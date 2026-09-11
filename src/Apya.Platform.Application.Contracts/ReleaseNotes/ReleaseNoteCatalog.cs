@@ -182,6 +182,27 @@ public static class ReleaseNoteCatalog
                 "eskiden karşınıza boş bir yazı kutusu çıkıyordu, şimdi seçeneklerin listesi " +
                 "açılıyor."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Davet bağlantısıyla hesap açarken onay kutuları artık takılmıyor",
+                "Davet bağlantısıyla açılan hizmet protokolü sayfasında protokolü ve KVKK " +
+                "taahhütlerini onaylayan iki kutuyu işaretleseniz bile form gönderilmiyor, " +
+                "kutuların altında \"kabul etmeden devam edilemez\" uyarısı kalıyordu. Bu yüzden " +
+                "davetle gelen müşteriler hesaplarını açamıyordu. Onay kutuları artık doğru " +
+                "çalışıyor; işaretleyip devam ettiğinizde hesabınız açılıyor. Şifreniz kurallara " +
+                "uymadığı için sayfa geri dönerse işaretleriniz korunuyor, belgeyi baştan sonuna " +
+                "yeniden okumanız gerekmiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Aynı e-posta adresiyle ikinci hesap açılamıyor",
+                "Daha önce kullanılmış bir e-posta adresiyle yeniden başvurulduğunda hiçbir uyarı " +
+                "çıkmadan ikinci bir hesap açılabiliyordu; aynı adrese bağlı iki hesap, giriş " +
+                "yaparken hangisine düştüğünüzü belirsiz bırakıyordu. Artık başvuru formunda " +
+                "adresiniz zaten bir hesaba bağlıysa ya da aynı adresle işlemdeki bir başvurunuz " +
+                "varsa bunu hemen görüyorsunuz; hesabınız varsa oradan giriş yapabilir ya da " +
+                "şifrenizi sıfırlayabilirsiniz. Sonuçsuz kapanan ya da reddedilen bir başvurunun " +
+                "ardından aynı adresle yeniden başvurabiliyorsunuz. Açılmış hesaplarınız bu " +
+                "değişiklikten etkilenmiyor."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Bildirimler, görev listesi, belgeler ve finans toplamları daha hızlı geliyor",
                 "Kayıt sayısı arttıkça bazı ekranların açılması yavaşlıyordu. Bildirim zili ve " +

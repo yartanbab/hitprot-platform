@@ -1,14 +1,16 @@
-# Deploy delta — 2026-09-11 (`e1f93653` → `c70cef19`)
+# Deploy delta — 2026-09-11 (`e1f93653` → `10a34d6e`)
 
 Canlıda koşan kod **`e1f93653`** + tek dosyalık protokol yaması (`5411a19d`).
 Bu paket ikisinin de üzerine gelir.
 
-Paket: `Apya-Yayin-c70cef19.zip` + `Apya-DbMigrator-c70cef19.zip`
+Paket: `Apya-Yayin-10a34d6e.zip` + `Apya-DbMigrator-10a34d6e.zip`
 (`Masaüstü\Apya-Yayin-2026-09-11\`).
 
-> `b2b15129` paketi (2026-09-09) hiç yüklenmedi ve birleşik sekme sistemi
-> (#371–#376) main'e girince geride kaldı. Bu paket onun yerini alır; o
-> paketin içeriği burada eksiksiz var.
+> Bu paketten önce iki paket üretildi, ikisi de **hiç yüklenmedi**:
+> `b2b15129` (2026-09-09) birleşik sekme sistemi (#371–#376) main'e girince,
+> `c70cef19` (2026-09-11) kayıt akışının iki sürüm notu maddesi (#377) eklenince
+> geride kaldı. `c70cef19` ile bu paket arasındaki fark **yalnız sürüm notu
+> kataloğu** — kod aynı. İkisinin de içeriği burada eksiksiz var.
 
 ## Taban nasıl ölçüldü — 🔴 DEPLOY ÖNCESİ YENİDEN ÖLÇ
 
@@ -28,7 +30,7 @@ Sürüm tespitini her zaman birden çok dosyada yap.
 
 ## Ne iniyor
 
-**24 commit · PR #349 → #376.** Müşterinin göreceği başlıklar:
+**26 commit · PR #349 → #377.** Müşterinin göreceği başlıklar:
 
 | Alan | Değişiklik |
 |---|---|
@@ -40,7 +42,7 @@ Sürüm tespitini her zaman birden çok dosyada yap.
 | Hibe | Başvuru ekranlarındaki ekleme diyalogları hiçbir işlem yapmıyordu: "Evrak Takibi"nde evrak ekleme ve revizyon isteme, "Red ve İtiraz"da gerekçe maddesi ve görüş, "Uygulama ve Tahsilat"ta rapor ve bölüm ekleme düğmeleri tıklanınca sessizce hiçbir şey olmuyordu; durum seçimleri de açılır liste yerine boş metin kutusu gösteriyordu (#366). Yalnız istemci tarafı — migration yok. |
 | Sekme düzeni | **YENİ (#371–#373).** Görevler, projeler ve finans ekranlarında sekmeler tek ortak düzende çalışıyor. Proje detayına yeni panolar geldi: takvim, gösterge, galeri, belgeler ve fazlası. Görev penceresinde özellik ekleme tek menüye indi; telefonda sekme şeridi rahatladı. |
 | Proje kapsamı & finans | **YENİ (#374, #375).** Kontrol listesine artık **proje** maddeleri de eklenebiliyor (bu yüzden yeni migration var, aşağıda). Proje finansında görev harcamaları tablosu; Görevler ekranında tüm projelerin giderlerini tek yerde gösteren Finans sekmesi; gider kaydının bağlantısı sonradan değiştirilebiliyor. |
-| Sürüm notu | `2026.09.07` girişine hibe maddesi (#367) — **10 madde**. Yeni `2026.09.10` girişi (#376) — **8 madde**. |
+| Sürüm notu | `2026.09.07` girişine hibe maddesi (#367) ve kayıt akışının iki maddesi (#377: protokol onay kutuları, aynı e-postayla ikinci hesap) — **12 madde**. Yeni `2026.09.10` girişi (#376) — **8 madde**. |
 | Hız | Bildirim zili/listesi, görev konsolu, proje belge listesi ve finans toplamları için indeksler (#359, #361, #362). |
 | Veri bütünlüğü | Filtresiz UNIQUE indeksler soft-delete satırının anahtarını kalıcı rezerve ediyordu; 14 indeks yeniden kuruldu, 7'si `IsDeleted = 0` filtresi aldı (#353). SQL Server'da sıralı GUID sağlayıcısı düzeltildi (#352). |
 
@@ -91,7 +93,7 @@ davranışı önemli:
 
 🔴 **Yeni sürüm notu maddeleri VARSAYILAN OLARAK KAPALIDIR.** Tohum yalnız tablo
 tamamen boşsa çalışır; canlıda tablo 2026-09-06 paketiyle doldu. Dolayısıyla
-`2026.09.07` (10) ve `2026.09.10` (8) girişlerinin **18 maddesi kullanıcıya GİTMEZ** — host `/Admin/ReleaseNotes`
+`2026.09.07` (12) ve `2026.09.10` (8) girişlerinin **20 maddesi kullanıcıya GİTMEZ** — host `/Admin/ReleaseNotes`
 ekranından onaylayana kadar yalnız host'a "Onay bekliyor" rozetiyle görünür.
 
 ## Deploy adımları
@@ -107,7 +109,10 @@ ekranından onaylayana kadar yalnız host'a "Onay bekliyor" rozetiyle görünür
    `Successfully completed all database migrations.` satırından doğrula.
 7. Zamanlanmış görevi **SİL** (varsayılan "Günlük 00:00" — yoksa her gece koşar).
 8. App pool geri dönüşümü.
-9. `/Admin/ReleaseNotes` → `2026.09.07` ve `2026.09.10` maddelerini (18) onayla
+9. `/Admin/ReleaseNotes` → `2026.09.07` ve `2026.09.10` maddelerini (20) onayla.
+   Kayıt akışının iki maddesi (#377) kataloğun müşteri odaklılık kuralında sınırda
+   (yaşayan kişi henüz hesabı olmayan aday) — yayınlayıp yayınlamamak burada ayrıca
+   karar verilebilir.
    (yukarıdaki 🔴 nota bak).
 
 ## Deploy sonrası QA
