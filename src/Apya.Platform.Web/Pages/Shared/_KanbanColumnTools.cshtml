@@ -25,7 +25,15 @@
     @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit))
     {
         <button type="button" class="kanban-edit-cols js-edit-cols d-none">
-            <i class="fa fa-sliders me-1" aria-hidden="true"></i>Kolonları düzenle
+            <i class="fa fa-sliders me-1" aria-hidden="true"></i>Kolonlar
         </button>
     }
+    @* Görünüm (kanban v2): yoğunluk + kartta gösterilen alanlar + boş kolon /
+       tamamlanan anahtarları. Popover'ı /js/apya-kanban.js açar; etiketteki
+       yoğunluk adı da oradan güncellenir (Shell.KanbanView). *@
+    <button type="button" class="kanban-view-btn js-kanban-view"
+            aria-haspopup="dialog" aria-expanded="false">
+        <i class="fa fa-table-columns me-1" aria-hidden="true"></i>Görünüm: <span class="js-kanban-view-density">Kompakt</span>
+        <i class="fa fa-chevron-down kanban-view-caret" aria-hidden="true"></i>
+    </button>
 </div>

@@ -108,24 +108,46 @@
             try { localStorage.setItem(kbKey('collapsed'), JSON.stringify(collapsed)); } catch (e) { }
         }
 
+        function syncCollapseBtn(colEl, shut) {
+            var btn = colEl.querySelector('.js-col-collapse');
+            if (!btn) { return; }
+            btn.setAttribute('title', shut ? 'Genişlet' : 'Daralt');
+            btn.setAttribute('aria-expanded', String(!shut));
+            var icon = btn.querySelector('i');
+            if (icon) { icon.className = 'fa fa-angle-' + (shut ? 'right' : 'left'); }
+        }
+
         // Aç/kapa düğmesini DOĞRUDAN bağlar (jQuery delegasyonu değil): kolonlar
         // her render'da yeniden kurulduğu için sızıntı olmaz, davranış test edilebilir
         // kalır. Yeniden yükleme YAPMAZ — sınıfı ve ok yönünü yerinde çevirir.
         function bindCollapse(colEl, token) {
             var btn = colEl.querySelector('.js-col-collapse');
-            if (!btn) { return; }
-            btn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                var shut = !colEl.classList.contains('is-collapsed');
-                colEl.classList.toggle('is-collapsed', shut);
-                applyColumnWidth(colEl, token);
-                collapsed[token] = shut;
-                saveCollapsed();
+            if (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var shut = !colEl.classList.contains('is-collapsed');
+                    colEl.classList.toggle('is-collapsed', shut);
+                    // Elle müdahale otomatik daraltmayı devre dışı bırakır —
+                    // tercih artık açıkça kullanıcıya ait.
+                    colEl.classList.remove('is-auto-collapsed');
+                    applyColumnWidth(colEl, token);
+                    collapsed[token] = shut;
+                    saveCollapsed();
+                    syncCollapseBtn(colEl, shut);
+                });
+            }
 
-                btn.setAttribute('title', shut ? 'Genişlet' : 'Daralt');
-                btn.setAttribute('aria-expanded', String(!shut));
-                var icon = btn.querySelector('i');
-                if (icon) { icon.className = 'fa fa-angle-' + (shut ? 'right' : 'left'); }
+            // v2: daraltılmış kolon (ray) tıklanınca açılır. Düğme/menü/kutu
+            // tıklamaları kendi işini yapar; ray hâli dışında etkisiz.
+            colEl.addEventListener('click', function (e) {
+                if (!colEl.classList.contains('is-collapsed')) { return; }
+                if (e.target.closest('button, .dropdown-menu, input')) { return; }
+                colEl.classList.remove('is-collapsed', 'is-auto-collapsed');
+                collapsed[token] = false;
+                saveCollapsed();
+                applyColumnWidth(colEl, token);
+                syncCollapseBtn(colEl, false);
+                updateCounts();   // boş kutu / rozetler yeniden değerlendirilsin
             });
         }
         var grouping = '';
@@ -141,6 +163,84 @@
         var sortables = [];
         var customIds = {};       // { columnId: true } özel kolonlar
         var configInited = false;
+
+        // ── Görünüm tercihi (Shell.KanbanView — kanban v2, ekran 2a) ────────
+        // density/fields/collapseEmpty/hideDone kullanıcı AYARIDIR: üç kanban
+        // yüzeyi ve cihazlar arası ortak. Sayfaya _KanbanBoard.cshtml
+        // data-kanban-view ile gelir; her değişiklikte sunucuya yazılır
+        // (sekme düzenindeki persistTabs deseni — sessiz hata).
+        // Yoğunluk uygulama geneli <html data-density>'ye BAĞLANMAZ: dört
+        // kademe KART tasarımıdır, tablo satır yüksekliği değil.
+        var DENSITIES = ['card', 'compact', 'list', 'title'];
+        var DENSITY_LABELS = { card: 'Kart', compact: 'Kompakt', list: 'Liste', title: 'Başlık' };
+        // Alan anahtarları ShellKanbanViewSetting.FieldKeys ile birebir;
+        // "project" ve "subtasks" yalnız genel panoda seçilebilir çizilir.
+        var FIELD_DEFS = [
+            ['code', 'Kod'], ['pri', 'Öncelik'], ['assignee', 'Atanan'],
+            ['due', 'Son tarih'], ['meta', 'Yorum / ek'], ['tags', 'Etiketler'],
+            ['project', 'Proje'], ['subtasks', 'Alt görev']
+        ];
+        var view = readViewPrefs();
+
+        function readViewPrefs() {
+            var v = { density: '', fields: {}, collapseEmpty: true, hideDone: false };
+            var board = document.querySelector(boardSel);
+            var raw = board && board.getAttribute('data-kanban-view');
+            if (raw) {
+                try {
+                    var p = JSON.parse(raw) || {};
+                    v.density = p.density || '';
+                    v.fields = p.fields || {};
+                    if (p.collapseEmpty === false) { v.collapseEmpty = false; }
+                    v.hideDone = p.hideDone === true;
+                } catch (e) { /* bozuk değer tercihi çökertmesin — varsayılana düş */ }
+            }
+            if (DENSITIES.indexOf(v.density) < 0) {
+                // Kayıt yoksa varsayılan: masaüstünde Kompakt, dar ekranda Liste.
+                v.density = (window.matchMedia && window.matchMedia('(max-width: 767px)').matches)
+                    ? 'list' : 'compact';
+            }
+            return v;
+        }
+        // Kayıtta OLMAYAN alan AÇIK sayılır — yeni bir alan eklendiğinde eski
+        // kayıtlar onu gizlemesin (ShellKanbanViewDto.Fields sözleşmesi).
+        function fieldOn(key) { return view.fields[key] !== false; }
+
+        function persistViewPrefs() {
+            // Sessizce yut: görünüm tercihi kritik değil; bir sonraki yüklemede
+            // sunucudaki hâl geri gelir (persistTabs gerekçesiyle aynı).
+            var token = (document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1];
+            fetch('/api/app/shell/set-kanban-view', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token ? decodeURIComponent(token) : ''
+                },
+                body: JSON.stringify({
+                    density: view.density,
+                    fields: view.fields,
+                    collapseEmpty: view.collapseEmpty,
+                    hideDone: view.hideDone
+                })
+            }).catch(function () { });
+        }
+
+        // Yoğunluk/alan değişimi SUNUCUYA GİTMEDEN yeniden çizsin diye son
+        // görev listesi bellekte tutulur; filtre değişimi yine load()'dan geçer.
+        var lastTasks = null;
+        var lastActiveLog = null;
+        function rerender() {
+            if (lastTasks) { render(lastTasks, lastActiveLog); }
+            else { load(); }
+        }
+
+        function applyViewPrefs() {
+            var board = document.querySelector(boardSel);
+            if (board) { board.setAttribute('data-kb-density', view.density); }
+            syncViewButton();
+            rerender();
+        }
 
         function canEdit(t) {
             if (typeof opts.canEdit === 'function') { return opts.canEdit(t); }
@@ -161,148 +261,172 @@
             return 's' + col.getAttribute('data-status-id');
         }
 
-        // ── Kart (DOM, XSS-güvenli: dinamik metin textContent ile) ──
-        function buildCard(task, activeLog) {
-            var card = el('div', 'kanban-card shadow-sm');
-            card.setAttribute('data-id', task.id);
-            card.setAttribute('data-priority', priorityAttr(task.priority));
-            // Kolon silme onayı kartın döneceği durum kolonunu bundan bulur.
-            card.setAttribute('data-status', task.status);
+        // ── Kart (DOM, XSS-güvenli: dinamik metin textContent ile) ──────────
+        // Kanban v2 (ekran 2a): kart DÖRT yoğunlukta çizilir (card/compact/
+        // list/title), alanlar Görünüm popover'ından açılıp kapanır. Düzenle/Sil
+        // düğmeleri karttan kalktı — hepsi ⋯ menüsünde. Gecikme dili gün
+        // sayısıyla sürüyor (Faz 7) ama kırmızı şerit yerine kart/rozet dilinde.
 
-            var isDone = task.status === 4 || task.status === 0;
-            if (task.dueDate && !isDone) {
-                var diff = moment(task.dueDate).diff(moment(), 'hours');
-                if (diff < 0) { card.classList.add('border-danger', 'border-2'); }
-                else if (diff <= 48) { card.classList.add('border-warning', 'border-2'); }
-            }
-            var isActive = enableTimer && activeLog && activeLog.taskId === task.id;
-            if (isActive) { card.classList.add('timer-active'); }
+        // Gecikme GÜN sayısı — Done(4)/İptal(0) gecikmez.
+        function lateDaysOf(task) {
+            if (task.status === 4 || task.status === 0 || !task.dueDate) { return 0; }
+            var d = Math.floor(moment().diff(moment(task.dueDate), 'days'));
+            return d > 0 ? d : 0;
+        }
 
-            // Üst satır: onay kutusu + id rozeti + (proje adı / üst görev) + timer
-            var top = el('div', 'd-flex justify-content-between align-items-start mb-1');
-            var tagWrap = el('div', 'd-flex flex-column gap-1');
-            var topLeft = el('div', 'd-flex align-items-start gap-2');
-            // Toplu seçim onay kutusu — yalnız yetkiliye; hover'da beliriyor,
-            // seçim varken kalıcı görünüyor (CSS .kanban-card.is-selected).
-            if (bulkAllowed()) {
-                var check = document.createElement('input');
-                check.type = 'checkbox';
-                check.className = 'kanban-card-check js-card-check';
-                check.setAttribute('aria-label', 'Kartı seç');
-                check.checked = !!selected[task.id];
-                topLeft.appendChild(check);
-            }
-            var idBadge = el('small', 'text-muted border px-1 rounded bg-light');
-            idBadge.style.fontSize = '0.72rem';
-            idBadge.innerHTML = '<i class="fa fa-tag me-1"></i>';
-            // Kullanıcıya görünen kod ("GRV-17") — liste satırıyla aynı kimlik.
-            // Eski payload'da code yoksa GUID kısaltmasına düş.
-            idBadge.appendChild(document.createTextNode(
-                task.code || ('#' + ('' + task.id).substring(0, 4))));
-            tagWrap.appendChild(idBadge);
+        // Toplu seçim onay kutusu — yalnız yetkiliye; hover'da beliriyor,
+        // seçim varken kalıcı görünüyor (CSS .kanban-card.is-selected).
+        function buildCheck(task) {
+            if (!bulkAllowed()) { return null; }
+            var check = document.createElement('input');
+            check.type = 'checkbox';
+            check.className = 'kanban-card-check js-card-check';
+            check.setAttribute('aria-label', 'Kartı seç');
+            check.checked = !!selected[task.id];
+            return check;
+        }
 
-            // Genel panoda proje adı ZORUNLU: renkli ince şerit + ad. Ton projeye
-            // göre deterministik (apyaTask.hashTone — etiket/avatar ile aynı sözlük),
-            // böylece aynı proje her kartta aynı rengi taşır. Bootstrap text-primary
-            // KULLANILMAZ: dark temada -emphasis kalıntısı bırakan sınıf ailesi.
-            // Projeye göre gruplandıysa ad kulvar başlığında zaten var — kart sadeleşir.
-            if (showProject && task.projectName && grouping !== 'project') {
-                var tone = (window.apyaTask && apyaTask.hashTone) ? apyaTask.hashTone(task.projectName) : 'brand';
-                var pj = el('span', 'kanban-card-project is-' + tone);
-                pj.appendChild(document.createTextNode(task.projectName));
-                tagWrap.appendChild(pj);
-            }
-            if (task.parentTaskTitle) {
-                var pt = el('span', 'small text-primary');
-                pt.innerHTML = '<i class="fa fa-level-up-alt fa-rotate-90 me-1"></i>';
-                pt.appendChild(document.createTextNode(task.parentTaskTitle));
-                tagWrap.appendChild(pt);
-            }
-            topLeft.appendChild(tagWrap);
-            top.appendChild(topLeft);
+        // ⋯ menü düğmesi — doğrudan bağlanır (kartlar her render'da yeniden
+        // kurulur, sızıntı olmaz); stopPropagation kart tıklamasını (detay
+        // açma / seçim) tetiklemesin diye.
+        function buildMenuBtn(task) {
+            var b = el('button', 'kanban-card-menubtn js-card-menu');
+            b.type = 'button';
+            b.setAttribute('title', 'Kart menüsü');
+            b.setAttribute('aria-label', 'Kart menüsü');
+            b.setAttribute('aria-haspopup', 'true');
+            b.innerHTML = '<i class="fa fa-ellipsis"></i>';
+            b.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleCardMenu(b, task);
+            });
+            return b;
+        }
 
-            if (enableTimer) {
-                var tc = el('div', 'timer-controls');
-                tc.innerHTML = isActive
-                    ? '<button class="btn btn-sm btn-danger js-stop-timer p-1 px-2" data-id="' + task.id + '" title="Sayacı durdur"><i class="fa fa-pause fa-beat"></i></button>'
-                    : '<button class="btn btn-sm btn-outline-success js-start-timer p-1 px-2" data-id="' + task.id + '" title="Sayacı başlat"><i class="fa fa-play"></i></button>';
-                top.appendChild(tc);
-            }
-            card.appendChild(top);
+        // Kullanıcıya görünen kod ("GRV-17") — liste satırıyla aynı kimlik.
+        // Eski payload'da code yoksa GUID kısaltmasına düş. codeOf() ve kolon
+        // silme önizlemesi bu sınıfı okur.
+        function buildCode(task) {
+            var c = el('span', 'kanban-card-code');
+            c.textContent = task.code || ('#' + ('' + task.id).substring(0, 4));
+            return c;
+        }
 
-            // Başlık — text-dark KOYMA: .kanban-card kendi bg'sine göre (light/dark)
-            // doğru metin rengini zaten ambient/body'den miras alır; text-dark sabit
-            // koyu renk zorlayıp dark'ta görünmez yapıyordu.
-            var title = el('div', 'fw-bold mb-2');
-            title.textContent = task.title;
-            card.appendChild(title);
-
-            // Etiketler — apyaTask.tagChips kendi içinde escape ediyor (güvenli).
-            if (window.apyaTask && task.tags && task.tags.length) {
-                var tagsRow = el('div', 'mb-2');
-                tagsRow.innerHTML = window.apyaTask.tagChips(task.tags);
-                card.appendChild(tagsRow);
-            }
-
-            // Alt satır: atanan + bitiş
-            var bottom = el('div', 'd-flex justify-content-between align-items-center flex-wrap gap-1');
-            var who = el('div', 'small text-muted');
-            who.innerHTML = '<i class="fa fa-user-circle me-1"></i>';
-            who.appendChild(document.createTextNode(task.assigneeName || 'Atanmamış'));
-            bottom.appendChild(who);
-
-            // Done ise BİTİŞ = gerçek tamamlanma günü (completedDate); eski kayıtlarda
-            // completedDate yoksa deadline'a düş. Done değilse deadline (renk/uyarı) göster.
-            var doneDate = isDone ? (task.completedDate || task.dueDate) : null;
-            if (isDone && doneDate) {
-                var doneEl = el('div', 'small text-success fw-bold');
-                doneEl.innerHTML = '<i class="fa fa-check-circle me-1"></i>' + moment(doneDate).format('DD MMM');
-                bottom.appendChild(doneEl);
-            } else if (!isDone && task.dueDate) {
-                var due = el('div', 'small');
-                var d2 = moment(task.dueDate).diff(moment(), 'hours');
-                if (d2 < 0) { due.className = 'apya-chip apya-chip-negative heartbeat-animation'; due.innerHTML = '<i class="fa fa-exclamation-circle me-1"></i>Süresi Geçti (' + moment(task.dueDate).format('DD MMM') + ')'; }
-                else if (d2 <= 48) { due.className = 'apya-chip apya-chip-warning'; due.innerHTML = '<i class="fa fa-clock me-1"></i>Yaklaşıyor (' + moment(task.dueDate).format('DD MMM') + ')'; }
-                else { due.className = 'small text-muted'; due.innerHTML = '<i class="fa fa-clock me-1"></i>' + moment(task.dueDate).format('DD MMM'); }
-                bottom.appendChild(due);
-            }
-            card.appendChild(bottom);
-
-            // Faz 7 — risk dili ve meta rozetleri. Gecikme GÜN SAYISIYLA söylenir
-            // ("3 gün gecikti"); "Süresi Geçti" tek başına ne kadar geç olduğunu
-            // söylemiyordu. Engelli kart bekleten görevin KODUNU taşır.
-            var meta = el('div', 'kanban-card-meta');
-            if (!isDone && task.dueDate) {
-                var lateDays = Math.floor(moment().diff(moment(task.dueDate), 'days'));
-                if (lateDays > 0) {
-                    var od = el('span', 'kanban-chip-late');
-                    od.textContent = lateDays + ' gün gecikti';
-                    meta.appendChild(od);
+        // Atanan: baş harfli daire (apya-avatar sözlüğü). Atanmamış: kesik
+        // çizgili boş daire; kart modunda "Atanmamış" etiketi de yazılır.
+        function buildWho(task, withName) {
+            var wrap = el('span', 'kanban-card-who');
+            if (task.assigneeName) {
+                var av = el('span', 'apya-avatar apya-avatar-brand kanban-avatar');
+                av.title = task.assigneeName;
+                av.textContent = (window.apyaTask && apyaTask.personInitials)
+                    ? apyaTask.personInitials(task.assigneeName) : '?';
+                wrap.appendChild(av);
+                if (withName) {
+                    var nm = el('span', 'kanban-card-whoname');
+                    nm.textContent = task.assigneeName;
+                    wrap.appendChild(nm);
+                }
+            } else {
+                var dash = el('span', 'kanban-avatar-empty');
+                dash.title = 'Atanmamış';
+                wrap.appendChild(dash);
+                if (withName) {
+                    var lbl = el('span', 'kanban-card-whoname is-empty');
+                    lbl.textContent = 'Atanmamış';
+                    wrap.appendChild(lbl);
                 }
             }
-            if (task.blockedByCodes && task.blockedByCodes.length) {
-                var bl = el('span', 'kanban-chip-blocked');
-                bl.innerHTML = '<i class="fa fa-lock me-1"></i>';
-                bl.appendChild(document.createTextNode('Engelli · ' + task.blockedByCodes.join(', ')));
-                meta.appendChild(bl);
+            return wrap;
+        }
+
+        // Bitiş: Done'da tamamlanma günü (✓), gecikmişte tarih + "+Ng" rozeti
+        // ya da "· N gün geç" dili — yoğunluğa göre kısalır.
+        function dueText(task) {
+            var isDone = task.status === 4 || task.status === 0;
+            var d = isDone ? (task.completedDate || task.dueDate) : task.dueDate;
+            return d ? moment(d).format('DD MMM') : '';
+        }
+
+        function buildDueFull(task, lateDays) {
+            var isDone = task.status === 4;
+            var text = dueText(task);
+            if (!text) { return null; }
+            var due = el('span', 'kanban-card-due' + (lateDays ? ' is-late' : '') + (isDone ? ' is-done' : ''));
+            if (isDone) { due.innerHTML = '<i class="fa fa-check-circle me-1"></i>'; }
+            due.appendChild(document.createTextNode(text));
+            if (lateDays) {
+                var badge = el('span', 'kanban-late-badge');
+                badge.textContent = '+' + lateDays + 'g';
+                due.appendChild(badge);
             }
-            if (task.commentCount) {
-                var cm = el('span', 'kanban-card-metaitem');
-                cm.innerHTML = '<i class="fa fa-comment me-1"></i>' + task.commentCount;
-                meta.appendChild(cm);
+            return due;
+        }
+
+        function buildDueCompact(task, lateDays) {
+            var isDone = task.status === 4;
+            var text = dueText(task);
+            if (!text) { return null; }
+            var due = el('span', 'kanban-card-due' + (lateDays ? ' is-late' : '') + (isDone ? ' is-done' : ''));
+            due.innerHTML = isDone ? '<i class="fa fa-check-circle me-1"></i>' : '<i class="fa fa-clock me-1"></i>';
+            due.appendChild(document.createTextNode(
+                lateDays ? (text + ' · ' + lateDays + ' gün geç') : text));
+            return due;
+        }
+
+        // Yorum / ek / alt görev sayaçları. "meta" alanı yorum+eki, "subtasks"
+        // alanı alt görev sayacını yönetir; Engelli rozeti alan tercihinden
+        // BAĞIMSIZ (risk sinyali kapatılamaz).
+        function buildMetaItems(task) {
+            var items = [];
+            if (fieldOn('meta')) {
+                if (task.commentCount) {
+                    var cm = el('span', 'kanban-card-metaitem');
+                    cm.innerHTML = '<i class="fa fa-comment me-1"></i>' + task.commentCount;
+                    items.push(cm);
+                }
+                if (task.attachmentCount) {
+                    var at = el('span', 'kanban-card-metaitem');
+                    at.innerHTML = '<i class="fa fa-paperclip me-1"></i>' + task.attachmentCount;
+                    items.push(at);
+                }
             }
-            if (task.attachmentCount) {
-                var at = el('span', 'kanban-card-metaitem');
-                at.innerHTML = '<i class="fa fa-paperclip me-1"></i>' + task.attachmentCount;
-                meta.appendChild(at);
-            }
-            if (task.subTaskCount) {
+            if (fieldOn('subtasks') && task.subTaskCount) {
                 var st = el('span', 'kanban-card-metaitem');
                 st.innerHTML = '<i class="fa fa-list-check me-1"></i>' +
                     (task.completedSubTaskCount || 0) + '/' + task.subTaskCount;
-                meta.appendChild(st);
+                items.push(st);
             }
-            if (meta.childNodes.length) { card.appendChild(meta); }
+            return items;
+        }
+
+        function buildBlockedChip(task) {
+            if (!task.blockedByCodes || !task.blockedByCodes.length) { return null; }
+            var bl = el('span', 'kanban-chip-blocked');
+            bl.innerHTML = '<i class="fa fa-lock me-1"></i>';
+            bl.appendChild(document.createTextNode('Engelli · ' + task.blockedByCodes.join(', ')));
+            return bl;
+        }
+
+        // Genel panoda proje adı: renkli ince şerit + ad (ton apyaTask.hashTone).
+        // Projeye göre gruplandıysa ad kulvar başlığında zaten var — basılmaz.
+        function buildProjectRow(task) {
+            if (!(showProject && task.projectName && grouping !== 'project' && fieldOn('project'))) { return null; }
+            var tone = (window.apyaTask && apyaTask.hashTone) ? apyaTask.hashTone(task.projectName) : 'brand';
+            var pj = el('span', 'kanban-card-project is-' + tone);
+            pj.appendChild(document.createTextNode(task.projectName));
+            return pj;
+        }
+
+        // Ortak kuyruk: engelli rozeti, iptal notu, çizilmeyen özel kolon notu.
+        // Yalnız kart/kompakt modda — satır modlarında yer yok, bilgi ⋯ menüde.
+        function appendCardExtras(card, task) {
+            var blocked = buildBlockedChip(task);
+            if (blocked) {
+                var meta = el('div', 'kanban-card-meta');
+                meta.appendChild(blocked);
+                card.appendChild(meta);
+            }
 
             // İptal edilmiş kart: ne zaman ve neden iptal edildiği görünür,
             // "İptali geri al" kartı iptalden ÖNCEKİ durumuna döndürür.
@@ -323,24 +447,177 @@
             }
 
             // Kart, bu panoda ÇİZİLMEYEN bir özel kolonda duruyorsa (genel panoda
-            // "Tümü" seçili ya da başka bir projenin kolonu) nerede olduğunu söyle —
-            // yoksa kart durum kolonunda görünür ve özel kolon kaybolmuş sanılır.
+            // "Tümü" seçili ya da başka bir projenin kolonu) nerede olduğunu söyle.
             if (task.boardColumnName && !(task.boardColumnId && customIds[task.boardColumnId])) {
                 var colNote = el('div', 'kanban-card-colnote');
                 colNote.innerHTML = '<i class="fa fa-diagram-project me-1"></i>';
                 colNote.appendChild(document.createTextNode('Projede özel kolon: ' + task.boardColumnName));
                 card.appendChild(colNote);
             }
+        }
 
-            // Aksiyonlar: düzenle + sil
-            var actions = el('div', 'apya-touch-actions text-end mt-2 d-flex justify-content-end gap-1');
-            if (canEdit(task)) {
-                actions.innerHTML += '<button class="btn btn-sm btn-light py-0 px-2 rounded js-edit-task" data-id="' + task.id + '" title="Düzenle" aria-label="Görevi düzenle"><i class="fa fa-pencil-alt text-secondary" style="font-size:0.75rem;"></i></button>';
+        // KART modu: kod + öncelik metni üstte, tam başlık, etiket satırı,
+        // altta çizgiyle ayrılmış avatar+ad · tarih.
+        function buildCardFull(card, task, lateDays, isActive) {
+            var top = el('div', 'kanban-card-top');
+            var check = buildCheck(task);
+            if (check) { top.appendChild(check); }
+            if (fieldOn('code')) { top.appendChild(buildCode(task)); }
+            if (fieldOn('pri') && window.apyaTask && apyaTask.priorityBadge) {
+                var pri = el('span', 'kanban-card-pri');
+                pri.innerHTML = apyaTask.priorityBadge(task.priority);
+                top.appendChild(pri);
             }
-            if (canDelete(task)) {
-                actions.innerHTML += '<button class="btn btn-sm btn-light py-0 px-2 rounded js-delete-task" data-id="' + task.id + '" title="Sil" aria-label="Görevi sil"><i class="fa fa-trash text-danger" style="font-size:0.75rem;"></i></button>';
+            if (enableTimer) { top.appendChild(buildTimerBtn(task, isActive)); }
+            top.appendChild(buildMenuBtn(task));
+            card.appendChild(top);
+
+            var pj = buildProjectRow(task);
+            if (pj) { card.appendChild(pj); }
+            if (task.parentTaskTitle) {
+                var pt = el('span', 'kanban-card-parent');
+                pt.innerHTML = '<i class="fa fa-level-up-alt fa-rotate-90 me-1"></i>';
+                pt.appendChild(document.createTextNode(task.parentTaskTitle));
+                card.appendChild(pt);
             }
-            if (actions.childNodes.length) { card.appendChild(actions); }
+
+            var title = el('div', 'kanban-card-title');
+            title.textContent = task.title;
+            card.appendChild(title);
+
+            if (fieldOn('tags') && window.apyaTask && task.tags && task.tags.length) {
+                var tagsRow = el('div', 'kanban-card-tags');
+                tagsRow.innerHTML = apyaTask.tagChips(task.tags);
+                card.appendChild(tagsRow);
+            }
+
+            var foot = el('div', 'kanban-card-foot');
+            if (fieldOn('assignee')) { foot.appendChild(buildWho(task, true)); }
+            buildMetaItems(task).forEach(function (m) { foot.appendChild(m); });
+            if (fieldOn('due')) {
+                var due = buildDueFull(task, lateDays);
+                if (due) { foot.appendChild(due); }
+            }
+            if (foot.childNodes.length) { card.appendChild(foot); }
+
+            appendCardExtras(card, task);
+        }
+
+        // KOMPAKT modu (varsayılan): sol öncelik şeridi (CSS), kod + etiketler
+        // üstte, 2 satır kırpılmış başlık, altta avatar · ◷ tarih · sayaçlar.
+        function buildCardCompact(card, task, lateDays, isActive) {
+            var top = el('div', 'kanban-card-top');
+            var check = buildCheck(task);
+            if (check) { top.appendChild(check); }
+            if (fieldOn('code')) { top.appendChild(buildCode(task)); }
+            var pj = buildProjectRow(task);
+            if (pj) { top.appendChild(pj); }
+            if (fieldOn('tags') && window.apyaTask && task.tags && task.tags.length) {
+                var tags = el('span', 'kanban-card-tags');
+                tags.innerHTML = apyaTask.tagChips(task.tags);
+                top.appendChild(tags);
+            }
+            if (enableTimer) { top.appendChild(buildTimerBtn(task, isActive)); }
+            top.appendChild(buildMenuBtn(task));
+            card.appendChild(top);
+
+            var title = el('div', 'kanban-card-title is-clamped');
+            title.textContent = task.title;
+            card.appendChild(title);
+
+            var foot = el('div', 'kanban-card-foot');
+            if (fieldOn('assignee')) { foot.appendChild(buildWho(task, false)); }
+            if (fieldOn('due')) {
+                var due = buildDueCompact(task, lateDays);
+                if (due) { foot.appendChild(due); }
+            }
+            var metaWrap = el('span', 'kanban-card-metawrap');
+            buildMetaItems(task).forEach(function (m) { metaWrap.appendChild(m); });
+            if (metaWrap.childNodes.length) { foot.appendChild(metaWrap); }
+            if (foot.childNodes.length) { card.appendChild(foot); }
+
+            appendCardExtras(card, task);
+        }
+
+        // LİSTE modu: 36px tek satır — nokta · no · başlık · kısa tarih · avatar · ⋯
+        function buildCardRow(card, task, lateDays) {
+            var check = buildCheck(task);
+            if (check) { card.appendChild(check); }
+            if (fieldOn('pri')) { card.appendChild(el('span', 'kanban-pri-dot')); }
+            if (fieldOn('code')) {
+                var num = el('span', 'kanban-card-code');
+                var code = task.code || ('#' + ('' + task.id).substring(0, 4));
+                // Satırda yer dar: "GRV-17" → "17". Tire yoksa olduğu gibi kalır.
+                num.textContent = code.indexOf('-') > 0 ? code.split('-').pop() : code;
+                num.title = code;
+                card.appendChild(num);
+            }
+            var title = el('span', 'kanban-card-title');
+            title.textContent = task.title;
+            card.appendChild(title);
+            if (fieldOn('due')) {
+                var isDone = task.status === 4;
+                var d = el('span', 'kanban-card-due' + (lateDays ? ' is-late' : '') + (isDone ? ' is-done' : ''));
+                if (lateDays) { d.textContent = '-' + lateDays + 'g'; }
+                else if (isDone) { d.innerHTML = '<i class="fa fa-check"></i>'; }
+                else if (task.dueDate) { d.textContent = moment(task.dueDate).format('DD'); }
+                if (d.textContent || d.childNodes.length) { card.appendChild(d); }
+            }
+            if (fieldOn('assignee')) { card.appendChild(buildWho(task, false)); }
+            card.appendChild(buildMenuBtn(task));
+        }
+
+        // BAŞLIK modu: 28px — sol öncelik kenarı (CSS), başlık, geçse "+Ng", ⋯
+        function buildCardTitle(card, task, lateDays) {
+            var check = buildCheck(task);
+            if (check) { card.appendChild(check); }
+            var title = el('span', 'kanban-card-title');
+            title.textContent = task.title;
+            card.appendChild(title);
+            if (fieldOn('due') && lateDays) {
+                var badge = el('span', 'kanban-late-badge');
+                badge.textContent = '+' + lateDays + 'g';
+                card.appendChild(badge);
+            }
+            card.appendChild(buildMenuBtn(task));
+        }
+
+        function buildTimerBtn(task, isActive) {
+            var tc = el('span', 'timer-controls');
+            tc.innerHTML = isActive
+                ? '<button class="btn btn-sm btn-danger js-stop-timer p-1 px-2" data-id="' + task.id + '" title="Sayacı durdur"><i class="fa fa-pause fa-beat"></i></button>'
+                : '<button class="btn btn-sm btn-outline-success js-start-timer p-1 px-2" data-id="' + task.id + '" title="Sayacı başlat"><i class="fa fa-play"></i></button>';
+            return tc;
+        }
+
+        function buildCard(task, activeLog) {
+            var card = el('div', 'kanban-card');
+            card.setAttribute('data-id', task.id);
+            card.setAttribute('data-priority', priorityAttr(task.priority));
+            // Kolon silme onayı kartın döneceği durum kolonunu bundan bulur.
+            card.setAttribute('data-status', task.status);
+
+            // Gecikme/engel işaretleri ATTRIBUTE'ta taşınır: kolon sayaçları ve
+            // "N geç" rozeti bunları sayar. Görsel dil yoğunluğa göre değişse de
+            // sayım kaynağı sabit kalır (gizli-rozet tuzağına düşülmez).
+            var lateDays = lateDaysOf(task);
+            if (lateDays > 0) {
+                card.classList.add('is-late');
+                card.setAttribute('data-late', lateDays);
+            }
+            if (task.blockedByCodes && task.blockedByCodes.length) {
+                card.setAttribute('data-blocked', task.blockedByCodes.length);
+            }
+            var isActive = enableTimer && activeLog && activeLog.taskId === task.id;
+            if (isActive) { card.classList.add('timer-active'); }
+            if (selected[task.id]) { card.classList.add('is-selected'); }
+            // Öncelik alanı kapalıyken kompakt şerit / başlık kenarı da söner.
+            if (!fieldOn('pri')) { card.classList.add('kb-no-pri'); }
+
+            if (view.density === 'list') { buildCardRow(card, task, lateDays); }
+            else if (view.density === 'title') { buildCardTitle(card, task, lateDays); }
+            else if (view.density === 'card') { buildCardFull(card, task, lateDays, isActive); }
+            else { buildCardCompact(card, task, lateDays, isActive); }
             return card;
         }
 
@@ -363,24 +640,12 @@
             });
         }
 
-        // Boş kolon metni — sürükleme hedefi görünür kalsın diye kolonun kendi dilinde.
-        var EMPTY_TEXT = {
-            1: ['Sırada iş yok', 'Yeni bir görev ekleyerek başla.'],
-            2: ['Henüz iş başlamadı', 'Kart sürükleyerek buraya taşı ya da sıradaki bir işe başla.'],
-            3: ['Test bekleyen iş yok', ''],
-            4: ['Henüz kapatılan görev yok', '']
-        };
-        function buildEmptyState(statusValue) {
-            var t = EMPTY_TEXT[statusValue] || ['Bu kolon boş', 'Kartları buraya sürükleyebilirsin.'];
+        // Boş kolon metni — v2: tek satırlık kesik çizgili bırakma hedefi.
+        // (Durum başına ayrı metinler kalktı; boş kolon zaten çoğunlukla raya
+        // iniyor, kutu yalnız "daraltma kapalı"yken görünür.)
+        function buildEmptyState() {
             var box = el('div', 'kanban-empty');
-            var title = el('div', 'kanban-empty-title');
-            title.textContent = t[0];
-            box.appendChild(title);
-            if (t[1]) {
-                var sub = el('div', 'kanban-empty-sub');
-                sub.textContent = t[1];
-                box.appendChild(sub);
-            }
+            box.textContent = 'Kart yok · buraya sürükle';
             return box;
         }
 
@@ -419,7 +684,7 @@
             // eşlemeli ÖZEL kolonun da statusValue'su dolu olabiliyor ama o kendi
             // kolonu olarak yaşar (kartlar boardColumnId ile bağlı).
             var isSys = !!c.isSystem;
-            var col = el('div', 'kanban-column shadow-sm border' + (isSys ? '' : ' js-custom-col'));
+            var col = el('div', 'kanban-column' + (isSys ? '' : ' js-custom-col'));
             if (isSys) { col.setAttribute('data-status-id', c.statusValue); }
             else { col.setAttribute('data-column-id-custom', c.id); }
             if (c.id) { col.setAttribute('data-column-id', c.id); }
@@ -441,18 +706,26 @@
             var collapseBtn = '<button type="button" class="kanban-col-collapse js-col-collapse" ' +
                 'title="' + (shut ? 'Genişlet' : 'Daralt') + '" aria-expanded="' + (!shut) + '" ' +
                 'aria-label="Kolonu aç/kapat"><i class="fa fa-angle-' + (shut ? 'right' : 'left') + '"></i></button>';
+            // v2 başlık: nokta + ad + mono sayaç + "N geç" rozeti solda; ＋, ⋯ ve
+            // aç/kapa sağda. Sayaç eylem grubunun DIŞINDA: ray (daraltılmış)
+            // hâlde eylemler gizlenirken sayaç görünür kalmalı. WIP artık rozet
+            // değil, başlığın altında ince çizgi + "n / limit" etiketi.
             col.innerHTML =
                 '<div class="kanban-header">' +
                     '<span class="kanban-title js-col-name' + (canEditColumns && c.id ? ' is-editable' : '') +
                         '" title="' + (canEditColumns && c.id ? 'Adı düzenlemek için tıkla' : '') + '">' +
                         '<i class="fa fa-circle me-2"></i></span>' +
-                    '<span class="d-flex align-items-center gap-2 apya-touch-actions">' +
-                        '<span class="apya-chip apya-chip-' + colorTone(c.colorClass) + ' kanban-count">0</span>' +
-                        '<span class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti"></span>' +
+                    '<span class="kanban-count">0</span>' +
+                    '<span class="kanban-col-late js-col-late d-none"></span>' +
+                    '<span class="kanban-col-actions apya-touch-actions">' +
                         addBtn +
                         columnMenuHtml(c) +
                         collapseBtn +
                     '</span>' +
+                '</div>' +
+                '<div class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti">' +
+                    '<span class="kanban-wip-track"><span class="kanban-wip-fill"></span></span>' +
+                    '<span class="kanban-wip-label"></span>' +
                 '</div>' +
                 '<div class="kanban-cards"></div>';
             // Ad textContent ile: XSS-güvenli (kolon adı kullanıcı girdisi).
@@ -536,8 +809,9 @@
 
         function codeOf(id) {
             var card = document.querySelector(boardSel + ' .kanban-card[data-id="' + id + '"]');
-            var small = card && card.querySelector('small');
-            return small ? small.textContent.trim() : id.substring(0, 8);
+            var code = card && card.querySelector('.kanban-card-code');
+            // Kod alanı Görünüm'den kapatılmış olabilir; kimlik yine söylenmeli.
+            return code ? (code.title || code.textContent.trim()) : id.substring(0, 8);
         }
 
         // İşlem öncesi konumu sakla ki "Geri al" kartları yerine koyabilsin.
@@ -576,6 +850,18 @@
             if (btn) { btn.classList.toggle('d-none', !lastBulk || !lastBulk.entries.length); }
         }
 
+        // Kullanıcı listesi BİR KEZ istenir; hem toplu "Ata" menüsü hem kart ⋯
+        // menüsündeki "Ata" alt listesi aynı önbellekten okur.
+        var usersPromise = null;
+        function getUsers() {
+            if (!usersPromise) {
+                usersPromise = taskSvc.getUsersLookup()
+                    .then(function (res) { return res.items || []; })
+                    .catch(function () { usersPromise = null; return []; });
+            }
+            return usersPromise;
+        }
+
         // "Ata" menüsü kullanıcı listesinden BİR KEZ doldurulur (her render'da
         // istek atmasın); menü yoksa yetki de yok demektir.
         var assignMenuFilled = false;
@@ -584,19 +870,20 @@
             var menu = bar && bar.querySelector('.js-kb-assign-menu');
             if (!menu || assignMenuFilled) { return; }
             assignMenuFilled = true;
-            taskSvc.getUsersLookup().then(function (res) {
+            getUsers().then(function (items) {
+                if (!items.length) { assignMenuFilled = false; return; }
                 var none = el('button', 'apya-console-menu-item js-kb-assign');
                 none.type = 'button';
                 none.textContent = 'Atamayı kaldır';
                 menu.appendChild(none);
-                (res.items || []).forEach(function (u) {
+                items.forEach(function (u) {
                     var btn = el('button', 'apya-console-menu-item js-kb-assign');
                     btn.type = 'button';
                     btn.setAttribute('data-user-id', u.id);
                     btn.textContent = u.userName || u.name || '';
                     menu.appendChild(btn);
                 });
-            }).catch(function () { assignMenuFilled = false; });
+            });
         }
 
         // Taşı menüsü panodaki kolonlardan doldurulur: sistem kolonu durum,
@@ -621,6 +908,364 @@
                 btn.textContent = name ? name.textContent.trim() : '';
                 menu.appendChild(btn);
             });
+        }
+
+        // ── Kart ⋯ menüsü (v2) ──────────────────────────────────────────────
+        // Düzenle/Sil düğmeleri karttan kalktı; taşı/ata/ertele/öncelik dâhil
+        // tüm kart eylemleri buradan. Menü BODY'ye basılır: kolonlar
+        // overflow-y:auto — kart içinde açılsa kolonun kenarında kırpılırdı
+        // (3b panelinin gerekçesiyle aynı). Yetki kapıları toplu işlem
+        // çubuğuyla AYNI kaynaktan okunur: çubukta olmayan eylem menüde de yok.
+        var cardMenu = null;
+
+        function cardMenuCaps() {
+            var bar = bulkBar();
+            return {
+                move: !!(bar && bar.querySelector('.js-kb-move-menu')),
+                assign: !!(bar && bar.querySelector('.js-kb-assign-menu')),
+                defer: !!(bar && bar.querySelector('.js-kb-defer')),
+                priority: !!(bar && bar.querySelector('.js-kb-priority'))
+            };
+        }
+
+        function closeCardMenu() {
+            if (!cardMenu) { return; }
+            cardMenu.remove();
+            cardMenu = null;
+            document.removeEventListener('click', onCardMenuDoc, true);
+            document.removeEventListener('keydown', onCardMenuKey, true);
+            window.removeEventListener('scroll', closeCardMenu, true);
+            window.removeEventListener('resize', closeCardMenu);
+        }
+        function onCardMenuDoc(e) {
+            if (cardMenu && !cardMenu.contains(e.target)) { closeCardMenu(); }
+        }
+        function onCardMenuKey(e) {
+            if (e.key === 'Escape') { closeCardMenu(); }
+        }
+
+        // Tek kart eylemi: bildir + panoyu tazele (toplu akıştaki finishBulk'ın
+        // tekil karşılığı; geri alma yok — tek kartta maliyeti düşük).
+        function runCardAction(promise, okMsg) {
+            closeCardMenu();
+            Promise.resolve(promise).then(function () {
+                abp.notify.success(okMsg);
+                load();
+                onChanged();
+            }).catch(function () {
+                abp.notify.error('İşlem tamamlanamadı.');
+                load();
+            });
+        }
+
+        // Görev silme onayı — karttaki eski Sil düğmesinin akışı, artık ⋯
+        // menüsünden çağrılıyor (yazılı "SİL" onayı korunur).
+        function confirmDeleteTask(id) {
+            Swal.fire({
+                title: 'Görev Silinecek!',
+                text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
+                icon: 'warning', input: 'text', inputPlaceholder: 'SİL',
+                showCancelButton: true, confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
+                cancelButtonText: 'İptal', confirmButtonColor: '#dc3545',
+                preConfirm: function (v) { if (v !== 'SİL') { Swal.showValidationMessage('Onaylamak için tam olarak "SİL" yazın.'); } return v; }
+            }).then(function (r) {
+                if (r.isConfirmed) {
+                    taskSvc.delete(id).then(function () { abp.notify.info('Başarıyla silindi.'); load(); onChanged(); });
+                }
+            });
+        }
+
+        function toggleCardMenu(btn, task) {
+            if (cardMenu && cardMenu.getAttribute('data-task-id') === String(task.id)) {
+                closeCardMenu();
+                return;
+            }
+            closeCardMenu();
+            openCardMenu(btn, task);
+        }
+
+        function menuRow(label, extraCls) {
+            var b = el('button', 'kanban-popmenu-item' + (extraCls ? ' ' + extraCls : ''));
+            b.type = 'button';
+            b.textContent = label;
+            return b;
+        }
+
+        function openCardMenu(btn, task) {
+            var caps = cardMenuCaps();
+            var menu = el('div', 'kanban-card-popmenu');
+            menu.setAttribute('data-task-id', task.id);
+            menu.setAttribute('role', 'menu');
+
+            var head = el('div', 'kanban-popmenu-head');
+            head.textContent = task.code || ('#' + ('' + task.id).substring(0, 4));
+            menu.appendChild(head);
+
+            // Taşı ▸ — hedefler panodaki kolonlardan (toplu menüyle aynı kaynak);
+            // alt liste akordeon açılır: dokunmatikte uçan menü tutturulamıyor.
+            if (caps.move) {
+                var moveBtn = menuRow('Taşı', 'has-sub');
+                var moveSub = el('div', 'kanban-popmenu-sub d-none');
+                document.querySelectorAll(boardSel + ' .kanban-column:not(.js-add-col):not(.kanban-note-col):not(.kanban-cancel-col)').forEach(function (col) {
+                    var name = col.querySelector('.js-col-name');
+                    var t = el('button', 'kanban-popmenu-subitem');
+                    t.type = 'button';
+                    t.textContent = name ? name.textContent.trim() : '';
+                    var colId = col.getAttribute('data-column-id');
+                    var statusId = col.getAttribute('data-status-id');
+                    t.addEventListener('click', function () {
+                        runCardAction(
+                            colId ? colSvc.moveTaskToColumn(task.id, colId)
+                                  : taskSvc.updateStatus(task.id, parseInt(statusId, 10)),
+                            '"' + t.textContent + '" kolonuna taşındı.');
+                    });
+                    moveSub.appendChild(t);
+                });
+                moveBtn.addEventListener('click', function () { moveSub.classList.toggle('d-none'); });
+                menu.appendChild(moveBtn);
+                menu.appendChild(moveSub);
+            }
+
+            // Ata ▸ — kullanıcılar ortak önbellekten; ilk açılışta yüklenir.
+            if (caps.assign) {
+                var assignBtn = menuRow('Ata', 'has-sub');
+                var assignSub = el('div', 'kanban-popmenu-sub d-none');
+                var assignFilled = false;
+                assignBtn.addEventListener('click', function () {
+                    assignSub.classList.toggle('d-none');
+                    if (assignFilled) { return; }
+                    assignFilled = true;
+                    getUsers().then(function (items) {
+                        var none = el('button', 'kanban-popmenu-subitem');
+                        none.type = 'button';
+                        none.textContent = 'Atamayı kaldır';
+                        none.addEventListener('click', function () {
+                            runCardAction(taskSvc.setAssignee(task.id, null), 'Atama kaldırıldı.');
+                        });
+                        assignSub.appendChild(none);
+                        items.forEach(function (u) {
+                            var ub = el('button', 'kanban-popmenu-subitem');
+                            ub.type = 'button';
+                            ub.textContent = u.userName || u.name || '';
+                            ub.addEventListener('click', function () {
+                                runCardAction(taskSvc.setAssignee(task.id, u.id),
+                                    '"' + ub.textContent + '" kişisine atandı.');
+                            });
+                            assignSub.appendChild(ub);
+                        });
+                    });
+                });
+                menu.appendChild(assignBtn);
+                menu.appendChild(assignSub);
+            }
+
+            // Ertele — 1g / 7g mono hapları (toplu çubuktaki iki hazır adım).
+            if (caps.defer) {
+                var deferRow = el('div', 'kanban-popmenu-row');
+                deferRow.appendChild(document.createTextNode('Ertele'));
+                var deferWrap = el('span', 'kanban-popmenu-tail');
+                [1, 7].forEach(function (days) {
+                    var d = el('button', 'kanban-popmenu-pill');
+                    d.type = 'button';
+                    d.textContent = days + 'g';
+                    d.addEventListener('click', function () {
+                        runCardAction(taskSvc.defer(task.id, days), days + ' gün ertelendi.');
+                    });
+                    deferWrap.appendChild(d);
+                });
+                deferRow.appendChild(deferWrap);
+                menu.appendChild(deferRow);
+            }
+
+            // Öncelik — 4 renkli nokta (Düşük → Kritik).
+            if (caps.priority) {
+                var priRow = el('div', 'kanban-popmenu-row');
+                priRow.appendChild(document.createTextNode('Öncelik'));
+                var priWrap = el('span', 'kanban-popmenu-tail');
+                var PRI_NAMES = { 1: 'Düşük', 2: 'Orta', 3: 'Yüksek', 4: 'Kritik' };
+                [1, 2, 3, 4].forEach(function (p) {
+                    var d = el('button', 'kanban-popmenu-dot');
+                    d.type = 'button';
+                    d.setAttribute('data-priority', p);
+                    d.title = PRI_NAMES[p];
+                    d.setAttribute('aria-label', 'Öncelik: ' + PRI_NAMES[p]);
+                    d.addEventListener('click', function () {
+                        runCardAction(taskSvc.setPriority(task.id, p), 'Öncelik "' + PRI_NAMES[p] + '" yapıldı.');
+                    });
+                    priWrap.appendChild(d);
+                });
+                priRow.appendChild(priWrap);
+                menu.appendChild(priRow);
+            }
+
+            var needsDivider = menu.childNodes.length > 1;
+            var tail = [];
+            if (task.status === 0) {
+                var restore = menuRow('İptali geri al');
+                restore.addEventListener('click', function () {
+                    runCardAction(taskSvc.restoreFromCancel(task.id), 'İptal geri alındı.');
+                });
+                tail.push(restore);
+            }
+            if (editModal && canEdit(task)) {
+                var edit = menuRow('Düzenle');
+                edit.addEventListener('click', function () {
+                    closeCardMenu();
+                    editModal.open({ id: task.id });
+                });
+                tail.push(edit);
+            }
+            if (canDelete(task)) {
+                var del = menuRow('Sil', 'is-danger');
+                del.addEventListener('click', function () {
+                    closeCardMenu();
+                    confirmDeleteTask(task.id);
+                });
+                tail.push(del);
+            }
+            if (tail.length) {
+                if (needsDivider) { menu.appendChild(el('div', 'kanban-popmenu-divider')); }
+                tail.forEach(function (t) { menu.appendChild(t); });
+            }
+            if (menu.childNodes.length <= 1) { return; }  // yalnız başlık — menü boş
+
+            // BODY'ye bas, düğmenin altına sabitle; alta sığmıyorsa üstüne aç.
+            document.body.appendChild(menu);
+            var rect = btn.getBoundingClientRect();
+            var mw = menu.offsetWidth || 190;
+            var mh = menu.offsetHeight;
+            var left = Math.max(8, Math.min(rect.right - mw, window.innerWidth - mw - 8));
+            var top = rect.bottom + 4;
+            if (top + mh > window.innerHeight - 8) { top = Math.max(8, rect.top - mh - 4); }
+            menu.style.left = left + 'px';
+            menu.style.top = top + 'px';
+
+            cardMenu = menu;
+            document.addEventListener('click', onCardMenuDoc, true);
+            document.addEventListener('keydown', onCardMenuKey, true);
+            window.addEventListener('scroll', closeCardMenu, true);
+            window.addEventListener('resize', closeCardMenu);
+        }
+
+        // ── Görünüm popover'ı (yoğunluk · kartta göster · anahtarlar) ───────
+        // Tetikleyici araç çubuğundaki "Görünüm" düğmesi (_KanbanColumnTools).
+        // Popover BODY'ye basılır (kart menüsüyle aynı gerekçe).
+        var viewPop = null;
+
+        function syncViewButton() {
+            var btn = nearBoard('.js-kanban-view');
+            if (!btn) { return; }
+            var label = btn.querySelector('.js-kanban-view-density');
+            if (label) { label.textContent = DENSITY_LABELS[view.density]; }
+            btn.classList.toggle('is-active', !!viewPop);
+            btn.setAttribute('aria-expanded', String(!!viewPop));
+        }
+
+        function closeViewPop() {
+            if (!viewPop) { return; }
+            viewPop.remove();
+            viewPop = null;
+            document.removeEventListener('click', onViewPopDoc, true);
+            document.removeEventListener('keydown', onViewPopKey, true);
+            window.removeEventListener('resize', closeViewPop);
+            syncViewButton();
+        }
+        function onViewPopDoc(e) {
+            if (viewPop && !viewPop.contains(e.target) && !e.target.closest('.js-kanban-view')) { closeViewPop(); }
+        }
+        function onViewPopKey(e) {
+            if (e.key === 'Escape') { closeViewPop(); }
+        }
+
+        // Değişikliği anında uygula + sunucuya yaz + popover durumunu tazele.
+        function changeView(mutate) {
+            mutate();
+            applyViewPrefs();
+            persistViewPrefs();
+            syncViewPop();
+        }
+
+        function syncViewPop() {
+            if (!viewPop) { return; }
+            viewPop.querySelectorAll('[data-kb-density]').forEach(function (b) {
+                b.classList.toggle('is-active', b.getAttribute('data-kb-density') === view.density);
+            });
+            viewPop.querySelectorAll('[data-kb-field]').forEach(function (b) {
+                var on = fieldOn(b.getAttribute('data-kb-field'));
+                b.classList.toggle('is-on', on);
+                b.setAttribute('aria-pressed', String(on));
+            });
+            viewPop.querySelectorAll('[data-kb-switch]').forEach(function (b) {
+                var key = b.getAttribute('data-kb-switch');
+                var on = key === 'collapseEmpty' ? view.collapseEmpty : view.hideDone;
+                b.classList.toggle('is-on', on);
+                b.setAttribute('aria-pressed', String(on));
+            });
+        }
+
+        function openViewPop(btn) {
+            closeViewPop();
+            var pop = el('div', 'kanban-view-pop');
+            pop.setAttribute('role', 'dialog');
+            pop.setAttribute('aria-label', 'Pano görünümü');
+
+            var html = '<div class="kanban-pop-head">Yoğunluk</div>' +
+                '<div class="kanban-pop-density">' +
+                DENSITIES.map(function (d) {
+                    return '<button type="button" data-kb-density="' + d + '">' + DENSITY_LABELS[d] + '</button>';
+                }).join('') +
+                '</div>' +
+                '<div class="kanban-pop-head">Kartta göster</div>' +
+                '<div class="kanban-pop-fields">' +
+                FIELD_DEFS.filter(function (f) {
+                    // Proje ve alt görev alanları yalnız genel panoda seçilebilir;
+                    // proje panosunda kartta proje adı zaten yok.
+                    return showProject || (f[0] !== 'project' && f[0] !== 'subtasks');
+                }).map(function (f) {
+                    return '<button type="button" data-kb-field="' + f[0] + '">' + f[1] + '</button>';
+                }).join('') +
+                '</div>' +
+                '<div class="kanban-pop-switches">' +
+                    '<button type="button" class="kanban-pop-switchrow" data-kb-switch="collapseEmpty">' +
+                        'Boş kolonları daralt<span class="kanban-switch" aria-hidden="true"><span class="kanban-switch-knob"></span></span></button>' +
+                    '<button type="button" class="kanban-pop-switchrow" data-kb-switch="hideDone">' +
+                        'Tamamlananları gizle<span class="kanban-switch" aria-hidden="true"><span class="kanban-switch-knob"></span></span></button>' +
+                '</div>' +
+                '<div class="kanban-pop-note">Tercih hesabına kaydedilir · tüm panolarda ortak</div>';
+            pop.innerHTML = html;
+
+            pop.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var t = e.target.closest('button');
+                if (!t) { return; }
+                if (t.hasAttribute('data-kb-density')) {
+                    changeView(function () { view.density = t.getAttribute('data-kb-density'); });
+                } else if (t.hasAttribute('data-kb-field')) {
+                    changeView(function () {
+                        var key = t.getAttribute('data-kb-field');
+                        view.fields[key] = !fieldOn(key);
+                    });
+                } else if (t.hasAttribute('data-kb-switch')) {
+                    changeView(function () {
+                        if (t.getAttribute('data-kb-switch') === 'collapseEmpty') { view.collapseEmpty = !view.collapseEmpty; }
+                        else { view.hideDone = !view.hideDone; }
+                    });
+                }
+            });
+
+            document.body.appendChild(pop);
+            var rect = btn.getBoundingClientRect();
+            var pw = pop.offsetWidth || 300;
+            var left = Math.max(8, Math.min(rect.right - pw, window.innerWidth - pw - 8));
+            pop.style.left = left + 'px';
+            pop.style.top = (rect.bottom + 10) + 'px';
+
+            viewPop = pop;
+            syncViewPop();
+            syncViewButton();
+            document.addEventListener('click', onViewPopDoc, true);
+            document.addEventListener('keydown', onViewPopKey, true);
+            window.addEventListener('resize', closeViewPop);
         }
 
         // ── Kulvarlar (kolon içi gruplama) ──────────────────────────────────
@@ -672,33 +1317,23 @@
             if (group) { group.classList.toggle('d-none', !enableLanes); }
             var sel = bar.querySelector('.js-group-select');
             if (sel && sel.value !== grouping) { sel.value = grouping; }
-            bar.classList.toggle('d-none', !(showCols || enableLanes));
+            // "Görünüm" her panoda var — çubuk artık düğme çizildiyse hep görünür.
+            // Düğme DOĞRUDAN bağlanır (bindCollapse gerekçesi: davranış test
+            // edilebilir kalsın); partial tek kez basıldığı için sızıntı yok.
+            var viewBtn = bar.querySelector('.js-kanban-view');
+            if (viewBtn && !viewBtn.hasAttribute('data-kb-bound')) {
+                viewBtn.setAttribute('data-kb-bound', 'true');
+                viewBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    if (viewPop) { closeViewPop(); } else { openViewPop(viewBtn); }
+                });
+            }
+            bar.classList.toggle('d-none', !(showCols || enableLanes || viewBtn));
         }
 
-        // Faz 7 — pano üstünde tek satır risk uyarısı. Sayılar kolon özetleriyle
-        // AYNI kaynaktan (kartların kendi rozetleri) gelir, ayrışamaz.
-        function syncRiskStrip() {
-            var board = document.querySelector(boardSel);
-            var wrap = board && board.closest ? board.closest('.kanban-wrap') : null;
-            if (!wrap) { return; }
-            var strip = wrap.querySelector('.js-kanban-risk');
-            var late = board.querySelectorAll('.kanban-chip-late').length;
-            var blocked = board.querySelectorAll('.kanban-chip-blocked').length;
-
-            if (!late && !blocked) {
-                if (strip) { strip.remove(); }
-                return;
-            }
-            if (!strip) {
-                strip = el('div', 'kanban-risk-strip js-kanban-risk');
-                board.parentNode.insertBefore(strip, board);
-            }
-            var parts = [];
-            if (late) { parts.push(late + ' görev gecikmiş'); }
-            if (blocked) { parts.push(blocked + ' görev engelli'); }
-            strip.innerHTML = '<i class="fa fa-triangle-exclamation me-2"></i>';
-            strip.appendChild(document.createTextNode(parts.join(', ') + '.'));
-        }
+        // (v2) Pano üstü kırmızı risk şeridi KALKTI: gecikme sinyali artık kolon
+        // başlığındaki "N geç" rozeti + karttaki gün sayısı; sayfa düzeyindeki
+        // toplam, filtre çubuğundaki "Gecikmiş" chip/barında yaşıyor.
 
         // Hedef durum kolonunun ADI board'dan okunur — JS'te ikinci bir durum
         // sözlüğü tutulmaz (adlandırma tek kaynaktan gelsin).
@@ -716,8 +1351,8 @@
             }
             var shown = Array.prototype.slice.call(cards, 0, 8);
             var rows = shown.map(function (card) {
-                var codeEl = card.querySelector('small');
-                var titleEl = card.querySelector('.fw-bold');
+                var codeEl = card.querySelector('.kanban-card-code');
+                var titleEl = card.querySelector('.kanban-card-title');
                 return '<li>' +
                     '<span class="kanban-del-code">' + esc(codeEl ? codeEl.textContent.trim() : '') + '</span>' +
                     '<span class="kanban-del-title">' + esc(titleEl ? titleEl.textContent : '') + '</span>' +
@@ -1079,6 +1714,9 @@
             if (!board) { return; }
             board.innerHTML = '';
             customIds = {};
+            // Yoğunluk board attribute'unda taşınır — kolon genişliği ve kart
+            // aralığı CSS'te buradan okunur (kanban.css [data-kb-density]).
+            board.setAttribute('data-kb-density', view.density);
 
             cols.slice().sort(function (a, b) { return a.order - b.order; }).forEach(function (c) {
                 if (!c.isSystem) { customIds[c.id] = true; }
@@ -1096,8 +1734,8 @@
             cancelCol.innerHTML =
                 '<div class="kanban-header">' +
                     '<span class="kanban-title js-col-name"><i class="fa fa-ban me-2"></i>İptal edildi</span>' +
-                    '<span class="d-flex align-items-center gap-2">' +
-                        '<span class="apya-chip apya-chip-negative kanban-count">0</span>' +
+                    '<span class="kanban-count">0</span>' +
+                    '<span class="kanban-col-actions apya-touch-actions">' +
                         '<button type="button" class="kanban-col-collapse js-col-collapse" ' +
                             'title="' + (cancelShut ? 'Genişlet' : 'Daralt') + '" aria-expanded="' + (!cancelShut) + '" ' +
                             'aria-label="İptal kolonunu aç/kapat"><i class="fa fa-angle-' + (cancelShut ? 'right' : 'left') + '"></i></button>' +
@@ -1160,6 +1798,9 @@
         }
 
         function render(tasks, activeLog) {
+            lastTasks = tasks;
+            lastActiveLog = activeLog;
+            closeCardMenu();   // çapa kart birazdan yok olacak
             document.querySelectorAll(boardSel + ' .kanban-cards').forEach(function (n) { n.innerHTML = ''; });
             // Kartlar önce kabına göre toplanır: kulvar kipinde her kabın içi
             // gruplanarak basılacak, kapların kendisi değişmiyor.
@@ -1189,10 +1830,10 @@
             fillAssignMenu();   // kullanıcı listesi bir kez
             syncSelection();    // yeniden çizimde seçim vurgusu korunur
             updateCounts();
-            syncRiskStrip();
             initSortable();
             ensureColumnConfig();
             applyLayout();
+            syncViewButton();   // "Görünüm: Kompakt" etiketi güncel kalsın
         }
 
         // Sayaç + WIP + boş metin: kolon başlığının kartlarla senkronu TEK yerde.
@@ -1200,38 +1841,57 @@
         // son kart çıkınca geri gelir (yeniden yükleme beklemeden).
         function updateCounts() {
             document.querySelectorAll(boardSel + ' .kanban-column').forEach(function (col) {
+                if (col.classList.contains('js-add-col') || col.classList.contains('kanban-note-col')) { return; }
                 var n = col.querySelectorAll('.kanban-cards .kanban-card').length;
                 var b = col.querySelector('.kanban-count');
                 if (b) { b.textContent = n; }
 
-                // Faz 7 — kolon başlığı özeti: kaç kart gecikmiş / engelli.
-                // Kartların KENDİ sınıflarından sayılır, ikinci bir veri yolu yok.
-                var head = col.querySelector('.kanban-header');
-                if (head && !col.classList.contains('js-add-col')) {
-                    var old = head.querySelector('.kanban-col-summary');
-                    if (old) { old.remove(); }
-                    var late = col.querySelectorAll('.kanban-cards .kanban-chip-late').length;
-                    var blocked = col.querySelectorAll('.kanban-cards .kanban-chip-blocked').length;
-                    if (late || blocked) {
-                        var sum = el('div', 'kanban-col-summary');
-                        if (late) { sum.innerHTML += '<span class="is-late">' + late + ' gecikmiş</span>'; }
-                        if (blocked) { sum.innerHTML += '<span class="is-blocked">' + blocked + ' engelli</span>'; }
-                        head.insertAdjacentElement('afterend', sum);
+                // "N geç" rozeti — kartların data-late ATTRIBUTE'undan sayılır:
+                // görsel dil yoğunlukla değişse de sayım kaynağı sabit kalır
+                // (gizli rozet sayma tuzağına düşülmez). Faz 7'nin gün-sayısı
+                // dili kartta sürüyor; kolon özeti tek rozete indi.
+                var late = col.querySelectorAll('.kanban-cards .kanban-card[data-late]').length;
+                var lateEl = col.querySelector('.js-col-late');
+                if (lateEl) {
+                    lateEl.textContent = late ? (late + ' geç') : '';
+                    lateEl.classList.toggle('d-none', !late);
+                }
+
+                // "Tamamlananları gizle": Tamamlandı sistem kolonu tamamen
+                // gizlenir (ray bile değil). Özel kolonlar durumdan bağımsız kalır.
+                if (col.getAttribute('data-status-id') === '4' && !col.hasAttribute('data-column-id-custom')) {
+                    col.classList.toggle('d-none', view.hideDone);
+                }
+
+                // Boş kolon: "Boş kolonları daralt" AÇIK ve kullanıcının kendi
+                // tercihi YOKSA raya iner; kart gelince kendiliğinden açılır.
+                // İptal kolonu kendi varsayılanıyla yönetilir, otomatiğe girmez.
+                var token = colToken(col);
+                var hasPref = Object.prototype.hasOwnProperty.call(collapsed, token);
+                var isCancel = col.classList.contains('kanban-cancel-col');
+                if (!hasPref && !isCancel) {
+                    var auto = n === 0 && view.collapseEmpty;
+                    if (auto && !col.classList.contains('is-collapsed')) {
+                        col.classList.add('is-collapsed', 'is-auto-collapsed');
+                        applyColumnWidth(col, token);
+                        syncCollapseBtn(col, true);
+                    } else if (!auto && col.classList.contains('is-auto-collapsed')) {
+                        col.classList.remove('is-collapsed', 'is-auto-collapsed');
+                        applyColumnWidth(col, token);
+                        syncCollapseBtn(col, false);
                     }
                 }
 
                 var cards = col.querySelector('.kanban-cards');
-                if (cards && !col.classList.contains('js-add-col')) {
+                if (cards) {
                     var empty = cards.querySelector('.kanban-empty');
-                    if (n === 0 && !empty) {
-                        cards.appendChild(buildEmptyState(col.getAttribute('data-status-id')));
-                    } else if (n > 0 && empty) {
-                        empty.remove();
-                    }
+                    var needBox = n === 0 && !col.classList.contains('is-collapsed');
+                    if (needBox && !empty) { cards.appendChild(buildEmptyState()); }
+                    else if (!needBox && empty) { empty.remove(); }
                 }
 
-                // WIP rozeti: "n / limit". Aşımda negatif tona geçer — limit sert
-                // kısıt değil, uyarı sinyalidir (bkz. BoardColumn.WipLimit).
+                // WIP: ince çizgi + "n / limit" etiketi. Aşımda negatif tona geçer —
+                // limit sert kısıt değil, uyarı sinyalidir (bkz. BoardColumn.WipLimit).
                 var wipEl = col.querySelector('.kanban-wip');
                 if (!wipEl) { return; }
                 var limit = parseInt(col.getAttribute('data-wip-limit'), 10);
@@ -1240,8 +1900,11 @@
                     return;
                 }
                 wipEl.classList.remove('d-none');
-                wipEl.textContent = n + ' / ' + limit;
                 wipEl.classList.toggle('is-over', n > limit);
+                var label = wipEl.querySelector('.kanban-wip-label');
+                if (label) { label.textContent = n + ' / ' + limit; }
+                var fill = wipEl.querySelector('.kanban-wip-fill');
+                if (fill) { fill.style.width = Math.min(100, (n / limit) * 100) + '%'; }
             });
         }
 
@@ -1263,7 +1926,26 @@
                     delay: 150,
                     delayOnTouchOnly: true,
                     touchStartThreshold: 5,
+                    // Sürükleme başlarken OTOMATİK daraltılmış (boş) kolonlar
+                    // açılır ki bırakma hedefi görünür olsun; bırakınca boş
+                    // kalanlar raya geri iner (updateCounts değil burada:
+                    // kart başka panoya taşınmadıysa sunucu yolu zaten
+                    // updateCounts/load çağırıyor, erken kapatma titretir).
+                    onStart: function () {
+                        document.querySelectorAll(boardSel + ' .kanban-column.is-auto-collapsed').forEach(function (c) {
+                            c.classList.remove('is-collapsed');
+                            applyColumnWidth(c, colToken(c));
+                        });
+                    },
                     onEnd: function (evt) {
+                        document.querySelectorAll(boardSel + ' .kanban-column.is-auto-collapsed').forEach(function (c) {
+                            if (!c.querySelector('.kanban-cards .kanban-card')) {
+                                c.classList.add('is-collapsed');
+                                applyColumnWidth(c, colToken(c));
+                            } else {
+                                c.classList.remove('is-auto-collapsed');
+                            }
+                        });
                         if (evt.from === evt.to) { return; }
                         var taskId = $(evt.item).data('id');
                         var col = $(evt.to).closest('.kanban-column');
@@ -1399,9 +2081,6 @@
         // ── Olay bağlamaları (delege; board kapsamında) ──
         var $doc = $(document);
 
-        $doc.on('click', boardSel + ' .js-edit-task', function () {
-            if (editModal) { editModal.open({ id: $(this).data('id') }); }
-        });
         // Karta tıklama: sade tık detay açar, Ctrl/⌘ tek tek seçer, Shift aralık
         // seçer. Seçim varken sade tık da seçime katılır — kullanıcı "seçim kipi"
         // içindeyken kart açmak istemiyor.
@@ -1540,23 +2219,6 @@
             var custom = $col.attr('data-column-id-custom');
             var statusOrColumn = custom ? ('c:' + custom) : ('s:' + $col.attr('data-status-id'));
             createModal.open({ projectId: projectId, statusOrColumn: statusOrColumn });
-        });
-
-        $doc.on('click', boardSel + ' .js-delete-task', function (e) {
-            e.stopPropagation();
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Görev Silinecek!',
-                text: 'Görevi kalıcı olarak silmek üzeresiniz. Onaylamak için aşağıdaki alana "SİL" yazmalısınız.',
-                icon: 'warning', input: 'text', inputPlaceholder: 'SİL',
-                showCancelButton: true, confirmButtonText: '<i class="fa fa-trash"></i> Evet, Sil!',
-                cancelButtonText: 'İptal', confirmButtonColor: '#dc3545',
-                preConfirm: function (v) { if (v !== 'SİL') { Swal.showValidationMessage('Onaylamak için tam olarak "SİL" yazın.'); } return v; }
-            }).then(function (r) {
-                if (r.isConfirmed) {
-                    taskSvc.delete(id).then(function () { abp.notify.info('Başarıyla silindi.'); load(); onChanged(); });
-                }
-            });
         });
 
         // Timer
