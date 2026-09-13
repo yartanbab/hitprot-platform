@@ -733,6 +733,18 @@
     color: var(--apya-accent-600, #4338CA);
 }
 
+.apya-wiz__plan-price {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--apya-text-primary, #374151);
+}
+
+/* Bedel tanımlı değil: rakam gibi vurgulanmaz. */
+.apya-wiz__plan-price--none {
+    font-weight: 500;
+    color: var(--apya-text-secondary, #6B7280);
+}
+
 .apya-wiz__plan-desc {
     font-size: 12px;
     line-height: 1.45;
