@@ -23,6 +23,7 @@ $(function () {
             : l('Grants:RuleMissing', l('Grants:Rule:' + key));
     }
 
+    // Sütun başlıkları mobilde gizleniyor; değer hücreleri etiketlerini data-label ile taşır.
     function row(r) {
         var chips = '';
         if (r.isHostRecommended) {
@@ -47,13 +48,16 @@ $(function () {
             '<span class="apya-cat-sub">' + esc(r.issuer) + ' · ' + esc(r.period) + '</span>' +
             (reason ? '<span class="apya-cat-reason">' + esc(reason) + '</span>' : '') +
             '</span>' +
-            '<span><span class="apya-chip apya-chip-' + bucketTone[r.bucket] + '">' +
+            '<span class="apya-cat-bucket"><span class="apya-chip apya-chip-' + bucketTone[r.bucket] + '">' +
                 esc(l('Grants:Bucket:' + bucketKeys[r.bucket])) + '</span></span>' +
-            '<span class="apya-cat-num">%' + r.score + '</span>' +
+            '<span class="apya-cat-num" data-label="' + esc(l('Grants:Catalog:Col:Score')) + '">%' +
+                r.score + '</span>' +
             '<span class="apya-mini-bar"><span style="width:' + r.score + '%"></span></span>' +
-            '<span class="apya-cat-num text-end">' + esc(money(r.maxAmount)) + '</span>' +
-            '<span class="apya-cat-num">' + days + '</span>' +
-            '<span class="d-flex align-items-center gap-1">' +
+            '<span class="apya-cat-num text-end" data-label="' + esc(l('Grants:Catalog:Col:Amount')) +
+                '">' + esc(money(r.maxAmount)) + '</span>' +
+            '<span class="apya-cat-num" data-label="' + esc(l('Grants:Catalog:Col:Days')) + '">' +
+                days + '</span>' +
+            '<span class="apya-cat-actions d-flex align-items-center gap-1">' +
             '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Detail?id=' + r.grantCallId + '">' +
                 esc(l('Grants:Feed:Card:Detail')) + '</a>' +
             '<button type="button" class="apya-cat-bookmark' + (r.isBookmarked ? ' is-on' : '') +
