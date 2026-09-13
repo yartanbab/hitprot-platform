@@ -145,3 +145,20 @@
     --apya-skel-row: 64px;
     --apya-skel-count: 4;
 }
+
+/* Dar ekran: 300px'lik kırılım sütunu ad sütununu eziyor; onay kutusu solda
+   kalır, kalan hücreler firmanın altına iner. */
+@media (max-width: 991.98px) {
+    .apya-cand-row {
+        grid-template-columns: 26px minmax(0, 1fr);
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    /* Başlık şeridi GİZLENMEZ: "tümünü seç" onay kutusu burada duruyor. Yalnız
+       dar ekranda karşılığı kalmayan sütun adları düşer. */
+    .apya-cand-row.apya-cat-head > :nth-child(n+3) { display: none; }
+
+    .apya-cand-row > * { grid-column: 2; }
+    .apya-cand-row > :first-child { grid-column: 1; grid-row: 1; }
+}

@@ -38,13 +38,16 @@ $(function () {
             '<span>' + esc(r.contactName) + ' · ' + esc(r.grantName) + ' · ' + esc(date(r.creationTime)) +
             '</span></span>' +
 
-            '<span class="apya-lead-heat">' +
+            '<span class="apya-lead-heat" data-label="' + esc(l('Grants:Leads:Col:Heat')) + '">' +
             '<span>' + r.heatScore + '</span>' +
             '<span class="apya-mini-bar"><span style="width:' + r.heatScore + '%"></span></span></span>' +
 
-            '<span class="apya-lead-num">' + r.passedRuleCount + '/' + r.totalRuleCount + '</span>' +
-            '<span class="apya-lead-num">' + esc(shortMoney(r.estimatedSupport)) + '</span>' +
-            '<span class="apya-lead-num">' + esc(l('Grants:Difficulty:' + r.difficulty)) + '</span>' +
+            '<span class="apya-lead-num" data-label="' + esc(l('Grants:Leads:Col:Test')) + '">' +
+            r.passedRuleCount + '/' + r.totalRuleCount + '</span>' +
+            '<span class="apya-lead-num" data-label="' + esc(l('Grants:Leads:Col:Potential')) + '">' +
+            esc(shortMoney(r.estimatedSupport)) + '</span>' +
+            '<span class="apya-lead-num" data-label="' + esc(l('Grants:Leads:Col:Difficulty')) + '">' +
+            esc(l('Grants:Difficulty:' + r.difficulty)) + '</span>' +
             '<span><span class="apya-chip ' + heatTone(r.heatScore) + '">' +
             esc(l('Grants:Leads:Status:' + statusKeys[r.status])) + '</span></span></button>';
     }

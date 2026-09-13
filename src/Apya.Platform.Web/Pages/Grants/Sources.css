@@ -237,3 +237,22 @@
     font-size: var(--apya-text-xs);
     color: var(--apya-danger-700);
 }
+
+/* Dar ekran: 596px'lik sabit sütunlar sığmıyor. Çağrı ve düğme tam satır,
+   dönem/son tarih ve tutar/güven ikişerli. */
+@media (max-width: 991.98px) {
+    .apya-queue-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+        padding: var(--apya-space-3);
+    }
+
+    .apya-queue-head { display: none; }
+
+    .apya-queue-call,
+    .apya-queue-row > :last-child { grid-column: 1 / -1; }
+
+    .apya-queue-row > .text-end { text-align: start !important; }
+    .apya-queue-title { white-space: normal; overflow: visible; }
+}

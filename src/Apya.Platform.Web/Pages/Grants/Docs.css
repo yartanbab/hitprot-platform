@@ -149,3 +149,20 @@
     --apya-skel-row: 100px;
     --apya-skel-count: 3;
 }
+
+/* Dar ekran: durum + eylem sütunları ad sütununa yer bırakmıyor. Tür ikonu solda
+   kalır, kalan hücreler evrak adının altına iner. */
+@media (max-width: 991.98px) {
+    .apya-doc-row {
+        grid-template-columns: 20px minmax(0, 1fr);
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-doc-row.apya-cat-head { display: none; }
+    .apya-doc-row > * { grid-column: 2; }
+    .apya-doc-row > :first-child { grid-column: 1; grid-row: 1; }
+
+    .apya-doc-name-text,
+    .apya-doc-file { white-space: normal; overflow: visible; }
+}

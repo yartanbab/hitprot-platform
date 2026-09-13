@@ -153,8 +153,10 @@ $(function () {
                 $body.append(
                     '<div class="apya-campaign-row">' +
                     '<span>' + esc(l('Grants:DataField:' + key)) + '</span>' +
-                    '<span class="apya-campaign-count">' + r.firmCount + '</span>' +
-                    '<span class="apya-campaign-count">' + r.affectedCallCount + '</span>' +
+                    '<span class="apya-campaign-count" data-label="' + esc(l('Grants:Weights:Col:Firms')) + '">' +
+                    r.firmCount + '</span>' +
+                    '<span class="apya-campaign-count" data-label="' + esc(l('Grants:Weights:Col:Calls')) + '">' +
+                    r.affectedCallCount + '</span>' +
                     '<span class="apya-campaign-how">' + esc(l('Grants:DataFieldHow:' + key)) + '</span>' +
                     '</div>');
             });

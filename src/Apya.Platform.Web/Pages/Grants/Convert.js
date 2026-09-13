@@ -33,11 +33,14 @@ $(function () {
             '<span class="apya-cv-item-name">' + esc(l('Grants:CostItem:' + costKeys[m.kind])) +
             (m.isEligible ? '' : ' <span class="apya-chip apya-chip-neutral">' +
                 esc(l('Grants:Conversion:OutsideScope')) + '</span>') + '</span>' +
-            '<span class="apya-numeric">' + money(m.amount) + '</span>' +
+            '<span class="apya-numeric" data-label="' + esc(l('Grants:Conversion:Col:Amount')) + '">' +
+            money(m.amount) + '</span>' +
             '<span class="apya-cv-arrow"><i class="fa fa-arrow-right"></i></span>' +
-            '<span><input type="text" class="form-control form-control-sm apya-cv-name" maxlength="128" ' +
+            '<span data-label="' + esc(l('Grants:Conversion:Col:BudgetLine')) + '">' +
+            '<input type="text" class="form-control form-control-sm apya-cv-name" maxlength="128" ' +
             'value="' + esc(m.suggestedName) + '" /></span>' +
-            '<span><select class="form-select form-select-sm apya-cv-category">' +
+            '<span data-label="' + esc(l('Grants:Conversion:Col:Category')) + '">' +
+            '<select class="form-select form-select-sm apya-cv-category">' +
             (m.suggestedCategory == null
                 ? '<option value="" selected>' + esc(l('Grants:Conversion:PickCategory')) + '</option>'
                 : '') + options + '</select></span>' +

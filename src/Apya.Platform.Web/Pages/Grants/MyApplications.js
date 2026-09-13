@@ -58,10 +58,12 @@ $(function () {
             '<span class="apya-chip apya-chip-neutral">' + esc(stageName) + '</span>' +
             '<span class="apya-mini-bar"><span style="width:' + r.progressPercent + '%"></span></span></span>' +
 
-            '<span class="apya-numeric' + (r.isApprovedAmount ? ' fw-semibold' : '') + '">' +
+            '<span class="apya-numeric' + (r.isApprovedAmount ? ' fw-semibold' : '') +
+            '" data-label="' + esc(l('Grants:Mine:Col:Amount')) + '">' +
             (r.amount != null ? shortMoney(r.amount) + ' ₺' : '—') + '</span>' +
 
-            '<span class="apya-numeric apya-my-grant-meta">' +
+            '<span class="apya-numeric apya-my-grant-meta" data-label="' +
+            esc(l('Grants:Mine:Col:Deadline')) + '">' +
             (r.deadline
                 ? esc(date(r.deadline)) + (r.daysRemaining != null && r.daysRemaining >= 0
                     ? ' · ' + esc(l('Grants:Feed:Card:DaysLeft', r.daysRemaining)) : '')

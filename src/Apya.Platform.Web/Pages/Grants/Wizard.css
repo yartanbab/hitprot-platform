@@ -236,3 +236,15 @@
 [data-theme="dark"] .apya-wiz-lock {
     color: var(--apya-accent-300);
 }
+
+/* Dar ekran: kalem adı + gerekçe tam satır, tutar/limit/destek ikişerli. */
+@media (max-width: 991.98px) {
+    .apya-wiz-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-wiz-row.apya-cat-head { display: none; }
+    .apya-wiz-row > :first-child { grid-column: 1 / -1; }
+}

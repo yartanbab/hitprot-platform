@@ -324,6 +324,32 @@
 
 .apya-cat-bookmark.is-on { color: var(--apya-accent-500); }
 
+/* Dar ekran: sabit sütunlar (~780px) sığmadığı için ad sütunu sıfıra iner ve yazı
+   harf harf sarar. Satır burada karta dönüşür — başlık şeridi gizlenir, değerler
+   kendi etiketiyle üç sütuna yerleşir. */
+@media (max-width: 991.98px) {
+    .apya-cat-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+        padding: var(--apya-space-3);
+    }
+
+    .apya-cat-row.apya-cat-head { display: none; }
+
+    /* Kova ikonu kaldırılır: aynı bilgiyi altındaki kova chip'i metinle veriyor. */
+    .apya-cat-row > i { display: none; }
+
+    /* Yüzde değeri zaten yazılı; çubuk dar ekranda sütun yiyor. */
+    .apya-cat-row > .apya-mini-bar { display: none; }
+
+    .apya-cat-call,
+    .apya-cat-bucket,
+    .apya-cat-actions { grid-column: 1 / -1; }
+
+    .apya-cat-row > .text-end { text-align: start !important; }
+}
+
 /* --- Uygunluk tablosu (1e) --- */
 .apya-check-row {
     display: grid;
@@ -350,6 +376,21 @@
     text-align: right;
 }
 
+/* Dar ekran: 200px'lik not sütunu şartın adına yer bırakmıyor; not şartın
+   altına iner. */
+@media (max-width: 991.98px) {
+    .apya-check-row {
+        grid-template-columns: 20px minmax(0, 1fr);
+        align-items: start;
+        row-gap: 4px;
+    }
+
+    .apya-check-row.apya-cat-head { display: none; }
+    .apya-check-row > * { grid-column: 2; }
+    .apya-check-row > i { grid-column: 1; grid-row: 1; }
+    .apya-check-note { text-align: start; }
+}
+
 /* --- Bütçe hesaplayıcı (1e) --- */
 .apya-budget-row {
     display: grid;
@@ -369,6 +410,19 @@
     font-family: var(--apya-font-mono);
     font-size: var(--apya-fs-sm);
     text-align: right;
+}
+
+/* Dar ekran: kalem adı tam satır, tutar/oran/destek ikişerli. */
+@media (max-width: 991.98px) {
+    .apya-budget-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-budget-row.apya-cat-head { display: none; }
+    .apya-budget-row > :first-child { grid-column: 1 / -1; }
+    .apya-budget-row > .text-end { text-align: start !important; }
 }
 
 .apya-budget-summary {

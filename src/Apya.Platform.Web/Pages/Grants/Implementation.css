@@ -171,3 +171,15 @@
     --apya-skel-row: 88px;
     --apya-skel-count: 3;
 }
+
+/* Dar ekran: kalem adı tam satır, para sütunları ikişerli. */
+@media (max-width: 991.98px) {
+    .apya-im-budget-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-im-budget-row.apya-cat-head { display: none; }
+    .apya-im-budget-row > :first-child { grid-column: 1 / -1; }
+}

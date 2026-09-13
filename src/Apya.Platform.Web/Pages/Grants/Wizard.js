@@ -244,11 +244,14 @@ $(function () {
             'placeholder="' + esc(l('Grants:Wizard:JustificationPlaceholder')) + '" ' +
             'value="' + esc(line.justification || '') + '" maxlength="512" />' +
             '</span>' +
-            '<span><input type="number" min="0" step="1" class="form-control form-control-sm apya-numeric apya-wiz-amount" ' +
+            '<span data-label="' + esc(l('Grants:Wizard:Col:Amount')) + '">' +
+            '<input type="number" min="0" step="1" class="form-control form-control-sm apya-numeric apya-wiz-amount" ' +
             'value="' + (line.amount || 0) + '" /></span>' +
-            '<span class="apya-numeric">' + (line.limitPercent == null ? '—' : '%' + line.limitPercent) +
+            '<span class="apya-numeric" data-label="' + esc(l('Grants:Wizard:Col:Limit')) + '">' +
+            (line.limitPercent == null ? '—' : '%' + line.limitPercent) +
             (line.limitApplied ? ' <i class="fa fa-triangle-exclamation text-warning"></i>' : '') + '</span>' +
-            '<span class="apya-numeric fw-semibold">' + money(line.supportAmount) + '</span>' +
+            '<span class="apya-numeric fw-semibold" data-label="' + esc(l('Grants:Wizard:Col:Support')) + '">' +
+            money(line.supportAmount) + '</span>' +
             '</div>';
     }
 

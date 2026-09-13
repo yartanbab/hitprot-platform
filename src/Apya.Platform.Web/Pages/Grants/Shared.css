@@ -361,6 +361,23 @@
     vertical-align: -0.1em;
 }
 
+/* --- Dar ekran: satır tabloları --- */
+/* Sabit sütunlu satır tabloları 992px altında karta dönüşür ve başlık şeridi
+   gizlenir (ölçüler her ekranın kendi CSS'inde). Başlık gizlenince sayı/tarih
+   hücresi bağlamını kaybettiği için etiketini data-label ile taşır; metin
+   Localization'dan gelir, buraya gömülmez. */
+@media (max-width: 991.98px) {
+    .apya-page [data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: var(--apya-text-xs);
+        font-weight: var(--apya-weight-bold);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--apya-text-tertiary);
+    }
+}
+
 /* Hareketi kapatanlarda sabit blok kalır. tokens.css zaten süreyi 1ms'e
    çekiyor; bu kural yine de açık yazılıyor. */
 @media (prefers-reduced-motion: reduce) {

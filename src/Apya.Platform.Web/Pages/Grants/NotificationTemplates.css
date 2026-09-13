@@ -196,3 +196,15 @@
     --apya-skel-row: 62px;
     --apya-skel-count: 5;
 }
+
+/* Dar ekran: beş sütun 390px'de birer kelimeye iner; satır alt alta okunur. */
+@media (max-width: 991.98px) {
+    .apya-nt-head { display: none; }
+
+    .apya-nt-row {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+        row-gap: 4px;
+        text-align: start;
+    }
+}

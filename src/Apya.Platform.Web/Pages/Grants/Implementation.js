@@ -143,9 +143,12 @@ $(function () {
     function budgetRow(b) {
         return '<div class="apya-im-budget-row' + (b.isNearLimit ? ' is-near' : '') + '">' +
             '<span>' + esc(b.name) + '</span>' +
-            '<span class="apya-numeric">' + money(b.approvedAmount) + '</span>' +
-            '<span class="apya-numeric">' + money(b.spentAmount) + '</span>' +
-            '<span class="apya-numeric">' + money(b.remainingAmount) + '</span>' +
+            '<span class="apya-numeric" data-label="' + esc(l('Grants:Impl:Col:Approved')) + '">' +
+            money(b.approvedAmount) + '</span>' +
+            '<span class="apya-numeric" data-label="' + esc(l('Grants:Impl:Col:Spent')) + '">' +
+            money(b.spentAmount) + '</span>' +
+            '<span class="apya-numeric" data-label="' + esc(l('Grants:Impl:Col:Remaining')) + '">' +
+            money(b.remainingAmount) + '</span>' +
             '<span class="apya-im-usage">' +
             '<span class="apya-mini-bar' + (b.isNearLimit ? ' apya-im-usage-bar-over' : '') + '">' +
             '<span style="width:' + Math.min(100, b.usagePercent) + '%"></span></span>' +

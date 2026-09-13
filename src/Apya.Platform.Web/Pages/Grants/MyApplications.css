@@ -144,3 +144,25 @@
 
     .apya-my-interest-row.apya-cat-head { display: none; }
 }
+
+/* Dar ekran: 762px'lik sabit sütunlar sığmıyor, satır karta dönüşür. Hibe adı,
+   aşama ve sıradaki iş tam satır; tutar ile son tarih yan yana. */
+@media (max-width: 991.98px) {
+    .apya-my-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+        padding: var(--apya-space-3);
+    }
+
+    .apya-my-row.apya-cat-head { display: none; }
+
+    .apya-my-grant,
+    .apya-my-stage,
+    .apya-my-next,
+    .apya-my-row > :last-child { grid-column: 1 / -1; }
+
+    /* Tam genişlikte kırpmaya gerek yok; ad sarsın. */
+    .apya-my-grant-name,
+    .apya-my-grant-meta { white-space: normal; overflow: visible; }
+}
