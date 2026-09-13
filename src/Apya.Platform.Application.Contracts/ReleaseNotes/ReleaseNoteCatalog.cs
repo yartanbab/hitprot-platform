@@ -26,6 +26,24 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.11",
+            date: "11 Eylül 2026",
+            title: "Görevler ekranındaki panolar artık tüm projeleri kapsıyor",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Belge, form, kontrol listesi ve bağımlılık panoları Görevler ekranında da var",
+                "Proje detayından tanıdığınız Belgeler, Formlar, Kontrol Listesi ve Bağımlılıklar " +
+                "panelleri artık Görevler ekranının ＋ menüsünde de var. Buradaki fark kapsam: tek " +
+                "proje değil, bütün projeleriniz — kayıtlar proje proje, her projenin içinde görev " +
+                "görev gruplanmış gelir. Bir projeye bağlı olmayan görevlerin kayıtları da " +
+                "kaybolmaz, \"Projesiz görevler\" başlığı altında listelenir. Paneller yalnız " +
+                "okumak için değil: belgeyi burada açıp düzenleyebilir, kontrol listesi maddesini " +
+                "işaretleyebilir ya da yeni madde ekleyebilirsiniz — değişiklik doğrudan ilgili " +
+                "görevin kaydına işlenir. Bağımlılıklar panosunda ayrıca farklı projelere yayılan " +
+                "görev bağlantılarını yalnız bu ekranda görürsünüz; termini geçmiş bir öncül hangi " +
+                "görevi bekletiyorsa satırında ⚠ ile işaretlidir.")),
+
+        new ReleaseNote(
             version: "2026.09.10",
             date: "10 Eylül 2026",
             title: "Görevler, projeler ve finans tek sekme düzeninde buluştu",
