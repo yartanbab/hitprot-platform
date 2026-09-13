@@ -31,8 +31,28 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Talebi bırakan kullanıcı. Cevap bildirimi ona gider.</summary>
     public Guid? RequestedByUserId { get; private set; }
 
-    /// <summary>Firmanın kendi notu — host'un ön değerlendirmesi buradan başlar.</summary>
+    /// <summary>
+    /// Firmanın proje fikri — host'un ön değerlendirmesi buradan başlar. Kolon adı
+    /// tarihsel olarak "not"; ekranda "Proje fikrinizi birkaç cümleyle anlatın" diye sorulur.
+    /// </summary>
     public string? Note { get; private set; }
+
+    /// <summary>Firmanın öngördüğü toplam proje bütçesi (₺). Zorunlu değil.</summary>
+    public decimal? EstimatedBudget { get; private set; }
+
+    /// <summary>Hedeflenen başlangıç — çeyreğin ilk günü olarak saklanır. Null = belli değil.</summary>
+    public DateTime? TargetStartDate { get; private set; }
+
+    /// <summary>
+    /// Konsorsiyum ortağı durumu. Soru yalnız ortaklık şartı taşıyan çağrıda sorulur:
+    /// null = sorulmadı · true = ortak arıyor · false = ortağı belli (<see cref="PartnerName"/>).
+    /// </summary>
+    public bool? NeedsPartner { get; private set; }
+
+    public string? PartnerName { get; private set; }
+
+    /// <summary>Firmanın ilgisini geri çektiği an; yalnız <see cref="GrantInterestStatus.GeriCekildi"/> durumunda dolu.</summary>
+    public DateTime? WithdrawnAt { get; private set; }
 
     public GrantInterestStatus Status { get; private set; }
 
@@ -51,7 +71,16 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     protected GrantInterest() { }
 
-    public GrantInterest(Guid id, Guid? tenantId, Guid grantCallId, Guid? requestedByUserId, string? note)
+    public GrantInterest(
+        Guid id,
+        Guid? tenantId,
+        Guid grantCallId,
+        Guid? requestedByUserId,
+        string? note,
+        decimal? estimatedBudget = null,
+        DateTime? targetStartDate = null,
+        bool? needsPartner = null,
+        string? partnerName = null)
         : base(id)
     {
         TenantId = tenantId;
@@ -59,7 +88,37 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
         RequestedByUserId = requestedByUserId;
         var trimmedNote = note?.Trim();
         Note = Check.Length(string.IsNullOrEmpty(trimmedNote) ? null : trimmedNote, nameof(note), maxLength: 1000);
+
+        if (estimatedBudget < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(estimatedBudget), "Bütçe negatif olamaz.");
+        }
+        EstimatedBudget = estimatedBudget;
+        TargetStartDate = targetStartDate?.Date;
+
+        // Ortağı belli değilse ad tutulmaz: "ortak arıyor" diyen kayıtta eski bir ad kalmasın.
+        NeedsPartner = needsPartner;
+        var trimmedPartner = partnerName?.Trim();
+        PartnerName = needsPartner == false && !string.IsNullOrEmpty(trimmedPartner)
+            ? Check.Length(trimmedPartner, nameof(partnerName), maxLength: 200)
+            : null;
+
         Status = GrantInterestStatus.Yeni;
+    }
+
+    /// <summary>
+    /// Firma ilgisini geri çekti. Yalnız karara bağlanmamış talep çekilebilir —
+    /// başvuruya dönmüş ya da gerekçesiyle kapanmış kayıt tarihçedir, değiştirilmez.
+    /// </summary>
+    public void Withdraw(DateTime now)
+    {
+        if (!IsPending)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantInterestNotWithdrawable);
+        }
+
+        Status = GrantInterestStatus.GeriCekildi;
+        WithdrawnAt = now;
     }
 
     /// <summary>Danışman kaydı üstlendi; firmayla irtibat başladı.</summary>

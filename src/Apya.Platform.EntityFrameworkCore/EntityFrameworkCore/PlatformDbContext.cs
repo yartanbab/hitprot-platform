@@ -1030,6 +1030,8 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.Note).HasMaxLength(1000);
                 b.Property(x => x.HostFeedback).HasMaxLength(1000);
+                b.Property(x => x.EstimatedBudget).HasPrecision(18, 2);
+                b.Property(x => x.PartnerName).HasMaxLength(200);
                 // Çağrıya FK: emsali GrantApplication — ikisi de kiracıya ait ve çağrıya
                 // bağlı. Başvuruya FK KURULMADI: başvuru silinse bile talebin kendisi
                 // ve host'un kararı durmalı.

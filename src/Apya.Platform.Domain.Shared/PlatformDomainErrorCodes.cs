@@ -149,6 +149,8 @@ public static class PlatformDomainErrorCodes
     public const string GrantInterestNotFound = "Platform:Grant:InterestNotFound";
     public const string GrantInterestAlreadyAnswered = "Platform:Grant:InterestAlreadyAnswered";
     public const string GrantInterestReasonRequired = "Platform:Grant:InterestReasonRequired";
+    public const string GrantInterestNotWithdrawable = "Platform:Grant:InterestNotWithdrawable";
+    public const string GrantInterestPartnerAnswerRequired = "Platform:Grant:InterestPartnerAnswerRequired";
 
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";

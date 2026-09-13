@@ -2438,6 +2438,8 @@
     "Platform:Grant:InterestNotFound": "Interest request not found.",
     "Platform:Grant:InterestAlreadyAnswered": "This request has already been answered; it cannot be answered again.",
     "Platform:Grant:InterestReasonRequired": "A request cannot be closed without a reason; the text is sent to the firm as written.",
+    "Platform:Grant:InterestNotWithdrawable": "This request can no longer be withdrawn: it has been decided or was already withdrawn.",
+    "Platform:Grant:InterestPartnerAnswerRequired": "This call requires a consortium; please state whether you have a partner.",
     "Grants:Interest:Express": "I'm interested",
     "Grants:Interest:ExpressAgain": "Express interest again",
     "Grants:Interest:Modal:Title": "Interest request",

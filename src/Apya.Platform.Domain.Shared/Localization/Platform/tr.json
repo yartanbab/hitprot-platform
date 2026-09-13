@@ -2849,6 +2849,8 @@
         "Platform:Grant:InterestNotFound": "İlgi talebi bulunamadı.",
         "Platform:Grant:InterestAlreadyAnswered": "Bu talep karara bağlanmış; yeniden cevaplanamaz.",
         "Platform:Grant:InterestReasonRequired": "Gerekçe yazmadan talep kapatılamaz; metin firmaya aynen iletiliyor.",
+        "Platform:Grant:InterestNotWithdrawable": "Bu talep artık geri çekilemez: karara bağlandı ya da daha önce geri çekildi.",
+        "Platform:Grant:InterestPartnerAnswerRequired": "Bu çağrı konsorsiyum şartı taşıyor; ortağınız olup olmadığını belirtin.",
         "Grants:Interest:Express": "İlgileniyorum",
         "Grants:Interest:ExpressAgain": "Yeniden ilgi bildir",
         "Grants:Interest:Modal:Title": "İlgi talebi",
