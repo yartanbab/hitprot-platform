@@ -216,3 +216,17 @@
 [data-theme="dark"] .apya-weight-impact--new {
     color: var(--apya-accent-300);
 }
+
+/* Dar ekran: alan adı ve "nasıl toplanır" tam satır, sayımlar yan yana. */
+@media (max-width: 991.98px) {
+    .apya-campaign-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-campaign-head { display: none; }
+
+    .apya-campaign-row > :first-child,
+    .apya-campaign-how { grid-column: 1 / -1; }
+}

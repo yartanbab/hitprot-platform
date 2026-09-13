@@ -153,9 +153,12 @@ $(function () {
                 '<span class="apya-queue-call">' +
                 '<span class="apya-queue-title">' + esc(d.title) + '</span>' +
                 '<span class="apya-queue-issuer">' + esc(d.issuer) + '</span></span>' +
-                '<span class="apya-queue-num">' + esc(d.period) + '</span>' +
-                '<span class="apya-queue-num">' + esc(date(d.deadline)) + '</span>' +
-                '<span class="apya-queue-num text-end">' + esc(money(d.maxAmount)) + '</span>' +
+                '<span class="apya-queue-num" data-label="' + esc(l('Grants:Sources:Col:Period')) + '">' +
+                esc(d.period) + '</span>' +
+                '<span class="apya-queue-num" data-label="' + esc(l('Grants:Sources:Col:Deadline')) + '">' +
+                esc(date(d.deadline)) + '</span>' +
+                '<span class="apya-queue-num text-end" data-label="' + esc(l('Grants:Sources:Col:Amount')) + '">' +
+                esc(money(d.maxAmount)) + '</span>' +
                 '<span class="apya-queue-conf">' +
                 '<span class="apya-conf-bar"><span class="' + confidenceClass(d.fieldConfidence) +
                 '" style="width:' + d.fieldConfidence + '%"></span></span>' +

@@ -98,7 +98,8 @@ $(function () {
                 '<i class="fa ' + outcomeIcon[r.outcome] + '"></i>' +
                 '<span>' + esc(l('Grants:Rule:' + ruleKeys[r.rule])) +
                 ' <span class="apya-cat-sub">· ' + esc(firm) + '</span></span>' +
-                '<span class="apya-check-note">' + esc(note) + '</span>' +
+                '<span class="apya-check-note" data-label="' + esc(l('Grants:Detail:Col:Note')) + '">' +
+                esc(note) + '</span>' +
                 '</div>');
         });
         $('#RuleEmpty').toggleClass('d-none', (d.rules || []).length > 0);
@@ -115,9 +116,12 @@ $(function () {
             $rows.append(
                 '<div class="apya-budget-row" data-index="' + i + '">' +
                 '<span>' + esc(l('Grants:CostItem:' + costKeys[c.kind])) + ' ' + limit + '</span>' +
-                '<input type="number" min="0" step="0.01" class="form-control form-control-sm apya-budget-input" />' +
-                '<span class="apya-cat-num text-end">' + (d.supportRatePercent != null ? '%' + d.supportRatePercent : '—') + '</span>' +
-                '<span class="apya-cat-num text-end apya-budget-support">—</span>' +
+                '<span data-label="' + esc(l('Grants:Detail:Budget:Yours')) + '">' +
+                '<input type="number" min="0" step="0.01" class="form-control form-control-sm apya-budget-input" /></span>' +
+                '<span class="apya-cat-num text-end" data-label="' + esc(l('Grants:Detail:Budget:Rate')) + '">' +
+                (d.supportRatePercent != null ? '%' + d.supportRatePercent : '—') + '</span>' +
+                '<span class="apya-cat-num text-end apya-budget-support" data-label="' +
+                esc(l('Grants:Detail:Budget:Support')) + '">—</span>' +
                 '</div>');
         });
         $('#BudgetEmpty').toggleClass('d-none', (d.costItems || []).length > 0);

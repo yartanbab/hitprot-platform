@@ -66,10 +66,12 @@ $(function () {
                 : '') +
             (d.reviewNote ? '<span class="apya-doc-note">' + esc(d.reviewNote) + '</span>' : '') +
             '</span>' +
-            '<span class="apya-cat-sub">' + esc(l('Grants:Party:' + partyKeys[d.uploaderParty])) + '</span>' +
+            '<span class="apya-cat-sub" data-label="' + esc(l('Grants:Documents:Col:Party')) + '">' +
+            esc(l('Grants:Party:' + partyKeys[d.uploaderParty])) + '</span>' +
             '<span><span class="apya-chip apya-chip-' + statusTone[d.status] + '">' +
             esc(l('Grants:DocStatus:' + statusKeys[d.status])) + '</span></span>' +
-            '<span class="apya-doc-version">' + (d.latestVersionNo > 0 ? 'v' + d.latestVersionNo : '—') + '</span>' +
+            '<span class="apya-doc-version" data-label="' + esc(l('Grants:Documents:Col:Version')) + '">' +
+            (d.latestVersionNo > 0 ? 'v' + d.latestVersionNo : '—') + '</span>' +
             '<span class="apya-doc-actions">' + actions + '</span>' +
             '</div>';
     }

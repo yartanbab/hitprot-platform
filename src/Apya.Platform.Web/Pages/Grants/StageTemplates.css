@@ -250,3 +250,19 @@
 [data-theme="dark"] .apya-tpl-item.is-active {
     color: var(--apya-accent-300);
 }
+
+/* Dar ekran: beş form sütunu 390px'e sığmıyor. Tutamak solda kalır, alanlar
+   aşama adının altına tam genişlikte iner (yer tutucular sütun adının işini
+   görüyor, başlık şeridi gizleniyor). */
+@media (max-width: 991.98px) {
+    .apya-tpl-row {
+        grid-template-columns: 22px minmax(0, 1fr);
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-tpl-row.apya-tpl-head { display: none; }
+    .apya-tpl-row > * { grid-column: 2; }
+    .apya-tpl-grip { grid-column: 1; grid-row: 1; }
+    .apya-tpl-remove { justify-self: start; }
+}

@@ -151,3 +151,22 @@
     font-size: var(--apya-text-xs);
     color: var(--apya-text-secondary);
 }
+
+/* Dar ekran: firma tam satır, ölçüler ikişerli. Satırın kendisi bir button;
+   metin hizası sola sabitlenir. */
+@media (max-width: 991.98px) {
+    .apya-lead-head { display: none; }
+
+    .apya-lead-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+        text-align: start;
+    }
+
+    .apya-lead-firm { grid-column: 1 / -1; }
+
+    /* Isı hücresi yatay flex; etiketi kendi satırına al. */
+    .apya-lead-heat { flex-wrap: wrap; }
+    .apya-lead-heat::before { flex: 0 0 100%; }
+}

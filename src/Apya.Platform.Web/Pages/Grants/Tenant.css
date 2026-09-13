@@ -348,16 +348,6 @@
     .apya-cat-actions { grid-column: 1 / -1; }
 
     .apya-cat-row > .text-end { text-align: start !important; }
-
-    .apya-cat-row > [data-label]::before {
-        content: attr(data-label);
-        display: block;
-        font-size: var(--apya-text-xs);
-        font-weight: var(--apya-weight-bold);
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        color: var(--apya-text-tertiary);
-    }
 }
 
 /* --- Uygunluk tablosu (1e) --- */
@@ -386,6 +376,21 @@
     text-align: right;
 }
 
+/* Dar ekran: 200px'lik not sütunu şartın adına yer bırakmıyor; not şartın
+   altına iner. */
+@media (max-width: 991.98px) {
+    .apya-check-row {
+        grid-template-columns: 20px minmax(0, 1fr);
+        align-items: start;
+        row-gap: 4px;
+    }
+
+    .apya-check-row.apya-cat-head { display: none; }
+    .apya-check-row > * { grid-column: 2; }
+    .apya-check-row > i { grid-column: 1; grid-row: 1; }
+    .apya-check-note { text-align: start; }
+}
+
 /* --- Bütçe hesaplayıcı (1e) --- */
 .apya-budget-row {
     display: grid;
@@ -405,6 +410,19 @@
     font-family: var(--apya-font-mono);
     font-size: var(--apya-fs-sm);
     text-align: right;
+}
+
+/* Dar ekran: kalem adı tam satır, tutar/oran/destek ikişerli. */
+@media (max-width: 991.98px) {
+    .apya-budget-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-budget-row.apya-cat-head { display: none; }
+    .apya-budget-row > :first-child { grid-column: 1 / -1; }
+    .apya-budget-row > .text-end { text-align: start !important; }
 }
 
 .apya-budget-summary {

@@ -305,3 +305,15 @@
 }
 
 .apya-param-add:hover { background: var(--apya-surface-hover); }
+
+/* Dar ekran: dört form sütunu sığmıyor; alanlar alt alta tam genişlikte durur. */
+@media (max-width: 991.98px) {
+    .apya-doc-row {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-doc-row.apya-doc-head { display: none; }
+    .apya-doc-remove { justify-self: start; }
+}

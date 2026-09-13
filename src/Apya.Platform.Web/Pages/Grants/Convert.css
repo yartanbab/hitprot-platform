@@ -116,3 +116,16 @@
 }
 
 .apya-cv-metric--good { color: var(--apya-positive-700); }
+
+/* Dar ekran: iki esnek sütun aynı satıra sığmıyor. Eşleme alt alta okunur;
+   yön oku yatay düzenin parçası olduğu için düşer. */
+@media (max-width: 991.98px) {
+    .apya-cv-row {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-cv-row.apya-cat-head { display: none; }
+    .apya-cv-arrow { display: none; }
+}

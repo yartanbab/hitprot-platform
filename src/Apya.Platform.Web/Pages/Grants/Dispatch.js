@@ -114,10 +114,12 @@ $(function () {
             esc(c.tenantName) + chips + '</span>' +
             (warning ? '<span class="apya-cand-warning">' + esc(warning) + '</span>' : '') +
             '</span>' +
-            '<span><span class="apya-chip apya-numeric apya-chip-' + (c.score >= 65 ? 'positive' : 'neutral') + '">%' +
+            '<span data-label="' + esc(l('Grants:Dispatch:Col:Score')) + '">' +
+            '<span class="apya-chip apya-numeric apya-chip-' + (c.score >= 65 ? 'positive' : 'neutral') + '">%' +
                 c.score + '</span></span>' +
             '<span class="apya-cand-dims">' + (c.dimensions || []).map(dimBar).join('') + '</span>' +
-            '<span class="apya-cat-sub">' + esc(c.assignedUserName || '—') + '</span>' +
+            '<span class="apya-cat-sub" data-label="' + esc(l('Grants:Dispatch:Col:Consultant')) + '">' +
+            esc(c.assignedUserName || '—') + '</span>' +
             '</div>';
     }
 
