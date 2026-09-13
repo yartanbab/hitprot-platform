@@ -128,47 +128,11 @@ public class GrantDraftAppService : ApplicationService, IGrantDraftAppService
     /// <summary>Çıkarılan değerleri programın parametre alanlarına yazar.</summary>
     private static void ApplyParameters(Grant grant, IReadOnlyDictionary<string, GrantExtractedFieldDto> values)
     {
-        if (Decimal(values, GrantTextExtractor.FieldMaxAmount) is { } amount)
+        // Ayrıştırma TEK yerde: parametre formunun "nereden geldi" karşılaştırması da aynı
+        // kuralı kullanır, yoksa biçim farkı sahte "metinden farklı" uyarısı üretirdi.
+        foreach (var (key, field) in values)
         {
-            grant.MaxAmount = amount;
-        }
-        if (Int(values, GrantTextExtractor.FieldSupportRate) is { } rate)
-        {
-            grant.SupportRatePercent = rate;
-        }
-        if (Int(values, GrantTextExtractor.FieldDuration) is { } months)
-        {
-            grant.ProjectDurationMonths = months;
-        }
-        if (Int(values, GrantTextExtractor.FieldCompanyAge) is { } age)
-        {
-            grant.MinCompanyAgeYears = age;
-        }
-        if (Int(values, GrantTextExtractor.FieldCompanySizes) is { } sizes)
-        {
-            grant.EligibleCompanySizes = sizes;
-        }
-        if (Int(values, GrantTextExtractor.FieldRdStaff) is { } rdStaff)
-        {
-            grant.MinRdStaffCount = rdStaff;
-        }
-        if (Bool(values, GrantTextExtractor.FieldConsortium) is { } consortium)
-        {
-            grant.RequiresConsortium = consortium;
-        }
-
-        // TRL "3-7" biçiminde gelir.
-        var trl = Text(values, GrantTextExtractor.FieldTrl);
-        if (trl != null)
-        {
-            var parts = trl.Split('-', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 2
-                && int.TryParse(parts[0], out var min)
-                && int.TryParse(parts[1], out var max))
-            {
-                grant.MinTrl = min;
-                grant.MaxTrl = max;
-            }
+            GrantDraftValueParser.TryApply(grant, key, field.Value);
         }
     }
 

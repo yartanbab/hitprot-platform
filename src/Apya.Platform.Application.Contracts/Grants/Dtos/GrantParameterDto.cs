@@ -68,4 +68,40 @@ public class GrantParameterDto : EntityDto<Guid>
 
     /// <summary>Yayınla düğmesi: eksik zorunlu alan yoksa VE yayınlanacak taslak çağrı varsa aktif.</summary>
     public bool CanPublish { get; set; }
+
+    // --- 10b · Nereden geldi ---
+
+    /// <summary>Yedi eleme şartının her biri için kaynak. Çıkarıcının okumadığı şart daima Elle.</summary>
+    public List<GrantRuleSourceDto> RuleSources { get; set; } = new();
+
+    /// <summary>Son taslak çağrıda resmî metinden değer okunan alan sayısı (başlık cümlesi).</summary>
+    public int DraftFieldCount { get; set; }
+
+    /// <summary>Bunlardan host'un henüz onaylamadığı alan sayısı.</summary>
+    public int DraftPendingCount { get; set; }
+}
+
+/// <summary>10b · Bir eleme şartının kaynağı.</summary>
+public class GrantRuleSourceDto
+{
+    public GrantEligibilityRule Rule { get; set; }
+
+    public GrantParameterSource Source { get; set; }
+
+    /// <summary>
+    /// Resmî metinden okunan değer — yalnız <see cref="GrantParameterSource.MetindenFarkli"/>
+    /// durumunda dolu. Cümleyi istemci, programın kendi değeriyle AYNI biçimlendiriciyle kurar.
+    /// </summary>
+    public GrantRuleValuesDto? SourceValues { get; set; }
+}
+
+/// <summary>Kaynak metinden okunabilen şart değerleri (çıkarıcının tanıdığı alanlar).</summary>
+public class GrantRuleValuesDto
+{
+    public int EligibleCompanySizes { get; set; }
+    public int? MinCompanyAgeYears { get; set; }
+    public int? MinTrl { get; set; }
+    public int? MaxTrl { get; set; }
+    public int? MinRdStaffCount { get; set; }
+    public bool RequiresConsortium { get; set; }
 }

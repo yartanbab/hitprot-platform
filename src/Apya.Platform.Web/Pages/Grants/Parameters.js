@@ -5,8 +5,6 @@ $(function () {
     var l = abp.localization.getResource('Platform');
     var grantId = $('.apya-page').data('grant-id');
 
-    // GrantEligibilityRule ↔ kural adı (sunucudaki enum sırasıyla birebir).
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
     var sizeKeys = { 1: 'Mikro', 2: 'Kucuk', 4: 'Orta', 8: 'Buyuk' };
     var partyKeys = ['Firma', 'Danisman', 'Ortak', 'Kurum'];
     var obligationKeys = ['Zorunlu', 'Kosullu'];
@@ -137,12 +135,310 @@ $(function () {
         $('#ParamCoFinancing').val(rate == null ? '' : 100 - rate);
     }
 
-    // ---------- Sol nav: bölüme kaydır ----------
-    $('.apya-param-nav-item[data-target]').on('click', function () {
-        var target = document.querySelector($(this).data('target'));
-        if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-        $('.apya-param-nav-item').removeClass('is-active');
-        $(this).addClass('is-active');
+    // ---------- Sekme grubu (10b) ----------
+    // Seçili sekme adreste (#eligibility) durur: kaydet sonrası yenilemede kullanıcı yerinde kalır.
+    function showTab(name) {
+        var $btn = $('.apya-param-tabs [data-tab="' + name + '"]');
+        if (!$btn.length) {
+            name = 'eligibility';
+            $btn = $('.apya-param-tabs [data-tab="eligibility"]');
+        }
+        $('.apya-param-tabs [data-tab]').removeClass('is-active').attr('aria-selected', 'false');
+        $btn.addClass('is-active').attr('aria-selected', 'true');
+        $('.apya-param-panel').each(function () {
+            $(this).prop('hidden', $(this).data('panel') !== name);
+        });
+        try { history.replaceState(null, '', '#' + name); } catch (e) { /* yoksay */ }
+    }
+
+    $('.apya-param-tabs').on('click', '[data-tab]', function () { showTab($(this).data('tab')); });
+    showTab((window.location.hash || '').replace('#', ''));
+
+    // ---------- Şart kartları (10b) ----------
+    // Kart = şartın tek satırlık özeti; tıklayınca altındaki alan açılır (11c "dolu alan tek
+    // satır özet"). Kart GÖRÜNÜR: şart konmuşsa ya da editörü açıksa. Konmamış şartlar
+    // "Şart ekle" menüsünde durur. Özet metni formun GÜNCEL değerinden kurulur (kaydetmeden).
+    var SOURCE = { Metinden: 0, Elle: 1, MetindenFarkli: 2, OnayBekliyor: 3 };
+    var ruleSources = {};   // GrantEligibilityRule → GrantRuleSourceDto (son kayda göre)
+    var lastImpacts = {};   // GrantEligibilityRule → GrantRuleImpactDto (canlı önizleme)
+    var lastTotal = 0;
+    var openRows = {};      // kart anahtarı → editörü açık mı
+
+    function tagValues(s, kind) {
+        return (s.criteriaTags || []).filter(function (t) { return t.kind === kind; })
+            .map(function (t) { return t.value; });
+    }
+
+    function listText(values) {
+        var shown = values.slice(0, 3).join(' · ');
+        return values.length > 3 ? shown + ' ' + l('Grants:Parameters:Value:More', values.length - 3) : shown;
+    }
+
+    function rangeText(min, max, prefix, fmt) {
+        fmt = fmt || function (x) { return x; };
+        if (min != null && max != null) { return l(prefix + 'Range', fmt(min), fmt(max)); }
+        if (min != null) { return l(prefix + 'Min', fmt(min)); }
+        return l(prefix + 'Max', fmt(max));
+    }
+
+    function moneyText(v) { return Math.round(v).toLocaleString('tr-TR'); }
+
+    // rule: GrantEligibilityRule (firmayı ELEYEN şartlar) · null: yalnız uyum puanını etkiler.
+    var RULES = [
+        { key: 'size', rule: 0, label: 'Grants:Parameters:CompanySizes',
+          isSet: function (s) { return s.eligibleCompanySizes !== 0; },
+          text: function (s) {
+              return [1, 2, 4, 8].filter(function (x) { return (s.eligibleCompanySizes & x) !== 0; })
+                  .map(function (x) { return l('Grants:Size:' + sizeKeys[x]); }).join(', ');
+          } },
+        { key: 'age', rule: 1, label: 'Grants:Parameters:CompanyAge',
+          isSet: function (s) { return s.minCompanyAgeYears != null || s.maxCompanyAgeYears != null; },
+          text: function (s) { return rangeText(s.minCompanyAgeYears, s.maxCompanyAgeYears, 'Grants:Parameters:Value:Years'); } },
+        { key: 'trl', rule: 2, label: 'Grants:Parameters:Trl',
+          isSet: function (s) { return s.minTrl != null; },
+          text: function (s) {
+              return s.maxTrl != null && s.maxTrl !== s.minTrl
+                  ? l('Grants:Parameters:Value:TrlRange', s.minTrl, s.maxTrl)
+                  : l('Grants:Parameters:Value:Trl', s.minTrl);
+          } },
+        { key: 'staff', rule: 3, label: 'Grants:Parameters:StaffCount',
+          isSet: function (s) { return s.minStaffCount != null; },
+          text: function (s) { return l('Grants:Parameters:Value:PeopleMin', s.minStaffCount); } },
+        { key: 'rdstaff', rule: 4, label: 'Grants:Parameters:RdStaffCount',
+          isSet: function (s) { return s.minRdStaffCount != null; },
+          text: function (s) { return l('Grants:Parameters:Value:PeopleMin', s.minRdStaffCount); } },
+        { key: 'revenue', rule: 5, label: 'Grants:Parameters:Revenue',
+          isSet: function (s) { return s.minRevenue != null || s.maxRevenue != null; },
+          text: function (s) { return rangeText(s.minRevenue, s.maxRevenue, 'Grants:Parameters:Value:Money', moneyText); } },
+        { key: 'consortium', rule: 6, label: 'Grants:Rule:Consortium',
+          isSet: function (s) { return !!s.requiresConsortium; },
+          text: function (s) {
+              return s.minConsortiumPartners
+                  ? l('Grants:Parameters:Value:ConsortiumPartners', s.minConsortiumPartners)
+                  : l('Grants:Parameters:Value:Consortium');
+          } },
+        { key: 'nace', rule: null, label: 'Grants:Parameters:Nace',
+          isSet: function (s) { return tagValues(s, 3).length > 0; },
+          text: function (s) { return listText(tagValues(s, 3)); } },
+        { key: 'sector', rule: null, label: 'Grants:Parameters:Sector',
+          isSet: function (s) { return tagValues(s, 0).length > 0; },
+          text: function (s) { return listText(tagValues(s, 0)); } },
+        { key: 'region', rule: null, label: 'Grants:Parameters:Region',
+          isSet: function (s) { return tagValues(s, 1).length > 0; },
+          text: function (s) { return listText(tagValues(s, 1)); } },
+        { key: 'keyword', rule: null, label: 'Grants:Parameters:Keyword',
+          isSet: function (s) { return tagValues(s, 2).length > 0; },
+          text: function (s) { return listText(tagValues(s, 2)); } },
+        { key: 'thematic', rule: null, label: 'Grants:Parameters:Thematic',
+          isSet: function (s) { return tagValues(s, 4).length > 0; },
+          text: function (s) {
+              return listText(tagValues(s, 4).map(function (v) { return l('Grants:Thematic:' + v); }));
+          } },
+        { key: 'priority', rule: null, label: 'Grants:Parameters:Priorities',
+          isSet: function (s) { return s.prefersFemaleEntrepreneur || s.prefersYoungEntrepreneur; },
+          text: function (s) {
+              var parts = [];
+              if (s.prefersFemaleEntrepreneur) { parts.push(l('Grants:Parameters:PrefersFemale')); }
+              if (s.prefersYoungEntrepreneur) { parts.push(l('Grants:Parameters:PrefersYoung')); }
+              return parts.join(' · ');
+          } },
+        { key: 'minscore', rule: null, label: 'Grants:Parameters:MinMatchScore',
+          isSet: function (s) { return s.minMatchScore > 0; },
+          text: function (s) { return l('Grants:Parameters:Value:MinScore', s.minMatchScore); } }
+    ];
+
+    function ruleDef(rule) { return RULES.filter(function (r) { return r.rule === rule; })[0]; }
+
+    function setSources(dto) {
+        ruleSources = {};
+        (dto.ruleSources || []).forEach(function (s) { ruleSources[s.rule] = s; });
+    }
+
+    // Satır başına TEK sinyal: çelişki > onay bekliyor > eksik veri > kaynak.
+    function paintSource($row, r) {
+        var src = r.rule == null ? null : ruleSources[r.rule];
+        var impact = r.rule == null ? null : lastImpacts[r.rule];
+        var tone = '', icon = '', text = '';
+
+        if (src && src.source === SOURCE.MetindenFarkli) {
+            tone = 'is-conflict'; icon = 'fa-code-compare'; text = l('Grants:Parameters:Source:Conflict');
+        } else if (src && src.source === SOURCE.OnayBekliyor) {
+            tone = 'is-suggest'; icon = 'fa-wand-magic-sparkles'; text = l('Grants:Parameters:Source:Pending');
+        } else if (impact && impact.missingDataCount > 0) {
+            tone = 'is-attention'; icon = 'fa-circle-exclamation';
+            text = l('Grants:Parameters:Source:MissingData', impact.missingDataCount);
+        } else if (src && src.source === SOURCE.Metinden) {
+            text = l('Grants:Parameters:Source:Text');
+        } else if (r.rule != null) {
+            text = l('Grants:Parameters:Source:Manual');
+        }
+
+        $row.removeClass('is-conflict is-suggest is-attention').addClass(tone);
+        $row.find('[data-rule-source]').html(
+            (icon ? '<i class="fa ' + icon + '" aria-hidden="true"></i>' : '') + esc(text));
+    }
+
+    function paintImpact($row, r, maxImpact) {
+        var $imp = $row.find('[data-rule-impact]').removeClass('is-score is-medium is-heavy');
+        var $bar = $imp.find('.apya-rule-bar > span');
+
+        if (r.rule == null) {
+            $imp.addClass('is-score').find('.apya-rule-impact-text').text(l('Grants:Parameters:Impact:Score'));
+            $bar.css('width', 0);
+            return;
+        }
+
+        var i = lastImpacts[r.rule];
+        var n = i ? i.eliminatedCount : null;
+        // Eşik firma SAYISI değil PAYI: kiracı sayısı büyüdükçe mutlak eşik anlamını yitirir.
+        var share = n && lastTotal ? n / lastTotal : 0;
+        $imp.toggleClass('is-heavy', share >= 0.25).toggleClass('is-medium', share >= 0.12 && share < 0.25);
+        $imp.find('.apya-rule-impact-text').text(
+            n == null ? '—' : n === 0 ? l('Grants:Parameters:Impact:None') : l('Grants:Parameters:Impact:Firms', n));
+        $bar.css('width', maxImpact && n ? Math.round((n / maxImpact) * 100) + '%' : 0);
+    }
+
+    function paintRules() {
+        var s = collect();
+        s.minTrl = trlMin;
+        s.maxTrl = trlMax;
+
+        var maxImpact = 0;
+        RULES.forEach(function (r) {
+            var i = r.rule == null ? null : lastImpacts[r.rule];
+            if (i && i.eliminatedCount > maxImpact) { maxImpact = i.eliminatedCount; }
+        });
+
+        var visible = 0;
+        var addable = [];
+        RULES.forEach(function (r) {
+            var $row = $('.apya-rule[data-rule-key="' + r.key + '"]');
+            var set = r.isSet(s);
+            var show = set || !!openRows[r.key];
+            $row.prop('hidden', !show);
+            if (!show) {
+                addable.push(r);
+                return;
+            }
+            visible++;
+            $row.find('[data-rule-value]')
+                .text(set ? r.text(s) : l('Grants:Parameters:Value:NotSet'))
+                .toggleClass('is-empty', !set);
+            paintSource($row, r);
+            paintImpact($row, r, maxImpact);
+        });
+
+        $('#NavEligibilityBadge').text(visible);
+        paintAddMenu(addable);
+        paintConflicts(s);
+    }
+
+    function toggleRow($row, open) {
+        var key = $row.data('rule-key');
+        if (open) { openRows[key] = true; } else { delete openRows[key]; }
+        $row.toggleClass('is-open', open);
+        $row.find('.apya-rule-summary').attr('aria-expanded', open ? 'true' : 'false');
+        $row.find('.apya-rule-editor').prop('hidden', !open);
+    }
+
+    $('#RuleList').on('click', '.apya-rule-summary', function () {
+        var $row = $(this).closest('.apya-rule');
+        toggleRow($row, !$row.hasClass('is-open'));
+        paintRules();
+    });
+
+    function paintAddMenu(addable) {
+        var $menu = $('#RuleAddMenu').empty();
+        if (!addable.length) {
+            $menu.append('<li><span class="dropdown-item-text">' + esc(l('Grants:Parameters:AddRule:Empty')) + '</span></li>');
+            return;
+        }
+        addable.forEach(function (r) {
+            $menu.append('<li><button type="button" class="dropdown-item" data-add-rule="' + r.key + '">' +
+                esc(l(r.label)) + '</button></li>');
+        });
+    }
+
+    $('#RuleAddMenu').on('click', '[data-add-rule]', function () {
+        var $row = $('.apya-rule[data-rule-key="' + $(this).data('add-rule') + '"]');
+        toggleRow($row, true);
+        paintRules();
+        if ($row[0] && $row[0].scrollIntoView) { $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        $row.find('.apya-rule-editor').find('input:not([disabled]), button').first().trigger('focus');
+    });
+
+    // ---------- Çelişki: resmî metin ↔ program değeri ----------
+    function paintConflicts(s) {
+        var $box = $('#RuleConflicts').empty();
+        Object.keys(ruleSources).forEach(function (k) {
+            var src = ruleSources[k];
+            var def = ruleDef(src.rule);
+            if (!def || src.source !== SOURCE.MetindenFarkli || !src.sourceValues) { return; }
+
+            // Metindeki değer, programın değeriyle AYNI biçimlendiriciden geçer.
+            var v = src.sourceValues;
+            var fromText = {
+                eligibleCompanySizes: v.eligibleCompanySizes, minCompanyAgeYears: v.minCompanyAgeYears,
+                maxCompanyAgeYears: null, minTrl: v.minTrl, maxTrl: v.maxTrl,
+                minRdStaffCount: v.minRdStaffCount, requiresConsortium: v.requiresConsortium, minConsortiumPartners: null
+            };
+            var textValue = def.isSet(fromText) ? def.text(fromText) : l('Grants:Parameters:Value:NotSet');
+            var current = def.isSet(s) ? def.text(s) : l('Grants:Parameters:Value:NotSet');
+
+            $box.append(
+                '<div class="apya-rule-conflict" role="status">' +
+                '<i class="fa fa-code-compare" aria-hidden="true"></i>' +
+                '<div class="apya-rule-conflict-text"><strong>' + esc(l('Grants:Parameters:Conflict:Title')) + '</strong> ' +
+                esc(l('Grants:Parameters:Conflict:Text', l(def.label), textValue, current)) + '</div>' +
+                '<div class="apya-rule-conflict-actions">' +
+                '<button type="button" class="btn btn-danger apya-conflict-apply" data-rule="' + src.rule + '">' +
+                esc(l('Grants:Parameters:Conflict:Apply')) + '</button>' +
+                '<button type="button" class="btn btn-outline-secondary apya-conflict-keep" data-rule="' + src.rule + '">' +
+                esc(l('Grants:Parameters:Conflict:Keep')) + '</button>' +
+                '</div></div>');
+        });
+    }
+
+    // Metne dönülen şartın alanları sunucunun geri yazdığı değerle doldurulur. Formun kalanı
+    // YENİDEN YÜKLENMEZ: kaydedilmemiş başka değişiklikler kaybolmasın.
+    function setRuleFromDto(rule, dto) {
+        switch (rule) {
+            case 0:
+                $('#ParamSizes .apya-choice').each(function () {
+                    $(this).toggleClass('is-on', (dto.eligibleCompanySizes & Number($(this).data('size'))) !== 0);
+                });
+                break;
+            case 1:
+                setNum('#ParamMinAge', dto.minCompanyAgeYears);
+                break;
+            case 2:
+                trlMin = dto.minTrl == null ? null : dto.minTrl;
+                trlMax = dto.maxTrl == null ? trlMin : dto.maxTrl;
+                paintTrl();
+                break;
+            case 4:
+                setNum('#ParamMinRdStaff', dto.minRdStaffCount);
+                break;
+            case 6:
+                $('#ParamConsortium').prop('checked', !!dto.requiresConsortium);
+                $('#ParamMinPartners').prop('disabled', !dto.requiresConsortium);
+                break;
+        }
+    }
+
+    $('#RuleConflicts').on('click', '.apya-conflict-apply, .apya-conflict-keep', function () {
+        var rule = Number($(this).data('rule'));
+        var toText = $(this).hasClass('apya-conflict-apply');
+        var $buttons = $(this).closest('.apya-rule-conflict').find('button').prop('disabled', true);
+
+        (toText ? service.applySourceValue(grantId, rule) : service.keepOwnValue(grantId, rule))
+            .then(function (dto) {
+                if (toText) { setRuleFromDto(rule, dto); }
+                setSources(dto);
+                paintRules();
+                if (toText) { schedulePreview(); }
+            })
+            .always(function () { $buttons.prop('disabled', false); });
     });
 
     // ---------- Evrak & Belgeler ----------
@@ -276,6 +572,10 @@ $(function () {
 
         $('#ParamName').val(dto.name || '');
         $('#ParamIssuer').val(dto.issuer || '');
+        $('#ParamTitle').text(dto.name || '');
+        $('#ParamIssuerText').text(dto.issuer || '');
+        paintLead(dto);
+        setSources(dto);
         $('#ParamSummary').val(dto.description || '');
         $('#ParamSourceUrl').val(dto.sourceUrl || '');
         $('#ParamSourceUrlText').text(dto.sourceUrl || '');
@@ -339,13 +639,25 @@ $(function () {
         $('#ParamStageTemplate').val(dto.stageTemplateId || '');
         paintStageMeta();
 
-        $('#NavEligibilityBadge').text((dto.criteriaTags || []).length);
         $('#NavFinancialBadge').text((dto.eligibleCostItems || []).length);
 
         paintStatus(dto);
+        paintRules();
         loading = false;
         refreshPreview();
     }
+
+    // Başlık cümlesi: resmî metinden kaç alan okundu, kaçı onay bekliyor + şartların etkisi.
+    function paintLead(dto) {
+        var read = dto.draftFieldCount || 0;
+        var pending = dto.draftPendingCount || 0;
+        var lead = read === 0 ? ''
+            : (pending ? l('Grants:Parameters:Lead:Read', read, pending) : l('Grants:Parameters:Lead:ReadApproved', read)) + ' ';
+        $('#ParamLead').text(lead + l('Grants:Parameters:Lead:Hint'));
+    }
+
+    $('#ParamName').on('input', function () { $('#ParamTitle').text($(this).val()); });
+    $('#ParamIssuer').on('input', function () { $('#ParamIssuerText').text($(this).val()); });
 
     // Tamamlanma + eksik zorunlu alan + yayın kapısı; hem kayıt dönüşü hem canlı
     // önizleme aynı alanları taşıdığı için tek boyayıcı yeterli.
@@ -383,6 +695,8 @@ $(function () {
     // ---------- Canlı eşleşme ----------
     function schedulePreview() {
         if (loading) { return; }
+        // Kart özeti beklemeden güncellenir; firma sayıları 300ms sonra sunucudan gelir.
+        paintRules();
         clearTimeout(previewTimer);
         previewTimer = setTimeout(refreshPreview, 300);
     }
@@ -395,41 +709,14 @@ $(function () {
         paintStatus(p);
 
         $('#MatchCount').text(p.matchingFirms);
-        $('#MatchTotal').text(l('Grants:Parameters:OfTotal', p.totalFirms));
+        $('#MatchTotal').text(l('Grants:Parameters:MatchOf', p.totalFirms));
+        $('#MatchBar').css('width', p.totalFirms ? Math.round((p.matchingFirms / p.totalFirms) * 100) + '%' : 0);
 
-        var $sizes = $('#MatchSizeBreakdown').empty();
-        (p.sizeBreakdown || []).forEach(function (s) {
-            var pct = p.totalFirms ? Math.round((s.count / p.totalFirms) * 100) : 0;
-            $sizes.append(
-                '<div class="apya-side-row"><span>' + esc(l('Grants:Size:' + sizeKeys[s.size])) +
-                '</span><span class="apya-numeric">' + s.count + '</span></div>' +
-                '<div class="apya-mini-bar"><span style="width:' + pct + '%"></span></div>');
-        });
-
-        var impactByRule = {};
-        (p.ruleImpacts || []).forEach(function (i) { impactByRule[i.rule] = i; });
-        $('.apya-field-impact').each(function () {
-            var i = impactByRule[Number($(this).data('impact'))];
-            var n = i ? i.eliminatedCount : 0;
-            $(this)
-                .text(i ? (n ? l('Grants:Parameters:EliminationImpact', n) : l('Grants:Parameters:NoImpact')) : '')
-                .toggleClass('is-heavy', n > 0 && p.totalFirms > 0 && n / p.totalFirms >= 0.25);
-        });
-
-        var $top = $('#MatchTopRule').empty();
-        if (p.topEliminatingRule === null || p.topEliminatingRule === undefined) {
-            $top.append('<div class="apya-side-note apya-side-note--quiet">' +
-                esc(l('Grants:Parameters:NoEliminatingRule')) + '</div>');
-            return;
-        }
-        var top = impactByRule[p.topEliminatingRule];
-        var ruleName = l('Grants:Rule:' + ruleKeys[p.topEliminatingRule]);
-        var text = l('Grants:Parameters:EliminationWarning', ruleName, top.eliminatedCount);
-        if (top.missingDataCount) {
-            text += ' ' + l('Grants:Parameters:MissingDataNote', top.missingDataCount);
-        }
-        $top.append('<div class="apya-side-note"><i class="fa fa-triangle-exclamation mt-1"></i><span>' +
-            esc(text) + '</span></div>');
+        // En çok eleyen şart ayrı bir kutuda değil, kartların etki sütununda görünür (10b).
+        lastTotal = p.totalFirms || 0;
+        lastImpacts = {};
+        (p.ruleImpacts || []).forEach(function (i) { lastImpacts[i.rule] = i; });
+        paintRules();
     }
 
     // ---------- Kaydet / Yayınla ----------
@@ -460,7 +747,7 @@ $(function () {
     });
 
     // Alan değişimlerinde canlı panel yenilensin (300ms debounce).
-    $('.apya-param-sections').on('input change', 'input, select, textarea', schedulePreview);
+    $('.apya-param-panels').on('input change', 'input, select, textarea', schedulePreview);
 
     // ---------- Eşleştirme ağırlıkları özeti (4b'ye köprü) ----------
     function paintWeights(w) {
