@@ -84,6 +84,28 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         return request.Id;
     }
 
+    /// <summary>
+    /// 🔴 <see cref="AllowAnonymousAttribute"/> ŞART: sihirbaz oturumsuz açılır. Sınıf
+    /// düzeyindeki izin kapısı burada kalsaydı aday sayfayı hiç göremezdi — Web testleri
+    /// yetkilendirmeyi her zaman geçirdiği için bunu YAKALAMAZ.
+    /// </summary>
+    [AllowAnonymous]
+    public async Task<Dictionary<SalesPlan, decimal>> GetPlanPricesAsync()
+    {
+        var prices = new Dictionary<SalesPlan, decimal>();
+
+        foreach (var plan in Enum.GetValues<SalesPlan>())
+        {
+            var price = await _pricing.GetPriceOrNullAsync(plan);
+            if (price.HasValue)
+            {
+                prices[plan] = price.Value;
+            }
+        }
+
+        return prices;
+    }
+
     public async Task<PagedResultDto<RegistrationRequestDto>> GetListAsync(RegistrationRequestListFilterDto input)
     {
         var query = await _repository.GetQueryableAsync();

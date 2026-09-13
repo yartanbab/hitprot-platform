@@ -175,6 +175,31 @@ public class RegistrationRequestPages_Tests : PlatformWebTestBase
         html.ShouldContain("value=\"Joint\"");
     }
 
+    /// <summary>
+    /// Kart bedeli <c>/PackageManagement</c>'taki host ayarından okunur ve protokoldeki
+    /// biçimle (tr-TR, "+ KDV") basılır. Bedeli girilmemiş pakete rakam UYDURULMAZ.
+    /// </summary>
+    [Fact]
+    public async Task Paket_kartlari_tanimli_bedeli_basar_tanimsiza_rakam_uydurmaz()
+    {
+        var packages = GetRequiredService<IPackageAppService>();
+        var settings = await packages.GetSubscriptionSettingsAsync();
+        settings.StandardPlanPrice = 24000m;
+        settings.CorporatePlanPrice = 48000.50m;
+        settings.JointPlanPrice = 0m;
+        await packages.UpdateSubscriptionSettingsAsync(settings);
+
+        var html = WebUtility.HtmlDecode(await GetResponseAsStringAsync("/Account/RegistrationRequest"));
+
+        // Kuruşsuz tutarda ondalık basılmaz; kuruşlu tutar tr-TR virgülüyle.
+        html.ShouldContain("24.000 TL + KDV / yıl", Case.Sensitive);
+        html.ShouldContain("48.000,50 TL + KDV / yıl", Case.Sensitive);
+        html.ShouldContain("Bedel görüşmede paylaşılır", Case.Sensitive);
+
+        // Bedeller artık kartta; "onay aşamasında paylaşılır" demek yalan olurdu.
+        html.ShouldNotContain("onay aşamasında paylaşılır");
+    }
+
     [Fact]
     public async Task Panel_talebi_ve_degerlendirme_alanlarini_gosterir()
     {

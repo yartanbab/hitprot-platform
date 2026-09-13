@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using Apya.Platform.Consents;
 using Apya.Platform.Consents.Dtos;
@@ -58,8 +59,9 @@ public class RegistrationRequestModel : PlatformPageModel
         _consentAppService = consentAppService;
     }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
+        await LoadPlanPricesAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -71,7 +73,7 @@ public class RegistrationRequestModel : PlatformPageModel
 
         if (!ModelState.IsValid)
         {
-            return Page();
+            return await RedisplayAsync();
         }
 
         // Bal küpü doluysa botu sessizce başarıya yönlendir.
@@ -90,7 +92,7 @@ public class RegistrationRequestModel : PlatformPageModel
         catch (BusinessException ex) when (ex.Code == PlatformDomainErrorCodes.RegistrationRequestRateLimitExceeded)
         {
             ModelState.AddModelError(string.Empty, L["Platform:RegistrationRequest:RateLimitExceeded"].Value);
-            return Page();
+            return await RedisplayAsync();
         }
         catch (BusinessException ex) when (ex.Code == PlatformDomainErrorCodes.RegistrationRequestEmailAlreadyRegistered)
         {
@@ -100,7 +102,7 @@ public class RegistrationRequestModel : PlatformPageModel
             ModelState.AddModelError(
                 $"{nameof(Input)}.{nameof(Input.Email)}",
                 L["Platform:RegistrationRequest:EmailAlreadyRegistered"].Value);
-            return Page();
+            return await RedisplayAsync();
         }
 
         await TryRecordKvkkConsentAsync();
@@ -139,8 +141,36 @@ public class RegistrationRequestModel : PlatformPageModel
         }
     }
 
+    /// <summary>
+    /// Doğrulama hatasıyla form yeniden basılırken bedeller de yeniden yüklenir; aksi
+    /// halde kartlar tanımlı bedeli "görüşmede paylaşılır" diye gösterirdi.
+    /// </summary>
+    private async Task<IActionResult> RedisplayAsync()
+    {
+        await LoadPlanPricesAsync();
+        return Page();
+    }
+
+    private async Task LoadPlanPricesAsync()
+    {
+        PlanPrices = await _registrationRequestAppService.GetPlanPricesAsync();
+    }
+
     /// <summary>Sihirbazın 1. adımındaki paket kartları.</summary>
     public IEnumerable<SalesPlan> Plans => Enum.GetValues<SalesPlan>();
+
+    /// <summary>Tanımlı yıllık bedeller (<c>/PackageManagement</c>); bedeli girilmemiş paket burada yok.</summary>
+    public Dictionary<SalesPlan, decimal> PlanPrices { get; private set; } = new();
+
+    /// <summary>
+    /// "48.000" / "48.000,50" — kuruşsuz tutarda ondalık basılmaz. Kültür SABİT tr-TR:
+    /// tutar TL'dir ve protokoldeki biçimle aynı görünmeli; arayüz dili değişince
+    /// "48,000 TL" gibi karma bir yazım çıkmamalı.
+    /// </summary>
+    public string FormatPrice(decimal price)
+        => price.ToString(price == decimal.Truncate(price) ? "N0" : "N2", TrCulture);
+
+    private static readonly CultureInfo TrCulture = CultureInfo.GetCultureInfo("tr-TR");
 
     public IEnumerable<CompanyType> CompanyTypes => Enum.GetValues<CompanyType>();
 

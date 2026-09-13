@@ -132,8 +132,16 @@
 
         var plan = form.querySelector('input[name="Input.RequestedPlan"]:checked');
         if (plan) {
-            var planName = plan.closest('.apya-wiz__plan').querySelector('.apya-wiz__plan-name');
-            appendRow(summary, 'Seçilen paket', planName ? planName.textContent.trim() : plan.value);
+            var card = plan.closest('.apya-wiz__plan');
+            var planName = card.querySelector('.apya-wiz__plan-name');
+            // "Popüler" rozeti adın içinde; özete sızmasın.
+            var planTag = planName ? planName.querySelector('.apya-wiz__plan-tag') : null;
+            var nameText = planName
+                ? planName.textContent.replace(planTag ? planTag.textContent : '', '').trim()
+                : plan.value;
+            var planPrice = card.querySelector('.apya-wiz__plan-price');
+            appendRow(summary, 'Seçilen paket',
+                planPrice ? nameText + ' — ' + planPrice.textContent.trim() : nameText);
         }
 
         var fields = form.querySelectorAll('[data-wizard-panel="2"] .apya-auth__input, [data-wizard-panel="3"] .apya-auth__input');

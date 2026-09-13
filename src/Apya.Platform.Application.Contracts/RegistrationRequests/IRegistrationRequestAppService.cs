@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Apya.Platform.RegistrationRequests.Dtos;
+using Apya.Platform.Tenants;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 
@@ -16,6 +18,12 @@ public interface IRegistrationRequestAppService : IApplicationService
 {
     /// <summary>Kayıt talebini kaydeder (oturumsuz; Web sınırından çağrılır).</summary>
     Task<Guid> CreateAsync(CreateRegistrationRequestDto input);
+
+    /// <summary>
+    /// Sihirbazın paket kartlarındaki yıllık liste bedelleri (oturumsuz). Yalnız TANIMLI
+    /// bedeller döner; bedeli girilmemiş paket sözlükte YOKTUR — ekran rakam uydurmaz.
+    /// </summary>
+    Task<Dictionary<SalesPlan, decimal>> GetPlanPricesAsync();
 
     /// <summary>Panel listesi (izin: RegistrationRequests.Default).</summary>
     Task<PagedResultDto<RegistrationRequestDto>> GetListAsync(RegistrationRequestListFilterDto input);

@@ -58,6 +58,16 @@
                             }
                         </span>
                         <span class="apya-wiz__plan-quota">@L["RegistrationRequest:Plan:Quota:" + plan]</span>
+                        @* Bedel /PackageManagement'tan gelir. Girilmemişse rakam UYDURULMAZ —
+                           protokoldeki "taraflarca ayrıca belirlenecektir" kuralının karşılığı. *@
+                        @if (Model.PlanPrices.TryGetValue(plan, out var price))
+                        {
+                            <span class="apya-wiz__plan-price">@L["RegistrationRequest:Plan:Price", Model.FormatPrice(price)]</span>
+                        }
+                        else
+                        {
+                            <span class="apya-wiz__plan-price apya-wiz__plan-price--none">@L["RegistrationRequest:Plan:PriceOnRequest"]</span>
+                        }
                         <span class="apya-wiz__plan-desc">@L["RegistrationRequest:Plan:Desc:" + plan]</span>
                     </span>
                 </label>
