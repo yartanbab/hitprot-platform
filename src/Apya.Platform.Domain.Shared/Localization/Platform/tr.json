@@ -2397,6 +2397,8 @@
         "DisplayName:FromCurrency": "Kaynak para birimi",
         "DisplayName:GoToTasks": "Görevlere git",
         "DisplayName:GrantCallId": "Hibe çağrısı",
+        "DisplayName:EstimatedBudget": "Tahmini bütçe",
+        "DisplayName:PartnerName": "Ortak kuruluş",
         "DisplayName:GrantId": "Hibe",
         "DisplayName:HourOfDay": "Günün saati",
         "DisplayName:HourlyRate": "Saatlik ücret",

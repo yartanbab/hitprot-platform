@@ -95,6 +95,15 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
             var interest = await _interestRepo.GetAsync(interestId);
             callId = interest.GrantCallId;
 
+            // 🔴 Kapı YAN ETKİDEN ÖNCE: karara bağlanmış ya da firmanın geri çektiği talepte
+            // başvuru yazılmadan durulur. Aşağıdaki MarkApplicationStarted da aynı kuralı
+            // uygular ama başvuru ondan önce kaydedildiği için kaydı geri almak işlemin
+            // geri sarılmasına kalırdı — firma ilgisini çekerken host sayfası açıksa bu yarış gerçek.
+            if (!interest.IsPending)
+            {
+                throw new BusinessException(PlatformDomainErrorCodes.GrantInterestAlreadyAnswered);
+            }
+
             // Başvuru KİRACININ bağlamında açılır; host bağlamında açılsaydı firma
             // kendi başvurusunu göremezdi. Aynı çağrıya ikinci başvuru açılmaz
             // (tenant+çağrı benzersiz): eski kayıt varsa talep ona bağlanır.
@@ -215,6 +224,11 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
                             : (int)(call.Deadline.Value.Date - today).TotalDays,
                         CreationTime = interest.CreationTime,
                         Note = interest.Note,
+                        EstimatedBudget = interest.EstimatedBudget,
+                        TargetStartDate = interest.TargetStartDate,
+                        NeedsPartner = interest.NeedsPartner,
+                        PartnerName = interest.PartnerName,
+                        WithdrawnAt = interest.WithdrawnAt,
                         Status = interest.Status,
                         HostFeedback = interest.HostFeedback,
                         RequestedByName = interest.RequestedByUserId.HasValue

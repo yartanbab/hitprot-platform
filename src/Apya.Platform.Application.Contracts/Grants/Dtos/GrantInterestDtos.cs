@@ -4,14 +4,34 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Apya.Platform.Grants.Dtos;
 
-/// <summary>Kiracı: "İlgileniyorum" talebi.</summary>
+/// <summary>
+/// Kiracı: "İlgileniyorum" talebi — hibe detayındaki onay adımından sonra doldurulan
+/// proje fikri. Talep host kutusuna bu bilgilerle düşer.
+/// </summary>
 public class ExpressGrantInterestInput
 {
     [Required(ErrorMessage = "Çağrı seçilmedi.")]
     public Guid GrantCallId { get; set; }
 
-    [StringLength(1000, ErrorMessage = "Not en fazla 1000 karakter olabilir.")]
-    public string? Note { get; set; }
+    /// <summary>Proje fikri, birkaç cümle. Danışmanın ön değerlendirmesi buradan başlar.</summary>
+    [Required(ErrorMessage = "Proje fikrinizi birkaç cümleyle yazın.")]
+    [StringLength(1000, ErrorMessage = "Proje fikri en fazla 1000 karakter olabilir.")]
+    public string Note { get; set; } = string.Empty;
+
+    [Range(typeof(decimal), "0", "999999999999", ErrorMessage = "Bütçe negatif olamaz.")]
+    public decimal? EstimatedBudget { get; set; }
+
+    /// <summary>Hedeflenen başlangıç çeyreğinin ilk günü. Boş = henüz belli değil.</summary>
+    public DateTime? TargetStartDate { get; set; }
+
+    /// <summary>
+    /// Yalnız konsorsiyum şartı taşıyan çağrıda sorulur ve orada ZORUNLUDUR (servis denetler).
+    /// true = ortak arıyor · false = ortağı belli.
+    /// </summary>
+    public bool? NeedsPartner { get; set; }
+
+    [StringLength(200, ErrorMessage = "Ortak kuruluşun adı en fazla 200 karakter olabilir.")]
+    public string? PartnerName { get; set; }
 }
 
 /// <summary>Kiracının kendi ilgi talebi — "İlgi Taleplerim" satırı ve detay rozeti.</summary>
@@ -24,6 +44,11 @@ public class MyGrantInterestDto
     public DateTime CreationTime { get; set; }
     public GrantInterestStatus Status { get; set; }
     public string? Note { get; set; }
+    public decimal? EstimatedBudget { get; set; }
+    public DateTime? TargetStartDate { get; set; }
+    public bool? NeedsPartner { get; set; }
+    public string? PartnerName { get; set; }
+    public DateTime? WithdrawnAt { get; set; }
 
     /// <summary>Host'un gerekçesi — yalnız uygun bulunmayan taleplerde dolu.</summary>
     public string? HostFeedback { get; set; }
@@ -58,7 +83,19 @@ public class GrantInterestRowDto
     public int? DaysRemaining { get; set; }
 
     public DateTime CreationTime { get; set; }
+
+    /// <summary>Proje fikri.</summary>
     public string? Note { get; set; }
+
+    public decimal? EstimatedBudget { get; set; }
+    public DateTime? TargetStartDate { get; set; }
+
+    /// <summary>null = soru sorulmadı (çağrı ortaklık istemiyor) · true = ortak arıyor · false = ortağı belli.</summary>
+    public bool? NeedsPartner { get; set; }
+
+    public string? PartnerName { get; set; }
+    public DateTime? WithdrawnAt { get; set; }
+
     public GrantInterestStatus Status { get; set; }
     public string? HostFeedback { get; set; }
 

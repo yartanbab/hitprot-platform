@@ -28,6 +28,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
+    private readonly IRepository<GrantBookmark, Guid> _bookmarkRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
@@ -37,6 +38,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         IRepository<GrantApplication, Guid> appRepo,
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
+        IRepository<GrantBookmark, Guid> bookmarkRepo,
         ITenantRepository tenantRepo,
         GrantNotificationDispatcher notifyDispatcher,
         IDataFilter<IMultiTenant> mtFilter)
@@ -45,6 +47,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         _appRepo = appRepo;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
+        _bookmarkRepo = bookmarkRepo;
         _tenantRepo = tenantRepo;
         _notifyDispatcher = notifyDispatcher;
         _mtFilter = mtFilter;
@@ -54,16 +57,30 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
     {
         // Yalnız HOST kataloğuna ilgi bildirilebilir. Filtre kapalıyken TenantId koşulu
         // elle konmazsa kiracı, başka kiracının çağrı Id'siyle kendine talep açabilir.
-        bool callExists;
+        GrantCall? call;
+        Grant? grant = null;
         using (_mtFilter.Disable())
         {
-            callExists = await _callRepo.FirstOrDefaultAsync(
-                c => c.Id == input.GrantCallId && c.TenantId == null) != null;
+            call = await _callRepo.FirstOrDefaultAsync(
+                c => c.Id == input.GrantCallId && c.TenantId == null);
+            if (call != null)
+            {
+                grant = await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId && g.TenantId == null);
+            }
         }
-        if (!callExists)
+        if (call == null || grant == null)
         {
             throw new EntityNotFoundException(typeof(GrantCall), input.GrantCallId);
         }
+
+        // Ortak sorusu yalnız konsorsiyum şartlı çağrıda sorulur ve orada cevapsız geçilemez:
+        // danışmanın ilk bakacağı eksik budur. Şartsız çağrıda gelen cevap SAKLANMAZ —
+        // soru ekranda hiç görünmediyse "ortak arıyor" diye bir bilgi de yoktur.
+        if (grant.RequiresConsortium && input.NeedsPartner == null)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantInterestPartnerAnswerRequired);
+        }
+        var needsPartner = grant.RequiresConsortium ? input.NeedsPartner : null;
 
         // Süren talep ya da açılmış başvuru varsa ikincisi yazılmaz. Uygun bulunmayan
         // talep ise kapıyı KAPATMAZ: firma durumunu düzeltip yeniden bildirebilir,
@@ -82,9 +99,21 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
             CurrentTenant.Id,
             input.GrantCallId,
             CurrentUser.Id,
-            input.Note);
+            input.Note,
+            input.EstimatedBudget,
+            input.TargetStartDate,
+            needsPartner,
+            needsPartner == false ? input.PartnerName : null);
 
         await _interestRepo.InsertAsync(interest, autoSave: true);
+
+        // İlgi bildirilen çağrı takip listesine düşer (tur 14): son tarih ve metin
+        // değişikliği bildirimleri takip listesinden akar. Zaten takipteyse ikinci satır açılmaz.
+        if (await _bookmarkRepo.FirstOrDefaultAsync(b => b.GrantCallId == input.GrantCallId) == null)
+        {
+            await _bookmarkRepo.InsertAsync(
+                new GrantBookmark(GuidGenerator.Create(), CurrentTenant.Id, input.GrantCallId), autoSave: true);
+        }
 
         var catalog = await ResolveCatalogAsync(new[] { interest.GrantCallId });
         await NotifyHostAsync(interest, catalog);
@@ -105,6 +134,19 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
             .OrderByDescending(i => i.CreationTime)
             .Select(i => MapMine(i, catalog))
             .ToList();
+    }
+
+    public async Task<MyGrantInterestDto> WithdrawAsync(Guid id)
+    {
+        // Kiracı filtresi açık: başka firmanın talebi bulunmaz, "yok" sayılır.
+        var interest = await _interestRepo.FirstOrDefaultAsync(i => i.Id == id)
+                       ?? throw new BusinessException(PlatformDomainErrorCodes.GrantInterestNotFound);
+
+        interest.Withdraw(Clock.Now);
+        await _interestRepo.UpdateAsync(interest, autoSave: true);
+
+        var catalog = await ResolveCatalogAsync(new[] { interest.GrantCallId });
+        return MapMine(interest, catalog);
     }
 
     /// <summary>
@@ -197,6 +239,11 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
             CreationTime = interest.CreationTime,
             Status = interest.Status,
             Note = interest.Note,
+            EstimatedBudget = interest.EstimatedBudget,
+            TargetStartDate = interest.TargetStartDate,
+            NeedsPartner = interest.NeedsPartner,
+            PartnerName = interest.PartnerName,
+            WithdrawnAt = interest.WithdrawnAt,
             HostFeedback = interest.HostFeedback,
             GrantApplicationId = interest.GrantApplicationId
         };

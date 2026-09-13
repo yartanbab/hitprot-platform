@@ -2070,6 +2070,8 @@
     "DisplayName:Name": "Name",
     "DisplayName:NewAmount": "New amount",
     "DisplayName:Note": "Note",
+    "DisplayName:EstimatedBudget": "Estimated budget",
+    "DisplayName:PartnerName": "Partner organisation",
     "DisplayName:Notes": "Notes",
     "DisplayName:OpeningBalance": "Opening balance",
     "DisplayName:OperationalContactName": "Operational contact name",
