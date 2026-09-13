@@ -27,8 +27,8 @@
             <button type="button" id="BookmarkBtn" class="btn btn-sm btn-outline-secondary">
                 <i class="fa fa-bookmark me-1"></i><span id="BookmarkText"></span>
             </button>
-            @* Kiracı başvuruyu kendi açmaz: ilgi bildirir, host değerlendirir.
-               Buton ve rozet dönüşümlü görünür — durumu JS boyar. *@
+            @* Kiracı başvuruyu kendi açmaz: ilgi bildirir, host değerlendirir (tur 14).
+               "İlgileniyorum" YALNIZ burada — kartlar "İncele" der. Durumu JS boyar. *@
             <button type="button" id="InterestBtn" class="btn btn-sm btn-primary d-none">
                 <i class="fa fa-handshake me-1"></i><span id="InterestBtnText"></span>
             </button>
@@ -53,9 +53,31 @@
                 <i class="fa fa-circle-info mt-1"></i>
                 <span><strong>@L["Grants:Interest:Feedback"]:</strong> <span id="InterestFeedbackText"></span></span>
             </div>
+            <div id="InterestWithdrawn" class="apya-side-note apya-side-note--quiet d-none">
+                <i class="fa fa-rotate-left mt-1"></i>
+                <span id="InterestWithdrawnText"></span>
+            </div>
             <div class="apya-detail-metrics" id="CallMetrics"></div>
         </div>
     </div>
+
+    @* Tur 14 · "İlginiz iletildi" + dört adımlı ilerleme. Talep sürerken ve başvuruya
+       döndüğünde görünür; reddedilen / geri çekilen talep başlık kartındaki notla anlatılır. *@
+    <section id="InterestState" class="apya-interest-state d-none" aria-live="polite">
+        <div id="InterestSent" class="apya-interest-sent d-none">
+            <span class="apya-interest-sent-icon"><i class="fa fa-circle-check"></i></span>
+            <div class="min-w-0">
+                <div class="apya-interest-sent-title">@L["Grants:Interest:Sent:Title"]</div>
+                <div class="apya-interest-sent-text" id="InterestSentText"></div>
+            </div>
+        </div>
+        <ol class="apya-interest-steps" id="InterestSteps"></ol>
+        <div class="apya-interest-actions">
+            <button type="button" id="InterestWithdrawBtn" class="btn apya-interest-withdraw d-none">
+                <i class="fa fa-rotate-left me-1"></i>@L["Grants:Interest:Withdraw"]
+            </button>
+        </div>
+    </section>
 
     <div class="apya-detail-layout">
         <div class="d-flex flex-column gap-4">
@@ -156,26 +178,91 @@
     </div>
 </div>
 
-@* ---- İlgi talebi modalı ---- *@
-<div class="modal fade" id="InterestModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <form id="InterestForm">
-                <div class="modal-header">
-                    <h5 class="modal-title">@L["Grants:Interest:Modal:Title"]</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+@* ---- Tur 14 · İlgi onayı (1. adım) + proje fikri (2. adım) ----
+   Modal sayfa kabının DIŞINDA; okunabilirlik token'ları gelsin diye kapsam sınıfı kendisinde. *@
+<div class="modal fade apya-grant-scope" id="InterestModal" tabindex="-1" aria-hidden="true" aria-labelledby="InterestConfirmTitle">
+    <div class="modal-dialog modal-dialog-centered apya-interest-dialog">
+        <div class="modal-content apya-interest-modal">
+            <form id="InterestForm" novalidate>
+                @* 1. adım — ne olacağı açıkça yazılı, vazgeçme hakkı net. *@
+                <div class="apya-interest-pane" data-pane="confirm">
+                    <div class="apya-interest-body">
+                        <span class="apya-interest-icon"><i class="fa fa-hand-point-up"></i></span>
+                        <div>
+                            <h5 class="apya-interest-title" id="InterestConfirmTitle">@L["Grants:Interest:Confirm:Title"]</h5>
+                            <p class="apya-interest-lead">@L["Grants:Interest:Confirm:Lead"]</p>
+                        </div>
+                        <ul class="apya-interest-facts">
+                            <li><i class="fa fa-file-pen"></i><span>@L["Grants:Interest:Confirm:Form"]</span></li>
+                            <li><i class="fa fa-user-check"></i><span>@L["Grants:Interest:Confirm:Review"]</span></li>
+                            <li><i class="fa fa-rotate-left is-quiet"></i><span>@L["Grants:Interest:Confirm:NoCommitment"]</span></li>
+                        </ul>
+                    </div>
+                    <div class="apya-interest-foot">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Interest:Confirm:Cancel"]</button>
+                        <button type="button" class="btn btn-primary" id="InterestContinue">@L["Grants:Interest:Confirm:Continue"]</button>
+                    </div>
                 </div>
-                <div class="modal-body d-flex flex-column gap-2">
-                    <div class="small text-muted">@L["Grants:Interest:Modal:Hint"]</div>
-                    <label class="form-label mb-0" for="InterestNote">@L["Grants:Interest:Modal:Note"]</label>
-                    <textarea class="form-control" id="InterestNote" rows="4" maxlength="1000"></textarea>
-                    <div class="small text-muted">@L["Grants:Interest:Modal:NoteOptional"]</div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Sources:Cancel"]</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-paper-plane me-1"></i>@L["Grants:Interest:Modal:Submit"]
-                    </button>
+
+                @* 2. adım — proje fikri. Çağrı bu sayfadan seçili gelir. *@
+                <div class="apya-interest-pane d-none" data-pane="form">
+                    <div class="apya-interest-body">
+                        <div>
+                            <h5 class="apya-interest-title">@L["Grants:Interest:Form:Title"]</h5>
+                            <p class="apya-interest-lead mb-0">@L["Grants:Interest:Form:Lead"]</p>
+                        </div>
+
+                        <div class="apya-interest-field">
+                            <span class="form-label mb-0">@L["Grants:Interest:Form:Call"]</span>
+                            <div class="apya-interest-call">
+                                <span id="InterestCallName"></span>
+                                <span class="apya-chip apya-chip-accent">@L["Grants:Interest:Form:CallPreselected"]</span>
+                            </div>
+                        </div>
+
+                        <div class="apya-interest-field">
+                            <label class="form-label mb-0" for="InterestNote">@L["Grants:Interest:Form:Idea"] <span class="text-danger" aria-hidden="true">*</span></label>
+                            <textarea class="form-control" id="InterestNote" rows="4" maxlength="1000" required></textarea>
+                            <div class="invalid-feedback">@L["Grants:Interest:Form:IdeaRequired"]</div>
+                        </div>
+
+                        <div class="apya-interest-grid">
+                            <div class="apya-interest-field">
+                                <label class="form-label mb-0" for="InterestBudget">@L["Grants:Interest:Form:Budget"]</label>
+                                <input type="number" min="0" step="0.01" class="form-control apya-numeric" id="InterestBudget" data-money-input="true" />
+                            </div>
+                            <div class="apya-interest-field">
+                                <label class="form-label mb-0" for="InterestStart">@L["Grants:Interest:Form:TargetStart"]</label>
+                                <select class="form-select" id="InterestStart"></select>
+                            </div>
+                        </div>
+
+                        @* Yalnız konsorsiyum şartlı çağrıda görünür ve orada zorunludur. *@
+                        <fieldset id="InterestPartnerBlock" class="apya-interest-field d-none">
+                            <legend class="form-label mb-0">@L["Grants:Interest:Form:Partner"] <span class="text-danger" aria-hidden="true">*</span></legend>
+                            <div class="apya-interest-choices">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="InterestPartner" id="InterestPartnerHas" value="has" />
+                                    <label class="form-check-label" for="InterestPartnerHas">@L["Grants:Interest:Form:Partner:Has"]</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="InterestPartner" id="InterestPartnerNeeds" value="needs" />
+                                    <label class="form-check-label" for="InterestPartnerNeeds">@L["Grants:Interest:Form:Partner:Needs"]</label>
+                                </div>
+                            </div>
+                            <div class="invalid-feedback" id="InterestPartnerError">@L["Grants:Interest:Form:PartnerRequired"]</div>
+                            <input type="text" class="form-control d-none" id="InterestPartnerName" maxlength="200"
+                                   placeholder="@L["Grants:Interest:Form:PartnerName"]" aria-label="@L["Grants:Interest:Form:PartnerName"]" />
+                            <div id="InterestPartnerHint" class="apya-side-note apya-side-note--quiet d-none">
+                                <i class="fa fa-lightbulb mt-1"></i>
+                                <span>@L["Grants:Interest:Form:PartnerHint"]</span>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="apya-interest-foot">
+                        <button type="button" class="btn btn-outline-secondary" id="InterestBack">@L["Grants:Interest:Form:Back"]</button>
+                        <button type="submit" class="btn btn-primary">@L["Grants:Interest:Form:Submit"]</button>
+                    </div>
                 </div>
             </form>
         </div>

@@ -108,3 +108,18 @@
 .apya-int-extra {
     padding: 0 var(--apya-space-4) 10px;
 }
+
+/* Proje fikri + altındaki tek satır (bütçe · başlangıç · ortak durumu).
+   Sayfa hibe okunabilirlik kapsamında değil: meta satırı tertiary yerine secondary. */
+.apya-int-idea {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.apya-int-meta {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-text-xs);
+    overflow-wrap: anywhere;
+}
