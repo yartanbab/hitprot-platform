@@ -50,3 +50,264 @@
     font-size: var(--apya-fs-md);
     font-weight: var(--apya-weight-semibold);
 }
+
+/* =============================================================================
+   Tur 14 · İlgi akışı — "İlginiz iletildi" şeridi, dört adım, onay diyaloğu.
+   Tasarım 14a. Değerler token; tasarımdaki 10px köşe radius-lg'ye, #A7F3D0 kenarlık
+   positive-500'ün karışımına indi. Diyaloğun 16px köşesi UYGULANMADI: tema köprüsü
+   bütün modallara !important ile radius-xl (12px) veriyor; tek modalı ayırmak yerine
+   platform kuralı korundu.
+   ============================================================================= */
+.apya-interest-state {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+    margin-bottom: var(--apya-space-6);
+}
+
+.apya-interest-sent {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px 20px;
+    border: 1px solid color-mix(in srgb, var(--apya-positive-500) 32%, var(--apya-border-default));
+    border-radius: var(--apya-radius-xl);
+    background: color-mix(in srgb, var(--apya-positive-500) 6%, var(--apya-surface-base));
+}
+
+.apya-interest-sent-icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--apya-radius-lg);
+    background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent);
+    color: var(--apya-positive-700);
+    font-size: 15px;
+}
+
+.apya-interest-sent-title {
+    margin-bottom: 3px;
+    color: var(--apya-positive-700);
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-interest-sent-text {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-base);
+    line-height: var(--apya-leading-base);
+}
+
+.apya-interest-steps {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 4px 20px;
+    list-style: none;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+}
+
+.apya-interest-step {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: 14px 0;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+
+.apya-interest-step:last-child { border-bottom: 0; }
+
+.apya-interest-dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-border-default);
+}
+
+.apya-interest-step.is-done .apya-interest-dot { background: var(--apya-positive-500); }
+
+.apya-interest-step.is-current .apya-interest-dot {
+    background: var(--apya-accent-500);
+    box-shadow: 0 0 0 4px var(--apya-accent-soft);
+}
+
+.apya-interest-step-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-interest-step-title {
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-interest-step-sub {
+    color: var(--apya-text-tertiary);
+    font-size: var(--apya-fs-xs);
+}
+
+/* Gelecek adım soluk ama OKUNUR: kapsamda tertiary AA'yı geçiyor (10a). */
+.apya-interest-step.is-pending .apya-interest-step-title { color: var(--apya-text-tertiary); }
+
+.apya-interest-step-check {
+    color: var(--apya-positive-500);
+    font-size: 12px;
+}
+
+.apya-interest-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+/* "İlgimi geri çek" — vazgeçme hakkı görünür ama birincil eylemle yarışmaz. */
+.apya-interest-withdraw {
+    border-color: transparent;
+    background: transparent;
+    color: var(--apya-text-secondary);
+}
+
+.apya-interest-withdraw:hover,
+.apya-interest-withdraw:focus-visible {
+    border-color: transparent;
+    background: var(--apya-surface-hover);
+    color: var(--apya-text-primary);
+}
+
+/* --- Onay diyaloğu --- */
+.apya-interest-dialog { max-width: 500px; }
+
+.apya-interest-modal {
+    overflow: hidden;
+    border: 0;
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-xl);
+}
+
+.apya-interest-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 26px 28px 0;
+}
+
+.apya-interest-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-size: 19px;
+}
+
+.apya-interest-title {
+    margin: 0 0 6px;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-interest-lead {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+    line-height: 1.6;
+}
+
+.apya-interest-facts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: var(--apya-space-4);
+    list-style: none;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-raised);
+}
+
+.apya-interest-facts li {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-base);
+    line-height: var(--apya-leading-base);
+}
+
+.apya-interest-facts i {
+    margin-top: 3px;
+    color: var(--apya-accent-500);
+    font-size: 13px;
+}
+
+.apya-interest-facts i.is-quiet { color: var(--apya-text-tertiary); }
+
+.apya-interest-foot {
+    display: flex;
+    gap: 10px;
+    padding: 20px 28px 24px;
+}
+
+.apya-interest-foot .btn { flex: 1; }
+.apya-interest-foot .btn-primary { flex: 1.5; }
+
+.apya-interest-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.apya-interest-field legend { float: none; width: auto; }
+
+.apya-interest-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+}
+
+.apya-interest-call {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 10px 12px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-interest-choices {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-1);
+}
+
+@media (max-width: 575.98px) {
+    .apya-interest-body { padding: 22px 20px 0; }
+    .apya-interest-foot { flex-direction: column-reverse; padding: 18px 20px 20px; }
+    .apya-interest-grid { grid-template-columns: minmax(0, 1fr); }
+    .apya-interest-sent { padding: 14px 16px; }
+    .apya-interest-steps { padding: 2px 16px; }
+}

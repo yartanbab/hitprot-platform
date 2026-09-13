@@ -17,4 +17,10 @@ public interface IGrantInterestAppService : IApplicationService
     Task<MyGrantInterestDto> ExpressAsync(ExpressGrantInterestInput input);
 
     Task<List<MyGrantInterestDto>> GetMineAsync();
+
+    /// <summary>
+    /// İlgiyi geri çeker. Yalnız karara bağlanmamış talep çekilebilir; sonra aynı
+    /// çağrıya yeniden ilgi bildirilebilir (yeni kayıt açılır).
+    /// </summary>
+    Task<MyGrantInterestDto> WithdrawAsync(Guid id);
 }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Grants;
 using Apya.Platform.Grants.Dtos;
+using Apya.Platform.Notifications;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
@@ -28,6 +29,9 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
     private readonly IRepository<Grant, Guid> _grantRepository;
     private readonly IRepository<GrantCall, Guid> _callRepository;
     private readonly IRepository<GrantApplication, Guid> _applicationRepository;
+    private readonly IRepository<Notification, Guid> _notificationRepository;
+    private readonly IRepository<GrantBookmark, Guid> _bookmarkRepository;
+    private readonly IRepository<GrantInterest, Guid> _interestRepository;
     private readonly ITenantManager _tenantManager;
     private readonly ITenantRepository _tenantRepository;
     private readonly ICurrentTenant _currentTenant;
@@ -39,17 +43,23 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         _grantRepository = GetRequiredService<IRepository<Grant, Guid>>();
         _callRepository = GetRequiredService<IRepository<GrantCall, Guid>>();
         _applicationRepository = GetRequiredService<IRepository<GrantApplication, Guid>>();
+        _notificationRepository = GetRequiredService<IRepository<Notification, Guid>>();
+        _bookmarkRepository = GetRequiredService<IRepository<GrantBookmark, Guid>>();
+        _interestRepository = GetRequiredService<IRepository<GrantInterest, Guid>>();
         _tenantManager = GetRequiredService<ITenantManager>();
         _tenantRepository = GetRequiredService<ITenantRepository>();
         _currentTenant = GetRequiredService<ICurrentTenant>();
     }
 
     /// <summary>Host kataloğunda açık bir çağrı.</summary>
-    private async Task<GrantCall> CreateHostCallAsync(string name)
+    private async Task<GrantCall> CreateHostCallAsync(string name, bool requiresConsortium = false)
     {
         _currentTenant.Id.ShouldBeNull("katalog host bağlamında tohumlanmalı");
 
-        var grant = new Grant(Guid.NewGuid(), name, "Kurum", maxAmount: 100_000m, minMatchScore: 0);
+        var grant = new Grant(Guid.NewGuid(), name, "Kurum", maxAmount: 100_000m, minMatchScore: 0)
+        {
+            RequiresConsortium = requiresConsortium
+        };
         await _grantRepository.InsertAsync(grant, autoSave: true);
 
         var call = new GrantCall(Guid.NewGuid(), grant.Id, "2026/1", GrantCallStatus.Acik);
@@ -104,6 +114,33 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     [Fact]
+    public async Task Talep_birakilinca_host_bildirim_alir()
+    {
+        var call = await CreateHostCallAsync("Bildirim Programı");
+        var tenantId = await CreateTenantAsync("Haber Veren " + Guid.NewGuid().ToString("N")[..6]);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+            {
+                GrantCallId = call.Id,
+                Note = "Ortak arayışımız var."
+            });
+        }
+
+        // Bildirim HOST'a gider: kiracıya değil, kutuyu açacak danışman ekibine.
+        var notifications = await _notificationRepository.GetListAsync(
+            n => n.Type == NotificationType.GrantInterestReceived);
+
+        notifications.ShouldNotBeEmpty("kiracı ilgi bildirdiğinde host haberdar olmalı");
+        notifications.ShouldContain(n => n.TenantId == null, "alıcı host kullanıcısıdır");
+
+        var latest = notifications.OrderByDescending(n => n.CreationTime).First();
+        latest.Body.ShouldContain("Bildirim Programı");
+        latest.Body.ShouldContain("Ortak arayışımız var.");
+    }
+
+    [Fact]
     public async Task Kiracinin_talebi_baska_kiraciya_sizmaz()
     {
         var call = await CreateHostCallAsync("Sızıntı Kontrolü Programı");
@@ -114,12 +151,133 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(tenantA))
         {
             interestId = (await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id })).Id;
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" })).Id;
         }
 
         using (_currentTenant.Change(tenantB))
         {
             (await _interestAppService.GetMineAsync()).ShouldNotContain(i => i.Id == interestId);
+        }
+    }
+
+    [Fact]
+    public async Task Konsorsiyum_sartli_cagrida_ortak_cevabi_zorunlu_ve_saklanir()
+    {
+        var consortiumCall = await CreateHostCallAsync("Ortaklık Şartlı Program", requiresConsortium: true);
+        var plainCall = await CreateHostCallAsync("Şartsız Program");
+        var tenantId = await CreateTenantAsync("Ortak Arayan " + Guid.NewGuid().ToString("N")[..6]);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            (await Should.ThrowAsync<BusinessException>(() => _interestAppService.ExpressAsync(
+                    new ExpressGrantInterestInput { GrantCallId = consortiumCall.Id, Note = "Fikir" })))
+                .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestPartnerAnswerRequired);
+
+            var answered = await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+            {
+                GrantCallId = consortiumCall.Id,
+                Note = "Öngörülü bakım modülü",
+                EstimatedBudget = 12_500_000m,
+                TargetStartDate = new DateTime(2027, 1, 1),
+                NeedsPartner = true
+            });
+            answered.NeedsPartner.ShouldBe(true);
+            answered.EstimatedBudget.ShouldBe(12_500_000m);
+            answered.TargetStartDate.ShouldBe(new DateTime(2027, 1, 1));
+
+            // Şartsız çağrıda soru ekranda hiç çıkmaz; gelen cevap SAKLANMAZ.
+            var plain = await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+            {
+                GrantCallId = plainCall.Id,
+                Note = "Fikir",
+                NeedsPartner = false,
+                PartnerName = "Uydurma Ortak"
+            });
+            plain.NeedsPartner.ShouldBeNull();
+            plain.PartnerName.ShouldBeNull();
+        }
+
+        // Host kutusu yeni alanları görür.
+        var row = (await _hostAppService.GetAsync(onlyPending: true)).Items
+            .Single(i => i.GrantCallId == consortiumCall.Id);
+        row.Note.ShouldBe("Öngörülü bakım modülü");
+        row.NeedsPartner.ShouldBe(true);
+        row.EstimatedBudget.ShouldBe(12_500_000m);
+    }
+
+    [Fact]
+    public async Task Ilgi_bildirilen_cagri_takibe_alinir_ve_ikinci_satir_acilmaz()
+    {
+        var call = await CreateHostCallAsync("Takip Programı");
+        var tenantId = await CreateTenantAsync("Takipçi Firma " + Guid.NewGuid().ToString("N")[..6]);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            var first = await _interestAppService.ExpressAsync(
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir" });
+            (await _bookmarkRepository.GetListAsync(b => b.GrantCallId == call.Id)).Count.ShouldBe(1);
+
+            // Geri çek + yeniden bildir: takip satırı çoğalmamalı.
+            await _interestAppService.WithdrawAsync(first.Id);
+            await _interestAppService.ExpressAsync(
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir, ikinci kez" });
+            (await _bookmarkRepository.GetListAsync(b => b.GrantCallId == call.Id)).Count.ShouldBe(1);
+        }
+    }
+
+    [Fact]
+    public async Task Geri_cekilen_talep_kutuda_bekleyen_sayilmaz_ve_baslatilamaz()
+    {
+        var call = await CreateHostCallAsync("Vazgeçilen Program");
+        var tenantId = await CreateTenantAsync("Vazgeçen Firma " + Guid.NewGuid().ToString("N")[..6]);
+
+        Guid interestId;
+        using (_currentTenant.Change(tenantId))
+        {
+            interestId = (await _interestAppService.ExpressAsync(
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir" })).Id;
+
+            var withdrawn = await _interestAppService.WithdrawAsync(interestId);
+            withdrawn.Status.ShouldBe(GrantInterestStatus.GeriCekildi);
+            withdrawn.WithdrawnAt.ShouldNotBeNull();
+        }
+
+        (await _hostAppService.GetAsync(onlyPending: true)).Items.ShouldNotContain(i => i.Id == interestId);
+        (await _hostAppService.GetAsync(onlyPending: false)).Items
+            .Single(i => i.Id == interestId).Status.ShouldBe(GrantInterestStatus.GeriCekildi);
+
+        (await Should.ThrowAsync<BusinessException>(() => _hostAppService.StartApplicationAsync(interestId)))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestAlreadyAnswered);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            (await _applicationRepository.GetListAsync(a => a.GrantCallId == call.Id)).Count.ShouldBe(0);
+        }
+    }
+
+    [Fact]
+    public async Task Baska_kiracinin_talebi_geri_cekilemez()
+    {
+        var call = await CreateHostCallAsync("Yabancı Talep Programı");
+        var tenantA = await CreateTenantAsync("Sahip Firma " + Guid.NewGuid().ToString("N")[..6]);
+        var tenantB = await CreateTenantAsync("Yabancı Firma " + Guid.NewGuid().ToString("N")[..6]);
+
+        Guid interestId;
+        using (_currentTenant.Change(tenantA))
+        {
+            interestId = (await _interestAppService.ExpressAsync(
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir" })).Id;
+        }
+
+        using (_currentTenant.Change(tenantB))
+        {
+            (await Should.ThrowAsync<BusinessException>(() => _interestAppService.WithdrawAsync(interestId)))
+                .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestNotFound);
+        }
+
+        using (_currentTenant.Change(tenantA))
+        {
+            (await _interestRepository.GetAsync(interestId)).Status.ShouldBe(GrantInterestStatus.Yeni);
         }
     }
 
@@ -131,10 +289,10 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
 
         using (_currentTenant.Change(tenantId))
         {
-            await _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id });
+            await _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" });
 
             (await Should.ThrowAsync<BusinessException>(
-                    () => _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id })))
+                    () => _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" })))
                 .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestAlreadyOpen);
         }
     }
@@ -149,7 +307,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(tenantId))
         {
             firstId = (await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id })).Id;
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" })).Id;
         }
 
         await _hostAppService.RejectAsync(new RejectGrantInterestInput
@@ -162,7 +320,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         {
             // Red kapıyı kapatmaz: YENİ kayıt açılır, eski gerekçe geçmişte kalır.
             var second = await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id });
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" });
             second.Id.ShouldNotBe(firstId);
 
             var mine = await _interestAppService.GetMineAsync();

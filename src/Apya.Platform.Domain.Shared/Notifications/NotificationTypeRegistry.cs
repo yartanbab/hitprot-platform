@@ -109,6 +109,12 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-handshake", "/Grants/MyApplications", GroupSimilar: false),
 
+            // Host'a giden tek hibe bildirimi. Aynı gün birden çok firma talep
+            // bırakabilir; okunmamış satır varsa sayaç artar, kutu tek satır kalır.
+            [NotificationType.GrantInterestReceived] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-inbox", "/Grants/Interests", GroupSimilar: true),
+
             [NotificationType.AiWorkflowTriggered] = new(
                 NotificationCategory.Ai, NotificationSeverity.Info,
                 "fa fa-robot", "/AiCenter/Evaluations", GroupSimilar: false),

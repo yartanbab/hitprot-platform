@@ -58,7 +58,18 @@ public class GrantCallDetailDto
     public bool AlreadyApplied { get; set; }
     public bool IsBookmarked { get; set; }
 
+    /// <summary>Çağrı konsorsiyum şartı taşıyor mu — ilgi formundaki ortak sorusu buna göre görünür.</summary>
+    public bool RequiresConsortium { get; set; }
+
     // --- İlgi talebi (son kayıt) ---
+
+    /// <summary>Son talebin kimliği — "İlgimi geri çek" buna gider.</summary>
+    public Guid? InterestId { get; set; }
+
+    /// <summary>"İlginiz iletildi" şeridindeki zaman.</summary>
+    public DateTime? InterestCreationTime { get; set; }
+
+    public DateTime? InterestWithdrawnAt { get; set; }
 
     /// <summary>Hiç talep bırakılmadıysa null — buton "İlgileniyorum" olarak çıkar.</summary>
     public GrantInterestStatus? InterestStatus { get; set; }

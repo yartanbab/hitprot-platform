@@ -37,5 +37,11 @@ public enum GrantNotificationTrigger
     /// Host, kiracının ilgi talebini karara bağladı. Başvuru süreci başlatıldıysa
     /// gövde bunu duyurur; uygun bulunmadıysa gerekçeyi taşır.
     /// </summary>
-    InterestAnswered = 7
+    InterestAnswered = 7,
+
+    /// <summary>
+    /// Kiracı bir çağrıya ilgi bildirdi. 🔴 Tek HOST'A giden tetikleyici: alıcı
+    /// firma değil danışman ekibidir, kutuyu kimsenin açmasını beklemeyelim diye.
+    /// </summary>
+    InterestReceived = 8
 }

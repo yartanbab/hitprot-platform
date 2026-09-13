@@ -7,9 +7,9 @@ namespace Apya.Platform.Grants;
 /// Başvuru ancak <see cref="BasvuruAcildi"/> ile doğar — o ana kadar ortada
 /// <c>GrantApplication</c> yoktur.</para>
 ///
-/// <para>"Vazgeçildi" durumu YOK: talebi geri çekme ekranı kurulmadı. Uygun
-/// bulunmayan talep kapanır ama çağrıyı kilitlemez; kiracı yeniden bildirebilir
-/// ve bu YENİ bir kayıt açar — eski gerekçe geçmişte kalır.</para>
+/// <para>Kapanan talep (uygun bulunmayan ya da firmanın geri çektiği) çağrıyı
+/// kilitlemez; kiracı yeniden bildirebilir ve bu YENİ bir kayıt açar — eski kayıt
+/// geçmişte kalır.</para>
 /// </summary>
 public enum GrantInterestStatus
 {
@@ -22,5 +22,11 @@ public enum GrantInterestStatus
     BasvuruAcildi = 2,
 
     /// <summary>Gerekçesiyle birlikte kapatıldı; gerekçe kiracıya gösterilir.</summary>
-    UygunDegil = 3
+    UygunDegil = 3,
+
+    /// <summary>
+    /// Firma, karar verilmeden ilgisini geri çekti. Yalnız bekleyen talep geri
+    /// çekilebilir: başvuruya dönmüş ya da reddedilmiş kayıt tarihçedir.
+    /// </summary>
+    GeriCekildi = 4
 }

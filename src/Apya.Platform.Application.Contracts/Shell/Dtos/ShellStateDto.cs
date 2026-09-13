@@ -127,6 +127,13 @@ public class ShellBadgesDto
     /// <summary>Karar bekleyen hibe başvurusu (yalnız host bağlamı + Grants.Edit).</summary>
     public int PendingGrantApplications { get; set; }
 
+    /// <summary>
+    /// Karara bağlanmamış hibe ilgi talebi — kiracıların "İlgileniyorum" dedikleri
+    /// (yalnız host bağlamı + Grants.Edit). Talepler KİRACIYA ait olduğu için sayım
+    /// kiracılar arası yapılır.
+    /// </summary>
+    public int PendingGrantInterests { get; set; }
+
     /// <summary>Son 24 saatte başarısız webhook teslimi (yalnız DynamicAssets yetkisi).</summary>
     public int WebhookErrors { get; set; }
 }

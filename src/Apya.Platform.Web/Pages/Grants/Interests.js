@@ -4,8 +4,8 @@ $(function () {
     var rejectModal = new bootstrap.Modal(document.getElementById('RejectModal'));
 
     // GrantInterestStatus enum sırasıyla birebir.
-    var statusKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil'];
-    var statusTone = ['warning', 'neutral', 'positive', 'negative'];
+    var statusKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi'];
+    var statusTone = ['warning', 'neutral', 'positive', 'negative', 'neutral'];
 
     var model = null;
     var onlyPending = true;
@@ -13,6 +13,34 @@ $(function () {
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function date(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
+    function money(v) { return Math.round(v).toLocaleString('tr-TR') + ' ₺'; }
+
+    // "2027-01-01T00:00:00" → "2027 · 1. çeyrek". Yıl/ay dizeden okunur: Date'e çevirmek
+    // saat dilimiyle bir önceki günü (ve çeyreği) verebilir.
+    function quarter(v) {
+        var y = Number(String(v).slice(0, 4));
+        var m = Number(String(v).slice(5, 7));
+        return l('Grants:Interest:Form:Quarter', y, Math.floor((m - 1) / 3) + 1);
+    }
+
+    /// Proje fikrinin altındaki tek satır: bütçe · başlangıç · ortak durumu. Sayılar mono.
+    function ideaMeta(r) {
+        var parts = [];
+        if (r.estimatedBudget != null) {
+            parts.push(esc(l('Grants:Interests:Meta:Budget')) + ' <span class="apya-numeric">' + esc(money(r.estimatedBudget)) + '</span>');
+        }
+        if (r.targetStartDate) {
+            parts.push(esc(l('Grants:Interests:Meta:Start')) + ' <span class="apya-numeric">' + esc(quarter(r.targetStartDate)) + '</span>');
+        }
+        if (r.needsPartner === true) {
+            parts.push(esc(l('Grants:Interests:Meta:NeedsPartner')));
+        } else if (r.needsPartner === false) {
+            parts.push(r.partnerName
+                ? esc(l('Grants:Interests:Meta:Partner', r.partnerName))
+                : esc(l('Grants:Interests:Meta:HasPartner')));
+        }
+        return parts.length ? '<span class="apya-int-meta">' + parts.join(' · ') + '</span>' : '';
+    }
 
     function deadlineText(r) {
         if (r.deadline == null) { return ''; }
@@ -23,6 +51,12 @@ $(function () {
     }
 
     function actions(r) {
+        // Firmanın geri çektiği talepte eylem YOK — başvuru başlatılamaz, reddedilemez.
+        if (r.status === 4) {
+            return '<span class="small text-muted">' +
+                esc(l('Grants:Interests:WithdrawnAt', date(r.withdrawnAt))) + '</span>';
+        }
+
         // Karara bağlanmış talepte eylem yok: kim, ne zaman kapattı bilgisi kalır.
         if (r.status === 2 || r.status === 3) {
             return r.reviewedAt
@@ -44,9 +78,10 @@ $(function () {
     }
 
     function item(r) {
-        var note = r.note
+        var note = '<span class="apya-int-idea">' + (r.note
             ? '<span class="apya-int-note">' + esc(r.note) + '</span>'
-            : '<span class="apya-int-note is-empty">' + esc(l('Grants:Interests:NoNote')) + '</span>';
+            : '<span class="apya-int-note is-empty">' + esc(l('Grants:Interests:NoNote')) + '</span>') +
+            ideaMeta(r) + '</span>';
 
         var feedback = r.hostFeedback
             ? '<div class="apya-int-extra"><div class="apya-side-note">' +

@@ -22,7 +22,8 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.DecisionIssued]            = NotificationType.GrantDecisionIssued,
             [GrantNotificationTrigger.ReportDeadlineNear]        = NotificationType.GrantReportDue,
             [GrantNotificationTrigger.CallPublished]             = NotificationType.GrantCallPublished,
-            [GrantNotificationTrigger.InterestAnswered]          = NotificationType.GrantInterestAnswered
+            [GrantNotificationTrigger.InterestAnswered]          = NotificationType.GrantInterestAnswered,
+            [GrantNotificationTrigger.InterestReceived]          = NotificationType.GrantInterestReceived
         };
 
     /// <summary>
@@ -63,7 +64,10 @@ public static class GrantNotificationTriggerRegistry
             // tokenda birleştirilseydi gövde "Kararımız: başvuru süreci başlatıldı —"
             // diye yarım cümleyle giderdi.
             [GrantNotificationTrigger.InterestAnswered] =
-                ["{çağrı_adı}", "{karar}", "{gerekçe}"]
+                ["{çağrı_adı}", "{karar}", "{gerekçe}"],
+
+            [GrantNotificationTrigger.InterestReceived] =
+                ["{firma_adı}", "{çağrı_adı}", "{firma_notu}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

@@ -102,4 +102,76 @@ public class GrantInterest_Tests
         Should.Throw<BusinessException>(() => rejected.StartReview(Guid.NewGuid(), Now))
             .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestAlreadyAnswered);
     }
+
+    [Fact]
+    public void Bekleyen_talep_geri_cekilebilir_ve_kapanir()
+    {
+        var fresh = NewInterest();
+        fresh.Withdraw(Now);
+
+        fresh.Status.ShouldBe(GrantInterestStatus.GeriCekildi);
+        fresh.WithdrawnAt.ShouldBe(Now);
+        fresh.IsPending.ShouldBeFalse("geri çekilen talep host kutusunda bekleyen sayılmaz");
+
+        // İncelemeye alınmış talep de karar değildir — firma hâlâ vazgeçebilir.
+        var reviewing = NewInterest();
+        reviewing.StartReview(Guid.NewGuid(), Now);
+        reviewing.Withdraw(Now);
+        reviewing.Status.ShouldBe(GrantInterestStatus.GeriCekildi);
+    }
+
+    [Fact]
+    public void Karara_baglanmis_ya_da_cekilmis_talep_geri_cekilemez()
+    {
+        var started = NewInterest();
+        started.MarkApplicationStarted(Guid.NewGuid(), Guid.NewGuid(), Now);
+        Should.Throw<BusinessException>(() => started.Withdraw(Now))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestNotWithdrawable);
+
+        var rejected = NewInterest();
+        rejected.Reject("gerekçe", Guid.NewGuid(), Now);
+        Should.Throw<BusinessException>(() => rejected.Withdraw(Now))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestNotWithdrawable);
+
+        var withdrawn = NewInterest();
+        withdrawn.Withdraw(Now);
+        Should.Throw<BusinessException>(() => withdrawn.Withdraw(Now.AddHours(1)))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestNotWithdrawable);
+        withdrawn.WithdrawnAt.ShouldBe(Now, "ilk geri çekme anı ezilmemeli");
+
+        // Geri çekilen talebe host da dokunamaz: başvuru başlatılamaz, reddedilemez.
+        Should.Throw<BusinessException>(() => withdrawn.MarkApplicationStarted(Guid.NewGuid(), Guid.NewGuid(), Now))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestAlreadyAnswered);
+    }
+
+    [Fact]
+    public void Ortak_adi_yalniz_ortagi_belli_kayitta_tutulur()
+    {
+        var hasPartner = new GrantInterest(Guid.NewGuid(), null, Guid.NewGuid(), null, "fikir",
+            needsPartner: false, partnerName: "  Vektör Yazılım  ");
+        hasPartner.NeedsPartner.ShouldBe(false);
+        hasPartner.PartnerName.ShouldBe("Vektör Yazılım");
+
+        // "Ortak arıyoruz" diyen kayıtta ad anlamsız; formdan artık kalmış olsa bile yazılmaz.
+        var needsPartner = new GrantInterest(Guid.NewGuid(), null, Guid.NewGuid(), null, "fikir",
+            needsPartner: true, partnerName: "Eski ad");
+        needsPartner.NeedsPartner.ShouldBe(true);
+        needsPartner.PartnerName.ShouldBeNull();
+
+        var notAsked = new GrantInterest(Guid.NewGuid(), null, Guid.NewGuid(), null, "fikir", partnerName: "Ad");
+        notAsked.NeedsPartner.ShouldBeNull();
+        notAsked.PartnerName.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Butce_negatif_olamaz_baslangic_gun_olarak_saklanir()
+    {
+        Should.Throw<ArgumentOutOfRangeException>(() =>
+            new GrantInterest(Guid.NewGuid(), null, Guid.NewGuid(), null, "fikir", estimatedBudget: -1m));
+
+        var interest = new GrantInterest(Guid.NewGuid(), null, Guid.NewGuid(), null, "fikir",
+            estimatedBudget: 12_500_000m, targetStartDate: new DateTime(2027, 1, 1, 15, 30, 0));
+        interest.EstimatedBudget.ShouldBe(12_500_000m);
+        interest.TargetStartDate.ShouldBe(new DateTime(2027, 1, 1));
+    }
 }

@@ -19,7 +19,9 @@ using Volo.Abp;
 using Volo.Abp.Identity;
 // System.Threading.Tasks.TaskStatus ile çakışıyor — domain enum'u kastediliyor.
 using TaskStatus = Apya.Platform.Tasks.TaskStatus;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 using Volo.Abp.SettingManagement;
 
 namespace Apya.Platform.Application.Shell;
@@ -45,6 +47,8 @@ public class ShellAppService : PlatformAppService, IShellAppService
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IRepository<WebhookDeliveryLog, Guid> _webhookLogRepository;
     private readonly IRepository<GrantApplication, Guid> _grantApplicationRepository;
+    private readonly IRepository<GrantInterest, Guid> _grantInterestRepository;
+    private readonly IDataFilter<IMultiTenant> _mtFilter;
 
     public ShellAppService(
         IHostEnvironment hostEnvironment,
@@ -52,7 +56,9 @@ public class ShellAppService : PlatformAppService, IShellAppService
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<Project, Guid> projectRepository,
         IRepository<WebhookDeliveryLog, Guid> webhookLogRepository,
-        IRepository<GrantApplication, Guid> grantApplicationRepository)
+        IRepository<GrantApplication, Guid> grantApplicationRepository,
+        IRepository<GrantInterest, Guid> grantInterestRepository,
+        IDataFilter<IMultiTenant> mtFilter)
     {
         _hostEnvironment = hostEnvironment;
         _settingManager = settingManager;
@@ -60,6 +66,8 @@ public class ShellAppService : PlatformAppService, IShellAppService
         _projectRepository = projectRepository;
         _webhookLogRepository = webhookLogRepository;
         _grantApplicationRepository = grantApplicationRepository;
+        _grantInterestRepository = grantInterestRepository;
+        _mtFilter = mtFilter;
     }
 
     public async Task<ShellStateDto> GetStateAsync()
@@ -367,6 +375,18 @@ public class ShellAppService : PlatformAppService, IShellAppService
             badges.PendingGrantApplications = grantQuery.Count(a =>
                 a.Stage == GrantApplicationStage.Basvuru ||
                 a.Stage == GrantApplicationStage.Degerlendirme);
+
+            // --- Bekleyen ilgi talepleri ---
+            // 🔴 Talepler KİRACIYA ait; host bağlamında kiracı filtresi hepsini eler
+            // ve rozet daima 0 kalırdı. Filtre kapatılır ve TenantId koşulu KONMAZ:
+            // kutu bilinçli olarak kiracılar arası bakıyor (host konsolu da öyle).
+            using (_mtFilter.Disable())
+            {
+                var interestQuery = await _grantInterestRepository.GetQueryableAsync();
+                badges.PendingGrantInterests = interestQuery.Count(i =>
+                    i.Status == GrantInterestStatus.Yeni ||
+                    i.Status == GrantInterestStatus.Inceleniyor);
+            }
         }
 
         // --- Webhook hataları ---

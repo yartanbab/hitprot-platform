@@ -21,6 +21,11 @@ $(function () {
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
+    function fmtDateTime(v) {
+        return v ? new Date(v).toLocaleString('tr-TR', {
+            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : '';
+    }
 
     // ---------- Başlık + metrikler ----------
     function paintHead(d) {
@@ -52,33 +57,79 @@ $(function () {
         paintBookmark(d.isBookmarked);
     }
 
-    // ---------- İlgi talebi ----------
-    // Enum sırası sunucudakiyle birebir: Yeni · İnceleniyor · BaşvuruAçıldı · UygunDeğil.
-    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil'];
-    var interestTone = ['neutral', 'neutral', 'positive', 'negative'];
+    // ---------- İlgi talebi (tur 14) ----------
+    // Enum değerleri sunucudakiyle birebir (GrantInterestStatus).
+    var IST = { Yeni: 0, Inceleniyor: 1, BasvuruAcildi: 2, UygunDegil: 3, GeriCekildi: 4 };
 
     function paintInterest(d) {
         var st = d.interestStatus;
-        var rejected = st === 3;
+        var closed = st === IST.UygunDegil || st === IST.GeriCekildi;
+        var pending = st === IST.Yeni || st === IST.Inceleniyor;
 
-        // Buton yalnız yeni talep bırakılabiliyorken çıkar. Uygun bulunmayan talep
-        // kapıyı kapatmaz: "Yeniden ilgi bildir" ile yeni kayıt açılır.
-        var canExpress = !d.alreadyApplied && (st == null || rejected);
+        // Yeni talep ancak süren talep ya da açılmış başvuru yokken bırakılabilir. Kapanan
+        // talep (reddedilen ya da geri çekilen) kapıyı kapatmaz: yeni kayıt açılır.
+        var canExpress = !d.alreadyApplied && (st == null || closed);
         $('#InterestBtn').toggleClass('d-none', !canExpress).prop('disabled', false);
-        $('#InterestBtnText').text(l(rejected ? 'Grants:Interest:ExpressAgain' : 'Grants:Interest:Express'));
+        $('#InterestBtnText').text(l(closed ? 'Grants:Interest:ExpressAgain' : 'Grants:Interest:Express'));
 
-        // Talep kaydı olmayan ESKİ başvurular da rozet görür (bu özellikten önce açılanlar).
-        var chipKey = st != null ? interestKeys[st] : (d.alreadyApplied ? 'BasvuruAcildi' : null);
-        var tone = st != null ? interestTone[st] : 'positive';
+        // Talep kaydı olmayan ESKİ başvurular (bu akıştan önce açılanlar) yalnız rozet görür;
+        // talebi olanların durumu aşağıdaki şeritte anlatılır — başlıkta ikinci sinyal yok.
+        var legacy = st == null && d.alreadyApplied;
         $('#InterestChip')
-            .attr('class', 'apya-chip apya-chip-' + tone + (chipKey == null ? ' d-none' : ''))
-            .text(chipKey == null ? '' : l('Grants:Interest:Status:' + chipKey));
+            .attr('class', 'apya-chip apya-chip-positive' + (legacy ? '' : ' d-none'))
+            .text(legacy ? l('Grants:Interest:Status:BasvuruAcildi') : '');
 
         $('#InterestAppLink').toggleClass('d-none', !d.interestApplicationId)
             .attr('href', '/Grants/Wizard?id=' + d.interestApplicationId);
 
-        $('#InterestFeedback').toggleClass('d-none', !d.interestFeedback);
+        $('#InterestFeedback').toggleClass('d-none', !(st === IST.UygunDegil && d.interestFeedback));
         $('#InterestFeedbackText').text(d.interestFeedback || '');
+
+        $('#InterestWithdrawn').toggleClass('d-none', st !== IST.GeriCekildi);
+        $('#InterestWithdrawnText').text(st === IST.GeriCekildi
+            ? l('Grants:Interest:Withdrawn', fmtDate(d.interestWithdrawnAt)) : '');
+
+        paintInterestState(d, st, pending);
+    }
+
+    var stepDone = '<i class="fa fa-check apya-interest-step-check" aria-hidden="true"></i>';
+
+    function stepRow(state, title, sub, tail) {
+        return '<li class="apya-interest-step is-' + state + '">' +
+            '<span class="apya-interest-dot" aria-hidden="true"></span>' +
+            '<span class="apya-interest-step-text">' +
+            '<span class="apya-interest-step-title">' + esc(title) + '</span>' +
+            '<span class="apya-interest-step-sub">' + esc(sub) + '</span></span>' +
+            (tail || '') + '</li>';
+    }
+
+    /// "İlginiz iletildi" şeridi + dört adım. Proje fikri onay adımıyla BİRLİKTE
+    /// gönderildiği için ilk iki adım aynı anda tamamlanır.
+    function paintInterestState(d, st, pending) {
+        var started = st === IST.BasvuruAcildi;
+        $('#InterestState').toggleClass('d-none', !pending && !started);
+        if (!pending && !started) { return; }
+
+        $('#InterestSent').toggleClass('d-none', !pending);
+        $('#InterestSentText').text(l('Grants:Interest:Sent:Text', fmtDateTime(d.interestCreationTime)));
+
+        var reviewing = st === IST.Inceleniyor;
+        $('#InterestSteps').html([
+            stepRow('done', l('Grants:Interest:Step:Expressed'), fmtDateTime(d.interestCreationTime), stepDone),
+            stepRow('done', l('Grants:Interest:Step:Idea'), l('Grants:Interest:Step:IdeaSent'), stepDone),
+            started
+                ? stepRow('done', l('Grants:Interest:Step:Review'), l('Grants:Interest:Step:ReviewDone'), stepDone)
+                : stepRow('current', l('Grants:Interest:Step:Review'),
+                    l(reviewing ? 'Grants:Interest:Step:ReviewActive' : 'Grants:Interest:Step:ReviewWaiting'),
+                    reviewing ? '<span class="apya-chip apya-chip-accent">' + esc(l('Grants:Interest:Step:ReviewChip')) + '</span>' : ''),
+            started
+                ? stepRow('done', l('Grants:Interest:Step:Decision'), l('Grants:Interest:Step:DecisionStarted'), stepDone)
+                : stepRow('pending', l('Grants:Interest:Step:Decision'), l('Grants:Interest:Step:DecisionHint'))
+        ].join(''));
+
+        // Başvuruya dönmüş talepte eylem yok; boş kap flex boşluğu bırakmasın diye kapla birlikte gizlenir.
+        $('#InterestWithdrawBtn').closest('.apya-interest-actions').toggleClass('d-none', !pending);
+        $('#InterestWithdrawBtn').toggleClass('d-none', !pending);
     }
 
     function paintBookmark(on) {
@@ -225,26 +276,121 @@ $(function () {
             .always(function () { $btn.prop('disabled', false); });
     });
 
+    // ---------- İlgi onayı + proje fikri ----------
+    function showPane(name) {
+        $('#InterestModal .apya-interest-pane').each(function () {
+            $(this).toggleClass('d-none', $(this).data('pane') !== name);
+        });
+    }
+
+    // Hedeflenen başlangıç: içinde bulunulan çeyrekten itibaren sekiz çeyrek. Değer
+    // çeyreğin ilk günü, "yyyy-MM-dd" olarak ELLE kurulur — toISOString() TZ+03'te
+    // tarihi bir gün geriye kaydırır.
+    function quarterOptions() {
+        var now = new Date();
+        var y = now.getFullYear();
+        var q = Math.floor(now.getMonth() / 3) + 1;
+        var html = '<option value="">' + esc(l('Grants:Interest:Form:TargetStart:Unknown')) + '</option>';
+        for (var i = 0; i < 8; i++) {
+            var month = (q - 1) * 3 + 1;
+            html += '<option value="' + y + '-' + (month < 10 ? '0' : '') + month + '-01">' +
+                esc(l('Grants:Interest:Form:Quarter', y, q)) + '</option>';
+            q++;
+            if (q > 4) { q = 1; y++; }
+        }
+        return html;
+    }
+
+    function partnerChoice() { return $('input[name=InterestPartner]:checked').val() || null; }
+
+    function paintPartner() {
+        var c = partnerChoice();
+        $('#InterestPartnerName').toggleClass('d-none', c !== 'has');
+        $('#InterestPartnerHint').toggleClass('d-none', c !== 'needs');
+    }
+
+    function resetInterestForm() {
+        document.getElementById('InterestForm').reset();
+        $('#InterestNote').removeClass('is-invalid');
+        $('#InterestPartnerError').removeClass('d-block');
+        $('#InterestCallName').text(detail ? detail.grantName : '');
+        $('#InterestStart').html(quarterOptions());
+        var budget = document.getElementById('InterestBudget');
+        if (budget.__apyaMoney) { apya.moneyInput.setValue(budget, null); }
+        $('#InterestPartnerBlock').toggleClass('d-none', !(detail && detail.requiresConsortium));
+        paintPartner();
+        showPane('confirm');
+    }
+
     $('#InterestBtn').on('click', function () {
-        $('#InterestNote').val('');
+        resetInterestForm();
         interestModal.show();
     });
 
+    $('#InterestContinue').on('click', function () {
+        showPane('form');
+        $('#InterestNote').trigger('focus');
+    });
+
+    $('#InterestBack').on('click', function () { showPane('confirm'); });
+
+    $('#InterestModal').on('change', 'input[name=InterestPartner]', function () {
+        $('#InterestPartnerError').removeClass('d-block');
+        paintPartner();
+    });
+
+    $('#InterestNote').on('input', function () { $(this).removeClass('is-invalid'); });
+
     $('#InterestForm').on('submit', function (e) {
         e.preventDefault();
-        var $submit = $(this).find('button[type=submit]').prop('disabled', true);
 
-        interestSvc.express({ grantCallId: callId, note: $('#InterestNote').val() })
+        var note = $.trim($('#InterestNote').val());
+        var askPartner = !!(detail && detail.requiresConsortium);
+        var choice = partnerChoice();
+        var valid = true;
+        if (!note) { $('#InterestNote').addClass('is-invalid'); valid = false; }
+        if (askPartner && !choice) { $('#InterestPartnerError').addClass('d-block'); valid = false; }
+        if (!valid) { return; }
+
+        var budget = document.getElementById('InterestBudget');
+        var input = {
+            grantCallId: callId,
+            note: note,
+            estimatedBudget: budget.__apyaMoney
+                ? apya.moneyInput.getValue(budget)
+                : (budget.value === '' ? null : Number(budget.value)),
+            targetStartDate: $('#InterestStart').val() || null,
+            needsPartner: askPartner ? choice === 'needs' : null,
+            partnerName: askPartner && choice === 'has' ? ($.trim($('#InterestPartnerName').val()) || null) : null
+        };
+
+        var $submit = $(this).find('button[type=submit]').prop('disabled', true);
+        interestSvc.express(input)
             .then(function () {
                 interestModal.hide();
-                abp.notify.success(l('Grants:Interest:Toast'));
-                // Durumu sunucudan geri okuyoruz: rozet, buton ve gerekçe tek yerden boyanıyor.
+                // Durum sunucudan geri okunur: şerit, düğme ve takip işareti tek yerden boyanır.
                 return service.getCallDetail(callId).then(function (d) {
                     detail = d;
                     paintInterest(d);
+                    paintBookmark(d.isBookmarked);
+                    var state = document.getElementById('InterestState');
+                    if (state && state.scrollIntoView) { state.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
                 });
             })
             .always(function () { $submit.prop('disabled', false); });
+    });
+
+    $('#InterestWithdrawBtn').on('click', function () {
+        if (!detail || !detail.interestId) { return; }
+        var $btn = $(this);
+        abp.message.confirm(l('Grants:Interest:Withdraw:Confirm'), l('Grants:Interest:Withdraw:Title')).then(function (ok) {
+            if (!ok) { return; }
+            $btn.prop('disabled', true);
+            interestSvc.withdraw(detail.interestId)
+                .then(function () { return service.getCallDetail(callId); })
+                .then(function (d) { detail = d; paintInterest(d); })
+                .always(function () { $btn.prop('disabled', false); });
+        });
     });
 
     service.getCallDetail(callId).then(function (d) {

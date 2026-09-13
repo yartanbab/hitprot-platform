@@ -100,7 +100,7 @@ public class CatalogTenantIsolation_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(TenantA))
         {
             await Should.ThrowAsync<EntityNotFoundException>(
-                () => _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = foreignCall.Id }));
+                () => _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = foreignCall.Id, Note = "Proje fikri" }));
         }
     }
 
@@ -122,7 +122,7 @@ public class CatalogTenantIsolation_Tests : PlatformEntityFrameworkCoreTestBase
 
             // Kiracı başvuruyu KENDİ açmaz; talep bırakır, başvuruyu host'un kararı doğurur.
             var interest = await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id });
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" });
             interest.GrantCallId.ShouldBe(call.Id);
             interest.Status.ShouldBe(GrantInterestStatus.Yeni);
         }

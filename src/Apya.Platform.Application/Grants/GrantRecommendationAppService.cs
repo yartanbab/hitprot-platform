@@ -217,6 +217,10 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 Similar = await BuildSimilarAsync(call, grant, signals, today),
                 AlreadyApplied = applied.Contains(call.Id),
                 IsBookmarked = bookmarked.Contains(call.Id),
+                RequiresConsortium = grant.RequiresConsortium,
+                InterestId = interest?.Id,
+                InterestCreationTime = interest?.CreationTime,
+                InterestWithdrawnAt = interest?.WithdrawnAt,
                 InterestStatus = interest?.Status,
                 InterestFeedback = interest?.HostFeedback,
                 InterestApplicationId = interest?.GrantApplicationId
