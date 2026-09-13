@@ -1459,6 +1459,7 @@
     "Platform:Grant:PublishRequiredFieldsMissing": "Cannot publish, required fields are empty: {Fields}",
     "Platform:Grant:StageTemplateInUse": "This template is used by {GrantCount} programme(s); change their template before deleting it.",
     "Platform:Grant:DraftIdentityRequired": "Cannot save the draft: programme name and issuer are required.",
+    "Platform:Grant:ParameterNoSourceValue": "There is no value read from the official text for this requirement; it cannot be compared with the source.",
     "Platform:Documents:FileNameRequired": "Document name cannot be empty.",
     "Platform:Documents:FileLocked": "\"{DisplayName}\" is locked. Delivered documents cannot be changed.",
     "Platform:Documents:FileAmountInvalid": "Document amount cannot be negative: {Amount}",

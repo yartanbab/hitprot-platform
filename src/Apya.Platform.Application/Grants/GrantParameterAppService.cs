@@ -36,6 +36,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
     private readonly IRepository<GrantStageTemplate, Guid> _templateRepo;
     private readonly IRepository<GrantStageTemplateStep, Guid> _templateStepRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
+    private readonly IRepository<GrantDraftField, Guid> _draftFieldRepo;
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly GrantMatchManager _matcher;
@@ -51,6 +52,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         IRepository<GrantStageTemplate, Guid> templateRepo,
         IRepository<GrantStageTemplateStep, Guid> templateStepRepo,
         IRepository<GrantCall, Guid> callRepo,
+        IRepository<GrantDraftField, Guid> draftFieldRepo,
         IRepository<FirmProfile, Guid> profileRepo,
         ITenantRepository tenantRepo,
         GrantMatchManager matcher,
@@ -65,6 +67,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         _templateRepo = templateRepo;
         _templateStepRepo = templateStepRepo;
         _callRepo = callRepo;
+        _draftFieldRepo = draftFieldRepo;
         _profileRepo = profileRepo;
         _tenantRepo = tenantRepo;
         _matcher = matcher;
@@ -210,6 +213,146 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         return await MapAsync(grant);
     }
 
+    public async Task<GrantParameterDto> ApplySourceValueAsync(Guid id, GrantEligibilityRule rule)
+    {
+        EnsureHostContext();
+
+        var grant = await _grantRepo.GetAsync(id);
+        var field = await FindSourceFieldAsync(grant.Id, rule);
+        if (field == null || !GrantDraftValueParser.TryApply(grant, field.FieldKey, field.RawValue))
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantParameterNoSourceValue);
+        }
+
+        field.Status = GrantDraftFieldStatus.Kabul;
+        await _draftFieldRepo.UpdateAsync(field, autoSave: true);
+        await _grantRepo.UpdateAsync(grant, autoSave: true);
+
+        return await MapAsync(grant);
+    }
+
+    public async Task<GrantParameterDto> KeepOwnValueAsync(Guid id, GrantEligibilityRule rule)
+    {
+        EnsureHostContext();
+
+        var grant = await _grantRepo.GetAsync(id);
+        var field = await FindSourceFieldAsync(grant.Id, rule)
+                    ?? throw new BusinessException(PlatformDomainErrorCodes.GrantParameterNoSourceValue);
+
+        // Program değerine DOKUNULMAZ; yalnız metin önerisi reddedilir. Karşılaştırma bir daha
+        // bu alanı kaynak saymaz, şart "elle" görünür ve çelişki uyarısı kapanır.
+        field.Status = GrantDraftFieldStatus.Red;
+        await _draftFieldRepo.UpdateAsync(field, autoSave: true);
+
+        return await MapAsync(grant);
+    }
+
+    // ---------- 10b · Nereden geldi ----------
+
+    /// <summary>
+    /// Eleme şartı → metin çıkarıcısının alan anahtarı. Personel ve ciroyu çıkarıcı hiç
+    /// okumuyor: anahtarları YOK, kaynakları daima "elle".
+    /// </summary>
+    private static readonly IReadOnlyDictionary<GrantEligibilityRule, string?> RuleFieldKeys =
+        new Dictionary<GrantEligibilityRule, string?>
+        {
+            [GrantEligibilityRule.CompanySize] = GrantTextExtractor.FieldCompanySizes,
+            [GrantEligibilityRule.CompanyAge] = GrantTextExtractor.FieldCompanyAge,
+            [GrantEligibilityRule.Trl] = GrantTextExtractor.FieldTrl,
+            [GrantEligibilityRule.StaffCount] = null,
+            [GrantEligibilityRule.RdStaffCount] = GrantTextExtractor.FieldRdStaff,
+            [GrantEligibilityRule.Revenue] = null,
+            [GrantEligibilityRule.Consortium] = GrantTextExtractor.FieldConsortium
+        };
+
+    /// <summary>
+    /// Programın metinden değer okunmuş SON taslak çağrısının alanları. Kaynak karşılaştırması
+    /// tek çağrıya bakar: eski dönemin metni bugünkü değerle çelişki üretmemeli.
+    /// </summary>
+    private async Task<List<GrantDraftField>> LatestDraftFieldsAsync(Guid grantId)
+    {
+        var calls = (await _callRepo.GetListAsync(c => c.GrantId == grantId))
+            .OrderByDescending(c => c.CreationTime)
+            .ToList();
+        if (calls.Count == 0)
+        {
+            return new List<GrantDraftField>();
+        }
+
+        var callIds = calls.Select(c => c.Id).ToList();
+        var fields = (await _draftFieldRepo.GetListAsync(f => callIds.Contains(f.GrantCallId)))
+            .Where(f => !string.IsNullOrWhiteSpace(f.RawValue))
+            .ToList();
+
+        foreach (var call in calls)
+        {
+            var own = fields.Where(f => f.GrantCallId == call.Id).ToList();
+            if (own.Count > 0)
+            {
+                return own;
+            }
+        }
+
+        return new List<GrantDraftField>();
+    }
+
+    private async Task<GrantDraftField?> FindSourceFieldAsync(Guid grantId, GrantEligibilityRule rule)
+    {
+        var key = RuleFieldKeys.GetValueOrDefault(rule);
+        return key == null
+            ? null
+            : (await LatestDraftFieldsAsync(grantId)).FirstOrDefault(f => f.FieldKey == key);
+    }
+
+    private static GrantRuleSourceDto BuildRuleSource(Grant grant, GrantEligibilityRule rule, List<GrantDraftField> fields)
+    {
+        var dto = new GrantRuleSourceDto { Rule = rule, Source = GrantParameterSource.Elle };
+
+        var key = RuleFieldKeys.GetValueOrDefault(rule);
+        var field = key == null ? null : fields.FirstOrDefault(f => f.FieldKey == key);
+        if (field == null || field.Status == GrantDraftFieldStatus.Red)
+        {
+            return dto;
+        }
+
+        // Metin değeri boş bir programa uygulanır; ayrıştırılamıyorsa kaynak bilinmiyor sayılır.
+        var fromText = new Grant(Guid.Empty, "-", "-", 0m, 0);
+        if (!GrantDraftValueParser.TryApply(fromText, field.FieldKey, field.RawValue))
+        {
+            return dto;
+        }
+
+        if (!SameRuleValue(rule, grant, fromText))
+        {
+            dto.Source = GrantParameterSource.MetindenFarkli;
+            dto.SourceValues = new GrantRuleValuesDto
+            {
+                EligibleCompanySizes = fromText.EligibleCompanySizes,
+                MinCompanyAgeYears = fromText.MinCompanyAgeYears,
+                MinTrl = fromText.MinTrl,
+                MaxTrl = fromText.MaxTrl,
+                MinRdStaffCount = fromText.MinRdStaffCount,
+                RequiresConsortium = fromText.RequiresConsortium
+            };
+            return dto;
+        }
+
+        dto.Source = field.Status == GrantDraftFieldStatus.Kabul
+            ? GrantParameterSource.Metinden
+            : GrantParameterSource.OnayBekliyor;
+        return dto;
+    }
+
+    private static bool SameRuleValue(GrantEligibilityRule rule, Grant current, Grant fromText) => rule switch
+    {
+        GrantEligibilityRule.CompanySize => current.EligibleCompanySizes == fromText.EligibleCompanySizes,
+        GrantEligibilityRule.CompanyAge => current.MinCompanyAgeYears == fromText.MinCompanyAgeYears,
+        GrantEligibilityRule.Trl => current.MinTrl == fromText.MinTrl && current.MaxTrl == fromText.MaxTrl,
+        GrantEligibilityRule.RdStaffCount => current.MinRdStaffCount == fromText.MinRdStaffCount,
+        GrantEligibilityRule.Consortium => current.RequiresConsortium == fromText.RequiresConsortium,
+        _ => true
+    };
+
     /// <summary>
     /// 6d · Yayına alınan çağrıyı UYGUNLUK EŞİĞİNİ GEÇEN firmalara duyurur.
     ///
@@ -294,6 +437,13 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         dto.DraftCallCount = (int)await _callRepo.CountAsync(
             c => c.GrantId == grant.Id && c.Status == GrantCallStatus.Taslak);
         dto.CanPublish = dto.MissingRequiredFields.Count == 0 && dto.DraftCallCount > 0;
+
+        var draftFields = await LatestDraftFieldsAsync(grant.Id);
+        dto.DraftFieldCount = draftFields.Count;
+        dto.DraftPendingCount = draftFields.Count(f => f.Status == GrantDraftFieldStatus.Beklemede);
+        dto.RuleSources = RuleFieldKeys.Keys
+            .Select(rule => BuildRuleSource(grant, rule, draftFields))
+            .ToList();
 
         return dto;
     }

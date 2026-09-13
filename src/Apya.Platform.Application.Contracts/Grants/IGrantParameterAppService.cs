@@ -25,4 +25,16 @@ public interface IGrantParameterAppService : IApplicationService
     /// <c>Platform:Grant:PublishRequiredFieldsMissing</c> ile reddeder.
     /// </summary>
     Task<GrantParameterDto> PublishAsync(Guid id);
+
+    /// <summary>
+    /// 10b çelişkisi: şartı son taslak çağrının resmî metninden okunan değere geri döndürür
+    /// ve metin alanını kabul edilmiş sayar.
+    /// </summary>
+    Task<GrantParameterDto> ApplySourceValueAsync(Guid id, GrantEligibilityRule rule);
+
+    /// <summary>
+    /// 10b çelişkisi: host'un değerini korur. Metin önerisi reddedilir; uyarı bir daha çıkmaz
+    /// ve şartın kaynağı "elle" olur.
+    /// </summary>
+    Task<GrantParameterDto> KeepOwnValueAsync(Guid id, GrantEligibilityRule rule);
 }

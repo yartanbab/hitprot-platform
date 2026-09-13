@@ -1460,6 +1460,7 @@
         "Platform:Grant:PublishRequiredFieldsMissing": "Zorunlu alanlar boş olduğu için yayınlanamadı: {Fields}",
         "Platform:Grant:StageTemplateInUse": "Bu şablon {GrantCount} programda kullanılıyor; silmeden önce programların şablonunu değiştirin.",
         "Platform:Grant:DraftIdentityRequired": "Taslak kaydedilemedi: program adı ve kurum zorunludur.",
+        "Platform:Grant:ParameterNoSourceValue": "Bu şart için resmî metinden okunmuş bir değer yok; kaynak karşılaştırması yapılamaz.",
         "Platform:DynamicAssets:SlugAlreadyExists": "Bu kısa ad (slug) zaten kullanımda. Lütfen farklı bir slug girin.",
         "Platform:DynamicAssets:BlockNotFound": "İlgili içerik bloğu bulunamadı.",
         "Platform:DynamicAssets:TitleRequired": "Başlık boş bırakılamaz.",

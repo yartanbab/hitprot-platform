@@ -94,6 +94,7 @@ public static class PlatformDomainErrorCodes
     public const string GrantPublishRequiredFieldsMissing = "Platform:Grant:PublishRequiredFieldsMissing";
     public const string GrantStageTemplateInUse = "Platform:Grant:StageTemplateInUse";
     public const string GrantDraftIdentityRequired = "Platform:Grant:DraftIdentityRequired";
+    public const string GrantParameterNoSourceValue = "Platform:Grant:ParameterNoSourceValue";
 
     // 2a · Başvuru sihirbazı
     public const string GrantBudgetAmountNegative = "Platform:Grant:BudgetAmountNegative";
