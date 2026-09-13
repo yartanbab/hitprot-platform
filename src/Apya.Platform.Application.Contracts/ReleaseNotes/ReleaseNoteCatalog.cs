@@ -28,7 +28,7 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.11",
             date: "11 Eylül 2026",
-            title: "Görevler ekranındaki panolar artık tüm projeleri kapsıyor",
+            title: "Görevler ekranında tüm projelerin panoları, hibeye ilgi bildirirken net adımlar",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Belge, form, kontrol listesi ve bağımlılık panoları Görevler ekranında da var",
@@ -41,7 +41,18 @@ public static class ReleaseNoteCatalog
                 "işaretleyebilir ya da yeni madde ekleyebilirsiniz — değişiklik doğrudan ilgili " +
                 "görevin kaydına işlenir. Bağımlılıklar panosunda ayrıca farklı projelere yayılan " +
                 "görev bağlantılarını yalnız bu ekranda görürsünüz; termini geçmiş bir öncül hangi " +
-                "görevi bekletiyorsa satırında ⚠ ile işaretlidir.")),
+                "görevi bekletiyorsa satırında ⚠ ile işaretlidir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Bir hibeye ilgi bildirirken ne olacağını baştan görüyorsunuz",
+                "Hibe kartlarında artık tek düğme var: İncele. İlginizi çağrının detay sayfasından " +
+                "bildiriyorsunuz ve önce sizi neyin beklediğini anlatan bir onay adımı geliyor: " +
+                "danışmanınız önerinizi 1 iş günü içinde inceleyip sizi arar, görüşmeden önce hiçbir " +
+                "yükümlülük doğmaz. Ardından proje fikrinizi birkaç cümleyle yazıyor, isterseniz " +
+                "tahmini bütçeyi ve başlangıç çeyreğini ekliyorsunuz; ortaklık şartı olan çağrılarda " +
+                "ortağınızın olup olmadığı da soruluyor. Gönderince talebinizin hangi adımda olduğu " +
+                "sayfada görünür, çağrı Takip ettiklerim listenize eklenir. Karar verilmeden fikriniz " +
+                "değişirse ilginizi geri çekip daha sonra yeniden bildirebilirsiniz.")),
 
         new ReleaseNote(
             version: "2026.09.10",
