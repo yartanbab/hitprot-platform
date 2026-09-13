@@ -448,7 +448,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         return dto;
     }
 
-    private static List<string> FindMissingRequiredFields(Grant grant, int criteriaTagCount)
+    internal static List<string> FindMissingRequiredFields(Grant grant, int criteriaTagCount)
     {
         var missing = new List<string>();
         if (string.IsNullOrWhiteSpace(grant.Issuer))

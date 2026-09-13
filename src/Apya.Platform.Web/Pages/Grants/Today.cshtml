@@ -1,0 +1,117 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.TodayModel
+@{
+    ViewBag.Title = L["Grants:Today:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Tenant.css" />
+    <abp-style src="/Pages/Grants/Today.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Today.js" />
+}
+
+@* 11a/11b · Bugün — her rol için tek giriş ekranı: üstte en fazla üç iş, gerisi katlı.
+   Konsollar kalıyor; bu ekran onların önüne geçen giriş kapısı. Cümleleri JS kurar. *@
+<div data-page-description="@L[Model.IsHost ? "Grants:Today:Description:Host" : "Grants:Today:Description"]"
+     class="apya-page apya-grant-scope apya-today" data-host="@(Model.IsHost ? "1" : "0")">
+
+    <div class="apya-today-head">
+        <h2 class="apya-today-greeting" id="TodayGreeting"></h2>
+        <p class="apya-today-sub" id="TodaySub"></p>
+    </div>
+
+    @if (Model.IsHost)
+    {
+        @* Üç sekme: iş şu an kimde. Sunucu Owner alanını verir, süzme istemcide. *@
+        <div class="apya-tenant-tabs apya-today-tabs" role="tablist">
+            <button type="button" class="apya-tenant-tab is-active" role="tab" data-owner="0">
+                @L["Grants:Today:Tab:Mine"] <span class="apya-chip apya-chip-accent apya-numeric" id="TabCountMine"></span>
+            </button>
+            <button type="button" class="apya-tenant-tab" role="tab" data-owner="1">
+                @L["Grants:Today:Tab:Firm"] <span class="apya-chip apya-chip-neutral apya-numeric" id="TabCountFirm"></span>
+            </button>
+            <button type="button" class="apya-tenant-tab" role="tab" data-owner="2">
+                @L["Grants:Today:Tab:Institution"] <span class="apya-chip apya-chip-neutral apya-numeric" id="TabCountInstitution"></span>
+            </button>
+        </div>
+    }
+
+    @* Öne çıkan işler. :empty iskeleti veri gelince JS kaldırır (boş sonuçta da). *@
+    <div class="apya-today-list apya-skel-cards" id="TodayItems"></div>
+
+    <div class="apya-today-empty card mb-0 d-none" id="TodayEmpty">
+        <div class="card-body">
+            <span class="apya-today-empty-icon"><i class="fa fa-mug-hot"></i></span>
+            <div>
+                <div class="fw-semibold">@L[Model.IsHost ? "Grants:Today:Empty:Host" : "Grants:Today:Empty"]</div>
+                <div class="apya-today-empty-hint">@L[Model.IsHost ? "Grants:Today:EmptyHint:Host" : "Grants:Today:EmptyHint"]</div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.IsHost)
+    {
+        @* Tek fırsat — danışmanın önerdiği, henüz ilgi bildirilmemiş çağrı. Öneri yoksa kart çıkmaz. *@
+        <a class="apya-today-opportunity d-none" id="TodayOpportunity" href="#">
+            <span class="apya-today-item-icon is-star"><i class="fa fa-star"></i></span>
+            <span class="apya-today-item-body">
+                <span class="apya-today-item-title" id="OpportunityTitle"></span>
+                <span class="apya-today-item-detail" id="OpportunityDetail"></span>
+            </span>
+            <span class="apya-today-item-cta">@L["Grants:Today:Opportunity:Cta"] <i class="fa fa-chevron-right"></i></span>
+        </a>
+    }
+
+    <details class="apya-today-fold d-none" id="TodayMore">
+        <summary class="apya-today-fold-summary">
+            <i class="fa fa-chevron-right apya-today-fold-caret"></i>
+            <span id="TodayMoreTitle"></span>
+        </summary>
+        <div class="apya-today-list" id="TodayMoreItems"></div>
+    </details>
+
+    @if (!Model.IsHost)
+    {
+        <details class="apya-today-fold d-none" id="TodayConsultantItems">
+            <summary class="apya-today-fold-summary">
+                <i class="fa fa-chevron-right apya-today-fold-caret"></i>
+                <span id="TodayConsultantItemsTitle"></span>
+                <span class="apya-today-fold-hint">@L["Grants:Today:ConsultantItems:Hint"]</span>
+            </summary>
+            <ul class="apya-today-plain" id="TodayConsultantRows"></ul>
+        </details>
+
+        <div class="apya-today-grid">
+            <section class="card mb-0">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        <div class="fw-bold">@L["Grants:Today:Applications"]</div>
+                        <a href="/Grants/MyApplications" class="apya-today-link">@L["Grants:Today:Applications:All"] <i class="fa fa-arrow-right"></i></a>
+                    </div>
+                    <div class="apya-today-apps" id="TodayApps"></div>
+                    <div class="apya-today-apps-empty d-none" id="TodayAppsEmpty">@L["Grants:Today:Applications:Empty"]</div>
+                </div>
+            </section>
+
+            <section class="card mb-0 d-none" id="TodayConsultant">
+                <div class="card-body apya-today-consultant">
+                    <span class="apya-today-avatar apya-numeric" id="ConsultantInitials"></span>
+                    <div class="min-w-0">
+                        <div class="fw-semibold" id="ConsultantName"></div>
+                        <div class="apya-today-consultant-role">@L["Grants:Today:Consultant:Role"]</div>
+                    </div>
+                    <a class="btn btn-sm btn-outline-secondary" id="ConsultantLink" href="#">
+                        <i class="fa fa-comment me-1"></i>@L["Grants:Today:Consultant:Message"]
+                    </a>
+                </div>
+            </section>
+        </div>
+    }
+</div>

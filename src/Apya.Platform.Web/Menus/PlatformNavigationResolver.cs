@@ -632,6 +632,9 @@ public class PlatformNavigationResolver : IScopedDependency
         // olduğu için İş Yönetimi'nden ayrı kategori. "Başvurular" sayfası HOST'a özel
         // (GrantApplicationHostAppService.EnsureHostContext) → tenant menüsünde gösterilmez.
         var grants = new ApplicationMenuItem("Apya.Grants", l["Menu:Grants:Group"], icon: "fa fa-award", order: 4);
+        // 11a/11b · "Bugün" her iki rolde de grubun ilk girişi: konsollar kalır, önlerine giriş kapısı gelir.
+        if (await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Today", l["Menu:Grants:Today"], icon: "fa fa-sun", url: "/Grants/Today"));
         if (await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Calls", l["Menu:Grants:Calls"], icon: "fa fa-bullhorn", url: "/Grants"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))

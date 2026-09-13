@@ -191,10 +191,11 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
                 .Count(d => d.Obligation == GrantDocumentObligation.Zorunlu
                             && d.Status != GrantDocumentStatus.Onaylandi
                             && d.UploaderParty != GrantPartyRole.Danisman);
-            var emptyFields = CountEmptyFields(application, budgetLines.GetValueOrDefault(application.Id, new()),
+            var emptyFields = GrantNextActionResolver.CountEmptyFields(
+                application, budgetLines.GetValueOrDefault(application.Id, new()),
                 grant == null ? new() : costItems.GetValueOrDefault(grant.Id, new()));
 
-            (row.NextAction, row.NextActionValue) = ResolveNextAction(
+            (row.NextAction, row.NextActionValue) = GrantNextActionResolver.Resolve(
                 application, missingDocs, emptyFields);
 
             // 6b · Red kararı satırı işaretler ve itiraz geri sayımını taşır.
@@ -236,46 +237,4 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
         return dto;
     }
 
-    /// <summary>Proje özeti (3 alan) + açık harcama kalemleri üzerinden boş alan sayısı.</summary>
-    private static int CountEmptyFields(
-        GrantApplication application,
-        List<GrantApplicationBudgetLine> lines,
-        List<GrantEligibleCostItem> costItems)
-    {
-        var empty = 0;
-        if (application.ProjectTitle.IsNullOrWhiteSpace()) { empty++; }
-        if (application.ProjectSummary.IsNullOrWhiteSpace()) { empty++; }
-        if (application.ProjectDurationMonths == null) { empty++; }
-
-        var filled = lines.Count(l => l.Amount > 0);
-        empty += Math.Max(0, costItems.Count - filled);
-        return empty;
-    }
-
-    /// <summary>
-    /// Sıradaki iş: önce kapanmış/proje durumları, sonra firmadan bekleneni,
-    /// en sonda karşı tarafı söyler. Firma kendi işini en üstte görmeli.
-    /// </summary>
-    private static (GrantNextAction Action, int Value) ResolveNextAction(
-        GrantApplication application, int missingDocuments, int emptyFields)
-    {
-        if (application.ProjectId.HasValue) { return (GrantNextAction.InProject, 0); }
-        if (application.Stage == GrantApplicationStage.Odeme) { return (GrantNextAction.Done, 0); }
-
-        if (application.SubmittedAt.HasValue)
-        {
-            // Gönderildikten sonra top kurumdadır; firmanın yapacağı bir şey yok.
-            return (GrantNextAction.WaitingOnInstitution, 0);
-        }
-
-        if (application.PendingParty == GrantPartyRole.Danisman)
-        {
-            return (GrantNextAction.WaitingOnConsultant, missingDocuments);
-        }
-
-        if (missingDocuments > 0) { return (GrantNextAction.UploadDocuments, missingDocuments); }
-        if (emptyFields > 0) { return (GrantNextAction.CompleteForm, emptyFields); }
-
-        return (GrantNextAction.WaitingOnConsultant, 0);
-    }
 }

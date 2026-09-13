@@ -1,0 +1,363 @@
+/* =============================================================================
+   11a/11b · Bugün — tek giriş ekranı: üstte en fazla üç iş, gerisi katlı.
+   -----------------------------------------------------------------------------
+   Tüm değerler --apya-* token'larından gelir; ham renk/ölçü yazılmaz.
+   Kardeş grupları daima flex/grid + gap ile dizilir, per-element margin yoktur.
+   ============================================================================= */
+
+.apya-today {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-5);
+}
+
+.apya-today-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 72ch;
+}
+
+.apya-today-greeting {
+    margin: 0;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-3xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-today-sub {
+    margin: 0;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+    line-height: 1.6;
+}
+
+.apya-today-tabs { height: auto; }
+
+.apya-today-tabs .apya-tenant-tab { height: 40px; }
+
+/* --- İş kartı: ikon · cümle · meta · tek eylem --- */
+.apya-today-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+.apya-today-item,
+.apya-today-opportunity {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+    gap: var(--apya-space-4);
+    align-items: center;
+    padding: 18px 20px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+    color: inherit;
+    text-decoration: none;
+    box-shadow: var(--apya-shadow-sm);
+    transition: border-color var(--apya-motion-fast) var(--apya-easing-standard),
+                box-shadow var(--apya-motion-fast) var(--apya-easing-standard);
+}
+
+.apya-today-item:hover,
+.apya-today-opportunity:hover {
+    border-color: var(--apya-border-strong);
+    box-shadow: var(--apya-shadow-md);
+    color: inherit;
+    text-decoration: none;
+}
+
+.apya-today-item:focus-visible,
+.apya-today-opportunity:focus-visible {
+    outline: 2px solid var(--apya-border-focus);
+    outline-offset: 2px;
+}
+
+.apya-today-item-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+    font-size: 17px;
+}
+
+.apya-today-item-icon.is-star {
+    background: color-mix(in srgb, var(--apya-warning-500) 16%, transparent);
+    color: var(--apya-warning-700);
+}
+
+.apya-today-item-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.apya-today-item-title {
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-semibold);
+    line-height: 1.35;
+}
+
+.apya-today-item-detail {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+    line-height: 1.55;
+}
+
+.apya-today-item-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.apya-today-item-meta:empty { display: none; }
+
+.apya-today-item-firm {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+    white-space: nowrap;
+}
+
+.apya-today-item-meta .apya-chip > i {
+    margin-right: 5px;
+    font-size: 10px;
+}
+
+/* Tek eylem: düğme gibi 44px, kart zaten bağlantı — ikinci tıklama hedefi yok. */
+.apya-today-item-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 18px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+    white-space: nowrap;
+}
+
+.apya-today-item:hover .apya-today-item-cta,
+.apya-today-opportunity:hover .apya-today-item-cta {
+    background: var(--apya-accent-500);
+    border-color: var(--apya-accent-500);
+    color: var(--apya-text-inverse);
+}
+
+.apya-today-item-cta > i { font-size: 11px; }
+
+/* --- Boş durum --- */
+.apya-today-empty .card-body {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-4);
+    font-size: var(--apya-fs-md);
+}
+
+.apya-today-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--apya-radius-lg);
+    background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent);
+    color: var(--apya-positive-700);
+    font-size: 17px;
+}
+
+.apya-today-empty-hint {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+/* --- Katlı bölümler --- */
+.apya-today-fold {
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+}
+
+.apya-today-fold-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+    cursor: pointer;
+    list-style: none;
+}
+
+.apya-today-fold-summary::-webkit-details-marker { display: none; }
+
+.apya-today-fold-caret {
+    color: var(--apya-text-tertiary);
+    font-size: 11px;
+    transition: transform var(--apya-motion-fast) var(--apya-easing-standard);
+}
+
+.apya-today-fold[open] .apya-today-fold-caret { transform: rotate(90deg); }
+
+.apya-today-fold-hint {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-regular);
+}
+
+.apya-today-fold > .apya-today-list {
+    padding: 0 20px 20px;
+}
+
+.apya-today-fold > .apya-today-list .apya-today-item {
+    box-shadow: none;
+}
+
+.apya-today-plain {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0 20px 18px 40px;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+}
+
+/* --- Alt ızgara: başvurular + danışman --- */
+.apya-today-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    gap: var(--apya-space-4);
+    align-items: start;
+}
+
+.apya-today-apps {
+    display: flex;
+    flex-direction: column;
+}
+
+.apya-today-app {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: 12px 0;
+    border-bottom: 1px solid var(--apya-border-subtle);
+    color: inherit;
+    text-decoration: none;
+}
+
+.apya-today-app:last-child { border-bottom: 0; }
+
+.apya-today-app:hover { color: inherit; }
+
+.apya-today-app:hover .apya-today-app-name { text-decoration: underline; }
+
+.apya-today-app.is-closed .apya-today-app-name,
+.apya-today-app.is-closed .apya-today-app-state { color: var(--apya-text-tertiary); }
+
+.apya-today-app-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-today-app-name {
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-today-app-state {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-today-app-days {
+    flex: none;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-today-apps-empty {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+}
+
+.apya-today-link {
+    color: var(--apya-text-link);
+    font-size: var(--apya-fs-md);
+    text-decoration: none;
+}
+
+.apya-today-link:hover { text-decoration: underline; }
+
+.apya-today-link > i { margin-left: 4px; font-size: 11px; }
+
+.apya-today-consultant {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+}
+
+.apya-today-consultant .btn { margin-left: auto; }
+
+.apya-today-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-brand-500);
+    color: var(--apya-avatar-fg);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-today-consultant-role {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+/* --- Koyu tema: accent-600 koyu temada -500'den KOYU (bilinen tuzak) → ikon metni açılır. --- */
+[data-theme="dark"] .apya-today-item-icon { color: var(--apya-accent-300); }
+
+/* --- Dar ekran: kart tek sütuna iner, eylem alta tam genişlik --- */
+@media (max-width: 767.98px) {
+    .apya-today-item,
+    .apya-today-opportunity {
+        grid-template-columns: 44px minmax(0, 1fr);
+        padding: 14px 16px;
+    }
+
+    .apya-today-item-meta {
+        grid-column: 2;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .apya-today-item-cta {
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+
+    .apya-today-grid { grid-template-columns: minmax(0, 1fr); }
+}
