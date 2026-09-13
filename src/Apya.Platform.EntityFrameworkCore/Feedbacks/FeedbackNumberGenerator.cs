@@ -41,9 +41,13 @@ public class FeedbackNumberGenerator : IFeedbackNumberGenerator, ITransientDepen
             ? $"SELECT NEXT VALUE FOR [{SequenceName}] AS [Value]"
             : $"SELECT nextval('\"{SequenceName}\"') AS \"Value\"";
 
-        var next = await dbContext.Database
+        // SingleAsync KULLANMA: EF sorguyu "SELECT TOP(2) ... FROM (<sql>) AS [s]" diye
+        // alt sorguya sarar, SQL Server ise NEXT VALUE FOR'u alt sorguda reddeder.
+        // ToListAsync ham SQL'i olduğu gibi gönderir.
+        var next = (await dbContext.Database
             .SqlQueryRaw<long>(sql)
-            .SingleAsync();
+            .ToListAsync())
+            .Single();
 
         return $"FB-{_clock.Now.Year}-{next:D6}";
     }
