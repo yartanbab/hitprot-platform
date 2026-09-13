@@ -5,40 +5,7 @@
    yüzden tek dosyada. Tüm değerler --apya-* token'larından gelir.
    ============================================================================= */
 
-/* --- Sekme şeridi --- */
-.apya-tenant-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--apya-space-1);
-    height: 38px;
-    padding: 4px;
-    margin-bottom: var(--apya-space-4);
-    border-radius: var(--apya-radius-lg);
-    background: var(--apya-surface-sunken);
-}
-
-.apya-tenant-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 var(--apya-space-3);
-    border: 0;
-    border-radius: var(--apya-radius-md);
-    background: transparent;
-    color: var(--apya-text-secondary);
-    font-size: var(--apya-fs-sm);
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.apya-tenant-tab:hover { color: var(--apya-text-primary); }
-
-.apya-tenant-tab.is-active {
-    background: var(--apya-surface-base);
-    color: var(--apya-text-primary);
-    font-weight: var(--apya-weight-semibold);
-    box-shadow: var(--apya-shadow-sm);
-}
+/* --- Sekme şeridi: Shared.css'e taşındı (.apya-grant-tabs) — parametre formu da kullanıyor. --- */
 
 /* --- Üst şerit: profil + takvim --- */
 .apya-tenant-top {

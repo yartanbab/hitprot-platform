@@ -386,3 +386,44 @@
     .apya-skel-cards:empty::after,
     .apya-skel-num:empty::before { animation: none; }
 }
+
+/* --- Sekme şeridi (tur 10a: gri hap kap, aktif sekme beyaz + gölge) ---
+   Kiracı akışı (1d/9a, .apya-tenant-tabs adıyla) ve parametre formu (10b) ortak kullanır.
+   Eski ad seçici listesinde durur: kiracı sayfaları değişmeden aynı görünür. */
+.apya-grant-tabs,
+.apya-tenant-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--apya-space-1);
+    height: 38px;
+    padding: 4px;
+    margin-bottom: var(--apya-space-4);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-sunken);
+}
+
+.apya-grant-tab,
+.apya-tenant-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 var(--apya-space-3);
+    border: 0;
+    border-radius: var(--apya-radius-md);
+    background: transparent;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.apya-grant-tab:hover,
+.apya-tenant-tab:hover { color: var(--apya-text-primary); }
+
+.apya-grant-tab.is-active,
+.apya-tenant-tab.is-active {
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-weight: var(--apya-weight-semibold);
+    box-shadow: var(--apya-shadow-sm);
+}

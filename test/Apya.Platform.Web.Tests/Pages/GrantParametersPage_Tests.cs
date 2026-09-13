@@ -36,9 +36,19 @@ public class GrantParametersPage_Tests : PlatformWebTestBase
 
         var html = await GetResponseAsStringAsync($"/Grants/Parameters?id={id}");
 
-        html.ShouldContain("apya-param-layout");
-        html.ShouldContain("Uygunluk Şartları");
-        html.ShouldContain("Canlı Eşleşme");
+        // 10b düzeni: başlık + canlı eşleşme kartı, sekme grubu, şart kartları, alt sabit çubuk.
+        html.ShouldContain("apya-param-hero");
+        html.ShouldContain("Şu an kaç firma uygun");
+        html.ShouldContain("apya-param-tabs");
+        html.ShouldContain("Kimler başvurabilir");
+        html.ShouldContain("RuleList");
+        html.ShouldContain("Nereden geldi");
+        html.ShouldContain("Kaç firmayı eliyor");
+        html.ShouldContain("RuleConflicts");
+        html.ShouldContain("apya-param-bar");
+        // Eski sol menü ve sağ panel geri gelmemeli.
+        html.ShouldNotContain("apya-param-nav");
+        html.ShouldNotContain("apya-param-side");
         // STK hedeflemesi: firma profilindekiyle aynı sabit tematik alan listesi.
         html.ShouldContain("ParamThematic");
         html.ShouldContain("Kültür ve Sanat");
@@ -69,9 +79,9 @@ public class GrantParametersPage_Tests : PlatformWebTestBase
 
         // Yalnız SAYFANIN kendi bloğu ölçülür; LeptonX kabuğunun satır içi stilleri
         // bu kuralın konusu değil.
-        var start = html.IndexOf("apya-param-layout", StringComparison.Ordinal);
+        var start = html.IndexOf("apya-param-hero", StringComparison.Ordinal);
         start.ShouldBeGreaterThan(-1);
-        var end = html.IndexOf("</aside>", start, StringComparison.Ordinal);
+        var end = html.IndexOf("apya-param-bar-actions", start, StringComparison.Ordinal);
         end.ShouldBeGreaterThan(start);
         var body = html[start..end];
 

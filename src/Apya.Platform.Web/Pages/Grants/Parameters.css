@@ -1,111 +1,395 @@
 /* =============================================================================
-   1b · Hibe Parametre Formu
+   10b · Hibe Parametre Formu (1b'nin okunabilir hâli)
    -----------------------------------------------------------------------------
+   Düzen: başlık + canlı eşleşme kartı → sekme grubu → panel → alt sabit çubuk.
    Tüm değerler --apya-* token'larından gelir; ham renk/ölçü yazılmaz.
    Kardeş grupları daima flex/grid + gap ile dizilir, per-element margin yoktur.
    ============================================================================= */
 
-.apya-param-layout {
+/* --- Başlık + "şu an kaç firma uygun" --- */
+.apya-param-hero {
     display: grid;
-    grid-template-columns: 236px minmax(0, 1fr) 320px;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
     gap: var(--apya-space-5);
-    align-items: start;
+    align-items: stretch;
+    margin-bottom: var(--apya-space-5);
 }
 
-/* Yan paneller daralınca akış tek kolona düşer; orta kolon daima ilk sırada kalır. */
-@media (max-width: 1399.98px) {
-    .apya-param-layout {
-        grid-template-columns: 236px minmax(0, 1fr);
-    }
-    .apya-param-side {
-        grid-column: 1 / -1;
-    }
+.apya-param-hero-main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--apya-space-2);
+    min-width: 0;
+}
+
+.apya-param-title {
+    margin: 0;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-3xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+    overflow-wrap: anywhere;
+}
+
+.apya-param-issuer {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-medium);
+}
+
+.apya-param-issuer:empty { display: none; }
+
+.apya-param-lead {
+    max-width: 72ch;
+    margin: 0;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+    line-height: 1.6;
+}
+
+.apya-param-match .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+}
+
+.apya-param-match-count {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.apya-param-match-count .apya-param-metric {
+    font-size: var(--apya-text-5xl);
+    line-height: 1;
+}
+
+.apya-param-match-total {
+    color: var(--apya-text-secondary);
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-md);
+}
+
+.apya-param-match-hint {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+    line-height: var(--apya-leading-base);
 }
 
 @media (max-width: 991.98px) {
-    .apya-param-layout {
-        grid-template-columns: minmax(0, 1fr);
-    }
-    .apya-param-nav,
-    .apya-param-side {
-        position: static;
-    }
+    .apya-param-hero { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* --- Sol nav --- */
-.apya-param-nav {
-    position: sticky;
-    top: var(--apya-space-4);
+/* --- Sekme grubu: tasarımda 40px sekme, dar ekranda yatay kayar --- */
+.apya-param-tabs {
+    width: fit-content;
+    max-width: 100%;
+    height: auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.apya-param-tabs .apya-grant-tab {
+    flex: none;
+    height: 40px;
+    padding: 0 18px;
+    white-space: nowrap;
+}
+
+.apya-param-panels {
     display: flex;
     flex-direction: column;
-    gap: var(--apya-space-1);
-    padding: var(--apya-space-3) var(--apya-space-3) var(--apya-space-4);
+    gap: var(--apya-space-4);
+}
+
+/* --- Şart kartları (şart · değer · nereden geldi · kaç firmayı eliyor) --- */
+.apya-rule-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.apya-rule-intro {
+    margin: 0;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+}
+
+.apya-rule-head,
+.apya-rule-summary {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) 260px 148px;
+    gap: var(--apya-space-6);
+    align-items: center;
+}
+
+.apya-rule-head {
+    padding: 0 var(--apya-space-6);
+}
+
+/* Başlık satırının arkasında kart yok, sayfa zemini var: tertiary orada 4,44:1'e düşüyor
+   (ölçüldü), secondary ile ~7:1. */
+.apya-rule-head > span {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.apya-rule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.apya-rule {
     border: 1px solid var(--apya-border-default);
     border-radius: var(--apya-radius-xl);
     background: var(--apya-surface-base);
-    box-shadow: var(--apya-shadow-sm);
 }
 
-.apya-param-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 9px;
+.apya-rule-summary {
     width: 100%;
-    padding: var(--apya-space-2) 10px;
+    padding: 18px var(--apya-space-6);
     border: 0;
-    border-radius: var(--apya-radius-lg);
+    border-radius: inherit;
     background: transparent;
-    color: var(--apya-text-secondary);
-    font-size: var(--apya-fs-sm);
+    color: inherit;
     text-align: left;
     cursor: pointer;
 }
 
-.apya-param-nav-item > i {
-    width: 14px;
-    font-size: var(--apya-text-xs);
+.apya-rule-summary:hover { background: var(--apya-surface-hover); }
+
+.apya-rule-summary:focus-visible {
+    outline: 2px solid var(--apya-border-focus);
+    outline-offset: 2px;
 }
 
-.apya-param-nav-item > span:first-of-type {
-    flex: 1;
+.apya-rule.is-open .apya-rule-summary {
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
-.apya-param-nav-item:hover:not(:disabled) {
-    background: var(--apya-surface-hover);
-}
-
-.apya-param-nav-item.is-active {
-    background: var(--apya-accent-soft);
-    color: var(--apya-accent-600);
+.apya-rule-label {
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
     font-weight: var(--apya-weight-semibold);
 }
 
-.apya-param-nav-item:disabled {
-    color: var(--apya-text-disabled);
-    cursor: default;
+.apya-rule-value {
+    min-width: 0;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    overflow-wrap: anywhere;
+}
+
+.apya-rule-value.is-empty { color: var(--apya-text-tertiary); }
+
+.apya-rule-source {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+    line-height: var(--apya-leading-base);
+}
+
+.apya-rule-source > i {
+    margin-right: 6px;
+    font-size: 11px;
+}
+
+/* Satır başına TEK sinyal: durum rengi zeminde, gerekçe cümlede. */
+.apya-rule.is-suggest {
+    border-color: color-mix(in srgb, var(--apya-accent-500) 30%, var(--apya-border-default));
+    background: color-mix(in srgb, var(--apya-accent-500) 4%, var(--apya-surface-base));
+}
+
+.apya-rule.is-suggest .apya-rule-source { color: var(--apya-accent-600); }
+
+.apya-rule.is-attention {
+    border-color: color-mix(in srgb, var(--apya-warning-500) 35%, var(--apya-border-default));
+    background: var(--apya-warning-50);
+}
+
+.apya-rule.is-attention .apya-rule-source { color: var(--apya-warning-700); }
+
+.apya-rule.is-conflict {
+    border-color: color-mix(in srgb, var(--apya-negative-500) 40%, var(--apya-border-default));
+    background: var(--apya-negative-50);
+}
+
+.apya-rule.is-conflict .apya-rule-source { color: var(--apya-negative-700); }
+
+.apya-rule-impact {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.apya-rule-impact-text {
+    color: var(--apya-text-secondary);
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-rule-impact.is-medium .apya-rule-impact-text { color: var(--apya-warning-700); }
+.apya-rule-impact.is-heavy .apya-rule-impact-text { color: var(--apya-negative-700); }
+
+/* Eleme değil, uyum puanı: sayı yok, çubuk yok, cümle. */
+.apya-rule-impact.is-score .apya-rule-impact-text {
+    font-family: inherit;
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-regular);
+}
+
+.apya-rule-bar {
+    height: 6px;
+    overflow: hidden;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+}
+
+.apya-rule-bar > span {
+    display: block;
+    height: 100%;
+    background: var(--apya-border-strong);
+}
+
+.apya-rule-impact.is-medium .apya-rule-bar > span { background: var(--apya-warning-500); }
+.apya-rule-impact.is-heavy .apya-rule-bar > span { background: var(--apya-negative-500); }
+.apya-rule-impact.is-score .apya-rule-bar { display: none; }
+
+.apya-rule-editor {
+    padding: var(--apya-space-4) var(--apya-space-6) var(--apya-space-5);
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+.apya-rule-input { max-width: 180px; }
+
+/* Çelişki: tam cümle + iki eylem. */
+.apya-rule-conflicts {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.apya-rule-conflicts:empty { display: none; }
+
+.apya-rule-conflict {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 18px var(--apya-space-6);
+    border: 1px solid color-mix(in srgb, var(--apya-negative-500) 40%, var(--apya-border-default));
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-negative-50);
+}
+
+.apya-rule-conflict > i {
+    color: var(--apya-negative-500);
+    font-size: 16px;
+}
+
+.apya-rule-conflict-text {
+    flex: 1 1 320px;
+    min-width: 0;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    line-height: 1.6;
+}
+
+.apya-rule-conflict-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.apya-rule-add {
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    border-radius: var(--apya-radius-xl);
+}
+
+@media (max-width: 991.98px) {
+    .apya-rule-head { display: none; }
+
+    .apya-rule-summary {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+        padding: 14px var(--apya-space-4);
+    }
+
+    .apya-rule-editor { padding: var(--apya-space-3) var(--apya-space-4) var(--apya-space-4); }
+    .apya-rule-conflict { padding: 14px var(--apya-space-4); }
+}
+
+/* --- Alt sabit çubuk: tamamlanma · yayın kapısı · eylemler --- */
+.apya-param-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--apya-z-sticky);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-4) var(--apya-space-6);
+    margin-top: var(--apya-space-6);
+    padding: 14px var(--apya-space-6);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl) var(--apya-radius-xl) 0 0;
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-md);
+}
+
+.apya-param-bar-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-4);
+    min-width: 0;
 }
 
 .apya-param-progress {
     display: flex;
     flex-direction: column;
-    gap: var(--apya-space-1);
-    margin-top: var(--apya-space-2);
-    padding-top: var(--apya-space-3);
-    border-top: 1px solid var(--apya-border-subtle);
+    gap: 6px;
+    width: 180px;
 }
 
 .apya-param-progress-head {
     display: flex;
     justify-content: space-between;
+    color: var(--apya-text-secondary);
     font-size: var(--apya-fs-xs);
-    color: var(--apya-text-tertiary);
 }
 
-/* --- Bölüm kartları --- */
-.apya-param-sections {
+.apya-param-bar-sep {
+    width: 1px;
+    height: 36px;
+    background: var(--apya-border-default);
+}
+
+.apya-param-bar-message {
+    font-size: var(--apya-fs-md);
+}
+
+.apya-param-bar-actions {
     display: flex;
-    flex-direction: column;
-    gap: var(--apya-space-4);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+@media (max-width: 767.98px) {
+    .apya-param-bar { padding: 12px var(--apya-space-4); }
+    .apya-param-bar-sep { display: none; }
+    .apya-param-bar-actions,
+    .apya-param-bar-actions .btn { width: 100%; }
 }
 
 /* --- Alan ızgarası --- */
@@ -194,15 +478,7 @@
 /* --- Etiket (chip) girişi ---
    NOT: aynı bileşenin kuralları Grants/Index.cshtml içinde de duruyor; ortak bir
    yere (apya-shell.css) taşınması ayrı bir temizlik adımı olarak önerildi. */
-/* --- Sağ panel: canlı eşleşme --- */
-.apya-param-side {
-    position: sticky;
-    top: var(--apya-space-4);
-    display: flex;
-    flex-direction: column;
-    gap: var(--apya-space-3);
-}
-
+/* --- Canlı eşleşme sayısı --- */
 .apya-param-metric {
     font-family: var(--apya-font-mono);
     font-variant-numeric: tabular-nums;
@@ -212,19 +488,11 @@
     line-height: 1.1;
 }
 
-.apya-side-row {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--apya-space-2);
-    font-size: var(--apya-fs-xs);
-    color: var(--apya-text-secondary);
-}
-
 /* --- Koyu tema: aksan METNİ ---
    accent-600 koyu temada -500'den DAHA KOYU tanımlıdır (#4F46E5); %13 tint üstünde
    kontrast 4:1'in altına düşer. apya-theme-bridge'in .apya-chip-accent için yaptığı
    düzeltmenin aynısı: metin -300'e çıkar (~8:1). */
-[data-theme="dark"] .apya-param-nav-item.is-active,
+[data-theme="dark"] .apya-rule.is-suggest .apya-rule-source,
 [data-theme="dark"] .apya-trl-seg.is-on,
 [data-theme="dark"] .apya-cost-limit {
     color: var(--apya-accent-300);
