@@ -19,28 +19,11 @@
 
 <div data-page-description="@L["Grants:Mine:Description"]" class="apya-page apya-grant-scope">
 
-    @* ---------- Beşli KPI ---------- *@
-    <div class="apya-my-kpis">
-        <div class="card mb-0"><div class="card-body">
-            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:Open"]</span></span>
-            <span class="apya-skel-num apya-my-kpi apya-numeric" id="KpiOpen"></span>
-        </div></div>
-        <div class="card mb-0"><div class="card-body">
-            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:Approved"]</span></span>
-            <span class="apya-skel-num apya-my-kpi apya-my-kpi--good apya-numeric" id="KpiApproved"></span>
-        </div></div>
-        <div class="card mb-0"><div class="card-body">
-            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:OnYou"]</span></span>
-            <span class="apya-skel-num apya-my-kpi apya-numeric" id="KpiOnYou"></span>
-        </div></div>
-        <div class="card mb-0"><div class="card-body">
-            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:Collected"]</span></span>
-            <span class="apya-skel-num apya-my-kpi apya-numeric" id="KpiCollected"></span>
-        </div></div>
-        <div class="card mb-0"><div class="card-body">
-            <span class="apya-field-label"><span>@L["Grants:Mine:Kpi:Nearest"]</span></span>
-            <span class="apya-skel-num apya-my-kpi apya-numeric" id="KpiNearest"></span>
-        </div></div>
+    @* 11c · KPI satırı KALDIRILDI: "Açık 4 · Onaylanan 2 · Tahsil 3,4M" firma için karar
+       değiştirmiyor. Bir cümleye iner; sizden bekleyen iş varsa ikinci cümle. *@
+    <div class="apya-my-summary">
+        <p class="apya-my-summary-text apya-skel-num" id="MineSummary"></p>
+        <p class="apya-my-summary-sub d-none" id="MineOnYou"></p>
     </div>
 
     @* ---------- Liste ---------- *@

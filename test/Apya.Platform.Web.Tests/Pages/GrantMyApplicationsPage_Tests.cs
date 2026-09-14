@@ -83,7 +83,8 @@ public class GrantMyApplicationsPage_Tests : PlatformWebTestBase
     {
         var html = await GetResponseAsStringAsync("/Grants/MyApplications");
 
-        html.ShouldContain("apya-my-kpis");
+        // 11c · KPI ızgarası yerine tek cümle.
+        html.ShouldContain("apya-my-summary");
         html.ShouldContain("Sıradaki iş");
         System.Text.RegularExpressions.Regex.IsMatch(html, @"MyApplications[^""]*\.js")
             .ShouldBeTrue("sayfa demeti MyApplications.js içermeli");

@@ -213,34 +213,14 @@ else
     @* 1d · Kiracı: Uygun Hibeler. Başlık + açıklama app header'da. *@
     <div data-page-description="Profilinize uygun açık hibe çağrıları ve başvurularınız" class="apya-page apya-grant-scope">
 
-        <div class="apya-tenant-tabs">
-            <button type="button" class="apya-tenant-tab is-active" data-tab="eligible">
-                @L["Grants:Feed:Tab:Eligible"]<span class="apya-chip apya-chip-accent" id="TabCountEligible">—</span>
-            </button>
-            <a class="apya-tenant-tab" href="/Grants/Catalog">
-                @L["Grants:Feed:Tab:All"]<span class="apya-chip apya-chip-neutral" id="TabCountAll">—</span>
-            </a>
-            <button type="button" class="apya-tenant-tab" data-tab="bookmarked">
-                @L["Grants:Feed:Tab:Bookmarked"]<span class="apya-chip apya-chip-neutral" id="TabCountBookmarked">—</span>
-            </button>
+        @* 10c/13a · Başlık cümlesi: kaç uygun çağrı, en yakın son tarih hangi kartta.
+           11c · KPI kartları KALDIRILDI: "Onaylanan 2 · Tahsil 3,4M" firma için karar değiştirmiyor. *@
+        <div class="apya-feed-head-block">
+            <h2 class="apya-feed-heading apya-skel-num" id="FeedHeading"></h2>
+            <p class="apya-feed-lead" id="FeedLead"></p>
         </div>
 
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-circle-check", Accent = "positive", Label = "Onaylanan", ValueId = "KpiOnaylanan", Value = "—" }' />
-            </div>
-            <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-magnifying-glass-chart", Accent = "warning", Label = "Değerlendirmede", ValueId = "KpiDegerlendirmede", Value = "—" }' />
-            </div>
-            <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "accent", Label = "Tahsil Edilen", ValueId = "KpiTahsilEdilen", Value = "—" }' />
-            </div>
-            <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-hourglass-half", Accent = "brand", Label = "Bu Ay Son Tarih", ValueId = "KpiBuAySonTarih", Value = "—" }' />
-            </div>
-        </div>
-
-        <div class="apya-tenant-top">
+        <div class="apya-feed-top">
             @* --- Profil kartı --- *@
             <section class="card mb-0">
                 <div class="card-body d-flex flex-column gap-2">
@@ -259,14 +239,6 @@ else
                 </div>
             </section>
 
-            @* --- Takvim şeridi (90 gün) --- *@
-            <section class="card mb-0">
-                <div class="card-body d-flex flex-column gap-3">
-                    <span class="apya-overline">@L["Grants:Feed:Timeline"]</span>
-                    <div id="Timeline" class="apya-timeline"></div>
-                    <div id="TimelineEmpty" class="small text-muted d-none">@L["Grants:Feed:Timeline:Empty"]</div>
-                </div>
-            </section>
         </div>
 
         @* --- Profil editörü (katlanır) --- *@
@@ -403,13 +375,71 @@ else
             </div>
         </section>
 
-        @* --- Kart akışı --- *@
-        <div id="FeedGrid" class="apya-skel-cards apya-feed-grid"></div>
+        @* --- 13 · Üç sekmede aynı kart: Size uygun (2 kolon) · Tüm açık hibeler (3 kolon) · Takip ettiklerim --- *@
+        <div class="apya-feed-bar">
+            <div class="apya-tenant-tabs mb-0" role="tablist">
+                <button type="button" class="apya-tenant-tab is-active" role="tab" data-tab="eligible">
+                    @L["Grants:Feed:Tab:Eligible"]<span class="apya-chip apya-chip-accent apya-numeric" id="TabCountEligible">—</span>
+                </button>
+                <button type="button" class="apya-tenant-tab" role="tab" data-tab="all">
+                    @L["Grants:Feed:Tab:All"]<span class="apya-chip apya-chip-neutral apya-numeric" id="TabCountAll">—</span>
+                </button>
+                <button type="button" class="apya-tenant-tab" role="tab" data-tab="bookmarked">
+                    @L["Grants:Feed:Tab:Bookmarked"]<span class="apya-chip apya-chip-neutral apya-numeric" id="TabCountBookmarked">—</span>
+                </button>
+            </div>
+            <div class="apya-feed-bar-right">
+                <span class="apya-feed-sort" id="FeedSortLabel"></span>
+                <a href="/Grants/Catalog" class="btn btn-sm btn-outline-secondary" id="FeedTableLink" title="@L["Grants:Feed:TableView"]">
+                    <i class="fa fa-list me-1"></i>@L["Grants:Feed:TableView"]
+                </a>
+            </div>
+        </div>
+
+        @* 12a · Tüm açık hibeler: kova sayısı tek satır — uygun olmayan gizlenmez, soluk durur. *@
+        <div class="apya-feed-buckets d-none" id="FeedBuckets"></div>
+
+        @* 13b · Takip ettiklerim: bildirim vaadi tek cümle. *@
+        <p class="apya-feed-note d-none" id="BookmarkHint">@L["Grants:Feed:Bookmark:Hint"]</p>
+
+        <div id="FeedGrid" class="apya-skel-cards apya-feed-grid" data-cols="2"></div>
+
+        @* 13a · Eşiğin altındaki çağrılar gizlenmez; kart akışının altında tek cümleyle çağrılır. *@
+        <div class="apya-feed-more d-none" id="FeedMore">
+            <i class="fa fa-list"></i>
+            <span id="FeedMoreText"></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="FeedMoreBtn">@L["Grants:Feed:More:Cta"]</button>
+        </div>
+
         <div id="FeedEmpty" class="d-none">
             <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-wand-magic-sparkles", Title = "Şu an size uygun açık çağrı yok.", Description = "Profilinizi tamamlayın ya da tüm açık hibeleri inceleyin." }' />
         </div>
         <div id="BookmarkEmpty" class="d-none">
-            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-bookmark", Title = "Henüz takip ettiğiniz çağrı yok.", Description = "Katalogda yer imi simgesine basarak çağrı takip edebilirsiniz." }' />
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-bookmark", Title = "Henüz takip ettiğiniz çağrı yok.", Description = "Herhangi bir kartın köşesindeki yer imiyle takibe alabilirsiniz; danışmanınız da sizin adınıza işaretleyebilir." }' />
+        </div>
+
+        @* 13b · Takip notu — kartın köşesindeki kalemle açılır. Modal sayfa kabının dışında; kapsam sınıfı kendisinde. *@
+        <div class="modal fade apya-grant-scope" id="BookmarkNoteModal" tabindex="-1" aria-hidden="true" aria-labelledby="BookmarkNoteTitle">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form id="BookmarkNoteForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="BookmarkNoteTitle">@L["Grants:Feed:Bookmark:NoteTitle"]</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+                        <div class="modal-body d-flex flex-column gap-2">
+                            <div class="fw-semibold" id="BookmarkNoteCall"></div>
+                            <label class="form-label mb-0" for="BookmarkNoteText">@L["Grants:Feed:Bookmark:NoteLabel"]</label>
+                            <textarea class="form-control" id="BookmarkNoteText" rows="3" maxlength="500"></textarea>
+                            <div class="small text-muted">@L["Grants:Feed:Bookmark:NoteHint"]</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Sources:Cancel"]</button>
+                            <button type="submit" class="btn btn-primary">@L["Grants:Feed:Bookmark:NoteSave"]</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
         @* --- Başvurularım --- *@
