@@ -81,6 +81,10 @@
     "file": "draggableActivation-Ybw9Upbh.js",
     "name": "draggableActivation"
   },
+  "_formChoices-CM6Xg9_c.js": {
+    "file": "formChoices-CM6Xg9_c.js",
+    "name": "formChoices"
+  },
   "_grid-vendor-D-Pdxerz.js": {
     "file": "grid-vendor-D-Pdxerz.js",
     "name": "grid-vendor",
@@ -294,7 +298,8 @@
       "_react-vendor-D57GAUXd.js",
       "_httpClient-DePjXdo1.js",
       "_Hint-CNW95h3H.js",
-      "_publicFormLink-CJ_6ABDU.js"
+      "_publicFormLink-CJ_6ABDU.js",
+      "_formChoices-CM6Xg9_c.js"
     ]
   },
   "src/forms.jsx": {
@@ -327,7 +332,8 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_httpClient-DePjXdo1.js",
-      "_publicFormLink-CJ_6ABDU.js"
+      "_publicFormLink-CJ_6ABDU.js",
+      "_formChoices-CM6Xg9_c.js"
     ]
   },
   "src/responses.jsx": {
@@ -338,7 +344,8 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_httpClient-DePjXdo1.js",
-      "_Hint-CNW95h3H.js"
+      "_Hint-CNW95h3H.js",
+      "_formChoices-CM6Xg9_c.js"
     ]
   },
   "src/task-detail.jsx": {

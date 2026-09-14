@@ -1,7 +1,17 @@
 import React, { useRef } from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QuestionCard, payloadBlocks, serverIdMap } from './form-builder';
+
+/* Canlı liste paneli önizleme için sunucudan çağrıları ister. */
+vi.mock('./lib/api/httpClient', () => ({
+    api: { get: vi.fn(async () => [
+        { value: 'c1', label: 'TÜBİTAK · Sanayi Ar-Ge Projeleri (2026/1)' },
+        { value: 'c2', label: 'KOSGEB · KOBİGEL Dijital Dönüşüm (2026/1)' },
+        { value: 'c3', label: 'Sanayi ve Tek. Bak. · Teknoyatırım (2026/1)' },
+        { value: 'c4', label: 'Horizon Europe · EIC Accelerator (2026/1)' },
+    ]) },
+}));
 
 /**
  * Sürüklenen KART DEĞİL, üstündeki ⠿ tutamacı. Kart `draggable` olduğu sürece
@@ -102,5 +112,45 @@ describe('alan kimlikleri kayitta korunur', () => {
 
     it('sunucu blok dondurmezse esleme bos kalir', () => {
         expect(serverIdMap([{ id: 'k3j9x0aa' }], undefined)).toEqual({});
+    });
+});
+
+/**
+ * Tur 15 · Açılır liste canlı "Yayındaki hibeler" kaynağına bağlanabilir. Canlı listede elle yazılan
+ * seçenekler gizlenir, önizleme sunucudaki güncel çağrıları gösterir.
+ */
+describe('acilir liste secenek kaynagi', () => {
+    const dropdown = (settings) => ({ id: 'd1', type: 18, content: 'İlgilendiğiniz çağrı', settings });
+    const renderCard = (settings, onPatchSettings = vi.fn()) => render(
+        <QuestionCard block={dropdown(settings)} index={0} selected onSelect={vi.fn()} onPatch={vi.fn()}
+            onPatchSettings={onPatchSettings} onChangeType={vi.fn()} onDuplicate={vi.fn()} onRemove={vi.fn()}
+            onAddAfter={vi.fn()} onMove={vi.fn()} dragRef={{ current: null }} publicSlug="proje-fikri" />,
+    );
+
+    it('canli listede onizleme gelir, sabit secenek duzenleyicisi gizlenir', async () => {
+        renderCard({ source: 'open-grant-calls', urlPrefill: true, options: ['Seçenek 1'] });
+        expect(screen.getByLabelText('Yayındaki hibeler, canlı liste')).toBeChecked();
+        await waitFor(() => expect(screen.getByText(/başvuruya açık 4 çağrı var/)).toBeInTheDocument());
+        expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+            'TÜBİTAK · Sanayi Ar-Ge Projeleri (2026/1)', 'KOSGEB · KOBİGEL Dijital Dönüşüm (2026/1)', 'Sanayi ve Tek. Bak. · Teknoyatırım (2026/1)',
+        ]);
+        expect(screen.getByText('ve 1 çağrı daha')).toBeInTheDocument();
+        expect(screen.queryByText('+ Seçenek ekle')).not.toBeInTheDocument();
+        expect(screen.getByLabelText('Çağrıya özel bağlantı')).toBeInTheDocument();
+    });
+
+    it('sabit secenege donunce kaynak ayarlari kaldirilir', () => {
+        const onPatchSettings = vi.fn();
+        renderCard({ source: 'open-grant-calls', urlPrefill: true }, onPatchSettings);
+        fireEvent.click(screen.getByLabelText('Sabit seçenekler, elle yazılır'));
+        expect(onPatchSettings).toHaveBeenCalledWith('d1', { source: undefined, urlPrefill: undefined });
+    });
+
+    it('canli liste secilince baglantidan on secim de acilir', () => {
+        const onPatchSettings = vi.fn();
+        renderCard({ options: ['Seçenek 1'] }, onPatchSettings);
+        expect(screen.getByText('+ Seçenek ekle')).toBeInTheDocument();
+        fireEvent.click(screen.getByLabelText('Yayındaki hibeler, canlı liste'));
+        expect(onPatchSettings).toHaveBeenCalledWith('d1', { source: 'open-grant-calls', urlPrefill: true });
     });
 });
