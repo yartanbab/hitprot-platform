@@ -16,6 +16,7 @@ using Volo.Abp.Users;
 using Apya.Platform.Expenses;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Tenants;
 using Apya.Platform.ProjectBudgets;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
@@ -56,7 +57,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
     private readonly IRepository<FundingTranche, Guid> _fundingRepo;
     private readonly IRepository<TaskItem, Guid> _taskRepo;
     private readonly ProjectManager _projectManager;
-    private readonly ITenantRepository _tenantRepo;
+    private readonly TenantDisplayNameResolver _displayNames;
     private readonly IIdentityUserRepository _userRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
@@ -78,7 +79,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         IRepository<FundingTranche, Guid> fundingRepo,
         IRepository<TaskItem, Guid> taskRepo,
         ProjectManager projectManager,
-        ITenantRepository tenantRepo,
+        TenantDisplayNameResolver displayNames,
         IIdentityUserRepository userRepo,
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> mtFilter)
@@ -99,7 +100,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         _fundingRepo = fundingRepo;
         _taskRepo = taskRepo;
         _projectManager = projectManager;
-        _tenantRepo = tenantRepo;
+        _displayNames = displayNames;
         _userRepo = userRepo;
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
@@ -297,8 +298,8 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         {
             if (application.TenantId.HasValue)
             {
-                var tenant = await _tenantRepo.FindAsync(application.TenantId.Value);
-                dto.FirmName = tenant?.Name ?? "—";
+                var firmName = await _displayNames.GetAsync(application.TenantId.Value);
+                dto.FirmName = firmName ?? "—";
                 dto.SuggestedProjectName = $"{dto.FirmName} · {grant.Name}";
             }
             else

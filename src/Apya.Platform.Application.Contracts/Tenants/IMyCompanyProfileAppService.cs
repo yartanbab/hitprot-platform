@@ -8,5 +8,11 @@ public interface IMyCompanyProfileAppService : IApplicationService
 {
     Task<MyCompanyProfileDto> GetAsync();
 
+    /// <summary>
+    /// Kurumun gösterilen adı (resmî unvan; yoksa kiracı adı) — yazdırılan başlıklar için hafif
+    /// okuma. Host bağlamında <c>null</c>.
+    /// </summary>
+    Task<string?> GetDisplayNameAsync();
+
     Task UpdateAsync(UpdateTenantProfileDto input);
 }

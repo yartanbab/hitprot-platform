@@ -32,6 +32,7 @@ public class MyCompanyProfileAppService : PlatformAppService, IMyCompanyProfileA
     private readonly IIdentityUserRepository _userRepository;
     private readonly TenantSubscriptionManager _subscriptionManager;
     private readonly TenantProfileUpdater _tenantProfileUpdater;
+    private readonly TenantDisplayNameResolver _displayNames;
 
     public MyCompanyProfileAppService(
         IRepository<TenantProfile, Guid> tenantProfileRepository,
@@ -40,7 +41,8 @@ public class MyCompanyProfileAppService : PlatformAppService, IMyCompanyProfileA
         ITenantRepository tenantRepository,
         IIdentityUserRepository userRepository,
         TenantSubscriptionManager subscriptionManager,
-        TenantProfileUpdater tenantProfileUpdater)
+        TenantProfileUpdater tenantProfileUpdater,
+        TenantDisplayNameResolver displayNames)
     {
         _tenantProfileRepository = tenantProfileRepository;
         _packageRepository = packageRepository;
@@ -49,6 +51,7 @@ public class MyCompanyProfileAppService : PlatformAppService, IMyCompanyProfileA
         _userRepository = userRepository;
         _subscriptionManager = subscriptionManager;
         _tenantProfileUpdater = tenantProfileUpdater;
+        _displayNames = displayNames;
     }
 
     public async Task<MyCompanyProfileDto> GetAsync()
@@ -89,6 +92,11 @@ public class MyCompanyProfileAppService : PlatformAppService, IMyCompanyProfileA
             return dto;
         }
     }
+
+    public Task<string?> GetDisplayNameAsync()
+        => CurrentTenant.Id is { } tenantId
+            ? _displayNames.GetAsync(tenantId)
+            : Task.FromResult<string?>(null);
 
     [Authorize(PlatformPermissions.TenantSettings.Default)]
     public async Task UpdateAsync(UpdateTenantProfileDto input)

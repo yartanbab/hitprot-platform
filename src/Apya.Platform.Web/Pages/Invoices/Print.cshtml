@@ -54,11 +54,38 @@
         </div>
         <div class="invoice-box">
             <div class="invoice-header">
-                <div class="brand">
-                    <h1>APYA PLATFORM</h1>
-                    <p>Kurumsal Yönetim Çözümleri</p>
-                    <p>VDK 1234567890</p>
-                </div>
+                @if (Model.Issuer is { } issuer)
+                {
+                    @* Faturayı kesen kurum: kayıt talebinden taşınan, Kurum Profili'nde düzenlenen bilgi. *@
+                    var issuerTax = string.Join(" · ", new[]
+                    {
+                        string.IsNullOrWhiteSpace(issuer.TaxOffice) ? null : issuer.TaxOffice + " V.D.",
+                        string.IsNullOrWhiteSpace(issuer.TaxNumber) ? null : issuer.TaxNumber
+                    }.Where(x => x != null));
+                    <div class="brand">
+                        <h1>@(string.IsNullOrWhiteSpace(issuer.LegalName) ? issuer.TenantName : issuer.LegalName)</h1>
+                        @if (!string.IsNullOrWhiteSpace(issuer.Address))
+                        {
+                            <p>@issuer.Address</p>
+                        }
+                        @if (issuerTax.Length > 0)
+                        {
+                            <p>@issuerTax</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(issuer.CorporateEmail))
+                        {
+                            <p>@issuer.CorporateEmail</p>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="brand">
+                        <h1>APYA PLATFORM</h1>
+                        <p>Kurumsal Yönetim Çözümleri</p>
+                        <p>VDK 1234567890</p>
+                    </div>
+                }
                 <div class="invoice-meta">
                     <div class="meta-title">FATURA</div>
                     <div><strong>Tarih:</strong> @inv.InvoiceDate.ToString("dd.MM.yyyy")</div>

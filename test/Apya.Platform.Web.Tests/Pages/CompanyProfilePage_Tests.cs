@@ -3,16 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Apya.Platform.RegistrationRequests;
 using Apya.Platform.Tenants;
 using Apya.Platform.Web.Menus;
 using HtmlAgilityPack;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Shouldly;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Security.Claims;
 using Xunit;
 
 namespace Apya.Platform.Pages;
@@ -21,7 +18,7 @@ namespace Apya.Platform.Pages;
 /// /CompanyProfile — kurumun kendi profili.
 ///
 /// <para>Web testleri HOST bağlamında koşar; kurum gözüyle istek için
-/// <see cref="WithTenantClientAsync"/> kullanılır.</para>
+/// <c>WithTenantClientAsync</c> (taban sınıf) kullanılır.</para>
 /// </summary>
 public class CompanyProfilePage_Tests : PlatformWebTestBase
 {
@@ -123,31 +120,6 @@ public class CompanyProfilePage_Tests : PlatformWebTestBase
     }
 
     // --- Yardımcılar ---
-
-    /// <summary>
-    /// İsteği kurum kullanıcısı gözüyle atar: principal'a tenant claim'i verilir ve ABP'nin
-    /// çözücüsü kiracıyı kullanıcıdan okur (<c>?__tenant</c> bu yüzden işe yaramaz).
-    /// 🔑 İki şart birlikte: <c>PreserveExecutionContext</c> açık OLMALI ve istemci bundan
-    /// SONRA kurulmalı — tabanın hazır <c>Client</c>'ı AsyncLocal'ı sunucuya taşımaz.
-    /// </summary>
-    private async Task WithTenantClientAsync(Guid tenantId, Func<HttpClient, Task> action)
-    {
-        Server.PreserveExecutionContext = true;
-
-        var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
-            new Claim(AbpClaimTypes.UserId, Guid.NewGuid().ToString()),
-            new Claim(AbpClaimTypes.UserName, "admin"),
-            new Claim(AbpClaimTypes.TenantId, tenantId.ToString())
-        }, "Test"));
-
-        using (GetRequiredService<ICurrentPrincipalAccessor>().Change(principal))
-        {
-            // Yönlendirme İZLENMEZ: kaydın başarısı 302 ile ölçülür, izlenirse sonuç 200 görünür.
-            using var client = CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-            await action(client);
-        }
-    }
 
     /// <summary>Düzenleme formundaki tüm alanları ve antiforgery jetonunu tarayıcının göndereceği hâliyle okur.</summary>
     private static Dictionary<string, string> ReadForm(string html)
