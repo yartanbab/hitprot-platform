@@ -6618,6 +6618,31 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantCalls", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantCallDailyStat", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Day")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GrantCallId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrantCallId", "Day", "Kind")
+                        .IsUnique();
+
+                    b.ToTable("AppGrantCallDailyStats", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantConsultingLog", b =>
                 {
                     b.Property<Guid>("Id")
