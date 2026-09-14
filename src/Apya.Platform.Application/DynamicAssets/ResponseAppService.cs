@@ -27,19 +27,22 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
     private readonly IConsentAppService _consentAppService;
     private readonly ILogger<ResponseAppService> _logger;
     private readonly Apya.Platform.Tasks.ITaskShareAppService _taskShareAppService;
+    private readonly PublicFormLocator _formLocator;
 
     public ResponseAppService(
         IAppDocumentRepository documentRepository,
         IRepository<AppResponse, Guid> responseRepository,
         IConsentAppService consentAppService,
         ILogger<ResponseAppService> logger,
-        Apya.Platform.Tasks.ITaskShareAppService taskShareAppService)
+        Apya.Platform.Tasks.ITaskShareAppService taskShareAppService,
+        PublicFormLocator formLocator)
     {
         _documentRepository = documentRepository;
         _responseRepository = responseRepository;
         _consentAppService = consentAppService;
         _logger = logger;
         _taskShareAppService = taskShareAppService;
+        _formLocator = formLocator;
     }
 
     public async Task SubmitAsync(SubmitResponseDto input)
@@ -75,13 +78,15 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
 
     private async Task SubmitCoreAsync(SubmitResponseDto input, Apya.Platform.Tasks.GuestFormContextDto? guest)
     {
-        // Find the document by slug
-        var document = await _documentRepository.GetBySlugWithBlocksAsync(input.DocumentSlug);
+        // Görev bağlamında kiracı zaten token'dan geldi; bağlantıdaki form kiracısı yalnız düz gönderimde okunur.
+        var location = await _formLocator.FindAsync(input.DocumentSlug, guest is null ? input.FormTenantId : null);
 
-        if (document is null)
+        if (location is null)
         {
             throw new EntityNotFoundException(typeof(AppDocument), input.DocumentSlug);
         }
+
+        var document = location.Document;
 
         // Reject submissions to forms that are not currently published.
         if (document.Status != FormStatus.Published)
@@ -122,35 +127,42 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
         // 4) Cevap doğrulama (SEC-003): serbest JSON'la çöp/spam veriyi engelle.
         ValidateAnswers(input.Answers, document, input.DocumentSlug);
 
-        // Create a new response entity (status defaults to Pending)
-        var response = new AppResponse(
-            GuidGenerator.Create(),
-            document.Id,
-            input.Answers,
-            respondentId: CurrentUser.Id,
-            completionSeconds: input.CompletionSeconds
-        );
-
-        // Görev bağlamı doğrulanmışsa yanıt o göreve (ve linke) damgalanır;
-        // görevin Form sekmesi yanıtları bununla süzer.
-        if (guest != null)
+        // Yanıt ve KVKK rıza kaydı çözülen kiracıda yazılır: kiracı formunda formun sahibi, host formunu
+        // dolduran kiracı kullanıcısında dolduranın kendisi. 🔑 ABP kiracıyı varlık KURULURKEN atar; nesne
+        // bu kapsamın dışında kurulursa çağıranın (anonimde host) kiracısını alır.
+        AppResponse response;
+        using (CurrentTenant.Change(location.ResponseTenantId))
         {
-            response.AttachToTask(guest.TaskId, guest.ShareLinkId);
-        }
+            // Create a new response entity (status defaults to Pending)
+            response = new AppResponse(
+                GuidGenerator.Create(),
+                document.Id,
+                input.Answers,
+                respondentId: CurrentUser.Id,
+                completionSeconds: input.CompletionSeconds
+            );
 
-        await _responseRepository.InsertAsync(response, autoSave: true);
-
-        // KVKK onayı istenmişse rıza kaydını ortak omurgaya yaz (hukuki delil).
-        if (settings.Kvkk && input.KvkkConsent)
-        {
-            await _consentAppService.RecordAsync(new RecordConsentInput
+            // Görev bağlamı doğrulanmışsa yanıt o göreve (ve linke) damgalanır;
+            // görevin Form sekmesi yanıtları bununla süzer.
+            if (guest != null)
             {
-                Type = ConsentType.FormKvkk,
-                Granted = true,
-                SubjectKind = CurrentUser.Id.HasValue ? ConsentSubjectKind.User : ConsentSubjectKind.Anonymous,
-                SubjectId = CurrentUser.Id?.ToString(),
-                SourceRef = input.DocumentSlug
-            });
+                response.AttachToTask(guest.TaskId, guest.ShareLinkId);
+            }
+
+            await _responseRepository.InsertAsync(response, autoSave: true);
+
+            // KVKK onayı istenmişse rıza kaydını ortak omurgaya yaz (hukuki delil).
+            if (settings.Kvkk && input.KvkkConsent)
+            {
+                await _consentAppService.RecordAsync(new RecordConsentInput
+                {
+                    Type = ConsentType.FormKvkk,
+                    Granted = true,
+                    SubjectKind = CurrentUser.Id.HasValue ? ConsentSubjectKind.User : ConsentSubjectKind.Anonymous,
+                    SubjectId = CurrentUser.Id?.ToString(),
+                    SourceRef = input.DocumentSlug
+                });
+            }
         }
 
         // Increment the form's response counter (best-effort).

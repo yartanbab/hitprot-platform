@@ -75,4 +75,12 @@ public class SubmitResponseDto
     public string? TaskShareToken { get; set; }
 
     public Guid? TaskId { get; set; }
+
+    /// <summary>
+    /// Form sahibinin kiracısı; kiracı formunun herkese açık bağlantısı taşır (<c>?tenant=</c>).
+    /// Anonim ziyaretçinin kiracısı yoktur, bu olmadan kiracı formu bulunamaz. Boşsa önce çağıranın
+    /// kendi kiracısına, oturum açmış kiracı kullanıcısında sonra host formlarına bakılır.
+    /// Görev bağlamı (token) varsa yok sayılır.
+    /// </summary>
+    public Guid? FormTenantId { get; set; }
 }

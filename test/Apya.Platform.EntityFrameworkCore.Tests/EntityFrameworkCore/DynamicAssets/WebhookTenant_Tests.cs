@@ -10,6 +10,7 @@ using Apya.Platform.DynamicAssets.Webhooks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
 using Volo.Abp.BackgroundJobs;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Entities.Events;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
@@ -61,8 +62,7 @@ public class WebhookTenant_Tests : PlatformEntityFrameworkCoreTestBase
             var response = await _responseRepository.InsertAsync(
                 new AppResponse(Guid.NewGuid(), document.Id, "{\"soru\":\"cevap\"}"), autoSave: true);
 
-            await WithUnitOfWorkAsync(() => new WebhookPublisherHandler(_subscriptionRepository, jobs, NullLogger<WebhookPublisherHandler>.Instance)
-                .HandleEventAsync(new EntityCreatedEventData<AppResponse>(response)));
+            await WithUnitOfWorkAsync(() => CreateHandler(jobs).HandleEventAsync(new EntityCreatedEventData<AppResponse>(response)));
         }
 
         var args = jobs.Enqueued.OfType<WebhookSenderJobArgs>().ShouldHaveSingleItem();
@@ -86,6 +86,50 @@ public class WebhookTenant_Tests : PlatformEntityFrameworkCoreTestBase
         var log = (await _deliveryLogRepository.GetListAsync(l => l.SubscriptionId == subscription.Id)).ShouldHaveSingleItem();
         log.IsSuccess.ShouldBeTrue();
     }
+
+    /// <summary>
+    /// Host formunu dolduran kiracının yanıtı kiracıda durur ama abonelik host'undur. Olay dolduranın
+    /// bağlamında işlense bile host aboneliği bulunur; aynı forma kimliğini bilerek abonelik açan başka
+    /// kiracı ise yanıtı almaz.
+    /// </summary>
+    [Fact]
+    public async Task Host_formuna_kiraci_yaniti_yalniz_host_aboneligine_gider()
+    {
+        var hostDocument = await _documentRepository.InsertAsync(
+            new AppDocument(Guid.NewGuid(), "Proje fikri", "fikir-" + Guid.NewGuid().ToString("N")[..6]), autoSave: true);
+        var hostSubscription = await _subscriptionRepository.InsertAsync(
+            new WebhookSubscription(Guid.NewGuid(), hostDocument.Id, "https://hooks.host.test/fikir", "host-anahtar"), autoSave: true);
+
+        var tenantManager = GetRequiredService<ITenantManager>();
+        var filler = await tenantManager.CreateAsync("Dolduran " + Guid.NewGuid().ToString("N")[..6]);
+        var eavesdropper = await tenantManager.CreateAsync("Dinleyen " + Guid.NewGuid().ToString("N")[..6]);
+        await GetRequiredService<ITenantRepository>().InsertManyAsync(new[] { filler, eavesdropper }, autoSave: true);
+        using (_currentTenant.Change(eavesdropper.Id))
+        {
+            await _subscriptionRepository.InsertAsync(
+                new WebhookSubscription(Guid.NewGuid(), hostDocument.Id, "https://hooks.dinleyen.test/x", "dinleyen-anahtar"), autoSave: true);
+        }
+
+        var jobs = new CapturingJobManager();
+        using (_currentTenant.Change(filler.Id))
+        {
+            var response = await _responseRepository.InsertAsync(
+                new AppResponse(Guid.NewGuid(), hostDocument.Id, "{\"fikir\":\"sensör\"}"), autoSave: true);
+            await WithUnitOfWorkAsync(() => CreateHandler(jobs).HandleEventAsync(new EntityCreatedEventData<AppResponse>(response)));
+        }
+
+        var args = jobs.Enqueued.OfType<WebhookSenderJobArgs>().ShouldHaveSingleItem();
+        args.SubscriptionId.ShouldBe(hostSubscription.Id);
+        args.TenantId.ShouldBeNull();
+    }
+
+    private WebhookPublisherHandler CreateHandler(IBackgroundJobManager jobs)
+        => new(
+            _subscriptionRepository,
+            _documentRepository,
+            jobs,
+            NullLogger<WebhookPublisherHandler>.Instance,
+            GetRequiredService<IDataFilter<IMultiTenant>>());
 
     private sealed class CapturingJobManager : IBackgroundJobManager
     {

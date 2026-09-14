@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
@@ -16,15 +17,17 @@ namespace Apya.Platform.DynamicAssets;
 public class PublicDocumentAppService : PlatformAppService, IPublicDocumentAppService
 {
     private readonly IAppDocumentRepository _documentRepository;
+    private readonly PublicFormLocator _formLocator;
 
-    public PublicDocumentAppService(IAppDocumentRepository documentRepository)
+    public PublicDocumentAppService(IAppDocumentRepository documentRepository, PublicFormLocator formLocator)
     {
         _documentRepository = documentRepository;
+        _formLocator = formLocator;
     }
 
-    public async Task<PublicDocumentDto> GetBySlugAsync(string slug)
+    public async Task<PublicDocumentDto> GetBySlugAsync(string slug, Guid? tenantId = null)
     {
-        var document = await _documentRepository.GetBySlugWithBlocksAsync(slug);
+        var document = (await _formLocator.FindAsync(slug, tenantId))?.Document;
 
         if (document is null)
         {
