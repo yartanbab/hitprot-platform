@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Apya.Platform.RegistrationRequests;
 
 namespace Apya.Platform.Tenants;
 
@@ -17,6 +18,16 @@ public class CreateTenantExtendedDto
     [StringLength(128)]
     public string AdminPassword { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Yönetici kullanıcının adı/soyadı/telefonu. Boşsa ABP tohumunun varsayılanı kalır
+    /// (ad "admin"). Protokol akışı yetkiliden doldurur; host modalı göstermez.
+    /// </summary>
+    public string? AdminName { get; set; }
+
+    public string? AdminSurname { get; set; }
+
+    public string? AdminPhoneNumber { get; set; }
+
     /// <summary>Tenant'a atanacak satış paketi (Basic/Standard/Premium/Enterprise).</summary>
     public PackageCode PackageCode { get; set; } = PackageCode.Basic;
 
@@ -27,6 +38,9 @@ public class CreateTenantExtendedDto
     public SubscriptionPeriod SubscriptionPeriod { get; set; } = SubscriptionPeriod.Unlimited;
 
     public CompanyType CompanyType { get; set; } = CompanyType.Company;
+
+    [StringLength(200)]
+    public string LegalName { get; set; } = string.Empty;
 
     [StringLength(50)]
     public string TaxNumber { get; set; } = string.Empty;
@@ -43,6 +57,12 @@ public class CreateTenantExtendedDto
     [StringLength(128)]
     public string LegalRepresentativeName { get; set; } = string.Empty;
 
+    [StringLength(100)]
+    public string LegalRepresentativeTitle { get; set; } = string.Empty;
+
+    [StringLength(256)]
+    public string LegalRepresentativeEmail { get; set; } = string.Empty;
+
     [StringLength(32)]
     public string LegalRepresentativePhone { get; set; } = string.Empty;
 
@@ -51,4 +71,6 @@ public class CreateTenantExtendedDto
 
     [StringLength(32)]
     public string OperationalContactPhone { get; set; } = string.Empty;
+
+    public RegistrationRequestCompanySize? EmployeeCount { get; set; }
 }

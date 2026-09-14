@@ -14,6 +14,7 @@ using Volo.Abp.TenantManagement;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Notifications;
 using Apya.Platform.Permissions;
+using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Grants;
 
@@ -34,6 +35,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantBookmark, Guid> _bookmarkRepo;
     private readonly ITenantRepository _tenantRepo;
+    private readonly TenantDisplayNameResolver _displayNames;
     private readonly IIdentityUserRepository _userRepo;
     private readonly FirmSignalsBuilder _signalsBuilder;
     private readonly GrantMatchManager _matcher;
@@ -52,6 +54,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         IRepository<GrantApplication, Guid> appRepo,
         IRepository<GrantBookmark, Guid> bookmarkRepo,
         ITenantRepository tenantRepo,
+        TenantDisplayNameResolver displayNames,
         IIdentityUserRepository userRepo,
         FirmSignalsBuilder signalsBuilder,
         GrantMatchManager matcher,
@@ -69,6 +72,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         _appRepo = appRepo;
         _bookmarkRepo = bookmarkRepo;
         _tenantRepo = tenantRepo;
+        _displayNames = displayNames;
         _userRepo = userRepo;
         _signalsBuilder = signalsBuilder;
         _matcher = matcher;
@@ -203,8 +207,8 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         var daysLeft = call.Deadline.HasValue
             ? Math.Max(0, (call.Deadline.Value.Date - Clock.Now.Date).Days).ToString()
             : null;
-        var firmNames = (await _tenantRepo.GetListAsync())
-            .ToDictionary(t => t.Id, t => t.Name);
+        // {firma_adı} kurumun resmî unvanıdır; kiracı adı (kısa anahtar) değil.
+        var firmNames = await _displayNames.GetManyAsync(input.TenantIds);
 
         var result = new GrantDispatchResultDto();
 

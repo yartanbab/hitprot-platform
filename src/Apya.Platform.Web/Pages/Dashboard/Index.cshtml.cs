@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Threading.Tasks;
 using Apya.Platform.Dashboard;
+using Apya.Platform.Tenants;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Apya.Platform.Web.Pages.Dashboard;
@@ -35,10 +36,14 @@ public class IndexModel : PlatformPageModel
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IDashboardAppService _dashboardAppService;
+    private readonly IMyCompanyProfileAppService _myCompanyProfileAppService;
 
-    public IndexModel(IDashboardAppService dashboardAppService)
+    public IndexModel(
+        IDashboardAppService dashboardAppService,
+        IMyCompanyProfileAppService myCompanyProfileAppService)
     {
         _dashboardAppService = dashboardAppService;
+        _myCompanyProfileAppService = myCompanyProfileAppService;
     }
 
     /// <summary>Varsayılan görünümün kart düzeni, island'ın beklediği camelCase JSON.</summary>
@@ -62,8 +67,10 @@ public class IndexModel : PlatformPageModel
         var layout = await _dashboardAppService.GetLayoutAsync(null!);
         LayoutJson = JsonSerializer.Serialize(layout, JsonOptions);
 
+        // Baskı başlığında kurumun resmî unvanı; kiracı adı unvandan türetilmiş kısa anahtardır.
+        // Host'ta null → island "Genel Bakış" başlığına düşer (önceki davranış).
         PrintContextJson = JsonSerializer.Serialize(
-            new { tenantName = CurrentTenant.Name, userName = PrintUserName() },
+            new { tenantName = await _myCompanyProfileAppService.GetDisplayNameAsync(), userName = PrintUserName() },
             JsonOptions);
     }
 

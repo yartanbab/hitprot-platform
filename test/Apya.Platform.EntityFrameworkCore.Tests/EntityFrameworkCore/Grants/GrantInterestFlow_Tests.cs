@@ -140,6 +140,35 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         latest.Body.ShouldContain("Ortak arayışımız var.");
     }
 
+    /// <summary>
+    /// Host'a giden bildirimde firma, kiracı adıyla (unvandan türetilmiş kısa anahtar) değil
+    /// Kurum Profili'ndeki resmî unvanıyla anılır.
+    /// </summary>
+    [Fact]
+    public async Task Host_bildirimi_kurumu_resmi_unvaniyla_anar()
+    {
+        var call = await CreateHostCallAsync("Unvan Programı");
+        var tenantId = await CreateTenantAsync("unvan-" + Guid.NewGuid().ToString("N")[..6]);
+        await GetRequiredService<IRepository<Apya.Platform.Tenants.TenantProfile, Guid>>().InsertAsync(
+            new Apya.Platform.Tenants.TenantProfile(Guid.NewGuid(), tenantId, Apya.Platform.Tenants.CompanyType.Association, string.Empty, string.Empty)
+            {
+                LegalName = "Unvanlı Gençlik ve Spor Derneği"
+            },
+            autoSave: true);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            await _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Unvan testi." });
+        }
+
+        var notification = (await _notificationRepository.GetListAsync(
+                n => n.Type == NotificationType.GrantInterestReceived))
+            .OrderByDescending(n => n.CreationTime)
+            .First(n => n.Title.Contains("Unvan Programı"));
+
+        notification.Title.ShouldContain("Unvanlı Gençlik ve Spor Derneği");
+    }
+
     [Fact]
     public async Task Kiracinin_talebi_baska_kiraciya_sizmaz()
     {

@@ -1,38 +1,47 @@
 using System;
 using Apya.Platform.RegistrationRequests;
-using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.Tenants;
 
-public class TenantProfileDto : FullAuditedEntityDto<Guid>
+/// <summary>
+/// Kurumun kendi profili: kayıt talebinden taşınan kimlik ve iletişim bilgisi + hesabın
+/// özeti. Profil alanları <see cref="TenantProfile"/>'dan eşlenir; özet alanları servis
+/// ayrı kaynaklardan doldurur.
+/// </summary>
+public class MyCompanyProfileDto
 {
-    public Guid TenantId { get; set; }
+    /// <summary>Hesap (kiracı) adı — girişte ve menüde görünen kısa ad.</summary>
     public string TenantName { get; set; } = string.Empty;
-    public PackageCode PackageCode { get; set; } = PackageCode.Basic;
-    public CompanyType CompanyType { get; set; }
+
     public string LegalName { get; set; } = string.Empty;
+    public CompanyType CompanyType { get; set; }
     public string TaxNumber { get; set; } = string.Empty;
     public string TaxOffice { get; set; } = string.Empty;
+    public RegistrationRequestCompanySize? EmployeeCount { get; set; }
+
     public string Address { get; set; } = string.Empty;
     public string CorporateEmail { get; set; } = string.Empty;
+
     public string LegalRepresentativeName { get; set; } = string.Empty;
     public string LegalRepresentativeTitle { get; set; } = string.Empty;
     public string LegalRepresentativeEmail { get; set; } = string.Empty;
     public string LegalRepresentativePhone { get; set; } = string.Empty;
+
     public string OperationalContactName { get; set; } = string.Empty;
     public string OperationalContactPhone { get; set; } = string.Empty;
-    public RegistrationRequestCompanySize? EmployeeCount { get; set; }
-    public bool IsActive { get; set; }
 
-    /// <summary>
-    /// Yürürlükteki aboneliğin dönemi. Abonelik satırı olmayan müşteride
-    /// <see cref="SubscriptionPeriod.Unlimited"/> — süresiz sayılır, hiç düşmez.
-    /// </summary>
-    public SubscriptionPeriod SubscriptionPeriod { get; set; } = SubscriptionPeriod.Unlimited;
+    // --- Hesap özeti ---
+    public string PackageName { get; set; } = string.Empty;
 
     /// <summary>Paketin geçerlilik bitişi. <c>null</c> = süresiz.</summary>
     public DateTime? SubscriptionEndDate { get; set; }
 
-    /// <summary>Ek süredeyse <c>true</c>: bitiş geçti ama paket hâlâ açık.</summary>
-    public bool IsInGracePeriod { get; set; }
+    /// <summary>Hizmet protokolü numarası. <c>null</c> = protokol akışından önce açılmış hesap.</summary>
+    public string? AgreementNumber { get; set; }
+
+    public DateTime? AgreementApprovedAt { get; set; }
+
+    public int UserCount { get; set; }
+
+    public DateTime MemberSince { get; set; }
 }
