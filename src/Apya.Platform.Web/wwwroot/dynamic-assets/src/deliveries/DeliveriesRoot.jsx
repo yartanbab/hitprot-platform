@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Button, EmptyState, Input, SkeletonList } from '../components/ui';
+import { DocsPageHeader, EmptyActions, OverflowMenu, ProcessRibbon } from '../components/documents';
 import {
-  abpAuth, abpNotify, addItems, createPackage, createShareLink, deletePackage,
+  abpAppPath, abpAuth, abpNotify, addItems, createPackage, createShareLink, deletePackage,
   generate, getPackage, getPackages, getPreflight, getRuns, getShareLinks,
   getTemplates, removeItem, revokeShareLink, searchDocuments,
 } from './api';
@@ -44,8 +45,19 @@ function Toast({ message, onDone }) {
   return <div className="apya-pop-in apya-doc-toast" role="status"><span style={{ fontSize: 12 }}>{message}</span></div>;
 }
 
+const sameId = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
+
 export function DeliveriesRoot() {
-  const projectId = new URLSearchParams(window.location.search).get('projectId');
+  const initialQuery = useMemo(() => new URLSearchParams(window.location.search), []);
+
+  // Proje bağlamı URL'den gelir. Yalnız ?packageId= ile gelindiyse (belge
+  // detayındaki "ilişkili kayıt" bağlantısı, rapor derleyicinin "Üret ve teslime
+  // geç"i) paket açılır; proje yoksa paketin kendisinden çözülür.
+  const [projectId, setProjectId] = useState(initialQuery.get('projectId'));
+  const [resolvingProject, setResolvingProject] = useState(
+    !initialQuery.get('projectId') && Boolean(initialQuery.get('packageId')),
+  );
+  const pendingPackageRef = useRef(initialQuery.get('packageId'));
 
   const [packages, setPackages] = useState([]);
   const [templates, setTemplates] = useState([]);
@@ -88,6 +100,30 @@ export function DeliveriesRoot() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (!resolvingProject) return;
+
+    (async () => {
+      try {
+        const pkg = await getPackage(pendingPackageRef.current);
+        // Yükleme bayrağı proje değişimiyle AYNI render'da kalkmalı: yoksa bekleyen
+        // paket, yeni projenin listesi gelmeden boş listede aranıp düşürülür.
+        setLoading(true);
+        setProjectId(pkg.projectId);
+
+        // Yenilemede bağlam kaybolmasın: proje adrese yazılır.
+        const params = new URLSearchParams(window.location.search);
+        params.set('projectId', pkg.projectId);
+        window.history.replaceState(null, '', `${window.location.pathname}?${params}`);
+      } catch (e) {
+        pendingPackageRef.current = null;
+        console.error('[Deliveries] resolve project', e);
+      } finally {
+        setResolvingProject(false);
+      }
+    })();
+  }, [resolvingProject]);
+
   const openPackage = async (id) => {
     setSelectedId(id);
     try {
@@ -99,6 +135,18 @@ export function DeliveriesRoot() {
       console.error('[Deliveries] openPackage', e);
     }
   };
+
+  /* Adresle gelen paket, liste yüklenince bir kez açılır. Başka projenin
+     paketiyse (bozuk bağlantı) sessizce geçilir — liste zaten doğru projeyi gösteriyor. */
+  useEffect(() => {
+    if (loading || resolvingProject || !pendingPackageRef.current) return;
+
+    const target = packages.find((p) => sameId(p.id, pendingPackageRef.current));
+    pendingPackageRef.current = null;
+    if (target) openPackage(target.id);
+    // openPackage her render'da yeniden kuruluyor; yalnız yükleme bitişine bağlıyız.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, resolvingProject, packages]);
 
   const handleCreate = async () => {
     const name = window.prompt('Paket adı:');
@@ -223,34 +271,67 @@ export function DeliveriesRoot() {
     }
   };
 
+  /* --- Seçili paketin eylemleri ---
+     Buton kuralı: tek birincil düğme. Taslakta iş "üretmek", üretilmiş pakette
+     "indirmek"; geri kalan her şey paket başlığındaki ⋯ menüsünde. */
+  const isDraft = detail?.status === 1;
+  const downloadHref = detail
+    ? `${window.abp.appPath}Documents/Deliveries?handler=DownloadPackage&packageId=${detail.id}`
+    : null;
+
+  const detailActions = detail ? [
+    canGenerate && {
+      key: 'generate', label: isDraft ? 'Paketi üret' : 'Yeniden üret', icon: 'fa-gears', disabled: busy, onSelect: openPreflight,
+    },
+    detail.hasOutput && { key: 'download', label: 'Çıktıyı indir', icon: 'fa-download', href: downloadHref },
+    canShare && detail.hasOutput && {
+      key: 'share', label: 'Paylaşım bağlantısı oluştur', icon: 'fa-share-nodes', disabled: busy, onSelect: handleShare,
+    },
+    canGenerate && isDraft && {
+      key: 'delete', label: 'Paketi sil', icon: 'fa-trash', className: 'is-danger', disabled: busy, onSelect: () => handleDelete(detail.id),
+    },
+  ].filter(Boolean) : [];
+
+  const primaryAction = detailActions.find((a) => a.key === (isDraft ? 'generate' : 'download')) ?? null;
+  const menuActions = detailActions.filter((a) => a !== primaryAction);
+
+  const page = (children) => (
+    <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
+      <DocsPageHeader
+        title="Teslimler & arşiv"
+        description="Paket kurucu, üretim öncesi kontrol ve rapor sürümleri"
+        menuItems={[
+          canGenerate && projectId && {
+            key: 'new', label: 'Yeni paket', icon: 'fa-plus', disabled: busy, onSelect: handleCreate,
+          },
+        ]}
+      />
+      <ProcessRibbon active="deliver" projectId={projectId} />
+      {children}
+    </div>
+  );
+
+  if (resolvingProject) return page(<SkeletonList rows={6} />);
+
   if (!projectId) {
-    return (
-      <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
-        <EmptyState
-          icon={<i className="fa fa-box-open" />}
-          title="Proje bağlamı gerekiyor"
-          description="Bu sayfa Dokümanlar'daki bir proje bağlamından açılır (?projectId=...)."
-        />
-      </div>
+    return page(
+      <EmptyState
+        icon={<i className="fa fa-box-open" />}
+        title="Proje bağlamı gerekiyor"
+        description="Bu sayfa Dokümanlar'daki bir proje bağlamından açılır (?projectId=...)."
+        action={(
+          <EmptyActions
+            // Rapor derleyici projeyi seçtirir ve "Üret ve teslime geç" ile buraya bağlamla döner.
+            primary={<Button asChild><a href={`${abpAppPath()}Documents/ReportBuilder`}>Rapor derleyiciye git</a></Button>}
+            link={{ label: 'veya Projelere git', href: `${abpAppPath()}Projects` }}
+          />
+        )}
+      />,
     );
   }
 
-  return (
-    <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
-      <div className="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Teslimler &amp; arşiv</h1>
-          <p style={{ fontSize: 12, color: 'var(--apya-text-tertiary)', margin: '4px 0 0' }}>
-            Paket kurucu, üretim öncesi kontrol ve rapor sürümleri
-          </p>
-        </div>
-        {canGenerate && (
-          <Button variant="primary" leadingIcon={<i className="fa fa-plus" />} disabled={busy} onClick={handleCreate}>
-            Yeni paket
-          </Button>
-        )}
-      </div>
-
+  return page(
+    <>
       <div className="apya-docs-shell is-wide">
         <div className="apya-docs-tree" style={{ maxHeight: 'none' }}>
           <div className="apya-md-overline" style={{ padding: '4px 8px 6px' }}>Paketler</div>
@@ -309,11 +390,25 @@ export function DeliveriesRoot() {
 
         <div className="apya-docs-main">
           {!detail ? (
-            <EmptyState
-              icon={<i className="fa fa-box" />}
-              title="Bir paket seçin"
-              description="Ekleri sıralayın, kontrolü çalıştırın ve paketi üretin."
-            />
+            !loading && packages.length === 0 ? (
+              <EmptyState
+                icon={<i className="fa fa-box" />}
+                title="Henüz paket yok"
+                description="Paket, rapor derleyicide seçtiğiniz şablonla ya da buradan boş olarak oluşturulur."
+                action={canGenerate && (
+                  <EmptyActions
+                    primary={<Button leadingIcon={<i className="fa fa-plus" />} disabled={busy} onClick={handleCreate}>Yeni paket</Button>}
+                    link={{ label: 'veya rapor derleyiciden başla', href: `${abpAppPath()}Documents/ReportBuilder?projectId=${projectId}` }}
+                  />
+                )}
+              />
+            ) : (
+              <EmptyState
+                icon={<i className="fa fa-box" />}
+                title="Bir paket seçin"
+                description="Ekleri sıralayın, kontrolü çalıştırın ve paketi üretin."
+              />
+            )
           ) : (
             <div className="p-3 d-flex flex-column gap-3">
               <div className="d-flex align-items-start justify-content-between gap-3 flex-wrap">
@@ -327,29 +422,16 @@ export function DeliveriesRoot() {
                 </div>
 
                 <div className="d-flex align-items-center gap-2">
-                  {detail.hasOutput && (
-                    <a
-                      href={`${window.abp.appPath}Documents/Deliveries?handler=DownloadPackage&packageId=${detail.id}`}
-                      className="apya-doc-linkbtn"
-                    >
-                      Çıktıyı indir
-                    </a>
-                  )}
-                  {canShare && detail.hasOutput && (
-                    <Button variant="outline" size="sm" disabled={busy} onClick={handleShare}>
-                      <i className="fa fa-share-nodes" /> Paylaş
+                  {primaryAction && (primaryAction.href ? (
+                    <Button asChild size="sm" leadingIcon={<i className={`fa ${primaryAction.icon}`} />}>
+                      <a href={primaryAction.href}>{primaryAction.label}</a>
                     </Button>
-                  )}
-                  {canGenerate && (
-                    <Button variant="primary" size="sm" disabled={busy} onClick={openPreflight}>
-                      Paketi üret
+                  ) : (
+                    <Button variant="primary" size="sm" disabled={primaryAction.disabled} onClick={primaryAction.onSelect}>
+                      {primaryAction.label}
                     </Button>
-                  )}
-                  {canGenerate && detail.status === 1 && (
-                    <button type="button" className="apya-doc-linkbtn" disabled={busy} onClick={() => handleDelete(detail.id)}>
-                      Sil
-                    </button>
-                  )}
+                  ))}
+                  <OverflowMenu size="sm" label="Paket eylemleri" items={menuActions} />
                 </div>
               </div>
 
@@ -465,6 +547,6 @@ export function DeliveriesRoot() {
         />
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
-    </div>
+    </>,
   );
 }

@@ -1,9 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
+import { DocsPageHeader, ProcessRibbon } from '../components/documents';
+import { abpAuth } from '../deliveries/api';
 import {
-  RECIPIENT_LABEL, SECTION_LABEL, abpNotify, createTemplate, deleteTemplate,
+  RECIPIENT_LABEL, SECTION_LABEL, abpAppPath, abpNotify, createTemplate, deleteTemplate,
   duplicateTemplate, getProjects, getTemplates, updateSections,
 } from './api';
+import { ensureDraftPackage } from './draftPackage';
 import { PreviewTab } from './PreviewTab';
 import { DistributionTab } from './DistributionTab';
 
@@ -75,6 +78,11 @@ export function ReportBuilderRoot() {
   const [tab, setTab] = useState('sections');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  // Alt akışta hangi düğmenin çalıştığı: 'save' | 'deliver' | null.
+  const [flowBusy, setFlowBusy] = useState(null);
+  const projectSelectRef = useRef(null);
+
+  const canGenerate = abpAuth('Platform.Documents.GenerateReports');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -176,20 +184,66 @@ export function ReportBuilderRoot() {
     }
   };
 
+  /* --- Alt akış: Taslak kaydet | Önizle | Üret ve teslime geç ---
+     Taslak = seçili şablona bağlı TASLAK teslim paketi (bkz. draftPackage.js).
+     Asıl üretim Teslim adımında, üretim öncesi kontrolden geçerek yapılır. */
+  const deliveriesHref = (packageId) => `${abpAppPath()}Documents/Deliveries?projectId=${projectId}`
+    + (packageId ? `&packageId=${packageId}` : '');
+
+  const saveDraft = async ({ silent = false } = {}) => {
+    setFlowBusy(silent ? 'deliver' : 'save');
+    try {
+      const { pkg, created } = await ensureDraftPackage({ projectId, template: selected });
+      if (!silent) {
+        abpNotify(created ? 'success' : 'info', created
+          ? `Taslak kaydedildi: ${pkg.name}`
+          : `Bu şablonun taslağı zaten kayıtlı: ${pkg.name}`);
+      }
+      return pkg;
+    } catch (e) {
+      abpNotify('error', 'Taslak kaydedilemedi.');
+      console.error('[ReportBuilder] saveDraft', e);
+      return null;
+    } finally {
+      setFlowBusy(null);
+    }
+  };
+
+  const produceAndDeliver = async () => {
+    // Paket açma yetkisi olmayan kullanıcı Teslim ekranına yalnız bakmaya gider.
+    if (!canGenerate || !selected) {
+      window.location.assign(deliveriesHref(null));
+      return;
+    }
+
+    const pkg = await saveDraft({ silent: true });
+    if (pkg) window.location.assign(deliveriesHref(pkg.id));
+  };
+
+  /** Boş durumdaki "Proje seç": başlıktaki seçiciye götürür, destekleyen tarayıcıda açar. */
+  const focusProjectPicker = () => {
+    const select = projectSelectRef.current;
+    if (!select) return;
+    select.focus();
+    try {
+      select.showPicker?.();
+    } catch {
+      // showPicker desteklenmiyorsa odak yeterli.
+    }
+  };
+
   if (loading) return <div className="p-4"><SkeletonList rows={8} /></div>;
 
   return (
     <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
-      <div className="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Rapor derleyici</h1>
-          <p style={{ fontSize: 12, color: 'var(--apya-text-tertiary)', margin: '4px 0 0' }}>
-            Şablonun bölümlerini seç, önizle, alıcıya dağıt
-          </p>
-        </div>
-
-        <div className="d-flex align-items-center gap-2">
+      {/* Buton kuralı: bu ekranın birincil düğmesi alt akış şeridindeki
+          "Üret ve teslime geç"; başlık yalnız proje seçiciyi ve ⋯ menüsünü taşır. */}
+      <DocsPageHeader
+        title="Rapor derleyici"
+        description="Şablonun bölümlerini seç, önizle, alıcıya dağıt"
+        aside={(
           <select
+            ref={projectSelectRef}
             className="apya-doc-select"
             value={projectId}
             onChange={(e) => setProjectId(e.target.value)}
@@ -200,11 +254,13 @@ export function ReportBuilderRoot() {
               <option key={p.id} value={p.id}>{p.code ? `${p.code} · ${p.name}` : p.name}</option>
             ))}
           </select>
-          <Button variant="outline" size="sm" disabled={busy} onClick={handleCreate}>
-            <i className="fa fa-plus" /> Yeni şablon
-          </Button>
-        </div>
-      </div>
+        )}
+        menuItems={[
+          { key: 'new-template', label: 'Yeni şablon', icon: 'fa-plus', disabled: busy, onSelect: handleCreate },
+        ]}
+      />
+
+      <ProcessRibbon active="report" projectId={projectId || null} />
 
       <div className="apya-doc-tabs mb-3" role="tablist">
         {TABS.map((t) => (
@@ -213,12 +269,46 @@ export function ReportBuilderRoot() {
             type="button"
             role="tab"
             aria-selected={tab === t.key}
-            className={cn('apya-doc-tab', tab === t.key && 'active')}
+            className={cn('apya-doc-tab', tab === t.key && 'is-active')}
             onClick={() => setTab(t.key)}
           >
             {t.label}
           </button>
         ))}
+      </div>
+
+      <div className="apya-doc-subflow">
+        <span className="apya-doc-subflow-text">
+          {projectId
+            ? 'Bu ekranda: bölümleri seç ve sırala → önizle → üret. Ürettiğin rapor Teslim adımına geçer.'
+            : 'Önce yukarıdan bir proje seçin — taslak ve teslim proje bağlamında çalışır.'}
+        </span>
+        <div className="apya-doc-subflow-actions" role="group" aria-label="Rapor akışı">
+          {canGenerate && (
+            <Button
+              variant="secondary"
+              size="sm"
+              isLoading={flowBusy === 'save'}
+              disabled={!projectId || !selected || flowBusy !== null}
+              onClick={() => saveDraft()}
+            >
+              Taslak kaydet
+            </Button>
+          )}
+          <Button variant="secondary" size="sm" disabled={tab === 'preview'} onClick={() => setTab('preview')}>
+            Önizle
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            isLoading={flowBusy === 'deliver'}
+            disabled={!projectId || flowBusy !== null}
+            trailingIcon={<i className="fa fa-arrow-right" aria-hidden="true" />}
+            onClick={produceAndDeliver}
+          >
+            {canGenerate ? 'Üret ve teslime geç' : 'Teslime geç'}
+          </Button>
+        </div>
       </div>
 
       <div className="apya-doc-reportgrid">
@@ -297,11 +387,11 @@ export function ReportBuilderRoot() {
         )}
 
         {tab === 'preview' && (
-          <PreviewTab projectId={projectId} template={selected} />
+          <PreviewTab projectId={projectId} template={selected} onPickProject={focusProjectPicker} />
         )}
 
         {tab === 'distribution' && (
-          <DistributionTab projectId={projectId} />
+          <DistributionTab projectId={projectId} onPickProject={focusProjectPicker} />
         )}
       </div>
     </div>
