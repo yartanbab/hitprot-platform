@@ -698,6 +698,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.MaxAmount).IsRequired();
                 b.Property(x => x.EligibleCompanySizes).IsRequired().HasDefaultValue(0);
                 b.Property(x => x.SourceUrl).HasMaxLength(512);
+                b.Property(x => x.Objective).HasMaxLength(2000);
+                b.Property(x => x.Priorities).HasMaxLength(4000);
+                b.Property(x => x.EligibleApplicants).HasMaxLength(2000);
+                b.Property(x => x.MinAmount).HasColumnType("decimal(18,2)");
                 b.Property(x => x.PosterFileName).HasMaxLength(256);
                 b.Property(x => x.MinRevenue).HasColumnType("decimal(18,2)");
                 b.Property(x => x.MaxRevenue).HasColumnType("decimal(18,2)");

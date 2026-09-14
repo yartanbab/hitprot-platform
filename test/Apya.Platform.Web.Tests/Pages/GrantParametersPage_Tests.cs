@@ -59,6 +59,11 @@ public class GrantParametersPage_Tests : PlatformWebTestBase
         // 12b · Kimlik bölümünde afiş alanı; önizleme kiracı kartıyla aynı zemin betiğini kullanır.
         html.ShouldContain("PosterPreview");
         html.ShouldContain("PosterUploadBtn");
+        // Resmî duyurunun metin başlıkları ve asgari destek tutarı.
+        html.ShouldContain("ParamObjective");
+        html.ShouldContain("ParamPriorities");
+        html.ShouldContain("ParamEligibleApplicants");
+        html.ShouldContain("ParamMinAmount");
         System.Text.RegularExpressions.Regex.IsMatch(html, @"Poster[^""]*\.js")
             .ShouldBeTrue("sayfa demeti Poster.js içermeli");
         // Eski sol menü ve sağ panel geri gelmemeli.
@@ -334,5 +339,40 @@ public class GrantParametersPage_Tests : PlatformWebTestBase
             () => service.PublishAsync(id));
 
         ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantPublishRequiredFieldsMissing);
+    }
+
+    [Fact]
+    public async Task Kimlik_Metinleri_Ve_Asgari_Destek_Kiraci_Detayina_Tasinir()
+    {
+        var (grantId, callId) = await OpenCallGrantAsync();
+        var service = GetRequiredService<IGrantParameterAppService>();
+        var current = await service.GetAsync(grantId);
+
+        var saved = await service.UpdateAsync(grantId, new UpdateGrantParameterDto
+        {
+            Name = current.Name,
+            Issuer = current.Issuer,
+            Objective = "Yaratıcı endüstrilerin katkısını artırmak",
+            Priorities = "Öncelik 1\r\nÖncelik 2",
+            EligibleApplicants = "Dernekler\nVakıflar",
+            MinAmount = 5_000_000m,
+            MaxAmount = 20_000_000m
+        });
+
+        saved.Objective.ShouldBe("Yaratıcı endüstrilerin katkısını artırmak");
+        saved.MinAmount.ShouldBe(5_000_000m);
+
+        var reread = await service.GetAsync(grantId);
+        reread.Priorities.ShouldBe("Öncelik 1\r\nÖncelik 2");
+        reread.EligibleApplicants.ShouldBe("Dernekler\nVakıflar");
+        reread.MinAmount.ShouldBe(5_000_000m);
+
+        // Kiracı detayı aynı değerleri taşır; satırları listeye istemci çevirir.
+        var detail = await GetRequiredService<IGrantRecommendationAppService>().GetCallDetailAsync(callId);
+        detail.Objective.ShouldBe("Yaratıcı endüstrilerin katkısını artırmak");
+        detail.Priorities.ShouldBe("Öncelik 1\r\nÖncelik 2");
+        detail.EligibleApplicants.ShouldBe("Dernekler\nVakıflar");
+        detail.MinAmount.ShouldBe(5_000_000m);
+        detail.MaxAmount.ShouldBe(20_000_000m);
     }
 }

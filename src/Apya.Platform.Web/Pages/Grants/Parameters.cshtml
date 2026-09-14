@@ -141,6 +141,25 @@
                     <label class="apya-field-label" for="ParamSummary"><span>@L["Grants:Parameters:Summary"]</span></label>
                     <textarea id="ParamSummary" class="form-control form-control-sm" rows="2"></textarea>
                 </div>
+
+                <div class="apya-field">
+                    <label class="apya-field-label" for="ParamObjective"><span>@L["Grants:Parameters:Objective"]</span></label>
+                    <textarea id="ParamObjective" class="form-control form-control-sm" rows="3" maxlength="2000"></textarea>
+                </div>
+
+                @* Resmî duyurunun liste başlıkları: satır başına bir madde, kiracı detayında liste olur. *@
+                <div class="apya-param-grid apya-param-grid--2">
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ParamPriorities"><span>@L["Grants:Parameters:ProgramPriorities"]</span></label>
+                        <textarea id="ParamPriorities" class="form-control form-control-sm" rows="4" maxlength="4000"></textarea>
+                        <div class="small text-muted">@L["Grants:Parameters:OnePerLine"]</div>
+                    </div>
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ParamEligibleApplicants"><span>@L["Grants:Parameters:EligibleApplicants"]</span></label>
+                        <textarea id="ParamEligibleApplicants" class="form-control form-control-sm" rows="4" maxlength="2000"></textarea>
+                        <div class="small text-muted">@L["Grants:Parameters:OnePerLine"]</div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -418,12 +437,21 @@
                     </div>
                 </div>
 
-                <div class="apya-param-grid apya-param-grid--4">
+                @* Resmî duyurudaki "Proje bütçesi: asgari – azami destek tutarı". Kendi satırında:
+                   dörtlü ızgaranın tek sütununa iki tutar kutusu 1280px'te sığmıyordu. *@
+                <div class="apya-param-grid apya-param-grid--2">
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ParamMinAmount"><span>@L["Grants:Parameters:MinAmount"]</span></label>
+                        <input type="number" min="0" step="0.01" id="ParamMinAmount" data-money-input="true" class="form-control form-control-sm apya-numeric" />
+                    </div>
                     <div class="apya-field">
                         <label class="apya-field-label" for="ParamMaxAmount"><span>@L["Grants:Parameters:MaxAmount"]</span></label>
                         <input type="number" min="0" step="0.01" id="ParamMaxAmount" data-money-input="true" class="form-control form-control-sm apya-numeric" />
                         <div class="small text-muted">@L["Grants:Parameters:MaxAmountHint"]</div>
                     </div>
+                </div>
+
+                <div class="apya-param-grid apya-param-grid--3">
                     <div class="apya-field">
                         <label class="apya-field-label" for="ParamSupportRate"><span>@L["Grants:Parameters:SupportRate"]</span></label>
                         <input type="number" min="0" max="100" id="ParamSupportRate" class="form-control form-control-sm apya-numeric" />

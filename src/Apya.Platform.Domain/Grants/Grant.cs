@@ -17,10 +17,20 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public decimal? MaxAmount { get; set; } // Tutar alanı
 
+    /// <summary>Asgari destek tutarı. null = alt limit yok (MaxAmount'un aksine kolon nullable).</summary>
+    public decimal? MinAmount { get; set; }
+
     public double MinMatchScore { get; set; }
 
     /// <summary>Resmî çağrı metninin adresi (1b başlığında ve kaynak karşılaştırmada gösterilir).</summary>
     public string? SourceUrl { get; set; }
+
+    // --- Kimlik · resmî duyurunun metin başlıkları ---
+    // Eşleştirmeye GİRMEZ; kiracı detayında okunur. Öncelikler ve uygun başvuru sahipleri
+    // satır başına bir madde olarak yazılır, istemci satırları listeye çevirir.
+    public string? Objective { get; set; }
+    public string? Priorities { get; set; }
+    public string? EligibleApplicants { get; set; }
 
     // Faz A: eşleştirme kriterleri (Faz B'de FirmProfile ile örtüşme skoru).
     public int EligibleCompanySizes { get; set; } // CompanySize bit-maskesi (0 = kısıt yok)

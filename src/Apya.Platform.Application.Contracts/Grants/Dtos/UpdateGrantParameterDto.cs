@@ -25,6 +25,15 @@ public class UpdateGrantParameterDto
     [StringLength(512, ErrorMessage = "Kaynak adresi en fazla {1} karakter olabilir.")]
     public string? SourceUrl { get; set; }
 
+    [StringLength(2000, ErrorMessage = "Programın amacı en fazla {1} karakter olabilir.")]
+    public string? Objective { get; set; }
+
+    [StringLength(4000, ErrorMessage = "Programın öncelikleri en fazla {1} karakter olabilir.")]
+    public string? Priorities { get; set; }
+
+    [StringLength(2000, ErrorMessage = "Uygun başvuru sahipleri en fazla {1} karakter olabilir.")]
+    public string? EligibleApplicants { get; set; }
+
     // --- Uygunluk Şartları ---
     public int EligibleCompanySizes { get; set; }
 
@@ -63,6 +72,9 @@ public class UpdateGrantParameterDto
     public List<GrantCriteriaTagDto> CriteriaTags { get; set; } = new();
 
     // --- Finansal Yapı ---
+    [Range(0, 999999999999.99, ErrorMessage = "Destek tutarı negatif olamaz.")]
+    public decimal? MinAmount { get; set; }
+
     [Range(0, 999999999999.99, ErrorMessage = "Destek tutarı negatif olamaz.")]
     public decimal? MaxAmount { get; set; }
 

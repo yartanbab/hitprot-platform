@@ -47,6 +47,7 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
         html.ShouldContain("apya-detail-layout");
         html.ShouldContain("Uygunluk kontrolü");
         html.ShouldContain("Bütçe hesaplayıcı");
+        html.ShouldContain("AboutCard");
         System.Text.RegularExpressions.Regex.IsMatch(html, @"Detail[^""]*\.js")
             .ShouldBeTrue("sayfa demeti Detail.js içermeli");
     }

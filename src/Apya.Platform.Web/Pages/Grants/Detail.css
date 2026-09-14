@@ -51,6 +51,9 @@
     font-weight: var(--apya-weight-semibold);
 }
 
+/* Program hakkında · amaç metni: host'un yazdığı paragraf araları korunur. */
+.apya-detail-prose { white-space: pre-line; }
+
 /* =============================================================================
    Tur 14 · İlgi akışı — "İlginiz iletildi" şeridi, dört adım, onay diyaloğu.
    Tasarım 14a. Değerler token; tasarımdaki 10px köşe radius-lg'ye, #A7F3D0 kenarlık

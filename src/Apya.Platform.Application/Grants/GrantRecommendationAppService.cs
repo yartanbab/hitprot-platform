@@ -161,9 +161,13 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 Issuer = grant.Issuer,
                 Description = grant.Description,
                 SourceUrl = grant.SourceUrl,
+                Objective = grant.Objective,
+                Priorities = grant.Priorities,
+                EligibleApplicants = grant.EligibleApplicants,
                 Period = call.Period,
                 Deadline = call.Deadline,
                 DaysRemaining = days,
+                MinAmount = grant.MinAmount,
                 MaxAmount = grant.MaxAmount,
                 SupportRatePercent = grant.SupportRatePercent,
                 CoFinancingRatePercent = grant.SupportRatePercent.HasValue
