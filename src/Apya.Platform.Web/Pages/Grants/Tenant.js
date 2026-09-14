@@ -351,7 +351,8 @@ $(function () {
     $('#BookmarkNoteForm').on('submit', function (e) {
         e.preventDefault();
         if (!bookmarkNoteCallId) { return; }
-        var note = $.trim($('#BookmarkNoteText').val());
+        // 🔴 $.trim YOK: libs'teki jQuery 4.0.0 (install-libs) kaldırdı; String.prototype.trim kullanılır.
+        var note = ($('#BookmarkNoteText').val() || '').trim();
         var $submit = $(this).find('button[type=submit]').prop('disabled', true);
         recoSvc.setBookmarkNote({ grantCallId: bookmarkNoteCallId, note: note || null }).then(function () {
             var row = feed.filter(function (r) { return r.grantCallId === bookmarkNoteCallId; })[0];

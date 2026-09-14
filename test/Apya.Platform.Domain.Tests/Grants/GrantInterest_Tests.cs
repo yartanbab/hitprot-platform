@@ -174,4 +174,33 @@ public class GrantInterest_Tests
         interest.EstimatedBudget.ShouldBe(12_500_000m);
         interest.TargetStartDate.ShouldBe(new DateTime(2027, 1, 1));
     }
+
+    [Fact]
+    public void Fikir_formu_cevaplari_kirpilir_bos_cevap_null_saklanir()
+    {
+        var interest = NewInterest("fikir");
+
+        interest.SetIdeaDetails(
+            problemStatement: "  Saha verisi elle toplanıyor  ",
+            targetAudience: "   ",
+            plannedActivities: null,
+            durationAndPartners: "12 ay; belediye",
+            supportNeeds: "",
+            priorExperience: "TÜBİTAK 1501",
+            teamStructure: "3 yazılımcı",
+            stakeholders: " Dernek X ");
+
+        interest.ProblemStatement.ShouldBe("Saha verisi elle toplanıyor");
+        interest.TargetAudience.ShouldBeNull("boşluktan ibaret cevap yazılmamış sayılır");
+        interest.PlannedActivities.ShouldBeNull();
+        interest.DurationAndPartners.ShouldBe("12 ay; belediye");
+        interest.SupportNeeds.ShouldBeNull();
+        interest.PriorExperience.ShouldBe("TÜBİTAK 1501");
+        interest.TeamStructure.ShouldBe("3 yazılımcı");
+        interest.Stakeholders.ShouldBe("Dernek X");
+
+        // Her cevap 1000 karakterle sınırlı; aşan cevap kabul edilmez.
+        Should.Throw<ArgumentException>(() => interest.SetIdeaDetails(
+            new string('x', GrantInterestConsts.MaxAnswerLength + 1), null, null, null, null, null, null, null));
+    }
 }

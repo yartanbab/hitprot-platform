@@ -1,7 +1,22 @@
 # Deploy delta — 2026-09-14 (`e1f93653` → `d5e84c04`)
 
-Canlıda koşan kod **`e1f93653`** + tek dosyalık protokol yaması (`5411a19d`).
-Bu paket ikisinin de üzerine gelir.
+> ✅ **Bu paket canlıya İNDİ — 2026-09-14, 20:40 ile 23:18 arasında.** 23:18'de aynı beş dosya yeniden
+> ölçüldü: `css/apya-shell.css` `ce7baefa`, `js/apya-kanban.js` `42634812`, `js/documents.js`
+> `9e775717`, `Pages/Projects/Index.js` `65e03b13`, `Pages/Account/Protokol.js` `09726f2c` — beşi de
+> main `a9012b56` (= `d5e84c04`'ün `src/` ağacı) ile birebir; 09-07 sonrası chunk
+> `js/QueryProvider-B4436sFh.js` artık **200**, `Pages/Grants/Journey.js`, `InterestReview.js`,
+> `Funnel.js` **200**, `/Hibeler` **200**, `/health/ready` **200** (0,07 sn). DbMigrator'ın koşup
+> koşmadığı dışarıdan ölçülemez: `dbmigrator\Logs\logs.txt` sonundaki "Successfully completed"
+> satırına bakılmalı; `/Admin/ReleaseNotes` onayı (43 madde) da sunucuda yapılacak iş.
+>
+> 🔴 **Bu paketle canlıya bir hata da indi:** `wwwroot/libs/jquery/jquery.js` **4.0.0** (install-libs
+> böyle kopyalıyor, canlıda da 4.0.0) `$.trim`'i kaldırmıştır; `Pages/Grants/Detail.js` ("Evet,
+> ilgileniyorum") ve `Pages/Grants/Tenant.js` (takip notu kaydet) bu çağrıyla gönderimde `TypeError`
+> verir, düğme sessizce hiçbir şey yapmaz. Düzeltme ve dokuz soruluk ilgi formu bir sonraki pakette:
+> `deploy-delta-2026-09-14-3.md` (`337eaf55`).
+
+Canlıda koşan kod (bu paket üretilirken) **`e1f93653`** + tek dosyalık protokol yaması (`5411a19d`).
+Bu paket ikisinin de üzerine geldi.
 
 Paket: `Apya-Yayin-d5e84c04.zip` + `Apya-DbMigrator-d5e84c04.zip`
 (`Masaüstü\Apya-Yayin-2026-09-14-2\`).

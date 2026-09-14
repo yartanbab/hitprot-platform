@@ -31,6 +31,8 @@ public class GrantInterestsPage_Tests : PlatformWebTestBase
         var html = await GetResponseAsStringAsync("/Grants/InterestReview?id=6f2f3a1e-0000-4000-8000-00000000ab01");
 
         html.ShouldContain("apya-irv-layout");
+        // Tur 19 · formun 2-9. soru cevapları fikir kartında listelenir.
+        html.ShouldContain("IdeaAnswers");
         html.ShouldContain("ConsultantNote");
         html.ShouldContain("Firmaya gitmez");
         html.ShouldContain("AssignSelect");
@@ -81,6 +83,31 @@ public class GrantInterestsPage_Tests : PlatformWebTestBase
         html.ShouldContain("İlgimi geri çek");
         // Eski tek adımlı not modalı geri gelmemeli.
         html.ShouldNotContain("Talebi gönder");
+    }
+
+    /// <summary>
+    /// Tur 19: proje fikri formu APYA bilgi formunun dokuz sorusunu taşır; ilk ikisi zorunlu,
+    /// her sorunun altında örnek ipucu var.
+    /// </summary>
+    [Fact]
+    public async Task Kiraci_Detayi_Proje_Fikri_Formu_Dokuz_Soruyu_Tasiyor()
+    {
+        var html = await GetResponseAsStringAsync("/Grants/Detail?id=6f2f3a1e-0000-4000-8000-00000000ab01");
+
+        foreach (var id in new[]
+                 {
+                     "InterestNote", "InterestProblem", "InterestAudience", "InterestActivities",
+                     "InterestDuration", "InterestSupport", "InterestExperience", "InterestTeam",
+                     "InterestStakeholders"
+                 })
+        {
+            html.ShouldContain("id=\"" + id + "\"");
+        }
+
+        html.ShouldContain("Projenin hedef kitlesi kimler?");
+        html.ShouldContain("apya-interest-hint");
+        // Zorunlu olan yalnız ilk iki soru: iki required textarea.
+        System.Text.RegularExpressions.Regex.Matches(html, @"<textarea[^>]*\brequired\b").Count.ShouldBe(2);
     }
 
     [Fact]

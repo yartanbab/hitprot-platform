@@ -112,6 +112,16 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
             needsPartner,
             needsPartner == false ? input.PartnerName : null);
 
+        interest.SetIdeaDetails(
+            input.ProblemStatement,
+            input.TargetAudience,
+            input.PlannedActivities,
+            input.DurationAndPartners,
+            input.SupportNeeds,
+            input.PriorExperience,
+            input.TeamStructure,
+            input.Stakeholders);
+
         await _interestRepo.InsertAsync(interest, autoSave: true);
 
         // İlgi bildirilen çağrı takip listesine düşer (tur 14): son tarih ve metin
@@ -260,6 +270,14 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
             TargetStartDate = interest.TargetStartDate,
             NeedsPartner = interest.NeedsPartner,
             PartnerName = interest.PartnerName,
+            ProblemStatement = interest.ProblemStatement,
+            TargetAudience = interest.TargetAudience,
+            PlannedActivities = interest.PlannedActivities,
+            DurationAndPartners = interest.DurationAndPartners,
+            SupportNeeds = interest.SupportNeeds,
+            PriorExperience = interest.PriorExperience,
+            TeamStructure = interest.TeamStructure,
+            Stakeholders = interest.Stakeholders,
             WithdrawnAt = interest.WithdrawnAt,
             HostFeedback = interest.HostFeedback,
             GrantApplicationId = interest.GrantApplicationId

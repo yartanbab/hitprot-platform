@@ -90,6 +90,16 @@ public static class ReleaseNoteCatalog
                 "kurumun adına göre her zaman aynı renkte bir zeminle çiziliyor, böylece aynı kurumun " +
                 "çağrılarını bir bakışta ayırt edebilirsiniz. Afişe tıklamak çağrının detayını açar."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "İlgi bildirirken proje fikrinizi dokuz soruyla anlatıyorsunuz",
+                "Bir çağrıya Evet, ilgileniyorum dediğinizde açılan proje fikri formu artık danışmanınızın " +
+                "ön değerlendirme için ihtiyaç duyduğu soruların tamamını soruyor: proje fikriniz, çözmeyi " +
+                "hedeflediğiniz problem ya da ihtiyaç, hedef kitle, planladığınız faaliyetler, tahmini süre ve " +
+                "iş birliği yapmak istediğiniz kurumlar, en çok destek beklediğiniz konu, önceki proje " +
+                "deneyiminiz, ekibinizin yapısı ve birlikte çalışacağınız paydaşlar. Yalnız ilk iki soru " +
+                "zorunlu; diğerlerini bildiğiniz kadarıyla doldurabilirsiniz. Tahmini bütçe, hedeflenen " +
+                "başlangıç ve ortak sorusu yerinde duruyor. Yanıtlarınız danışmanınıza soru soru iletilir."),
+
             // ── Formlar ───────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Formunuzun herkese açık bağlantısı artık dışarıdan açılıyor",

@@ -32,6 +32,41 @@ public class ExpressGrantInterestInput
 
     [StringLength(200, ErrorMessage = "Ortak kuruluşun adı en fazla 200 karakter olabilir.")]
     public string? PartnerName { get; set; }
+
+    // --- Proje fikri formu · 2-9. sorular. Yalnız 2. soru zorunlu; gerisi bildiği kadarıyla. ---
+
+    /// <summary>2 · Projenin çözüm ürettiği problem ya da ihtiyaç.</summary>
+    [Required(ErrorMessage = "Çözmek istediğiniz problemi veya ihtiyacı yazın.")]
+    [StringLength(GrantInterestConsts.MaxAnswerLength, ErrorMessage = "Cevap en fazla 1000 karakter olabilir.")]
+    public string ProblemStatement { get; set; } = string.Empty;
+
+    /// <summary>3 · Hedef kitle.</summary>
+    [StringLength(GrantInterestConsts.MaxAnswerLength, ErrorMessage = "Cevap en fazla 1000 karakter olabilir.")]
+    public string? TargetAudience { get; set; }
+
+    /// <summary>4 · Planlanan faaliyetler.</summary>
+    [StringLength(GrantInterestConsts.MaxAnswerLength, ErrorMessage = "Cevap en fazla 1000 karakter olabilir.")]
+    public string? PlannedActivities { get; set; }
+
+    /// <summary>5 · Tahmini süre ve iş birliği yapılmak istenen kurumlar.</summary>
+    [StringLength(GrantInterestConsts.MaxAnswerLength, ErrorMessage = "Cevap en fazla 1000 karakter olabilir.")]
+    public string? DurationAndPartners { get; set; }
+
+    /// <summary>6 · En çok destek ya da yönlendirme beklenen konu.</summary>
+    [StringLength(GrantInterestConsts.MaxAnswerLength, ErrorMessage = "Cevap en fazla 1000 karakter olabilir.")]
+    public string? SupportNeeds { get; set; }
+
+    /// <summary>7 · Daha önce yürütülen benzer projeler.</summary>
+    [StringLength(GrantInterestConsts.MaxAnswerLength, ErrorMessage = "Cevap en fazla 1000 karakter olabilir.")]
+    public string? PriorExperience { get; set; }
+
+    /// <summary>8 · Ekip yapısı ve anahtar kişilerin yetkinlikleri.</summary>
+    [StringLength(GrantInterestConsts.MaxAnswerLength, ErrorMessage = "Cevap en fazla 1000 karakter olabilir.")]
+    public string? TeamStructure { get; set; }
+
+    /// <summary>9 · Mevcut paydaşlar, dernekler, çözüm ortakları ve rolleri.</summary>
+    [StringLength(GrantInterestConsts.MaxAnswerLength, ErrorMessage = "Cevap en fazla 1000 karakter olabilir.")]
+    public string? Stakeholders { get; set; }
 }
 
 /// <summary>Kiracının kendi ilgi talebi — "İlgi Taleplerim" satırı ve detay rozeti.</summary>
@@ -48,6 +83,17 @@ public class MyGrantInterestDto
     public DateTime? TargetStartDate { get; set; }
     public bool? NeedsPartner { get; set; }
     public string? PartnerName { get; set; }
+
+    /// <summary>Proje fikri formunun 2-9. cevapları; boş bırakılan soru null.</summary>
+    public string? ProblemStatement { get; set; }
+    public string? TargetAudience { get; set; }
+    public string? PlannedActivities { get; set; }
+    public string? DurationAndPartners { get; set; }
+    public string? SupportNeeds { get; set; }
+    public string? PriorExperience { get; set; }
+    public string? TeamStructure { get; set; }
+    public string? Stakeholders { get; set; }
+
     public DateTime? WithdrawnAt { get; set; }
 
     /// <summary>Host'un gerekçesi — yalnız uygun bulunmayan taleplerde dolu.</summary>
@@ -94,6 +140,17 @@ public class GrantInterestRowDto
     public bool? NeedsPartner { get; set; }
 
     public string? PartnerName { get; set; }
+
+    /// <summary>Proje fikri formunun 2-9. cevapları; danışman inceleme ekranında soru soru okur.</summary>
+    public string? ProblemStatement { get; set; }
+    public string? TargetAudience { get; set; }
+    public string? PlannedActivities { get; set; }
+    public string? DurationAndPartners { get; set; }
+    public string? SupportNeeds { get; set; }
+    public string? PriorExperience { get; set; }
+    public string? TeamStructure { get; set; }
+    public string? Stakeholders { get; set; }
+
     public DateTime? WithdrawnAt { get; set; }
 
     public GrantInterestStatus Status { get; set; }
