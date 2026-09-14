@@ -57,4 +57,16 @@ public class FormResponsesExcel_Tests
         sheet.Cell(2, 3).GetValue<int>().ShouldBe(42);
         sheet.Cell(2, 4).GetString().ShouldBe("Sensör");
     }
+
+    /// <summary>Tur 15 · canlı listeden seçilen çağrı { value, label } saklanır; Excel'e kimlik değil ad yazılır.</summary>
+    [Fact]
+    public void Canli_liste_secimi_adiyla_yazilir()
+    {
+        var response = Response(null);
+        response.Answers = $"{{\"{QuestionId}\":{{\"value\":\"3f2b8c1e-9d4a-4c7e-8b21-5a6f0e9d1c34\",\"label\":\"TÜBİTAK · 1501 (2026/1)\"}}}}";
+
+        var sheet = Sheet(ReportExporter.FormResponsesToExcel(Form(), new List<ResponseListItemDto> { response }));
+
+        sheet.Cell(2, 4).GetString().ShouldBe("TÜBİTAK · 1501 (2026/1)");
+    }
 }

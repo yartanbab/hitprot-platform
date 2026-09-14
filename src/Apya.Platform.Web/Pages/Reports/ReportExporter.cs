@@ -852,6 +852,8 @@ internal static class ReportExporter
     private static string JsonValueToText(JsonElement val) => val.ValueKind switch
     {
         JsonValueKind.Array => string.Join("; ", val.EnumerateArray().Select(JsonValueToText).Where(s => s.Length > 0)),
+        // Canlı listeden seçim { value, label }: kimlik değil, gönderim anındaki ad yazılır.
+        JsonValueKind.Object when val.TryGetProperty("label", out var label) && label.ValueKind == JsonValueKind.String => label.GetString() ?? "",
         JsonValueKind.Object => string.Join(" ", val.EnumerateObject().Select(p => JsonValueToText(p.Value)).Where(s => s.Length > 0)),
         JsonValueKind.String => val.GetString() ?? "",
         JsonValueKind.True => "true",

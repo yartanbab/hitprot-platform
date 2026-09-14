@@ -36,6 +36,22 @@ public class PublicBlockDto
     public int Order { get; set; }
     public string Content { get; set; } = null!;
     public string Settings { get; set; } = null!;
+
+    /// <summary>
+    /// Canlı kaynaktan çözülmüş seçenekler (<see cref="FormChoiceSources"/>). Sabit seçenekli alanda boş;
+    /// o alanlar seçeneklerini <see cref="Settings"/> içindeki <c>options</c> dizisinden okur.
+    /// </summary>
+    public List<FormChoiceDto>? Choices { get; set; }
+}
+
+/// <summary>
+/// Canlı kaynaklı açılır listenin bir seçeneği. Yanıtta <c>{ value, label }</c> olarak saklanır: değer
+/// kaydı gösterir, etiket gönderim anındaki adı korur (çağrı sonra kapansa ya da adı değişse de okunur).
+/// </summary>
+public class FormChoiceDto
+{
+    public string Value { get; set; } = null!;
+    public string Label { get; set; } = null!;
 }
 
 /// <summary>

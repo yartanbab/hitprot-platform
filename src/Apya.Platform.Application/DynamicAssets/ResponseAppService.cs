@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
@@ -28,6 +30,7 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
     private readonly ILogger<ResponseAppService> _logger;
     private readonly Apya.Platform.Tasks.ITaskShareAppService _taskShareAppService;
     private readonly PublicFormLocator _formLocator;
+    private readonly FormChoiceProvider _choiceProvider;
 
     public ResponseAppService(
         IAppDocumentRepository documentRepository,
@@ -35,7 +38,8 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
         IConsentAppService consentAppService,
         ILogger<ResponseAppService> logger,
         Apya.Platform.Tasks.ITaskShareAppService taskShareAppService,
-        PublicFormLocator formLocator)
+        PublicFormLocator formLocator,
+        FormChoiceProvider choiceProvider)
     {
         _documentRepository = documentRepository;
         _responseRepository = responseRepository;
@@ -43,6 +47,7 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
         _logger = logger;
         _taskShareAppService = taskShareAppService;
         _formLocator = formLocator;
+        _choiceProvider = choiceProvider;
     }
 
     public async Task SubmitAsync(SubmitResponseDto input)
@@ -126,6 +131,7 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
 
         // 4) Cevap doğrulama (SEC-003): serbest JSON'la çöp/spam veriyi engelle.
         ValidateAnswers(input.Answers, document, input.DocumentSlug);
+        var answers = await NormalizeChoiceAnswersAsync(input.Answers, document, input.DocumentSlug);
 
         // Yanıt ve KVKK rıza kaydı çözülen kiracıda yazılır: kiracı formunda formun sahibi, host formunu
         // dolduran kiracı kullanıcısında dolduranın kendisi. 🔑 ABP kiracıyı varlık KURULURKEN atar; nesne
@@ -137,7 +143,7 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
             response = new AppResponse(
                 GuidGenerator.Create(),
                 document.Id,
-                input.Answers,
+                answers,
                 respondentId: CurrentUser.Id,
                 completionSeconds: input.CompletionSeconds
             );
@@ -231,6 +237,73 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
                 throw new BusinessException(PlatformDomainErrorCodes.FormRequiredAnswerMissing);
             }
         }
+    }
+
+    /// <summary>
+    /// Canlı listeye bağlı açılır listenin cevabı (<c>{ value, label }</c>) GÜNCEL listeye karşı doğrulanır:
+    /// form açıkken kapanan ya da hiç listede olmayan çağrı reddedilir. Etiket istemciden alınmaz,
+    /// sunucudaki adla yazılır; yanıt ekranı ve dışa aktarım gönderim anındaki adı gösterir.
+    /// </summary>
+    private async Task<string> NormalizeChoiceAnswersAsync(string answersJson, AppDocument document, string slug)
+    {
+        var boundBlocks = document.Blocks
+            .Select(b => (Block: b, Source: FormChoiceProvider.SourceOf(b.Type, b.Settings)))
+            .Where(x => x.Source != null)
+            .ToList();
+        if (boundBlocks.Count == 0)
+        {
+            return answersJson;
+        }
+
+        var answers = JsonNode.Parse(answersJson)!.AsObject();
+        var changed = false;
+        foreach (var (block, source) in boundBlocks)
+        {
+            var key = block.Id.ToString();
+            var node = answers[key];
+            if (node is null)
+            {
+                continue; // cevapsız; zorunluysa ValidateAnswers zaten reddetti
+            }
+
+            string? value = null;
+            var readable = node switch
+            {
+                JsonObject choice => choice["value"] is JsonValue v && v.TryGetValue(out value),
+                JsonValue raw => raw.TryGetValue(out value),
+                _ => false
+            };
+            if (!readable)
+            {
+                throw new BusinessException(PlatformDomainErrorCodes.FormAnswersInvalid);
+            }
+
+            // "Seçiniz…" bırakılmış alan: nesne biçimi boş olsa da ValidateAnswers onu dolu sayar.
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                if (IsRequired(block))
+                {
+                    throw new BusinessException(PlatformDomainErrorCodes.FormRequiredAnswerMissing);
+                }
+
+                continue;
+            }
+
+            var match = (await _choiceProvider.GetChoicesAsync(source))?.FirstOrDefault(c => c.Value == value);
+            if (match is null)
+            {
+                _logger.LogWarning("Form yanıtında listede olmayan seçenek reddedildi. Slug: {Slug}, Alan: {BlockId}, Değer: {Value}",
+                    slug, block.Id, value);
+                throw new BusinessException(PlatformDomainErrorCodes.FormAnswersInvalid);
+            }
+
+            answers[key] = new JsonObject { ["value"] = match.Value, ["label"] = match.Label };
+            changed = true;
+        }
+
+        return changed
+            ? answers.ToJsonString(new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping })
+            : answersJson;
     }
 
     private static bool IsRequired(AppBlock block)

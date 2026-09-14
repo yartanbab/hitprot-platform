@@ -24,15 +24,18 @@ public class FormAppService : PlatformAppService, IFormAppService
     private readonly IAppDocumentRepository _documentRepository;
     private readonly IRepository<AppResponse, Guid> _responseRepository;
     private readonly ILogger<FormAppService> _logger;
+    private readonly FormChoiceProvider _choiceProvider;
 
     public FormAppService(
         IAppDocumentRepository documentRepository,
         IRepository<AppResponse, Guid> responseRepository,
-        ILogger<FormAppService> logger)
+        ILogger<FormAppService> logger,
+        FormChoiceProvider choiceProvider)
     {
         _documentRepository = documentRepository;
         _responseRepository = responseRepository;
         _logger = logger;
+        _choiceProvider = choiceProvider;
     }
 
     public async Task<PagedResultDto<FormListItemDto>> GetListAsync(FormListFilterDto input)
@@ -236,6 +239,11 @@ public class FormAppService : PlatformAppService, IFormAppService
             TodayResponseCount = todayCount,
             PendingResponseCount = pendingCount
         };
+    }
+
+    public async Task<List<FormChoiceDto>> GetChoicesAsync(string source)
+    {
+        return await _choiceProvider.GetChoicesAsync(source) ?? new List<FormChoiceDto>();
     }
 
     /// <summary>
