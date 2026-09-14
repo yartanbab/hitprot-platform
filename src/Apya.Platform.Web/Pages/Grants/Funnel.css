@@ -1,0 +1,149 @@
+/* =============================================================================
+   18c · Host · Çağrı dönüşüm hunisi — altı aşama yan yana, altta bar ve oran.
+   Metin rengi daima token (kart gövdesi dahil); bar zemini koyu temada da ayırt edilir.
+   ============================================================================= */
+
+.apya-fnl-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--apya-space-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--apya-space-5);
+}
+
+.apya-fnl-head-text { min-width: 0; }
+
+.apya-fnl-title {
+    margin: 0;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-fnl-sub {
+    margin: 4px 0 0;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+}
+
+.apya-fnl-controls {
+    display: flex;
+    gap: var(--apya-space-3);
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.apya-fnl-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    margin: 0;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-fnl-control #FunnelCall { max-width: 26rem; }
+
+.apya-fnl-stages {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+    margin: 0 0 var(--apya-space-4);
+    padding: 0;
+    list-style: none;
+}
+
+.apya-fnl-stage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    min-width: 0;
+    padding: var(--apya-space-4);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-primary);
+}
+
+.apya-fnl-label {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.apya-fnl-value {
+    color: var(--apya-text-primary);
+    font-size: 1.75rem;
+    font-weight: var(--apya-weight-bold);
+    line-height: 1.1;
+}
+
+.apya-fnl-bar {
+    display: block;
+    height: 6px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-border-subtle);
+    overflow: hidden;
+}
+
+.apya-fnl-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--apya-accent-500);
+}
+
+.apya-fnl-subtext {
+    min-height: 1.2em;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-fnl-insight {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-3);
+    margin-bottom: var(--apya-space-4);
+    padding: var(--apya-space-3) var(--apya-space-4);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+}
+
+.apya-fnl-insight > i {
+    margin-top: 3px;
+    color: var(--apya-warning-500);
+}
+
+.apya-fnl-empty {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    color: var(--apya-text-secondary);
+}
+
+.apya-fnl-note {
+    margin: var(--apya-space-4) 0 0;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+@media (max-width: 1199.98px) {
+    .apya-fnl-stages { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 575.98px) {
+    .apya-fnl-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .apya-fnl-controls,
+    .apya-fnl-control { width: 100%; }
+    .apya-fnl-control #FunnelCall { max-width: none; }
+    .apya-fnl-value { font-size: 1.5rem; }
+}

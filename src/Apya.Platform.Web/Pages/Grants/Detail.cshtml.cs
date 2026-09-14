@@ -1,4 +1,6 @@
 using System;
+using System.Threading.Tasks;
+using Apya.Platform.Grants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Permissions;
@@ -10,11 +12,25 @@ namespace Apya.Platform.Web.Pages.Grants;
 [Authorize(PlatformPermissions.Grants.Default)]
 public class DetailModel : PlatformPageModel
 {
+    private readonly IGrantFunnelAppService _funnel;
+
+    public DetailModel(IGrantFunnelAppService funnel)
+    {
+        _funnel = funnel;
+    }
+
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync()
     {
-        return Id == Guid.Empty ? RedirectToPage("./Index") : Page();
+        if (Id == Guid.Empty)
+        {
+            return RedirectToPage("./Index");
+        }
+
+        // 18c · Huni: sayfa açılışı bir görüntülenme; ekran içi yenilemeler (JS) sayılmaz. Host'un bakışı sayılmaz.
+        await _funnel.RecordTenantViewAsync(Id);
+        return Page();
     }
 }

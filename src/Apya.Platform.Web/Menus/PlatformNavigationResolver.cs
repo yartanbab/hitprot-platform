@@ -650,6 +650,9 @@ public class PlatformNavigationResolver : IScopedDependency
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Interests", l["Menu:Grants:Interests"], icon: "fa fa-handshake", url: "/Grants/Interests"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Leads", l["Menu:Grants:Leads"], icon: "fa fa-inbox", url: "/Grants/Leads"));
+        // 18c · Hangi çağrı iş getiriyor: görüntülenmeden onaya huni. Kiracı verisini de saydığı için yalnız host.
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Funnel", l["Menu:Grants:Funnel"], icon: "fa fa-filter", url: "/Grants/Funnel"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.NotificationTemplates", l["Menu:Grants:NotificationTemplates"], icon: "fa fa-bell", url: "/Grants/NotificationTemplates"));
         if (_currentTenant.Id != null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
