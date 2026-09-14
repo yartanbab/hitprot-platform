@@ -541,6 +541,9 @@ $(function () {
             issuer: $('#ParamIssuer').val(),
             description: $('#ParamSummary').val(),
             sourceUrl: $('#ParamSourceUrl').val(),
+            objective: $('#ParamObjective').val(),
+            priorities: $('#ParamPriorities').val(),
+            eligibleApplicants: $('#ParamEligibleApplicants').val(),
             eligibleCompanySizes: sizes,
             minCompanyAgeYears: num('#ParamMinAge'),
             maxCompanyAgeYears: num('#ParamMaxAge'),
@@ -555,6 +558,7 @@ $(function () {
             prefersFemaleEntrepreneur: $('#ParamPrefersFemale').is(':checked'),
             prefersYoungEntrepreneur: $('#ParamPrefersYoung').is(':checked'),
             criteriaTags: tags,
+            minAmount: num('#ParamMinAmount'),
             maxAmount: num('#ParamMaxAmount'),
             supportRatePercent: num('#ParamSupportRate'),
             projectDurationMonths: num('#ParamDuration'),
@@ -580,6 +584,9 @@ $(function () {
         $('#ParamSummary').val(dto.description || '');
         $('#ParamSourceUrl').val(dto.sourceUrl || '');
         $('#ParamSourceUrlText').text(dto.sourceUrl || '');
+        $('#ParamObjective').val(dto.objective || '');
+        $('#ParamPriorities').val(dto.priorities || '');
+        $('#ParamEligibleApplicants').val(dto.eligibleApplicants || '');
         posterFileName = dto.posterFileName || null;
         paintPoster();
 
@@ -617,6 +624,7 @@ $(function () {
             addTag($('.apya-tag-input[data-kind="' + t.kind + '"]'), t.value);
         });
 
+        setNum('#ParamMinAmount', dto.minAmount);
         setNum('#ParamMaxAmount', dto.maxAmount);
         setNum('#ParamSupportRate', dto.supportRatePercent);
         setNum('#ParamDuration', dto.projectDurationMonths);

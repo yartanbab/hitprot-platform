@@ -82,6 +82,25 @@
     <div class="apya-detail-layout">
         <div class="d-flex flex-column gap-4">
 
+            @* Resmî duyurunun metin başlıkları. Hiçbiri dolu değilse kart gizli kalır; JS boyar. *@
+            <section class="card mb-0 d-none" id="AboutCard">
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="fw-bold">@L["Grants:Detail:About"]</div>
+                    <div id="AboutObjective" class="d-none">
+                        <div class="apya-overline">@L["Grants:Parameters:Objective"]</div>
+                        <p class="mb-0 apya-detail-prose" id="AboutObjectiveText"></p>
+                    </div>
+                    <div id="AboutPriorities" class="d-none">
+                        <div class="apya-overline">@L["Grants:Parameters:ProgramPriorities"]</div>
+                        <ul class="mb-0 ps-3" id="AboutPrioritiesList"></ul>
+                    </div>
+                    <div id="AboutApplicants" class="d-none">
+                        <div class="apya-overline">@L["Grants:Parameters:EligibleApplicants"]</div>
+                        <ul class="mb-0 ps-3" id="AboutApplicantsList"></ul>
+                    </div>
+                </div>
+            </section>
+
             <section class="card mb-0">
                 <div class="card-body d-flex flex-column gap-3">
                     <div class="fw-bold">@L["Grants:Detail:Eligibility"]</div>

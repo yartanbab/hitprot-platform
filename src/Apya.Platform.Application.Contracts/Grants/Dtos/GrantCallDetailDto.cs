@@ -15,10 +15,14 @@ public class GrantCallDetailDto
     public string Issuer { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? SourceUrl { get; set; }
+    public string? Objective { get; set; }
+    public string? Priorities { get; set; }
+    public string? EligibleApplicants { get; set; }
     public string Period { get; set; } = string.Empty;
     public DateTime? Deadline { get; set; }
     public int? DaysRemaining { get; set; }
 
+    public decimal? MinAmount { get; set; }
     public decimal? MaxAmount { get; set; }
     public int? SupportRatePercent { get; set; }
 

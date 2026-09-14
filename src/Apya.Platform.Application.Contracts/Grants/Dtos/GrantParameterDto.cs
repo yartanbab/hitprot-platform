@@ -15,6 +15,9 @@ public class GrantParameterDto : EntityDto<Guid>
     public string Issuer { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? SourceUrl { get; set; }
+    public string? Objective { get; set; }
+    public string? Priorities { get; set; }
+    public string? EligibleApplicants { get; set; }
 
     /// <summary>12b · Afişin saklanan adı; adres istemcide /file/get/ ile kurulur (proje kapağıyla aynı).</summary>
     public string? PosterFileName { get; set; }
@@ -36,6 +39,7 @@ public class GrantParameterDto : EntityDto<Guid>
     public List<GrantCriteriaTagDto> CriteriaTags { get; set; } = new();
 
     // --- Finansal Yapı ---
+    public decimal? MinAmount { get; set; }
     public decimal? MaxAmount { get; set; }
     public int? SupportRatePercent { get; set; }
 

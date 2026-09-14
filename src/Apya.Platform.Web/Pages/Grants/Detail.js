@@ -43,7 +43,9 @@ $(function () {
                 : l('Grants:Feed:Card:DaysLeft', d.daysRemaining));
 
         var metrics = [
-            [l('Grants:Parameters:MaxAmount'), money(d.maxAmount)],
+            d.minAmount
+                ? [l('Grants:Parameters:AmountRange'), amountRange(d.minAmount, d.maxAmount)]
+                : [l('Grants:Parameters:MaxAmount'), money(d.maxAmount)],
             [l('Grants:Parameters:SupportRate'), d.supportRatePercent != null ? '%' + d.supportRatePercent : '—'],
             [l('Grants:Parameters:Duration'), d.projectDurationMonths != null ? d.projectDurationMonths : '—'],
             [l('Grants:Field:Deadline'), fmtDate(d.deadline)]
@@ -53,8 +55,39 @@ $(function () {
                 '</span><span class="apya-detail-metric-value">' + esc(m[1]) + '</span></div>';
         }).join(''));
 
+        paintAbout(d);
         paintInterest(d);
         paintBookmark(d.isBookmarked);
+    }
+
+    // Azami 0 = üst limit yok; açık uçlu aralık "5.000.000+ ₺" yazılır.
+    function amountRange(min, max) {
+        var from = Math.round(min).toLocaleString('tr-TR');
+        return max ? from + ' – ' + money(max) : from + '+ ₺';
+    }
+
+    // ---------- Program hakkında ----------
+    function lines(text) {
+        return (text || '').split('\n')
+            .map(function (s) { return s.trim(); })
+            .filter(function (s) { return s.length > 0; });
+    }
+
+    function paintList($block, $list, text) {
+        var items = lines(text);
+        $list.html(items.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join(''));
+        $block.toggleClass('d-none', items.length === 0);
+        return items.length > 0;
+    }
+
+    function paintAbout(d) {
+        var objective = (d.objective || '').trim();
+        $('#AboutObjectiveText').text(objective);
+        $('#AboutObjective').toggleClass('d-none', !objective);
+
+        var hasPriorities = paintList($('#AboutPriorities'), $('#AboutPrioritiesList'), d.priorities);
+        var hasApplicants = paintList($('#AboutApplicants'), $('#AboutApplicantsList'), d.eligibleApplicants);
+        $('#AboutCard').toggleClass('d-none', !objective && !hasPriorities && !hasApplicants);
     }
 
     // ---------- İlgi talebi (tur 14) ----------
