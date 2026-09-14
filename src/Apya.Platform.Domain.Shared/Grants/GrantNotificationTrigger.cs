@@ -49,5 +49,11 @@ public enum GrantNotificationTrigger
     /// 18b · Host çağrıyı kapattı. Talebi yanıtlanmamış ya da başvurusu gönderilmemiş firmalara
     /// gider; gövde profile uyan açık çağrıları taşır.
     /// </summary>
-    CallClosed = 9
+    CallClosed = 9,
+
+    /// <summary>18e · Firma ön görüşme için üç saat önerdi. HOST'a gider.</summary>
+    MeetingProposed = 10,
+
+    /// <summary>18e · Danışman saatlerden birini onayladı ya da başka saat istedi. Firmaya gider.</summary>
+    MeetingAnswered = 11
 }

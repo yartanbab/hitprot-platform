@@ -164,6 +164,41 @@
     flex-wrap: wrap;
 }
 
+/* 18e · Ön görüşme: firmanın önerdiği üç saat seçilebilir satır; geçmiş saat seçilemez. */
+.apya-irv-meeting-slots {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    margin: var(--apya-space-3) 0;
+}
+
+.apya-irv-meeting-slot {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    margin: 0;
+    padding: var(--apya-space-2) var(--apya-space-3);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    cursor: pointer;
+}
+
+.apya-irv-meeting-slot:has(input:checked) { border-color: var(--apya-accent-500); }
+
+.apya-irv-meeting-slot.is-past {
+    color: var(--apya-text-secondary);
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
+
+.apya-irv-meeting-state {
+    margin-top: var(--apya-space-2);
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+}
+
 .apya-irv-assign {
     display: flex;
     flex-direction: column;

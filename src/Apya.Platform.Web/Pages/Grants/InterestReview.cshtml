@@ -73,6 +73,20 @@
                 </div>
             </section>
 
+            @* --- 18e · Ön görüşme: firmanın önerdiği üç saat --- *@
+            <section class="card mb-0 apya-irv-card" id="MeetingSection">
+                <div class="card-body">
+                    <div class="apya-irv-card-title">@L["Grants:InterestReview:Meeting:Title"]</div>
+                    <div class="apya-irv-card-meta" id="MeetingMeta"></div>
+                    <div class="apya-irv-meeting-slots d-none" id="MeetingSlots" role="radiogroup" aria-labelledby="MeetingMeta"></div>
+                    <p class="apya-irv-meeting-state mb-0 d-none" id="MeetingState"></p>
+                    <div class="apya-irv-actions d-none" id="MeetingActions">
+                        <button type="button" class="btn btn-primary" id="MeetingConfirmBtn">@L["Grants:InterestReview:Meeting:Confirm"]</button>
+                        <button type="button" class="btn btn-outline-secondary" id="MeetingOtherBtn">@L["Grants:InterestReview:Meeting:Other"]</button>
+                    </div>
+                </div>
+            </section>
+
             @* --- Karar + devret --- *@
             <section class="card mb-0 apya-irv-card">
                 <div class="card-body">
@@ -141,6 +155,30 @@
                 </div>
             </section>
         </aside>
+    </div>
+</div>
+
+@* ---- 18e · Başka saat iste: not firmaya aynen gider ---- *@
+<div class="modal fade apya-grant-scope" id="MeetingOtherModal" tabindex="-1" aria-hidden="true" aria-labelledby="MeetingOtherTitle">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="MeetingOtherForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="MeetingOtherTitle">@L["Grants:InterestReview:Meeting:Other"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body d-flex flex-column gap-2">
+                    <div class="small text-muted">@L["Grants:InterestReview:Meeting:OtherHint"]</div>
+                    <textarea class="form-control" id="MeetingOtherNote" rows="3" maxlength="500" required aria-label="@L["Grants:InterestReview:Meeting:Other"]"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Sources:Cancel"]</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-paper-plane me-1"></i>@L["Grants:InterestReview:Meeting:Send"]
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 

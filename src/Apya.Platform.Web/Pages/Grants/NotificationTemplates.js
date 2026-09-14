@@ -4,10 +4,11 @@ $(function () {
 
     // Enum sırası sunucudakiyle birebir (GrantNotificationTrigger).
     // 🔴 InterestAnswered (7) ve InterestReceived (8) eklenirken bu dizi güncellenmemişti; iki şablonun adı
-    // ekranda "Grants:Notify:Trigger:undefined:Name" olarak çıkıyordu. CallClosed (9) 18b ile geldi.
+    // ekranda "Grants:Notify:Trigger:undefined:Name" olarak çıkıyordu. CallClosed (9) 18b, MeetingProposed (10) ve
+    // MeetingAnswered (11) 18e ile geldi.
     var triggerKeys = ['RecommendationSent', 'DocumentDeadlineNear', 'DocumentRevisionRequested',
                        'ApplicationStageChanged', 'DecisionIssued', 'ReportDeadlineNear', 'CallPublished',
-                       'InterestAnswered', 'InterestReceived', 'CallClosed'];
+                       'InterestAnswered', 'InterestReceived', 'CallClosed', 'MeetingProposed', 'MeetingAnswered'];
 
     var model = null;
     var selectedId = null;

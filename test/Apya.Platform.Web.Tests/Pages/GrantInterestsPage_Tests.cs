@@ -36,6 +36,10 @@ public class GrantInterestsPage_Tests : PlatformWebTestBase
         html.ShouldContain("AssignSelect");
         html.ShouldContain("PartnerSection");
         html.ShouldContain("RejectModal");
+        // 18e · Ön görüşme kartı ve başka saat penceresi.
+        html.ShouldContain("MeetingSection");
+        html.ShouldContain("MeetingOtherModal");
+        html.ShouldContain("Görüşmeyi onayla");
         System.Text.RegularExpressions.Regex.IsMatch(html, @"InterestReview[^""]*\.js")
             .ShouldBeTrue("sayfa demeti InterestReview.js içermeli");
     }

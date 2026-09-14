@@ -44,6 +44,9 @@ public class GrantJourneyItemDto
 
     public string? HostFeedback { get; set; }
 
+    /// <summary>18e · Bekleyen talebin son görüşme önerisi.</summary>
+    public GrantMeetingDto? Meeting { get; set; }
+
     // --- Başvuru ---
     public Guid? ApplicationId { get; set; }
     public string? StageName { get; set; }

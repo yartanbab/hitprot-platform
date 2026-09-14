@@ -24,7 +24,9 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.CallPublished]             = NotificationType.GrantCallPublished,
             [GrantNotificationTrigger.InterestAnswered]          = NotificationType.GrantInterestAnswered,
             [GrantNotificationTrigger.InterestReceived]          = NotificationType.GrantInterestReceived,
-            [GrantNotificationTrigger.CallClosed]                = NotificationType.GrantCallClosed
+            [GrantNotificationTrigger.CallClosed]                = NotificationType.GrantCallClosed,
+            [GrantNotificationTrigger.MeetingProposed]           = NotificationType.GrantMeetingProposed,
+            [GrantNotificationTrigger.MeetingAnswered]           = NotificationType.GrantMeetingAnswered
         };
 
     /// <summary>
@@ -71,7 +73,14 @@ public static class GrantNotificationTriggerRegistry
                 ["{firma_adı}", "{çağrı_adı}", "{firma_notu}"],
 
             [GrantNotificationTrigger.CallClosed] =
-                ["{çağrı_adı}", "{benzer_çağrılar}"]
+                ["{çağrı_adı}", "{benzer_çağrılar}"],
+
+            [GrantNotificationTrigger.MeetingProposed] =
+                ["{firma_adı}", "{çağrı_adı}", "{önerilen_saatler}"],
+
+            // Sonuç tek tokendadır: onayda saat, başka saat isteğinde danışmanın notu yazılır.
+            [GrantNotificationTrigger.MeetingAnswered] =
+                ["{çağrı_adı}", "{görüşme_sonucu}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

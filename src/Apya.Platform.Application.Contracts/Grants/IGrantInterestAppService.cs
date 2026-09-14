@@ -23,4 +23,10 @@ public interface IGrantInterestAppService : IApplicationService
     /// çağrıya yeniden ilgi bildirilebilir (yeni kayıt açılır).
     /// </summary>
     Task<MyGrantInterestDto> WithdrawAsync(Guid id);
+
+    /// <summary>
+    /// 18e · Ön görüşme için üç saat önerir. Yalnız karara bağlanmamış talepte ve açık öneri yokken; danışman
+    /// başka saat istediyse yeniden önerilebilir. Host'a bildirim gider.
+    /// </summary>
+    Task<GrantMeetingDto> ProposeMeetingAsync(ProposeGrantMeetingInput input);
 }

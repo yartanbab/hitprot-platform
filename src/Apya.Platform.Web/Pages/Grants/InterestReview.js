@@ -3,6 +3,7 @@ $(function () {
     var l = abp.localization.getResource('Platform');
     var interestId = $('.apya-page').data('interest-id');
     var rejectModal = new bootstrap.Modal(document.getElementById('RejectModal'));
+    var meetingOtherModal = new bootstrap.Modal(document.getElementById('MeetingOtherModal'));
 
     // Enum sıraları sunucudakiyle birebir.
     var statusKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi', 'Kacirildi'];
@@ -142,10 +143,37 @@ $(function () {
         }).join('') : '<p class="apya-irv-card-meta mb-0">' + esc(l('Grants:InterestReview:Partner:None')) + '</p>');
     }
 
+    function slotText(v) {
+        return new Date(v).toLocaleString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long', hour: '2-digit', minute: '2-digit' });
+    }
+
+    /// 18e · GrantMeetingStatus: 0 Bekliyor · 1 Onaylandı · 2 Başka saat istendi. Yalnız bekleyen talepte eylem var.
+    function paintMeeting(d) {
+        var m = d.meeting;
+        var pending = d.interest.status === 0 || d.interest.status === 1;
+        var open = !!m && m.status === 0 && pending;
+        $('#MeetingSlots').toggleClass('d-none', !open).html(open ? m.slots.map(function (s, i) {
+            var past = new Date(s) <= new Date();
+            return '<label class="apya-irv-meeting-slot' + (past ? ' is-past' : '') + '">' +
+                '<input type="radio" name="MeetingSlot" value="' + i + '"' + (past ? ' disabled' : '') + '> ' +
+                '<span>' + esc(slotText(s)) + '</span></label>';
+        }).join('') : '');
+        $('#MeetingActions').toggleClass('d-none', !open);
+
+        $('#MeetingMeta').text(!m
+            ? l('Grants:InterestReview:Meeting:None')
+            : m.status === 0 ? l('Grants:InterestReview:Meeting:Pending', m.durationMinutes) : '');
+        var state = !m ? ''
+            : m.status === 1 ? l('Grants:InterestReview:Meeting:Confirmed', slotText(m.confirmedSlot), m.durationMinutes)
+            : m.status === 2 ? l('Grants:InterestReview:Meeting:OtherRequested', m.hostNote || '') : '';
+        $('#MeetingState').toggleClass('d-none', !state).text(state);
+    }
+
     function paint(d) {
         model = d;
         paintHead(d);
         paintIdea(d);
+        paintMeeting(d);
         paintDecision(d);
         paintFirm(d);
         paintPartners(d);
@@ -187,6 +215,33 @@ $(function () {
         busy($(this), service.startApplication(interestId).then(function () {
             abp.notify.success(l('Grants:Interests:Started'));
             return load();
+        }));
+    });
+
+    $('#MeetingConfirmBtn').on('click', function () {
+        var slot = $('input[name=MeetingSlot]:checked').val();
+        if (slot == null) {
+            abp.notify.warn(l('Grants:InterestReview:Meeting:PickSlot'));
+            return;
+        }
+        busy($(this), service.confirmMeeting({ proposalId: model.meeting.id, slotIndex: parseInt(slot, 10) }).then(function (d) {
+            paint(d);
+            abp.notify.success(l('Grants:InterestReview:Meeting:DoneConfirmed'));
+        }));
+    });
+
+    $('#MeetingOtherBtn').on('click', function () {
+        $('#MeetingOtherNote').val('');
+        meetingOtherModal.show();
+    });
+
+    $('#MeetingOtherForm').on('submit', function (e) {
+        e.preventDefault();
+        var $submit = $(this).find('button[type=submit]');
+        busy($submit, service.requestOtherMeetingTime({ proposalId: model.meeting.id, note: $('#MeetingOtherNote').val() }).then(function (d) {
+            meetingOtherModal.hide();
+            paint(d);
+            abp.notify.success(l('Grants:InterestReview:Meeting:DoneOther'));
         }));
     });
 
