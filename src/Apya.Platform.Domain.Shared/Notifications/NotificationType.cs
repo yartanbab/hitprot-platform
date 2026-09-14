@@ -28,5 +28,6 @@ public enum NotificationType
     GrantReportDue                 = 19, // Ara/sonuç raporu — teslime 30 / 14 / 3 gün
     GrantCallPublished             = 20, // Yeni çağrı yayına alındı
     GrantInterestAnswered          = 21, // İlgi talebi karara bağlandı (başvuru açıldı / uygun değil)
-    GrantInterestReceived          = 22  // Kiracı ilgi bildirdi — HOST'a gider
+    GrantInterestReceived          = 22, // Kiracı ilgi bildirdi — HOST'a gider
+    GrantCallClosed                = 23  // 18b · Çağrı kapandı; yarım kalan firmaya benzer çağrılarla
 }

@@ -14,13 +14,16 @@ public class GrantCallAppService :
     IGrantCallAppService
 {
     private readonly IRepository<Grant, Guid> _grantRepository;
+    private readonly GrantCallClosingManager _closingManager;
 
     public GrantCallAppService(
         IRepository<GrantCall, Guid> repository,
-        IRepository<Grant, Guid> grantRepository)
+        IRepository<Grant, Guid> grantRepository,
+        GrantCallClosingManager closingManager)
         : base(repository)
     {
         _grantRepository = grantRepository;
+        _closingManager = closingManager;
         GetPolicyName = PlatformPermissions.Grants.Default;
         GetListPolicyName = PlatformPermissions.Grants.Default;
         CreatePolicyName = PlatformPermissions.Grants.Create;
@@ -62,6 +65,29 @@ public class GrantCallAppService :
         {
             throw new AbpAuthorizationException("Hibe çağrısı yalnızca host bağlamında yönetilebilir.");
         }
+    }
+
+    /// <summary>
+    /// 18b · Çağrı bu güncellemede KAPANDIYSA kapanış zinciri çalışır. Zaten kapalı çağrıyı yeniden
+    /// kaydetmek zinciri tetiklemez; yeniden açılıp kapatılırsa bildirim log'u tekrarı engeller.
+    /// </summary>
+    public override async Task<GrantCallDto> UpdateAsync(Guid id, CreateUpdateGrantCallDto input)
+    {
+        var before = (await Repository.GetAsync(id)).Status;
+        var dto = await base.UpdateAsync(id, input);
+
+        if (before != GrantCallStatus.Kapandi && dto.Status == GrantCallStatus.Kapandi)
+        {
+            var result = await _closingManager.RunAsync(id);
+            dto.ClosingSummary = new GrantCallClosingSummaryDto
+            {
+                MissedInterestCount = result.MissedInterestCount,
+                UnfinishedApplicationCount = result.UnfinishedApplicationCount,
+                NotifiedFirmCount = result.NotifiedFirmCount
+            };
+        }
+
+        return dto;
     }
 
     // AutoMapper yerine domain kurucusu/guard'ı kullan (private setter'lar + SetSchedule kuralı).

@@ -140,6 +140,18 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
         AssignedUserId ??= userId;
     }
 
+    /// <summary>
+    /// 18b · Karara bağlanmadan çağrı kapandı. Gerekçe otomatik ve firmaya gösterilir; kararı veren
+    /// bir danışman olmadığı için inceleyen alanı değişmez.
+    /// </summary>
+    public void MarkMissed(string reason, DateTime now)
+    {
+        EnsurePending();
+        Status = GrantInterestStatus.Kacirildi;
+        HostFeedback = Check.Length(reason.Trim(), nameof(reason), maxLength: 1000);
+        ReviewedAt = now;
+    }
+
     /// <summary>18a · İç not; her durumda yazılabilir (kapanmış talebe sonradan not düşmek geçmişi bozmaz).</summary>
     public void SetConsultantNote(string? note)
     {

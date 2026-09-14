@@ -23,7 +23,8 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.ReportDeadlineNear]        = NotificationType.GrantReportDue,
             [GrantNotificationTrigger.CallPublished]             = NotificationType.GrantCallPublished,
             [GrantNotificationTrigger.InterestAnswered]          = NotificationType.GrantInterestAnswered,
-            [GrantNotificationTrigger.InterestReceived]          = NotificationType.GrantInterestReceived
+            [GrantNotificationTrigger.InterestReceived]          = NotificationType.GrantInterestReceived,
+            [GrantNotificationTrigger.CallClosed]                = NotificationType.GrantCallClosed
         };
 
     /// <summary>
@@ -67,7 +68,10 @@ public static class GrantNotificationTriggerRegistry
                 ["{çağrı_adı}", "{karar}", "{gerekçe}"],
 
             [GrantNotificationTrigger.InterestReceived] =
-                ["{firma_adı}", "{çağrı_adı}", "{firma_notu}"]
+                ["{firma_adı}", "{çağrı_adı}", "{firma_notu}"],
+
+            [GrantNotificationTrigger.CallClosed] =
+                ["{çağrı_adı}", "{benzer_çağrılar}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

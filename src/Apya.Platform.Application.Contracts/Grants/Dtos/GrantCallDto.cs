@@ -13,4 +13,14 @@ public class GrantCallDto : EntityDto<Guid>
     public decimal? Budget { get; set; }
     public string? Reference { get; set; }
     public string? GrantName { get; set; }
+
+    /// <summary>18b · Bu güncellemede çağrı kapandıysa zincirin özeti; aksi hâlde null.</summary>
+    public GrantCallClosingSummaryDto? ClosingSummary { get; set; }
+}
+
+public class GrantCallClosingSummaryDto
+{
+    public int MissedInterestCount { get; set; }
+    public int UnfinishedApplicationCount { get; set; }
+    public int NotifiedFirmCount { get; set; }
 }
