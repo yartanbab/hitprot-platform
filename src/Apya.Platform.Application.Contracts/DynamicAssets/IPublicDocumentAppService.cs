@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Services;
 using Apya.Platform.DynamicAssets.Dtos;
@@ -14,5 +15,8 @@ public interface IPublicDocumentAppService : IApplicationService
     /// Retrieves a published document with its blocks by the unique slug.
     /// Returns only the publicly-safe fields needed for form rendering.
     /// </summary>
-    Task<PublicDocumentDto> GetBySlugAsync(string slug);
+    /// <param name="slug">Form slug (unique per tenant).</param>
+    /// <param name="tenantId">Form owner's tenant, carried by a tenant form's public link. Empty:
+    /// the caller's own tenant, then (for a signed-in tenant user) the host's forms.</param>
+    Task<PublicDocumentDto> GetBySlugAsync(string slug, Guid? tenantId = null);
 }

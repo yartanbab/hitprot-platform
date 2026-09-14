@@ -782,7 +782,10 @@ internal static class ReportExporter
             .OrderBy(b => b.Order)
             .ToList();
 
-        string[] fixedHeaders = ["Tarih", "Durum", "Süre (sn)"];
+        // Host formuna kiracılar yanıt verdiyse satırın hangi firmaya ait olduğu görünmeli.
+        var withFirm = responses.Any(r => !string.IsNullOrEmpty(r.TenantName));
+        string[] fixedHeaders = withFirm ? ["Tarih", "Firma", "Durum", "Süre (sn)"] : ["Tarih", "Durum", "Süre (sn)"];
+        var firstStatusColumn = withFirm ? 3 : 2;
         for (int i = 0; i < fixedHeaders.Length; i++)
         {
             ws.Cell(1, i + 1).Value = fixedHeaders[i];
@@ -803,8 +806,9 @@ internal static class ReportExporter
 
             ws.Cell(row, 1).Value = r.CreationTime;
             ws.Cell(row, 1).Style.DateFormat.Format = "dd.MM.yyyy HH:mm";
-            ws.Cell(row, 2).Value = ResponseStatusLabel(r.Status);
-            if (r.CompletionSeconds.HasValue) ws.Cell(row, 3).Value = r.CompletionSeconds.Value;
+            if (withFirm) ws.Cell(row, 2).Value = r.TenantName ?? "";
+            ws.Cell(row, firstStatusColumn).Value = ResponseStatusLabel(r.Status);
+            if (r.CompletionSeconds.HasValue) ws.Cell(row, firstStatusColumn + 1).Value = r.CompletionSeconds.Value;
 
             for (int i = 0; i < columns.Count; i++)
             {

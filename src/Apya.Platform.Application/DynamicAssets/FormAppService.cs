@@ -4,8 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
+using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 using Apya.Platform.DynamicAssets.Dtos;
 using Apya.Platform.Permissions;
 
@@ -212,6 +215,9 @@ public class FormAppService : PlatformAppService, IFormAppService
     {
         var document = await _documentRepository.GetAsync(id);
 
+        // Host formuna kiracıların verdiği yanıtlar o kiracılarda durur; host'un sayımı süzgeç kapalı
+        // yapılır. Form kimliği tekil olduğundan başka formun yanıtı sayılmaz.
+        using var _ = CurrentTenant.Id is null ? DataFilter.Disable<IMultiTenant>() : NullDisposable.Instance;
         var responseQueryable = await _responseRepository.GetQueryableAsync();
         responseQueryable = responseQueryable.Where(r => r.DocumentId == id);
 

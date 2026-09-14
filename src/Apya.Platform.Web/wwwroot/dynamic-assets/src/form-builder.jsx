@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
+import { publicFormPath } from './lib/publicFormLink';
 import './index.css';
 
 /* ============================================================
@@ -510,7 +511,7 @@ function PublishModal({ formId, slug, onClose }) {
     }
   };
 
-  const publicUrl = publishedSlug ? `${window.location.origin}/f/${publishedSlug}` : null;
+  const publicUrl = publishedSlug ? `${window.location.origin}${publicFormPath(publishedSlug)}` : null;
   const copyLink = () => { if (publicUrl) navigator.clipboard?.writeText(publicUrl); notify('success', 'Bağlantı kopyalandı.'); };
 
   return (

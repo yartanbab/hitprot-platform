@@ -1,23 +1,24 @@
-import { b as F, j as e, r as i } from "./react-vendor-D57GAUXd.js";
+import { b as $, j as e, r as i } from "./react-vendor-D57GAUXd.js";
 import { a as m } from "./httpClient-DePjXdo1.js";
 import { H as A } from "./Hint-CNW95h3H.js";
+import { p as E } from "./publicFormLink-CJ_6ABDU.js";
 /* empty css               */
 const N = {
   0: { label: "Taslak", cls: "bg-neutral-100 text-neutral-700" },
   1: { label: "Yayında", cls: "bg-positive-100 text-positive-700" },
   2: { label: "Arşiv", cls: "bg-warning-100 text-warning-700" }
-}, E = (a) => {
+}, D = (a) => {
   try {
     return new Date(a).toLocaleDateString("tr-TR");
   } catch {
     return a;
   }
-}, D = (a) => {
+}, z = (a) => {
   var o, n;
   return (n = (o = window == null ? void 0 : window.abp) == null ? void 0 : o.auth) == null ? void 0 : n.isGranted(a);
-}, S = (a, o) => (getComputedStyle(document.documentElement).getPropertyValue(a) || "").trim() || o, w = () => S("--apya-neutral-400", "#9CA3AF"), $ = () => S("--apya-accent-500", "#4F46E5");
-function z() {
-  const [a, o] = i.useState([]), [n, l] = i.useState(!0), [d, h] = i.useState([]), [c, b] = i.useState(""), [y, u] = i.useState(!1), g = D("Platform.DynamicAssets.ManageCategories"), p = async (r) => {
+}, S = (a, o) => (getComputedStyle(document.documentElement).getPropertyValue(a) || "").trim() || o, w = () => S("--apya-neutral-400", "#9CA3AF"), F = () => S("--apya-accent-500", "#4F46E5");
+function L() {
+  const [a, o] = i.useState([]), [n, l] = i.useState(!0), [d, h] = i.useState([]), [c, b] = i.useState(""), [y, u] = i.useState(!1), g = z("Platform.DynamicAssets.ManageCategories"), p = async (r) => {
     l(!0);
     try {
       const t = new URLSearchParams({ MaxResultCount: "200", SkipCount: "0" });
@@ -39,7 +40,7 @@ function z() {
     p(c);
   }, [c]);
   const j = (r) => d.find((t) => t.id === r), v = async (r) => {
-    if (await B(r.title))
+    if (await M(r.title))
       try {
         await m.delete(`/api/app/form/${r.id}`), o((s) => s.filter((k) => k.id !== r.id)), x("success", "Form silindi.");
       } catch (s) {
@@ -71,7 +72,7 @@ function z() {
         {
           onClick: () => b(r.id),
           className: `rounded-full px-3 py-1.5 text-xs font-semibold transition ${c === r.id ? "text-white" : "text-text-secondary hover:opacity-80"}`,
-          style: c === r.id ? { backgroundColor: r.color || $() } : { backgroundColor: `${r.color || w()}20` },
+          style: c === r.id ? { backgroundColor: r.color || F() } : { backgroundColor: `${r.color || w()}20` },
           children: [
             r.icon ? `${r.icon} ` : "",
             r.name
@@ -109,19 +110,19 @@ function z() {
             "👁 ",
             r.viewCount
           ] }),
-          /* @__PURE__ */ e.jsx("span", { className: "ml-auto whitespace-nowrap", children: E(r.creationTime) })
+          /* @__PURE__ */ e.jsx("span", { className: "ml-auto whitespace-nowrap", children: D(r.creationTime) })
         ] }),
         /* @__PURE__ */ e.jsxs("div", { className: "mt-3 flex items-center gap-1.5", children: [
           /* @__PURE__ */ e.jsx("a", { href: `/DynamicAssets/Builder?id=${r.id}`, className: "min-w-0 flex-1 truncate rounded-lg border border-default px-3 py-1.5 text-center text-xs font-semibold text-text-secondary hover:bg-surface-sunken", children: "Düzenle" }),
           /* @__PURE__ */ e.jsx("a", { href: `/DynamicAssets/Responses?formId=${r.id}`, className: "min-w-0 flex-1 truncate rounded-lg border border-default px-3 py-1.5 text-center text-xs font-semibold text-text-secondary hover:bg-surface-sunken", children: "Yanıtlar" }),
-          r.status === 1 && /* @__PURE__ */ e.jsx("a", { href: `/f/${r.slug}`, target: "_blank", rel: "noreferrer", className: "shrink-0 rounded-lg border border-default px-2.5 py-1.5 text-xs hover:bg-surface-sunken", title: "Formu aç", children: "↗" }),
+          r.status === 1 && /* @__PURE__ */ e.jsx("a", { href: E(r.slug), target: "_blank", rel: "noreferrer", className: "shrink-0 rounded-lg border border-default px-2.5 py-1.5 text-xs hover:bg-surface-sunken", title: "Formu aç", children: "↗" }),
           /* @__PURE__ */ e.jsx("button", { onClick: () => v(r), className: "shrink-0 rounded-lg border border-negative-100 px-2.5 py-1.5 text-xs text-negative-500 hover:bg-negative-50", children: "🗑" }),
           /* @__PURE__ */ e.jsx(A, { placement: "left", text: "Formu siler ama mevcut yanıtları SİLMEZ — yanıtlar veritabanında kalır, sahipsiz kalır ve bir daha hiçbir ekrandan erişilemez." })
         ] })
       ] }, r.id);
     }) }),
     y && /* @__PURE__ */ e.jsx(
-      L,
+      B,
       {
         categories: d,
         onClose: () => u(!1),
@@ -130,8 +131,8 @@ function z() {
     )
   ] });
 }
-function L({ categories: a, onClose: o, onChanged: n }) {
-  const [l, d] = i.useState(""), [h, c] = i.useState($()), [b, y] = i.useState(!1), [u, g] = i.useState(null), [p, f] = i.useState(""), j = async () => {
+function B({ categories: a, onClose: o, onChanged: n }) {
+  const [l, d] = i.useState(""), [h, c] = i.useState(F()), [b, y] = i.useState(!1), [u, g] = i.useState(null), [p, f] = i.useState(""), j = async () => {
     if (l.trim()) {
       y(!0);
       try {
@@ -184,7 +185,7 @@ function x(a, o) {
   const n = window.abp;
   n != null && n.notify && a === "success" ? n.notify.success(o) : n != null && n.message ? n.message[a === "error" ? "error" : "info"](o) : console.log(`[${a}] ${o}`);
 }
-function B(a) {
+function M(a) {
   var n;
   const o = window.abp;
   return (n = o == null ? void 0 : o.message) != null && n.confirm ? new Promise((l) => {
@@ -192,4 +193,4 @@ function B(a) {
   }) : Promise.resolve(window.confirm(`"${a}" formunu sil?`));
 }
 const C = document.getElementById("forms-list-root");
-C && F(C).render(/* @__PURE__ */ e.jsx(z, {}));
+C && $(C).render(/* @__PURE__ */ e.jsx(L, {}));

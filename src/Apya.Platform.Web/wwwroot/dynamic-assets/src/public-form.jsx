@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
+import { formTenantFromSearch } from './lib/publicFormLink';
 import './index.css';
 
 /* BlockType enum — mirrors backend (stable ints) */
@@ -118,11 +119,14 @@ function PublicForm({ slug }) {
     return token && taskId ? { taskShareToken: token, taskId } : null;
   })());
   const startedAt = useRef(Date.now());
+  // Kiracı formunun bağlantısı formun kiracısını taşır; anonim ziyaretçide başka yolla bulunamaz.
+  const formTenantId = useRef(formTenantFromSearch(window.location.search));
 
   useEffect(() => {
     (async () => {
       try {
-        const dto = await api.get(`/api/app/public-document/by-slug?slug=${encodeURIComponent(slug)}`);
+        const tenantQuery = formTenantId.current ? `&tenantId=${formTenantId.current}` : '';
+        const dto = await api.get(`/api/app/public-document/by-slug?slug=${encodeURIComponent(slug)}${tenantQuery}`);
         setDoc(dto);
         setStatus('ready');
         startedAt.current = Date.now();
@@ -169,6 +173,7 @@ function PublicForm({ slug }) {
         completionSeconds: Math.round((Date.now() - startedAt.current) / 1000),
         kvkkConsent,
         website: honeypot.current, // honeypot; boş kalmalı
+        formTenantId: formTenantId.current,
         ...(gorevBaglami.current ?? {}),
       });
       setStatus('done');

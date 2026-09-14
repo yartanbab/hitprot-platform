@@ -1,5 +1,6 @@
-import { b as z, j as e, r as m } from "./react-vendor-D57GAUXd.js";
-import { a as C } from "./httpClient-DePjXdo1.js";
+import { b as z, j as e, r as x } from "./react-vendor-D57GAUXd.js";
+import { a as S } from "./httpClient-DePjXdo1.js";
+import { f as E } from "./publicFormLink-CJ_6ABDU.js";
 /* empty css               */
 const l = {
   LongText: 1,
@@ -17,7 +18,7 @@ const l = {
   SectionHeader: 16,
   Paragraph: 17,
   Dropdown: 18
-}, E = /* @__PURE__ */ new Set([l.SectionHeader, l.Paragraph]), f = (i) => {
+}, F = /* @__PURE__ */ new Set([l.SectionHeader, l.Paragraph]), f = (i) => {
   try {
     return typeof i == "string" ? JSON.parse(i) : i || {};
   } catch {
@@ -72,31 +73,31 @@ function M({ block: i, value: r, onChange: y }) {
   }
 }
 function q({ slug: i }) {
-  const [r, y] = m.useState(null), [d, c] = m.useState({}), [t, a] = m.useState("loading"), [o, u] = m.useState(""), [b, S] = m.useState(!1), v = m.useRef(""), A = m.useRef((() => {
-    const s = new URLSearchParams(window.location.search), n = s.get("shareToken"), x = s.get("taskId");
-    return n && x ? { taskShareToken: n, taskId: x } : null;
-  })()), k = m.useRef(Date.now());
-  m.useEffect(() => {
+  const [r, y] = x.useState(null), [d, c] = x.useState({}), [t, a] = x.useState("loading"), [o, u] = x.useState(""), [b, A] = x.useState(!1), k = x.useRef(""), T = x.useRef((() => {
+    const s = new URLSearchParams(window.location.search), n = s.get("shareToken"), m = s.get("taskId");
+    return n && m ? { taskShareToken: n, taskId: m } : null;
+  })()), w = x.useRef(Date.now()), j = x.useRef(E(window.location.search));
+  x.useEffect(() => {
     (async () => {
       try {
-        const s = await C.get(`/api/app/public-document/by-slug?slug=${encodeURIComponent(i)}`);
-        y(s), a("ready"), k.current = Date.now();
+        const s = j.current ? `&tenantId=${j.current}` : "", n = await S.get(`/api/app/public-document/by-slug?slug=${encodeURIComponent(i)}${s}`);
+        y(n), a("ready"), w.current = Date.now();
       } catch (s) {
         u((s == null ? void 0 : s.message) || "Form yüklenemedi."), a("error");
       }
     })();
   }, [i]);
-  const w = m.useMemo(
+  const C = x.useMemo(
     () => ((r == null ? void 0 : r.blocks) || []).slice().sort((s, n) => s.order - n.order),
     [r]
-  ), h = w.filter((s) => !E.has(s.type)), P = h.filter((s) => {
+  ), h = C.filter((s) => !F.has(s.type)), P = h.filter((s) => {
     const n = d[s.id];
     return Array.isArray(n) ? n.length > 0 : n !== void 0 && n !== "" && n !== null;
-  }).length, T = h.length ? Math.round(P / h.length * 100) : 0, D = (s, n) => c((x) => ({ ...x, [s]: n })), R = async () => {
+  }).length, R = h.length ? Math.round(P / h.length * 100) : 0, D = (s, n) => c((m) => ({ ...m, [s]: n })), I = async () => {
     for (const s of h)
       if (f(s.settings).required) {
-        const x = d[s.id];
-        if (Array.isArray(x) ? x.length === 0 : x === void 0 || x === "" || x === null) {
+        const m = d[s.id];
+        if (Array.isArray(m) ? m.length === 0 : m === void 0 || m === "" || m === null) {
           u("Lütfen tüm zorunlu alanları doldurun.");
           return;
         }
@@ -107,30 +108,31 @@ function q({ slug: i }) {
     }
     u(""), a("submitting");
     try {
-      await C.post("/api/app/response/submit", {
+      await S.post("/api/app/response/submit", {
         documentSlug: i,
         answers: JSON.stringify(d),
-        completionSeconds: Math.round((Date.now() - k.current) / 1e3),
+        completionSeconds: Math.round((Date.now() - w.current) / 1e3),
         kvkkConsent: b,
-        website: v.current,
+        website: k.current,
         // honeypot; boş kalmalı
-        ...A.current ?? {}
+        formTenantId: j.current,
+        ...T.current ?? {}
       }), a("done");
     } catch (s) {
       u((s == null ? void 0 : s.message) || "Gönderim başarısız."), a("ready");
     }
   };
-  if (t === "loading") return /* @__PURE__ */ e.jsx(j, { children: "Form yükleniyor…" });
-  if (t === "error") return /* @__PURE__ */ e.jsx(j, { children: /* @__PURE__ */ e.jsx("span", { className: "text-negative-500", children: o }) });
+  if (t === "loading") return /* @__PURE__ */ e.jsx(N, { children: "Form yükleniyor…" });
+  if (t === "error") return /* @__PURE__ */ e.jsx(N, { children: /* @__PURE__ */ e.jsx("span", { className: "text-negative-500", children: o }) });
   if (t === "done")
-    return /* @__PURE__ */ e.jsx(j, { children: /* @__PURE__ */ e.jsxs("div", { className: "text-center", children: [
+    return /* @__PURE__ */ e.jsx(N, { children: /* @__PURE__ */ e.jsxs("div", { className: "text-center", children: [
       /* @__PURE__ */ e.jsx("div", { className: "mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-positive-100 text-3xl", children: "✓" }),
       /* @__PURE__ */ e.jsx("h2", { className: "text-2xl font-bold text-text-primary", children: "Teşekkürler!" }),
       /* @__PURE__ */ e.jsx("p", { className: "mt-2 text-text-secondary", children: "Yanıtınız başarıyla gönderildi." })
     ] }) });
   const g = f(r == null ? void 0 : r.themeJson);
   return /* @__PURE__ */ e.jsxs("div", { className: "min-h-screen bg-surface-app-bg py-8", children: [
-    /* @__PURE__ */ e.jsx("div", { className: "fixed inset-x-0 top-0 z-10 h-1.5 bg-neutral-200", children: /* @__PURE__ */ e.jsx("div", { className: "h-full bg-accent transition-all duration-300", style: { width: `${T}%` } }) }),
+    /* @__PURE__ */ e.jsx("div", { className: "fixed inset-x-0 top-0 z-10 h-1.5 bg-neutral-200", children: /* @__PURE__ */ e.jsx("div", { className: "h-full bg-accent transition-all duration-300", style: { width: `${R}%` } }) }),
     /* @__PURE__ */ e.jsxs("div", { className: "mx-auto max-w-2xl px-4", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "overflow-hidden rounded-2xl bg-surface-raised shadow-sm", children: [
         /* @__PURE__ */ e.jsxs("div", { className: "border-b border-subtle p-6", style: g.primary ? { borderTopColor: g.primary, borderTopWidth: 4 } : void 0, children: [
@@ -138,7 +140,7 @@ function q({ slug: i }) {
           r.description && /* @__PURE__ */ e.jsx("p", { className: "mt-1 text-sm text-text-secondary", children: r.description })
         ] }),
         /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-6 p-6", children: [
-          w.map((s) => {
+          C.map((s) => {
             const n = f(s.settings);
             return s.type === l.SectionHeader ? /* @__PURE__ */ e.jsx("h2", { className: "border-b border-default pb-1 text-lg font-bold text-text-primary", children: s.content }, s.id) : s.type === l.Paragraph ? /* @__PURE__ */ e.jsx("p", { className: "text-sm text-text-secondary", children: s.content }, s.id) : /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1.5", children: [
               /* @__PURE__ */ e.jsxs("label", { className: "text-sm font-semibold text-text-primary", children: [
@@ -158,7 +160,7 @@ function q({ slug: i }) {
               "aria-hidden": "true",
               defaultValue: "",
               onChange: (s) => {
-                v.current = s.target.value;
+                k.current = s.target.value;
               },
               style: { position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }
             }
@@ -169,7 +171,7 @@ function q({ slug: i }) {
               {
                 type: "checkbox",
                 checked: b,
-                onChange: (s) => S(s.target.checked),
+                onChange: (s) => A(s.target.checked),
                 className: "mt-0.5 h-4 w-4 rounded text-accent"
               }
             ),
@@ -183,7 +185,7 @@ function q({ slug: i }) {
           /* @__PURE__ */ e.jsx(
             "button",
             {
-              onClick: R,
+              onClick: I,
               disabled: t === "submitting",
               className: "mt-2 rounded-xl bg-accent px-6 py-3 text-sm font-bold text-white transition hover:bg-accent-600 disabled:opacity-50",
               style: g.primary ? { backgroundColor: g.primary } : void 0,
@@ -196,8 +198,8 @@ function q({ slug: i }) {
     ] })
   ] });
 }
-const j = ({ children: i }) => /* @__PURE__ */ e.jsx("div", { className: "flex min-h-screen items-center justify-center bg-surface-app-bg p-6 text-text-secondary", children: i }), N = document.getElementById("public-form-root");
-if (N) {
-  const i = N.getAttribute("data-slug");
-  z(N).render(/* @__PURE__ */ e.jsx(q, { slug: i }));
+const N = ({ children: i }) => /* @__PURE__ */ e.jsx("div", { className: "flex min-h-screen items-center justify-center bg-surface-app-bg p-6 text-text-secondary", children: i }), v = document.getElementById("public-form-root");
+if (v) {
+  const i = v.getAttribute("data-slug");
+  z(v).render(/* @__PURE__ */ e.jsx(q, { slug: i }));
 }

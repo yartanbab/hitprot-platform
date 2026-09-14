@@ -16,6 +16,9 @@ public class ResponseListItemDto : CreationAuditedEntityDto<Guid>
 
     /// <summary>JSON answers keyed by block id (for the spreadsheet view and CSV export).</summary>
     public string Answers { get; set; } = null!;
+
+    /// <summary>Firm that answered a host form (host view only; empty for the host's own and tenant views).</summary>
+    public string? TenantName { get; set; }
 }
 
 /// <summary>Full response detail incl. answers and reviewer comments.</summary>
@@ -29,6 +32,9 @@ public class ResponseDetailDto : CreationAuditedEntityDto<Guid>
     public int? CompletionSeconds { get; set; }
     public string? RespondentMetaJson { get; set; }
     public List<ResponseCommentDto> Comments { get; set; } = new();
+
+    /// <summary>Firm that answered a host form (host view only).</summary>
+    public string? TenantName { get; set; }
 }
 
 public class ResponseCommentDto : CreationAuditedEntityDto<Guid>
