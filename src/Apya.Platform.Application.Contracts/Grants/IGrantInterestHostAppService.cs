@@ -22,4 +22,13 @@ public interface IGrantInterestHostAppService : IApplicationService
     Task<GrantInterestConsoleDto> StartApplicationAsync(Guid interestId);
 
     Task<GrantInterestConsoleDto> RejectAsync(RejectGrantInterestInput input);
+
+    /// <summary>18a · Tek talebin inceleme ekranı.</summary>
+    Task<GrantInterestReviewDto> GetReviewAsync(Guid interestId);
+
+    /// <summary>18a · İç not (firmaya gitmez). Boş not siler.</summary>
+    Task<GrantInterestReviewDto> SaveNoteAsync(SaveGrantInterestNoteInput input);
+
+    /// <summary>18a · Talebi başka danışmana devret; yalnız etkin host kullanıcısına.</summary>
+    Task<GrantInterestReviewDto> AssignAsync(AssignGrantInterestInput input);
 }

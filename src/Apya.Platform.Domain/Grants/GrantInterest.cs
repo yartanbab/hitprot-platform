@@ -66,6 +66,15 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Süreç başlatıldıysa açılan başvuru. Kiracı sihirbaza buradan geçer.</summary>
     public Guid? GrantApplicationId { get; private set; }
 
+    /// <summary>
+    /// 18a · Danışmanın iç notu. 🔴 FİRMAYA GİTMEZ — firmaya giden metin yalnız
+    /// <see cref="HostFeedback"/>'tir. Kiracı DTO'larına bu alan konmaz.
+    /// </summary>
+    public string? ConsultantNote { get; private set; }
+
+    /// <summary>18a · Talebin sorumlu danışmanı (host kullanıcısı). null = kimseye atanmadı.</summary>
+    public Guid? AssignedUserId { get; private set; }
+
     /// <summary>Karara bağlanmamış talep — host kutusunda bekleyen satır.</summary>
     public bool IsPending => Status is GrantInterestStatus.Yeni or GrantInterestStatus.Inceleniyor;
 
@@ -121,13 +130,28 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
         WithdrawnAt = now;
     }
 
-    /// <summary>Danışman kaydı üstlendi; firmayla irtibat başladı.</summary>
+    /// <summary>Danışman kaydı üstlendi; firmayla irtibat başladı. Sorumlu yoksa üstlenen olur.</summary>
     public void StartReview(Guid? userId, DateTime now)
     {
         EnsurePending();
         Status = GrantInterestStatus.Inceleniyor;
         ReviewedByUserId = userId;
         ReviewedAt = now;
+        AssignedUserId ??= userId;
+    }
+
+    /// <summary>18a · İç not; her durumda yazılabilir (kapanmış talebe sonradan not düşmek geçmişi bozmaz).</summary>
+    public void SetConsultantNote(string? note)
+    {
+        var trimmed = note?.Trim();
+        ConsultantNote = string.IsNullOrEmpty(trimmed) ? null : Check.Length(trimmed, nameof(note), maxLength: 2000);
+    }
+
+    /// <summary>18a · Başka danışmana devret. Karara bağlanmış talep devredilmez — yapılacak iş kalmadı.</summary>
+    public void AssignTo(Guid? userId)
+    {
+        EnsurePending();
+        AssignedUserId = userId;
     }
 
     /// <summary>Host başvuru sürecini başlattı; talep açılan başvuruya bağlanır.</summary>

@@ -24,6 +24,31 @@ public class GrantInterestsPage_Tests : PlatformWebTestBase
             .ShouldBeTrue("sayfa demeti Interests.js içermeli");
     }
 
+    /// <summary>18a · Talep inceleme ekranı: fikir, iç not, karar + devret, firma kartı, ortak önerisi.</summary>
+    [Fact]
+    public async Task Ilgi_Inceleme_Sayfasi_Render_Oluyor()
+    {
+        var html = await GetResponseAsStringAsync("/Grants/InterestReview?id=6f2f3a1e-0000-4000-8000-00000000ab01");
+
+        html.ShouldContain("apya-irv-layout");
+        html.ShouldContain("ConsultantNote");
+        html.ShouldContain("Firmaya gitmez");
+        html.ShouldContain("AssignSelect");
+        html.ShouldContain("PartnerSection");
+        html.ShouldContain("RejectModal");
+        System.Text.RegularExpressions.Regex.IsMatch(html, @"InterestReview[^""]*\.js")
+            .ShouldBeTrue("sayfa demeti InterestReview.js içermeli");
+    }
+
+    [Fact]
+    public async Task Ilgi_Inceleme_Id_Verilmezse_Kutuya_Doner()
+    {
+        var response = await Client.GetAsync("/Grants/InterestReview");
+
+        ((int)response.StatusCode).ShouldBe(302);
+        response.Headers.Location!.ToString().ShouldContain("/Grants/Interests");
+    }
+
     [Fact]
     public async Task Kiraci_Detayinda_Basvuru_Acan_Dugme_Yok()
     {

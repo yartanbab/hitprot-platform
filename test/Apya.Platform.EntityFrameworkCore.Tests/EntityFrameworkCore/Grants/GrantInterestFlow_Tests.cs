@@ -7,6 +7,7 @@ using Apya.Platform.Notifications;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 using Xunit;
@@ -356,5 +357,125 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
             mine.Single(i => i.Id == firstId).HostFeedback.ShouldBe("Konsorsiyum ortağınız yok.");
             mine.Single(i => i.Id == second.Id).Status.ShouldBe(GrantInterestStatus.Yeni);
         }
+    }
+
+    // ---------- 18a · İnceleme ekranı ----------
+
+    /// <summary>Devredilecek danışman: host bağlamında etkin kullanıcı.</summary>
+    private async Task<Guid> CreateHostUserAsync(string name)
+    {
+        _currentTenant.Id.ShouldBeNull();
+        var manager = GetRequiredService<IdentityUserManager>();
+        var suffix = Guid.NewGuid().ToString("N")[..6];
+        var user = new IdentityUser(Guid.NewGuid(), "danisman-" + suffix, $"danisman-{suffix}@apya.test") { Name = name };
+        (await manager.CreateAsync(user)).Succeeded.ShouldBeTrue();
+        return user.Id;
+    }
+
+    private async Task<Guid> ExpressAsync(Guid tenantId, Guid callId, bool? needsPartner)
+    {
+        using (_currentTenant.Change(tenantId))
+        {
+            var dto = await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+            {
+                GrantCallId = callId,
+                Note = "Öngörülü bakım modülü",
+                EstimatedBudget = 12_500_000m,
+                NeedsPartner = needsPartner
+            });
+            return dto.Id;
+        }
+    }
+
+    /// <summary>
+    /// Ortaklık gereken talepte aynı çağrıya ilgi bildirmiş DİĞER firmalar önerilir; talebin
+    /// kendi firması önerilmez. Proje fikri, uyum ve eksik şartlar tek yükte gelir.
+    /// </summary>
+    [Fact]
+    public async Task Inceleme_ekrani_fikir_firma_ve_ortak_onerisini_tek_yukte_doner()
+    {
+        var call = await CreateHostCallAsync("Ortaklık İsteyen Program", requiresConsortium: true);
+        var firmA = await CreateTenantAsync("Akım Teknoloji " + Guid.NewGuid().ToString("N")[..6]);
+        var firmB = await CreateTenantAsync("Vektör Yazılım " + Guid.NewGuid().ToString("N")[..6]);
+
+        var interestA = await ExpressAsync(firmA, call.Id, needsPartner: true);
+        var interestB = await ExpressAsync(firmB, call.Id, needsPartner: true);
+
+        var review = await _hostAppService.GetReviewAsync(interestA);
+
+        review.Interest.Id.ShouldBe(interestA);
+        review.Interest.Note.ShouldBe("Öngörülü bakım modülü");
+        review.Interest.EstimatedBudget.ShouldBe(12_500_000m);
+        review.RequiresConsortium.ShouldBeTrue();
+        review.MatchScore.ShouldBeInRange(0, 100);
+        // Profil boş: ortaklık şartı ölçülemez, eksik olarak görünür.
+        (review.FailedRules.Count + review.UnknownRules.Count).ShouldBeGreaterThan(0);
+
+        review.PartnerSuggestions.ShouldContain(p => p.InterestId == interestB && p.NeedsPartner == true);
+        review.PartnerSuggestions.ShouldNotContain(p => p.TenantId == firmA, "talebin kendi firması ortak önerilmez");
+    }
+
+    /// <summary>🔴 İç not firmaya GİTMEZ: kiracı DTO'sunda böyle bir alan bulunmamalı.</summary>
+    [Fact]
+    public async Task Danisman_notu_kaydedilir_ve_firmanin_dtosunda_yer_almaz()
+    {
+        typeof(MyGrantInterestDto).GetProperty("ConsultantNote").ShouldBeNull("iç not kiracıya taşınmamalı");
+
+        var call = await CreateHostCallAsync("Not Programı");
+        var firm = await CreateTenantAsync("Not Firması " + Guid.NewGuid().ToString("N")[..6]);
+        var interestId = await ExpressAsync(firm, call.Id, needsPartner: null);
+
+        var saved = await _hostAppService.SaveNoteAsync(new SaveGrantInterestNoteInput { InterestId = interestId, Note = "  1501 önceliğiyle örtüşüyor  " });
+        saved.ConsultantNote.ShouldBe("1501 önceliğiyle örtüşüyor");
+
+        var cleared = await _hostAppService.SaveNoteAsync(new SaveGrantInterestNoteInput { InterestId = interestId, Note = "   " });
+        cleared.ConsultantNote.ShouldBeNull();
+    }
+
+    /// <summary>
+    /// Devret yalnız etkin HOST kullanıcısına ve yalnız bekleyen talepte. Sorumlu gelen kutusu
+    /// satırında da görünür; danışman listesi yükü (bekleyen talep sayısı) taşır.
+    /// </summary>
+    [Fact]
+    public async Task Talep_yalniz_host_danismanina_ve_beklerken_devredilir()
+    {
+        var call = await CreateHostCallAsync("Devir Programı");
+        var firm = await CreateTenantAsync("Devir Firması " + Guid.NewGuid().ToString("N")[..6]);
+        var interestId = await ExpressAsync(firm, call.Id, needsPartner: null);
+        var consultantId = await CreateHostUserAsync("Selin Bakır");
+
+        var review = await _hostAppService.AssignAsync(new AssignGrantInterestInput { InterestId = interestId, UserId = consultantId });
+        review.Interest.AssignedUserId.ShouldBe(consultantId);
+        review.Interest.AssignedUserName.ShouldBe("Selin Bakır");
+        review.Consultants.Single(c => c.UserId == consultantId).AssignedCount.ShouldBeGreaterThanOrEqualTo(1);
+
+        (await _hostAppService.GetAsync(onlyPending: true)).Items.Single(i => i.Id == interestId)
+            .AssignedUserName.ShouldBe("Selin Bakır");
+
+        var unknown = await Should.ThrowAsync<BusinessException>(() =>
+            _hostAppService.AssignAsync(new AssignGrantInterestInput { InterestId = interestId, UserId = Guid.NewGuid() }));
+        unknown.Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestAssigneeNotFound);
+
+        await _hostAppService.RejectAsync(new RejectGrantInterestInput { InterestId = interestId, Reason = "Kapsam dışı." });
+        var closed = await Should.ThrowAsync<BusinessException>(() =>
+            _hostAppService.AssignAsync(new AssignGrantInterestInput { InterestId = interestId, UserId = consultantId }));
+        closed.Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestAlreadyAnswered);
+    }
+
+    /// <summary>İncelemeye alan danışman, sorumlu yoksa sorumlu olur; varsa üzerine yazmaz.</summary>
+    [Fact]
+    public void Incelemeye_alan_danisman_bos_sorumlulugu_ustlenir()
+    {
+        var first = Guid.NewGuid();
+        var second = Guid.NewGuid();
+
+        var unassigned = new GrantInterest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, "fikir");
+        unassigned.StartReview(first, DateTime.Now);
+        unassigned.AssignedUserId.ShouldBe(first);
+
+        var assigned = new GrantInterest(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, "fikir");
+        assigned.AssignTo(second);
+        assigned.StartReview(first, DateTime.Now);
+        assigned.AssignedUserId.ShouldBe(second, "devredilmiş talebi inceleyen sorumluluğu devralmaz");
     }
 }
