@@ -47,6 +47,9 @@ public class GrantRecommendationDto
     /// <summary>Danışman firma adına işaretlediyse adı; firma kendi işaretlediyse null.</summary>
     public string? BookmarkedByName { get; set; }
 
+    /// <summary>12b · Programın afişi (saklanan ad); yoksa kart kuruma özel zemin çizer.</summary>
+    public string? PosterFileName { get; set; }
+
     /// <summary>Çağrı firmaya önerilir mi: skor >= program eşiği ya da host-push.
     /// False olanlar da kiracıya listelenir ("Diğer Açık Çağrılar"), yalnız ayrı blokta.</summary>
     public bool IsRecommended { get; set; }

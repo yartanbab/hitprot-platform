@@ -5841,6 +5841,10 @@ namespace Apya.Platform.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
+                    b.Property<string>("PosterFileName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<bool>("PrefersFemaleEntrepreneur")
                         .HasColumnType("bit");
 

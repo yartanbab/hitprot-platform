@@ -15,6 +15,15 @@ public interface IGrantParameterAppService : IApplicationService
     Task<GrantParameterDto> UpdateAsync(Guid id, UpdateGrantParameterDto input);
 
     /// <summary>
+    /// 12b · Diske yazılmış afişi programa bağlar. Dönüş: yerine geçen eski dosyanın adı —
+    /// çağıran diskten siler; eski afiş yoksa ya da aynı dosyaysa null.
+    /// </summary>
+    Task<string?> SetPosterAsync(Guid id, string storedFileName);
+
+    /// <summary>12b · Afişi kaldırır. Dönüş: kaldırılan dosyanın adı; afiş yoksa null.</summary>
+    Task<string?> RemovePosterAsync(Guid id);
+
+    /// <summary>
     /// Kaydedilmemiş parametrelerle canlı eşleşme önizlemesi (sağ panel). Veritabanına
     /// hiçbir şey yazmaz.
     /// </summary>
