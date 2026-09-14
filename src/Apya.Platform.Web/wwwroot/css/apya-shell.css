@@ -7560,9 +7560,31 @@ html[data-sidebar] .apya-sidebar-resizer {
 
    `.text-muted` bilerek DIŞARIDA: kendi kuralı var, miras onu etkilemiyor —
    ikincil etiketler uygulamanın geri kalanıyla aynı tonda kalsın. */
-.apya-subscription .card-body {
+.apya-subscription .card-body,
+.apya-company-profile .card-body {
     color: var(--apya-text-primary);
 }
+
+/* Kurum Profili başlığındaki bina işareti (Hibe bölüm ikonlarıyla aynı ton). */
+.apya-company-profile__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-size: 1.25rem;
+}
+/* Uzun unvan başlığı sıkıştırmasın, düğmeyi alt satıra itsin. */
+.apya-company-profile__head { min-width: 0; flex-basis: 12rem; }
+/* .text-muted üçüncül token'ı okur: kart zemininde açıkta #9CA3AF 2,54:1, koyuda #71717A
+   3,81:1 — ikisi de AA altı (ölçüldü). Sayfada "Belirtilmemiş" ve başlık alt satırı bu
+   tonda OKUNAN metin; hibe kapsamının AA değerleri burada da kullanılır. */
+.apya-company-profile { --apya-text-tertiary: #6B7280; }
+[data-theme="dark"] .apya-company-profile { --apya-text-tertiary: #8A8A93; }
 
 /* ----------------------------------------------------------------------------
    27) SISTEM SAGLIGI - teshis konsolu

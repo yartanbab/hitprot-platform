@@ -19,33 +19,33 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
     private readonly ITenantRepository _tenantRepository;
     private readonly ITenantManager _tenantManager;
     private readonly IRepository<TenantProfile, Guid> _tenantProfileRepository;
-    private readonly TenantProfileManager _tenantProfileManager;
     private readonly TenantPackageManager _tenantPackageManager;
     private readonly TenantSubscriptionManager _tenantSubscriptionManager;
     private readonly IRepository<TenantSubscription, Guid> _subscriptionRepository;
     private readonly IUnitOfWorkManager _unitOfWorkManager;
     private readonly TenantProvisioner _tenantProvisioner;
+    private readonly TenantProfileUpdater _tenantProfileUpdater;
 
     public TenantProfileAppService(
         ITenantRepository tenantRepository,
         ITenantManager tenantManager,
         IRepository<TenantProfile, Guid> tenantProfileRepository,
-        TenantProfileManager tenantProfileManager,
         TenantPackageManager tenantPackageManager,
         TenantSubscriptionManager tenantSubscriptionManager,
         IRepository<TenantSubscription, Guid> subscriptionRepository,
         IUnitOfWorkManager unitOfWorkManager,
-        TenantProvisioner tenantProvisioner)
+        TenantProvisioner tenantProvisioner,
+        TenantProfileUpdater tenantProfileUpdater)
     {
         _tenantRepository = tenantRepository;
         _tenantManager = tenantManager;
         _tenantProfileRepository = tenantProfileRepository;
-        _tenantProfileManager = tenantProfileManager;
         _tenantPackageManager = tenantPackageManager;
         _tenantSubscriptionManager = tenantSubscriptionManager;
         _subscriptionRepository = subscriptionRepository;
         _unitOfWorkManager = unitOfWorkManager;
         _tenantProvisioner = tenantProvisioner;
+        _tenantProfileUpdater = tenantProfileUpdater;
     }
 
     public async Task<PagedResultDto<TenantProfileDto>> GetListAsync(PagedAndSortedResultRequestDto input)
@@ -216,50 +216,7 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
     [Authorize(TenantManagementPermissions.Tenants.Update)]
     public async Task<TenantProfileDto> UpdateProfileAsync(Guid tenantId, UpdateTenantProfileDto input)
     {
-        var profile = await _tenantProfileRepository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
-
-        if (profile == null)
-        {
-            var newProfile = await _tenantProfileManager.CreateProfileAsync(
-                tenantId,
-                input.CompanyType,
-                input.TaxNumber ?? string.Empty,
-                input.CorporateEmail ?? string.Empty
-            );
-
-            newProfile.LegalName = input.LegalName ?? string.Empty;
-            newProfile.TaxOffice = input.TaxOffice ?? string.Empty;
-            newProfile.Address = input.Address ?? string.Empty;
-            newProfile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
-            newProfile.LegalRepresentativeTitle = input.LegalRepresentativeTitle ?? string.Empty;
-            newProfile.LegalRepresentativeEmail = input.LegalRepresentativeEmail ?? string.Empty;
-            newProfile.LegalRepresentativePhone = input.LegalRepresentativePhone ?? string.Empty;
-            newProfile.OperationalContactName = input.OperationalContactName ?? string.Empty;
-            newProfile.OperationalContactPhone = input.OperationalContactPhone ?? string.Empty;
-            newProfile.EmployeeCount = input.EmployeeCount;
-
-            await _tenantProfileRepository.InsertAsync(newProfile);
-
-            return ObjectMapper.Map<TenantProfile, TenantProfileDto>(newProfile);
-        }
-
-        await _tenantProfileManager.CheckTaxNumberUniqueAsync(input.TaxNumber, profile.Id);
-
-        profile.CompanyType = input.CompanyType;
-        profile.LegalName = input.LegalName ?? string.Empty;
-        profile.TaxNumber = input.TaxNumber ?? string.Empty;
-        profile.TaxOffice = input.TaxOffice ?? string.Empty;
-        profile.Address = input.Address ?? string.Empty;
-        profile.CorporateEmail = input.CorporateEmail ?? string.Empty;
-        profile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
-        profile.LegalRepresentativeTitle = input.LegalRepresentativeTitle ?? string.Empty;
-        profile.LegalRepresentativeEmail = input.LegalRepresentativeEmail ?? string.Empty;
-        profile.LegalRepresentativePhone = input.LegalRepresentativePhone ?? string.Empty;
-        profile.OperationalContactName = input.OperationalContactName ?? string.Empty;
-        profile.OperationalContactPhone = input.OperationalContactPhone ?? string.Empty;
-        profile.EmployeeCount = input.EmployeeCount;
-
-        await _tenantProfileRepository.UpdateAsync(profile);
+        var profile = await _tenantProfileUpdater.UpdateAsync(tenantId, input);
 
         return ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
     }

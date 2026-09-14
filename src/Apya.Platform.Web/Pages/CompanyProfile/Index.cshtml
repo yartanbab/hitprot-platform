@@ -1,0 +1,300 @@
+@page "/CompanyProfile"
+@model Apya.Platform.Web.Pages.CompanyProfile.IndexModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
+@using Apya.Platform.Tenants
+@{
+    ViewBag.Title = L["CompanyProfile:Title"].Value;
+    var p = Model.Profile;
+    var displayName = string.IsNullOrWhiteSpace(p.LegalName) ? p.TenantName : p.LegalName;
+
+    string TypeName(CompanyType type)
+        => Enum.IsDefined(type) ? L["RegistrationRequest:CompanyType:" + type].Value : string.Empty;
+
+    string? SizeName(Apya.Platform.RegistrationRequests.RegistrationRequestCompanySize? size)
+        => size.HasValue ? L["RegistrationRequest:CompanySize:" + size.Value].Value : null;
+
+    void Field(string label, string? value)
+    {
+        <dt class="col-sm-5">@label</dt>
+        <dd class="col-sm-7 text-break">
+            @if (string.IsNullOrWhiteSpace(value))
+            {
+                <span class="text-muted">@L["CompanyProfile:NotSet"]</span>
+            }
+            else
+            {
+                @value
+            }
+        </dd>
+    }
+}
+
+@*
+    KURUM PROFİLİ — avatar menüsündeki kurum adının gittiği yer.
+
+    Neden var: kayıt talebinde istenen kurum bilgisi (unvan, vergi no, adres, yetkili)
+    hesap açılınca yalnız host tarafında duruyordu; kurum kendi bilgisini hiçbir ekranda
+    göremiyor, değiştiremiyordu. Form bu değerlerle DOLU açılır — kurum yalnız değişeni
+    düzeltir.
+*@
+@* apya-company-profile: kart metninin rengini token'a bağlayan kural buna asılı
+   (LeptonX'in sabit .card-body rengi koyu temada AA altında kalıyor; bkz. apya-shell.css). *@
+<div data-page-description="@L["CompanyProfile:PageDescription"]" class="apya-page--narrow apya-company-profile">
+
+@if (Model.IsHost)
+{
+    <div class="alert alert-info" role="status">
+        <i class="fa fa-circle-info me-2"></i>@L["CompanyProfile:Host.Notice"]
+    </div>
+}
+else
+{
+    @if (TempData["CompanyProfileSaved"] is string saved)
+    {
+        <div class="alert alert-success" role="status">
+            <i class="fa fa-circle-check me-2"></i>@saved
+        </div>
+    }
+
+    <abp-card>
+        <abp-card-body>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <span class="apya-company-profile__mark" aria-hidden="true"><i class="fa fa-building"></i></span>
+                <div class="flex-grow-1 apya-company-profile__head">
+                    <h2 class="fs-4 fw-semibold mb-1 text-break">@displayName</h2>
+                    <div class="text-muted small">
+                        @TypeName(p.CompanyType)
+                        @if (!string.IsNullOrEmpty(TypeName(p.CompanyType)))
+                        {
+                            <text> · </text>
+                        }
+                        @L["CompanyProfile:AccountName"]: <span class="fw-medium">@p.TenantName</span>
+                    </div>
+                </div>
+                @if (Model.CanEdit && !Model.IsEditing)
+                {
+                    <a class="btn btn-primary" href="?edit=true">
+                        <i class="fa fa-pen me-1" aria-hidden="true"></i>@L["CompanyProfile:Edit"]
+                    </a>
+                }
+            </div>
+        </abp-card-body>
+    </abp-card>
+
+    @if (Model.IsEditing)
+    {
+        <form method="post" class="mt-3" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="alert alert-secondary small" role="note">
+                <i class="fa fa-file-signature me-2" aria-hidden="true"></i>@L["CompanyProfile:ProtocolNote"]
+            </div>
+
+            <abp-card>
+                <abp-card-header>
+                    <abp-card-title><i class="fa fa-id-card text-primary me-2"></i>@L["CompanyProfile:Section.Identity"]</abp-card-title>
+                </abp-card-header>
+                <abp-card-body>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" asp-for="Input.LegalName">@L["CompanyProfile:LegalName"]</label>
+                            <input class="form-control" asp-for="Input.LegalName" />
+                            <span asp-validation-for="Input.LegalName"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.CompanyType">@L["CompanyProfile:CompanyType"]</label>
+                            <select class="form-select" asp-for="Input.CompanyType">
+                                @foreach (var type in Model.CompanyTypes)
+                                {
+                                    <option value="@type">@TypeName(type)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.EmployeeCount">@L["CompanyProfile:EmployeeCount"]</label>
+                            <select class="form-select" asp-for="Input.EmployeeCount">
+                                <option value="">@L["CompanyProfile:NotSet"]</option>
+                                @foreach (var size in Model.CompanySizes)
+                                {
+                                    <option value="@size">@SizeName(size)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.TaxNumber">@L["CompanyProfile:TaxNumber"]</label>
+                            <input class="form-control" asp-for="Input.TaxNumber" inputmode="numeric" />
+                            <span asp-validation-for="Input.TaxNumber"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.TaxOffice">@L["CompanyProfile:TaxOffice"]</label>
+                            <input class="form-control" asp-for="Input.TaxOffice" />
+                            <span asp-validation-for="Input.TaxOffice"></span>
+                        </div>
+                    </div>
+                </abp-card-body>
+            </abp-card>
+
+            <abp-card class="mt-3">
+                <abp-card-header>
+                    <abp-card-title><i class="fa fa-location-dot text-primary me-2"></i>@L["CompanyProfile:Section.Contact"]</abp-card-title>
+                </abp-card-header>
+                <abp-card-body>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" asp-for="Input.Address">@L["CompanyProfile:Address"]</label>
+                            <textarea class="form-control" asp-for="Input.Address" rows="3"></textarea>
+                            <span asp-validation-for="Input.Address"></span>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" asp-for="Input.CorporateEmail">@L["CompanyProfile:CorporateEmail"]</label>
+                            <input class="form-control" asp-for="Input.CorporateEmail" type="email" />
+                            <span asp-validation-for="Input.CorporateEmail"></span>
+                        </div>
+                    </div>
+                </abp-card-body>
+            </abp-card>
+
+            <abp-card class="mt-3">
+                <abp-card-header>
+                    <abp-card-title><i class="fa fa-user-tie text-primary me-2"></i>@L["CompanyProfile:Section.Representative"]</abp-card-title>
+                </abp-card-header>
+                <abp-card-body>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.LegalRepresentativeName">@L["CompanyProfile:RepresentativeName"]</label>
+                            <input class="form-control" asp-for="Input.LegalRepresentativeName" autocomplete="name" />
+                            <span asp-validation-for="Input.LegalRepresentativeName"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.LegalRepresentativeTitle">@L["CompanyProfile:RepresentativeTitle"]</label>
+                            <input class="form-control" asp-for="Input.LegalRepresentativeTitle" />
+                            <span asp-validation-for="Input.LegalRepresentativeTitle"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.LegalRepresentativeEmail">@L["CompanyProfile:RepresentativeEmail"]</label>
+                            <input class="form-control" asp-for="Input.LegalRepresentativeEmail" type="email" />
+                            <span asp-validation-for="Input.LegalRepresentativeEmail"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.LegalRepresentativePhone">@L["CompanyProfile:RepresentativePhone"]</label>
+                            <input class="form-control" asp-for="Input.LegalRepresentativePhone" type="tel" />
+                            <span asp-validation-for="Input.LegalRepresentativePhone"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.OperationalContactName">@L["CompanyProfile:OperationalName"]</label>
+                            <input class="form-control" asp-for="Input.OperationalContactName" />
+                            <span asp-validation-for="Input.OperationalContactName"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" asp-for="Input.OperationalContactPhone">@L["CompanyProfile:OperationalPhone"]</label>
+                            <input class="form-control" asp-for="Input.OperationalContactPhone" type="tel" />
+                            <span asp-validation-for="Input.OperationalContactPhone"></span>
+                        </div>
+                    </div>
+                </abp-card-body>
+            </abp-card>
+
+            <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                <a class="btn btn-outline-secondary" asp-page="/CompanyProfile/Index">@L["CompanyProfile:Cancel"]</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-check me-1" aria-hidden="true"></i>@L["CompanyProfile:Save"]
+                </button>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="row g-3 mt-0">
+            <div class="col-12 col-lg-6">
+                <abp-card class="h-100 mb-0">
+                    <abp-card-header>
+                        <abp-card-title><i class="fa fa-id-card text-primary me-2"></i>@L["CompanyProfile:Section.Identity"]</abp-card-title>
+                    </abp-card-header>
+                    <abp-card-body>
+                        <dl class="row small mb-0">
+                            @{ Field(L["CompanyProfile:LegalName"], p.LegalName); }
+                            @{ Field(L["CompanyProfile:CompanyType"], TypeName(p.CompanyType)); }
+                            @{ Field(L["CompanyProfile:TaxNumber"], p.TaxNumber); }
+                            @{ Field(L["CompanyProfile:TaxOffice"], p.TaxOffice); }
+                            @{ Field(L["CompanyProfile:EmployeeCount"], SizeName(p.EmployeeCount)); }
+                        </dl>
+                    </abp-card-body>
+                </abp-card>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <abp-card class="h-100 mb-0">
+                    <abp-card-header>
+                        <abp-card-title><i class="fa fa-gem text-primary me-2"></i>@L["CompanyProfile:Section.Account"]</abp-card-title>
+                    </abp-card-header>
+                    <abp-card-body>
+                        <dl class="row small mb-0">
+                            <dt class="col-sm-5">@L["CompanyProfile:Package"]</dt>
+                            <dd class="col-sm-7">
+                                @p.PackageName
+                                @if (Model.CanEdit)
+                                {
+                                    <a class="ms-1" href="/Subscription">@L["CompanyProfile:ViewSubscription"]<i class="fa fa-arrow-right ms-1" aria-hidden="true"></i></a>
+                                }
+                            </dd>
+
+                            @{ Field(L["CompanyProfile:PackageEnds"], p.SubscriptionEndDate?.ToString("dd.MM.yyyy") ?? L["CompanyProfile:Unlimited"].Value); }
+
+                            <dt class="col-sm-5">@L["CompanyProfile:Agreement"]</dt>
+                            <dd class="col-sm-7">
+                                @if (p.AgreementNumber is { } agreementNumber)
+                                {
+                                    @agreementNumber
+                                    @if (p.AgreementApprovedAt.HasValue)
+                                    {
+                                        <div class="text-muted">@L["CompanyProfile:AgreementApproved", p.AgreementApprovedAt.Value.ToString("dd.MM.yyyy")]</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">@L["CompanyProfile:NotSet"]</span>
+                                }
+                            </dd>
+
+                            @{ Field(L["CompanyProfile:Users"], p.UserCount.ToString()); }
+                            @{ Field(L["CompanyProfile:MemberSince"], p.MemberSince.ToString("dd.MM.yyyy")); }
+                        </dl>
+                    </abp-card-body>
+                </abp-card>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <abp-card class="h-100 mb-0">
+                    <abp-card-header>
+                        <abp-card-title><i class="fa fa-location-dot text-primary me-2"></i>@L["CompanyProfile:Section.Contact"]</abp-card-title>
+                    </abp-card-header>
+                    <abp-card-body>
+                        <dl class="row small mb-0">
+                            @{ Field(L["CompanyProfile:Address"], p.Address); }
+                            @{ Field(L["CompanyProfile:CorporateEmail"], p.CorporateEmail); }
+                        </dl>
+                    </abp-card-body>
+                </abp-card>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <abp-card class="h-100 mb-0">
+                    <abp-card-header>
+                        <abp-card-title><i class="fa fa-user-tie text-primary me-2"></i>@L["CompanyProfile:Section.Representative"]</abp-card-title>
+                    </abp-card-header>
+                    <abp-card-body>
+                        <dl class="row small mb-0">
+                            @{ Field(L["CompanyProfile:RepresentativeName"], p.LegalRepresentativeName); }
+                            @{ Field(L["CompanyProfile:RepresentativeTitle"], p.LegalRepresentativeTitle); }
+                            @{ Field(L["CompanyProfile:RepresentativeEmail"], p.LegalRepresentativeEmail); }
+                            @{ Field(L["CompanyProfile:RepresentativePhone"], p.LegalRepresentativePhone); }
+                            @{ Field(L["CompanyProfile:OperationalName"], p.OperationalContactName); }
+                            @{ Field(L["CompanyProfile:OperationalPhone"], p.OperationalContactPhone); }
+                        </dl>
+                    </abp-card-body>
+                </abp-card>
+            </div>
+        </div>
+    }
+}
+</div>
