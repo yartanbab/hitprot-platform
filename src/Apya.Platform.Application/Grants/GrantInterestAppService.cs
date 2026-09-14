@@ -33,6 +33,8 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
     private readonly TenantDisplayNameResolver _displayNames;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly IRepository<GrantMeetingProposal, Guid> _proposalRepo;
+    private readonly GrantMeetingManager _meetingManager;
 
     public GrantInterestAppService(
         IRepository<GrantInterest, Guid> interestRepo,
@@ -42,7 +44,9 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         IRepository<GrantBookmark, Guid> bookmarkRepo,
         TenantDisplayNameResolver displayNames,
         GrantNotificationDispatcher notifyDispatcher,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        IRepository<GrantMeetingProposal, Guid> proposalRepo,
+        GrantMeetingManager meetingManager)
     {
         _interestRepo = interestRepo;
         _appRepo = appRepo;
@@ -52,6 +56,8 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         _displayNames = displayNames;
         _notifyDispatcher = notifyDispatcher;
         _mtFilter = mtFilter;
+        _proposalRepo = proposalRepo;
+        _meetingManager = meetingManager;
     }
 
     public async Task<MyGrantInterestDto> ExpressAsync(ExpressGrantInterestInput input)
@@ -148,6 +154,30 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
 
         var catalog = await ResolveCatalogAsync(new[] { interest.GrantCallId });
         return MapMine(interest, catalog);
+    }
+
+    public async Task<GrantMeetingDto> ProposeMeetingAsync(ProposeGrantMeetingInput input)
+    {
+        // Kiracı filtresi açık: başka firmanın talebi bulunmaz, "yok" sayılır.
+        var interest = await _interestRepo.FirstOrDefaultAsync(i => i.Id == input.InterestId)
+                       ?? throw new BusinessException(PlatformDomainErrorCodes.GrantInterestNotFound);
+
+        var proposal = await _meetingManager.ProposeAsync(interest, input.Slots, CurrentUser.Id);
+        await _proposalRepo.InsertAsync(proposal, autoSave: true);
+
+        var catalog = await ResolveCatalogAsync(new[] { interest.GrantCallId });
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.MeetingProposed,
+            tenantId: null,
+            new Dictionary<string, string?>
+            {
+                ["{firma_adı}"] = await GetFirmNameAsync(),
+                ["{çağrı_adı}"] = catalog.TryGetValue(interest.GrantCallId, out var call) ? call.Name : null,
+                ["{önerilen_saatler}"] = GrantMeetingMapping.SlotsText(proposal.Slots)
+            },
+            nameof(GrantMeetingProposal), proposal.Id);
+
+        return GrantMeetingMapping.ToDto(proposal);
     }
 
     /// <summary>

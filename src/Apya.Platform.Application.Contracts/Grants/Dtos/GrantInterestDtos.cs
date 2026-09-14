@@ -121,6 +121,9 @@ public class GrantInterestReviewDto
 {
     public GrantInterestRowDto Interest { get; set; } = new();
 
+    /// <summary>18e · Talebin son görüşme önerisi; firma henüz önermediyse boş.</summary>
+    public GrantMeetingDto? Meeting { get; set; }
+
     /// <summary>İç not — firmaya gitmez.</summary>
     public string? ConsultantNote { get; set; }
 
@@ -201,4 +204,53 @@ public class RejectGrantInterestInput
     [Required(ErrorMessage = "Gerekçe zorunludur.")]
     [StringLength(1000, ErrorMessage = "Gerekçe en fazla 1000 karakter olabilir.")]
     public string Reason { get; set; } = string.Empty;
+}
+
+/// <summary>18e · Ön görüşme önerisi: firmanın üç saati ve danışmanın cevabı. Firmaya ve host'a aynı biçimde gider.</summary>
+public class GrantMeetingDto
+{
+    public Guid Id { get; set; }
+    public GrantMeetingStatus Status { get; set; }
+
+    /// <summary>Önerilen saatler, erkenden geçe. Onayda seçilen sıra numarası bu listeye göredir.</summary>
+    public List<DateTime> Slots { get; set; } = new();
+
+    public DateTime? ConfirmedSlot { get; set; }
+
+    /// <summary>Başka saat isteğinin gerekçesi.</summary>
+    public string? HostNote { get; set; }
+
+    public DateTime CreationTime { get; set; }
+    public DateTime? AnsweredAt { get; set; }
+    public int DurationMinutes { get; set; } = GrantMeetingConsts.DurationMinutes;
+}
+
+public class ProposeGrantMeetingInput
+{
+    [Required(ErrorMessage = "Talep seçilmedi.")]
+    public Guid InterestId { get; set; }
+
+    /// <summary>Tam üç, farklı ve gelecekteki saat (sunucu ayrıca denetler).</summary>
+    public List<DateTime> Slots { get; set; } = new();
+}
+
+public class ConfirmGrantMeetingInput
+{
+    [Required(ErrorMessage = "Öneri seçilmedi.")]
+    public Guid ProposalId { get; set; }
+
+    /// <summary>0, 1 ya da 2 — <see cref="GrantMeetingDto.Slots"/> sırası.</summary>
+    [Range(0, GrantMeetingConsts.SlotCount - 1)]
+    public int SlotIndex { get; set; }
+}
+
+public class RequestGrantMeetingTimeInput
+{
+    [Required(ErrorMessage = "Öneri seçilmedi.")]
+    public Guid ProposalId { get; set; }
+
+    /// <summary>Firmaya aynen iletilir; boş geçilemez.</summary>
+    [Required(ErrorMessage = "Not zorunludur.")]
+    [StringLength(GrantMeetingConsts.MaxHostNoteLength, ErrorMessage = "Not en fazla 500 karakter olabilir.")]
+    public string Note { get; set; } = string.Empty;
 }

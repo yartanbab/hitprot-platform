@@ -29,5 +29,7 @@ public enum NotificationType
     GrantCallPublished             = 20, // Yeni çağrı yayına alındı
     GrantInterestAnswered          = 21, // İlgi talebi karara bağlandı (başvuru açıldı / uygun değil)
     GrantInterestReceived          = 22, // Kiracı ilgi bildirdi — HOST'a gider
-    GrantCallClosed                = 23  // 18b · Çağrı kapandı; yarım kalan firmaya benzer çağrılarla
+    GrantCallClosed                = 23, // 18b · Çağrı kapandı; yarım kalan firmaya benzer çağrılarla
+    GrantMeetingProposed           = 24, // 18e · Firma ön görüşme saatleri önerdi — HOST'a gider
+    GrantMeetingAnswered           = 25  // 18e · Danışman görüşmeyi onayladı ya da başka saat istedi
 }

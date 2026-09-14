@@ -153,6 +153,11 @@ public static class PlatformDomainErrorCodes
     public const string GrantInterestNotWithdrawable = "Platform:Grant:InterestNotWithdrawable";
     public const string GrantInterestPartnerAnswerRequired = "Platform:Grant:InterestPartnerAnswerRequired";
     public const string GrantInterestAssigneeNotFound = "Platform:Grant:InterestAssigneeNotFound";
+    public const string GrantMeetingSlotsInvalid = "Platform:Grant:MeetingSlotsInvalid";
+    public const string GrantMeetingAlreadyOpen = "Platform:Grant:MeetingAlreadyOpen";
+    public const string GrantMeetingNotPending = "Platform:Grant:MeetingNotPending";
+    public const string GrantMeetingNoteRequired = "Platform:Grant:MeetingNoteRequired";
+    public const string GrantMeetingInterestClosed = "Platform:Grant:MeetingInterestClosed";
 
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";

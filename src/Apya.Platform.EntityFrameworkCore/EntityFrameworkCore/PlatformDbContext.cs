@@ -150,6 +150,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantCallDailyStat> GrantCallDailyStats { get; set; }
         public DbSet<GrantLead> GrantLeads { get; set; }
         public DbSet<GrantInterest> GrantInterests { get; set; }
+        public DbSet<GrantMeetingProposal> GrantMeetingProposals { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
@@ -1049,6 +1050,17 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.TenantId, x.GrantCallId, x.Status });
                 // Host kutusunun sıralaması: bekleyenler önce, tarihe göre.
                 b.HasIndex(x => new { x.Status, x.CreationTime });
+            });
+
+            builder.Entity<GrantMeetingProposal>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantMeetingProposals", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.HostNote).HasMaxLength(GrantMeetingConsts.MaxHostNoteLength);
+                // 18e · Öneri talebe aittir; talep silinirse önerisi de gider.
+                b.HasOne<GrantInterest>().WithMany().HasForeignKey(x => x.GrantInterestId).OnDelete(DeleteBehavior.Cascade);
+                // Talebin son önerisi ve "açık öneri var mı" kapısı.
+                b.HasIndex(x => new { x.GrantInterestId, x.Status });
             });
 
             // --- 6d · Bildirim şablonları ---

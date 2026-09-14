@@ -31,4 +31,10 @@ public interface IGrantInterestHostAppService : IApplicationService
 
     /// <summary>18a · Talebi başka danışmana devret; yalnız etkin host kullanıcısına.</summary>
     Task<GrantInterestReviewDto> AssignAsync(AssignGrantInterestInput input);
+
+    /// <summary>18e · Firmanın önerdiği saatlerden birini onaylar; talep incelemeye alınır, firmaya bildirim gider.</summary>
+    Task<GrantInterestReviewDto> ConfirmMeetingAsync(ConfirmGrantMeetingInput input);
+
+    /// <summary>18e · Önerilen saatlere uymadığını notla bildirir; firma yeniden önerebilir.</summary>
+    Task<GrantInterestReviewDto> RequestOtherMeetingTimeAsync(RequestGrantMeetingTimeInput input);
 }

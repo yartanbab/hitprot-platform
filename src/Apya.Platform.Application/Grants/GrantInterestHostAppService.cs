@@ -43,6 +43,7 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
     private readonly GrantMatchManager _matcher;
     private readonly GrantMatchWeightResolver _weightResolver;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly IRepository<GrantMeetingProposal, Guid> _proposalRepo;
 
     public GrantInterestHostAppService(
         IRepository<GrantInterest, Guid> interestRepo,
@@ -58,7 +59,8 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         FirmSignalsBuilder signalsBuilder,
         GrantMatchManager matcher,
         GrantMatchWeightResolver weightResolver,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        IRepository<GrantMeetingProposal, Guid> proposalRepo)
     {
         _interestRepo = interestRepo;
         _appRepo = appRepo;
@@ -74,6 +76,7 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         _matcher = matcher;
         _weightResolver = weightResolver;
         _mtFilter = mtFilter;
+        _proposalRepo = proposalRepo;
     }
 
     public async Task<GrantInterestConsoleDto> GetAsync(bool onlyPending)
@@ -191,9 +194,12 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         GrantInterest interest;
         Dictionary<Guid, string> tenantUsers;
         int approvedGrantCount;
+        GrantMeetingProposal? meeting;
         using (_currentTenant.Change(tenantId))
         {
             interest = await _interestRepo.GetAsync(interestId);
+            meeting = (await _proposalRepo.GetListAsync(p => p.GrantInterestId == interestId))
+                .OrderByDescending(p => p.CreationTime).FirstOrDefault();
             tenantUsers = (await _userRepo.GetListAsync()).ToDictionary(u => u.Id, DisplayName);
             approvedGrantCount = (await _appRepo.GetListAsync(a => a.ApprovedAmount != null)).Count;
         }
@@ -215,6 +221,7 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         var dto = new GrantInterestReviewDto
         {
             Interest = row,
+            Meeting = meeting == null ? null : GrantMeetingMapping.ToDto(meeting),
             ConsultantNote = interest.ConsultantNote,
             RequiresConsortium = grant.RequiresConsortium,
             MatchScore = _matcher.Explain(signals, grant, criteria, weights).Total,
@@ -282,6 +289,85 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         }
 
         return await GetReviewAsync(input.InterestId);
+    }
+
+    public async Task<GrantInterestReviewDto> ConfirmMeetingAsync(ConfirmGrantMeetingInput input)
+    {
+        EnsureHostContext();
+
+        var (tenantId, interestId, callId, slot) = await AnswerMeetingAsync(input.ProposalId, (proposal, interest) =>
+        {
+            proposal.Confirm(input.SlotIndex, CurrentUser.Id, Clock.Now);
+            // Saat verilen talep danışmanın elindedir: bekleyen talep incelemeye alınır, danışman üstlenir.
+            if (interest.Status == GrantInterestStatus.Yeni)
+            {
+                interest.StartReview(CurrentUser.Id, Clock.Now);
+            }
+        });
+
+        await NotifyMeetingAnsweredAsync(tenantId, callId, input.ProposalId,
+            L["Grants:Meeting:Result:Confirmed", GrantMeetingMapping.SlotText(slot!.Value), GrantMeetingConsts.DurationMinutes]);
+        return await GetReviewAsync(interestId);
+    }
+
+    public async Task<GrantInterestReviewDto> RequestOtherMeetingTimeAsync(RequestGrantMeetingTimeInput input)
+    {
+        EnsureHostContext();
+
+        var (tenantId, interestId, callId, _) = await AnswerMeetingAsync(input.ProposalId,
+            (proposal, _) => proposal.RequestOtherTime(input.Note, CurrentUser.Id, Clock.Now));
+
+        await NotifyMeetingAnsweredAsync(tenantId, callId, input.ProposalId,
+            L["Grants:Meeting:Result:OtherTime", input.Note.Trim()]);
+        return await GetReviewAsync(interestId);
+    }
+
+    /// <summary>
+    /// Öneri firmanın kiracısındadır: kimlikle süzgeç kapalı bulunur, değişiklik o kiracıda yazılır. Karara bağlanmış
+    /// ya da geri çekilmiş talebin önerisi cevaplanmaz.
+    /// </summary>
+    private async Task<(Guid TenantId, Guid InterestId, Guid CallId, DateTime? ConfirmedSlot)> AnswerMeetingAsync(
+        Guid proposalId, Action<GrantMeetingProposal, GrantInterest> answer)
+    {
+        GrantMeetingProposal? found;
+        using (_mtFilter.Disable())
+        {
+            found = await _proposalRepo.FindAsync(proposalId);
+        }
+
+        if (found?.TenantId == null)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantMeetingNotPending);
+        }
+
+        var tenantId = found.TenantId.Value;
+        using (_currentTenant.Change(tenantId))
+        {
+            var proposal = await _proposalRepo.GetAsync(proposalId);
+            var interest = await _interestRepo.GetAsync(proposal.GrantInterestId);
+            if (!interest.IsPending)
+            {
+                throw new BusinessException(PlatformDomainErrorCodes.GrantMeetingInterestClosed);
+            }
+
+            answer(proposal, interest);
+            await _proposalRepo.UpdateAsync(proposal, autoSave: true);
+            await _interestRepo.UpdateAsync(interest, autoSave: true);
+            return (tenantId, interest.Id, interest.GrantCallId, proposal.ConfirmedSlot);
+        }
+    }
+
+    private async Task NotifyMeetingAnsweredAsync(Guid tenantId, Guid callId, Guid proposalId, string result)
+    {
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.MeetingAnswered,
+            tenantId,
+            new Dictionary<string, string?>
+            {
+                ["{çağrı_adı}"] = await GetGrantNameAsync(callId),
+                ["{görüşme_sonucu}"] = result
+            },
+            nameof(GrantMeetingProposal), proposalId);
     }
 
     /// <summary>

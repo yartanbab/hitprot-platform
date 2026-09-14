@@ -38,6 +38,7 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
     private readonly IRepository<Project, Guid> _projectRepo;
     private readonly IIdentityUserRepository _userRepo;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly IRepository<GrantMeetingProposal, Guid> _proposalRepo;
 
     public GrantJourneyAppService(
         IGrantMyApplicationsAppService myApplications,
@@ -49,7 +50,8 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
         IRepository<Grant, Guid> grantRepo,
         IRepository<Project, Guid> projectRepo,
         IIdentityUserRepository userRepo,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        IRepository<GrantMeetingProposal, Guid> proposalRepo)
     {
         _myApplications = myApplications;
         _appRepo = appRepo;
@@ -61,6 +63,7 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
         _projectRepo = projectRepo;
         _userRepo = userRepo;
         _mtFilter = mtFilter;
+        _proposalRepo = proposalRepo;
     }
 
     public async Task<GrantJourneyDto> GetAsync()
@@ -77,6 +80,10 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
         var rows = (await _myApplications.GetAsync()).Items;
         var applications = (await _appRepo.GetListAsync()).ToDictionary(a => a.Id);
         var interests = await _interestRepo.GetListAsync();
+        // 18e · Talep başına son görüşme önerisi (kiracı filtresi açık: yalnız firmanın kendi önerileri).
+        var meetings = (await _proposalRepo.GetListAsync())
+            .GroupBy(p => p.GrantInterestId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(p => p.CreationTime).First());
 
         var appIds = rows.Select(r => r.Id).ToList();
         var documents = (await _docRepo.GetListAsync(d => appIds.Contains(d.GrantApplicationId)))
@@ -190,7 +197,10 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
                 At = interest.WithdrawnAt ?? interest.ReviewedAt ?? interest.CreationTime,
                 InterestId = interest.Id,
                 ReviewerName = interest.ReviewedByUserId.HasValue ? hostUsers.GetValueOrDefault(interest.ReviewedByUserId.Value) : null,
-                HostFeedback = interest.HostFeedback
+                HostFeedback = interest.HostFeedback,
+                Meeting = kind == GrantJourneyItemKind.InterestPending && meetings.TryGetValue(interest.Id, out var meeting)
+                    ? GrantMeetingMapping.ToDto(meeting)
+                    : null
             });
         }
 

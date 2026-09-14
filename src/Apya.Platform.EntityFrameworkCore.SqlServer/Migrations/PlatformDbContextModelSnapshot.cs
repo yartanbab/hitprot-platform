@@ -7507,6 +7507,98 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantMatchWeights", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantMeetingProposal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("AnsweredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("AnsweredByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime?>("ConfirmedSlot")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid>("GrantCallId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GrantInterestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HostNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<Guid?>("ProposedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Slot1")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Slot2")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Slot3")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrantInterestId", "Status");
+
+                    b.ToTable("AppGrantMeetingProposals", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantMilestone", b =>
                 {
                     b.Property<Guid>("Id")
@@ -13572,6 +13664,15 @@ namespace Apya.Platform.Migrations
                         .WithMany()
                         .HasForeignKey("GrantId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantMeetingProposal", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.GrantInterest", null)
+                        .WithMany()
+                        .HasForeignKey("GrantInterestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Apya.Platform.Grants.GrantMilestone", b =>

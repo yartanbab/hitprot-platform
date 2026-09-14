@@ -120,6 +120,16 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-calendar-xmark", "/Grants/Journey", GroupSimilar: false),
 
+            // 18e · Görüşme önerisi talebin inceleme ekranında cevaplanır; kutu oraya götürür.
+            [NotificationType.GrantMeetingProposed] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-calendar-plus", "/Grants/Interests", GroupSimilar: true),
+
+            // 18e · Onaylanan saat ya da başka saat isteği firmanın Hibe Yolculuğum satırında durur.
+            [NotificationType.GrantMeetingAnswered] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-calendar-check", "/Grants/Journey", GroupSimilar: false),
+
             [NotificationType.AiWorkflowTriggered] = new(
                 NotificationCategory.Ai, NotificationSeverity.Info,
                 "fa fa-robot", "/AiCenter/Evaluations", GroupSimilar: false),
