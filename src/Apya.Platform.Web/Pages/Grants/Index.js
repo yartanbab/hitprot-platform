@@ -303,9 +303,17 @@ $(function () {
         };
         var id = $('#CallId').val();
         var op = id ? callService.update(id, dto) : callService.create(dto);
-        op.then(function () {
+        op.then(function (saved) {
             callModal.hide();
             abp.notify.success(id ? 'Çağrı güncellendi.' : 'Çağrı oluşturuldu.');
+            // 18b · Bu kayıtta çağrı kapandıysa zincirin sonucu ayrıca duyurulur.
+            if (saved && saved.closingSummary) {
+                var s = saved.closingSummary;
+                abp.message.info(abp.localization.localize('Grants:CallClose:Summary', 'Platform')
+                    .replace('{0}', s.missedInterestCount)
+                    .replace('{1}', s.unfinishedApplicationCount)
+                    .replace('{2}', s.notifiedFirmCount));
+            }
             if (activeCallTile) { loadCalls(activeCallTile); }
         });
     });

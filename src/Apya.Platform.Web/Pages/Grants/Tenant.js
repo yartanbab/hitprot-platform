@@ -189,8 +189,8 @@ $(function () {
     function ruleText(rule) { return l('Grants:Rule:' + ruleKeys[rule]); }
 
     // GrantInterestStatus enum değerleri sunucudakiyle birebir.
-    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi'];
-    var interestTone = ['neutral', 'neutral', 'positive', 'negative', 'neutral'];
+    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi', 'Kacirildi'];
+    var interestTone = ['neutral', 'neutral', 'positive', 'negative', 'neutral', 'neutral'];
     var bucketKeys = ['Uygun', 'Kosullu', 'UygunDegil'];
     var bucketTone = ['positive', 'warning', 'neutral'];
 

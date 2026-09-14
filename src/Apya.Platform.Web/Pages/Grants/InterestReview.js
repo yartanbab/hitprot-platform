@@ -5,8 +5,8 @@ $(function () {
     var rejectModal = new bootstrap.Modal(document.getElementById('RejectModal'));
 
     // Enum sıraları sunucudakiyle birebir.
-    var statusKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi'];
-    var statusTone = ['warning', 'neutral', 'positive', 'negative', 'neutral'];
+    var statusKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi', 'Kacirildi'];
+    var statusTone = ['warning', 'neutral', 'positive', 'negative', 'neutral', 'neutral'];
     var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
     var sizeKeys = { 1: 'Mikro', 2: 'Kucuk', 4: 'Orta', 8: 'Buyuk' };
 
@@ -81,7 +81,8 @@ $(function () {
         if (r.status === 2) { text = l('Grants:InterestReview:Decision:Started', r.reviewedByName || '—', date(r.reviewedAt)); }
         if (r.status === 3) { text = l('Grants:InterestReview:Decision:Rejected', r.reviewedByName || '—', date(r.reviewedAt)); }
         if (r.status === 4) { text = l('Grants:Interests:WithdrawnAt', date(r.withdrawnAt)); }
-        var feedback = r.status === 3 && r.hostFeedback
+        if (r.status === 5) { text = l('Grants:Interests:MissedAt', date(r.reviewedAt)); }
+        var feedback = (r.status === 3 || r.status === 5) && r.hostFeedback
             ? '<span class="apya-irv-feedback">' + esc(r.hostFeedback) + '</span>' : '';
         $('#DecisionText').toggleClass('d-none', !text).html(esc(text) + feedback);
 

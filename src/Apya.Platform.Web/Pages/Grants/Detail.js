@@ -59,11 +59,12 @@ $(function () {
 
     // ---------- İlgi talebi (tur 14) ----------
     // Enum değerleri sunucudakiyle birebir (GrantInterestStatus).
-    var IST = { Yeni: 0, Inceleniyor: 1, BasvuruAcildi: 2, UygunDegil: 3, GeriCekildi: 4 };
+    var IST = { Yeni: 0, Inceleniyor: 1, BasvuruAcildi: 2, UygunDegil: 3, GeriCekildi: 4, Kacirildi: 5 };
 
     function paintInterest(d) {
         var st = d.interestStatus;
-        var closed = st === IST.UygunDegil || st === IST.GeriCekildi;
+        // Kaçırılan talep (çağrı kapanıp yeniden açıldıysa) kapıyı kapatmaz: yeni talep açılır.
+        var closed = st === IST.UygunDegil || st === IST.GeriCekildi || st === IST.Kacirildi;
         var pending = st === IST.Yeni || st === IST.Inceleniyor;
 
         // Yeni talep ancak süren talep ya da açılmış başvuru yokken bırakılabilir. Kapanan
