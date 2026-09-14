@@ -6,6 +6,41 @@
    Kardeş grupları daima flex/grid + gap ile dizilir, per-element margin yoktur.
    ============================================================================= */
 
+/* --- 12b · Program afişi: kiracı kartı önizlemesi + yükleme --- */
+.apya-param-poster {
+    display: grid;
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+    gap: var(--apya-space-4);
+    align-items: start;
+}
+
+.apya-param-poster-preview {
+    border-radius: var(--apya-radius-lg);
+    overflow: hidden;
+}
+
+.apya-param-poster-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    min-width: 0;
+}
+
+.apya-param-poster-rule {
+    color: var(--apya-text-secondary);
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-param-poster-status {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+@media (max-width: 767.98px) {
+    .apya-param-poster { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* --- Başlık + "şu an kaç firma uygun" --- */
 .apya-param-hero {
     display: grid;

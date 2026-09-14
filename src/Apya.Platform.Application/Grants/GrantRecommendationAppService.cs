@@ -395,6 +395,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     GrantId = grant.Id,
                     GrantName = grant.Name,
                     Issuer = grant.Issuer,
+                    PosterFileName = grant.PosterFileName,
                     Period = call.Period,
                     Deadline = call.Deadline,
                     DaysRemaining = days,

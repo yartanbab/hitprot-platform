@@ -83,6 +83,31 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         return await MapAsync(grant);
     }
 
+    public async Task<string?> SetPosterAsync(Guid id, string storedFileName)
+    {
+        EnsureHostContext();
+        var grant = await _grantRepo.GetAsync(id);
+        var previous = grant.PosterFileName;
+
+        grant.SetPoster(storedFileName);
+        await _grantRepo.UpdateAsync(grant, autoSave: true);
+
+        // Aynı dosya yeniden bağlandıysa çağıran diski silmesin.
+        return string.Equals(previous, grant.PosterFileName, StringComparison.OrdinalIgnoreCase) ? null : previous;
+    }
+
+    public async Task<string?> RemovePosterAsync(Guid id)
+    {
+        EnsureHostContext();
+        var grant = await _grantRepo.GetAsync(id);
+        var previous = grant.PosterFileName;
+
+        grant.SetPoster(null);
+        await _grantRepo.UpdateAsync(grant, autoSave: true);
+
+        return previous;
+    }
+
     public async Task<GrantParameterDto> UpdateAsync(Guid id, UpdateGrantParameterDto input)
     {
         EnsureHostContext();

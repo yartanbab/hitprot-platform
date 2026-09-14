@@ -55,6 +55,14 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Programın kullandığı aşama şablonu (3b). null = şablon seçilmemiş.</summary>
     public Guid? StageTemplateId { get; set; }
 
+    // --- 12b · Program afişi ---
+    /// <summary>
+    /// Afişin App_Data/uploads altındaki saklanan adı. null = afiş yok; kiracı kartı kuruma
+    /// özel iki tonlu zemin çizer. Proje kapağıyla aynı sözleşme: dosyayı diske yazmak ve
+    /// eskisini silmek Web katmanının işidir, burada yalnız ad tutulur.
+    /// </summary>
+    public string? PosterFileName { get; private set; }
+
     public ICollection<GrantCall> Calls { get; set; } = new List<GrantCall>();
     public ICollection<GrantCriteriaTag> CriteriaTags { get; set; } = new List<GrantCriteriaTag>();
     public ICollection<GrantEligibleCostItem> EligibleCostItems { get; set; } = new List<GrantEligibleCostItem>();
@@ -74,5 +82,11 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
         MaxAmount = maxAmount; // Gelen sayıyı buraya atıyoruz
         MinMatchScore = minMatchScore;
         Description = ""; // Açıklama boş kalsın şimdilik
+    }
+
+    /// <summary>12b · Boş ad afişi kaldırır.</summary>
+    public void SetPoster(string? storedFileName)
+    {
+        PosterFileName = string.IsNullOrWhiteSpace(storedFileName) ? null : storedFileName.Trim();
     }
 }

@@ -16,6 +16,9 @@ public class GrantParameterDto : EntityDto<Guid>
     public string? Description { get; set; }
     public string? SourceUrl { get; set; }
 
+    /// <summary>12b · Afişin saklanan adı; adres istemcide /file/get/ ile kurulur (proje kapağıyla aynı).</summary>
+    public string? PosterFileName { get; set; }
+
     // --- Uygunluk Şartları ---
     public int EligibleCompanySizes { get; set; }
     public int? MinCompanyAgeYears { get; set; }
