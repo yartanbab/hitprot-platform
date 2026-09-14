@@ -28,7 +28,7 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.14",
             date: "14 Eylül 2026",
-            title: "Kurum Profili ekranı; kurum bilgileriniz faturada ve hibe profilinde",
+            title: "Kurum Profili, Hibe Yolculuğum ve görüşme saati önerme; formlarda düzeltmeler",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Kurumunuzun bilgileri artık Kurum Profili ekranında",
@@ -52,7 +52,75 @@ public static class ReleaseNoteCatalog
                 "Fatura ve pano çıktılarında kurumunuzun kendi unvanı",
                 "Yazdırdığınız faturanın başlığında artık kurumunuzun resmî unvanı, adresi, vergi " +
                 "dairesi ve vergi numarası yer alıyor. Genel Bakış panosunun çıktısı ve hibe " +
-                "bildirimleri de kurumunuzu kısa hesap adıyla değil, resmî unvanıyla anıyor.")),
+                "bildirimleri de kurumunuzu kısa hesap adıyla değil, resmî unvanıyla anıyor."),
+
+            // ── Hibe ──────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe Yolculuğum: bütün hibe süreçleriniz tek zaman çizgisinde",
+                "Hibe Yönetimi menüsünde yeni Hibe Yolculuğum ekranı var. Bildirdiğiniz her ilgi, " +
+                "açtığınız her başvuru ve projeye dönüşen her destek, çağrı başına tek satırda duruyor. " +
+                "Satır durumu cümleyle anlatıyor: talebinizi hangi danışmanın incelediği, başvurunuzun " +
+                "hangi aşamada olduğu ve sırada ne olduğu, son tarihe kaç gün kaldığı, reddedilen " +
+                "başvuruda itiraz için kalan süre, onaylanan destek ve sıradaki tahsilat dilimi. " +
+                "Ekranın başında kaç sürecinizin sürdüğü ve bugüne kadar onaylanan toplam destek " +
+                "yazıyor. Her satırın yanında o işe götüren düğme var: çağrıyı görmek, başvuruya devam " +
+                "etmek, itiraz etmek ya da ilginizi geri çekmek."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Danışmanınıza ön görüşme için saat önerebiliyorsunuz",
+                "Hibe Yolculuğum'da yanıt bekleyen bir ilgi talebinizin yanında Görüşme saati öner " +
+                "düğmesi var. Size uyan üç saati seçip gönderiyorsunuz; danışmanınız bunlardan birini " +
+                "onaylıyor ya da uymuyorsa size bir not bırakıp başka saat istiyor. Sonuç size bildirim " +
+                "olarak geliyor ve talebin satırında da yazıyor. Başka saat istendiyse yeniden üç saat " +
+                "önerebilirsiniz. Ön görüşme 30 dakika sürer ve çevrim içi yapılır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Çağrı kapanınca yanıtsız talebiniz belirsiz kalmıyor, size uygun çağrılar öneriliyor",
+                "Bir çağrı, ilgi talebiniz yanıtlanmadan kapanırsa talebiniz artık beklemede kalmıyor: " +
+                "durumu Çağrı kapandı olarak değişiyor ve nedeni talebin yanında yazıyor. O çağrıda " +
+                "yanıtsız bir talebiniz ya da gönderilmemiş bir başvurunuz varsa tek bir bildirim " +
+                "alıyorsunuz; bildirim, profilinize en uygun iki açık çağrıyı uyum oranıyla birlikte " +
+                "öneriyor. Başvuruya yazdıklarınız ve yüklediğiniz evraklar saklı kalır; kapanan çağrı " +
+                "Hibe Yolculuğum'da da görünür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe kartlarında program afişi",
+                "Hibeler ekranındaki çağrı kartlarının üst kısmında artık programın afişi görünüyor; " +
+                "afişin üzerinde kurum, dönem ve program adı yazıyor. Afişi olmayan programlarda kart, " +
+                "kurumun adına göre her zaman aynı renkte bir zeminle çiziliyor, böylece aynı kurumun " +
+                "çağrılarını bir bakışta ayırt edebilirsiniz. Afişe tıklamak çağrının detayını açar."),
+
+            // ── Formlar ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Formunuzun herkese açık bağlantısı artık dışarıdan açılıyor",
+                "Şablonlar & Formlar'da yayınladığınız bir formun bağlantısı, platformda oturumu olmayan " +
+                "kişilere gönderildiğinde açılmıyordu. Sorun giderildi: formu yayınladığınızda pencerede " +
+                "çıkan bağlantı ve form listesindeki aç bağlantısı artık herkes için çalışıyor. Daha önce " +
+                "paylaştığınız bağlantılar eski biçimde olduğu için açılmaz; lütfen bağlantıyı yeniden " +
+                "kopyalayıp paylaşın."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yayındaki formu düzenlemek gelen yanıtları sorularından koparmıyor",
+                "Yayındaki bir formun sorularını düzenleyip kaydettiğinizde, daha önce gelmiş yanıtlar " +
+                "yanıt ekranında soru adı yerine \"Soru\" olarak görünüyor, Excel dışa aktarımında ilgili " +
+                "sütunlar boş kalıyordu. Artık bir sorunun metnini, türünü ya da sırasını değiştirmek " +
+                "gelen yanıtları etkilemiyor. Bu düzeltmeden önce yapılmış düzenlemelerde kopan " +
+                "eşleşmeler geri getirilemiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Form yanıtları webhook adreslerinize yeniden gönderiliyor",
+                "Webhook'lar ekranında formlarınız için tanımladığınız adreslere, yeni yanıt geldiğinde " +
+                "gönderim yapılmıyordu. Sorun giderildi: yanıtlar tanımladığınız adrese iletiliyor ve her " +
+                "gönderim, aboneliğin teslim geçmişinde görünüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Formlarda açılır liste yayındaki hibe çağrılarına bağlanabiliyor",
+                "Form düzenleyicide bir açılır liste sorusunu seçtiğinizde Seçenek kaynağı altında " +
+                "Yayındaki hibeler seçeneği var. Bu durumda seçenekleri elle yazmıyorsunuz: liste, form " +
+                "her açıldığında başvuruya açık çağrılardan geliyor ve kapanan çağrı kendiliğinden " +
+                "düşüyor. Bağlantıdaki çağrıyı ön seç açıksa bir çağrıya özel form bağlantısı " +
+                "kopyalayabilirsiniz; formu bu bağlantıyla açan kişi o çağrıyı seçili bulur. Yanıtlarda " +
+                "seçilen çağrının adı görünür.")),
 
         new ReleaseNote(
             version: "2026.09.11",
