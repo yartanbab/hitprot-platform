@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
+import { DocsPageHeader, EmptyActions, ProcessRibbon } from '../components/documents';
 import {
   abpNotify, createMatch, fmtDate, fmtMoney, getBoard, getCandidates, getMatches, removeMatch,
 } from './api';
@@ -90,33 +91,48 @@ export function MatchingRoot() {
     }
   };
 
+  const page = (children) => (
+    <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
+      <DocsPageHeader
+        title="Harcama ↔ belge eşleştirme"
+        description={board ? (
+          <>
+            {board.expenses.length} belgesiz harcama · toplam{' '}
+            <strong style={{ color: 'var(--apya-negative-500)' }}>{fmtMoney(board.undocumentedTotal)}</strong>
+          </>
+        ) : 'Belgesiz harcamaları belgelerle eşleştirin'}
+        menuItems={[
+          projectId && {
+            key: 'timeline',
+            label: 'Zaman çizelgesine dön',
+            icon: 'fa-arrow-left',
+            href: `${window.abp.appPath}Documents/Timeline?projectId=${projectId}`,
+          },
+        ]}
+      />
+      <ProcessRibbon active="docs" projectId={projectId} />
+      {children}
+    </div>
+  );
+
   if (!projectId) {
-    return (
-      <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
-        <EmptyState icon={<i className="fa fa-link" />} title="Proje bağlamı gerekiyor"
-          description="Bu sayfa bir proje bağlamından açılır (?projectId=...)." />
-      </div>
+    return page(
+      <EmptyState icon={<i className="fa fa-link" />} title="Proje bağlamı gerekiyor"
+        description="Bu sayfa bir proje bağlamından açılır (?projectId=...)."
+        action={(
+          <EmptyActions
+            primary={<Button asChild><a href={`${window.abp.appPath}Projects`}>Projelere git</a></Button>}
+            link={{ label: 'veya proje kapsamını aç', href: `${window.abp.appPath}Documents/Scope` }}
+          />
+        )} />,
     );
   }
 
-  if (loading) return <div className="p-4"><SkeletonList rows={8} /></div>;
+  if (loading) return page(<SkeletonList rows={8} />);
   if (!board) return null;
 
-  return (
-    <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
-      <div className="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Harcama ↔ belge eşleştirme</h1>
-          <p style={{ fontSize: 12, color: 'var(--apya-text-tertiary)', margin: '4px 0 0' }}>
-            {board.expenses.length} belgesiz harcama · toplam{' '}
-            <strong style={{ color: 'var(--apya-negative-500)' }}>{fmtMoney(board.undocumentedTotal)}</strong>
-          </p>
-        </div>
-        <a href={`${window.abp.appPath}Documents/Timeline?projectId=${projectId}`} className="apya-doc-linkbtn">
-          Zaman çizelgesine dön
-        </a>
-      </div>
-
+  return page(
+    <>
       <div className="apya-doc-matchboard">
         {/* Sol: belgesiz harcamalar */}
         <div className="apya-doc-check-card">
@@ -164,7 +180,7 @@ export function MatchingRoot() {
             <div style={{ fontSize: 12, color: 'var(--apya-text-tertiary)' }}>
               Eşik üstünde aday yok. Sağdaki listeden elle bağlayabilirsiniz.
             </div>
-          ) : candidates.map((c) => (
+          ) : candidates.map((c, index) => (
             <div key={c.documentFileId} className="apya-doc-candidate">
               <div className="d-flex align-items-start justify-content-between gap-2">
                 <div style={{ minWidth: 0 }}>
@@ -196,7 +212,9 @@ export function MatchingRoot() {
                 </div>
               )}
 
-              <Button variant="primary" size="sm" className="mt-2 w-100" disabled={busy}
+              {/* Buton kuralı: tek birincil düğme — sunucu adayları skora göre
+                  sıralı döndürür, en güçlü adayınki birincil, diğerleri ikincil. */}
+              <Button variant={index === 0 ? 'primary' : 'outline'} size="sm" className="mt-2 w-100" disabled={busy}
                 onClick={() => handleMatch(c.documentFileId)}>
                 Bağla + EK no ata
               </Button>
@@ -252,6 +270,6 @@ export function MatchingRoot() {
           ))}
         </div>
       )}
-    </div>
+    </>,
   );
 }

@@ -39,6 +39,15 @@
       "_react-vendor-D57GAUXd.js"
     ]
   },
+  "_ProcessRibbon-BtZ1ri4F.js": {
+    "file": "ProcessRibbon-BtZ1ri4F.js",
+    "name": "ProcessRibbon",
+    "imports": [
+      "_react-vendor-D57GAUXd.js",
+      "_ui-vendor-DaE-uom6.js",
+      "_Dialog-Bky2XNdc.js"
+    ]
+  },
   "_QueryProvider-B4436sFh.js": {
     "file": "QueryProvider-B4436sFh.js",
     "name": "QueryProvider",
@@ -63,6 +72,10 @@
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js"
     ]
+  },
+  "_api-DE9auhlW.js": {
+    "file": "api-DE9auhlW.js",
+    "name": "api"
   },
   "_draggableActivation-Ybw9Upbh.js": {
     "file": "draggableActivation-Ybw9Upbh.js",
@@ -179,6 +192,8 @@
       "_Dialog-Bky2XNdc.js",
       "_SkeletonShape-BzeBQ1R3.js",
       "_EmptyState-D5m5kdmR.js",
+      "_ProcessRibbon-BtZ1ri4F.js",
+      "_api-DE9auhlW.js",
       "_ModalPortal-8QCz-DZi.js"
     ]
   },
@@ -203,7 +218,8 @@
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
       "_SkeletonShape-BzeBQ1R3.js",
-      "_EmptyState-D5m5kdmR.js"
+      "_EmptyState-D5m5kdmR.js",
+      "_ProcessRibbon-BtZ1ri4F.js"
     ]
   },
   "src/documents-report.jsx": {
@@ -215,7 +231,9 @@
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
       "_SkeletonShape-BzeBQ1R3.js",
-      "_EmptyState-D5m5kdmR.js"
+      "_EmptyState-D5m5kdmR.js",
+      "_ProcessRibbon-BtZ1ri4F.js",
+      "_api-DE9auhlW.js"
     ]
   },
   "src/documents-upload.jsx": {
@@ -227,7 +245,8 @@
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
       "_SkeletonShape-BzeBQ1R3.js",
-      "_EmptyState-D5m5kdmR.js"
+      "_EmptyState-D5m5kdmR.js",
+      "_ProcessRibbon-BtZ1ri4F.js"
     ]
   },
   "src/documents.jsx": {
@@ -239,6 +258,7 @@
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
       "_ModalPortal-8QCz-DZi.js",
+      "_ProcessRibbon-BtZ1ri4F.js",
       "_SkeletonShape-BzeBQ1R3.js",
       "_EmptyState-D5m5kdmR.js",
       "_draggableActivation-Ybw9Upbh.js",

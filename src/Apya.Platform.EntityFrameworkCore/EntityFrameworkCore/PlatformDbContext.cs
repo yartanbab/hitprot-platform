@@ -739,6 +739,7 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "GrantBookmarks", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
+                b.Property(x => x.Note).HasMaxLength(500);
                 b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
                 // Kiracı bir çağrıyı en fazla bir kez takip eder.
                 b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique();

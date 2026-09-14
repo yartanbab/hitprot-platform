@@ -123,6 +123,49 @@ public class GrantDispatchPage_Tests : PlatformWebTestBase
         yuksek.TotalFirms.ShouldBe(hepsi.TotalFirms, "toplam firma sayısı süzgeçten etkilenmez");
     }
 
+    /// <summary>
+    /// 13b · Danışman gönderince çağrı firmanın "Takip ettiklerim" sekmesine düşer.
+    /// Firma zaten takipteyse dokunulmaz — firmanın kendi notu ezilmez, ikinci kayıt açılmaz.
+    /// </summary>
+    [Fact]
+    public async Task Gonderim_Firmayi_Danisman_Adina_Takibe_Alir()
+    {
+        var tenantId = await CreateFirmAsync("Takip");
+        var service = GetRequiredService<IGrantHostDispatchAppService>();
+        var reco = GetRequiredService<IGrantRecommendationAppService>();
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        var bookmarkRepo = GetRequiredService<IRepository<GrantBookmark, Guid>>();
+        var callId = await OpenCallIdAsync();
+
+        var input = new SendHostRecommendationInput
+        {
+            GrantCallId = callId,
+            TenantIds = { tenantId },
+            Note = "Sizin için işaretledim",
+            SendNotification = false,
+            SendEmail = false
+        };
+        await service.SendAsync(input);
+
+        using (currentTenant.Change(tenantId))
+        {
+            var row = (await reco.GetOpenCallsAsync()).Single(r => r.GrantCallId == callId);
+            row.IsBookmarked.ShouldBeTrue("gönderim firmayı takibe alır");
+            row.IsHostRecommended.ShouldBeTrue();
+
+            await reco.SetBookmarkNoteAsync(new SetGrantBookmarkNoteInput { GrantCallId = callId, Note = "Firmanın notu" });
+        }
+
+        // İkinci gönderim atlanır; takip kaydı ve firmanın notu yerinde kalır.
+        await service.SendAsync(input);
+
+        using (currentTenant.Change(tenantId))
+        {
+            (await bookmarkRepo.GetListAsync(b => b.GrantCallId == callId)).Count.ShouldBe(1);
+            (await reco.GetOpenCallsAsync()).Single(r => r.GrantCallId == callId).BookmarkNote.ShouldBe("Firmanın notu");
+        }
+    }
+
     [Fact]
     public async Task Gonderim_Idempotent_Ikinci_Kez_Atlanir()
     {

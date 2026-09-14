@@ -32,6 +32,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
     private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepo;
     private readonly IRepository<GrantRecommendation, Guid> _recRepo;
     private readonly IRepository<GrantApplication, Guid> _appRepo;
+    private readonly IRepository<GrantBookmark, Guid> _bookmarkRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly IIdentityUserRepository _userRepo;
     private readonly FirmSignalsBuilder _signalsBuilder;
@@ -49,6 +50,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         IRepository<GrantCriteriaTag, Guid> criteriaRepo,
         IRepository<GrantRecommendation, Guid> recRepo,
         IRepository<GrantApplication, Guid> appRepo,
+        IRepository<GrantBookmark, Guid> bookmarkRepo,
         ITenantRepository tenantRepo,
         IIdentityUserRepository userRepo,
         FirmSignalsBuilder signalsBuilder,
@@ -65,6 +67,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         _criteriaRepo = criteriaRepo;
         _recRepo = recRepo;
         _appRepo = appRepo;
+        _bookmarkRepo = bookmarkRepo;
         _tenantRepo = tenantRepo;
         _userRepo = userRepo;
         _signalsBuilder = signalsBuilder;
@@ -242,6 +245,16 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
                 };
                 await _recRepo.InsertAsync(rec, autoSave: true);
                 result.SentCount++;
+
+                // 13b · Danışman firma adına takibe alır: çağrı firmanın "Takip ettiklerim"
+                // sekmesine "X sizin için işaretledi" notuyla düşer. Firma zaten takipteyse
+                // dokunulmaz — firmanın kendi notu ezilmesin.
+                if (await _bookmarkRepo.FirstOrDefaultAsync(b => b.GrantCallId == input.GrantCallId) == null)
+                {
+                    await _bookmarkRepo.InsertAsync(
+                        new GrantBookmark(GuidGenerator.Create(), tenantId, input.GrantCallId, CurrentUser.Id),
+                        autoSave: true);
+                }
 
                 // Şablon kapalıysa öneri kaydı yine açılır, duyuru yapılmaz —
                 // host bildirim metnini bilinçli olarak susturmuş demektir.

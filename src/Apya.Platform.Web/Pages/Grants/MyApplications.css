@@ -3,31 +3,32 @@
    Ortak sözlük Shared.css / Tenant.css'te; burada yalnız bu ekranın ölçüleri.
    ============================================================================= */
 
-.apya-my-kpis {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: var(--apya-space-3);
+/* 11c · Beşli KPI yerine tek cümle; sizden bekleyen iş varsa ikinci satır uyarı tonunda. */
+.apya-my-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: var(--apya-space-4);
 }
 
-@media (max-width: 1199.98px) {
-    .apya-my-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 575.98px) {
-    .apya-my-kpis { grid-template-columns: minmax(0, 1fr); }
-}
-
-.apya-my-kpi {
-    display: block;
-    font-family: var(--apya-font-mono);
-    font-variant-numeric: tabular-nums;
-    font-size: var(--apya-fs-2xl);
+.apya-my-summary-text {
+    margin: 0;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-xl);
     font-weight: var(--apya-weight-bold);
     letter-spacing: var(--apya-tracking-tight);
-    line-height: 1.15;
+    line-height: var(--apya-leading-snug);
 }
 
-.apya-my-kpi--good { color: var(--apya-positive-700); }
+.apya-my-summary-sub {
+    margin: 0;
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-warning-700);
+}
+
+/* 11c · Aşama hücresi: ad yerine cümle; satır içinde sarabilir. */
+.apya-my-stage-text { overflow-wrap: anywhere; }
 
 /* Satır — tasarım 6a: 1fr | 168px | 118px | 128px | 240px | 108px */
 .apya-my-row {
@@ -38,6 +39,9 @@
     padding: 10px var(--apya-space-3);
     border-bottom: 1px solid var(--apya-border-subtle);
     font-size: var(--apya-fs-sm);
+    /* LeptonX .card-body sabit #686B6E basar, koyu temada dönmez (3,43:1). Satır rengi
+       açıkça token'a bağlı; ikincil hücreler kendi token'ını zaten veriyor. */
+    color: var(--apya-text-primary);
 }
 
 .apya-my-row:last-child { border-bottom: 0; }

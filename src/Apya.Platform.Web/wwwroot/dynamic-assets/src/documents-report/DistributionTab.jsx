@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
+import { EmptyActions } from '../components/documents';
 import { SchedulePanel } from './SchedulePanel';
 import {
   abpAppPath, abpNotify, createShareLink, fmtDate, getPackages, getShareLinks, revokeShareLink,
@@ -16,7 +17,7 @@ import {
  * SHA-256 özeti saklanır). Bu yüzden link kopyalanmadan pencere kapanırsa
  * yeniden üretmek gerekir — bu kasıtlı.
  */
-export function DistributionTab({ projectId }) {
+export function DistributionTab({ projectId, onPickProject }) {
   const [packages, setPackages] = useState([]);
   const [selected, setSelected] = useState(null);
   const [links, setLinks] = useState([]);
@@ -85,7 +86,13 @@ export function DistributionTab({ projectId }) {
     return (
       <div className="apya-doc-check-card">
         <EmptyState icon={<i className="fa fa-share-nodes" />} title="Proje bağlamı gerekiyor"
-          description="Dağıtım üretilmiş paketler üzerinden yürür; üstteki listeden bir proje seçin." />
+          description="Dağıtım üretilmiş paketler üzerinden yürür; üstteki listeden bir proje seçin."
+          action={(
+            <EmptyActions
+              primary={<Button size="sm" onClick={onPickProject}>Proje seç</Button>}
+              link={{ label: 'veya proje kapsamından seç', href: `${abpAppPath()}Documents/Scope` }}
+            />
+          )} />
       </div>
     );
   }

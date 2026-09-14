@@ -166,6 +166,42 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
         (await service.GetOpenCallsAsync()).Single(r => r.GrantCallId == id).IsBookmarked.ShouldBeFalse();
     }
 
+    /// <summary>13b · Not takibin parçasıdır: takipteyken yazılır, boş not siler, takip kalkınca not da gider.</summary>
+    [Fact]
+    public async Task Takip_Notu_Yazilir_Bos_Not_Siler()
+    {
+        var service = GetRequiredService<IGrantRecommendationAppService>();
+        var id = await OpenCallIdAsync();
+
+        (await service.ToggleBookmarkAsync(id)).ShouldBeTrue();
+        await service.SetBookmarkNoteAsync(new SetGrantBookmarkNoteInput { GrantCallId = id, Note = "  Ekim'de danışmanla görüş  " });
+
+        var row = (await service.GetOpenCallsAsync()).Single(r => r.GrantCallId == id);
+        row.BookmarkNote.ShouldBe("Ekim'de danışmanla görüş", "not kırpılarak saklanır");
+        row.BookmarkedAt.ShouldNotBeNull();
+        row.BookmarkedByName.ShouldBeNull("firma kendi işaretledi; danışman adı yok");
+
+        await service.SetBookmarkNoteAsync(new SetGrantBookmarkNoteInput { GrantCallId = id, Note = "   " });
+        (await service.GetOpenCallsAsync()).Single(r => r.GrantCallId == id).BookmarkNote.ShouldBeNull();
+
+        (await service.ToggleBookmarkAsync(id)).ShouldBeFalse();
+        var after = (await service.GetOpenCallsAsync()).Single(r => r.GrantCallId == id);
+        after.IsBookmarked.ShouldBeFalse();
+        after.BookmarkedAt.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Takipte_Olmayan_Cagriya_Not_Yazilamaz()
+    {
+        var service = GetRequiredService<IGrantRecommendationAppService>();
+        var id = await OpenCallIdAsync();
+        (await service.GetOpenCallsAsync()).Single(r => r.GrantCallId == id).IsBookmarked.ShouldBeFalse();
+
+        // Not takibin yerine geçmez: önce takip, sonra not.
+        await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
+            () => service.SetBookmarkNoteAsync(new SetGrantBookmarkNoteInput { GrantCallId = id, Note = "x" }));
+    }
+
     [Fact]
     public async Task Profil_Dolulugu_Alan_Doldukca_Artar()
     {

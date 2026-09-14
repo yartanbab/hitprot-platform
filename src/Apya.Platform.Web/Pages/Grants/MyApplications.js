@@ -34,6 +34,11 @@ $(function () {
 
     // ---------- Satır ----------
     function row(r) {
+        // 11c · Aşama adı yerine cümle: "Kurum dosyanızı inceliyor. Sizden bir şey beklenmiyor."
+        // Şablon adı varsa ikinci satırda kalır (danışmanla aynı dili konuşabilsin).
+        var stageSentence = r.appealDaysLeft != null
+            ? l('Grants:Today:App:Rejected', r.appealDaysLeft)
+            : l('Grants:Today:App:' + actionKeys[r.nextAction], r.nextActionValue);
         var stageName = r.stageName || l('Grants:Stage:' + stageKeys[r.stage]);
         // Red kararı olan başvuruda CTA doğrudan itiraz ekranına gider.
         var cta = r.isRejected
@@ -55,7 +60,8 @@ $(function () {
             (r.period ? ' · ' + esc(r.period) : '') + '</span></span>' +
 
             '<span class="apya-my-stage">' +
-            '<span class="apya-chip apya-chip-neutral">' + esc(stageName) + '</span>' +
+            '<span class="apya-my-stage-text">' + esc(stageSentence) + '</span>' +
+            '<span class="apya-my-grant-meta">' + esc(stageName) + '</span>' +
             '<span class="apya-mini-bar"><span style="width:' + r.progressPercent + '%"></span></span></span>' +
 
             '<span class="apya-numeric' + (r.isApprovedAmount ? ' fw-semibold' : '') +
@@ -107,12 +113,19 @@ $(function () {
         var items = model.items || [];
         var open = items.filter(function (r) { return !r.isClosed; }).length;
 
-        $('#KpiOpen').text(model.openCount);
-        $('#KpiApproved').text(model.approvedCount);
-        $('#KpiOnYou').text(model.waitingOnYouCount);
-        $('#KpiCollected').text(shortMoney(model.collectedAmount) + ' ₺');
-        $('#KpiNearest').text(model.nearestDeadlineDays != null
-            ? l('Grants:Feed:Card:DaysLeft', model.nearestDeadlineDays) : '—');
+        // 11c · KPI kartları yerine tek cümle; sizden bekleyen iş varsa ikinci cümle.
+        var summary = model.approvedCount > 0
+            ? l('Grants:Mine:Summary:Won', model.approvedCount, shortMoney(model.collectedAmount) + ' ₺')
+            : open > 0 ? l('Grants:Mine:Summary:Open', open) : l('Grants:Mine:Summary:None');
+        $('#MineSummary').removeClass('apya-skel-num').text(summary);
+        $('#MineOnYou').toggleClass('d-none', !model.waitingOnYouCount).text(
+            model.waitingOnYouCount
+                ? (model.nearestDeadlineDays === 0
+                    ? l('Grants:Mine:Summary:OnYouToday', model.waitingOnYouCount)
+                    : model.nearestDeadlineDays != null
+                    ? l('Grants:Mine:Summary:OnYouNearest', model.waitingOnYouCount, model.nearestDeadlineDays)
+                    : l('Grants:Mine:Summary:OnYou', model.waitingOnYouCount))
+                : '');
 
         $('#FilterAll').text(l('Grants:Mine:Filter:All', items.length));
         $('#FilterOpen').text(l('Grants:Mine:Filter:Open', open));

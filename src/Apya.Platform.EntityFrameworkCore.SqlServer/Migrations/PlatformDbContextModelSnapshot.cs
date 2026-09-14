@@ -6505,6 +6505,13 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("GrantCallId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("MarkedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TenantId");
