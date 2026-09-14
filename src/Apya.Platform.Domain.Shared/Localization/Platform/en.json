@@ -905,6 +905,7 @@
     "Grants:Feed:Profile:Complete": "{0}% complete",
     "Grants:Feed:Profile:Missing": "{0} field(s) missing",
     "Grants:Feed:Profile:Cta": "Complete profile",
+    "Grants:Feed:Profile:Suggested": "Fields were pre-filled from your organization profile. Review and save — they aren't used for matching until you save.",
     "Grants:Feed:Profile:Gain": "Completing your profile makes {0} more call(s) measurable",
     "Grants:Feed:Profile:Full": "Your profile is complete — every condition can be measured.",
     "Grants:Feed:Card:WhyEligible": "Why it fits",

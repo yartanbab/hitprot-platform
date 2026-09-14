@@ -800,6 +800,7 @@
         "Grants:Feed:Profile:Complete": "%{0} dolu",
         "Grants:Feed:Profile:Missing": "{0} alan eksik",
         "Grants:Feed:Profile:Cta": "Profili Tamamla",
+        "Grants:Feed:Profile:Suggested": "Alanlar kurum profilinizdeki bilgilerle önceden dolduruldu. Kontrol edip kaydedin — kaydedene kadar eşleştirmede kullanılmaz.",
         "Grants:Feed:Profile:Gain": "Profili tamamlarsanız {0} çağrı daha ölçülebilir hâle gelir",
         "Grants:Feed:Profile:Full": "Profiliniz eksiksiz — tüm şartlar ölçülebiliyor.",
         "Grants:Feed:Card:WhyEligible": "Neden uygun",
