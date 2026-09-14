@@ -28,7 +28,7 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.11",
             date: "11 Eylül 2026",
-            title: "Görevler ekranında tüm projelerin panoları, hibeye ilgi bildirirken net adımlar",
+            title: "Görevlerde tüm projelerin panoları, hibede net adımlar, dokümanlarda süreç şeridi",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Belge, form, kontrol listesi ve bağımlılık panoları Görevler ekranında da var",
@@ -52,7 +52,47 @@ public static class ReleaseNoteCatalog
                 "tahmini bütçeyi ve başlangıç çeyreğini ekliyorsunuz; ortaklık şartı olan çağrılarda " +
                 "ortağınızın olup olmadığı da soruluyor. Gönderince talebinizin hangi adımda olduğu " +
                 "sayfada görünür, çağrı Takip ettiklerim listenize eklenir. Karar verilmeden fikriniz " +
-                "değişirse ilginizi geri çekip daha sonra yeniden bildirebilirsiniz.")),
+                "değişirse ilginizi geri çekip daha sonra yeniden bildirebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Dokümanlarda belgeden teslime süreç şeridi",
+                "Dokümanlar, Yükleme kuyruğu, Proje kapsamı, Zaman çizelgesi & bütçe, Harcama & belge " +
+                "eşleştirme, Rapor derleyici ve Teslimler & arşiv ekranlarının başlığı altında artık " +
+                "dört adımlı bir şerit var: Belgeler, Uygunluk, Derle, Teslim. Hangi adımda olduğunuz " +
+                "vurgulanır; bir adıma tıklayınca seçili projeyi kaybetmeden o ekrana geçersiniz. " +
+                "Şeridin sağındaki \"Sırada\" ipucu projenin kontrol listesine bakıp bir sonraki işi " +
+                "söyler: hangi eksik belgeyi yüklerseniz uygunluğun yüzde kaça çıkacağını ya da " +
+                "teslimi kaç kalemin beklettiğini."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Doküman ekranlarında tek ana düğme, diğer eylemler ⋯ menüsünde",
+                "Doküman ekranlarının başlığında artık yalnız o ekranın ana işi için bir düğme var; " +
+                "öteki eylemler yanındaki ⋯ menüsüne taşındı. Eski yerinde bulamadıklarınız orada: " +
+                "Dokümanlar'da Yeni klasör, Toplu yükleme ve Belge yakala; Proje kapsamında Hepsini " +
+                "aç; Rapor derleyicide Yeni şablon; Teslimler & arşiv'de Yeni paket. Seçili paketin " +
+                "ana düğmesi taslakta Paketi üret, üretilmiş pakette Çıktıyı indir; paylaşım " +
+                "bağlantısı, yeniden üretme ve silme paketin kendi ⋯ menüsünde. Telefonda Belge " +
+                "yakala eskisi gibi sağ alt köşedeki düğmede. Henüz içeriği olmayan ekranlar da tek " +
+                "bir başlangıç düğmesi ve yanında ikinci bir yol gösteriyor; örneğin hiç klasör " +
+                "yokken Şemayı kur ya da boş klasörle başla."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Rapor derleyicide taslak kaydedin, tek tıkla teslime geçin",
+                "Rapor derleyicide sekmelerin altında üç düğme var: Taslak kaydet, Önizle ve Üret ve " +
+                "teslime geç. Taslak kaydet, seçtiğiniz şablonla o proje için bir taslak teslim " +
+                "paketi açar; aynı şablonla yeniden bastığınızda ikinci paket açılmaz, mevcut taslak " +
+                "kullanılır. Üret ve teslime geç sizi Teslimler & arşiv ekranına götürür ve paketi " +
+                "açık getirir; ekleri tamamlayıp üretim öncesi kontrolden geçtikten sonra paketi " +
+                "orada üretirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Dokümanlarda uygunluk kartı, Belge yakala düğmesi ve paket bağlantısı düzeldi",
+                "Dokümanlar'daki Uygunluk ve Eksik belge kartları artık bir proje klasörü seçer " +
+                "seçmez doluyor; Uygunluk sekmesini açmanız gerekmiyor. Telefonda Belge yakala " +
+                "düğmesi sayfanın en sonunda kalmak yerine ekranın sağ alt köşesinde sabit duruyor. " +
+                "Belge detayındaki İlişkili kayıtlar bölümünden bir teslim paketine tıklayınca paket " +
+                "doğrudan açılıyor; daha önce proje seçme uyarısında kalıyordu. Rapor derleyicide de " +
+                "hangi sekmede olduğunuz yeniden işaretleniyor.")),
 
         new ReleaseNote(
             version: "2026.09.10",
