@@ -8,6 +8,7 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Data;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
@@ -41,6 +42,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     private readonly GrantMatchManager _matcher;
     private readonly GrantMatchWeightResolver _weightResolver;
     private readonly GrantDifficultyCalculator _difficulty;
+    private readonly IIdentityUserRepository _userRepo;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
 
     public GrantRecommendationAppService(
@@ -59,6 +61,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         GrantMatchManager matcher,
         GrantMatchWeightResolver weightResolver,
         GrantDifficultyCalculator difficulty,
+        IIdentityUserRepository userRepo,
         IDataFilter<IMultiTenant> mtFilter)
     {
         _callRepo = callRepo;
@@ -76,6 +79,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         _matcher = matcher;
         _weightResolver = weightResolver;
         _difficulty = difficulty;
+        _userRepo = userRepo;
         _mtFilter = mtFilter;
     }
 
@@ -101,6 +105,16 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         await _bookmarkRepo.InsertAsync(
             new GrantBookmark(GuidGenerator.Create(), CurrentTenant.Id, grantCallId), autoSave: true);
         return true;
+    }
+
+    public async Task SetBookmarkNoteAsync(SetGrantBookmarkNoteInput input)
+    {
+        // Kiracı filtresi açık: başka firmanın takibi bulunmaz. Takipte olmayan çağrıya
+        // not yazılmaz — not takibin parçasıdır, yerine geçmez.
+        var bookmark = await _bookmarkRepo.FirstOrDefaultAsync(b => b.GrantCallId == input.GrantCallId)
+                       ?? throw new EntityNotFoundException(typeof(GrantBookmark), input.GrantCallId);
+        bookmark.SetNote(input.Note);
+        await _bookmarkRepo.UpdateAsync(bookmark, autoSave: true);
     }
 
     public async Task<GrantCallDetailDto> GetCallDetailAsync(Guid grantCallId)
@@ -293,7 +307,24 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
 
         // 2) Başvurduğum çağrılar + takip ettiklerim (tenant-scoped).
         var appliedIds = (await _appRepo.GetListAsync()).Select(a => a.GrantCallId).ToHashSet();
-        var bookmarkedIds = (await _bookmarkRepo.GetListAsync()).Select(b => b.GrantCallId).ToHashSet();
+        var bookmarks = (await _bookmarkRepo.GetListAsync()).ToDictionary(b => b.GrantCallId);
+        var bookmarkedIds = bookmarks.Keys.ToHashSet();
+
+        // 13b · Firma adına işaretleyen danışman host kullanıcısıdır; kiracı sorgulayamaz,
+        // filtre kapalı okunur. Yalnız gerektiğinde (işaretleyen varsa).
+        var markerIds = bookmarks.Values.Where(b => b.MarkedByUserId.HasValue).Select(b => b.MarkedByUserId!.Value).Distinct().ToList();
+        var markerNames = new Dictionary<Guid, string>();
+        if (markerIds.Count > 0)
+        {
+            using (_mtFilter.Disable())
+            {
+                foreach (var user in await _userRepo.GetListByIdsAsync(markerIds))
+                {
+                    var full = $"{user.Name} {user.Surname}".Trim();
+                    markerNames[user.Id] = full.IsNullOrWhiteSpace() ? user.UserName : full;
+                }
+            }
+        }
 
         // 2a) Bıraktığım ilgi talepleri — kart CTA'sı buna bakar. Çağrı başına SON kayıt.
         var interestByCall = (await _interestRepo.GetListAsync())
@@ -387,7 +418,10 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     Difficulty = _difficulty
                         .Calculate(grant, docs.Count, docs.Any(d => d.RequiresESignature), stepCount, days)
                         .Level,
-                    IsBookmarked = bookmarkedIds.Contains(call.Id)
+                    IsBookmarked = bookmarkedIds.Contains(call.Id),
+                    BookmarkNote = bookmarks.TryGetValue(call.Id, out var bm) ? bm.Note : null,
+                    BookmarkedAt = bm?.CreationTime,
+                    BookmarkedByName = bm?.MarkedByUserId is { } markerId ? markerNames.GetValueOrDefault(markerId) : null
                 });
             }
         }

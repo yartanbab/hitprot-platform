@@ -3,6 +3,16 @@ using System.Collections.Generic;
 
 namespace Apya.Platform.Grants.Dtos;
 
+/// <summary>13b · Takip notu girişi.</summary>
+public class SetGrantBookmarkNoteInput
+{
+    [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Çağrı seçilmedi.")]
+    public Guid GrantCallId { get; set; }
+
+    [System.ComponentModel.DataAnnotations.StringLength(500, ErrorMessage = "Takip notu en fazla 500 karakter olabilir.")]
+    public string? Note { get; set; }
+}
+
 /// <summary>Tenant çağrı feed öğesi — canlı hesaplanır (kalıcı değil).</summary>
 public class GrantRecommendationDto
 {
@@ -25,6 +35,17 @@ public class GrantRecommendationDto
 
     /// <summary>Host bu çağrıyı bu firmaya bilinçli olarak gönderdi mi (B3 host-push).</summary>
     public bool IsHostRecommended { get; set; }
+
+    // --- 13b · Takip ettiklerim ---
+
+    /// <summary>Firmanın takip notu; yalnız takipteki çağrıda ve not yazıldıysa dolu.</summary>
+    public string? BookmarkNote { get; set; }
+
+    /// <summary>Takibe alınma zamanı; takipte değilse null.</summary>
+    public DateTime? BookmarkedAt { get; set; }
+
+    /// <summary>Danışman firma adına işaretlediyse adı; firma kendi işaretlediyse null.</summary>
+    public string? BookmarkedByName { get; set; }
 
     /// <summary>Çağrı firmaya önerilir mi: skor >= program eşiği ya da host-push.
     /// False olanlar da kiracıya listelenir ("Diğer Açık Çağrılar"), yalnız ayrı blokta.</summary>
