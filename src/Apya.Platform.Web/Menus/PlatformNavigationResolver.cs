@@ -654,6 +654,9 @@ public class PlatformNavigationResolver : IScopedDependency
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.NotificationTemplates", l["Menu:Grants:NotificationTemplates"], icon: "fa fa-bell", url: "/Grants/NotificationTemplates"));
         if (_currentTenant.Id != null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.MyApplications", l["Menu:Grants:MyApplications"], icon: "fa fa-list-check", url: "/Grants/MyApplications"));
+        // 18d · Hibe Yolculuğum: Başvurularım'ın yanında, yalnız kiracıda (host'un firması yok).
+        if (_currentTenant.Id != null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Journey", l["Menu:Grants:Journey"], icon: "fa fa-route", url: "/Grants/Journey"));
         if (grants.Items.Count > 0) roots.Add(grants);
 
         // Finans & Bütçe — TEK ÇATI (kullanıcı kararı 2026-09-03). Finansa dair

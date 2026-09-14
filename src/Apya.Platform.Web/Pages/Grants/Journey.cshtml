@@ -1,0 +1,43 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.JourneyModel
+@{
+    ViewBag.Title = L["Grants:Journey:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Journey.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Journey.js" />
+}
+
+@* 18d · Hibe Yolculuğum — firmanın bütün hibe ilişkileri tek zaman çizgisinde. Başvurularım
+   tablo olarak kalır; bu ekran "nerede duruyorum" sorusunu cevaplar. Cümleleri JS kurar. *@
+<div data-page-description="@L["Grants:Journey:Description"]" class="apya-page apya-grant-scope apya-jny">
+
+    <div class="apya-jny-head">
+        <div class="apya-jny-head-text">
+            <h2 class="apya-jny-title">@L["Grants:Journey:Heading"]</h2>
+            <p class="apya-jny-sub apya-skel-num" id="JourneySub"></p>
+        </div>
+        <div class="apya-jny-won d-none" id="JourneyWon">
+            <span class="apya-jny-won-label">@L["Grants:Journey:Won"]</span>
+            <span class="apya-jny-won-value apya-numeric" id="JourneyWonValue"></span>
+        </div>
+    </div>
+
+    <ol class="apya-jny-list apya-skel-cards" id="JourneyItems"></ol>
+
+    <div class="card mb-0 d-none" id="JourneyEmpty">
+        <div class="card-body apya-jny-empty">
+            <i class="fa fa-route"></i>
+            <p class="mb-0">@L["Grants:Journey:Empty"]</p>
+            <a href="/Grants" class="btn btn-sm btn-primary">@L["Grants:Journey:EmptyCta"]</a>
+        </div>
+    </div>
+</div>
