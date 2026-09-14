@@ -4,6 +4,7 @@ $(function () {
     var weightService = apya.platform.grants.grantMatchWeight;
     var l = abp.localization.getResource('Platform');
     var grantId = $('.apya-page').data('grant-id');
+    var posterFileName = null;
 
     var sizeKeys = { 1: 'Mikro', 2: 'Kucuk', 4: 'Orta', 8: 'Buyuk' };
     var partyKeys = ['Firma', 'Danisman', 'Ortak', 'Kurum'];
@@ -579,6 +580,8 @@ $(function () {
         $('#ParamSummary').val(dto.description || '');
         $('#ParamSourceUrl').val(dto.sourceUrl || '');
         $('#ParamSourceUrlText').text(dto.sourceUrl || '');
+        posterFileName = dto.posterFileName || null;
+        paintPoster();
 
         $('#ParamSizes .apya-choice').each(function () {
             $(this).toggleClass('is-on', (dto.eligibleCompanySizes & Number($(this).data('size'))) !== 0);
@@ -656,8 +659,8 @@ $(function () {
         $('#ParamLead').text(lead + l('Grants:Parameters:Lead:Hint'));
     }
 
-    $('#ParamName').on('input', function () { $('#ParamTitle').text($(this).val()); });
-    $('#ParamIssuer').on('input', function () { $('#ParamIssuerText').text($(this).val()); });
+    $('#ParamName').on('input', function () { $('#ParamTitle').text($(this).val()); paintPoster(); });
+    $('#ParamIssuer').on('input', function () { $('#ParamIssuerText').text($(this).val()); paintPoster(); });
 
     // Tamamlanma + eksik zorunlu alan + yayın kapısı; hem kayıt dönüşü hem canlı
     // önizleme aynı alanları taşıdığı için tek boyayıcı yeterli.
@@ -769,6 +772,84 @@ $(function () {
     }
 
     weightService.get(grantId).then(paintWeights);
+
+    // ---------- 12b · Program afişi ----------
+    // Tasarım ölçüsü: 16:9, en az 1280×720, JPG/PNG. Boyut ve tür sunucuda da denetlenir;
+    // çözünürlük yalnız burada (sunucuda görsel çözücü yok, paket eklenmedi).
+    var POSTER_MIN_W = 1280, POSTER_MIN_H = 720, POSTER_MAX_BYTES = 5 * 1024 * 1024;
+
+    function paintPoster() {
+        var issuer = $('#ParamIssuer').val() || '';
+        $('#PosterPreview').attr('style', apyaGrantPoster.style(issuer, posterFileName));
+        $('#PosterPreviewIssuer').text(issuer);
+        $('#PosterPreviewName').text($('#ParamName').val() || '');
+        $('#PosterStatus').text(posterFileName
+            ? l('Grants:Parameters:Poster:Uploaded')
+            : issuer ? l('Grants:Parameters:Poster:None', issuer) : l('Grants:Parameters:Poster:NoneNoIssuer'));
+        $('#PosterRemoveBtn').toggleClass('d-none', !posterFileName);
+    }
+
+    function posterError(x, fallbackKey) {
+        var body = x.responseJSON;
+        return (body && body.error && body.error.message) || (typeof body === 'undefined' && x.responseText) || l(fallbackKey);
+    }
+
+    function posterRequest(handler, form) {
+        return $.ajax({
+            url: '?handler=' + handler + '&id=' + grantId,
+            type: 'POST',
+            data: form || new FormData(),
+            processData: false,
+            contentType: false
+        });
+    }
+
+    $('#PosterUploadBtn').on('click', function () { $('#PosterFile').val('').trigger('click'); });
+
+    $('#PosterFile').on('change', function () {
+        var file = this.files && this.files[0];
+        if (!file) { return; }
+        if (!/^image\/(png|jpeg)$/.test(file.type)) { abp.message.warn(l('Grants:Parameters:Poster:Unsupported')); return; }
+        if (file.size > POSTER_MAX_BYTES) { abp.message.warn(l('Grants:Parameters:Poster:TooLarge')); return; }
+
+        var objectUrl = URL.createObjectURL(file);
+        var img = new Image();
+        img.onerror = function () {
+            URL.revokeObjectURL(objectUrl);
+            abp.message.warn(l('Grants:Parameters:Poster:Unsupported'));
+        };
+        img.onload = function () {
+            URL.revokeObjectURL(objectUrl);
+            if (img.naturalWidth < POSTER_MIN_W || img.naturalHeight < POSTER_MIN_H) {
+                abp.message.warn(l('Grants:Parameters:Poster:TooSmall', img.naturalWidth, img.naturalHeight));
+                return;
+            }
+            var form = new FormData();
+            form.append('file', file);
+            var $btn = $('#PosterUploadBtn').prop('disabled', true);
+            posterRequest('UploadPoster', form).done(function (res) {
+                posterFileName = res.posterFileName;
+                paintPoster();
+                abp.notify.success(l('Grants:Parameters:Poster:Saved'));
+            }).fail(function (x) {
+                abp.message.error(posterError(x, 'Grants:Parameters:Poster:Failed'));
+            }).always(function () { $btn.prop('disabled', false); });
+        };
+        img.src = objectUrl;
+    });
+
+    $('#PosterRemoveBtn').on('click', function () {
+        abp.message.confirm(l('Grants:Parameters:Poster:RemoveConfirm')).then(function (ok) {
+            if (!ok) { return; }
+            posterRequest('RemovePoster').done(function () {
+                posterFileName = null;
+                paintPoster();
+                abp.notify.success(l('Grants:Parameters:Poster:Removed'));
+            }).fail(function (x) {
+                abp.message.error(posterError(x, 'Grants:Parameters:Poster:Failed'));
+            });
+        });
+    });
 
     // Şablon listesi önce yüklenir: seçim kutusu dolmadan fill() değeri atayamaz.
     templateService.getList().then(function (list) {

@@ -212,20 +212,6 @@ $(function () {
             esc(l(unfit ? 'Grants:Feed:Card:WhyNot' : 'Grants:Feed:Card:Review')) + '</a>';
     }
 
-    /// 12b · Afiş yoksa kuruma özel iki tonlu zemin. Ton kurum adından türer: aynı kurum her
-    /// kartta aynı renk. Açıklık %34/%22 sabit — beyaz metin her tonda 4,5:1'in üstünde kalır.
-    function issuerHue(name) {
-        var h = 0;
-        for (var i = 0; i < (name || '').length; i++) { h = (h * 31 + name.charCodeAt(i)) % 360; }
-        return h;
-    }
-
-    function posterStyle(r) {
-        if (r.posterUrl) { return 'background-image:url(' + JSON.stringify(r.posterUrl) + ')'; }
-        var h = issuerHue(r.issuer);
-        return 'background-image:linear-gradient(135deg,hsl(' + h + ' 48% 34%),hsl(' + ((h + 32) % 360) + ' 55% 22%))';
-    }
-
     /// 10c/12b · "Neden uygun" tek cümle: sağlanan şartların adları; koşulluda eksik veri;
     /// uymayanda eleyen şartın gerekçesi. Ek gerektiren kalıp yok.
     function whySentence(r) {
@@ -275,7 +261,7 @@ $(function () {
         var unfit = r.bucket === 2;
         var gap = gapSentence(r);
         return '<article class="apya-feed-card' + (unfit ? ' is-unfit' : '') + '" data-call="' + r.grantCallId + '">' +
-            '<a class="apya-feed-poster" style="' + posterStyle(r) + '" href="/Grants/Detail?id=' + r.grantCallId + '" aria-label="' + esc(r.grantName) + '">' +
+            '<a class="apya-feed-poster" style="' + apyaGrantPoster.style(r.issuer, r.posterFileName) + '" href="/Grants/Detail?id=' + r.grantCallId + '" aria-label="' + esc(r.grantName) + '">' +
             '<span class="apya-feed-poster-top">' +
             (r.isHostRecommended ? '<span class="apya-feed-badge"><i class="fa fa-star"></i>' + esc(l('Grants:Feed:Card:HostRecommended')) + '</span>' : '<span></span>') +
             daysChip(r) + '</span>' +

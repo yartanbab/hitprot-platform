@@ -5837,6 +5837,10 @@ namespace Apya.Platform.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<string>("PosterFileName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<bool>("PrefersFemaleEntrepreneur")
                         .HasColumnType("boolean");
 
