@@ -1,0 +1,285 @@
+/* =============================================================================
+   18a · Host · İlgi inceleme ekranı
+   Sol sütun: proje fikri, iç not, karar. Sağ sütun: firma kartı, eksikler, ortak önerisi.
+   Tüm değerler --apya-* token'larından; kart gövdesinde metin rengi açıkça verilir
+   (LeptonX .card-body koyu temada sabit gri basar).
+   ============================================================================= */
+
+.apya-irv-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: var(--apya-space-4);
+}
+
+.apya-irv-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    text-decoration: none;
+}
+
+.apya-irv-back:hover { color: var(--apya-text-primary); }
+
+.apya-irv-title {
+    margin: 0;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+    overflow-wrap: anywhere;
+}
+
+.apya-irv-state {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    flex-wrap: wrap;
+}
+
+.apya-irv-waiting {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-irv-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+    gap: var(--apya-space-4);
+    align-items: start;
+}
+
+@media (max-width: 991.98px) {
+    .apya-irv-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+.apya-irv-main,
+.apya-irv-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-4);
+    min-width: 0;
+}
+
+.apya-irv-card .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+    color: var(--apya-text-primary);
+}
+
+.apya-irv-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-3);
+}
+
+.apya-irv-card-title {
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-irv-card-meta {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-irv-idea {
+    margin: 0;
+    font-size: var(--apya-fs-md);
+    line-height: 1.6;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.apya-irv-idea.is-empty {
+    color: var(--apya-text-secondary);
+    font-style: italic;
+}
+
+.apya-irv-stats,
+.apya-irv-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+    padding-top: var(--apya-space-3);
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+.apya-irv-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (max-width: 575.98px) {
+    .apya-irv-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.apya-irv-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-irv-stat-label {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-irv-stat-value {
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+    overflow-wrap: anywhere;
+}
+
+.apya-irv-note-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    flex-wrap: wrap;
+}
+
+.apya-irv-note-actions { display: flex; justify-content: flex-end; }
+
+.apya-irv-decision {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-irv-feedback {
+    color: var(--apya-text-primary);
+    white-space: pre-line;
+}
+
+.apya-irv-actions {
+    display: flex;
+    gap: var(--apya-space-2);
+    flex-wrap: wrap;
+}
+
+.apya-irv-assign {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: var(--apya-space-3);
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+.apya-irv-assign-row {
+    display: flex;
+    gap: var(--apya-space-2);
+}
+
+.apya-irv-assign-row .form-select { flex: 1; min-width: 0; }
+
+/* Koyu temada modal dışındaki giriş alanları açık zeminde kalıyor (köprü yalnız .modal içini
+   düzeltiyor). Bu ekranın iki alanı token'a bağlanır; genel düzeltme ayrı iş. */
+[data-theme="dark"] .apya-irv-card .form-control,
+[data-theme="dark"] .apya-irv-card .form-select {
+    background-color: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+}
+
+/* --- Firma kartı --- */
+.apya-irv-firm {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+}
+
+.apya-irv-firm-text { flex: 1; min-width: 0; }
+
+.apya-irv-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-700);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-irv-avatar.is-small {
+    width: 32px;
+    height: 32px;
+    font-size: var(--apya-fs-sm);
+}
+
+[data-theme="dark"] .apya-irv-avatar { color: var(--apya-accent-300); }
+
+.apya-irv-match {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.apya-irv-match-value {
+    color: var(--apya-positive-700);
+    font-size: var(--apya-fs-xl);
+    font-weight: var(--apya-weight-bold);
+    line-height: 1.1;
+}
+
+.apya-irv-gaps ul {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.apya-irv-gaps li,
+.apya-irv-gaps p {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-irv-gaps i { margin-top: 3px; }
+.apya-irv-gaps .is-failed i { color: var(--apya-negative-500); }
+.apya-irv-gaps .is-unknown i { color: var(--apya-warning-500); }
+.apya-irv-gaps .is-ok i { color: var(--apya-positive-500); }
+.apya-irv-gaps .is-neutral i { color: var(--apya-text-secondary); }
+
+/* --- Ortak önerisi --- */
+.apya-irv-partners {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+}
+
+.apya-irv-partner {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: var(--apya-space-2);
+    border: 1px solid var(--apya-border-subtle);
+    border-radius: var(--apya-radius-lg);
+}
+
+.apya-irv-partner-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-irv-partner-text span {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
