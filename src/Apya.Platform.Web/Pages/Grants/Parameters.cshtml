@@ -13,6 +13,7 @@
 }
 
 @section scripts {
+    <abp-script src="/Pages/Grants/Poster.js" />
     <abp-script src="/Pages/Grants/Parameters.js" />
 }
 
@@ -100,6 +101,34 @@
                     <div class="apya-field">
                         <label class="apya-field-label" for="ParamIssuer"><span>@L["Grants:Parameters:Issuer"]</span></label>
                         <input type="text" id="ParamIssuer" class="form-control form-control-sm" maxlength="64" />
+                    </div>
+                </div>
+
+                @* 12b · Program afişi. Önizleme kiracı kartındaki afişin aynısı: aynı sınıflar
+                   (Shared.css), aynı zemin (Poster.js). Dosya proje kapağı gibi App_Data/uploads'a yazılır. *@
+                <div class="apya-field">
+                    <span class="apya-field-label"><span>@L["Grants:Parameters:Poster"]</span></span>
+                    <div class="apya-param-poster">
+                        <div class="apya-feed-poster apya-param-poster-preview" id="PosterPreview" aria-hidden="true">
+                            <span class="apya-feed-poster-top"></span>
+                            <span class="apya-feed-poster-bottom">
+                                <span class="apya-feed-poster-issuer" id="PosterPreviewIssuer"></span>
+                                <span class="apya-feed-poster-name" id="PosterPreviewName"></span>
+                            </span>
+                        </div>
+                        <div class="apya-param-poster-side">
+                            <div class="apya-param-poster-rule">@L["Grants:Parameters:Poster:Rule"]</div>
+                            <div class="apya-param-poster-status" id="PosterStatus"></div>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="PosterUploadBtn">
+                                    <i class="fa fa-upload me-1"></i>@L["Grants:Parameters:Poster:Upload"]
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger d-none" id="PosterRemoveBtn">
+                                    <i class="fa fa-trash me-1"></i>@L["Grants:Parameters:Poster:Remove"]
+                                </button>
+                            </div>
+                            <input type="file" id="PosterFile" accept="image/png,image/jpeg" hidden />
+                        </div>
                     </div>
                 </div>
 
