@@ -26,6 +26,35 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.14",
+            date: "14 Eylül 2026",
+            title: "Kurum Profili ekranı; kurum bilgileriniz faturada ve hibe profilinde",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kurumunuzun bilgileri artık Kurum Profili ekranında",
+                "Sağ üstteki profil menünüzde kurumunuzun adına tıkladığınızda Kurum Profili açılır. " +
+                "Burada resmî unvanınız, kurum türünüz, vergi/kütük numaranız ve vergi daireniz, " +
+                "çalışan sayınız, tebligat adresiniz, kurumsal e-postanız ile yetkili ve operasyonel " +
+                "iletişim kişileriniz bir arada durur; yanında paketiniz ve bitiş tarihi, hizmet " +
+                "protokolünüzün numarası, kullanıcı sayınız ve üyelik başlangıcınız görünür. Bilgiler " +
+                "kayıt başvurunuzda verdiğiniz değerlerle dolu gelir. Kurum yöneticileri Düzenle ile " +
+                "değiştirebilir; ekrana Ayarlar sayfasındaki Kurum Profili kartından da ulaşılır. " +
+                "Onayladığınız hizmet protokolünün metni, onay anındaki bilgilerle saklanmaya devam eder."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe kurum profiliniz kurum bilgilerinizle önceden doluyor",
+                "Hibeler ekranındaki kurum profilinizi henüz hiç kaydetmediyseniz, profili açtığınızda " +
+                "kurum türünüz, vergi bilgileriniz ve çalışan sayınıza göre ölçeğiniz Kurum " +
+                "Profili'nizdeki bilgilerle önceden doldurulmuş gelir. Değerleri kontrol edip " +
+                "kaydedin: kaydedene kadar size uygun çağrıların hesabında kullanılmaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Fatura ve pano çıktılarında kurumunuzun kendi unvanı",
+                "Yazdırdığınız faturanın başlığında artık kurumunuzun resmî unvanı, adresi, vergi " +
+                "dairesi ve vergi numarası yer alıyor. Genel Bakış panosunun çıktısı ve hibe " +
+                "bildirimleri de kurumunuzu kısa hesap adıyla değil, resmî unvanıyla anıyor.")),
+
+        new ReleaseNote(
             version: "2026.09.11",
             date: "11 Eylül 2026",
             title: "Görevlerde tüm projelerin panoları, hibede net adımlar, dokümanlarda süreç şeridi",
