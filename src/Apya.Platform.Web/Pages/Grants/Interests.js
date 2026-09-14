@@ -92,8 +92,11 @@ $(function () {
 
         return '<div class="apya-int-item">' +
             '<div class="apya-int-row">' +
-            '<span class="apya-int-cell"><strong>' + esc(r.firmName) + '</strong>' +
-            '<span>' + esc(r.requestedByName || '—') + ' · ' + esc(date(r.creationTime)) + '</span></span>' +
+            // 18a · Firma adı inceleme ekranına açılır; kutu yerinde kalır (karar 3).
+            '<span class="apya-int-cell"><a class="apya-int-open" href="/Grants/InterestReview?id=' + r.id + '"><strong>' + esc(r.firmName) + '</strong></a>' +
+            '<span>' + esc(r.requestedByName || '—') + ' · ' + esc(date(r.creationTime)) + '</span>' +
+            (r.assignedUserName ? '<span>' + esc(l('Grants:Interests:AssignedTo', r.assignedUserName)) + '</span>' : '') +
+            '</span>' +
 
             '<span class="apya-int-cell"><strong>' + esc(r.grantName) + '</strong>' +
             '<span>' + esc(r.period || '') + esc(deadlineText(r)) + '</span></span>' +

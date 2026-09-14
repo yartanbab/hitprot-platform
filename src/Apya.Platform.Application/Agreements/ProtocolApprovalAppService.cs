@@ -134,6 +134,10 @@ public class ProtocolApprovalAppService : PlatformAppService, IProtocolApprovalA
             await RecordConsentsAsync(request, input);
         }
 
+        // Protokolü onaylayan yetkili aynı zamanda hesabın yöneticisidir (girişi onun
+        // e-postasıyla yapar); adı ve telefonu yönetici kullanıcıya da yazılır.
+        var (adminName, adminSurname) = SplitFullName(request.FullName);
+
         // Ad bir ÖNERİDİR: benzersizleştirme kurulumun kendi UoW'unda yapılır, yoksa
         // buradaki okuma az önce açılmış bir kiracıyı göremez (bkz. TenantProvisioner).
         var provisioned = await _provisioner.ProvisionAsync(new CreateTenantExtendedDto
@@ -141,17 +145,24 @@ public class ProtocolApprovalAppService : PlatformAppService, IProtocolApprovalA
             Name = request.CompanyName,
             AdminEmailAddress = request.Email,
             AdminPassword = input.Password,
+            AdminName = adminName,
+            AdminSurname = adminSurname,
+            AdminPhoneNumber = request.Phone,
             PackageCode = SalesPlanCatalog.ToPackageCode(plan),
             SubscriptionPeriod = SubscriptionPeriod.Annual, // Protokol Madde 8: 1 yıl
             CompanyType = request.CompanyType,
+            LegalName = request.CompanyName,
             TaxNumber = request.TaxNumber,
             TaxOffice = request.TaxOffice ?? string.Empty,
             CorporateEmail = request.CorporateEmail ?? request.Email,
             Address = request.Address,
             LegalRepresentativeName = request.FullName,
+            LegalRepresentativeTitle = request.AuthorizedTitle,
+            LegalRepresentativeEmail = request.Email,
             LegalRepresentativePhone = request.Phone,
             OperationalContactName = request.OperationalContactName ?? string.Empty,
-            OperationalContactPhone = request.OperationalContactPhone ?? string.Empty
+            OperationalContactPhone = request.OperationalContactPhone ?? string.Empty,
+            EmployeeCount = request.CompanySize
         },
         resolveUniqueName: true);
 
@@ -236,6 +247,23 @@ public class ProtocolApprovalAppService : PlatformAppService, IProtocolApprovalA
                 Logger.LogWarning(ex, "Protokol rıza kaydı yazılamadı ({Type}); sözleşme kaydedildi.", type);
             }
         }
+    }
+
+    /// <summary>
+    /// Formdaki tek "Ad Soyad" kutusunu ayırır: son kelime soyad, öncesi ad
+    /// ("Ayşe Nur Yılmaz" → "Ayşe Nur" / "Yılmaz"). Tek kelimede soyad boş kalır.
+    /// Kullanıcı yanlış ayrılmışsa "Hesabım"dan düzeltir.
+    /// </summary>
+    private static (string Name, string? Surname) SplitFullName(string fullName)
+    {
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return parts.Length switch
+        {
+            0 => (string.Empty, null),
+            1 => (parts[0], null),
+            _ => (string.Join(' ', parts[..^1]), parts[^1])
+        };
     }
 
 

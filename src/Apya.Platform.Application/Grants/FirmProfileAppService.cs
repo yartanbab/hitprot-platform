@@ -7,6 +7,8 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.RegistrationRequests;
+using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Grants;
 
@@ -16,13 +18,16 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
 {
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
     private readonly IRepository<FirmProfileTag, Guid> _tagRepo;
+    private readonly IRepository<TenantProfile, Guid> _tenantProfileRepo;
 
     public FirmProfileAppService(
         IRepository<FirmProfile, Guid> profileRepo,
-        IRepository<FirmProfileTag, Guid> tagRepo)
+        IRepository<FirmProfileTag, Guid> tagRepo,
+        IRepository<TenantProfile, Guid> tenantProfileRepo)
     {
         _profileRepo = profileRepo;
         _tagRepo = tagRepo;
+        _tenantProfileRepo = tenantProfileRepo;
     }
 
     public async Task<FirmProfileDto> GetMyProfileAsync()
@@ -30,7 +35,7 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
         var profile = await _profileRepo.FirstOrDefaultAsync();
         if (profile == null)
         {
-            return WithCompleteness(new FirmProfileDto());
+            return await SuggestFromTenantProfileAsync();
         }
         var tags = await _tagRepo.GetListAsync(t => t.FirmProfileId == profile.Id);
         return WithCompleteness(Map(profile, tags
@@ -68,6 +73,80 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
         // tag'leri GetMyProfileAsync yeniden okuyamayacağı için (boş dönerdi).
         return WithCompleteness(Map(profile, saved));
     }
+
+    /// <summary>
+    /// Hiç kaydedilmemiş profil, hesap açılışında kayıt talebinden taşınan kurum profilinden
+    /// ÖNERİLİR — kurum aynı bilgiyi ikinci kez yazmasın. Öneri KAYDEDİLMEZ: ölçek uygunluk
+    /// şartına girer ve bant eşlemesi sınırlarda yaklaşıktır; kurum görüp kaydedince geçerli
+    /// olur. Doluluk yüzdesi bu yüzden öneri uygulanmadan hesaplanır.
+    /// </summary>
+    private async Task<FirmProfileDto> SuggestFromTenantProfileAsync()
+    {
+        var tenantId = CurrentTenant.Id;
+        TenantProfile? tenantProfile = null;
+        if (tenantId != null)
+        {
+            // Kurum profili host kaydıdır (IMultiTenant DEĞİL); eşleştirme ELLE.
+            using (CurrentTenant.Change(null))
+            {
+                tenantProfile = await _tenantProfileRepo.FirstOrDefaultAsync(p => p.TenantId == tenantId);
+            }
+        }
+
+        var type = tenantProfile == null ? OrganizationType.Sirket : ToOrganizationType(tenantProfile.CompanyType);
+        var dto = WithCompleteness(new FirmProfileDto { Type = type });
+        if (tenantProfile == null)
+        {
+            return dto;
+        }
+
+        dto.IsSuggested = true;
+
+        if (type.IsNgo())
+        {
+            // Talepteki tek kutu "vergi / kütük numarası": 10 haneli sayı VKN'dir, gerisi
+            // (DERBİS "06-123-045", vakıf sicil) kütük numarasıdır.
+            var number = tenantProfile.TaxNumber.Trim();
+            if (number.Length == 10 && number.All(char.IsAsciiDigit))
+            {
+                dto.TaxNumber = number;
+            }
+            else if (number.Length > 0)
+            {
+                dto.RegistryNumber = number;
+            }
+
+            dto.TaxOffice = tenantProfile.TaxOffice.IsNullOrWhiteSpace() ? null : tenantProfile.TaxOffice;
+            // Ücretli ekip bandı (1-3/4-10/11-25/25+) talepteki çalışan aralığıyla örtüşmez — önerilmez.
+        }
+        else
+        {
+            dto.Size = ToCompanySize(tenantProfile.EmployeeCount);
+        }
+
+        return dto;
+    }
+
+    /// <summary>Kamu kurumu ve "Diğer"in hibe tarafında karşılığı yok; varsayılan (Şirket) kalır, kurum seçer.</summary>
+    private static OrganizationType ToOrganizationType(CompanyType type) => type switch
+    {
+        CompanyType.Association => OrganizationType.Dernek,
+        CompanyType.Foundation => OrganizationType.Vakif,
+        _ => OrganizationType.Sirket
+    };
+
+    /// <summary>
+    /// KOBİ ölçeği: Mikro &lt;10, Küçük &lt;50, Orta &lt;250 çalışan. Talep aralıkları sınırda
+    /// yaklaşıktır (10 kişi Küçük, 50 kişi Orta sayılır) — öneri olmasının sebebi bu.
+    /// "200+" hem Orta (200-249) hem Büyük olabilir; tahmin edilmez.
+    /// </summary>
+    private static CompanySize? ToCompanySize(RegistrationRequestCompanySize? employees) => employees switch
+    {
+        RegistrationRequestCompanySize.UpTo10 => CompanySize.Mikro,
+        RegistrationRequestCompanySize.From11To50 => CompanySize.Kucuk,
+        RegistrationRequestCompanySize.From51To200 => CompanySize.Orta,
+        _ => null
+    };
 
     /// <summary>
     /// Kurum türüne göre anlamlı etiket türleri. Karşı türün etiketleri kayıtta ELENİR:

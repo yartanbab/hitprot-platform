@@ -109,6 +109,8 @@ $(function () {
             ? l('Grants:Feed:Profile:Full')
             : l('Grants:Feed:Profile:Gain', conditional));
 
+        $('#ProfileSuggestedNote').toggleClass('d-none', !p.isSuggested);
+
         var type = p.type || 0;
         $('#ProfileOrgType').val(String(type));
         applyOrgType(type);

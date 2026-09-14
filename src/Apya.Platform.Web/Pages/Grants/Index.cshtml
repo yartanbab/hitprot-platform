@@ -246,6 +246,10 @@ else
         <section class="card d-none" id="ProfileEditor">
             <div class="card-body d-flex flex-column gap-3">
                 <div class="fw-bold"><i class="fa fa-id-card-clip me-2"></i>@L["Grants:Feed:Profile:Title"]</div>
+                @* Hiç kaydedilmemiş profil kurum profilinden önerilir; kayıt olmadan eşleşmeye girmez. *@
+                <div class="alert alert-info small mb-0 d-none" id="ProfileSuggestedNote" role="status">
+                    <i class="fa fa-wand-magic-sparkles me-2" aria-hidden="true"></i>@L["Grants:Feed:Profile:Suggested"]
+                </div>
 
                 <div class="apya-param-grid apya-param-grid--4">
                     <div class="apya-field">

@@ -106,6 +106,90 @@ public class GrantInterestRowDto
     public string? ReviewedByName { get; set; }
     public DateTime? ReviewedAt { get; set; }
     public Guid? GrantApplicationId { get; set; }
+
+    /// <summary>18a · Sorumlu danışman.</summary>
+    public Guid? AssignedUserId { get; set; }
+
+    public string? AssignedUserName { get; set; }
+}
+
+/// <summary>
+/// 18a · Danışmanın tek talep üzerindeki inceleme ekranı: proje fikri, firma, uygunluk ve
+/// aynı çağrıya ilgi bildirmiş olası ortaklar tek yükte. Hepsi mevcut kayıtlardan hesaplanır.
+/// </summary>
+public class GrantInterestReviewDto
+{
+    public GrantInterestRowDto Interest { get; set; } = new();
+
+    /// <summary>İç not — firmaya gitmez.</summary>
+    public string? ConsultantNote { get; set; }
+
+    public bool RequiresConsortium { get; set; }
+
+    // --- Firma kartı ---
+    /// <summary>Firmanın bu çağrıya uyum puanı (0-100) — katalog ve gönderim ekranıyla aynı hesap.</summary>
+    public int MatchScore { get; set; }
+
+    public GrantEligibilityBucket Bucket { get; set; }
+
+    /// <summary>Sağlanan şart sayısı — şart hiç yoksa "hepsini karşılıyor" denmesin diye.</summary>
+    public int PassedRuleCount { get; set; }
+
+    public List<GrantEligibilityRule> FailedRules { get; set; } = new();
+    public List<GrantEligibilityRule> UnknownRules { get; set; } = new();
+
+    public CompanySize? Size { get; set; }
+    public List<string> NaceCodes { get; set; } = new();
+    public List<string> Sectors { get; set; } = new();
+    public List<string> Regions { get; set; } = new();
+    public decimal? AnnualRevenue { get; set; }
+    public int? StaffCount { get; set; }
+    public int? RdStaffCount { get; set; }
+    public bool? HasConsortiumPartner { get; set; }
+
+    /// <summary>Firmanın platformdaki aktif proje sayısı.</summary>
+    public int ActiveProjectCount { get; set; }
+
+    /// <summary>Onaylı tutarı girilmiş önceki hibe başvurusu sayısı.</summary>
+    public int ApprovedGrantCount { get; set; }
+
+    /// <summary>Aynı çağrıya ilgi bildirmiş başka firmalar; yalnız ortaklık gereken talepte dolar.</summary>
+    public List<GrantInterestPartnerSuggestionDto> PartnerSuggestions { get; set; } = new();
+
+    /// <summary>Devret listesi: etkin host kullanıcıları + üzerlerindeki bekleyen talep sayısı.</summary>
+    public List<GrantConsultantDto> Consultants { get; set; } = new();
+}
+
+public class GrantInterestPartnerSuggestionDto
+{
+    public Guid InterestId { get; set; }
+    public Guid TenantId { get; set; }
+    public string FirmName { get; set; } = string.Empty;
+    public CompanySize? Size { get; set; }
+    public int MatchScore { get; set; }
+
+    /// <summary>O firma da ortak arıyor mu (null = soru sorulmadı).</summary>
+    public bool? NeedsPartner { get; set; }
+
+    public GrantInterestStatus Status { get; set; }
+}
+
+public class SaveGrantInterestNoteInput
+{
+    [Required(ErrorMessage = "Talep seçilmedi.")]
+    public Guid InterestId { get; set; }
+
+    [StringLength(2000, ErrorMessage = "Danışman notu en fazla 2000 karakter olabilir.")]
+    public string? Note { get; set; }
+}
+
+public class AssignGrantInterestInput
+{
+    [Required(ErrorMessage = "Talep seçilmedi.")]
+    public Guid InterestId { get; set; }
+
+    /// <summary>null = sorumluyu kaldır.</summary>
+    public Guid? UserId { get; set; }
 }
 
 public class RejectGrantInterestInput

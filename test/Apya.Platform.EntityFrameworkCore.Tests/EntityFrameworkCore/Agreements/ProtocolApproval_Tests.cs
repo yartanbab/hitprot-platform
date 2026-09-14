@@ -10,6 +10,8 @@ using Apya.Platform.Tenants;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Identity;
+using Volo.Abp.MultiTenancy;
 using Volo.Abp.Validation;
 using Xunit;
 
@@ -30,6 +32,9 @@ public class ProtocolApproval_Tests : PlatformEntityFrameworkCoreTestBase
     private readonly IRepository<RegistrationRequest, Guid> _requestRepository;
     private readonly IRepository<ServiceAgreement, Guid> _agreementRepository;
     private readonly IRepository<ConsentRecord, Guid> _consentRepository;
+    private readonly IRepository<TenantProfile, Guid> _profileRepository;
+    private readonly IdentityUserManager _userManager;
+    private readonly ICurrentTenant _currentTenant;
 
     public ProtocolApproval_Tests()
     {
@@ -38,6 +43,9 @@ public class ProtocolApproval_Tests : PlatformEntityFrameworkCoreTestBase
         _requestRepository = GetRequiredService<IRepository<RegistrationRequest, Guid>>();
         _agreementRepository = GetRequiredService<IRepository<ServiceAgreement, Guid>>();
         _consentRepository = GetRequiredService<IRepository<ConsentRecord, Guid>>();
+        _profileRepository = GetRequiredService<IRepository<TenantProfile, Guid>>();
+        _userManager = GetRequiredService<IdentityUserManager>();
+        _currentTenant = GetRequiredService<ICurrentTenant>();
     }
 
     /// <summary>
@@ -51,7 +59,9 @@ public class ProtocolApproval_Tests : PlatformEntityFrameworkCoreTestBase
     private async Task<Guid> CreateApprovedRequestAsync(
         string? companyName = null,
         SalesPlan plan = SalesPlan.Corporate,
-        string? taxNumber = null)
+        string? taxNumber = null,
+        string phone = "05551112233",
+        RegistrationRequestCompanySize? companySize = null)
     {
         var id = await _requestAppService.CreateAsync(new CreateRegistrationRequestDto
         {
@@ -64,7 +74,8 @@ public class ProtocolApproval_Tests : PlatformEntityFrameworkCoreTestBase
             FullName = "Ayşe Yılmaz",
             AuthorizedTitle = "Yönetim Kurulu Başkanı",
             Email = $"protokol-{Guid.NewGuid():N}@ornek.com",
-            Phone = "05551112233"
+            Phone = phone,
+            CompanySize = companySize
         });
 
         await _requestAppService.UpdateAsync(id, new UpdateRegistrationRequestDto
@@ -309,6 +320,48 @@ public class ProtocolApproval_Tests : PlatformEntityFrameworkCoreTestBase
         consents.Count.ShouldBe(2);
         consents.ShouldAllBe(c => c.Granted);
         consents.ShouldAllBe(c => c.PolicyVersion == ConsentConsts.ServiceAgreementPolicyVersion);
+    }
+
+    /// <summary>
+    /// Talepteki kurum ve yetkili bilgisi hesapla birlikte taşınır: profilde unvan, görev,
+    /// e-posta ve çalışan sayısı; yönetici kullanıcıda ad, soyad ve telefon. Taşınmasaydı
+    /// kurum aynı bilgiyi yeniden yazmak zorunda kalır, menüde "admin" görünürdü.
+    /// </summary>
+    [Fact]
+    public async Task Onay_kurum_ve_yetkili_bilgisini_hesaba_tasir()
+    {
+        var id = await CreateApprovedRequestAsync(
+            companyName: "Taşıma Testi Derneği",
+            phone: "+90 555 111 22 33",
+            companySize: RegistrationRequestCompanySize.From11To50);
+        var invite = await _requestAppService.IssueInviteAsync(id);
+
+        await ApproveAsync(invite.Token);
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var request = await _requestRepository.GetAsync(id);
+            var tenantId = request.TenantId!.Value;
+
+            var profile = await _profileRepository.GetAsync(p => p.TenantId == tenantId);
+            profile.LegalName.ShouldBe("Taşıma Testi Derneği");
+            profile.LegalRepresentativeName.ShouldBe("Ayşe Yılmaz");
+            profile.LegalRepresentativeTitle.ShouldBe("Yönetim Kurulu Başkanı");
+            profile.LegalRepresentativeEmail.ShouldBe(request.Email);
+            profile.EmployeeCount.ShouldBe(RegistrationRequestCompanySize.From11To50);
+
+            using (_currentTenant.Change(tenantId))
+            {
+                var admin = await _userManager.FindByEmailAsync(request.Email);
+                admin.ShouldNotBeNull();
+                // Kiracıya geçiş yöneticiyi bu adla arar; değişmemeli.
+                admin.UserName.ShouldBe("admin");
+                admin.Name.ShouldBe("Ayşe");
+                admin.Surname.ShouldBe("Yılmaz");
+                // Boşluklar atılır: ABP telefon kolonu 16 karakter, biçimli hâli sığmazdı.
+                admin.PhoneNumber.ShouldBe("+905551112233");
+            }
+        });
     }
 
     /// <summary>Kullanılmış davet ikinci kez çalışmamalı — jeton tek kullanımlıktır.</summary>

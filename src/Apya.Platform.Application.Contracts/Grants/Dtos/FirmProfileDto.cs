@@ -32,4 +32,10 @@ public class FirmProfileDto
 
     /// <summary>Doldurulmamış alan sayısı — "N alan eksik" chip'i.</summary>
     public int MissingFieldCount { get; set; }
+
+    /// <summary>
+    /// Profil hiç kaydedilmemiş; alanlar kurum profilinden ÖNERİ olarak dolduruldu.
+    /// Kaydedilene kadar eşleştirmeye girmez — doluluk da bu yüzden kayıtsız hâli sayar.
+    /// </summary>
+    public bool IsSuggested { get; set; }
 }

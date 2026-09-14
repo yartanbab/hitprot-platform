@@ -1,4 +1,5 @@
 using System;
+using Apya.Platform.RegistrationRequests;
 using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.Tenants;
@@ -9,14 +10,18 @@ public class TenantProfileDto : FullAuditedEntityDto<Guid>
     public string TenantName { get; set; } = string.Empty;
     public PackageCode PackageCode { get; set; } = PackageCode.Basic;
     public CompanyType CompanyType { get; set; }
+    public string LegalName { get; set; } = string.Empty;
     public string TaxNumber { get; set; } = string.Empty;
     public string TaxOffice { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
     public string CorporateEmail { get; set; } = string.Empty;
     public string LegalRepresentativeName { get; set; } = string.Empty;
+    public string LegalRepresentativeTitle { get; set; } = string.Empty;
+    public string LegalRepresentativeEmail { get; set; } = string.Empty;
     public string LegalRepresentativePhone { get; set; } = string.Empty;
     public string OperationalContactName { get; set; } = string.Empty;
     public string OperationalContactPhone { get; set; } = string.Empty;
+    public RegistrationRequestCompanySize? EmployeeCount { get; set; }
     public bool IsActive { get; set; }
 
     /// <summary>

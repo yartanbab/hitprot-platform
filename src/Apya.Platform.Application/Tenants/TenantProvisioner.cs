@@ -1,11 +1,14 @@
 using System;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Apya.Platform.Accounts;
+using Microsoft.AspNetCore.Identity;
 using Volo.Abp;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.Uow;
@@ -43,6 +46,7 @@ public class TenantProvisioner : ITransientDependency
     private readonly TenantSubscriptionManager _tenantSubscriptionManager;
     private readonly RegisteredEmailChecker _registeredEmailChecker;
     private readonly IDataSeeder _dataSeeder;
+    private readonly IdentityUserManager _userManager;
     private readonly IUnitOfWorkManager _unitOfWorkManager;
     private readonly ICurrentTenant _currentTenant;
 
@@ -55,6 +59,7 @@ public class TenantProvisioner : ITransientDependency
         TenantSubscriptionManager tenantSubscriptionManager,
         RegisteredEmailChecker registeredEmailChecker,
         IDataSeeder dataSeeder,
+        IdentityUserManager userManager,
         IUnitOfWorkManager unitOfWorkManager,
         ICurrentTenant currentTenant)
     {
@@ -66,6 +71,7 @@ public class TenantProvisioner : ITransientDependency
         _tenantSubscriptionManager = tenantSubscriptionManager;
         _registeredEmailChecker = registeredEmailChecker;
         _dataSeeder = dataSeeder;
+        _userManager = userManager;
         _unitOfWorkManager = unitOfWorkManager;
         _currentTenant = currentTenant;
     }
@@ -106,6 +112,8 @@ public class TenantProvisioner : ITransientDependency
                 new DataSeedContext(tenant.Id)
                     .WithProperty("AdminEmail", input.AdminEmailAddress)
                     .WithProperty("AdminPassword", input.AdminPassword));
+
+            await ApplyAdminIdentityAsync(input);
         }
 
         var profile = await _tenantProfileManager.CreateProfileAsync(
@@ -115,12 +123,18 @@ public class TenantProvisioner : ITransientDependency
             input.CorporateEmail);
 
         profile.SetPackage(input.PackageCode);
+        // Host modalı unvan sormaz; oraya elle yazılan müşteri adı en yakın öneridir.
+        // (Protokol akışında ikisi zaten aynı: talepteki unvan.)
+        profile.LegalName = input.LegalName.IsNullOrWhiteSpace() ? input.Name : input.LegalName;
         profile.TaxOffice = input.TaxOffice ?? string.Empty;
         profile.Address = input.Address ?? string.Empty;
         profile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
+        profile.LegalRepresentativeTitle = input.LegalRepresentativeTitle ?? string.Empty;
+        profile.LegalRepresentativeEmail = input.LegalRepresentativeEmail ?? string.Empty;
         profile.LegalRepresentativePhone = input.LegalRepresentativePhone ?? string.Empty;
         profile.OperationalContactName = input.OperationalContactName ?? string.Empty;
         profile.OperationalContactPhone = input.OperationalContactPhone ?? string.Empty;
+        profile.EmployeeCount = input.EmployeeCount;
 
         await _tenantProfileRepository.InsertAsync(profile);
 
@@ -135,6 +149,50 @@ public class TenantProvisioner : ITransientDependency
         await uow.CompleteAsync();
 
         return new TenantProvisioningResult(tenant.Id, tenant.Name, profile, subscription);
+    }
+
+    /// <summary>
+    /// Tohumlanan yöneticiye ad/soyad/telefon yazar; menüde "admin" yerine kişinin adı görünür
+    /// ve "Hesabım"da düzenlenebilir. Kullanıcı adı ("admin") DEĞİŞMEZ — kiracıya geçiş
+    /// yöneticiyi o adla arar.
+    ///
+    /// <para>🔴 ABP kolonları talep alanlarından DAR (ad/soyad 64, telefon 16). Taşan değer
+    /// kırpılmazsa SQL taşma hatası tüm kurulumu geri alır; hesap bir görünüm ayrıntısı
+    /// yüzünden açılmaz. Telefon boşluklardan arındırılır ("+90 532 111 22 33" 17 karakter);
+    /// yine sığmıyorsa yazılmaz — yarım bir numara yanlış numaradan kötüdür.</para>
+    /// </summary>
+    private async Task ApplyAdminIdentityAsync(CreateTenantExtendedDto input)
+    {
+        var phone = new string((input.AdminPhoneNumber ?? string.Empty)
+            .Where(c => char.IsAsciiDigit(c) || c == '+').ToArray());
+
+        if (input.AdminName.IsNullOrWhiteSpace() && input.AdminSurname.IsNullOrWhiteSpace() && phone.Length == 0)
+        {
+            return;
+        }
+
+        var admin = await _userManager.FindByEmailAsync(input.AdminEmailAddress);
+        if (admin == null)
+        {
+            return;
+        }
+
+        if (!input.AdminName.IsNullOrWhiteSpace())
+        {
+            admin.Name = input.AdminName.Trim().Truncate(IdentityUserConsts.MaxNameLength);
+        }
+
+        if (!input.AdminSurname.IsNullOrWhiteSpace())
+        {
+            admin.Surname = input.AdminSurname.Trim().Truncate(IdentityUserConsts.MaxSurnameLength);
+        }
+
+        if (phone.Length > 0 && phone.Length <= IdentityUserConsts.MaxPhoneNumberLength)
+        {
+            admin.SetPhoneNumber(phone, confirmed: false);
+        }
+
+        (await _userManager.UpdateAsync(admin)).CheckErrors();
     }
 
     /// <summary>

@@ -1,5 +1,9 @@
 /* Host: İlgi Talepleri. Ortak sınıflar Shared.css'te. */
 
+/* 18a · Firma adı inceleme ekranına açılır. */
+.apya-int-open { color: inherit; text-decoration: none; }
+.apya-int-open:hover strong { text-decoration: underline; }
+
 .apya-int-kpis {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

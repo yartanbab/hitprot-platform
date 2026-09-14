@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Authorization;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
@@ -37,6 +38,11 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
     private readonly IIdentityUserRepository _userRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
+    private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepo;
+    private readonly FirmSignalsBuilder _signalsBuilder;
+    private readonly GrantMatchManager _matcher;
+    private readonly GrantMatchWeightResolver _weightResolver;
+    private readonly IDataFilter<IMultiTenant> _mtFilter;
 
     public GrantInterestHostAppService(
         IRepository<GrantInterest, Guid> interestRepo,
@@ -47,7 +53,12 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         ITenantRepository tenantRepo,
         IIdentityUserRepository userRepo,
         ICurrentTenant currentTenant,
-        GrantNotificationDispatcher notifyDispatcher)
+        GrantNotificationDispatcher notifyDispatcher,
+        IRepository<GrantCriteriaTag, Guid> criteriaRepo,
+        FirmSignalsBuilder signalsBuilder,
+        GrantMatchManager matcher,
+        GrantMatchWeightResolver weightResolver,
+        IDataFilter<IMultiTenant> mtFilter)
     {
         _interestRepo = interestRepo;
         _appRepo = appRepo;
@@ -58,6 +69,11 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         _userRepo = userRepo;
         _currentTenant = currentTenant;
         _notifyDispatcher = notifyDispatcher;
+        _criteriaRepo = criteriaRepo;
+        _signalsBuilder = signalsBuilder;
+        _matcher = matcher;
+        _weightResolver = weightResolver;
+        _mtFilter = mtFilter;
     }
 
     public async Task<GrantInterestConsoleDto> GetAsync(bool onlyPending)
@@ -163,6 +179,182 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         return await BuildConsoleAsync(onlyPending: true);
     }
 
+    // ---------- 18a · İnceleme ekranı ----------
+
+    public async Task<GrantInterestReviewDto> GetReviewAsync(Guid interestId)
+    {
+        EnsureHostContext();
+
+        var tenantId = (await FindInterestTenantIdAsync(interestId))!.Value;
+        var tenant = await _tenantRepo.GetAsync(tenantId);
+
+        GrantInterest interest;
+        Dictionary<Guid, string> tenantUsers;
+        int approvedGrantCount;
+        using (_currentTenant.Change(tenantId))
+        {
+            interest = await _interestRepo.GetAsync(interestId);
+            tenantUsers = (await _userRepo.GetListAsync()).ToDictionary(u => u.Id, DisplayName);
+            approvedGrantCount = (await _appRepo.GetListAsync(a => a.ApprovedAmount != null)).Count;
+        }
+
+        // Katalog host verisidir: çağrı, program, kriterler host bağlamında okunur.
+        var call = await _callRepo.GetAsync(interest.GrantCallId);
+        var grant = await _grantRepo.GetAsync(call.GrantId);
+        var criteria = await _criteriaRepo.GetListAsync(t => t.GrantId == grant.Id);
+        var weights = await _weightResolver.ResolveAsync(grant.Id);
+        var today = Clock.Now.Date;
+
+        var hostUsers = await _userRepo.GetListAsync();
+        var row = ToRow(interest, tenantId, tenant.Name, call, grant.Name, tenantUsers, today);
+        FillHostNames(row, hostUsers.ToDictionary(u => u.Id, DisplayName));
+
+        var signals = await _signalsBuilder.BuildAsync(tenantId);
+        var eligibility = _matcher.Evaluate(signals, grant, today);
+
+        var dto = new GrantInterestReviewDto
+        {
+            Interest = row,
+            ConsultantNote = interest.ConsultantNote,
+            RequiresConsortium = grant.RequiresConsortium,
+            MatchScore = _matcher.Explain(signals, grant, criteria, weights).Total,
+            Bucket = eligibility.Bucket,
+            PassedRuleCount = eligibility.Rules.Count(r => r.Outcome == GrantRuleOutcome.Passed),
+            FailedRules = eligibility.Rules.Where(r => r.Outcome == GrantRuleOutcome.Failed).Select(r => r.Rule).ToList(),
+            UnknownRules = eligibility.Rules.Where(r => r.Outcome == GrantRuleOutcome.Unknown).Select(r => r.Rule).ToList(),
+            Size = signals.Size,
+            NaceCodes = TagValues(signals, GrantCriteriaKind.NaceKodu),
+            Sectors = TagValues(signals, GrantCriteriaKind.Sektor),
+            Regions = TagValues(signals, GrantCriteriaKind.Bolge),
+            AnnualRevenue = signals.AnnualRevenue,
+            StaffCount = signals.StaffCount,
+            RdStaffCount = signals.RdStaffCount,
+            HasConsortiumPartner = signals.HasConsortiumPartner,
+            ActiveProjectCount = signals.ActiveProjectCount,
+            ApprovedGrantCount = approvedGrantCount,
+            Consultants = await BuildConsultantsAsync(hostUsers)
+        };
+
+        // Ortak önerisi yalnız ortaklık gereken yerde: firma ortak arıyor ya da çağrı konsorsiyum istiyor.
+        if (interest.NeedsPartner == true || grant.RequiresConsortium)
+        {
+            dto.PartnerSuggestions = await BuildPartnerSuggestionsAsync(interest, tenantId, grant, criteria, weights);
+        }
+
+        return dto;
+    }
+
+    public async Task<GrantInterestReviewDto> SaveNoteAsync(SaveGrantInterestNoteInput input)
+    {
+        EnsureHostContext();
+
+        var tenantId = await FindInterestTenantIdAsync(input.InterestId);
+        using (_currentTenant.Change(tenantId))
+        {
+            var interest = await _interestRepo.GetAsync(input.InterestId);
+            interest.SetConsultantNote(input.Note);
+            await _interestRepo.UpdateAsync(interest, autoSave: true);
+        }
+
+        return await GetReviewAsync(input.InterestId);
+    }
+
+    public async Task<GrantInterestReviewDto> AssignAsync(AssignGrantInterestInput input)
+    {
+        EnsureHostContext();
+
+        // Host bağlamında aranır: kiracı kullanıcısı (firma çalışanı) danışman olarak atanamaz.
+        if (input.UserId.HasValue)
+        {
+            var user = await _userRepo.FindAsync(input.UserId.Value);
+            if (user == null || !user.IsActive)
+            {
+                throw new BusinessException(PlatformDomainErrorCodes.GrantInterestAssigneeNotFound);
+            }
+        }
+
+        var tenantId = await FindInterestTenantIdAsync(input.InterestId);
+        using (_currentTenant.Change(tenantId))
+        {
+            var interest = await _interestRepo.GetAsync(input.InterestId);
+            interest.AssignTo(input.UserId);
+            await _interestRepo.UpdateAsync(interest, autoSave: true);
+        }
+
+        return await GetReviewAsync(input.InterestId);
+    }
+
+    /// <summary>
+    /// Aynı çağrıya ilgi bildirmiş BAŞKA firmalar (firma başına son talep). Eşleştirme kaydı
+    /// tutulmaz — danışman adayı görür, o talebin inceleme ekranına geçer.
+    /// </summary>
+    private async Task<List<GrantInterestPartnerSuggestionDto>> BuildPartnerSuggestionsAsync(
+        GrantInterest interest, Guid tenantId, Grant grant, List<GrantCriteriaTag> criteria, GrantMatchWeightSet weights)
+    {
+        // 🔴 Talepler kiracılara dağınık; okuma için filtre bilinçli kapatılır (yazma yok).
+        List<GrantInterest> others;
+        using (_mtFilter.Disable())
+        {
+            others = await _interestRepo.GetListAsync(i =>
+                i.GrantCallId == interest.GrantCallId
+                && i.TenantId != null && i.TenantId != tenantId
+                && (i.Status == GrantInterestStatus.Yeni
+                    || i.Status == GrantInterestStatus.Inceleniyor
+                    || i.Status == GrantInterestStatus.BasvuruAcildi));
+        }
+
+        if (others.Count == 0)
+        {
+            return new List<GrantInterestPartnerSuggestionDto>();
+        }
+
+        var tenantNames = (await _tenantRepo.GetListAsync()).ToDictionary(t => t.Id, t => t.Name);
+        var result = new List<GrantInterestPartnerSuggestionDto>();
+        foreach (var other in others.GroupBy(o => o.TenantId!.Value).Select(g => g.OrderByDescending(o => o.CreationTime).First()))
+        {
+            var signals = await _signalsBuilder.BuildAsync(other.TenantId);
+            result.Add(new GrantInterestPartnerSuggestionDto
+            {
+                InterestId = other.Id,
+                TenantId = other.TenantId!.Value,
+                FirmName = tenantNames.GetValueOrDefault(other.TenantId.Value, string.Empty),
+                Size = signals.Size,
+                MatchScore = _matcher.Explain(signals, grant, criteria, weights).Total,
+                NeedsPartner = other.NeedsPartner,
+                Status = other.Status
+            });
+        }
+
+        // O da ortak arayan önce, sonra uyum puanı.
+        return result
+            .OrderByDescending(s => s.NeedsPartner == true)
+            .ThenByDescending(s => s.MatchScore)
+            .Take(3)
+            .ToList();
+    }
+
+    /// <summary>Devret listesi. Yük = üzerindeki bekleyen talep sayısı (tüm kiracılardan).</summary>
+    private async Task<List<GrantConsultantDto>> BuildConsultantsAsync(List<IdentityUser> hostUsers)
+    {
+        List<GrantInterest> assigned;
+        using (_mtFilter.Disable())
+        {
+            assigned = await _interestRepo.GetListAsync(i =>
+                i.AssignedUserId != null
+                && (i.Status == GrantInterestStatus.Yeni || i.Status == GrantInterestStatus.Inceleniyor));
+        }
+
+        var load = assigned.GroupBy(i => i.AssignedUserId!.Value).ToDictionary(g => g.Key, g => g.Count());
+        return hostUsers
+            .Where(u => u.IsActive)
+            .Select(u => new GrantConsultantDto { UserId = u.Id, Name = DisplayName(u), AssignedCount = load.GetValueOrDefault(u.Id) })
+            .OrderBy(c => c.Name)
+            .ToList();
+    }
+
+    private static List<string> TagValues(FirmSignals signals, GrantCriteriaKind kind)
+        => signals.Tags.Where(t => t.Kind == kind).Select(t => t.Value).Distinct().ToList();
+
     // ---------- Yardımcılar ----------
 
     private async Task NotifyAnsweredAsync(
@@ -210,34 +402,8 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
                 foreach (var interest in interests)
                 {
                     var call = calls.GetValueOrDefault(interest.GrantCallId);
-                    rows.Add(new GrantInterestRowDto
-                    {
-                        Id = interest.Id,
-                        TenantId = tenant.Id,
-                        FirmName = tenant.Name,
-                        GrantCallId = interest.GrantCallId,
-                        GrantName = call == null ? string.Empty : grants.GetValueOrDefault(call.GrantId, string.Empty),
-                        Period = call?.Period,
-                        Deadline = call?.Deadline,
-                        DaysRemaining = call?.Deadline == null
-                            ? null
-                            : (int)(call.Deadline.Value.Date - today).TotalDays,
-                        CreationTime = interest.CreationTime,
-                        Note = interest.Note,
-                        EstimatedBudget = interest.EstimatedBudget,
-                        TargetStartDate = interest.TargetStartDate,
-                        NeedsPartner = interest.NeedsPartner,
-                        PartnerName = interest.PartnerName,
-                        WithdrawnAt = interest.WithdrawnAt,
-                        Status = interest.Status,
-                        HostFeedback = interest.HostFeedback,
-                        RequestedByName = interest.RequestedByUserId.HasValue
-                            ? users.GetValueOrDefault(interest.RequestedByUserId.Value)
-                            : null,
-                        ReviewedByUserId = interest.ReviewedByUserId,
-                        ReviewedAt = interest.ReviewedAt,
-                        GrantApplicationId = interest.GrantApplicationId
-                    });
+                    var grantName = call == null ? string.Empty : grants.GetValueOrDefault(call.GrantId, string.Empty);
+                    rows.Add(ToRow(interest, tenant.Id, tenant.Name, call, grantName, users, today));
                 }
             }
         }
@@ -265,19 +431,55 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
 
     private async Task FillReviewerNamesAsync(List<GrantInterestRowDto> rows)
     {
-        if (rows.All(r => r.ReviewedAt == null))
+        if (rows.All(r => r.ReviewedAt == null && r.AssignedUserId == null))
         {
             return;
         }
 
         var hostUsers = (await _userRepo.GetListAsync()).ToDictionary(u => u.Id, DisplayName);
-        foreach (var row in rows.Where(r => r.ReviewedAt != null))
+        foreach (var row in rows)
         {
-            row.ReviewedByName = row.ReviewedByUserId.HasValue
-                ? hostUsers.GetValueOrDefault(row.ReviewedByUserId.Value)
-                : null;
+            FillHostNames(row, hostUsers);
         }
     }
+
+    /// <summary>İnceleyen ve sorumlu danışman host kullanıcılarıdır; adları host bağlamında çözülür.</summary>
+    private static void FillHostNames(GrantInterestRowDto row, Dictionary<Guid, string> hostUsers)
+    {
+        row.ReviewedByName = row.ReviewedByUserId.HasValue ? hostUsers.GetValueOrDefault(row.ReviewedByUserId.Value) : null;
+        row.AssignedUserName = row.AssignedUserId.HasValue ? hostUsers.GetValueOrDefault(row.AssignedUserId.Value) : null;
+    }
+
+    private static GrantInterestRowDto ToRow(
+        GrantInterest interest, Guid tenantId, string firmName, GrantCall? call, string grantName,
+        Dictionary<Guid, string> tenantUsers, DateTime today)
+        => new()
+        {
+            Id = interest.Id,
+            TenantId = tenantId,
+            FirmName = firmName,
+            GrantCallId = interest.GrantCallId,
+            GrantName = grantName,
+            Period = call?.Period,
+            Deadline = call?.Deadline,
+            DaysRemaining = call?.Deadline == null ? null : (int)(call.Deadline.Value.Date - today).TotalDays,
+            CreationTime = interest.CreationTime,
+            Note = interest.Note,
+            EstimatedBudget = interest.EstimatedBudget,
+            TargetStartDate = interest.TargetStartDate,
+            NeedsPartner = interest.NeedsPartner,
+            PartnerName = interest.PartnerName,
+            WithdrawnAt = interest.WithdrawnAt,
+            Status = interest.Status,
+            HostFeedback = interest.HostFeedback,
+            RequestedByName = interest.RequestedByUserId.HasValue
+                ? tenantUsers.GetValueOrDefault(interest.RequestedByUserId.Value)
+                : null,
+            ReviewedByUserId = interest.ReviewedByUserId,
+            ReviewedAt = interest.ReviewedAt,
+            GrantApplicationId = interest.GrantApplicationId,
+            AssignedUserId = interest.AssignedUserId
+        };
 
     /// <summary>Ad + soyad; ikisi de boşsa kullanıcı adı — satır isimsiz kalmasın.</summary>
     private static string DisplayName(IdentityUser user)

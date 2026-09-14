@@ -1,0 +1,171 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.InterestReviewModel
+@{
+    ViewBag.Title = L["Grants:InterestReview:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/InterestReview.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/InterestReview.js" />
+}
+
+@* 18a · Danışman · İlgi inceleme. Sol: proje fikri, iç not, karar. Sağ: firma, eksikler, ortak önerisi.
+   Hepsi mevcut kayıtlardan; SLA hedefi tanımlı olmadığı için yalnız bekleme süresi yazılır. *@
+<div data-page-description="@L["Grants:InterestReview:Description"]" class="apya-page apya-grant-scope" data-interest-id="@Model.Id">
+
+    <div class="apya-irv-head">
+        <a href="/Grants/Interests" class="apya-irv-back"><i class="fa fa-arrow-left"></i>@L["Grants:InterestReview:Back"]</a>
+        <h2 class="apya-irv-title apya-skel-num" id="ReviewTitle"></h2>
+        <div class="apya-irv-state">
+            <span class="apya-chip" id="ReviewStatus"></span>
+            <span class="apya-irv-waiting" id="ReviewWaiting"></span>
+        </div>
+    </div>
+
+    <div class="apya-irv-layout">
+        <div class="apya-irv-main">
+            @* --- Proje fikri --- *@
+            <section class="card mb-0 apya-irv-card">
+                <div class="card-body">
+                    <div class="apya-irv-card-head">
+                        <span class="apya-param-section-icon"><i class="fa fa-lightbulb"></i></span>
+                        <div>
+                            <div class="apya-irv-card-title">@L["Grants:InterestReview:Idea:Title"]</div>
+                            <div class="apya-irv-card-meta" id="IdeaMeta"></div>
+                        </div>
+                    </div>
+                    <p class="apya-irv-idea" id="IdeaText"></p>
+                    <div class="apya-irv-stats">
+                        <div class="apya-irv-stat">
+                            <span class="apya-irv-stat-label">@L["Grants:InterestReview:Stat:Budget"]</span>
+                            <span class="apya-irv-stat-value apya-numeric" id="StatBudget"></span>
+                        </div>
+                        <div class="apya-irv-stat">
+                            <span class="apya-irv-stat-label">@L["Grants:InterestReview:Stat:Start"]</span>
+                            <span class="apya-irv-stat-value apya-numeric" id="StatStart"></span>
+                        </div>
+                        <div class="apya-irv-stat">
+                            <span class="apya-irv-stat-label">@L["Grants:InterestReview:Stat:Consortium"]</span>
+                            <span class="apya-irv-stat-value" id="StatConsortium"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            @* --- Danışman notu (firmaya gitmez) --- *@
+            <section class="card mb-0 apya-irv-card">
+                <div class="card-body">
+                    <div class="apya-irv-note-head">
+                        <label class="apya-irv-card-title" for="ConsultantNote">@L["Grants:InterestReview:Note:Title"]</label>
+                        <span class="apya-irv-card-meta">@L["Grants:InterestReview:Note:Hint"]</span>
+                    </div>
+                    <textarea class="form-control" id="ConsultantNote" rows="3" maxlength="2000"></textarea>
+                    <div class="apya-irv-note-actions">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="SaveNoteBtn">@L["Grants:InterestReview:Note:Save"]</button>
+                    </div>
+                </div>
+            </section>
+
+            @* --- Karar + devret --- *@
+            <section class="card mb-0 apya-irv-card">
+                <div class="card-body">
+                    <div class="apya-irv-decision d-none" id="DecisionText"></div>
+                    <div class="apya-irv-actions" id="ReviewActions">
+                        <button type="button" class="btn btn-outline-secondary d-none" id="StartReviewBtn">@L["Grants:Interests:Action:Review"]</button>
+                        <button type="button" class="btn btn-primary" id="StartApplicationBtn">@L["Grants:Interests:Action:Start"]</button>
+                        <button type="button" class="btn btn-outline-danger" id="RejectBtn">@L["Grants:InterestReview:Action:Reject"]</button>
+                    </div>
+                    <div class="apya-irv-assign">
+                        <label class="apya-irv-stat-label" for="AssignSelect">@L["Grants:InterestReview:Assign:Title"]</label>
+                        <div class="apya-irv-assign-row">
+                            <select class="form-select form-select-sm" id="AssignSelect"></select>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="AssignBtn">
+                                <i class="fa fa-user-plus me-1"></i>@L["Grants:InterestReview:Assign:Submit"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="apya-irv-side">
+            @* --- Firma kartı --- *@
+            <section class="card mb-0 apya-irv-card">
+                <div class="card-body">
+                    <div class="apya-irv-firm">
+                        <span class="apya-irv-avatar" id="FirmInitials"></span>
+                        <div class="apya-irv-firm-text">
+                            <div class="apya-irv-card-title" id="FirmName"></div>
+                            <div class="apya-irv-card-meta" id="FirmMeta"></div>
+                        </div>
+                        <div class="apya-irv-match">
+                            <span class="apya-irv-match-value apya-numeric" id="FirmMatch"></span>
+                            <span class="apya-irv-stat-label">@L["Grants:InterestReview:Firm:Match"]</span>
+                        </div>
+                    </div>
+                    <div class="apya-irv-facts">
+                        <div class="apya-irv-stat">
+                            <span class="apya-irv-stat-label">@L["Grants:InterestReview:Firm:Revenue"]</span>
+                            <span class="apya-irv-stat-value apya-numeric" id="FirmRevenue"></span>
+                        </div>
+                        <div class="apya-irv-stat">
+                            <span class="apya-irv-stat-label">@L["Grants:InterestReview:Firm:RdStaff"]</span>
+                            <span class="apya-irv-stat-value apya-numeric" id="FirmRdStaff"></span>
+                        </div>
+                        <div class="apya-irv-stat">
+                            <span class="apya-irv-stat-label">@L["Grants:InterestReview:Firm:Projects"]</span>
+                            <span class="apya-irv-stat-value apya-numeric" id="FirmProjects"></span>
+                        </div>
+                        <div class="apya-irv-stat">
+                            <span class="apya-irv-stat-label">@L["Grants:InterestReview:Firm:Grants"]</span>
+                            <span class="apya-irv-stat-value" id="FirmGrants"></span>
+                        </div>
+                    </div>
+                    <div class="apya-irv-gaps" id="FirmGaps"></div>
+                </div>
+            </section>
+
+            @* --- Ortak önerisi: yalnız ortaklık gereken talepte --- *@
+            <section class="card mb-0 apya-irv-card d-none" id="PartnerSection">
+                <div class="card-body">
+                    <div class="apya-irv-card-title">@L["Grants:InterestReview:Partner:Title"]</div>
+                    <div class="apya-irv-card-meta">@L["Grants:InterestReview:Partner:Hint"]</div>
+                    <div class="apya-irv-partners" id="PartnerList"></div>
+                </div>
+            </section>
+        </aside>
+    </div>
+</div>
+
+@* ---- Gerekçe modalı (İlgi Talepleri kutusundakiyle aynı sözleşme) ---- *@
+<div class="modal fade apya-grant-scope" id="RejectModal" tabindex="-1" aria-hidden="true" aria-labelledby="RejectTitle">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="RejectForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="RejectTitle">@L["Grants:Interests:Reject:Title"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body d-flex flex-column gap-2">
+                    <div class="fw-semibold" id="RejectTarget"></div>
+                    <div class="small text-muted">@L["Grants:Interests:Reject:Hint"]</div>
+                    <label class="form-label mb-0" for="RejectReason">@L["Grants:Interests:Reject:Reason"]</label>
+                    <textarea class="form-control" id="RejectReason" rows="4" maxlength="1000" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Sources:Cancel"]</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-paper-plane me-1"></i>@L["Grants:Interests:Reject:Submit"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
