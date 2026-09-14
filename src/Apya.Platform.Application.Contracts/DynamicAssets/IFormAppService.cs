@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -23,4 +24,10 @@ public interface IFormAppService : IApplicationService
     Task<DocumentDto> MoveToDraftAsync(Guid id);
 
     Task<FormStatisticsDto> GetStatisticsAsync(Guid id);
+
+    /// <summary>
+    /// Live options of a <see cref="FormChoiceSources"/> source, for the builder's preview. Empty list for
+    /// an unknown source.
+    /// </summary>
+    Task<List<FormChoiceDto>> GetChoicesAsync(string source);
 }

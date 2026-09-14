@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
 import { publicFormPath } from './lib/publicFormLink';
+import { OPEN_GRANT_CALLS, withChoiceParam } from './lib/formChoices';
 import './index.css';
 
 /* ============================================================
@@ -166,7 +167,70 @@ function BlockPreview({ block }) {
 /* ============================================================
  * Question card — all editing happens inline (Google Forms style)
  * ============================================================ */
-export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettings, onChangeType, onDuplicate, onRemove, onAddAfter, onMove, dragRef }) {
+/* Açılır listenin seçenek kaynağı (tur 15): elle yazılan seçenekler ya da canlı "Yayındaki hibeler".
+   Canlı listede seçenekler formda saklanmaz; form her açıldığında sunucu güncel çağrılardan üretir. */
+function ChoiceSourcePanel({ block, settings: s, onPatchSettings, publicSlug }) {
+  const live = s.source === OPEN_GRANT_CALLS;
+  const [choices, setChoices] = useState(null);
+  const [linkValue, setLinkValue] = useState('');
+
+  useEffect(() => {
+    if (!live || choices) return;
+    api.get(`/api/app/form/choices?source=${OPEN_GRANT_CALLS}`).then((list) => setChoices(list || [])).catch(() => setChoices([]));
+  }, [live, choices]);
+
+  const setLive = (on) => onPatchSettings(block.id, on ? { source: OPEN_GRANT_CALLS, urlPrefill: true } : { source: undefined, urlPrefill: undefined });
+  const copyLink = () => {
+    navigator.clipboard?.writeText(`${window.location.origin}${withChoiceParam(publicFormPath(publicSlug), linkValue)}`);
+    notify('success', 'Bağlantı kopyalandı.');
+  };
+
+  return (
+    <div className="mt-4 rounded-xl border border-subtle bg-surface-sunken p-3" onClick={(e) => e.stopPropagation()}>
+      <p className="mb-2 text-[11px] font-semibold uppercase text-text-tertiary">Seçenek kaynağı</p>
+      <label className="flex items-center gap-2 text-sm text-text-primary">
+        <input type="radio" name={`source-${block.id}`} checked={!live} onChange={() => setLive(false)} className="h-4 w-4 text-accent" />
+        Sabit seçenekler, elle yazılır
+      </label>
+      <label className="mt-1 flex items-center gap-2 text-sm text-text-primary">
+        <input type="radio" name={`source-${block.id}`} checked={live} onChange={() => setLive(true)} className="h-4 w-4 text-accent" />
+        Yayındaki hibeler, canlı liste
+      </label>
+
+      {live && (
+        <div className="mt-3 border-t border-subtle pt-3">
+          {choices == null ? (
+            <p className="text-xs text-text-tertiary">Liste yükleniyor…</p>
+          ) : (
+            <>
+              <p className="text-xs text-text-secondary">Şu an başvuruya açık {choices.length} çağrı var. Kapanan çağrı listeden kendiliğinden düşer, yeni yayınlanan eklenir.</p>
+              {choices.length > 0 && (
+                <ul className="mt-2 flex flex-col gap-1 text-sm text-text-primary">
+                  {choices.slice(0, 3).map((c) => <li key={c.value} className="truncate">{c.label}</li>)}
+                </ul>
+              )}
+              {choices.length > 3 && <p className="mt-1 text-xs text-text-tertiary">ve {choices.length - 3} çağrı daha</p>}
+            </>
+          )}
+          <div className="mt-3">
+            <Toggle label="Bağlantıdaki çağrıyı ön seç" checked={!!s.urlPrefill} onChange={(v) => onPatchSettings(block.id, { urlPrefill: v })} />
+          </div>
+          {s.urlPrefill && publicSlug && choices?.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <select className={`${inputCls} min-w-0 flex-1`} value={linkValue} onChange={(e) => setLinkValue(e.target.value)} aria-label="Çağrıya özel bağlantı">
+                <option value="">Çağrıya özel bağlantı için seçin…</option>
+                {choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+              <button type="button" disabled={!linkValue} onClick={copyLink} className="rounded-lg border border-default bg-surface-raised px-3 py-2 text-xs font-semibold text-text-primary hover:bg-surface-sunken disabled:opacity-50">Bağlantıyı kopyala</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettings, onChangeType, onDuplicate, onRemove, onAddAfter, onMove, dragRef, publicSlug }) {
   const s = block.settings || {};
   const isLayout = LAYOUT_ONLY.has(block.type);
   const cardRef = useRef(null);
@@ -222,10 +286,15 @@ export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatc
         )}
         {selected && <TypeSelect value={block.type} onChange={(t) => onChangeType(block.id, t)} />}
         {!selected && <span className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">{LABELS[block.type]}</span>}
+        {s.source && <span className="shrink-0 rounded-full bg-primary-subtle px-2.5 py-1 text-[11px] font-semibold text-primary">⚡ Canlı liste</span>}
       </div>
 
+      {selected && block.type === BT.Dropdown && (
+        <ChoiceSourcePanel block={block} settings={s} onPatchSettings={onPatchSettings} publicSlug={publicSlug} />
+      )}
+
       {/* options editor (selected, choice types) */}
-      {selected && HAS_OPTIONS.has(block.type) && (
+      {selected && HAS_OPTIONS.has(block.type) && !s.source && (
         <div className="mt-4 flex flex-col gap-2">
           {(s.options || []).map((opt, i) => (
             <div key={i} className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -362,6 +431,8 @@ function FormBuilder() {
   const changeType = (id, newType) => setBlocks((prev) => prev.map((b) => {
     if (b.id !== id) return b;
     const settings = { ...b.settings };
+    // Canlı liste yalnız açılır listede anlamlı; başka tipe geçen alan sabit seçeneğe döner.
+    if (newType !== BT.Dropdown) { delete settings.source; delete settings.urlPrefill; }
     if (HAS_OPTIONS.has(newType) && !settings.options) settings.options = ['Seçenek 1', 'Seçenek 2'];
     return { ...b, type: newType, settings };
   }));
@@ -464,6 +535,7 @@ function FormBuilder() {
               onAddAfter={addAfter}
               onMove={moveTo}
               dragRef={dragIndex}
+              publicSlug={slug}
             />
           ))}
         </div>

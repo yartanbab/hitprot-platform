@@ -18,11 +18,16 @@ public class PublicDocumentAppService : PlatformAppService, IPublicDocumentAppSe
 {
     private readonly IAppDocumentRepository _documentRepository;
     private readonly PublicFormLocator _formLocator;
+    private readonly FormChoiceProvider _choiceProvider;
 
-    public PublicDocumentAppService(IAppDocumentRepository documentRepository, PublicFormLocator formLocator)
+    public PublicDocumentAppService(
+        IAppDocumentRepository documentRepository,
+        PublicFormLocator formLocator,
+        FormChoiceProvider choiceProvider)
     {
         _documentRepository = documentRepository;
         _formLocator = formLocator;
+        _choiceProvider = choiceProvider;
     }
 
     public async Task<PublicDocumentDto> GetBySlugAsync(string slug, Guid? tenantId = null)
@@ -62,6 +67,13 @@ public class PublicDocumentAppService : PlatformAppService, IPublicDocumentAppSe
         var dto = ObjectMapper.Map<AppDocument, PublicDocumentDto>(document);
         dto.RequireKvkk = settings.Kvkk;
         dto.RequireCaptcha = settings.Captcha;
+
+        // Canlı listeye bağlı açılır listelerin seçenekleri her açılışta güncel veriden gelir.
+        foreach (var block in dto.Blocks)
+        {
+            block.Choices = await _choiceProvider.GetChoicesAsync(FormChoiceProvider.SourceOf(block.Type, block.Settings));
+        }
+
         return dto;
     }
 }

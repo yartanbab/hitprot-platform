@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
+import { choiceLabel } from './lib/formChoices';
 import './index.css';
 
 const abpAuth = (p) => window?.abp?.auth?.isGranted(p);
@@ -44,6 +45,7 @@ function StatCard({ label, value, accent }) {
 function renderAnswer(val) {
   if (val == null || val === '') return <span className="text-text-tertiary">—</span>;
   if (Array.isArray(val)) return val.join(', ');
+  if (choiceLabel(val) != null) return choiceLabel(val);
   if (typeof val === 'object') return Object.values(val).filter(Boolean).join(' ');
   return String(val);
 }
@@ -390,6 +392,17 @@ function buildChartData(block, rows) {
     return { type: 'bar', labels: counts.map((_, i) => String(i)), data: counts };
   }
 
+  // Canlı listeye bağlı açılır liste: sabit seçenek dizisi yok, sayım yanıtlardaki adlarla yapılır.
+  if (settings.source) {
+    const byLabel = {};
+    rows.forEach((r) => {
+      const label = choiceLabel(parse(r.answers)[block.id]);
+      if (label) byLabel[label] = (byLabel[label] || 0) + 1;
+    });
+    const labels = Object.keys(byLabel).sort((a, b) => byLabel[b] - byLabel[a]);
+    return { type: 'pie', labels, data: labels.map((l) => byLabel[l]) };
+  }
+
   // Select / Dropdown / MultiSelect — option label -> occurrence count
   const counts = Object.fromEntries(options.map((o) => [o, 0]));
   rows.forEach((r) => {
@@ -403,6 +416,7 @@ function buildChartData(block, rows) {
 function answerToText(v) {
   if (v == null) return '';
   if (Array.isArray(v)) return v.join('; ');
+  if (choiceLabel(v) != null) return choiceLabel(v);
   if (typeof v === 'object') return Object.values(v).filter(Boolean).join(' ');
   return String(v);
 }
