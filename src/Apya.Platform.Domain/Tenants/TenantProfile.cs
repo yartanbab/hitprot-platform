@@ -1,4 +1,5 @@
 using System;
+using Apya.Platform.RegistrationRequests;
 using Volo.Abp.Domain.Entities.Auditing;
 
 namespace Apya.Platform.Tenants;
@@ -14,6 +15,12 @@ public class TenantProfile : FullAuditedAggregateRoot<Guid>
 
     public CompanyType CompanyType { get; set; }
 
+    /// <summary>
+    /// Resmî unvan. Kiracı adı bunun yerine GEÇMEZ: o, unvandan türetilmiş ASCII bir
+    /// anahtardır ("hudayim-dernegi") ve giriş/URL için tekil tutulur.
+    /// </summary>
+    public string LegalName { get; set; } = string.Empty;
+
     public string TaxNumber { get; set; } = string.Empty;
 
     public string TaxOffice { get; set; } = string.Empty;
@@ -23,10 +30,15 @@ public class TenantProfile : FullAuditedAggregateRoot<Guid>
     public string CorporateEmail { get; set; } = string.Empty;
 
     public string LegalRepresentativeName { get; set; } = string.Empty;
+    public string LegalRepresentativeTitle { get; set; } = string.Empty;
+    public string LegalRepresentativeEmail { get; set; } = string.Empty;
     public string LegalRepresentativePhone { get; set; } = string.Empty;
 
     public string OperationalContactName { get; set; } = string.Empty;
     public string OperationalContactPhone { get; set; } = string.Empty;
+
+    /// <summary>Yaklaşık çalışan sayısı aralığı; kayıt talebindeki beyanla aynı ölçek.</summary>
+    public RegistrationRequestCompanySize? EmployeeCount { get; set; }
 
     protected TenantProfile()
     {

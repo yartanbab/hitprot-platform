@@ -227,12 +227,16 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
                 input.CorporateEmail ?? string.Empty
             );
 
+            newProfile.LegalName = input.LegalName ?? string.Empty;
             newProfile.TaxOffice = input.TaxOffice ?? string.Empty;
             newProfile.Address = input.Address ?? string.Empty;
             newProfile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
+            newProfile.LegalRepresentativeTitle = input.LegalRepresentativeTitle ?? string.Empty;
+            newProfile.LegalRepresentativeEmail = input.LegalRepresentativeEmail ?? string.Empty;
             newProfile.LegalRepresentativePhone = input.LegalRepresentativePhone ?? string.Empty;
             newProfile.OperationalContactName = input.OperationalContactName ?? string.Empty;
             newProfile.OperationalContactPhone = input.OperationalContactPhone ?? string.Empty;
+            newProfile.EmployeeCount = input.EmployeeCount;
 
             await _tenantProfileRepository.InsertAsync(newProfile);
 
@@ -242,14 +246,18 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         await _tenantProfileManager.CheckTaxNumberUniqueAsync(input.TaxNumber, profile.Id);
 
         profile.CompanyType = input.CompanyType;
+        profile.LegalName = input.LegalName ?? string.Empty;
         profile.TaxNumber = input.TaxNumber ?? string.Empty;
         profile.TaxOffice = input.TaxOffice ?? string.Empty;
         profile.Address = input.Address ?? string.Empty;
         profile.CorporateEmail = input.CorporateEmail ?? string.Empty;
         profile.LegalRepresentativeName = input.LegalRepresentativeName ?? string.Empty;
+        profile.LegalRepresentativeTitle = input.LegalRepresentativeTitle ?? string.Empty;
+        profile.LegalRepresentativeEmail = input.LegalRepresentativeEmail ?? string.Empty;
         profile.LegalRepresentativePhone = input.LegalRepresentativePhone ?? string.Empty;
         profile.OperationalContactName = input.OperationalContactName ?? string.Empty;
         profile.OperationalContactPhone = input.OperationalContactPhone ?? string.Empty;
+        profile.EmployeeCount = input.EmployeeCount;
 
         await _tenantProfileRepository.UpdateAsync(profile);
 
