@@ -11082,6 +11082,9 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("DeletionTime");
 
+                    b.Property<int?>("EmployeeCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ExtraProperties")
                         .IsRequired()
                         .HasColumnType("text")
@@ -11101,6 +11104,16 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<string>("LegalName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("LegalRepresentativeEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
                     b.Property<string>("LegalRepresentativeName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -11108,6 +11121,11 @@ namespace Apya.Platform.Migrations
                     b.Property<string>("LegalRepresentativePhone")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("LegalRepresentativeTitle")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("OperationalContactName")
                         .IsRequired()

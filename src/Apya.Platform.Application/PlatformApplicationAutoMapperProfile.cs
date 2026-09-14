@@ -168,6 +168,8 @@ namespace Apya.Platform
 
             // --- TENANT PROFILE MODÜLÜ ---
             CreateMap<Apya.Platform.Tenants.TenantProfile, Apya.Platform.Tenants.TenantProfileDto>();
+            // Hesap özeti alanları (paket, sözleşme, kullanıcı sayısı) servis tarafında doldurulur.
+            CreateMap<Apya.Platform.Tenants.TenantProfile, Apya.Platform.Tenants.MyCompanyProfileDto>();
 
             // --- GERİ BİLDİRİM (FEEDBACK) MODÜLÜ ---
             // HasScreenshot/CommentCount/TenantName/UserStatus AppService'te elle doldurulur (ham entity'de yok).

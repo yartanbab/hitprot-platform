@@ -11,6 +11,7 @@ using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Grants;
 
@@ -29,7 +30,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
     private readonly IRepository<GrantBookmark, Guid> _bookmarkRepo;
-    private readonly ITenantRepository _tenantRepo;
+    private readonly TenantDisplayNameResolver _displayNames;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
 
@@ -39,7 +40,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
         IRepository<GrantBookmark, Guid> bookmarkRepo,
-        ITenantRepository tenantRepo,
+        TenantDisplayNameResolver displayNames,
         GrantNotificationDispatcher notifyDispatcher,
         IDataFilter<IMultiTenant> mtFilter)
     {
@@ -48,7 +49,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         _callRepo = callRepo;
         _grantRepo = grantRepo;
         _bookmarkRepo = bookmarkRepo;
-        _tenantRepo = tenantRepo;
+        _displayNames = displayNames;
         _notifyDispatcher = notifyDispatcher;
         _mtFilter = mtFilter;
     }
@@ -177,28 +178,14 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
     }
 
     /// <summary>
-    /// Kiracının adı. <see cref="ICurrentTenant.Name"/> istek dışı bağlamlarda
-    /// (arka plan işi, test) boş gelebiliyor; o zaman kiracı kaydından okunur —
-    /// bildirim "— firması ilgileniyor" diye gitmesin.
+    /// Kurumun adı — resmî unvan, yoksa kiracı adı (<see cref="TenantDisplayNameResolver"/>).
+    /// <see cref="ICurrentTenant.Name"/> kullanılmaz: o, unvandan türetilmiş kısa anahtardır
+    /// ve istek dışı bağlamlarda (arka plan işi, test) boş da gelebiliyor.
     /// </summary>
     private async Task<string?> GetFirmNameAsync()
     {
-        if (!CurrentTenant.Name.IsNullOrWhiteSpace())
-        {
-            return CurrentTenant.Name;
-        }
-
         var tenantId = CurrentTenant.Id;
-        if (tenantId == null)
-        {
-            return null;
-        }
-
-        // Kiracı kaydı host kataloğunda yaşıyor; okuma host bağlamında yapılır.
-        using (CurrentTenant.Change(null))
-        {
-            return (await _tenantRepo.FindAsync(tenantId.Value))?.Name;
-        }
+        return tenantId == null ? null : await _displayNames.GetAsync(tenantId.Value);
     }
 
     /// <summary>Çağrı → (program adı, dönem). Katalog host'ta yaşıyor: filtre kapatılır.</summary>

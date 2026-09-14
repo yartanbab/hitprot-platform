@@ -1,6 +1,8 @@
 @page
 @model Apya.Platform.Web.Pages.TenantManagement.Tenants.EditModalModel
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using Apya.Platform.RegistrationRequests
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     Layout = null;
 }
@@ -27,15 +29,28 @@
                 </div>
                 
                 <div class="tab-pane fade" id="legal" role="tabpanel" aria-labelledby="legal-tab">
+                    <abp-input asp-for="Tenant.LegalName" label="Resmî Unvan" />
                     <abp-select asp-for="Tenant.CompanyType" label="Kurum Türü" />
                     <abp-input asp-for="Tenant.CorporateEmail" label="Kurumsal E-Posta" />
                     <abp-input asp-for="Tenant.TaxNumber" label="Vergi Numarası" />
                     <abp-input asp-for="Tenant.TaxOffice" label="Vergi Dairesi" />
+                    <div class="mb-3">
+                        <label class="form-label" asp-for="Tenant.EmployeeCount">Çalışan Sayısı</label>
+                        <select class="form-select" asp-for="Tenant.EmployeeCount">
+                            <option value="">—</option>
+                            @foreach (var size in Enum.GetValues<RegistrationRequestCompanySize>())
+                            {
+                                <option value="@size">@L["RegistrationRequest:CompanySize:" + size]</option>
+                            }
+                        </select>
+                    </div>
                 </div>
 
                 <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
                     <abp-input asp-for="Tenant.Address" label="Açık Adres" />
                     <abp-input asp-for="Tenant.LegalRepresentativeName" label="Yasal Yetkili Kişi" />
+                    <abp-input asp-for="Tenant.LegalRepresentativeTitle" label="Yetkilinin Görevi" />
+                    <abp-input asp-for="Tenant.LegalRepresentativeEmail" label="Yetkilinin E-Postası" />
                     <abp-input asp-for="Tenant.LegalRepresentativePhone" label="Telefon Numarası" />
                     <abp-input asp-for="Tenant.OperationalContactName" label="Operasyonel İletişim Kişisi" />
                     <abp-input asp-for="Tenant.OperationalContactPhone" label="Telefon Numarası" />

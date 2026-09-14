@@ -32,11 +32,15 @@ public class EditModalModel : AbpPageModel
         
         TenantName = profile.TenantName;
         Tenant.CompanyType = profile.CompanyType;
+        Tenant.LegalName = profile.LegalName;
         Tenant.CorporateEmail = profile.CorporateEmail;
         Tenant.TaxNumber = profile.TaxNumber;
         Tenant.TaxOffice = profile.TaxOffice;
+        Tenant.EmployeeCount = profile.EmployeeCount;
         Tenant.Address = profile.Address;
         Tenant.LegalRepresentativeName = profile.LegalRepresentativeName;
+        Tenant.LegalRepresentativeTitle = profile.LegalRepresentativeTitle;
+        Tenant.LegalRepresentativeEmail = profile.LegalRepresentativeEmail;
         Tenant.LegalRepresentativePhone = profile.LegalRepresentativePhone;
         Tenant.OperationalContactName = profile.OperationalContactName;
         Tenant.OperationalContactPhone = profile.OperationalContactPhone;

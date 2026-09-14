@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.Timing;
+using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Grants;
 
@@ -28,6 +30,7 @@ public class GrantAudienceResolver : DomainService
     private readonly FirmSignalsBuilder _signalsBuilder;
     private readonly GrantMatchManager _matcher;
     private readonly GrantMatchWeightResolver _weightResolver;
+    private readonly TenantDisplayNameResolver _displayNames;
     private readonly IClock _clock;
 
     public GrantAudienceResolver(
@@ -36,6 +39,7 @@ public class GrantAudienceResolver : DomainService
         FirmSignalsBuilder signalsBuilder,
         GrantMatchManager matcher,
         GrantMatchWeightResolver weightResolver,
+        TenantDisplayNameResolver displayNames,
         IClock clock)
     {
         _tenantRepo = tenantRepo;
@@ -43,6 +47,7 @@ public class GrantAudienceResolver : DomainService
         _signalsBuilder = signalsBuilder;
         _matcher = matcher;
         _weightResolver = weightResolver;
+        _displayNames = displayNames;
         _clock = clock;
     }
 
@@ -77,6 +82,11 @@ public class GrantAudienceResolver : DomainService
             result.Add((tenant.Id, tenant.Name));
         }
 
-        return result;
+        // Duyurudaki {firma_adı} kurumun resmî unvanıdır; kiracı adı (kısa anahtar) değil.
+        var displayNames = await _displayNames.GetManyAsync(result.Select(r => r.Item1));
+
+        return result
+            .Select(r => (r.Item1, displayNames.GetValueOrDefault(r.Item1) ?? r.Item2))
+            .ToList();
     }
 }

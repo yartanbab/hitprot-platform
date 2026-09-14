@@ -362,6 +362,11 @@ namespace Apya.Platform.EntityFrameworkCore
                     .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.Property(x => x.TaxNumber).HasMaxLength(50);
                 b.Property(x => x.CorporateEmail).HasMaxLength(256);
+                // Kayıt talebinden birebir taşınır: uzunluklar talepteki sınırla aynı,
+                // yoksa taşıma sırasında kırpma ya da taşma hatası olurdu.
+                b.Property(x => x.LegalName).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxCompanyNameLength);
+                b.Property(x => x.LegalRepresentativeTitle).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxAuthorizedTitleLength);
+                b.Property(x => x.LegalRepresentativeEmail).HasMaxLength(Apya.Platform.RegistrationRequests.RegistrationRequestConsts.MaxEmailLength);
                 // Paket (edition): mevcut profiller migration'da Basic'e düşsün (enum 0 değil).
                 b.Property(x => x.PackageCode).HasDefaultValue(Apya.Platform.Tenants.PackageCode.Basic);
             });

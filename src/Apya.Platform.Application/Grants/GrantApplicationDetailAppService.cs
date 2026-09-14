@@ -15,6 +15,7 @@ using Volo.Abp.TenantManagement;
 using Volo.Abp.Users;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Grants;
 
@@ -46,7 +47,7 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
     private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepo;
     private readonly IRepository<GrantEligibleCostItem, Guid> _costItemRepo;
     private readonly IRepository<GrantStageTemplateStep, Guid> _stepRepo;
-    private readonly ITenantRepository _tenantRepo;
+    private readonly TenantDisplayNameResolver _displayNames;
     private readonly IIdentityUserRepository _userRepo;
     private readonly FirmSignalsBuilder _signalsBuilder;
     private readonly GrantMatchManager _matcher;
@@ -70,7 +71,7 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
         IRepository<GrantCriteriaTag, Guid> criteriaRepo,
         IRepository<GrantEligibleCostItem, Guid> costItemRepo,
         IRepository<GrantStageTemplateStep, Guid> stepRepo,
-        ITenantRepository tenantRepo,
+        TenantDisplayNameResolver displayNames,
         IIdentityUserRepository userRepo,
         FirmSignalsBuilder signalsBuilder,
         GrantMatchManager matcher,
@@ -93,7 +94,7 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
         _criteriaRepo = criteriaRepo;
         _costItemRepo = costItemRepo;
         _stepRepo = stepRepo;
-        _tenantRepo = tenantRepo;
+        _displayNames = displayNames;
         _userRepo = userRepo;
         _signalsBuilder = signalsBuilder;
         _matcher = matcher;
@@ -279,8 +280,8 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
         {
             if (application.TenantId.HasValue)
             {
-                var tenant = await _tenantRepo.FindAsync(application.TenantId.Value);
-                dto.FirmName = tenant?.Name ?? "—";
+                var firmName = await _displayNames.GetAsync(application.TenantId.Value);
+                dto.FirmName = firmName ?? "—";
             }
             else
             {

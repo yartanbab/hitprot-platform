@@ -88,6 +88,12 @@ public static class PlatformAdminLinks
         // yükseltme çağrısı tam da onu görmesi gerekene kapalı kalırdı.
         new("Apya.Admin.Subscription", PlatformPermissions.TenantSettings.Default,
             "Menu:Subscription", "Settings:Admin.Subscription.Desc",
-            "/Subscription", "fa fa-gem", TenantOnly: true)
+            "/Subscription", "fa fa-gem", TenantOnly: true),
+
+        // Kurumun kimlik/iletişim bilgisi. Sayfanın kendisi her kurum kullanıcısına açık
+        // (avatar menüsünden gelinir); buradaki kart düzenleme yetkisi olan yöneticiye.
+        new("Apya.Admin.CompanyProfile", PlatformPermissions.TenantSettings.Default,
+            "Menu:CompanyProfile", "Settings:Admin.CompanyProfile.Desc",
+            "/CompanyProfile", "fa fa-building", TenantOnly: true)
     };
 }

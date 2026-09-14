@@ -408,6 +408,9 @@ $(function () {
 
         var tenantRoot = document.getElementById('apya-tenant-switch');
         var tenantCanSwitch = !!(tenantRoot && tenantRoot.classList.contains('dropdown'));
+        // Kurum kullanıcısında (host'un kiracıya geçtiği oturum dahil) satır Kurum
+        // Profili'ne gider; müşteri değiştirebilen host'ta değiştirici davranışı kalır.
+        var inTenant = !!(window.abp && abp.currentTenant && abp.currentTenant.isAvailable);
 
         var section = document.createElement('div');
         section.className = 'apya-avatar-menu';
@@ -446,6 +449,10 @@ $(function () {
             rows += '<button type="button" class="apya-shell-menu-row dropdown-item" role="menuitem" data-act="tenant">' +
                 '<i class="fa fa-building" aria-hidden="true"></i><span class="apya-avatar-menu-tenant-name"></span>' +
                 '<i class="fa fa-chevron-right" aria-hidden="true"></i></button>';
+        } else if (inTenant) {
+            rows += '<a class="apya-shell-menu-row dropdown-item" role="menuitem" href="/CompanyProfile" title="' + escapeHtml(l('AvatarMenu:CompanyProfile')) + '">' +
+                '<i class="fa fa-building" aria-hidden="true"></i><span class="apya-avatar-menu-tenant-name"></span>' +
+                '<i class="fa fa-chevron-right" aria-hidden="true"></i></a>';
         } else {
             rows += '<div class="apya-shell-menu-row is-static">' +
                 '<i class="fa fa-building" aria-hidden="true"></i><span class="apya-avatar-menu-tenant-name"></span></div>';
