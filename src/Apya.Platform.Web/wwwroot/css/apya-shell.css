@@ -1912,6 +1912,11 @@ i.apya-priority-dot {
         box-shadow: var(--apya-shadow-lg, 0 10px 24px -8px rgba(17, 24, 39, .4));
     }
 }
+/* Geniş ekranda düğme ⋯ menüsüne iner (buton kuralı: başlıkta tek birincil düğme).
+   `button.` öneki Tailwind'in .inline-flex sınıfını yükleme sırasından bağımsız ezer. */
+@media (min-width: 641px) {
+    button.apya-doc-capture-btn { display: none; }
+}
 
 /* ── Öneri şeridi ────────────────────────────────────────────────────────
    Mor/ai tonu bilinçli: bu satırlar SİSTEMİN önerisi, kullanıcının verisi
@@ -6646,6 +6651,250 @@ i.apya-priority-dot {
 .apya-doc-dropzone:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px var(--apya-border-focus);
+}
+
+/* ----------------------------------------------------------------------------
+   17g) DOKÜMANLAR — süreç şeridi ve buton kuralı
+   1 Belgeler → 2 Uygunluk → 3 Derle → 4 Teslim. Şerit her süreç ekranında
+   başlığın altında durur (components/documents/ProcessRibbon.jsx). Başlık
+   satırı en fazla bir birincil düğme + ⋯ menüsü taşır (DocsPageHeader).
+   ---------------------------------------------------------------------------- */
+.apya-docs-pagehead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    margin-bottom: 12px;
+}
+.apya-docs-pagehead .apya-docs-pagehead-text { min-width: 0; }
+/* Çift sınıf: tema başlık/paragraf kuralları (h1, p) sınıfı ezmesin. */
+.apya-docs-pagehead .apya-docs-pagehead-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+.apya-docs-pagehead .apya-docs-pagehead-desc {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--apya-text-tertiary);
+}
+.apya-docs-pagehead-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.apya-docs-pagehead-actions:empty { display: none; }
+
+/* --- Süreç şeridi --- */
+.apya-flow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 6px 10px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    box-shadow: var(--apya-shadow-sm);
+}
+.apya-flow-steps {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.apya-flow-step {
+    display: flex;
+    align-items: center;
+    flex: 1 1 0;
+    min-width: 0;
+}
+.apya-flow-link {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 8px;
+    min-width: 0;
+    padding: 4px 9px;
+    border-radius: var(--apya-radius-lg);
+    color: inherit;
+    text-decoration: none;
+    transition: background var(--apya-motion-fast, 120ms) var(--apya-easing-standard, ease);
+}
+.apya-flow-link:hover { background: var(--apya-surface-sunken); color: inherit; text-decoration: none; }
+.apya-flow-link:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+.apya-flow-step.is-active .apya-flow-link { background: var(--apya-accent-soft); }
+.apya-flow-no {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+    font-size: 10px;
+    font-weight: 700;
+}
+.apya-flow-step.is-active .apya-flow-no {
+    background: var(--apya-accent-500);
+    color: #fff;
+}
+/* Koyu temada accent-500 beyaz rakamla 4,5:1'in altında kalıyor. */
+[data-theme="dark"] .apya-flow-step.is-active .apya-flow-no { background: var(--apya-accent-600); }
+.apya-flow-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+.apya-flow-label {
+    color: var(--apya-text-primary);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.apya-flow-step.is-active .apya-flow-label { color: var(--apya-accent-700); }
+[data-theme="dark"] .apya-flow-step.is-active .apya-flow-label { color: var(--apya-accent-300); }
+.apya-flow-sub {
+    overflow: hidden;
+    color: var(--apya-text-secondary);
+    font-size: 10.5px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.apya-flow-arrow {
+    flex: none;
+    padding: 0 4px;
+    color: var(--apya-border-strong);
+    font-size: 11px;
+}
+.apya-flow-next {
+    display: flex;
+    align-items: center;
+    flex: 0 1 auto;
+    gap: 7px;
+    min-width: 0;
+    max-width: 42%;
+    margin: 0;
+    padding-left: 10px;
+    border-left: 1px solid var(--apya-border-subtle);
+}
+.apya-flow-next-label {
+    flex: none;
+    color: var(--apya-text-secondary);
+    font-size: 10.5px;
+}
+.apya-flow-next-text {
+    overflow: hidden;
+    padding: 3px 9px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.apya-flow-next.is-warning .apya-flow-next-text { background: var(--apya-warning-100); color: var(--apya-warning-700); }
+.apya-flow-next.is-accent .apya-flow-next-text { background: var(--apya-accent-soft); color: var(--apya-accent-700); }
+[data-theme="dark"] .apya-flow-next.is-accent .apya-flow-next-text { color: var(--apya-accent-300); }
+
+/* Dar ekran: ipucu kendi satırına iner, adımlar tam genişliği alır. */
+@media (max-width: 991.98px) {
+    .apya-flow { flex-wrap: wrap; }
+    .apya-flow-next {
+        flex: 1 1 100%;
+        max-width: none;
+        padding: 6px 2px 2px;
+        border-top: 1px solid var(--apya-border-subtle);
+        border-left: none;
+    }
+}
+@media (max-width: 640px) {
+    .apya-flow-sub,
+    .apya-flow-arrow { display: none; }
+    .apya-flow-link { gap: 6px; padding: 4px 6px; }
+    /* İpucu kendi satırında: kesilip yüzdeyi yutmasın, iki satıra sarsın. */
+    .apya-flow-next-text { border-radius: var(--apya-radius-lg); white-space: normal; }
+}
+/* Telefon: etkin olmayan adım yalnız numarasıyla durur, dört adım tek satıra sığar.
+   Bağlantının erişilebilir adı aria-label'dan gelir, metin gizlense de kaybolmaz. */
+@media (max-width: 480px) {
+    .apya-flow-step:not(.is-active) { flex: none; }
+    .apya-flow-step:not(.is-active) .apya-flow-text { display: none; }
+}
+
+/* --- ⋯ menüsü (Radix Popover içeriği; satırlar .apya-console-menu-item) --- */
+.apya-docs-menu {
+    z-index: var(--apya-z-popover, 1060);
+    min-width: 220px;
+    max-width: min(320px, calc(100vw - 24px));
+    padding: 4px 0;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-elevated);
+    box-shadow: var(--apya-shadow-lg);
+}
+.apya-docs-menu .apya-console-menu-item { text-decoration: none; }
+.apya-docs-menu a.apya-console-menu-item:hover { color: var(--apya-text-primary); text-decoration: none; }
+.apya-docs-menu .apya-console-menu-item:disabled {
+    background: transparent;
+    cursor: not-allowed;
+    opacity: .55;
+}
+.apya-docs-menu-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.apya-docs-menu-hint {
+    color: var(--apya-text-secondary);
+    font-size: 11px;
+}
+/* Telefonda sabit düğmesi olan eylem menüde tekrar etmesin. */
+@media (max-width: 640px) {
+    .apya-docs-menu .is-desktop-only { display: none; }
+}
+
+/* --- Boş durum: tek birincil düğme + metin bağlantısı --- */
+.apya-docs-empty-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+}
+
+/* --- Rapor derleyici alt akış şeridi: Taslak kaydet | Önizle | Üret ve teslime geç --- */
+.apya-doc-subflow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    margin-bottom: 12px;
+    padding: 9px 13px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    box-shadow: var(--apya-shadow-sm);
+}
+.apya-doc-subflow-text {
+    flex: 1 1 280px;
+    min-width: 0;
+    color: var(--apya-text-secondary);
+    font-size: 11.5px;
+}
+.apya-doc-subflow-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 /* ============================================================================

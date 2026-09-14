@@ -53,6 +53,11 @@ vi.mock('./api', () => ({
     fmtMoney: (v) => String(v ?? ''),
 }));
 
+// Süreç şeridi kendi uygunluk özetini çeker; bu test onu değil bütçe etkisini ölçüyor.
+vi.mock('../components/documents/useComplianceOverview', () => ({
+    useComplianceOverview: () => ({ overview: null, loading: false, failed: false, reload: vi.fn() }),
+}));
+
 // eslint-disable-next-line import/first
 import { MatchingRoot } from './MatchingRoot';
 

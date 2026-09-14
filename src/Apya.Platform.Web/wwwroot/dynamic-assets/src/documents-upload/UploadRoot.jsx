@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
+import { DocsPageHeader, EmptyActions, ProcessRibbon } from '../components/documents';
 import {
   ALLOWED_EXTENSIONS, abpAppPath, abpDocument, abpNotify, fmtSize,
   getDocumentTypes, setMeta, uploadFile, validate,
@@ -162,17 +163,20 @@ export function UploadRoot() {
 
   if (loading) return <div className="p-4"><SkeletonList rows={6} /></div>;
 
+  // Dönüş bağlantısı seçili klasörü taşır: Dokümanlar aynı klasörde açılır.
+  const backHref = `${abpAppPath()}Documents${folderId ? `?folder=${folderId}` : ''}`;
+  const projectId = folders.find((f) => f.id === folderId)?.projectId ?? null;
+
   return (
     <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
-      <div className="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Yükleme kuyruğu</h1>
-          <p style={{ fontSize: 12, color: 'var(--apya-text-tertiary)', margin: '4px 0 0' }}>
-            Dosyaları sürükleyin; sıra tek tek yükler, hatalı olanı tekrar denersiniz
-          </p>
-        </div>
-        <a className="apya-doc-linkbtn" href={`${abpAppPath()}Documents`}>Dokümanlar'a dön</a>
-      </div>
+      {/* Birincil düğme ("Yükle") sıranın başında durur — başlıkta ikinci bir
+          birincil düğme olmasın diye başlık yalnız ⋯ menüsünü taşır. */}
+      <DocsPageHeader
+        title="Yükleme kuyruğu"
+        description="Dosyaları sürükleyin; sıra tek tek yükler, hatalı olanı tekrar denersiniz"
+        menuItems={[{ key: 'back', label: "Dokümanlar'a dön", icon: 'fa-arrow-left', href: backHref }]}
+      />
+      <ProcessRibbon active="docs" projectId={projectId} />
 
       <div className="apya-doc-uploadgrid">
         {/* Sol: hedef + bırakma alanı */}
@@ -256,17 +260,27 @@ export function UploadRoot() {
                   Bitenleri temizle
                 </button>
               )}
-              <Button variant="primary" size="sm"
-                disabled={running || !folderId || (counts.queued + counts.failed) === 0}
-                onClick={runQueue}>
-                {running ? 'Yükleniyor…' : `Yükle (${counts.queued + counts.failed})`}
-              </Button>
+              {/* Sıra boşken boş durumun "Dosya seç" düğmesi birincildir; kapalı
+                  bir "Yükle (0)" onunla yarışmasın. */}
+              {items.length > 0 && (
+                <Button variant="primary" size="sm"
+                  disabled={running || !folderId || (counts.queued + counts.failed) === 0}
+                  onClick={runQueue}>
+                  {running ? 'Yükleniyor…' : `Yükle (${counts.queued + counts.failed})`}
+                </Button>
+              )}
             </span>
           </div>
 
           {items.length === 0 ? (
             <EmptyState icon={<i className="fa fa-inbox" />} title="Sıra boş"
-              description="Soldaki alana dosya bırakarak başlayın." />
+              description="Soldaki alana dosya bırakarak başlayın."
+              action={(
+                <EmptyActions
+                  primary={<Button size="sm" onClick={() => inputRef.current?.click()}>Dosya seç</Button>}
+                  link={{ label: "veya Dokümanlar'a dön", href: backHref }}
+                />
+              )} />
           ) : items.map((i) => {
             const s = STATUS[i.status];
             return (

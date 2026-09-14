@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
-import { abpNotify, createRisk, deleteRisk, fmtDate, fmtMoney, fmtNum, getTimeline, setRiskClosed } from './api';
+import { DocsPageHeader, EmptyActions, ProcessRibbon } from '../components/documents';
+import {
+  abpAppPath, abpNotify, createRisk, deleteRisk, fmtDate, fmtMoney, fmtNum, getTimeline, setRiskClosed,
+} from './api';
 
 /**
  * Zaman çizelgesi & bütçe.
@@ -93,30 +96,42 @@ export function TimelineRoot() {
     }
   };
 
+  // Zaman çizelgesi sürecin bir adımı değil (planlama); şerit etkin adımsız durur.
+  const page = (children) => (
+    <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
+      <DocsPageHeader
+        title={data?.projectName ?? 'Zaman çizelgesi & bütçe'}
+        description={data
+          ? `${fmtDate(data.startDate)} – ${fmtDate(data.endDate)} · ${data.steps.length} iş adımı`
+          : 'İş adımları, bütçe-belge kapsaması ve risk kütüğü'}
+      />
+      <ProcessRibbon active={null} projectId={projectId} />
+      {children}
+    </div>
+  );
+
   if (!projectId) {
-    return (
-      <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
-        <EmptyState icon={<i className="fa fa-diagram-project" />} title="Proje bağlamı gerekiyor"
-          description="Bu sayfa bir proje bağlamından açılır (?projectId=...)." />
-      </div>
+    return page(
+      <EmptyState icon={<i className="fa fa-diagram-project" />} title="Proje bağlamı gerekiyor"
+        description="Bu sayfa bir proje bağlamından açılır (?projectId=...)."
+        action={(
+          <EmptyActions
+            primary={<Button asChild><a href={`${abpAppPath()}Projects`}>Projelere git</a></Button>}
+            link={{ label: 'veya proje kapsamını aç', href: `${abpAppPath()}Documents/Scope` }}
+          />
+        )} />,
     );
   }
 
-  if (loading) return <div className="p-4"><SkeletonList rows={8} /></div>;
+  if (loading) return page(<SkeletonList rows={8} />);
   if (!data) return null;
 
   const projectStart = data.startDate ? new Date(data.startDate) : null;
   const projectEnd = data.endDate ? new Date(data.endDate) : null;
   const budget = data.budget;
 
-  return (
-    <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
-      <div className="mb-4">
-        <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{data.projectName}</h1>
-        <p style={{ fontSize: 12, color: 'var(--apya-text-tertiary)', margin: '4px 0 0' }}>
-          {fmtDate(data.startDate)} – {fmtDate(data.endDate)} · {data.steps.length} iş adımı
-        </p>
-      </div>
+  return page(
+    <>
 
       {/* Bütçe kapsaması — asıl soru: harcadığımın ne kadarı belgeli? */}
       <div className="apya-doc-kpis">
@@ -218,6 +233,6 @@ export function TimelineRoot() {
           </div>
         ))}
       </div>
-    </div>
+    </>,
   );
 }

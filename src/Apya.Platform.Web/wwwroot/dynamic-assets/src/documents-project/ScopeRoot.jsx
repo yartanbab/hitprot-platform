@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
+import { DocsPageHeader, EmptyActions, ProcessRibbon } from '../components/documents';
 import { abpAppPath, abpNotify, fmtDate, fmtMoney, getScopeBranch, getScopeOverview } from './api';
 
 /**
@@ -283,51 +284,69 @@ export function ScopeRoot() {
     return [...set].sort((a, b) => a.localeCompare(b, 'tr'));
   }, [branches]);
 
-  if (loading) return <div className="p-4"><SkeletonList rows={8} /></div>;
+  const hasRows = Boolean(overview?.rows?.length);
+  const allOpen = hasRows && overview.rows.every((r) => open.has(r.id));
 
-  if (!overview || overview.rows.length === 0) {
-    return (
-      <div className="p-4">
-        <EmptyState
-          icon={<i className="fa fa-diagram-project" />}
-          title="Henüz proje yok"
-          description="Kapsam ağacı projelerden doğar; önce bir proje oluşturun."
-          action={<Button asChild><a href={`${abpAppPath()}Projects`}>Projelere git</a></Button>}
-        />
-      </div>
+  // Başlık ve süreç şeridi yüklenirken de, proje yokken de yerinde durur —
+  // ekran içerik gelince zıplamasın.
+  const head = (
+    <>
+      <DocsPageHeader
+        title="Proje kapsamı"
+        description="Projeler, iş adımları, görevler ve bunlara bağlı belge · tutar · uygunluk"
+        // Rapor TEK proje için derlenir; hedef, açılan (ya da bağlamdan gelen) proje.
+        primary={hasRows && (activeProjectId ? (
+          <Button asChild leadingIcon={<i className="fa fa-file-export" />}>
+            <a href={`${abpAppPath()}Documents/ReportBuilder?projectId=${activeProjectId}`}>Kapsamı raporla</a>
+          </Button>
+        ) : (
+          <Button disabled title="Raporlamak için bir proje açın" leadingIcon={<i className="fa fa-file-export" />}>
+            Kapsamı raporla
+          </Button>
+        ))}
+        menuItems={[
+          hasRows && {
+            key: 'expand',
+            label: allOpen ? 'Hepsini kapat' : 'Hepsini aç',
+            icon: allOpen ? 'fa-compress' : 'fa-expand',
+            disabled: busy,
+            onSelect: expandAll,
+          },
+        ]}
+      />
+      <ProcessRibbon active="docs" projectId={activeProjectId} />
+    </>
+  );
+
+  const page = (children) => (
+    <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
+      {head}
+      {children}
+    </div>
+  );
+
+  if (loading) return page(<SkeletonList rows={8} />);
+
+  if (!hasRows) {
+    return page(
+      <EmptyState
+        icon={<i className="fa fa-diagram-project" />}
+        title="Henüz proje yok"
+        description="Kapsam ağacı projelerden doğar; önce bir proje oluşturun."
+        action={(
+          <EmptyActions
+            primary={<Button asChild><a href={`${abpAppPath()}Projects`}>Projelere git</a></Button>}
+            link={{ label: "veya Dokümanlar'a dön", href: `${abpAppPath()}Documents` }}
+          />
+        )}
+      />,
     );
   }
 
   const rollup = overview.rollup;
-  const allOpen = overview.rows.every((r) => open.has(r.id));
 
-  return (
-    <div className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto" style={{ maxWidth: 1560 }}>
-      <div className="d-flex align-items-end gap-3 mb-4 flex-wrap">
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Proje kapsamı</h1>
-          <p style={{ fontSize: 12, color: 'var(--apya-text-tertiary)', margin: '4px 0 0' }}>
-            Projeler, iş adımları, görevler ve bunlara bağlı belge · tutar · uygunluk
-          </p>
-        </div>
-        <div className="flex-grow-1" />
-        <Button variant="outline" size="sm" onClick={expandAll} isLoading={busy}>
-          <i className={cn('fa', allOpen ? 'fa-compress' : 'fa-expand')} />
-          {allOpen ? ' Hepsini kapat' : ' Hepsini aç'}
-        </Button>
-        {/* Rapor TEK proje icin derlenir; hedef, acilan (ya da baglamdan gelen) proje. */}
-        {activeProjectId ? (
-          <Button asChild size="sm">
-            <a href={`${abpAppPath()}Documents/ReportBuilder?projectId=${activeProjectId}`}>
-              <i className="fa fa-file-export" /> Kapsamı raporla
-            </a>
-          </Button>
-        ) : (
-          <Button size="sm" disabled title="Raporlamak için bir proje açın">
-            <i className="fa fa-file-export" /> Kapsamı raporla
-          </Button>
-        )}
-      </div>
+  return page(
+    <>
 
       {/* Ozet serit */}
       <div className="apya-doc-kpis">
@@ -441,6 +460,6 @@ export function ScopeRoot() {
           </span>
         </div>
       </div>
-    </div>
+    </>,
   );
 }

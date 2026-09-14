@@ -238,7 +238,7 @@ function FileCard({ file, selected, onSelect, onDragStart }) {
 export function FileList({
   loading, files, totalCount, view, sorting, onSort,
   selectedId, onSelect, checkedIds, onToggleCheck, onToggleAll,
-  page, pageSize, onPageChange, onDragStart, emptyHint,
+  page, pageSize, onPageChange, onDragStart, emptyHint, emptyAction = null,
   missingItems = [], onUploadMissing, canUpload = false, isTrash = false, onRestore,
 }) {
   const allChecked = files.length > 0 && files.every((f) => checkedIds.has(f.id));
@@ -262,6 +262,7 @@ export function FileList({
         icon={<i className="fa fa-inbox" />}
         title="Burada henüz belge yok"
         description={emptyHint}
+        action={emptyAction}
       />
     );
   }

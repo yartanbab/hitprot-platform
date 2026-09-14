@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
-import { SECTION_LABEL, abpNotify, fmtDate, fmtMoney, getPreview, previewPdfUrl } from './api';
+import { EmptyActions } from '../components/documents';
+import { SECTION_LABEL, abpAppPath, abpNotify, fmtDate, fmtMoney, getPreview, previewPdfUrl } from './api';
 
 /**
  * Önizleme sekmesi.
@@ -9,7 +10,7 @@ import { SECTION_LABEL, abpNotify, fmtDate, fmtMoney, getPreview, previewPdfUrl 
  * diğerinden sapamaz. PDF'e "ÖNİZLEME" damgası sunucuda basılır, çünkü
  * damgayı istemciye bırakmak onu atlanabilir kılardı.
  */
-export function PreviewTab({ projectId, template }) {
+export function PreviewTab({ projectId, template, onPickProject }) {
   const [model, setModel] = useState(null);
   const [periodCode, setPeriodCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,7 +34,13 @@ export function PreviewTab({ projectId, template }) {
     return (
       <div className="apya-doc-check-card">
         <EmptyState icon={<i className="fa fa-eye" />} title="Proje bağlamı gerekiyor"
-          description="Önizleme gerçek veriyle üretilir; üstteki listeden bir proje seçin." />
+          description="Önizleme gerçek veriyle üretilir; üstteki listeden bir proje seçin."
+          action={(
+            <EmptyActions
+              primary={<Button size="sm" onClick={onPickProject}>Proje seç</Button>}
+              link={{ label: 'veya proje kapsamından seç', href: `${abpAppPath()}Documents/Scope` }}
+            />
+          )} />
       </div>
     );
   }

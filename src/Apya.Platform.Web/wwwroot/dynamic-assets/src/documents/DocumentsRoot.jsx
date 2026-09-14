@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Input, ModalPortal } from '../components/ui';
 import {
+  DocsPageHeader, EmptyActions, ProcessRibbon, sameSummary, useComplianceOverview,
+} from '../components/documents';
+import {
   abpAuth, abpDocument, abpNotify, abpAppPath,
-  bulkMoveFiles, bulkTagFiles, deleteFile, getComplianceOverview, getDocumentTypes, getFile, getFiles,
+  bulkMoveFiles, bulkTagFiles, deleteFile, getDocumentTypes, getFile, getFiles,
   applySuggestions, dismissSuggestions, getSetupState, getSuggestions,
   getWorkSteps, linkComplianceDocument, moveFile, restoreFile, updateFileMeta, uploadAttachment,
 } from './api';
@@ -145,9 +148,19 @@ export function DocumentsRoot() {
 
   const [node, setNode] = useState(() => {
     const smart = initialQuery.get('smart');
+    if (smart) return { key: smart, kind: 'smart', smart };
+
+    // Süreç şeridinden (?projectId=) gelindi: bağlam ağaç yüklenmeden de proje
+    // düzeyinde kurulur. Projenin klasörü ağaçta varsa aşağıdaki geri yükleme
+    // effect'i düğümü o klasöre çevirir; yoksa proje düğümü olarak kalır.
+    const projectId = initialQuery.get('projectId');
+    if (projectId && !initialQuery.get('folder') && !initialQuery.get('step')) {
+      return { key: `project-${projectId}`, kind: 'project', projectId };
+    }
+
     // Klasör/iş adımı düğümü ağaç yüklenmeden çözülemez (projeyi ağaç taşıyor);
     // onu aşağıdaki geri yükleme effect'i tamamlar.
-    return smart ? { key: smart, kind: 'smart', smart } : { key: 'all', kind: 'all' };
+    return { key: 'all', kind: 'all' };
   });
 
   // Yükleme yalnız klasör bağlamında yapılır; uygunluk ve etkinlik ise proje
@@ -168,7 +181,6 @@ export function DocumentsRoot() {
     const requested = initialQuery.get('tab');
     return ['files', 'compliance', 'activity'].includes(requested) ? requested : 'files';
   });
-  const [complianceSummary, setComplianceSummary] = useState(null);
 
   const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -189,7 +201,6 @@ export function DocumentsRoot() {
   const [suggestions, setSuggestions] = useState(null);
   const [suggestionBusy, setSuggestionBusy] = useState(false);
 
-  const [missingItems, setMissingItems] = useState([]);
   // "Yükle" düğmesine basılan eksik kalem; yükleme bitince buna bağlanır.
   const pendingRequirementRef = useRef(null);
 
@@ -232,6 +243,8 @@ export function DocumentsRoot() {
       base.includeSubFolders = true;
     } else if (node.kind === 'workstep') {
       base.workStepId = node.workStepId;
+    } else if (node.kind === 'project') {
+      base.projectId = node.projectId;
     } else if (node.kind === 'smart' && node.smart === 'expiring') {
       base.expiringWithinDays = 30;
     } else if (node.kind === 'smart' && node.smart === 'missing-meta') {
@@ -284,36 +297,37 @@ export function DocumentsRoot() {
 
   useEffect(() => { loadKpis(); }, [loadKpis]);
 
-  /* --- Satır içi eksik kalemler ---
-     Kontrol listesi PROJE kapsamında tanımlı; proje bağlamı yoksa gösterilecek
-     bir eksik de yok. İş adımı seçiliyse yalnız o adımın kalemleri süzülür. */
-  const loadMissing = useCallback(async () => {
-    if (!activeProjectId) {
-      setMissingItems([]);
-      return;
-    }
+  /* --- Uygunluk özeti ---
+     Tek kaynak: KPI şeridi, süreç şeridi ve satır içi eksik kalemler aynı
+     özetten okur. Kontrol listesi PROJE kapsamında tanımlı; proje bağlamı
+     yoksa özet de yok. Okunamazsa dosya listesi yine çalışır (eksik satırı basılmaz). */
+  const compliance = useComplianceOverview(activeProjectId);
+  const reloadCompliance = compliance.reload;
 
-    try {
-      const overview = await getComplianceOverview(activeProjectId, null);
+  /* İş adımı seçiliyse yalnız o adımın kalemleri süzülür. */
+  const missingItems = useMemo(() => {
+    const items = (compliance.overview?.checklists ?? []).flatMap((checklist) =>
+      (checklist.items ?? [])
+        .filter((item) => item.status === 2) // 2 = Missing
+        .map((item) => ({ ...item, assignmentId: checklist.assignmentId })));
 
-      const items = (overview.checklists ?? []).flatMap((checklist) =>
-        (checklist.items ?? [])
-          .filter((item) => item.status === 2) // 2 = Missing
-          .map((item) => ({ ...item, assignmentId: checklist.assignmentId })));
+    return node.kind === 'workstep'
+      ? items.filter((i) => i.workStepId === node.workStepId)
+      : items;
+  }, [compliance.overview, node.kind, node.workStepId]);
 
-      setMissingItems(
-        node.kind === 'workstep'
-          ? items.filter((i) => i.workStepId === node.workStepId)
-          : items,
-      );
-    } catch (e) {
-      // Kontrol listesi okunamadıysa dosya listesi yine çalışmalı.
-      setMissingItems([]);
-      console.error('[Documents] loadMissing', e);
-    }
-  }, [activeProjectId, node.kind, node.workStepId]);
+  /* Uygunluk sekmesi paket uygular/feragat alır; özet değiştiyse tek kaynağı
+     tazeleriz. Geri çağrı KİMLİĞİ SABİT olmalı: ComplianceTab onu yükleyicisinin
+     bağımlılığına koyuyor, her render'da yeni fonksiyon sonsuz yeniden yükleme
+     döngüsü kurardı. Güncel özet ref'ten okunur. */
+  const complianceRef = useRef(compliance);
+  complianceRef.current = compliance;
 
-  useEffect(() => { loadMissing(); }, [loadMissing]);
+  const handleSummaryChange = useCallback((summary) => {
+    const current = complianceRef.current;
+    if (!summary || current.loading) return;
+    if (!sameSummary(summary, current.overview?.summary)) current.reload();
+  }, []);
 
   /* --- Öneriler --- */
   const loadSuggestions = useCallback(async () => {
@@ -423,15 +437,20 @@ export function DocumentsRoot() {
 
     const folderId = initialQuery.get('folder');
     const stepId = initialQuery.get('step');
-    if (!folderId && !stepId) {
+    const projectId = initialQuery.get('projectId');
+    if (!folderId && !stepId && !projectId) {
       restoredRef.current = true;
       return;
     }
 
     const flatten = (nodes) => nodes.flatMap((n) => [n, ...flatten(n.children || [])]);
-    const found = flatten(tree).find((n) => (
-      folderId ? n.documentId === folderId : n.workStepId === stepId
-    ));
+    const sameId = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
+    const all = flatten(tree);
+    // Proje bağlamında ön-sıradaki (en üstteki) proje klasörü seçilir: ağaçta
+    // görünür, yükleme de klasör bağlamı istediği için "Yükle" açılır.
+    const found = folderId ? all.find((n) => n.documentId === folderId)
+      : stepId ? all.find((n) => n.workStepId === stepId)
+        : all.find((n) => n.kind === 'folder' && sameId(n.projectId, projectId));
 
     restoredRef.current = true;
     if (found) {
@@ -448,6 +467,7 @@ export function DocumentsRoot() {
     if (tab !== 'files') params.set('tab', tab);
     if (node.kind === 'folder') params.set('folder', node.documentId);
     else if (node.kind === 'workstep') params.set('step', node.workStepId);
+    else if (node.kind === 'project') params.set('projectId', node.projectId);
     else if (node.kind === 'smart') params.set('smart', node.smart);
     if (search.trim()) params.set('q', search.trim());
     if (view !== 'list') params.set('view', view);
@@ -614,7 +634,7 @@ export function DocumentsRoot() {
         flash(fileList.length === 1 ? 'Dosya yüklendi.' : `${fileList.length} dosya yüklendi.`);
       }
 
-      await Promise.all([loadFiles(), loadKpis(), loadTree(), loadMissing()]);
+      await Promise.all([loadFiles(), loadKpis(), loadTree(), reloadCompliance()]);
     } catch (e) {
       abpNotify('error', 'Dosya yüklenemedi.');
       console.error('[Documents] upload', e);
@@ -675,6 +695,51 @@ export function DocumentsRoot() {
     files.every((f) => prev.has(f.id)) ? new Set() : new Set(files.map((f) => f.id))
   ));
 
+  /* --- Süreç şeridi: Belgeler ve Uygunluk bu ekranın sekmeleri ---
+     O iki adıma sayfa yenilemeden geçilir; Derle ve Teslim kendi ekranına gider. */
+  const handleFlowSelect = (stepKey, event) => {
+    if (stepKey !== 'docs' && stepKey !== 'compliance') return;
+    event.preventDefault();
+    setTab(stepKey === 'docs' ? 'files' : 'compliance');
+  };
+
+  const pickFiles = () => fileInputRef.current?.click();
+
+  /* --- Boş durum eylemi: tek birincil düğme + metin bağlantısı ---
+     Yalnız "henüz bir şey yok" durumlarında; arama/süzgeç ve akıllı klasör
+     boşken eylem önermiyoruz (orada boş olmak iyi haber ya da süzgeç sonucu). */
+  const noFolders = !loadingTree && folders.length === 0;
+
+  let emptyAction = null;
+  if (canCreate && !search.trim() && node.kind !== 'smart') {
+    if (noFolders) {
+      // Tasarımdaki ilk kurulum boş durumu: şema sihirbazı ya da boş klasör.
+      // Sihirbaz ağaç BOŞKEN yeniden açılabilir — kurulacak hiçbir şey yokken
+      // "ilk kurulum" hâlâ ilk kurulumdur.
+      emptyAction = setupState ? (
+        <EmptyActions
+          primary={<Button onClick={() => setSetupState({ ...setupState, setupCompleted: false })}>Şemayı kur</Button>}
+          link={{ label: 'veya boş klasörle başla', onClick: openCreateFolder }}
+        />
+      ) : (
+        <EmptyActions primary={<Button onClick={openCreateFolder}>Yeni klasör</Button>} />
+      );
+    } else if (activeFolderId) {
+      emptyAction = (
+        <EmptyActions
+          primary={<Button leadingIcon={<i className="fa fa-upload" />} onClick={pickFiles}>Yükle</Button>}
+          link={{ label: 'veya toplu yükleme ekranını aç', href: `${abpAppPath()}Documents/Upload?documentId=${activeFolderId}` }}
+        />
+      );
+    }
+  }
+
+  const emptyHint = noFolders
+    ? 'Klasör şemasını kurumun beklediği yapıya göre kurun; zorunlu belgeler ve meta alanları birlikte gelir.'
+    : activeFolderId
+      ? 'Dosyaları buraya sürükleyin ya da "Yükle" ile ekleyin.'
+      : 'Sol taraftan bir klasör seçin; yükleme klasör bağlamında yapılır.';
+
   return (
     <div
       className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto"
@@ -686,77 +751,91 @@ export function DocumentsRoot() {
         handleUpload(e.dataTransfer.files);
       }}
     >
-      <div className="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
-        <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Dokümanlar</h1>
-          <p style={{ fontSize: 12, color: 'var(--apya-text-tertiary)', margin: '4px 0 0' }}>
-            Klasörler, belgeler ve meta veri
-          </p>
-        </div>
-        {/* flex-wrap ŞART: dar ekranda üç eylem yan yana sığmıyor ve satır
-            viewport'u yatay taşırıyordu (mobilde ölçüldü, "Yükle" ekranın
-            dışında kalıyordu). Sarınca ikinci satıra iner. */}
-        <div className="d-flex align-items-center flex-wrap gap-2">
-          {/* Buradaki "Yükle" tek seferlik ve seçili klasöre çalışır; sıra,
-              ilerleme ve tekrar deneme isteyen toplu iş kuyruk ekranında. */}
-          {canCreate && (
-            <a
-              className="apya-doc-linkbtn"
-              href={`${abpAppPath()}Documents/Upload${activeFolderId ? `?documentId=${activeFolderId}` : ''}`}
-            >
-              Toplu yükleme
-            </a>
-          )}
-          {canCreate && (
-            <Button variant="secondary" leadingIcon={<i className="fa fa-folder-plus" />} onClick={openCreateFolder}>
-              Yeni klasör
-            </Button>
-          )}
-          {canCreate && (
-            <Button
-              variant="primary"
-              isLoading={uploading}
-              disabled={!activeFolderId}
-              title={activeFolderId ? undefined : 'Önce bir klasör seçin'}
-              leadingIcon={<i className="fa fa-upload" />}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Yükle
-            </Button>
-          )}
+      {/* Buton kuralı: başlıkta tek birincil düğme ("Yükle" — tek seferlik, seçili
+          klasöre çalışır), ikincil eylemler ⋯ menüsünde. Sıra, ilerleme ve tekrar
+          deneme isteyen toplu iş kuyruk ekranında. */}
+      <DocsPageHeader
+        title="Dokümanlar"
+        description="Klasörler, belgeler ve meta veri"
+        primary={canCreate && (
+          <Button
+            variant="primary"
+            isLoading={uploading}
+            disabled={!activeFolderId}
+            title={activeFolderId ? undefined : 'Önce bir klasör seçin'}
+            leadingIcon={<i className="fa fa-upload" />}
+            onClick={pickFiles}
+          >
+            Yükle
+          </Button>
+        )}
+        menuItems={canCreate ? [
+          { key: 'folder', label: 'Yeni klasör', icon: 'fa-folder-plus', onSelect: openCreateFolder },
+          {
+            key: 'bulk',
+            label: 'Toplu yükleme',
+            icon: 'fa-layer-group',
+            href: `${abpAppPath()}Documents/Upload${activeFolderId ? `?documentId=${activeFolderId}` : ''}`,
+          },
+          {
+            key: 'capture',
+            label: 'Belge yakala',
+            icon: 'fa-camera',
+            // Telefonda sağ alttaki sabit düğme bu işi görüyor; menüde tekrar etmesin.
+            className: 'is-desktop-only',
+            disabled: !activeFolderId || uploading,
+            hint: activeFolderId ? null : 'Önce bir klasör seçin',
+            onSelect: () => cameraInputRef.current?.click(),
+          },
+        ] : []}
+      />
 
-          {/* Belge yakala — sahadaki kullanıcının ana eylemi. Mobilde kamerayı
-              açar; dar ekranda sağ altta sabit bir düğmeye dönüşür (CSS). */}
-          {canCreate && (
-            <Button
-              variant="secondary"
-              className="apya-doc-capture-btn"
-              isLoading={uploading}
-              disabled={!activeFolderId}
-              title={activeFolderId ? undefined : 'Önce bir klasör seçin'}
-              leadingIcon={<i className="fa fa-camera" />}
-              onClick={() => cameraInputRef.current?.click()}
-            >
-              Belge yakala
-            </Button>
-          )}
-          <input
-            ref={fileInputRef} type="file" multiple hidden
-            onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }}
-          />
+      <ProcessRibbon
+        active={tab === 'compliance' ? 'compliance' : 'docs'}
+        projectId={activeProjectId}
+        compliance={compliance}
+        onSelect={handleFlowSelect}
+      />
 
-          {/* Sahadaki kullanıcı: belgeyi telefonun kamerasıyla yakalar.
-              `capture` mobil tarayıcıda doğrudan kamerayı açar; masaüstünde
-              yok sayılıp normal dosya seçiciye düşer, o yüzden ayrı bir kod
-              yolu gerekmiyor. OCR YOK — dosya olduğu gibi yüklenir. */}
-          <input
-            ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden
-            onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }}
-          />
-        </div>
-      </div>
+      {/* Belge yakala — sahadaki kullanıcının ana eylemi. Dar ekranda sağ altta
+          sabit bir düğmedir (CSS); geniş ekranda gizlenir, ⋯ menüsünden açılır.
+          Portal ŞART: ada kökünün .apya-fade-in transform'u `position: fixed`
+          için kapsayıcı blok olur, düğme görünen alana değil sayfanın dibine
+          hizalanırdı (bkz. ModalPortal). */}
+      {canCreate && (
+        <ModalPortal>
+          <Button
+            variant="secondary"
+            className="apya-doc-capture-btn"
+            isLoading={uploading}
+            disabled={!activeFolderId}
+            title={activeFolderId ? undefined : 'Önce bir klasör seçin'}
+            leadingIcon={<i className="fa fa-camera" />}
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            Belge yakala
+          </Button>
+        </ModalPortal>
+      )}
+      <input
+        ref={fileInputRef} type="file" multiple hidden
+        onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }}
+      />
 
-      <KpiStrip uploadedThisMonth={uploadedThisMonth} expiring={expiringCount} compliance={complianceSummary} />
+      {/* Sahadaki kullanıcı: belgeyi telefonun kamerasıyla yakalar.
+          `capture` mobil tarayıcıda doğrudan kamerayı açar; masaüstünde
+          yok sayılıp normal dosya seçiciye düşer, o yüzden ayrı bir kod
+          yolu gerekmiyor. OCR YOK — dosya olduğu gibi yüklenir. */}
+      <input
+        ref={cameraInputRef} type="file" accept="image/*" capture="environment" hidden
+        onChange={(e) => { handleUpload(e.target.files); e.target.value = ''; }}
+      />
+
+      <KpiStrip
+        uploadedThisMonth={uploadedThisMonth}
+        expiring={expiringCount}
+        compliance={compliance.overview?.summary ?? null}
+      />
 
       <div className="apya-doc-tabs" role="tablist">
         {[
@@ -795,7 +874,7 @@ export function DocumentsRoot() {
             <ComplianceTab
               projectId={activeProjectId}
               periodCode={null}
-              onSummaryChange={setComplianceSummary}
+              onSummaryChange={handleSummaryChange}
               documentTypes={documentTypes}
             />
           </div>
@@ -870,9 +949,8 @@ export function DocumentsRoot() {
             pageSize={PAGE_SIZE}
             onPageChange={setPage}
             onDragStart={handleDragStart}
-            emptyHint={activeFolderId
-              ? 'Dosyaları buraya sürükleyin ya da "Yükle" ile ekleyin.'
-              : 'Sol taraftan bir klasör seçin; yükleme klasör bağlamında yapılır.'}
+            emptyHint={emptyHint}
+            emptyAction={emptyAction}
             missingItems={missingItems}
             onUploadMissing={handleUploadForRequirement}
             canUpload={canCreate}
