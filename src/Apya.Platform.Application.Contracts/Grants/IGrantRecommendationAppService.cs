@@ -23,4 +23,7 @@ public interface IGrantRecommendationAppService : IApplicationService
 
     /// <summary>1d/9a · Takip işaretini açıp kapatır. Dönüş: yeni durum.</summary>
     Task<bool> ToggleBookmarkAsync(Guid grantCallId);
+
+    /// <summary>13b · Takipteki çağrıya not düşer; boş not siler. Takipte değilse hata.</summary>
+    Task SetBookmarkNoteAsync(SetGrantBookmarkNoteInput input);
 }

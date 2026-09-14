@@ -177,128 +177,122 @@ $(function () {
         activeTab = $(this).data('tab');
         $('.apya-tenant-tab').removeClass('is-active');
         $(this).addClass('is-active');
+        // Dar ekranda şerit yatay kayar; seçilen sekme görünür alana ortalanır.
+        var strip = this.parentElement, r = this.getBoundingClientRect(), sr = strip.getBoundingClientRect();
+        strip.scrollLeft += r.left - sr.left - (sr.width - r.width) / 2;
         paintFeed();
-    });
-
-    // ---------- Takvim şeridi (90 gün) ----------
-    // Konum son tarihle orantılıdır; ancak son tarihi aynı ya da birbirine yakın
-    // çağrılar aynı yüzdeye düşüp etiketleri üst üste bindiriyordu. Orantılı
-    // konum hesaplandıktan sonra soldan sağa tek geçişte etiket genişliği kadar
-    // asgari aralık zorlanıyor: sıra ve yaklaşık orantı korunuyor, çakışma bitiyor.
-    function paintTimeline() {
-        var horizon = 90;
-        var points = feed
-            .filter(function (r) { return r.daysRemaining != null && r.daysRemaining >= 0 && r.daysRemaining <= horizon; })
-            .sort(function (a, b) { return a.daysRemaining - b.daysRemaining; })
-            .slice(0, 6);
-
-        var $t = $('#Timeline').empty();
-        $('#TimelineEmpty').toggleClass('d-none', points.length > 0);
-        $t.toggleClass('d-none', points.length === 0);
-        if (points.length === 0) { return; }
-
-        // Etiket kutusu en fazla 132px; şerit dar olduğunda pay eşit bölünür, bu
-        // sayede son nokta da sağ kenarın içinde kalır (kanıt: half + (n-1)*slot
-        // <= width - half, çünkü slot <= width / n).
-        var width = $t.width() || 640;
-        var slot = Math.min(132, width / points.length);
-        var half = slot / 2;
-        var cursor = half;
-
-        points.forEach(function (r) {
-            var x = Math.max(cursor, Math.min(width - half, (r.daysRemaining / horizon) * width));
-            cursor = x + slot;
-            // <20 gün kırmızı · 20-40 sarı · 40+ accent.
-            var tone = r.daysRemaining < 20 ? 'is-urgent' : r.daysRemaining <= 40 ? 'is-soon' : '';
-            $t.append(
-                '<a class="apya-timeline-point" style="left:' + ((x / width) * 100).toFixed(2) + '%;width:' +
-                Math.floor(slot) + 'px" href="/Grants/Detail?id=' + r.grantCallId + '">' +
-                '<span class="apya-timeline-label">' + esc(r.grantName) + '</span>' +
-                '<span class="apya-timeline-date">' + esc(fmtDate(r.deadline)) + '</span>' +
-                '<span class="apya-timeline-dot ' + tone + '"></span></a>');
-        });
-    }
-
-    // Şerit genişliği değişince (pencere, kenar çubuğu) asgari aralık yeniden
-    // hesaplanmalı — yoksa daralan şeritte çakışma geri gelir.
-    var timelineResizeTimer;
-    $(window).on('resize', function () {
-        clearTimeout(timelineResizeTimer);
-        timelineResizeTimer = setTimeout(paintTimeline, 150);
     });
 
     // ---------- Kart akışı ----------
     function ruleText(rule) { return l('Grants:Rule:' + ruleKeys[rule]); }
 
-    // GrantInterestStatus enum sırasıyla birebir.
-    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil'];
-    var interestTone = ['neutral', 'neutral', 'positive', 'negative'];
+    // GrantInterestStatus enum değerleri sunucudakiyle birebir.
+    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi'];
+    var interestTone = ['neutral', 'neutral', 'positive', 'negative', 'neutral'];
+    var bucketKeys = ['Uygun', 'Kosullu', 'UygunDegil'];
+    var bucketTone = ['positive', 'warning', 'neutral'];
 
-    /// Kartın tek eylemi (tur 14): ilgi kartta DEĞİL detayda bildirilir, kart "İncele" der.
-    /// Süren talepte düğme yerine durum rozeti çıkar; başlık zaten detaya gider.
-    function interestCta(r) {
+    var bookmarkNoteModal = new bootstrap.Modal(document.getElementById('BookmarkNoteModal'));
+    var bookmarkNoteCallId = null;
+
+    /// Kartın tek eylemi (tur 14): ilgi kartta DEĞİL detayda bildirilir, kart "İncele" der;
+    /// şartları karşılamayan kartta "Neden uymuyor?". Süren talepte düğme yerine durum rozeti.
+    function cardCta(r) {
         var st = r.interestStatus;
-
         if (r.alreadyApplied || st === 2) {
-            return '<span class="apya-chip apya-chip-positive">' +
-                esc(l('Grants:Interest:Status:BasvuruAcildi')) + '</span>';
+            return '<span class="apya-chip apya-chip-positive">' + esc(l('Grants:Interest:Status:BasvuruAcildi')) + '</span>';
         }
         if (st === 0 || st === 1) {
-            return '<span class="apya-chip apya-chip-' + interestTone[st] + '">' +
-                esc(l('Grants:Interest:Status:' + interestKeys[st])) + '</span>';
+            return '<span class="apya-chip apya-chip-' + interestTone[st] + '">' + esc(l('Grants:Interest:Status:' + interestKeys[st])) + '</span>';
         }
-        if (r.score >= 65) {
-            return '<a class="btn btn-sm btn-primary" href="/Grants/Detail?id=' + r.grantCallId + '">' +
-                esc(l('Grants:Feed:Card:Review')) + '</a>';
+        var unfit = r.bucket === 2;
+        return '<a class="btn btn-sm ' + (unfit ? 'btn-outline-secondary' : 'btn-primary') + '" href="/Grants/Detail?id=' + r.grantCallId + '">' +
+            esc(l(unfit ? 'Grants:Feed:Card:WhyNot' : 'Grants:Feed:Card:Review')) + '</a>';
+    }
+
+    /// 12b · Afiş yoksa kuruma özel iki tonlu zemin. Ton kurum adından türer: aynı kurum her
+    /// kartta aynı renk. Açıklık %34/%22 sabit — beyaz metin her tonda 4,5:1'in üstünde kalır.
+    function issuerHue(name) {
+        var h = 0;
+        for (var i = 0; i < (name || '').length; i++) { h = (h * 31 + name.charCodeAt(i)) % 360; }
+        return h;
+    }
+
+    function posterStyle(r) {
+        if (r.posterUrl) { return 'background-image:url(' + JSON.stringify(r.posterUrl) + ')'; }
+        var h = issuerHue(r.issuer);
+        return 'background-image:linear-gradient(135deg,hsl(' + h + ' 48% 34%),hsl(' + ((h + 32) % 360) + ' 55% 22%))';
+    }
+
+    /// 10c/12b · "Neden uygun" tek cümle: sağlanan şartların adları; koşulluda eksik veri;
+    /// uymayanda eleyen şartın gerekçesi. Ek gerektiren kalıp yok.
+    function whySentence(r) {
+        if (r.bucket === 2 && r.failedRules && r.failedRules.length) {
+            return reasonSentence(r, r.failedRules[0]);
         }
-        return '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Detail?id=' + r.grantCallId + '">' +
-            esc(l('Grants:Feed:Card:WhyNot')) + '</a>';
+        var passed = (r.passedRules || []).slice(0, 3).map(ruleText);
+        if (passed.length === 0) { return l('Grants:Feed:Card:WhyNone'); }
+        return l(r.bucket === 0 ? 'Grants:Feed:Card:WhyAll' : 'Grants:Feed:Card:WhySome', passed.join(', '));
+    }
+
+    function gapSentence(r) {
+        if (r.bucket === 1 && r.unknownRules && r.unknownRules.length) {
+            return l('Grants:RuleMissing', ruleText(r.unknownRules[0]));
+        }
+        if (r.bucket === 0 && r.unknownRules && r.unknownRules.length) {
+            return l('Grants:Feed:Card:GapOptional', ruleText(r.unknownRules[0]));
+        }
+        return '';
+    }
+
+    function difficultyWord(d) {
+        return l(d >= 4 ? 'Grants:Feed:Card:Hard' : d >= 3 ? 'Grants:Feed:Card:Medium' : 'Grants:Feed:Card:Easy');
+    }
+
+    function daysChip(r) {
+        if (r.daysRemaining == null) { return ''; }
+        var d = r.daysRemaining;
+        if (d < 0) { return '<span class="apya-feed-days is-closed">' + esc(l('Grants:Feed:Card:Closed')) + '</span>'; }
+        return '<span class="apya-feed-days' + (d <= 20 ? ' is-urgent' : '') + '"><i class="fa fa-clock"></i>' +
+            esc(l('Grants:Feed:Card:DaysLeft', d)) + '</span>';
+    }
+
+    /// 13b · Takip satırı: ne zaman, kim işaretledi, firmanın notu.
+    function bookmarkLine(r) {
+        if (!r.isBookmarked) { return ''; }
+        var parts = [];
+        if (r.bookmarkedAt) { parts.push(l('Grants:Feed:Bookmark:Since', fmtDate(r.bookmarkedAt))); }
+        if (r.bookmarkedByName) { parts.push(l('Grants:Feed:Bookmark:MarkedBy', r.bookmarkedByName)); }
+        var note = r.bookmarkNote ? esc(r.bookmarkNote) : '<span class="apya-feed-bookmark-empty">' + esc(l('Grants:Feed:Bookmark:NoNote')) + '</span>';
+        return '<div class="apya-feed-bookmark"><i class="fa fa-bookmark"></i><span class="apya-feed-bookmark-text">' +
+            '<span class="apya-feed-bookmark-meta">' + esc(parts.join(' · ')) + '</span>' + note + '</span>' +
+            '<button type="button" class="apya-feed-bookmark-edit" data-note="' + r.grantCallId + '" title="' + esc(l('Grants:Feed:Bookmark:EditNote')) + '"><i class="fa fa-pen"></i></button></div>';
     }
 
     function feedCard(r) {
-        var chips = '<span class="apya-chip apya-numeric apya-chip-' + (r.score >= 65 ? 'positive' : 'neutral') + '">%' + r.score + '</span>';
-        if (r.isHostRecommended) {
-            chips += '<span class="apya-chip apya-chip-brand">' + esc(l('Grants:Feed:Card:HostRecommended')) + '</span>';
-        }
-
-        // "Neden uygun" — kanıtlı sağlanan şartlardan en fazla üçü.
-        var reasons = (r.passedRules || []).slice(0, 3).map(function (rule) {
-            return '<span class="apya-feed-reason is-good"><i class="fa fa-check"></i>' + esc(ruleText(rule)) + '</span>';
-        }).join('');
-        (r.unknownRules || []).slice(0, 2).forEach(function (rule) {
-            reasons += '<span class="apya-feed-reason is-missing"><i class="fa fa-circle-exclamation"></i>' +
-                esc(l('Grants:RuleMissing', ruleText(rule))) + '</span>';
-        });
-        (r.failedRules || []).slice(0, 2).forEach(function (rule) {
-            reasons += '<span class="apya-feed-reason is-bad"><i class="fa fa-xmark"></i>' +
-                esc(reasonSentence(r, rule)) + '</span>';
-        });
-
-        var days = r.daysRemaining == null ? ''
-            : r.daysRemaining < 0 ? '<span class="apya-chip apya-chip-neutral">' + esc(l('Grants:Feed:Card:Closed')) + '</span>'
-            : '<span class="apya-chip apya-chip-' + (r.daysRemaining < 20 ? 'negative' : r.daysRemaining <= 40 ? 'warning' : 'neutral') +
-              '">' + esc(l('Grants:Feed:Card:DaysLeft', r.daysRemaining)) + '</span>';
-
-        var cta = interestCta(r);
-
-        return '<div class="apya-feed-card">' +
-            '<div class="apya-feed-head">' +
-            '<span class="apya-feed-icon"><i class="fa fa-award"></i></span>' +
-            '<div class="flex-grow-1 min-w-0">' +
-            '<a class="apya-feed-title text-decoration-none d-block" href="/Grants/Detail?id=' + r.grantCallId + '">' +
-            esc(r.grantName) + '</a>' +
-            '<span class="apya-feed-issuer">' + esc(r.issuer) + ' · ' + esc(r.period) + '</span></div>' +
-            '<div class="d-flex flex-column align-items-end gap-1">' + chips + '</div>' +
-            '</div>' +
-            '<div class="apya-feed-amount"><span class="small text-muted">' + esc(l('Grants:Parameters:MaxAmount')) + '</span>' +
-            '<span class="apya-feed-amount-value">' + esc(ceiling(r.maxAmount)) +
-            (r.supportRatePercent != null ? ' · %' + r.supportRatePercent : '') + '</span></div>' +
-            (reasons ? '<div class="apya-feed-reasons">' + reasons + '</div>' : '') +
+        var unfit = r.bucket === 2;
+        var gap = gapSentence(r);
+        return '<article class="apya-feed-card' + (unfit ? ' is-unfit' : '') + '" data-call="' + r.grantCallId + '">' +
+            '<a class="apya-feed-poster" style="' + posterStyle(r) + '" href="/Grants/Detail?id=' + r.grantCallId + '" aria-label="' + esc(r.grantName) + '">' +
+            '<span class="apya-feed-poster-top">' +
+            (r.isHostRecommended ? '<span class="apya-feed-badge"><i class="fa fa-star"></i>' + esc(l('Grants:Feed:Card:HostRecommended')) + '</span>' : '<span></span>') +
+            daysChip(r) + '</span>' +
+            '<span class="apya-feed-poster-bottom">' +
+            '<span class="apya-feed-poster-issuer">' + esc(r.issuer) + ' · ' + esc(r.period) + '</span>' +
+            '<span class="apya-feed-poster-name">' + esc(r.grantName) + '</span></span></a>' +
+            '<button type="button" class="apya-feed-mark' + (r.isBookmarked ? ' is-on' : '') + '" data-mark="' + r.grantCallId + '" ' +
+            'title="' + esc(l(r.isBookmarked ? 'Grants:Catalog:Unbookmark' : 'Grants:Catalog:Bookmark')) + '" aria-pressed="' + (r.isBookmarked ? 'true' : 'false') + '">' +
+            '<i class="fa' + (r.isBookmarked ? '' : '-regular') + ' fa-bookmark"></i></button>' +
+            '<div class="apya-feed-body">' +
+            '<div class="apya-feed-amount-row"><span class="apya-feed-amount-value">' + esc(ceiling(r.maxAmount)) + '</span>' +
+            (r.supportRatePercent != null ? '<span class="apya-feed-rate">' + esc(l('Grants:Feed:Card:Rate', r.supportRatePercent)) + '</span>' : '') + '</div>' +
+            '<p class="apya-feed-why">' + esc(whySentence(r)) + '</p>' +
+            (gap ? '<p class="apya-feed-gap"><i class="fa fa-circle-exclamation"></i>' + esc(gap) + '</p>' : '') +
+            (activeTab === 'bookmarked' ? bookmarkLine(r) : '') +
             '<div class="apya-feed-foot">' +
-            '<div class="d-flex align-items-center gap-1">' + days +
-            '<span class="apya-chip apya-chip-neutral">' + esc(l('Grants:Detail:Difficulty')) + ' ' +
-            r.difficulty + '/5</span></div>' + cta +
-            '</div></div>';
+            '<span class="apya-feed-fit is-' + bucketTone[r.bucket] + '"><span class="apya-feed-fit-dot"></span>' + esc(l('Grants:Bucket:' + bucketKeys[r.bucket])) +
+            '<span class="apya-feed-fit-sep">·</span>' + esc(difficultyWord(r.difficulty)) + '</span>' +
+            cardCta(r) + '</div></div></article>';
     }
 
     /// Eleyen şartın tek satırlık gerekçesi — değerler sunucudan, cümle burada kurulur.
@@ -308,19 +302,94 @@ $(function () {
         return l('Grants:RuleReason:' + ruleKeys[rule], firmValue, grantValue);
     }
 
-    function paintFeed() {
-        var items = activeTab === 'bookmarked'
-            ? feed.filter(function (r) { return r.isBookmarked; })
-            : feed.filter(function (r) { return r.isRecommended; });
+    // Sıra: uyum skoruna göre; uygun olmayanlar soluk ama listede (12a).
+    function sorted(items) {
+        return items.slice().sort(function (a, b) { return b.score - a.score || (a.daysRemaining == null ? 1e9 : a.daysRemaining) - (b.daysRemaining == null ? 1e9 : b.daysRemaining); });
+    }
 
-        // İskelet `:empty` kuralıyla çiziliyor; sonuç boş gelince kap boş kalır ve
-        // iskelet sonsuza dek parlamaya devam ederdi (boş durum metniyle yan yana).
-        // Veri geldiği anda sınıfı düşür.
+    function paintFeed() {
+        var eligible = sorted(feed.filter(function (r) { return r.isRecommended; }));
+        var items = activeTab === 'bookmarked' ? sorted(feed.filter(function (r) { return r.isBookmarked; }))
+            : activeTab === 'all' ? sorted(feed)
+            : eligible;
+
+        $('#FeedGrid').attr('data-cols', activeTab === 'eligible' ? '2' : '3');
+        // İskelet `:empty` kuralıyla çiziliyor; boş sonuçta sonsuza dek parlardı — sınıf her boyamada düşer.
         $('#FeedGrid').removeClass('apya-skel-cards').html(items.map(feedCard).join(''));
+        // Hiç açık çağrı yoksa "Tüm açık hibeler" sekmesi de boş kartı gösterir, boş ızgara değil.
         $('#FeedEmpty').toggleClass('d-none', items.length > 0 || activeTab === 'bookmarked');
         $('#BookmarkEmpty').toggleClass('d-none', items.length > 0 || activeTab !== 'bookmarked');
+        $('#BookmarkHint').toggleClass('d-none', activeTab !== 'bookmarked' || items.length === 0);
+        $('#FeedTableLink').toggleClass('d-none', activeTab !== 'all');
+        $('#FeedSortLabel').text(l('Grants:Feed:SortByFit'));
 
-        paintTimeline();
+        // 12a · Kova sayıları tek satır.
+        var buckets = [0, 1, 2].map(function (b) { return feed.filter(function (r) { return r.bucket === b; }).length; });
+        $('#FeedBuckets').toggleClass('d-none', activeTab !== 'all' || feed.length === 0).html(
+            '<span class="apya-feed-bucket is-positive">' + esc(l('Grants:Feed:Bucket:Eligible', buckets[0])) + '</span>' +
+            '<span class="apya-feed-bucket is-warning">' + esc(l('Grants:Feed:Bucket:Conditional', buckets[1])) + '</span>' +
+            '<span class="apya-feed-bucket is-neutral">' + esc(l('Grants:Feed:Bucket:Ineligible', buckets[2])) + '</span>');
+
+        // 13a · Eşiğin altındakiler gizlenmez; altta tek cümleyle çağrılır.
+        var below = feed.length - eligible.length;
+        $('#FeedMore').toggleClass('d-none', activeTab !== 'eligible' || below === 0);
+        $('#FeedMoreText').text(l('Grants:Feed:More:Text', below));
+    }
+
+    $('#FeedMoreBtn').on('click', function () { $('.apya-tenant-tab[data-tab="all"]').trigger('click'); });
+
+    // Yer imi: kartın köşesindeki düğme; ikinci basış takipten çıkarır.
+    $('#FeedGrid').on('click', '[data-mark]', function () {
+        var id = $(this).data('mark');
+        var $btn = $(this).prop('disabled', true);
+        recoSvc.toggleBookmark(id).then(function (on) {
+            var row = feed.filter(function (r) { return r.grantCallId === id; })[0];
+            if (row) { row.isBookmarked = on; if (!on) { row.bookmarkNote = null; row.bookmarkedAt = null; row.bookmarkedByName = null; } else { row.bookmarkedAt = new Date().toISOString(); } }
+            $('#TabCountBookmarked').text(feed.filter(function (r) { return r.isBookmarked; }).length);
+            paintHeading();
+            paintFeed();
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+
+    // 13b · Takip notu.
+    $('#FeedGrid').on('click', '[data-note]', function () {
+        bookmarkNoteCallId = $(this).data('note');
+        var row = feed.filter(function (r) { return r.grantCallId === bookmarkNoteCallId; })[0];
+        $('#BookmarkNoteCall').text(row ? row.grantName : '');
+        $('#BookmarkNoteText').val(row && row.bookmarkNote ? row.bookmarkNote : '');
+        bookmarkNoteModal.show();
+    });
+
+    $('#BookmarkNoteForm').on('submit', function (e) {
+        e.preventDefault();
+        if (!bookmarkNoteCallId) { return; }
+        var note = $.trim($('#BookmarkNoteText').val());
+        var $submit = $(this).find('button[type=submit]').prop('disabled', true);
+        recoSvc.setBookmarkNote({ grantCallId: bookmarkNoteCallId, note: note || null }).then(function () {
+            var row = feed.filter(function (r) { return r.grantCallId === bookmarkNoteCallId; })[0];
+            if (row) { row.bookmarkNote = note || null; }
+            bookmarkNoteModal.hide();
+            paintFeed();
+        }).always(function () { $submit.prop('disabled', false); });
+    });
+
+    // 10c/13a · Başlık cümlesi: kaç uygun çağrı, en yakın son tarih hangi kartta.
+    function paintHeading() {
+        var eligible = sorted(feed.filter(function (r) { return r.isRecommended; }));
+        $('#FeedHeading').removeClass('apya-skel-num').text(eligible.length
+            ? l('Grants:Feed:Heading', eligible.length) : l('Grants:Feed:Heading:None'));
+        var nearest = null, nearestIndex = -1;
+        eligible.forEach(function (r, i) {
+            if (r.daysRemaining != null && r.daysRemaining >= 0 && (nearest == null || r.daysRemaining < nearest.daysRemaining)) { nearest = r; nearestIndex = i; }
+        });
+        var lead = [];
+        if (eligible.length) { lead.push(l('Grants:Feed:Lead:Sorted')); }
+        if (nearest) {
+            lead.push(nearest.daysRemaining === 0
+                ? l('Grants:Feed:Lead:NearestToday', nearest.grantName, nearestIndex + 1)
+                : l('Grants:Feed:Lead:Nearest', nearest.daysRemaining, nearest.grantName, nearestIndex + 1));
+        }
+        $('#FeedLead').text(lead.join(' ')).toggleClass('d-none', lead.length === 0);
     }
 
     // ---------- Başvurularım ----------
@@ -354,21 +423,13 @@ $(function () {
         });
     }
 
-    function loadDashboard() {
-        return appSvc.getMyDashboard().then(function (d) {
-            $('#KpiOnaylanan').text(d.onaylanan);
-            $('#KpiDegerlendirmede').text(d.degerlendirmede);
-            $('#KpiTahsilEdilen').text(money(d.tahsilEdilen));
-            $('#KpiBuAySonTarih').text(d.buAySonTarih);
-        });
-    }
-
     function load() {
         return recoSvc.getOpenCalls().then(function (items) {
             feed = items || [];
             $('#TabCountEligible').text(feed.filter(function (r) { return r.isRecommended; }).length);
             $('#TabCountAll').text(feed.length);
             $('#TabCountBookmarked').text(feed.filter(function (r) { return r.isBookmarked; }).length);
+            paintHeading();
             paintFeed();
             return profileSvc.getMyProfile();
         }).then(paintProfile);
@@ -376,5 +437,4 @@ $(function () {
 
     load();
     loadApplications();
-    loadDashboard();
 });
