@@ -51,6 +51,28 @@ const TYPE_GROUPS = [
 const LABELS = Object.fromEntries(TYPE_GROUPS.flatMap((g) => g.items.map((i) => [i.type, i.label])));
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Kayıt gövdesi. Sunucudan gelen alanın kimliği (GUID) geri gönderilir: yanıtlar alan
+ * kimliğiyle saklandığı için sunucu o alanı yerinde günceller. Yerel geçici kimlik (uid)
+ * gönderilmez, sunucu yeni alana kendi kimliğini verir.
+ */
+export const payloadBlocks = (blocks) => blocks.map((b, idx) => ({
+  id: GUID_RE.test(b.id) ? b.id : null,
+  type: b.type, order: idx + 1, content: b.content || LABELS[b.type] || 'Soru', settings: JSON.stringify(b.settings || {}),
+}));
+
+/**
+ * Kayıttan sonra yerel kimlik → sunucu kimliği eşlemesi (sıra numarasıyla). Yeni alanın geçici
+ * kimliği değiştirilmezse bir sonraki kayıt onu yine YENİ sayar ve gelen yanıtlar sorusundan kopar.
+ */
+export const serverIdMap = (sent, saved) => {
+  const byOrder = new Map((saved || []).map((b) => [b.order, b.id]));
+  return Object.fromEntries(sent
+    .map((b, idx) => [b.id, byOrder.get(idx + 1)])
+    .filter(([local, server]) => server && local !== server));
+};
 
 function defaultBlock(type) {
   const base = { id: uid(), type, content: LABELS[type] || 'Soru', settings: { required: false } };
@@ -353,16 +375,20 @@ function FormBuilder() {
     return next;
   });
 
-  const buildPayloadBlocks = () => blocks.map((b, idx) => ({
-    type: b.type, order: idx + 1, content: b.content || LABELS[b.type] || 'Soru', settings: JSON.stringify(b.settings || {}),
-  }));
+  const applyServerIds = (sent, saved) => {
+    const map = serverIdMap(sent, saved);
+    if (!Object.keys(map).length) return;
+    setBlocks((prev) => prev.map((b) => (map[b.id] ? { ...b, id: map[b.id] } : b)));
+    setSelectedId((id) => map[id] || id);
+  };
 
   const save = async () => {
     if (!title.trim()) return notify('warn', 'Lütfen forma bir başlık verin.');
     setSaving(true);
     try {
       if (!formId) {
-        const dto = await api.post('/api/app/form', { title: title.trim(), description: description.trim() || null, categoryId, themeJson: null, blocks: buildPayloadBlocks() });
+        const dto = await api.post('/api/app/form', { title: title.trim(), description: description.trim() || null, categoryId, themeJson: null, blocks: payloadBlocks(blocks) });
+        applyServerIds(blocks, dto.blocks);
         setFormId(dto.id);
         setSlug(dto.slug || '');
         const url = new URL(window.location.href);
@@ -371,7 +397,8 @@ function FormBuilder() {
         notify('success', 'Form oluşturuldu.');
       } else {
         await api.put(`/api/app/form/${formId}`, { title: title.trim(), description: description.trim() || null, categoryId, themeJson: null, blocks: [] });
-        await api.put(`/api/app/form/${formId}/blocks`, { blocks: buildPayloadBlocks() });
+        const dto = await api.put(`/api/app/form/${formId}/blocks`, { blocks: payloadBlocks(blocks) });
+        applyServerIds(blocks, dto?.blocks);
         notify('success', 'Form kaydedildi.');
       }
     } catch (e) {

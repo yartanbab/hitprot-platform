@@ -90,13 +90,30 @@ public class AppDocument : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     /// <summary>
-    /// Removes all blocks from this document. Used by the builder when
-    /// replacing the full block set in a single save. EF Core orphan-deletes
-    /// the detached blocks (required FK + cascade) on the next SaveChanges.
+    /// Updates an existing block in place, keeping its id. Responses store answers
+    /// keyed by block id, so a builder save must never re-create a block that still exists.
+    /// Throws <see cref="BusinessException"/> if the block is not found.
     /// </summary>
-    public void ClearBlocks()
+    public void UpdateBlock(
+        Guid blockId,
+        BlockType type,
+        int order,
+        string content,
+        string settings,
+        string? agentContext)
     {
-        _blocks.Clear();
+        var block = _blocks.FirstOrDefault(b => b.Id == blockId);
+
+        if (block is null)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.DocumentBlockNotFound);
+        }
+
+        block.SetType(type);
+        block.SetOrder(order);
+        block.SetContent(content);
+        block.SetSettings(settings);
+        block.SetAgentContext(agentContext);
     }
 
     /// <summary>
