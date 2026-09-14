@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
+import { formTenantFromSearch } from './lib/publicFormLink';
+import { prefillChoice } from './lib/formChoices';
 import './index.css';
 
 /* BlockType enum — mirrors backend (stable ints) */
@@ -38,6 +40,23 @@ function Field({ block, value, onChange }) {
     case BT.TimePicker:
       return <input type="time" className={fieldCls} value={value || ''} onChange={(e) => set(e.target.value)} />;
     case BT.Dropdown:
+      // Canlı listeye bağlı alan: seçenekler sunucudan güncel gelir, cevap { value, label } saklanır.
+      if (Array.isArray(block.choices)) {
+        return (
+          <select
+            className={fieldCls}
+            value={value?.value || ''}
+            disabled={block.choices.length === 0}
+            onChange={(e) => {
+              const choice = block.choices.find((c) => c.value === e.target.value);
+              set(choice ? { value: choice.value, label: choice.label } : '');
+            }}
+          >
+            <option value="">{block.choices.length ? 'Seçiniz…' : 'Şu an başvuruya açık çağrı yok'}</option>
+            {block.choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+        );
+      }
       return (
         <select className={fieldCls} value={value || ''} onChange={(e) => set(e.target.value)}>
           <option value="">Seçiniz…</option>
@@ -106,6 +125,7 @@ function PublicForm({ slug }) {
   const [status, setStatus] = useState('loading'); // loading | ready | error | submitting | done
   const [errorMsg, setErrorMsg] = useState('');
   const [kvkkConsent, setKvkkConsent] = useState(false);
+  const [prefilled, setPrefilled] = useState({}); // alan kimliği → bağlantıdan ön seçilen değer
   const honeypot = useRef(''); // bot doldurur, insan boş bırakır
 
   // GÖREV BAĞLAMI — form bir görevin süreli paylaşım linkinden açıldıysa adreste
@@ -118,12 +138,24 @@ function PublicForm({ slug }) {
     return token && taskId ? { taskShareToken: token, taskId } : null;
   })());
   const startedAt = useRef(Date.now());
+  // Kiracı formunun bağlantısı formun kiracısını taşır; anonim ziyaretçide başka yolla bulunamaz.
+  const formTenantId = useRef(formTenantFromSearch(window.location.search));
 
   useEffect(() => {
     (async () => {
       try {
-        const dto = await api.get(`/api/app/public-document/by-slug?slug=${encodeURIComponent(slug)}`);
+        const tenantQuery = formTenantId.current ? `&tenantId=${formTenantId.current}` : '';
+        const dto = await api.get(`/api/app/public-document/by-slug?slug=${encodeURIComponent(slug)}${tenantQuery}`);
         setDoc(dto);
+        // Bağlantıdaki ?grant= listede varsa ilgili alan ön seçili açılır (ör. hibe detayından gelen firma).
+        const initial = {};
+        for (const b of dto.blocks || []) {
+          if (!Array.isArray(b.choices) || !parse(b.settings).urlPrefill) continue;
+          const choice = prefillChoice(b.choices, window.location.search);
+          if (choice) initial[b.id] = choice;
+        }
+        setAnswers(initial);
+        setPrefilled(Object.fromEntries(Object.entries(initial).map(([id, c]) => [id, c.value])));
         setStatus('ready');
         startedAt.current = Date.now();
       } catch (e) {
@@ -169,6 +201,7 @@ function PublicForm({ slug }) {
         completionSeconds: Math.round((Date.now() - startedAt.current) / 1000),
         kvkkConsent,
         website: honeypot.current, // honeypot; boş kalmalı
+        formTenantId: formTenantId.current,
         ...(gorevBaglami.current ?? {}),
       });
       setStatus('done');
@@ -222,6 +255,9 @@ function PublicForm({ slug }) {
                   </label>
                   {s.helpText && <p className="text-xs text-text-tertiary">{s.helpText}</p>}
                   <Field block={b} value={answers[b.id]} onChange={onChange} />
+                  {prefilled[b.id] && answers[b.id]?.value === prefilled[b.id] && (
+                    <p className="text-xs text-text-secondary">Bağlantıdan seçildi; değiştirebilirsiniz.</p>
+                  )}
                 </div>
               );
             })}

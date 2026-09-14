@@ -36,6 +36,22 @@ public class PublicBlockDto
     public int Order { get; set; }
     public string Content { get; set; } = null!;
     public string Settings { get; set; } = null!;
+
+    /// <summary>
+    /// Canlı kaynaktan çözülmüş seçenekler (<see cref="FormChoiceSources"/>). Sabit seçenekli alanda boş;
+    /// o alanlar seçeneklerini <see cref="Settings"/> içindeki <c>options</c> dizisinden okur.
+    /// </summary>
+    public List<FormChoiceDto>? Choices { get; set; }
+}
+
+/// <summary>
+/// Canlı kaynaklı açılır listenin bir seçeneği. Yanıtta <c>{ value, label }</c> olarak saklanır: değer
+/// kaydı gösterir, etiket gönderim anındaki adı korur (çağrı sonra kapansa ya da adı değişse de okunur).
+/// </summary>
+public class FormChoiceDto
+{
+    public string Value { get; set; } = null!;
+    public string Label { get; set; } = null!;
 }
 
 /// <summary>
@@ -75,4 +91,12 @@ public class SubmitResponseDto
     public string? TaskShareToken { get; set; }
 
     public Guid? TaskId { get; set; }
+
+    /// <summary>
+    /// Form sahibinin kiracısı; kiracı formunun herkese açık bağlantısı taşır (<c>?tenant=</c>).
+    /// Anonim ziyaretçinin kiracısı yoktur, bu olmadan kiracı formu bulunamaz. Boşsa önce çağıranın
+    /// kendi kiracısına, oturum açmış kiracı kullanıcısında sonra host formlarına bakılır.
+    /// Görev bağlamı (token) varsa yok sayılır.
+    /// </summary>
+    public Guid? FormTenantId { get; set; }
 }

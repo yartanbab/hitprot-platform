@@ -4,8 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
+using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 using Apya.Platform.DynamicAssets.Dtos;
 using Apya.Platform.Permissions;
 
@@ -21,15 +24,18 @@ public class FormAppService : PlatformAppService, IFormAppService
     private readonly IAppDocumentRepository _documentRepository;
     private readonly IRepository<AppResponse, Guid> _responseRepository;
     private readonly ILogger<FormAppService> _logger;
+    private readonly FormChoiceProvider _choiceProvider;
 
     public FormAppService(
         IAppDocumentRepository documentRepository,
         IRepository<AppResponse, Guid> responseRepository,
-        ILogger<FormAppService> logger)
+        ILogger<FormAppService> logger,
+        FormChoiceProvider choiceProvider)
     {
         _documentRepository = documentRepository;
         _responseRepository = responseRepository;
         _logger = logger;
+        _choiceProvider = choiceProvider;
     }
 
     public async Task<PagedResultDto<FormListItemDto>> GetListAsync(FormListFilterDto input)
@@ -125,10 +131,25 @@ public class FormAppService : PlatformAppService, IFormAppService
     {
         var document = await _documentRepository.GetWithBlocksAsync(id);
 
-        document.ClearBlocks();
+        // Yanıtlar alan kimliğiyle saklanır (yanıt ekranı, rapor dışa aktarımı, webhook). Hepsini
+        // silip yeniden eklemek her kayıtta kimlikleri değiştirir ve eski yanıtları sorularından
+        // koparırdı: kimliği gelen alan YERİNDE güncellenir, listede olmayan silinir.
+        var incomingIds = input.Blocks.Where(b => b.Id.HasValue).Select(b => b.Id!.Value).ToHashSet();
+        foreach (var removedId in document.Blocks.Where(b => !incomingIds.Contains(b.Id)).Select(b => b.Id).ToList())
+        {
+            document.RemoveBlock(removedId);
+        }
 
+        var updatedIds = new HashSet<Guid>();
         foreach (var blockDto in input.Blocks.OrderBy(b => b.Order))
         {
+            // Formda olmayan ya da aynı istekte ikinci kez gelen kimlik yeni alan sayılır.
+            if (blockDto.Id is { } blockId && document.Blocks.Any(b => b.Id == blockId) && updatedIds.Add(blockId))
+            {
+                document.UpdateBlock(blockId, blockDto.Type, blockDto.Order, blockDto.Content, blockDto.Settings, blockDto.AgentContext);
+                continue;
+            }
+
             document.AddBlock(
                 GuidGenerator.Create(),
                 blockDto.Type,
@@ -197,6 +218,9 @@ public class FormAppService : PlatformAppService, IFormAppService
     {
         var document = await _documentRepository.GetAsync(id);
 
+        // Host formuna kiracıların verdiği yanıtlar o kiracılarda durur; host'un sayımı süzgeç kapalı
+        // yapılır. Form kimliği tekil olduğundan başka formun yanıtı sayılmaz.
+        using var _ = CurrentTenant.Id is null ? DataFilter.Disable<IMultiTenant>() : NullDisposable.Instance;
         var responseQueryable = await _responseRepository.GetQueryableAsync();
         responseQueryable = responseQueryable.Where(r => r.DocumentId == id);
 
@@ -215,6 +239,11 @@ public class FormAppService : PlatformAppService, IFormAppService
             TodayResponseCount = todayCount,
             PendingResponseCount = pendingCount
         };
+    }
+
+    public async Task<List<FormChoiceDto>> GetChoicesAsync(string source)
+    {
+        return await _choiceProvider.GetChoicesAsync(source) ?? new List<FormChoiceDto>();
     }
 
     /// <summary>
