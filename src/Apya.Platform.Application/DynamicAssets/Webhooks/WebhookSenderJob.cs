@@ -6,6 +6,7 @@ using Volo.Abp.BackgroundJobs;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.DynamicAssets.Webhooks;
 
@@ -21,22 +22,34 @@ public class WebhookSenderJob : AsyncBackgroundJob<WebhookSenderJobArgs>, ITrans
     private readonly WebhookDeliverySender _deliverySender;
     private readonly IGuidGenerator _guidGenerator;
     private readonly ILogger<WebhookSenderJob> _logger;
+    private readonly ICurrentTenant _currentTenant;
 
     public WebhookSenderJob(
         IRepository<WebhookSubscription, Guid> subscriptionRepository,
         IRepository<WebhookDeliveryLog, Guid> deliveryLogRepository,
         WebhookDeliverySender deliverySender,
         IGuidGenerator guidGenerator,
-        ILogger<WebhookSenderJob> logger)
+        ILogger<WebhookSenderJob> logger,
+        ICurrentTenant currentTenant)
     {
         _subscriptionRepository = subscriptionRepository;
         _deliveryLogRepository = deliveryLogRepository;
         _deliverySender = deliverySender;
         _guidGenerator = guidGenerator;
         _logger = logger;
+        _currentTenant = currentTenant;
     }
 
     public override async Task ExecuteAsync(WebhookSenderJobArgs args)
+    {
+        // İş kiracısız çalışır; abonelik kiracıya aittir ve süzgeç onu host'ta aramasın.
+        using (_currentTenant.Change(args.TenantId))
+        {
+            await DeliverAsync(args);
+        }
+    }
+
+    private async Task DeliverAsync(WebhookSenderJobArgs args)
     {
         var subscription = await _subscriptionRepository.FindAsync(args.SubscriptionId);
 

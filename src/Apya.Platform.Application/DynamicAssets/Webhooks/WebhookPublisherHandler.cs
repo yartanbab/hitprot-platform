@@ -56,6 +56,7 @@ public class WebhookPublisherHandler
         {
             await _backgroundJobManager.EnqueueAsync(new WebhookSenderJobArgs
             {
+                TenantId = subscription.TenantId,
                 SubscriptionId = subscription.Id,
                 ResponseId = response.Id,
                 DocumentId = response.DocumentId,
