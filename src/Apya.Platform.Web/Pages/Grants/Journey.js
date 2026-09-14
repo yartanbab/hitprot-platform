@@ -1,0 +1,150 @@
+$(function () {
+    var service = apya.platform.grants.grantJourney;
+    var interestService = apya.platform.grants.grantInterest;
+    var l = abp.localization.getResource('Platform');
+
+    // GrantJourneyItemKind / GrantNextAction enum sıralarıyla birebir.
+    var kindKeys = ['InterestPending', 'InterestRejected', 'InterestWithdrawn', 'ApplicationOpen',
+        'ApplicationWithInstitution', 'ApplicationRejected', 'Project', 'Completed', 'CallClosed'];
+    var kindTone = ['accent', 'neutral', 'neutral', 'warning', 'accent', 'negative', 'positive', 'positive', 'neutral'];
+    var nextKeys = ['CompleteForm', 'UploadDocuments', 'WaitingOnConsultant', 'WaitingOnInstitution', 'InProject', 'Done'];
+
+    function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
+    function date(v) { return v ? new Date(v).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'; }
+    function shortMoney(v) {
+        if (v == null) { return '—'; }
+        return v >= 1000000
+            ? (v / 1000000).toLocaleString('tr-TR', { maximumFractionDigits: 1 }) + 'M ₺'
+            : Math.round(v).toLocaleString('tr-TR') + ' ₺';
+    }
+
+    function deadlineSentence(i) {
+        if (!i.deadline || i.daysRemaining == null || i.daysRemaining < 0) { return ''; }
+        return i.daysRemaining === 0
+            ? l('Grants:Journey:DeadlineToday', date(i.deadline))
+            : l('Grants:Journey:Deadline', date(i.deadline), i.daysRemaining);
+    }
+
+    /// Satırın başlığındaki durum sözcüğü: "danışman incelemesinde", "evrak hazırlığı · 5/11".
+    function stateText(i) {
+        if (i.kind === 0) { return l(i.reviewerName ? 'Grants:Journey:State:InReview' : 'Grants:Journey:State:Sent'); }
+        if (i.kind === 3 && i.documentsTotal > 0) {
+            return l('Grants:Journey:State:Preparing') + ' · ' + i.documentsApproved + '/' + i.documentsTotal;
+        }
+        return l('Grants:Journey:State:' + kindKeys[i.kind]);
+    }
+
+    function body(i) {
+        switch (i.kind) {
+            case 0:
+                return i.reviewerName
+                    ? l('Grants:Journey:Body:InReview', date(i.at), i.reviewerName)
+                    : l('Grants:Journey:Body:Sent', date(i.at));
+            case 1:
+                return l('Grants:Journey:Body:Rejected', date(i.at));
+            case 2:
+                return l('Grants:Journey:Body:Withdrawn', date(i.at));
+            case 3:
+                return [l('Grants:Today:App:' + nextKeys[i.nextAction], i.nextActionValue),
+                    i.consultantName ? l('Grants:Journey:Body:Consultant', i.consultantName) : '',
+                    deadlineSentence(i)].filter(Boolean).join(' ');
+            case 4:
+                return l('Grants:Journey:Body:WithInstitution', date(i.at));
+            case 5:
+                return i.appealDaysLeft != null
+                    ? l('Grants:Journey:Body:AppealOpen', i.appealDaysLeft)
+                    : l('Grants:Journey:Body:AppealClosed');
+            case 6:
+                return [i.approvedAmount != null ? l('Grants:Journey:Body:Approved', shortMoney(i.approvedAmount)) : '',
+                    i.projectName ? l('Grants:Journey:Body:Project', i.projectName) : '',
+                    i.nextTrancheNo != null && i.nextTrancheDue
+                        ? l('Grants:Journey:Body:NextTranche', i.nextTrancheNo, date(i.nextTrancheDue))
+                        : i.collectedAmount > 0 ? l('Grants:Journey:Body:Collected', shortMoney(i.collectedAmount)) : ''
+                ].filter(Boolean).join(' ');
+            case 7:
+                return l('Grants:Journey:Body:Completed', shortMoney(i.approvedAmount), shortMoney(i.collectedAmount));
+            case 8:
+                if (!i.applicationId) { return l('Grants:Journey:Body:ClosedInterest'); }
+                return i.nextAction === 0
+                    ? l('Grants:Journey:Body:ClosedForm', i.nextActionValue)
+                    : i.nextAction === 1
+                        ? l('Grants:Journey:Body:ClosedDocuments', i.nextActionValue)
+                        : l('Grants:Journey:Body:ClosedApplication');
+        }
+        return '';
+    }
+
+    function actions(i) {
+        var html = [];
+        var link = function (href, key, primary) {
+            return '<a class="btn btn-sm ' + (primary ? 'btn-primary' : 'btn-outline-secondary') + '" href="' + href + '">' + esc(l(key)) + '</a>';
+        };
+        switch (i.kind) {
+            case 0:
+                html.push(link('/Grants/Detail?id=' + i.grantCallId, 'Grants:Journey:Action:Call', false));
+                html.push('<button type="button" class="btn btn-sm btn-outline-danger" data-withdraw="' + i.interestId + '">' +
+                    esc(l('Grants:Journey:Action:Withdraw')) + '</button>');
+                break;
+            case 3: html.push(link('/Grants/Wizard?id=' + i.applicationId, 'Grants:Journey:Action:Continue', true)); break;
+            case 4: html.push(link('/Grants/Wizard?id=' + i.applicationId, 'Grants:Journey:Action:View', false)); break;
+            case 5:
+                if (i.appealDaysLeft != null) { html.push(link('/Grants/Appeal?id=' + i.applicationId, 'Grants:Journey:Action:Appeal', true)); }
+                break;
+            case 6:
+            case 7: html.push(link('/Grants/Implementation?id=' + i.applicationId, 'Grants:Journey:Action:Implementation', false)); break;
+            case 1:
+            case 2:
+            case 8: html.push(link('/Grants/Detail?id=' + i.grantCallId, 'Grants:Journey:Action:Call', false)); break;
+        }
+        return html.join('');
+    }
+
+    function item(i) {
+        var feedback = i.kind === 1 && i.hostFeedback
+            ? '<blockquote class="apya-jny-feedback">' + esc(i.hostFeedback) + '</blockquote>' : '';
+        return '<li class="apya-jny-item is-' + kindTone[i.kind] + '">' +
+            '<span class="apya-jny-dot" aria-hidden="true"></span>' +
+            '<div class="apya-jny-card">' +
+            '<div class="apya-jny-card-head">' +
+            '<span class="apya-jny-name">' + esc(i.grantName) + '</span>' +
+            '<span class="apya-chip apya-chip-' + kindTone[i.kind] + '">' + esc(stateText(i)) + '</span>' +
+            '</div>' +
+            (i.issuer || i.period ? '<div class="apya-jny-meta">' + esc([i.issuer, i.period].filter(Boolean).join(' · ')) + '</div>' : '') +
+            '<p class="apya-jny-body">' + esc(body(i)) + '</p>' + feedback +
+            '<div class="apya-jny-actions">' + actions(i) + '</div>' +
+            '</div></li>';
+    }
+
+    function paint(d) {
+        var parts = [];
+        if (d.activeCount) { parts.push(l('Grants:Journey:Sub:Active', d.activeCount)); }
+        if (d.projectCount) { parts.push(l('Grants:Journey:Sub:Projects', d.projectCount)); }
+        if (d.missedCount) { parts.push(l('Grants:Journey:Sub:Missed', d.missedCount)); }
+        var sub = parts.length ? parts.join(', ') : l('Grants:Journey:Sub:None');
+        $('#JourneySub').removeClass('apya-skel-num').text(d.firmName ? d.firmName + ' · ' + sub : sub);
+
+        $('#JourneyWon').toggleClass('d-none', !(d.wonAmount > 0));
+        $('#JourneyWonValue').text(shortMoney(d.wonAmount));
+
+        var items = d.items || [];
+        $('#JourneyItems').removeClass('apya-skel-cards').html(items.map(item).join(''));
+        $('#JourneyEmpty').toggleClass('d-none', items.length > 0);
+    }
+
+    function load() { return service.get().then(paint); }
+
+    $('#JourneyItems').on('click', '[data-withdraw]', function () {
+        var id = $(this).data('withdraw');
+        var $btn = $(this);
+        abp.message.confirm(l('Grants:Interest:Withdraw:Confirm'), l('Grants:Interest:Withdraw:Title')).then(function (ok) {
+            if (!ok) { return; }
+            $btn.prop('disabled', true);
+            interestService.withdraw(id).then(function () {
+                abp.notify.success(l('Grants:Journey:Withdrawn'));
+                return load();
+            }).always(function () { $btn.prop('disabled', false); });
+        });
+    });
+
+    load();
+});

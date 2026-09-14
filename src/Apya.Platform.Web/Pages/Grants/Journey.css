@@ -1,0 +1,167 @@
+/* =============================================================================
+   18d · Kiracı · Hibe Yolculuğum — dikey zaman çizgisi.
+   Nokta rengi ilişkinin durumunu söyler; metin rengi daima token (kart gövdesi dahil).
+   ============================================================================= */
+
+.apya-jny-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--apya-space-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--apya-space-5);
+}
+
+.apya-jny-head-text { min-width: 0; }
+
+.apya-jny-title {
+    margin: 0;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-2xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-jny-sub {
+    margin: 4px 0 0;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+}
+
+.apya-jny-won {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.apya-jny-won-label {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+@media (max-width: 575.98px) {
+    .apya-jny-won { align-items: flex-start; }
+}
+
+.apya-jny-won-value {
+    color: var(--apya-positive-700);
+    font-size: var(--apya-fs-xl);
+    font-weight: var(--apya-weight-bold);
+}
+
+/* --- Zaman çizgisi --- */
+.apya-jny-list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+    margin: 0;
+    padding: 0 0 0 28px;
+    list-style: none;
+}
+
+.apya-jny-list:not(:empty)::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 9px;
+    width: 2px;
+    border-radius: var(--apya-radius-full);
+    /* border-default açık zeminde 1,2:1 kalıyor, çizgi seçilmiyordu. */
+    background: var(--apya-border-strong);
+}
+
+/* İskelet: liste boşken sol boşluk olmasın. */
+.apya-jny-list.apya-skel-cards:empty { padding-left: 0; }
+
+.apya-jny-item { position: relative; }
+
+.apya-jny-dot {
+    position: absolute;
+    top: 18px;
+    left: -24px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--apya-surface-base);
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-text-disabled);
+    box-shadow: 0 0 0 1px var(--apya-border-default);
+}
+
+.apya-jny-item.is-accent .apya-jny-dot { background: var(--apya-accent-500); }
+.apya-jny-item.is-warning .apya-jny-dot { background: var(--apya-warning-500); }
+.apya-jny-item.is-positive .apya-jny-dot { background: var(--apya-positive-500); }
+.apya-jny-item.is-negative .apya-jny-dot { background: var(--apya-negative-500); }
+
+.apya-jny-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: var(--apya-space-3) var(--apya-space-4);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+    color: var(--apya-text-primary);
+}
+
+/* Kapanmış ilişkiler geri çekilir ama gizlenmez. */
+.apya-jny-item.is-neutral .apya-jny-card { background: var(--apya-surface-raised); box-shadow: none; }
+
+.apya-jny-card-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--apya-space-2);
+    flex-wrap: wrap;
+}
+
+.apya-jny-name {
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+    overflow-wrap: anywhere;
+}
+
+.apya-jny-meta {
+    color: var(--apya-text-secondary);
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-jny-body {
+    margin: 0;
+    font-size: var(--apya-fs-sm);
+    line-height: 1.55;
+}
+
+.apya-jny-feedback {
+    margin: 0;
+    padding: 6px 10px;
+    border-left: 3px solid var(--apya-border-strong);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    white-space: pre-line;
+}
+
+.apya-jny-actions {
+    display: flex;
+    gap: var(--apya-space-2);
+    flex-wrap: wrap;
+}
+
+.apya-jny-actions:empty { display: none; }
+
+.apya-jny-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: var(--apya-space-6);
+    color: var(--apya-text-secondary);
+    text-align: center;
+}
+
+.apya-jny-empty > i { font-size: 28px; color: var(--apya-text-disabled); }
+
+#JourneyItems { --apya-skel-card: 120px; }
