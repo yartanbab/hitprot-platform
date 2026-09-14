@@ -100,6 +100,10 @@
     "file": "i18n-DkhYld-7.js",
     "name": "i18n"
   },
+  "_publicFormLink-CJ_6ABDU.js": {
+    "file": "publicFormLink-CJ_6ABDU.js",
+    "name": "publicFormLink"
+  },
   "_query-vendor-Bf69L2iP.js": {
     "file": "query-vendor-Bf69L2iP.js",
     "name": "query-vendor",
@@ -289,7 +293,8 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_httpClient-DePjXdo1.js",
-      "_Hint-CNW95h3H.js"
+      "_Hint-CNW95h3H.js",
+      "_publicFormLink-CJ_6ABDU.js"
     ]
   },
   "src/forms.jsx": {
@@ -300,7 +305,8 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_httpClient-DePjXdo1.js",
-      "_Hint-CNW95h3H.js"
+      "_Hint-CNW95h3H.js",
+      "_publicFormLink-CJ_6ABDU.js"
     ]
   },
   "src/project-panels.jsx": {
@@ -320,7 +326,8 @@
     "isEntry": true,
     "imports": [
       "_react-vendor-D57GAUXd.js",
-      "_httpClient-DePjXdo1.js"
+      "_httpClient-DePjXdo1.js",
+      "_publicFormLink-CJ_6ABDU.js"
     ]
   },
   "src/responses.jsx": {

@@ -129,12 +129,16 @@ function ResponsesApp({ formId }) {
     } catch (e) { notify('error', e?.message); }
   };
 
+  // Host formuna kiracılar yanıt verdiyse satırın hangi firmaya ait olduğu görünür.
+  const withFirm = rows.some((r) => r.tenantName);
+
   const exportCsv = () => {
-    const headers = ['Tarih', 'Durum', 'Süre (sn)', ...columns.map((c) => c.content)];
+    const headers = ['Tarih', ...(withFirm ? ['Firma'] : []), 'Durum', 'Süre (sn)', ...columns.map((c) => c.content)];
     const dataRows = rows.map((r) => {
       const ans = parse(r.answers);
       return [
         fmtDate(r.creationTime),
+        ...(withFirm ? [r.tenantName || ''] : []),
         STATUS[r.status]?.label || '',
         r.completionSeconds ?? '',
         ...columns.map((c) => answerToText(ans[c.id])),
@@ -213,6 +217,7 @@ function ResponsesApp({ formId }) {
             <thead className="bg-surface-sunken text-left text-xs font-semibold uppercase text-text-tertiary">
               <tr>
                 <th className="px-4 py-3">Tarih</th>
+                {withFirm && <th className="px-4 py-3">Firma</th>}
                 <th className="px-4 py-3">Durum</th>
                 <th className="px-4 py-3">Süre</th>
                 <th className="px-4 py-3"></th>
@@ -222,6 +227,7 @@ function ResponsesApp({ formId }) {
               {rows.map((r) => (
                 <tr key={r.id} className="hover:bg-surface-sunken">
                   <td className="px-4 py-3">{fmtDate(r.creationTime)}</td>
+                  {withFirm && <td className="px-4 py-3 font-medium">{r.tenantName || '—'}</td>}
                   <td className="px-4 py-3">
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS[r.status]?.cls}`}>{STATUS[r.status]?.label}</span>
                   </td>
@@ -238,6 +244,7 @@ function ResponsesApp({ formId }) {
             <thead className="bg-surface-sunken text-left text-xs font-semibold uppercase text-text-tertiary">
               <tr>
                 <th className="whitespace-nowrap px-4 py-3">Tarih</th>
+                {withFirm && <th className="whitespace-nowrap px-4 py-3">Firma</th>}
                 {columns.map((c) => <th key={c.id} className="whitespace-nowrap px-4 py-3">{c.content}</th>)}
                 <th className="px-4 py-3">Durum</th>
               </tr>
@@ -248,6 +255,7 @@ function ResponsesApp({ formId }) {
                 return (
                   <tr key={r.id} className="cursor-pointer hover:bg-surface-sunken" onClick={() => openDetail(r.id)}>
                     <td className="whitespace-nowrap px-4 py-3 text-text-secondary">{fmtDate(r.creationTime)}</td>
+                    {withFirm && <td className="whitespace-nowrap px-4 py-3 font-medium">{r.tenantName || '—'}</td>}
                     {columns.map((c) => <td key={c.id} className="px-4 py-3">{renderAnswer(ans[c.id])}</td>)}
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS[r.status]?.cls}`}>{STATUS[r.status]?.label}</span>
@@ -274,7 +282,8 @@ function ResponsesApp({ formId }) {
                   <button onClick={() => setSelected(null)} className="rounded p-1 text-text-tertiary hover:bg-surface-sunken">✕</button>
                 </div>
 
-                <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
+                <div className="mb-4 flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                  {selected.tenantName && <><span className="font-semibold text-text-primary">{selected.tenantName}</span>·</>}
                   <span>{fmtDate(selected.creationTime)}</span>·<span>{fmtDuration(selected.completionSeconds)}</span>
                 </div>
 
