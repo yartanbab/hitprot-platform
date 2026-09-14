@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { QuestionCard } from './form-builder';
+import { QuestionCard, payloadBlocks, serverIdMap } from './form-builder';
 
 /**
  * Sürüklenen KART DEĞİL, üstündeki ⠿ tutamacı. Kart `draggable` olduğu sürece
@@ -70,5 +70,37 @@ describe('QuestionCard surukleme tutamaci', () => {
         render(<Harness index={3} onMove={onMove} />);
         fireEvent.drop(cardOf());
         expect(onMove).toHaveBeenCalledWith(3);
+    });
+});
+
+/**
+ * Yanıtlar alan kimliğiyle saklanır. Kayıt kimliği değiştirirse eski yanıtlar sorusundan kopar
+ * (yanıt ekranında "Soru", dışa aktarımda boş hücre). Bu yüzden sunucudan gelen kimlik geri
+ * gönderilir ve yeni alanın geçici kimliği kayıttan sonra sunucununkiyle değiştirilir.
+ */
+describe('alan kimlikleri kayitta korunur', () => {
+    const SERVER_ID = '3f2b8c1e-9d4a-4c7e-8b21-5a6f0e9d1c34';
+
+    it('sunucu kimligi geri gonderilir, gecici kimlik gonderilmez', () => {
+        const body = payloadBlocks([
+            { id: SERVER_ID, type: 'ShortText', content: 'Adınız', settings: { required: true } },
+            { id: 'k3j9x0aa', type: 'Email', content: 'E-posta', settings: {} },
+        ]);
+        expect(body.map((b) => b.id)).toEqual([SERVER_ID, null]);
+        expect(body.map((b) => b.order)).toEqual([1, 2]);
+        expect(body[0].settings).toBe('{"required":true}');
+    });
+
+    it('kayittan sonra yalniz degisen kimlikler eslenir', () => {
+        const sent = [{ id: SERVER_ID }, { id: 'k3j9x0aa' }];
+        const saved = [
+            { id: 'aaaaaaaa-0000-4000-8000-000000000002', order: 2 },
+            { id: SERVER_ID, order: 1 },
+        ];
+        expect(serverIdMap(sent, saved)).toEqual({ k3j9x0aa: 'aaaaaaaa-0000-4000-8000-000000000002' });
+    });
+
+    it('sunucu blok dondurmezse esleme bos kalir', () => {
+        expect(serverIdMap([{ id: 'k3j9x0aa' }], undefined)).toEqual({});
     });
 });

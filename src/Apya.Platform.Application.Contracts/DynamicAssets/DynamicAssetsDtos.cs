@@ -52,6 +52,12 @@ public class CreateTemplateDto
 /// </summary>
 public class CreateBlockDto
 {
+    /// <summary>
+    /// Id of an existing block. Only read by form block updates: when it matches a block of the
+    /// form, that block is updated in place so stored answers keep pointing at it. Empty = new block.
+    /// </summary>
+    public Guid? Id { get; set; }
+
     public BlockType Type { get; set; }
     public int Order { get; set; }
     public string Content { get; set; } = null!;

@@ -65,6 +65,14 @@ public class AppBlock : Entity<Guid>
         Order = order;
     }
 
+    /// <summary>
+    /// Changes the field type in place. Called internally by <see cref="AppDocument.UpdateBlock"/>.
+    /// </summary>
+    internal void SetType(BlockType type)
+    {
+        Type = type;
+    }
+
     public void SetContent(string content)
     {
         Content = Check.NotNull(content, nameof(content));
