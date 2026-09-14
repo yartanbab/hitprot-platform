@@ -57,7 +57,8 @@ namespace Apya.Platform
             // Hibe Çağrısı (GrantCall) — GrantName MapToGetOutputDtoAsync'te doldurulur.
             // (Girdi→entity dönüşümü AppService'te MapToEntityAsync ile yapılır, AutoMapper değil.)
             CreateMap<GrantCall, GrantCallDto>()
-                .ForMember(d => d.GrantName, o => o.Ignore());
+                .ForMember(d => d.GrantName, o => o.Ignore())
+                .ForMember(d => d.ClosingSummary, o => o.Ignore());
 
             // Hibe Başvurusu (B1) — Period/GrantName AppService'te (filtre-kapalı) doldurulur.
             // TenantName/Tranches/Milestones (Faz C) da AppService'te elle doldurulur.

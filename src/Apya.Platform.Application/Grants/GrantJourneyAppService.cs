@@ -173,6 +173,7 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
             {
                 GrantInterestStatus.UygunDegil => GrantJourneyItemKind.InterestRejected,
                 GrantInterestStatus.GeriCekildi => GrantJourneyItemKind.InterestWithdrawn,
+                GrantInterestStatus.Kacirildi => GrantJourneyItemKind.CallClosed,
                 _ when closed => GrantJourneyItemKind.CallClosed,
                 _ => GrantJourneyItemKind.InterestPending
             };

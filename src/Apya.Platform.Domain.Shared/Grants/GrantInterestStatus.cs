@@ -28,5 +28,11 @@ public enum GrantInterestStatus
     /// Firma, karar verilmeden ilgisini geri çekti. Yalnız bekleyen talep geri
     /// çekilebilir: başvuruya dönmüş ya da reddedilmiş kayıt tarihçedir.
     /// </summary>
-    GeriCekildi = 4
+    GeriCekildi = 4,
+
+    /// <summary>
+    /// 18b · Karara bağlanmadan çağrı kapandı. Gerekçe otomatik yazılır ve firmaya gösterilir;
+    /// kayıt tarihçedir, çağrı yeniden açılırsa firma YENİ talep bırakabilir.
+    /// </summary>
+    Kacirildi = 5
 }

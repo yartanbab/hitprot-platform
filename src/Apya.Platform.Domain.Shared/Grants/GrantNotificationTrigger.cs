@@ -43,5 +43,11 @@ public enum GrantNotificationTrigger
     /// Kiracı bir çağrıya ilgi bildirdi. 🔴 Tek HOST'A giden tetikleyici: alıcı
     /// firma değil danışman ekibidir, kutuyu kimsenin açmasını beklemeyelim diye.
     /// </summary>
-    InterestReceived = 8
+    InterestReceived = 8,
+
+    /// <summary>
+    /// 18b · Host çağrıyı kapattı. Talebi yanıtlanmamış ya da başvurusu gönderilmemiş firmalara
+    /// gider; gövde profile uyan açık çağrıları taşır.
+    /// </summary>
+    CallClosed = 9
 }

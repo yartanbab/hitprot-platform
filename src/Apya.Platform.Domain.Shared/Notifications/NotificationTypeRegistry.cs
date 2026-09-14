@@ -115,6 +115,11 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-inbox", "/Grants/Interests", GroupSimilar: true),
 
+            // 18b · Kapanan çağrı firmanın Hibe Yolculuğum ekranında "çağrı kapandı" satırıyla durur.
+            [NotificationType.GrantCallClosed] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-calendar-xmark", "/Grants/Journey", GroupSimilar: false),
+
             [NotificationType.AiWorkflowTriggered] = new(
                 NotificationCategory.Ai, NotificationSeverity.Info,
                 "fa fa-robot", "/AiCenter/Evaluations", GroupSimilar: false),

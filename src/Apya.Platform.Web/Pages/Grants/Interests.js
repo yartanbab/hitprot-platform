@@ -4,8 +4,8 @@ $(function () {
     var rejectModal = new bootstrap.Modal(document.getElementById('RejectModal'));
 
     // GrantInterestStatus enum sırasıyla birebir.
-    var statusKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi'];
-    var statusTone = ['warning', 'neutral', 'positive', 'negative', 'neutral'];
+    var statusKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi', 'Kacirildi'];
+    var statusTone = ['warning', 'neutral', 'positive', 'negative', 'neutral', 'neutral'];
 
     var model = null;
     var onlyPending = true;
@@ -52,6 +52,11 @@ $(function () {
 
     function actions(r) {
         // Firmanın geri çektiği talepte eylem YOK — başvuru başlatılamaz, reddedilemez.
+        // 18b · Çağrı kapanınca kaçırılan talepte eylem yok; gerekçe satırın altında.
+        if (r.status === 5) {
+            return '<span class="small text-muted">' + esc(l('Grants:Interests:MissedAt', date(r.reviewedAt))) + '</span>';
+        }
+
         if (r.status === 4) {
             return '<span class="small text-muted">' +
                 esc(l('Grants:Interests:WithdrawnAt', date(r.withdrawnAt))) + '</span>';

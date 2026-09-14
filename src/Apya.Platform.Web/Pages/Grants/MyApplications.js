@@ -136,8 +136,8 @@ $(function () {
 
     // ---------- İlgi taleplerim ----------
     // GrantInterestStatus enum sırasıyla birebir.
-    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi'];
-    var interestTone = ['neutral', 'neutral', 'positive', 'negative', 'neutral'];
+    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi', 'Kacirildi'];
+    var interestTone = ['neutral', 'neutral', 'positive', 'negative', 'neutral', 'neutral'];
 
     function interestRow(r) {
         return '<div class="apya-my-interest-row">' +

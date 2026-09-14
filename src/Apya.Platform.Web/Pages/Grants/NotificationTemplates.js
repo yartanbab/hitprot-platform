@@ -3,8 +3,11 @@ $(function () {
     var l = abp.localization.getResource('Platform');
 
     // Enum sırası sunucudakiyle birebir (GrantNotificationTrigger).
+    // 🔴 InterestAnswered (7) ve InterestReceived (8) eklenirken bu dizi güncellenmemişti; iki şablonun adı
+    // ekranda "Grants:Notify:Trigger:undefined:Name" olarak çıkıyordu. CallClosed (9) 18b ile geldi.
     var triggerKeys = ['RecommendationSent', 'DocumentDeadlineNear', 'DocumentRevisionRequested',
-                       'ApplicationStageChanged', 'DecisionIssued', 'ReportDeadlineNear', 'CallPublished'];
+                       'ApplicationStageChanged', 'DecisionIssued', 'ReportDeadlineNear', 'CallPublished',
+                       'InterestAnswered', 'InterestReceived', 'CallClosed'];
 
     var model = null;
     var selectedId = null;
