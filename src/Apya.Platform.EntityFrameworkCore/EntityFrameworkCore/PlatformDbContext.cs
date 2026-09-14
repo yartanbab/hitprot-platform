@@ -1042,6 +1042,15 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.EstimatedBudget).HasPrecision(18, 2);
                 b.Property(x => x.PartnerName).HasMaxLength(200);
                 b.Property(x => x.ConsultantNote).HasMaxLength(2000);
+                // Proje fikri formu 2-9. sorular (tur 19); hepsi isteğe bağlı serbest metin.
+                b.Property(x => x.ProblemStatement).HasMaxLength(GrantInterestConsts.MaxAnswerLength);
+                b.Property(x => x.TargetAudience).HasMaxLength(GrantInterestConsts.MaxAnswerLength);
+                b.Property(x => x.PlannedActivities).HasMaxLength(GrantInterestConsts.MaxAnswerLength);
+                b.Property(x => x.DurationAndPartners).HasMaxLength(GrantInterestConsts.MaxAnswerLength);
+                b.Property(x => x.SupportNeeds).HasMaxLength(GrantInterestConsts.MaxAnswerLength);
+                b.Property(x => x.PriorExperience).HasMaxLength(GrantInterestConsts.MaxAnswerLength);
+                b.Property(x => x.TeamStructure).HasMaxLength(GrantInterestConsts.MaxAnswerLength);
+                b.Property(x => x.Stakeholders).HasMaxLength(GrantInterestConsts.MaxAnswerLength);
                 // Çağrıya FK: emsali GrantApplication — ikisi de kiracıya ait ve çağrıya
                 // bağlı. Başvuruya FK KURULMADI: başvuru silinse bile talebin kendisi
                 // ve host'un kararı durmalı.

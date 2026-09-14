@@ -51,6 +51,34 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public string? PartnerName { get; private set; }
 
+    // --- Proje fikri formu · 2-9. sorular (tur 19) ---
+    // 1. soru (proje fikri) Note'ta durur. Zorunluluk (2. soru) girişte DTO'da denetlenir;
+    // boş bırakılan cevap null yazılır, boş dize değil — host ekranı "yanıtlanmamış" der.
+
+    /// <summary>2 · Projenin çözüm ürettiği problem ya da ihtiyaç.</summary>
+    public string? ProblemStatement { get; private set; }
+
+    /// <summary>3 · Hedef kitle.</summary>
+    public string? TargetAudience { get; private set; }
+
+    /// <summary>4 · Planlanan faaliyetler.</summary>
+    public string? PlannedActivities { get; private set; }
+
+    /// <summary>5 · Tahmini süre ve iş birliği yapılmak istenen kurumlar.</summary>
+    public string? DurationAndPartners { get; private set; }
+
+    /// <summary>6 · En çok destek ya da yönlendirme beklenen konu.</summary>
+    public string? SupportNeeds { get; private set; }
+
+    /// <summary>7 · Daha önce yürütülen benzer ulusal/uluslararası projeler.</summary>
+    public string? PriorExperience { get; private set; }
+
+    /// <summary>8 · Ekip yapısı ve anahtar kişilerin yetkinlikleri.</summary>
+    public string? TeamStructure { get; private set; }
+
+    /// <summary>9 · Mevcut paydaşlar, dernekler, çözüm ortakları ve rolleri.</summary>
+    public string? Stakeholders { get; private set; }
+
     /// <summary>Firmanın ilgisini geri çektiği an; yalnız <see cref="GrantInterestStatus.GeriCekildi"/> durumunda dolu.</summary>
     public DateTime? WithdrawnAt { get; private set; }
 
@@ -113,6 +141,38 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
             : null;
 
         Status = GrantInterestStatus.Yeni;
+    }
+
+    /// <summary>
+    /// Proje fikri formunun 2-9. soruları. Boşluktan ibaret cevap yazılmamış sayılır (null);
+    /// her cevap <see cref="GrantInterestConsts.MaxAnswerLength"/> ile sınırlıdır.
+    /// </summary>
+    public void SetIdeaDetails(
+        string? problemStatement,
+        string? targetAudience,
+        string? plannedActivities,
+        string? durationAndPartners,
+        string? supportNeeds,
+        string? priorExperience,
+        string? teamStructure,
+        string? stakeholders)
+    {
+        ProblemStatement = CleanAnswer(problemStatement, nameof(problemStatement));
+        TargetAudience = CleanAnswer(targetAudience, nameof(targetAudience));
+        PlannedActivities = CleanAnswer(plannedActivities, nameof(plannedActivities));
+        DurationAndPartners = CleanAnswer(durationAndPartners, nameof(durationAndPartners));
+        SupportNeeds = CleanAnswer(supportNeeds, nameof(supportNeeds));
+        PriorExperience = CleanAnswer(priorExperience, nameof(priorExperience));
+        TeamStructure = CleanAnswer(teamStructure, nameof(teamStructure));
+        Stakeholders = CleanAnswer(stakeholders, nameof(stakeholders));
+    }
+
+    private static string? CleanAnswer(string? value, string name)
+    {
+        var trimmed = value?.Trim();
+        return string.IsNullOrEmpty(trimmed)
+            ? null
+            : Check.Length(trimmed, name, maxLength: GrantInterestConsts.MaxAnswerLength);
     }
 
     /// <summary>

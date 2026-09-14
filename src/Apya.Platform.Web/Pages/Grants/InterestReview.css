@@ -101,6 +101,36 @@
     font-style: italic;
 }
 
+/* Tur 19 · Formun 2-9. soru cevapları: soru başlığı sessiz, cevap gövde metni. */
+.apya-irv-answers {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+    margin: 0;
+    padding-top: var(--apya-space-3);
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+.apya-irv-answer dt {
+    margin-bottom: 2px;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-irv-answer dd {
+    margin: 0;
+    font-size: var(--apya-fs-md);
+    line-height: 1.6;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.apya-irv-answer dd.is-empty {
+    color: var(--apya-text-secondary);
+    font-style: italic;
+}
+
 .apya-irv-stats,
 .apya-irv-facts {
     display: grid;

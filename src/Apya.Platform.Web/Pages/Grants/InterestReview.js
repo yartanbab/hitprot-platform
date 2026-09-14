@@ -59,12 +59,30 @@ $(function () {
             : l('Grants:InterestReview:Arrived', dateTime(r.creationTime)));
     }
 
+    // Proje fikri formunun 2-9. soruları; etiketler formdaki soru metninin kendisi.
+    var answerFields = [
+        { key: 'Problem', field: 'problemStatement' },
+        { key: 'Audience', field: 'targetAudience' },
+        { key: 'Activities', field: 'plannedActivities' },
+        { key: 'Duration', field: 'durationAndPartners' },
+        { key: 'Support', field: 'supportNeeds' },
+        { key: 'Experience', field: 'priorExperience' },
+        { key: 'Team', field: 'teamStructure' },
+        { key: 'Stakeholders', field: 'stakeholders' }
+    ];
+
     function paintIdea(d) {
         var r = d.interest;
         $('#IdeaMeta').text(r.requestedByName
             ? l('Grants:InterestReview:Idea:MetaBy', dateTime(r.creationTime), r.requestedByName)
             : dateTime(r.creationTime));
         $('#IdeaText').toggleClass('is-empty', !r.note).text(r.note || l('Grants:InterestReview:Idea:Empty'));
+        $('#IdeaAnswers').html(answerFields.map(function (f) {
+            var value = r[f.field];
+            return '<div class="apya-irv-answer"><dt>' + esc(l('Grants:Interest:Form:' + f.key)) + '</dt>' +
+                '<dd' + (value ? '' : ' class="is-empty"') + '>' +
+                esc(value || l('Grants:InterestReview:Answer:Empty')) + '</dd></div>';
+        }).join(''));
         $('#StatBudget').text(money(r.estimatedBudget));
         $('#StatStart').text(quarter(r.targetStartDate));
         $('#StatConsortium').text(consortiumText(r));

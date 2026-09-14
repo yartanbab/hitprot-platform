@@ -6,6 +6,7 @@ using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Notifications;
 using Shouldly;
 using Volo.Abp;
+using Volo.Abp.Validation;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
@@ -86,7 +87,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(tenantId))
         {
             var interest = await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "12 aylık Ar-Ge projesi" });
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "12 aylık Ar-Ge projesi", ProblemStatement = "Sorun" });
             interestId = interest.Id;
 
             // Talep tek başına başvuru DEĞİLDİR: bu aşamada ortada başvuru yoktur.
@@ -125,7 +126,8 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
             await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
             {
                 GrantCallId = call.Id,
-                Note = "Ortak arayışımız var."
+                Note = "Ortak arayışımız var.",
+                ProblemStatement = "Sorun"
             });
         }
 
@@ -159,7 +161,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
 
         using (_currentTenant.Change(tenantId))
         {
-            await _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Unvan testi." });
+            await _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Unvan testi.", ProblemStatement = "Sorun" });
         }
 
         var notification = (await _notificationRepository.GetListAsync(
@@ -181,7 +183,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(tenantA))
         {
             interestId = (await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" })).Id;
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri", ProblemStatement = "Sorun" })).Id;
         }
 
         using (_currentTenant.Change(tenantB))
@@ -200,13 +202,14 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(tenantId))
         {
             (await Should.ThrowAsync<BusinessException>(() => _interestAppService.ExpressAsync(
-                    new ExpressGrantInterestInput { GrantCallId = consortiumCall.Id, Note = "Fikir" })))
+                    new ExpressGrantInterestInput { GrantCallId = consortiumCall.Id, Note = "Fikir", ProblemStatement = "Sorun" })))
                 .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestPartnerAnswerRequired);
 
             var answered = await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
             {
                 GrantCallId = consortiumCall.Id,
                 Note = "Öngörülü bakım modülü",
+                ProblemStatement = "Sorun",
                 EstimatedBudget = 12_500_000m,
                 TargetStartDate = new DateTime(2027, 1, 1),
                 NeedsPartner = true
@@ -220,6 +223,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
             {
                 GrantCallId = plainCall.Id,
                 Note = "Fikir",
+                ProblemStatement = "Sorun",
                 NeedsPartner = false,
                 PartnerName = "Uydurma Ortak"
             });
@@ -244,13 +248,13 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(tenantId))
         {
             var first = await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir" });
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir", ProblemStatement = "Sorun" });
             (await _bookmarkRepository.GetListAsync(b => b.GrantCallId == call.Id)).Count.ShouldBe(1);
 
             // Geri çek + yeniden bildir: takip satırı çoğalmamalı.
             await _interestAppService.WithdrawAsync(first.Id);
             await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir, ikinci kez" });
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir, ikinci kez", ProblemStatement = "Sorun" });
             (await _bookmarkRepository.GetListAsync(b => b.GrantCallId == call.Id)).Count.ShouldBe(1);
         }
     }
@@ -265,7 +269,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(tenantId))
         {
             interestId = (await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir" })).Id;
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir", ProblemStatement = "Sorun" })).Id;
 
             var withdrawn = await _interestAppService.WithdrawAsync(interestId);
             withdrawn.Status.ShouldBe(GrantInterestStatus.GeriCekildi);
@@ -296,7 +300,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(tenantA))
         {
             interestId = (await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir" })).Id;
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir", ProblemStatement = "Sorun" })).Id;
         }
 
         using (_currentTenant.Change(tenantB))
@@ -319,10 +323,10 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
 
         using (_currentTenant.Change(tenantId))
         {
-            await _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" });
+            await _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri", ProblemStatement = "Sorun" });
 
             (await Should.ThrowAsync<BusinessException>(
-                    () => _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" })))
+                    () => _interestAppService.ExpressAsync(new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri", ProblemStatement = "Sorun" })))
                 .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestAlreadyOpen);
         }
     }
@@ -337,7 +341,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         using (_currentTenant.Change(tenantId))
         {
             firstId = (await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" })).Id;
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri", ProblemStatement = "Sorun" })).Id;
         }
 
         await _hostAppService.RejectAsync(new RejectGrantInterestInput
@@ -350,7 +354,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         {
             // Red kapıyı kapatmaz: YENİ kayıt açılır, eski gerekçe geçmişte kalır.
             var second = await _interestAppService.ExpressAsync(
-                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri" });
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Proje fikri", ProblemStatement = "Sorun" });
             second.Id.ShouldNotBe(firstId);
 
             var mine = await _interestAppService.GetMineAsync();
@@ -380,6 +384,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
             {
                 GrantCallId = callId,
                 Note = "Öngörülü bakım modülü",
+                ProblemStatement = "Sorun",
                 EstimatedBudget = 12_500_000m,
                 NeedsPartner = needsPartner
             });
@@ -477,5 +482,53 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         assigned.AssignTo(second);
         assigned.StartReview(first, DateTime.Now);
         assigned.AssignedUserId.ShouldBe(second, "devredilmiş talebi inceleyen sorumluluğu devralmaz");
+    }
+
+    /// <summary>
+    /// Tur 19: proje fikri formunun 2-9. soruları talebe yazılır ve danışman inceleme ekranının
+    /// satırına gelir; boş bırakılan soru null döner, boş dize değil. 2. soru servis kapısında
+    /// zorunludur — yalnız ekranda değil, REST'ten de atlanamaz.
+    /// </summary>
+    [Fact]
+    public async Task Fikir_formu_cevaplari_talebe_yazilir_ve_inceleme_ekranina_gelir()
+    {
+        var call = await CreateHostCallAsync("Dokuz Soru Programı");
+        var tenantId = await CreateTenantAsync("Soru Cevap A.Ş. " + Guid.NewGuid().ToString("N")[..6]);
+
+        Guid interestId;
+        using (_currentTenant.Change(tenantId))
+        {
+            await Should.ThrowAsync<AbpValidationException>(() => _interestAppService.ExpressAsync(
+                new ExpressGrantInterestInput { GrantCallId = call.Id, Note = "Fikir", ProblemStatement = "  " }));
+
+            var mine = await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+            {
+                GrantCallId = call.Id,
+                Note = "Öngörülü bakım modülü",
+                ProblemStatement = " Arıza kayıtları elle tutuluyor ",
+                TargetAudience = "KOBİ üretim tesisleri",
+                PlannedActivities = "Saha çalışması, yazılım geliştirme",
+                DurationAndPartners = "12 ay; OSB müdürlüğü",
+                SupportNeeds = "Bütçelendirme",
+                PriorExperience = "",
+                TeamStructure = "2 makine mühendisi, 3 yazılımcı",
+                Stakeholders = null
+            });
+            interestId = mine.Id;
+
+            mine.ProblemStatement.ShouldBe("Arıza kayıtları elle tutuluyor");
+            mine.PriorExperience.ShouldBeNull("boş bırakılan soru null döner");
+            mine.Stakeholders.ShouldBeNull();
+        }
+
+        var review = await _hostAppService.GetReviewAsync(interestId);
+        review.Interest.ProblemStatement.ShouldBe("Arıza kayıtları elle tutuluyor");
+        review.Interest.TargetAudience.ShouldBe("KOBİ üretim tesisleri");
+        review.Interest.PlannedActivities.ShouldBe("Saha çalışması, yazılım geliştirme");
+        review.Interest.DurationAndPartners.ShouldBe("12 ay; OSB müdürlüğü");
+        review.Interest.SupportNeeds.ShouldBe("Bütçelendirme");
+        review.Interest.PriorExperience.ShouldBeNull();
+        review.Interest.TeamStructure.ShouldBe("2 makine mühendisi, 3 yazılımcı");
+        review.Interest.Stakeholders.ShouldBeNull();
     }
 }

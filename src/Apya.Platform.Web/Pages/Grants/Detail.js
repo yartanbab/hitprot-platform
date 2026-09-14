@@ -304,6 +304,10 @@ $(function () {
 
     function partnerChoice() { return $('input[name=InterestPartner]:checked').val() || null; }
 
+    // İsteğe bağlı soru: boş bırakıldıysa null gider, sunucu da null saklar.
+    // 🔴 $.trim YOK: libs'teki jQuery 4.0.0 (install-libs) kaldırdı; String.prototype.trim kullanılır.
+    function answer(id) { return ($('#' + id).val() || '').trim() || null; }
+
     function paintPartner() {
         var c = partnerChoice();
         $('#InterestPartnerName').toggleClass('d-none', c !== 'has');
@@ -312,7 +316,7 @@ $(function () {
 
     function resetInterestForm() {
         document.getElementById('InterestForm').reset();
-        $('#InterestNote').removeClass('is-invalid');
+        $('#InterestNote, #InterestProblem').removeClass('is-invalid');
         $('#InterestPartnerError').removeClass('d-block');
         $('#InterestCallName').text(detail ? detail.grantName : '');
         $('#InterestStart').html(quarterOptions());
@@ -340,29 +344,43 @@ $(function () {
         paintPartner();
     });
 
-    $('#InterestNote').on('input', function () { $(this).removeClass('is-invalid'); });
+    $('#InterestNote, #InterestProblem').on('input', function () { $(this).removeClass('is-invalid'); });
 
     $('#InterestForm').on('submit', function (e) {
         e.preventDefault();
 
-        var note = $.trim($('#InterestNote').val());
+        var note = ($('#InterestNote').val() || '').trim();
+        var problem = ($('#InterestProblem').val() || '').trim();
         var askPartner = !!(detail && detail.requiresConsortium);
         var choice = partnerChoice();
         var valid = true;
         if (!note) { $('#InterestNote').addClass('is-invalid'); valid = false; }
+        if (!problem) { $('#InterestProblem').addClass('is-invalid'); valid = false; }
         if (askPartner && !choice) { $('#InterestPartnerError').addClass('d-block'); valid = false; }
-        if (!valid) { return; }
+        if (!valid) {
+            // Form uzun; gönder düğmesine basıldığında boş kalan zorunlu soru ekranın dışında olabilir.
+            $('#InterestForm .is-invalid').first().trigger('focus');
+            return;
+        }
 
         var budget = document.getElementById('InterestBudget');
         var input = {
             grantCallId: callId,
             note: note,
+            problemStatement: problem,
+            targetAudience: answer('InterestAudience'),
+            plannedActivities: answer('InterestActivities'),
+            durationAndPartners: answer('InterestDuration'),
+            supportNeeds: answer('InterestSupport'),
+            priorExperience: answer('InterestExperience'),
+            teamStructure: answer('InterestTeam'),
+            stakeholders: answer('InterestStakeholders'),
             estimatedBudget: budget.__apyaMoney
                 ? apya.moneyInput.getValue(budget)
                 : (budget.value === '' ? null : Number(budget.value)),
             targetStartDate: $('#InterestStart').val() || null,
             needsPartner: askPartner ? choice === 'needs' : null,
-            partnerName: askPartner && choice === 'has' ? ($.trim($('#InterestPartnerName').val()) || null) : null
+            partnerName: askPartner && choice === 'has' ? (($('#InterestPartnerName').val() || '').trim() || null) : null
         };
 
         var $submit = $(this).find('button[type=submit]').prop('disabled', true);
