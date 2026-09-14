@@ -26,6 +26,21 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.15",
+            date: "15 Eylül 2026",
+            title: "Hibe detayında programın amacı, öncelikleri ve destek tutarı aralığı",
+
+            // ── Hibe ──────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe detayında programın amacı, öncelikleri ve kimlerin başvurabileceği",
+                "Hibeler ekranında bir çağrının detayını açtığınızda, resmî duyurudaki programın amacı, " +
+                "öncelikleri ve uygun başvuru sahipleri artık Program hakkında bölümünde bir arada duruyor; " +
+                "öncelikler ve başvuru sahipleri madde madde listeleniyor. Destek tutarında da yalnız üst " +
+                "sınır değil, varsa alt sınır görünüyor (ör. 5.000.000 – 20.000.000 ₺); böylece projenizin " +
+                "bütçesinin programa uyup uymadığını baştan görebilirsiniz. Bu bilgiler henüz girilmemiş " +
+                "programlarda bölüm görünmez.")),
+
+        new ReleaseNote(
             version: "2026.09.14",
             date: "14 Eylül 2026",
             title: "Kurum Profili, Hibe Yolculuğum ve görüşme saati önerme; formlarda düzeltmeler",
