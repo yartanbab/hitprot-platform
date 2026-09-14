@@ -22,10 +22,12 @@ namespace Apya.Platform.Web.Pages.Hibeler;
 public class DetayModel : AbpPageModel
 {
     private readonly IGrantPublicAppService _public;
+    private readonly IGrantFunnelAppService _funnel;
 
-    public DetayModel(IGrantPublicAppService publicService)
+    public DetayModel(IGrantPublicAppService publicService, IGrantFunnelAppService funnel)
     {
         _public = publicService;
+        _funnel = funnel;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -44,6 +46,8 @@ public class DetayModel : AbpPageModel
         if (Id == Guid.Empty) { return RedirectToPage("./Index"); }
 
         Detail = await _public.GetDetailAsync(Id);
+        // 18c · Huni: yalnız sayfanın açılışı sayılır (form gönderimi sonrası yeniden çizim sayılmaz).
+        await _funnel.RecordPublicViewAsync(Id);
         return Page();
     }
 

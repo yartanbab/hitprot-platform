@@ -1,0 +1,58 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.FunnelModel
+@{
+    ViewBag.Title = L["Grants:Funnel:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Funnel.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Funnel.js" />
+}
+
+@* 18c · Hangi çağrı iş getiriyor. Sayılar ve cümleler JS'te kurulur; aşama tanımları GrantFunnelDto'da. *@
+<div data-page-description="@L["Grants:Funnel:Description"]" class="apya-page apya-grant-scope apya-fnl">
+
+    <div class="apya-fnl-head">
+        <div class="apya-fnl-head-text">
+            <h2 class="apya-fnl-title" id="FunnelHeading">@L["Grants:Funnel:Title"]</h2>
+            <p class="apya-fnl-sub" id="FunnelSub"></p>
+        </div>
+        <div class="apya-fnl-controls" id="FunnelControls">
+            <label class="apya-fnl-control">
+                <span>@L["Grants:Funnel:Call"]</span>
+                <select id="FunnelCall" class="form-select form-select-sm"></select>
+            </label>
+            <label class="apya-fnl-control">
+                <span>@L["Grants:Funnel:Window"]</span>
+                <select id="FunnelWindow" class="form-select form-select-sm">
+                    <option value="30">@L["Grants:Funnel:Days", 30]</option>
+                    <option value="60" selected>@L["Grants:Funnel:Days", 60]</option>
+                    <option value="90">@L["Grants:Funnel:Days", 90]</option>
+                </select>
+            </label>
+        </div>
+    </div>
+
+    <ol class="apya-fnl-stages" id="FunnelStages" aria-live="polite"></ol>
+
+    <div class="apya-fnl-insight d-none" id="FunnelInsight">
+        <i class="fa fa-lightbulb" aria-hidden="true"></i>
+        <p class="mb-0" id="FunnelInsightText"></p>
+    </div>
+
+    <div class="card mb-0 d-none" id="FunnelEmpty">
+        <div class="card-body apya-fnl-empty">
+            <i class="fa fa-filter" aria-hidden="true"></i>
+            <p class="mb-0" id="FunnelEmptyText"></p>
+        </div>
+    </div>
+
+    <p class="apya-fnl-note">@L["Grants:Funnel:Note"]</p>
+</div>

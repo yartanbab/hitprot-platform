@@ -147,6 +147,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantReportSection> GrantReportSections { get; set; }
         public DbSet<GrantNotificationTemplate> GrantNotificationTemplates { get; set; }
         public DbSet<GrantNotificationLog> GrantNotificationLogs { get; set; }
+        public DbSet<GrantCallDailyStat> GrantCallDailyStats { get; set; }
         public DbSet<GrantLead> GrantLeads { get; set; }
         public DbSet<GrantInterest> GrantInterests { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
@@ -1071,6 +1072,14 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Aynı eşik iki kez gönderilemesin. Soft delete olmadığı için
                 // indeks silinmiş satırlarla dolmaz.
                 b.HasIndex(x => new { x.Trigger, x.EntityId, x.DayMark }).IsUnique();
+            });
+
+            builder.Entity<GrantCallDailyStat>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantCallDailyStats", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                // 18c · Gün + kanal başına tek satır; huni sorgusu çağrı + gün aralığıyla okur, tekil indeks onu da taşır.
+                b.HasIndex(x => new { x.GrantCallId, x.Day, x.Kind }).IsUnique();
             });
 
             builder.Entity<GrantDisbursementTranche>(b =>
