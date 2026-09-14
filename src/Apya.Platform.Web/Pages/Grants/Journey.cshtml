@@ -41,3 +41,35 @@
         </div>
     </div>
 </div>
+
+@* 18e · Görüşme saati öner: firma üç saat seçer, danışman birini onaylar. *@
+<div class="modal fade apya-grant-scope" id="MeetingModal" tabindex="-1" aria-hidden="true" aria-labelledby="MeetingTitle">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="MeetingForm" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="MeetingTitle">@L["Grants:Meeting:Propose:Title"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Grants:Meeting:Cancel"]"></button>
+                </div>
+                <div class="modal-body d-flex flex-column gap-3">
+                    <div class="fw-semibold" id="MeetingTarget"></div>
+                    <p class="apya-jny-meeting-hint mb-0">@L["Grants:Meeting:Propose:Hint", Apya.Platform.Grants.GrantMeetingConsts.DurationMinutes]</p>
+                    @for (var slot = 1; slot <= Apya.Platform.Grants.GrantMeetingConsts.SlotCount; slot++)
+                    {
+                        <div>
+                            <label class="form-label mb-1" for="MeetingSlot@(slot)">@L["Grants:Meeting:Propose:Slot", slot]</label>
+                            <input type="datetime-local" class="form-control" id="MeetingSlot@(slot)" data-meeting-slot required />
+                        </div>
+                    }
+                    <p class="apya-jny-meeting-error mb-0 d-none" id="MeetingError" role="alert">@L["Grants:Meeting:Propose:Invalid"]</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Meeting:Cancel"]</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-calendar-plus me-1"></i>@L["Grants:Meeting:Propose:Submit"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

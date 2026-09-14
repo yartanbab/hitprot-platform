@@ -165,3 +165,15 @@
 .apya-jny-empty > i { font-size: 28px; color: var(--apya-text-disabled); }
 
 #JourneyItems { --apya-skel-card: 120px; }
+
+/* 18e · Görüşme saati öner penceresi. */
+.apya-jny-meeting-hint {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-jny-meeting-error {
+    color: var(--apya-negative-700);
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+}

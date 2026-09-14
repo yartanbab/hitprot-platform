@@ -2,6 +2,7 @@ $(function () {
     var service = apya.platform.grants.grantJourney;
     var interestService = apya.platform.grants.grantInterest;
     var l = abp.localization.getResource('Platform');
+    var meetingModal = new bootstrap.Modal(document.getElementById('MeetingModal'));
 
     // GrantJourneyItemKind / GrantNextAction enum sıralarıyla birebir.
     var kindKeys = ['InterestPending', 'InterestRejected', 'InterestWithdrawn', 'ApplicationOpen',
@@ -10,6 +11,18 @@ $(function () {
     var nextKeys = ['CompleteForm', 'UploadDocuments', 'WaitingOnConsultant', 'WaitingOnInstitution', 'InProject', 'Done'];
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
+    function slotText(v) {
+        return new Date(v).toLocaleString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long', hour: '2-digit', minute: '2-digit' });
+    }
+
+    /// 18e · Bekleyen talebin görüşme durumu. GrantMeetingStatus: 0 Bekliyor · 1 Onaylandı · 2 Başka saat istendi.
+    function meetingSentence(m) {
+        if (!m) { return ''; }
+        if (m.status === 1) { return l('Grants:Journey:Meeting:Confirmed', slotText(m.confirmedSlot), m.durationMinutes); }
+        if (m.status === 2) { return l('Grants:Journey:Meeting:OtherTime', m.hostNote || ''); }
+        return l('Grants:Journey:Meeting:Pending', m.slots.map(slotText).join(' · '));
+    }
+
     function date(v) { return v ? new Date(v).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'; }
     function shortMoney(v) {
         if (v == null) { return '—'; }
@@ -37,9 +50,9 @@ $(function () {
     function body(i) {
         switch (i.kind) {
             case 0:
-                return i.reviewerName
+                return [i.reviewerName
                     ? l('Grants:Journey:Body:InReview', date(i.at), i.reviewerName)
-                    : l('Grants:Journey:Body:Sent', date(i.at));
+                    : l('Grants:Journey:Body:Sent', date(i.at)), meetingSentence(i.meeting)].filter(Boolean).join(' ');
             case 1:
                 return l('Grants:Journey:Body:Rejected', date(i.at));
             case 2:
@@ -81,6 +94,11 @@ $(function () {
         };
         switch (i.kind) {
             case 0:
+                // Açık öneri yoksa (ya da danışman başka saat istediyse) firma saat önerir.
+                if (!i.meeting || i.meeting.status === 2) {
+                    html.push('<button type="button" class="btn btn-sm btn-primary" data-meeting="' + i.interestId + '" data-grant="' + esc(i.grantName) + '">' +
+                        esc(l('Grants:Journey:Action:ProposeMeeting')) + '</button>');
+                }
                 html.push(link('/Grants/Detail?id=' + i.grantCallId, 'Grants:Journey:Action:Call', false));
                 html.push('<button type="button" class="btn btn-sm btn-outline-danger" data-withdraw="' + i.interestId + '">' +
                     esc(l('Grants:Journey:Action:Withdraw')) + '</button>');
@@ -144,6 +162,41 @@ $(function () {
                 return load();
             }).always(function () { $btn.prop('disabled', false); });
         });
+    });
+
+    /// datetime-local değeri yerel saattir ("2026-09-16T10:00"); en erken şu an, en geç 60 gün sonrası.
+    function localValue(d) {
+        var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+
+    $('#JourneyItems').on('click', '[data-meeting]', function () {
+        var now = new Date();
+        var max = new Date(now.getTime() + 60 * 24 * 3600 * 1000);
+        $('#MeetingForm').data('interest', $(this).data('meeting'));
+        $('#MeetingTarget').text($(this).data('grant'));
+        $('[data-meeting-slot]').val('').attr({ min: localValue(now), max: localValue(max) });
+        $('#MeetingError').addClass('d-none');
+        meetingModal.show();
+    });
+
+    $('#MeetingForm').on('submit', function (e) {
+        e.preventDefault();
+        var values = $('[data-meeting-slot]').map(function () { return this.value; }).get();
+        var now = new Date();
+        var valid = values.every(function (v) { return v && new Date(v) > now; })
+            && new Set(values).size === values.length;
+        $('#MeetingError').toggleClass('d-none', valid);
+        if (!valid) { return; }
+
+        var $submit = $(this).find('button[type=submit]').prop('disabled', true);
+        // datetime-local saniyesiz gelir ("…T10:00"); tam ISO biçimiyle gönderilir.
+        var slots = values.map(function (v) { return v.length === 16 ? v + ':00' : v; });
+        interestService.proposeMeeting({ interestId: $(this).data('interest'), slots: slots }).then(function () {
+            meetingModal.hide();
+            abp.notify.success(l('Grants:Meeting:Propose:Sent'));
+            return load();
+        }).always(function () { $submit.prop('disabled', false); });
     });
 
     load();
