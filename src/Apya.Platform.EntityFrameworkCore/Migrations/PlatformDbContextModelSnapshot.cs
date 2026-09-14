@@ -5767,6 +5767,10 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("EligibleApplicants")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.Property<int>("EligibleCompanySizes")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
@@ -5811,6 +5815,9 @@ namespace Apya.Platform.Migrations
                     b.Property<int?>("MaxTrl")
                         .HasColumnType("integer");
 
+                    b.Property<decimal?>("MinAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int?>("MinCompanyAgeYears")
                         .HasColumnType("integer");
 
@@ -5837,6 +5844,10 @@ namespace Apya.Platform.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<string>("Objective")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.Property<string>("PosterFileName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -5846,6 +5857,10 @@ namespace Apya.Platform.Migrations
 
                     b.Property<bool>("PrefersYoungEntrepreneur")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Priorities")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
 
                     b.Property<int?>("ProjectDurationMonths")
                         .HasColumnType("integer");
