@@ -28,8 +28,9 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.11",
             date: "11 Eylül 2026",
-            title: "Görevlerde tüm projelerin panoları, hibede net adımlar, dokümanlarda süreç şeridi",
+            title: "Yenilenen Kart Panosu, hibede Bugün ekranı, dokümanlarda süreç şeridi",
 
+            // ── Görevler ──────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Belge, form, kontrol listesi ve bağımlılık panoları Görevler ekranında da var",
                 "Proje detayından tanıdığınız Belgeler, Formlar, Kontrol Listesi ve Bağımlılıklar " +
@@ -43,6 +44,28 @@ public static class ReleaseNoteCatalog
                 "görev bağlantılarını yalnız bu ekranda görürsünüz; termini geçmiş bir öncül hangi " +
                 "görevi bekletiyorsa satırında ⚠ ile işaretlidir."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kart Panosu yenilendi: dört yoğunluk ve tek Görünüm menüsü",
+                "Görevler ekranında ve proje detayındaki Kart Panosu'nda kartları dört yoğunlukta " +
+                "görebiliyorsunuz: Kart, Kompakt, Liste ve Başlık. Kartta hangi bilgilerin görüneceğini " +
+                "(kod, öncelik, atanan, son tarih, yorum ve ekler, etiketler) araç çubuğundaki Görünüm " +
+                "menüsünden seçiyorsunuz; tercihiniz hesabınızda saklanır, başka cihazda da aynı gelir. " +
+                "Kartın üzerindeki Düzenle ve Sil düğmeleri kalktı: taşıma, atama, erteleme, öncelik, " +
+                "düzenleme ve silme artık kartın ⋯ menüsünde. Boş kolonlar ince bir şeride daralır, " +
+                "tıklayınca açılır; Görünüm menüsünden tamamlanan görevleri de gizleyebilirsiniz. Kolon " +
+                "başlığı o kolondaki gecikmiş görev sayısını gösteriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevler filtre çubuğunda yalnız kullandığınız filtreler görünüyor",
+                "Görevler ekranının filtre çubuğu sadeleşti: seçilmemiş filtreler artık yer kaplamıyor, " +
+                "yalnız etkin olanlar \"Durum: Sürüyor\" gibi bir etiketle duruyor ve yanındaki ✕ ile tek " +
+                "tıkta kalkıyor. Yeni bir filtre eklemek için ＋ Filtre'ye basıp Durum, Atanan, Proje, " +
+                "Öncelik ya da Son tarih'i seçin. Gecikmiş görevlerin sayısı çubukta ayrı bir etiket " +
+                "olarak görünür; tıklayınca liste de pano da yalnız gecikenleri gösterir. Kart " +
+                "Panosu'nun Grupla, Kolonlar ve Görünüm araçları çubuğun sağına taşındı ve yalnız pano " +
+                "görünümündeyken çıkıyor. Kayıtlı görünümleriniz pano tercihlerinizi de hatırlıyor."),
+
+            // ── Hibe ──────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Bir hibeye ilgi bildirirken ne olacağını baştan görüyorsunuz",
                 "Hibe kartlarında artık tek düğme var: İncele. İlginizi çağrının detay sayfasından " +
@@ -54,6 +77,37 @@ public static class ReleaseNoteCatalog
                 "sayfada görünür, çağrı Takip ettiklerim listenize eklenir. Karar verilmeden fikriniz " +
                 "değişirse ilginizi geri çekip daha sonra yeniden bildirebilirsiniz."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibelerde yeni Bugün ekranı: sıradaki işleriniz tek listede",
+                "Hibeler menüsünün ilk girişi artık Bugün. Ekran üstte kaç işiniz olduğunu söylüyor ve " +
+                "en önemli üç işi sıralıyor: eksik evrak, doldurulmamış form alanı, süresi işleyen bir " +
+                "itiraz ya da yaklaşan bir rapor. Sıra, işin riskine ve tutarına göre belirlenir; her " +
+                "işin yanında kalan gün ve tek bir eylem düğmesi var, geri kalan işler katlanmış olarak " +
+                "altta durur. Danışmanınızın sizin için önerdiği bir çağrı varsa fırsat kartı olarak " +
+                "görünür, danışmanınızın üstlendiği işleri de bilgi olarak görürsünüz. Başvurularınızın " +
+                "hangi aşamada olduğu aynı ekranda cümleyle yazılır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe kartları sadeleşti, takip ettiğiniz çağrılara not ekleyebiliyorsunuz",
+                "Hibeler ekranının başında dört gösterge kartı ve takvim şeridi yerine artık tek bir " +
+                "cümle var: size uygun kaç açık çağrı olduğu ve en yakın son tarihin hangi çağrıda " +
+                "olduğu. Çağrılar Size uygun, Tüm açık hibeler ve Takip ettiklerim sekmelerinde kart " +
+                "olarak listelenir; her kart neden uygun olduğunu tek cümleyle söyler, eksik bilgi " +
+                "varsa ikinci satırda belirtir. Uygun olmadığınız çağrılar gizlenmez, soluk görünür. " +
+                "Takip ettiğiniz bir çağrıya kısa bir not yazabilirsiniz; danışmanınız sizin için bir " +
+                "çağrı işaretlediyse kart Takip ettiklerim'de \"sizin için işaretledi\" satırıyla çıkar. " +
+                "Başvurularım ekranında da gösterge kartları yerine durumu anlatan cümleler var: her " +
+                "başvurunun aşaması, sıranın sizde mi yoksa danışmanınızda ya da kurumda mı olduğunu " +
+                "söyleyen bir cümleyle yazılıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe tabloları telefonda okunur hâle geldi",
+                "Hibe kataloğu, Başvurularım, hibe detayındaki bütçe ve uygunluk tabloları, evrak " +
+                "listeleri ve başvuru sihirbazındaki satırlar dar ekranda artık harf harf alt alta " +
+                "sarılmıyor: telefonda ve dar pencerelerde her satır, sayı ve tarih alanlarının başlığını " +
+                "da taşıyan bir karta dönüşüyor. Geniş ekrandaki tablo görünümü değişmedi."),
+
+            // ── Dokümanlar ────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Dokümanlarda belgeden teslime süreç şeridi",
                 "Dokümanlar, Yükleme kuyruğu, Proje kapsamı, Zaman çizelgesi & bütçe, Harcama & belge " +
@@ -92,7 +146,14 @@ public static class ReleaseNoteCatalog
                 "düğmesi sayfanın en sonunda kalmak yerine ekranın sağ alt köşesinde sabit duruyor. " +
                 "Belge detayındaki İlişkili kayıtlar bölümünden bir teslim paketine tıklayınca paket " +
                 "doğrudan açılıyor; daha önce proje seçme uyarısında kalıyordu. Rapor derleyicide de " +
-                "hangi sekmede olduğunuz yeniden işaretleniyor.")),
+                "hangi sekmede olduğunuz yeniden işaretleniyor."),
+
+            // ── Genel ─────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Geri bildirim gönderirken çıkan hata giderildi",
+                "Sağ üstteki Geri Bildirim bağlantısından yapılan gönderim hata verebiliyor ve iletiniz " +
+                "kaydedilmiyordu. Sorun giderildi. Bu sürede bize ulaştıramadığınız bir öneri ya da " +
+                "sorun olduysa lütfen yeniden gönderin.")),
 
         new ReleaseNote(
             version: "2026.09.10",
