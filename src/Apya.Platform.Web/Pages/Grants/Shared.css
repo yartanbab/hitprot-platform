@@ -657,3 +657,37 @@
     padding-top: var(--apya-space-3);
     border-top: 1px solid var(--apya-border-subtle);
 }
+
+/* =============================================================================
+   19a · Proje fikri formu (_IdeaQuestions) — çağrıya ilgi (Detail), havuza fikir (Idea) ve
+   danışmanın firma adına girişi (Ideas) aynı soruları sorar; alan kuralları bu yüzden ortak.
+   ============================================================================= */
+.apya-interest-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.apya-interest-field legend { float: none; width: auto; }
+
+/* Soru altı ipucu ("Örn: …") — etiketle alan arasında, sessiz. */
+.apya-interest-hint {
+    margin-top: -2px;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+    line-height: 1.5;
+}
+
+.apya-interest-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--apya-space-3);
+}
+
+@media (max-width: 575.98px) {
+    .apya-interest-grid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -1,0 +1,73 @@
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model bool
+@* Tur 19 · APYA proje fikri bilgi formunun dokuz sorusu + bütçe ve hedef başlangıç; yalnız ilk ikisi zorunlu.
+   Üç yerde AYNI form: çağrıya ilgi (Detail), havuza fikir (Idea) ve danışmanın firma adına girişi (Ideas).
+   Model = havuz bağlamı mı (true: ilk sorunun ipucu çağrıdan söz etmez). Alanları IdeaForm.js okur. *@
+<div class="apya-interest-field">
+    <label class="form-label mb-0" for="InterestNote">@L["Grants:Interest:Form:Idea"] <span class="text-danger" aria-hidden="true">*</span></label>
+    <div class="apya-interest-hint">@(Model ? L["Grants:Idea:Form:Idea:Hint"] : L["Grants:Interest:Form:Idea:Hint"])</div>
+    <textarea class="form-control" id="InterestNote" rows="3" maxlength="1000" required></textarea>
+    <div class="invalid-feedback">@L["Grants:Interest:Form:IdeaRequired"]</div>
+</div>
+
+<div class="apya-interest-field">
+    <label class="form-label mb-0" for="InterestProblem">@L["Grants:Interest:Form:Problem"] <span class="text-danger" aria-hidden="true">*</span></label>
+    <div class="apya-interest-hint">@L["Grants:Interest:Form:Problem:Hint"]</div>
+    <textarea class="form-control" id="InterestProblem" rows="3" maxlength="1000" required></textarea>
+    <div class="invalid-feedback">@L["Grants:Interest:Form:ProblemRequired"]</div>
+</div>
+
+<div class="apya-interest-field">
+    <label class="form-label mb-0" for="InterestAudience">@L["Grants:Interest:Form:Audience"]</label>
+    <div class="apya-interest-hint">@L["Grants:Interest:Form:Audience:Hint"]</div>
+    <textarea class="form-control" id="InterestAudience" rows="2" maxlength="1000"></textarea>
+</div>
+
+<div class="apya-interest-field">
+    <label class="form-label mb-0" for="InterestActivities">@L["Grants:Interest:Form:Activities"]</label>
+    <div class="apya-interest-hint">@L["Grants:Interest:Form:Activities:Hint"]</div>
+    <textarea class="form-control" id="InterestActivities" rows="2" maxlength="1000"></textarea>
+</div>
+
+<div class="apya-interest-field">
+    <label class="form-label mb-0" for="InterestDuration">@L["Grants:Interest:Form:Duration"]</label>
+    <div class="apya-interest-hint">@L["Grants:Interest:Form:Duration:Hint"]</div>
+    <textarea class="form-control" id="InterestDuration" rows="2" maxlength="1000"></textarea>
+</div>
+
+<div class="apya-interest-field">
+    <label class="form-label mb-0" for="InterestSupport">@L["Grants:Interest:Form:Support"]</label>
+    <div class="apya-interest-hint">@L["Grants:Interest:Form:Support:Hint"]</div>
+    <textarea class="form-control" id="InterestSupport" rows="2" maxlength="1000"></textarea>
+</div>
+
+<div class="apya-interest-field">
+    <label class="form-label mb-0" for="InterestExperience">@L["Grants:Interest:Form:Experience"]</label>
+    <div class="apya-interest-hint">@L["Grants:Interest:Form:Experience:Hint"]</div>
+    <textarea class="form-control" id="InterestExperience" rows="2" maxlength="1000"></textarea>
+</div>
+
+<div class="apya-interest-field">
+    <label class="form-label mb-0" for="InterestTeam">@L["Grants:Interest:Form:Team"]</label>
+    <div class="apya-interest-hint">@L["Grants:Interest:Form:Team:Hint"]</div>
+    <textarea class="form-control" id="InterestTeam" rows="2" maxlength="1000"></textarea>
+</div>
+
+<div class="apya-interest-field">
+    <label class="form-label mb-0" for="InterestStakeholders">@L["Grants:Interest:Form:Stakeholders"]</label>
+    <div class="apya-interest-hint">@L["Grants:Interest:Form:Stakeholders:Hint"]</div>
+    <textarea class="form-control" id="InterestStakeholders" rows="2" maxlength="1000"></textarea>
+</div>
+
+<div class="apya-interest-grid">
+    <div class="apya-interest-field">
+        <label class="form-label mb-0" for="InterestBudget">@L["Grants:Interest:Form:Budget"]</label>
+        <input type="number" min="0" step="0.01" class="form-control apya-numeric" id="InterestBudget" data-money-input="true" />
+    </div>
+    <div class="apya-interest-field">
+        <label class="form-label mb-0" for="InterestStart">@L["Grants:Interest:Form:TargetStart"]</label>
+        <select class="form-select" id="InterestStart"></select>
+    </div>
+</div>

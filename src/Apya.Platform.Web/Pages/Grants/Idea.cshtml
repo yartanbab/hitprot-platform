@@ -1,0 +1,56 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.IdeaModel
+@{
+    ViewBag.Title = L["Grants:Idea:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Idea.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/IdeaForm.js" />
+    <abp-script src="/Pages/Grants/Idea.js" />
+}
+
+@* 19a/19b · Kiracı: çağrı seçmeden proje fikri. Form çağrıya ilgi formunun aynısı (_IdeaQuestions),
+   tek fark çağrının boş kalması. Fikir havuza düşer ve Hibe Yolculuğum'da "fikir havuzunda" satırı olur. *@
+<div data-page-description="@L["Grants:Idea:Description"]" class="apya-page apya-grant-scope">
+    <form id="IdeaForm" class="card mb-0 apya-idea-card" novalidate>
+        <div class="apya-idea-body">
+            <div class="apya-idea-head">
+                <span class="apya-idea-icon" aria-hidden="true"><i class="fa fa-lightbulb"></i></span>
+                <div>
+                    <h2 class="apya-idea-title">@L["Grants:Idea:Heading"]</h2>
+                    <p class="apya-idea-lead">@L["Grants:Idea:Lead"]</p>
+                </div>
+            </div>
+
+            <div class="apya-interest-field">
+                <span class="form-label mb-0">@L["Grants:Interest:Form:Call"]</span>
+                <div class="apya-idea-call">
+                    <i class="fa fa-circle-info" aria-hidden="true"></i>
+                    <span>@L["Grants:Idea:CallEmpty"]</span>
+                </div>
+                <div class="apya-interest-hint">@L["Grants:Idea:CallHint"] <a href="/Grants">@L["Grants:Idea:CallHintLink"]</a></div>
+            </div>
+
+            <partial name="_IdeaQuestions" model="true" />
+
+            <p class="apya-idea-note">
+                <i class="fa fa-bell" aria-hidden="true"></i>
+                <span>@L["Grants:Idea:Pooled"]</span>
+            </p>
+        </div>
+        <div class="apya-idea-foot">
+            <a href="/Grants/Journey" class="btn btn-outline-secondary">@L["Grants:Idea:Cancel"]</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-paper-plane me-1" aria-hidden="true"></i>@L["Grants:Idea:Share"]
+            </button>
+        </div>
+    </form>
+</div>

@@ -644,7 +644,7 @@ public class PlatformNavigationResolver : IScopedDependency
         // Hibe Yönetimi — kendi izin grubu (Groups.Grants) ve kendi feature'ı (Features.Grants)
         // olduğu için İş Yönetimi'nden ayrı kategori.
         //
-        // Tur 22 · host menüsü = farklı NESNE başına bir öğe: Bugün · Çağrılar · Talepler · Raporlar.
+        // Tur 22 · host menüsü = farklı NESNE başına bir öğe: Bugün · Çağrılar · Talepler · Fikir Havuzu · Raporlar.
         // Kaynaklar Çağrılar'ın sekmesi (çağrıların geldiği yer), ayrı menü değil.
         // Aynı nesnenin aşamaları sekmeye indi: İlgi Talepleri + Ön Değerlendirme → Talepler ›
         // Yanıt bekleyen; Başvuru Pipeline + Başvurular → Talepler › Yürüyen başvuru. Günlük işte
@@ -659,6 +659,9 @@ public class PlatformNavigationResolver : IScopedDependency
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Calls", l["Menu:Grants:Calls"], icon: "fa fa-bullhorn", url: "/Grants"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Requests", l["Menu:Grants:Requests"], icon: "fa fa-table-columns", url: "/Grants/Requests"));
+        // 19a/22 · Fikir Havuzu: çağrısız fikirler talep değil, ayrı nesne → ayrı menü (sekmesiz tek liste).
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Ideas", l["Menu:Grants:Ideas"], icon: "fa fa-lightbulb", url: "/Grants/Ideas"));
         // 18c · Dönüşüm hunisi Raporlar'ın ilk ekranı. Kiracı verisini de saydığı için yalnız host.
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Reports", l["Menu:Grants:Reports"], icon: "fa fa-chart-column", url: "/Grants/Funnel"));
