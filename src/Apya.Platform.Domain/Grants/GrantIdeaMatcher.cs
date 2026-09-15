@@ -28,8 +28,12 @@ public static class GrantIdeaMatcher
     /// <summary>Kelimenin karşılaştırılan kökü.</summary>
     public const int StemLength = 5;
 
-    /// <summary>Fikrin bu kadar farklı kökü programla örtüşürse metin payı tamdır.</summary>
-    public const int FullTextOverlap = 8;
+    /// <summary>
+    /// Fikrin bu kadar farklı kökü programla örtüşürse metin payı tamdır. 8 iken gençlik katılımı çağrısına birebir
+    /// yazılmış fikir (6 örtüşme) profili zayıf firmada 52'de kalıp eşiği geçemiyordu (yerel veride ölçüldü) —
+    /// tasarımın "fikir firmadan güçlüdür" kuralına aykırı.
+    /// </summary>
+    public const int FullTextOverlap = 6;
 
     private const int MinWordLength = 4;
     private const int MaxReasonTerms = 3;
@@ -47,7 +51,9 @@ public static class GrantIdeaMatcher
         "kurum", "kurulus", "alan", "alani", "saglamak", "yonelik", "ilgili", "etmek", "etme", "gelistirme",
         "artirmak", "katki", "turkiye", "tarafindan", "uzere", "sonra", "once", "kadar", "ayrica", "bunun",
         "bunlar", "ozellikle", "yeni", "iliskin", "sure", "donem", "kisi", "genel", "onemli", "surec", "calisma",
-        "bizim", "istiyoruz", "isteyen", "planliyoruz", "dusunuyoruz"
+        "bizim", "istiyoruz", "isteyen", "planliyoruz", "dusunuyoruz",
+        // Yerel veride sahte örtüşme üretenler: "maliyeti"/"maliyet", "miktarda"/"miktarları", "kazanım"/"kazanmaları".
+        "maliyet", "miktar", "kazanmak"
     }.Select(w => w.Length <= StemLength ? w : w[..StemLength]).ToHashSet(StringComparer.Ordinal);
 
     public static GrantIdeaMatch Match(

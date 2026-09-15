@@ -51,6 +51,24 @@ public class GrantIdeaMatcher_Tests
         match.BudgetFits.ShouldBe(true);
     }
 
+    /// <summary>
+    /// Tasarım: fikir firmadan güçlüdür — firma "uyabilir", fikir "zaten bunu yapmak istiyor". Çağrının diliyle yazılmış
+    /// fikir, profili zayıf firmada da eşiği geçer (yerel veride 52'de kalıyordu).
+    /// </summary>
+    [Fact]
+    public void Cagriya_birebir_yazilmis_fikir_zayif_firma_profilinde_de_esigi_gecer()
+    {
+        var idea = Idea(
+            "Gençlerin yerel karar alma süreçlerine katılımı için gençlik meclisi atölyeleri ve dijital katılım platformu",
+            "Bölgedeki gençler belediye kararlarına katılamıyor, demokratik katılım kanalları yok",
+            "Gençler, gençlik çalışanları, dezavantajlı gruplar");
+
+        var match = GrantIdeaMatcher.Match(idea, YouthProgram(), NoTags, firmScore: 17);
+
+        match.TextScore.ShouldBe(100);
+        match.IsMatch.ShouldBeTrue();
+    }
+
     [Fact]
     public void Konu_disi_fikir_esigin_altinda_kalir()
     {

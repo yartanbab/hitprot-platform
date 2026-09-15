@@ -281,7 +281,8 @@ $(function () {
 
         $('#IdeaBelowBlock').toggleClass('d-none', below.length === 0);
         $('#IdeaBelowHint').text(l('Grants:Dispatch:Ideas:BelowHint', d.threshold));
-        $('#IdeaBelowCards').html(below.map(function (i) { return ideaCard(i, d.isOpen, false); }).join(''));
+        // Eşik altı fikir bu PR'da bağlanmaz (kullanıcı kararı): yalnız "Fikri aç".
+        $('#IdeaBelowCards').html(below.map(function (i) { return ideaCard(i, false, false); }).join(''));
     }
 
     function loadIdeas() { return ideaService.getCallMatches(callId).then(paintIdeas); }

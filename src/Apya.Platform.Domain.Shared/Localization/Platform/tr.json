@@ -3457,7 +3457,7 @@
         "Grants:Ideas:Created": "Fikir havuza eklendi.",
         "Grants:Ideas:Col:Match": "Çağrı eşleşmesi",
         "Grants:Ideas:Match:More": "+{0} çağrı",
-        "Grants:Ideas:Match:None": "Açık çağrı yok — izleniyor",
+        "Grants:Ideas:Match:None": "Uyan açık çağrı yok — izleniyor",
         "Grants:Ideas:Link": "İlişkilendir",
         "Grants:Ideas:Sort:Match": "Sırala: Eşleşme gücü",
         "Grants:Ideas:Awaiting": "{0} fikir açık çağrılarla eşleşiyor ve ilişkilendirilmeyi bekliyor.",

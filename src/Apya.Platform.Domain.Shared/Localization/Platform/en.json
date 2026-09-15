@@ -3058,7 +3058,7 @@
     "Grants:Ideas:Created": "The idea was added to the pool.",
     "Grants:Ideas:Col:Match": "Call match",
     "Grants:Ideas:Match:More": "+{0} calls",
-    "Grants:Ideas:Match:None": "No open call — watching",
+    "Grants:Ideas:Match:None": "No matching open call — watching",
     "Grants:Ideas:Link": "Link",
     "Grants:Ideas:Sort:Match": "Sort: Match strength",
     "Grants:Ideas:Awaiting": "{0} ideas match open calls and are waiting to be linked.",
