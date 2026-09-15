@@ -502,7 +502,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
     /// hesaba GİRMEZ — "false" onlarda geçerli bir cevaptır, eksiklik değil. MaxAmount da
     /// girmez: kolonu NOT NULL ve 0 ("üst limit yok") geçerli bir değerdir.
     /// </summary>
-    private static int CalculateCompletionPercent(Grant grant, int criteriaTagCount, int costItemCount, int documentCount)
+    internal static int CalculateCompletionPercent(Grant grant, int criteriaTagCount, int costItemCount, int documentCount)
     {
         var filled = new List<bool>
         {
@@ -530,7 +530,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         return (int)Math.Round(filled.Count(f => f) * 100.0 / filled.Count);
     }
 
-    private static FirmSignals ToSignals(FirmProfile? profile)
+    internal static FirmSignals ToSignals(FirmProfile? profile)
     {
         if (profile == null)
         {

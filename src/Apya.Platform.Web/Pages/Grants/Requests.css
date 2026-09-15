@@ -4,21 +4,7 @@
    secondary'ye, #A5B4FC şerit kenarlığı accent-300'e indi.
    ============================================================================= */
 
-.apya-req-filters {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--apya-space-2);
-}
-
-/* width:auto kutuyu en uzun seçenek kadar açar; uzun çağrı adı 375px'te sayfayı 438px'e
-   itiyordu (ölçüldü). Geniş ekranda üst sınır, dar ekranda tam satır. */
-.apya-req-filters .form-select { width: auto; min-width: 180px; max-width: 320px; }
-
-@media (max-width: 767.98px) {
-    .apya-req-filters { flex: 1 1 100%; }
-    .apya-req-filters .form-select { flex: 1 1 100%; width: 100%; min-width: 0; max-width: none; }
-}
+/* Süzgeç kutuları Shared.css'te (.apya-req-filters): Çağrılar ekranı da kullanır. */
 
 /* --- Yanıt süresi şeridi --- */
 .apya-req-due {

@@ -104,34 +104,11 @@
     color: var(--apya-text-secondary);
 }
 
-/* --- Kart akışı: Size uygun 2 sütun, diğer sekmeler 3 sütun (13) --- */
-.apya-feed-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--apya-space-4);
-}
-
-.apya-feed-grid[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-
-/* Üç sütun yalnız geniş ekranda: 1200px'te kart 252px'e iniyor, afiş adı ve rozetler sıkışıyordu. */
-@media (max-width: 1399.98px) { .apya-feed-grid[data-cols="3"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 767.98px) { .apya-feed-grid, .apya-feed-grid[data-cols="3"] { grid-template-columns: minmax(0, 1fr); } }
+/* Kart akışı ızgarası, kartın kendisi, gövde, tutar satırı ve alt satır Shared.css'te:
+   host Çağrılar ekranı (21a) aynı kartı host'a özel gövdeyle kullanır. */
 
 /* 7b · İskelet yüksekliği gerçek kart yüksekliğine (afiş + gövde) eşit. */
 #FeedGrid { --apya-skel-card: 300px; }
-
-/* --- 12 · Afişli kart --- */
-.apya-feed-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    color: var(--apya-text-primary);
-    border: 1px solid var(--apya-border-default);
-    border-radius: var(--apya-radius-xl);
-    background: var(--apya-surface-base);
-    box-shadow: var(--apya-shadow-sm);
-    overflow: hidden;
-}
 
 /* 12a · Uygun olmayan kart gizlenmez, soluk durur: afiş grileşir, zemin geri çekilir.
    Metne opaklık uygulanmaz — okunurluk (AA) korunur. */
@@ -161,33 +138,6 @@
 
 .apya-feed-mark:hover { background: #fff; color: #1F2937; }
 .apya-feed-mark.is-on { color: var(--apya-accent-500); }
-
-.apya-feed-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: var(--apya-space-2);
-    padding: var(--apya-space-3) var(--apya-space-4) var(--apya-space-4);
-}
-
-.apya-feed-amount-row {
-    display: flex;
-    align-items: baseline;
-    gap: var(--apya-space-2);
-    flex-wrap: wrap;
-}
-
-.apya-feed-amount-value {
-    font-family: var(--apya-font-mono);
-    font-variant-numeric: tabular-nums;
-    font-size: var(--apya-fs-lg);
-    font-weight: var(--apya-weight-bold);
-}
-
-.apya-feed-rate {
-    font-size: var(--apya-fs-xs);
-    color: var(--apya-text-secondary);
-}
 
 /* 12b · "Neden uygun" tek cümle; eksik veri ikinci, daha kısık satır. */
 .apya-feed-why {
@@ -273,17 +223,6 @@
 .apya-feed-reason.is-good > i { color: var(--apya-positive-500); }
 .apya-feed-reason.is-missing > i { color: var(--apya-warning-500); }
 .apya-feed-reason.is-bad > i { color: var(--apya-negative-500); }
-
-.apya-feed-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--apya-space-2);
-    flex-wrap: wrap;
-    margin-top: auto;
-    padding-top: var(--apya-space-3);
-    border-top: 1px solid var(--apya-border-subtle);
-}
 
 /* 11c · Uygunluk üç kelimeyle değil, nokta + kova adı + zorluk sözcüğüyle. */
 .apya-feed-fit {

@@ -44,7 +44,7 @@ public class GrantRequestsPage_Tests : PlatformWebTestBase
     }
 
     /// <summary>
-    /// Host menüsü farklı nesne başına bir öğe: Bugün · Çağrılar · Talepler · Kaynaklar · Raporlar.
+    /// Host menüsü farklı nesne başına bir öğe: Bugün · Çağrılar · Talepler · Raporlar.
     /// Aşamalar sekmeye, şablonlar Ayarlar'a indi; eski öğeler kenar çubuğunda basılmaz.
     /// LeptonX öğe kimliğini "MenuItem_" + ad (nokta → alt çizgi) olarak basar.
     /// </summary>
@@ -58,6 +58,8 @@ public class GrantRequestsPage_Tests : PlatformWebTestBase
         html.ShouldContain("MenuItem_Apya_Grants_Requests");
         html.ShouldContain("MenuItem_Apya_Grants_Reports");
 
+        // Kaynaklar Çağrılar'ın sekmesi oldu (21a/22).
+        html.ShouldNotContain("MenuItem_Apya_Grants_Sources");
         html.ShouldNotContain("MenuItem_Apya_Grants_Applications");
         html.ShouldNotContain("MenuItem_Apya_Grants_Pipeline");
         html.ShouldNotContain("MenuItem_Apya_Grants_Interests");

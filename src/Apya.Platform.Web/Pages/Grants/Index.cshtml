@@ -8,146 +8,98 @@
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.Grants.IndexModel
 @{
-    ViewBag.Title = "Hibeler";
+    ViewBag.Title = Model.IsHost ? L["Grants:Calls:Title"].Value : "Hibeler";
 }
 
 @section styles {
     <abp-style src="/Pages/Grants/Shared.css" />
-    @if (!Model.IsHost)
+    @if (Model.IsHost)
+    {
+        <abp-style src="/Pages/Grants/Calls.css" />
+    }
+    else
     {
         <abp-style src="/Pages/Grants/Tenant.css" />
     }
 }
 
 @section scripts {
+    <abp-script src="/Pages/Grants/Poster.js" />
     @if (Model.IsHost)
     {
         <abp-script src="/Pages/Grants/Index.js" />
     }
     else
     {
-        <abp-script src="/Pages/Grants/Poster.js" />
         <abp-script src="/Pages/Grants/Tenant.js" />
     }
 }
 
-<style>
-    .apya-call-row:first-of-type { border-top: 0 !important; }
-
-    /* #GrantModal modal-dialog-scrollable kullanıyor ama header/body/footer bir form etiketi içinde;
-       form flex olmayınca Bootstrap'ın scroll zinciri kırılıyor ve alt kısım (footer dahil) taşıp kesiliyor. */
-    #GrantModal .modal-content > form {
-        display: flex;
-        flex-direction: column;
-        flex: 1 1 auto;
-        min-height: 0;
-    }
-</style>
-
 @if (Model.IsHost)
 {
-    @* Başlık + açıklama app header'da (ViewBag.Title + data-page-description);
-       sayfa içinde tekrarlanmıyor — bkz. apya-shell.css §19. *@
-    <div data-page-description="KOSGEB, TÜBİTAK, AB gibi kurumların destek programları ve dönemsel çağrıları" class="apya-page apya-grant-scope">
+    @* 21a/22 · Host Çağrılar. Kart = çağrı + programı. Sekmeler Yayında · Taslak · Kaynaklar (ayrı
+       sayfa, aynı başlık); "Kapanmış" sekme değil süzgeç. Program oluşturma Elle hibe gir'de (/Grants/Import),
+       düzenleme Parametreler'de — eski program penceresi kaldırıldı. Kartları Index.js boyar. *@
+    <div data-page-description="@L["Grants:Calls:Description"]" class="apya-page apya-grant-scope" data-call-tab="@Model.Tab">
         <div class="apya-page-head">
-            <div class="apya-page-head-actions">
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-                {
-                    <a href="/Grants/Applications" class="btn btn-outline-secondary"><i class="fa fa-file-signature me-1"></i>Başvurular</a>
-                }
+            <div class="apya-page-head-actions d-flex align-items-center gap-2">
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Create))
                 {
-                    <button id="NewGrantButton" class="btn btn-primary">
-                        <i class="fa fa-plus me-1"></i> Yeni Hibe Ekle
+                    <a href="/Grants/Import" class="btn btn-outline-secondary">
+                        <i class="fa fa-pen-to-square me-1"></i>@L["Grants:Sources:ManualEntry"]
+                    </a>
+                }
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+                {
+                    <button type="button" id="ScrapeAllBtn" class="btn btn-primary">
+                        <i class="fa fa-rotate me-1"></i>@L["Grants:Sources:ScrapeAll"]
                     </button>
                 }
             </div>
         </div>
 
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-award", Accent = "accent", Label = "Toplam Program", ValueId = "KpiTotalPrograms", Value = "—" }' />
-            </div>
-            <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-sack-dollar", Accent = "positive", Label = "Toplam Potansiyel Tutar", ValueId = "KpiTotalAmount", Value = "—", Hint = "Listelenen tüm programların üst limit tutarlarının toplamı. Dağıtılmış ya da taahhüt edilmiş tutar değil, teorik tavandır." }' />
-            </div>
-            <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-bullseye", Accent = "brand", Label = "Ortalama Uyum Puanı", ValueId = "KpiAvgScore", Value = "—", Hint = "Programlara tanımladığınız asgari uyum eşiklerinin ortalaması — firmaların gerçek eşleşme puanı değildir. Firmaların puanını görmek için bir çağrıda Firmalara Gönder ekranındaki önizlemeyi kullanın." }' />
-            </div>
-            <div class="col-6 col-md-3">
-                <partial name="_KpiCard" model='new Apya.Platform.Web.Pages.Shared.KpiCardModel { Icon = "fa-trophy", Accent = "warning", Label = "En Yüksek Tutarlı Program", ValueId = "KpiTopProgram", Value = "—" }' />
+        <div class="apya-req-bar">
+            <partial name="_CallTabs" model="Model.Tab" />
+            <div class="apya-req-filters">
+                <select class="form-select" id="IssuerFilter" aria-label="@L["Grants:Calls:Filter:Issuer"]">
+                    <option value="">@L["Grants:Calls:Filter:AllIssuers"]</option>
+                </select>
+                <select class="form-select apya-call-live-only" id="StateFilter" aria-label="@L["Grants:Calls:Filter:State"]">
+                    <option value="open">@L["Grants:Calls:Filter:Open"]</option>
+                    <option value="closed">@L["Grants:Calls:Filter:Closed"]</option>
+                </select>
+                <select class="form-select" id="SortFilter" aria-label="@L["Grants:Calls:Filter:Sort"]">
+                    <option value="0">@L["Grants:Calls:Sort:Deadline"]</option>
+                    <option value="1">@L["Grants:Calls:Sort:Newest"]</option>
+                    <option value="2">@L["Grants:Calls:Sort:Name"]</option>
+                </select>
+                <div class="apya-req-views" role="group" aria-label="@L["Grants:Calls:Views"]">
+                    <button type="button" class="apya-req-view is-active" data-view="cards" aria-pressed="true"
+                            title="@L["Grants:Calls:View:Cards"]" aria-label="@L["Grants:Calls:View:Cards"]">
+                        <i class="fa fa-grip" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="apya-req-view" data-view="list" aria-pressed="false"
+                            title="@L["Grants:Calls:View:List"]" aria-label="@L["Grants:Calls:View:List"]">
+                        <i class="fa fa-list" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div id="GrantTileGrid" class="apya-tile-grid"></div>
+        <div id="CallGrid" class="apya-feed-grid apya-call-grid apya-skel-cards" data-cols="3"></div>
 
-        <div id="GrantTileGridEmpty" class="d-none">
-            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-award", Title = "Henüz hibe programı eklenmedi." }' />
-        </div>
-    </div>
-
-    @* ---- Program (Grant) modalı ---- *@
-    <div class="modal fade" id="GrantModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <form id="GrantForm">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="GrantModalTitle">Yeni Hibe Programı</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" id="GrantId" />
-                        <div class="mb-3">
-                            <label class="form-label" for="GrantName">Program Adı</label>
-                            <input type="text" class="form-control" id="GrantName" maxlength="128" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="GrantIssuer">Kurum (TÜBİTAK, KOSGEB vb.)</label>
-                            <input type="text" class="form-control" id="GrantIssuer" maxlength="64" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="GrantDescription">Açıklama</label>
-                            <textarea class="form-control" id="GrantDescription" rows="2"></textarea>
-                        </div>
-                        <div class="row">
-                            <div class="col-6 mb-3">
-                                <label class="form-label" for="GrantMaxAmount">Maksimum Destek Tutarı (₺)</label>
-                                <input type="number" step="0.01" class="form-control" id="GrantMaxAmount" data-money-input="true" />
-                            </div>
-                            <div class="col-6 mb-3">
-                                <label class="form-label" for="GrantMinMatchScore">Minimum Uyum Puanı (%)</label>
-                                <input type="number" step="1" min="0" max="100" class="form-control" id="GrantMinMatchScore" />
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Hedef Firma Ölçeği</label>
-                            <div class="d-flex flex-wrap gap-3">
-                                <div class="form-check"><input class="form-check-input apya-size" type="checkbox" value="1" id="szMikro"><label class="form-check-label" for="szMikro">Mikro</label></div>
-                                <div class="form-check"><input class="form-check-input apya-size" type="checkbox" value="2" id="szKucuk"><label class="form-check-label" for="szKucuk">Küçük</label></div>
-                                <div class="form-check"><input class="form-check-input apya-size" type="checkbox" value="4" id="szOrta"><label class="form-check-label" for="szOrta">Orta</label></div>
-                                <div class="form-check"><input class="form-check-input apya-size" type="checkbox" value="8" id="szBuyuk"><label class="form-check-label" for="szBuyuk">Büyük</label></div>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Hedef Sektörler</label>
-                            <div class="apya-tag-input" data-kind="0"><div class="apya-tag-chips"></div><input type="text" class="form-control form-control-sm apya-tag-entry" placeholder="Yazın, Enter'a basın…" /></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Hedef Bölgeler</label>
-                            <div class="apya-tag-input" data-kind="1"><div class="apya-tag-chips"></div><input type="text" class="form-control form-control-sm apya-tag-entry" placeholder="Yazın, Enter'a basın…" /></div>
-                        </div>
-                        <div class="mb-1">
-                            <label class="form-label">Anahtar Kelimeler</label>
-                            <div class="apya-tag-input" data-kind="2"><div class="apya-tag-chips"></div><input type="text" class="form-control form-control-sm apya-tag-entry" placeholder="Yazın, Enter'a basın…" /></div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
-                        <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i>Kaydet</button>
-                    </div>
-                </form>
+        <section id="CallList" class="card mb-0 apya-call-list d-none">
+            <div class="apya-call-row apya-call-head" aria-hidden="true">
+                <span>@L["Grants:Calls:Col:Program"]</span>
+                <span>@L["Grants:Calls:Col:Deadline"]</span>
+                <span>@L["Grants:Calls:Col:Amount"]</span>
+                <span>@L["Grants:Calls:Col:Reach"]</span>
+                <span></span>
             </div>
-        </div>
+            <div id="CallRows"></div>
+        </section>
+
+        <p id="CallEmpty" class="apya-src-empty d-none"></p>
     </div>
 
     @* ---- Çağrı (GrantCall) modalı ---- *@
@@ -168,9 +120,12 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label" for="CallStatus">Durum</label>
+                            @* Taslak seçeneği ŞART: yoksa taslak çağrı bu pencereden düzenlenince select ilk
+                               seçeneğe düşer ve çağrı sessizce "Planlandı" olarak kaydedilirdi. *@
                             <select class="form-select" id="CallStatus">
+                                <option value="3">@L["Grants:Calls:State:Draft"]</option>
                                 <option value="0">Planlandı</option>
-                                <option value="1" selected>Açık</option>
+                                <option value="1">Açık</option>
                                 <option value="2">Kapandı</option>
                             </select>
                             @* 18b · Kapanış zinciri sabit; host ne olacağını kaydetmeden önce görür. *@
