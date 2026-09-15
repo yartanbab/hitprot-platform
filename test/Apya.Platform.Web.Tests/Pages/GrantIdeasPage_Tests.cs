@@ -39,6 +39,56 @@ public class GrantIdeasPage_Tests : PlatformWebTestBase
         html.ShouldNotContain("apya-grant-tabs");
     }
 
+    /// <summary>19b · "Fikir daveti gönder": Kime · Bağlam · Mesaj · Bildirim + hatırlatma, önizleme ve son davet satırı.</summary>
+    [Fact]
+    public async Task Fikir_Daveti_Penceresi_Render_Oluyor()
+    {
+        var html = await GetResponseAsStringAsync("/Grants/Ideas");
+
+        html.ShouldContain("InviteOpenBtn");
+        html.ShouldContain("InviteModal");
+        html.ShouldContain("name=\"InviteAudience\"");
+        html.ShouldContain("name=\"InviteContext\"");
+        html.ShouldContain("InviteMessage");
+        html.ShouldContain("InviteRemindDays");
+        html.ShouldContain("InvitePreviewBtn");
+        html.ShouldContain("InviteLatest");
+        html.ShouldContain("SMS (yakında)");
+        Regex.IsMatch(html, @"IdeaInvite[^""]*\.js").ShouldBeTrue("davet betiği yüklenmeli");
+    }
+
+    /// <summary>19b · Bildirimin açtığı adres bağlama göre yönlendirir; firmaya ait olmayan davet yolculuğa düşer.</summary>
+    [Fact]
+    public async Task Davet_Adresi_Baglama_Gore_Yonlendirir()
+    {
+        var host = await Client.GetAsync($"/Grants/Invitation?id={Guid.NewGuid()}");
+        ((int)host.StatusCode).ShouldBe(302);
+        host.Headers.Location!.ToString().ShouldContain("/Grants/Ideas");
+
+        var tenant = await GetRequiredService<ITenantManager>().CreateAsync("davet-" + Guid.NewGuid().ToString("N")[..8]);
+        await GetRequiredService<ITenantRepository>().InsertAsync(tenant, autoSave: true);
+        var sent = await GetRequiredService<Apya.Platform.Grants.IGrantIdeaInvitationAppService>().SendAsync(
+            new Apya.Platform.Grants.Dtos.SendGrantIdeaInvitationInput
+            {
+                Audience = Apya.Platform.Grants.GrantIdeaInvitationAudience.Single,
+                TenantId = tenant.Id,
+                Message = "Fikrinizi paylaşın"
+            });
+
+        await WithTenantClientAsync(tenant.Id, async client =>
+        {
+            var pool = await client.GetAsync($"/Grants/Invitation?id={sent.InvitationId}");
+            ((int)pool.StatusCode).ShouldBe(302);
+            pool.Headers.Location!.ToString().ShouldBe($"/Grants/Idea?invitation={sent.InvitationId}");
+
+            var foreign = await client.GetAsync($"/Grants/Invitation?id={Guid.NewGuid()}");
+            foreign.Headers.Location!.ToString().ShouldContain("/Grants/Journey");
+
+            // Formun üstündeki davet notu yeri.
+            (await client.GetStringAsync($"/Grants/Idea?invitation={sent.InvitationId}")).ShouldContain("InvitationNote");
+        });
+    }
+
     [Fact]
     public async Task Host_Fikir_Paylas_Sayfasinda_Havuza_Yonlenir()
     {

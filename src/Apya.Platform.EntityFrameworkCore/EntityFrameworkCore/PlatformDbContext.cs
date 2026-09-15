@@ -147,6 +147,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantReportSection> GrantReportSections { get; set; }
         public DbSet<GrantNotificationTemplate> GrantNotificationTemplates { get; set; }
         public DbSet<GrantNotificationLog> GrantNotificationLogs { get; set; }
+        public DbSet<GrantIdeaInvitation> GrantIdeaInvitations { get; set; }
+        public DbSet<GrantIdeaInvitationRecipient> GrantIdeaInvitationRecipients { get; set; }
         public DbSet<GrantCallDailyStat> GrantCallDailyStats { get; set; }
         public DbSet<GrantLead> GrantLeads { get; set; }
         public DbSet<GrantInterest> GrantInterests { get; set; }
@@ -1088,6 +1090,26 @@ namespace Apya.Platform.EntityFrameworkCore
                 // TenantId için eklediği "IS NOT NULL" korunur (davranış değişmesin).
                 b.HasIndex(x => new { x.TenantId, x.Trigger }).IsUnique()
                     .HasFilter(isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            // --- 19b · Fikir daveti ---
+            builder.Entity<GrantIdeaInvitation>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantIdeaInvitations", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Message).IsRequired().HasMaxLength(GrantIdeaInvitationConsts.MaxMessageLength);
+                // Hatırlatma işi yalnız hatırlatmalı davetleri tarar; "son davet" şeridi en yeniyi okur.
+                b.HasIndex(x => new { x.RemindAfterDays, x.SentAt });
+            });
+
+            builder.Entity<GrantIdeaInvitationRecipient>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantIdeaInvitationRecipients", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.HasOne<GrantIdeaInvitation>().WithMany(i => i.Recipients).HasForeignKey(x => x.InvitationId).OnDelete(DeleteBehavior.Cascade);
+                // Aynı davette firma bir kez (AddRecipient da korur); kiracı başına davet geçmişi sorgusu için ikinci indeks.
+                b.HasIndex(x => new { x.InvitationId, x.FirmTenantId }).IsUnique();
+                b.HasIndex(x => x.FirmTenantId);
             });
 
             builder.Entity<GrantNotificationLog>(b =>

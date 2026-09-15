@@ -22,6 +22,15 @@
 <div data-page-description="@L["Grants:Idea:Description"]" class="apya-page apya-grant-scope">
     <form id="IdeaForm" class="card mb-0 apya-idea-card" novalidate>
         <div class="apya-idea-body">
+            @* 19b · Davet bildiriminden gelindiyse danışmanın mesajı formun üstünde (Idea.js doldurur). *@
+            <div id="InvitationNote" class="apya-idea-invite d-none" role="note">
+                <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                <div>
+                    <span class="apya-idea-invite-from" id="InvitationFrom"></span>
+                    <p class="mb-0" id="InvitationMessage"></p>
+                </div>
+            </div>
+
             <div class="apya-idea-head">
                 <span class="apya-idea-icon" aria-hidden="true"><i class="fa fa-lightbulb"></i></span>
                 <div>

@@ -49,12 +49,15 @@ public class GrantNotificationDispatcher : DomainService
     /// </summary>
     /// <param name="userIds">Alıcılar. Çağıran taraf hangi kiracıda olduklarını
     /// <see cref="ICurrentTenant.Change"/> ile ayarlamış olmalıdır.</param>
+    /// <param name="sendEmail">null = şablonun e-posta ayarı. 19b fikir davetinde kanal gönderim başına seçilir;
+    /// kullanıcının kategori tercihi her durumda geçerlidir.</param>
     public async Task<bool> DispatchAsync(
         GrantNotificationTrigger trigger,
         IReadOnlyCollection<Guid> userIds,
         IReadOnlyDictionary<string, string?> values,
         string? entityType = null,
-        Guid? entityId = null)
+        Guid? entityId = null,
+        bool? sendEmail = null)
     {
         if (userIds.Count == 0)
         {
@@ -78,7 +81,7 @@ public class GrantNotificationDispatcher : DomainService
                 await _notificationManager.PublishAsync(userId, subject, body, type, entityType, entityId);
             }
 
-            if (template.Email)
+            if (sendEmail ?? template.Email)
             {
                 await TrySendEmailAsync(userId, subject, body);
             }
@@ -99,14 +102,15 @@ public class GrantNotificationDispatcher : DomainService
         Guid? tenantId,
         IReadOnlyDictionary<string, string?> values,
         string? entityType = null,
-        Guid? entityId = null)
+        Guid? entityId = null,
+        bool? sendEmail = null)
     {
         using (CurrentTenant.Change(tenantId))
         {
             var userIds = (await _userRepo.GetListAsync())
                 .Where(u => u.IsActive).Select(u => u.Id).ToList();
 
-            return await DispatchAsync(trigger, userIds, values, entityType, entityId);
+            return await DispatchAsync(trigger, userIds, values, entityType, entityId, sendEmail);
         }
     }
 

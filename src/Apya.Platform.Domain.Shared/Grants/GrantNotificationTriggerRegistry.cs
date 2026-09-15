@@ -27,7 +27,8 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.CallClosed]                = NotificationType.GrantCallClosed,
             [GrantNotificationTrigger.MeetingProposed]           = NotificationType.GrantMeetingProposed,
             [GrantNotificationTrigger.MeetingAnswered]           = NotificationType.GrantMeetingAnswered,
-            [GrantNotificationTrigger.IdeaLinked]                = NotificationType.GrantIdeaLinked
+            [GrantNotificationTrigger.IdeaLinked]                = NotificationType.GrantIdeaLinked,
+            [GrantNotificationTrigger.IdeaInvited]               = NotificationType.GrantIdeaInvited
         };
 
     /// <summary>
@@ -85,7 +86,12 @@ public static class GrantNotificationTriggerRegistry
 
             // Eşleşme yüzdesi ve danışman adı ilişkilendirme anında hesaplanır; son tarih çağrısızsa boştur.
             [GrantNotificationTrigger.IdeaLinked] =
-                ["{firma_adı}", "{fikir}", "{çağrı_adı}", "{eşleşme}", "{danışman}", "{son_tarih}"]
+                ["{firma_adı}", "{fikir}", "{çağrı_adı}", "{eşleşme}", "{danışman}", "{son_tarih}"],
+
+            // Mesajı danışman gönderim başına yazar. Hatırlatmada {hatırlatma} dolar ("Hatırlatma:"), ilk gönderimde boştur.
+            // Çağrısız (havuz) davette {çağrı_adı} ve {son_tarih} boştur.
+            [GrantNotificationTrigger.IdeaInvited] =
+                ["{hatırlatma}", "{firma_adı}", "{davet_mesajı}", "{çağrı_adı}", "{son_tarih}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

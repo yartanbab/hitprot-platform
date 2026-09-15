@@ -15,6 +15,7 @@
 @section scripts {
     <abp-script src="/Pages/Grants/IdeaForm.js" />
     <abp-script src="/Pages/Grants/Ideas.js" />
+    <abp-script src="/Pages/Grants/IdeaInvite.js" />
 }
 
 @* 19a/22 · Fikir Havuzu. Sekme yok: çağrıyla ilişkilendirilen fikir talep olur ve Talepler'de yaşar.
@@ -22,6 +23,9 @@
 <div data-page-description="@L["Grants:Ideas:Description"]" class="apya-page apya-grant-scope">
     <div class="apya-page-head">
         <div class="apya-page-head-actions d-flex align-items-center gap-2">
+            <button type="button" id="InviteOpenBtn" class="btn btn-outline-secondary">
+                <i class="fa fa-paper-plane me-1" aria-hidden="true"></i>@L["Grants:Invite:Open"]
+            </button>
             <button type="button" id="IdeaAddBtn" class="btn btn-primary">
                 <i class="fa fa-plus me-1" aria-hidden="true"></i>@L["Grants:Ideas:Add"]
             </button>
@@ -43,6 +47,11 @@
             </select>
         </div>
     </div>
+
+    @* 19b · Son fikir davetinin sonucu: kaç firmaya gitti, kaçı yanıtladı, hatırlatma ne zaman. *@
+    <p id="InviteLatest" class="apya-invite-latest d-none">
+        <i class="fa fa-paper-plane" aria-hidden="true"></i><span id="InviteLatestText"></span>
+    </p>
 
     @* 22 · "Eşleşme bekleyen" şeridi: açık çağrılarla eşiği geçen ama henüz bağlanmamış fikirler. *@
     <div id="AwaitingStrip" class="apya-idea-awaiting d-none" role="status">
@@ -110,6 +119,131 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fa fa-plus me-1" aria-hidden="true"></i>@L["Grants:Ideas:Create:Save"]
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ---- 19b · Fikir daveti gönder: Kime · Bağlam · Mesaj · Bildirim + hatırlatma. Mantığı IdeaInvite.js'te. ---- *@
+<div class="modal fade apya-grant-scope" id="InviteModal" tabindex="-1" aria-hidden="true" aria-labelledby="InviteTitle">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form id="InviteForm" class="d-flex flex-column mh-100" novalidate>
+                <div class="modal-header">
+                    <div class="apya-idea-modal-head">
+                        <h5 class="modal-title" id="InviteTitle">@L["Grants:Invite:Title"]</h5>
+                        <span class="apya-idea-modal-meta">@L["Grants:Invite:Lead"]</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Grants:Invite:Cancel"]"></button>
+                </div>
+                <div class="modal-body d-flex flex-column gap-3">
+                    <fieldset class="apya-invite-section">
+                        <legend class="apya-invite-legend">@L["Grants:Invite:To"]</legend>
+                        <div class="apya-invite-options" role="radiogroup">
+                            <label class="apya-invite-option">
+                                <input class="form-check-input" type="radio" name="InviteAudience" value="0" />
+                                <span>@L["Grants:Invite:To:Single"]</span>
+                            </label>
+                            <label class="apya-invite-option">
+                                <input class="form-check-input" type="radio" name="InviteAudience" value="1" />
+                                <span>@L["Grants:Invite:To:Filtered"]</span>
+                            </label>
+                            <label class="apya-invite-option">
+                                <input class="form-check-input" type="radio" name="InviteAudience" value="2" />
+                                <span>@L["Grants:Invite:To:All"]</span>
+                            </label>
+                        </div>
+                        <div class="apya-invite-pane" data-audience-pane="0">
+                            <select class="form-select" id="InviteFirm" aria-label="@L["Grants:Invite:FirmPick"]">
+                                <option value="">@L["Grants:Invite:FirmPick"]</option>
+                            </select>
+                            <div class="invalid-feedback">@L["Grants:Invite:FirmRequired"]</div>
+                        </div>
+                        <div class="apya-invite-pane" data-audience-pane="1">
+                            <div class="apya-invite-conditions">
+                                <span class="apya-invite-condition-label">@L["Grants:Invite:Sizes"]</span>
+                                @foreach (var (value, key) in new[] { (1, "Mikro"), (2, "Kucuk"), (4, "Orta"), (8, "Buyuk") })
+                                {
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input apya-invite-size" type="checkbox" id="InviteSize@(value)" value="@value" />
+                                        <label class="form-check-label" for="InviteSize@(value)">@L[$"Grants:Size:{key}"]</label>
+                                    </div>
+                                }
+                            </div>
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="InviteNoIdea" />
+                                <label class="form-check-label" for="InviteNoIdea">@L["Grants:Invite:OnlyWithoutIdea"]</label>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="apya-invite-section">
+                        <legend class="apya-invite-legend">@L["Grants:Invite:Context"]</legend>
+                        <div class="apya-invite-options" role="radiogroup">
+                            <label class="apya-invite-option">
+                                <input class="form-check-input" type="radio" name="InviteContext" value="pool" />
+                                <span>@L["Grants:Invite:Context:Pool"]</span>
+                            </label>
+                            <label class="apya-invite-option">
+                                <input class="form-check-input" type="radio" name="InviteContext" value="call" />
+                                <span>@L["Grants:Invite:Context:Call"]</span>
+                            </label>
+                        </div>
+                        <div class="apya-invite-pane" id="InviteCallPane">
+                            <select class="form-select" id="InviteCall" aria-label="@L["Grants:Invite:CallPick"]">
+                                <option value="">@L["Grants:Invite:CallPick"]</option>
+                            </select>
+                            <div class="invalid-feedback">@L["Grants:Invite:CallRequired"]</div>
+                        </div>
+                    </fieldset>
+
+                    <div class="apya-interest-field">
+                        <label class="apya-invite-legend" for="InviteMessage">@L["Grants:Invite:Message"]</label>
+                        <textarea class="form-control" id="InviteMessage" rows="4" maxlength="@Apya.Platform.Grants.GrantIdeaInvitationConsts.MaxMessageLength" required></textarea>
+                        <div class="invalid-feedback">@L["Grants:Invite:MessageRequired"]</div>
+                    </div>
+
+                    <fieldset class="apya-invite-section">
+                        <legend class="apya-invite-legend">@L["Grants:Invite:Channel"]</legend>
+                        <div class="apya-invite-conditions">
+                            <div class="form-check form-check-inline mb-0">
+                                <input class="form-check-input" type="checkbox" id="InviteInApp" checked disabled />
+                                <label class="form-check-label" for="InviteInApp">@L["Grants:Invite:Channel:InApp"]</label>
+                            </div>
+                            <div class="form-check form-check-inline mb-0">
+                                <input class="form-check-input" type="checkbox" id="InviteEmail" />
+                                <label class="form-check-label" for="InviteEmail">@L["Grants:Invite:Channel:Email"]</label>
+                            </div>
+                            <div class="form-check form-check-inline mb-0">
+                                <input class="form-check-input" type="checkbox" id="InviteSms" disabled />
+                                <label class="form-check-label" for="InviteSms">@L["Grants:Invite:Channel:SmsSoon"]</label>
+                            </div>
+                        </div>
+                        <div class="apya-invite-remind">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="InviteRemind" />
+                                <label class="form-check-label" for="InviteRemind">@L["Grants:Invite:Remind"]</label>
+                            </div>
+                            <input type="number" class="form-control form-control-sm apya-numeric" id="InviteRemindDays"
+                                   min="@Apya.Platform.Grants.GrantIdeaInvitationConsts.MinRemindAfterDays"
+                                   max="@Apya.Platform.Grants.GrantIdeaInvitationConsts.MaxRemindAfterDays"
+                                   aria-label="@L["Grants:Invite:RemindDays"]" />
+                            <span class="apya-invite-remind-unit">@L["Grants:Invite:RemindDays"]</span>
+                        </div>
+                    </fieldset>
+
+                    <div id="InvitePreview" class="apya-invite-preview d-none" aria-live="polite">
+                        <span class="apya-overline">@L["Grants:Invite:PreviewTitle"]</span>
+                        <strong id="InvitePreviewSubject"></strong>
+                        <p id="InvitePreviewBody" class="mb-0"></p>
+                        <p id="InviteTemplateOff" class="apya-side-note mb-0 d-none">@L["Grants:Invite:TemplateOff"]</p>
+                    </div>
+                </div>
+                <div class="modal-footer apya-invite-foot">
+                    <span id="InviteResponses" class="apya-invite-responses"></span>
+                    <button type="button" id="InvitePreviewBtn" class="btn btn-outline-secondary">@L["Grants:Invite:Preview"]</button>
+                    <button type="submit" id="InviteSend" class="btn btn-primary" disabled>@L["Grants:Invite:SendNone"]</button>
                 </div>
             </form>
         </div>

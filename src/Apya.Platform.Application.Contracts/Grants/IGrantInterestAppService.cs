@@ -22,6 +22,11 @@ public interface IGrantInterestAppService : IApplicationService
     /// </summary>
     Task<MyGrantInterestDto> ShareIdeaAsync(ShareGrantIdeaInput input);
 
+    /// <summary>
+    /// 19b · Firmaya gelen fikir daveti — bildirimden açılan form üstünde gösterilir. Firma alıcı değilse bulunamaz.
+    /// </summary>
+    Task<MyGrantIdeaInvitationDto> GetInvitationAsync(Guid id);
+
     /// <summary>Çağrıya bırakılan talepler; havuz fikirleri Hibe Yolculuğum'da görünür.</summary>
     Task<List<MyGrantInterestDto>> GetMineAsync();
 

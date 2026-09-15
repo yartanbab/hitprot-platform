@@ -36,6 +36,9 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly IRepository<GrantMeetingProposal, Guid> _proposalRepo;
     private readonly GrantMeetingManager _meetingManager;
+    private readonly IRepository<GrantIdeaInvitation, Guid> _invitationRepo;
+    private readonly IRepository<GrantIdeaInvitationRecipient, Guid> _recipientRepo;
+    private readonly GrantIdeaInvitationManager _invitationManager;
 
     public GrantInterestAppService(
         IRepository<GrantInterest, Guid> interestRepo,
@@ -47,7 +50,10 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         GrantNotificationDispatcher notifyDispatcher,
         IDataFilter<IMultiTenant> mtFilter,
         IRepository<GrantMeetingProposal, Guid> proposalRepo,
-        GrantMeetingManager meetingManager)
+        GrantMeetingManager meetingManager,
+        IRepository<GrantIdeaInvitation, Guid> invitationRepo,
+        IRepository<GrantIdeaInvitationRecipient, Guid> recipientRepo,
+        GrantIdeaInvitationManager invitationManager)
     {
         _interestRepo = interestRepo;
         _appRepo = appRepo;
@@ -59,6 +65,9 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         _mtFilter = mtFilter;
         _proposalRepo = proposalRepo;
         _meetingManager = meetingManager;
+        _invitationRepo = invitationRepo;
+        _recipientRepo = recipientRepo;
+        _invitationManager = invitationManager;
     }
 
     public async Task<MyGrantInterestDto> ExpressAsync(ExpressGrantInterestInput input)
@@ -154,6 +163,32 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         await _interestRepo.InsertAsync(interest, autoSave: true);
 
         return MapMine(interest, new Dictionary<Guid, (string Name, string? Period)>());
+    }
+
+    public async Task<MyGrantIdeaInvitationDto> GetInvitationAsync(Guid id)
+    {
+        // Davet host kaydıdır (TenantId null); kiracı yalnız alıcısı olduğu daveti okur. Değilse "yok" sayılır:
+        // başka firmaya giden mesaj Id tahminiyle okunamasın.
+        var firmId = CurrentTenant.Id ?? throw new AbpAuthorizationException();
+        GrantIdeaInvitation? invitation;
+        using (_mtFilter.Disable())
+        {
+            invitation = await _invitationRepo.FirstOrDefaultAsync(i => i.Id == id && i.TenantId == null);
+        }
+        if (invitation == null || await _recipientRepo.FirstOrDefaultAsync(r => r.InvitationId == id && r.FirmTenantId == firmId) == null)
+        {
+            throw new EntityNotFoundException(typeof(GrantIdeaInvitation), id);
+        }
+
+        var (callName, _) = await _invitationManager.DescribeCallAsync(invitation.GrantCallId);
+        return new MyGrantIdeaInvitationDto
+        {
+            Id = invitation.Id,
+            SentAt = invitation.SentAt,
+            Message = invitation.Message,
+            GrantCallId = invitation.GrantCallId,
+            GrantName = callName
+        };
     }
 
     public async Task<List<MyGrantInterestDto>> GetMineAsync()

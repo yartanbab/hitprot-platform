@@ -7166,6 +7166,108 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantEligibleCostItems", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantIdeaInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Audience")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid?>("GrantCallId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("RemindAfterDays")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("SendEmail")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RemindAfterDays", "SentAt");
+
+                    b.ToTable("AppGrantIdeaInvitations", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantIdeaInvitationRecipient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FirmTenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InvitationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RemindedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FirmTenantId");
+
+                    b.HasIndex("InvitationId", "FirmTenantId")
+                        .IsUnique();
+
+                    b.ToTable("AppGrantIdeaInvitationRecipients", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantInterest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -13688,6 +13790,15 @@ namespace Apya.Platform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantIdeaInvitationRecipient", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.GrantIdeaInvitation", null)
+                        .WithMany("Recipients")
+                        .HasForeignKey("InvitationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantInterest", b =>
                 {
                     b.HasOne("Apya.Platform.Grants.GrantCall", null)
@@ -14162,6 +14273,11 @@ namespace Apya.Platform.Migrations
             modelBuilder.Entity("Apya.Platform.Grants.GrantDecision", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantIdeaInvitation", b =>
+                {
+                    b.Navigation("Recipients");
                 });
 
             modelBuilder.Entity("Apya.Platform.Grants.GrantReport", b =>
