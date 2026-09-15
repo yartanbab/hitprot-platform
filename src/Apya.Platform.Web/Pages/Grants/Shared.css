@@ -672,7 +672,8 @@
     border: 0;
 }
 
-.apya-interest-field legend { float: none; width: auto; }
+/* Bootstrap reboot legend'ı 24 px basar (≥1200 px); soru başlığı diğer etiketler gibi 14 px kalsın. */
+.apya-interest-field legend { float: none; width: auto; font-size: inherit; }
 
 /* Soru altı ipucu ("Örn: …") — etiketle alan arasında, sessiz. */
 .apya-interest-hint {
