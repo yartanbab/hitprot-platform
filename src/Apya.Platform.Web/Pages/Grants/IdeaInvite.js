@@ -49,8 +49,8 @@ $(function () {
         $('#InviteRemindDays').prop('disabled', !$('#InviteRemind').is(':checked'));
     }
 
-    function paintCount(n) {
-        $('#InviteSend').text(n > 0 ? l('Grants:Invite:Send', n) : l('Grants:Invite:SendNone')).prop('disabled', n === 0);
+    function paintCount(n, emptyKey) {
+        $('#InviteSend').text(n > 0 ? l('Grants:Invite:Send', n) : l(emptyKey || 'Grants:Invite:SendNone')).prop('disabled', n === 0);
     }
 
     // Seçim hızlı değişince eski cevap yenisini ezmesin: yalnız son isteğin sonucu boyanır.
@@ -58,7 +58,8 @@ $(function () {
         clearTimeout(countTimer);
         countTimer = setTimeout(function () {
             var input = audienceInput();
-            if (input.audience === AUDIENCE.Single && !input.tenantId) { paintCount(0); return; }
+            // Tek firma seçilmeden "uyan firma yok" demek yanıltır: düğme ne beklendiğini söyler.
+            if (input.audience === AUDIENCE.Single && !input.tenantId) { paintCount(0, 'Grants:Invite:FirmPick'); return; }
             var seq = ++countSeq;
             service.countRecipients(input).then(function (n) { if (seq === countSeq) { paintCount(n); } });
         }, 250);

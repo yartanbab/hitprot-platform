@@ -199,6 +199,17 @@ public class GrantIdeaInvitation_Tests : PlatformEntityFrameworkCoreTestBase
         }))).Code.ShouldBe(PlatformDomainErrorCodes.GrantInvitationNoRecipients);
     }
 
+    /// <summary>"Önizle" bildirim şablonundan geçer: danışman ekranda yazdığı mesajın firmaya nasıl gideceğini görür.</summary>
+    [Fact]
+    public async Task Onizleme_sablonla_islenmis_mesaji_doner()
+    {
+        var preview = await _invitations.PreviewAsync(new PreviewGrantIdeaInvitationInput { Message = "  Fikirlerinizi bekliyoruz  " });
+
+        preview.TemplateEnabled.ShouldBeTrue();
+        preview.Subject.ShouldBe("Proje fikrinizi paylaşın");
+        preview.Body.ShouldBe("Fikirlerinizi bekliyoruz");
+    }
+
     [Fact]
     public async Task Firma_yalniz_kendisine_gelen_daveti_okur()
     {
