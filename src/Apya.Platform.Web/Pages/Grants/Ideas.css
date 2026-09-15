@@ -177,6 +177,122 @@
 #IdeaCreateForm { min-height: 0; }
 #IdeaCreateForm .modal-body { min-height: 0; }
 
+/* --- 19b · Son davet satırı: listenin üstünde sessiz bilgi --- */
+.apya-invite-latest {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    margin: 0 0 var(--apya-space-3);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-invite-latest > .fa { color: var(--apya-accent-500); }
+
+/* --- 19b · Fikir daveti penceresi --- */
+.apya-invite-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+/* Bootstrap legend'ı float + tam genişlik yapar; bölüm başlığı etiket boyunda kalsın. */
+.apya-invite-legend {
+    float: none;
+    width: auto;
+    margin: 0;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-invite-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--apya-space-2);
+}
+
+/* Seçenek kutusu: radyo + metin; seçili olan çerçeveyle belirginleşir. */
+.apya-invite-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 8px 12px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    cursor: pointer;
+}
+
+.apya-invite-option .form-check-input { margin: 0; }
+.apya-invite-option:has(input:checked) { border-color: var(--apya-accent-500); background: var(--apya-accent-soft); }
+.apya-invite-option:has(input:disabled) { color: var(--apya-text-secondary); cursor: not-allowed; }
+
+.apya-invite-pane {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    padding: 10px 12px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+
+.apya-invite-conditions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-1) var(--apya-space-3);
+}
+
+.apya-invite-condition-label {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-invite-remind {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-2);
+}
+
+.apya-invite-remind .form-control { width: 72px; }
+.apya-invite-remind-unit { color: var(--apya-text-secondary); font-size: var(--apya-fs-sm); }
+
+.apya-invite-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-lg);
+    color: var(--apya-text-primary);
+}
+
+.apya-invite-preview p { white-space: pre-line; color: var(--apya-text-secondary); }
+
+.apya-invite-foot { gap: var(--apya-space-2); }
+
+.apya-invite-responses {
+    margin-right: auto;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+@media (max-width: 575.98px) {
+    .apya-invite-option { flex: 1 1 100%; }
+    .apya-invite-foot .btn { flex: 1 1 auto; }
+    .apya-invite-responses { flex: 1 1 100%; }
+}
+
+#InviteForm { min-height: 0; }
+#InviteForm .modal-body { min-height: 0; }
+
 /* --- Dar ekran: satır karta dönüşür, hücreler etiketini data-label ile taşır (Shared.css) --- */
 @media (max-width: 991.98px) {
     .apya-idea-headrow { display: none; }

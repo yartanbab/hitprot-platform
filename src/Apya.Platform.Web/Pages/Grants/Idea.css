@@ -19,6 +19,29 @@
     padding: 26px 28px 0;
 }
 
+/* 19b · Davet notu: danışmanın mesajı, formun ne için doldurulduğunu söyler. */
+.apya-idea-invite {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-3);
+    padding: 12px 14px;
+    border: 1px solid var(--apya-accent-300);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-text-primary);
+}
+
+.apya-idea-invite > .fa { margin-top: 3px; color: var(--apya-accent-500); }
+
+.apya-idea-invite-from {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-idea-invite p { white-space: pre-line; line-height: 1.55; }
+
 .apya-idea-head {
     display: flex;
     align-items: flex-start;

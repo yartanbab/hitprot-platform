@@ -4,6 +4,18 @@ $(function () {
 
     apya.grantIdeaForm.reset();
 
+    // 19b · Davet bildirimi /Grants/Invitation üzerinden ?invitation=<id> ile getirir. Davet bulunamazsa (başka
+    // firmanın ya da silinmiş) form yine çalışır: not gösterilmez, hata penceresi açılmaz.
+    var invitationId = new URLSearchParams(window.location.search).get('invitation');
+    if (invitationId) {
+        interestSvc.getInvitation(invitationId, { abpHandleError: false }).then(function (inv) {
+            var date = new Date(inv.sentAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+            $('#InvitationFrom').text(l('Grants:Invite:Banner', date));
+            $('#InvitationMessage').text(inv.message);
+            $('#InvitationNote').removeClass('d-none');
+        });
+    }
+
     $('#IdeaForm').on('submit', function (e) {
         e.preventDefault();
         if (!apya.grantIdeaForm.validate()) {
