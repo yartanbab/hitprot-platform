@@ -47,18 +47,30 @@ $(function () {
         return l('Grants:DetailHost:Section:Empty');
     }
 
+    // Bölüm kartta yalnız durum; iş, bölümün düzenlendiği ekranda yapılır.
+    // Sihirbaza adım parametresi GEÇİLMEZ: adım sunucuda iki tarafa ortak tutulur,
+    // bağlantı açınca firmanın ekranı da kayardı.
+    var sectionPages = {
+        Summary: '/Grants/Wizard?id=',
+        Budget: '/Grants/Wizard?id=',
+        Documents: '/Grants/Documents?id=',
+        Submit: '/Grants/Documents?id='
+    };
+
     function paintSections() {
         $('#Sections').html((model.sections || []).map(function (s) {
-            return '<div class="apya-dh-section">' +
+            var href = sectionPages[s.key] ? sectionPages[s.key] + appId : null;
+            return (href ? '<a class="apya-dh-section is-link" href="' + href + '">' : '<div class="apya-dh-section">') +
                 '<span><i class="fa ' + (s.state === 3 ? 'fa-circle-check text-success'
                     : s.state === 4 ? 'fa-lock text-muted' : 'fa-circle-dot text-warning') + '"></i></span>' +
                 '<span>' + esc(l('Grants:DetailHost:Section:' + s.key)) +
+                (href ? ' <i class="fa fa-chevron-right apya-dh-section-go"></i>' : '') +
                 '<br /><span class="apya-dh-section-note">' + esc(sectionNote(s)) + '</span></span>' +
                 '<span><span class="apya-chip apya-chip-' + stateTone[s.state] + '">' +
                 esc(l('Grants:DetailHost:State:' + stateKeys[s.state])) + '</span></span>' +
                 '<span class="apya-dh-section-note">' +
                 (s.party != null ? esc(l('Grants:DetailHost:OnParty', l('Grants:Party:' + partyKeys[s.party]))) : '') +
-                '</span></div>';
+                '</span>' + (href ? '</a>' : '</div>');
         }).join(''));
     }
 

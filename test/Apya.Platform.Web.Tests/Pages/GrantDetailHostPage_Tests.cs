@@ -262,4 +262,49 @@ public class GrantDetailHostPage_Tests : PlatformWebTestBase
             submit.State.ShouldBe(GrantDetailSectionState.Locked);
         }
     }
+
+    [Fact]
+    public async Task Evrak_Bolumu_Evrak_Takibi_Acilmadan_Sablondan_Sayilir()
+    {
+        var id = await SetupAsync();
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            var application = await GetRequiredService<IRepository<GrantApplication, Guid>>().GetAsync(id);
+            var call = await GetRequiredService<IRepository<GrantCall, Guid>>().GetAsync(application.GrantCallId);
+            await GetRequiredService<IRepository<GrantDocumentRequirement, Guid>>().InsertAsync(
+                new GrantDocumentRequirement(Guid.NewGuid(), call.GrantId, 0, "Proje öneri formu")
+                {
+                    Obligation = GrantDocumentObligation.Zorunlu,
+                    UploaderParty = GrantPartyRole.Firma
+                }, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        // Evrak takibi (IGrantApplicationDocumentAppService.GetAsync) HİÇ çağrılmadı.
+        await _detail.GetAsync(id);
+        var dto = await _detail.GetAsync(id);
+
+        var documents = dto.Sections.Single(s => s.Key == GrantApplicationDetailAppService.SectionDocuments);
+        documents.Total.ShouldBe(1);
+        documents.State.ShouldBe(GrantDetailSectionState.InProgress);
+        documents.Party.ShouldBe(GrantPartyRole.Firma);
+
+        // İki ekran da listeyi türetir; ikinci açılış satırı çoğaltmamalı.
+        var console = await GetRequiredService<IGrantApplicationDocumentAppService>().GetAsync(id);
+        console.Documents.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Evraksiz_Basvuruda_Gonderim_Kilitli()
+    {
+        // Şablonda evrak yok: zorunlu sayısı 0, gönderilecek paket de yok.
+        var id = await SetupAsync();
+
+        var dto = await _detail.GetAsync(id);
+
+        dto.Sections.Single(s => s.Key == GrantApplicationDetailAppService.SectionDocuments)
+            .Total.ShouldBe(0);
+        dto.Sections.Single(s => s.Key == GrantApplicationDetailAppService.SectionSubmit)
+            .State.ShouldBe(GrantDetailSectionState.Locked);
+    }
 }

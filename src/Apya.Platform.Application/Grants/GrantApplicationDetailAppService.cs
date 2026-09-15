@@ -55,6 +55,7 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
+    private readonly GrantDocumentChecklistManager _checklist;
 
     public GrantApplicationDetailAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -78,7 +79,8 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
         GrantMatchWeightResolver weightResolver,
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> mtFilter,
-        GrantNotificationDispatcher notifyDispatcher)
+        GrantNotificationDispatcher notifyDispatcher,
+        GrantDocumentChecklistManager checklist)
     {
         _appRepo = appRepo;
         _budgetRepo = budgetRepo;
@@ -102,6 +104,7 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
         _notifyDispatcher = notifyDispatcher;
+        _checklist = checklist;
     }
 
     public const string SectionFirm = "Firm";
@@ -113,7 +116,12 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
     public async Task<GrantApplicationDetailDto> GetAsync(Guid applicationId)
     {
         EnsureHostContext();
-        return await BuildAsync(await GetApplicationAsync(applicationId));
+        var application = await GetApplicationAsync(applicationId);
+        // Form durumu kartı evrak satırlarını sayar; liste yalnız evrak takibinde
+        // türetilseydi o ekran açılana kadar kart "boş" derdi.
+        var (_, grant) = await GetCatalogAsync(application);
+        await _checklist.EnsureAsync(application, grant.Id);
+        return await BuildAsync(application);
     }
 
     public async Task<GrantApplicationDetailDto> AddConsultingLogAsync(AddGrantConsultingLogInput input)
@@ -462,9 +470,12 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
             Key = SectionSubmit,
             Value = application.SubmittedAt.HasValue ? 1 : 0,
             Total = 1,
-            // Gönderim, zorunlu evrak tamamlanana kadar KİLİTLİ görünür.
+            // Gönderim, paketin kurulabildiği ana kadar KİLİTLİ görünür: zorunlular onaylı
+            // VE en az bir onaylı evrak (evrak paketindeki IsComplete ile aynı kural).
+            // Yalnız zorunluya baksaydık evraksız başvuruda 0 < 0 tutmaz, kilit açılırdı.
             State = application.SubmittedAt.HasValue ? GrantDetailSectionState.Complete
-                : approved < mandatory ? GrantDetailSectionState.Locked
+                : approved < mandatory || !documents.Any(d => d.Status == GrantDocumentStatus.Onaylandi)
+                    ? GrantDetailSectionState.Locked
                 : GrantDetailSectionState.InProgress
         });
 
