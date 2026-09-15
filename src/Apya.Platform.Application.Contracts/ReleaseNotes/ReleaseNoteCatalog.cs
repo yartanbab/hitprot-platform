@@ -28,9 +28,36 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.15",
             date: "15 Eylül 2026",
-            title: "Hibe detayında programın amacı, öncelikleri ve destek tutarı aralığı",
+            title: "Proje fikrinizi çağrı beklemeden paylaşın; hibe detayında program amacı ve destek aralığı",
 
             // ── Hibe ──────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Proje fikrinizi uygun çağrıyı beklemeden paylaşın",
+                "Aklınızda bir proje var ama henüz ona uygun bir çağrı yoksa, fikrinizi şimdiden paylaşabilirsiniz. " +
+                "Hibeler ekranındaki \"Aklınızda bir proje mi var?\" kartından ya da Hibe Yolculuğum ekranının " +
+                "üstündeki Proje fikrimi paylaş düğmesinden açılan form, çağrılara ilgi bildirirken doldurduğunuz " +
+                "soruların aynısıdır; tek fark çağrı seçmenizin gerekmemesidir. Fikriniz Hibe Yolculuğum'da " +
+                "\"fikir havuzunda\" olarak görünür ve oradan istediğiniz zaman geri çekebilirsiniz. Birden fazla " +
+                "fikir paylaşabilirsiniz. Danışmanınız sizinle konuştuğu bir fikri sizin adınıza da ekleyebilir; " +
+                "o fikir de yolculuğunuzda yer alır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Fikrinize uygun bir çağrı açıldığında haberiniz oluyor",
+                "Paylaştığınız bir fikre uyan yeni bir çağrı açıldığında danışmanınız fikrinizi o çağrıyla " +
+                "ilişkilendirir ve size \"Fikrinize uygun bir çağrı açıldı\" bildirimi gelir. Bildirimde fikrinizin " +
+                "çağrıyla ne kadar örtüştüğü ve son başvuru tarihi yazar; bildirime tıklayınca çağrının detayı açılır. " +
+                "Fikriniz bu çağrı için danışman incelemesine alınmış olur ve çağrı takip listenize eklenir. Hibe " +
+                "Yolculuğum ekranından ön görüşme için saat önerebilir ya da ilgilenmiyorsanız talebinizi geri " +
+                "çekebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Danışmanınızdan proje fikri daveti",
+                "Danışmanınız sizi proje fikrinizi paylaşmaya davet edebilir. Davet bildirim olarak gelir, isteğe " +
+                "bağlı olarak e-postanıza da düşer. Bildirime tıkladığınızda danışmanınızın mesajı formun üstünde " +
+                "görünür; davet belirli bir çağrı içinse doğrudan o çağrının sayfası açılır ve ilginizi oradan " +
+                "bildirirsiniz. Davete yanıt vermediyseniz, danışmanınızın belirlediği süre sonunda bir kez " +
+                "hatırlatma alırsınız; fikrinizi paylaştıysanız ya da çağrıya ilginizi bildirdiyseniz hatırlatma gelmez."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Hibe detayında programın amacı, öncelikleri ve kimlerin başvurabileceği",
                 "Hibeler ekranında bir çağrının detayını açtığınızda, resmî duyurudaki programın amacı, " +
