@@ -428,6 +428,47 @@
     box-shadow: var(--apya-shadow-sm);
 }
 
+/* --- 22b · Talepler şeridi ---
+   Üç sayfa aynı başlığı paylaşır: Talepler (sekmeler + süzgeçler), Pipeline ve Başvurular
+   (sekmeler + pano/liste düğmesi). Etkin görünüm tasarımda koyu dolgu → inverse token'ları. */
+.apya-req-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-3);
+    margin-bottom: var(--apya-space-4);
+}
+
+.apya-req-bar .apya-grant-tabs { margin-bottom: 0; }
+
+.apya-req-views {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-base);
+}
+
+.apya-req-view {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 34px;
+    border-radius: var(--apya-radius-md);
+    color: var(--apya-text-secondary);
+    text-decoration: none;
+}
+
+.apya-req-view:hover { color: var(--apya-text-primary); }
+
+.apya-req-view.is-active {
+    background: var(--apya-surface-inverse);
+    color: var(--apya-text-inverse);
+}
+
 /* --- 12b · Hibe afişi (kiracı kartı + host parametre formu önizlemesi) ---
    Afiş 16:9. Yüklenmemişse Poster.js kuruma özel iki tonlu zemin verir. Karartma perdesi
    yalnız alt %65'te (tasarım): üst köşe rozetleri kendi zeminini taşır. Perde, bembeyaz bir

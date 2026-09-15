@@ -180,7 +180,11 @@ $(function () {
     // ---------- Açılış ----------
     service.get().then(function (dto) {
         model = dto;
-        var first = (dto.items || [])[0];
+        var items = dto.items || [];
+        // 22b · Talepler'den gelindiyse o talep seçili açılır; bulunamazsa ilk talep.
+        var requested = String($('[data-lead-id]').attr('data-lead-id') || '').toLowerCase();
+        var match = requested && items.find(function (i) { return String(i.id).toLowerCase() === requested; });
+        var first = match || items[0];
         selectedId = first ? first.id : null;
         paintList();
         if (selectedId) { loadDetail(selectedId); }

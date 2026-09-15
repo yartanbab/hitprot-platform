@@ -453,8 +453,12 @@ public static class PlatformSettingDefaults
     /// kaldırıldı (Genel Bakış'la aynı işi yapıyordu) ve menü havuzunda artık
     /// karşılığı yok — adı burada bırakmak boşa düşen bir iğne üretirdi.
     /// </para>
+    /// <para>
+    /// "Apya.Grants.Applications" 2026-09-15'te "Apya.Grants.Requests"e çevrildi: hibe
+    /// menüsü sadeleşti (tur 22), Başvurular ayrı menü değil Talepler'in bir sekmesi.
+    /// </para>
     /// </summary>
-    public const string ShellPins = "Apya.Finance.CashAccounts,Apya.Grants.Applications";
+    public const string ShellPins = "Apya.Finance.CashAccounts,Apya.Grants.Requests";
 
     /// <summary>Sabitlenebilir en fazla öğe — liste kenar çubuğunu boğmasın.</summary>
     public const int ShellPinsMax = 12;

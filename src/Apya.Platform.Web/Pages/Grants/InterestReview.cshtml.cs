@@ -18,6 +18,6 @@ public class InterestReviewModel : PlatformPageModel
 
     public IActionResult OnGet()
     {
-        return Id == Guid.Empty ? Redirect("/Grants/Interests") : Page();
+        return Id == Guid.Empty ? Redirect("/Grants/Requests") : Page();
     }
 }

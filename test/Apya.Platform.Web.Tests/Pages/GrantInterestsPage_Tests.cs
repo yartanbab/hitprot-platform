@@ -12,16 +12,17 @@ namespace Apya.Platform.Pages;
 /// </summary>
 public class GrantInterestsPage_Tests : PlatformWebTestBase
 {
+    /// <summary>
+    /// Tur 22 · İlgi Talepleri listesi Talepler › Yanıt bekleyen'e taşındı. Eski adres eski
+    /// bildirimlerde ve yer imlerinde duruyor; kırılmasın diye yönlendirir.
+    /// </summary>
     [Fact]
-    public async Task Host_Ilgi_Talepleri_Sayfasi_Render_Oluyor()
+    public async Task Eski_Ilgi_Talepleri_Adresi_Taleplere_Yonlendirir()
     {
-        var html = await GetResponseAsStringAsync("/Grants/Interests");
+        var response = await Client.GetAsync("/Grants/Interests");
 
-        html.ShouldContain("apya-int-kpis");
-        html.ShouldContain("RejectModal");
-        html.ShouldContain("Başvuru sürecini başlat");
-        System.Text.RegularExpressions.Regex.IsMatch(html, @"Interests[^""]*\.js")
-            .ShouldBeTrue("sayfa demeti Interests.js içermeli");
+        ((int)response.StatusCode).ShouldBe(302);
+        response.Headers.Location!.ToString().ShouldContain("/Grants/Requests");
     }
 
     /// <summary>18a · Talep inceleme ekranı: fikir, iç not, karar + devret, firma kartı, ortak önerisi.</summary>
@@ -52,7 +53,7 @@ public class GrantInterestsPage_Tests : PlatformWebTestBase
         var response = await Client.GetAsync("/Grants/InterestReview");
 
         ((int)response.StatusCode).ShouldBe(302);
-        response.Headers.Location!.ToString().ShouldContain("/Grants/Interests");
+        response.Headers.Location!.ToString().ShouldContain("/Grants/Requests");
     }
 
     [Fact]

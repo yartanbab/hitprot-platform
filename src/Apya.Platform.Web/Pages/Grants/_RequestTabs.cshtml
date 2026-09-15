@@ -1,0 +1,40 @@
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model string
+@*
+    22b · Talepler'in iki sekmesi. Sekmeler adres taşır: Yanıt bekleyen /Grants/Requests,
+    Yürüyen başvuru pano (/Grants/Pipeline) ve liste (/Grants/Applications) — kanıtlanmış iki ekran
+    yeniden yazılmadan aynı başlığı paylaşır. Model: "pending" | "board" | "list".
+
+    Kap (.apya-req-bar) sayfanın elindedir: Yanıt bekleyen süzgeçlerini aynı satıra koyar.
+    Sayaçları sayfa doldurur (Requests.js ya da RequestTabs.js); boşken iskelet görünür.
+*@
+@{
+    var running = Model != "pending";
+}
+<nav class="apya-grant-tabs apya-req-tabs" aria-label="@L["Grants:Requests:Sections"]">
+    <a class="apya-grant-tab @(running ? null : "is-active")" href="/Grants/Requests" aria-current="@(running ? null : "page")">
+        @L["Grants:Requests:Tab:Pending"]
+        <span class="apya-chip apya-chip-accent apya-numeric apya-skel-num" data-request-count="pending"></span>
+    </a>
+    <a class="apya-grant-tab @(running ? "is-active" : null)" href="/Grants/Pipeline" aria-current="@(running ? "page" : null)">
+        @L["Grants:Requests:Tab:Running"]
+        <span class="apya-chip apya-chip-neutral apya-numeric apya-skel-num" data-request-count="running"></span>
+    </a>
+</nav>
+@if (running)
+{
+    <div class="apya-req-views" role="group" aria-label="@L["Grants:Requests:Views"]">
+        <a class="apya-req-view @(Model == "board" ? "is-active" : null)" href="/Grants/Pipeline"
+           title="@L["Grants:Requests:View:Board"]" aria-label="@L["Grants:Requests:View:Board"]"
+           aria-current="@(Model == "board" ? "page" : null)">
+            <i class="fa fa-table-columns" aria-hidden="true"></i>
+        </a>
+        <a class="apya-req-view @(Model == "list" ? "is-active" : null)" href="/Grants/Applications"
+           title="@L["Grants:Requests:View:List"]" aria-label="@L["Grants:Requests:View:List"]"
+           aria-current="@(Model == "list" ? "page" : null)">
+            <i class="fa fa-list" aria-hidden="true"></i>
+        </a>
+    </div>
+}

@@ -195,6 +195,19 @@ public class PlatformNavigationResolver : IScopedDependency
             if (definition.TenantOnly && _currentTenant.Id == null) { continue; }
             if (!await _permission.IsGrantedAsync(definition.PermissionName)) { continue; }
 
+            // Grup, içine görünür ilk bağlantı düşünce doğar: izni olmayanda boş başlık
+            // ne Ayarlar'da ne de menü düzenleme ekranının boş grup listesinde görünür.
+            if (definition.Group != null && !pool.ContainsKey(definition.Group.Name))
+            {
+                pool[definition.Group.Name] = new PoolEntry
+                {
+                    Item = new ApplicationMenuItem(
+                        definition.Group.Name, _l[definition.Group.TitleKey], icon: definition.Group.Icon),
+                    DefaultParent = SettingsRoot,
+                    DefaultIndex = sequence++
+                };
+            }
+
             var item = new ApplicationMenuItem(
                 definition.Name, _l[definition.TitleKey],
                 icon: definition.Icon, url: definition.Url);
@@ -203,8 +216,8 @@ public class PlatformNavigationResolver : IScopedDependency
             pool[definition.Name] = new PoolEntry
             {
                 Item = item,
-                // Yönetim hedeflerinin varsayılan yeri Ayarlar sayfası.
-                DefaultParent = SettingsRoot,
+                // Yönetim hedeflerinin varsayılan yeri Ayarlar sayfası (ya da oradaki grubu).
+                DefaultParent = definition.Group?.Name ?? SettingsRoot,
                 DefaultIndex = sequence++
             };
         }
@@ -629,32 +642,28 @@ public class PlatformNavigationResolver : IScopedDependency
                 "Apya.Calendar", l["Menu:Calendar"], icon: "fa fa-calendar-days", url: "/Calendars", order: 3));
 
         // Hibe Yönetimi — kendi izin grubu (Groups.Grants) ve kendi feature'ı (Features.Grants)
-        // olduğu için İş Yönetimi'nden ayrı kategori. "Başvurular" sayfası HOST'a özel
-        // (GrantApplicationHostAppService.EnsureHostContext) → tenant menüsünde gösterilmez.
+        // olduğu için İş Yönetimi'nden ayrı kategori.
+        //
+        // Tur 22 · host menüsü = farklı NESNE başına bir öğe: Bugün · Çağrılar · Talepler · Raporlar.
+        // Aynı nesnenin aşamaları sekmeye indi: İlgi Talepleri + Ön Değerlendirme → Talepler ›
+        // Yanıt bekleyen; Başvuru Pipeline + Başvurular → Talepler › Yürüyen başvuru. Günlük işte
+        // açılmayan aşama/bildirim şablonları Ayarlar › Hibe'de (PlatformAdminLinks).
+        // 🔴 Talepler ve Raporlar YENİ adla doğar: eski adı taşısalardı menüsünü özelleştirmiş
+        // kullanıcıda kayıtlı düzen onları eski yerinde tutardı.
         var grants = new ApplicationMenuItem("Apya.Grants", l["Menu:Grants:Group"], icon: "fa fa-award", order: 4);
-        // 11a/11b · "Bugün" her iki rolde de grubun ilk girişi: konsollar kalır, önlerine giriş kapısı gelir.
+        // 11a/11b · "Bugün" her iki rolde de grubun ilk girişi.
         if (await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Today", l["Menu:Grants:Today"], icon: "fa fa-sun", url: "/Grants/Today"));
         if (await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Calls", l["Menu:Grants:Calls"], icon: "fa fa-bullhorn", url: "/Grants"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Applications", l["Menu:Grants:Applications"], icon: "fa fa-file-signature", url: "/Grants/Applications"));
-        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.StageTemplates", l["Menu:Grants:StageTemplates"], icon: "fa fa-diagram-project", url: "/Grants/StageTemplates"));
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Requests", l["Menu:Grants:Requests"], icon: "fa fa-table-columns", url: "/Grants/Requests"));
+        // Kaynaklar tur 22'de Çağrılar'ın sekmesi olacak; o ekran kurulana kadar menüde kalır.
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Sources", l["Menu:Grants:Sources"], icon: "fa fa-globe", url: "/Grants/Sources"));
+        // 18c · Dönüşüm hunisi Raporlar'ın ilk ekranı. Kiracı verisini de saydığı için yalnız host.
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Pipeline", l["Menu:Grants:Pipeline"], icon: "fa fa-table-columns", url: "/Grants/Pipeline"));
-        // Kiracıların "İlgileniyorum" talepleri; başvuru bu kutudaki kararla açılır.
-        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Interests", l["Menu:Grants:Interests"], icon: "fa fa-handshake", url: "/Grants/Interests"));
-        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Leads", l["Menu:Grants:Leads"], icon: "fa fa-inbox", url: "/Grants/Leads"));
-        // 18c · Hangi çağrı iş getiriyor: görüntülenmeden onaya huni. Kiracı verisini de saydığı için yalnız host.
-        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Funnel", l["Menu:Grants:Funnel"], icon: "fa fa-filter", url: "/Grants/Funnel"));
-        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.NotificationTemplates", l["Menu:Grants:NotificationTemplates"], icon: "fa fa-bell", url: "/Grants/NotificationTemplates"));
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Reports", l["Menu:Grants:Reports"], icon: "fa fa-chart-column", url: "/Grants/Funnel"));
         if (_currentTenant.Id != null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.MyApplications", l["Menu:Grants:MyApplications"], icon: "fa fa-list-check", url: "/Grants/MyApplications"));
         // 18d · Hibe Yolculuğum: Başvurularım'ın yanında, yalnız kiracıda (host'un firması yok).

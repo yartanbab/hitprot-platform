@@ -31,6 +31,10 @@ public static class PlatformAdminLinks
     /// Yalnız kiracı bağlamında gösterilir. Host'un paketi yoktur (her şey açıktır), bu yüzden
     /// "Paketim" gibi hedefler host'ta izin yeterli olsa bile basılmamalıdır.
     /// </param>
+    /// <param name="Group">
+    /// Ayarlar sayfasında bir başlık altında toplanacaksa grubu. Grup, içine görünür bir
+    /// bağlantı düştüğünde doğar — izni olmayan kullanıcıda boş başlık basılmaz.
+    /// </param>
     public record AdminLinkDefinition(
         string Name,
         string PermissionName,
@@ -38,7 +42,14 @@ public static class PlatformAdminLinks
         string DescriptionKey,
         string Url,
         string Icon,
-        bool TenantOnly = false);
+        bool TenantOnly = false,
+        AdminLinkGroup? Group = null);
+
+    /// <summary>Ayarlar sayfasındaki başlık. Ad, bağlantı adlarıyla aynı kurala uyar (alt çizgi yok).</summary>
+    public record AdminLinkGroup(string Name, string TitleKey, string Icon);
+
+    /// <summary>Tur 22 · Hibe modülünün günlük işte açılmayan ekranları.</summary>
+    public static readonly AdminLinkGroup Grants = new("Apya.Admin.Grants", "Menu:Settings:Grants", "fa fa-award");
 
     public static readonly IReadOnlyList<AdminLinkDefinition> All = new List<AdminLinkDefinition>
     {
@@ -94,6 +105,17 @@ public static class PlatformAdminLinks
         // (avatar menüsünden gelinir); buradaki kart düzenleme yetkisi olan yöneticiye.
         new("Apya.Admin.CompanyProfile", PlatformPermissions.TenantSettings.Default,
             "Menu:CompanyProfile", "Settings:Admin.CompanyProfile.Desc",
-            "/CompanyProfile", "fa fa-building", TenantOnly: true)
+            "/CompanyProfile", "fa fa-building", TenantOnly: true),
+
+        // Hibe · aşama ve bildirim şablonları eskiden hibe menüsündeydi. YENİ adla doğarlar:
+        // eski ad (Apya.Grants.*) kayıtlı menü düzeninde kalsaydı öğe kenar çubuğunda kalırdı.
+        // Grants.Edit host tarafında tanımlı → kiracıda ikisi de, dolayısıyla grup da basılmaz.
+        new("Apya.Admin.GrantStageTemplates", PlatformPermissions.Grants.Edit,
+            "Menu:Grants:StageTemplates", "Settings:Admin.GrantStageTemplates.Desc",
+            "/Grants/StageTemplates", "fa fa-diagram-project", Group: Grants),
+
+        new("Apya.Admin.GrantNotificationTemplates", PlatformPermissions.Grants.Edit,
+            "Menu:Grants:NotificationTemplates", "Settings:Admin.GrantNotificationTemplates.Desc",
+            "/Grants/NotificationTemplates", "fa fa-bell", Group: Grants)
     };
 }
