@@ -39,7 +39,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
     private readonly IRepository<GrantApplicationDocumentVersion, Guid> _versionRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
-    private readonly IRepository<GrantDocumentRequirement, Guid> _requirementRepo;
+    private readonly GrantDocumentChecklistManager _checklist;
     private readonly IIdentityUserRepository _userRepo;
     private readonly NotificationManager _notificationManager;
     private readonly ICurrentTenant _currentTenant;
@@ -52,7 +52,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         IRepository<GrantApplicationDocumentVersion, Guid> versionRepo,
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
-        IRepository<GrantDocumentRequirement, Guid> requirementRepo,
+        GrantDocumentChecklistManager checklist,
         IIdentityUserRepository userRepo,
         NotificationManager notificationManager,
         ICurrentTenant currentTenant,
@@ -64,7 +64,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         _versionRepo = versionRepo;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
-        _requirementRepo = requirementRepo;
+        _checklist = checklist;
         _userRepo = userRepo;
         _notificationManager = notificationManager;
         _currentTenant = currentTenant;
@@ -85,7 +85,8 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
     public async Task<GrantDocumentConsoleDto> GetAsync(Guid applicationId)
     {
         var application = await GetApplicationAsync(applicationId);
-        await EnsureChecklistAsync(application);
+        var (_, grant) = await GetCatalogAsync(application);
+        await _checklist.EnsureAsync(application, grant.Id);
         return await BuildAsync(application);
     }
 
@@ -376,7 +377,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
     ///
     /// <para>🔴 Danışman HOST bağlamında çalışır, evrak satırları ise KİRACIYA aittir.
     /// Filtre açık okunursa host tarafında liste BOŞ döner: ekran boş görünür ve daha
-    /// kötüsü <see cref="EnsureChecklistAsync"/> "hiç evrak yok" sanıp kontrol
+    /// kötüsü <see cref="GrantDocumentChecklistManager"/> "hiç evrak yok" sanıp kontrol
     /// listesini her açılışta yeniden üretir. <see cref="GetDocumentAsync"/> bu kapıyı
     /// zaten kapatıyordu; liste okumaları atlanmıştı.</para>
     ///
@@ -401,37 +402,6 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         using (_mtFilter.Disable())
         {
             return await _versionRepo.GetListAsync(v => ids.Contains(v.DocumentId));
-        }
-    }
-
-    /// <summary>
-    /// Kontrol listesini çağrının şablonuyla eşitler. Şablonda olup listede olmayan
-    /// satır eklenir; listede olup şablondan çıkarılmış satır SİLİNMEZ — yüklenmiş
-    /// evrakı ve sürüm geçmişini yok etmek denetim izini koparırdı.
-    /// </summary>
-    private async Task EnsureChecklistAsync(GrantApplication application)
-    {
-        var (_, grant) = await GetCatalogAsync(application);
-
-        List<GrantDocumentRequirement> requirements;
-        using (_mtFilter.Disable())
-        {
-            requirements = (await _requirementRepo.GetListAsync(r => r.GrantId == grant.Id && r.TenantId == null))
-                .OrderBy(r => r.Order).ToList();
-        }
-        if (requirements.Count == 0) { return; }
-
-        var existing = await ReadDocumentsAsync(application.Id);
-        var known = existing.Where(d => d.RequirementId.HasValue)
-            .Select(d => d.RequirementId!.Value).ToHashSet();
-
-        foreach (var requirement in requirements.Where(r => !known.Contains(r.Id)))
-        {
-            await _docRepo.InsertAsync(new GrantApplicationDocument(
-                GuidGenerator.Create(), application.TenantId, application.Id,
-                requirement.Id, requirement.Name, requirement.Obligation,
-                requirement.UploaderParty, requirement.RequiresESignature,
-                requirement.Order), autoSave: true);
         }
     }
 
