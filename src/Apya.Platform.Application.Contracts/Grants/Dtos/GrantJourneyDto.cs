@@ -26,7 +26,8 @@ public class GrantJourneyItemDto
 {
     public GrantJourneyItemKind Kind { get; set; }
 
-    public Guid GrantCallId { get; set; }
+    /// <summary>Havuzdaki fikirde (<see cref="GrantJourneyItemKind.IdeaPooled"/>) null.</summary>
+    public Guid? GrantCallId { get; set; }
     public string GrantName { get; set; } = string.Empty;
     public string? Issuer { get; set; }
     public string? Period { get; set; }
@@ -46,6 +47,13 @@ public class GrantJourneyItemDto
 
     /// <summary>18e · Bekleyen talebin son görüşme önerisi.</summary>
     public GrantMeetingDto? Meeting { get; set; }
+
+    // --- 19a · Havuzdaki fikir ---
+    /// <summary>Proje fikrinin metni — çağrı adı olmadığı için kartın başlığı bu.</summary>
+    public string? Idea { get; set; }
+
+    /// <summary>Fikri kim girdi: firma kendisi mi, danışman firma adına mı.</summary>
+    public GrantInterestSource? IdeaSource { get; set; }
 
     // --- Başvuru ---
     public Guid? ApplicationId { get; set; }

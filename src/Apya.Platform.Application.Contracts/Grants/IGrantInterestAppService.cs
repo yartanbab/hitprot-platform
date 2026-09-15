@@ -16,6 +16,13 @@ public interface IGrantInterestAppService : IApplicationService
 {
     Task<MyGrantInterestDto> ExpressAsync(ExpressGrantInterestInput input);
 
+    /// <summary>
+    /// 19a · Çağrı seçmeden Fikir Havuzu'na proje fikri. Talep değildir: yanıt süresi işlemez;
+    /// uygun çağrı açılınca danışman ilişkilendirir. Aynı firmanın birden çok fikri olabilir.
+    /// </summary>
+    Task<MyGrantInterestDto> ShareIdeaAsync(ShareGrantIdeaInput input);
+
+    /// <summary>Çağrıya bırakılan talepler; havuz fikirleri Hibe Yolculuğum'da görünür.</summary>
     Task<List<MyGrantInterestDto>> GetMineAsync();
 
     /// <summary>

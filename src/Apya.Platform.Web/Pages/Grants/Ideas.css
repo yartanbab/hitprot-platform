@@ -1,0 +1,144 @@
+/* =============================================================================
+   19a/22 · Host Fikir Havuzu. Şerit ve süzgeç kutuları Shared.css'te (.apya-req-*, Talepler ile
+   ortak); soru alanları da Shared.css'te (kiracı formuyla ortak).
+   ============================================================================= */
+
+.apya-idea-count {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+}
+
+/* --- Liste (CSS grid; hibe modülünde <table> yok) ---
+   Fikir metni oranla genişler; kısa değerli sütunlar sabit. Satır başına ayrı ızgara olduğu için
+   sütunlar max-content olamaz (hizalar satırdan satıra kayar). 1280px yan menülü kabukta "Kim girdi"
+   127px kalıp tam ad kesiliyordu (ölçüldü) → ad Talepler gibi kısaltılır, sabit sütunlar 120px. */
+.apya-idea-row {
+    display: grid;
+    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr) 120px 120px 88px;
+    gap: var(--apya-space-4);
+    align-items: center;
+    padding: 14px var(--apya-space-5);
+}
+
+.apya-idea-row + .apya-idea-row { border-top: 1px solid var(--apya-border-subtle); }
+
+/* LeptonX .card açık temada gövde rengini #686B6E verir; fikir ve bütçe birincil metin olmalı (ölçüldü). */
+.apya-idea-table { color: var(--apya-text-primary); }
+
+.apya-idea-headrow {
+    padding-block: 11px;
+    background: var(--apya-surface-raised);
+    border-bottom: 1px solid var(--apya-border-default);
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-secondary);
+}
+
+.apya-idea-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.apya-idea-main strong,
+.apya-idea-main span,
+.apya-idea-creator-name,
+.apya-idea-start {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.apya-idea-main strong { font-weight: var(--apya-weight-semibold); }
+
+.apya-idea-main span {
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+}
+
+.apya-idea-creator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.apya-idea-creator-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.apya-idea-creator-name { color: var(--apya-text-primary); }
+
+.apya-idea-creator-source {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-idea-budget { font-weight: var(--apya-weight-semibold); }
+.apya-idea-start { color: var(--apya-text-secondary); }
+.apya-idea-cta { justify-self: stretch; }
+
+/* --- İncele penceresi --- */
+.apya-idea-modal-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-idea-modal-meta {
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+}
+
+.apya-idea-answers {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-4);
+}
+
+.apya-idea-answer dt {
+    margin-bottom: 4px;
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-secondary);
+}
+
+.apya-idea-answer dd {
+    margin: 0;
+    color: var(--apya-text-primary);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.apya-idea-answer dd.is-empty { color: var(--apya-text-secondary); font-style: italic; }
+
+/* Kaydırmalı pencerede form, içerikle gövde arasına girer: gövdenin kayabilmesi için esnek
+   zincir min-height:0 ile sürmeli (yoksa uzun form pencereden taşar). */
+#IdeaCreateForm { min-height: 0; }
+#IdeaCreateForm .modal-body { min-height: 0; }
+
+/* --- Dar ekran: satır karta dönüşür, hücreler etiketini data-label ile taşır (Shared.css) --- */
+@media (max-width: 991.98px) {
+    .apya-idea-headrow { display: none; }
+
+    .apya-idea-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-idea-main,
+    .apya-idea-creator,
+    .apya-idea-cta { grid-column: 1 / -1; }
+
+    /* Avatar + ad yatay flex; etiketi kendi satırına al. */
+    .apya-idea-creator { flex-wrap: wrap; }
+    .apya-idea-creator::before { flex: 0 0 100%; }
+}

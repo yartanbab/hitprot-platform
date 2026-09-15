@@ -28,6 +28,14 @@
     font-size: var(--apya-fs-md);
 }
 
+/* 19a · Sağ blok: kazanılan destek + "Proje fikrimi paylaş". */
+.apya-jny-head-side {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--apya-space-4);
+}
+
 .apya-jny-won {
     display: flex;
     flex-direction: column;

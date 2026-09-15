@@ -317,29 +317,8 @@ $(function () {
         });
     }
 
-    // Hedeflenen başlangıç: içinde bulunulan çeyrekten itibaren sekiz çeyrek. Değer
-    // çeyreğin ilk günü, "yyyy-MM-dd" olarak ELLE kurulur — toISOString() TZ+03'te
-    // tarihi bir gün geriye kaydırır.
-    function quarterOptions() {
-        var now = new Date();
-        var y = now.getFullYear();
-        var q = Math.floor(now.getMonth() / 3) + 1;
-        var html = '<option value="">' + esc(l('Grants:Interest:Form:TargetStart:Unknown')) + '</option>';
-        for (var i = 0; i < 8; i++) {
-            var month = (q - 1) * 3 + 1;
-            html += '<option value="' + y + '-' + (month < 10 ? '0' : '') + month + '-01">' +
-                esc(l('Grants:Interest:Form:Quarter', y, q)) + '</option>';
-            q++;
-            if (q > 4) { q = 1; y++; }
-        }
-        return html;
-    }
-
+    // Dokuz soru, bütçe ve başlangıç IdeaForm.js'te (havuz formuyla ortak); burada çağrı ve ortak.
     function partnerChoice() { return $('input[name=InterestPartner]:checked').val() || null; }
-
-    // İsteğe bağlı soru: boş bırakıldıysa null gider, sunucu da null saklar.
-    // 🔴 $.trim YOK: libs'teki jQuery 4.0.0 (install-libs) kaldırdı; String.prototype.trim kullanılır.
-    function answer(id) { return ($('#' + id).val() || '').trim() || null; }
 
     function paintPartner() {
         var c = partnerChoice();
@@ -349,12 +328,9 @@ $(function () {
 
     function resetInterestForm() {
         document.getElementById('InterestForm').reset();
-        $('#InterestNote, #InterestProblem').removeClass('is-invalid');
+        apya.grantIdeaForm.reset();
         $('#InterestPartnerError').removeClass('d-block');
         $('#InterestCallName').text(detail ? detail.grantName : '');
-        $('#InterestStart').html(quarterOptions());
-        var budget = document.getElementById('InterestBudget');
-        if (budget.__apyaMoney) { apya.moneyInput.setValue(budget, null); }
         $('#InterestPartnerBlock').toggleClass('d-none', !(detail && detail.requiresConsortium));
         paintPartner();
         showPane('confirm');
@@ -377,18 +353,12 @@ $(function () {
         paintPartner();
     });
 
-    $('#InterestNote, #InterestProblem').on('input', function () { $(this).removeClass('is-invalid'); });
-
     $('#InterestForm').on('submit', function (e) {
         e.preventDefault();
 
-        var note = ($('#InterestNote').val() || '').trim();
-        var problem = ($('#InterestProblem').val() || '').trim();
         var askPartner = !!(detail && detail.requiresConsortium);
         var choice = partnerChoice();
-        var valid = true;
-        if (!note) { $('#InterestNote').addClass('is-invalid'); valid = false; }
-        if (!problem) { $('#InterestProblem').addClass('is-invalid'); valid = false; }
+        var valid = apya.grantIdeaForm.validate();
         if (askPartner && !choice) { $('#InterestPartnerError').addClass('d-block'); valid = false; }
         if (!valid) {
             // Form uzun; gönder düğmesine basıldığında boş kalan zorunlu soru ekranın dışında olabilir.
@@ -396,25 +366,11 @@ $(function () {
             return;
         }
 
-        var budget = document.getElementById('InterestBudget');
-        var input = {
+        var input = $.extend(apya.grantIdeaForm.read(), {
             grantCallId: callId,
-            note: note,
-            problemStatement: problem,
-            targetAudience: answer('InterestAudience'),
-            plannedActivities: answer('InterestActivities'),
-            durationAndPartners: answer('InterestDuration'),
-            supportNeeds: answer('InterestSupport'),
-            priorExperience: answer('InterestExperience'),
-            teamStructure: answer('InterestTeam'),
-            stakeholders: answer('InterestStakeholders'),
-            estimatedBudget: budget.__apyaMoney
-                ? apya.moneyInput.getValue(budget)
-                : (budget.value === '' ? null : Number(budget.value)),
-            targetStartDate: $('#InterestStart').val() || null,
             needsPartner: askPartner ? choice === 'needs' : null,
             partnerName: askPartner && choice === 'has' ? (($('#InterestPartnerName').val() || '').trim() || null) : null
-        };
+        });
 
         var $submit = $(this).find('button[type=submit]').prop('disabled', true);
         interestSvc.express(input)

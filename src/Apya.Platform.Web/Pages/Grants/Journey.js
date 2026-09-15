@@ -6,8 +6,11 @@ $(function () {
 
     // GrantJourneyItemKind / GrantNextAction enum sıralarıyla birebir.
     var kindKeys = ['InterestPending', 'InterestRejected', 'InterestWithdrawn', 'ApplicationOpen',
-        'ApplicationWithInstitution', 'ApplicationRejected', 'Project', 'Completed', 'CallClosed'];
-    var kindTone = ['accent', 'neutral', 'neutral', 'warning', 'accent', 'negative', 'positive', 'positive', 'neutral'];
+        'ApplicationWithInstitution', 'ApplicationRejected', 'Project', 'Completed', 'CallClosed', 'IdeaPooled'];
+    var kindTone = ['accent', 'neutral', 'neutral', 'warning', 'accent', 'negative', 'positive', 'positive', 'neutral', 'accent'];
+    // GrantInterestSource: 0 firma · 1 danışman firma adına.
+    var SOURCE_CONSULTANT = 1;
+    var IDEA_TITLE_MAX = 120;
     var nextKeys = ['CompleteForm', 'UploadDocuments', 'WaitingOnConsultant', 'WaitingOnInstitution', 'InProject', 'Done'];
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
@@ -83,6 +86,8 @@ $(function () {
                     : i.nextAction === 1
                         ? l('Grants:Journey:Body:ClosedDocuments', i.nextActionValue)
                         : l('Grants:Journey:Body:ClosedApplication');
+            case 9:
+                return l(i.ideaSource === SOURCE_CONSULTANT ? 'Grants:Journey:Body:IdeaPooledByConsultant' : 'Grants:Journey:Body:IdeaPooled', date(i.at));
         }
         return '';
     }
@@ -113,8 +118,21 @@ $(function () {
             case 1:
             case 2:
             case 8: html.push(link('/Grants/Detail?id=' + i.grantCallId, 'Grants:Journey:Action:Call', false)); break;
+            // 19a · Havuzdaki fikrin çağrısı yok; firma yalnız geri çekebilir.
+            case 9:
+                html.push('<button type="button" class="btn btn-sm btn-outline-danger" data-withdraw-idea="' + i.interestId + '">' +
+                    esc(l('Grants:Journey:Action:WithdrawIdea')) + '</button>');
+                break;
         }
         return html.join('');
+    }
+
+    /// Kartın başlığı: çağrının adı; havuzdaki fikirde çağrı olmadığı için fikrin kendisi (uzunsa kesilir).
+    function name(i) {
+        if (i.kind !== 9) { return '<span class="apya-jny-name">' + esc(i.grantName) + '</span>'; }
+        var idea = i.idea || l('Grants:Journey:IdeaLabel');
+        var short = idea.length > IDEA_TITLE_MAX ? idea.slice(0, IDEA_TITLE_MAX).trim() + '…' : idea;
+        return '<span class="apya-jny-name" title="' + esc(idea) + '">' + esc(short) + '</span>';
     }
 
     function item(i) {
@@ -124,7 +142,7 @@ $(function () {
             '<span class="apya-jny-dot" aria-hidden="true"></span>' +
             '<div class="apya-jny-card">' +
             '<div class="apya-jny-card-head">' +
-            '<span class="apya-jny-name">' + esc(i.grantName) + '</span>' +
+            name(i) +
             '<span class="apya-chip apya-chip-' + kindTone[i.kind] + '">' + esc(stateText(i)) + '</span>' +
             '</div>' +
             (i.issuer || i.period ? '<div class="apya-jny-meta">' + esc([i.issuer, i.period].filter(Boolean).join(' · ')) + '</div>' : '') +
@@ -138,6 +156,9 @@ $(function () {
         if (d.activeCount) { parts.push(l('Grants:Journey:Sub:Active', d.activeCount)); }
         if (d.projectCount) { parts.push(l('Grants:Journey:Sub:Projects', d.projectCount)); }
         if (d.missedCount) { parts.push(l('Grants:Journey:Sub:Missed', d.missedCount)); }
+        // Havuzdaki fikir süreç sayılmaz ama "hibe ilişkiniz yok" da denmez.
+        var ideaCount = (d.items || []).filter(function (i) { return i.kind === 9; }).length;
+        if (ideaCount) { parts.push(l('Grants:Journey:Sub:Ideas', ideaCount)); }
         var sub = parts.length ? parts.join(', ') : l('Grants:Journey:Sub:None');
         $('#JourneySub').removeClass('apya-skel-num').text(d.firmName ? d.firmName + ' · ' + sub : sub);
 
@@ -159,6 +180,19 @@ $(function () {
             $btn.prop('disabled', true);
             interestService.withdraw(id).then(function () {
                 abp.notify.success(l('Grants:Journey:Withdrawn'));
+                return load();
+            }).always(function () { $btn.prop('disabled', false); });
+        });
+    });
+
+    $('#JourneyItems').on('click', '[data-withdraw-idea]', function () {
+        var id = $(this).data('withdraw-idea');
+        var $btn = $(this);
+        abp.message.confirm(l('Grants:Idea:Withdraw:Confirm'), l('Grants:Idea:Withdraw:Title')).then(function (ok) {
+            if (!ok) { return; }
+            $btn.prop('disabled', true);
+            interestService.withdraw(id).then(function () {
+                abp.notify.success(l('Grants:Journey:IdeaWithdrawn'));
                 return load();
             }).always(function () { $btn.prop('disabled', false); });
         });

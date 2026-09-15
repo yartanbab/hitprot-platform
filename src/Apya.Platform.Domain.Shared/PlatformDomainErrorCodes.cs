@@ -153,6 +153,7 @@ public static class PlatformDomainErrorCodes
     public const string GrantInterestNotWithdrawable = "Platform:Grant:InterestNotWithdrawable";
     public const string GrantInterestPartnerAnswerRequired = "Platform:Grant:InterestPartnerAnswerRequired";
     public const string GrantInterestAssigneeNotFound = "Platform:Grant:InterestAssigneeNotFound";
+    public const string GrantInterestIdeaNotLinked = "Platform:Grant:InterestIdeaNotLinked";
     public const string GrantMeetingSlotsInvalid = "Platform:Grant:MeetingSlotsInvalid";
     public const string GrantMeetingAlreadyOpen = "Platform:Grant:MeetingAlreadyOpen";
     public const string GrantMeetingNotPending = "Platform:Grant:MeetingNotPending";

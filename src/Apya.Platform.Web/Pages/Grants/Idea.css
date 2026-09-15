@@ -1,0 +1,97 @@
+/* =============================================================================
+   19a · Kiracı · Proje fikrimi paylaş. Form kartı okunur genişlikte ortalanır; soru alanlarının
+   kuralları Shared.css'te (çağrıya ilgi penceresi ve host "Fikir ekle" ile ortak).
+   ============================================================================= */
+
+/* LeptonX .card açık temada gövde rengini #686B6E verir; soru etiketleri birincil metin olmalı (ölçüldü). */
+.apya-idea-card {
+    width: 100%;
+    max-width: 720px;
+    margin-inline: auto;
+    overflow: hidden;
+    color: var(--apya-text-primary);
+}
+
+.apya-idea-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 26px 28px 0;
+}
+
+.apya-idea-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.apya-idea-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-accent-soft);
+    color: var(--apya-accent-500);
+    font-size: 19px;
+}
+
+.apya-idea-title {
+    margin: 0 0 6px;
+    color: var(--apya-text-primary);
+    font-size: var(--apya-fs-xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+}
+
+.apya-idea-lead {
+    margin: 0;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+    line-height: 1.6;
+}
+
+/* Çağrı alanı bilerek boş: kesik kenar "sonra dolacak" der. */
+.apya-idea-call {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 10px 12px;
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-md);
+}
+
+.apya-idea-call > i,
+.apya-idea-note > i { color: var(--apya-accent-500); }
+
+.apya-idea-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-2);
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-accent-soft);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    line-height: 1.55;
+}
+
+.apya-idea-note > i { margin-top: 3px; }
+
+.apya-idea-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px 28px 24px;
+}
+
+@media (max-width: 575.98px) {
+    .apya-idea-body { padding: 22px 20px 0; }
+    .apya-idea-foot { flex-direction: column-reverse; padding: 18px 20px 20px; }
+}

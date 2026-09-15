@@ -31,5 +31,8 @@ public enum GrantJourneyItemKind
     Completed = 7,
 
     /// <summary>Çağrı kapandı; başvuru gönderilmemişti ya da talep yanıtlanmamıştı.</summary>
-    CallClosed = 8
+    CallClosed = 8,
+
+    /// <summary>19a · Çağrısız proje fikri Fikir Havuzu'nda; uygun çağrı açılınca danışman ilişkilendirir.</summary>
+    IdeaPooled = 9
 }

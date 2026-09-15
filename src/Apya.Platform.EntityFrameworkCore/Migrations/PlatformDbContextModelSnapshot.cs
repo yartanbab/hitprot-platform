@@ -7217,7 +7217,7 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("GrantApplicationId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("GrantCallId")
+                    b.Property<Guid?>("GrantCallId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("HostFeedback")
@@ -7269,6 +7269,9 @@ namespace Apya.Platform.Migrations
 
                     b.Property<Guid?>("ReviewedByUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Stakeholders")
                         .HasMaxLength(1000)
@@ -13690,8 +13693,7 @@ namespace Apya.Platform.Migrations
                     b.HasOne("Apya.Platform.Grants.GrantCall", null)
                         .WithMany()
                         .HasForeignKey("GrantCallId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Apya.Platform.Grants.GrantMatchWeight", b =>

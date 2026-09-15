@@ -179,8 +179,8 @@ public class GrantCallBoardAppService : PlatformAppService, IGrantCallBoardAppSe
         {
             profiles = await _profileRepo.GetListAsync();
             interests = (await _interestRepo.GetListAsync(
-                    i => callIds.Contains(i.GrantCallId) && i.Status != GrantInterestStatus.GeriCekildi))
-                .GroupBy(i => i.GrantCallId)
+                    i => i.GrantCallId != null && callIds.Contains(i.GrantCallId.Value) && i.Status != GrantInterestStatus.GeriCekildi))
+                .GroupBy(i => i.GrantCallId!.Value)
                 .ToDictionary(g => g.Key, g => g.Count());
         }
 

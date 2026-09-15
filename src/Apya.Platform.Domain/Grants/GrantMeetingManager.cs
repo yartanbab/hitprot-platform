@@ -27,6 +27,7 @@ public class GrantMeetingManager : DomainService
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantMeetingInterestClosed);
         }
+        interest.EnsureLinked();
 
         var open = await _proposalRepository.FindAsync(p => p.GrantInterestId == interest.Id
             && (p.Status == GrantMeetingStatus.Bekliyor || p.Status == GrantMeetingStatus.Onaylandi));
@@ -36,6 +37,6 @@ public class GrantMeetingManager : DomainService
         }
 
         return new GrantMeetingProposal(
-            GuidGenerator.Create(), interest.TenantId, interest.Id, interest.GrantCallId, userId, slots, Clock.Now);
+            GuidGenerator.Create(), interest.TenantId, interest.Id, interest.GrantCallId!.Value, userId, slots, Clock.Now);
     }
 }

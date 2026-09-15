@@ -112,7 +112,6 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         using (_currentTenant.Change(tenantId))
         {
             var interest = await _interestRepo.GetAsync(interestId);
-            callId = interest.GrantCallId;
 
             // 🔴 Kapı YAN ETKİDEN ÖNCE: karara bağlanmış ya da firmanın geri çektiği talepte
             // başvuru yazılmadan durulur. Aşağıdaki MarkApplicationStarted da aynı kuralı
@@ -123,17 +122,21 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
                 throw new BusinessException(PlatformDomainErrorCodes.GrantInterestAlreadyAnswered);
             }
 
+            // 19a · Havuzdaki fikrin çağrısı yok; başvuru ancak ilişkilendirildikten sonra açılır.
+            interest.EnsureLinked();
+            callId = interest.GrantCallId!.Value;
+
             // Başvuru KİRACININ bağlamında açılır; host bağlamında açılsaydı firma
             // kendi başvurusunu göremezdi. Aynı çağrıya ikinci başvuru açılmaz
             // (tenant+çağrı benzersiz): eski kayıt varsa talep ona bağlanır.
-            var application = await _appRepo.FirstOrDefaultAsync(a => a.GrantCallId == interest.GrantCallId);
+            var application = await _appRepo.FirstOrDefaultAsync(a => a.GrantCallId == callId);
             if (application == null)
             {
-                application = new GrantApplication(GuidGenerator.Create(), tenantId, interest.GrantCallId);
+                application = new GrantApplication(GuidGenerator.Create(), tenantId, callId);
                 await _appRepo.InsertAsync(application, autoSave: true);
 
                 // Host bu çağrıyı bu firmaya göndermişse (B3), başvuruldu olarak işaretle.
-                var rec = await _recRepo.FirstOrDefaultAsync(r => r.GrantCallId == interest.GrantCallId);
+                var rec = await _recRepo.FirstOrDefaultAsync(r => r.GrantCallId == callId);
                 if (rec != null)
                 {
                     rec.MarkApplied();
@@ -165,9 +168,11 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         using (_currentTenant.Change(tenantId))
         {
             var interest = await _interestRepo.GetAsync(input.InterestId);
+            // Red bildirimi çağrı adını taşır; havuz fikri Talepler akışına ait değil.
+            interest.EnsureLinked();
             interest.Reject(input.Reason, CurrentUser.Id, Clock.Now);
             await _interestRepo.UpdateAsync(interest, autoSave: true);
-            callId = interest.GrantCallId;
+            callId = interest.GrantCallId!.Value;
         }
 
         // Gerekçe METİN OLARAK gider: firmanın gördüğü cümle host'un yazdığıdır,
@@ -205,7 +210,9 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         }
 
         // Katalog host verisidir: çağrı, program, kriterler host bağlamında okunur.
-        var call = await _callRepo.GetAsync(interest.GrantCallId);
+        // İnceleme ekranı çağrıya göre puanlar; havuz fikri kendi ekranında açılır (19a).
+        interest.EnsureLinked();
+        var call = await _callRepo.GetAsync(interest.GrantCallId!.Value);
         var grant = await _grantRepo.GetAsync(call.GrantId);
         var criteria = await _criteriaRepo.GetListAsync(t => t.GrantId == grant.Id);
         var weights = await _weightResolver.ResolveAsync(grant.Id);
@@ -353,7 +360,8 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
             answer(proposal, interest);
             await _proposalRepo.UpdateAsync(proposal, autoSave: true);
             await _interestRepo.UpdateAsync(interest, autoSave: true);
-            return (tenantId, interest.Id, interest.GrantCallId, proposal.ConfirmedSlot);
+            // Öneri yalnız çağrıya bağlı talepte açılır (GrantMeetingManager).
+            return (tenantId, interest.Id, interest.GrantCallId!.Value, proposal.ConfirmedSlot);
         }
     }
 
@@ -477,7 +485,8 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         {
             using (_currentTenant.Change(tenant.Id))
             {
-                var interests = await _interestRepo.GetListAsync();
+                // 19a · Havuz fikirleri talep değildir; Fikir Havuzu ekranında yaşar.
+                var interests = await _interestRepo.GetListAsync(i => i.GrantCallId != null);
                 if (interests.Count == 0)
                 {
                     continue;
@@ -487,7 +496,7 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
 
                 foreach (var interest in interests)
                 {
-                    var call = calls.GetValueOrDefault(interest.GrantCallId);
+                    var call = calls.GetValueOrDefault(interest.GrantCallId!.Value);
                     var grantName = call == null ? string.Empty : grants.GetValueOrDefault(call.GrantId, string.Empty);
                     rows.Add(ToRow(interest, tenant.Id, tenant.Name, call, grantName, users, today));
                 }
@@ -544,7 +553,7 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
             Id = interest.Id,
             TenantId = tenantId,
             FirmName = firmName,
-            GrantCallId = interest.GrantCallId,
+            GrantCallId = interest.GrantCallId!.Value,
             GrantName = grantName,
             Period = call?.Period,
             Deadline = call?.Deadline,

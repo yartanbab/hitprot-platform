@@ -271,31 +271,7 @@
 .apya-interest-foot .btn { flex: 1; }
 .apya-interest-foot .btn-primary { flex: 1.5; }
 
-.apya-interest-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-}
-
-.apya-interest-field legend { float: none; width: auto; }
-
-/* Soru altı ipucu ("Örn: …") — etiketle alan arasında, sessiz. */
-.apya-interest-hint {
-    margin-top: -2px;
-    color: var(--apya-text-secondary);
-    font-size: var(--apya-fs-xs);
-    line-height: 1.5;
-}
-
-.apya-interest-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--apya-space-3);
-}
+/* Soru alanları (.apya-interest-field/-hint/-grid) Shared.css'te: form üç sayfada ortak. */
 
 .apya-interest-call {
     display: flex;
@@ -320,7 +296,6 @@
 @media (max-width: 575.98px) {
     .apya-interest-body { padding: 22px 20px 0; }
     .apya-interest-foot { flex-direction: column-reverse; padding: 18px 20px 20px; }
-    .apya-interest-grid { grid-template-columns: minmax(0, 1fr); }
     .apya-interest-sent { padding: 14px 16px; }
     .apya-interest-steps { padding: 2px 16px; }
 }

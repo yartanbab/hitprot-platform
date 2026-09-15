@@ -1,0 +1,109 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.IdeasModel
+@{
+    ViewBag.Title = L["Grants:Ideas:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Ideas.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/IdeaForm.js" />
+    <abp-script src="/Pages/Grants/Ideas.js" />
+}
+
+@* 19a/22 · Fikir Havuzu. Sekme yok: çağrıyla ilişkilendirilen fikir talep olur ve Talepler'de yaşar.
+   Çağrı eşleşmesi sütunu ve "Eşleşme bekleyen" şeridi eşleştirmeyle gelir (tur 20). Satırları Ideas.js boyar. *@
+<div data-page-description="@L["Grants:Ideas:Description"]" class="apya-page apya-grant-scope">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions d-flex align-items-center gap-2">
+            <button type="button" id="IdeaAddBtn" class="btn btn-primary">
+                <i class="fa fa-plus me-1" aria-hidden="true"></i>@L["Grants:Ideas:Add"]
+            </button>
+        </div>
+    </div>
+
+    <div class="apya-req-bar">
+        <p id="IdeaCount" class="apya-idea-count apya-skel-num mb-0"></p>
+        <div class="apya-req-filters">
+            <select class="form-select" id="SourceFilter" aria-label="@L["Grants:Ideas:Filter:Source"]">
+                <option value="">@L["Grants:Ideas:Filter:AllSources"]</option>
+                <option value="0">@L["Grants:Ideas:Source:Tenant"]</option>
+                <option value="1">@L["Grants:Ideas:Source:Consultant"]</option>
+            </select>
+            <select class="form-select" id="SortFilter" aria-label="@L["Grants:Ideas:Filter:Sort"]">
+                <option value="0">@L["Grants:Ideas:Sort:Newest"]</option>
+                <option value="1">@L["Grants:Ideas:Sort:Budget"]</option>
+            </select>
+        </div>
+    </div>
+
+    <section class="card mb-0 apya-idea-table">
+        <div class="apya-idea-row apya-idea-headrow" aria-hidden="true">
+            <span>@L["Grants:Ideas:Col:Idea"]</span>
+            <span>@L["Grants:Ideas:Col:Creator"]</span>
+            <span>@L["Grants:Ideas:Col:Budget"]</span>
+            <span>@L["Grants:Ideas:Col:Start"]</span>
+            <span></span>
+        </div>
+        <div id="IdeaRows" class="apya-skel-rows"></div>
+        <p id="IdeaEmpty" class="apya-src-empty d-none"></p>
+    </section>
+</div>
+
+@* ---- Fikrin tamamı: dokuz sorunun cevapları ---- *@
+<div class="modal fade apya-grant-scope" id="IdeaModal" tabindex="-1" aria-hidden="true" aria-labelledby="IdeaModalTitle">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="apya-idea-modal-head">
+                    <h5 class="modal-title" id="IdeaModalTitle"></h5>
+                    <span class="apya-idea-modal-meta" id="IdeaModalMeta"></span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Grants:Ideas:Detail:Close"]"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="apya-idea-answers mb-0" id="IdeaAnswers"></dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Ideas:Detail:Close"]</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ---- Firma adına fikir ekle — kiracı formunun aynı soruları (_IdeaQuestions) ---- *@
+<div class="modal fade apya-grant-scope" id="IdeaCreateModal" tabindex="-1" aria-hidden="true" aria-labelledby="IdeaCreateTitle">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form id="IdeaCreateForm" class="d-flex flex-column mh-100" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="IdeaCreateTitle">@L["Grants:Ideas:Create:Title"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Grants:Ideas:Create:Cancel"]"></button>
+                </div>
+                <div class="modal-body d-flex flex-column gap-3">
+                    <p class="apya-interest-hint mb-0">@L["Grants:Ideas:Create:Lead"]</p>
+                    <div class="apya-interest-field">
+                        <label class="form-label mb-0" for="IdeaFirm">@L["Grants:Ideas:Create:Firm"] <span class="text-danger" aria-hidden="true">*</span></label>
+                        <select class="form-select" id="IdeaFirm" required>
+                            <option value="">@L["Grants:Ideas:Create:FirmPick"]</option>
+                        </select>
+                        <div class="invalid-feedback">@L["Grants:Ideas:Create:FirmRequired"]</div>
+                    </div>
+                    <partial name="_IdeaQuestions" model="true" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Ideas:Create:Cancel"]</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-plus me-1" aria-hidden="true"></i>@L["Grants:Ideas:Create:Save"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
