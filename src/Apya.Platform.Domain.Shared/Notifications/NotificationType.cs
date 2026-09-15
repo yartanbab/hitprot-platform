@@ -32,5 +32,6 @@ public enum NotificationType
     GrantCallClosed                = 23, // 18b · Çağrı kapandı; yarım kalan firmaya benzer çağrılarla
     GrantMeetingProposed           = 24, // 18e · Firma ön görüşme saatleri önerdi — HOST'a gider
     GrantMeetingAnswered           = 25, // 18e · Danışman görüşmeyi onayladı ya da başka saat istedi
-    GrantIdeaLinked                = 26  // 20b · Havuzdaki fikir yeni bir çağrıyla ilişkilendirildi
+    GrantIdeaLinked                = 26, // 20b · Havuzdaki fikir yeni bir çağrıyla ilişkilendirildi
+    GrantIdeaInvited               = 27  // 19b · Firma proje fikrini paylaşmaya davet edildi (ve hatırlatması)
 }

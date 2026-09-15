@@ -58,5 +58,11 @@ public enum GrantNotificationTrigger
     MeetingAnswered = 11,
 
     /// <summary>20b · Danışman havuzdaki fikri yeni bir çağrıyla ilişkilendirdi. Fikrin sahibi firmaya gider.</summary>
-    IdeaLinked = 12
+    IdeaLinked = 12,
+
+    /// <summary>
+    /// 19b · Danışman firmayı proje fikrini paylaşmaya davet etti (elle gönderim). Yanıtlamayan firmaya aynı şablon
+    /// bir kez hatırlatma olarak gider.
+    /// </summary>
+    IdeaInvited = 13
 }

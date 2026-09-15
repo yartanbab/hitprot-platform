@@ -136,6 +136,11 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-bullseye", "/Grants/Detail?id={0}", GroupSimilar: false),
 
+            // 19b · Davet bağlamına göre ayrı yere gider (havuz → fikir formu, çağrı → çağrının detayı): yönlendirici sayfa karar verir.
+            [NotificationType.GrantIdeaInvited] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-lightbulb", "/Grants/Invitation?id={0}", GroupSimilar: false),
+
             [NotificationType.AiWorkflowTriggered] = new(
                 NotificationCategory.Ai, NotificationSeverity.Info,
                 "fa fa-robot", "/AiCenter/Evaluations", GroupSimilar: false),
