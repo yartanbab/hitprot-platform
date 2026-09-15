@@ -154,6 +154,8 @@ public static class PlatformDomainErrorCodes
     public const string GrantInterestPartnerAnswerRequired = "Platform:Grant:InterestPartnerAnswerRequired";
     public const string GrantInterestAssigneeNotFound = "Platform:Grant:InterestAssigneeNotFound";
     public const string GrantInterestIdeaNotLinked = "Platform:Grant:InterestIdeaNotLinked";
+    public const string GrantInterestAlreadyLinked = "Platform:Grant:InterestAlreadyLinked";
+    public const string GrantIdeaCallNotOpen = "Platform:Grant:IdeaCallNotOpen";
     public const string GrantMeetingSlotsInvalid = "Platform:Grant:MeetingSlotsInvalid";
     public const string GrantMeetingAlreadyOpen = "Platform:Grant:MeetingAlreadyOpen";
     public const string GrantMeetingNotPending = "Platform:Grant:MeetingNotPending";

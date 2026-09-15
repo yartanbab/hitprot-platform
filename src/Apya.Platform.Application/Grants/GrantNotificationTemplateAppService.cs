@@ -129,7 +129,11 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
             ["{aşama}"] = L["Grants:Notify:Sample:Stage"],
             ["{karar}"] = L["Grants:Notify:Decision:Reddedildi"],
             ["{itiraz_bilgisi}"] = L["Grants:Notify:AppealWindow", deadline.ToString("dd.MM.yyyy"), 30],
-            ["{rapor_adı}"] = L["Grants:Notify:Sample:Report"]
+            ["{rapor_adı}"] = L["Grants:Notify:Sample:Report"],
+            // 20b · Fikre uygun çağrı
+            ["{fikir}"] = L["Grants:Notify:Sample:Idea"],
+            ["{eşleşme}"] = "%91",
+            ["{danışman}"] = L["Grants:Notify:Sample:Consultant"]
         };
     }
 }

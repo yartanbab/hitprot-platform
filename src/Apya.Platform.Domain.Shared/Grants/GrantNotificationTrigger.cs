@@ -55,5 +55,8 @@ public enum GrantNotificationTrigger
     MeetingProposed = 10,
 
     /// <summary>18e · Danışman saatlerden birini onayladı ya da başka saat istedi. Firmaya gider.</summary>
-    MeetingAnswered = 11
+    MeetingAnswered = 11,
+
+    /// <summary>20b · Danışman havuzdaki fikri yeni bir çağrıyla ilişkilendirdi. Fikrin sahibi firmaya gider.</summary>
+    IdeaLinked = 12
 }
