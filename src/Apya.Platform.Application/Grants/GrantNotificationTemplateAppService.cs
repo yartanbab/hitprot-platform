@@ -133,7 +133,9 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
             // 20b · Fikre uygun çağrı
             ["{fikir}"] = L["Grants:Notify:Sample:Idea"],
             ["{eşleşme}"] = "%91",
-            ["{danışman}"] = L["Grants:Notify:Sample:Consultant"]
+            ["{danışman}"] = L["Grants:Notify:Sample:Consultant"],
+            // 19b · Fikir daveti: mesaj örneği ekranın varsayılan metni; {hatırlatma} ilk gönderimde boş.
+            ["{davet_mesajı}"] = L["Grants:Invite:DefaultMessage"]
         };
     }
 }
