@@ -391,6 +391,20 @@ html, body {
     --bs-btn-active-bg:    var(--apya-accent-700);
 }
 
+/* --- Seçili onay kutusu / radyo / anahtar → accent token (2026-09-15) ---
+   LeptonX Lite seçili kontrolü kendi marka pembesiyle (#F72585) boyar, ikisi
+   !important. Köprünün kuralı "UI primary = accent": butonlar çivitken seçili
+   kutular pembe kalıyordu. Köprü global demette LeptonX'ten SONRA geldiği için
+   aynı özgüllükteki bu !important kural kazanır; anahtarın odak anındaki gri
+   zemini de (aynı özgüllük, önce gelir) seçiliyken ezer. Koyu temada token
+   kendiliğinden #6366F1'e döner. */
+.form-check-input:checked,
+.form-check-input[type=checkbox]:indeterminate,
+.form-switch .form-check-input:checked {
+    background-color: var(--apya-accent-500) !important;
+    border-color: var(--apya-accent-500) !important;
+}
+
 /* --- Buton light → surface token'ları ---
    LeptonX --bs-light'ı #bbb yapıyor → btn-light kirli gri kalıyordu (her iki
    temada). "Sessiz/ikincil" buton niyetine uygun: taban zemin + belirgin hover. */
