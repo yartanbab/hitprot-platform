@@ -175,6 +175,7 @@ $(function () {
             $('#CallTitle').text(c.grantName);
             $('#CallPeriod').text(c.period);
             $('#CandidateCount').text(l('Grants:Dispatch:CandidateCount', candidates.length, c.totalFirms));
+            $('#FirmTabCount').removeClass('apya-skel-num').text(candidates.length);
             $('#ThresholdNote').text(l('Grants:Dispatch:ProgramThreshold', Math.round(c.grantMinMatchScore)));
 
             // Danışman listesi yükleriyle birlikte; seçim korunur.
@@ -196,6 +197,121 @@ $(function () {
         });
     }
 
+    // ---------- 20a · Havuzdaki fikirler ----------
+    // Sekme ve şerit yalnız Grants.Edit izninde basılır; yoksa havuz ucu hiç çağrılmaz.
+    var ideasEnabled = $('.apya-page').data('ideas') === true;
+    var ideaService = apya.platform.grants.grantIdeaPool;
+    var ideaMatches = null;
+    var IDEA_TITLE_MAX = 160;
+
+    function money(v) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : null; }
+
+    function showTab(name) {
+        $('[data-dispatch-tab]').each(function () {
+            var on = $(this).data('dispatch-tab') === name;
+            $(this).toggleClass('is-active', on).attr('aria-selected', on ? 'true' : 'false');
+        });
+        $('#DispatchPaneFirms').toggleClass('d-none', name !== 'firms');
+        $('#DispatchPaneIdeas').toggleClass('d-none', name !== 'ideas');
+    }
+
+    $('[data-dispatch-tab]').on('click', function () { showTab($(this).data('dispatch-tab')); });
+
+    function reason(icon, tone, text) {
+        return '<li class="' + tone + '"><i class="fa ' + icon + '" aria-hidden="true"></i><span>' + esc(text) + '</span></li>';
+    }
+
+    // GrantInterestSource: 0 firma · 1 danışman firma adına.
+    function ideaCard(i, canLink, withNote) {
+        var idea = i.idea || '—';
+        var title = idea.length > IDEA_TITLE_MAX ? idea.slice(0, IDEA_TITLE_MAX).trim() + '…' : idea;
+        var meta = [i.firmName, new Date(i.creationTime).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }),
+            l(i.source === 1 ? 'Grants:Dispatch:Ideas:ByConsultant' : 'Grants:Dispatch:Ideas:ByTenant'),
+            money(i.estimatedBudget)].filter(Boolean).join(' · ');
+
+        var reasons = '';
+        if (i.matchedTerms && i.matchedTerms.length) {
+            reasons += reason('fa-check', 'is-good', l('Grants:Dispatch:Ideas:Reason:Terms', i.matchedTerms.join(', ')));
+        }
+        if (i.budgetFits === true) {
+            reasons += reason('fa-check', 'is-good', l('Grants:Dispatch:Ideas:Reason:BudgetFits'));
+        } else if (i.budgetFits === false) {
+            reasons += reason('fa-triangle-exclamation', 'is-warn', l('Grants:Dispatch:Ideas:Reason:BudgetOver'));
+        }
+        if (i.firmScore != null) {
+            reasons += reason('fa-building', 'is-quiet', l('Grants:Dispatch:Ideas:Reason:Firm', i.firmScore));
+        }
+
+        return '<article class="card mb-0 apya-idea-match' + (i.isMatch ? '' : ' is-below') + '">' +
+            '<div class="card-body">' +
+            '<div class="apya-idea-match-head">' +
+            '<h3 class="apya-idea-match-title" title="' + esc(idea) + '">' + esc(title) + '</h3>' +
+            '<span class="apya-idea-match-score apya-numeric' + (i.isMatch ? ' is-strong' : '') + '">%' + i.score + '</span>' +
+            '</div>' +
+            '<div class="apya-idea-match-meta">' +
+            '<span class="apya-avatar ' + (i.source === 1 ? 'apya-avatar-brand' : 'apya-avatar-neutral') + '" aria-hidden="true">' + esc(initials(i.firmName)) + '</span>' +
+            '<span>' + esc(meta) + '</span></div>' +
+            (reasons ? '<ul class="apya-idea-match-reasons">' + reasons + '</ul>' : '') +
+            '<div class="apya-idea-match-actions">' +
+            (canLink ? '<button type="button" class="btn btn-sm btn-primary" data-link-idea="' + i.id + '">' +
+                '<i class="fa fa-link me-1" aria-hidden="true"></i>' + esc(l('Grants:Dispatch:Ideas:Link')) + '</button>' : '') +
+            '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Ideas?open=' + i.id + '">' + esc(l('Grants:Dispatch:Ideas:Open')) + '</a>' +
+            (withNote ? '<span class="apya-idea-match-note">' + esc(l('Grants:Dispatch:Ideas:LinkNote')) + '</span>' : '') +
+            '</div></div></article>';
+    }
+
+    function paintIdeas(d) {
+        ideaMatches = d;
+        var items = d.items || [];
+        var strong = items.filter(function (i) { return i.isMatch; });
+        var below = items.filter(function (i) { return !i.isMatch; });
+
+        $('#IdeaTabCount').removeClass('apya-skel-num').text(d.matchCount);
+        $('#IdeaStrip').toggleClass('d-none', d.matchCount === 0);
+        $('#IdeaStripTitle').text(l('Grants:Dispatch:Ideas:Strip', d.matchCount));
+        // Taslak ya da kapanmış çağrıya bağlanamaz: toplu düğme ve kart düğmeleri basılmaz.
+        $('#IdeaLinkAll').toggleClass('d-none', !d.isOpen);
+        $('#IdeaNotOpen').toggleClass('d-none', d.isOpen);
+
+        $('#IdeaCards').removeClass('apya-skel-cards').html(strong.map(function (i, idx) {
+            return ideaCard(i, d.isOpen, idx === 0 && d.isOpen);
+        }).join(''));
+        $('#IdeaEmpty').toggleClass('d-none', strong.length > 0)
+            .text(l(items.length ? 'Grants:Dispatch:Ideas:Empty' : 'Grants:Dispatch:Ideas:EmptyPool'));
+
+        $('#IdeaBelowBlock').toggleClass('d-none', below.length === 0);
+        $('#IdeaBelowHint').text(l('Grants:Dispatch:Ideas:BelowHint', d.threshold));
+        $('#IdeaBelowCards').html(below.map(function (i) { return ideaCard(i, d.isOpen, false); }).join(''));
+    }
+
+    function loadIdeas() { return ideaService.getCallMatches(callId).then(paintIdeas); }
+
+    function linkIdeas(ids, $btn) {
+        abp.message.confirm(l('Grants:Dispatch:Ideas:LinkConfirm', ids.length), l('Grants:Dispatch:Ideas:LinkConfirmTitle')).then(function (ok) {
+            if (!ok) { return; }
+            $btn.prop('disabled', true);
+            ideaService.link({ grantCallId: callId, interestIds: ids }).then(function (r) {
+                if (r.skippedCount > 0) {
+                    abp.message.info(l('Grants:Dispatch:Ideas:LinkedSkipped', r.linkedCount, r.skippedCount));
+                } else {
+                    abp.notify.success(l('Grants:Dispatch:Ideas:Linked', r.linkedCount));
+                }
+                return loadIdeas();
+            }).always(function () { $btn.prop('disabled', false); });
+        });
+    }
+
+    $('#DispatchPaneIdeas').on('click', '[data-link-idea]', function () {
+        linkIdeas([$(this).data('link-idea')], $(this));
+    });
+
+    $('#IdeaLinkAll').on('click', function () {
+        if (!ideaMatches) { return; }
+        var ids = (ideaMatches.items || []).filter(function (i) { return i.isMatch; }).map(function (i) { return i.id; });
+        if (ids.length) { linkIdeas(ids, $(this)); }
+    });
+
     $('#MinScoreValue').text('%' + $('#MinScore').val());
     load();
+    if (ideasEnabled) { loadIdeas(); }
 });

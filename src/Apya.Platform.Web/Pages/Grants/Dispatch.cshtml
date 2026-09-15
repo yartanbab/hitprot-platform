@@ -1,10 +1,16 @@
 @page
 @using Apya.Platform.Localization
+@using Apya.Platform.Permissions
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<PlatformResource> L
+@inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.Grants.DispatchModel
 @{
     ViewBag.Title = L["Grants:Dispatch:Title"].Value;
+    // 20a · Havuz uçları Grants.Edit ister; bu sayfa Create ile açılıyor. İzni olmayana sekme hiç basılmaz.
+    var canLinkIdeas = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit);
+    var ideasTab = canLinkIdeas && Model.Tab == "ideas";
 }
 
 @section styles {
@@ -18,7 +24,8 @@
 }
 
 @* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
-<div data-page-description="@L["Grants:Dispatch:Description"]" class="apya-page apya-grant-scope" data-call-id="@Model.Id">
+<div data-page-description="@L["Grants:Dispatch:Description"]" class="apya-page apya-grant-scope" data-call-id="@Model.Id"
+     data-ideas="@(canLinkIdeas ? "true" : "false")">
     <div class="apya-page-head">
         <div class="apya-page-head-actions d-flex align-items-center gap-2">
             <a href="/Grants" class="btn btn-sm btn-outline-secondary">
@@ -29,7 +36,33 @@
         </div>
     </div>
 
-    <div class="apya-dispatch-layout">
+    @if (canLinkIdeas)
+    {
+        @* 20a · Havuz taraması: çağrıya uyan fikir varsa şerit iki sekmede de üstte durur. *@
+        <div id="IdeaStrip" class="apya-dispatch-idea-strip d-none" role="status">
+            <i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <div class="apya-dispatch-idea-strip-text">
+                <strong id="IdeaStripTitle"></strong>
+                <span>@L["Grants:Dispatch:Ideas:StripHint"]</span>
+            </div>
+            <button type="button" id="IdeaLinkAll" class="btn btn-primary">@L["Grants:Dispatch:Ideas:LinkAll"]</button>
+        </div>
+
+        <div class="apya-grant-tabs" role="tablist" aria-label="@L["Grants:Dispatch:Sections"]">
+            <button type="button" class="apya-grant-tab @(ideasTab ? null : "is-active")" role="tab" id="DispatchTabFirms"
+                    data-dispatch-tab="firms" aria-controls="DispatchPaneFirms" aria-selected="@(ideasTab ? "false" : "true")">
+                @L["Grants:Dispatch:Tab:Firms"]
+                <span class="apya-chip apya-chip-neutral apya-numeric apya-skel-num" id="FirmTabCount"></span>
+            </button>
+            <button type="button" class="apya-grant-tab @(ideasTab ? "is-active" : null)" role="tab" id="DispatchTabIdeas"
+                    data-dispatch-tab="ideas" aria-controls="DispatchPaneIdeas" aria-selected="@(ideasTab ? "true" : "false")">
+                @L["Grants:Dispatch:Tab:Ideas"]
+                <span class="apya-chip apya-chip-accent apya-numeric apya-skel-num" id="IdeaTabCount"></span>
+            </button>
+        </div>
+    }
+
+    <div class="apya-dispatch-layout @(ideasTab ? "d-none" : null)" id="DispatchPaneFirms" role="tabpanel" aria-labelledby="DispatchTabFirms">
 
         @* ---------- Sol: süzgeç ---------- *@
         <aside class="card mb-0 apya-dispatch-filter">
@@ -163,4 +196,26 @@
             </div>
         </aside>
     </div>
+
+    @if (canLinkIdeas)
+    {
+        @* 20a · Havuzdaki fikirler: eşiği geçenler kartla ve gerekçesiyle, eşik altındakiler ayrı ve soluk.
+           Kartları Dispatch.js boyar; puan sunucuda (GrantIdeaMatcher) hesaplanır. *@
+        <section class="apya-dispatch-ideas @(ideasTab ? null : "d-none")" id="DispatchPaneIdeas" role="tabpanel" aria-labelledby="DispatchTabIdeas">
+            <p class="apya-dispatch-ideas-scoring mb-0">
+                <i class="fa fa-circle-info" aria-hidden="true"></i>@L["Grants:Dispatch:Ideas:Scoring"]
+            </p>
+            <div id="IdeaNotOpen" class="apya-side-note d-none" role="status">
+                <i class="fa fa-triangle-exclamation mt-1" aria-hidden="true"></i>
+                <span>@L["Grants:Dispatch:Ideas:NotOpen"]</span>
+            </div>
+            <div id="IdeaCards" class="apya-dispatch-idea-list apya-skel-cards"></div>
+            <p id="IdeaEmpty" class="apya-src-empty d-none"></p>
+            <div id="IdeaBelowBlock" class="apya-dispatch-idea-below d-none">
+                <div class="apya-overline">@L["Grants:Dispatch:Ideas:Below"]</div>
+                <p class="apya-dispatch-ideas-scoring mb-0" id="IdeaBelowHint"></p>
+                <div id="IdeaBelowCards" class="apya-dispatch-idea-list"></div>
+            </div>
+        </section>
+    }
 </div>

@@ -6,7 +6,8 @@ $(function () {
 
     // GrantInterestSource sırasıyla birebir.
     var sourceKeys = ['Tenant', 'Consultant'];
-    var filters = { source: null, sort: 0 };
+    // Varsayılan sıra eşleşme gücü (GrantIdeaPoolSort.Match = 2) — seçim kutusunun ilk seçeneği.
+    var filters = { source: null, sort: 2 };
     var firmsFilled = false;
 
     // Dokuz sorunun etiketleri formdakiyle aynı; sıra da formun sırası.
@@ -49,20 +50,45 @@ $(function () {
             '</span></span>';
     }
 
+    // 20a · Eşiği geçen en güçlü açık çağrı: "KA154 Gençlik · %91 +2 çağrı"; yoksa izleniyor.
+    function matchCell(r) {
+        var label = ' data-label="' + esc(l('Grants:Ideas:Col:Match')) + '"';
+        if (!r.bestMatch) {
+            return '<span class="apya-idea-match-cell is-none"' + label + '>' + esc(l('Grants:Ideas:Match:None')) + '</span>';
+        }
+        var m = r.bestMatch;
+        var call = m.period ? m.grantName + ' · ' + m.period : m.grantName;
+        return '<span class="apya-idea-match-cell"' + label + ' title="' + esc(call) + '">' +
+            '<span class="apya-idea-match-call">' + esc(m.grantName) + '</span>' +
+            '<span class="apya-idea-match-pct apya-numeric">%' + m.score + '</span>' +
+            (r.otherMatchCount > 0 ? '<span class="apya-idea-match-more">' + esc(l('Grants:Ideas:Match:More', r.otherMatchCount)) + '</span>' : '') +
+            '</span>';
+    }
+
     function row(r) {
+        // Eşleşen fikirde birincil iş ilişkilendirmek: eşleştirme ekranının fikir sekmesine götürür. Fikrin tamamı
+        // her satırda başlığa tıklayınca açılır.
+        var cta = r.bestMatch
+            ? '<a class="btn btn-sm btn-primary apya-idea-cta" href="/Grants/Dispatch?id=' + r.bestMatch.grantCallId + '&tab=ideas">' + esc(l('Grants:Ideas:Link')) + '</a>'
+            : '<button type="button" class="btn btn-sm btn-outline-secondary apya-idea-cta" data-idea="' + r.id + '">' + esc(l('Grants:Ideas:Open')) + '</button>';
+
         return '<div class="apya-idea-row">' +
             '<div class="apya-idea-main">' +
-            // Fikir tek satırda kesilir; tamamı üzerine gelince ve "İncele"de görünür.
-            '<strong title="' + esc(r.idea) + '">' + esc(r.idea || '—') + '</strong>' +
+            // Fikir tek satırda kesilir; tamamı üzerine gelince, tıklayınca pencerede görünür.
+            '<button type="button" class="apya-idea-open" data-idea="' + r.id + '" title="' + esc(r.idea) + '">' + esc(r.idea || '—') + '</button>' +
             '<span>' + esc(r.firmName) + ' · ' + esc(date(r.creationTime)) + '</span></div>' +
             creator(r) +
             '<span class="apya-idea-budget apya-numeric" data-label="' + esc(l('Grants:Ideas:Col:Budget')) + '">' + esc(money(r.estimatedBudget)) + '</span>' +
-            '<span class="apya-idea-start" data-label="' + esc(l('Grants:Ideas:Col:Start')) + '">' + esc(quarter(r.targetStartDate)) + '</span>' +
-            '<button type="button" class="btn btn-sm btn-outline-secondary apya-idea-cta" data-idea="' + r.id + '">' + esc(l('Grants:Ideas:Open')) + '</button>' +
+            matchCell(r) +
+            cta +
             '</div>';
     }
 
+    var lastDto = null;
+    var onlyAwaiting = false;
+
     function paint(dto) {
+        lastDto = dto;
         if (!firmsFilled) {
             firmsFilled = true;
             (dto.firms || []).forEach(function (f) { $('#IdeaFirm').append($('<option>').val(f.id).text(f.name)); });
@@ -70,7 +96,14 @@ $(function () {
 
         $('#IdeaCount').removeClass('apya-skel-num').text(l('Grants:Ideas:Count', dto.totalCount));
 
-        var items = dto.items || [];
+        // 22 · Şerit süzgeçten bağımsız sayar; "yalnız bunları göster" istemci tarafında süzer.
+        if (dto.awaitingMatchCount === 0) { onlyAwaiting = false; }
+        $('#AwaitingStrip').toggleClass('d-none', dto.awaitingMatchCount === 0);
+        $('#AwaitingText').text(l('Grants:Ideas:Awaiting', dto.awaitingMatchCount));
+        $('#AwaitingToggle').text(l(onlyAwaiting ? 'Grants:Ideas:AwaitingAll' : 'Grants:Ideas:AwaitingShow'))
+            .attr('aria-pressed', onlyAwaiting ? 'true' : 'false');
+
+        var items = (dto.items || []).filter(function (r) { return !onlyAwaiting || r.bestMatch; });
         $('#IdeaRows').removeClass('apya-skel-rows').html(items.map(row).join(''));
         $('#IdeaEmpty').toggleClass('d-none', items.length > 0)
             .text(l(dto.totalCount > 0 ? 'Grants:Ideas:EmptyFiltered' : 'Grants:Ideas:Empty'));
@@ -80,11 +113,19 @@ $(function () {
 
     $('#SourceFilter').on('change', function () { filters.source = $(this).val() === '' ? null : Number($(this).val()); load(); });
     $('#SortFilter').on('change', function () { filters.sort = Number($(this).val()); load(); });
+    $('#AwaitingToggle').on('click', function () {
+        onlyAwaiting = !onlyAwaiting;
+        if (lastDto) { paint(lastDto); }
+    });
 
     // ---------- İncele ----------
     $('#IdeaRows').on('click', '[data-idea]', function () {
-        var $btn = $(this).prop('disabled', true);
-        service.get($btn.data('idea')).then(function (d) {
+        openIdea($(this).data('idea'), $(this));
+    });
+
+    function openIdea(id, $btn) {
+        if ($btn) { $btn.prop('disabled', true); }
+        service.get(id).then(function (d) {
             $('#IdeaModalTitle').text(d.firmName);
             $('#IdeaModalMeta').text([
                 (d.creatorName ? d.creatorName + ' · ' : '') + sourceLabel(d.source),
@@ -100,8 +141,8 @@ $(function () {
                         : '<dd class="is-empty">' + esc(l('Grants:Ideas:Detail:Unanswered')) + '</dd>') + '</div>';
             }).join(''));
             detailModal.show();
-        }).always(function () { $btn.prop('disabled', false); });
-    });
+        }).always(function () { if ($btn) { $btn.prop('disabled', false); } });
+    }
 
     // ---------- Firma adına fikir ekle ----------
     $('#IdeaAddBtn').on('click', function () {
@@ -134,5 +175,7 @@ $(function () {
             .always(function () { $submit.prop('disabled', false); });
     });
 
-    load();
+    // Eşleştirme ekranındaki "Fikri aç" buraya ?open=<id> ile gelir.
+    var openId = new URLSearchParams(window.location.search).get('open');
+    load().then(function () { if (openId) { openIdea(openId); } });
 });

@@ -25,6 +25,10 @@ public class GrantIdeasPage_Tests : PlatformWebTestBase
         html.ShouldContain("IdeaModal");
         html.ShouldContain("IdeaCreateModal");
         html.ShouldContain("IdeaFirm");
+        // 20a/22 · Çağrı eşleşmesi sütunu, "Eşleşme bekleyen" şeridi ve varsayılan sıra eşleşme gücü.
+        html.ShouldContain("Çağrı eşleşmesi");
+        html.ShouldContain("AwaitingStrip");
+        System.Text.RegularExpressions.Regex.IsMatch(html, @"id=""SortFilter""[^>]*>\s*<option value=""2"">").ShouldBeTrue("ilk seçenek eşleşme gücü");
         // Firma adına giriş kiracı formunun aynı dokuz sorusunu sorar; havuz ipucu çağrıdan söz etmez.
         html.ShouldContain("id=\"InterestStakeholders\"");
         html.ShouldContain("Nasıl bir proje geliştirmek istiyorsunuz?");

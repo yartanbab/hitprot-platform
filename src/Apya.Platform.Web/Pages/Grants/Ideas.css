@@ -12,10 +12,11 @@
 /* --- Liste (CSS grid; hibe modülünde <table> yok) ---
    Fikir metni oranla genişler; kısa değerli sütunlar sabit. Satır başına ayrı ızgara olduğu için
    sütunlar max-content olamaz (hizalar satırdan satıra kayar). 1280px yan menülü kabukta "Kim girdi"
-   127px kalıp tam ad kesiliyordu (ölçüldü) → ad Talepler gibi kısaltılır, sabit sütunlar 120px. */
+   127px kalıp tam ad kesiliyordu (ölçüldü) → ad Talepler gibi kısaltılır. 20a: hedef başlangıç sütunu
+   yerini çağrı eşleşmesine bıraktı (başlangıç "İncele" penceresinde); eylem "İlişkilendir" metnine göre. */
 .apya-idea-row {
     display: grid;
-    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr) 120px 120px 88px;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 116px minmax(0, 1.3fr) 104px;
     gap: var(--apya-space-4);
     align-items: center;
     padding: 14px var(--apya-space-5);
@@ -43,16 +44,30 @@
     min-width: 0;
 }
 
-.apya-idea-main strong,
+.apya-idea-main .apya-idea-open,
 .apya-idea-main span,
 .apya-idea-creator-name,
-.apya-idea-start {
+.apya-idea-match-call {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.apya-idea-main strong { font-weight: var(--apya-weight-semibold); }
+/* Fikrin kendisi pencereyi açan düğme: metin gibi görünür, odakta çerçevelenir. */
+.apya-idea-open {
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: var(--apya-weight-semibold);
+    text-align: left;
+    cursor: pointer;
+}
+
+.apya-idea-open:hover { text-decoration: underline; }
+.apya-idea-open:focus-visible { outline: 2px solid var(--apya-accent-500); outline-offset: 2px; border-radius: var(--apya-radius-sm); }
 
 .apya-idea-main span {
     font-size: var(--apya-fs-sm);
@@ -81,8 +96,46 @@
 }
 
 .apya-idea-budget { font-weight: var(--apya-weight-semibold); }
-.apya-idea-start { color: var(--apya-text-secondary); }
 .apya-idea-cta { justify-self: stretch; }
+
+/* --- 20a · Çağrı eşleşmesi hücresi: çağrı adı kesilir, yüzde ve "+2 çağrı" her zaman görünür --- */
+.apya-idea-match-cell {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+}
+
+.apya-idea-match-cell.is-none { color: var(--apya-text-secondary); }
+.apya-idea-match-call { min-width: 0; }
+
+.apya-idea-match-pct {
+    flex: 0 0 auto;
+    color: var(--apya-text-positive);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-idea-match-more {
+    flex: 0 0 auto;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+/* --- 22 · Eşleşme bekleyen şeridi (Talepler'in yanıt süresi şeridiyle aynı dil) --- */
+.apya-idea-awaiting {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: 12px 18px;
+    margin-bottom: var(--apya-space-4);
+    border: 1px solid var(--apya-accent-300);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-accent-soft);
+    color: var(--apya-text-secondary);
+}
+
+.apya-idea-awaiting > .fa { color: var(--apya-accent-500); }
+.apya-idea-awaiting-text { flex: 1; line-height: 1.5; }
 
 /* --- İncele penceresi --- */
 .apya-idea-modal-head {
@@ -138,7 +191,12 @@
     .apya-idea-creator,
     .apya-idea-cta { grid-column: 1 / -1; }
 
-    /* Avatar + ad yatay flex; etiketi kendi satırına al. */
-    .apya-idea-creator { flex-wrap: wrap; }
-    .apya-idea-creator::before { flex: 0 0 100%; }
+    /* Avatar + ad ve çağrı adı + yüzde yatay flex; etiketi kendi satırına al. */
+    .apya-idea-creator,
+    .apya-idea-match-cell { flex-wrap: wrap; }
+    .apya-idea-creator::before,
+    .apya-idea-match-cell::before { flex: 0 0 100%; }
+
+    .apya-idea-awaiting { flex-wrap: wrap; }
+    .apya-idea-awaiting .btn { flex: 1 1 100%; }
 }

@@ -61,6 +61,37 @@ public class GrantNotificationTemplatesPage_Tests : PlatformWebTestBase
         dto.EnabledCount.ShouldBe(dto.Templates.Count);
     }
 
+    /// <summary>
+    /// 🔴 Ekran tetikleyici adını JS'teki sıralı diziden okur. Tetikleyici eklenip dizi unutulunca şablon
+    /// "Grants:Notify:Trigger:undefined:Name" diye görünüyordu (InterestAnswered/Received ile yaşandı).
+    /// </summary>
+    [Fact]
+    public void Ekrandaki_Tetikleyici_Dizisi_Enumla_Birebir()
+    {
+        var path = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(),
+            "..", "..", "..", "..", "..", "src", "Apya.Platform.Web", "Pages", "Grants", "NotificationTemplates.js");
+        System.IO.File.Exists(path).ShouldBeTrue($"Betik bulunamadı: {System.IO.Path.GetFullPath(path)}");
+
+        var script = System.IO.File.ReadAllText(path);
+        var array = System.Text.RegularExpressions.Regex.Match(script, @"var triggerKeys = \[(?<body>[^\]]*)\]").Groups["body"].Value;
+        var keys = System.Text.RegularExpressions.Regex.Matches(array, @"'(?<k>\w+)'").Select(m => m.Groups["k"].Value).ToList();
+
+        keys.ShouldBe(Enum.GetValues<GrantNotificationTrigger>().OrderBy(t => (int)t).Select(t => t.ToString()).ToList());
+    }
+
+    /// <summary>20b · Fikre uygun çağrı şablonu önizlemede fikir, eşleşme ve danışmanla dolar.</summary>
+    [Fact]
+    public async Task Fikre_Uygun_Cagri_Onizlemesi_Doludur()
+    {
+        var dto = await _templates.GetAsync();
+        var linked = dto.Templates.Single(t => t.Trigger == GrantNotificationTrigger.IdeaLinked);
+
+        linked.Body.ShouldContain("{fikir}");
+        linked.PreviewBody.ShouldNotContain("{");
+        linked.PreviewBody.ShouldContain("%91");
+        linked.PreviewBody.ShouldContain("Kadın kooperatifleri");
+    }
+
     [Fact]
     public async Task Onizleme_Ornek_Degerlerle_Dolar()
     {
