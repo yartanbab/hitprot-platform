@@ -331,8 +331,9 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         }
 
         // 2a) Bıraktığım ilgi talepleri — kart CTA'sı buna bakar. Çağrı başına SON kayıt.
-        var interestByCall = (await _interestRepo.GetListAsync())
-            .GroupBy(i => i.GrantCallId)
+        // 🔴 Havuz fikri (çağrısız) süzülür: null anahtar ToDictionary'de patlar ve akış hiç açılmaz.
+        var interestByCall = (await _interestRepo.GetListAsync(i => i.GrantCallId != null))
+            .GroupBy(i => i.GrantCallId!.Value)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(i => i.CreationTime).First().Status);
 
         // 2b) Host'un gönderdiği aktif öneriler (B3, tenant-scoped, Dismissed hariç).

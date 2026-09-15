@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
+using Volo.Abp.Authorization;
 using Volo.Abp.Data;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
@@ -112,15 +113,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
             needsPartner,
             needsPartner == false ? input.PartnerName : null);
 
-        interest.SetIdeaDetails(
-            input.ProblemStatement,
-            input.TargetAudience,
-            input.PlannedActivities,
-            input.DurationAndPartners,
-            input.SupportNeeds,
-            input.PriorExperience,
-            input.TeamStructure,
-            input.Stakeholders);
+        interest.SetIdeaDetails(input);
 
         await _interestRepo.InsertAsync(interest, autoSave: true);
 
@@ -138,9 +131,35 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         return MapMine(interest, catalog);
     }
 
+    public async Task<MyGrantInterestDto> ShareIdeaAsync(ShareGrantIdeaInput input)
+    {
+        // Fikir bir firmanındır; host havuza firma adına Fikir Havuzu ekranından girer.
+        if (CurrentTenant.Id == null)
+        {
+            throw new AbpAuthorizationException();
+        }
+
+        // Mükerrer kapısı YOK: çağrı başına tek süren talep kuralı havuza uymaz — firmanın
+        // birbirinden bağımsız birkaç fikri olabilir. Takip listesi de yok, çağrı yok.
+        var interest = new GrantInterest(
+            GuidGenerator.Create(),
+            CurrentTenant.Id,
+            grantCallId: null,
+            CurrentUser.Id,
+            input.Note,
+            input.EstimatedBudget,
+            input.TargetStartDate);
+        interest.SetIdeaDetails(input);
+
+        await _interestRepo.InsertAsync(interest, autoSave: true);
+
+        return MapMine(interest, new Dictionary<Guid, (string Name, string? Period)>());
+    }
+
     public async Task<List<MyGrantInterestDto>> GetMineAsync()
     {
-        var interests = await _interestRepo.GetListAsync();
+        // "İlgi Taleplerim" çağrıya bırakılan talepleri listeler; havuz fikri Hibe Yolculuğum'da.
+        var interests = await _interestRepo.GetListAsync(i => i.GrantCallId != null);
         if (interests.Count == 0)
         {
             return new List<MyGrantInterestDto>();
@@ -182,7 +201,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
             new Dictionary<string, string?>
             {
                 ["{firma_adı}"] = await GetFirmNameAsync(),
-                ["{çağrı_adı}"] = catalog.TryGetValue(interest.GrantCallId, out var call) ? call.Name : null,
+                ["{çağrı_adı}"] = CallName(catalog, interest),
                 ["{önerilen_saatler}"] = GrantMeetingMapping.SlotsText(proposal.Slots)
             },
             nameof(GrantMeetingProposal), proposal.Id);
@@ -205,7 +224,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         var values = new Dictionary<string, string?>
         {
             ["{firma_adı}"] = await GetFirmNameAsync(),
-            ["{çağrı_adı}"] = catalog.TryGetValue(interest.GrantCallId, out var call) ? call.Name : null,
+            ["{çağrı_adı}"] = CallName(catalog, interest),
             // Not boşsa token ham "{firma_notu}" olarak gitmesin diye açık bir karşılık yazılır.
             ["{firma_notu}"] = interest.Note ?? L["Grants:Notify:Trigger:InterestReceived:NoNote"]
         };
@@ -230,9 +249,9 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
 
     /// <summary>Çağrı → (program adı, dönem). Katalog host'ta yaşıyor: filtre kapatılır.</summary>
     private async Task<Dictionary<Guid, (string Name, string? Period)>> ResolveCatalogAsync(
-        IEnumerable<Guid> callIds)
+        IEnumerable<Guid?> callIds)
     {
-        var ids = callIds.Distinct().ToList();
+        var ids = callIds.Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
         var map = new Dictionary<Guid, (string, string?)>();
 
         using (_mtFilter.Disable())
@@ -251,10 +270,13 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         return map;
     }
 
+    private static string? CallName(Dictionary<Guid, (string Name, string? Period)> catalog, GrantInterest interest)
+        => interest.GrantCallId is { } callId && catalog.TryGetValue(callId, out var call) ? call.Name : null;
+
     private static MyGrantInterestDto MapMine(
         GrantInterest interest, Dictionary<Guid, (string Name, string? Period)> catalog)
     {
-        var (name, period) = catalog.TryGetValue(interest.GrantCallId, out var found)
+        var (name, period) = interest.GrantCallId is { } callId && catalog.TryGetValue(callId, out var found)
             ? found
             : (Name: string.Empty, Period: (string?)null);
         return new MyGrantInterestDto

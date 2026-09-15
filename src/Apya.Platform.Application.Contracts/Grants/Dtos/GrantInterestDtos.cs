@@ -8,11 +8,39 @@ namespace Apya.Platform.Grants.Dtos;
 /// Kiracı: "İlgileniyorum" talebi — hibe detayındaki onay adımından sonra doldurulan
 /// proje fikri. Talep host kutusuna bu bilgilerle düşer.
 /// </summary>
-public class ExpressGrantInterestInput
+public class ExpressGrantInterestInput : GrantIdeaInput
 {
     [Required(ErrorMessage = "Çağrı seçilmedi.")]
     public Guid GrantCallId { get; set; }
 
+    /// <summary>
+    /// Yalnız konsorsiyum şartı taşıyan çağrıda sorulur ve orada ZORUNLUDUR (servis denetler).
+    /// true = ortak arıyor · false = ortağı belli.
+    /// </summary>
+    public bool? NeedsPartner { get; set; }
+
+    [StringLength(200, ErrorMessage = "Ortak kuruluşun adı en fazla 200 karakter olabilir.")]
+    public string? PartnerName { get; set; }
+}
+
+/// <summary>19a · Kiracı: çağrı seçmeden Fikir Havuzu'na proje fikri.</summary>
+public class ShareGrantIdeaInput : GrantIdeaInput
+{
+}
+
+/// <summary>19a · Host: danışman firma adına havuza fikir girer.</summary>
+public class CreateGrantIdeaInput : GrantIdeaInput
+{
+    [Required(ErrorMessage = "Firma seçilmedi.")]
+    public Guid TenantId { get; set; }
+}
+
+/// <summary>
+/// Proje fikri formu — tur 19'un dokuz sorusu, bütçe ve hedef başlangıç. Çağrıya ilgi, havuza fikir
+/// ve danışmanın firma adına girişi AYNI formu doldurur; çağrıya özgü sorular türeyen sınıftadır.
+/// </summary>
+public abstract class GrantIdeaInput
+{
     /// <summary>Proje fikri, birkaç cümle. Danışmanın ön değerlendirmesi buradan başlar.</summary>
     [Required(ErrorMessage = "Proje fikrinizi birkaç cümleyle yazın.")]
     [StringLength(1000, ErrorMessage = "Proje fikri en fazla 1000 karakter olabilir.")]
@@ -23,15 +51,6 @@ public class ExpressGrantInterestInput
 
     /// <summary>Hedeflenen başlangıç çeyreğinin ilk günü. Boş = henüz belli değil.</summary>
     public DateTime? TargetStartDate { get; set; }
-
-    /// <summary>
-    /// Yalnız konsorsiyum şartı taşıyan çağrıda sorulur ve orada ZORUNLUDUR (servis denetler).
-    /// true = ortak arıyor · false = ortağı belli.
-    /// </summary>
-    public bool? NeedsPartner { get; set; }
-
-    [StringLength(200, ErrorMessage = "Ortak kuruluşun adı en fazla 200 karakter olabilir.")]
-    public string? PartnerName { get; set; }
 
     // --- Proje fikri formu · 2-9. sorular. Yalnız 2. soru zorunlu; gerisi bildiği kadarıyla. ---
 
@@ -73,7 +92,9 @@ public class ExpressGrantInterestInput
 public class MyGrantInterestDto
 {
     public Guid Id { get; set; }
-    public Guid GrantCallId { get; set; }
+
+    /// <summary>null = Fikir Havuzu'na çağrısız bırakılan fikir (19a).</summary>
+    public Guid? GrantCallId { get; set; }
     public string GrantName { get; set; } = string.Empty;
     public string? Period { get; set; }
     public DateTime CreationTime { get; set; }

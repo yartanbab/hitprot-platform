@@ -332,8 +332,10 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
                 .GroupBy(t => t.GrantId).ToDictionary(g => g.Key, g => g.Count());
             tenants = (await _tenantRepo.GetListAsync()).ToDictionary(t => t.Id, t => t.Name);
             leads = await _leadRepo.GetListAsync(l => l.PreferredMeetingAt != null);
+            // 19a · Havuz fikri talep değildir; "ilgi talebi incele" satırına girmez.
             interests = await _interestRepo.GetListAsync(i =>
-                i.Status == GrantInterestStatus.Yeni || i.Status == GrantInterestStatus.Inceleniyor);
+                i.GrantCallId != null
+                && (i.Status == GrantInterestStatus.Yeni || i.Status == GrantInterestStatus.Inceleniyor));
         }
 
         var users = await LoadUserNamesAsync();
@@ -455,7 +457,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
         if (interests.Count > 0)
         {
             var interestCalls = interests
-                .Select(i => calls.GetValueOrDefault(i.GrantCallId))
+                .Select(i => calls.GetValueOrDefault(i.GrantCallId!.Value))
                 .Where(c => c != null)
                 .Select(c => c!)
                 .ToList();

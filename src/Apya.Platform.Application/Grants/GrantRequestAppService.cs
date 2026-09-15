@@ -130,7 +130,8 @@ public class GrantRequestAppService : PlatformAppService, IGrantRequestAppServic
         HashSet<Guid> plannedMeetings;
         using (_mtFilter.Disable())
         {
-            interests = await _interestRepo.GetListAsync(i => i.TenantId != null);
+            // 19a · Havuz fikri talep değildir (yanıt süresi yok); Fikir Havuzu ekranında yaşar.
+            interests = await _interestRepo.GetListAsync(i => i.TenantId != null && i.GrantCallId != null);
             var interestIds = interests.Select(i => i.Id).ToList();
             plannedMeetings = (await _proposalRepo.GetListAsync(
                     p => p.Status == GrantMeetingStatus.Onaylandi && interestIds.Contains(p.GrantInterestId)))
@@ -144,7 +145,7 @@ public class GrantRequestAppService : PlatformAppService, IGrantRequestAppServic
         foreach (var interest in interests)
         {
             var consultantId = interest.AssignedUserId ?? interest.ReviewedByUserId;
-            var row = NewRow(GrantRequestKind.Interest, interest.Id, interest.GrantCallId, interest.CreationTime, calls, grants);
+            var row = NewRow(GrantRequestKind.Interest, interest.Id, interest.GrantCallId!.Value, interest.CreationTime, calls, grants);
             row.FirmName = tenants.GetValueOrDefault(interest.TenantId!.Value, string.Empty);
             row.Summary = interest.Note;
             row.ConsultantUserId = consultantId;

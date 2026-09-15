@@ -26,7 +26,15 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
     public Guid? TenantId { get; set; }
 
-    public Guid GrantCallId { get; private set; }
+    /// <summary>
+    /// 19a · null = Fikir Havuzu kaydı: firma (ya da adına danışman) çağrı seçmeden fikrini bıraktı.
+    /// Havuz kaydı talep DEĞİLDİR — yanıt süresi işlemez, Talepler'e düşmez; çağrıyla
+    /// ilişkilendirilince talep olur. Başvuru ve görüşme çağrı ister (<see cref="EnsureLinked"/>).
+    /// </summary>
+    public Guid? GrantCallId { get; private set; }
+
+    /// <summary>19a · Kaydı kim girdi: firma kendisi mi, danışman firma adına mı.</summary>
+    public GrantInterestSource Source { get; private set; }
 
     /// <summary>Talebi bırakan kullanıcı. Cevap bildirimi ona gider.</summary>
     public Guid? RequestedByUserId { get; private set; }
@@ -106,22 +114,27 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Karara bağlanmamış talep — host kutusunda bekleyen satır.</summary>
     public bool IsPending => Status is GrantInterestStatus.Yeni or GrantInterestStatus.Inceleniyor;
 
+    /// <summary>19a · Çağrıya bağlanmamış fikir — havuzda bekler.</summary>
+    public bool IsPoolIdea => GrantCallId == null;
+
     protected GrantInterest() { }
 
     public GrantInterest(
         Guid id,
         Guid? tenantId,
-        Guid grantCallId,
+        Guid? grantCallId,
         Guid? requestedByUserId,
         string? note,
         decimal? estimatedBudget = null,
         DateTime? targetStartDate = null,
         bool? needsPartner = null,
-        string? partnerName = null)
+        string? partnerName = null,
+        GrantInterestSource source = GrantInterestSource.Tenant)
         : base(id)
     {
         TenantId = tenantId;
         GrantCallId = grantCallId;
+        Source = source;
         RequestedByUserId = requestedByUserId;
         var trimmedNote = note?.Trim();
         Note = Check.Length(string.IsNullOrEmpty(trimmedNote) ? null : trimmedNote, nameof(note), maxLength: 1000);
@@ -230,6 +243,7 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public void MarkApplicationStarted(Guid applicationId, Guid? userId, DateTime now)
     {
         EnsurePending();
+        EnsureLinked();
         Status = GrantInterestStatus.BasvuruAcildi;
         GrantApplicationId = applicationId;
         ReviewedByUserId = userId;
@@ -251,6 +265,25 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
         HostFeedback = Check.Length(trimmed, nameof(reason), maxLength: 1000);
         ReviewedByUserId = userId;
         ReviewedAt = now;
+    }
+
+    /// <summary>
+    /// 19a · Danışman fikri firma adına girdi. 🔴 ABP, kayıt oturumdaki kullanıcının kiracısına ait değilse
+    /// <c>CreatorId</c>'yi YAZMAZ — host kullanıcısı firmanın kaydını açtığı için "Kim girdi" boş kalıyordu
+    /// (ölçüldü). Giren elle yazılır; ABP dolu alanı ezmez.
+    /// </summary>
+    public void RecordEnteredBy(Guid? userId)
+    {
+        CreatorId = userId;
+    }
+
+    /// <summary>Başvuru ve görüşme bir çağrı için yürür; havuzdaki fikir önce çağrıyla ilişkilendirilmeli.</summary>
+    public void EnsureLinked()
+    {
+        if (IsPoolIdea)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantInterestIdeaNotLinked);
+        }
     }
 
     private void EnsurePending()

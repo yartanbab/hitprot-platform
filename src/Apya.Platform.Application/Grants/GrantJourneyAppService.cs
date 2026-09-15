@@ -96,7 +96,9 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
             : (await _projectRepo.GetListAsync(p => projectIds.Contains(p.Id))).ToDictionary(p => p.Id, p => p.Name);
 
         // Katalog host'ta (TenantId=null) durur; danışman adları host kullanıcılarıdır.
-        var callIds = rows.Select(r => r.GrantCallId).Concat(interests.Select(i => i.GrantCallId)).Distinct().ToList();
+        var callIds = rows.Select(r => r.GrantCallId)
+            .Concat(interests.Where(i => i.GrantCallId != null).Select(i => i.GrantCallId!.Value))
+            .Distinct().ToList();
         Dictionary<Guid, GrantCall> calls;
         Dictionary<Guid, Grant> grants;
         Dictionary<Guid, string> hostUsers;
@@ -168,11 +170,11 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
         // --- İlgi talepleri: başvurusu olan çağrı atlanır, çağrı başına en yeni talep ---
         var coveredCalls = rows.Select(r => r.GrantCallId).ToHashSet();
         foreach (var interest in interests
-                     .Where(i => !coveredCalls.Contains(i.GrantCallId))
-                     .GroupBy(i => i.GrantCallId)
+                     .Where(i => i.GrantCallId != null && !coveredCalls.Contains(i.GrantCallId.Value))
+                     .GroupBy(i => i.GrantCallId!.Value)
                      .Select(g => g.OrderByDescending(i => i.CreationTime).First()))
         {
-            var call = calls.GetValueOrDefault(interest.GrantCallId);
+            var call = calls.GetValueOrDefault(interest.GrantCallId!.Value);
             var grant = call == null ? null : grants.GetValueOrDefault(call.GrantId);
             var closed = call?.Status == GrantCallStatus.Kapandi;
 
@@ -204,13 +206,29 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
             });
         }
 
+        // --- 19a · Havuzdaki fikirler: her fikir ayrı satır. Geri çekilen fikir yolculuktan düşer —
+        // çağrısı olmadığı için "çağrıyı gör" diyecek bir yeri de yok.
+        foreach (var idea in interests.Where(i => i.IsPoolIdea && i.IsPending))
+        {
+            dto.Items.Add(new GrantJourneyItemDto
+            {
+                Kind = GrantJourneyItemKind.IdeaPooled,
+                GrantName = string.Empty,
+                At = idea.CreationTime,
+                InterestId = idea.Id,
+                Idea = idea.Note,
+                IdeaSource = idea.Source
+            });
+        }
+
         dto.ActiveCount = dto.Items.Count(IsActive);
         dto.ProjectCount = dto.Items.Count(i => i.Kind == GrantJourneyItemKind.Project);
         dto.MissedCount = dto.Items.Count(i => i.Kind == GrantJourneyItemKind.CallClosed);
 
         // Süren işler önce (son tarihi yakın olan başta), sonra projeler, en sonda kapananlar.
         dto.Items = dto.Items
-            .OrderBy(i => IsActive(i) ? 0 : i.Kind is GrantJourneyItemKind.Project or GrantJourneyItemKind.Completed ? 1 : 2)
+            // Havuzdaki fikir süreç sayılmaz ama bekleyen iştir: aktiflerin ardında (son tarihi yok).
+            .OrderBy(i => IsActive(i) || i.Kind == GrantJourneyItemKind.IdeaPooled ? 0 : i.Kind is GrantJourneyItemKind.Project or GrantJourneyItemKind.Completed ? 1 : 2)
             .ThenBy(i => IsActive(i) ? i.DaysRemaining ?? int.MaxValue : 0)
             .ThenByDescending(i => i.At)
             .ToList();
