@@ -1,0 +1,31 @@
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model string
+@*
+    21a/22 · Çağrılar'ın üç sekmesi. Yayında ve Taslak aynı sayfadır (/Grants?tab=…, Index.js sayfayı
+    yenilemeden geçer); Kaynaklar kendi sayfasıdır (/Grants/Sources) ve aynı başlığı taşır.
+    Model: "live" | "draft" | "sources". Sayaçları Index.js doldurur; Kaynaklar'da sayaç yok.
+*@
+<nav class="apya-grant-tabs apya-call-tabs" aria-label="@L["Grants:Calls:Sections"]">
+    <a class="apya-grant-tab @(Model == "live" ? "is-active" : null)" href="/Grants" data-call-tab="live"
+       aria-current="@(Model == "live" ? "page" : null)">
+        @L["Grants:Calls:Tab:Live"]
+        @if (Model != "sources")
+        {
+            <span class="apya-chip apya-chip-accent apya-numeric apya-skel-num" data-call-count="live"></span>
+        }
+    </a>
+    <a class="apya-grant-tab @(Model == "draft" ? "is-active" : null)" href="/Grants?tab=draft" data-call-tab="draft"
+       aria-current="@(Model == "draft" ? "page" : null)">
+        @L["Grants:Calls:Tab:Draft"]
+        @if (Model != "sources")
+        {
+            <span class="apya-chip apya-chip-neutral apya-numeric apya-skel-num" data-call-count="draft"></span>
+        }
+    </a>
+    <a class="apya-grant-tab @(Model == "sources" ? "is-active" : null)" href="/Grants/Sources"
+       aria-current="@(Model == "sources" ? "page" : null)">
+        @L["Grants:Calls:Tab:Sources"]
+    </a>
+</nav>

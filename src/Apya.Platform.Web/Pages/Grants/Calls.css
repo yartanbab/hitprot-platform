@@ -1,0 +1,170 @@
+/* =============================================================================
+   21a/22 · Host Çağrılar. Kart iskeleti (ızgara, kart, gövde, tutar, alt satır) ve afiş
+   Shared.css'te — kiracı akışıyla aynı kart, host'a özel gövde. Sekme şeridi, süzgeçler ve
+   görünüm düğmesi de Shared.css'teki Talepler şeridi (.apya-req-*).
+   ============================================================================= */
+
+/* 7b · İskelet yüksekliği gerçek kart yüksekliğine (afiş + gövde) yakın. */
+#CallGrid { --apya-skel-card: 320px; }
+
+/* Host kartında köşede yer imi düğmesi yok: afiş üstü rozetler tüm genişliği kullanır. */
+.apya-call-card .apya-feed-poster-top { padding-right: 0; }
+
+/* 21a · Taslak kart sarı kenarlı. */
+.apya-call-card.is-draft { border-color: var(--apya-warning-500); }
+
+/* --- Afiş üstü durum rozeti ---
+   Afiş her temada koyudur; rozet renkleri bu yüzden token DEĞİL sabit (.apya-feed-days ile aynı
+   gerekçe). Tasarımın amber zemini (#D97706 %92) beyaz yazıyla ~3,2:1 kalıyordu → #B45309 (5,0:1). */
+.apya-call-state {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: var(--apya-radius-full);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-semibold);
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.92);
+    color: #1F2937;
+    box-shadow: 0 1px 3px rgba(17, 24, 39, 0.3);
+}
+
+.apya-call-state.is-live { color: #065F46; }
+.apya-call-state.is-draft { background: #B45309; color: #fff; }
+.apya-call-state.is-closed { background: rgba(17, 24, 39, 0.6); color: #fff; box-shadow: none; }
+
+/* --- Gövde: yayındakinde erişim, taslakta yayına ne kaldığı (satır başına tek sinyal) --- */
+.apya-call-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--apya-space-5);
+}
+
+.apya-call-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.apya-call-stat-label {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-call-stat-value {
+    font-size: var(--apya-fs-xl);
+    font-weight: var(--apya-weight-bold);
+    line-height: 1.1;
+}
+
+.apya-call-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--apya-space-2);
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: var(--apya-radius-lg);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-call-note > i { margin-top: 3px; }
+.apya-call-note.is-warning { background: var(--apya-warning-50); color: var(--apya-text-warning); }
+.apya-call-note.is-ready { background: var(--apya-positive-50); color: var(--apya-text-positive); }
+
+.apya-call-note-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--apya-fs-xs);
+}
+
+/* --- Eylemler: tek birincil düğme solda, kalem ve "…" sağda --- */
+.apya-call-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    width: 100%;
+}
+
+.apya-call-actions > .btn:not(.apya-call-icon) { margin-right: auto; }
+
+.apya-call-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Talepler şeridindeki görünüm düğmeleri bağlantıydı; burada düğme — tarayıcı çerçevesini sıfırla. */
+button.apya-req-view {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+button.apya-req-view.is-active { background: var(--apya-surface-inverse); }
+
+/* --- Liste görünümü (CSS grid; hibe modülünde <table> yok) --- */
+/* Satır başına ayrı ızgara: eylem sütunu max-content OLAMAZ (düğme metni satırdan satıra değişir,
+   sütunlar hizasını kaybeder) → sabit. Durum rozeti program hücresine alındı: ayrı sütunla 1280px'te
+   destek ve erişim 62-75px'e sıkışıyordu (ölçüldü). */
+.apya-call-row {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) 140px minmax(0, 1fr) minmax(0, 1fr) 240px;
+    gap: var(--apya-space-3);
+    align-items: center;
+    padding: 12px var(--apya-space-5);
+}
+
+.apya-call-row + .apya-call-row { border-top: 1px solid var(--apya-border-subtle); }
+
+.apya-call-head {
+    padding-block: 11px;
+    background: var(--apya-surface-raised);
+    border-bottom: 1px solid var(--apya-border-default);
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-secondary);
+}
+
+.apya-call-name {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.apya-call-name strong { font-weight: var(--apya-weight-semibold); }
+
+.apya-call-name-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    min-width: 0;
+}
+
+.apya-call-name-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-call-row .apya-call-actions { justify-content: flex-end; }
+.apya-call-row .apya-call-actions > .btn:not(.apya-call-icon) { margin-right: 0; }
+
+/* Yan menülü kabukta 1200px altında beş sütun sığmaz → satır karta dönüşür. */
+@media (max-width: 1199.98px) {
+    .apya-call-head { display: none; }
+
+    .apya-call-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-call-name,
+    .apya-call-row .apya-call-actions { grid-column: 1 / -1; }
+
+    .apya-call-row .apya-call-actions { justify-content: flex-start; }
+}

@@ -1,23 +1,33 @@
+// 21a/22 · Host Çağrılar. Kart = çağrı + programı; sayılar sunucudan (GrantCallBoardAppService).
+// Program oluşturma Elle hibe gir'de (/Grants/Import), düzenleme Parametreler'de. Bu sayfada
+// yalnız çağrı penceresi (ekle/düzenle) ve silme işlemleri kalır.
 $(function () {
-    var grantService = apya.platform.grants.grant;
+    var board = apya.platform.grants.grantCallBoard;
     var callService = apya.platform.grants.grantCall;
-        var canCreate = abp.auth.isGranted('Platform.Grants.Create');
+    var grantService = apya.platform.grants.grant;
+    var sourceService = apya.platform.grants.grantSource;
+    var l = abp.localization.getResource('Platform');
+
+    var canCreate = abp.auth.isGranted('Platform.Grants.Create');
     var canEdit = abp.auth.isGranted('Platform.Grants.Edit');
     var canDelete = abp.auth.isGranted('Platform.Grants.Delete');
 
-    var $grid = $('#GrantTileGrid');
-    var $empty = $('#GrantTileGridEmpty');
-    var grantModal = new bootstrap.Modal(document.getElementById('GrantModal'));
-    var callModal = new bootstrap.Modal(document.getElementById('CallModal'));
+    // Enum sıraları sunucudakiyle birebir: GrantCallStatus, GrantCallBoardTab.
+    var ST = { Planlandi: 0, Acik: 1, Kapandi: 2, Taslak: 3 };
+    var TAB = { live: 0, draft: 1 };
 
-    var statusLabels = { 0: 'Planlandı', 1: 'Açık', 2: 'Kapandı' };
-    var statusTone = { 0: 'neutral', 1: 'positive', 2: 'warning' };
-    var sizeNames = { 1: 'Mikro', 2: 'Küçük', 4: 'Orta', 8: 'Büyük' };
+    var callModal = new bootstrap.Modal(document.getElementById('CallModal'));
+    var state = {
+        tab: $('[data-call-tab]').first().attr('data-call-tab') === 'draft' ? 'draft' : 'live',
+        closed: false,
+        issuer: '',
+        sort: 0,
+        view: 'cards'
+    };
+    var issuersFilled = false;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
-    function money(v) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
-    // Tavan belirtilmemiş program 0 ile saklanır (MaxAmount kolonu NOT NULL) — "0 ₺" yerine — göster.
-    function ceiling(v) { return v ? money(v) : '—'; }
+    function num(v) { return Math.round(v).toLocaleString('tr-TR'); }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
     function numOrNull(sel) {
         // Maskeli tutar alanında .val() "1.234,56" döndürür; parseFloat onu 1'e indirir.
@@ -27,271 +37,275 @@ $(function () {
     }
     function setMoney(sel, v) { apya.moneyInput.setValue($(sel)[0], v); }
 
-    // ---------- Etiket (chip) girişi ----------
-    function addTag($input, value) {
-        value = (value || '').trim();
-        if (!value) return;
-        var $chips = $input.find('.apya-tag-chips');
-        var dup = $chips.find('.apya-tag-chip').filter(function () {
-            return $(this).contents().first().text().trim().toLowerCase() === value.toLowerCase();
-        }).length;
-        if (!dup) {
-            $chips.append('<span class="apya-tag-chip">' + esc(value) +
-                '<button type="button" class="apya-tag-remove" aria-label="Kaldır">&times;</button></span>');
+    // ---------- Kart parçaları ----------
+    // Tavan belirtilmemiş program 0 ile saklanır (MaxAmount kolonu NOT NULL); asgari varsa aralık.
+    function amount(c) {
+        var max = c.maxAmount || 0, min = c.minAmount || 0;
+        if (min && max) { return num(min) + ' – ' + num(max) + ' ₺'; }
+        if (max) { return num(max) + ' ₺'; }
+        if (min) { return num(min) + '+ ₺'; }
+        return l('Grants:Calls:NoCeiling');
+    }
+
+    function stateOf(c) {
+        if (c.status == null) { return { key: 'NoCall', tone: 'warning', cls: 'is-draft' }; }
+        switch (c.status) {
+            case ST.Acik: return { key: 'Live', tone: 'positive', cls: 'is-live' };
+            case ST.Planlandi: return { key: 'Planned', tone: 'neutral', cls: 'is-planned' };
+            case ST.Kapandi: return { key: 'Closed', tone: 'neutral', cls: 'is-closed' };
+            default: return { key: 'Draft', tone: 'warning', cls: 'is-draft' };
         }
     }
-    function getTags(kind) {
-        return $('#GrantModal .apya-tag-input[data-kind="' + kind + '"] .apya-tag-chip')
-            .map(function () { return $(this).contents().first().text().trim(); }).get();
-    }
-    function setTags(kind, values) {
-        var $input = $('#GrantModal .apya-tag-input[data-kind="' + kind + '"]');
-        (values || []).forEach(function (v) { addTag($input, v); });
-    }
-    function collectCriteria() {
-        var out = [];
-        [0, 1, 2].forEach(function (kind) {
-            getTags(kind).forEach(function (v) { out.push({ kind: kind, value: v }); });
-        });
-        return out;
-    }
 
-    $('#GrantModal').on('keydown', '.apya-tag-entry', function (e) {
-        if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            addTag($(this).closest('.apya-tag-input'), $(this).val());
-            $(this).val('');
+    function daysPill(c) {
+        if (c.daysRemaining == null) { return ''; }
+        if (c.status === ST.Kapandi || c.daysRemaining < 0) {
+            return '<span class="apya-feed-days is-closed">' + esc(l('Grants:Feed:Card:Closed')) + '</span>';
         }
-    }).on('blur', '.apya-tag-entry', function () {
-        addTag($(this).closest('.apya-tag-input'), $(this).val());
-        $(this).val('');
-    }).on('click', '.apya-tag-remove', function () {
-        $(this).closest('.apya-tag-chip').remove();
-    });
-
-    function getSizeMask() {
-        var m = 0;
-        $('#GrantModal .apya-size:checked').each(function () { m += parseInt($(this).val(), 10); });
-        return m;
-    }
-    function setSizeMask(mask) {
-        $('#GrantModal .apya-size').each(function () {
-            $(this).prop('checked', (mask & parseInt($(this).val(), 10)) !== 0);
-        });
+        return '<span class="apya-feed-days' + (c.daysRemaining <= 20 ? ' is-urgent' : '') + '"><i class="fa fa-clock"></i>' +
+            esc(l('Grants:Feed:Card:DaysLeft', c.daysRemaining)) + '</span>';
     }
 
-    // ---------- KPI ----------
-    function renderKpis(items) {
-        var total = items.length;
-        var totalAmount = items.reduce(function (s, g) { return s + (g.maxAmount || 0); }, 0);
-        var avg = total ? items.reduce(function (s, g) { return s + (g.minMatchScore || 0); }, 0) / total : 0;
-        var top = items.reduce(function (b, g) { return (!b || (g.maxAmount || 0) > (b.maxAmount || 0)) ? g : b; }, null);
-        $('#KpiTotalPrograms').text(total);
-        $('#KpiTotalAmount').text(total ? Math.round(totalAmount).toLocaleString('tr-TR') + ' ₺' : '—');
-        $('#KpiAvgScore').text(total ? ('%' + Math.round(avg)) : '—');
-        $('#KpiTopProgram').text(top ? top.name : '—').attr('title', top ? top.name : '');
+    function isDraft(c) { return c.status == null || c.status === ST.Taslak; }
+
+    function missingNames(c) {
+        return (c.missingRequiredFields || []).map(function (f) { return l('Grants:Field:' + f); }).join(' · ');
     }
 
-    // ---------- Kart ----------
-    function sizeChips(mask) {
-        if (!mask) return '';
-        return [1, 2, 4, 8].filter(function (b) { return mask & b; })
-            .map(function (b) { return '<span class="apya-chip apya-chip-neutral">' + sizeNames[b] + '</span>'; }).join('');
-    }
-    function critChips(tags) {
-        return (tags || []).map(function (t) {
-            var tone = t.kind === 0 ? 'brand' : (t.kind === 1 ? 'neutral' : 'ai');
-            return '<span class="apya-chip apya-chip-' + tone + '">' + esc(t.value) + '</span>';
-        }).join('');
-    }
-    function tileTemplate(g) {
-        var scoreChip = g.minMatchScore > 0 ? '<span class="apya-chip apya-chip-ai">%' + g.minMatchScore + ' uyum</span>' : '';
-        var criteria = critChips(g.criteriaTags) + sizeChips(g.eligibleCompanySizes);
-        var actions =
-            '<div class="apya-tile-actions">' +
-            (canEdit ? '<a class="btn btn-sm btn-link text-muted apya-param-link" title="Parametreler" href="/Grants/Parameters?id=' + g.id + '"><i class="fa fa-sliders"></i></a>' : '') +
-            (canEdit ? '<button type="button" class="btn btn-sm btn-link text-muted apya-edit-btn" title="Düzenle"><i class="fa fa-pen"></i></button>' : '') +
-            (canDelete ? '<button type="button" class="btn btn-sm btn-link text-danger apya-delete-btn" title="Sil"><i class="fa fa-trash"></i></button>' : '') +
-            '</div>';
-        var $tile = $(
-            '<div class="apya-tile" data-id="' + g.id + '">' +
-            '  <div class="apya-tile-head">' +
-            '    <div class="d-flex align-items-start gap-2">' +
-            '      <span class="apya-tile-icon-box"><i class="fa fa-award"></i></span>' +
-            '      <div><div class="apya-tile-title">' + esc(g.name) + '</div><div class="apya-tile-sub">' + esc(g.issuer) + '</div></div>' +
-            '    </div>' +
-            '    <div class="d-flex flex-column align-items-end gap-1">' + scoreChip + '</div>' +
-            '  </div>' +
-            (criteria ? '<div class="d-flex flex-wrap gap-1">' + criteria + '</div>' : '') +
-            '  <div class="apya-tile-progress-label"><span>Maks. Tutar</span><span class="apya-numeric fw-semibold">' + ceiling(g.maxAmount) + '</span></div>' +
-            '  <div class="apya-calls-section">' +
-            '    <a href="#" class="apya-toggle-calls small text-decoration-none">Çağrılar (<span class="apya-call-count">' + (g.callCount || 0) + '</span>) <i class="fa fa-chevron-down apya-expand-chevron ms-1"></i></a>' +
-            '    <div class="apya-calls-panel d-none mt-2"></div>' +
-            '  </div>' +
-            '  <div class="apya-tile-foot" style="justify-content:flex-end">' + actions + '</div>' +
-            '</div>'
-        );
-        $tile.data('grant', g);
-        return $tile;
-    }
-    function loadList() {
-        grantService.getList({ maxResultCount: 1000, sorting: 'name asc' }).then(function (res) {
-            $grid.empty();
-            renderKpis(res.items);
-            if (!res.items.length) { $grid.addClass('d-none'); $empty.removeClass('d-none'); return; }
-            $grid.removeClass('d-none'); $empty.addClass('d-none');
-            res.items.forEach(function (g) { $grid.append(tileTemplate(g)); });
-        });
+    // Satır başına tek sinyal: yayındakinde erişim, taslakta yayına ne kaldığı.
+    function body(c) {
+        if (c.status == null) {
+            return '<p class="apya-call-note is-warning"><i class="fa fa-circle-exclamation"></i><span>' + esc(l('Grants:Calls:NoCallNote')) + '</span></p>';
+        }
+        if (c.status === ST.Taslak) {
+            var missing = missingNames(c);
+            return missing
+                ? '<p class="apya-call-note is-warning"><i class="fa fa-triangle-exclamation"></i><span>' +
+                    esc(l('Grants:Calls:DraftNote', c.completionPercent)) + '<span class="apya-call-note-sub">' + esc(missing) + '</span></span></p>'
+                : '<p class="apya-call-note is-ready"><i class="fa fa-circle-check"></i><span>' + esc(l('Grants:Calls:DraftReady', c.completionPercent)) + '</span></p>';
+        }
+        return '<div class="apya-call-stats">' +
+            '<div class="apya-call-stat"><span class="apya-call-stat-label">' + esc(l('Grants:Calls:Stat:Firms')) + '</span>' +
+            '<span class="apya-call-stat-value apya-numeric">' + (c.matchingFirmCount || 0) + '</span></div>' +
+            '<div class="apya-call-stat"><span class="apya-call-stat-label">' + esc(l('Grants:Calls:Stat:Interest')) + '</span>' +
+            '<span class="apya-call-stat-value apya-numeric">' + (c.interestCount || 0) + '</span></div></div>';
     }
 
-    // ---------- Çağrı listesi (genişletilebilir) ----------
-    function callRow(c) {
-        var tone = statusTone[c.status] || 'neutral';
-        var send = (canCreate && c.status === 1) ? '<button type="button" class="btn btn-sm btn-link apya-call-send" title="Firmalara Gönder"><i class="fa fa-paper-plane"></i></button>' : '';
-        var edit = canEdit ? '<button type="button" class="btn btn-sm btn-link text-muted apya-call-edit" title="Düzenle"><i class="fa fa-pen"></i></button>' : '';
-        var del = canDelete ? '<button type="button" class="btn btn-sm btn-link text-danger apya-call-del" title="Sil"><i class="fa fa-trash"></i></button>' : '';
-        var $row = $(
-            '<div class="apya-call-row d-flex align-items-center justify-content-between gap-2 py-1 border-top">' +
-            '  <div class="d-flex align-items-center gap-2 flex-wrap">' +
-            '    <span class="fw-semibold">' + esc(c.period) + '</span>' +
-            '    <span class="apya-chip apya-chip-' + tone + '">' + (statusLabels[c.status] || '') + '</span>' +
-            '    <span class="text-muted small"><i class="fa fa-hourglass-half me-1"></i>' + fmtDate(c.deadline) + '</span>' +
-            (c.budget != null ? '<span class="text-muted small apya-numeric">' + money(c.budget) + '</span>' : '') +
-            '  </div>' +
-            '  <div class="d-flex align-items-center gap-1">' + send + edit + del + '</div>' +
-            '</div>'
-        );
-        $row.data('call', c);
-        return $row;
-    }
-    function loadCalls($tile) {
-        var $panel = $tile.find('.apya-calls-panel');
-        var grantId = $tile.data('grant').id;
-        $panel.html('<div class="text-muted small py-2">Yükleniyor…</div>');
-        return callService.getList({ grantId: grantId, maxResultCount: 100, sorting: 'period desc' }).then(function (res) {
-            $panel.empty();
-            res.items.forEach(function (c) { $panel.append(callRow(c)); });
-            if (canCreate) {
-                $panel.append('<button type="button" class="btn btn-sm btn-outline-secondary mt-2 apya-call-add"><i class="fa fa-plus me-1"></i>Çağrı Ekle</button>');
-            } else if (!res.items.length) {
-                $panel.append('<div class="text-muted small py-2">Bu program için çağrı yok.</div>');
-            }
-            $tile.find('.apya-call-count').text(res.items.length);
-        });
+    function paramsHref(c) { return '/Grants/Parameters?id=' + c.grantId; }
+
+    function cta(c) {
+        if (c.status == null) {
+            return canCreate ? '<button type="button" class="btn btn-sm btn-primary" data-act="add-call">' + esc(l('Grants:Calls:AddCall')) + '</button>' : '';
+        }
+        if (c.status === ST.Taslak) {
+            return canEdit ? '<a class="btn btn-sm btn-primary" href="' + paramsHref(c) + '">' + esc(l('Grants:Calls:CompleteParameters')) + '</a>' : '';
+        }
+        if (c.status === ST.Acik && canCreate) {
+            return '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Dispatch?id=' + c.grantCallId + '">' + esc(l('Grants:Calls:SendToFirms')) + '</a>';
+        }
+        return canEdit ? '<a class="btn btn-sm btn-outline-secondary" href="' + paramsHref(c) + '">' + esc(l('Grants:Calls:Parameters')) + '</a>' : '';
     }
 
-    $grid.on('click', '.apya-toggle-calls', function (e) {
+    // Kart overflow:hidden — menü sabit konumla açılır ki kırpılmasın.
+    function menu(c) {
+        var items = [];
+        if (c.grantCallId && canEdit) { items.push(['edit-call', 'Grants:Calls:Menu:EditCall']); }
+        if (canCreate) { items.push(['add-call', 'Grants:Calls:Menu:AddCall']); }
+        if (c.grantCallId && canDelete) { items.push(['delete-call', 'Grants:Calls:Menu:DeleteCall', true]); }
+        if (canDelete) { items.push(['delete-grant', 'Grants:Calls:Menu:DeleteGrant', true]); }
+        if (!items.length) { return ''; }
+        return '<div class="dropdown">' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary apya-call-icon" data-bs-toggle="dropdown" ' +
+            'data-bs-popper-config=\'{"strategy":"fixed"}\' aria-expanded="false" aria-label="' + esc(l('Grants:Calls:Menu:More')) + '" title="' + esc(l('Grants:Calls:Menu:More')) + '">' +
+            '<i class="fa fa-ellipsis-vertical"></i></button>' +
+            '<ul class="dropdown-menu dropdown-menu-end">' + items.map(function (i) {
+                return '<li><button type="button" class="dropdown-item' + (i[2] ? ' text-danger' : '') + '" data-act="' + i[0] + '">' + esc(l(i[1])) + '</button></li>';
+            }).join('') + '</ul></div>';
+    }
+
+    function actions(c) {
+        var pen = canEdit
+            ? '<a class="btn btn-sm btn-outline-secondary apya-call-icon" href="' + paramsHref(c) + '" title="' + esc(l('Grants:Calls:Parameters')) + '" aria-label="' + esc(l('Grants:Calls:Parameters')) + '"><i class="fa fa-pen"></i></a>'
+            : '';
+        return '<div class="apya-call-actions">' + cta(c) + pen + menu(c) + '</div>';
+    }
+
+    function card(c) {
+        var st = stateOf(c);
+        var head = c.period ? c.issuer + ' · ' + c.period : c.issuer;
+        var posterTag = canEdit ? 'a' : 'div';
+        return '<article class="apya-feed-card apya-call-card' + (isDraft(c) ? ' is-draft' : '') + '" data-grant="' + c.grantId + '"' +
+            (c.grantCallId ? ' data-call="' + c.grantCallId + '"' : '') + ' data-name="' + esc(c.grantName) + '" data-period="' + esc(c.period || '') + '">' +
+            '<' + posterTag + ' class="apya-feed-poster" style="' + apyaGrantPoster.style(c.issuer, c.posterFileName) + '"' +
+            (canEdit ? ' href="' + paramsHref(c) + '"' : '') + ' aria-label="' + esc(c.grantName) + '">' +
+            '<span class="apya-feed-poster-top"><span class="apya-call-state ' + st.cls + '">' + esc(l('Grants:Calls:State:' + st.key)) + '</span>' + daysPill(c) + '</span>' +
+            '<span class="apya-feed-poster-bottom"><span class="apya-feed-poster-issuer">' + esc(head) + '</span>' +
+            '<span class="apya-feed-poster-name">' + esc(c.grantName) + '</span></span></' + posterTag + '>' +
+            '<div class="apya-feed-body">' +
+            '<div class="apya-feed-amount-row"><span class="apya-feed-amount-value">' + esc(amount(c)) + '</span>' +
+            (c.supportRatePercent != null ? '<span class="apya-feed-rate">' + esc(l('Grants:Feed:Card:Rate', c.supportRatePercent)) + '</span>' : '') + '</div>' +
+            body(c) +
+            '<div class="apya-feed-foot">' + actions(c) + '</div>' +
+            '</div></article>';
+    }
+
+    function reach(c) {
+        if (c.status == null) { return '—'; }
+        if (c.status === ST.Taslak) { return l('Grants:Calls:Completion', c.completionPercent); }
+        return l('Grants:Calls:Reach', c.matchingFirmCount || 0, c.interestCount || 0);
+    }
+
+    function row(c) {
+        var st = stateOf(c);
+        var deadline = c.deadline
+            ? fmtDate(c.deadline) + (c.daysRemaining != null && c.daysRemaining >= 0 && c.status !== ST.Kapandi ? ' · ' + l('Grants:Feed:Card:DaysLeft', c.daysRemaining) : '')
+            : '—';
+        return '<div class="apya-call-row" data-grant="' + c.grantId + '"' + (c.grantCallId ? ' data-call="' + c.grantCallId + '"' : '') +
+            ' data-name="' + esc(c.grantName) + '" data-period="' + esc(c.period || '') + '">' +
+            // Durum rozeti program hücresinde: ayrı sütun 1280px'te destek ve erişimi 62-75px'e sıkıştırıyordu.
+            '<div class="apya-call-name"><strong>' + esc(c.grantName) + '</strong>' +
+            '<span class="apya-call-name-meta"><span class="apya-chip apya-chip-' + st.tone + '">' + esc(l('Grants:Calls:State:' + st.key)) + '</span>' +
+            '<span class="apya-call-name-sub" title="' + esc(c.period ? c.issuer + ' · ' + c.period : c.issuer) + '">' +
+            esc(c.period ? c.issuer + ' · ' + c.period : c.issuer) + '</span></span></div>' +
+            '<span class="apya-numeric" data-label="' + esc(l('Grants:Calls:Col:Deadline')) + '">' + esc(deadline) + '</span>' +
+            '<span class="apya-numeric" data-label="' + esc(l('Grants:Calls:Col:Amount')) + '">' + esc(amount(c)) + '</span>' +
+            '<span data-label="' + esc(l('Grants:Calls:Col:Reach')) + '">' + esc(reach(c)) + '</span>' +
+            actions(c) + '</div>';
+    }
+
+    // ---------- Boyama ----------
+    function fillIssuers(list) {
+        if (issuersFilled) { return; }
+        issuersFilled = true;
+        (list || []).forEach(function (i) { $('#IssuerFilter').append($('<option>').val(i).text(i)); });
+    }
+
+    function emptyText() {
+        if (state.issuer) { return l('Grants:Calls:EmptyFiltered'); }
+        if (state.tab === 'draft') { return l('Grants:Calls:EmptyDraft'); }
+        return l(state.closed ? 'Grants:Calls:EmptyClosed' : 'Grants:Calls:EmptyLive');
+    }
+
+    function paint(dto) {
+        $('[data-call-count="live"]').text(dto.liveCount);
+        $('[data-call-count="draft"]').text(dto.draftCount);
+        fillIssuers(dto.issuers);
+
+        var items = dto.items || [];
+        var cards = state.view === 'cards';
+        $('#CallGrid').removeClass('apya-skel-cards').toggleClass('d-none', !cards || items.length === 0)
+            .html(cards ? items.map(card).join('') : '');
+        $('#CallList').toggleClass('d-none', cards || items.length === 0);
+        $('#CallRows').html(cards ? '' : items.map(row).join(''));
+        $('#CallEmpty').toggleClass('d-none', items.length > 0).text(emptyText());
+    }
+
+    function load() {
+        $('.apya-call-live-only').toggleClass('d-none', state.tab !== 'live');
+        return board.get({
+            tab: TAB[state.tab],
+            closed: state.tab === 'live' && state.closed,
+            issuer: state.issuer || null,
+            sort: state.sort
+        }).then(paint);
+    }
+
+    // ---------- Sekme, süzgeç, görünüm ----------
+    $('.apya-call-tabs').on('click', 'a[data-call-tab]', function (e) {
         e.preventDefault();
-        var $tile = $(this).closest('.apya-tile');
-        var $panel = $tile.find('.apya-calls-panel');
-        var opening = $panel.hasClass('d-none');
-        $panel.toggleClass('d-none', !opening);
-        $(this).find('.apya-expand-chevron').toggleClass('is-open', opening);
-        if (opening && !$tile.data('callsLoaded')) {
-            $tile.data('callsLoaded', true);
-            loadCalls($tile);
-        }
+        state.tab = $(this).attr('data-call-tab');
+        $('.apya-call-tabs a[data-call-tab]').each(function () {
+            var on = $(this).attr('data-call-tab') === state.tab;
+            $(this).toggleClass('is-active', on).attr('aria-current', on ? 'page' : null);
+        });
+        history.replaceState(null, '', state.tab === 'draft' ? '/Grants?tab=draft' : '/Grants');
+        load();
     });
 
-    // ---------- Program create/edit ----------
-    $('#NewGrantButton').click(function () {
-        $('#GrantForm')[0].reset();
-        $('#GrantId').val('');
-        $('#GrantModal .apya-tag-chips').empty();
-        setSizeMask(0);
-        $('#GrantModalTitle').text('Yeni Hibe Programı');
-        grantModal.show();
-    });
-    $grid.on('click', '.apya-edit-btn', function () {
-        var g = $(this).closest('.apya-tile').data('grant');
-        $('#GrantForm')[0].reset();
-        $('#GrantModal .apya-tag-chips').empty();
-        $('#GrantId').val(g.id);
-        $('#GrantName').val(g.name);
-        $('#GrantIssuer').val(g.issuer);
-        $('#GrantDescription').val(g.description || '');
-        setMoney('#GrantMaxAmount', g.maxAmount);
-        $('#GrantMinMatchScore').val(g.minMatchScore || 0);
-        setSizeMask(g.eligibleCompanySizes || 0);
-        setTags(0, (g.criteriaTags || []).filter(function (t) { return t.kind === 0; }).map(function (t) { return t.value; }));
-        setTags(1, (g.criteriaTags || []).filter(function (t) { return t.kind === 1; }).map(function (t) { return t.value; }));
-        setTags(2, (g.criteriaTags || []).filter(function (t) { return t.kind === 2; }).map(function (t) { return t.value; }));
-        $('#GrantModalTitle').text('Hibe Programı Düzenle');
-        grantModal.show();
-    });
-    $('#GrantForm').on('submit', function (e) {
-        e.preventDefault();
-        var name = $('#GrantName').val().trim();
-        var issuer = $('#GrantIssuer').val().trim();
-        if (!name || !issuer) { abp.notify.warn('Program adı ve kurum zorunludur.'); return; }
-        var dto = {
-            name: name,
-            issuer: issuer,
-            description: $('#GrantDescription').val().trim() || null,
-            maxAmount: numOrNull('#GrantMaxAmount'),
-            minMatchScore: parseFloat($('#GrantMinMatchScore').val()) || 0,
-            eligibleCompanySizes: getSizeMask(),
-            criteriaTags: collectCriteria()
-        };
-        var id = $('#GrantId').val();
-        var op = id ? grantService.update(id, dto) : grantService.create(dto);
-        op.then(function () {
-            grantModal.hide();
-            abp.notify.success(id ? 'Hibe programı güncellendi.' : 'Hibe programı oluşturuldu.');
-            loadList();
+    $('#IssuerFilter').on('change', function () { state.issuer = $(this).val(); load(); });
+    $('#StateFilter').on('change', function () { state.closed = $(this).val() === 'closed'; load(); });
+    $('#SortFilter').on('change', function () { state.sort = parseInt($(this).val(), 10) || 0; load(); });
+
+    $('.apya-req-views').on('click', '[data-view]', function () {
+        state.view = $(this).attr('data-view');
+        $('.apya-req-views [data-view]').each(function () {
+            var on = $(this).attr('data-view') === state.view;
+            $(this).toggleClass('is-active', on).attr('aria-pressed', on ? 'true' : 'false');
         });
-    });
-    $grid.on('click', '.apya-delete-btn', function () {
-        var g = $(this).closest('.apya-tile').data('grant');
-        Swal.fire({
-            title: 'Hibe Programı Silinecek',
-            text: '"' + g.name + '" programını (ve çağrılarını) silmek istiyor musunuz?',
-            icon: 'warning', showCancelButton: true,
-            confirmButtonText: 'Evet, Sil', cancelButtonText: 'İptal', confirmButtonColor: '#dc3545'
-        }).then(function (r) {
-            if (!r.isConfirmed) return;
-            grantService.delete(g.id).then(function () {
-                abp.notify.success('Hibe programı silindi.');
-                loadList();
-            });
-        });
+        load();
     });
 
-    // ---------- Çağrı create/edit/delete ----------
-    var activeCallTile = null;
+    // ---------- Çağrı penceresi ----------
     function openCallModal(grantId, call) {
         $('#CallForm')[0].reset();
         $('#CallGrantId').val(grantId);
         if (call) {
             $('#CallId').val(call.id);
             $('#CallPeriod').val(call.period);
-            $('#CallStatus').val(call.status);
+            $('#CallStatus').val(String(call.status));
             $('#CallOpenDate').val(call.openDate ? call.openDate.substring(0, 10) : '');
             $('#CallDeadline').val(call.deadline ? call.deadline.substring(0, 10) : '');
             setMoney('#CallBudget', call.budget);
             $('#CallReference').val(call.reference || '');
-            $('#CallModalTitle').text('Çağrı Düzenle');
+            $('#CallModalTitle').text(l('Grants:Calls:Modal:EditTitle'));
         } else {
+            // Yeni çağrı taslak doğar: yayına alma Parametreler'deki yayın kapısından geçer.
             $('#CallId').val('');
-            $('#CallStatus').val('1');
-            $('#CallModalTitle').text('Yeni Çağrı');
+            $('#CallStatus').val(String(ST.Taslak));
+            $('#CallModalTitle').text(l('Grants:Calls:Modal:NewTitle'));
         }
         callModal.show();
     }
-    $grid.on('click', '.apya-call-add', function () {
-        var $tile = $(this).closest('.apya-tile');
-        activeCallTile = $tile;
-        openCallModal($tile.data('grant').id, null);
+
+    function target(el) {
+        var $host = $(el).closest('[data-grant]');
+        return {
+            grantId: $host.attr('data-grant'),
+            callId: $host.attr('data-call') || null,
+            name: $host.attr('data-name'),
+            period: $host.attr('data-period')
+        };
+    }
+
+    function confirmDelete(titleKey, textKey, arg) {
+        return Swal.fire({
+            title: l(titleKey),
+            text: l(textKey, arg),
+            icon: 'warning', showCancelButton: true,
+            confirmButtonText: l('Grants:Calls:Delete:Confirm'), cancelButtonText: l('Grants:Calls:Delete:Cancel'),
+            confirmButtonColor: '#dc3545'
+        });
+    }
+
+    $('.apya-page').on('click', '[data-act]', function () {
+        var t = target(this);
+        switch ($(this).attr('data-act')) {
+            case 'add-call':
+                openCallModal(t.grantId, null);
+                break;
+            case 'edit-call':
+                // Kart bütçeyi taşımaz; pencere çağrının güncel hâliyle açılır.
+                callService.get(t.callId).then(function (call) { openCallModal(t.grantId, call); });
+                break;
+            case 'delete-call':
+                confirmDelete('Grants:Calls:DeleteCall:Title', 'Grants:Calls:DeleteCall:Text', t.name + ' · ' + t.period).then(function (r) {
+                    if (!r.isConfirmed) { return; }
+                    callService.delete(t.callId).then(function () { abp.notify.success(l('Grants:Calls:DeleteCall:Done')); load(); });
+                });
+                break;
+            case 'delete-grant':
+                confirmDelete('Grants:Calls:DeleteGrant:Title', 'Grants:Calls:DeleteGrant:Text', t.name).then(function (r) {
+                    if (!r.isConfirmed) { return; }
+                    grantService.delete(t.grantId).then(function () { abp.notify.success(l('Grants:Calls:DeleteGrant:Done')); load(); });
+                });
+                break;
+        }
     });
-    $grid.on('click', '.apya-call-edit', function () {
-        var $tile = $(this).closest('.apya-tile');
-        activeCallTile = $tile;
-        openCallModal($tile.data('grant').id, $(this).closest('.apya-call-row').data('call'));
-    });
+
     $('#CallForm').on('submit', function (e) {
         e.preventDefault();
         var period = $('#CallPeriod').val().trim();
-        if (!period) { abp.notify.warn('Dönem zorunludur.'); return; }
+        if (!period) { abp.notify.warn(l('Grants:Calls:Modal:PeriodRequired')); return; }
         var dto = {
             grantId: $('#CallGrantId').val(),
             period: period,
@@ -305,42 +319,33 @@ $(function () {
         var op = id ? callService.update(id, dto) : callService.create(dto);
         op.then(function (saved) {
             callModal.hide();
-            abp.notify.success(id ? 'Çağrı güncellendi.' : 'Çağrı oluşturuldu.');
+            abp.notify.success(l(id ? 'Grants:Calls:Modal:Updated' : 'Grants:Calls:Modal:Created'));
             // 18b · Bu kayıtta çağrı kapandıysa zincirin sonucu ayrıca duyurulur.
             if (saved && saved.closingSummary) {
                 var s = saved.closingSummary;
-                abp.message.info(abp.localization.localize('Grants:CallClose:Summary', 'Platform')
+                abp.message.info(l('Grants:CallClose:Summary')
                     .replace('{0}', s.missedInterestCount)
                     .replace('{1}', s.unfinishedApplicationCount)
                     .replace('{2}', s.notifiedFirmCount));
             }
-            if (activeCallTile) { loadCalls(activeCallTile); }
-        });
-    });
-    $grid.on('click', '.apya-call-del', function () {
-        var $tile = $(this).closest('.apya-tile');
-        var c = $(this).closest('.apya-call-row').data('call');
-        Swal.fire({
-            title: 'Çağrı Silinecek',
-            text: '"' + c.period + '" çağrısını silmek istiyor musunuz?',
-            icon: 'warning', showCancelButton: true,
-            confirmButtonText: 'Evet, Sil', cancelButtonText: 'İptal', confirmButtonColor: '#dc3545'
-        }).then(function (r) {
-            if (!r.isConfirmed) return;
-            callService.delete(c.id).then(function () {
-                abp.notify.success('Çağrı silindi.');
-                loadCalls($tile);
-            });
+            load();
         });
     });
 
-    // ---------- Firmalara Gönder ----------
-    // Modal, 1c ekranına (/Grants/Dispatch) devredildi: skor kırılımı, danışman
-    // ataması ve kanal seçimi bir modala sığmıyordu. Buradaki düğme oraya götürür.
-    $grid.on('click', '.apya-call-send', function () {
-        var c = $(this).closest('.apya-call-row').data('call');
-        window.location.href = '/Grants/Dispatch?id=' + c.id;
+    // ---------- Tümünü tara (Kaynaklar sekmesindeki düğmeyle aynı uç) ----------
+    $('#ScrapeAllBtn').on('click', function () {
+        var $btn = $(this).prop('disabled', true);
+        sourceService.scrapeAll()
+            .then(function (r) {
+                abp.notify.success(l('Grants:Sources:ScrapeResult', r.sourceCount, r.skippedCount, r.newDraftCount));
+                // Kazıyıcı bağlı değilken hepsi atlanır — sessiz başarısızlık yerine söyle.
+                if (r.sourceCount > 0 && r.skippedCount === r.sourceCount) {
+                    abp.message.info(l('Grants:Sources:ScraperNotConnected'));
+                }
+                return load();
+            })
+            .always(function () { $btn.prop('disabled', false); });
     });
 
-    loadList();
+    load();
 });

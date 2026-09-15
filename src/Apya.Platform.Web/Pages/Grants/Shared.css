@@ -442,6 +442,22 @@
 
 .apya-req-bar .apya-grant-tabs { margin-bottom: 0; }
 
+.apya-req-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-2);
+}
+
+/* width:auto kutuyu en uzun seçenek kadar açar; uzun çağrı adı 375px'te sayfayı 438px'e
+   itiyordu (ölçüldü). Geniş ekranda üst sınır, dar ekranda tam satır. */
+.apya-req-filters .form-select { width: auto; min-width: 180px; max-width: 320px; }
+
+@media (max-width: 767.98px) {
+    .apya-req-filters { flex: 1 1 100%; }
+    .apya-req-filters .form-select { flex: 1 1 100%; width: 100%; min-width: 0; max-width: none; }
+}
+
 .apya-req-views {
     display: inline-flex;
     gap: 2px;
@@ -574,3 +590,70 @@
 /* <=20 gün: kırmızı hap. Token DEĞİL sabit renk: koyu temada --apya-negative-700 açık
    pembeye döner (beyaz yazı 1,9:1). Afiş her temada koyu, hap da öyle kalmalı — 6,5:1. */
 .apya-feed-days.is-urgent { background: #B91C1C; }
+
+/* --- 12 · Afişli kart iskeleti ---
+   Kiracı akışı (Tenant.css: soluk kart, yer imi, "neden uygun") ve host Çağrılar ekranı
+   (Calls.css: durum rozeti, erişim sayıları) ortak kullanır. Kurallar Tenant.css'ten birebir taşındı. */
+
+/* Kart akışı: Size uygun 2 sütun, diğer sekmeler 3 sütun (13) */
+.apya-feed-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--apya-space-4);
+}
+
+.apya-feed-grid[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Üç sütun yalnız geniş ekranda: 1200px'te kart 252px'e iniyor, afiş adı ve rozetler sıkışıyordu. */
+@media (max-width: 1399.98px) { .apya-feed-grid[data-cols="3"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767.98px) { .apya-feed-grid, .apya-feed-grid[data-cols="3"] { grid-template-columns: minmax(0, 1fr); } }
+
+.apya-feed-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    color: var(--apya-text-primary);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+    overflow: hidden;
+}
+
+.apya-feed-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    padding: var(--apya-space-3) var(--apya-space-4) var(--apya-space-4);
+}
+
+.apya-feed-amount-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--apya-space-2);
+    flex-wrap: wrap;
+}
+
+.apya-feed-amount-value {
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-fs-lg);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-feed-rate {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-feed-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--apya-space-2);
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding-top: var(--apya-space-3);
+    border-top: 1px solid var(--apya-border-subtle);
+}

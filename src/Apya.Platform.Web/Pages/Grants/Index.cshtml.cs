@@ -1,7 +1,8 @@
-using Apya.Platform.Web.Pages;
-using Volo.Abp.MultiTenancy;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Volo.Abp.MultiTenancy;
 using Apya.Platform.Permissions;
+using Apya.Platform.Web.Pages;
 
 namespace Apya.Platform.Web.Pages.Grants;
 
@@ -13,6 +14,10 @@ public class IndexModel : PlatformPageModel
     // Host (CurrentTenant.Id == null) → katalog yönetimi; tenant → profil + öneri feed.
     public bool IsHost { get; private set; }
 
+    /// <summary>21a/22 · Host Çağrılar sekmesi: "live" (varsayılan) ya da "draft". Kaynaklar ayrı sayfa.</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Tab { get; set; }
+
     public IndexModel(ICurrentTenant currentTenant)
     {
         _currentTenant = currentTenant;
@@ -21,5 +26,6 @@ public class IndexModel : PlatformPageModel
     public void OnGet()
     {
         IsHost = _currentTenant.Id == null;
+        Tab = Tab == "draft" ? "draft" : "live";
     }
 }
