@@ -130,6 +130,12 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-calendar-check", "/Grants/Journey", GroupSimilar: false),
 
+            // 20b · Fikrine uyan çağrı açıldı: bildirim çağrının detayına götürür ("Çağrıyı incele");
+            // görüşme önerisi ve geri çekme Hibe Yolculuğum satırında.
+            [NotificationType.GrantIdeaLinked] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-bullseye", "/Grants/Detail?id={0}", GroupSimilar: false),
+
             [NotificationType.AiWorkflowTriggered] = new(
                 NotificationCategory.Ai, NotificationSeverity.Info,
                 "fa fa-robot", "/AiCenter/Evaluations", GroupSimilar: false),

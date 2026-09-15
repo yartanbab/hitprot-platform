@@ -277,6 +277,23 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
         CreatorId = userId;
     }
 
+    /// <summary>
+    /// 20a · Danışman havuzdaki fikri çağrıyla ilişkilendirdi: kayıt talep olur. Fikri okuyup çağrıyı seçen
+    /// danışman ilk yanıtı zaten vermiştir → doğrudan <see cref="GrantInterestStatus.Inceleniyor"/>; sorumlu
+    /// yoksa ilişkilendiren olur. Yalnız bekleyen havuz fikri bağlanır.
+    /// </summary>
+    public void LinkToCall(Guid grantCallId, Guid? userId, DateTime now)
+    {
+        if (!IsPoolIdea)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantInterestAlreadyLinked);
+        }
+
+        EnsurePending();
+        GrantCallId = grantCallId;
+        StartReview(userId, now);
+    }
+
     /// <summary>Başvuru ve görüşme bir çağrı için yürür; havuzdaki fikir önce çağrıyla ilişkilendirilmeli.</summary>
     public void EnsureLinked()
     {

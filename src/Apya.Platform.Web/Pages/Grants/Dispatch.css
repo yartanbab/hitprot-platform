@@ -162,3 +162,157 @@
     .apya-cand-row > * { grid-column: 2; }
     .apya-cand-row > :first-child { grid-column: 1; grid-row: 1; }
 }
+
+/* =============================================================================
+   20a · Havuzdaki fikirler. Şerit Talepler'in yanıt süresi şeridiyle aynı dil (accent zemin);
+   sekme şeridi Shared.css'teki .apya-grant-tabs. Kartın gerekçe satırları token renkte.
+   ============================================================================= */
+
+.apya-dispatch-idea-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: 15px 18px;
+    margin-bottom: var(--apya-space-4);
+    border: 1px solid var(--apya-accent-300);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-accent-soft);
+    color: var(--apya-text-secondary);
+}
+
+.apya-dispatch-idea-strip > .fa { color: var(--apya-accent-500); }
+
+.apya-dispatch-idea-strip-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    line-height: 1.5;
+}
+
+.apya-dispatch-idea-strip-text strong { color: var(--apya-text-primary); }
+
+/* Sekme şeridi bağlantı değil düğme: tarayıcının düğme yazı tipini ve yüksekliğini sıfırla. */
+button.apya-grant-tab { font-family: inherit; line-height: 1; }
+
+.apya-dispatch-ideas {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+.apya-dispatch-ideas-scoring {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-dispatch-idea-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+}
+
+#IdeaCards { --apya-skel-card: 190px; }
+
+.apya-dispatch-idea-below {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-2);
+    margin-top: var(--apya-space-3);
+}
+
+/* --- Fikir kartı --- */
+.apya-idea-match { color: var(--apya-text-primary); }
+
+.apya-idea-match .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.apya-idea-match-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--apya-space-3);
+}
+
+.apya-idea-match-title {
+    margin: 0;
+    font-size: var(--apya-fs-md);
+    font-weight: var(--apya-weight-semibold);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.apya-idea-match-score {
+    flex: 0 0 auto;
+    padding: 3px 10px;
+    border-radius: var(--apya-radius-full);
+    background: var(--apya-surface-sunken);
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+    font-weight: var(--apya-weight-bold);
+}
+
+.apya-idea-match-score.is-strong {
+    background: var(--apya-positive-50);
+    color: var(--apya-text-positive);
+}
+
+.apya-idea-match-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+    min-width: 0;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-idea-match-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px var(--apya-space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--apya-fs-sm);
+}
+
+.apya-idea-match-reasons li {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    color: var(--apya-text-secondary);
+}
+
+.apya-idea-match-reasons li.is-good > i { color: var(--apya-text-positive); }
+.apya-idea-match-reasons li.is-warn > i { color: var(--apya-text-warning); }
+.apya-idea-match-reasons li.is-quiet > i { color: var(--apya-text-tertiary); }
+
+.apya-idea-match-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding-top: 10px;
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+.apya-idea-match-note {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+}
+
+/* Eşik altı: zemin geri çekilir, metin okunur kalır (soluklaştırma opacity ile DEĞİL — kontrast düşerdi). */
+.apya-idea-match.is-below { background: var(--apya-surface-raised); }
+
+@media (max-width: 767.98px) {
+    .apya-dispatch-idea-strip { flex-wrap: wrap; }
+    .apya-dispatch-idea-strip .btn { flex: 1 1 100%; }
+    .apya-idea-match-actions .btn { flex: 1 1 auto; }
+}

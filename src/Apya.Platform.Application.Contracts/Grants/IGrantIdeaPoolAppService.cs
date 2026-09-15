@@ -23,4 +23,16 @@ public interface IGrantIdeaPoolAppService : IApplicationService
 
     /// <summary>Danışman firma adına fikir girer; kayıt firmanın olur ve Hibe Yolculuğu'nda görünür.</summary>
     Task<GrantIdeaDetailDto> CreateAsync(CreateGrantIdeaInput input);
+
+    /// <summary>
+    /// 20a · Çağrı için havuz taraması: her bekleyen fikrin puanı ve gerekçesi. Kayıt tutulmaz, her açılışta
+    /// hesaplanır. Firmanın bu çağrıda süren talebi ya da başvurusu varsa fikri listelenmez (bağlanamaz).
+    /// </summary>
+    Task<GrantCallIdeaMatchesDto> GetCallMatchesAsync(Guid grantCallId);
+
+    /// <summary>
+    /// 20a · Fikirleri açık çağrıyla ilişkilendirir: talep olur (İnceleniyor, sorumlu ilişkilendiren), çağrı
+    /// firmanın takip listesine girer ve firmaya "Fikrinize uygun bir çağrı açıldı" bildirimi gider.
+    /// </summary>
+    Task<GrantIdeaLinkResultDto> LinkAsync(LinkGrantIdeasInput input);
 }

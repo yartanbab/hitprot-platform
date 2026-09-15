@@ -78,6 +78,28 @@ public class GrantDispatchPage_Tests : PlatformWebTestBase
             .ShouldBeTrue("sayfa demeti Dispatch.js içermeli");
     }
 
+    /// <summary>
+    /// 20a · İki sekme: Firmalar ve Havuzdaki fikirler. Fikir Havuzu'ndaki "İlişkilendir" sayfayı
+    /// <c>?tab=ideas</c> ile fikir sekmesi açık getirir; firma tablosu gizli ama sayfada durur.
+    /// </summary>
+    [Fact]
+    public async Task Havuzdaki_Fikirler_Sekmesi_Adresle_Acilir()
+    {
+        var id = await OpenCallIdAsync();
+
+        var firms = await GetResponseAsStringAsync($"/Grants/Dispatch?id={id}");
+        firms.ShouldContain("data-dispatch-tab=\"ideas\"");
+        firms.ShouldContain("IdeaStrip");
+        firms.ShouldContain("Uyan fikirlerin hepsini ilişkilendir");
+        System.Text.RegularExpressions.Regex.IsMatch(firms, @"id=""DispatchPaneIdeas""[^>]*")
+            .ShouldBeTrue();
+        System.Text.RegularExpressions.Regex.IsMatch(firms, @"class=""apya-dispatch-ideas d-none""").ShouldBeTrue("varsayılan sekme firmalar");
+
+        var ideas = await GetResponseAsStringAsync($"/Grants/Dispatch?id={id}&tab=ideas");
+        System.Text.RegularExpressions.Regex.IsMatch(ideas, @"class=""apya-dispatch-layout d-none""").ShouldBeTrue("fikir sekmesinde firma tablosu gizli");
+        System.Text.RegularExpressions.Regex.IsMatch(ideas, @"class=""apya-dispatch-ideas d-none""").ShouldBeFalse();
+    }
+
     [Fact]
     public async Task Id_Verilmezse_Listeye_Yonlendirir()
     {

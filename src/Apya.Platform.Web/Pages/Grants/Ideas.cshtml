@@ -18,7 +18,7 @@
 }
 
 @* 19a/22 · Fikir Havuzu. Sekme yok: çağrıyla ilişkilendirilen fikir talep olur ve Talepler'de yaşar.
-   Çağrı eşleşmesi sütunu ve "Eşleşme bekleyen" şeridi eşleştirmeyle gelir (tur 20). Satırları Ideas.js boyar. *@
+   Çağrı eşleşmesi sütunu ve "Eşleşme bekleyen" şeridi tur 20: açık çağrılar her açılışta taranır. Satırları Ideas.js boyar. *@
 <div data-page-description="@L["Grants:Ideas:Description"]" class="apya-page apya-grant-scope">
     <div class="apya-page-head">
         <div class="apya-page-head-actions d-flex align-items-center gap-2">
@@ -37,10 +37,18 @@
                 <option value="1">@L["Grants:Ideas:Source:Consultant"]</option>
             </select>
             <select class="form-select" id="SortFilter" aria-label="@L["Grants:Ideas:Filter:Sort"]">
+                <option value="2">@L["Grants:Ideas:Sort:Match"]</option>
                 <option value="0">@L["Grants:Ideas:Sort:Newest"]</option>
                 <option value="1">@L["Grants:Ideas:Sort:Budget"]</option>
             </select>
         </div>
+    </div>
+
+    @* 22 · "Eşleşme bekleyen" şeridi: açık çağrılarla eşiği geçen ama henüz bağlanmamış fikirler. *@
+    <div id="AwaitingStrip" class="apya-idea-awaiting d-none" role="status">
+        <i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i>
+        <span id="AwaitingText" class="apya-idea-awaiting-text"></span>
+        <button type="button" id="AwaitingToggle" class="btn btn-sm btn-outline-primary" aria-pressed="false"></button>
     </div>
 
     <section class="card mb-0 apya-idea-table">
@@ -48,7 +56,7 @@
             <span>@L["Grants:Ideas:Col:Idea"]</span>
             <span>@L["Grants:Ideas:Col:Creator"]</span>
             <span>@L["Grants:Ideas:Col:Budget"]</span>
-            <span>@L["Grants:Ideas:Col:Start"]</span>
+            <span>@L["Grants:Ideas:Col:Match"]</span>
             <span></span>
         </div>
         <div id="IdeaRows" class="apya-skel-rows"></div>
