@@ -1,0 +1,127 @@
+/* =============================================================================
+   22b · Host Talepler › Yanıt bekleyen. Sekme şeridi ve görünüm düğmesi Shared.css'te
+   (pano ve liste sayfalarıyla ortak). Değerler token; tasarımın #374151 gövde metni
+   secondary'ye, #A5B4FC şerit kenarlığı accent-300'e indi.
+   ============================================================================= */
+
+.apya-req-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--apya-space-2);
+}
+
+/* width:auto kutuyu en uzun seçenek kadar açar; uzun çağrı adı 375px'te sayfayı 438px'e
+   itiyordu (ölçüldü). Geniş ekranda üst sınır, dar ekranda tam satır. */
+.apya-req-filters .form-select { width: auto; min-width: 180px; max-width: 320px; }
+
+@media (max-width: 767.98px) {
+    .apya-req-filters { flex: 1 1 100%; }
+    .apya-req-filters .form-select { flex: 1 1 100%; width: 100%; min-width: 0; max-width: none; }
+}
+
+/* --- Yanıt süresi şeridi --- */
+.apya-req-due {
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-3);
+    padding: 15px 18px;
+    border: 1px solid var(--apya-accent-300);
+    margin-bottom: var(--apya-space-4);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-accent-soft);
+    color: var(--apya-text-secondary);
+}
+
+.apya-req-due > .fa { color: var(--apya-accent-500); }
+.apya-req-due-text { flex: 1; line-height: 1.55; }
+
+/* --- Tablo (CSS grid; hibe modülünde <table> yok) ---
+   Tasarımın sabit sütunları (210/150/140/150/130) üst menülü 1440px kabuk içindi. Yan menülü
+   kabukta kart 1440px'te ~1050px kalıyor ve firma sütununa 149px düşüyordu (ölçüldü) →
+   metin sütunları oranla paylaşır, kısa değerli üç sütun sabit kalır. */
+.apya-req-head,
+.apya-req-row {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, 1fr) 112px 136px 104px;
+    gap: var(--apya-space-4);
+    align-items: center;
+    padding: 14px var(--apya-space-5);
+}
+
+.apya-req-head {
+    padding-block: 11px;
+    background: var(--apya-surface-raised);
+    border-bottom: 1px solid var(--apya-border-default);
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-secondary);
+}
+
+.apya-req-row + .apya-req-row { border-top: 1px solid var(--apya-border-subtle); }
+
+.apya-req-firm {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.apya-req-firm strong { font-weight: var(--apya-weight-semibold); }
+
+.apya-req-firm span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+}
+
+.apya-req-call,
+.apya-req-arrived {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--apya-text-secondary);
+}
+
+.apya-req-consultant {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    color: var(--apya-text-secondary);
+}
+
+.apya-req-consultant-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.apya-req-response { font-weight: var(--apya-weight-semibold); }
+.apya-req-response.is-waiting { color: var(--apya-text-warning); }
+.apya-req-response.is-urgent { color: var(--apya-text-negative); }
+.apya-req-response.is-good { color: var(--apya-text-positive); }
+.apya-req-response.is-quiet { color: var(--apya-text-secondary); font-weight: var(--apya-weight-regular); }
+
+.apya-req-cta { justify-self: stretch; }
+
+/* --- Dar ekran: satır karta dönüşür, hücreler etiketini data-label ile taşır (Shared.css) --- */
+@media (max-width: 991.98px) {
+    .apya-req-head { display: none; }
+
+    .apya-req-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+        row-gap: var(--apya-space-2);
+    }
+
+    .apya-req-firm,
+    .apya-req-cta { grid-column: 1 / -1; }
+
+    /* Avatar + ad yatay flex; etiketi kendi satırına al. */
+    .apya-req-consultant { flex-wrap: wrap; }
+    .apya-req-consultant::before { flex: 0 0 100%; }
+
+    .apya-req-due { flex-wrap: wrap; }
+    .apya-req-due .btn { flex: 1 1 100%; }
+}

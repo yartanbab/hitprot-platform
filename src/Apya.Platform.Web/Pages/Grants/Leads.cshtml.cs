@@ -1,5 +1,7 @@
+using System;
 using Apya.Platform.Grants;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Permissions;
 using Apya.Platform.Web.Pages;
 
@@ -19,4 +21,8 @@ public class LeadsModel : PlatformPageModel
     /// FormatException ile sayfayı komple düşürür.
     /// </summary>
     public int QualifiedThreshold => GrantLeadHeatCalculator.QualifiedThreshold;
+
+    /// <summary>22b · Talepler'den gelinen talep; listede seçili açılır. Yoksa ilk talep seçilir.</summary>
+    [BindProperty(SupportsGet = true)]
+    public Guid? Id { get; set; }
 }

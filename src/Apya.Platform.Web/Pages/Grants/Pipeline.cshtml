@@ -15,9 +15,15 @@
 @section scripts {
     <script src="~/libs/sortablejs/Sortable.min.js"></script>
     <abp-script src="/Pages/Grants/Pipeline.js" />
+    <abp-script src="/Pages/Grants/RequestTabs.js" />
 }
 
 <div data-page-description="@L["Grants:Pipeline:Description"]" class="apya-page apya-grant-scope">
+
+    @* 22b · Pano, Talepler › Yürüyen başvuru sekmesinin pano görünümü. *@
+    <div class="apya-req-bar">
+        <partial name="_RequestTabs" model='"board"' />
+    </div>
 
     @* ---------- Üst şerit: çağrı + danışman süzgeci ---------- *@
     <div class="card mb-0">

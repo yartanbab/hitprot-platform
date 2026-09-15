@@ -113,7 +113,7 @@ public static class NotificationTypeRegistry
             // bırakabilir; okunmamış satır varsa sayaç artar, kutu tek satır kalır.
             [NotificationType.GrantInterestReceived] = new(
                 NotificationCategory.Grants, NotificationSeverity.Normal,
-                "fa fa-inbox", "/Grants/Interests", GroupSimilar: true),
+                "fa fa-inbox", "/Grants/Requests", GroupSimilar: true),
 
             // 18b · Kapanan çağrı firmanın Hibe Yolculuğum ekranında "çağrı kapandı" satırıyla durur.
             [NotificationType.GrantCallClosed] = new(
@@ -123,7 +123,7 @@ public static class NotificationTypeRegistry
             // 18e · Görüşme önerisi talebin inceleme ekranında cevaplanır; kutu oraya götürür.
             [NotificationType.GrantMeetingProposed] = new(
                 NotificationCategory.Grants, NotificationSeverity.Normal,
-                "fa fa-calendar-plus", "/Grants/Interests", GroupSimilar: true),
+                "fa fa-calendar-plus", "/Grants/Requests", GroupSimilar: true),
 
             // 18e · Onaylanan saat ya da başka saat isteği firmanın Hibe Yolculuğum satırında durur.
             [NotificationType.GrantMeetingAnswered] = new(

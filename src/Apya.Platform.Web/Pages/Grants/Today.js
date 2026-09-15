@@ -44,7 +44,7 @@ $(function () {
             case 4: case 5: case 9: return '/Grants/DetailHost?id=' + item.applicationId;
             case 6: return '/Grants/Leads';
             case 7: return '/Grants/Parameters?id=' + item.grantId;
-            case 8: return '/Grants/Interests';
+            case 8: return '/Grants/Requests';
         }
         return '#';
     }

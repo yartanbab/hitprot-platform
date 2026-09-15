@@ -1,0 +1,59 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.RequestsModel
+@{
+    ViewBag.Title = L["Grants:Requests:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+    <abp-style src="/Pages/Grants/Requests.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Requests.js" />
+}
+
+@* 22b · Talepler › Yanıt bekleyen. Karar ve eylemler kaydın kendi ekranında (İlgi inceleme,
+   Ön değerlendirme); burası sıradaki işi bulup açmak içindir. *@
+<div data-page-description="@L["Grants:Requests:Description"]" class="apya-page apya-grant-scope">
+
+    <div class="apya-req-bar">
+        <partial name="_RequestTabs" model='"pending"' />
+        <div class="apya-req-filters">
+            <select class="form-select" id="ConsultantFilter" aria-label="@L["Grants:Requests:Filter:Consultant"]">
+                <option value="">@L["Grants:Requests:Filter:AllConsultants"]</option>
+            </select>
+            <select class="form-select" id="CallFilter" aria-label="@L["Grants:Requests:Filter:Call"]">
+                <option value="">@L["Grants:Requests:Filter:AllCalls"]</option>
+            </select>
+            @* "Tümü" sekmesi yok: kapanmış talepler durum süzgecinden gelir (22b). *@
+            <select class="form-select" id="StateFilter" aria-label="@L["Grants:Requests:Filter:State"]">
+                <option value="open">@L["Grants:Requests:Filter:Open"]</option>
+                <option value="closed">@L["Grants:Requests:Filter:Closed"]</option>
+            </select>
+        </div>
+    </div>
+
+    @* Yanıt süresi dolmak üzere ya da dolmuş talepler — danışman kırılımıyla tek cümle. *@
+    <div id="DueStrip" class="apya-req-due d-none" role="status">
+        <i class="fa fa-triangle-exclamation" aria-hidden="true"></i>
+        <span id="DueText" class="apya-req-due-text"></span>
+        <a id="DueNext" class="btn btn-primary" href="#">@L["Grants:Requests:Due:Next"]</a>
+    </div>
+
+    <section class="card mb-0 apya-req-table">
+        <div class="apya-req-head" aria-hidden="true">
+            <span>@L["Grants:Requests:Col:Firm"]</span>
+            <span>@L["Grants:Requests:Col:Call"]</span>
+            <span>@L["Grants:Requests:Col:Consultant"]</span>
+            <span>@L["Grants:Requests:Col:Arrived"]</span>
+            <span>@L["Grants:Requests:Col:Response"]</span>
+            <span></span>
+        </div>
+        <div id="RequestRows" class="apya-skel-rows"></div>
+        <p id="RequestEmpty" class="apya-src-empty d-none"></p>
+    </section>
+</div>

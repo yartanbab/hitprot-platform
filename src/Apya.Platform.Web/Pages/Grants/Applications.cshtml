@@ -11,6 +11,7 @@
 
 @section scripts {
     <abp-script src="/Pages/Grants/Applications.js" />
+    <abp-script src="/Pages/Grants/RequestTabs.js" />
 }
 
 <style>
@@ -23,6 +24,11 @@
         <div class="apya-page-head-actions">
             <a href="/Grants" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i>Programlara Dön</a>
         </div>
+    </div>
+
+    @* 22b · Liste, Talepler › Yürüyen başvuru sekmesinin liste görünümü. *@
+    <div class="apya-req-bar">
+        <partial name="_RequestTabs" model='"list"' />
     </div>
 
     <div id="AppList"></div>
