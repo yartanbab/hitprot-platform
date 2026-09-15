@@ -470,9 +470,12 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
             Key = SectionSubmit,
             Value = application.SubmittedAt.HasValue ? 1 : 0,
             Total = 1,
-            // Gönderim, zorunlu evrak tamamlanana kadar KİLİTLİ görünür.
+            // Gönderim, paketin kurulabildiği ana kadar KİLİTLİ görünür: zorunlular onaylı
+            // VE en az bir onaylı evrak (evrak paketindeki IsComplete ile aynı kural).
+            // Yalnız zorunluya baksaydık evraksız başvuruda 0 < 0 tutmaz, kilit açılırdı.
             State = application.SubmittedAt.HasValue ? GrantDetailSectionState.Complete
-                : approved < mandatory ? GrantDetailSectionState.Locked
+                : approved < mandatory || !documents.Any(d => d.Status == GrantDocumentStatus.Onaylandi)
+                    ? GrantDetailSectionState.Locked
                 : GrantDetailSectionState.InProgress
         });
 

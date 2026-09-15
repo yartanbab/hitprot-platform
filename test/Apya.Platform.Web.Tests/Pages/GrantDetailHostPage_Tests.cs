@@ -293,4 +293,18 @@ public class GrantDetailHostPage_Tests : PlatformWebTestBase
         var console = await GetRequiredService<IGrantApplicationDocumentAppService>().GetAsync(id);
         console.Documents.Count.ShouldBe(1);
     }
+
+    [Fact]
+    public async Task Evraksiz_Basvuruda_Gonderim_Kilitli()
+    {
+        // Şablonda evrak yok: zorunlu sayısı 0, gönderilecek paket de yok.
+        var id = await SetupAsync();
+
+        var dto = await _detail.GetAsync(id);
+
+        dto.Sections.Single(s => s.Key == GrantApplicationDetailAppService.SectionDocuments)
+            .Total.ShouldBe(0);
+        dto.Sections.Single(s => s.Key == GrantApplicationDetailAppService.SectionSubmit)
+            .State.ShouldBe(GrantDetailSectionState.Locked);
+    }
 }
