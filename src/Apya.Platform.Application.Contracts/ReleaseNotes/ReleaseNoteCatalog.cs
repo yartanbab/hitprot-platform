@@ -26,6 +26,22 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.17",
+            date: "17 Eylül 2026",
+            title: "Genel Bakış'ta üst şerit inceldi, kartlara daha çok yer kaldı",
+
+            // ── Genel Bakış ───────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Genel Bakış ekranı kartlara daha çok yer ayırıyor",
+                "Genel Bakış'ın üst şeridi iki satırdan tek satıra indi: ekran adı, görünüm sekmeleri " +
+                "(Proje Yönetimi, Finans, Bugün, Hibe takibi) ve sağdaki denetimler artık aynı hizada duruyor. " +
+                "Sekmenin hemen üstünde aynı görünüm adını tekrarlayan etiket kaldırıldı — hangi görünümde " +
+                "olduğunuz zaten koyu renkli sekmeden okunuyor. Kazanılan yer kartlara gitti: kartlar ekranda " +
+                "daha yukarıdan başlıyor, ilk bakışta daha fazlasını görüyor ve daha az aşağı kaydırıyorsunuz. " +
+                "Görünümler, zaman aralığı, yazdırma ve düzenleme aynı yerde ve aynı şekilde çalışmaya devam " +
+                "ediyor; telefonda bir değişiklik yok.")),
+
+        new ReleaseNote(
             version: "2026.09.15",
             date: "15 Eylül 2026",
             title: "Proje fikrinizi çağrı beklemeden paylaşın; hibe detayında program amacı ve destek aralığı",
