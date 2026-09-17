@@ -28,7 +28,26 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.17",
             date: "17 Eylül 2026",
-            title: "Genel Bakış'ta üst şerit inceldi, kartlara daha çok yer kaldı",
+            title: "Formlarda hazır listeler, birbirine bağlı ve koşullu sorular; Genel Bakış'ta üst şerit inceldi",
+
+            // ── Formlar ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Form sorularında hazır listeler ve birbirine bağlı sorular",
+                "Açılır liste sorularında seçenekleri tek tek yazmak zorunda değilsiniz: hazır bir liste " +
+                "seçebiliyorsunuz — açık hibe çağrıları, projeleriniz ya da proje görevleriniz. Liste kendini " +
+                "güncel tutar; yeni bir proje açtığınızda formu düzenlemeniz gerekmez. İki soruyu birbirine de " +
+                "bağlayabilirsiniz: formu dolduran önce projeyi seçer, ikinci soruda yalnız o projenin görevleri " +
+                "listelenir. Bağlanacak soru formda daha yukarıda olmalı — düzenleyicide uygun bir üst soru " +
+                "yoksa uyarı görürsünüz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Cevaba göre görünen sorular",
+                "Bir soruyu yalnız belirli durumlarda gösterebilirsiniz: üstteki soru cevaplandığında, belirli " +
+                "bir cevap verildiğinde ya da verilmediğinde. Seçilen kaydın özelliğine de bakabilir; örneğin " +
+                "yalnız ortaklık şartı olan bir çağrı seçildiğinde ortak bilgilerini sorabilirsiniz. Gizlenen " +
+                "sorular zorunlu sayılmaz ve cevapları kaydedilmez: formu dolduran kişi cevabını koşulu bozacak " +
+                "şekilde değiştirirse o soru formdan çıkar, daha önce yazdığı cevap da kayda geçmez. İlerleme " +
+                "göstergesi yalnız görünen soruları sayar."),
 
             // ── Genel Bakış ───────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
