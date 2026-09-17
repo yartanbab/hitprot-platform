@@ -1,0 +1,865 @@
+<title>Hibe Workspace Denetimi</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#F6F7F9; --surface:#FFFFFF; --surface-2:#EEF0F4; --surface-3:#E4E7ED;
+    --line:#DDE1E8; --line-strong:#C3C9D4;
+    --ink:#14181F; --ink-2:#39414E; --muted:#5C6470;
+    --accent:#3D4BC7; --accent-ink:#2C379B; --accent-soft:rgba(61,75,199,.09);
+    --pos:#0A6B4F; --pos-soft:rgba(10,107,79,.10);
+    --warn:#95590A; --warn-soft:rgba(149,89,10,.12);
+    --neg:#A92222; --neg-soft:rgba(169,34,34,.10);
+    --shadow:0 1px 2px rgba(20,24,31,.05), 0 8px 24px -16px rgba(20,24,31,.28);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0F1217; --surface:#161A21; --surface-2:#1D222B; --surface-3:#262C37;
+      --line:#2A313C; --line-strong:#3A424F;
+      --ink:#E7EAF0; --ink-2:#C2C9D4; --muted:#959DAB;
+      --accent:#9CA5FF; --accent-ink:#B8BFFF; --accent-soft:rgba(156,165,255,.12);
+      --pos:#54C69C; --pos-soft:rgba(84,198,156,.13);
+      --warn:#E0A64A; --warn-soft:rgba(224,166,74,.14);
+      --neg:#F08A84; --neg-soft:rgba(240,138,132,.13);
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0F1217; --surface:#161A21; --surface-2:#1D222B; --surface-3:#262C37;
+    --line:#2A313C; --line-strong:#3A424F;
+    --ink:#E7EAF0; --ink-2:#C2C9D4; --muted:#959DAB;
+    --accent:#9CA5FF; --accent-ink:#B8BFFF; --accent-soft:rgba(156,165,255,.12);
+    --pos:#54C69C; --pos-soft:rgba(84,198,156,.13);
+    --warn:#E0A64A; --warn-soft:rgba(224,166,74,.14);
+    --neg:#F08A84; --neg-soft:rgba(240,138,132,.13);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    font-size:15px; line-height:1.6; margin:0;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding-inline:20px; padding-block:0 72px}
+  h1,h2,h3,h4{font-family:"IBM Plex Serif",Georgia,serif; text-wrap:balance; margin:0}
+  h1{font-size:clamp(28px,4.4vw,42px); line-height:1.15; font-weight:600; letter-spacing:-.01em}
+  h2{font-size:clamp(21px,2.6vw,27px); font-weight:600; line-height:1.25}
+  h3{font-size:17px; font-weight:600; line-height:1.35}
+  h4{font-size:15px; font-weight:600; font-family:"IBM Plex Sans",sans-serif}
+  p{margin:0}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.87em}
+  code{background:var(--surface-2); padding:1px 5px; border-radius:4px; color:var(--ink-2); word-break:break-word}
+  a{color:var(--accent-ink); text-underline-offset:2px}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px}
+
+  /* ---- üst şerit ---- */
+  .topbar{
+    position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--ground) 88%,transparent);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+  }
+  .topbar-in{max-width:1080px; margin:0 auto; padding:9px 20px; display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .topbar a{
+    font-size:12.5px; color:var(--muted); text-decoration:none; padding:4px 9px;
+    border-radius:999px; white-space:nowrap; border:1px solid transparent;
+  }
+  .topbar a:hover{color:var(--ink); background:var(--surface-2); border-color:var(--line)}
+  .topbar .brand{font-weight:600; color:var(--ink); padding-left:0; margin-right:auto; font-family:"IBM Plex Serif",serif}
+
+  /* ---- başlık ---- */
+  header.hero{padding-block:44px 30px; border-bottom:1px solid var(--line)}
+  .eyebrow{
+    font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+    font-weight:600; margin-bottom:12px;
+  }
+  .lede{font-size:17px; color:var(--ink-2); max-width:62ch; margin-top:14px}
+  .meta{margin-top:20px; font-size:13px; color:var(--muted); display:flex; gap:18px; flex-wrap:wrap}
+
+  .facts{display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:1px; background:var(--line);
+         border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-top:26px}
+  .fact{background:var(--surface); padding:13px 14px}
+  .fact b{display:block; font-size:22px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+  .fact span{font-size:12px; color:var(--muted); display:block; margin-top:2px; line-height:1.35}
+
+  section{padding-block:38px; border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:0}
+  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:6px; flex-wrap:wrap}
+  .sec-tag{
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--accent-ink);
+    background:var(--accent-soft); padding:2px 7px; border-radius:5px; font-weight:500;
+  }
+  .sec-sub{color:var(--muted); font-size:14px; margin-bottom:22px; max-width:68ch}
+  .stack{display:flex; flex-direction:column; gap:18px}
+  .stack-sm{display:flex; flex-direction:column; gap:10px}
+
+  /* ---- tablo ---- */
+  .tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:560px}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{
+    background:var(--surface-2); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--muted); font-weight:600; white-space:nowrap; position:sticky; top:0;
+  }
+  tbody tr:last-child td{border-bottom:0}
+  td.num{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+  td.mono,th.mono{font-family:"IBM Plex Mono",monospace; font-size:12.5px; white-space:nowrap}
+
+  /* ---- rozetler ---- */
+  .chip{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
+        padding:2px 8px; border-radius:999px; white-space:nowrap; line-height:1.5}
+  .chip-neg{background:var(--neg-soft); color:var(--neg)}
+  .chip-warn{background:var(--warn-soft); color:var(--warn)}
+  .chip-pos{background:var(--pos-soft); color:var(--pos)}
+  .chip-acc{background:var(--accent-soft); color:var(--accent-ink)}
+  .chip-mut{background:var(--surface-3); color:var(--muted)}
+
+  /* ---- problem kartı ---- */
+  .prob{background:var(--surface); border:1px solid var(--line); border-radius:11px; overflow:hidden}
+  .prob-head{display:flex; gap:11px; align-items:flex-start; padding:14px 16px; border-bottom:1px solid var(--line)}
+  .prob-id{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; color:var(--muted); padding-top:2px}
+  .prob-head h3{flex:1; min-width:0}
+  .prob-body{display:grid; gap:0; grid-template-columns:118px 1fr}
+  .prob-body>dt{
+    padding:10px 16px; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--muted); border-bottom:1px solid var(--line); background:var(--surface-2);
+  }
+  .prob-body>dd{padding:10px 16px; margin:0; border-bottom:1px solid var(--line); font-size:14px; color:var(--ink-2)}
+  .prob-body>dt:last-of-type,.prob-body>dd:last-of-type{border-bottom:0}
+  .prob-body dd b{color:var(--ink)}
+  @media (max-width:560px){
+    .prob-body{grid-template-columns:1fr}
+    .prob-body>dt{padding-bottom:2px; background:transparent; border-bottom:0}
+    .prob-body>dd{padding-top:2px}
+  }
+
+  /* ---- hata kutusu ---- */
+  .bug{border:1px solid var(--line); border-left:3px solid var(--neg); border-radius:0 10px 10px 0;
+       background:var(--surface); padding:14px 16px}
+  .bug h3{margin-bottom:6px}
+  .bug p{font-size:14px; color:var(--ink-2)}
+  .bug ul{margin:8px 0 0; padding-left:18px; font-size:13.5px; color:var(--ink-2)}
+  .bug li{margin-bottom:3px}
+  .bug--warn{border-left-color:var(--warn)}
+
+  /* ---- IA ağaç ---- */
+  .ia-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  @media (max-width:760px){.ia-grid{grid-template-columns:1fr}}
+  .ia{background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:16px}
+  .ia h4{margin-bottom:10px; display:flex; align-items:center; gap:8px}
+  .ia pre{
+    font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:1.7; margin:0;
+    white-space:pre; overflow-x:auto; color:var(--ink-2);
+  }
+  .ia--new{border-color:var(--accent); box-shadow:var(--shadow)}
+  .ia--new pre b{color:var(--accent-ink); font-weight:500}
+  .ia del{color:var(--muted); text-decoration-color:var(--neg)}
+
+  /* ---- akış ---- */
+  .flow{background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:16px}
+  .flow pre{font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:1.75; margin:0;
+            white-space:pre; overflow-x:auto; color:var(--ink-2)}
+  .flow h4{margin-bottom:10px}
+
+  /* ---- karar ---- */
+  .q{background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:14px 16px}
+  .q h4{margin-bottom:4px}
+  .q p{font-size:14px; color:var(--ink-2)}
+  .q .rec{margin-top:8px; font-size:13.5px; color:var(--ink); background:var(--accent-soft);
+          border-radius:7px; padding:8px 11px}
+  .q .rec b{color:var(--accent-ink)}
+
+  details{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:0}
+  summary{cursor:pointer; padding:11px 15px; font-weight:600; font-size:14px; list-style:none; display:flex;
+          justify-content:space-between; gap:10px; align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+"; color:var(--muted); font-family:"IBM Plex Mono",monospace}
+  details[open] summary::after{content:"−"}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  .det-body{padding:13px 15px; font-size:13.5px; color:var(--ink-2)}
+  .det-body .tbl-wrap{border-radius:8px}
+
+  ul.clean{margin:0; padding-left:19px; font-size:14px; color:var(--ink-2)}
+  ul.clean li{margin-bottom:5px}
+  ul.clean li::marker{color:var(--muted)}
+  .note{font-size:13px; color:var(--muted); font-style:italic}
+  hr.soft{border:0; border-top:1px solid var(--line); margin:4px 0}
+  footer{padding-block:30px; color:var(--muted); font-size:13px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<nav class="topbar" aria-label="Bölümler">
+  <div class="topbar-in">
+    <span class="brand">Hibe Workspace Denetimi</span>
+    <a href="#ozet">Özet</a>
+    <a href="#hatalar">Hatalar</a>
+    <a href="#envanter">A · Envanter</a>
+    <a href="#problemler">B · Problemler</a>
+    <a href="#ia">C · Mimari</a>
+    <a href="#akis">D · Akış</a>
+    <a href="#cta">E · CTA</a>
+    <a href="#kararlar">Kararlar</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Apya.Platform · UX denetimi ve bilgi mimarisi önerisi</div>
+  <h1>Hibe modülü: 31 ekran, 4 isimli tek kavram, 2 kayıp rozet</h1>
+  <p class="lede">
+    Modül çalışıyor ve arkasında ciddi bir domain var. Sorun eksik özellik değil:
+    <b>ekranlar backend'in nesne modelini yansıtıyor, kullanıcının iş akışını değil.</b>
+    Bu rapor mevcut yüzeyi tek tek sayar, nerede ne kırıldığını gösterir ve iki rol için
+    yeniden kurulmuş bir bilgi mimarisi önerir — hiçbir backend yeteneğini düşürmeden.
+  </p>
+  <div class="meta">
+    <span>17 Eylül 2026</span>
+    <span>Ölçüm dalı <code>claude/combine-four-units-single-screen</code></span>
+    <span>HEAD <code>99630ddc</code></span>
+  </div>
+
+  <div class="facts">
+    <div class="fact"><b>31</b><span>hibe route'u<br>(+3 partial, +6 anonim sayfa)</span></div>
+    <div class="fact"><b>32</b><span>AppService<br>(9 metodun UI karşılığı yok)</span></div>
+    <div class="fact"><b>20</b><span>durum enum'u<br>13 JS dosyasında elle eşlenmiş</span></div>
+    <div class="fact"><b>1809</b><span>hibe yerelleştirme<br>anahtarı</span></div>
+    <div class="fact"><b>13</b><span>modal<br>0 drawer</span></div>
+    <div class="fact"><b>7</b><span>menü girişi<br>+2 Ayarlar bağlantısı</span></div>
+  </div>
+</header>
+
+<!-- ============================ ÖZET ============================ -->
+<section id="ozet">
+  <div class="sec-head"><span class="sec-tag">0</span><h2>Yönetici özeti</h2></div>
+  <p class="sec-sub">Üç kök problem, bir tavsiye. Detaylar aşağıdaki bölümlerde satır satır.</p>
+
+  <div class="stack">
+    <div class="prob">
+      <div class="prob-head">
+        <span class="prob-id">K1</span>
+        <h3>Modül tek ürün gibi kurgulanmış, oysa içinde iki ayrı ürün var</h3>
+        <span class="chip chip-neg">kök</span>
+      </div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt>
+        <dd>31 route'un <b>17'si yalnız host</b> (danışman), <b>2'si yalnız kiracı</b>, 11'i ikisinde de açılıyor ama
+          çoğu <code>IsHost</code> ile içeriden ikiye dallanıyor (<code>Index.cshtml</code>, <code>Today.cshtml</code>).
+          Aynı menü ağacı iki farklı işi anlatıyor.</dd>
+        <dt>Sonuç</dt>
+        <dd>Danışman "Talepler"i görüyor, firma göremiyor; firma "Başvurularım"ı görüyor, danışman göremiyor.
+          Menü ikisine de yarım görünüyor ve hiçbir rol tam bir iş alanı görmüyor.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head">
+        <span class="prob-id">K2</span>
+        <h3>Aynı kayıt ekrandan ekrana isim değiştiriyor</h3>
+        <span class="chip chip-neg">kök</span>
+      </div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt>
+        <dd>Tek bir <code>GrantInterest</code> satırı: <b>Fikir</b> (çağrısız) · <b>İlgi talebi</b> · <b>Talep</b> ·
+          <b>Talebiniz</b> · <b>İlgi incelemesi</b>. Tek bir <code>Grant</code>/<code>GrantCall</code> ikilisi:
+          <b>Hibe</b> · <b>Çağrı</b> · <b>Program</b> · <b>Destek programı</b> — üçü tek cümlede
+          (<code>Grants:Parameters:Description</code>).</dd>
+        <dt>Sonuç</dt>
+        <dd>Kullanıcı ürünün veri modelini öğrenmek zorunda kalıyor. Menüdeki "Fikir Havuzu" ile "Talepler"in
+          <b>aynı tablonun iki süzgeci</b> olduğunu hiçbir ekran söylemiyor.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head">
+        <span class="prob-id">K3</span>
+        <h3>"Sıradaki iş" motoru var ama ekranlar onu sahiplenmiyor</h3>
+        <span class="chip chip-warn">kök</span>
+      </div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt>
+        <dd><code>GrantNextActionResolver</code> (7 kurallı öncelik) ve <code>GrantTodayItemKind</code> (10 iş türü)
+          tüm yaşam döngüsünü kapsıyor. Ama bu çıktı yalnız 3 ekranda var: Bugün, Başvurularım, Yolculuk.
+          Başvurunun <b>kendi detay ekranlarında</b> (Wizard, Evrak, DetailHost, Uygulama, İtiraz) yok.</dd>
+        <dt>Sonuç</dt>
+        <dd>Kullanıcı bir başvurunun içine girdiğinde "şimdi ne yapmalıyım" sorusunun cevabını kaybediyor;
+          8 ekranda hiç birincil buton yok, 4 ekranda aynı anda 2-3 tane var.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div style="margin-top:22px" class="q">
+    <h4>Tavsiye — tek cümlede</h4>
+    <p>Menüyü ekran listesi olmaktan çıkarıp <b>nesne + rol</b> ekseninde yeniden kur: danışmana
+      <b>Bugün · Çağrılar · Talepler · Başvurular · Raporlar</b>, firmaya <b>Bugün · Fırsatlar · Başvurularım</b>.
+      Fikir Havuzu'nu Talepler'in sekmesine indir (aynı tablo), Başvurular'ı sekme olmaktan çıkarıp üst seviyeye al
+      (kendi nesnesi), her detay ekranının tepesine tek bir "sıradaki iş" şeridi koy.</p>
+    <div class="rec"><b>Kapsam:</b> sıfır yeni tablo, sıfır migration, sıfır yeni backend metodu.
+      Kayıp fonksiyon yok — 9 UI'sız backend metodunun 4'ü bu düzende yerine oturuyor.</div>
+  </div>
+</section>
+
+<!-- ============================ HATALAR ============================ -->
+<section id="hatalar">
+  <div class="sec-head"><span class="sec-tag">!</span><h2>Önce bunlar: denetimde çıkan 3 gerçek kusur</h2></div>
+  <p class="sec-sub">Redesign kapsamı değil. Üçü de kodda doğrulandı ve tasarımdan bağımsız olarak düzeltilmeli.</p>
+
+  <div class="stack">
+    <div class="bug">
+      <h3>1 · Ödenmiş tahsilat dilimi ekranda “İptal” yazıyor</h3>
+      <p>Sunucu enum'u <code>Planlandi=0, TalepEdildi=1, Odendi=2</code>. İki ekran diziyi
+        <code>['Planlandi','Odendi','Iptal']</code> sanıyor.</p>
+      <ul>
+        <li><code>MarkPaid()</code> durumu <b>2</b> yapıyor → ekranda <b>“İptal”</b> görünüyor
+          (<code>Implementation.js:9</code>, <code>DetailHost.js:12</code>).</li>
+        <li><code>Implementation.js:30</code> → <code>paid = trancheStatus === 1</code>; ödenmiş dilim hiçbir zaman
+          <code>.is-paid</code> almıyor.</li>
+        <li><code>TalepEdildi = 1</code> kodun hiçbir yerinde set edilmiyor (ölü değer);
+          <code>Grants:Tranche:Iptal</code> anahtarı enum'da olmayan bir duruma ait.</li>
+        <li>Aynı enum <code>Applications.js:6</code> ve <code>Tenant.js:10</code>'da doğru sırada — ama
+          yerelleştirilmemiş, elle Türkçe yazılmış. <b>Tek enum, 4 dosya, 2 farklı eşleme.</b></li>
+      </ul>
+    </div>
+
+    <div class="bug">
+      <h3>2 · Kenar çubuğundaki “bekleyen iş” rozetleri hiç basılmıyor</h3>
+      <p><code>apya-sidebar-shell.js:367-370</code> rozetleri <code>Apya.Grants.Applications</code> ve
+        <code>Apya.Grants.Interests</code> menü adlarına bağlıyor. Bu iki ad <b>tur 22'de menüden kalktı</b>
+        (<code>Requests</code> / <code>Ideas</code> oldu). <code>addBadge</code> çapayı bulamayınca sessizce çıkıyor —
+        hata vermiyor.</p>
+      <ul>
+        <li>Kaybolan sinyaller: <code>pendingGrantApplications</code>, <code>pendingGrantInterests</code>
+          (<code>ShellAppService.cs:370-390</code> hâlâ hesaplıyor).</li>
+        <li>Aynı tuzağın <code>Apya.Work.Tasks</code>'ta yaşandığı, dosyanın kendi yorumunda yazılı.</li>
+      </ul>
+    </div>
+
+    <div class="bug bug--warn">
+      <h3>3 · Kabuğun “+ Yeni” menüsü, tasarımın kaldırdığı kavramı açıyor</h3>
+      <p>Global <code>+ Yeni → Hibe Çağrısı</code> ve komut paleti <code>/Grants/CreateModal</code>'a gidiyor
+        (<code>apya-shell-actions.js:91</code>, <code>command-palette.js:107</code>). O pencere bir <b>çağrı değil,
+        program</b> (<code>Grant</code>) yaratıyor — oysa tur 22'de "program penceresi kaldırılır, program
+        <code>/Grants/Import</code>'tan doğar" kararı verildi.</p>
+      <ul>
+        <li><code>CreateModalModel</code> ve <code>EditModalModel</code>'de <code>[Authorize]</code> <b>yok</b>.
+          Yazma <code>GrantAppService</code> katmanında korunuyor (<code>CreatePolicyName</code>), yani veri deliği
+          değil — ama formu yetkisiz kullanıcı da açabiliyor ve 5 alanlık bu form ekranlardaki 35 alanlık
+          parametre setiyle çelişiyor.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ A · ENVANTER ============================ -->
+<section id="envanter">
+  <div class="sec-head"><span class="sec-tag">A</span><h2>Mevcut envanter</h2></div>
+  <p class="sec-sub">Kodda gerçekten var olan yüzey. Rol sütunu belirleyici:
+    <code>Grants.Create/Edit/Delete</code> izinleri <code>MultiTenancySides.Host</code> olarak tanımlı, yani
+    <code>[Authorize(Grants.Edit)]</code> fiilen “yalnız danışman” demek.</p>
+
+  <div class="stack">
+
+    <div>
+      <h3 style="margin-bottom:10px">A1 · Menü girişleri (7 + 2)</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Menü ID</th><th>Etiket</th><th class="mono">URL</th><th>İzin</th><th>Rol</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">Apya.Grants.Today</td><td>Bugün</td><td class="mono">/Grants/Today</td><td>Default</td><td><span class="chip chip-mut">ikisi</span></td></tr>
+            <tr><td class="mono">Apya.Grants.Calls</td><td>Çağrılar</td><td class="mono">/Grants</td><td>Default</td><td><span class="chip chip-mut">ikisi</span></td></tr>
+            <tr><td class="mono">Apya.Grants.Requests</td><td>Talepler</td><td class="mono">/Grants/Requests</td><td>Edit</td><td><span class="chip chip-acc">host</span></td></tr>
+            <tr><td class="mono">Apya.Grants.Ideas</td><td>Fikir Havuzu</td><td class="mono">/Grants/Ideas</td><td>Edit</td><td><span class="chip chip-acc">host</span></td></tr>
+            <tr><td class="mono">Apya.Grants.Reports</td><td>Raporlar</td><td class="mono">/Grants/Funnel</td><td>Edit</td><td><span class="chip chip-acc">host</span></td></tr>
+            <tr><td class="mono">Apya.Grants.MyApplications</td><td>Başvurularım</td><td class="mono">/Grants/MyApplications</td><td>Default</td><td><span class="chip chip-pos">kiracı</span></td></tr>
+            <tr><td class="mono">Apya.Grants.Journey</td><td>Hibe Yolculuğum</td><td class="mono">/Grants/Journey</td><td>Default</td><td><span class="chip chip-pos">kiracı</span></td></tr>
+            <tr><td class="mono">Apya.Admin.GrantStageTemplates</td><td>Ayarlar › Aşama Şablonları</td><td class="mono">/Grants/StageTemplates</td><td>Edit</td><td><span class="chip chip-acc">host</span></td></tr>
+            <tr><td class="mono">Apya.Admin.GrantNotificationTemplates</td><td>Ayarlar › Bildirim Şablonları</td><td class="mono">/Grants/NotificationTemplates</td><td>Edit</td><td><span class="chip chip-acc">host</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note" style="margin-top:8px">Menüde olmayan ama çalışan 14 ekran var — hepsine yalnız sekme,
+        satır bağlantısı veya derin URL ile ulaşılıyor. <code>/Grants/Interests</code> ise artık
+        <b>hiçbir yerden bağlanmıyor</b> (yönlendirmeye indirgenmiş öksüz rota).</p>
+    </div>
+
+    <div>
+      <h3 style="margin-bottom:10px">A2 · Ekranlar, birincil eylemleri ve giriş noktaları</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th class="mono">Route</th><th>Ne yapar</th><th>Rol</th><th>Giriş</th><th class="num">btn-primary</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">/Grants/Today</td><td>Bugün — 10 iş türü, katlı liste, host'ta 3 sekme</td><td>ikisi</td><td>menü</td><td class="num">0</td></tr>
+            <tr><td class="mono">/Grants</td><td>Host: çağrı panosu (afişli kart + liste) · Kiracı: fırsat akışı + firma profili</td><td>ikisi</td><td>menü</td><td class="num">3</td></tr>
+            <tr><td class="mono">/Grants/Sources</td><td>Kaynaklar + taslak kuyruğu (Çağrılar'ın 3. sekmesi)</td><td>host</td><td>sekme</td><td class="num">2</td></tr>
+            <tr><td class="mono">/Grants/Import</td><td>Metin yapıştır → 13 alan çıkar → taslak program</td><td>host</td><td>buton</td><td class="num">2</td></tr>
+            <tr><td class="mono">/Grants/Parameters</td><td>619 satır — 6 sekme, ~35 alan, 14 şart kartı, canlı eşleşme, yayın kapısı</td><td>host</td><td>derin</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/MatchWeights</td><td>Skor ağırlıkları + etki önizleme + eksik veri kampanyası</td><td>host</td><td>derin</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/Dispatch</td><td>Firmalara gönder — aday tablo, skor kırılımı, toplu seçim + havuz fikri sekmesi</td><td>host</td><td>derin</td><td class="num">2</td></tr>
+            <tr><td class="mono">/Grants/Requests</td><td>Talep gelen kutusu (ilgi + ön değerlendirme), yanıt süresi şeridi</td><td>host</td><td>menü</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/Ideas</td><td>Fikir havuzu — çağrısız <code>GrantInterest</code> satırları, davet gönder</td><td>host</td><td>menü</td><td class="num">3</td></tr>
+            <tr><td class="mono">/Grants/InterestReview</td><td>Tek talebin kararı: incele / başvuru aç / reddet / devret / görüşme</td><td>host</td><td>satır</td><td class="num">3</td></tr>
+            <tr><td class="mono">/Grants/Leads</td><td>Kamu formundan gelen talepler, ısı skoru, kiracıya dönüştür</td><td>host</td><td>satır</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/Pipeline</td><td>Başvuru kanbanı (şablon aşamaları)</td><td>host</td><td>sekme</td><td class="num">0</td></tr>
+            <tr><td class="mono">/Grants/Applications</td><td>Aynı başvuruların liste hâli + dilim/kilometre taşı modalleri</td><td>host</td><td>sekme</td><td class="num">3</td></tr>
+            <tr><td class="mono">/Grants/DetailHost</td><td>Danışman başvuru detayı: akış, form durumu, mesaj, danışmanlık kaydı</td><td>host</td><td>derin</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/Convert</td><td>Onaylı başvuru → proje (bütçe, görev, dilim aktarımı)</td><td>host</td><td>derin</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/Funnel</td><td>Çağrı dönüşüm hunisi (menüde “Raporlar”)</td><td>host</td><td>menü</td><td class="num">0</td></tr>
+            <tr><td class="mono">/Grants/StageTemplates</td><td>Aşama şablonları (sahip, evrak, tamamlanma, hatırlatma)</td><td>host</td><td>Ayarlar</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/NotificationTemplates</td><td>14 tetikleyicinin metni ve kanalı</td><td>host</td><td>Ayarlar</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/Catalog</td><td>Tüm açık hibeler — tablo görünümü (8 kolon)</td><td>kiracı</td><td>sekme</td><td class="num">0</td></tr>
+            <tr><td class="mono">/Grants/Detail</td><td>Çağrı detayı + uygunluk tablosu + bütçe + ilgi bildirme modalı</td><td>ikisi</td><td>kart</td><td class="num">3</td></tr>
+            <tr><td class="mono">/Grants/Idea</td><td>Proje fikrimi paylaş (9 soru + bütçe + başlangıç)</td><td>kiracı</td><td>buton</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/MyApplications</td><td>Firmanın başvuruları + ilgi talepleri, “sıradaki iş” sütunu</td><td>kiracı</td><td>menü</td><td class="num">0</td></tr>
+            <tr><td class="mono">/Grants/Journey</td><td>Aynı verinin zaman çizgisi hâli + görüşme önerme</td><td>kiracı</td><td>menü</td><td class="num">2</td></tr>
+            <tr><td class="mono">/Grants/Wizard</td><td>4 adımlı başvuru sihirbazı, SignalR canlı alan kilidi</td><td>ikisi</td><td>satır</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/Documents</td><td>İki taraflı evrak takibi, sürümleme, onay/revizyon, paket</td><td>ikisi</td><td>satır</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Grants/Implementation</td><td>Rapor–dilim zinciri, bütçe gerçekleşmesi</td><td>ikisi</td><td>satır</td><td class="num">0</td></tr>
+            <tr><td class="mono">/Grants/Appeal</td><td>Red gerekçeleri, madde madde itiraz</td><td>ikisi</td><td>satır</td><td class="num">1</td></tr>
+            <tr><td class="mono">/Hibeler · /Detay · /Randevu</td><td>Anonim kamu yüzeyi: arama, uygunluk testi, lead formu, randevu</td><td>anonim</td><td>SEO</td><td class="num">1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <details>
+      <summary>A3 · Bileşen envanteri — modal, sekme, form, boş durum</summary>
+      <div class="det-body stack-sm">
+        <p><b>13 modal, 0 drawer.</b> Tüm <code>Pages/</code> ağacında <code>offcanvas</code> kullanımı sıfır.
+          İç içe modal yok (iyi); <code>Detail</code>'deki ilgi akışı tek modalda iki pane olarak çözülmüş — doğru desen.</p>
+        <p><b>3 sekme sistemi, 3 ayrı partial:</b> <code>_CallTabs</code> (Yayında/Taslak/Kaynaklar),
+          <code>_RequestTabs</code> (Yanıt bekleyen/Yürüyen + pano/liste), <code>Parameters</code>'ın kendi 6 sekmesi.
+          Hepsi adres taşıyor — bu doğru ve korunmalı.</p>
+        <p><b>Tek gerçek wizard:</b> <code>/Grants/Wizard</code> (4 adım). <code>Parameters</code> 35 alanı
+          wizard değil sekmeyle bölüyor — düzenleme ekranı olduğu için doğru karar.</p>
+        <p><b>Boş durum 10 kez yeniden yazılmış</b> (<code>.apya-src-empty</code>, <code>.apya-jny-empty</code>,
+          <code>.apya-today-empty</code>, <code>.apya-fnl-empty</code>, <code>.apya-imp-empty</code>,
+          <code>.apya-tpl-empty</code>, <code>.apya-campaign-empty</code>, <code>.apya-doc-empty</code>,
+          <code>.apya-today-apps-empty</code> + ortak <code>_EmptyState</code>). Ortak partial'ı yalnız 3 hibe
+          ekranı kullanıyor. KPI şeridi 7, stepper 4, "seçili satır" 5 ayrı tanım.</p>
+        <p><b>Boş durumu hiç olmayan 6 ekran:</b> InterestReview, DetailHost, Wizard, Parameters, Convert (kısmi),
+          MatchWeights (kısmi). <b>İskelet kullanmayan 14 ekran</b> — <code>apya-skel-*</code> altyapısı
+          <code>Shared.css</code>'te hazır ve JS gerektirmiyor.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>A4 · Backend'de var, UI'da yok — 9 metot</summary>
+      <div class="det-body">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Metot</th><th>Neden önemli</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">GrantAppeal.SaveDecisionAsync</td><td><b>Kurum kararını giren tek uç.</b> UI'sı olmadığı için red/itiraz ekranı yalnız okuyor; <code>GrantDecision</code> hiç dolmuyor ve <code>DecisionIssued</code> bildirimi (zorunlu, susturulamaz) hiç ateşlenmiyor.</td></tr>
+              <tr><td class="mono">GrantAppeal.ResolveAppealAsync</td><td>İtiraz sonucunu kapatan uç. “İtiraz kabul oranı” verisi hiç oluşmuyor.</td></tr>
+              <tr><td class="mono">Wizard.RequestTakeoverAsync</td><td rowspan="2">Canlı alan kilidi devralma çifti. UI'sız olduğu için çakışma yalnız 20 dk zaman aşımıyla çözülüyor.</td></tr>
+              <tr><td class="mono">Wizard.ApproveTakeoverAsync</td></tr>
+              <tr><td class="mono">GrantApplication.GetMyDashboardAsync</td><td>Kiracı hibe panosu DTO'su hazır, hiçbir sayfa çağırmıyor.</td></tr>
+              <tr><td class="mono">Recommendation.GetMyRecommendationsAsync</td><td>“Yalnız uygun çağrılar” süzgeci sunucuda var; iki katalog yüzeyi de tüm listeyi çekip istemcide süzüyor.</td></tr>
+              <tr><td class="mono">InterestHost.GetAsync(onlyPending)</td><td>Tur 22'de Talepler devraldı → ölü uç.</td></tr>
+              <tr><td class="mono">StageTemplate.GetAsync(id)</td><td>Tekil okuma; UI listeden çalışıyor (zararsız).</td></tr>
+              <tr><td class="mono">Grant.GetListAsync</td><td>Program listesi; pano <code>grantCallBoard.get</code> kullanıyor (zararsız).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top:10px" class="note">İlk ikisi ürün açısından kritik: <b>karar girişi olmayan bir hibe
+          sistemi, sürecin sonunu kapatamıyor.</b> Bu bir tasarım eksiği, bug değil — yeni IA'da yeri var.</p>
+      </div>
+    </details>
+
+  </div>
+</section>
+
+<!-- ============================ B · PROBLEMLER ============================ -->
+<section id="problemler">
+  <div class="sec-head"><span class="sec-tag">B</span><h2>UX problemleri</h2></div>
+  <p class="sec-sub">Her madde: problem · neden problem · kullanıcı etkisi · çözüm. Şiddet sırasına göre.</p>
+
+  <div class="stack">
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P1</span><h3>Menü, nesneleri yanlış seviyeye koymuş</h3><span class="chip chip-neg">yüksek</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd><b>Başvuru</b> — haftalarca süren, evrakı, bütçesi, kararı olan ana nesne — “Talepler”in bir alt sekmesi. <b>Fikir</b> — tek formluk bir not — üst seviyede kendi menü girişine sahip.</dd>
+        <dt>Neden</dt><dd>Menü, iş hacmini değil geliştirme sırasını yansıtıyor. Fikir Havuzu (tur 19) en son eklendiği için en görünür yere kondu.</dd>
+        <dt>Etki</dt><dd>Danışman günün büyük kısmını geçirdiği ekrana iki tıkla ulaşıyor; ayda birkaç kez açtığı ekran ilk sırada.</dd>
+        <dt>Çözüm</dt><dd><b>Başvurular üst seviyeye</b>, <b>Fikir Havuzu Talepler'in sekmesine.</b> Menü yine 5 öğe kalır (bkz. C bölümü).</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P2</span><h3>Fikir ile talep aynı tablo ama iki ayrı ürün gibi sunuluyor</h3><span class="chip chip-neg">yüksek</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd><code>GrantInterest.GrantCallId = null</code> ise “Fikir Havuzu”, dolu ise “Talep”. Tek satır, tek tablo, iki ekran, iki menü girişi, iki farklı süzgeç seti, iki farklı satır aksiyonu.</dd>
+        <dt>Neden</dt><dd>Fikrin çağrıya bağlanması (<code>LinkAsync</code>) kaydı bir ekrandan diğerine “ışınlıyor”; kullanıcı aynı kaydı bir daha ilk ekranda bulamıyor.</dd>
+        <dt>Etki</dt><dd>“Geçen hafta baktığım fikir nerede?” — cevabı: artık Talepler'de. Hiçbir ekran bunu söylemiyor.</dd>
+        <dt>Çözüm</dt><dd>Tek gelen kutusu, üç sekme: <b>Yanıt bekleyen · Çağrısız fikirler · Kapanmış</b>. Bağlama işlemi sekme değiştirir, ekran değiştirmez; satırda “çağrıya bağlandı” izi kalır.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P3</span><h3>Aynı başvuruyu ilerleten üç ayrı mekanizma var</h3><span class="chip chip-neg">yüksek</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd>Aşama ilerletme üç uçta: <code>Pipeline.MoveAsync</code> (pano sürükle), <code>ApplicationHost.AdvanceStageAsync</code> (liste modalı), <code>ApplicationDetail.AdvanceToNextStepAsync</code> (detay butonu). Üstelik iki paralel ilerleme ekseni var: 4 sabit <code>GrantApplicationStage</code> ve serbest <code>GrantStageTemplateStep</code> — ikisi <b>senkronize değil</b>.</dd>
+        <dt>Neden</dt><dd>Pano şablon adımlarını, liste sabit aşamaları kullanıyor. Aynı başvuru iki ekranda farklı yerde görünebiliyor.</dd>
+        <dt>Etki</dt><dd>Danışman hangi ekrandan ilerlettiğine göre farklı sonuç alıyor; “bu başvuru hangi aşamada?” sorusunun tek cevabı yok.</dd>
+        <dt>Çözüm</dt><dd>Başvurular tek ekran, <b>iki görünüm</b> (pano/liste) — bugünkü <code>_RequestTabs</code> deseni doğru, sorun eylemlerin görünüme göre değişmesi. Aynı satır aksiyonu ve aynı detay drawer'ı her iki görünümde. İki eksenin ilişkisi ayrı bir ürün kararı (bkz. Kararlar S3).</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P4</span><h3>Durum sözlüğü 13 JS dosyasına elle kopyalanmış</h3><span class="chip chip-neg">yüksek</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd>20 durum enum'u, her ekranda elle yazılmış <code>keys[]</code> + <code>tone[]</code> dizileriyle eşleniyor. Enum'a değer eklenince hiçbir derleyici uyarısı çıkmıyor.</dd>
+        <dt>Neden</dt><dd>Sunucu enum'u ile istemci dizisi arasında sözleşme yok. Tahsilat dilimi hatası (yukarıda #1) tam olarak böyle kaçtı; aynı <code>GrantInterestStatus</code> host'ta sarı, kiracıda gri.</dd>
+        <dt>Etki</dt><dd>Kullanıcı aynı kaydı iki ekranda farklı renkte ve farklı kelimeyle görüyor. En kötü hâlde <b>yanlış bilgi</b> (ödenen dilim “iptal”).</dd>
+        <dt>Çözüm</dt><dd>Tek kaynak: sunucudan üretilen <code>grantStatus</code> haritası (enum → yerelleştirilmiş etiket + ton). 13 dizi silinir. Rol farkı gerekiyorsa aynı haritada <code>host</code>/<code>tenant</code> varyantı olur — ama <b>renk asla değişmez.</b></dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P5</span><h3>Birincil eylem hiyerarşisi yok</h3><span class="chip chip-warn">orta</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd>8 ekranda hiç <code>btn-primary</code> yok (Pipeline ve Funnel'da hiç buton yok). 4 ekranda 3 tane var; <code>InterestReview</code>'da <b>ikisi aynı anda görünüyor</b>: “Görüşmeyi onayla” ve “Başvuru sürecini başlat”.</dd>
+        <dt>Neden</dt><dd>Her ekran kendi eylem setini bağımsız kurmuş; “o an yapılması gereken tek iş” kavramı ekran seviyesinde yok — oysa <code>GrantNextActionResolver</code> bunu zaten hesaplıyor.</dd>
+        <dt>Etki</dt><dd>Kullanıcı ekranı tarıyor. Boş ekranlarda “buraya neden geldim?”, dolu ekranlarda “hangisine basmalıyım?”.</dd>
+        <dt>Çözüm</dt><dd>Her ekranda <b>tek primary = sıradaki iş</b>. Diğerleri outline, düşük frekanslılar <code>⋯</code> altında. Yıkıcı eylemler (reddet, sil) ayrı ve <b>asla primary değil</b>.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P6</span><h3>Aynı veri için iki menü girişi — üç ayrı yerde</h3><span class="chip chip-warn">orta</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd>① <b>Başvurularım</b> ile <b>Hibe Yolculuğum</b> aynı kayıtları listeliyor (biri tablo, biri zaman çizgisi) — ikisi de menüde, yan yana. ② Kiracı <code>/Grants</code> sayfasının altındaki “Başvurularım” bloğu üçüncü kopya. ③ <b>Catalog</b>, <code>/Grants</code>'ın “Tüm açık hibeler” sekmesinin tablo hâli.</dd>
+        <dt>Neden</dt><dd>Görünüm farkı (tablo/zaman çizgisi/kart) menü girişi seviyesine terfi etmiş.</dd>
+        <dt>Etki</dt><dd>Kiracı 4 menü öğesinin 3'ünde aynı 5 kaydı görüyor; hangisinin “asıl” olduğunu bilmiyor.</dd>
+        <dt>Çözüm</dt><dd>Görünüm menüye çıkmaz, ekranın içinde <b>görünüm anahtarı</b> olur (desen zaten var: <code>_RequestTabs</code>'ın pano/liste ikonları).</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P7</span><h3>Detay ekranları bağlam ve çıkış vermiyor</h3><span class="chip chip-warn">orta</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd>11 alt ekranda geri bağlantısı yok (NotificationTemplates, Leads, Convert, Wizard, Documents, Implementation, Appeal, Journey, Today, Catalog, MyApplications). Uygulama genelinde sayfa içi breadcrumb yalnız kamu <code>/Hibeler/Detay</code>'da var.</dd>
+        <dt>Neden</dt><dd>Kabukta geri/ileri/son bakılanlar düğmeleri var (<code>apya-topbar-shell.js</code>) ama bunlar <b>tarayıcı geçmişi</b>, iş hiyerarşisi değil: “başvuru → evrak”tan çıkınca kullanıcı listeye değil bir önceki sayfaya düşüyor.</dd>
+        <dt>Etki</dt><dd>Derin ekranlarda kaybolma; aynı kayda dönmek için menüden yeniden başlama.</dd>
+        <dt>Çözüm</dt><dd>Nesne bazlı bağlam şeridi: <code>Talepler › Acme A.Ş. › Evrak</code> — ilk iki seviye tıklanabilir ve <b>kaydın kimliğini taşır</b>, sayfa adını değil.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P8</span><h3>Domainin ürettiği sinyaller listelerde kayboluyor</h3><span class="chip chip-warn">orta</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd>Skor kırılımı (6 boyut) yalnız 1 ekranda; diğer 4 yüzey çıplak yüzde gösteriyor. Zorluk gerekçeleri yalnız çağrı detayında. <b>Lead ısı skoru</b> birleşik Talepler kutusunda hiç yok — oysa önceliklendirmenin tek nesnel sinyali o.</dd>
+        <dt>Neden</dt><dd>Sinyaller üretildikleri ekranda kaldı; birleştirme turlarında taşınmadı.</dd>
+        <dt>Etki</dt><dd>“Neden bu skor?” sorusu 5 yüzeyin 4'ünde cevapsız; danışman birleşik kutuda sıraya kendi sezgisiyle karar veriyor.</dd>
+        <dt>Çözüm</dt><dd>Skor ve ısı, satırda <b>tıklanabilir</b> olsun: üstüne gelince kırılım popover'ı, tıklayınca detay drawer'ı. Veri hazır, yeni uç gerekmiyor.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P9</span><h3>Mobil, iki ekranda hiç düşünülmemiş</h3><span class="chip chip-warn">orta</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd>Responsive tabanın tamamı <code>Shared.css:369</code>'daki tek <code>[data-label]</code> kuralına dayanıyor (991px'te grid satırı karta dönüyor). <b>Applications</b> hiç sayfa CSS'i olmadığı için bu kurala bağlı değil; <b>Pipeline</b>'ın hiç <code>@media</code> kuralı yok — 375px'te 6 sütunlu kanban yatay kaydırma olarak kalıyor.</dd>
+        <dt>Neden</dt><dd>Kırılım noktaları da standart değil: 6 farklı eşik (1399/1279/1199/991/767/575).</dd>
+        <dt>Etki</dt><dd>Danışman telefonda başvuru listesini kullanamıyor.</dd>
+        <dt>Çözüm</dt><dd>Tek eşik seti (991 / 767), <code>data-label</code> her tabloya, pano telefonda <b>tek sütun + aşama seçici</b> olarak yeniden kurgulanır.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P10</span><h3>Yönetim ekranları günlük işin içine karışmış</h3><span class="chip chip-warn">orta</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd><code>Parameters</code> (35 alan, yayın kapısı) ve <code>MatchWeights</code> menüde yok, çağrı kartından deriniyor. <code>StageTemplates</code>/<code>NotificationTemplates</code> Ayarlar'da. <code>Sources</code> ise Çağrılar'ın sekmesi. Dört yönetim ekranı, üç farklı yerde.</dd>
+        <dt>Neden</dt><dd>Tur 22'de “günlük işte açılmayanlar Ayarlar'a” kuralı konuldu ama yalnız ikisine uygulandı.</dd>
+        <dt>Etki</dt><dd>Danışman “eşleştirmeyi nereden ayarlıyordum?” diye arıyor.</dd>
+        <dt>Çözüm</dt><dd>Kural netleşsin: <b>programa bağlı olan</b> (Parameters, MatchWeights) çağrının kendi ekranında sekme; <b>programdan bağımsız olan</b> (StageTemplates, NotificationTemplates, Sources) Ayarlar › Hibe altında tek yerde.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P11</span><h3>Süreç, karar girilemediği için kapanmıyor</h3><span class="chip chip-warn">orta</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd>Kurumun kararını (kabul/red/kısmi + itiraz penceresi) yazan <code>SaveDecisionAsync</code> ve itirazı sonuçlandıran <code>ResolveAppealAsync</code>'in UI'sı yok. İtiraz ekranı yalnız okuyor.</dd>
+        <dt>Neden</dt><dd>6b turunda ekran “karar zaten girilmiş” varsayımıyla tasarlandı; girişi yapan yüzey hiç çizilmedi.</dd>
+        <dt>Etki</dt><dd>Yaşam döngüsünün son üçte biri (karar → itiraz → sonuç) sistemde kayıtlı değil; zorunlu <code>DecisionIssued</code> bildirimi hiç gitmiyor.</dd>
+        <dt>Çözüm</dt><dd>Başvuru detayında “Kurum kararını gir” — tek modal (sonuç · onaylanan tutar · itiraz son tarihi · gerekçe). Backend hazır.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">P12</span><h3>Arama yok</h3><span class="chip chip-mut">düşük</span></div>
+      <dl class="prob-body">
+        <dt>Problem</dt><dd>⌘K komut paleti var ama yalnız <b>menüde</b> geziniyor (kenar çubuğunu DOM'dan tarıyor). Firma adı, çağrı adı, başvuru numarasıyla arama hiçbir yerde yok.</dd>
+        <dt>Neden</dt><dd>P4 kapsam kararı: “backend yok, yalnız navigasyon”.</dd>
+        <dt>Etki</dt><dd>Danışman belirli bir firmayı bulmak için listeyi süzmek zorunda; 24 firmada sorun değil, 240'ta sorun.</dd>
+        <dt>Çözüm</dt><dd><b>Şimdilik kapsam dışı</b> — yeni bir arama ucu gerektiriyor. Ara çözüm: Talepler ve Başvurular ekranlarına firma adı süzgeci (mevcut uçlar zaten filtreli okuyor).</dd>
+      </dl>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================ C · IA ============================ -->
+<section id="ia">
+  <div class="sec-head"><span class="sec-tag">C</span><h2>Bilgi mimarisi</h2></div>
+  <p class="sec-sub">Kural: bir menü girişi = bir <b>nesne</b>. Görünüm (pano/liste/zaman çizgisi) ve yaşam evresi
+    (bekleyen/yürüyen/kapanmış) menüye çıkmaz — ekranın içinde sekme veya anahtar olur.</p>
+
+  <div class="ia-grid">
+    <div class="ia">
+      <h4>Bugün — danışman (host)</h4>
+      <pre>HİBE YÖNETİMİ
+├─ Bugün               iş kuyruğu
+├─ Çağrılar            Yayında · Taslak · Kaynaklar
+├─ <del>Talepler</del>            Yanıt bekleyen · <b style="color:var(--neg)">Yürüyen başvuru</b>
+│                         └ pano / liste
+├─ <del>Fikir Havuzu</del>        ayrı ekran, sekmesiz
+└─ Raporlar            huni
+
+menüde YOK, derinde:
+   Parameters · MatchWeights · Import
+   Dispatch · InterestReview · Leads
+   DetailHost · Convert · Applications
+   Pipeline · Wizard · Documents
+   Implementation · Appeal
+   <span style="color:var(--neg)">Interests → öksüz</span></pre>
+    </div>
+    <div class="ia ia--new">
+      <h4><span class="chip chip-acc">öneri</span> Danışman konsolu</h4>
+      <pre>HİBE
+├─ <b>Bugün</b>                iş kuyruğu (giriş kapısı)
+├─ <b>Çağrılar</b>             Yayında · Taslak · Kaynaklar
+│     └ çağrı detayı: Parametreler ·
+│       Eşleştirme · Gönderim  <span style="color:var(--muted)">(sekme)</span>
+├─ <b>Talepler</b>             Yanıt bekleyen ·
+│                        <b>Çağrısız fikirler</b> · Kapanmış
+├─ <b>Başvurular</b>           pano / liste <span style="color:var(--muted)">(görünüm)</span>
+│     └ başvuru detayı: Form · Evrak ·
+│       Karar · Uygulama · Proje
+└─ <b>Raporlar</b>             Huni · Çağrı performansı
+
+Ayarlar › Hibe
+   Aşama şablonları · Bildirim şablonları
+   · Kaynaklar</pre>
+    </div>
+  </div>
+
+  <div class="ia-grid" style="margin-top:16px">
+    <div class="ia">
+      <h4>Bugün — firma (kiracı)</h4>
+      <pre>HİBE YÖNETİMİ
+├─ Bugün
+├─ Çağrılar        = fırsat akışı + firma profili
+│                    + "Başvurularım" bloğu <span style="color:var(--neg)">(kopya)</span>
+│     └ Catalog    tablo hâli <span style="color:var(--neg)">(kopya)</span>
+├─ Başvurularım    tablo
+└─ Hibe Yolculuğum zaman çizgisi <span style="color:var(--neg)">(aynı veri)</span></pre>
+    </div>
+    <div class="ia ia--new">
+      <h4><span class="chip chip-acc">öneri</span> Firma portalı</h4>
+      <pre>HİBE
+├─ <b>Bugün</b>             sıradaki işleriniz
+├─ <b>Fırsatlar</b>         Size uygun · Tümü · Takip
+│                     görünüm: kart / tablo
+│     └ çağrı detayı → İlgi bildir
+│       veya Proje fikri paylaş
+└─ <b>Başvurularım</b>      liste / zaman çizgisi
+      └ başvuru: Form · Evrak · Rapor
+        · İtiraz
+
+Eşleşme profili → Bugün'de tamamlanma
+şeridi + kendi sayfası</pre>
+    </div>
+  </div>
+
+  <div class="stack" style="margin-top:22px">
+    <h3>Ne taşınıyor, neden</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Karar</th><th>Gerekçe</th><th>Kayıp</th></tr></thead>
+        <tbody>
+          <tr><td><b>Fikir Havuzu → Talepler sekmesi</b></td><td>Aynı tablo (<code>GrantInterest</code>), çağrı bağı null mı değil mi farkı. Bağlama işlemi bugün kaydı ekranlar arası ışınlıyor.</td><td>Yok — davet gönderme ve fikir ekleme sekmenin kendi eylemleri olarak kalır.</td></tr>
+          <tr><td><b>Başvurular → üst seviye</b></td><td>Ayrı nesne (<code>GrantApplication</code>), ayrı yaşam döngüsü, ayrı izinler, en yüksek kullanım.</td><td>Yok — <code>_RequestTabs</code>'ın “Yürüyen başvuru” sekmesi menüye terfi ediyor.</td></tr>
+          <tr><td><b>Parametreler + Eşleştirme → çağrı detayının sekmesi</b></td><td>İkisi de <code>?id=</code> zorunlu; programdan bağımsız açılamıyorlar. Bugün zaten menüde yoklar, sadece keşfedilemez durumdalar.</td><td>Yok.</td></tr>
+          <tr><td><b>Kaynaklar → Ayarlar › Hibe</b></td><td>Programdan bağımsız, kurulum işi. Günlük işte açılmıyor (kazıyıcı bağlı bile değil: <code>NotConfiguredGrantScraper</code> her koşuyu “Atlandı” döner).</td><td>Taslak kuyruğu Çağrılar › Taslak sekmesinde kalır.</td></tr>
+          <tr><td><b>Yolculuk → Başvurularım'ın görünümü</b></td><td>Aynı veri, farklı gösterim. <code>GrantJourneyAppService</code> zaten 6a satırını taşıyor, kendi kuralını kurmuyor.</td><td>Yok — zaman çizgisi görünüm anahtarıyla açılır.</td></tr>
+          <tr><td><b>Catalog → Fırsatlar'ın tablo görünümü</b></td><td>Bugün zaten sekme çubuğu <code>/Grants</code>'e geri linkliyor; iki sayfa aynı <code>getOpenCalls</code> ucunu çağırıyor.</td><td>Yok.</td></tr>
+          <tr><td><b>Interests rotası silinir</b></td><td>Hiçbir yerden bağlanmıyor, gövdesi yok, yalnız yönlendirme.</td><td>Yok — yönlendirme korunur (eski yer imleri).</td></tr>
+          <tr><td><b>“+ Yeni → Hibe Çağrısı” kaldırılır</b></td><td>Program penceresi tur 22'de kaldırıldı; kabuk hâlâ sunuyor ve 5 alanlık eski formu açıyor.</td><td>Program ekleme <code>/Grants/Import</code>'ta kalır.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="q">
+      <h4>Kavram sözlüğü — tek dil</h4>
+      <p>Her ekranda aynı kelime. Menü, başlık, buton, bildirim ve sürüm notu bu tabloya uyar.</p>
+      <div class="tbl-wrap" style="margin-top:10px">
+        <table>
+          <thead><tr><th>Varlık</th><th>Tek ad</th><th>Artık kullanılmaz</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">Grant</td><td><b>Program</b></td><td>Hibe · Destek programı</td></tr>
+            <tr><td class="mono">GrantCall</td><td><b>Çağrı</b></td><td>Hibe · Program (tekil kullanımda)</td></tr>
+            <tr><td class="mono">GrantInterest (çağrılı)</td><td><b>Talep</b></td><td>İlgi talebi · İlgi · Talebiniz</td></tr>
+            <tr><td class="mono">GrantInterest (çağrısız)</td><td><b>Fikir</b> <span class="note">(talebin çağrısız hâli)</span></td><td>Havuz kaydı</td></tr>
+            <tr><td class="mono">GrantLead</td><td><b>Ön talep</b></td><td>Ön değerlendirme talebi · Lead</td></tr>
+            <tr><td class="mono">GrantApplication</td><td><b>Başvuru</b></td><td>Pipeline · Hibe başvurusu</td></tr>
+            <tr><td class="mono">GrantMilestone</td><td><b>Kilometre taşı</b></td><td>Milestone</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="rec"><b>Not:</b> “Hibe” kelimesi modülün <b>adı</b> olarak kalır (menü kökü), tekil bir kaydın adı
+        olarak kullanılmaz. Bugün <code>Grants:Detail:Title</code> = “Hibe Detayı” ama ekran bir <b>çağrı</b> detayı.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ D · AKIŞ ============================ -->
+<section id="akis">
+  <div class="sec-head"><span class="sec-tag">D</span><h2>Gerçek yaşam döngüsü</h2></div>
+  <p class="sec-sub">Kodda doğrulanmış geçişler — tasarım varsayımı değil. Kırmızı işaretli iki nokta bugün
+    UI'da karşılığı olmayan geçişler.</p>
+
+  <div class="stack">
+    <div class="flow">
+      <h4>Çağrıdan projeye</h4>
+      <pre>KAYNAK            Import (metin)  ──▶  Grant + GrantCall(Taslak)
+                  Scrape ──▶ <span style="color:var(--muted)">bağlı değil (her koşu "Atlandı")</span>
+                     │
+YAYIN             Parameters ▸ PublishAsync  ──▶  Status=Açık
+                     │                            └▶ CallPublished bildirimi
+                     │                               (yalnız eşiği geçen firmalara)
+                     ▼
+GÖRÜNÜRLÜK        ┌─ /Hibeler (anonim)  ──▶ uygunluk testi ──▶ GrantLead
+                  ├─ kiracı akışı       ──▶ İlgi bildir     ──▶ GrantInterest
+                  ├─ fikir paylaş       ──▶ GrantInterest (çağrısız)
+                  └─ danışman gönderimi ──▶ GrantRecommendation
+                     │
+TALEP             InterestReview ▸ incele / reddet / devret / görüşme
+                     │
+<b style="color:var(--accent-ink)">BAŞVURU</b>           StartApplicationAsync  ──▶  <b>GrantApplication</b>
+                  <span style="color:var(--muted)">firma kendi başvurusunu açamaz — tek doğuş noktası burası</span>
+                     │
+HAZIRLIK          Wizard (4 adım, canlı kilit) + Documents (iki taraflı)
+                     │  ▸ SubmitAsync ──▶ SubmittedAt
+                     ▼
+KARAR             <span style="color:var(--neg)">SaveDecisionAsync ──▶ GrantDecision   ✖ UI YOK</span>
+                     │                    └▶ DecisionIssued (zorunlu bildirim)
+                     ├─ red ──▶ Appeal ▸ madde + görüş ▸ SubmitAppeal
+                     │            └▶ <span style="color:var(--neg)">ResolveAppealAsync   ✖ UI YOK</span>
+                     ▼
+PROJE             Convert ▸ ConvertAsync  ──▶  Project + bütçe + görev + dilim
+                     │                          <span style="color:var(--muted)">(başvuru kapanmaz, projeye bağlanır)</span>
+                     ▼
+UYGULAMA          Implementation ▸ rapor ▸ onay ──▶ dilim ödenebilir
+                                              <span style="color:var(--muted)">(rapor onaysızsa ödeme reddedilir)</span></pre>
+    </div>
+
+    <div class="flow">
+      <h4>Her ekranın tepesinde duracak şerit</h4>
+      <pre>┌──────────────────────────────────────────────────────────┐
+│ Acme A.Ş. · TÜBİTAK 1507 · 2026/1. dönem                 │
+│ <span style="color:var(--warn)">Başvuru hazırlanıyor</span>   Son gün 28 Ekim   <b>12 gün</b>       │
+│ Danışman: A. Yılmaz          Tamamlanma ███████░░░ %72   │
+│                                                          │
+│ SIRADAKİ İŞ  3 zorunlu evrak eksik.      [ Evrakları  ]  │
+│                                          [ tamamla ▸  ]  │
+└──────────────────────────────────────────────────────────┘</pre>
+      <ul class="clean" style="margin-top:12px">
+        <li>Metni ve butonu <b>tek kaynak</b> üretir: <code>GrantNextActionResolver</code> (7 kural) —
+          kiracıda “sizde/danışmanınızda”, host'ta 10 iş türü.</li>
+        <li>Ortak partial olarak 6 detay ekranına girer: Wizard · Documents · DetailHost · Implementation ·
+          Appeal · Detail. Bugün hiçbirinde yok.</li>
+        <li>Terminal durumlarda (projede / kapandı) şerit CTA'sız bilgi satırına döner — kural zaten resolver'da.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ E · CTA ============================ -->
+<section id="cta">
+  <div class="sec-head"><span class="sec-tag">E</span><h2>CTA denetimi</h2></div>
+  <p class="sec-sub">Önemli butonlar ve akıbetleri. “Birleştir” = aynı işi yapan iki buton tek yere iner.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Buton</th><th>Nerede</th><th>Karar</th><th>Gerekçe / yeni hâli</th></tr></thead>
+      <tbody>
+        <tr><td>İlgileniyorum</td><td>Çağrı detayı</td><td><span class="chip chip-pos">Koru</span></td><td>Firmanın tek gerçek birincil eylemi. Modal iki pane olarak doğru kurulmuş.</td></tr>
+        <tr><td>Başvuru sürecini başlat</td><td>İlgi incelemesi</td><td><span class="chip chip-pos">Koru</span></td><td>Tek primary olur; “Görüşmeyi onayla” outline'a iner.</td></tr>
+        <tr><td>Görüşmeyi onayla</td><td>İlgi incelemesi</td><td><span class="chip chip-acc">Seviye düşür</span></td><td>Aynı anda iki primary sorunu (P5).</td></tr>
+        <tr><td>Reddet</td><td>İlgi incelemesi</td><td><span class="chip chip-warn">Ayır</span></td><td>Yıkıcı eylem; diğerlerinden boşlukla ayrılır, <code>btn-outline-danger</code> kalır.</td></tr>
+        <tr><td>Tümünü Tara</td><td>Çağrılar <b>ve</b> Kaynaklar</td><td><span class="chip chip-acc">Birleştir</span></td><td>İki ekranda aynı uç (<code>scrapeAll</code>). Kaynaklar Ayarlar'a taşınınca tek yerde kalır.</td></tr>
+        <tr><td>Elle Hibe Ekle / Gir</td><td>Çağrılar, Kaynaklar</td><td><span class="chip chip-acc">Adlandır</span></td><td>Tek ad: <b>“Program ekle”</b>. Bugün aynı ekran iki farklı isimle çağrılıyor.</td></tr>
+        <tr><td>+ Yeni › Hibe Çağrısı</td><td>Kabuk (global)</td><td><span class="chip chip-neg">Kaldır</span></td><td>Kaldırılmış program penceresini açıyor (hata #3).</td></tr>
+        <tr><td>Programlara Dön</td><td>Başvurular listesi</td><td><span class="chip chip-acc">Adlandır</span></td><td>Gittiği yer “Çağrılar” ekranı. Bağlam şeridi gelince buton tümden kalkar.</td></tr>
+        <tr><td>İlişkilendir</td><td>Fikir Havuzu satırı</td><td><span class="chip chip-acc">Adlandır</span></td><td><b>“Çağrıya bağla”</b> — ne olacağını söylemeli.</td></tr>
+        <tr><td>Aç / İncele / Devam et</td><td>5 farklı liste</td><td><span class="chip chip-acc">Birleştir</span></td><td>Satır CTA'sı artık <b>sıradaki işin adı</b> olur (“Evrak yükle”, “Karara bağla”).</td></tr>
+        <tr><td>Milestone Ekle</td><td>Başvurular</td><td><span class="chip chip-acc">Adlandır</span></td><td>“Kilometre taşı ekle” — Türkçe arayüzde tek İngilizce kelime.</td></tr>
+        <tr><td>Kurum kararını gir</td><td><span class="note">yok</span></td><td><span class="chip chip-pos">Ekle</span></td><td>Backend hazır (P11). Başvuru detayında tek modal.</td></tr>
+        <tr><td>Kilidi devral</td><td><span class="note">yok</span></td><td><span class="chip chip-mut">Beklet</span></td><td>Backend hazır ama 20 dk zaman aşımı idare ediyor; öncelikli değil.</td></tr>
+        <tr><td>4 ikonlu satır aksiyonu</td><td>Evrak takibi</td><td><span class="chip chip-acc">Sadeleştir</span></td><td>1 birincil (sıradaki iş) + <code>⋯</code>: indir, geçmiş, revizyon iste.</td></tr>
+        <tr><td>Kaydet / Yayınla</td><td>Parametreler</td><td><span class="chip chip-pos">Koru</span></td><td>Doğru kurulmuş: Yayınla disabled başlar, zorunlu alanlar tamamlanınca açılır.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================ KARARLAR ============================ -->
+<section id="kararlar">
+  <div class="sec-head"><span class="sec-tag">→</span><h2>Karar bekleyen sorular</h2></div>
+  <p class="sec-sub">Tasarıma geçmeden önce bu dördüne cevap gerekiyor. Her birinde önerim işaretli.</p>
+
+  <div class="stack">
+    <div class="q">
+      <h4>S1 · Menü kaç öğe olsun?</h4>
+      <p>Öneri 5 (danışman) / 3 (firma). Alternatif: Başvurular'ı Talepler'in içinde bırakıp 4'e inmek —
+        menü kısalır ama en çok kullanılan ekran bir tık daha uzaklaşır.</p>
+      <div class="rec"><b>Önerim:</b> 5 + 3. Menü uzunluğu sorun değil; <b>yanlış seviye</b> sorun.</div>
+    </div>
+    <div class="q">
+      <h4>S2 · Firma kendi başvurusunu açabilmeli mi?</h4>
+      <p>Bugün açamıyor: <code>GrantApplication</code> yalnız danışmanın “Başvuru sürecini başlat”ıyla doğuyor.
+        Bu bilinçli bir danışmanlık modeliyse UI bunu <b>söylemeli</b> (“Danışmanınız süreci başlatacak”);
+        değilse yeni bir uç gerekir.</p>
+      <div class="rec"><b>Önerim:</b> model korunsun, <b>UI açıkça anlatsın.</b> Firmanın beklemesi gereken adım
+        bugün hiçbir ekranda yazmıyor.</div>
+    </div>
+    <div class="q">
+      <h4>S3 · İki ilerleme ekseni ne olacak?</h4>
+      <p>4 sabit aşama (<code>GrantApplicationStage</code>) ile serbest şablon adımları
+        (<code>GrantStageTemplateStep</code>) senkronize değil; pano birini, liste diğerini kullanıyor.</p>
+      <div class="rec"><b>Önerim:</b> şablon adımı <b>ayrıntı</b>, sabit aşama <b>özet</b> olsun — pano sabit
+        aşamaya göre sütunlansın, şablon adımı satırın içinde ilerleme olarak görünsün. Backend değişmez,
+        yalnız pano sütun kaynağı değişir.</div>
+    </div>
+    <div class="q">
+      <h4>S4 · Bu rapordan sonra hangi sırayla gidelim?</h4>
+      <p>Önerilen sıra ve her adımın doğrulaması:</p>
+      <div class="tbl-wrap" style="margin-top:10px">
+        <table>
+          <thead><tr><th class="num">#</th><th>Adım</th><th>Doğrulama</th></tr></thead>
+          <tbody>
+            <tr><td class="num">0</td><td>3 kusurun hotfix'i (dilim durumu · rozet adları · + Yeni menüsü)</td><td>Birim testi + <code>dotnet build</code> + rozet için canlı QA</td></tr>
+            <tr><td class="num">1</td><td>Tek durum sözlüğü (P4) — sunucudan üretilen harita, 13 dizi silinir</td><td>Her enum için etiket+ton testi; ekran ekran görsel karşılaştırma</td></tr>
+            <tr><td class="num">2</td><td>Claude Design'da ana navigasyon + 4 ekran tasarımı</td><td>Onayın</td></tr>
+            <tr><td class="num">3</td><td>Menü + sekme yeniden yapılandırması (C bölümü)</td><td>Menü testleri; <code>ShellPins</code>/<code>ShellMenuLayout</code> ad göçü kontrolü</td></tr>
+            <tr><td class="num">4</td><td>“Sıradaki iş” şeridi — ortak partial, 6 ekran</td><td>Resolver çıktısının 6 ekranda aynı cümleyi verdiği testi</td></tr>
+            <tr><td class="num">5</td><td>Karar girişi (P11) + satır aksiyonu sadeleştirmesi</td><td>Karar → bildirim → itiraz zinciri uçtan uca testi</td></tr>
+            <tr><td class="num">6</td><td>Mobil: Applications + Pipeline (P9)</td><td>375px tarayıcı ölçümü, iki tema</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="rec"><b>Not:</b> 0 ve 1 tasarımdan bağımsız; tasarım beklerken paralel gidebilir.
+        Hiçbir adımda migration yok.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Ölçüm yöntemi: <code>src/Apya.Platform.Web/Pages/Grants/</code> (124 dosya), <code>Application/Grants/</code> (34 servis),
+  <code>Domain/Grants/</code> (67 sınıf), <code>Domain.Shared/Grants/</code> (47 enum),
+  <code>Localization/Platform/tr.json</code> (1809 hibe anahtarı), menü ve izin sağlayıcıları.
+  Rapordaki her sayı ve satır referansı kod okunarak doğrulanmıştır; tasarım paketlerinden veya geçmiş
+  notlardan aktarılmamıştır.
+</footer>
+
+</div>
