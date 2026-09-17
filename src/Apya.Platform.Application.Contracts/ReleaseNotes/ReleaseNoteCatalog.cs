@@ -28,7 +28,37 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.17",
             date: "17 Eylül 2026",
-            title: "Formlarda hazır listeler, birbirine bağlı ve koşullu sorular; Genel Bakış'ta üst şerit inceldi",
+            title: "Bütçe uyarıları; formlarda hazır listeler ve koşullu sorular; Genel Bakış'ta ince üst şerit",
+
+            // ── Finans / bütçe bildirimleri ───────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bütçe hareketleri artık bildirim olarak geliyor",
+                "Projenizin bütçesinde önemli bir şey olduğunda zilde bildirim görüyorsunuz: bütçe revizyonu " +
+                "yürürlüğe girdiğinde, bir fonlama dilimi tahsil edildiğinde, dilimden kesinti yapıldığında ve " +
+                "bir dilim itiraz sürecine alındığında. Her bildirimde hangi proje, hangi dilim ya da hangi " +
+                "kalem olduğu ve tutarlar yazar; bildirime tıkladığınızda projenin bütçe ekranı açılır. " +
+                "Bildirimler projenin sorumlusuna gider; bütçeyi görme yetkisi olmayan kullanıcılara tutar " +
+                "içeren bildirim gönderilmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bütçe kaleminiz tükenmeden uyarı alıyorsunuz",
+                "Bir bütçe kaleminin harcaması onaylanan tutarın %50, %75 ve %90'ına ulaştığında uyarı gelir; " +
+                "uyarıda onaylanan tutar, harcanan tutar, kullanım yüzdesi ve kalan tutar birlikte durur. " +
+                "Kalem tamamen tükendiğinde ya da tutar aşıldığında ayrıca kritik bir uyarı gider ve aşan " +
+                "tutar ayrıca yazılır. Aynı durum için tek uyarı alırsınız — harcama arttıkça aynı eşik " +
+                "tekrar tekrar bildirilmez. Bütçeyi revize ederseniz uyarılar yeni tutara göre yeniden kurulur."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Geciken fonlama dilimleri hatırlatılıyor",
+                "Planlanan tarihi geçtiği hâlde tahsil edilmemiş bir fonlama diliminiz varsa uyarı alırsınız; " +
+                "uyarıda dilimin beklendiği tarih, kaç gündür geciktiği ve beklenen tutar yazar. Dilim tahsil " +
+                "edildiğinde hatırlatma kesilir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Bildirim tercihlerinize Finans eklendi",
+                "Bildirimler ekranındaki tercih penceresinde artık Finans satırı da var: bütçe bildirimlerini " +
+                "uygulama içinde açık tutup kapatabilir, isterseniz e-posta ile de almayı seçebilirsiniz. " +
+                "Bildirim merkezinde Finans kendi sekmesi olarak listelenir."),
 
             // ── Formlar ───────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,

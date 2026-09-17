@@ -33,5 +33,18 @@ public enum NotificationType
     GrantMeetingProposed           = 24, // 18e · Firma ön görüşme saatleri önerdi — HOST'a gider
     GrantMeetingAnswered           = 25, // 18e · Danışman görüşmeyi onayladı ya da başka saat istedi
     GrantIdeaLinked                = 26, // 20b · Havuzdaki fikir yeni bir çağrıyla ilişkilendirildi
-    GrantIdeaInvited               = 27  // 19b · Firma proje fikrini paylaşmaya davet edildi (ve hatırlatması)
+    GrantIdeaInvited               = 27, // 19b · Firma proje fikrini paylaşmaya davet edildi (ve hatırlatması)
+
+    // Finans ekseni — proje bütçesi, fonlama dilimleri ve kesintiler.
+    // Bu olaylar bugüne kadar sessizce gerçekleşiyordu: kalem bütçesi aşılıyor,
+    // dilim vadesi geçiyor, kesinti yapılıyordu ve kimse haberdar olmuyordu.
+    // Hepsi tek kayda (PROJE) işaret eder; kalem ayrıntısı gövdede taşınır —
+    // bütçe ekranı zaten proje kırılımında açılıyor.
+    BudgetRevisionApplied       = 28, // Bütçe revizyonu uygulandı (kalem tutarları değişti)
+    BudgetUsageThresholdReached = 29, // Kalem kullanımı bir eşiği geçti (%50 / 75 / 90)
+    BudgetOverrun               = 30, // Kalem onaylanan tutarı AŞTI
+    FundingTrancheCollected     = 31, // Fonlama dilimi tahsil edildi
+    FundingTrancheOverdue       = 32, // Planlanan tarihi geçti, hâlâ tahsil edilmedi
+    TrancheDeductionAdded       = 33, // Dilime kesinti işlendi
+    TrancheDisputed             = 34  // Dilim itirazlı olarak işaretlendi
 }
