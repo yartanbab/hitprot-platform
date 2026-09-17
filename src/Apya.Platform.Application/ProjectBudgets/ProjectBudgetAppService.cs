@@ -39,6 +39,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> _matchRepository;
     private readonly ProjectBudgetManager _budgetManager;
+    private readonly IFinanceNotificationPublisher _financeNotifications;
 
     public ProjectBudgetAppService(
         IRepository<ProjectBudgetLine, Guid> lineRepository,
@@ -51,7 +52,8 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         IRepository<IncomeEntry, Guid> incomeRepository,
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> matchRepository,
-        ProjectBudgetManager budgetManager)
+        ProjectBudgetManager budgetManager,
+        IFinanceNotificationPublisher financeNotifications)
     {
         _lineRepository = lineRepository;
         _trancheRepository = trancheRepository;
@@ -64,6 +66,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         _taskRepository = taskRepository;
         _matchRepository = matchRepository;
         _budgetManager = budgetManager;
+        _financeNotifications = financeNotifications;
     }
 
     /// <summary>Host bağlamında kiracı filtresini kapatır; kiracı bağlamında dokunmaz.</summary>
@@ -535,6 +538,10 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         tranche.RegisterCollection(input.ReceivedAmount, input.ReceivedDate, input.IncomeEntryId);
 
         await _trancheRepository.UpdateAsync(tranche, autoSave: true);
+
+        await _financeNotifications.TrancheCollectedAsync(
+            tranche.ProjectId, tranche.SequenceNo, tranche.ReceivedAmount, tranche.ExpectedAmount);
+
         return await MapTrancheAsync(tranche);
     }
 
@@ -547,6 +554,14 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         tranche.SetDisputed(disputed);
 
         await _trancheRepository.UpdateAsync(tranche, autoSave: true);
+
+        // Yalnız itiraz AÇILIRKEN bildirilir; işaretin kaldırılması haber değeri taşımaz.
+        if (disputed)
+        {
+            await _financeNotifications.TrancheDisputedAsync(
+                tranche.ProjectId, tranche.SequenceNo, tranche.ExpectedAmount);
+        }
+
         return await MapTrancheAsync(tranche);
     }
 
@@ -561,6 +576,10 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         await _budgetManager.AddDeductionAsync(tranche, input.Amount, input.Reason, input.DeductionDate);
 
         await _trancheRepository.UpdateAsync(tranche, autoSave: true);
+
+        await _financeNotifications.DeductionAddedAsync(
+            tranche.ProjectId, tranche.SequenceNo, input.Amount, input.Reason);
+
         return await MapTrancheAsync(tranche);
     }
 
@@ -647,6 +666,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         {
             await _deductionRepository.UpdateAsync(sourceDeduction, autoSave: true);
         }
+
+        await _financeNotifications.RevisionAppliedAsync(
+            projectId, revision.RevisionNo, revision.Reason, revision.TotalApprovedAmount);
 
         var dto = ObjectMapper.Map<BudgetRevision, BudgetRevisionDto>(revision);
         dto.NetDelta = revision.NetDelta;
