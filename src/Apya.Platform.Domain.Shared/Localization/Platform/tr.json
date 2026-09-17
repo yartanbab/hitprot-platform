@@ -2196,6 +2196,8 @@
         "Setting:Telemetry.RetentionDays.Description": "Denetim günlüğü ve istemci hata kayıtları bu süreden sonra otomatik silinir. Geri bildirimler bu süreden etkilenmez.",
         "Setting:Subscription.AutoDowngradeEnabled": "Süre dolunca Basic pakete indir",
         "Setting:Subscription.AutoDowngradeEnabled.Description": "Kapalıyken süresi dolan müşteriye yalnız uyarı gider, paketi değişmez. Açtığınızda süresi çoktan dolmuş müşteriler ilk kontrolde indirilir.",
+        "Setting:Notifications.BudgetUsageThresholds": "Bütçe kullanım uyarı eşikleri (%)",
+        "Setting:Notifications.BudgetUsageThresholds.Description": "Bir bütçe kalemi bu yüzdelere ulaştığında proje sorumlusuna uyarı gider — virgülle ayırın (örn. 50,75,90,100). Her değerlendirmede yalnız en yüksek uygun eşik gönderilir. Tutar aşıldığında eşik uyarısı gitmez, yerine \"bütçe aşıldı\" bildirimi gider; o bildirim bu ayarla kapatılamaz. Boş bırakılırsa kullanım uyarısı üretilmez.",
         "Setting:Subscription.GraceDays": "Ek süre (gün)",
         "Setting:Subscription.GraceDays.Description": "Bitiş tarihinden sonra paketin açık kalmaya devam ettiği süre. 0 = ek süre yok, bitiş tarihinde indirilir. En fazla 90 gün.",
         "Setting:Subscription.WarningDays": "Uyarı eşikleri (gün)",

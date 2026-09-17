@@ -30,6 +30,7 @@ public class ExpenseAppService :
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly ProjectBudgetManager _budgetManager;
     private readonly FxLedgerStamper _fxStamper;
+    private readonly BudgetRiskEvaluator _budgetRiskEvaluator;
 
     public ExpenseAppService(
         IRepository<Expense, Guid> repository,
@@ -38,7 +39,8 @@ public class ExpenseAppService :
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<Project, Guid> projectRepository,
         ProjectBudgetManager budgetManager,
-        FxLedgerStamper fxStamper)
+        FxLedgerStamper fxStamper,
+        BudgetRiskEvaluator budgetRiskEvaluator)
         : base(repository)
     {
         _cashMovementRepository = cashMovementRepository;
@@ -47,6 +49,7 @@ public class ExpenseAppService :
         _projectRepository = projectRepository;
         _budgetManager = budgetManager;
         _fxStamper = fxStamper;
+        _budgetRiskEvaluator = budgetRiskEvaluator;
         GetPolicyName = PlatformPermissions.Expenses.Default;
         GetListPolicyName = PlatformPermissions.Expenses.Default;
         CreatePolicyName = PlatformPermissions.Expenses.Create;
@@ -170,6 +173,8 @@ public class ExpenseAppService :
             dto.Id,
             CurrentTenant.Id), autoSave: true);
 
+        await EvaluateBudgetRiskAsync(input);
+
         return dto;
     }
 
@@ -192,7 +197,28 @@ public class ExpenseAppService :
             await _cashMovementRepository.UpdateAsync(linked, autoSave: true);
         }
 
+        await EvaluateBudgetRiskAsync(input);
+
         return dto;
+    }
+
+    /// <summary>
+    /// Harcama bütçe kalemine işlendikten sonra riski ölçer: eşik aşımı ertesi
+    /// günün worker turuna bırakılsaydı uyarı geç kalırdı.
+    /// <para>Kalemsiz gider bütçeye dokunmaz; ölçülecek bir şey yok.</para>
+    /// </summary>
+    private async Task EvaluateBudgetRiskAsync(CreateUpdateExpenseDto input)
+    {
+        if (input.BudgetLineId == null)
+        {
+            return;
+        }
+
+        var projectId = await ResolveEffectiveProjectIdAsync(input);
+        if (projectId.HasValue)
+        {
+            await _budgetRiskEvaluator.EvaluateProjectAsync(projectId.Value);
+        }
     }
 
     public override async Task DeleteAsync(Guid id)

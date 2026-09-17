@@ -285,6 +285,13 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
         // --- Sinyalden göreve köprüsü --- (hepsi host seviyesinde)
         context.Add(
             new SettingDefinition(
+                PlatformSettings.Notifications.BudgetUsageThresholds,
+                defaultValue: PlatformSettingDefaults.BudgetUsageThresholds,
+                displayName: L("Setting:Notifications.BudgetUsageThresholds"),
+                description: L("Setting:Notifications.BudgetUsageThresholds.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+
+            new SettingDefinition(
                 PlatformSettings.IssueTasks.TargetProjectId,
                 defaultValue: "",
                 displayName: L("Setting:IssueTasks.TargetProjectId"),

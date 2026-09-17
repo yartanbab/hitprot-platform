@@ -346,6 +346,21 @@ public static class PlatformSettings
     }
 
     /// <summary>
+    /// Bildirim davranışı — host (Global) seviyesinde.
+    /// KRİTİK: .WithProviders(Global) DefaultValueSettingValueProvider'ı zincirden
+    /// çıkarır, bu yüzden okurken açık varsayılan kullanılmalı.
+    /// </summary>
+    public static class Notifications
+    {
+        /// <summary>
+        /// Bütçe kullanım uyarısının hangi yüzdelerde üretileceği — virgülle ayrık
+        /// ("50,75,90,100"). Bir değerlendirmede yalnız EN YÜKSEK uygun eşik gönderilir;
+        /// sıfırdan %95'e sıçrayan bir kalem üç ayrı uyarı üretmez. Boş = uyarı üretilmez.
+        /// </summary>
+        public const string BudgetUsageThresholds = Prefix + ".Notifications.BudgetUsageThresholds";
+    }
+
+    /// <summary>
     /// Paket süresi / abonelik davranışı — hepsi host (Global) seviyesinde.
     /// KRİTİK: .WithProviders(Global) DefaultValueSettingValueProvider'ı zincirden
     /// çıkarır, bu yüzden okurken GetAsync&lt;T&gt;'ye AÇIK varsayılan geçilmeli.
@@ -573,4 +588,11 @@ public static class PlatformSettingDefaults
 
     /// <summary>Uyarı eşikleri varsayılanı: 7 ve 1 gün kala.</summary>
     public const string SubscriptionWarningDays = "7,1";
+
+    /// <summary>
+    /// Bütçe kullanım uyarısı varsayılanı. %100 eşiği "bütçe tam doldu" demektir.
+    /// Tutar AŞILDIĞINDA hiçbir eşik uyarısı gitmez; yerine aşım bildirimi gider —
+    /// ikisi birlikte giderse kullanıcı aynı olayı iki satırda okur.
+    /// </summary>
+    public const string BudgetUsageThresholds = "50,75,90,100";
 }

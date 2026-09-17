@@ -139,13 +139,13 @@ Gövde "Bütçe aşıldı" demez. Şablon:
 
 ## 4. Fazlar ve doğrulama
 
-| Faz | İçerik | Şema | Doğrulama |
-|---|---|---|---|
-| **1a** | `Finance` kategorisi + 7 tür + registry + tr.json + `PublishOnceAsync` | yok | `dotnet test` (yeni birim testleri: registry kapsaması, once semantiği) |
-| **1b** | Alıcı çözümü (`FinanceRecipientResolver`) | yok | Birim test: Lead yoksa oluşturan; izinsiz kullanıcı süzülüyor |
-| **1c** | Olay kancaları: revizyon, dilim tahsilat, kesinti, itiraz | yok | EF testleri; yerel QA: işlem sonrası zilde satır |
-| **1d** | `BudgetThresholdWorker` + ayar tabanlı eşikler | yok | Testte eşik geçişi tek bildirim üretiyor, ikinci turda üretmiyor |
-| **1e** | Bildirim merkezi: Finans sekmesi + ikonlar | yok | Tarayıcı QA (oturumlu), 400 px dahil |
+| Faz | İçerik | Şema | Doğrulama | Durum |
+|---|---|---|---|---|
+| **1a** | `Finance` kategorisi + 7 tür + registry + tr.json + `PublishOnceAsync` + merkez sekmesi | yok | 6 yeni "bir kez" testi + mevcut registry kapsama testi | ✅ `97cf05a7` |
+| **1b** | Alıcı çözümü (`FinanceNotificationRecipientResolver`) | yok | 4 test: Lead süzgeci, izin süzgeci, oluşturan yedeği, boş liste | ✅ `baee6f9f` |
+| **1c** | Olay kancaları: revizyon, dilim tahsilat, kesinti, itiraz | yok | 5 test: tür, aciliyet, tutar biçimi, gerekçe, sessiz kalma | ✅ `f74101cc` |
+| **1d** | `BudgetRiskEvaluator` + `BudgetRiskWorker` + ayar tabanlı eşikler + gider kancası | yok | 6 test: en yüksek eşik, aşım, tam %100, revizyon yeniden kurma, gecikmiş dilim | ✅ |
+| **1e** | Bildirim merkezi Finans sekmesi | yok | 1a'ya katıldı (kategori + etiket + sekme tek değişiklik) | ✅ |
 | **2** | Ölü türlerin üreticileri: `ProjectMemberAdded`, `Mention` | yok | Ayrı PR'lar, her biri kendi testiyle |
 | **3** | Belge onay/red, form cevabı, AI değerlendirme bildirimi | yok | Ayrı PR'lar |
 | **4** | **Bütçe onay iş akışı** (taslak→onay→kilit) + üstüne escalation | **çift migration** | Ürün kararı gerekiyor — §6/K2 |
@@ -168,24 +168,26 @@ Her faz ayrı PR. Faz 1 kendi içinde 5 PR'a bölünür (granüler PR tercihi).
 
 ---
 
-## 6. ONAY BEKLEYEN KARARLAR
+## 6. KARARLAR (2026-09-17 · alındı)
 
-### K1 — Faz 1 kapsamı doğru mu?
-Finans bildirimleri **şemasız** (7 tür + ayar tabanlı eşik + 1 worker), pilot olarak
-`ProjectBudgets`. Hibe tarafı zaten kapsanmış durumda.
+| # | Soru | Karar |
+|---|---|---|
+| **K1** | Faz 1 kapsamı | **Tam finans ekseni** — 7 tür, ayar tabanlı eşik, 1 worker, şemasız |
+| **K2** | Bütçe onay iş akışı bu işin parçası mı? | **Hayır, ayrı iş.** Domain'de karşılığı yok; durum makinesi + çift migration + yeni izin ister. Escalation buna bağlı olduğu için birlikte ertelendi |
+| **K3** | Şablon yönetimi genelleştirilsin mi? | **Hayır.** Metinler `tr.json`'da; Hibe şablon tablosu olduğu yerde kalıyor |
+| **K4** | Sarkan uçlar (`Mention`, `ProjectMemberAdded`, ölü bağımlılık) | **Raporda kalsın, dokunulmadı** |
 
-### K2 — Bütçe onay iş akışı bu işin parçası mı?
-"Bütçe onaya gönderildi / onaylandı / reddedildi / kilitlendi / dönem kapandı" bugün
-**domain'de yok**. Bildirim eklenerek çözülmez; yeni durum makinesi + çift migration +
-yeni izinler ister. Bu, bildirim işinden büyük bir üründür. Ayrı iş olarak mı ele alınsın?
+## 7. Faz 1 sonrası bilinen sınırlar
 
-### K3 — Şablon yönetimi genelleştirilsin mi?
-Host, finans bildirim metinlerini ekrandan düzenleyebilsin mi? Evet ise Hibe şablon
-tablosunun genelleştirilmesi (çift migration + veri taşıma + ekran) gerekir. Hayır ise
-metinler `tr.json`'da kalır.
+Bunlar kabul edilmiş kısıtlar, keşfedilmemiş hatalar değil:
 
-### K4 — Ölü uçlar ne olsun?
-`Mention` ve `ProjectMemberAdded` türleri kayıtlı ama üreticisi yok;
-`GrantApplicationDocumentAppService`'te kullanılmayan `NotificationManager` bağımlılığı var.
-Üreticileri yazılsın mı, yoksa şimdilik bilgi olarak mı kalsın? (Ölü kod CLAUDE.md gereği
-bildirildi, silinmedi.)
+- **Eşik hafızası 90 günde eskir.** `NotificationCleanupWorker` satırı kalıcı silince
+  koşul hâlâ doğruysa uyarı bir kez daha üretilir (ADR-3).
+- **Bildirim ile iş kaydı atomik değil.** Kanca yazma başarılı olduktan sonra çalışır;
+  bildirim üretimi hata alırsa yutulur ve loglanır (ADR-6).
+- **Claim tabanlı dinamik izinler alıcı süzgecinde görünmez** — o kullanıcı bildirim
+  almaz. Kapalı tarafa yanılma bilinçli (ADR-4).
+- **Escalation, quiet hours, tür bazlı tercih, teslim logu ve analitik yok** — Faz 4/5.
+- **Gelir kayıtları eşik hesabına girmiyor.** Harcanan tutar yalnız `Expense` toplamıdır;
+  bu, `GetOverviewAsync`'in `SpentAmount` tanımıyla birebir aynıdır — iki ekran farklı
+  rakam göstermesin diye bilinçli.
