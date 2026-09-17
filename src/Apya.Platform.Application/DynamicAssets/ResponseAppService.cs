@@ -31,6 +31,7 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
     private readonly Apya.Platform.Tasks.ITaskShareAppService _taskShareAppService;
     private readonly PublicFormLocator _formLocator;
     private readonly FormChoiceProvider _choiceProvider;
+    private readonly FormConditionEvaluator _conditionEvaluator;
 
     public ResponseAppService(
         IAppDocumentRepository documentRepository,
@@ -39,7 +40,8 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
         ILogger<ResponseAppService> logger,
         Apya.Platform.Tasks.ITaskShareAppService taskShareAppService,
         PublicFormLocator formLocator,
-        FormChoiceProvider choiceProvider)
+        FormChoiceProvider choiceProvider,
+        FormConditionEvaluator conditionEvaluator)
     {
         _documentRepository = documentRepository;
         _responseRepository = responseRepository;
@@ -48,6 +50,7 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
         _taskShareAppService = taskShareAppService;
         _formLocator = formLocator;
         _choiceProvider = choiceProvider;
+        _conditionEvaluator = conditionEvaluator;
     }
 
     public async Task SubmitAsync(SubmitResponseDto input)
@@ -129,9 +132,10 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
             throw new BusinessException(PlatformDomainErrorCodes.FormKvkkConsentRequired);
         }
 
-        // 4) Cevap doğrulama (SEC-003): serbest JSON'la çöp/spam veriyi engelle.
-        ValidateAnswers(input.Answers, document, input.DocumentSlug);
-        var answers = await NormalizeChoiceAnswersAsync(input.Answers, document, input.DocumentSlug);
+        // 4) Cevap doğrulama (SEC-003): serbest JSON'la çöp/spam veriyi engelle. Koşulu tutmayan alan
+        // GİZLİDİR: zorunluluğu aranmaz, gelen cevabı da yazılmaz.
+        var hiddenBlocks = await ValidateAnswersAsync(input.Answers, document, input.DocumentSlug);
+        var answers = await NormalizeChoiceAnswersAsync(input.Answers, document, input.DocumentSlug, hiddenBlocks);
 
         // Yanıt ve KVKK rıza kaydı çözülen kiracıda yazılır: kiracı formunda formun sahibi, host formunu
         // dolduran kiracı kullanıcısında dolduranın kendisi. 🔑 ABP kiracıyı varlık KURULURKEN atar; nesne
@@ -190,7 +194,7 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
     /// boyut sınırı, geçerli JSON nesnesi, yalnız var olan cevaplanabilir bloklara ait anahtarlar ve
     /// zorunlu blokların doldurulması. Serbest JSON'la çöp/spam/geçersiz veri girişini engeller.
     /// </summary>
-    private void ValidateAnswers(string answersJson, AppDocument document, string slug)
+    private async Task<HashSet<Guid>> ValidateAnswersAsync(string answersJson, AppDocument document, string slug)
     {
         if (string.IsNullOrEmpty(answersJson) || answersJson.Length > MaxAnswersLength)
         {
@@ -228,15 +232,26 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
             throw new BusinessException(PlatformDomainErrorCodes.FormAnswersInvalid);
         }
 
+        // 17 · Görünürlük kuralları CEVAPLARA göre çözülür; gizli alan aşağıdaki zorunluluk
+        // kontrolünün dışında kalır ("ortaklık istemeyen çağrıda ortak adı zorunlu" olmasın).
+        var hidden = await _conditionEvaluator.GetHiddenBlocksAsync(document, answersByBlock);
+
         // Zorunlu bloklar boş bırakılamaz (sunucu-taraflı savunma; istemci de kontrol ediyor).
         foreach (var block in answerableBlocks)
         {
+            if (hidden.Contains(block.Id))
+            {
+                continue;
+            }
+
             if (IsRequired(block)
                 && (!answersByBlock.TryGetValue(block.Id, out var value) || IsEmptyAnswer(value)))
             {
                 throw new BusinessException(PlatformDomainErrorCodes.FormRequiredAnswerMissing);
             }
         }
+
+        return hidden;
     }
 
     /// <summary>
@@ -244,19 +259,31 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
     /// form açıkken kapanan ya da hiç listede olmayan çağrı reddedilir. Etiket istemciden alınmaz,
     /// sunucudaki adla yazılır; yanıt ekranı ve dışa aktarım gönderim anındaki adı gösterir.
     /// </summary>
-    private async Task<string> NormalizeChoiceAnswersAsync(string answersJson, AppDocument document, string slug)
+    private async Task<string> NormalizeChoiceAnswersAsync(
+        string answersJson, AppDocument document, string slug, HashSet<Guid> hiddenBlocks)
     {
         var boundBlocks = document.Blocks
+            .Where(b => !hiddenBlocks.Contains(b.Id))
             .Select(b => (Block: b, Source: FormChoiceProvider.SourceOf(b.Type, b.Settings)))
             .Where(x => x.Source != null)
             .ToList();
-        if (boundBlocks.Count == 0)
+        if (boundBlocks.Count == 0 && hiddenBlocks.Count == 0)
         {
             return answersJson;
         }
 
         var answers = JsonNode.Parse(answersJson)!.AsObject();
         var changed = false;
+
+        // Gizli alana gelen cevap YAZILMAZ: kullanıcı önce doldurup sonra koşulu bozmuş olabilir ya da
+        // istemci hiç gizlememiş olabilir; kayıtta ekranda görünmeyen cevap kalmasın.
+        foreach (var hiddenId in hiddenBlocks)
+        {
+            if (answers.Remove(hiddenId.ToString()))
+            {
+                changed = true;
+            }
+        }
         foreach (var (block, source) in boundBlocks)
         {
             var key = block.Id.ToString();
