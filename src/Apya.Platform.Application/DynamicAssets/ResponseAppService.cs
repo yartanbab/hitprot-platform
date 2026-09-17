@@ -266,14 +266,7 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
                 continue; // cevapsız; zorunluysa ValidateAnswers zaten reddetti
             }
 
-            string? value = null;
-            var readable = node switch
-            {
-                JsonObject choice => choice["value"] is JsonValue v && v.TryGetValue(out value),
-                JsonValue raw => raw.TryGetValue(out value),
-                _ => false
-            };
-            if (!readable)
+            if (!TryReadChoiceValue(node, out var value))
             {
                 throw new BusinessException(PlatformDomainErrorCodes.FormAnswersInvalid);
             }
@@ -289,7 +282,8 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
                 continue;
             }
 
-            var match = (await _choiceProvider.GetChoicesAsync(source))?.FirstOrDefault(c => c.Value == value);
+            var parentValue = ParentValueOf(block, source, answers);
+            var match = (await _choiceProvider.GetChoicesAsync(source, parentValue))?.FirstOrDefault(c => c.Value == value);
             if (match is null)
             {
                 _logger.LogWarning("Form yanıtında listede olmayan seçenek reddedildi. Slug: {Slug}, Alan: {BlockId}, Değer: {Value}",
@@ -304,6 +298,36 @@ public class ResponseAppService : PlatformAppService, IResponseAppService
         return changed
             ? answers.ToJsonString(new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping })
             : answersJson;
+    }
+
+    /// <summary>
+    /// 16b · Zincirli alanın süzgeci: üst alanda İŞARETLENEN kayıt. Üst alan boşsa null döner; kaynak da boş
+    /// liste verdiği için cevap reddedilir — "önce projeyi seçmeden görev gönderilemez" kuralı sunucudadır.
+    /// </summary>
+    private string? ParentValueOf(AppBlock block, string? source, JsonObject answers)
+    {
+        if (_choiceProvider.Find(source)?.DependsOnSourceKey == null)
+        {
+            return null;
+        }
+
+        var parentBlockId = FormChoiceProvider.DependsOnBlockOf(block.Type, block.Settings);
+        return parentBlockId != null
+               && TryReadChoiceValue(answers[parentBlockId.Value.ToString()], out var parentValue)
+            ? parentValue
+            : null;
+    }
+
+    /// <summary>Cevap ya <c>{ value, label }</c> nesnesidir ya da düz değer; ikisinden de kimliği okur.</summary>
+    private static bool TryReadChoiceValue(JsonNode? node, out string? value)
+    {
+        value = null;
+        return node switch
+        {
+            JsonObject choice => choice["value"] is JsonValue v && v.TryGetValue(out value),
+            JsonValue raw => raw.TryGetValue(out value),
+            _ => false
+        };
     }
 
     private static bool IsRequired(AppBlock block)

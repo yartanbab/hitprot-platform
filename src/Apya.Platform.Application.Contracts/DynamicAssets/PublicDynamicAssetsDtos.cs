@@ -42,6 +42,12 @@ public class PublicBlockDto
     /// o alanlar seçeneklerini <see cref="Settings"/> içindeki <c>options</c> dizisinden okur.
     /// </summary>
     public List<FormChoiceDto>? Choices { get; set; }
+
+    /// <summary>
+    /// 16b · Zincirli alan: seçenekleri bu bloktaki seçime göre süzülür. Doluysa <see cref="Choices"/> ilk
+    /// açılışta boştur; üst alan seçilince istemci listeyi <c>GetBlockChoicesAsync</c> ile ister.
+    /// </summary>
+    public Guid? DependsOnBlockId { get; set; }
 }
 
 /// <summary>

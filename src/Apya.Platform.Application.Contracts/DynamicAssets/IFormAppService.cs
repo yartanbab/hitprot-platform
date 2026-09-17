@@ -30,4 +30,10 @@ public interface IFormAppService : IApplicationService
     /// an unknown source.
     /// </summary>
     Task<List<FormChoiceDto>> GetChoicesAsync(string source);
+
+    /// <summary>
+    /// 16a · Veri kaynakları kataloğu: alanın bağlanabileceği canlı listeler, kapsamları, zincir bağları ve
+    /// kaç formda kullanıldıkları.
+    /// </summary>
+    Task<List<FormChoiceSourceDto>> GetChoiceSourcesAsync();
 }

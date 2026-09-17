@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
@@ -68,12 +70,32 @@ public class PublicDocumentAppService : PlatformAppService, IPublicDocumentAppSe
         dto.RequireKvkk = settings.Kvkk;
         dto.RequireCaptcha = settings.Captcha;
 
-        // Canlı listeye bağlı açılır listelerin seçenekleri her açılışta güncel veriden gelir.
+        // Canlı listeye bağlı açılır listelerin seçenekleri her açılışta güncel veriden gelir. Zincirli alan
+        // (16b) burada doldurulmaz: listesi üst alandaki seçime bağlı, istemci seçim yapılınca ister.
         foreach (var block in dto.Blocks)
         {
-            block.Choices = await _choiceProvider.GetChoicesAsync(FormChoiceProvider.SourceOf(block.Type, block.Settings));
+            block.DependsOnBlockId = FormChoiceProvider.DependsOnBlockOf(block.Type, block.Settings);
+            block.Choices = block.DependsOnBlockId == null
+                ? await _choiceProvider.GetChoicesAsync(FormChoiceProvider.SourceOf(block.Type, block.Settings))
+                : new List<FormChoiceDto>();
         }
 
         return dto;
+    }
+
+    public async Task<List<FormChoiceDto>> GetBlockChoicesAsync(
+        string slug, Guid blockId, string? parentValue = null, Guid? tenantId = null)
+    {
+        var document = (await _formLocator.FindAsync(slug, tenantId))?.Document;
+        if (document is null || document.Status != FormStatus.Published)
+        {
+            throw new EntityNotFoundException(typeof(AppDocument), slug);
+        }
+
+        // Yalnız bu formun kendi alanı sorulabilir: blok kimliği başka formdan geliyorsa istek boşa düşer.
+        var block = document.Blocks.FirstOrDefault(b => b.Id == blockId);
+        var source = block == null ? null : FormChoiceProvider.SourceOf(block.Type, block.Settings);
+
+        return await _choiceProvider.GetChoicesAsync(source, parentValue) ?? new List<FormChoiceDto>();
     }
 }
