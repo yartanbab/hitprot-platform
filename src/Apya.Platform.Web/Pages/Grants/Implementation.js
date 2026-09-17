@@ -6,7 +6,9 @@ $(function () {
     // Enum sıraları sunucudakiyle birebir.
     var reportKeys = ['Planlandi', 'Hazirlaniyor', 'Gonderildi', 'Onaylandi', 'RevizyonIstendi'];
     var reportTone = ['neutral', 'warning', 'accent', 'positive', 'negative'];
-    var trancheKeys = ['Planlandi', 'Odendi', 'Iptal'];
+    // GrantDisbursementTrancheStatus: Planlandi=0, TalepEdildi=1, Odendi=2.
+    // Eski dizi bir kaydırmalıydı → ödenmiş dilim "İptal" görünüyordu.
+    var trancheKeys = ['Planlandi', 'TalepEdildi', 'Odendi'];
     var obligationKeys = ['ReportDue', 'TrancheDue'];
 
     var model = null;
@@ -27,7 +29,7 @@ $(function () {
     }
 
     function chainItem(c) {
-        var paid = c.trancheStatus === 1;
+        var paid = c.trancheStatus === 2; // Odendi = 2 (eskiden 1 yazıyordu, hiç eşleşmiyordu)
         var cls = paid ? ' is-paid' : (c.paymentBlocked ? ' is-blocked' : '');
 
         var tranche = c.trancheId

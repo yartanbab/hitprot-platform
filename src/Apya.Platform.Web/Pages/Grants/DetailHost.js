@@ -9,7 +9,10 @@ $(function () {
     var stateKeys = ['Empty', 'InProgress', 'Live', 'Complete', 'Locked'];
     var stateTone = ['neutral', 'warning', 'accent', 'positive', 'neutral'];
     var activityKinds = ['StageMoved', 'AssignmentChanged', 'HandedOver', 'Submitted'];
-    var trancheStatus = ['Planlandi', 'Odendi', 'Iptal'];
+    // GrantDisbursementTrancheStatus sırasıyla BİREBİR: Planlandi=0, TalepEdildi=1, Odendi=2.
+    // Eskiden ['Planlandi','Odendi','Iptal'] yazıyordu; MarkPaid() durumu 2 yaptığı için
+    // ÖDENMİŞ dilim ekranda "İptal" görünüyordu ("Iptal" enum'da hiç yok).
+    var trancheStatus = ['Planlandi', 'TalepEdildi', 'Odendi'];
 
     var model = null;
     var channel = 'all';
