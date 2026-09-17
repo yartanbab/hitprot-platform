@@ -428,7 +428,7 @@
         "Notification:TrancheDeduction:Title": "Dilimden kesinti yapıldı",
         "Notification:TrancheDeduction:Body": "{0} · {1}. dilimden {2} kesildi. Gerekçe: {3}. Bütçeyi revize edin ya da kesintiyi \"finanse edilmeyen\" olarak kapatın.",
         "Notification:TrancheDisputed:Title": "Dilim itirazlı işaretlendi",
-        "Notification:TrancheDisputed:Body": "{0} · {1}. dilim itiraz sürecine alındı. Beklenen tutar {2}. Karara bağlanana kadar tahsilat planı bu dilimi içermez.",
+        "Notification:TrancheDisputed:Body": "{0} · {1}. dilim itiraz sürecine alındı. Beklenen tutar {2}. Karara bağlanana kadar dilim tahsil edilmiş sayılmaz.",
         "Tasks:Status:Todo": "Yapılacak",
         "Tasks:Status:InProgress": "Sürüyor",
         "Tasks:Status:InReview": "Testte",
