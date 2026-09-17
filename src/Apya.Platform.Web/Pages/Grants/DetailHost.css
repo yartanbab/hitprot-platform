@@ -101,6 +101,20 @@
 
 .apya-dh-section:last-child { border-bottom: 0; }
 
+/* Dar ekranda sabit 132+108 sütunları bölüm adına yer bırakmıyordu (375 px'te ad
+   sütunu ~7 px, satır harf harf sarıyordu). Evrak takibindeki satır deseniyle aynı:
+   ikon solda kalır, kalan her şey alt alta gelir. */
+@media (max-width: 991.98px) {
+    .apya-dh-section {
+        grid-template-columns: 22px minmax(0, 1fr);
+        align-items: start;
+        row-gap: var(--apya-space-1);
+    }
+
+    .apya-dh-section > * { grid-column: 2; }
+    .apya-dh-section > :first-child { grid-column: 1; grid-row: 1; }
+}
+
 /* Bağlantı satırı: metin rengi kalır, yalnız zemin ve ok ipucu verir. */
 .apya-dh-section.is-link {
     color: inherit;
