@@ -4,6 +4,7 @@ import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
 import { publicFormPath } from './lib/publicFormLink';
 import { OPEN_GRANT_CALLS, withChoiceParam, CHOICE_SOURCES, sourceLabel } from './lib/formChoices';
+import { VISIBLE_WHEN, OPS, OP_LABELS, flagLabel } from './lib/formConditions';
 import './index.css';
 
 /* ============================================================
@@ -73,6 +74,13 @@ export const payloadBlocks = (blocks) => blocks.map((b, idx) => ({
  * 16b · Zincirli alanın üst alan adayları: YUKARIDA duran ve beklenen kaynağa bağlı açılır listeler.
  * Aşağıdaki alan aday değil — doldurucu önce üstteki soruyu yanıtlar, liste ona göre daralır.
  */
+/**
+ * 17 · Koşul kurulabilecek alanlar: YUKARIDA duran ve cevaplanabilen alanlar. Düzen blokları
+ * (başlık, açıklama) cevap taşımadığı için aday değildir.
+ */
+export const conditionCandidatesFor = (blocks, index) =>
+  blocks.slice(0, index).filter((b) => !LAYOUT_ONLY.has(b.type));
+
 export const parentCandidatesFor = (blocks, index, sources) => {
   const meta = (sources || []).find((x) => x.key === blocks[index]?.settings?.source);
   return meta?.dependsOnSourceKey
@@ -214,7 +222,7 @@ function ChoiceSourcePanel({ block, settings: s, onPatchSettings, publicSlug, so
 
   return (
     <div className="mt-4 rounded-xl border border-subtle bg-surface-sunken p-3" onClick={(e) => e.stopPropagation()}>
-      <p className="mb-2 text-[11px] font-semibold uppercase text-text-tertiary">Seçenek kaynağı</p>
+      <p className="mb-2 text-[11px] font-semibold uppercase text-text-secondary">Seçenek kaynağı</p>
       <label className="flex items-center gap-2 text-sm text-text-primary">
         <input type="radio" name={`source-${block.id}`} checked={!live} onChange={() => setLive(false)} className="h-4 w-4 text-accent" />
         Sabit seçenekler, elle yazılır
@@ -284,7 +292,99 @@ function ChoiceSourcePanel({ block, settings: s, onPatchSettings, publicSlug, so
   );
 }
 
-export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettings, onChangeType, onDuplicate, onRemove, onAddAfter, onMove, dragRef, publicSlug, sources = [], parentCandidates = [] }) {
+/* 17 · Görünürlük kuralı: alan yalnız YUKARIDAKİ bir alanın cevabına göre görünsün. Kural hep yukarıyı
+   gösterdiği için döngü kurulamaz; doldurucu da soruyu sırayla yanıtlar.
+   "Seçilen kayıt şu şartı taşıyorsa" seçeneği yalnız bayrak üreten kaynağa bağlı alanlarda çıkar
+   (bugün: çağrı listesi → ortaklık şartı). */
+function VisibilityPanel({ block, settings: s, onPatchSettings, candidates, sources }) {
+  const rule = s[VISIBLE_WHEN] || null;
+  const parent = candidates.find((c) => c.id === rule?.blockId) || null;
+  const parentSettings = parent?.settings || {};
+  const parentSource = parent?.type === BT.Dropdown ? parentSettings.source : null;
+  const parentMeta = sources.find((x) => x.key === parentSource) || null;
+  const parentChained = !!parentMeta?.dependsOnSourceKey;
+  const flags = parentMeta?.flags || [];
+  const [choices, setChoices] = useState(null);
+
+  useEffect(() => {
+    // Zincirli kaynakta seçenekler üst alandaki seçime bağlı — düzenleyicide sabit bir liste yok.
+    if (!parentSource || parentChained) return setChoices(null);
+    let stale = false;
+    api.get(`/api/app/form/choices?source=${encodeURIComponent(parentSource)}`)
+      .then((list) => { if (!stale) setChoices(list || []); })
+      .catch(() => { if (!stale) setChoices([]); });
+    return () => { stale = true; };
+  }, [parentSource, parentChained]);
+
+  const setRule = (patch) => onPatchSettings(block.id, { [VISIBLE_WHEN]: { ...rule, ...patch } });
+  const start = () => {
+    const first = candidates[0];
+    onPatchSettings(block.id, { [VISIBLE_WHEN]: { blockId: first.id, op: OPS.ANSWERED, value: undefined } });
+  };
+  // Üst alan değişince karşılaştırma da sıfırlanır: eski seçenek yeni alanda yok.
+  const setParent = (blockId) => onPatchSettings(block.id, { [VISIBLE_WHEN]: { blockId, op: OPS.ANSWERED, value: undefined } });
+  const setOp = (op) => setRule({ op, value: op === OPS.FLAG ? flags[0] : undefined });
+
+  const valueOptions = parentSource
+    ? (choices || []).map((c) => ({ value: c.value, label: c.label }))
+    : (parentSettings.options || []).map((o) => ({ value: o, label: o }));
+  const opList = [OPS.ANSWERED, OPS.EQ, OPS.NEQ, ...(flags.length ? [OPS.FLAG] : [])]
+    .filter((op) => !(parentChained && (op === OPS.EQ || op === OPS.NEQ)));
+
+  return (
+    <div className="mt-3 rounded-xl border border-subtle bg-surface-sunken p-3" onClick={(e) => e.stopPropagation()}>
+      <p className="mb-2 text-[11px] font-semibold uppercase text-text-secondary">Görünürlük</p>
+
+      {candidates.length === 0 ? (
+        <p className="text-xs text-text-secondary">Koşul için yukarıda bir alan gerekir; bu alan her zaman görünür.</p>
+      ) : !rule ? (
+        <button type="button" onClick={start} className="rounded-lg border border-default bg-surface-raised px-3 py-1.5 text-xs font-semibold text-text-primary hover:bg-surface-sunken">
+          + Koşul ekle
+        </button>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {!parent && (
+            <p className="rounded-lg bg-warning-subtle px-2.5 py-2 text-xs text-warning">
+              Koşuldaki alan artık yukarıda değil. Yeni bir alan seçin ya da koşulu kaldırın — yoksa bu alan formda hiç görünmeyebilir.
+            </p>
+          )}
+          <select className={inputCls} value={rule.blockId} onChange={(e) => setParent(e.target.value)} aria-label="Koşul alanı">
+            {!parent && <option value={rule.blockId}>Kaldırılmış alan</option>}
+            {candidates.map((c) => <option key={c.id} value={c.id}>{c.content || 'Adsız alan'}</option>)}
+          </select>
+
+          <select className={inputCls} value={rule.op} onChange={(e) => setOp(e.target.value)} aria-label="Koşul karşılaştırması">
+            {opList.map((op) => <option key={op} value={op}>{OP_LABELS[op]}</option>)}
+          </select>
+
+          {rule.op === OPS.FLAG && (
+            <select className={inputCls} value={rule.value || flags[0] || ''} onChange={(e) => setRule({ value: e.target.value })} aria-label="Koşul şartı">
+              {flags.map((f) => <option key={f} value={f}>{flagLabel(f)}</option>)}
+            </select>
+          )}
+
+          {(rule.op === OPS.EQ || rule.op === OPS.NEQ) && (
+            valueOptions.length > 0 ? (
+              <select className={inputCls} value={rule.value || ''} onChange={(e) => setRule({ value: e.target.value })} aria-label="Koşul cevabı">
+                <option value="">Cevabı seçin…</option>
+                {valueOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            ) : (
+              <input className={inputCls} value={rule.value || ''} onChange={(e) => setRule({ value: e.target.value })} placeholder="Beklenen cevap…" aria-label="Koşul cevabı" />
+            )
+          )}
+
+          <button type="button" onClick={() => onPatchSettings(block.id, { [VISIBLE_WHEN]: undefined })} /* Kırmızı token açık temada 4,39:1 (AA altı), sayısal tonlar koyu temada dönmüyor → nötr. */
+            className="self-start text-xs font-semibold text-text-secondary underline hover:text-text-primary">
+            Koşulu kaldır
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettings, onChangeType, onDuplicate, onRemove, onAddAfter, onMove, dragRef, publicSlug, sources = [], parentCandidates = [], conditionCandidates = [] }) {
   const s = block.settings || {};
   const isLayout = LAYOUT_ONLY.has(block.type);
   const cardRef = useRef(null);
@@ -345,6 +445,10 @@ export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatc
 
       {selected && block.type === BT.Dropdown && (
         <ChoiceSourcePanel block={block} settings={s} onPatchSettings={onPatchSettings} publicSlug={publicSlug} sources={sources} parentCandidates={parentCandidates} />
+      )}
+
+      {selected && (
+        <VisibilityPanel block={block} settings={s} onPatchSettings={onPatchSettings} candidates={conditionCandidates} sources={sources} />
       )}
 
       {/* options editor (selected, choice types) */}
@@ -512,7 +616,12 @@ function FormBuilder() {
     // Üst alan bağı blok kimliğiyle tutulur: yeni eklenen üst alan kaydedilince o bağ da sunucu kimliğine taşınır.
     setBlocks((prev) => prev.map((b) => {
       const dependsOn = b.settings?.dependsOn;
-      const settings = dependsOn && map[dependsOn] ? { ...b.settings, dependsOn: map[dependsOn] } : b.settings;
+      const condition = b.settings?.[VISIBLE_WHEN];
+      let settings = b.settings;
+      if (dependsOn && map[dependsOn]) settings = { ...settings, dependsOn: map[dependsOn] };
+      if (condition?.blockId && map[condition.blockId]) {
+        settings = { ...settings, [VISIBLE_WHEN]: { ...condition, blockId: map[condition.blockId] } };
+      }
       return map[b.id] || settings !== b.settings ? { ...b, id: map[b.id] || b.id, settings } : b;
     }));
     setSelectedId((id) => map[id] || id);
@@ -602,6 +711,7 @@ function FormBuilder() {
               publicSlug={slug}
               sources={choiceSources}
               parentCandidates={parentCandidatesFor(blocks, i, choiceSources)}
+              conditionCandidates={conditionCandidatesFor(blocks, i)}
             />
           ))}
         </div>
