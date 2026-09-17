@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -26,4 +27,15 @@ public interface ITenantProfileAppService : IApplicationService
     /// (yeni dönem mevcut bitişin üstüne biner). Ödeme altyapısı da aynı kapıyı kullanır.
     /// </summary>
     Task<TenantProfileDto> RenewPackageAsync(Guid tenantId, SubscriptionPeriod period);
+
+    /// <summary>
+    /// Kiracının kullanıcıları — host'un şifre belirleyeceği kişiyi seçmesi için.
+    /// </summary>
+    Task<List<TenantUserDto>> GetTenantUsersAsync(Guid tenantId);
+
+    /// <summary>
+    /// Kiracı kullanıcısına ESKİ ŞİFRE SORULMADAN yeni şifre yazar.
+    /// Müşteri şifresini unuttuğunda ve posta kanalı çalışmadığında tek kurtarma yolu budur.
+    /// </summary>
+    Task SetTenantUserPasswordAsync(Guid tenantId, Guid userId, string newPassword);
 }

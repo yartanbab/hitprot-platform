@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Identity;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.Uow;
 using System.Linq.Dynamic.Core;
@@ -25,6 +27,11 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
     private readonly IUnitOfWorkManager _unitOfWorkManager;
     private readonly TenantProvisioner _tenantProvisioner;
     private readonly TenantProfileUpdater _tenantProfileUpdater;
+    private readonly IIdentityUserRepository _identityUserRepository;
+    private readonly IdentityUserManager _userManager;
+
+    /// <summary>Şifre belirleme listesinde gösterilen kullanıcı tavanı.</summary>
+    private const int MaxTenantUsers = 500;
 
     public TenantProfileAppService(
         ITenantRepository tenantRepository,
@@ -35,7 +42,9 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         IRepository<TenantSubscription, Guid> subscriptionRepository,
         IUnitOfWorkManager unitOfWorkManager,
         TenantProvisioner tenantProvisioner,
-        TenantProfileUpdater tenantProfileUpdater)
+        TenantProfileUpdater tenantProfileUpdater,
+        IIdentityUserRepository identityUserRepository,
+        IdentityUserManager userManager)
     {
         _tenantRepository = tenantRepository;
         _tenantManager = tenantManager;
@@ -46,6 +55,8 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         _unitOfWorkManager = unitOfWorkManager;
         _tenantProvisioner = tenantProvisioner;
         _tenantProfileUpdater = tenantProfileUpdater;
+        _identityUserRepository = identityUserRepository;
+        _userManager = userManager;
     }
 
     public async Task<PagedResultDto<TenantProfileDto>> GetListAsync(PagedAndSortedResultRequestDto input)
@@ -219,5 +230,83 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         var profile = await _tenantProfileUpdater.UpdateAsync(tenantId, input);
 
         return ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+    }
+
+    /// <summary>
+    /// Kiracının kullanıcıları. Okuma KİRACI BAĞLAMINA geçilerek yapılır: host bağlamında
+    /// (TenantId = null) kiracı süzgeci hiçbir kullanıcıyı döndürmez.
+    /// </summary>
+    [Authorize(TenantManagementPermissions.Tenants.Update)]
+    public async Task<List<TenantUserDto>> GetTenantUsersAsync(Guid tenantId)
+    {
+        EnsureHostContext();
+
+        using (CurrentTenant.Change(tenantId))
+        {
+            var users = await _identityUserRepository.GetListAsync(
+                sorting: nameof(IdentityUser.UserName),
+                maxResultCount: MaxTenantUsers);
+
+            return users.Select(user => new TenantUserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email ?? string.Empty,
+                DisplayName = BuildDisplayName(user)
+            }).ToList();
+        }
+    }
+
+    /// <summary>
+    /// Kiracı kullanıcısına eski şifre sorulmadan yeni şifre yazar.
+    ///
+    /// <para>🔑 <c>RemovePassword + AddPassword</c> — ABP'nin kendi
+    /// <c>IdentityUserAppService.UpdateAsync</c>'iyle aynı ikili. İkisi de güvenlik damgasını
+    /// tazeler (kullanıcının açık oturumları düşer) ve <c>AddPassword</c> şifre politikasını
+    /// uygular.</para>
+    ///
+    /// <para>🔴 <b>Sıfırlama JETONU kullanılmıyor.</b> <c>GeneratePasswordResetTokenAsync</c>
+    /// iki faktör jeton sağlayıcısına bağlıdır; sağlayıcı yalnız Web konağında kayıtlı olduğu
+    /// için entegrasyon testlerinde "No IUserTwoFactorTokenProvider named 'Default'" ile
+    /// düşüyordu (ölçüldü). Jetonsuz ikili her bağlamda aynı çalışır.</para>
+    ///
+    /// <para>Şifre politikaya takılırsa <c>AddPassword</c> hata fırlatır ve UoW geri sarar;
+    /// kullanıcı şifresiz kalmaz.</para>
+    /// </summary>
+    [Authorize(TenantManagementPermissions.Tenants.Update)]
+    public async Task SetTenantUserPasswordAsync(Guid tenantId, Guid userId, string newPassword)
+    {
+        EnsureHostContext();
+
+        using (CurrentTenant.Change(tenantId))
+        {
+            // 🔴 Kullanıcı kiracı süzgecinin ALTINDA aranır: başka bir müşterinin kullanıcı
+            // kimliği gönderilse bile "bulunamadı" döner, yanlış hesaba şifre yazılamaz.
+            var user = await _userManager.GetByIdAsync(userId);
+
+            (await _userManager.RemovePasswordAsync(user)).CheckErrors();
+            (await _userManager.AddPasswordAsync(user, newPassword)).CheckErrors();
+        }
+    }
+
+    /// <summary>
+    /// 🔴 Şifre uçları YALNIZ host bağlamında çalışır. İzin host tarafına tanımlı olsa da
+    /// host kullanıcısı "Hesabına Gir" ile bir kiracının içindeyken de bu servise ulaşır;
+    /// orada <c>tenantId</c> parametresi bambaşka bir müşteriyi gösteriyor olabilir.
+    /// </summary>
+    private void EnsureHostContext()
+    {
+        if (CurrentTenant.Id != null)
+        {
+            throw new UserFriendlyException(
+                "Bu işlem yalnız host hesabında yapılabilir; önce müşteri hesabından çıkın.");
+        }
+    }
+
+    private static string BuildDisplayName(IdentityUser user)
+    {
+        var fullName = $"{user.Name} {user.Surname}".Trim();
+
+        return fullName.IsNullOrWhiteSpace() ? user.UserName : fullName;
     }
 }
