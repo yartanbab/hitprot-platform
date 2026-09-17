@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { formTenantFromSearch } from './lib/publicFormLink';
 import { prefillChoice, sourceEmptyLabel } from './lib/formChoices';
+import { hiddenBlockIds, withoutHidden } from './lib/formConditions';
 import './index.css';
 
 /* BlockType enum — mirrors backend (stable ints) */
@@ -173,7 +174,18 @@ function PublicForm({ slug }) {
     () => (doc?.blocks || []).slice().sort((a, b) => a.order - b.order),
     [doc],
   );
-  const answerable = fields.filter((b) => !LAYOUT_ONLY.has(b.type));
+
+  /* 17 · Koşulu tutmayan alan hiç çizilmez; ilerleme çubuğu ve zorunluluk kontrolü de onu saymaz. */
+  const choicesOf = (blockId) => {
+    const block = fields.find((b) => b.id === blockId);
+    return (block?.dependsOnBlockId ? chained[blockId] : block?.choices) || [];
+  };
+  const hidden = useMemo(
+    () => hiddenBlockIds(fields, answers, choicesOf),
+    [fields, answers, chained],
+  );
+
+  const answerable = fields.filter((b) => !LAYOUT_ONLY.has(b.type) && !hidden.has(b.id));
   const filledCount = answerable.filter((b) => {
     const v = answers[b.id];
     return Array.isArray(v) ? v.length > 0 : v !== undefined && v !== '' && v !== null;
@@ -191,6 +203,9 @@ function PublicForm({ slug }) {
       for (const c of children) delete next[c.id];
       return next;
     });
+    // Bu cevapla gizlenen alanların cevabı da düşer (koşul sonradan bozulmuş olabilir).
+    setAnswers((p) => withoutHidden(p, hiddenBlockIds(fields, p, choicesOf)));
+
     const parentValue = v && typeof v === 'object' ? v.value : v;
     for (const child of children) {
       if (!parentValue) {
@@ -226,7 +241,7 @@ function PublicForm({ slug }) {
     try {
       await api.post('/api/app/response/submit', {
         documentSlug: slug,
-        answers: JSON.stringify(answers),
+        answers: JSON.stringify(withoutHidden(answers, hidden)),
         completionSeconds: Math.round((Date.now() - startedAt.current) / 1000),
         kvkkConsent,
         website: honeypot.current, // honeypot; boş kalmalı
@@ -271,6 +286,7 @@ function PublicForm({ slug }) {
 
           <div className="flex flex-col gap-6 p-6">
             {fields.map((b) => {
+              if (hidden.has(b.id)) return null;
               const s = parse(b.settings);
               if (b.type === BT.SectionHeader)
                 return <h2 key={b.id} className="border-b border-default pb-1 text-lg font-bold text-text-primary">{b.content}</h2>;

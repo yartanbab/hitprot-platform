@@ -29,4 +29,38 @@ public static class FormChoiceSources
 
     /// <summary>Alan ayarı <c>"urlPrefill"</c> açıksa bu adres parametresindeki çağrı ön seçilir.</summary>
     public const string GrantPrefillParameter = "grant";
+
+    /// <summary>
+    /// 17 · Koşullu alanın görünürlük kuralı: <c>{ blockId, op, value }</c>. Kural yoksa alan hep görünür.
+    /// </summary>
+    public const string VisibleWhenSetting = "visibleWhen";
+}
+
+/// <summary>
+/// 17 · Koşullu alanın karşılaştırması. Üç tanesi cevaba bakar, <see cref="Flag"/> ise SEÇİLEN KAYDIN
+/// kendi özelliğine (ör. çağrı ortaklık istiyor mu) bakar.
+/// </summary>
+public static class FormConditionOperators
+{
+    /// <summary>Üst alanın cevabı verilen değere eşitse görünür.</summary>
+    public const string Equals = "eq";
+
+    /// <summary>Üst alanın cevabı verilen değerden farklıysa görünür (cevapsız alan da farklı sayılır).</summary>
+    public const string NotEquals = "neq";
+
+    /// <summary>Üst alan herhangi bir cevap aldıysa görünür.</summary>
+    public const string Answered = "answered";
+
+    /// <summary>Üst alanda seçilen kaydın <see cref="FormChoiceFlags"/> bayrağı açıksa görünür.</summary>
+    public const string Flag = "flag";
+}
+
+/// <summary>
+/// 17 · Canlı kaynaktan gelen seçeneğin, koşulda sorulabilen özellikleri. Kaynak hangi bayrakları
+/// ürettiğini <c>IFormChoiceSource.Flags</c> ile bildirir; düzenleyici koşul listesini oradan çizer.
+/// </summary>
+public static class FormChoiceFlags
+{
+    /// <summary>Seçilen çağrının programı ortaklık/konsorsiyum şartı koyuyor.</summary>
+    public const string RequiresConsortium = "requiresConsortium";
 }
