@@ -26,6 +26,18 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.17",
+            date: "17 Eylül 2026",
+            title: "Hibe tahsilat dilimlerinde durum düzeltmesi",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Ödenen hibe dilimi artık \"Ödendi\" olarak görünüyor",
+                "Uygulama ve Tahsilat ekranında, kurumun ödemesini yaptığı tahsilat dilimi satırda yanlışlıkla " +
+                "\"İptal\" olarak yazıyordu. Artık dilimin durumu doğru görünüyor (Planlandı · Talep edildi · " +
+                "Ödendi) ve ödemesi tamamlanan dilimler listede ayırt ediliyor. Bütçe ve tahsilat toplamları " +
+                "bu durumdan etkilenmiyordu; yanlış olan yalnızca satırdaki durum etiketiydi.")),
+
+        new ReleaseNote(
             version: "2026.09.15",
             date: "15 Eylül 2026",
             title: "Proje fikrinizi çağrı beklemeden paylaşın; hibe detayında program amacı ve destek aralığı",
