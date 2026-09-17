@@ -247,6 +247,49 @@ public class FormAppService : PlatformAppService, IFormAppService
     }
 
     /// <summary>
+    /// 16a · Veri kaynakları kataloğu. Kullanım sayısı bulunulan bağlamdaki formlardan sayılır; aynı formda
+    /// aynı kaynağa bağlı iki alan varsa form BİR kez sayılır.
+    /// </summary>
+    public async Task<List<FormChoiceSourceDto>> GetChoiceSourcesAsync()
+    {
+        var query = (await _documentRepository.GetQueryableAsync())
+            .Where(d => !d.IsTemplate)
+            .Select(d => d.Blocks
+                .Where(b => b.Type == BlockType.Dropdown)
+                .Select(b => b.Settings)
+                .ToList());
+
+        var usage = new Dictionary<string, int>();
+        foreach (var settings in await AsyncExecuter.ToListAsync(query))
+        {
+            var used = settings
+                .Select(s => FormChoiceProvider.SourceOf(BlockType.Dropdown, s))
+                .Where(s => s != null)
+                .Distinct();
+            foreach (var source in used)
+            {
+                usage[source!] = usage.GetValueOrDefault(source!) + 1;
+            }
+        }
+
+        var catalog = new List<FormChoiceSourceDto>();
+        foreach (var source in _choiceProvider.Sources.OrderBy(s => s.Key, StringComparer.Ordinal))
+        {
+            catalog.Add(new FormChoiceSourceDto
+            {
+                Key = source.Key,
+                Scope = source.Scope,
+                DependsOnSourceKey = source.DependsOnSourceKey,
+                // Firma kapsamlı kaynakta tek bir sayı yok (her firmada başka); kaynak null döndürür.
+                RecordCount = await source.CountAsync(),
+                UsedInFormCount = usage.GetValueOrDefault(source.Key)
+            });
+        }
+
+        return catalog;
+    }
+
+    /// <summary>
     /// Generates a URL-friendly slug from a title with a short unique suffix.
     /// </summary>
     private string GenerateSlugFromTitle(string title)

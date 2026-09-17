@@ -1,72 +1,61 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Apya.Platform.DynamicAssets.ChoiceSources;
 using Apya.Platform.DynamicAssets.Dtos;
-using Apya.Platform.Grants;
-using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
-using Volo.Abp.Domain.Repositories;
-using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.DynamicAssets;
 
 /// <summary>
-/// Resolves the live options of a dropdown bound to a <see cref="FormChoiceSources"/> source. Used when
-/// the public form is rendered (options shown), when a response is submitted (answer validated against
-/// the CURRENT list) and by the builder's live preview.
+/// 16 · Canlı listeye bağlı açılır listenin seçeneklerini çözen kayıt defteri. Form açılırken (seçenekler
+/// gösterilir), yanıt gönderilirken (cevap GÜNCEL listeye karşı doğrulanır) ve düzenleyicinin önizlemesinde
+/// aynı yol kullanılır.
+///
+/// <para>Kaynaklar <see cref="IFormChoiceSource"/> uygulamalarıdır; buraya kaynak adı GÖMÜLMEZ, yeni kaynak
+/// eklemek yalnız yeni bir sınıf yazmaktır.</para>
 /// </summary>
 public class FormChoiceProvider : ITransientDependency
 {
-    private static readonly CultureInfo Turkish = CultureInfo.GetCultureInfo("tr-TR");
+    private readonly Dictionary<string, IFormChoiceSource> _sources;
 
-    private readonly IRepository<GrantCall, Guid> _callRepository;
-    private readonly IRepository<Grant, Guid> _grantRepository;
-    private readonly IDataFilter<IMultiTenant> _multiTenantFilter;
-
-    public FormChoiceProvider(
-        IRepository<GrantCall, Guid> callRepository,
-        IRepository<Grant, Guid> grantRepository,
-        IDataFilter<IMultiTenant> multiTenantFilter)
+    public FormChoiceProvider(IEnumerable<IFormChoiceSource> sources)
     {
-        _callRepository = callRepository;
-        _grantRepository = grantRepository;
-        _multiTenantFilter = multiTenantFilter;
+        _sources = sources.ToDictionary(s => s.Key);
     }
 
-    /// <summary>Options of the source, or <c>null</c> when the source is unknown or empty (fixed options).</summary>
-    public async Task<List<FormChoiceDto>?> GetChoicesAsync(string? source)
+    /// <summary>Katalog: kaynaklar, kapsamları ve zincir bağları.</summary>
+    public IReadOnlyCollection<IFormChoiceSource> Sources => _sources.Values;
+
+    public IFormChoiceSource? Find(string? source)
+        => source != null && _sources.TryGetValue(source, out var found) ? found : null;
+
+    /// <summary>
+    /// Kaynağın seçenekleri, kaynak tanınmıyorsa (sabit seçenekli alan) <c>null</c>.
+    /// <paramref name="parentValue"/> zincirli kaynakta üst alanda seçilen kaydın kimliğidir.
+    /// </summary>
+    public async Task<List<FormChoiceDto>?> GetChoicesAsync(string? source, string? parentValue = null)
     {
-        if (source != FormChoiceSources.OpenGrantCalls)
-        {
-            return null;
-        }
-
-        List<GrantCall> calls;
-        Dictionary<Guid, Grant> grants;
-        // Katalog host'undur; form kiracıda ya da anonim açılabilir. Süzgeç kapatılınca kapsam TÜM
-        // kiracılara genişler, bu yüzden TenantId == null elle konur.
-        using (_multiTenantFilter.Disable())
-        {
-            calls = await _callRepository.GetListAsync(c => c.TenantId == null && c.Status == GrantCallStatus.Acik);
-            var grantIds = calls.Select(c => c.GrantId).Distinct().ToList();
-            grants = (await _grantRepository.GetListAsync(g => g.TenantId == null && grantIds.Contains(g.Id)))
-                .ToDictionary(g => g.Id);
-        }
-
-        return calls
-            .Where(c => grants.ContainsKey(c.GrantId))
-            .Select(c => new FormChoiceDto { Value = c.Id.ToString(), Label = LabelOf(grants[c.GrantId], c) })
-            .OrderBy(c => c.Label, StringComparer.Create(Turkish, ignoreCase: true))
-            .ToList();
+        var found = Find(source);
+        return found == null ? null : await found.GetAsync(parentValue);
     }
 
     /// <summary>The block's <c>source</c> setting; only dropdowns can be bound to a live list.</summary>
     public static string? SourceOf(BlockType type, string? settingsJson)
+        => type != BlockType.Dropdown ? null : StringSetting(settingsJson, "source");
+
+    /// <summary>Zincirli alanın üst alanı (blok kimliği); bağımsız alanda null.</summary>
+    public static Guid? DependsOnBlockOf(BlockType type, string? settingsJson)
+        => type == BlockType.Dropdown
+           && Guid.TryParse(StringSetting(settingsJson, FormChoiceSources.DependsOnSetting), out var blockId)
+            ? blockId
+            : null;
+
+    private static string? StringSetting(string? settingsJson, string name)
     {
-        if (type != BlockType.Dropdown || string.IsNullOrWhiteSpace(settingsJson))
+        if (string.IsNullOrWhiteSpace(settingsJson))
         {
             return null;
         }
@@ -75,9 +64,9 @@ public class FormChoiceProvider : ITransientDependency
         {
             using var settings = JsonDocument.Parse(settingsJson);
             return settings.RootElement.ValueKind == JsonValueKind.Object
-                   && settings.RootElement.TryGetProperty("source", out var source)
-                   && source.ValueKind == JsonValueKind.String
-                ? source.GetString()
+                   && settings.RootElement.TryGetProperty(name, out var value)
+                   && value.ValueKind == JsonValueKind.String
+                ? value.GetString()
                 : null;
         }
         catch (JsonException)
@@ -85,6 +74,4 @@ public class FormChoiceProvider : ITransientDependency
             return null;
         }
     }
-
-    private static string LabelOf(Grant grant, GrantCall call) => $"{grant.Issuer} · {grant.Name} ({call.Period})";
 }

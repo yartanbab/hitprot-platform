@@ -83,3 +83,24 @@ public class FormStatisticsDto
     public long TodayResponseCount { get; set; }
     public long PendingResponseCount { get; set; }
 }
+
+/// <summary>
+/// 16a · Veri Kaynakları kataloğunun bir satırı. Ad ve açıklama anahtardan türetilir (yerelleştirme),
+/// kapsam ve zincir bağı kaynağın kendi tanımından gelir.
+/// </summary>
+public class FormChoiceSourceDto
+{
+    /// <summary>Alan ayarında saklanan anahtar (<see cref="FormChoiceSources"/>).</summary>
+    public string Key { get; set; } = null!;
+
+    public FormChoiceSourceScope Scope { get; set; }
+
+    /// <summary>Zincirli kaynakta üst kaynağın anahtarı; bağımsızda null.</summary>
+    public string? DependsOnSourceKey { get; set; }
+
+    /// <summary>Kayıt sayısı. Firma kapsamlı kaynakta anlamı yok (her firmada farklı) → null.</summary>
+    public int? RecordCount { get; set; }
+
+    /// <summary>Bu kaynağa bağlı alanı olan form sayısı (bulunulan bağlamdaki formlar).</summary>
+    public int UsedInFormCount { get; set; }
+}

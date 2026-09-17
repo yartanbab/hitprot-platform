@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
 import { publicFormPath } from './lib/publicFormLink';
+import { CHOICE_SOURCES, CHOICE_SCOPES, sourceLabel } from './lib/formChoices';
 import './index.css';
 
 const STATUS = {
@@ -27,6 +28,7 @@ function FormsList() {
   const [categories, setCategories] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [showCatModal, setShowCatModal] = useState(false);
+  const [showSourceModal, setShowSourceModal] = useState(false);
   const canManageCategories = abpAuth('Platform.DynamicAssets.ManageCategories');
 
   const load = async (catId) => {
@@ -93,6 +95,9 @@ function FormsList() {
             ⚙ Kategoriler
           </button>
         )}
+        <button onClick={() => setShowSourceModal(true)} className="rounded-full border border-dashed border-default px-3 py-1.5 text-xs font-semibold text-text-secondary hover:border-strong hover:text-text-primary">
+          ⚡ Veri kaynakları
+        </button>
       </div>
 
       {loading ? (
@@ -144,6 +149,8 @@ function FormsList() {
         </div>
       )}
 
+      {showSourceModal && <ChoiceSourceCatalogModal onClose={() => setShowSourceModal(false)} />}
+
       {showCatModal && (
         <CategoryManagerModal
           categories={categories}
@@ -151,6 +158,58 @@ function FormsList() {
           onChanged={loadCategories}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * 16a · Veri Kaynakları kataloğu: alanın bağlanabileceği canlı listeler. Salt okunurdur — kaynak kodla
+ * gelir, ekrandan eklenmez; buradaki soru "hangi liste var, kaç kayıt, hangi formlar kullanıyor".
+ */
+function ChoiceSourceCatalogModal({ onClose }) {
+  const [sources, setSources] = useState(null);
+
+  useEffect(() => {
+    api.get('/api/app/form/choice-sources')
+      .then((list) => setSources(list || []))
+      .catch((e) => { notify('error', e?.message || 'Veri kaynakları yüklenemedi.'); setSources([]); });
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay p-4" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-2xl border border-default bg-surface-elevated p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-1 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-text-primary">Veri kaynakları</h2>
+          <button onClick={onClose} className="rounded p-1 text-text-tertiary hover:bg-surface-sunken">✕</button>
+        </div>
+        <p className="mb-4 text-sm text-text-secondary">Açılır liste alanını bu listelerden birine bağlayabilirsiniz; seçenekler form her açıldığında güncel veriden gelir.</p>
+
+        {sources == null ? (
+          <p className="py-8 text-center text-sm text-text-tertiary">Yükleniyor…</p>
+        ) : sources.length === 0 ? (
+          <p className="py-8 text-center text-sm text-text-tertiary">Tanımlı veri kaynağı yok.</p>
+        ) : (
+          <div className="flex max-h-80 flex-col gap-2 overflow-y-auto">
+            {sources.map((s) => (
+              <div key={s.key} className="rounded-lg border border-subtle px-3 py-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-text-primary">{sourceLabel(s.key)}</span>
+                  <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-[11px] font-semibold text-text-secondary">{CHOICE_SCOPES[s.scope] || 'Kapsam belirsiz'}</span>
+                  {s.dependsOnSourceKey && (
+                    <span className="rounded-full bg-primary-subtle px-2 py-0.5 text-[11px] font-semibold text-text-primary">⛓ {sourceLabel(s.dependsOnSourceKey)} alanına bağlı</span>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-text-secondary">{CHOICE_SOURCES[s.key]?.hint || ''}</p>
+                <p className="mt-1 text-xs text-text-secondary">
+                  {s.recordCount == null ? 'Kayıt sayısı firmaya göre değişir' : `${s.recordCount} kayıt`}
+                  {' · '}
+                  {s.usedInFormCount > 0 ? `${s.usedInFormCount} formda kullanılıyor` : 'Henüz hiçbir formda kullanılmıyor'}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
