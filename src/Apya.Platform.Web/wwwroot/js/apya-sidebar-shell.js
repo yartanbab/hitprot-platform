@@ -364,9 +364,16 @@ $(function () {
         // menüden kalktı ve rozet sessizce hiçbir yere basılmıyordu (addBadge
         // öğeyi bulamazsa çıkıyor — hata vermiyor). Artık yaprağın kendisinde.
         addBadge('Apya.Work.Boards', b.overdueTasks, 'apya-shell-badge--plain');
-        addBadge('Apya.Grants.Applications', b.pendingGrantApplications, 'apya-shell-badge--warning');
-        // Karara bağlanmamış ilgi talepleri — kutuyu açmadan da görünsün.
-        addBadge('Apya.Grants.Interests', b.pendingGrantInterests, 'apya-shell-badge--warning');
+        // Karara bağlanmamış talepler — kutuyu açmadan da görünsün.
+        // 🔴 Menü adı tur 22'de değişti: "Apya.Grants.Interests" kalktı, yerine
+        // "Apya.Grants.Requests" geldi. Eski ad kaldığı için rozet aylarca
+        // hiçbir yere basılmadı (addBadge çapayı bulamazsa sessizce çıkar —
+        // yukarıdaki Apya.Work.Tasks notunun birebir aynısı).
+        addBadge('Apya.Grants.Requests', b.pendingGrantInterests, 'apya-shell-badge--warning');
+        // b.pendingGrantApplications'ın çapası şu an YOK: yürüyen başvurular
+        // Talepler'in bir sekmesinde yaşıyor ve tek çapaya iki rozet basmak iki
+        // sayıyı etiketsiz yan yana dizerdi. Başvurular kendi menü öğesine
+        // çıkınca (IA revizyonu) buraya geri bağlanır.
         addBadge('Apya.Platform.Webhooks', b.webhookErrors, 'apya-shell-badge--negative');
     }
 
