@@ -103,4 +103,7 @@ public class FormChoiceSourceDto
 
     /// <summary>Bu kaynağa bağlı alanı olan form sayısı (bulunulan bağlamdaki formlar).</summary>
     public int UsedInFormCount { get; set; }
+
+    /// <summary>17 · Koşullu alanda sorulabilen bayraklar (<see cref="FormChoiceFlags"/>).</summary>
+    public List<string> Flags { get; set; } = new();
 }

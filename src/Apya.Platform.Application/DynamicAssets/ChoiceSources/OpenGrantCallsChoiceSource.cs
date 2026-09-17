@@ -38,6 +38,9 @@ public class OpenGrantCallsChoiceSource : IFormChoiceSource, ITransientDependenc
 
     public FormChoiceSourceScope Scope => FormChoiceSourceScope.HostCatalog;
 
+    /// <summary>17 · "Seçilen çağrı ortaklık istiyorsa" koşulu bu bayrakla kurulur.</summary>
+    public IReadOnlyList<string> Flags { get; } = new[] { FormChoiceFlags.RequiresConsortium };
+
     public async Task<List<FormChoiceDto>> GetAsync(string? parentValue)
     {
         List<GrantCall> calls;
@@ -54,7 +57,17 @@ public class OpenGrantCallsChoiceSource : IFormChoiceSource, ITransientDependenc
 
         return calls
             .Where(c => grants.ContainsKey(c.GrantId))
-            .Select(c => new FormChoiceDto { Value = c.Id.ToString(), Label = LabelOf(grants[c.GrantId], c) })
+            .Select(c => new FormChoiceDto
+            {
+                Value = c.Id.ToString(),
+                Label = LabelOf(grants[c.GrantId], c),
+                // Koşullu alan bu bayrağa bakar; istemci de aynı listeyi aldığı için ekranda
+                // gizleme/gösterme sunucuya sormadan yapılır.
+                Flags = new Dictionary<string, bool>
+                {
+                    [FormChoiceFlags.RequiresConsortium] = grants[c.GrantId].RequiresConsortium
+                }
+            })
             .OrderBy(c => c.Label, StringComparer.Create(Turkish, ignoreCase: true))
             .ToList();
     }

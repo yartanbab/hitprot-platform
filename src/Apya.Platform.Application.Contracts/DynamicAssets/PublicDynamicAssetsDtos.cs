@@ -58,6 +58,12 @@ public class FormChoiceDto
 {
     public string Value { get; set; } = null!;
     public string Label { get; set; } = null!;
+
+    /// <summary>
+    /// 17 · Seçeneğin koşulda sorulabilen özellikleri (<see cref="FormChoiceFlags"/>). Yalnız bayrak
+    /// üreten kaynaklarda dolu; koşul değerlendirmesi hem sunucuda hem istemcide bunu okur.
+    /// </summary>
+    public Dictionary<string, bool>? Flags { get; set; }
 }
 
 /// <summary>

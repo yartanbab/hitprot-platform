@@ -282,7 +282,8 @@ public class FormAppService : PlatformAppService, IFormAppService
                 DependsOnSourceKey = source.DependsOnSourceKey,
                 // Firma kapsamlı kaynakta tek bir sayı yok (her firmada başka); kaynak null döndürür.
                 RecordCount = await source.CountAsync(),
-                UsedInFormCount = usage.GetValueOrDefault(source.Key)
+                UsedInFormCount = usage.GetValueOrDefault(source.Key),
+                Flags = source.Flags.ToList()
             });
         }
 
