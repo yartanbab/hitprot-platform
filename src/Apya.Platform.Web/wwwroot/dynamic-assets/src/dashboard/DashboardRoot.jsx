@@ -363,49 +363,58 @@ function PageHeader({
     viewKey, onViewChange, range, onRangeChange,
     editMode, canEdit, onToggleEdit, onOpenCatalog, onPrint, printState,
 }) {
-    const activeView = VIEWS.find((v) => v.key === viewKey) ?? VIEWS[0];
-
     /* Yatay dolgu `main` ile AYNI (18px): başlık, kartların sol/sağ rayına
        hizalanmazsa şerit kaymış görünüyor.
+
+       TEK SATIR (102px → 53px). Şerit iki satırken üç yerde alan israf ediyordu:
+         - Aktif görünüm rozeti, 12px altındaki siyah sekmeyle AYNI metni
+           basıyordu → kaldırıldı; görünüm bilgisi sekmede okunmaya devam ediyor
+           (`aria-current` orada, kaybolan bir şey yok).
+         - Sağ küme 32px yüksekliğinde ama sol kolon 73px'e çıktığı için
+           `items-end` altında 41px'lik boş bant kalıyordu.
+         - Başlık 22px'ti; üst bar breadcrumb'ı aynı metni `aria-current` ile
+           zaten basıyor (apya-topbar-shell.js). Sayfanın tek h1'i olduğu için
+           GÖRÜNÜR kalır, yalnız 17px'e iner.
+       `flex-wrap` ŞART: 768–920px arasında sağ küme kendi satırına iner, yani
+       en kötü durumda bugünkü iki satıra dönülür — daha kötüsüne değil.
 
        MOBİLDE HİÇ RENDER EDİLMEZ: sayfa adı ("Genel Bakış") üst barda zaten
        yazıyor; başlık + rozet + sekme satırı dar ekranda ekranın üst üçte birini
        aynı bilgiye harcıyordu. Filtreler kartların ALTINA taşındı
        (bkz. DashboardRoot > main). */
     return (
-        <header className="px-[18px] pt-4 pb-3 bg-surface-base border-b border-default flex items-end justify-between gap-5 mobile:hidden">
-            <div className="flex flex-col gap-2.5 min-w-0">
-                <div className="flex items-center gap-2.5">
-                    <h1 className="text-[22px] font-semibold tracking-[-0.025em] text-text-primary m-0">
-                        {t('Dashboard:Title', 'Genel Bakış')}
-                    </h1>
-                    <span className="inline-flex items-center h-[22px] px-[9px] rounded-full bg-accent-soft text-accent-600 text-[11.5px] font-semibold flex-none">
-                        {t(activeView.labelKey, activeView.fallback)}
-                    </span>
-                </div>
+        <header className="px-[18px] py-2.5 bg-surface-base border-b border-default flex items-center gap-3 flex-wrap mobile:hidden">
+            <h1 className="text-[17px] font-semibold tracking-[-0.02em] text-text-primary m-0 whitespace-nowrap">
+                {t('Dashboard:Title', 'Genel Bakış')}
+            </h1>
 
-                <nav className="flex items-center gap-1 flex-wrap" aria-label={t('Dashboard:Views', 'Görünümler')}>
-                    {VIEWS.map((view) => (
-                        <button
-                            key={view.key}
-                            type="button"
-                            onClick={() => onViewChange(view.key)}
-                            aria-current={view.key === viewKey ? 'page' : undefined}
-                            className={cn(
-                                'inline-flex items-center h-[30px] px-3 rounded-[9px] text-[12.5px] transition-colors duration-fast',
-                                'focus-visible:outline-none focus-visible:shadow-focus',
-                                view.key === viewKey
-                                    ? 'bg-text-primary text-surface-base font-semibold'
-                                    : 'text-text-secondary font-medium hover:bg-surface-sunken hover:text-text-primary',
-                            )}
-                        >
-                            {t(view.labelKey, view.fallback)}
-                        </button>
-                    ))}
-                </nav>
-            </div>
+            {/* Salt görsel ayraç: başlık ve sekmeler tek satırda yan yana
+                dururken grup sınırını gösterir, ekran okuyucuya bilgi taşımaz. */}
+            <span aria-hidden="true" className="w-px h-[18px] bg-border-default flex-none" />
 
-            <div className="flex items-center gap-2 flex-none">
+            <nav className="flex items-center gap-1 flex-wrap" aria-label={t('Dashboard:Views', 'Görünümler')}>
+                {VIEWS.map((view) => (
+                    <button
+                        key={view.key}
+                        type="button"
+                        onClick={() => onViewChange(view.key)}
+                        aria-current={view.key === viewKey ? 'page' : undefined}
+                        className={cn(
+                            'inline-flex items-center h-[30px] px-3 rounded-[9px] text-[12.5px] transition-colors duration-fast',
+                            'focus-visible:outline-none focus-visible:shadow-focus',
+                            view.key === viewKey
+                                ? 'bg-text-primary text-surface-base font-semibold'
+                                : 'text-text-secondary font-medium hover:bg-surface-sunken hover:text-text-primary',
+                        )}
+                    >
+                        {t(view.labelKey, view.fallback)}
+                    </button>
+                ))}
+            </nav>
+
+            {/* `ml-auto` — `justify-between` DEĞİL: sarmalanan satırı da iki uca
+                yayar, sekmeler alta indiğinde aralarında boşluk açılırdı. */}
+            <div className="flex items-center gap-2 flex-none ml-auto">
                 <RangeSelect value={range} onChange={onRangeChange} />
                 <PrintButton onPrint={onPrint} printState={printState} />
                 {canEdit && (

@@ -28,7 +28,7 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.17",
             date: "17 Eylül 2026",
-            title: "Bütçenizdeki kritik değişiklikler artık size bildiriliyor",
+            title: "Bütçe uyarıları; formlarda hazır listeler ve koşullu sorular; Genel Bakış'ta ince üst şerit",
 
             // ── Finans / bütçe bildirimleri ───────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
@@ -58,7 +58,37 @@ public static class ReleaseNoteCatalog
                 "Bildirim tercihlerinize Finans eklendi",
                 "Bildirimler ekranındaki tercih penceresinde artık Finans satırı da var: bütçe bildirimlerini " +
                 "uygulama içinde açık tutup kapatabilir, isterseniz e-posta ile de almayı seçebilirsiniz. " +
-                "Bildirim merkezinde Finans kendi sekmesi olarak listelenir.")),
+                "Bildirim merkezinde Finans kendi sekmesi olarak listelenir."),
+
+            // ── Formlar ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Form sorularında hazır listeler ve birbirine bağlı sorular",
+                "Açılır liste sorularında seçenekleri tek tek yazmak zorunda değilsiniz: hazır bir liste " +
+                "seçebiliyorsunuz — açık hibe çağrıları, projeleriniz ya da proje görevleriniz. Liste kendini " +
+                "güncel tutar; yeni bir proje açtığınızda formu düzenlemeniz gerekmez. İki soruyu birbirine de " +
+                "bağlayabilirsiniz: formu dolduran önce projeyi seçer, ikinci soruda yalnız o projenin görevleri " +
+                "listelenir. Bağlanacak soru formda daha yukarıda olmalı — düzenleyicide uygun bir üst soru " +
+                "yoksa uyarı görürsünüz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Cevaba göre görünen sorular",
+                "Bir soruyu yalnız belirli durumlarda gösterebilirsiniz: üstteki soru cevaplandığında, belirli " +
+                "bir cevap verildiğinde ya da verilmediğinde. Seçilen kaydın özelliğine de bakabilir; örneğin " +
+                "yalnız ortaklık şartı olan bir çağrı seçildiğinde ortak bilgilerini sorabilirsiniz. Gizlenen " +
+                "sorular zorunlu sayılmaz ve cevapları kaydedilmez: formu dolduran kişi cevabını koşulu bozacak " +
+                "şekilde değiştirirse o soru formdan çıkar, daha önce yazdığı cevap da kayda geçmez. İlerleme " +
+                "göstergesi yalnız görünen soruları sayar."),
+
+            // ── Genel Bakış ───────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Genel Bakış ekranı kartlara daha çok yer ayırıyor",
+                "Genel Bakış'ın üst şeridi iki satırdan tek satıra indi: ekran adı, görünüm sekmeleri " +
+                "(Proje Yönetimi, Finans, Bugün, Hibe takibi) ve sağdaki denetimler artık aynı hizada duruyor. " +
+                "Sekmenin hemen üstünde aynı görünüm adını tekrarlayan etiket kaldırıldı — hangi görünümde " +
+                "olduğunuz zaten koyu renkli sekmeden okunuyor. Kazanılan yer kartlara gitti: kartlar ekranda " +
+                "daha yukarıdan başlıyor, ilk bakışta daha fazlasını görüyor ve daha az aşağı kaydırıyorsunuz. " +
+                "Görünümler, zaman aralığı, yazdırma ve düzenleme aynı yerde ve aynı şekilde çalışmaya devam " +
+                "ediyor; telefonda bir değişiklik yok.")),
 
         new ReleaseNote(
             version: "2026.09.15",
