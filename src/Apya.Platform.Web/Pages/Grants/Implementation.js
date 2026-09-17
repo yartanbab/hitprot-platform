@@ -4,11 +4,11 @@ $(function () {
     var appId = $('.apya-page').data('application-id');
 
     // Enum sıraları sunucudakiyle birebir.
-    var reportKeys = ['Planlandi', 'Hazirlaniyor', 'Gonderildi', 'Onaylandi', 'RevizyonIstendi'];
-    var reportTone = ['neutral', 'warning', 'accent', 'positive', 'negative'];
-    // GrantDisbursementTrancheStatus: Planlandi=0, TalepEdildi=1, Odendi=2.
-    // Eski dizi bir kaydırmalıydı → ödenmiş dilim "İptal" görünüyordu.
-    var trancheKeys = ['Planlandi', 'TalepEdildi', 'Odendi'];
+    // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var reportKeys = apyaGrantStatus.report.keys;
+    var reportTone = apyaGrantStatus.report.tones;
+    // Dilim durumu da sunucudan: dizi bir kaymıştı ve ödenmiş dilim "İptal" görünüyordu.
+    var trancheKeys = apyaGrantStatus.tranche.keys;
     var obligationKeys = ['ReportDue', 'TrancheDue'];
 
     var model = null;

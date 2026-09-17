@@ -5,8 +5,10 @@ $(function () {
 
     // Enum sıraları sunucudakiyle birebir.
     var outcomeKeys = ['Reddedildi', 'Onaylandi', 'KismiOnay'];
-    var stanceKeys = ['Belirsiz', 'Itiraz', 'Kabul'];
-    var stanceTone = ['neutral', 'accent', 'warning'];
+    // Tutum adları ve tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    // outcomeKeys hâlâ elle: GrantDecisionOutcome rozet basmıyor, sözlüğe girmedi.
+    var stanceKeys = apyaGrantStatus.stance.keys;
+    var stanceTone = apyaGrantStatus.stance.tones;
     var stanceClass = ['is-none', 'is-appeal', 'is-accept'];
 
     var model = null;

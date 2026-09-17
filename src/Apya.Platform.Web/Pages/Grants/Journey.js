@@ -5,9 +5,9 @@ $(function () {
     var meetingModal = new bootstrap.Modal(document.getElementById('MeetingModal'));
 
     // GrantJourneyItemKind / GrantNextAction enum sıralarıyla birebir.
-    var kindKeys = ['InterestPending', 'InterestRejected', 'InterestWithdrawn', 'ApplicationOpen',
-        'ApplicationWithInstitution', 'ApplicationRejected', 'Project', 'Completed', 'CallClosed', 'IdeaPooled'];
-    var kindTone = ['accent', 'neutral', 'neutral', 'warning', 'accent', 'negative', 'positive', 'positive', 'neutral', 'accent'];
+    // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var kindKeys = apyaGrantStatus.journey.keys;
+    var kindTone = apyaGrantStatus.journey.tones;
     // GrantInterestSource: 0 firma · 1 danışman firma adına.
     var SOURCE_CONSULTANT = 1;
     var IDEA_TITLE_MAX = 120;

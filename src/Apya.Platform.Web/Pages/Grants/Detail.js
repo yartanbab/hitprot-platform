@@ -6,8 +6,9 @@ $(function () {
     var interestModal = new bootstrap.Modal(document.getElementById('InterestModal'));
 
     // Enum sıraları sunucudakiyle birebir.
-    var bucketKeys = ['Uygun', 'Kosullu', 'UygunDegil'];
-    var bucketTone = ['positive', 'warning', 'neutral'];
+    // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var bucketKeys = apyaGrantStatus.bucket.keys;
+    var bucketTone = apyaGrantStatus.bucket.tones;
     var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
     var outcomeIcon = ['fa-circle-check is-passed', 'fa-circle-xmark is-failed', 'fa-circle-exclamation is-unknown'];
     var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword'];

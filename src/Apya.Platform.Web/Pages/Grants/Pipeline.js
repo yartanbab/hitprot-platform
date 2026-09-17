@@ -4,9 +4,10 @@ $(function () {
     var l = abp.localization.getResource('Platform');
 
     // Enum sıraları sunucudakiyle birebir.
-    var riskKeys = ['DeadlineNear', 'DeadlinePassed', 'MissingDocuments', 'WaitingOnFirm', 'Unassigned'];
-    var riskTone = ['warning', 'negative', 'warning', 'neutral', 'neutral'];
-    var stageKeys = ['Basvuru', 'Degerlendirme', 'Onay', 'Odeme'];
+    // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var riskKeys = apyaGrantStatus.risk.keys;
+    var riskTone = apyaGrantStatus.risk.tones;
+    var stageKeys = apyaGrantStatus.stage.keys;
 
     var board = null;
     var sortables = [];

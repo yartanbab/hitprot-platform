@@ -4,8 +4,9 @@ $(function () {
     var appId = $('.apya-page').data('application-id');
 
     // Enum sıraları sunucudakiyle birebir.
-    var statusKeys = ['Bekleniyor', 'Incelemede', 'Onaylandi', 'RevizyonIstendi'];
-    var statusTone = ['neutral', 'warning', 'positive', 'negative'];
+    // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var statusKeys = apyaGrantStatus.document.keys;
+    var statusTone = apyaGrantStatus.document.tones;
     var partyKeys = ['Firma', 'Danisman', 'Ortak', 'Kurum'];
 
     var model = null;
