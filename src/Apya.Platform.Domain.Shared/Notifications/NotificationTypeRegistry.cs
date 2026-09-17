@@ -141,6 +141,44 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-lightbulb", "/Grants/Invitation?id={0}", GroupSimilar: false),
 
+            // ── Finans ────────────────────────────────────────────────────────
+            // Derin link hepsinde proje bütçe raporu: sayfa Projects.ViewBudget
+            // denetimli olduğu için bildirimden gelen kullanıcı yetkisi yoksa
+            // içeriği göremez — bildirim yetki açığı üretmez.
+            //
+            // Eşik/aşım/vade bildirimleri GroupSimilar KAPALI: bunlar
+            // PublishOnceAsync ile kendi tekillik anahtarlarını taşır. Gruplama
+            // açık olsaydı registry ikinci bir anahtar üretir ve "bir kez"
+            // sözleşmesini sessizce bozardı.
+            [NotificationType.BudgetRevisionApplied] = new(
+                NotificationCategory.Finance, NotificationSeverity.Normal,
+                "fa fa-file-pen", "/Reports/ProjectBudget?ProjectId={0}", GroupSimilar: true),
+
+            [NotificationType.BudgetUsageThresholdReached] = new(
+                NotificationCategory.Finance, NotificationSeverity.High,
+                "fa fa-gauge-high", "/Reports/ProjectBudget?ProjectId={0}", GroupSimilar: false),
+
+            // Aşım kritik: bütçesi aşılmış bir kalem donör denetiminde bulgu üretir.
+            [NotificationType.BudgetOverrun] = new(
+                NotificationCategory.Finance, NotificationSeverity.Critical,
+                "fa fa-triangle-exclamation", "/Reports/ProjectBudget?ProjectId={0}", GroupSimilar: false),
+
+            [NotificationType.FundingTrancheCollected] = new(
+                NotificationCategory.Finance, NotificationSeverity.Info,
+                "fa fa-hand-holding-dollar", "/Reports/ProjectBudget?ProjectId={0}", GroupSimilar: true),
+
+            [NotificationType.FundingTrancheOverdue] = new(
+                NotificationCategory.Finance, NotificationSeverity.High,
+                "fa fa-hourglass-end", "/Reports/ProjectBudget?ProjectId={0}", GroupSimilar: false),
+
+            [NotificationType.TrancheDeductionAdded] = new(
+                NotificationCategory.Finance, NotificationSeverity.High,
+                "fa fa-scissors", "/Reports/ProjectBudget?ProjectId={0}", GroupSimilar: true),
+
+            [NotificationType.TrancheDisputed] = new(
+                NotificationCategory.Finance, NotificationSeverity.Normal,
+                "fa fa-flag", "/Reports/ProjectBudget?ProjectId={0}", GroupSimilar: true),
+
             [NotificationType.AiWorkflowTriggered] = new(
                 NotificationCategory.Ai, NotificationSeverity.Info,
                 "fa fa-robot", "/AiCenter/Evaluations", GroupSimilar: false),

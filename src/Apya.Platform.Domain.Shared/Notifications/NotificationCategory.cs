@@ -13,5 +13,12 @@ public enum NotificationCategory
     Ai        = 5,
     Feedback  = 6,
     /// <summary>Sınıflandırılmamış — kaydı olmayan türler buraya düşer.</summary>
-    System    = 7
+    System    = 7,
+    /// <summary>
+    /// Bütçe, fonlama ve harcama ekseni. Kendi kategorisi var çünkü tercih
+    /// granülaritesi kategori bazlı: kullanıcı görev bildirimlerini açık tutup
+    /// bütçe uyarılarını kapatabilmeli. <c>Projects</c> altına konsaydı ikisi
+    /// tek anahtara bağlı kalırdı.
+    /// </summary>
+    Finance   = 8
 }

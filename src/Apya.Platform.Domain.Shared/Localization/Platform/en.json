@@ -504,6 +504,7 @@
     "Notification:Category:Ai": "AI",
     "Notification:Category:Feedback": "Feedback",
     "Notification:Category:System": "System",
+    "Notification:Category:Finance": "Finance",
     "Notification:Severity:Info": "Info",
     "Notification:Severity:Normal": "Normal",
     "Notification:Severity:High": "High",

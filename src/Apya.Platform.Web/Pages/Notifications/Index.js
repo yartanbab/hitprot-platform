@@ -18,7 +18,8 @@ $(function () {
         { value: 4,    key: 'Grants',    icon: 'fa fa-award' },
         { value: 5,    key: 'Ai',        icon: 'fa fa-robot' },
         { value: 6,    key: 'Feedback',  icon: 'fa fa-comment-dots' },
-        { value: 7,    key: 'System',    icon: 'fa fa-gear' }
+        { value: 7,    key: 'System',    icon: 'fa fa-gear' },
+        { value: 8,    key: 'Finance',   icon: 'fa fa-wallet' }
     ];
 
     var state = {
