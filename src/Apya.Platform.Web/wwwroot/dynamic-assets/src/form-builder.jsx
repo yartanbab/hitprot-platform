@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
 import { publicFormPath } from './lib/publicFormLink';
-import { OPEN_GRANT_CALLS, withChoiceParam } from './lib/formChoices';
+import { OPEN_GRANT_CALLS, withChoiceParam, CHOICE_SOURCES, sourceLabel } from './lib/formChoices';
 import './index.css';
 
 /* ============================================================
@@ -69,6 +69,17 @@ export const payloadBlocks = (blocks) => blocks.map((b, idx) => ({
  * Kayıttan sonra yerel kimlik → sunucu kimliği eşlemesi (sıra numarasıyla). Yeni alanın geçici
  * kimliği değiştirilmezse bir sonraki kayıt onu yine YENİ sayar ve gelen yanıtlar sorusundan kopar.
  */
+/**
+ * 16b · Zincirli alanın üst alan adayları: YUKARIDA duran ve beklenen kaynağa bağlı açılır listeler.
+ * Aşağıdaki alan aday değil — doldurucu önce üstteki soruyu yanıtlar, liste ona göre daralır.
+ */
+export const parentCandidatesFor = (blocks, index, sources) => {
+  const meta = (sources || []).find((x) => x.key === blocks[index]?.settings?.source);
+  return meta?.dependsOnSourceKey
+    ? blocks.slice(0, index).filter((b) => b.type === BT.Dropdown && b.settings?.source === meta.dependsOnSourceKey)
+    : [];
+};
+
 export const serverIdMap = (sent, saved) => {
   const byOrder = new Map((saved || []).map((b) => [b.order, b.id]));
   return Object.fromEntries(sent
@@ -167,19 +178,35 @@ function BlockPreview({ block }) {
 /* ============================================================
  * Question card — all editing happens inline (Google Forms style)
  * ============================================================ */
-/* Açılır listenin seçenek kaynağı (tur 15): elle yazılan seçenekler ya da canlı "Yayındaki hibeler".
-   Canlı listede seçenekler formda saklanmaz; form her açıldığında sunucu güncel çağrılardan üretir. */
-function ChoiceSourcePanel({ block, settings: s, onPatchSettings, publicSlug }) {
-  const live = s.source === OPEN_GRANT_CALLS;
+/* Açılır listenin seçenek kaynağı (tur 15/16): elle yazılan seçenekler ya da bir veri kaynağına bağlı canlı
+   liste. Canlı listede seçenekler formda saklanmaz; form her açıldığında sunucu güncel kayıtlardan üretir.
+   Zincirli kaynakta (ör. görevler) ayrıca ÜST ALAN seçilir: liste o alandaki seçime göre daralır. */
+function ChoiceSourcePanel({ block, settings: s, onPatchSettings, publicSlug, sources, parentCandidates }) {
+  const live = !!s.source;
+  const meta = sources.find((x) => x.key === s.source) || null;
+  const chained = !!meta?.dependsOnSourceKey;
   const [choices, setChoices] = useState(null);
   const [linkValue, setLinkValue] = useState('');
 
   useEffect(() => {
-    if (!live || choices) return;
-    api.get(`/api/app/form/choices?source=${OPEN_GRANT_CALLS}`).then((list) => setChoices(list || [])).catch(() => setChoices([]));
-  }, [live, choices]);
+    // Zincirli kaynağın önizlemesi yok: listesi üst alandaki seçime bağlı, düzenleyicide seçim yapılmıyor.
+    if (!live || chained) { setChoices(null); return undefined; }
+    let stale = false;
+    setChoices(null);
+    api.get(`/api/app/form/choices?source=${encodeURIComponent(s.source)}`)
+      .then((list) => { if (!stale) setChoices(list || []); })
+      .catch(() => { if (!stale) setChoices([]); });
+    return () => { stale = true; };
+  }, [live, chained, s.source]);
 
-  const setLive = (on) => onPatchSettings(block.id, on ? { source: OPEN_GRANT_CALLS, urlPrefill: true } : { source: undefined, urlPrefill: undefined });
+  /* Kaynak değişince üst alan bağı DÜŞER (eski kaynağa aitti); bağlantıdan ön seçim yalnız çağrı listesinde
+     anlamlı olduğu için orada açık başlar. */
+  const defaultsFor = (key) => ({ source: key, urlPrefill: key === OPEN_GRANT_CALLS ? true : undefined, dependsOn: undefined });
+  const firstSource = sources.some((x) => x.key === OPEN_GRANT_CALLS) || sources.length === 0 ? OPEN_GRANT_CALLS : sources[0].key;
+  const setLive = (on) => onPatchSettings(block.id, on
+    ? defaultsFor(firstSource)
+    : { source: undefined, urlPrefill: undefined, dependsOn: undefined });
+  const setSource = (key) => onPatchSettings(block.id, defaultsFor(key));
   const copyLink = () => {
     navigator.clipboard?.writeText(`${window.location.origin}${withChoiceParam(publicFormPath(publicSlug), linkValue)}`);
     notify('success', 'Bağlantı kopyalandı.');
@@ -194,35 +221,62 @@ function ChoiceSourcePanel({ block, settings: s, onPatchSettings, publicSlug }) 
       </label>
       <label className="mt-1 flex items-center gap-2 text-sm text-text-primary">
         <input type="radio" name={`source-${block.id}`} checked={live} onChange={() => setLive(true)} className="h-4 w-4 text-accent" />
-        Yayındaki hibeler, canlı liste
+        Veri kaynağından, canlı liste
       </label>
 
       {live && (
         <div className="mt-3 border-t border-subtle pt-3">
-          {choices == null ? (
-            <p className="text-xs text-text-tertiary">Liste yükleniyor…</p>
+          <select className={inputCls} value={s.source} onChange={(e) => setSource(e.target.value)} aria-label="Veri kaynağı">
+            {!meta && <option value={s.source}>{sourceLabel(s.source)}</option>}
+            {sources.map((x) => <option key={x.key} value={x.key}>{sourceLabel(x.key)}</option>)}
+          </select>
+          <p className="mt-2 text-xs text-text-secondary">{CHOICE_SOURCES[s.source]?.hint || 'Seçenekler her form açılışında bu kaynaktan tazelenir.'}</p>
+
+          {chained && (
+            <div className="mt-3">
+              <label className="mb-1 block text-xs font-semibold text-text-secondary">Hangi alana bağlı?</label>
+              {parentCandidates.length === 0 ? (
+                <p className="rounded-lg bg-warning-subtle px-2.5 py-2 text-xs text-warning">
+                  Bu liste bir üst alana bağlı çalışır. Önce yukarıya “{sourceLabel(meta.dependsOnSourceKey)}” kaynağına bağlı bir açılır liste ekleyin.
+                </p>
+              ) : (
+                <select className={inputCls} value={s.dependsOn || ''} onChange={(e) => onPatchSettings(block.id, { dependsOn: e.target.value || undefined })} aria-label="Üst alan">
+                  <option value="">Üst alanı seçin…</option>
+                  {parentCandidates.map((p) => <option key={p.id} value={p.id}>{p.content || 'Adsız alan'}</option>)}
+                </select>
+              )}
+            </div>
+          )}
+
+          {!chained && (choices == null ? (
+            <p className="mt-2 text-xs text-text-tertiary">Liste yükleniyor…</p>
           ) : (
-            <>
-              <p className="text-xs text-text-secondary">Şu an başvuruya açık {choices.length} çağrı var. Kapanan çağrı listeden kendiliğinden düşer, yeni yayınlanan eklenir.</p>
+            <div className="mt-2">
+              <p className="text-xs text-text-secondary">Şu an {choices.length} kayıt listeleniyor.</p>
               {choices.length > 0 && (
                 <ul className="mt-2 flex flex-col gap-1 text-sm text-text-primary">
                   {choices.slice(0, 3).map((c) => <li key={c.value} className="truncate">{c.label}</li>)}
                 </ul>
               )}
-              {choices.length > 3 && <p className="mt-1 text-xs text-text-tertiary">ve {choices.length - 3} çağrı daha</p>}
-            </>
-          )}
-          <div className="mt-3">
-            <Toggle label="Bağlantıdaki çağrıyı ön seç" checked={!!s.urlPrefill} onChange={(v) => onPatchSettings(block.id, { urlPrefill: v })} />
-          </div>
-          {s.urlPrefill && publicSlug && choices?.length > 0 && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <select className={`${inputCls} min-w-0 flex-1`} value={linkValue} onChange={(e) => setLinkValue(e.target.value)} aria-label="Çağrıya özel bağlantı">
-                <option value="">Çağrıya özel bağlantı için seçin…</option>
-                {choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-              <button type="button" disabled={!linkValue} onClick={copyLink} className="rounded-lg border border-default bg-surface-raised px-3 py-2 text-xs font-semibold text-text-primary hover:bg-surface-sunken disabled:opacity-50">Bağlantıyı kopyala</button>
+              {choices.length > 3 && <p className="mt-1 text-xs text-text-tertiary">ve {choices.length - 3} kayıt daha</p>}
             </div>
+          ))}
+
+          {s.source === OPEN_GRANT_CALLS && (
+            <>
+              <div className="mt-3">
+                <Toggle label="Bağlantıdaki çağrıyı ön seç" checked={!!s.urlPrefill} onChange={(v) => onPatchSettings(block.id, { urlPrefill: v })} />
+              </div>
+              {s.urlPrefill && publicSlug && choices?.length > 0 && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <select className={`${inputCls} min-w-0 flex-1`} value={linkValue} onChange={(e) => setLinkValue(e.target.value)} aria-label="Çağrıya özel bağlantı">
+                    <option value="">Çağrıya özel bağlantı için seçin…</option>
+                    {choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                  <button type="button" disabled={!linkValue} onClick={copyLink} className="rounded-lg border border-default bg-surface-raised px-3 py-2 text-xs font-semibold text-text-primary hover:bg-surface-sunken disabled:opacity-50">Bağlantıyı kopyala</button>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -230,7 +284,7 @@ function ChoiceSourcePanel({ block, settings: s, onPatchSettings, publicSlug }) 
   );
 }
 
-export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettings, onChangeType, onDuplicate, onRemove, onAddAfter, onMove, dragRef, publicSlug }) {
+export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatchSettings, onChangeType, onDuplicate, onRemove, onAddAfter, onMove, dragRef, publicSlug, sources = [], parentCandidates = [] }) {
   const s = block.settings || {};
   const isLayout = LAYOUT_ONLY.has(block.type);
   const cardRef = useRef(null);
@@ -290,7 +344,7 @@ export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatc
       </div>
 
       {selected && block.type === BT.Dropdown && (
-        <ChoiceSourcePanel block={block} settings={s} onPatchSettings={onPatchSettings} publicSlug={publicSlug} />
+        <ChoiceSourcePanel block={block} settings={s} onPatchSettings={onPatchSettings} publicSlug={publicSlug} sources={sources} parentCandidates={parentCandidates} />
       )}
 
       {/* options editor (selected, choice types) */}
@@ -372,6 +426,7 @@ function FormBuilder() {
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [choiceSources, setChoiceSources] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -380,6 +435,10 @@ function FormBuilder() {
 
   useEffect(() => {
     api.get('/api/app/form-category?MaxResultCount=100').then((res) => setCategories(res.items || [])).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    api.get('/api/app/form/choice-sources').then((list) => setChoiceSources(list || [])).catch(() => setChoiceSources([]));
   }, []);
 
   useEffect(() => {
@@ -432,7 +491,7 @@ function FormBuilder() {
     if (b.id !== id) return b;
     const settings = { ...b.settings };
     // Canlı liste yalnız açılır listede anlamlı; başka tipe geçen alan sabit seçeneğe döner.
-    if (newType !== BT.Dropdown) { delete settings.source; delete settings.urlPrefill; }
+    if (newType !== BT.Dropdown) { delete settings.source; delete settings.urlPrefill; delete settings.dependsOn; }
     if (HAS_OPTIONS.has(newType) && !settings.options) settings.options = ['Seçenek 1', 'Seçenek 2'];
     return { ...b, type: newType, settings };
   }));
@@ -450,7 +509,12 @@ function FormBuilder() {
   const applyServerIds = (sent, saved) => {
     const map = serverIdMap(sent, saved);
     if (!Object.keys(map).length) return;
-    setBlocks((prev) => prev.map((b) => (map[b.id] ? { ...b, id: map[b.id] } : b)));
+    // Üst alan bağı blok kimliğiyle tutulur: yeni eklenen üst alan kaydedilince o bağ da sunucu kimliğine taşınır.
+    setBlocks((prev) => prev.map((b) => {
+      const dependsOn = b.settings?.dependsOn;
+      const settings = dependsOn && map[dependsOn] ? { ...b.settings, dependsOn: map[dependsOn] } : b.settings;
+      return map[b.id] || settings !== b.settings ? { ...b, id: map[b.id] || b.id, settings } : b;
+    }));
     setSelectedId((id) => map[id] || id);
   };
 
@@ -536,6 +600,8 @@ function FormBuilder() {
               onMove={moveTo}
               dragRef={dragIndex}
               publicSlug={slug}
+              sources={choiceSources}
+              parentCandidates={parentCandidatesFor(blocks, i, choiceSources)}
             />
           ))}
         </div>

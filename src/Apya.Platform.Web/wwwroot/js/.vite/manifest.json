@@ -81,8 +81,8 @@
     "file": "draggableActivation-Ybw9Upbh.js",
     "name": "draggableActivation"
   },
-  "_formChoices-CM6Xg9_c.js": {
-    "file": "formChoices-CM6Xg9_c.js",
+  "_formChoices-DAx-kYeM.js": {
+    "file": "formChoices-DAx-kYeM.js",
     "name": "formChoices"
   },
   "_grid-vendor-D-Pdxerz.js": {
@@ -299,7 +299,7 @@
       "_httpClient-DePjXdo1.js",
       "_Hint-CNW95h3H.js",
       "_publicFormLink-CJ_6ABDU.js",
-      "_formChoices-CM6Xg9_c.js"
+      "_formChoices-DAx-kYeM.js"
     ]
   },
   "src/forms.jsx": {
@@ -311,7 +311,8 @@
       "_react-vendor-D57GAUXd.js",
       "_httpClient-DePjXdo1.js",
       "_Hint-CNW95h3H.js",
-      "_publicFormLink-CJ_6ABDU.js"
+      "_publicFormLink-CJ_6ABDU.js",
+      "_formChoices-DAx-kYeM.js"
     ]
   },
   "src/project-panels.jsx": {
@@ -333,7 +334,7 @@
       "_react-vendor-D57GAUXd.js",
       "_httpClient-DePjXdo1.js",
       "_publicFormLink-CJ_6ABDU.js",
-      "_formChoices-CM6Xg9_c.js"
+      "_formChoices-DAx-kYeM.js"
     ]
   },
   "src/responses.jsx": {
@@ -345,7 +346,7 @@
       "_react-vendor-D57GAUXd.js",
       "_httpClient-DePjXdo1.js",
       "_Hint-CNW95h3H.js",
-      "_formChoices-CM6Xg9_c.js"
+      "_formChoices-DAx-kYeM.js"
     ]
   },
   "src/task-detail.jsx": {

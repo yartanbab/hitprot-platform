@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { formTenantFromSearch } from './lib/publicFormLink';
-import { prefillChoice } from './lib/formChoices';
+import { prefillChoice, sourceEmptyLabel } from './lib/formChoices';
 import './index.css';
 
 /* BlockType enum — mirrors backend (stable ints) */
@@ -23,8 +23,10 @@ const fieldCls =
   'w-full rounded-xl border border-default bg-surface-raised px-3 py-2.5 text-base text-text-primary placeholder:text-text-tertiary focus:border-focus focus:outline-none focus:ring-2 focus:ring-accent-soft';
 
 /* one answerable field */
-function Field({ block, value, onChange }) {
+function Field({ block, value, onChange, choices, loading = false }) {
   const s = parse(block.settings);
+  /* Zincirli alanın listesi belgeyle GELMEZ; üst alan seçilince ayrıca istenir (choices). */
+  const list = choices || block.choices;
   const set = (v) => onChange(block.id, v);
   switch (block.type) {
     case BT.LongText:
@@ -41,19 +43,19 @@ function Field({ block, value, onChange }) {
       return <input type="time" className={fieldCls} value={value || ''} onChange={(e) => set(e.target.value)} />;
     case BT.Dropdown:
       // Canlı listeye bağlı alan: seçenekler sunucudan güncel gelir, cevap { value, label } saklanır.
-      if (Array.isArray(block.choices)) {
+      if (Array.isArray(list)) {
         return (
           <select
             className={fieldCls}
             value={value?.value || ''}
-            disabled={block.choices.length === 0}
+            disabled={list.length === 0}
             onChange={(e) => {
-              const choice = block.choices.find((c) => c.value === e.target.value);
+              const choice = list.find((c) => c.value === e.target.value);
               set(choice ? { value: choice.value, label: choice.label } : '');
             }}
           >
-            <option value="">{block.choices.length ? 'Seçiniz…' : 'Şu an başvuruya açık çağrı yok'}</option>
-            {block.choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            <option value="">{loading ? 'Yükleniyor…' : (list.length ? 'Seçiniz…' : sourceEmptyLabel(s.source))}</option>
+            {list.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         );
       }
@@ -126,6 +128,8 @@ function PublicForm({ slug }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [kvkkConsent, setKvkkConsent] = useState(false);
   const [prefilled, setPrefilled] = useState({}); // alan kimliği → bağlantıdan ön seçilen değer
+  const [chained, setChained] = useState({}); // zincirli alan kimliği → üst seçime göre gelen liste
+  const [chainedLoading, setChainedLoading] = useState({});
   const honeypot = useRef(''); // bot doldurur, insan boş bırakır
 
   // GÖREV BAĞLAMI — form bir görevin süreli paylaşım linkinden açıldıysa adreste
@@ -176,7 +180,32 @@ function PublicForm({ slug }) {
   }).length;
   const progress = answerable.length ? Math.round((filledCount / answerable.length) * 100) : 0;
 
-  const onChange = (id, v) => setAnswers((p) => ({ ...p, [id]: v }));
+  /**
+   * 16b · Üst alan değişince ona bağlı alanın CEVABI DÜŞER ve listesi yeniden istenir: eski projenin görevi
+   * yeni projede geçerli değil, sunucu da onu reddederdi.
+   */
+  const onChange = (id, v) => {
+    const children = (doc?.blocks || []).filter((b) => b.dependsOnBlockId === id);
+    setAnswers((p) => {
+      const next = { ...p, [id]: v };
+      for (const c of children) delete next[c.id];
+      return next;
+    });
+    const parentValue = v && typeof v === 'object' ? v.value : v;
+    for (const child of children) {
+      if (!parentValue) {
+        setChained((p) => ({ ...p, [child.id]: [] }));
+        continue;
+      }
+      setChainedLoading((p) => ({ ...p, [child.id]: true }));
+      const tenantQuery = formTenantId.current ? `&tenantId=${formTenantId.current}` : '';
+      const url = `/api/app/public-document/block-choices?slug=${encodeURIComponent(slug)}&blockId=${child.id}&parentValue=${encodeURIComponent(parentValue)}${tenantQuery}`;
+      api.get(url)
+        .then((choices) => setChained((p) => ({ ...p, [child.id]: choices || [] })))
+        .catch(() => setChained((p) => ({ ...p, [child.id]: [] })))
+        .finally(() => setChainedLoading((p) => ({ ...p, [child.id]: false })));
+    }
+  };
 
   const submit = async () => {
     // required validation
@@ -254,7 +283,7 @@ function PublicForm({ slug }) {
                     {s.required && <span className="ml-1 text-negative-500">*</span>}
                   </label>
                   {s.helpText && <p className="text-xs text-text-tertiary">{s.helpText}</p>}
-                  <Field block={b} value={answers[b.id]} onChange={onChange} />
+                  <Field block={b} value={answers[b.id]} onChange={onChange} choices={b.dependsOnBlockId ? (chained[b.id] || []) : null} loading={!!chainedLoading[b.id]} />
                   {prefilled[b.id] && answers[b.id]?.value === prefilled[b.id] && (
                     <p className="text-xs text-text-secondary">Bağlantıdan seçildi; değiştirebilirsiniz.</p>
                   )}

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QuestionCard, payloadBlocks, serverIdMap } from './form-builder';
+import { QuestionCard, payloadBlocks, serverIdMap, parentCandidatesFor } from './form-builder';
 
 /* Canlı liste paneli önizleme için sunucudan çağrıları ister. */
 vi.mock('./lib/api/httpClient', () => ({
@@ -116,25 +116,33 @@ describe('alan kimlikleri kayitta korunur', () => {
 });
 
 /**
- * Tur 15 · Açılır liste canlı "Yayındaki hibeler" kaynağına bağlanabilir. Canlı listede elle yazılan
- * seçenekler gizlenir, önizleme sunucudaki güncel çağrıları gösterir.
+ * Tur 15/16 · Açılır liste bir VERİ KAYNAĞINA bağlanabilir. Canlı listede elle yazılan seçenekler gizlenir,
+ * önizleme sunucudaki güncel kayıtları gösterir; zincirli kaynakta ayrıca üst alan seçilir.
  */
 describe('acilir liste secenek kaynagi', () => {
+    const SOURCES = [
+        { key: 'firms', scope: 2, dependsOnSourceKey: null },
+        { key: 'open-grant-calls', scope: 0, dependsOnSourceKey: null },
+        { key: 'tenant-project-tasks', scope: 1, dependsOnSourceKey: 'tenant-projects' },
+        { key: 'tenant-projects', scope: 1, dependsOnSourceKey: null },
+    ];
     const dropdown = (settings) => ({ id: 'd1', type: 18, content: 'İlgilendiğiniz çağrı', settings });
-    const renderCard = (settings, onPatchSettings = vi.fn()) => render(
+    const renderCard = (settings, onPatchSettings = vi.fn(), parentCandidates = []) => render(
         <QuestionCard block={dropdown(settings)} index={0} selected onSelect={vi.fn()} onPatch={vi.fn()}
             onPatchSettings={onPatchSettings} onChangeType={vi.fn()} onDuplicate={vi.fn()} onRemove={vi.fn()}
-            onAddAfter={vi.fn()} onMove={vi.fn()} dragRef={{ current: null }} publicSlug="proje-fikri" />,
+            onAddAfter={vi.fn()} onMove={vi.fn()} dragRef={{ current: null }} publicSlug="proje-fikri"
+            sources={SOURCES} parentCandidates={parentCandidates} />,
     );
 
     it('canli listede onizleme gelir, sabit secenek duzenleyicisi gizlenir', async () => {
         renderCard({ source: 'open-grant-calls', urlPrefill: true, options: ['Seçenek 1'] });
-        expect(screen.getByLabelText('Yayındaki hibeler, canlı liste')).toBeChecked();
-        await waitFor(() => expect(screen.getByText(/başvuruya açık 4 çağrı var/)).toBeInTheDocument());
+        expect(screen.getByLabelText('Veri kaynağından, canlı liste')).toBeChecked();
+        expect(screen.getByLabelText('Veri kaynağı')).toHaveValue('open-grant-calls');
+        await waitFor(() => expect(screen.getByText('Şu an 4 kayıt listeleniyor.')).toBeInTheDocument());
         expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
             'TÜBİTAK · Sanayi Ar-Ge Projeleri (2026/1)', 'KOSGEB · KOBİGEL Dijital Dönüşüm (2026/1)', 'Sanayi ve Tek. Bak. · Teknoyatırım (2026/1)',
         ]);
-        expect(screen.getByText('ve 1 çağrı daha')).toBeInTheDocument();
+        expect(screen.getByText('ve 1 kayıt daha')).toBeInTheDocument();
         expect(screen.queryByText('+ Seçenek ekle')).not.toBeInTheDocument();
         expect(screen.getByLabelText('Çağrıya özel bağlantı')).toBeInTheDocument();
     });
@@ -143,14 +151,55 @@ describe('acilir liste secenek kaynagi', () => {
         const onPatchSettings = vi.fn();
         renderCard({ source: 'open-grant-calls', urlPrefill: true }, onPatchSettings);
         fireEvent.click(screen.getByLabelText('Sabit seçenekler, elle yazılır'));
-        expect(onPatchSettings).toHaveBeenCalledWith('d1', { source: undefined, urlPrefill: undefined });
+        expect(onPatchSettings).toHaveBeenCalledWith('d1', { source: undefined, urlPrefill: undefined, dependsOn: undefined });
     });
 
-    it('canli liste secilince baglantidan on secim de acilir', () => {
+    it('canli liste secilince cagri listesi ve baglantidan on secim gelir', () => {
         const onPatchSettings = vi.fn();
         renderCard({ options: ['Seçenek 1'] }, onPatchSettings);
         expect(screen.getByText('+ Seçenek ekle')).toBeInTheDocument();
-        fireEvent.click(screen.getByLabelText('Yayındaki hibeler, canlı liste'));
-        expect(onPatchSettings).toHaveBeenCalledWith('d1', { source: 'open-grant-calls', urlPrefill: true });
+        fireEvent.click(screen.getByLabelText('Veri kaynağından, canlı liste'));
+        expect(onPatchSettings).toHaveBeenCalledWith('d1', { source: 'open-grant-calls', urlPrefill: true, dependsOn: undefined });
+    });
+
+    it('kaynak degisince ust alan bagi ve baglanti on secimi dusur', () => {
+        const onPatchSettings = vi.fn();
+        renderCard({ source: 'open-grant-calls', urlPrefill: true }, onPatchSettings);
+        fireEvent.change(screen.getByLabelText('Veri kaynağı'), { target: { value: 'tenant-projects' } });
+        expect(onPatchSettings).toHaveBeenCalledWith('d1', { source: 'tenant-projects', urlPrefill: undefined, dependsOn: undefined });
+    });
+
+    it('zincirli kaynakta ust alan secilir, onizleme istenmez', () => {
+        renderCard({ source: 'tenant-project-tasks' }, vi.fn(), [{ id: 'p1', content: 'Projeniz' }]);
+        expect(screen.getByLabelText('Üst alan')).toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'Projeniz' })).toBeInTheDocument();
+        expect(screen.queryByText(/kayıt listeleniyor/)).not.toBeInTheDocument();
+    });
+
+    it('zincirli kaynakta uygun ust alan yoksa uyarilir', () => {
+        renderCard({ source: 'tenant-project-tasks' });
+        expect(screen.queryByLabelText('Üst alan')).not.toBeInTheDocument();
+        expect(screen.getByText(/Önce yukarıya .Firmanın projeleri. kaynağına bağlı bir açılır liste ekleyin/)).toBeInTheDocument();
+    });
+});
+
+/**
+ * 16b · Üst alan adayı YALNIZ yukarıdaki alanlar olabilir: doldurucu önce üstteki soruyu yanıtlar.
+ */
+describe('zincirli alanin ust alan adaylari', () => {
+    const SOURCES = [{ key: 'tenant-project-tasks', scope: 1, dependsOnSourceKey: 'tenant-projects' }];
+    const blocks = [
+        { id: 'p1', type: 18, content: 'Projeniz', settings: { source: 'tenant-projects' } },
+        { id: 'x1', type: 18, content: 'Çağrı', settings: { source: 'open-grant-calls' } },
+        { id: 't1', type: 18, content: 'Göreviniz', settings: { source: 'tenant-project-tasks' } },
+        { id: 'p2', type: 18, content: 'Diğer projeniz', settings: { source: 'tenant-projects' } },
+    ];
+
+    it('yalniz yukaridaki ve dogru kaynaga bagli alanlar aday', () => {
+        expect(parentCandidatesFor(blocks, 2, SOURCES).map((b) => b.id)).toEqual(['p1']);
+    });
+
+    it('zincirli olmayan alanda aday aranmaz', () => {
+        expect(parentCandidatesFor(blocks, 1, SOURCES)).toEqual([]);
     });
 });
