@@ -1834,6 +1834,29 @@ i.apya-priority-dot {
 }
 .apya-doc-row-head:hover { background: var(--apya-surface-sunken); }
 
+/* Belge listesi (documents/FileList.jsx). Belge adı kolonu `minmax(0,1fr)` iken
+   sabit kolonlar (~670px) ağaç + detay panelli düzende orta paneli (~610px)
+   doldurup adı 0px'e eziyordu: "Belge" ile "İş adımı" başlığı üst üste biniyor,
+   ad hiç görünmüyor, ikon yan hücreye taşıyordu. Ad kolonu artık 160px'in altına
+   inmez; kap daraldıkça önce İş adımı, sonra Tür düşer (ikisi detay panelinde
+   de var). Telefonda bu da yetmez → son çare yatay kaydırma, üst üste binme değil. */
+.apya-doc-filelist {
+    container: doclist / inline-size;
+    overflow-x: auto;
+}
+.apya-doc-filelist > .apya-doc-row {
+    grid-template-columns: 34px minmax(160px, 1fr) 140px 96px 116px 96px 110px;
+    min-width: min-content;
+}
+@container doclist (max-width: 840px) {
+    .apya-doc-filelist > .apya-doc-row { grid-template-columns: 34px minmax(160px, 1fr) 96px 116px 96px 110px; }
+    .apya-doc-filelist .apya-doc-col-step { display: none; }
+}
+@container doclist (max-width: 700px) {
+    .apya-doc-filelist > .apya-doc-row { grid-template-columns: 34px minmax(160px, 1fr) 116px 96px 110px; }
+    .apya-doc-filelist .apya-doc-col-type { display: none; }
+}
+
 /* ── İlk kurulum sihirbazı ───────────────────────────────────────────── */
 .apya-doc-setup {
     width: min(560px, calc(100vw - 32px));
