@@ -1,0 +1,732 @@
+<title>Hibe Uçtan Uca Denetimi</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --ground:#F6F7F9; --surface:#FFFFFF; --surface-2:#EEF0F4; --surface-3:#E4E7ED;
+    --line:#DDE1E8; --line-strong:#C3C9D4;
+    --ink:#14181F; --ink-2:#39414E; --muted:#5C6470;
+    --accent:#3D4BC7; --accent-ink:#2C379B; --accent-soft:rgba(61,75,199,.09);
+    --pos:#0A6B4F; --pos-soft:rgba(10,107,79,.10);
+    --warn:#95590A; --warn-soft:rgba(149,89,10,.12);
+    --neg:#A92222; --neg-soft:rgba(169,34,34,.10);
+    --shadow:0 1px 2px rgba(20,24,31,.05), 0 8px 24px -16px rgba(20,24,31,.28);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0F1217; --surface:#161A21; --surface-2:#1D222B; --surface-3:#262C37;
+      --line:#2A313C; --line-strong:#3A424F;
+      --ink:#E7EAF0; --ink-2:#C2C9D4; --muted:#959DAB;
+      --accent:#9CA5FF; --accent-ink:#B8BFFF; --accent-soft:rgba(156,165,255,.12);
+      --pos:#54C69C; --pos-soft:rgba(84,198,156,.13);
+      --warn:#E0A64A; --warn-soft:rgba(224,166,74,.14);
+      --neg:#F08A84; --neg-soft:rgba(240,138,132,.13);
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0F1217; --surface:#161A21; --surface-2:#1D222B; --surface-3:#262C37;
+    --line:#2A313C; --line-strong:#3A424F;
+    --ink:#E7EAF0; --ink-2:#C2C9D4; --muted:#959DAB;
+    --accent:#9CA5FF; --accent-ink:#B8BFFF; --accent-soft:rgba(156,165,255,.12);
+    --pos:#54C69C; --pos-soft:rgba(84,198,156,.13);
+    --warn:#E0A64A; --warn-soft:rgba(224,166,74,.14);
+    --neg:#F08A84; --neg-soft:rgba(240,138,132,.13);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -18px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground); color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    font-size:15px; line-height:1.6; margin:0;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1100px; margin:0 auto; padding-inline:20px; padding-block:0 72px}
+  h1,h2,h3,h4{font-family:"IBM Plex Serif",Georgia,serif; text-wrap:balance; margin:0}
+  h1{font-size:clamp(28px,4.4vw,42px); line-height:1.15; font-weight:600; letter-spacing:-.01em}
+  h2{font-size:clamp(21px,2.6vw,27px); font-weight:600; line-height:1.25}
+  h3{font-size:17px; font-weight:600; line-height:1.35}
+  h4{font-size:15px; font-weight:600; font-family:"IBM Plex Sans",sans-serif}
+  p{margin:0}
+  code,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:.87em}
+  code{background:var(--surface-2); padding:1px 5px; border-radius:4px; color:var(--ink-2); word-break:break-word}
+  a{color:var(--accent-ink); text-underline-offset:2px}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px}
+
+  .topbar{position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--ground) 88%,transparent);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line);}
+  .topbar-in{max-width:1100px; margin:0 auto; padding:9px 20px; display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+  .topbar a{font-size:12.5px; color:var(--muted); text-decoration:none; padding:4px 9px;
+    border-radius:999px; white-space:nowrap; border:1px solid transparent;}
+  .topbar a:hover{color:var(--ink); background:var(--surface-2); border-color:var(--line)}
+  .topbar .brand{font-weight:600; color:var(--ink); padding-left:0; margin-right:auto; font-family:"IBM Plex Serif",serif}
+
+  header.hero{padding-block:44px 30px; border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+    font-weight:600; margin-bottom:12px;}
+  .lede{font-size:17px; color:var(--ink-2); max-width:64ch; margin-top:14px}
+  .meta{margin-top:20px; font-size:13px; color:var(--muted); display:flex; gap:18px; flex-wrap:wrap}
+
+  .facts{display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:1px; background:var(--line);
+         border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-top:26px}
+  .fact{background:var(--surface); padding:13px 14px}
+  .fact b{display:block; font-size:22px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+  .fact span{font-size:12px; color:var(--muted); display:block; margin-top:2px; line-height:1.35}
+
+  section{padding-block:38px; border-bottom:1px solid var(--line)}
+  section:last-of-type{border-bottom:0}
+  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:6px; flex-wrap:wrap}
+  .sec-tag{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--accent-ink);
+    background:var(--accent-soft); padding:2px 7px; border-radius:5px; font-weight:500;}
+  .sec-sub{color:var(--muted); font-size:14px; margin-bottom:22px; max-width:70ch}
+  .stack{display:flex; flex-direction:column; gap:18px}
+  .stack-sm{display:flex; flex-direction:column; gap:10px}
+
+  .tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+  table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:560px}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{background:var(--surface-2); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--muted); font-weight:600; white-space:nowrap; position:sticky; top:0;}
+  tbody tr:last-child td{border-bottom:0}
+  td.num{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+  td.mono,th.mono{font-family:"IBM Plex Mono",monospace; font-size:12.5px; white-space:nowrap}
+
+  .chip{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
+        padding:2px 8px; border-radius:999px; white-space:nowrap; line-height:1.5}
+  .chip-neg{background:var(--neg-soft); color:var(--neg)}
+  .chip-warn{background:var(--warn-soft); color:var(--warn)}
+  .chip-pos{background:var(--pos-soft); color:var(--pos)}
+  .chip-acc{background:var(--accent-soft); color:var(--accent-ink)}
+  .chip-mut{background:var(--surface-3); color:var(--muted)}
+
+  .prob{background:var(--surface); border:1px solid var(--line); border-radius:11px; overflow:hidden}
+  .prob-head{display:flex; gap:11px; align-items:flex-start; padding:14px 16px; border-bottom:1px solid var(--line)}
+  .prob-id{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; color:var(--muted); padding-top:2px}
+  .prob-head h3{flex:1; min-width:0}
+  .prob-body{display:grid; gap:0; grid-template-columns:118px 1fr}
+  .prob-body>dt{padding:10px 16px; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--muted); border-bottom:1px solid var(--line); background:var(--surface-2);}
+  .prob-body>dd{padding:10px 16px; margin:0; border-bottom:1px solid var(--line); font-size:14px; color:var(--ink-2)}
+  .prob-body>dt:last-of-type,.prob-body>dd:last-of-type{border-bottom:0}
+  .prob-body dd b{color:var(--ink)}
+  @media (max-width:560px){
+    .prob-body{grid-template-columns:1fr}
+    .prob-body>dt{padding-bottom:2px; background:transparent; border-bottom:0}
+    .prob-body>dd{padding-top:2px}
+  }
+
+  .bug{border:1px solid var(--line); border-left:3px solid var(--neg); border-radius:0 10px 10px 0;
+       background:var(--surface); padding:14px 16px}
+  .bug h3{margin-bottom:6px}
+  .bug p{font-size:14px; color:var(--ink-2)}
+  .bug ul{margin:8px 0 0; padding-left:18px; font-size:13.5px; color:var(--ink-2)}
+  .bug li{margin-bottom:3px}
+  .bug--warn{border-left-color:var(--warn)}
+
+  .flow{background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:16px}
+  .flow pre{font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:1.75; margin:0;
+            white-space:pre; overflow-x:auto; color:var(--ink-2)}
+  .flow h4{margin-bottom:10px}
+  .flow b{color:var(--ink)}
+  .flow .bad{color:var(--neg); font-weight:500}
+  .flow .good{color:var(--pos); font-weight:500}
+
+  .q{background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:14px 16px}
+  .q h4{margin-bottom:4px}
+  .q p{font-size:14px; color:var(--ink-2)}
+  .q .rec{margin-top:8px; font-size:13.5px; color:var(--ink); background:var(--accent-soft);
+          border-radius:7px; padding:8px 11px}
+  .q .rec b{color:var(--accent-ink)}
+
+  details{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:0}
+  summary{cursor:pointer; padding:11px 15px; font-weight:600; font-size:14px; list-style:none; display:flex;
+          justify-content:space-between; gap:10px; align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+"; color:var(--muted); font-family:"IBM Plex Mono",monospace}
+  details[open] summary::after{content:"−"}
+  details[open] summary{border-bottom:1px solid var(--line)}
+  .det-body{padding:13px 15px; font-size:13.5px; color:var(--ink-2)}
+  .det-body .tbl-wrap{border-radius:8px}
+
+  ul.clean{margin:0; padding-left:19px; font-size:14px; color:var(--ink-2)}
+  ul.clean li{margin-bottom:5px}
+  ul.clean li::marker{color:var(--muted)}
+  ol.clean{margin:0; padding-left:19px; font-size:14px; color:var(--ink-2)}
+  ol.clean li{margin-bottom:5px}
+  .note{font-size:13px; color:var(--muted); font-style:italic}
+  footer{padding-block:30px; color:var(--muted); font-size:13px}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  @media (max-width:760px){.grid2{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<nav class="topbar" aria-label="Bölümler">
+  <div class="topbar-in">
+    <span class="brand">Hibe Uçtan Uca Denetimi</span>
+    <a href="#ozet">Özet</a>
+    <a href="#durum">Durum</a>
+    <a href="#deger">Değer</a>
+    <a href="#surec">Süreç</a>
+    <a href="#ux">UX</a>
+    <a href="#teknik">Teknik</a>
+    <a href="#eksik">Eksikler</a>
+    <a href="#persona">Persona</a>
+    <a href="#matris">Matris</a>
+    <a href="#yolharitasi">Yol haritası</a>
+    <a href="#karar">Karar</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Apya.Platform · CEO/CTO denetimi · ürün + süreç + mimari</div>
+  <h1>Hibe modülü: platformun %41'i, ama para döngüsü kapanmıyor</h1>
+  <p class="lede">
+    Bu modül altı haftada 37 tabloya, 42 bin satıra büyüdü ve teklif tarafı (çağrı → talep → başvuru)
+    gerçekten güçlü. Sorun büyüklük değil: <b>paranın gerçekleştiği yerde üç sistem birbirinden habersiz</b>,
+    yaşam döngüsünün son üçte biri (karar → kapanış → arşiv) hiç kayıt altına alınamıyor ve
+    modül kullanıcı sinyalinden hızlı büyümüş durumda. Bu rapor 17 Eylül UX denetiminin üstüne
+    finans, proje ve teknik eksenleri koyar; her bulgu kod okunarak doğrulanmıştır.
+  </p>
+  <div class="meta">
+    <span>18 Eylül 2026</span>
+    <span>Ölçüm: main <code>278e5384</code></span>
+    <span>Önceki katman: <a href="https://claude.ai/artifact/YE9i7pzJAqUxeuiBmunY3K">UX/IA denetimi (17 Eyl)</a></span>
+  </div>
+
+  <div class="facts">
+    <div class="fact"><b>37 / 90</b><span>veritabanı tablosu<br>hibe modülünde (%41)</span></div>
+    <div class="fact"><b>%34</b><span>tüm sayfa katmanı kodu<br>(21.631 / 64.135 satır)</span></div>
+    <div class="fact"><b>3</b><span>birbirinden habersiz<br>"tahsil edildi" kaydı</span></div>
+    <div class="fact"><b>2 / 32</b><span>liste ucunda<br>sayfalama var</span></div>
+    <div class="fact"><b>4</b><span>ayrı dosya deposu<br>(aynı PDF iki kez yüklenir)</span></div>
+    <div class="fact"><b>0</b><span>kapanış / arşiv<br>mekanizması</span></div>
+  </div>
+</header>
+
+<!-- ============================ 1 · EXECUTIVE SUMMARY ============================ -->
+<section id="ozet">
+  <div class="sec-head"><span class="sec-tag">1</span><h2>Executive summary — en önemli 10 bulgu</h2></div>
+  <p class="sec-sub">Sıralama iş etkisine göre. Her maddenin detayı ve dosya:satır kanıtı ilgili bölümde.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th style="width:36px">#</th><th>Bulgu</th><th>İş etkisi</th><th style="width:90px">Bölüm</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td><b>Müşteri iki ekranda iki farklı destek rakamı görüyor.</b> <code>Detail.js</code> destek hesabını sunucudan <i>farklı formülle</i> kendisi yapıyor: kalem limitinde yanlış taban + destek oranı çarpanı eksik. %50 oran + %40 limitte istemci sunucunun iki katını gösterir.</td><td><span class="chip chip-neg">para doğruluğu</span></td><td><a href="#surec">4</a></td></tr>
+        <tr><td class="num">2</td><td><b>Ödeme döngüsü kapanmıyor.</b> Dilim "Ödendi" işaretlenince ne gelir kaydı ne kasa hareketi doğuyor; hibe ekranı, proje finans paneli ve kasa üç ayrı gerçek anlatıyor.</td><td><span class="chip chip-neg">muhasebe bütünlüğü</span></td><td><a href="#surec">4</a></td></tr>
+        <tr><td class="num">3</td><td><b>Sürecin sonu sistemde yok.</b> Kurum kararını giren <code>SaveDecisionAsync</code>'in UI'sı hiç yapılmadı → karar, itiraz sonucu ve zorunlu <code>DecisionIssued</code> bildirimi hiç oluşmuyor. Kapanış/arşiv kavramı da yok (<code>ProjectStatus</code> ölü kod).</td><td><span class="chip chip-neg">ürün bütünlüğü</span></td><td><a href="#eksik">7</a></td></tr>
+        <tr><td class="num">4</td><td><b>"Rapor onaylanmadan ödeme çıkmaz" kuralı deliniyor.</b> Host başvuru ekranındaki <code>UpdateTrancheAsync</code> durumu DTO'dan doğrudan yazıyor; kapı yalnız Uygulama ekranındaki yolda çalışıyor.</td><td><span class="chip chip-neg">iş kuralı</span></td><td><a href="#teknik">6</a></td></tr>
+        <tr><td class="num">5</td><td><b>Tutar değişikliği hiçbir iz bırakmıyor.</b> Onay tutarı 500K→5M yapılsa ne aktivite kaydı ne entity history oluşur; hibe entity'leri <code>EntityHistorySelector</code> listesinde yok. Muhasebe barındıran bir üründe savunulamaz.</td><td><span class="chip chip-neg">denetlenebilirlik</span></td><td><a href="#teknik">6</a></td></tr>
+        <tr><td class="num">6</td><td><b>Hibe→proje köprüsü kayıplı tek yön kopya.</b> FK yok, kalem türü düşüyor, evrak taşınmıyor, iş adımı üretilmiyor; proje detay ekranında hibe izi sıfır. Katalog parametresi değişince gönderilmiş başvuruların rakamı geriye dönük oynuyor (destek tutarı hiç saklanmıyor).</td><td><span class="chip chip-neg">veri modeli</span></td><td><a href="#surec">4</a></td></tr>
+        <tr><td class="num">7</td><td><b>Modül kullanım sinyalinden önde büyümüş.</b> Şemanın %41'i, ama: kazıyıcı hiç bağlanmadı ("Tümünü Tara" her koşuda "Atlandı"), 9 backend ucu UI'sız, 14 ekran menüsüz, huni sayacı daha yeni veri toplamaya başladı.</td><td><span class="chip chip-warn">ürün odağı</span></td><td><a href="#deger">3</a></td></tr>
+        <tr><td class="num">8</td><td><b>Tek modülde iki ürün + dört isimli kavram</b> (17 Eyl denetiminin K1/K2'si). Menü 5+3 kararı ve fikir→sekme taşıması onaylandı ama henüz uygulanmadı.</td><td><span class="chip chip-warn">UX</span></td><td><a href="#ux">5</a></td></tr>
+        <tr><td class="num">9</td><td><b>Ölçek tavanı yakın.</b> 30/32 liste ucu sayfalamasız; kiracı kataloğu tümünü çekip istemcide süzüyor; Dispatch önizlemesi kiracı sayısıyla doğrusal (~4×T sorgu). 24 firmada sorunsuz, 200 firmada zaman aşımı.</td><td><span class="chip chip-warn">ölçeklenebilirlik</span></td><td><a href="#teknik">6</a></td></tr>
+        <tr><td class="num">10</td><td><b>Bilinen düzeltmeler dalda bekliyor.</b> 17 Eyl denetiminin 5 commit'i (ödenen dilimin "İptal" görünmesi, kayıp rozetler, durum sözlüğü) main'e girmedi; PR'ı yok. Canlıya giden her paket bu hatayı taşımaya devam ediyor.</td><td><span class="chip chip-warn">operasyon</span></td><td><a href="#yolharitasi">10</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================ 2 · MEVCUT DURUM ============================ -->
+<section id="durum">
+  <div class="sec-head"><span class="sec-tag">2</span><h2>Mevcut durum analizi</h2></div>
+  <p class="sec-sub">Modül ne kadar büyük, neresi sağlam, neresi kırılgan — sayılarla.</p>
+
+  <div class="grid2">
+    <div class="q">
+      <h4>Sağlam olan</h4>
+      <ul class="clean" style="margin-top:8px">
+        <li><b>Eşleştirme motoru tek kaynak:</b> kamu testi, kiracı akışı, gönderim konsolu aynı <code>GrantMatchManager</code>'dan skorlanıyor; 10 eski regresyon testi hâlâ yeşil.</li>
+        <li><b>Yetki çift kilitli:</b> 32 servisin 32'si korumalı; host-only 16 servisin 16'sında <code>EnsureHostContext()</code> var. Kiracı token'ıyla host ucuna ulaşmak yapısal olarak imkânsız.</li>
+        <li><b>Evrak ve sihirbaz olgun:</b> sürümleme, iki taraflı onay, paket üretimi, canlı alan kilidi (DB'de) — çekirdek başvuru deneyimi rakip düzeyinin üstünde.</li>
+        <li><b>Bildirim şablon katmanı</b> genel sistemin üstüne doğru oturmuş: tercih ve zorunluluk tek kaynaktan, kapı testli.</li>
+        <li>Çağrı takvim guard'ı (<code>deadline &lt; openDate</code>) ve parametre ekranındaki <code>[Range]</code> seti örnek nitelikte.</li>
+      </ul>
+    </div>
+    <div class="q">
+      <h4>Kırılgan olan</h4>
+      <ul class="clean" style="margin-top:8px">
+        <li><b>Para nerede gerçekleşiyorsa orada kopukluk var:</b> bütçe 3 tabloda bağımsız, tahsilat 3 kayıtta çelişik, gider hibe bağlamını bilmiyor.</li>
+        <li><b>Yaşam döngüsü yarım:</b> karar girilemiyor, kapanış yok, arşiv yok; "kapalı başvuru" formülü iki dosyada elle kopyalanmış.</li>
+        <li><b>Ölçek varsayımı "küçük":</b> sayfalama, sunucu süzgeci ve önbellek neredeyse hiç yok. Bugünkü hacimde görünmez; müşteri sayısı 10×'lanınca ilk kırılan yer.</li>
+        <li><b>Doğrulama sistematik değil:</b> tek bir <code>IValidatableObject</code> yok; negatif dilim tutarı üç katmanın üçünden de geçiyor.</li>
+        <li><b>İz kaydı seçici:</b> mesaj/evrak/aşama izleniyor, <b>tutar</b> izlenmiyor.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top:18px" class="tbl-wrap">
+    <table>
+      <thead><tr><th>Katman</th><th class="num">Hibe</th><th class="num">Platform</th><th class="num">Pay</th><th>Not</th></tr></thead>
+      <tbody>
+        <tr><td>Veritabanı tablosu</td><td class="num">37</td><td class="num">90</td><td class="num"><b>%41</b></td><td>Projects+Tasks+Accounting toplamından büyük</td></tr>
+        <tr><td>Sayfa katmanı (satır)</td><td class="num">21.631</td><td class="num">64.135</td><td class="num"><b>%34</b></td><td>31 route + 3 partial + 3 anonim sayfa</td></tr>
+        <tr><td>Application katmanı (satır)</td><td class="num">11.252</td><td class="num">41.956</td><td class="num"><b>%27</b></td><td>32 AppService</td></tr>
+        <tr><td>Domain katmanı (satır)</td><td class="num">5.827</td><td class="num">23.437</td><td class="num"><b>%25</b></td><td>66 sınıf, 35 entity</td></tr>
+        <tr><td>Yerelleştirme anahtarı</td><td class="num">1.809</td><td class="num">~3.169</td><td class="num"><b>%57</b></td><td>tr.json içindeki <code>Grants:</code> payı</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note" style="margin-top:8px">Yorum: hibe modülü fiilen platformun ikinci ürünü. Bu ölçekte bir modül artık
+    "özellik" değil "ürün" disipliniyle yönetilmeli: sürüm başına daha az yüzey, daha çok kapanmış döngü.</p>
+</section>
+
+<!-- ============================ 3 · CEO DEĞER ANALİZİ ============================ -->
+<section id="deger">
+  <div class="sec-head"><span class="sec-tag">3</span><h2>Ürün değeri: hangi alt sistem ne kadar hak ediyor?</h2></div>
+  <p class="sec-sub">Anahtar soru: <i>bu modül hibe yönetmeyi kolaylaştırıyor mu, yoksa kullanıcıyı veri girişiyle mi yoruyor?</i>
+    Cevap ikiye ayrılıyor: <b>teklif tarafı</b> (çağrı bul → uygunluk → başvuru) kolaylaştırıyor;
+    <b>uygulama tarafı</b> (para → rapor → kapanış) kullanıcıyı sistem dışına (Excel'e) itiyor, çünkü döngüler kapanmıyor.
+    ⚠ Kullanım sıklığı sütunu <b>varsayımdır</b> — üründe kullanım telemetrisi yok; huni sayacı yalnız görüntülenmeyi ve yalnız birkaç gündür sayıyor.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Alt sistem</th><th>Değer</th><th>Kullanım<br>(varsayım)</th><th>Karar</th><th>Gerekçe</th></tr></thead>
+      <tbody>
+        <tr><td><b>Parametre + uygunluk/eşleştirme motoru</b><br><span class="note">35 alan, 6 boyut, canlı eşleşme</span></td><td>Farklılaştırıcı</td><td>Her çağrıda</td><td><span class="chip chip-pos">koru</span></td><td>Ürünün asıl tezi bu. Tek skorlama kaynağı korunmuş — dokunma.</td></tr>
+        <tr><td><b>Başvuru sihirbazı + canlı kilit</b></td><td>Çekirdek</td><td>Sık</td><td><span class="chip chip-pos">koru</span></td><td>Kilit devralma UI'sı bekleyebilir (20 dk zaman aşımı idare ediyor).</td></tr>
+        <tr><td><b>Evrak takibi</b> (iki taraflı, sürümlü, paket)</td><td>Çekirdek</td><td>Sık</td><td><span class="chip chip-pos">koru</span></td><td>Documents modülüyle köprü eksik (bkz. §7) — ama sistemin kendisi sağlam.</td></tr>
+        <tr><td><b>Karar + itiraz</b></td><td>Çekirdek</td><td>Her başvuruda</td><td><span class="chip chip-neg">tamamla</span></td><td>Yarım: okuma ekranı var, giriş yok. En yüksek değer/maliyet oranlı iş — backend hazır, tek modal eksik.</td></tr>
+        <tr><td><b>Uygulama & tahsilat</b> (rapor–dilim zinciri)</td><td>Çekirdek</td><td>Aylık</td><td><span class="chip chip-neg">güçlendir</span></td><td>Kapı deliniyor (H-03), muhasebeye düşmüyor (H-04), kur karışıyor (H-11).</td></tr>
+        <tr><td><b>Projeye dönüştürme</b> (Convert)</td><td>Kritik köprü</td><td>Onay başına 1</td><td><span class="chip chip-neg">güçlendir</span></td><td>Çalışıyor ama kayıplı: FK yok, evrak yok, iş adımı yok, görevler numarasız.</td></tr>
+        <tr><td><b>Talep/fikir akışı</b> (ilgi, havuz, davet, görüşme)</td><td>Satış hunisi</td><td>Haftalık</td><td><span class="chip chip-pos">koru</span></td><td>Tur 19-22'de yeni kuruldu; onaylı IA kararıyla (fikir→sekme) yerine oturuyor.</td></tr>
+        <tr><td><b>Kamu yüzeyi + lead</b></td><td>Pazarlama girişi</td><td>Sürekli</td><td><span class="chip chip-pos">koru</span></td><td>Isı skoru tek nesnel önceliklendirme sinyali — Talepler'de görünür olmalı (P8).</td></tr>
+        <tr><td><b>Kaynaklar + kazıyıcı konsolu</b></td><td>Vaat edilmiş, çalışmıyor</td><td>—</td><td><span class="chip chip-warn">karar ver</span></td><td><code>NotConfiguredGrantScraper</code> her koşuyu "Atlandı" yazıyor. "Tümünü Tara" hiçbir şey yapmayan bir düğme — güven aşındırır. Ya gerçek kazıyıcı bağlanır, ya konsol Import'a indirgenir. Import (metin→13 alan) değerli, kalmalı.</td></tr>
+        <tr><td><b>Eşleştirme ağırlıkları</b> (6 boyut × 5 çarpan)</td><td>İleri seviye ayar</td><td>Nadir</td><td><span class="chip chip-mut">koru, derinde</span></td><td>Varsayılanlar düz ortalamayla birebir — dokunulmazsa zararsız. Menüye çıkmasın (zaten çıkmıyor).</td></tr>
+        <tr><td><b>Bildirim şablonları</b> (14 tetikleyici)</td><td>Operasyon</td><td>Kurulumda</td><td><span class="chip chip-warn">düzelt</span></td><td>Mimari doğru ama e-posta borusu çift gönderiyor ve döngüde senkron SMTP çağırıyor (H-14); üretimde SMTP zaten sorunlu.</td></tr>
+        <tr><td><b>Huni raporu + günlük sayaç</b></td><td>Yönetim görünürlüğü</td><td>Haftalık</td><td><span class="chip chip-mut">koru</span></td><td>Küçük ve yeni; satırları çekip bellekte saymayı ölçek gelince düzelt.</td></tr>
+        <tr><td><b>Danışmanlık kaydı</b> (saat + prim)</td><td>Ücretlendirme verisi</td><td>Sık</td><td><span class="chip chip-pos">koru</span></td><td>Host-only, doğru yerde.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:16px" class="q">
+    <h4>CEO okuması</h4>
+    <p>Silinecek büyük bir şey <b>yok</b> — her alt sistemin gerekçesi var. Sorun şu: son altı hafta hep
+      <i>yeni yüzey</i> ekledi, hiçbir sprint <i>döngü kapatmadı</i>. Bugün modülün en pahalı üç eksiği
+      (karar girişi, tahsilat köprüsü, kapanış) yeni tablo değil, <b>var olan backend'in üstüne 1-2 ekran</b> istiyor.
+      Tavsiye: yeni özellik kabulünü durdurup iki sprint boyunca yalnız döngü kapatmak.</p>
+  </div>
+</section>
+
+<!-- ============================ 4 · İŞ SÜRECİ ============================ -->
+<section id="surec">
+  <div class="sec-head"><span class="sec-tag">4</span><h2>İş süreci problemleri: paranın yolculuğu</h2></div>
+  <p class="sec-sub">Teklif tarafındaki akış (çağrı→talep→başvuru) 17 Eyl raporunda çizildi ve büyük ölçüde sağlıklı.
+    Buradaki odak: onaydan sonra paranın yolculuğu — modülün bugün en zayıf olduğu yer.</p>
+
+  <div class="flow">
+    <h4>Bütçe ve tahsilat: bugünkü veri akışı</h4>
+    <pre>
+HOST KATALOĞU               Grant { MaxAmount, SupportRate% }        <span class="bad">para birimi YOK — örtük ₺ (36 yerde sabit)</span>
+                                 │  GrantEligibleCostItem { tür, limit% }
+                                 ▼
+BAŞVURU (kiracı)            GrantApplicationBudgetLine { tür, tutar }
+                                 │   destek = her okumada YENİDEN hesap  <span class="bad">→ katalog değişirse geçmiş rakam oynar</span>
+                                 │   <span class="bad">Detail.js aynı hesabı FARKLI formülle tekrarlıyor</span>
+                     ╔═══════════╧═══════════ /Grants/Convert ═══════════╗
+                     ║  TEK YÖN · FK YOK · tür düşer · evrak taşınmaz    ║
+                     ╚═══════════╤═══════════════════════════════════════╝
+                                 ▼
+PROJE (kiracı)   ProjectBudgetLine ◄── Expense.BudgetLineId ── gider girişi <span class="bad">(hibe bağlamı görünmez)</span>
+                 FundingTranche { planlanan } ──(elle, opsiyonel)── IncomeEntry ── CashMovement
+                                 ▲
+        ╔════════════════════════╧════ KOPUK HAT ═════════════════════════╗
+        ║  GrantDisbursementTranche.MarkPaid() → Status=Ödendi            ║
+        ║     ✗ FundingTranche'e haber yok   ✗ IncomeEntry doğmaz         ║
+        ║     ✗ CashMovement doğmaz          ✗ hiçbir muhasebe izi yok    ║
+        ╚═════════════════════════════════════════════════════════════════╝</pre>
+  </div>
+
+  <div class="stack" style="margin-top:18px">
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">S-1</span><h3>Aynı tahsilatın üç ayrı kaydı — üç ekranda üç farklı rakam</h3><span class="chip chip-neg">kritik</span></div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt><dd>"Tahsil edildi" bilgisi üç bağımsız yerde: ① <code>GrantDisbursementTranche.Status</code> (hibe Uygulama ekranı + Genel Bakış oranı), ② <code>FundingTranche.ReceivedAmount</code> (proje finans paneli), ③ <code>IncomeEntry</code>+<code>CashMovement</code> (kasa/K-Z). Aralarında FK de senkron da yok; <code>MarkTranchePaidAsync</code> tek satır durum yazıp çıkıyor (<code>GrantImplementationAppService.cs:151-170</code>).</dd>
+        <dt>Etki</dt><dd>Danışman "ödendi" der, firmanın muhasebecisi kasada göremez; Genel Bakış'taki tahsilat oranı ile proje panelindeki oran çelişir. Kullanıcı hangisine güveneceğini bilemez → Excel'e döner.</dd>
+        <dt>Çözüm</dt><dd>Dilim "Ödendi" işaretlenirken tek akış: gelir kaydı öner (tarih+tutar dolu gelir formu) → kaydet → <code>FundingTranche.IncomeEntryId</code> bağla. Şema tarafında iki FK (dilim↔FundingTranche, migration onaya tabi). Ters yön: <code>RegisterCollectionAsync</code> hibeli projede dilimi de işaretlesin.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">S-2</span><h3>Dönüşüm kayıplı: proje, hibesinden habersiz doğuyor</h3><span class="chip chip-neg">kritik</span></div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt><dd>Convert bütçeyi kopyalıyor ama: kalem türü (<code>Kind</code>) istemciden gelip <b>hiç kullanılmıyor</b>; satırlar <code>ProjectBudgetManager</code>'ı atlayıp repo'ya basılıyor (iki kalem aynı <code>Material</code> koduyla doğabiliyor → sonraki güncellemede çakışma hatası); milestone→görev kopyasında <code>AssignNumber()</code> çağrılmadığı için görevler <code>GRV-0</code> doğuyor; evrak ve iş adımı hiç taşınmıyor. <code>Project.GrantId</code> programı gösteriyor, başvuruyu değil; proje detay ekranında tek bir hibe izi yok.</dd>
+        <dt>Etki</dt><dd>Onay anında kazanılan tüm bağlam (uygun maliyet kuralları, evrak arşivi, aşama planı) projede sıfırdan elle kuruluyor. "Bu harcama hibe kuralına uygun mu?" sorusu proje tarafında cevapsız.</dd>
+        <dt>Çözüm</dt><dd>① <code>Project.GrantApplicationId</code> + proje detayına "Hibe" paneli (onaylı tutar, dilimler, başvuruya link). ② Dönüşüm satırları <code>ProjectBudgetManager.CreateLineAsync</code>'ten geçsin, <code>Kind</code> koda yazılsın. ③ Görevlere <code>AssignNumber()</code>. ④ Evrak köprüsü §7'de.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">S-3</span><h3>Gerçekleşme raporu yanlış toplama yapıyor</h3><span class="chip chip-warn">yüksek</span></div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt><dd><code>BuildBudgetAsync</code> gider toplamını işlem para birimindeki <code>Amount</code> ile alıyor — ₺ defter karşılığı <code>BookAmount</code> dururken (<code>GrantImplementationAppService.cs:382</code>). EUR harcama TRY kalemle doğrudan bölünüyor. Ayrıca kalemsiz giderler toplamdan <b>sessizce düşüyor</b> (oysa <code>UnassignedSpentAmount</code> proje tarafında zaten hesaplanıyor) ve proje değiştirilen giderin kalemi sessizce sıfırlanıyor.</dd>
+        <dt>Etki</dt><dd>Bütçe kullanım yüzdesi dövizli projede anlamsız; "atanmamış gider" hiçbir uyarı üretmeden hibe raporundan kayboluyor.</dd>
+        <dt>Çözüm</dt><dd><code>BookAmount</code> kullan; "atanmamış N gider / ₺X" satırı ekle (veri hazır); kalem sıfırlanırken kullanıcıya söyle.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <h3 style="margin-top:26px; margin-bottom:10px">Adım azaltma: üç örnek akış</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>İş</th><th>Bugünkü akış</th><th class="num">Adım</th><th>Önerilen akış</th><th class="num">Adım</th><th>Kazanç</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>Hibe dilimi tahsilatı</b><br><span class="note">(dilim ödendi + kasaya girdi + proje güncel)</span></td>
+          <td>① Hibe › Uygulama › dilimi "Ödendi" işaretle ② Projeler › proje › Finans › tahsilat kaydet ③ Gelir ekranında gelir kaydı aç ④ tahsilatı gelire elle bağla — <b>üç modül, iki elle eşleme</b></td>
+          <td class="num">~11</td>
+          <td>Uygulama ekranında "Ödendi" → tarih+tutar dolu gelir önerisi → onayla. Gelir, kasa ve proje dilimi tek akışta bağlanır.</td>
+          <td class="num">3</td>
+          <td>−8 adım; üç kaydın çelişme ihtimali sıfırlanır</td>
+        </tr>
+        <tr>
+          <td><b>Kurum kararının kaydı</b></td>
+          <td>Mümkün değil — giriş ekranı yok. Danışman kararı e-postada/Excel'de tutuyor; itiraz penceresi sistem dışında takip ediliyor.</td>
+          <td class="num">∞</td>
+          <td>Başvuru detayında "Kurum kararını gir" modalı (sonuç · onaylı tutar · itiraz son tarihi · gerekçe) — backend hazır.</td>
+          <td class="num">2</td>
+          <td>Yaşam döngüsünün son üçte biri kayıt altına girer; zorunlu bildirim çalışmaya başlar</td>
+        </tr>
+        <tr>
+          <td><b>Aynı evrakın hem başvuruda hem projede kullanımı</b></td>
+          <td>① Hibe › Evrak'a yükle ② Dokümanlar'a <b>ikinci kez</b> yükle ③ iki ayrı sürüm geçmişini elle senkron tut</td>
+          <td class="num">6+</td>
+          <td>Dönüşümde onaylı evraklar proje doküman ağacına referansla bağlanır (bayt kopyalanmaz, kayıt köprülenir).</td>
+          <td class="num">0</td>
+          <td>Çift yükleme ve sürüm ayrışması biter</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================ 5 · UX ============================ -->
+<section id="ux">
+  <div class="sec-head"><span class="sec-tag">5</span><h2>UX + menü + buton denetimi</h2></div>
+  <p class="sec-sub">Bu katman 17 Eylül'de ekran ekran denetlendi
+    (<a href="https://claude.ai/artifact/YE9i7pzJAqUxeuiBmunY3K">rapor</a>) ve üç karar onaylandı.
+    Burada tekrar türetmiyorum; durumunu ve bu denetimin eklediklerini veriyorum.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>17 Eyl bulgusu</th><th>Karar / durum</th></tr></thead>
+      <tbody>
+        <tr><td><b>K1</b> · Tek modülde iki ürün (17 host / 2 kiracı / 11 çatal route)</td><td><span class="chip chip-acc">onaylı</span> Menü <b>5+3</b>: danışmana Bugün·Çağrılar·Talepler·Başvurular·Raporlar, firmaya Bugün·Fırsatlar·Başvurularım — <b>uygulanmadı</b></td></tr>
+        <tr><td><b>K2</b> · Aynı kayıt 4-5 isimle geziyor (Fikir/Talep/İlgi; Hibe/Çağrı/Program)</td><td><span class="chip chip-acc">onaylı</span> Kavram sözlüğü rapora kondu — metin göçü yapılmadı</td></tr>
+        <tr><td><b>K3</b> · "Sıradaki iş" motoru var, detay ekranları kullanmıyor; 8 ekranda hiç primary yok</td><td><span class="chip chip-warn">açık</span> Ortak şerit partial'ı 6 ekrana girecek (plan adım 4)</td></tr>
+        <tr><td><b>P1-P12</b> · Menü seviyesi, kopya ekranlar, üç ilerletme mekanizması, mobil, arama…</td><td><span class="chip chip-warn">açık</span> S3 (iki ilerleme ekseni) ürün kararı bekliyor: öneri = şablon adımı ayrıntı, sabit aşama özet</td></tr>
+        <tr><td><b>Hotfix'ler</b> · Ödenen dilim "İptal" · kayıp rozetler · "+ Yeni" hayalet penceresi + durum sözlüğü (13 elle dizi → tek harita)</td><td><span class="chip chip-neg">dalda sıkıştı</span> <code>claude/combine-four-units-single-screen-a5118e</code>, 5 commit, PR yok → <b>Faz 0</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="stack" style="margin-top:18px">
+    <div class="bug">
+      <h3>Bu denetimin eklediği UX kusurları</h3>
+      <ul>
+        <li><b>Kırık link:</b> Bugün ekranı projeye <code>/Projects/Detail?id=</code> ile gidiyor (<code>Today.js:191</code>) — böyle bir sayfa yok, gerçek route <code>/Projects/ProjectDetails/{id}</code>. Kullanıcı 404 alıyor.</li>
+        <li><b>Takvim yarım anlatıyor:</b> hibe rayında yalnız kilometre taşı + çağrı son başvurusu var; rapor teslimi, dilim tarihi ve itiraz penceresi takvime hiç düşmüyor (<code>CalendarFeedProvider.cs:312-388</code>). Üstelik takvim kalemi hangi başvuruya ait olduğunu kaybediyor (href sabit <code>/Grants/Applications</code>).</li>
+        <li><b>Hayalet düğme:</b> Kaynaklar'daki "Tümünü Tara" hiçbir şey taramıyor — kazıyıcı bağlı değil, her koşu "Atlandı". Çalışmayan birincil eylem, kullanıcının tüm düğmelere güvenini aşındırır.</li>
+        <li><b>Onay tutarı aşama modalının içinde:</b> parasal karar (<code>ApprovedAmount</code>) "aşamayı ilerlet" modalının yan alanı olarak giriliyor ve girildiğinde hiçbir iz bırakmıyor — karar girişi ekranı (H-02) bunun da doğru evi.</li>
+      </ul>
+    </div>
+    <p class="note">Buton/CTA envanterinin tamamı (koru/birleştir/adlandır/kaldır kararlarıyla 16 satır) 17 Eyl raporunun E bölümünde — geçerliliğini koruyor; tek ekleme yukarıdaki "Tümünü Tara".</p>
+  </div>
+</section>
+
+<!-- ============================ 6 · TEKNİK ============================ -->
+<section id="teknik">
+  <div class="sec-head"><span class="sec-tag">6</span><h2>Teknik denetim (CTO)</h2></div>
+  <p class="sec-sub">Yetki, API, bildirim, denetim izi, performans, doğrulama. Mimari genel olarak ABP desenlerine sadık —
+    bulgular tasarım hatası değil, tamamlanmamış kenarlar.</p>
+
+  <div class="stack">
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">T-1</span><h3>Yetki: çift kilit sağlam, granülerlik zayıf</h3><span class="chip chip-warn">orta</span></div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt><dd>4 izin (<code>Default</code> Both · <code>Create/Edit/Delete</code> Host). 32 servisin dağılımı: 12 Default · 15 Edit · 1 Create · 2 CrudAppService · 1 metot bazlı · 1 anonim. Host-only 16 servisin 16'sında <code>EnsureHostContext()</code> — kiracı token'ıyla erişim yapısal olarak kapalı. <code>Delete</code> fiilen yalnız katalog silme; diğer tüm silmeler <code>Edit</code> altında.</dd>
+        <dt>Sonuç</dt><dd>Güvenlik açığı yok; ama <b>parasal eylemler</b> (dilim ekle/öde, onay tutarı, karar) sıradan içerik düzenlemeyle aynı <code>Edit</code> iznini paylaşıyor. Ekip büyüyünce "junior danışman evrak inceleyebilsin ama tutar yazamasın" ayrımı kurulamaz. Kiracı tarafında tek izin (<code>Default</code>) — firma içinde "muhasebeci görsün, çalışan görmesin" mümkün değil.</dd>
+        <dt>Çözüm</dt><dd>Şimdi değil, ekip/rol talebi gelince: <code>Grants.ManageFinance</code> (Host) + <code>Grants.ViewFinance</code> (Both) iki iznin eklenmesi yeterli — sayfa değil servis metodu seviyesinde uygulanır.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">T-2</span><h3>Bildirim: hibe katmanı doğru oturmuş ama e-posta borusu çift</h3><span class="chip chip-neg">yüksek</span></div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt><dd>Hibe şablon katmanı genel sistemin üstünde; tercih ve zorunluluk tek kaynak (doğru). Ama <code>DecisionIssued</code> Critical türünde: <code>NotificationManager.PublishAsync</code> kritik e-postayı <b>kuyruğa</b> atıyor, ardından dispatcher <code>template.Email</code>'i görüp <b>ikinci e-postayı senkron</b> gönderiyor (<code>GrantNotificationDispatcher.cs:84-87</code> + <code>NotificationManager.cs:106</code>). Ayrıca dispatcher kiracıdaki her kullanıcı için döngüde <code>SendAsync</code> çağırıyor — <code>NotificationManager</code>'ın kendi yorumu "SMTP el sıkışması isteği bekletir, <code>QueueAsync</code> kullan" diyor.</dd>
+        <dt>Sonuç</dt><dd>Karar UI'sı gelir gelmez (H-02) her kararda kullanıcıya çift e-posta + SMTP yavaşsa asılı istek. Bugün gizli, yarın ilk günden görünür.</dd>
+        <dt>Çözüm</dt><dd>Dispatcher e-postayı <code>QueueAsync</code>'e alsın ve Critical türlerde kanalı <code>NotificationManager</code>'a bıraksın (tek gönderim noktası). H-02 ile <b>aynı PR'da</b> çıkmalı.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">T-3</span><h3>Denetim izi: tutar değişikliği görünmez</h3><span class="chip chip-neg">yüksek</span></div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt><dd>35 entity'nin 26'sı FullAudited (kim/ne zaman) ama <b>alan bazlı geçmiş sıfır</b>: <code>EntityHistorySelector</code>'da hibe entity'si yok — oysa Invoice/Payment/Expense listede. <code>GrantActivityKind</code> yalnız 4 tür (aşama, atama, devir, gönderim); tutar türü yok. <code>AdvanceStageAsync</code> onay tutarını yazarken <code>LogAsync</code> bile çağırmıyor.</dd>
+        <dt>Sonuç</dt><dd>Muhasebe barındıran platformda parasal alan izlenmiyor; ihtilafta "tutarı kim, ne zaman, kaçtan kaça değiştirdi" sorusu cevapsız.</dd>
+        <dt>Çözüm</dt><dd>İki satırlık kazanç: <code>GrantApplication</code> + <code>GrantDisbursementTranche</code>'i <code>SensitiveEntities</code>'e ekle. Artı: <code>GrantActivityKind.AmountChanged</code> + <code>AdvanceStageAsync</code>/<code>UpdateTrancheAsync</code>'te <code>LogAsync</code>.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">T-4</span><h3>Performans: her şey "küçük veri" varsayımıyla</h3><span class="chip chip-warn">orta — ölçekte kritik</span></div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt><dd>Sayfalama yalnız 2/32 serviste. Kiracı kataloğu: tüm açık çağrılar + kiracının tüm başvuru/bookmark/ilgi satırları her istekte belleğe, skorlama her istekte yeniden, tüm süzme istemcide (kamu yüzeyinde 60 tavanı var, kiracıda yok). <b>Dispatch önizleme:</b> tüm kiracılar × ~4 sorgu (sinyal kurucusu kiracı başına projelerin tamamını çekiyor), süzgeç hesaptan <i>sonra</i>. <b>İlgi konsolu:</b> kiracı döngüsünde her turda kullanıcı listesi yeniden. Huni satır çekip bellekte sayıyor.</dd>
+        <dt>Sonuç</dt><dd>Bugünkü hacimde (≈24 firma) görünmez. 150-300 kiracıda Dispatch zaman aşımına gider; 300+ açık çağrıda kiracı akışı MB'larca DTO taşır.</dd>
+        <dt>Çözüm</dt><dd>Sıralı üç hamle: ① sinyal kurucusuna toplu yükleme (tek sorguda N kiracı) + süzgeci sorguya indir, ② kiracı akışına sunucu tavanı + "daha fazla göster", ③ liste uçlarına <code>PagedResultDto</code>. Şema değişikliği yok.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">T-5</span><h3>Doğrulama: çapraz alan kuralı hiç yok</h3><span class="chip chip-neg">yüksek</span></div>
+      <dl class="prob-body">
+        <dt>Ölçüm</dt><dd>Modülde tek bir <code>IValidatableObject</code> yok. Somut delikler: dilim <code>Amount</code>/<code>SequenceNo</code> Range'siz (negatif geçer, üç katmanda da guard yok — API'den <code>-50.000</code> yazılıp tahsilat toplamına karışır) · çağrı <code>Budget</code> negatif olabilir · <code>MinMatchScore</code> iki giriş yolundan birinde sınırsız (150 → program kimseye önerilmez) · 7 min/max çiftinde sıra kontrolü yok (<code>min&gt;max</code> = tüm firmalar sessizce elenir) · <code>ApprovedAmount</code> hiçbir katmanda doğrulanmıyor.</dd>
+        <dt>Sonuç</dt><dd>Yanlış veri hata olarak değil, <b>yanlış iş sonucu</b> olarak yüzeye çıkıyor (eşleşmeyen program, bozuk tahsilat toplamı) — teşhisi en pahalı hata sınıfı.</dd>
+        <dt>Çözüm</dt><dd>Tek geçişlik iş: parasal DTO'lara <code>[Range]</code>, min/max çiftlerine <code>IValidatableObject</code>, entity <code>Update</code>'lerine <code>Check</code> guard'ı. Parametre ekranındaki mevcut desen şablon olarak kullanılır.</dd>
+      </dl>
+    </div>
+
+    <details>
+      <summary>T-6 · Küçük teknik borçlar (düzeltmesi ucuz, listelendi)</summary>
+      <div class="det-body">
+        <ul class="clean">
+          <li>"Kapalı başvuru" formülü iki serviste birebir kopya (<code>GrantMyApplicationsAppService.cs:212</code> ↔ <code>GrantTodayAppService.cs:164</code>) — tek yardımcıya in.</li>
+          <li><code>CreateModal/EditModal</code> PageModel'leri <code>[Authorize]</code>'sız ve artık hiçbir yerden bağlanmıyor — düzeltmesi zaten dalda; silme kararı kullanıcıda.</li>
+          <li><code>GrantApplicationDocumentAppService</code> hiç kullanmadığı <code>NotificationManager</code>'ı enjekte ediyor.</li>
+          <li><code>NearLimitPercent = 90</code>, yorum "%96" diyor — biri yanlış.</li>
+          <li>9 UI'sız backend metodu (karar çifti dahil) 17 Eyl raporunda listeli; 4'ü yeni IA'da yerine oturuyor, 2'si ölü uç.</li>
+          <li><code>Domain/Projects/ProjectTask.cs</code> ölü dosya ("silin" notuyla) hâlâ yerinde.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ============================ 7 · EKSİKLER ============================ -->
+<section id="eksik">
+  <div class="sec-head"><span class="sec-tag">7</span><h2>Eksik fonksiyonlar</h2></div>
+  <p class="sec-sub">"Yok" tespiti kod taramasıyla kesinleştirildi. Şişme riskine karşı her satırda "ne zaman" sütunu var —
+    hepsi birden değil, talep sinyaline göre.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Eksik</th><th>Bugünkü durum</th><th>Öneri</th><th>Ne zaman</th></tr></thead>
+      <tbody>
+        <tr><td><b>Karar girişi</b></td><td>Backend hazır, UI yok; süreç sonu kayıt dışı</td><td>Başvuru detayında tek modal</td><td><span class="chip chip-neg">hemen</span></td></tr>
+        <tr><td><b>Kapanış & arşiv</b></td><td>Hiç yok; <code>ProjectStatus</code> ölü enum, "kapalı" iki yerde türetiliyor</td><td>Başvuruya <code>ClosedAt</code> + kapanış nedeni; kapanan çağrı/başvuru varsayılan listelerden süzülür, "Arşiv" süzgeciyle erişilir. Ağır arşiv tablosu <b>gerekmez</b>.</td><td><span class="chip chip-neg">Faz 3</span></td></tr>
+        <tr><td><b>Tahsilat köprüsü</b></td><td>Üç kopuk kayıt (S-1)</td><td>"Ödendi → gelir önerisi" akışı + iki FK</td><td><span class="chip chip-neg">Faz 3</span></td></tr>
+        <tr><td><b>Evrak köprüsü</b></td><td>4 ayrı dosya deposu; hibe↔Documents kesişimi sıfır; Convert evrak taşımıyor</td><td>Dönüşümde onaylı evrakları proje doküman ağacına <i>referansla</i> bağla (bayt kopyalama yok)</td><td>Faz 3</td></tr>
+        <tr><td><b>Takvim beslemeleri</b></td><td>Yalnız milestone + çağrı deadline; rapor/dilim/itiraz yok; href kimlik kaybediyor</td><td><code>LoadGrantsAsync</code>'e üç tarih türü + başvuru derin linki — worker zaten aynı tarihleri izliyor</td><td>Faz 3</td></tr>
+        <tr><td><b>Bütçe sapma analizi</b></td><td>Yalnız anlık kullanım %'si; plan↔revize farkı ve zaman serisi yok</td><td>Önce S-3 düzelsin (rakam güvenilir olsun); sapma raporu sonra</td><td>Faz 5</td></tr>
+        <tr><td><b>Para birimi</b></td><td>Hibe tarafı çıplak decimal + 36 sabit ₺; proje tarafı tam kur-farkında. Katalogda Erasmus (EUR) tohumları varken örtük ₺ çelişki</td><td><code>Grant.Currency</code> + dönüşümde <code>SetFxBridge</code>; çift migration, ayrı onay</td><td>Faz 5</td></tr>
+        <tr><td><b>İş paketi / gösterge</b></td><td>Repoda WorkPackage/Indicator/Deliverable hiç yok; <code>ProjectWorkStep</code> var ama hibeden bağımsız ve Convert üretmiyor; faaliyet = serbest metin</td><td>Yeni model <b>kurma</b>: Convert, milestone'ları <code>ProjectWorkStep</code>'e de yazsın — mevcut Gantt omurgası bedavaya hibeye çalışır. AB tipi gösterge tablosu ancak gerçek müşteri talebiyle</td><td>Faz 5 / talep</td></tr>
+        <tr><td><b>Hibe tarafında risk kütüğü</b></td><td><code>ProjectRisk</code> var, hibe bağı yok; pipeline "risk"i yalnız görsel sinyal</td><td>Yeni tablo yerine: dönüşmüş başvurunun risklerini proje risk kütüğünde tut, hibe ekranı oradan okusun</td><td>talep</td></tr>
+        <tr><td><b>Arama</b></td><td>⌘K yalnız menü geziyor; firma/başvuru araması yok</td><td>17 Eyl kararı geçerli: kapsam dışı; ara çözüm liste süzgeçleri</td><td>talep</td></tr>
+        <tr><td><b>İlerleme yüzdesi</b></td><td>Başvuru "tamamlanma"sı yalnız form bölümlerinden; projeye geçince kayboluyor</td><td>Sıradaki-iş şeridine (K3) evrak+form+aşama birleşik yüzdesi — resolver verisi hazır</td><td>Faz 2</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================ 8 · PERSONA ============================ -->
+<section id="persona">
+  <div class="sec-head"><span class="sec-tag">8</span><h2>Persona testi</h2></div>
+  <p class="sec-sub">Platformun gerçek iki rolü (danışman=host, firma=kiracı) beş personaya açıldı.
+    "En acı nokta" = o personanın bugün sistemi terk edip Excel'e döndüğü yer.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Persona</th><th>Sık yaptığı</th><th>En acı nokta</th><th>Hızlı kazanım</th></tr></thead>
+      <tbody>
+        <tr><td><b>Proje yöneticisi</b><br><span class="note">danışman, host</span></td><td>Talep triyajı, başvuru ilerletme, evrak incelemesi</td><td>Aynı başvuruyu ilerleten 3 mekanizma + 2 senkronsuz eksen (S3); karar girilemediği için portföyün gerçek durumu sistemde değil</td><td>Karar modalı + tek ilerletme yolu</td></tr>
+        <tr><td><b>Finans sorumlusu</b><br><span class="note">firma tarafında muhasebe</span></td><td>Harcama girişi, tahsilat takibi, bütçe kontrolü</td><td>Dilim "ödendi" ama kasada yok; gider formunda hibe bağlamı görünmüyor; dövizli gerçekleşme yanlış</td><td>S-1 tahsilat akışı + S-3 BookAmount</td></tr>
+        <tr><td><b>Yönetici / koordinatör</b><br><span class="note">firma sahibi</span></td><td>Genel durum, son tarihler, "işler yolunda mı"</td><td>Başvurularım/Yolculuk/akış üç kopya ekran; ilerleme yüzdesi ve riskli kalem görünümü yok</td><td>Tek Başvurularım + sıradaki-iş şeridi</td></tr>
+        <tr><td><b>Proje çalışanı</b><br><span class="note">firma kullanıcısı</span></td><td>Kendine düşen evrak/görev</td><td>Dönüşümden gelen görevler numarasız (GRV-0) ve hibe bağlamsız; evrak görevi diye bir şey yok, e-postayla öğreniyor</td><td>AssignNumber düzeltmesi + görev başlığında hibe adı</td></tr>
+        <tr><td><b>Operasyon / asistan</b><br><span class="note">iki tarafta da</span></td><td>Belge toplama, takvim, randevu</td><td>Aynı PDF'i iki modüle iki kez yükleme; takvimde rapor/dilim/itiraz tarihleri yok; takvim kalemi başvuruya götürmüyor</td><td>Takvim beslemeleri + evrak köprüsü</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <details style="margin-top:16px">
+    <summary>Heuristik denetim özeti (Nielsen 10)</summary>
+    <div class="det-body">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>İlke</th><th>Durum</th><th>Somut örnek</th></tr></thead>
+          <tbody>
+            <tr><td>Sistem durumu görünürlüğü</td><td><span class="chip chip-neg">ihlal</span></td><td>Tahsilat üç ekranda üç rakam; ilerleme iki eksende iki cevap; "Tümünü Tara" hiçbir şey yapmadığını söylemiyor</td></tr>
+            <tr><td>Gerçek dünyayla uyum</td><td><span class="chip chip-warn">kısmi</span></td><td>Tek kayıt 4-5 isim (K2); "Milestone" tek İngilizce sızıntı</td></tr>
+            <tr><td>Kullanıcı kontrolü / geri dönüş</td><td><span class="chip chip-warn">kısmi</span></td><td>11 alt ekranda geri bağlantısı yok; takvim kalemi kaynağına götürmüyor</td></tr>
+            <tr><td>Tutarlılık</td><td><span class="chip chip-neg">ihlal</span></td><td>13 elle durum dizisi (düzeltme dalda); aynı eylem üç uçtan üç davranış</td></tr>
+            <tr><td>Hata önleme</td><td><span class="chip chip-neg">ihlal</span></td><td>Negatif tutar, min&gt;max, geçmiş dilim tarihi — üçü de sessiz kabul</td></tr>
+            <tr><td>Tanıma &gt; hatırlama</td><td><span class="chip chip-warn">kısmi</span></td><td>14 ekran menüsüz, yalnız derin linkle; Parametreler "nereden açılıyordu?"</td></tr>
+            <tr><td>Esneklik / verimlilik</td><td><span class="chip chip-pos">iyi</span></td><td>⌘K, sekmeler adres taşıyor, toplu gönderim var</td></tr>
+            <tr><td>Minimalist tasarım</td><td><span class="chip chip-warn">kısmi</span></td><td>Kiracıda 3 kopya liste; 4 ekranda 2-3 primary</td></tr>
+            <tr><td>Hata kurtarma</td><td><span class="chip chip-warn">kısmi</span></td><td>Yanlış veri iş sonucu olarak çıkıyor (eşleşmeyen program) — hata mesajı yok</td></tr>
+            <tr><td>Yardım / dokümantasyon</td><td><span class="chip chip-mut">yok</span></td><td>Ekran içi açıklama iyi durumda; ürün dokümantasyonu hiç yok (bilinçli erteleme kabul)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px" class="note">Görsel/tasarım katmanı (boş durumlar, iskeletler, 6 farklı kırılım eşiği, 13 modal/0 drawer)
+        17 Eyl raporunun A3 bölümünde envanterlendi — geçerli.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================ 9 · MATRİS ============================ -->
+<section id="matris">
+  <div class="sec-head"><span class="sec-tag">9</span><h2>Önceliklendirme matrisi</h2></div>
+  <p class="sec-sub">Kritik = yanlış bilgi/para ya da süreç mantığını bozuyor · Yüksek = verimliliği ciddi etkiliyor ·
+    Orta = iyileştirme · Düşük = kozmetik. UX bulguları (P1-P12) tek satırda temsil edildi, detayı önceki raporda.</p>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th class="mono">ID</th><th>Problem</th><th>Etki</th><th>Çözüm</th><th>Öncelik</th><th class="mono">Faz</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">H-01</td><td>İstemci destek hesabı sunucudan farklı formül (<code>Detail.js:220-248</code>)</td><td>Müşteriye yanlış rakam</td><td>İstemci hesabını sil, sunucu sonucunu bas (Wizard deseni)</td><td><span class="chip chip-neg">Kritik</span></td><td>1</td></tr>
+        <tr><td class="mono">H-02</td><td>Karar/itiraz girişi UI'sız; süreç sonu kayıt dışı</td><td>Yaşam döngüsü kapanmıyor</td><td>Başvuru detayında karar modalı (backend hazır)</td><td><span class="chip chip-neg">Kritik</span></td><td>1</td></tr>
+        <tr><td class="mono">H-03</td><td>Rapor kapısı bypass (<code>UpdateTrancheAsync</code> status'u DTO'dan yazıyor)</td><td>İş kuralı deliniyor</td><td>Status'u DTO'dan çıkar; geçiş yalnız <code>MarkTranchePaidAsync</code></td><td><span class="chip chip-neg">Kritik</span></td><td>0</td></tr>
+        <tr><td class="mono">H-04</td><td>Dilim ↔ gelir/kasa kopuk; üç "tahsil edildi" gerçeği</td><td>Muhasebe bütünlüğü</td><td>"Ödendi → gelir önerisi" akışı + 2 FK (migration onayı)</td><td><span class="chip chip-neg">Kritik</span></td><td>3</td></tr>
+        <tr><td class="mono">H-05</td><td>17 Eyl düzeltmeleri dalda (ödenen dilim "İptal" canlıya gidiyor)</td><td>Bilinen hata yaşıyor</td><td>Dalı main'e indir (sürüm notu birleştirmesiyle)</td><td><span class="chip chip-neg">Kritik</span></td><td>0</td></tr>
+        <tr><td class="mono">H-06</td><td>Negatif tutar kabulü (dilim, çağrı bütçesi, onay tutarı)</td><td>Bozuk toplamlar</td><td><code>[Range]</code> + domain guard seti</td><td><span class="chip chip-warn">Yüksek</span></td><td>0</td></tr>
+        <tr><td class="mono">H-07</td><td>Tutar değişikliği iz bırakmıyor (entity history + ActivityKind yok)</td><td>Denetlenemezlik</td><td><code>SensitiveEntities</code>'e 2 entity + <code>AmountChanged</code> türü</td><td><span class="chip chip-warn">Yüksek</span></td><td>1</td></tr>
+        <tr><td class="mono">H-08</td><td>Her kararda çift e-posta + döngüde senkron SMTP</td><td>Güven + performans</td><td>Dispatcher'ı <code>QueueAsync</code>'e al; Critical'de kanalı tekleştir</td><td><span class="chip chip-warn">Yüksek</span></td><td>1</td></tr>
+        <tr><td class="mono">H-09</td><td>min&gt;max sessizce tüm firmaları eliyor; <code>MinMatchScore</code> sınırsız</td><td>Sessiz yanlış sonuç</td><td>Çapraz alan doğrulaması + ekranda uyarı</td><td><span class="chip chip-warn">Yüksek</span></td><td>1</td></tr>
+        <tr><td class="mono">H-10</td><td>Gerçekleşme <code>Amount</code> topluyor (<code>BookAmount</code> değil); kalemsiz gider görünmez</td><td>Yanlış yüzde</td><td>BookAmount + "atanmamış" satırı</td><td><span class="chip chip-warn">Yüksek</span></td><td>1</td></tr>
+        <tr><td class="mono">H-11</td><td>Kapanış/arşiv yok; "kapalı" formülü 2 dosyada kopya</td><td>Liste kirlenmesi, çelişki riski</td><td><code>ClosedAt</code> + tek yardımcı + arşiv süzgeci</td><td><span class="chip chip-warn">Yüksek</span></td><td>3</td></tr>
+        <tr><td class="mono">H-12</td><td>Evrak 4 depoda; hibe↔Documents köprüsü yok; çift yükleme</td><td>Zaman kaybı + sürüm ayrışması</td><td>Dönüşümde referans köprüsü</td><td><span class="chip chip-warn">Yüksek</span></td><td>3</td></tr>
+        <tr><td class="mono">H-13</td><td>Destek tutarı persist edilmiyor → katalog değişince geçmiş oynar</td><td>Geriye dönük rakam kayması</td><td>Gönderimde hesaplanan desteği başvuruya yaz</td><td><span class="chip chip-warn">Yüksek</span></td><td>3</td></tr>
+        <tr><td class="mono">H-14</td><td>UX K1-K3 + P1-P12 (onaylı 5+3 plan uygulanmadı; S3 kararı açık)</td><td>Günlük verim</td><td>17 Eyl planı adım 2-6</td><td><span class="chip chip-warn">Yüksek</span></td><td>2</td></tr>
+        <tr><td class="mono">H-15</td><td>Bugün→proje kırık link (404, <code>Today.js:191</code>)</td><td>Kopuk gezinme</td><td>Route düzelt (tek satır)</td><td><span class="chip chip-warn">Yüksek</span></td><td>0</td></tr>
+        <tr><td class="mono">H-16</td><td>Sayfalama 2/32; kiracı katalog tavansız; huni bellekte sayıyor</td><td>Ölçek tavanı</td><td>Tavan + <code>PagedResultDto</code> + <code>CountAsync</code></td><td><span class="chip chip-warn">Orta</span></td><td>4</td></tr>
+        <tr><td class="mono">H-17</td><td>Dispatch/İlgi konsolu kiracı sayısıyla doğrusal (~4×T sorgu)</td><td>150+ kiracıda timeout</td><td>Toplu sinyal yüklemesi; süzgeç sorguya</td><td><span class="chip chip-warn">Orta</span></td><td>4</td></tr>
+        <tr><td class="mono">H-18</td><td>Convert <code>ProjectBudgetManager</code>'ı atlıyor (Material çakışması); görevler GRV-0</td><td>Gizli çakışma + kirli veri</td><td>Manager'dan geçir + <code>AssignNumber()</code></td><td><span class="chip chip-warn">Orta</span></td><td>3</td></tr>
+        <tr><td class="mono">H-19</td><td>Takvimde rapor/dilim/itiraz tarihleri yok; href kimliksiz</td><td>Son tarih kaçırma riski</td><td>3 besleme + derin link</td><td><span class="chip chip-warn">Orta</span></td><td>3</td></tr>
+        <tr><td class="mono">H-20</td><td>Proje ekranında hibe izi yok; <code>GrantId</code> başvuruyu değil programı tutuyor</td><td>Bağlam kopukluğu</td><td><code>GrantApplicationId</code> + proje detayına hibe paneli</td><td><span class="chip chip-warn">Orta</span></td><td>3</td></tr>
+        <tr><td class="mono">H-21</td><td>Para birimi yok (36 sabit ₺) — Erasmus (EUR) kataloğuyla çelişik</td><td>AB hibeleri kapsam dışı</td><td><code>Grant.Currency</code> + FX köprüsü (çift migration)</td><td><span class="chip chip-warn">Orta</span></td><td>5</td></tr>
+        <tr><td class="mono">H-22</td><td>"Tümünü Tara" hiçbir şey taramıyor (kazıyıcı yok)</td><td>Güven aşınması</td><td>Ya kazıyıcı bağla ya düğmeyi kaldır — ürün kararı</td><td><span class="chip chip-warn">Orta</span></td><td>5</td></tr>
+        <tr><td class="mono">H-23</td><td>İzin granülerliği (finans eylemleri Edit altında; kiracıda tek izin)</td><td>Ekip büyüyünce</td><td>2 yeni izin, talep gelince</td><td><span class="chip chip-mut">Düşük</span></td><td>talep</td></tr>
+        <tr><td class="mono">H-24</td><td>Küçük borçlar: ölü dosya/uç, kullanılmayan DI, %90/%96 tutarsızlığı, [Authorize]'sız 2 öksüz modal</td><td>Bakım yükü</td><td>T-6 listesi tek temizlik PR'ı</td><td><span class="chip chip-mut">Düşük</span></td><td>4</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================ 10 · ROADMAP ============================ -->
+<section id="yolharitasi">
+  <div class="sec-head"><span class="sec-tag">10</span><h2>Uygulama yol haritası</h2></div>
+  <p class="sec-sub">Her faz bağımsız teslim edilir ve kendi doğrulamasını taşır. Migration gerektirenler işaretli —
+    hepsi ayrıca onaya tabi. Süreler tek geliştirici temposuna göre.</p>
+
+  <div class="stack">
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">F0</span><h3>Bekleyeni indir + kanamayı durdur</h3><span class="chip chip-neg">1-2 gün</span></div>
+      <dl class="prob-body">
+        <dt>İş</dt><dd>① 17 Eyl dalını main'e indir (H-05; <code>2026.09.17</code> sürüm notu üç dalda — tek girişe birleştirilecek, madde başlıklarına dokunmadan) ② H-03 rapor kapısı ③ H-06 negatif tutar guard'ları ④ H-15 kırık link.</dd>
+        <dt>Fayda</dt><dd>Canlıya giden bilinen yanlış bilgi (ödenen dilim "İptal") ve delinen iş kuralı kapanır.</dd>
+        <dt>Bağımlılık</dt><dd>Yok. Migration yok. Risk: sürüm notu birleştirmesi (bilinen reçete var).</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">F1</span><h3>Hızlı kazanımlar: doğru rakam + kapanan döngü</h3><span class="chip chip-warn">3-5 gün</span></div>
+      <dl class="prob-body">
+        <dt>İş</dt><dd>① H-01 istemci hesabını sil ② H-02 karar modalı + H-08 çift e-posta düzeltmesi (aynı PR — karar UI'sı bildirimleri ilk kez ateşleyecek) ③ H-07 tutar izi ④ H-09 min/max doğrulaması ⑤ H-10 BookAmount ⑥ CTA düzeltmeleri (adlandırma, tek primary başlangıcı).</dd>
+        <dt>Fayda</dt><dd>Müşteriye tek doğru rakam; karar→bildirim→itiraz zinciri uçtan uca çalışır; parasal alanlar izlenir.</dd>
+        <dt>Bağımlılık</dt><dd>F0. Migration yok. Doğrulama: karar→bildirim→itiraz uçtan uca testi; iki ekranda aynı destek rakamı.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">F2</span><h3>UX yeniden yapılandırması (onaylı plan)</h3><span class="chip chip-warn">1-2 hafta</span></div>
+      <dl class="prob-body">
+        <dt>İş</dt><dd>17 Eyl planının 2-6 adımları: Claude Design ekranları → menü 5+3 + fikir→sekme + Başvurular menüye → sıradaki-iş şeridi (6 ekran) → Yolculuk/Catalog görünüm birleştirmesi → mobil (Applications + Pipeline). S3 kararı (iki ilerleme ekseni) Başvurular ekranı tasarlanırken verilecek — öneri: şablon adımı ayrıntı, sabit aşama özet.</dd>
+        <dt>Fayda</dt><dd>K1/K2/K3 kapanır; kiracıdaki 3 kopya liste teke iner.</dd>
+        <dt>Bağımlılık</dt><dd>F0 (durum sözlüğü dalda). Migration yok. Risk: <code>ShellPins</code>/kayıtlı düzen menü ID göçü.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">F3</span><h3>Ürün mantığı: modüller arası köprüler</h3><span class="chip chip-neg">2-3 hafta · migration var</span></div>
+      <dl class="prob-body">
+        <dt>İş</dt><dd>① H-04 tahsilat akışı (2 FK — <b>çift migration, onay</b>) ② H-20 proje↔başvuru bağı + proje detayına hibe paneli (<b>çift migration</b>) ③ H-12 evrak köprüsü ④ H-11 kapanış (<code>ClosedAt</code>, <b>çift migration</b>) ⑤ H-13 destek tutarı persist ⑥ H-18 dönüşüm düzeltmeleri ⑦ H-19 takvim beslemeleri.</dd>
+        <dt>Fayda</dt><dd>"Onaydan sonra Excel'e dönüş" biter: para, evrak, takvim ve proje tek zincirde.</dd>
+        <dt>Bağımlılık</dt><dd>F1 (rakamlar güvenilir olmalı). Risk: dönüşüm geçmiş verisi — mevcut projelere geriye dönük FK doldurma betiği gerekir; her migration ayrı PR (geri dönülebilirlik tercihi).</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">F4</span><h3>Teknik sağlamlaştırma</h3><span class="chip chip-mut">1 hafta</span></div>
+      <dl class="prob-body">
+        <dt>İş</dt><dd>① H-17 dispatch toplu sinyal ② H-16 sayfalama + kiracı akış tavanı ③ kapalı-formülü tekleştir ④ H-24 temizlik PR'ı (ölü dosya/uç, DI, öksüz modaller — silme kararlarıyla).</dd>
+        <dt>Fayda</dt><dd>10× müşteri hacmine hazır; bakım yükü düşer.</dd>
+        <dt>Bağımlılık</dt><dd>Bağımsız; F2 ile paralel gidebilir. Migration yok.</dd>
+      </dl>
+    </div>
+
+    <div class="prob">
+      <div class="prob-head"><span class="prob-id">F5</span><h3>İleri seviye — her biri ayrı ürün kararı</h3><span class="chip chip-mut">talebe göre</span></div>
+      <dl class="prob-body">
+        <dt>İş</dt><dd>① H-21 para birimi (AB hibeleri hedefse öne çekilir) ② bütçe sapma analizi ③ H-22 kazıyıcı kararı ④ iş paketi entegrasyonu (Convert→WorkStep) ⑤ arama ⑥ AI destekli metin çıkarma genişletmesi.</dd>
+        <dt>Fayda</dt><dd>Pazar genişletme (AB hibeleri) + otomasyon.</dd>
+        <dt>Bağımlılık</dt><dd>F3'ün köprüleri. Hiçbiri şimdi taahhüt edilmemeli — talep sinyali bekle.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 11 · KARAR ============================ -->
+<section id="karar">
+  <div class="sec-head"><span class="sec-tag">11</span><h2>CEO/CTO nihai değerlendirmesi</h2></div>
+  <p class="sec-sub">Beş stratejik karar. İlk üçü bu çeyreğin yönünü belirler.</p>
+
+  <div class="stack">
+    <div class="q">
+      <h4>1 · Yüzey genişlemesini durdur, döngü kapat</h4>
+      <p>Modül altı haftada şemanın %41'ine ulaştı; bu hızın devamı bakım borcunu katlar. En değerli üç iş
+        (karar girişi, tahsilat köprüsü, kapanış) <b>yeni tablo değil, var olan backend'in üstüne ekran</b> istiyor.
+        İki sprint boyunca yeni özellik kabul etme; F0-F1-F3 bitmeden tasarım paketlerinden yeni tur alma.</p>
+      <div class="rec"><b>Ölçüt:</b> "bu sprint kaç döngü kapattı?" — kaç yeni ekran açtı değil.</div>
+    </div>
+    <div class="q">
+      <h4>2 · Para doğruluğu pazarlanabilirlikten önce gelir</h4>
+      <p>Muhasebe barındıran bir platformda hibe modülünün müşteriye iki farklı destek rakamı göstermesi,
+        tahsilatın kasayla çelişmesi ve tutar değişikliğinin iz bırakmaması — üçü birden güven sermayesini yer.
+        Bunlar görünür olmadan önce düzeltilmeli; Premium/Enterprise konumlandırması ancak bundan sonra savunulur.</p>
+      <div class="rec"><b>Ölçüt:</b> aynı tahsilat üç ekranda tek rakam; her parasal değişikliğin izi var.</div>
+    </div>
+    <div class="q">
+      <h4>3 · Modülün tezi doğru: eşleştirme motoru + danışmanlık modeli — koru ve derinleştir</h4>
+      <p>Uygunluk motoru, iki taraflı evrak ve canlı sihirbaz gerçek farklılaştırıcı; "firma kendi başvurusunu açamaz"
+        modeli danışmanlık iş modelinin doğru yansıması (onaylı karar). Silinecek büyük parça yok; ama vaadi
+        karşılıksız iki yüzey (kazıyıcı konsolu, bazı UI'sız uçlar) ya tamamlanmalı ya küçültülmeli.</p>
+      <div class="rec"><b>Ölçüt:</b> ekranda basılabilen her düğme bir şey yapar.</div>
+    </div>
+    <div class="q">
+      <h4>4 · Onaylı IA'yı uygula, sonra dondur</h4>
+      <p>Menü 5+3, fikir→sekme, Başvurular→menü kararları verildi; navigasyon tartışması kapanmalı.
+        F2 tesliminden sonra IA'ya bir çeyrek dokunulmaz — kullanıcı kas hafızası ancak istikrarla oluşur.</p>
+      <div class="rec"><b>Ölçüt:</b> F2 sonrası menü değişikliği = yeni onay gerektiren istisna.</div>
+    </div>
+    <div class="q">
+      <h4>5 · Ölçek hazırlığını krize bırakma</h4>
+      <p>Bugünkü müşteri hacmi tüm performans sorunlarını gizliyor. Dispatch ve katalog desenleri ilk büyük müşteri
+        dalgasında aynı hafta patlar. F4 ucuz (1 hafta, migration'sız) — F3 ile paralel planla, satış ivmesi
+        gelmeden bitmiş olsun.</p>
+      <div class="rec"><b>Ölçüt:</b> 200 kiracı simülasyonunda Dispatch önizlemesi &lt; 3 sn.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Ölçüm yöntemi: main <code>278e5384</code> üzerinde kod okuması — Domain/Application/Web hibe ağaçları,
+  ProjectBudgets · Expenses · Incomes · Calendars · Documents · Notifications kesişimleri, izin ve menü sağlayıcıları,
+  EF DbContext (90 entity kaydı). Rapordaki her sayı ve dosya:satır referansı bu turda doğrulanmıştır;
+  UX katmanı 17 Eylül denetiminden devralınmış ve durumu güncellenmiştir. Kullanım sıklığı sütunları varsayımdır (telemetri yok).
+</footer>
+
+</div>
