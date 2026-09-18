@@ -87,6 +87,30 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
             </div>
             <div class="modal-body">
+                @* Bu cihaz — tarayıcı izni + yerel anahtar. Metinler Index.js'ten
+                   gelir (sayfanın geri kalanında olduğu gibi). Durum sunucuda
+                   SAKLANMAZ: "bu ekranda göster" kararı cihaza aittir ve ekran
+                   "açık" derken tarayıcı izninin kapalı olması imkânsız olsun. *@
+                <div id="notif-device-block" class="apya-notif-device mb-3">
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        <div class="flex-grow-1" style="min-width: 0;">
+                            <div id="notif-device-title" class="fw-semibold"></div>
+                            <div id="notif-device-status" class="text-sm text-muted"></div>
+                        </div>
+                        <div id="notif-device-switch" class="form-check form-switch m-0 d-none">
+                            <input class="form-check-input" type="checkbox" id="notif-device-toggle"
+                                   aria-labelledby="notif-device-title">
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" id="notif-device-enable" class="btn btn-sm btn-primary d-none"></button>
+                        <button type="button" id="notif-device-test" class="btn btn-sm btn-outline-secondary d-none"></button>
+                        <button type="button" id="notif-device-help" class="btn btn-sm btn-link px-0 d-none"></button>
+                    </div>
+                    <div id="notif-device-help-text" class="text-sm text-muted mt-2 d-none"></div>
+                    <div id="notif-device-hint" class="text-sm text-muted mt-2"></div>
+                </div>
+
                 <p class="text-sm text-muted">
                     Uygulama içi kapatılan kategoride bildirim hiç üretilmez.
                     E-posta açık olan kategorilerde kritik bildirimler anında,
@@ -137,6 +161,11 @@
         background-color: var(--apya-accent-600); color: #fff; }
 
     .apya-notif-search { width: 15rem; max-width: 100%; }
+
+    /* Tercihler modalındaki "bu cihaz" bloğu: kategori matrisinden önce gelir,
+       çünkü kanal hiç açık değilse matristeki seçimlerin bu cihazda karşılığı yok. */
+    .apya-notif-device { padding: 0.75rem; border: 1px solid var(--apya-border-default);
+        border-radius: var(--apya-radius-lg, 0.5rem); background-color: var(--apya-surface-raised); }
 
     /* Liste satırı — zil panelindeki dille aynı: ikon, önem şeridi, grup sayacı. */
     .notif-page-item { display: flex; gap: 0.75rem; padding: 0.875rem 1rem; cursor: pointer;

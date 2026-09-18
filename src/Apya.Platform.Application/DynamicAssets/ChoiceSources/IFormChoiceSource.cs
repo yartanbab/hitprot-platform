@@ -25,6 +25,12 @@ public interface IFormChoiceSource
     string? DependsOnSourceKey => null;
 
     /// <summary>
+    /// 17 · Bu kaynağın seçeneklerinde taşıdığı, koşulda sorulabilen bayraklar
+    /// (<see cref="FormChoiceFlags"/>). Boşsa bu kaynağa bağlı alan koşulda yalnız cevapla sorulur.
+    /// </summary>
+    IReadOnlyList<string> Flags => Array.Empty<string>();
+
+    /// <summary>
     /// Seçenekler. <paramref name="parentValue"/> yalnız zincirli kaynakta doludur (üst alanda seçilen
     /// kaydın kimliği); üst alan seçilmemişse boş liste döner.
     /// </summary>

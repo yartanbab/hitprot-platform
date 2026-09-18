@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QuestionCard, payloadBlocks, serverIdMap, parentCandidatesFor } from './form-builder';
+import { QuestionCard, payloadBlocks, serverIdMap, parentCandidatesFor, conditionCandidatesFor } from './form-builder';
 
 /* Canlı liste paneli önizleme için sunucudan çağrıları ister. */
 vi.mock('./lib/api/httpClient', () => ({
@@ -201,5 +201,90 @@ describe('zincirli alanin ust alan adaylari', () => {
 
     it('zincirli olmayan alanda aday aranmaz', () => {
         expect(parentCandidatesFor(blocks, 1, SOURCES)).toEqual([]);
+    });
+});
+
+/**
+ * 17 · Görünürlük kuralı düzenleyicide kurulur: koşul alanı YALNIZ yukarıdaki cevaplanabilir alanlardan
+ * seçilir, "seçilen kayıt şu şartı taşıyorsa" ise yalnız bayrak üreten kaynağa bağlı alanda çıkar.
+ */
+describe('kosullu alan gorunurluk kurali', () => {
+    const SOURCES = [
+        { key: 'open-grant-calls', scope: 0, dependsOnSourceKey: null, flags: ['requiresConsortium'] },
+        { key: 'tenant-projects', scope: 1, dependsOnSourceKey: null, flags: [] },
+    ];
+    const target = (settings) => ({ id: 'q2', type: 0, content: 'Ortak firma adı', settings });
+    const renderCard = (settings, onPatchSettings = vi.fn(), candidates = []) => render(
+        <QuestionCard block={target(settings)} index={1} selected onSelect={vi.fn()} onPatch={vi.fn()}
+            onPatchSettings={onPatchSettings} onChangeType={vi.fn()} onDuplicate={vi.fn()} onRemove={vi.fn()}
+            onAddAfter={vi.fn()} onMove={vi.fn()} dragRef={{ current: null }} publicSlug="basvuru"
+            sources={SOURCES} conditionCandidates={candidates} />,
+    );
+    const callField = { id: 'q1', type: 18, content: 'İlgilendiğiniz çağrı', settings: { source: 'open-grant-calls' } };
+    const textField = { id: 'q0', type: 0, content: 'Firma adı', settings: {} };
+
+    it('yukarida alan yoksa kosul kurulamaz', () => {
+        renderCard({});
+        expect(screen.getByText('Koşul için yukarıda bir alan gerekir; bu alan her zaman görünür.')).toBeInTheDocument();
+        expect(screen.queryByText('+ Koşul ekle')).not.toBeInTheDocument();
+    });
+
+    it('kosul eklenince ilk yukaridaki alan ve "yanitlanirsa" ile baslar', () => {
+        const onPatchSettings = vi.fn();
+        renderCard({}, onPatchSettings, [textField, callField]);
+        fireEvent.click(screen.getByText('+ Koşul ekle'));
+        expect(onPatchSettings).toHaveBeenCalledWith('q2', { visibleWhen: { blockId: 'q0', op: 'answered', value: undefined } });
+    });
+
+    it('bayrak ureten kaynaga bagli alanda "sarti tasiyorsa" secenegi cikar', () => {
+        renderCard({ visibleWhen: { blockId: 'q1', op: 'answered' } }, vi.fn(), [textField, callField]);
+        const ops = [...screen.getByLabelText('Koşul karşılaştırması').options].map((o) => o.textContent);
+        expect(ops).toContain('seçilen kayıt şu şartı taşıyorsa');
+    });
+
+    it('bayraksiz alanda o secenek YOK', () => {
+        renderCard({ visibleWhen: { blockId: 'q0', op: 'answered' } }, vi.fn(), [textField, callField]);
+        const ops = [...screen.getByLabelText('Koşul karşılaştırması').options].map((o) => o.textContent);
+        expect(ops).toEqual(['yanıtlanırsa', 'şu cevabı verirse', 'şu cevabı vermezse']);
+    });
+
+    it('sart secilince kural bayragi tasir', () => {
+        const onPatchSettings = vi.fn();
+        renderCard({ visibleWhen: { blockId: 'q1', op: 'answered' } }, onPatchSettings, [textField, callField]);
+        fireEvent.change(screen.getByLabelText('Koşul karşılaştırması'), { target: { value: 'flag' } });
+        expect(onPatchSettings).toHaveBeenCalledWith('q2', { visibleWhen: { blockId: 'q1', op: 'flag', value: 'requiresConsortium' } });
+    });
+
+    it('ust alan degisince karsilastirma sifirlanir', () => {
+        const onPatchSettings = vi.fn();
+        renderCard({ visibleWhen: { blockId: 'q1', op: 'flag', value: 'requiresConsortium' } }, onPatchSettings, [textField, callField]);
+        fireEvent.change(screen.getByLabelText('Koşul alanı'), { target: { value: 'q0' } });
+        expect(onPatchSettings).toHaveBeenCalledWith('q2', { visibleWhen: { blockId: 'q0', op: 'answered', value: undefined } });
+    });
+
+    it('kosuldaki alan yukaridan kalkmissa uyarilir', () => {
+        renderCard({ visibleWhen: { blockId: 'silinmis', op: 'answered' } }, vi.fn(), [textField]);
+        expect(screen.getByText(/Koşuldaki alan artık yukarıda değil/)).toBeInTheDocument();
+    });
+
+    it('kosul kaldirilinca ayar silinir', () => {
+        const onPatchSettings = vi.fn();
+        renderCard({ visibleWhen: { blockId: 'q0', op: 'answered' } }, onPatchSettings, [textField]);
+        fireEvent.click(screen.getByText('Koşulu kaldır'));
+        expect(onPatchSettings).toHaveBeenCalledWith('q2', { visibleWhen: undefined });
+    });
+});
+
+describe('kosul alani adaylari', () => {
+    const blocks = [
+        { id: 'a', type: 0, content: 'Firma adı', settings: {} },
+        { id: 'h', type: 16, content: 'Bölüm', settings: {} },
+        { id: 'b', type: 18, content: 'Çağrı', settings: {} },
+        { id: 'c', type: 0, content: 'Ortak', settings: {} },
+    ];
+
+    it('yalniz yukaridaki CEVAPLANABILIR alanlar aday', () => {
+        expect(conditionCandidatesFor(blocks, 3).map((b) => b.id)).toEqual(['a', 'b']);
+        expect(conditionCandidatesFor(blocks, 0)).toEqual([]);
     });
 });

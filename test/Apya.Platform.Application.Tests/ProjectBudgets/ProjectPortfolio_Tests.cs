@@ -51,9 +51,13 @@ public class ProjectPortfolio_Tests
         var manager = new ProjectBudgetManager(
             _lineRepo, _trancheRepo, _revisionRepo, _expenseRepo, _incomeRepo, _taskRepo);
 
+        // Portföy okuması bildirim üretmez; yine de gerçek bağımlılık verilir ki
+        // ileride bu yola bir bildirim eklenirse test NullReference ile değil,
+        // beklentiyle karşılaşsın.
         _sut = new ProjectBudgetAppService(
             _lineRepo, _trancheRepo, _deductionRepo, _revisionRepo, _projectRepo,
-            _categoryRepo, _expenseRepo, _incomeRepo, _taskRepo, _matchRepo, manager);
+            _categoryRepo, _expenseRepo, _incomeRepo, _taskRepo, _matchRepo, manager,
+            Substitute.For<IFinanceNotificationPublisher>());
 
         var services = new ServiceCollection();
         services.AddSingleton<IGuidGenerator>(SimpleGuidGenerator.Instance);

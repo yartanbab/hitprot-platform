@@ -28,8 +28,70 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.17",
             date: "17 Eylül 2026",
-            title: "Hibe tahsilat dilimlerinde durum düzeltmesi",
+            title: "Bütçe uyarıları; formlarda hazır listeler ve koşullu sorular; Genel Bakış'ta ince üst şerit; " +
+                   "hibe tahsilat dilimlerinde durum düzeltmesi",
 
+            // ── Finans / bütçe bildirimleri ───────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bütçe hareketleri artık bildirim olarak geliyor",
+                "Projenizin bütçesinde önemli bir şey olduğunda zilde bildirim görüyorsunuz: bütçe revizyonu " +
+                "yürürlüğe girdiğinde, bir fonlama dilimi tahsil edildiğinde, dilimden kesinti yapıldığında ve " +
+                "bir dilim itiraz sürecine alındığında. Her bildirimde hangi proje, hangi dilim ya da hangi " +
+                "kalem olduğu ve tutarlar yazar; bildirime tıkladığınızda projenin bütçe ekranı açılır. " +
+                "Bildirimler projenin sorumlusuna gider; bütçeyi görme yetkisi olmayan kullanıcılara tutar " +
+                "içeren bildirim gönderilmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bütçe kaleminiz tükenmeden uyarı alıyorsunuz",
+                "Bir bütçe kaleminin harcaması onaylanan tutarın %50, %75 ve %90'ına ulaştığında uyarı gelir; " +
+                "uyarıda onaylanan tutar, harcanan tutar, kullanım yüzdesi ve kalan tutar birlikte durur. " +
+                "Kalem tamamen tükendiğinde ya da tutar aşıldığında ayrıca kritik bir uyarı gider ve aşan " +
+                "tutar ayrıca yazılır. Aynı durum için tek uyarı alırsınız — harcama arttıkça aynı eşik " +
+                "tekrar tekrar bildirilmez. Bütçeyi revize ederseniz uyarılar yeni tutara göre yeniden kurulur."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Geciken fonlama dilimleri hatırlatılıyor",
+                "Planlanan tarihi geçtiği hâlde tahsil edilmemiş bir fonlama diliminiz varsa uyarı alırsınız; " +
+                "uyarıda dilimin beklendiği tarih, kaç gündür geciktiği ve beklenen tutar yazar. Dilim tahsil " +
+                "edildiğinde hatırlatma kesilir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Bildirim tercihlerinize Finans eklendi",
+                "Bildirimler ekranındaki tercih penceresinde artık Finans satırı da var: bütçe bildirimlerini " +
+                "uygulama içinde açık tutup kapatabilir, isterseniz e-posta ile de almayı seçebilirsiniz. " +
+                "Bildirim merkezinde Finans kendi sekmesi olarak listelenir."),
+
+            // ── Formlar ───────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Form sorularında hazır listeler ve birbirine bağlı sorular",
+                "Açılır liste sorularında seçenekleri tek tek yazmak zorunda değilsiniz: hazır bir liste " +
+                "seçebiliyorsunuz — açık hibe çağrıları, projeleriniz ya da proje görevleriniz. Liste kendini " +
+                "güncel tutar; yeni bir proje açtığınızda formu düzenlemeniz gerekmez. İki soruyu birbirine de " +
+                "bağlayabilirsiniz: formu dolduran önce projeyi seçer, ikinci soruda yalnız o projenin görevleri " +
+                "listelenir. Bağlanacak soru formda daha yukarıda olmalı — düzenleyicide uygun bir üst soru " +
+                "yoksa uyarı görürsünüz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Cevaba göre görünen sorular",
+                "Bir soruyu yalnız belirli durumlarda gösterebilirsiniz: üstteki soru cevaplandığında, belirli " +
+                "bir cevap verildiğinde ya da verilmediğinde. Seçilen kaydın özelliğine de bakabilir; örneğin " +
+                "yalnız ortaklık şartı olan bir çağrı seçildiğinde ortak bilgilerini sorabilirsiniz. Gizlenen " +
+                "sorular zorunlu sayılmaz ve cevapları kaydedilmez: formu dolduran kişi cevabını koşulu bozacak " +
+                "şekilde değiştirirse o soru formdan çıkar, daha önce yazdığı cevap da kayda geçmez. İlerleme " +
+                "göstergesi yalnız görünen soruları sayar."),
+
+            // ── Genel Bakış ───────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Genel Bakış ekranı kartlara daha çok yer ayırıyor",
+                "Genel Bakış'ın üst şeridi iki satırdan tek satıra indi: ekran adı, görünüm sekmeleri " +
+                "(Proje Yönetimi, Finans, Bugün, Hibe takibi) ve sağdaki denetimler artık aynı hizada duruyor. " +
+                "Sekmenin hemen üstünde aynı görünüm adını tekrarlayan etiket kaldırıldı — hangi görünümde " +
+                "olduğunuz zaten koyu renkli sekmeden okunuyor. Kazanılan yer kartlara gitti: kartlar ekranda " +
+                "daha yukarıdan başlıyor, ilk bakışta daha fazlasını görüyor ve daha az aşağı kaydırıyorsunuz. " +
+                "Görünümler, zaman aralığı, yazdırma ve düzenleme aynı yerde ve aynı şekilde çalışmaya devam " +
+                "ediyor; telefonda bir değişiklik yok."),
+
+            // ── Hibe ──────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Ödenen hibe dilimi artık \"Ödendi\" olarak görünüyor",
                 "Uygulama ve Tahsilat ekranında, kurumun ödemesini yaptığı tahsilat dilimi satırda yanlışlıkla " +

@@ -14,6 +14,117 @@
     // Aciliyet: sunucudaki NotificationSeverity ile aynı sıra (Info<Normal<High<Critical).
     var SEVERITY = { INFO: 1, NORMAL: 2, HIGH: 3, CRITICAL: 4 };
 
+    // ─── Masaüstü bildirimi ────────────────────────────────────────────────────
+    // Faz 1 kapsamı: SAYFA AÇIKKEN gelen SignalR olayını işletim sistemi
+    // bildirimine çevirmek. Bunun için Web Push GEREKMEZ — abonelik, VAPID ve
+    // sunucu tarafı gönderici yalnız tarayıcı KAPALIYKEN bildirim için gerekli
+    // ve o Faz 2'nin işi (bkz. docs/design/bildirim-sistemi/02-coklu-kanal-plan.md).
+    // Modül dışarıya açılıyor: /Notifications tercihler ekranı aynı durumu okuyup
+    // yazıyor, izin mantığı iki yere kopyalanmasın diye.
+    var DESKTOP = (function() {
+        var LS_ENABLED = 'apya.notif.desktop.enabled';
+        var LS_PROMPT  = 'apya.notif.desktop.promptDismissed';
+
+        // localStorage gizli sekmede ve site verisi kapalıyken ERİŞİMDE HATA ATAR;
+        // bildirim akışı buna takılmasın diye her okuma/yazma sarmalanıyor.
+        function read(key) {
+            try { return window.localStorage.getItem(key); } catch (e) { return null; }
+        }
+        function write(key, value) {
+            try { window.localStorage.setItem(key, value); } catch (e) { /* yoksay */ }
+        }
+
+        function supported() { return typeof window.Notification === 'function'; }
+
+        // Cihaz anahtarı yerelde tutuluyor, sunucuda değil: "bu ekranda bildirim
+        // göster" kararı cihaza aittir — ofis bilgisayarında kapatmak kullanıcının
+        // dizüstünü etkilememeli. İzin verilmiş olması niyet beyanı sayılır,
+        // bu yüzden varsayılan AÇIK.
+        function enabledHere() { return read(LS_ENABLED) !== '0'; }
+
+        // Tarayıcı izni + cihaz anahtarı tek duruma indirgenir. Ekran bu durumu
+        // gösterir; "açık" yazıp aslında kapalı olma hâli böyle engelleniyor.
+        // Faz 2'de 'PermissionGranted' ikiye ayrılacak: sunucuda abonelik varsa
+        // 'Subscribed' (tarayıcı kapalıyken de gelir), yoksa yalnız bu oturum.
+        function state() {
+            if (!supported())                          { return 'NotSupported'; }
+            if (Notification.permission === 'denied')   { return 'PermissionDenied'; }
+            if (Notification.permission === 'default')  { return 'NotRequested'; }
+            return enabledHere() ? 'PermissionGranted' : 'DisabledOnThisDevice';
+        }
+
+        function request() {
+            if (!supported()) { return Promise.resolve('NotSupported'); }
+
+            // 'denied' iken TEKRAR SORULMAZ: tarayıcı çağrıyı sessizce reddeder,
+            // kullanıcı hiçbir diyalog görmez ama "açılmadı" hissiyle kalır.
+            // Bu durumda yapılacak şey tarayıcı ayarına yönlendirmek (tercih ekranı).
+            if (Notification.permission !== 'default') { return Promise.resolve(state()); }
+
+            // Promise.resolve sarmalı eski Safari için: orada requestPermission
+            // geri çağırma alır ve undefined döner; izni yine de sonradan okuyoruz.
+            return Promise.resolve(Notification.requestPermission()).then(function() {
+                if (Notification.permission === 'granted') { write(LS_ENABLED, '1'); }
+                return state();
+            });
+        }
+
+        function setEnabledHere(on) { write(LS_ENABLED, on ? '1' : '0'); }
+
+        function promptDismissed() { return read(LS_PROMPT) === '1'; }
+        function dismissPrompt()   { write(LS_PROMPT, '1'); }
+
+        // force: yalnız kullanıcının "bu cihazda dene" düğmesi için.
+        function show(payload, force) {
+            if (state() !== 'PermissionGranted') { return false; }
+
+            // Kural: uygulama gözün önündeyse işletim sistemi bildirimi GÖSTERİLMEZ.
+            // Zil rozeti ve anlık uyarı aynı şeyi zaten söylüyor; ikisi birden
+            // aynı olay için iki kez rahatsız etmek olur. Değer, uygulama arka
+            // plandayken ortaya çıkıyor.
+            if (!force && document.visibilityState === 'visible') { return false; }
+
+            try {
+                var options = {
+                    body: payload.body || '',
+                    icon: '/icons/apya-icon.svg',
+                    // Aynı kullanıcının birden çok sekmesi açıkken her sekme
+                    // göstermeye çalışır; aynı `tag` işletim sisteminde bunları
+                    // TEK bildirimde toplar (sunucu artık satır kimliğini yolluyor).
+                    tag: payload.id ? 'apya-' + payload.id : undefined,
+                    requireInteraction: (payload.severity || 0) >= SEVERITY.CRITICAL
+                };
+
+                var notification = new Notification(payload.title || 'Apya', options);
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                    // Derin link sunucuda türetiliyor (NotificationTypeRegistry);
+                    // istemci adres kurmaya çalışmaz.
+                    if (payload.deepLinkUrl) { window.location.href = payload.deepLinkUrl; }
+                };
+                return true;
+            } catch (e) {
+                // Android Chrome sayfa bağlamında `new Notification`'ı reddeder ve
+                // service worker üzerinden gösterim ister; hata akışı kesmesin.
+                console.warn('[NotificationBell] masaüstü bildirimi gösterilemedi', e);
+                return false;
+            }
+        }
+
+        return {
+            supported: supported,
+            state: state,
+            request: request,
+            setEnabledHere: setEnabledHere,
+            promptDismissed: promptDismissed,
+            dismissPrompt: dismissPrompt,
+            show: show
+        };
+    })();
+
+    window.apyaDesktopNotifications = DESKTOP;
+
     function init() {
         // --- SignalR Bağlantısı ---
         if (typeof signalR !== "undefined") {
@@ -24,7 +135,8 @@
 
             connection.on("ReceiveNotification", function(notificationDto) {
                 refreshBadge();
-                abp.notify.info(notificationDto.title, "Yeni Bildirim");
+                notifyToast(notificationDto);
+                DESKTOP.show(notificationDto);
                 if (isListOpen) {
                     fetchNotifications();
                 }
@@ -62,6 +174,9 @@
         $('#notificationDropdown').on('show.bs.dropdown', function () {
             isListOpen = true;
             fetchNotifications();
+            // Şerit her açılışta yeniden değerlendirilir: izin başka sekmede
+            // verilmiş ya da tarayıcı ayarından geri alınmış olabilir.
+            renderDesktopPrompt();
         });
 
         $('#notificationDropdown').on('hide.bs.dropdown', function () {
@@ -95,6 +210,65 @@
                 });
             }
         });
+
+        // Şerit DOM'a sonradan giriyor: dinleyiciler delege ediliyor.
+        $(document).on('click', '#notif-desktop-prompt [data-act="enable"]', function() {
+            var l = abp.localization.getResource('Platform');
+            DESKTOP.request().then(function(state) {
+                $('#notif-desktop-prompt').remove();
+                if (state === 'PermissionGranted') {
+                    abp.notify.success(l('Notifications:Desktop:Enabled'));
+                } else if (state === 'PermissionDenied') {
+                    // Zorlama yok: ne olduğu söylenir, çözüm tercih ekranında.
+                    abp.notify.info(l('Notifications:Desktop:StatusDenied'));
+                }
+            });
+        });
+
+        $(document).on('click', '#notif-desktop-prompt [data-act="dismiss"]', function() {
+            DESKTOP.dismissPrompt();
+            $('#notif-desktop-prompt').remove();
+        });
+    }
+
+    // İzin şeridi. YALNIZ izin hiç istenmemişken ve kullanıcı kapatmamışken çıkar:
+    // ilk girişte kimseye sorulmaz (kullanıcı zile bakmışsa bildirimle zaten
+    // ilgileniyordur), reddedenin karşısına bir daha çıkmaz.
+    function renderDesktopPrompt() {
+        $('#notif-desktop-prompt').remove();
+
+        if (DESKTOP.state() !== 'NotRequested' || DESKTOP.promptDismissed()) {
+            return;
+        }
+
+        var l = abp.localization.getResource('Platform');
+        var $cta = $('<li id="notif-desktop-prompt" class="apya-notif-cta"></li>');
+
+        $cta.append($('<i class="fa fa-bell" aria-hidden="true"></i>'));
+        $cta.append($('<span class="apya-notif-cta-text"></span>')
+            .text(l('Notifications:Desktop:Prompt')));
+        $cta.append($('<button type="button" class="btn btn-sm btn-primary" data-act="enable"></button>')
+            .text(l('Notifications:Desktop:Enable')));
+        $cta.append($('<button type="button" class="btn btn-sm btn-link apya-notif-cta-dismiss" data-act="dismiss"></button>')
+            .text(l('Notifications:Desktop:DismissPrompt')));
+
+        $cta.insertBefore('#notification-items-list');
+    }
+
+    // Aciliyet toast biçimini seçer: kritik bir uyarı mavi bilgi kutusunda
+    // kaybolmasın, kritikte kendiliğinden kapanmasın.
+    function notifyToast(dto) {
+        var severity = dto.severity || 0;
+
+        if (severity >= SEVERITY.CRITICAL) {
+            abp.notify.error(dto.title, "Yeni Bildirim", { sticky: true });
+            return;
+        }
+        if (severity >= SEVERITY.HIGH) {
+            abp.notify.warn(dto.title, "Yeni Bildirim");
+            return;
+        }
+        abp.notify.info(dto.title, "Yeni Bildirim");
     }
 
     // --- Badge Güncelleme ---
