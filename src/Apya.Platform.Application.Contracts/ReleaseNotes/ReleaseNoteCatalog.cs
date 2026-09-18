@@ -91,6 +91,15 @@ public static class ReleaseNoteCatalog
                 "Görünümler, zaman aralığı, yazdırma ve düzenleme aynı yerde ve aynı şekilde çalışmaya devam " +
                 "ediyor; telefonda bir değişiklik yok."),
 
+            // ── Belgeler ──────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Belgeler listesinde belge adları yeniden görünüyor",
+                "Belgeler ekranında soldaki klasör ağacı ve sağdaki detay paneli açıkken liste daralıyor, belge " +
+                "adı sütunu tamamen kayboluyordu: \"Belge\" ile \"İş adımı\" başlıkları üst üste biniyor, satırlarda " +
+                "yalnız dosya simgesi kalıyor ve Durum sütunu sağdan kesiliyordu. Artık belge adları her ekran " +
+                "genişliğinde okunuyor. Liste daraldığında önce İş adımı, ardından Tür sütunu gizleniyor; ikisi de " +
+                "belgeye tıkladığınızda açılan detay panelinde yer alıyor. Telefonda liste yana kaydırılabiliyor."),
+
             // ── Hibe ──────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Ödenen hibe dilimi artık \"Ödendi\" olarak görünüyor",
