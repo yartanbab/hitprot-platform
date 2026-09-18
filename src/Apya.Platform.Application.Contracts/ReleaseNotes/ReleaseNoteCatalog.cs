@@ -97,7 +97,13 @@ public static class ReleaseNoteCatalog
                 "Uygulama ve Tahsilat ekranında, kurumun ödemesini yaptığı tahsilat dilimi satırda yanlışlıkla " +
                 "\"İptal\" olarak yazıyordu. Artık dilimin durumu doğru görünüyor (Planlandı · Talep edildi · " +
                 "Ödendi) ve ödemesi tamamlanan dilimler listede ayırt ediliyor. Bütçe ve tahsilat toplamları " +
-                "bu durumdan etkilenmiyordu; yanlış olan yalnızca satırdaki durum etiketiydi.")),
+                "bu durumdan etkilenmiyordu; yanlış olan yalnızca satırdaki durum etiketiydi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bugün ekranından hibe projenize geçiş düzeldi",
+                "Hibe › Bugün ekranındaki \"Başvurularınız nerede\" listesinde, projeye dönüşmüş bir başvuruya " +
+                "tıkladığınızda \"sayfa bulunamadı\" hatası alıyordunuz. Artık satır doğrudan projenin detay " +
+                "sayfasını açıyor. Henüz projeye dönüşmemiş başvurular eskisi gibi Başvurularım ekranına gidiyor.")),
 
         new ReleaseNote(
             version: "2026.09.15",
