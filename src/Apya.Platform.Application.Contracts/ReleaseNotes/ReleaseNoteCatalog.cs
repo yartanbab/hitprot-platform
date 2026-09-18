@@ -129,7 +129,14 @@ public static class ReleaseNoteCatalog
                 "kalem sınırları yanlış tutar üzerinden uygulanıyordu. Artık iki ekran aynı hesabı kullanıyor — " +
                 "kalem sınırı toplam proje bütçesine göre uygulanır, programın üst limiti aşılırsa kalem destekleri " +
                 "de orantılı olarak düşer ve satırların toplamı gösterilen toplamı tutar. Girdiğiniz tutarlar yine " +
-                "hiçbir yere kaydedilmez.")),
+                "hiçbir yere kaydedilmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe bütçe gerçekleşmesi kaleme bağlanmamış giderleri de söylüyor",
+                "Uygulama ve Tahsilat ekranındaki bütçe gerçekleşmesi yalnız bir bütçe kalemine bağlanmış giderleri " +
+                "sayıyordu; kalemsiz giderler hiçbir uyarı olmadan dışarıda kalıyor, kullanım oranları olduğundan " +
+                "düşük görünüyordu. Artık tablonun altında kaç giderin, toplam ne tutarın bir kaleme bağlanmadığı " +
+                "yazıyor. Bu giderleri projenin bütçesinde kalemlere bağladığınızda oranlara dahil olurlar.")),
 
         new ReleaseNote(
             version: "2026.09.15",
