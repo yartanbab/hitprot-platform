@@ -65,6 +65,25 @@ public class GrantDetailHostPage_Tests : PlatformWebTestBase
             .ShouldBeTrue("sayfa demeti DetailHost.js içermeli");
     }
 
+    /// <summary>
+    /// H-02 · Kurum kararını giren uç (SaveDecisionAsync) vardı ama hiçbir ekranda düğmesi yoktu;
+    /// karar, itiraz ve zorunlu "karar" bildirimi hiç oluşmuyordu. Giriş bu ekranın sağ panelinde.
+    /// </summary>
+    [Fact]
+    public async Task Kurum_Karari_Karti_Ve_Penceresi_Render_Olur()
+    {
+        var id = await SetupAsync();
+
+        var html = await GetResponseAsStringAsync($"/Grants/DetailHost?id={id}");
+
+        html.ShouldContain("id=\"decision\"");
+        html.ShouldContain("DecisionModal");
+        html.ShouldContain("Kurum kararını gir");
+        // Varsayılan seçim yok: yanlışlıkla red kaydedilmesin.
+        html.ShouldContain("<option value=\"\" disabled selected>");
+        html.ShouldContain("abp-data-datepicker=\"false\"");
+    }
+
     [Fact]
     public async Task Id_Verilmezse_Panoya_Yonlendirir()
     {

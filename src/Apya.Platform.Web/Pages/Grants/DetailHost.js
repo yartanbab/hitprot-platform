@@ -11,9 +11,17 @@ $(function () {
     var stateTone = apyaGrantStatus.sectionState.tones;
     var activityKinds = ['StageMoved', 'AssignmentChanged', 'HandedOver', 'Submitted'];
     // Dilim durumu da sunucudan: dizi bir kaymıştı ve ödenmiş dilim "İptal" görünüyordu.
+    // Ton da sözlükten: elle yazılmış `status === 1 ? 'positive'` talep edileni yeşil, ödeneni gri boyuyordu.
     var trancheStatus = apyaGrantStatus.tranche.keys;
+    var trancheTone = apyaGrantStatus.tranche.tones;
+    var decisionKeys = apyaGrantStatus.decision.keys;
+    var decisionTone = apyaGrantStatus.decision.tones;
+    var REJECTED = decisionKeys.indexOf('Reddedildi');
+    var appeal = apya.platform.grants.grantAppeal;
+    var decisionModal = new bootstrap.Modal(document.getElementById('DecisionModal'));
 
     var model = null;
+    var decision = null;
     var channel = 'all';
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
@@ -118,7 +126,7 @@ $(function () {
             ? model.tranches.map(function (t) {
                 return '<div class="apya-dh-row"><span class="apya-numeric">#' + t.sequenceNo + '</span>' +
                     '<span class="apya-numeric fw-semibold">' + money(t.amount) + ' ₺</span>' +
-                    '<span class="apya-chip apya-chip-' + (t.status === 1 ? 'positive' : 'neutral') + '">' +
+                    '<span class="apya-chip apya-chip-' + trancheTone[t.status] + '">' +
                     esc(l('Grants:Tranche:' + trancheStatus[t.status])) + '</span>' +
                     '<span class="apya-dh-item-time">' + esc(date(t.dueDate)) + '</span></div>';
             }).join('')
@@ -187,6 +195,80 @@ $(function () {
         });
     });
 
+    // ---------- Kurum kararı ----------
+    function pad(n) { return ('0' + n).slice(-2); }
+    // toISOString() TZ+03'te günü bir geri kaydırır; <input type=date> için gün elle kurulur.
+    function today() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function day(v) { return v ? String(v).substring(0, 10) : ''; }
+
+    function paintDecision() {
+        var has = !!(decision && decision.decisionId);
+        $('#DecisionNone').toggleClass('d-none', has);
+        $('#DecisionChip')
+            .attr('class', 'apya-chip' + (has ? ' apya-chip-' + decisionTone[decision.outcome] : ' d-none'))
+            .text(has ? l('Grants:Decision:Outcome:' + decisionKeys[decision.outcome]) : '');
+        $('#DecisionMeta').toggleClass('d-none', !has).text(has ? [
+            l('Grants:Decision:Meta:DecidedOn', date(decision.decidedOn)),
+            decision.referenceNo ? l('Grants:Appeal:Reference', decision.referenceNo) : null,
+            decision.outcome === REJECTED && decision.appealDeadline
+                ? l('Grants:Decision:Meta:AppealUntil', date(decision.appealDeadline)) : null
+        ].filter(Boolean).join(' · ') : '');
+        $('#DecisionBtnText').text(l(has ? 'Grants:Decision:Edit' : 'Grants:Decision:Enter'));
+        $('#DecisionBtn').prop('disabled', false);
+        $('#DecisionAppealLink').toggleClass('d-none', !(has && decision.outcome === REJECTED));
+    }
+
+    // Number('') 0'dır, 0 da "Reddedildi" — boş seçim ayrıca denetlenir.
+    function selectedOutcome() {
+        var v = $('#DecisionOutcome').val();
+        return v === '' || v == null ? null : Number(v);
+    }
+
+    function toggleAppealField() {
+        $('#DecisionAppealField').toggleClass('d-none', selectedOutcome() !== REJECTED);
+    }
+
+    function openDecision() {
+        var has = !!(decision && decision.decisionId);
+        $('#DecisionOutcome').val(has ? String(decision.outcome) : '');
+        $('#DecisionDecidedOn').val(has ? day(decision.decidedOn) : today());
+        $('#DecisionReference').val(has ? (decision.referenceNo || '') : '');
+        $('#DecisionAppealDeadline').val(has ? day(decision.appealDeadline) : '');
+        toggleAppealField();
+        decisionModal.show();
+    }
+
+    $('#DecisionOutcome').on('change', toggleAppealField);
+    $('#DecisionBtn').on('click', openDecision);
+
+    $('#DecisionForm').on('submit', function (e) {
+        e.preventDefault();
+        var outcome = selectedOutcome();
+        if (outcome === null) { return; }
+        var $save = $('#DecisionSaveBtn').prop('disabled', true);
+        appeal.saveDecision({
+            applicationId: appId,
+            outcome: outcome,
+            decidedOn: $('#DecisionDecidedOn').val(),
+            referenceNo: ($('#DecisionReference').val() || '').trim() || null,
+            appealDeadline: outcome === REJECTED ? ($('#DecisionAppealDeadline').val() || null) : null
+        }).then(function (dto) {
+            decision = dto;
+            paintDecision();
+            decisionModal.hide();
+            abp.notify.success(l('Grants:Decision:Saved'));
+        }).always(function () { $save.prop('disabled', false); });
+    });
+
+    function loadDecision() {
+        return appeal.get(appId).then(function (dto) {
+            decision = dto;
+            paintDecision();
+            // Appeal ekranının "kararı gir" bağlantısı buraya #decision ile gelir.
+            if (location.hash === '#decision' && !dto.decisionId) { openDecision(); }
+        });
+    }
+
     // ---------- Çizim ----------
     function paint() {
         $('#FirmInitials').text(initials(model.firmName));
@@ -212,4 +294,5 @@ $(function () {
     }
 
     load();
+    loadDecision();
 });

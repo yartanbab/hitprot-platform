@@ -40,6 +40,10 @@
     font-size: var(--apya-fs-base);
 }
 
+/* Onay ve kısmi onay da girilebildiği için rozet sonucun tonunu taşır (sözlük: decision). */
+.apya-ap-badge.is-positive { background: var(--apya-positive-50); color: var(--apya-positive-700); }
+.apya-ap-badge.is-warning  { background: var(--apya-warning-50);  color: var(--apya-warning-700); }
+
 .apya-ap-meta {
     font-size: var(--apya-fs-xs);
     color: var(--apya-text-tertiary);

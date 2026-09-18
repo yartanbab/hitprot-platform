@@ -125,6 +125,14 @@ public static class GrantStatusCatalog
         [GrantAppealStance.Kabul]    = "warning"
     };
 
+    // ── Kurum kararı ──────────────────────────────────────────────────────────
+    private static readonly Dictionary<GrantDecisionOutcome, string> Decision = new()
+    {
+        [GrantDecisionOutcome.Reddedildi] = "negative",
+        [GrantDecisionOutcome.Onaylandi]  = "positive",
+        [GrantDecisionOutcome.KismiOnay]  = "warning"
+    };
+
     // ── Başvuru detayı bölüm durumu ───────────────────────────────────────────
     private static readonly Dictionary<GrantDetailSectionState, string> SectionState = new()
     {
@@ -151,6 +159,7 @@ public static class GrantStatusCatalog
         ["risk"]         = Entry(Risk),
         ["journey"]      = Entry(Journey),
         ["stance"]       = Entry(Stance),
+        ["decision"]     = Entry(Decision),
         ["sectionState"] = Entry(SectionState)
     };
 

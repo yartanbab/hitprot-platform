@@ -3,10 +3,10 @@ $(function () {
     var l = abp.localization.getResource('Platform');
     var appId = $('.apya-page').data('application-id');
 
-    // Enum sıraları sunucudakiyle birebir.
-    var outcomeKeys = ['Reddedildi', 'Onaylandi', 'KismiOnay'];
-    // Tutum adları ve tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
-    // outcomeKeys hâlâ elle: GrantDecisionOutcome rozet basmıyor, sözlüğe girmedi.
+    // Karar ve tutum adları + tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var outcomeKeys = apyaGrantStatus.decision.keys;
+    var outcomeTone = apyaGrantStatus.decision.tones;
+    var outcomeIcon = { Reddedildi: 'fa-circle-xmark', Onaylandi: 'fa-circle-check', KismiOnay: 'fa-circle-half-stroke' };
     var stanceKeys = apyaGrantStatus.stance.keys;
     var stanceTone = apyaGrantStatus.stance.tones;
     var stanceClass = ['is-none', 'is-appeal', 'is-accept'];
@@ -98,6 +98,15 @@ $(function () {
         }).always(function () { $btn.prop('disabled', false); });
     });
 
+    // ---------- İtiraz sonucu (danışman, kurumun yanıtını işler) ----------
+    $('#ResolveBox').on('click', '[data-accepted]', function () {
+        var accepted = $(this).data('accepted') === true;
+        abp.message.confirm(l('Grants:Appeal:Resolve:Confirm')).then(function (ok) {
+            if (!ok) { return; }
+            service.resolveAppeal(appId, accepted).then(function (dto) { model = dto; paint(); });
+        });
+    });
+
     // ---------- Sağ panel ----------
     function paintSide() {
         var items = model.items || [];
@@ -141,19 +150,27 @@ $(function () {
             ? l('Grants:Appeal:NoDecisionHostHint')
             : l('Grants:Appeal:NoDecisionTenantHint'));
         $('#AddItemBtn').toggleClass('d-none', !hasDecision || !model.canEditOpinion);
+        $('#EnterDecisionLink').toggleClass('d-none', hasDecision || !model.canEditOpinion);
 
         if (hasDecision) {
-            $('#DecisionTitle').text(l('Grants:Appeal:Outcome:' + outcomeKeys[model.outcome],
-                date(model.decidedOn)));
+            var outcome = outcomeKeys[model.outcome];
+            $('#DecisionBadge').attr('class', 'apya-ap-badge is-' + outcomeTone[model.outcome]);
+            $('#DecisionIcon').attr('class', 'fa ' + outcomeIcon[outcome]);
+            $('#DecisionTitle').text(l('Grants:Appeal:Outcome:' + outcome, date(model.decidedOn)));
             $('#DecisionMeta').text([model.grantName, model.period,
                 model.referenceNo ? l('Grants:Appeal:Reference', model.referenceNo) : null]
                 .filter(Boolean).join(' · '));
 
-            $('#Countdown').text(model.appealSubmittedAt
-                ? l('Grants:Appeal:SubmittedOn', date(model.appealSubmittedAt))
-                : model.appealDaysLeft != null
-                    ? l('Grants:Appeal:DaysLeft', model.appealDaysLeft)
-                    : l('Grants:Appeal:WindowClosed'));
+            $('#WindowBox').toggleClass('d-none', outcome !== 'Reddedildi');
+            $('#Countdown').text(model.appealAccepted != null
+                ? l('Grants:Appeal:Resolved:' + (model.appealAccepted ? 'Accepted' : 'Rejected'))
+                : model.appealSubmittedAt
+                    ? l('Grants:Appeal:SubmittedOn', date(model.appealSubmittedAt))
+                    : model.appealDaysLeft != null
+                        ? l('Grants:Appeal:DaysLeft', model.appealDaysLeft)
+                        : l('Grants:Appeal:WindowClosed'));
+            $('#ResolveBox').toggleClass('d-none',
+                !(model.canEditOpinion && model.appealSubmittedAt && model.appealAccepted == null));
 
             // İtirazı firma gönderir; danışman görüş yazar.
             $('#SubmitAppealBtn').toggleClass('d-none',

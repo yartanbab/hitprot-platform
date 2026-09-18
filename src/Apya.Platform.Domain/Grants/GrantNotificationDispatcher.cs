@@ -74,6 +74,11 @@ public class GrantNotificationDispatcher : DomainService
         var subject = GrantNotificationRenderer.Render(template.Subject, values);
         var body = GrantNotificationRenderer.Render(template.Body, values);
 
+        // 🔴 Kritik türün e-postasını NotificationManager zaten kuyruğa alır (kullanıcı tercihi
+        // açıksa). Burada da gönderilirse firma aynı kurum kararını iki e-postayla alıyordu.
+        var emailByManager = template.InApp
+            && NotificationTypeRegistry.Get(type).DefaultSeverity >= NotificationSeverity.Critical;
+
         foreach (var userId in userIds)
         {
             if (template.InApp)
@@ -81,7 +86,7 @@ public class GrantNotificationDispatcher : DomainService
                 await _notificationManager.PublishAsync(userId, subject, body, type, entityType, entityId);
             }
 
-            if (sendEmail ?? template.Email)
+            if ((sendEmail ?? template.Email) && !emailByManager)
             {
                 await TrySendEmailAsync(userId, subject, body);
             }
@@ -152,6 +157,9 @@ public class GrantNotificationDispatcher : DomainService
     /// <summary>
     /// Şablon e-posta diyorsa bile kullanıcının kendi kategori tercihi geçerlidir —
     /// şablon "gönderilebilir mi", tercih "istiyor mu" sorusunu cevaplar.
+    ///
+    /// <para>Gönderim <c>QueueAsync</c> ile (NotificationManager'daki gerekçeyle): kiracının her
+    /// kullanıcısı için döngüde senkron SMTP, danışmanın isteğini sunucu yavaşsa bekletiyordu.</para>
     /// </summary>
     private async Task TrySendEmailAsync(Guid userId, string subject, string body)
     {
@@ -168,7 +176,7 @@ public class GrantNotificationDispatcher : DomainService
                 return;
             }
 
-            await _emailSender.SendAsync(user.Email, subject, body);
+            await _emailSender.QueueAsync(user.Email, subject, body);
         }
         catch (Exception ex)
         {
