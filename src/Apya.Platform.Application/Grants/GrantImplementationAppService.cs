@@ -51,6 +51,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly GrantTrancheManager _trancheManager;
+    private readonly GrantActivityRecorder _activity;
 
     public GrantImplementationAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -63,7 +64,8 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         IRepository<Expense, Guid> expenseRepo,
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> mtFilter,
-        GrantTrancheManager trancheManager)
+        GrantTrancheManager trancheManager,
+        GrantActivityRecorder activity)
     {
         _appRepo = appRepo;
         _reportRepo = reportRepo;
@@ -76,6 +78,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
         _trancheManager = trancheManager;
+        _activity = activity;
     }
 
     private bool IsConsultant => _currentTenant.Id == null;
@@ -158,8 +161,15 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         var application = await GetApplicationAsync(tranche.GrantApplicationId);
 
         await _trancheManager.EnsureCanMarkPaidAsync(tranche);
+        var wasPaid = tranche.Status == GrantDisbursementTrancheStatus.Odendi;
         tranche.MarkPaid();
         await _trancheRepo.UpdateAsync(tranche, autoSave: true);
+
+        if (!wasPaid)
+        {
+            await _activity.RecordAsync(tranche.TenantId, tranche.GrantApplicationId, GrantActivityKind.TranchePaid,
+                GrantActivityRecorder.Tranche(tranche.SequenceNo, GrantActivityRecorder.Money(tranche.Amount)));
+        }
 
         return await BuildAsync(application);
     }

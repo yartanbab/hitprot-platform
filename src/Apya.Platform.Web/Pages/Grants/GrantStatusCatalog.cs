@@ -133,6 +133,22 @@ public static class GrantStatusCatalog
         [GrantDecisionOutcome.KismiOnay]  = "warning"
     };
 
+    // ── Başvuru akışı olayı ───────────────────────────────────────────────────
+    // Akış metni l('Grants:DetailHost:Activity:' + keys[kind]) ile kurulur; dizi elle tutulurken
+    // para olayları (H-07) eklenince ekranda "undefined" basılırdı. Ton para olaylarını ayırır.
+    private static readonly Dictionary<GrantActivityKind, string> Activity = new()
+    {
+        [GrantActivityKind.StageMoved]            = "accent",
+        [GrantActivityKind.AssignmentChanged]     = "neutral",
+        [GrantActivityKind.HandedOver]            = "neutral",
+        [GrantActivityKind.Submitted]             = "positive",
+        [GrantActivityKind.ApprovedAmountChanged] = "warning",
+        [GrantActivityKind.TrancheAdded]          = "neutral",
+        [GrantActivityKind.TrancheAmountChanged]  = "warning",
+        [GrantActivityKind.TrancheRemoved]        = "negative",
+        [GrantActivityKind.TranchePaid]           = "positive"
+    };
+
     // ── Başvuru detayı bölüm durumu ───────────────────────────────────────────
     private static readonly Dictionary<GrantDetailSectionState, string> SectionState = new()
     {
@@ -160,6 +176,7 @@ public static class GrantStatusCatalog
         ["journey"]      = Entry(Journey),
         ["stance"]       = Entry(Stance),
         ["decision"]     = Entry(Decision),
+        ["activity"]     = Entry(Activity),
         ["sectionState"] = Entry(SectionState)
     };
 
