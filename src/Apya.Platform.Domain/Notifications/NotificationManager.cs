@@ -78,7 +78,7 @@ public class NotificationManager : DomainService
             {
                 existing.Repeat(title, body, actorUserId, actorName);
                 await _notificationRepository.UpdateAsync(existing);
-                await PublishCreatedEventAsync(userId, title, body, entityType, entityId, type);
+                await PublishCreatedEventAsync(existing);
                 await TrySendCriticalEmailAsync(userId, preference.Email, effectiveSeverity, title, body);
                 return;
             }
@@ -102,7 +102,7 @@ public class NotificationManager : DomainService
 
         await _notificationRepository.InsertAsync(notification);
 
-        await PublishCreatedEventAsync(userId, title, body, entityType, entityId, type);
+        await PublishCreatedEventAsync(notification);
         await TrySendCriticalEmailAsync(userId, preference.Email, effectiveSeverity, title, body);
     }
 
@@ -175,7 +175,7 @@ public class NotificationManager : DomainService
 
         await _notificationRepository.InsertAsync(notification);
 
-        await PublishCreatedEventAsync(userId, title, body, entityType, entityId, type);
+        await PublishCreatedEventAsync(notification);
         await TrySendCriticalEmailAsync(
             userId, preference.Email, severity ?? info.DefaultSeverity, title, body);
 
@@ -206,8 +206,14 @@ public class NotificationManager : DomainService
 
     /// <summary>
     /// Kritik bildirimler beklemeye gelmez — kullanıcı bu kategoriden e-posta
-    /// istiyorsa anında gönderilir. Geri kalanı günlük özete bırakılır
+    /// istiyorsa hemen kuyruğa alınır. Geri kalanı günlük özete bırakılır
     /// (bkz. NotificationDigestWorker).
+    ///
+    /// <para><c>QueueAsync</c> (ABP arka plan işi, kalıcı <c>AbpBackgroundJobs</c>
+    /// tablosu + yeniden deneme) kullanılıyor, <c>SendAsync</c> değil: doğrudan
+    /// gönderim SMTP el sıkışmasını KULLANICININ İSTEĞİ İÇİNDE bekletiyordu —
+    /// sunucu yavaşsa gideri kaydeden kişi bunu gecikme olarak görüyordu. Kuyruk
+    /// ayrıca geçici SMTP hatalarını yeniden deniyor; eskiden ilk hata yutuluyordu.</para>
     /// </summary>
     private async Task TrySendCriticalEmailAsync(
         Guid userId, bool emailEnabled,
@@ -222,34 +228,42 @@ public class NotificationManager : DomainService
             if (user == null || user.Email.IsNullOrWhiteSpace())
                 return;
 
-            await _emailSender.SendAsync(user.Email, title, body);
+            await _emailSender.QueueAsync(user.Email, title, body);
         }
         catch (Exception ex)
         {
             // E-posta altyapısı bildirim akışını kırmamalı: kayıt zaten atıldı,
             // kullanıcı uygulama içinde görecek.
-            Logger.LogWarning(ex, "Kritik bildirim e-postası gönderilemedi. UserId: {UserId}", userId);
+            Logger.LogWarning(ex, "Kritik bildirim e-postası kuyruğa alınamadı. UserId: {UserId}", userId);
         }
     }
 
-    // SignalR event fırlat (Web katmanı dinleyecek)
-    private Task PublishCreatedEventAsync(
-        Guid userId, string title, string body,
-        string? entityType, Guid? entityId, NotificationType type)
+    // SignalR event fırlat (Web katmanı dinleyecek).
+    // Kaydın kendisi geçiriliyor: gruplanan bildirimde metin Repeat() ile
+    // tazelendiği için çağıranın elindeki title/body değil, satırın son hâli
+    // yayınlanmalı.
+    private Task PublishCreatedEventAsync(Notification notification)
         => _localEventBus.PublishAsync(new NotificationCreatedEto
         {
-            TenantId   = CurrentTenant.Id,
-            UserId     = userId,
-            Title      = title,
-            Body       = body,
-            EntityType = entityType,
-            EntityId   = entityId,
-            Type       = type
+            Id         = notification.Id,
+            TenantId   = notification.TenantId,
+            UserId     = notification.UserId,
+            Title      = notification.Title,
+            Body       = notification.Body,
+            EntityType = notification.EntityType,
+            EntityId   = notification.EntityId,
+            Type       = notification.Type,
+            Severity   = notification.Severity
         });
 }
 
 public class NotificationCreatedEto
 {
+    /// <summary>
+    /// Bildirim satırının kimliği. İstemci bunu alınca "okundu" işaretlemesi ve
+    /// masaüstü bildiriminin tekilleştirme etiketi için ek sorgu atmak zorunda kalmaz.
+    /// </summary>
+    public Guid Id { get; set; }
     public Guid? TenantId { get; set; }
     public Guid UserId { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -257,6 +271,12 @@ public class NotificationCreatedEto
     public string? EntityType { get; set; }
     public Guid? EntityId { get; set; }
     public NotificationType Type { get; set; }
+
+    /// <summary>
+    /// Türün varsayılanı değil, satıra YAZILAN aciliyet — üretici ezmiş olabilir.
+    /// İstemci toast biçimini ve masaüstü bildiriminin ısrarlılığını buna göre seçer.
+    /// </summary>
+    public NotificationSeverity Severity { get; set; }
 }
 
 /// <summary>

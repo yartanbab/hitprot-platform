@@ -24,16 +24,29 @@ public class SignalRNotificationEventHandler :
         _hubContext = hubContext;
     }
 
+    /// <summary>
+    /// Payload'daki alan adları <c>wwwroot/Pages/Notifications/notification-bell.js</c>
+    /// ile SÖZLEŞMEDİR; derleyici bu bağı görmez. Bir alanı yeniden adlandırmak
+    /// istemcide sessizce <c>undefined</c> üretir — bu yüzden
+    /// <c>NotificationSignalRContract_Tests</c> iki tarafı kaynaktan okuyup karşılaştırır.
+    ///
+    /// <para><c>deepLinkUrl</c> sunucuda türetiliyor (saklanmıyor): istemci türden
+    /// adres kurmaya çalışmasın, derin link kuralı tek yerde
+    /// (<see cref="NotificationTypeRegistry"/>) kalsın.</para>
+    /// </summary>
     public async Task HandleEventAsync(NotificationCreatedEto eventData)
     {
         await _hubContext.Clients.User(eventData.UserId.ToString())
-            .SendAsync("ReceiveNotification", new 
+            .SendAsync("ReceiveNotification", new
             {
+                id = eventData.Id,
                 title = eventData.Title,
                 body = eventData.Body,
                 entityType = eventData.EntityType,
                 entityId = eventData.EntityId,
-                type = (int)eventData.Type
+                type = (int)eventData.Type,
+                severity = (int)eventData.Severity,
+                deepLinkUrl = NotificationTypeRegistry.BuildDeepLink(eventData.Type, eventData.EntityId)
             });
     }
 

@@ -156,63 +156,68 @@ async function networkOnly(req) {
     return fetch(req);
 }
 
-/* --- Push notification (APYA-97 SignalR'a alternatif/ek; saha kullanım için) ---
-   Server payload contract:
-     {
-       title, body, tag, severity, url,
-       approval: { id },                          // varsa onay-detay deep-link
-       actions: [                                 // notification action button'ları
-         { action: 'approve', title: 'Onayla' },
-         { action: 'reject',  title: 'Reddet' },
-       ],
-       idempotencyKey,                            // server tarafı: aynı key tekrarlanırsa NOOP
-     }
-*/
+/* --- Push notification — SUNUCU TARAFI HENÜZ YOK (Faz 2) --------------------
+   Bu işleyici bugün UYKUDA: `pushManager.subscribe()` kod tabanında hiçbir
+   yerden çağrılmıyor, dolayısıyla abonelik oluşmuyor ve push olayı hiç gelmiyor.
+   Sunucu tarafı — VAPID anahtarı, abonelik tablosu, gönderici — Faz 2'de
+   eklenecek (bkz. docs/design/bildirim-sistemi/02-coklu-kanal-plan.md).
+   Sayfa AÇIKKEN masaüstü bildirimi buraya gerek duymuyor; onu SignalR olayından
+   notification-bell.js gösteriyor.
+
+   Sunucu payload sözleşmesi, çekirdek bildirimle AYNI alan adlarını kullanır
+   (SignalRNotificationEventHandler ile aynı sözlük):
+     { notificationId, title, body, tag, severity, url }
+   `severity` sayıdır — Domain.Shared/NotificationSeverity: Info=1 … Critical=4.
+
+   Tarihçe: burada bir onay/red aksiyon sözleşmesi vardı (`payload.approval`,
+   `actions: [approve, reject]`, `POST /api/app/approvals/{id}/{action}`).
+   O uçlar kod tabanında HİÇ VAR OLMADI ve `?approval=` derin linkini okuyan
+   istemci de yok; abonelik açıldığı gün kullanıcıya 404 üreten düğme
+   göstereceği için çıkarıldı. Bildirim üzerinden onay istenirse ayrı bir iş
+   olarak, uçlarıyla birlikte planlanır. */
+
+const SEVERITY_CRITICAL = 4;
+
 self.addEventListener('push', (event) => {
     if (!event.data) return;
     let payload = {};
     try { payload = event.data.json(); } catch (_) { payload = { title: 'Apya', body: event.data.text() }; }
 
-    const title = payload.title || 'Apya';
-    /* Onay deep-link'i URL'e enjekte et — bildirim tap'inde dashboard direkt
-       ApprovalDetailSheet açar (BentoDashboard ?approval=ID okur). */
-    const approvalId = payload.approval?.id;
-    const url = approvalId
-        ? `/Dashboard?approval=${encodeURIComponent(approvalId)}`
-        : (payload.url || '/Dashboard');
+    event.waitUntil(showPushNotification(payload));
+});
 
-    const options = {
+/* Uygulama gözün önündeyse bildirim GÖSTERİLMEZ: aynı olay SignalR üzerinden
+   zaten geldi, sayfa anlık uyarı + zil rozetiyle söyledi. Bu karar bilinçli
+   olarak sunucudaki bir "presence" kaydına bırakılmadı — sunucu soketin açık
+   olduğunu bilir, sekmenin GÖRÜNÜR olduğunu bilmez; bunu yalnız burası bilir
+   (ve çoklu sunucu örneğinde de doğru kalır).
+   Kritik bildirim istisnadır: sessize alınmaz. */
+async function showPushNotification(payload) {
+    const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const isVisible = clientList.some((client) => client.visibilityState === 'visible');
+
+    if (isVisible && payload.severity !== SEVERITY_CRITICAL) return;
+
+    await self.registration.showNotification(payload.title || 'Apya', {
         body: payload.body,
         icon: '/icons/apya-icon.svg',
         badge: '/icons/apya-icon.svg',
-        tag: payload.tag,                          /* aynı tag → mevcut bildirim güncellenir, spam önlenir */
+        /* Aynı tag → mevcut bildirim güncellenir, yığılmaz. Sunucu tag'i
+           bildirimin GroupKey'inden üretir; grup yoksa satır kimliği kullanılır. */
+        tag: payload.tag || (payload.notificationId ? `apya-${payload.notificationId}` : undefined),
         renotify: false,
-        requireInteraction: payload.severity === 'critical',
-        data: {
-            url,
-            approvalId,
-            idempotencyKey: payload.idempotencyKey,
-        },
-        actions: payload.actions || [],
-    };
-    event.waitUntil(self.registration.showNotification(title, options));
-});
+        requireInteraction: payload.severity === SEVERITY_CRITICAL,
+        data: { url: payload.url || '/Dashboard' },
+    });
+}
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const data = event.notification.data || {};
-    const action = event.action;
 
-    /* Approve/Reject inline action — uygulamayı açmaya gerek YOK, doğrudan
-       endpoint'e POST. Server idempotencyKey ile double-tap koruması. Hata
-       durumunda yeni bir notification ile kullanıcıyı uyar. */
-    if ((action === 'approve' || action === 'reject') && data.approvalId) {
-        event.waitUntil(performApprovalAction(action, data.approvalId, data.idempotencyKey));
-        return;
-    }
-
-    /* Default: bildirimi aç. Aynı URL'i taşıyan client varsa odakla, yoksa yeni pencere. */
-    const url = data.url || '/Dashboard';
+    /* Aynı adresi taşıyan pencere varsa odakla, yoksa yeni pencere aç.
+       Adres sunucuda türetilir (NotificationTypeRegistry.BuildDeepLink) —
+       service worker tür→adres kuralını ikinci kez bilmek zorunda değil. */
+    const url = event.notification.data?.url || '/Dashboard';
     event.waitUntil((async () => {
         const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
         for (const c of clientList) {
@@ -221,27 +226,3 @@ self.addEventListener('notificationclick', (event) => {
         if (self.clients.openWindow) return self.clients.openWindow(url);
     })());
 });
-
-async function performApprovalAction(action, id, idempotencyKey) {
-    const endpoint = `/api/app/approvals/${encodeURIComponent(id)}/${action}`;
-    const headers = { 'Content-Type': 'application/json' };
-    if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
-    try {
-        const res = await fetch(endpoint, { method: 'POST', credentials: 'include', headers });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        await self.registration.showNotification('Apya', {
-            body: action === 'approve' ? 'Onaylandı.' : 'Reddedildi.',
-            icon: '/icons/apya-icon.svg',
-            tag: `approval-result-${id}`,
-            silent: true,                          /* kullanıcıyı tekrar uyarma */
-        });
-    } catch (err) {
-        await self.registration.showNotification('Apya — işlem başarısız', {
-            body: 'Onay/red gönderilemedi. Uygulamayı açıp tekrar dene.',
-            icon: '/icons/apya-icon.svg',
-            tag: `approval-error-${id}`,
-            requireInteraction: true,
-            data: { url: `/Dashboard?approval=${encodeURIComponent(id)}` },
-        });
-    }
-}

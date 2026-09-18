@@ -264,7 +264,84 @@ $(function () {
         });
     }
 
+    // ─── Bu cihaz: masaüstü bildirimi ─────────────────────────────────────────
+    // Durum TARAYICIDAN okunuyor (window.apyaDesktopNotifications — genel demetteki
+    // notification-bell.js kuruyor). Sunucuda "masaüstü açık" diye bir alan yok:
+    // olsaydı izin tarayıcı ayarından geri alındığında ekran açık gösterip
+    // kullanıcıyı yanıltırdı.
+    function renderDevicePanel() {
+        var desktop = window.apyaDesktopNotifications;
+        var $block = $('#notif-device-block');
+
+        // Zil betiği yüklenmediyse (ör. demet sırası değişti) blok hiç çıkmasın —
+        // yarım çalışan bir anahtar göstermek hiç göstermemekten kötü.
+        if (!desktop) { $block.addClass('d-none'); return; }
+
+        var state = desktop.state();
+
+        $('#notif-device-title').text(l('Notifications:Desktop:Title'));
+        $('#notif-device-hint').text(l('Notifications:Desktop:BackgroundOnlyHint'));
+        $('#notif-device-enable').text(l('Notifications:Desktop:Enable'));
+        $('#notif-device-test').text(l('Notifications:Desktop:Test'));
+        $('#notif-device-help').text(l('Notifications:Desktop:HowTo'));
+        $('#notif-device-help-text').text(l('Notifications:Desktop:HowToHelp'));
+
+        var statusText = {
+            NotSupported:         l('Notifications:Desktop:StatusUnsupported'),
+            NotRequested:         l('Notifications:Desktop:StatusNotRequested'),
+            PermissionDenied:     l('Notifications:Desktop:StatusDenied'),
+            PermissionGranted:    l('Notifications:Desktop:StatusOn'),
+            DisabledOnThisDevice: l('Notifications:Desktop:StatusOff')
+        };
+        $('#notif-device-status').text(statusText[state] || '');
+
+        // Anahtar yalnız izin verilmişken anlamlı. İzin istenmemişse "Aç" düğmesi,
+        // reddedilmişse yalnız yönlendirme görünür — reddedilmiş izinde tarayıcı
+        // API'si yeniden çağrılmaz (sessizce reddeder, kullanıcı hiçbir şey görmez).
+        var granted = (state === 'PermissionGranted' || state === 'DisabledOnThisDevice');
+
+        $('#notif-device-switch').toggleClass('d-none', !granted);
+        $('#notif-device-toggle').prop('checked', state === 'PermissionGranted');
+        $('#notif-device-enable').toggleClass('d-none', state !== 'NotRequested');
+        $('#notif-device-test').toggleClass('d-none', state !== 'PermissionGranted');
+        $('#notif-device-help').toggleClass('d-none', state !== 'PermissionDenied');
+        $('#notif-device-hint').toggleClass('d-none', !granted);
+
+        if (state !== 'PermissionDenied') { $('#notif-device-help-text').addClass('d-none'); }
+    }
+
+    $('#notif-device-toggle').on('change', function () {
+        window.apyaDesktopNotifications.setEnabledHere($(this).prop('checked'));
+        renderDevicePanel();
+    });
+
+    $('#notif-device-enable').on('click', function () {
+        window.apyaDesktopNotifications.request().then(function (state) {
+            renderDevicePanel();
+            if (state === 'PermissionGranted') {
+                abp.notify.success(l('Notifications:Desktop:Enabled'));
+            }
+        });
+    });
+
+    $('#notif-device-test').on('click', function () {
+        // force=true: normalde sayfa gözün önündeyken işletim sistemi bildirimi
+        // gösterilmez, ama kullanıcı burada bilerek "göster" diyor.
+        var shown = window.apyaDesktopNotifications.show({
+            title: 'Apya',
+            body: l('Notifications:Desktop:TestBody'),
+            severity: SEVERITY.NORMAL
+        }, true);
+
+        if (!shown) { abp.notify.warn(l('Notifications:Desktop:StatusUnsupported')); }
+    });
+
+    $('#notif-device-help').on('click', function () {
+        $('#notif-device-help-text').toggleClass('d-none');
+    });
+
     $('#notif-pref-modal').on('show.bs.modal', function () {
+        renderDevicePanel();
         notificationService.getPreferences().then(renderPreferences);
     });
 
