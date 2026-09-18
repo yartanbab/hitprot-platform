@@ -133,6 +133,8 @@ public static class PlatformDomainErrorCodes
 
     // 6c · Uygulama ve tahsilat
     public const string GrantTranchePaymentBlockedByReport = "Platform:Grant:TranchePaymentBlockedByReport";
+    public const string GrantTrancheAmountInvalid = "Platform:Grant:TrancheAmountInvalid";
+    public const string GrantApprovedAmountInvalid = "Platform:Grant:ApprovedAmountInvalid";
 
     // 6d · Bildirim şablonları
     public const string GrantNotificationTemplateNeedsChannel = "Platform:Grant:NotificationTemplateNeedsChannel";

@@ -125,6 +125,12 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Aşamayı ilerletir (host). <paramref name="approvedAmount"/> verilmezse mevcut değer korunur.</summary>
     public void AdvanceStage(GrantApplicationStage stage, decimal? approvedAmount = null)
     {
+        if (approvedAmount < 0)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantApprovedAmountInvalid)
+                .WithData("ApprovedAmount", approvedAmount);
+        }
+
         Stage = stage;
         if (approvedAmount.HasValue)
         {

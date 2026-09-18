@@ -15,6 +15,8 @@ public class CreateUpdateGrantCallDto
     public GrantCallStatus Status { get; set; }
     public DateTime? OpenDate { get; set; }
     public DateTime? Deadline { get; set; }
+
+    [Range(0, 999_999_999_999.99)]
     public decimal? Budget { get; set; }
 
     [StringLength(64)]

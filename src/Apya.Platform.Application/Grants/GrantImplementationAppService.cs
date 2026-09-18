@@ -24,8 +24,8 @@ namespace Apya.Platform.Grants;
 /// durumlarını yazar. Rol <see cref="ICurrentTenant"/>'tan türetilir.</para>
 ///
 /// <para>🔴 RAPOR ONAYLANMADAN DİLİM ÖDEMEYE ÇIKMAZ. Tasarımın kuralı bu; kapı
-/// burada uygulanır (<see cref="MarkTranchePaidAsync"/>), entity yalnız bağı
-/// taşır.</para>
+/// <see cref="GrantTrancheManager"/>'dadır — <see cref="MarkTranchePaidAsync"/> da,
+/// başvuru listesindeki dilim penceresi de oradan geçer.</para>
 ///
 /// <para>Bütçe gerçekleşmesi PROJEDEN okunur: harcama kaydı projede tutulur.
 /// Başvuru henüz projeye dönüşmediyse gerçekleşme yoktur ve ekran bunu söyler —
@@ -50,6 +50,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
     private readonly IRepository<Expense, Guid> _expenseRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly GrantTrancheManager _trancheManager;
 
     public GrantImplementationAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -61,7 +62,8 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         IRepository<ProjectBudgetLine, Guid> projectBudgetRepo,
         IRepository<Expense, Guid> expenseRepo,
         ICurrentTenant currentTenant,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        GrantTrancheManager trancheManager)
     {
         _appRepo = appRepo;
         _reportRepo = reportRepo;
@@ -73,6 +75,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         _expenseRepo = expenseRepo;
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
+        _trancheManager = trancheManager;
     }
 
     private bool IsConsultant => _currentTenant.Id == null;
@@ -154,15 +157,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         var tranche = await GetTrancheAsync(trancheId);
         var application = await GetApplicationAsync(tranche.GrantApplicationId);
 
-        var reports = await GetReportsAsync(application.Id);
-        var linked = reports.FirstOrDefault(r => r.TrancheId == tranche.Id);
-        if (linked != null && linked.Status != GrantReportStatus.Onaylandi)
-        {
-            // 🔴 Rapor onaylanmadan dilim ödemeye çıkmaz (tasarım 6c).
-            throw new BusinessException(PlatformDomainErrorCodes.GrantTranchePaymentBlockedByReport)
-                .WithData("Report", linked.Title);
-        }
-
+        await _trancheManager.EnsureCanMarkPaidAsync(tranche);
         tranche.MarkPaid();
         await _trancheRepo.UpdateAsync(tranche, autoSave: true);
 

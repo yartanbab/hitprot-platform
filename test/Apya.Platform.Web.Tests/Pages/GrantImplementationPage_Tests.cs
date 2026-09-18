@@ -127,6 +127,65 @@ public class GrantImplementationPage_Tests : PlatformWebTestBase
     }
 
     [Fact]
+    public async Task Dilim_Penceresinden_Odendi_Rapor_Kapisini_Asamaz()
+    {
+        var (_, id, trancheId) = await SetupAsync();
+        var host = GetRequiredService<IGrantApplicationHostAppService>();
+        var withReport = await _impl.SaveReportAsync(new SaveGrantReportInput
+        {
+            ApplicationId = id, Title = "1. ara rapor", TrancheId = trancheId
+        });
+        var reportId = withReport.Chain.Single(c => c.TrancheId == trancheId).ReportId;
+
+        // Ödemeye geçmeyen düzenleme kapıya takılmaz.
+        await host.UpdateTrancheAsync(trancheId, new CreateUpdateTrancheDto
+        {
+            SequenceNo = 1, Amount = 450_000m, Status = GrantDisbursementTrancheStatus.TalepEdildi
+        });
+
+        var paid = new CreateUpdateTrancheDto
+        {
+            SequenceNo = 1, Amount = 450_000m, Status = GrantDisbursementTrancheStatus.Odendi
+        };
+        var ex = await Should.ThrowAsync<BusinessException>(async () => await host.UpdateTrancheAsync(trancheId, paid));
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantTranchePaymentBlockedByReport);
+        (await _impl.GetAsync(id)).CollectedAmount.ShouldBe(0m);
+
+        await _impl.SetReportStatusAsync(new SetGrantReportStatusInput
+        {
+            ReportId = reportId, Status = GrantReportStatus.Onaylandi
+        });
+        await host.UpdateTrancheAsync(trancheId, paid);
+
+        (await _impl.GetAsync(id)).CollectedAmount.ShouldBe(450_000m);
+    }
+
+    [Fact]
+    public async Task Negatif_Tutarlar_Dogrulamada_Reddedilir()
+    {
+        var (_, id, trancheId) = await SetupAsync();
+        var host = GetRequiredService<IGrantApplicationHostAppService>();
+        var calls = GetRequiredService<IGrantCallAppService>();
+
+        await Should.ThrowAsync<Volo.Abp.Validation.AbpValidationException>(async () =>
+            await host.UpdateTrancheAsync(trancheId, new CreateUpdateTrancheDto { SequenceNo = 1, Amount = -50_000m }));
+        await Should.ThrowAsync<Volo.Abp.Validation.AbpValidationException>(async () =>
+            await host.AddTrancheAsync(id, new CreateUpdateTrancheDto { SequenceNo = 0, Amount = 100_000m }));
+        await Should.ThrowAsync<Volo.Abp.Validation.AbpValidationException>(async () =>
+            await host.AdvanceStageAsync(new AdvanceApplicationStageInput
+            {
+                ApplicationId = id, Stage = GrantApplicationStage.Onay, ApprovedAmount = -1m
+            }));
+        await Should.ThrowAsync<Volo.Abp.Validation.AbpValidationException>(async () =>
+            await calls.CreateAsync(new CreateUpdateGrantCallDto
+            {
+                GrantId = Guid.NewGuid(), Period = "2026/9", Budget = -1m
+            }));
+
+        (await _impl.GetAsync(id)).ApprovedAmount.ShouldBe(1_000_000m);
+    }
+
+    [Fact]
     public async Task Rapora_Bagli_Olmayan_Dilim_Dogrudan_Odenir()
     {
         var (_, id, trancheId) = await SetupAsync();

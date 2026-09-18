@@ -29,6 +29,7 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
     private readonly ITenantRepository _tenantRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
+    private readonly GrantTrancheManager _trancheManager;
 
     public GrantApplicationHostAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -38,7 +39,8 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         IRepository<Grant, Guid> grantRepo,
         ITenantRepository tenantRepo,
         ICurrentTenant currentTenant,
-        GrantNotificationDispatcher notifyDispatcher)
+        GrantNotificationDispatcher notifyDispatcher,
+        GrantTrancheManager trancheManager)
     {
         _appRepo = appRepo;
         _trancheRepo = trancheRepo;
@@ -48,6 +50,7 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         _tenantRepo = tenantRepo;
         _currentTenant = currentTenant;
         _notifyDispatcher = notifyDispatcher;
+        _trancheManager = trancheManager;
     }
 
     public async Task<List<GrantApplicationDto>> GetListAsync()
@@ -123,6 +126,7 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         using (_currentTenant.Change(tenantId))
         {
             var tranche = new GrantDisbursementTranche(GuidGenerator.Create(), tenantId, applicationId, input.SequenceNo, input.Amount, input.DueDate);
+            await EnsurePaymentAllowedAsync(tranche, input.Status);
             tranche.Update(input.SequenceNo, input.Amount, input.Status, input.DueDate);
             await _trancheRepo.InsertAsync(tranche, autoSave: true);
             return ObjectMapper.Map<GrantDisbursementTranche, GrantDisbursementTrancheDto>(tranche);
@@ -137,8 +141,18 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         using (_currentTenant.Change(tenantId))
         {
             var tranche = await _trancheRepo.GetAsync(trancheId);
+            await EnsurePaymentAllowedAsync(tranche, input.Status);
             tranche.Update(input.SequenceNo, input.Amount, input.Status, input.DueDate);
             await _trancheRepo.UpdateAsync(tranche, autoSave: true);
+        }
+    }
+
+    /// <summary>Pencere dilimi Ödendi'ye taşıyorsa rapor kapısından geçer; diğer durum değişiklikleri serbesttir.</summary>
+    private async Task EnsurePaymentAllowedAsync(GrantDisbursementTranche tranche, GrantDisbursementTrancheStatus target)
+    {
+        if (target == GrantDisbursementTrancheStatus.Odendi && tranche.Status != GrantDisbursementTrancheStatus.Odendi)
+        {
+            await _trancheManager.EnsureCanMarkPaidAsync(tranche);
         }
     }
 
