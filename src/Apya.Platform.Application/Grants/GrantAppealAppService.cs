@@ -80,20 +80,29 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
         var application = await GetApplicationAsync(input.ApplicationId);
 
         var decision = await FindDecisionAsync(application.Id);
+        bool notify;
         if (decision == null)
         {
             decision = new GrantDecision(
                 GuidGenerator.Create(), application.TenantId, application.Id,
                 input.Outcome, input.DecidedOn, input.ReferenceNo, input.AppealDeadline);
             await _decisionRepo.InsertAsync(decision, autoSave: true);
+            notify = true;
         }
         else
         {
+            // Karar no ya da tarih düzeltmesi firmaya ikinci bir "karar" bildirimi (zorunlu,
+            // e-postalı) göndermez; yalnız firmanın hakkını değiştiren alanlar bildirilir.
+            notify = decision.Outcome != input.Outcome
+                     || decision.AppealDeadline?.Date != input.AppealDeadline?.Date;
             decision.Update(input.Outcome, input.DecidedOn, input.ReferenceNo, input.AppealDeadline);
             await _decisionRepo.UpdateAsync(decision, autoSave: true);
         }
 
-        await NotifyDecisionAsync(application, decision);
+        if (notify)
+        {
+            await NotifyDecisionAsync(application, decision);
+        }
 
         return await BuildAsync(application);
     }
