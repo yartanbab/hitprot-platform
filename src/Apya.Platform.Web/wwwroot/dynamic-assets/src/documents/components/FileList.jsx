@@ -10,20 +10,20 @@ import { draggableActivation } from '../../lib/dom/draggableActivation';
  * Sıralama sunucu tarafında; başlığa tıklamak `sorting` string'ini değiştirir.
  */
 
+/* Kolon genişlikleri apya-shell.css'te (.apya-doc-filelist): dar panelde İş adımı
+   ve Tür kolonları @container ile düşer, bu yüzden şablon satır içi stil OLAMAZ. */
 const COLUMNS = [
-  { key: 'displayName', label: 'Belge', sortable: true, width: 'minmax(0,1fr)' },
-  { key: 'workStep', label: 'İş adımı', sortable: false, width: '140px' },
-  { key: 'type', label: 'Tür', sortable: false, width: '96px' },
-  { key: 'amount', label: 'Tutar', sortable: true, width: '116px', align: 'right' },
-  { key: 'documentDate', label: 'Tarih', sortable: true, width: '96px' },
-  { key: 'status', label: 'Durum', sortable: false, width: '110px' },
+  { key: 'displayName', label: 'Belge', sortable: true },
+  { key: 'workStep', label: 'İş adımı', sortable: false, className: 'apya-doc-col-step' },
+  { key: 'type', label: 'Tür', sortable: false, className: 'apya-doc-col-type' },
+  { key: 'amount', label: 'Tutar', sortable: true, align: 'right' },
+  { key: 'documentDate', label: 'Tarih', sortable: true },
+  { key: 'status', label: 'Durum', sortable: false },
 ];
-
-const GRID_TEMPLATE = `34px ${COLUMNS.map((c) => c.width).join(' ')}`;
 
 function SortHeader({ column, sorting, onSort }) {
   if (!column.sortable) {
-    return <span style={{ textAlign: column.align || 'left' }}>{column.label}</span>;
+    return <span className={column.className} style={{ textAlign: column.align || 'left' }}>{column.label}</span>;
   }
 
   const [field, dir] = (sorting || '').split(' ');
@@ -67,7 +67,7 @@ function MissingRow({ item, onUpload, canUpload }) {
     : item.periodCode || 'Proje';
 
   return (
-    <div className="apya-doc-row apya-doc-missing-row" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+    <div className="apya-doc-row apya-doc-missing-row">
       <span style={{ color: 'var(--apya-warning-600, #B45309)', textAlign: 'center', fontWeight: 700, fontSize: 12 }}>!</span>
 
       <span className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
@@ -86,9 +86,9 @@ function MissingRow({ item, onUpload, canUpload }) {
         {item.isBlocking && <Badge variant="warning" size="sm">teslimi bloke ediyor</Badge>}
       </span>
 
-      <span className="text-truncate" style={{ fontSize: 12, color: 'var(--apya-warning-700, #92400E)' }}>{scopeLabel}</span>
+      <span className="text-truncate apya-doc-col-step" style={{ fontSize: 12, color: 'var(--apya-warning-700, #92400E)' }}>{scopeLabel}</span>
 
-      <span className="text-truncate" style={{ fontSize: 12, color: 'var(--apya-warning-700, #92400E)' }}>
+      <span className="text-truncate apya-doc-col-type" style={{ fontSize: 12, color: 'var(--apya-warning-700, #92400E)' }}>
         {item.documentTypeName || '—'}
       </span>
 
@@ -124,7 +124,6 @@ function FileRow({ file, selected, checked, onSelect, onToggleCheck, onDragStart
       onPointerDown={isTrash ? undefined : activation.onPointerDown}
       onClick={isTrash ? undefined : activation.onClick}
       className={cn('apya-doc-row', selected && 'is-selected', isTrash && 'is-trashed')}
-      style={{ gridTemplateColumns: GRID_TEMPLATE }}
     >
       {/* Çöp kutusunda satır seçilemez ve taşınamaz: silinmiş belge üzerinde
           yapılabilecek tek şey geri almaktır. */}
@@ -159,11 +158,11 @@ function FileRow({ file, selected, checked, onSelect, onToggleCheck, onDragStart
         {file.isLocked && <i className="fa fa-lock" style={{ fontSize: 10, color: 'var(--apya-text-tertiary)' }} title="Kilitli" />}
       </span>
 
-      <span className="text-truncate" style={{ fontSize: 12, color: 'var(--apya-text-secondary)' }}>
+      <span className="text-truncate apya-doc-col-step" style={{ fontSize: 12, color: 'var(--apya-text-secondary)' }}>
         {file.workStepName ? `${file.workStepOrder} · ${file.workStepName}` : '—'}
       </span>
 
-      <span className="text-truncate" style={{ fontSize: 12, color: 'var(--apya-text-tertiary)' }}>
+      <span className="text-truncate apya-doc-col-type" style={{ fontSize: 12, color: 'var(--apya-text-tertiary)' }}>
         {file.documentTypeName || '—'}
       </span>
 
@@ -279,8 +278,8 @@ export function FileList({
           ))}
         </div>
       ) : (
-        <div>
-          <div className="apya-doc-row apya-doc-row-head" style={{ gridTemplateColumns: GRID_TEMPLATE }}>
+        <div className="apya-doc-filelist">
+          <div className="apya-doc-row apya-doc-row-head">
             <span onClick={onToggleAll} style={{ cursor: 'pointer' }}>
               <i
                 className={`fa fa-${allChecked ? 'square-check' : 'square'}`}
