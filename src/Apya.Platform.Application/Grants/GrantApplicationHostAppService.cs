@@ -30,6 +30,7 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
     private readonly ICurrentTenant _currentTenant;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
     private readonly GrantTrancheManager _trancheManager;
+    private readonly GrantActivityRecorder _activity;
 
     public GrantApplicationHostAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -40,7 +41,8 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         ITenantRepository tenantRepo,
         ICurrentTenant currentTenant,
         GrantNotificationDispatcher notifyDispatcher,
-        GrantTrancheManager trancheManager)
+        GrantTrancheManager trancheManager,
+        GrantActivityRecorder activity)
     {
         _appRepo = appRepo;
         _trancheRepo = trancheRepo;
@@ -51,6 +53,7 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         _currentTenant = currentTenant;
         _notifyDispatcher = notifyDispatcher;
         _trancheManager = trancheManager;
+        _activity = activity;
     }
 
     public async Task<List<GrantApplicationDto>> GetListAsync()
@@ -87,9 +90,16 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         using (_currentTenant.Change(tenantId))
         {
             var app = await _appRepo.GetAsync(input.ApplicationId);
+            var previousAmount = app.ApprovedAmount;
             app.AdvanceStage(input.Stage, input.ApprovedAmount);
             await _appRepo.UpdateAsync(app, autoSave: true);
             callId = app.GrantCallId;
+
+            if (input.ApprovedAmount.HasValue && input.ApprovedAmount != previousAmount)
+            {
+                await _activity.RecordAsync(tenantId, app.Id, GrantActivityKind.ApprovedAmountChanged,
+                    $"{GrantActivityRecorder.Money(previousAmount)} → {GrantActivityRecorder.Money(input.ApprovedAmount)}");
+            }
         }
 
         // 6d · Aşamayı hangi ekrandan ilerlettiğimiz firmayı ilgilendirmiyor;
@@ -129,6 +139,14 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
             await EnsurePaymentAllowedAsync(tranche, input.Status);
             tranche.Update(input.SequenceNo, input.Amount, input.Status, input.DueDate);
             await _trancheRepo.InsertAsync(tranche, autoSave: true);
+
+            await _activity.RecordAsync(tenantId, applicationId, GrantActivityKind.TrancheAdded,
+                GrantActivityRecorder.Tranche(tranche.SequenceNo, GrantActivityRecorder.Money(tranche.Amount)));
+            if (tranche.Status == GrantDisbursementTrancheStatus.Odendi)
+            {
+                await RecordPaidAsync(tranche);
+            }
+
             return ObjectMapper.Map<GrantDisbursementTranche, GrantDisbursementTrancheDto>(tranche);
         }
     }
@@ -142,10 +160,26 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         {
             var tranche = await _trancheRepo.GetAsync(trancheId);
             await EnsurePaymentAllowedAsync(tranche, input.Status);
+            var (previousAmount, wasPaid) = (tranche.Amount, tranche.Status == GrantDisbursementTrancheStatus.Odendi);
             tranche.Update(input.SequenceNo, input.Amount, input.Status, input.DueDate);
             await _trancheRepo.UpdateAsync(tranche, autoSave: true);
+
+            if (tranche.Amount != previousAmount)
+            {
+                await _activity.RecordAsync(tenantId, tranche.GrantApplicationId, GrantActivityKind.TrancheAmountChanged,
+                    GrantActivityRecorder.Tranche(tranche.SequenceNo,
+                        $"{GrantActivityRecorder.Money(previousAmount)} → {GrantActivityRecorder.Money(tranche.Amount)}"));
+            }
+            if (!wasPaid && tranche.Status == GrantDisbursementTrancheStatus.Odendi)
+            {
+                await RecordPaidAsync(tranche);
+            }
         }
     }
+
+    private Task RecordPaidAsync(GrantDisbursementTranche tranche) =>
+        _activity.RecordAsync(tranche.TenantId, tranche.GrantApplicationId, GrantActivityKind.TranchePaid,
+            GrantActivityRecorder.Tranche(tranche.SequenceNo, GrantActivityRecorder.Money(tranche.Amount)));
 
     /// <summary>Pencere dilimi Ödendi'ye taşıyorsa rapor kapısından geçer; diğer durum değişiklikleri serbesttir.</summary>
     private async Task EnsurePaymentAllowedAsync(GrantDisbursementTranche tranche, GrantDisbursementTrancheStatus target)
@@ -163,7 +197,11 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
         var tenantId = await FindTrancheTenantIdAsync(trancheId);
         using (_currentTenant.Change(tenantId))
         {
-            await _trancheRepo.DeleteAsync(trancheId);
+            var tranche = await _trancheRepo.GetAsync(trancheId);
+            await _trancheRepo.DeleteAsync(tranche, autoSave: true);
+
+            await _activity.RecordAsync(tenantId, tranche.GrantApplicationId, GrantActivityKind.TrancheRemoved,
+                GrantActivityRecorder.Tranche(tranche.SequenceNo, GrantActivityRecorder.Money(tranche.Amount)));
         }
     }
 

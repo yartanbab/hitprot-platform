@@ -9,7 +9,8 @@ $(function () {
     // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
     var stateKeys = apyaGrantStatus.sectionState.keys;
     var stateTone = apyaGrantStatus.sectionState.tones;
-    var activityKinds = ['StageMoved', 'AssignmentChanged', 'HandedOver', 'Submitted'];
+    // Akış olayı adları da sözlükten: para olayları (H-07) eklendiğinde elle dizi "undefined" basardı.
+    var activityKinds = apyaGrantStatus.activity.keys;
     // Dilim durumu da sunucudan: dizi bir kaymıştı ve ödenmiş dilim "İptal" görünüyordu.
     // Ton da sözlükten: elle yazılmış `status === 1 ? 'positive'` talep edileni yeşil, ödeneni gri boyuyordu.
     var trancheStatus = apyaGrantStatus.tranche.keys;

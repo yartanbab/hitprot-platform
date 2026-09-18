@@ -268,7 +268,12 @@ public class PlatformWebModule : AbpModule
                             typeof(Apya.Platform.CashMovements.CashMovement).IsAssignableFrom(type) ||
                             typeof(Apya.Platform.CustomerLedger.CustomerLedgerEntry).IsAssignableFrom(type) ||
                             typeof(Apya.Platform.Expenses.Expense).IsAssignableFrom(type) ||
-                            typeof(Apya.Platform.Incomes.IncomeEntry).IsAssignableFrom(type)
+                            typeof(Apya.Platform.Incomes.IncomeEntry).IsAssignableFrom(type) ||
+                            // H-07: hibede onaylanan tutar, tahsilat dilimi ve kurum kararı —
+                            // "kim, ne zaman, kaçtan kaça" sorusu alan düzeyinde cevaplanabilsin.
+                            typeof(Apya.Platform.Grants.GrantApplication).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Grants.GrantDisbursementTranche).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.Grants.GrantDecision).IsAssignableFrom(type)
                 )
             );
 
