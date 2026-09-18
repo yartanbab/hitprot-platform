@@ -24,8 +24,8 @@ namespace Apya.Platform.Grants;
 /// durumlarını yazar. Rol <see cref="ICurrentTenant"/>'tan türetilir.</para>
 ///
 /// <para>🔴 RAPOR ONAYLANMADAN DİLİM ÖDEMEYE ÇIKMAZ. Tasarımın kuralı bu; kapı
-/// burada uygulanır (<see cref="MarkTranchePaidAsync"/>), entity yalnız bağı
-/// taşır.</para>
+/// <see cref="GrantTrancheManager"/>'dadır — <see cref="MarkTranchePaidAsync"/> da,
+/// başvuru listesindeki dilim penceresi de oradan geçer.</para>
 ///
 /// <para>Bütçe gerçekleşmesi PROJEDEN okunur: harcama kaydı projede tutulur.
 /// Başvuru henüz projeye dönüşmediyse gerçekleşme yoktur ve ekran bunu söyler —
