@@ -112,6 +112,11 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
     {
         EnsureHostContext();
 
+        // Ters aralık entity'ye yazılmadan reddedilir (önce doğrula, sonra değiştir).
+        Grant.EnsureRangesValid(
+            input.MinCompanyAgeYears, input.MaxCompanyAgeYears, input.MinTrl, input.MaxTrl,
+            input.MinRevenue, input.MaxRevenue, input.MinAmount, input.MaxAmount);
+
         var grant = await _grantRepo.GetAsync(id);
         ObjectMapper.Map(input, grant);
 
@@ -248,6 +253,8 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantParameterNoSourceValue);
         }
+        // Metinden gelen değer de mevcut sınırla ters aralık kurabilir.
+        grant.EnsureRangesValid();
 
         field.Status = GrantDraftFieldStatus.Kabul;
         await _draftFieldRepo.UpdateAsync(field, autoSave: true);

@@ -163,6 +163,9 @@ $(function () {
         $('#BudgetTable').toggleClass('d-none', rows.length === 0);
         // Proje yoksa gerçekleşme de yoktur; sebebi ekranda yazar.
         $('#NoProjectNote').toggleClass('d-none', model.hasProject);
+        $('#UnassignedNote').toggleClass('d-none', !model.unassignedExpenseCount);
+        $('#UnassignedText').text(model.unassignedExpenseCount
+            ? l('Grants:Impl:Unassigned', model.unassignedExpenseCount, money(model.unassignedSpentAmount)) : '');
         $('#TransferNote').toggleClass('d-none', !rows.some(function (b) { return b.isNearLimit; }));
     }
 

@@ -133,6 +133,10 @@ public static class PlatformDomainErrorCodes
 
     // 6c · Uygulama ve tahsilat
     public const string GrantTranchePaymentBlockedByReport = "Platform:Grant:TranchePaymentBlockedByReport";
+    public const string GrantRangeCompanyAgeInverted = "Platform:Grant:RangeCompanyAgeInverted";
+    public const string GrantRangeTrlInverted = "Platform:Grant:RangeTrlInverted";
+    public const string GrantRangeRevenueInverted = "Platform:Grant:RangeRevenueInverted";
+    public const string GrantRangeAmountInverted = "Platform:Grant:RangeAmountInverted";
     public const string GrantTrancheAmountInvalid = "Platform:Grant:TrancheAmountInvalid";
     public const string GrantApprovedAmountInvalid = "Platform:Grant:ApprovedAmountInvalid";
 
