@@ -341,6 +341,46 @@ public class GrantParametersPage_Tests : PlatformWebTestBase
         ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantPublishRequiredFieldsMissing);
     }
 
+    /// <summary>
+    /// H-09 · Ters TRL aralığı kaydediliyor, eşleştirme programı sessizce herkese kapatıyordu.
+    /// Reddedilen kayıt mevcut değeri bozmamalı.
+    /// </summary>
+    [Fact]
+    public async Task Ters_Aralik_Kaydedilmez_Ve_Eski_Deger_Kalir()
+    {
+        var id = await FirstGrantIdAsync();
+        var service = GetRequiredService<IGrantParameterAppService>();
+        var current = await service.GetAsync(id);
+
+        var ex = await Should.ThrowAsync<Volo.Abp.BusinessException>(() => service.UpdateAsync(id, new UpdateGrantParameterDto
+        {
+            Name = current.Name,
+            Issuer = current.Issuer,
+            MinTrl = 7,
+            MaxTrl = 4
+        }));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantRangeTrlInverted);
+        // Veritabanından, yeni UoW'da: reddedilen değer izlenen entity'ye yazılıp denetim
+        // önleyicisinin SaveChanges'ıyla kalıcı olmamalı (işlemsiz test UoW'unda oluyordu).
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            var stored = await GetRequiredService<IRepository<Grant, Guid>>().GetAsync(id);
+            stored.MinTrl.ShouldBe(current.MinTrl);
+            stored.MaxTrl.ShouldBe(current.MaxTrl);
+        }
+    }
+
+    [Fact]
+    public async Task Eslesme_Esigi_Program_Penceresinde_De_Sinirli()
+    {
+        await Should.ThrowAsync<Volo.Abp.Validation.AbpValidationException>(() =>
+            GetRequiredService<IGrantAppService>().CreateAsync(new CreateUpdateGrantDto
+            {
+                Name = "Eşik testi", Issuer = "Kurum", MinMatchScore = 150
+            }));
+    }
+
     [Fact]
     public async Task Kimlik_Metinleri_Ve_Asgari_Destek_Kiraci_Detayina_Tasinir()
     {

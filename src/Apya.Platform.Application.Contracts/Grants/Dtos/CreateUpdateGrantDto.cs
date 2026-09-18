@@ -15,8 +15,11 @@ public class CreateUpdateGrantDto
 
     public string? Description { get; set; }
 
+    [Range(0, 999_999_999_999.99)]
     public decimal? MaxAmount { get; set; }
 
+    // Skor 0-100; parametre ekranı zaten sınırlıyordu, bu giriş yolu sınırsızdı (150 → program kimseye önerilmez).
+    [Range(0, 100)]
     public double MinMatchScore { get; set; }
 
     // Faz A: eşleştirme kriterleri (CompanySize bit-maskesi + sektör/bölge/anahtar kelime).

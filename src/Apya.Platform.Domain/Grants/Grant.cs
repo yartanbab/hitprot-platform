@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Volo.Abp;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
 
@@ -92,6 +93,35 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
         MaxAmount = maxAmount; // Gelen sayıyı buraya atıyoruz
         MinMatchScore = minMatchScore;
         Description = ""; // Açıklama boş kalsın şimdilik
+    }
+
+    /// <summary>
+    /// Aralık şartlarında en az değer en fazla değeri geçemez. Ters aralık eşleştirmede her firma için
+    /// "karşılamıyor" sayılır ve programı sessizce herkese kapatır; kayıt anında reddedilir.
+    /// <see cref="MaxAmount"/> 0 ise "üst limit yok" demektir (katalog sözleşmesi) ve karşılaştırılmaz.
+    /// </summary>
+    public void EnsureRangesValid() => EnsureRangesValid(
+        MinCompanyAgeYears, MaxCompanyAgeYears, MinTrl, MaxTrl, MinRevenue, MaxRevenue, MinAmount, MaxAmount);
+
+    /// <summary>
+    /// Aynı kural, entity'ye YAZMADAN önce girdi üzerinde. 🔴 Önce doğrula, sonra değiştir: izlenen entity
+    /// değiştirildikten sonra atılan istisna, işlemsiz bir UoW'da (test ortamı) denetim önleyicisinin
+    /// SaveChanges'ı ile yine de kalıcı olabiliyor.
+    /// </summary>
+    public static void EnsureRangesValid(
+        int? minCompanyAgeYears, int? maxCompanyAgeYears,
+        int? minTrl, int? maxTrl,
+        decimal? minRevenue, decimal? maxRevenue,
+        decimal? minAmount, decimal? maxAmount)
+    {
+        if (minCompanyAgeYears > maxCompanyAgeYears)
+            throw new BusinessException(PlatformDomainErrorCodes.GrantRangeCompanyAgeInverted);
+        if (minTrl > maxTrl)
+            throw new BusinessException(PlatformDomainErrorCodes.GrantRangeTrlInverted);
+        if (minRevenue > maxRevenue)
+            throw new BusinessException(PlatformDomainErrorCodes.GrantRangeRevenueInverted);
+        if (maxAmount is > 0 && minAmount > maxAmount)
+            throw new BusinessException(PlatformDomainErrorCodes.GrantRangeAmountInverted);
     }
 
     /// <summary>12b · Boş ad afişi kaldırır.</summary>
