@@ -97,6 +97,26 @@
 
         @* ---------- Sağ panel ---------- *@
         <aside class="apya-dh-side">
+            @* Kurum kararı: karar girişinin tek yeri. Red kararında gerekçe ve itiraz Appeal ekranında. *@
+            <div class="card mb-0" id="decision">
+                <div class="card-body d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        <span class="apya-overline">@L["Grants:Decision:Title"]</span>
+                        <span class="apya-chip d-none" id="DecisionChip"></span>
+                    </div>
+                    <div class="apya-dh-hint d-none" id="DecisionNone">@L["Grants:Decision:None"]</div>
+                    <div class="apya-dh-section-note apya-numeric d-none" id="DecisionMeta"></div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="DecisionBtn" disabled>
+                            <i class="fa fa-gavel me-1"></i><span id="DecisionBtnText">@L["Grants:Decision:Enter"]</span>
+                        </button>
+                        <a class="btn btn-sm btn-outline-secondary d-none" id="DecisionAppealLink" href="/Grants/Appeal?id=@Model.Id">
+                            @L["Grants:Decision:OpenAppeal"]
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <div class="card mb-0">
                 <div class="card-body d-flex flex-column gap-2">
                     <span class="apya-overline">@L["Grants:DetailHost:Tranches"]</span>
@@ -141,5 +161,60 @@
                 </div>
             </div>
         </aside>
+    </div>
+</div>
+
+@* ---- Kurum kararı ---- *@
+<div class="modal fade apya-grant-scope" id="DecisionModal" tabindex="-1" aria-hidden="true" aria-labelledby="DecisionModalTitle">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="DecisionForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="DecisionModalTitle">@L["Grants:Decision:Title"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body d-flex flex-column gap-3">
+                    @* Varsayılan seçim YOK: yanlışlıkla "Reddedildi" kaydetmek firmaya kapatılamayan bir bildirim gönderir. *@
+                    <div>
+                        <label class="form-label" for="DecisionOutcome">@L["Grants:Decision:Outcome"]</label>
+                        <select class="form-select" id="DecisionOutcome" required>
+                            <option value="" disabled selected>@L["Grants:Decision:OutcomePlaceholder"]</option>
+                            <option value="1">@L["Grants:Decision:Outcome:Onaylandi"]</option>
+                            <option value="2">@L["Grants:Decision:Outcome:KismiOnay"]</option>
+                            <option value="0">@L["Grants:Decision:Outcome:Reddedildi"]</option>
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        @* abp-data-datepicker="false" ŞART: ABP başlatıcısı type=date'i metne çevirip değeri tr biçimine sokar. *@
+                        <div class="col-sm-6">
+                            <label class="form-label" for="DecisionDecidedOn">@L["Grants:Decision:DecidedOn"]</label>
+                            <input type="date" abp-data-datepicker="false" class="form-control" id="DecisionDecidedOn" required />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" for="DecisionReference">@L["Grants:Decision:ReferenceNo"]</label>
+                            <input type="text" class="form-control" id="DecisionReference" maxlength="64"
+                                   aria-describedby="DecisionReferenceHint" />
+                            <div class="form-text" id="DecisionReferenceHint">@L["Grants:Decision:ReferenceNoHint"]</div>
+                        </div>
+                    </div>
+                    <div class="d-none" id="DecisionAppealField">
+                        <label class="form-label" for="DecisionAppealDeadline">@L["Grants:Decision:AppealDeadline"]</label>
+                        <input type="date" abp-data-datepicker="false" class="form-control" id="DecisionAppealDeadline"
+                               aria-describedby="DecisionAppealHint" />
+                        <div class="form-text" id="DecisionAppealHint">@L["Grants:Decision:AppealDeadlineHint"]</div>
+                    </div>
+                    <div class="apya-side-note">
+                        <i class="fa fa-bell mt-1"></i>
+                        <span>@L["Grants:Decision:NotifyNote"]</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Sources:Cancel"]</button>
+                    <button type="submit" class="btn btn-primary" id="DecisionSaveBtn">
+                        <i class="fa fa-save me-1"></i>@L["Grants:Decision:Save"]
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

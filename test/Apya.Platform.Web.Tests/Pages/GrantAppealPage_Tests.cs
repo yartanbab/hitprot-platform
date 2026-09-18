@@ -83,6 +83,22 @@ public class GrantAppealPage_Tests : PlatformWebTestBase
             .ShouldBeTrue("sayfa demeti Appeal.js içermeli");
     }
 
+    /// <summary>
+    /// H-02 · Host boş durumda "kararı gir" der ama düğmesi yoktu; itiraz sonucunu işleyen uç
+    /// (ResolveAppealAsync) de UI'sızdı — itiraz istatistiği hiç veri almıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Karar_Girisine_Ve_Itiraz_Sonucuna_Yol_Var()
+    {
+        var (_, id) = await SetupAsync();
+
+        var html = await GetResponseAsStringAsync($"/Grants/Appeal?id={id}");
+
+        html.ShouldContain($"/Grants/DetailHost?id={id}#decision");
+        html.ShouldContain("ResolveBox");
+        html.ShouldContain("Kurum itirazı nasıl sonuçlandırdı?");
+    }
+
     [Fact]
     public async Task Karar_Yokken_Ekran_Bos_Doner()
     {

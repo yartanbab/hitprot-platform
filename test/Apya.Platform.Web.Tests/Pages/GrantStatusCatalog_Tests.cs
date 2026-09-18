@@ -130,6 +130,7 @@ public class GrantStatusCatalog_Tests
     [Theory]
     [InlineData("tranche", "Grants:Tranche:")]
     [InlineData("stage", "Grants:Stage:")]
+    [InlineData("decision", "Grants:Decision:Outcome:")]
     public void Etiketi_anahtardan_kurulan_enumlarin_yerellestirmesi_tam(string entryName, string prefix)
     {
         var trPath = FindLocalization("tr.json");
