@@ -103,7 +103,15 @@ public static class ReleaseNoteCatalog
                 "Bugün ekranından hibe projenize geçiş düzeldi",
                 "Hibe › Bugün ekranındaki \"Başvurularınız nerede\" listesinde, projeye dönüşmüş bir başvuruya " +
                 "tıkladığınızda \"sayfa bulunamadı\" hatası alıyordunuz. Artık satır doğrudan projenin detay " +
-                "sayfasını açıyor. Henüz projeye dönüşmemiş başvurular eskisi gibi Başvurularım ekranına gidiyor.")),
+                "sayfasını açıyor. Henüz projeye dönüşmemiş başvurular eskisi gibi Başvurularım ekranına gidiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe kurumunun kararı ve itiraz süreniz artık sistemde",
+                "Danışmanınız hibe kurumunun kararını sisteme işlediğinde bildirim alırsınız. Bu bildirim, hibe " +
+                "bildirimlerini kapatmış olsanız bile gelir — kaçırılması itiraz hakkınızı kaybettirebilir; e-posta " +
+                "tercihiniz açıksa ayrıca tek bir e-posta gönderilir. Red kararında Red ve İtiraz ekranında itiraz " +
+                "için son günü, kurumun gerekçelerini ve danışmanınızın her gerekçe için görüşünü görürsünüz; kurum " +
+                "itirazınızı sonuçlandırdığında sonuç da aynı ekranda yer alır.")),
 
         new ReleaseNote(
             version: "2026.09.15",
