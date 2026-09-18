@@ -214,38 +214,45 @@ $(function () {
         recalcBudget();
     }
 
-    $('#BudgetRows').on('input', '.apya-budget-input', recalcBudget);
+    var budgetTimer = null;
+    var budgetSeq = 0;
+    $('#BudgetRows').on('input', '.apya-budget-input', function () {
+        clearTimeout(budgetTimer);
+        budgetTimer = setTimeout(recalcBudget, 250);
+    });
 
-    /// Destek = kalem bütçesi × destek oranı, kalem üst limitiyle kırpılır; toplam da
-    /// programın üst limitini aşamaz. Hesap tamamen istemcide, hiçbir şey kaydedilmez.
+    /// Hesap sunucuda, başvuru sihirbazıyla AYNI hesaplayıcıyla yapılır (oran, kalem limiti ve
+    /// tavan katalogdan); hiçbir şey kaydedilmez. Burada ayrı bir formül tutmak iki ekranın farklı
+    /// destek rakamı göstermesine yol açmıştı. Geç gelen eski yanıt yenisini ezmesin diye sıra tutulur.
     function recalcBudget() {
         if (!detail) { return; }
-        var rate = (detail.supportRatePercent || 0) / 100;
-        var totalOwn = 0;
-        var totalSupport = 0;
-
+        var lines = [];
         $('#BudgetRows .apya-budget-row').each(function () {
-            var i = Number($(this).data('index'));
-            var item = detail.costItems[i];
             var own = Number($(this).find('.apya-budget-input').val()) || 0;
-            var support = own * rate;
-            if (item.limitPercent != null) {
-                support = Math.min(support, own * (item.limitPercent / 100));
+            if (own > 0) {
+                lines.push({ kind: detail.costItems[Number($(this).data('index'))].kind, amount: own });
             }
-            totalOwn += own;
-            totalSupport += support;
-            $(this).find('.apya-budget-support').text(own ? money(support) : '—');
         });
 
-        var capped = false;
-        if (detail.maxAmount && totalSupport > detail.maxAmount) {
-            totalSupport = detail.maxAmount;
-            capped = true;
-        }
+        var seq = ++budgetSeq;
+        if (!lines.length) { paintEstimate(null); return; }
+        service.estimateBudget({ grantCallId: callId, lines: lines }).then(function (r) {
+            if (seq === budgetSeq) { paintEstimate(r); }
+        });
+    }
 
-        $('#BudgetSupport').text(totalOwn ? money(totalSupport) : '—');
-        $('#BudgetShare').text(totalOwn ? money(Math.max(0, totalOwn - totalSupport)) : '—');
-        $('#BudgetNote').text(capped ? l('Grants:Detail:Budget:Capped') : '');
+    function paintEstimate(r) {
+        var byKind = {};
+        (r ? r.lines : []).forEach(function (x) { byKind[x.kind] = x; });
+        $('#BudgetRows .apya-budget-row').each(function () {
+            var line = byKind[detail.costItems[Number($(this).data('index'))].kind];
+            var own = Number($(this).find('.apya-budget-input').val()) || 0;
+            $(this).find('.apya-budget-support').text(own > 0 && line ? money(line.supportAmount) : '—');
+        });
+
+        $('#BudgetSupport').text(r ? money(r.totalSupport) : '—');
+        $('#BudgetShare').text(r ? money(r.ownContribution) : '—');
+        $('#BudgetNote').text(r && r.capApplied ? l('Grants:Detail:Budget:Capped') : '');
     }
 
     // ---------- Süreç + evrak ----------
