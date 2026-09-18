@@ -103,8 +103,9 @@ $(function () {
         if (!can) { return []; }
         var all = [
             { label: 'Yeni görev', url: '/Tasks/CreateModal', allowed: can.createTask },
-            { label: 'Yeni proje', url: '/Projects/CreateModal', allowed: can.createProject },
-            { label: 'Yeni hibe çağrısı', url: '/Grants/CreateModal', allowed: can.createGrant }
+            { label: 'Yeni proje', url: '/Projects/CreateModal', allowed: can.createProject }
+            // Hibe satırı kaldırıldı — gerekçesi apya-shell-actions.js'te:
+            // /Grants/CreateModal kaldırılmış program penceresini açıyordu.
         ];
         return all.filter(function (a) { return a.allowed; }).map(function (a) {
             return { kind: 'create', label: a.label, url: a.url, icon: 'fa fa-plus', section: '' };

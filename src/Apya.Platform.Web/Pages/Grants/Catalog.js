@@ -4,8 +4,9 @@ $(function () {
 
     // GrantEligibilityBucket / GrantEligibilityRule enum sıralarıyla birebir.
     var UYGUN = 0, KOSULLU = 1, UYGUN_DEGIL = 2;
-    var bucketKeys = ['Uygun', 'Kosullu', 'UygunDegil'];
-    var bucketTone = ['positive', 'warning', 'neutral'];
+    // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var bucketKeys = apyaGrantStatus.bucket.keys;
+    var bucketTone = apyaGrantStatus.bucket.tones;
     var bucketIcon = ['fa-circle-check', 'fa-circle-exclamation', 'fa-circle-xmark'];
     var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
 

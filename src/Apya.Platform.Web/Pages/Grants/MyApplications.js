@@ -4,7 +4,8 @@ $(function () {
     var l = abp.localization.getResource('Platform');
 
     // Enum sıraları sunucudakiyle birebir.
-    var stageKeys = ['Basvuru', 'Degerlendirme', 'Onay', 'Odeme'];
+    // Enum adları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var stageKeys = apyaGrantStatus.stage.keys;
     var actionKeys = ['CompleteForm', 'UploadDocuments', 'WaitingOnConsultant',
                       'WaitingOnInstitution', 'InProject', 'Done'];
 
@@ -136,8 +137,10 @@ $(function () {
 
     // ---------- İlgi taleplerim ----------
     // GrantInterestStatus enum sırasıyla birebir.
-    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi', 'Kacirildi'];
-    var interestTone = ['neutral', 'neutral', 'positive', 'negative', 'neutral', 'neutral'];
+    // Tek kaynak: aynı durum host'ta ve kiracıda ARTIK AYNI tonda görünür
+    // (etiket farkı korunur — kiracı "Talebiniz iletildi" okur).
+    var interestKeys = apyaGrantStatus.interest.keys;
+    var interestTone = apyaGrantStatus.interest.tones;
 
     function interestRow(r) {
         return '<div class="apya-my-interest-row">' +

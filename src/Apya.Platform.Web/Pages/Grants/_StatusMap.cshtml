@@ -1,0 +1,13 @@
+@using Apya.Platform.Web.Pages.Grants
+@*
+    Durum rozetlerinin tek kaynağı — GrantStatusCatalog'u istemciye taşır.
+    Sayfa JS'i `apyaGrantStatus.<ad>.keys / .tones` olarak okur; enum adlarını
+    ARTIK ELLE YAZMAZ (sıra kaymasının kökü oydu, bkz. GrantStatusCatalog).
+
+    Sayfa gövdesinin başına konur: tüketici JS'ler $(function(){…}) içinde
+    çalıştığı için betik DOM hazır olmadan önce tanımlanmış olur.
+
+    🔑 Bu partial'ı eklemeyi unutmak sessiz değil GÜRÜLTÜLÜ bir hatadır
+    (`undefined.keys`), ayrıca GrantStatusMapInclude_Tests ikisini eşleştirir.
+*@
+<script>window.apyaGrantStatus = @Html.Raw(GrantStatusCatalog.ToJson());</script>

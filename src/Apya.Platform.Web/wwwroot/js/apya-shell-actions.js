@@ -84,11 +84,14 @@ $(function () {
         var can = (state && state.can) || {};
         var all = [
             { key: 'g', label: 'Görev', url: '/Tasks/CreateModal', allowed: !!can.createTask },
-            { key: 'p', label: 'Proje', url: '/Projects/CreateModal', allowed: !!can.createProject },
-            // /Grants/CreateModal bir HİBE (çağrı) oluşturuyor — handoff'taki
-            // "Hibe başvurusu" etiketi bu ekranın yaptığı iş DEĞİL; gerçekte
-            // ne yarattığıysa o yazılır.
-            { key: 'h', label: 'Hibe Çağrısı', url: '/Grants/CreateModal', allowed: !!can.createGrant }
+            { key: 'p', label: 'Proje', url: '/Projects/CreateModal', allowed: !!can.createProject }
+            // 🔴 Hibe girişi BİLEREK yok. Eskiden 'h' → /Grants/CreateModal vardı;
+            // o pencere bir çağrı değil 5 alanlık bir hibe PROGRAMI yaratıyordu.
+            // Tur 22'de program penceresi kaldırıldı, program /Grants/Import'ta
+            // (metin yapıştır → alan çıkar) doğuyor — ve "+ Yeni" yalnız modal
+            // açabildiği için tam sayfa olan Import buraya konamıyor.
+            // ShellCanDto.CreateGrant sunucuda duruyor: hibeye modal bir
+            // oluşturma akışı gelirse satır buraya geri eklenir.
         ];
         return all.filter(function (a) { return a.allowed; });
     }

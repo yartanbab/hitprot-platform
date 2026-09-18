@@ -5,9 +5,12 @@ $(function () {
     var l = abp.localization.getResource('Platform');
 
 
-    var stageLabels = { 0: 'Başvuru', 1: 'Değerlendirme', 2: 'Onay', 3: 'Ödeme' };
-    var stageTone = { 0: 'neutral', 1: 'warning', 2: 'positive', 3: 'ai' };
-    var trancheStatusLabels = { 0: 'Planlandı', 1: 'Talep Edildi', 2: 'Ödendi' };
+    // Aşama ve dilim: adlar sunucudan (GrantStatusCatalog → _StatusMap), etiketler
+    // yerelleştirmeden. Eskiden ikisi de elle Türkçe yazılıydı ve "Ödeme" aşaması
+    // "ai" tonundaydı — o ton platformda yapay zekâ yüzeylerine ayrılmış.
+    var stageLabels = apyaGrantStatus.stage.keys.map(function (k) { return l('Grants:Stage:' + k); });
+    var stageTone = apyaGrantStatus.stage.tones;
+    var trancheStatusLabels = apyaGrantStatus.tranche.keys.map(function (k) { return l('Grants:Tranche:' + k); });
 
     // GrantEligibilityRule enum sırasıyla birebir.
     var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
@@ -189,10 +192,10 @@ $(function () {
     function ruleText(rule) { return l('Grants:Rule:' + ruleKeys[rule]); }
 
     // GrantInterestStatus enum değerleri sunucudakiyle birebir.
-    var interestKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi', 'Kacirildi'];
-    var interestTone = ['neutral', 'neutral', 'positive', 'negative', 'neutral', 'neutral'];
-    var bucketKeys = ['Uygun', 'Kosullu', 'UygunDegil'];
-    var bucketTone = ['positive', 'warning', 'neutral'];
+    var interestKeys = apyaGrantStatus.interest.keys;
+    var interestTone = apyaGrantStatus.interest.tones;
+    var bucketKeys = apyaGrantStatus.bucket.keys;
+    var bucketTone = apyaGrantStatus.bucket.tones;
 
     var bookmarkNoteModal = new bootstrap.Modal(document.getElementById('BookmarkNoteModal'));
     var bookmarkNoteCallId = null;

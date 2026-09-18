@@ -28,7 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.17",
             date: "17 Eylül 2026",
-            title: "Bütçe uyarıları; formlarda hazır listeler ve koşullu sorular; Genel Bakış'ta ince üst şerit",
+            title: "Bütçe uyarıları; formlarda hazır listeler ve koşullu sorular; Genel Bakış'ta ince üst şerit; " +
+                   "hibe tahsilat dilimlerinde durum düzeltmesi",
 
             // ── Finans / bütçe bildirimleri ───────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
@@ -88,7 +89,15 @@ public static class ReleaseNoteCatalog
                 "olduğunuz zaten koyu renkli sekmeden okunuyor. Kazanılan yer kartlara gitti: kartlar ekranda " +
                 "daha yukarıdan başlıyor, ilk bakışta daha fazlasını görüyor ve daha az aşağı kaydırıyorsunuz. " +
                 "Görünümler, zaman aralığı, yazdırma ve düzenleme aynı yerde ve aynı şekilde çalışmaya devam " +
-                "ediyor; telefonda bir değişiklik yok.")),
+                "ediyor; telefonda bir değişiklik yok."),
+
+            // ── Hibe ──────────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Ödenen hibe dilimi artık \"Ödendi\" olarak görünüyor",
+                "Uygulama ve Tahsilat ekranında, kurumun ödemesini yaptığı tahsilat dilimi satırda yanlışlıkla " +
+                "\"İptal\" olarak yazıyordu. Artık dilimin durumu doğru görünüyor (Planlandı · Talep edildi · " +
+                "Ödendi) ve ödemesi tamamlanan dilimler listede ayırt ediliyor. Bütçe ve tahsilat toplamları " +
+                "bu durumdan etkilenmiyordu; yanlış olan yalnızca satırdaki durum etiketiydi.")),
 
         new ReleaseNote(
             version: "2026.09.15",

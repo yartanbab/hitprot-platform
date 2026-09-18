@@ -1,12 +1,19 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Apya.Platform.Grants;
 using Apya.Platform.Grants.Dtos;
+using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Web.Pages.Grants;
 
+/// <summary>
+/// Hibe programı düzenleme penceresi. Hiçbir yerden referans verilmiyor (program
+/// düzenleme /Grants/Parameters'ta); adresle erişime karşı kapı eklendi.
+/// </summary>
+[Authorize(PlatformPermissions.Grants.Edit)]
 public class EditModalModel : AbpPageModel
 {
     private readonly IGrantAppService _grantAppService;

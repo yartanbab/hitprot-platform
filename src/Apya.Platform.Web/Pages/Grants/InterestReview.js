@@ -6,8 +6,9 @@ $(function () {
     var meetingOtherModal = new bootstrap.Modal(document.getElementById('MeetingOtherModal'));
 
     // Enum sıraları sunucudakiyle birebir.
-    var statusKeys = ['Yeni', 'Inceleniyor', 'BasvuruAcildi', 'UygunDegil', 'GeriCekildi', 'Kacirildi'];
-    var statusTone = ['warning', 'neutral', 'positive', 'negative', 'neutral', 'neutral'];
+    // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var statusKeys = apyaGrantStatus.interest.keys;
+    var statusTone = apyaGrantStatus.interest.tones;
     var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
     var sizeKeys = { 1: 'Mikro', 2: 'Kucuk', 4: 'Orta', 8: 'Buyuk' };
 

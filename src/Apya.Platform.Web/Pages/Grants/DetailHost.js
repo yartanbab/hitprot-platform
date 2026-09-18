@@ -6,10 +6,12 @@ $(function () {
 
     // Enum sıraları sunucudakiyle birebir.
     var partyKeys = ['Firma', 'Danisman', 'Ortak', 'Kurum'];
-    var stateKeys = ['Empty', 'InProgress', 'Live', 'Complete', 'Locked'];
-    var stateTone = ['neutral', 'warning', 'accent', 'positive', 'neutral'];
+    // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var stateKeys = apyaGrantStatus.sectionState.keys;
+    var stateTone = apyaGrantStatus.sectionState.tones;
     var activityKinds = ['StageMoved', 'AssignmentChanged', 'HandedOver', 'Submitted'];
-    var trancheStatus = ['Planlandi', 'Odendi', 'Iptal'];
+    // Dilim durumu da sunucudan: dizi bir kaymıştı ve ödenmiş dilim "İptal" görünüyordu.
+    var trancheStatus = apyaGrantStatus.tranche.keys;
 
     var model = null;
     var channel = 'all';

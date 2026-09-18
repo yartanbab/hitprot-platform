@@ -1,9 +1,14 @@
 $(function () {
     var hostSvc = apya.platform.grants.grantApplicationHost;
 
-    var stageLabels = { 0: 'Başvuru', 1: 'Değerlendirme', 2: 'Onay', 3: 'Ödeme' };
-    var stageTone = { 0: 'neutral', 1: 'warning', 2: 'positive', 3: 'ai' };
-    var trancheStatusLabels = { 0: 'Planlandı', 1: 'Talep Edildi', 2: 'Ödendi' };
+    var l = abp.localization.getResource('Platform');
+
+    // Aşama ve dilim: adlar sunucudan (GrantStatusCatalog → _StatusMap), etiketler
+    // yerelleştirmeden. Eskiden ikisi de elle Türkçe yazılıydı ve "Ödeme" aşaması
+    // "ai" tonundaydı — o ton platformda yapay zekâ yüzeylerine ayrılmış.
+    var stageLabels = apyaGrantStatus.stage.keys.map(function (k) { return l('Grants:Stage:' + k); });
+    var stageTone = apyaGrantStatus.stage.tones;
+    var trancheStatusLabels = apyaGrantStatus.tranche.keys.map(function (k) { return l('Grants:Tranche:' + k); });
 
     var advanceModal = new bootstrap.Modal(document.getElementById('AdvanceStageModal'));
     var trancheModal = new bootstrap.Modal(document.getElementById('TrancheModal'));

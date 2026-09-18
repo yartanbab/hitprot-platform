@@ -4,9 +4,11 @@ $(function () {
     var appId = $('.apya-page').data('application-id');
 
     // Enum sıraları sunucudakiyle birebir.
-    var reportKeys = ['Planlandi', 'Hazirlaniyor', 'Gonderildi', 'Onaylandi', 'RevizyonIstendi'];
-    var reportTone = ['neutral', 'warning', 'accent', 'positive', 'negative'];
-    var trancheKeys = ['Planlandi', 'Odendi', 'Iptal'];
+    // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
+    var reportKeys = apyaGrantStatus.report.keys;
+    var reportTone = apyaGrantStatus.report.tones;
+    // Dilim durumu da sunucudan: dizi bir kaymıştı ve ödenmiş dilim "İptal" görünüyordu.
+    var trancheKeys = apyaGrantStatus.tranche.keys;
     var obligationKeys = ['ReportDue', 'TrancheDue'];
 
     var model = null;
@@ -27,7 +29,7 @@ $(function () {
     }
 
     function chainItem(c) {
-        var paid = c.trancheStatus === 1;
+        var paid = c.trancheStatus === 2; // Odendi = 2 (eskiden 1 yazıyordu, hiç eşleşmiyordu)
         var cls = paid ? ' is-paid' : (c.paymentBlocked ? ' is-blocked' : '');
 
         var tranche = c.trancheId
