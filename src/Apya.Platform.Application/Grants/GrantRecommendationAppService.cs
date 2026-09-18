@@ -246,6 +246,51 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         }
     }
 
+    /// <summary>
+    /// Sihirbazla AYNI hesap (<see cref="GrantBudgetCalculator"/>); oran, kalem limitleri ve tavan istemciden
+    /// alınmaz, katalogdan okunur. Programın desteklemediği kalem türleri hesaba girmez. Kayıt yok.
+    /// </summary>
+    public async Task<GrantBudgetEstimateDto> EstimateBudgetAsync(EstimateGrantBudgetInput input)
+    {
+        using (_mtFilter.Disable())
+        {
+            // Detay ekranıyla aynı kapı: yalnız katalogdaki (TenantId null) açık çağrı.
+            var call = await _callRepo.FirstOrDefaultAsync(
+                           c => c.Id == input.GrantCallId && c.Status == GrantCallStatus.Acik && c.TenantId == null)
+                       ?? throw new EntityNotFoundException(typeof(GrantCall), input.GrantCallId);
+            var grant = await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId && g.TenantId == null)
+                        ?? throw new EntityNotFoundException(typeof(Grant), call.GrantId);
+            var costItems = await _costItemRepo.GetListAsync(c => c.GrantId == grant.Id && c.TenantId == null);
+
+            var amounts = input.Lines
+                .GroupBy(l => l.Kind)
+                .ToDictionary(g => g.Key, g => g.Sum(l => l.Amount));
+            var budget = GrantBudgetCalculator.Calculate(
+                costItems
+                    .OrderBy(c => c.Kind)
+                    .Select(c => new GrantBudgetCalculator.LineInput(
+                        c.Kind, amounts.TryGetValue(c.Kind, out var amount) ? amount : 0m, c.LimitPercent)),
+                grant.SupportRatePercent,
+                grant.MaxAmount);
+
+            return new GrantBudgetEstimateDto
+            {
+                Lines = budget.Lines
+                    .Select(l => new GrantBudgetEstimateLineDto
+                    {
+                        Kind = l.Kind,
+                        SupportAmount = l.SupportAmount,
+                        LimitApplied = l.LimitApplied
+                    })
+                    .ToList(),
+                TotalProject = budget.TotalProject,
+                TotalSupport = budget.TotalSupport,
+                OwnContribution = budget.OwnContribution,
+                CapApplied = budget.CapApplied
+            };
+        }
+    }
+
     /// <summary>Aynı kurumun ya da en yüksek skorlu diğer açık çağrılar (en fazla 3).</summary>
     private async Task<List<GrantSimilarCallDto>> BuildSimilarAsync(
         GrantCall call, Grant grant, FirmSignals signals, DateTime today)

@@ -21,6 +21,9 @@ public interface IGrantRecommendationAppService : IApplicationService
     /// <summary>1e · Tek çağrının detayı: uygunluk tablosu, bütçe kalemleri, süreç, uyum kırılımı.</summary>
     Task<GrantCallDetailDto> GetCallDetailAsync(Guid grantCallId);
 
+    /// <summary>1e · Bütçe hesaplayıcısı: girilen tutarlardan destek tahmini (sihirbazla aynı hesap, kayıt yok).</summary>
+    Task<GrantBudgetEstimateDto> EstimateBudgetAsync(EstimateGrantBudgetInput input);
+
     /// <summary>1d/9a · Takip işaretini açıp kapatır. Dönüş: yeni durum.</summary>
     Task<bool> ToggleBookmarkAsync(Guid grantCallId);
 
