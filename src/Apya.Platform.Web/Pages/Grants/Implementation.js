@@ -35,7 +35,7 @@ $(function () {
         var tranche = c.trancheId
             ? '<span class="apya-im-tranche">' +
               '<span class="apya-im-amount">' + money(c.trancheAmount) + ' ₺</span>' +
-              '<span class="apya-chip apya-chip-' + (paid ? 'positive' : 'neutral') + '">' +
+              '<span class="apya-chip apya-chip-' + apyaGrantStatus.tranche.tones[c.trancheStatus] + '">' +
               esc(l('Grants:Tranche:' + trancheKeys[c.trancheStatus])) + '</span>' +
               (c.paymentBlocked
                   ? '<span class="apya-im-section-note">' + esc(l('Grants:Impl:PaymentBlocked')) + '</span>'
