@@ -28,8 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.17",
             date: "17 Eylül 2026",
-            title: "Bütçe uyarıları; formlarda hazır listeler ve koşullu sorular; Genel Bakış'ta ince üst şerit; " +
-                   "hibe tahsilat dilimlerinde durum düzeltmesi",
+            title: "Bütçe uyarıları ve masaüstü bildirimleri; formlarda hazır listeler ve koşullu sorular; " +
+                   "Genel Bakış'ta ince üst şerit; hibe tahsilat dilimlerinde durum düzeltmesi",
 
             // ── Finans / bütçe bildirimleri ───────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
@@ -60,6 +60,19 @@ public static class ReleaseNoteCatalog
                 "Bildirimler ekranındaki tercih penceresinde artık Finans satırı da var: bütçe bildirimlerini " +
                 "uygulama içinde açık tutup kapatabilir, isterseniz e-posta ile de almayı seçebilirsiniz. " +
                 "Bildirim merkezinde Finans kendi sekmesi olarak listelenir."),
+
+            // ── Bildirimler ───────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Apya arka plandayken bildirimler masaüstünüze geliyor",
+                "Apya bir tarayıcı sekmesinde açıkken başka bir sekmeye ya da programa geçtiğinizde, yeni " +
+                "bildirimler artık bilgisayarınızın bildirim alanında da görünüyor; bildirime tıkladığınızda Apya " +
+                "öne gelir ve ilgili sayfa açılır. Açmak için zil panelinde çıkan şeritte \"Aç\"a basıp tarayıcının " +
+                "sorduğu izni vermeniz yeterli. Bildirimler ekranındaki tercih penceresinin \"Bu cihaz\" bölümünden " +
+                "özelliği açıp kapatabilir, \"Bu cihazda dene\" ile çalıştığını görebilirsiniz; bu ayar her cihaz ve " +
+                "tarayıcı için ayrı tutulur. Apya ekranda önünüzdeyken masaüstü bildirimi çıkmaz, zil ve anlık uyarı " +
+                "yeterlidir. Birden fazla sekme açıksa aynı bildirim bir kez gelir; kritik bildirimler siz kapatana " +
+                "kadar ekranda kalır. Tarayıcı iznini daha önce reddettiyseniz aynı bölümdeki \"Nasıl açarım?\" " +
+                "açıklaması izni nereden açacağınızı gösterir. Tarayıcı tamamen kapalıyken bildirim gelmez."),
 
             // ── Formlar ───────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
