@@ -254,6 +254,56 @@ public class GrantImplementationPage_Tests : PlatformWebTestBase
         dto.Budget.ShouldBeEmpty("harcama kayıtları projede tutulur; proje yoksa gerçekleşme yok");
     }
 
+    /// <summary>
+    /// Kaleme bağlanmamış gider hibe gerçekleşmesinden SESSİZCE düşüyordu: kullanım oranları olduğundan
+    /// düşük görünüyor, ekran bunu hiç söylemiyordu. Proje bütçe ekranının "kaleme atanmamış" rakamıyla
+    /// aynı semantik (ham tutar toplamı) ayrıca döner.
+    /// </summary>
+    [Fact]
+    public async Task Kaleme_Baglanmamis_Gider_Gerceklesmede_Ayrica_Gosterilir()
+    {
+        var (tenantId, id, _) = await SetupAsync();
+
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            using (_currentTenant.Change(tenantId))
+            {
+                var project = new Apya.Platform.Projects.Project(
+                    Guid.NewGuid(), tenantId, null, "Hibe projesi", "PRJ-2026-901", string.Empty);
+                await GetRequiredService<IRepository<Apya.Platform.Projects.Project, Guid>>().InsertAsync(project, autoSave: true);
+
+                var line = new Apya.Platform.ProjectBudgets.ProjectBudgetLine(
+                    Guid.NewGuid(), tenantId, project.Id, "Personnel", "Personel", 500_000m, 500_000m);
+                await GetRequiredService<IRepository<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Guid>>()
+                    .InsertAsync(line, autoSave: true);
+
+                var cash = new Apya.Platform.CashAccounts.CashAccount(Guid.NewGuid(), "Banka", tenantId: tenantId);
+                await GetRequiredService<IRepository<Apya.Platform.CashAccounts.CashAccount, Guid>>().InsertAsync(cash, autoSave: true);
+
+                var expenses = GetRequiredService<IRepository<Apya.Platform.Expenses.Expense, Guid>>();
+                Apya.Platform.Expenses.Expense Spend(string title, decimal amount) => new(
+                    Guid.NewGuid(), title, amount, cash.Id, DateTime.Today, projectId: project.Id, tenantId: tenantId);
+                var salary = Spend("Maaş", 100_000m);
+                salary.BudgetLineId = line.Id;
+                await expenses.InsertAsync(salary, autoSave: true);
+                await expenses.InsertAsync(Spend("Ofis kirası", 30_000m), autoSave: true);
+                await expenses.InsertAsync(Spend("Kargo", 2_500m), autoSave: true);
+
+                var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+                var application = await appRepo.GetAsync(id);
+                application.LinkToProject(project.Id);
+                await appRepo.UpdateAsync(application, autoSave: true);
+            }
+            await uow.CompleteAsync();
+        }
+
+        var dto = await _impl.GetAsync(id);
+
+        dto.Budget.Single().SpentAmount.ShouldBe(100_000m);
+        dto.UnassignedExpenseCount.ShouldBe(2);
+        dto.UnassignedSpentAmount.ShouldBe(32_500m);
+    }
+
     [Fact]
     public async Task Firma_Okur_Ama_Rapor_Durumu_Degistiremez()
     {
