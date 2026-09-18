@@ -11,8 +11,7 @@ namespace Apya.Platform.Grants;
 ///
 /// <para>Rapor bir tahsilat dilimine BAĞLANABİLİR: tasarımın "rapor-dilim zinciri"
 /// budur. 🔴 Bağlıysa dilim, rapor onaylanmadan ödemeye çıkmamalıdır — kural
-/// uygulama katmanında (<see cref="GrantImplementationAppService"/>) uygulanır,
-/// entity yalnız bağı taşır.</para>
+/// <see cref="GrantTrancheManager"/>'da uygulanır, entity yalnız bağı taşır.</para>
 ///
 /// <para>Alt bölümler (teknik / mali / çizelge / YMM) ayrı satırlardır: "rapor
 /// hazırlanıyor" demek yetmez, hangi bölümün beklediği görünmeli.</para>

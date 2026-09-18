@@ -36,4 +36,16 @@ public class GrantApplication_Tests
         app.Stage.ShouldBe(GrantApplicationStage.Odeme);
         app.ApprovedAmount.ShouldBe(50000m);
     }
+
+    [Fact]
+    public void AdvanceStage_Rejects_Negative_ApprovedAmount()
+    {
+        var app = NewApp();
+        app.AdvanceStage(GrantApplicationStage.Onay, 50000m);
+
+        var ex = Should.Throw<Volo.Abp.BusinessException>(() => app.AdvanceStage(GrantApplicationStage.Onay, -1m));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantApprovedAmountInvalid);
+        app.ApprovedAmount.ShouldBe(50000m, "reddedilen giriş mevcut tutarı bozmamalı");
+    }
 }
