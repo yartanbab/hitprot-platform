@@ -103,7 +103,16 @@ public static class ReleaseNoteCatalog
                 "Bugün ekranından hibe projenize geçiş düzeldi",
                 "Hibe › Bugün ekranındaki \"Başvurularınız nerede\" listesinde, projeye dönüşmüş bir başvuruya " +
                 "tıkladığınızda \"sayfa bulunamadı\" hatası alıyordunuz. Artık satır doğrudan projenin detay " +
-                "sayfasını açıyor. Henüz projeye dönüşmemiş başvurular eskisi gibi Başvurularım ekranına gidiyor.")),
+                "sayfasını açıyor. Henüz projeye dönüşmemiş başvurular eskisi gibi Başvurularım ekranına gidiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Çağrı detayındaki bütçe hesaplayıcısı başvurudaki destek tutarıyla aynı sonucu veriyor",
+                "Bir hibe çağrısının detayında kalem kalem tutar girerek hesapladığınız destek, bazı durumlarda " +
+                "başvuru ekranında gördüğünüz tutardan yüksek çıkıyordu: \"toplam bütçenin %40'ını geçemez\" gibi " +
+                "kalem sınırları yanlış tutar üzerinden uygulanıyordu. Artık iki ekran aynı hesabı kullanıyor — " +
+                "kalem sınırı toplam proje bütçesine göre uygulanır, programın üst limiti aşılırsa kalem destekleri " +
+                "de orantılı olarak düşer ve satırların toplamı gösterilen toplamı tutar. Girdiğiniz tutarlar yine " +
+                "hiçbir yere kaydedilmez.")),
 
         new ReleaseNote(
             version: "2026.09.15",
