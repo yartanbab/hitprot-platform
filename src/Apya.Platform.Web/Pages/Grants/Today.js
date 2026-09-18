@@ -188,7 +188,7 @@ $(function () {
             var days = a.isClosed || a.daysRemaining == null ? ''
                 : '<span class="apya-today-app-days apya-numeric">' +
                   esc(a.daysRemaining < 0 ? l('Grants:Today:DaysPast', -a.daysRemaining) : l('Grants:Today:DaysShort', a.daysRemaining)) + '</span>';
-            var href = a.projectId ? '/Projects/Detail?id=' + a.projectId : '/Grants/MyApplications';
+            var href = a.projectId ? '/Projects/ProjectDetails/' + a.projectId : '/Grants/MyApplications';
             return '<a class="apya-today-app' + (a.isClosed ? ' is-closed' : '') + '" href="' + href + '">' +
                 '<span class="apya-today-app-body"><span class="apya-today-app-name">' + esc(a.grantName) + '</span>' +
                 '<span class="apya-today-app-state">' + esc(appSentence(a)) + '</span></span>' + days + '</a>';
