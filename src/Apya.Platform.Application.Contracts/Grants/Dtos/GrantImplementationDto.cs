@@ -30,6 +30,14 @@ public class GrantImplementationDto
     public List<GrantBudgetRealisationDto> Budget { get; set; } = new();
     public List<GrantObligationDto> Obligations { get; set; } = new();
 
+    /// <summary>
+    /// Projede bir bütçe kalemine bağlanmamış giderler. Kalem satırlarındaki kullanım oranlarına
+    /// GİRMEZLER; ekran sessizce düşürmek yerine ayrıca söyler. Proje bütçe ekranındaki
+    /// "kaleme atanmamış" rakamıyla aynı semantik (ham tutar toplamı).
+    /// </summary>
+    public int UnassignedExpenseCount { get; set; }
+    public decimal UnassignedSpentAmount { get; set; }
+
     /// <summary>Bütçe gerçekleşmesi projeden okundu mu; proje yoksa false.</summary>
     public bool HasProject { get; set; }
     public Guid? ProjectId { get; set; }

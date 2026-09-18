@@ -349,7 +349,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
             });
         }
 
-        dto.Budget = await BuildBudgetAsync(application);
+        await BuildBudgetAsync(application, dto);
         dto.Obligations = BuildObligations(reports, tranches, today);
 
         return dto;
@@ -360,18 +360,23 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
     /// projeye dönüşmemiş başvuruda gerçekleşme YOKTUR; boş liste döner ve ekran
     /// bunu açıkça söyler.
     /// </summary>
-    private async Task<List<GrantBudgetRealisationDto>> BuildBudgetAsync(GrantApplication application)
+    private async Task BuildBudgetAsync(GrantApplication application, GrantImplementationDto dto)
     {
-        var result = new List<GrantBudgetRealisationDto>();
-        if (!application.ProjectId.HasValue) { return result; }
+        var result = dto.Budget;
+        if (!application.ProjectId.HasValue) { return; }
 
         using (_currentTenant.Change(application.TenantId))
         {
+            var expenses = await _expenseRepo.GetListAsync(e => e.ProjectId == application.ProjectId.Value);
+            // Kalemsiz gider kalem satırlarına giremez; sessizce düşürülmez, ayrıca söylenir.
+            var unassigned = expenses.Where(e => !e.BudgetLineId.HasValue).ToList();
+            dto.UnassignedExpenseCount = unassigned.Count;
+            dto.UnassignedSpentAmount = unassigned.Sum(e => e.Amount);
+
             var lines = (await _projectBudgetRepo.GetListAsync(l => l.ProjectId == application.ProjectId.Value))
                 .OrderBy(l => l.Order).ToList();
-            if (lines.Count == 0) { return result; }
+            if (lines.Count == 0) { return; }
 
-            var expenses = await _expenseRepo.GetListAsync(e => e.ProjectId == application.ProjectId.Value);
             var spentByLine = expenses
                 .Where(e => e.BudgetLineId.HasValue)
                 .GroupBy(e => e.BudgetLineId!.Value)
@@ -395,8 +400,6 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
                 });
             }
         }
-
-        return result;
     }
 
     /// <summary>

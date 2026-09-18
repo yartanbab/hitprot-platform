@@ -1425,6 +1425,7 @@
         "Grants:Impl:Col:Usage": "Kullanım",
         "Grants:Impl:NoProject": "Bu başvuru henüz projeye dönüştürülmedi; harcama kayıtları projede tutulduğu için gerçekleşme gösterilemiyor.",
         "Grants:Impl:TransferWarning": "Bir kalemin kullanımı sınıra dayandı. Kalemler arası aktarım revizyon onayı gerektirir.",
+        "Grants:Impl:Unassigned": "{0} gider (toplam {1} ₺) bir bütçe kalemine bağlanmamış; yukarıdaki kullanım oranlarına dahil değil. Giderleri projenin bütçesinde kalemlere bağlayabilirsiniz.",
         "Grants:Impl:Obligations": "Yaklaşan yükümlülükler",
         "Grants:Impl:Obligation:Report": "{0} teslimi",
         "Grants:Impl:Obligation:Tranche": "{0}. dilim tahsilatı",

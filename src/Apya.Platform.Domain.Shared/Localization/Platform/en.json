@@ -1516,6 +1516,7 @@
     "Grants:Impl:Col:Usage": "Usage",
     "Grants:Impl:NoProject": "This application has not been converted into a project yet; spending lives in the project, so realisation cannot be shown.",
     "Grants:Impl:TransferWarning": "One line is close to its limit. Transfers between lines require a revision approval.",
+    "Grants:Impl:Unassigned": "{0} expenses (total ₺{1}) are not linked to a budget line and are not included in the usage rates above. You can link them to lines in the project budget.",
     "Grants:Impl:Obligations": "Upcoming obligations",
     "Grants:Impl:Obligation:Report": "{0} submission",
     "Grants:Impl:Obligation:Tranche": "tranche {0} collection",
