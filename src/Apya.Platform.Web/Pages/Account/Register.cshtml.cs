@@ -10,7 +10,8 @@ namespace Apya.Platform.Web.Pages.Account;
 
 /// <summary>
 /// Kayıt formu: kullanıcı adı ve e-posta alanlarının baş/son boşluklarını kırpar.
-/// Şifreye DOKUNULMAZ.
+/// Şifre burada kırpılmaz; onun kırpması
+/// <see cref="Apya.Platform.Identity.ApyaIdentityUserManager"/> içinde yapılır.
 /// </summary>
 public class ApyaRegisterModel : Volo.Abp.Account.Web.Pages.Account.RegisterModel
 {

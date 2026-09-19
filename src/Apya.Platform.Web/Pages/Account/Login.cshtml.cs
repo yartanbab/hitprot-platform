@@ -226,7 +226,8 @@ public class ApyaLoginModel : Volo.Abp.Account.Web.Pages.Account.LoginModel
 
     /// <summary>
     /// Kullanıcı adı / e-posta alanının baş ve sonundaki boşluklarını kırpar.
-    /// Şifreye DOKUNULMAZ. Ayrıntı: <see cref="AccountInputTrimmer"/>.
+    /// Ayrıntı: <see cref="AccountInputTrimmer"/>. Şifre burada kırpılmaz; onun kırpması
+    /// <see cref="Apya.Platform.Identity.ApyaIdentityUserManager"/> içinde yapılır.
     /// </summary>
     private void TrimUserNameInput()
     {
