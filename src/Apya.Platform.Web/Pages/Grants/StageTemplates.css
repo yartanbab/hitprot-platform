@@ -72,7 +72,7 @@
     justify-content: center;
     gap: 6px;
     width: 100%;
-    height: 32px;
+    height: 40px;
     border: 1px dashed var(--apya-border-strong);
     border-radius: var(--apya-radius-lg);
     background: transparent;
@@ -85,98 +85,181 @@
 
 .apya-tpl-new--inline { width: auto; padding: 0 var(--apya-space-3); }
 
-/* --- Orta: aşama tablosu --- */
+/* --- Orta: aşama kartları ---
+   Beş sütunlu tablo satırı ~620px istiyordu; orta sütun 1440px ekranda ~470px
+   kalıyor ve kap overflow:hidden olduğu için sağdaki sütunlar (silme dahil)
+   kırpılıyordu. Aşama başına iki katmanlı kart her genişlikte aynı düzen:
+   üstte ad + sahibi + sil, altta etiketli üç alan (sığmayınca alt alta iner). */
+.apya-tpl-editor {
+    /* Sessiz alanın metni, üstündeki etiketle aynı hizada başlasın diye kutu
+       sola bu kadar taşar: iç boşluk + kenarlık. */
+    --apya-tpl-inset: calc(var(--apya-space-2) + 1px);
+}
+
+/* Sessiz alanlar: kutu yalnız hover/odakta belirir, değer düz metin gibi okunur.
+   Odak halkası apya-theme-bridge'teki genel :focus kuralından gelir.
+   🔴 color şart: LeptonX demeti .form-control'e sabit koyu metin veriyor; zemin
+   şeffaf olunca koyu temada değer kartın üstünde görünmez kalıyordu. */
+.apya-tpl-editor .form-control {
+    padding-inline: var(--apya-space-2);
+    border-color: transparent;
+    background-color: transparent;
+    box-shadow: none;
+    color: var(--apya-text-primary);
+    transition:
+        border-color var(--apya-motion-base) var(--apya-easing-standard),
+        background-color var(--apya-motion-base) var(--apya-easing-standard),
+        box-shadow var(--apya-motion-base) var(--apya-easing-standard);
+}
+
+.apya-tpl-editor .apya-tpl-title,
+.apya-tpl-editor .apya-tpl-desc,
+.apya-tpl-row .apya-tpl-step-name,
+.apya-tpl-row .apya-tpl-note,
+.apya-tpl-row .apya-tpl-docs,
+.apya-tpl-row .apya-tpl-completion {
+    width: calc(100% + var(--apya-tpl-inset));
+    margin-inline-start: calc(-1 * var(--apya-tpl-inset));
+}
+
+.apya-tpl-row:hover .form-control {
+    border-color: var(--apya-border-default);
+    background-color: var(--apya-surface-base);
+}
+
+.apya-tpl-editor .form-control:hover,
+.apya-tpl-editor .form-control:focus {
+    border-color: var(--apya-border-strong);
+    background-color: var(--apya-surface-base);
+}
+
+.apya-tpl-editor .apya-tpl-title {
+    font-size: var(--apya-text-xl);
+    font-weight: var(--apya-weight-bold);
+    letter-spacing: var(--apya-tracking-tight);
+    color: var(--apya-text-primary);
+}
+
+.apya-tpl-editor .apya-tpl-desc {
+    font-size: var(--apya-fs-sm);
+    color: var(--apya-text-secondary);
+}
+
 .apya-tpl-table {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--apya-border-default);
-    border-radius: var(--apya-radius-xl);
-    overflow: hidden;
+    gap: 10px;
 }
+
+/* Aşamasız şablonda boş kap kart gövdesine fazladan bir gap-3 eklemesin. */
+.apya-tpl-table:empty { display: none; }
 
 .apya-tpl-row {
+    position: relative;
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) 118px 132px 156px 88px 30px;
-    align-items: center;
-    gap: var(--apya-space-2);
-    padding: 8px var(--apya-space-3);
-    border-bottom: 1px solid var(--apya-border-subtle);
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: var(--apya-space-3);
+    padding: 14px;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background-color: var(--apya-surface-base);
+    transition:
+        border-color var(--apya-motion-base) var(--apya-easing-standard),
+        background-color var(--apya-motion-base) var(--apya-easing-standard),
+        box-shadow var(--apya-motion-base) var(--apya-easing-standard);
 }
 
-.apya-tpl-row:last-child { border-bottom: 0; }
+.apya-tpl-row:hover { border-color: var(--apya-border-strong); }
 
-.apya-tpl-head {
-    background: var(--apya-surface-raised);
-    border-bottom: 1px solid var(--apya-border-default);
-}
-
-.apya-tpl-head > span {
-    font-size: var(--apya-text-xs);
-    font-weight: var(--apya-weight-bold);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--apya-text-tertiary);
-}
-
-.apya-tpl-grip {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--apya-border-strong);
-    cursor: grab;
+.apya-tpl-row:focus-within {
+    border-color: var(--apya-accent-500);
+    box-shadow: 0 0 0 3px var(--apya-accent-soft);
 }
 
 .apya-tpl-row.sortable-ghost { opacity: 0.4; }
 
+/* Sıra numarası tutamağın kendisi: hover'da yerini grip ikonuna bırakır. */
+.apya-tpl-grip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin-top: var(--apya-space-2);
+    border-radius: var(--apya-radius-lg);
+    background-color: var(--apya-surface-sunken);
+    color: var(--apya-text-tertiary);
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-text-xs);
+    font-variant-numeric: tabular-nums;
+    cursor: grab;
+    transition: background-color var(--apya-motion-base) var(--apya-easing-standard);
+}
+
+.apya-tpl-grip > .fa { display: none; }
+.apya-tpl-row:hover .apya-tpl-grip > .fa { display: inline-block; }
+.apya-tpl-row:hover .apya-tpl-num { display: none; }
+
+.apya-tpl-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+/* Sil butonu kartın sağ üst köşesine sabit (aşağıda); ad ile sahibi dar
+   kartta alt alta iner ama × hep aynı yerde kalır. */
+.apya-tpl-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--apya-space-2) var(--apya-space-3);
+    padding-inline-end: 40px;
+}
+
 .apya-tpl-name-cell {
     display: flex;
+    flex: 1 1 180px;
     flex-direction: column;
     gap: 2px;
     min-width: 0;
 }
 
-/* Satır içi alanlar tabloyu şişirmesin: kenarlıksız, satır yüksekliğinde. */
-.apya-tpl-row .form-control,
-.apya-tpl-row .form-select {
-    height: 30px;
-    min-width: 0;
-    padding: 0 var(--apya-space-2);
-    font-size: var(--apya-fs-sm);
+.apya-tpl-row .apya-tpl-step-name {
+    font-size: 15px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
 }
 
 .apya-tpl-row .apya-tpl-note {
-    height: 22px;
-    padding: 0 var(--apya-space-2);
-    border-color: transparent;
-    background: transparent;
     font-size: var(--apya-fs-xs);
     color: var(--apya-text-tertiary);
 }
 
-.apya-tpl-row .apya-tpl-note:focus {
-    border-color: var(--apya-border-default);
-    background: var(--apya-surface-base);
-}
-
-.apya-tpl-reminder {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.apya-tpl-reminder > .form-control {
-    font-family: var(--apya-font-mono);
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-}
-
-.apya-tpl-reminder > span {
+/* Sahibi hap biçiminde. `background` kısaltması Bootstrap'in ok ikonunu
+   silerdi — yalnız background-color.
+   Yarıçap: apya-theme-bridge `.form-select`e `var(--apya-radius-lg) !important`
+   veriyor; !important yazmadan hap olsun diye değişken bu elemanda eziliyor. */
+.apya-tpl-row .apya-tpl-owner {
+    --apya-radius-lg: var(--apya-radius-full);
     flex: none;
-    font-size: var(--apya-fs-xs);
-    color: var(--apya-text-tertiary);
+    width: auto;
+    field-sizing: content;
+    padding-inline: var(--apya-space-3) 30px;
+    background-position: right 10px center;
+    border-color: transparent;
+    background-color: var(--apya-surface-sunken);
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-medium);
+    color: var(--apya-text-secondary);
 }
 
 .apya-tpl-remove {
+    position: absolute;
+    top: 14px;
+    inset-inline-end: var(--apya-space-1);
+    min-width: 40px;
+    min-height: 42px;
     padding: 0;
     border: 0;
     background: transparent;
@@ -186,12 +269,143 @@
 
 .apya-tpl-remove:hover { color: var(--apya-negative-500); }
 
-.apya-tpl-empty {
-    padding: var(--apya-space-5);
-    text-align: center;
-    font-size: var(--apya-fs-sm);
+.apya-tpl-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--apya-space-3);
+}
+
+.apya-tpl-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    margin: 0;
+}
+
+.apya-tpl-label {
+    font-size: var(--apya-text-xs);
+    font-weight: var(--apya-weight-medium);
     color: var(--apya-text-tertiary);
 }
+
+/* Kırpma yok: açıklama, evrak ve koşul metni sarar, kutu içerikle uzar.
+   field-sizing desteklemeyen tarayıcıda tek satır yüksekliğinde kalır, içerik kayar. */
+.apya-tpl-editor textarea.form-control {
+    field-sizing: content;
+    padding-block: 9px;
+    line-height: 1.5;
+    resize: none;
+}
+
+.apya-tpl-reminder {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.apya-tpl-reminder > .form-control {
+    flex: none;
+    width: 72px;
+    margin-inline-start: calc(-1 * var(--apya-tpl-inset));
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+/* "7 gün" bitişik okunsun: kutu sayının genişliğine iner. Boş kutu dar kalır
+   ama etiketin tamamı (label) tıklama hedefi. */
+@supports (field-sizing: content) {
+    .apya-tpl-reminder > .form-control {
+        width: auto;
+        min-width: calc(1ch + 2 * var(--apya-tpl-inset));
+        field-sizing: content;
+    }
+}
+
+.apya-tpl-reminder > span {
+    flex: none;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-tertiary);
+}
+
+/* Odaktaki kart: numara ve sahibi hapı aksana döner. */
+.apya-tpl-row:focus-within .apya-tpl-grip,
+.apya-tpl-row:focus-within .apya-tpl-owner {
+    background-color: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+}
+
+/* Adsız aşama: kart, numara ve ad kutusu hata tonunda, altında gerekçe. */
+.apya-tpl-row.is-invalid {
+    border-color: var(--apya-border-error);
+    background-color: var(--apya-negative-50);
+    box-shadow: none;
+}
+
+.apya-tpl-row.is-invalid .apya-tpl-grip {
+    background-color: var(--apya-negative-100);
+    color: var(--apya-negative-700);
+}
+
+.apya-tpl-row.is-invalid .apya-tpl-step-name {
+    border-color: var(--apya-border-error);
+    background-color: var(--apya-surface-base);
+}
+
+.apya-tpl-error {
+    display: none;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-negative-700);
+}
+
+.apya-tpl-row.is-invalid .apya-tpl-error { display: block; }
+
+/* Adsız aşama varken pasif Kaydet: tema mavisinin soluk hali yerine nötr. */
+.apya-tpl-editor .btn-primary {
+    --bs-btn-disabled-bg: var(--apya-border-default);
+    --bs-btn-disabled-border-color: var(--apya-border-default);
+    --bs-btn-disabled-color: var(--apya-text-disabled);
+    --bs-btn-disabled-opacity: 1;
+}
+
+/* Boş şablon: tek çağrı — ilk aşamayı ekle. */
+.apya-tpl-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--apya-space-2);
+    padding: 32px var(--apya-space-5);
+    border: 1px dashed var(--apya-border-strong);
+    border-radius: var(--apya-radius-xl);
+    background-color: var(--apya-surface-raised);
+    text-align: center;
+}
+
+.apya-tpl-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--apya-radius-full);
+    background-color: var(--apya-accent-soft);
+    color: var(--apya-accent-600);
+}
+
+.apya-tpl-empty-title {
+    font-size: 15px;
+    font-weight: var(--apya-weight-semibold);
+    color: var(--apya-text-primary);
+}
+
+.apya-tpl-empty-hint {
+    max-width: 340px;
+    font-size: var(--apya-fs-sm);
+    line-height: 1.5;
+    color: var(--apya-text-tertiary);
+}
+
+.apya-tpl-empty > .btn { margin-top: 6px; }
 
 /* --- Sağ panel --- */
 .apya-tpl-side {
@@ -205,13 +419,26 @@
 .apya-tpl-column {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: var(--apya-space-2);
     padding: 7px 10px;
     border: 1px solid var(--apya-border-default);
     border-radius: var(--apya-radius-lg);
     background: var(--apya-surface-raised);
     font-size: var(--apya-fs-sm);
+}
+
+.apya-tpl-column-num {
+    flex: none;
+    font-family: var(--apya-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: var(--apya-text-xs);
+    color: var(--apya-text-tertiary);
+}
+
+.apya-tpl-column-name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .apya-tpl-column-owner {
@@ -237,32 +464,25 @@
     color: var(--apya-text-tertiary);
 }
 
+/* display:flex d-none'u ezmez (o !important) — gizleme çalışmaya devam eder. */
 .apya-tpl-warning {
+    display: flex;
+    align-items: baseline;
+    gap: var(--apya-space-2);
     padding: 10px;
     border-radius: var(--apya-radius-lg);
     background: var(--apya-warning-50);
     color: var(--apya-warning-700);
-    font-size: var(--apya-text-xs);
+    font-size: var(--apya-fs-xs);
     line-height: 1.45;
 }
 
-/* Koyu temada aksan metni: accent-600 dark'ta -500'den DAHA koyu tanımlı. */
-[data-theme="dark"] .apya-tpl-item.is-active {
+/* Koyu temada aksan metni: accent-600 dark'ta -500'den DAHA koyu tanımlı.
+   Hatalı kart kendi tonunda kalsın diye odak kuralı .is-invalid'i dışlar. */
+[data-theme="dark"] .apya-tpl-item.is-active,
+[data-theme="dark"] .apya-tpl-row:focus-within:not(.is-invalid) .apya-tpl-grip,
+[data-theme="dark"] .apya-tpl-row:focus-within:not(.is-invalid) .apya-tpl-owner,
+[data-theme="dark"] .apya-tpl-empty-icon {
     color: var(--apya-accent-300);
 }
 
-/* Dar ekran: beş form sütunu 390px'e sığmıyor. Tutamak solda kalır, alanlar
-   aşama adının altına tam genişlikte iner (yer tutucular sütun adının işini
-   görüyor, başlık şeridi gizleniyor). */
-@media (max-width: 991.98px) {
-    .apya-tpl-row {
-        grid-template-columns: 22px minmax(0, 1fr);
-        align-items: start;
-        row-gap: var(--apya-space-2);
-    }
-
-    .apya-tpl-row.apya-tpl-head { display: none; }
-    .apya-tpl-row > * { grid-column: 2; }
-    .apya-tpl-grip { grid-column: 1; grid-row: 1; }
-    .apya-tpl-remove { justify-self: start; }
-}

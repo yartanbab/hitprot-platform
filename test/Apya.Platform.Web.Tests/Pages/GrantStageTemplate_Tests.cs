@@ -58,7 +58,8 @@ public class GrantStageTemplate_Tests : PlatformWebTestBase
 
         html.ShouldContain("apya-tpl-layout");
         html.ShouldContain("Pano Önizlemesi");
-        html.ShouldContain("Tamamlanma koşulu");
+        // Alan etiketleri artık kartla JS'te çiziliyor; sunucu boş durum metnini basar.
+        html.ShouldContain("İlk aşamayı ekle");
         System.Text.RegularExpressions.Regex.IsMatch(html, @"StageTemplates[^""]*\.js")
             .ShouldBeTrue("sayfa demeti StageTemplates.js içermeli");
     }
