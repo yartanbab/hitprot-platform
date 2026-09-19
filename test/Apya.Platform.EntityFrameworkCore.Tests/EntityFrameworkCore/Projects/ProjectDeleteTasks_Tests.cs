@@ -137,21 +137,31 @@ public class ProjectDeleteTasks_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     [Fact]
-    public async Task Tohumlama_eskiden_silinmis_projelerin_gorevlerini_temizler()
+    public async Task Host_tohumlamasi_tum_kiracilarda_eskiden_silinmis_projelerin_gorevlerini_temizler()
     {
-        var project = await CreateProjectAsync(_currentTenant.Id);
-        var other = await CreateProjectAsync(_currentTenant.Id);
-        var orphan = await CreateTaskAsync(project.Id, _currentTenant.Id);
-        var survivor = await CreateTaskAsync(other.Id, _currentTenant.Id);
+        _currentTenant.Id.ShouldBeNull("test host bağlamında koşmalı");
+        var hostProject = await CreateProjectAsync(null);
+        var tenantProject = await CreateProjectAsync(OtherTenantId);
+        var other = await CreateProjectAsync(null);
+        var hostOrphan = await CreateTaskAsync(hostProject.Id, null);
+        var tenantOrphan = await CreateTaskAsync(tenantProject.Id, OtherTenantId);
+        var survivor = await CreateTaskAsync(other.Id, null);
 
         // Düzeltme öncesi davranış: proje görevlerine dokunulmadan silinir.
-        await _projectRepository.DeleteAsync(project.Id, autoSave: true);
-        (await IsDeletedAsync(orphan.Id)).ShouldBeFalse("kurgu: görev yetim kalmalı");
+        await _projectRepository.DeleteAsync(hostProject.Id, autoSave: true);
+        using (_dataFilter.Disable<IMultiTenant>())
+        {
+            await _projectRepository.DeleteAsync(tenantProject.Id, autoSave: true);
+        }
+        (await IsDeletedAsync(tenantOrphan.Id)).ShouldBeFalse("kurgu: görev yetim kalmalı");
 
+        // DbMigrator tohumlamayı YALNIZ host bağlamında koşar (ApyaPlatformDbMigrationService);
+        // kiracının yetimi de bu tek koşuda gitmeli.
         await WithUnitOfWorkAsync(() => GetRequiredService<DeletedProjectTasksCleanupSeedContributor>()
-            .SeedAsync(new DataSeedContext(_currentTenant.Id)));
+            .SeedAsync(new DataSeedContext()));
 
-        (await IsDeletedAsync(orphan.Id)).ShouldBeTrue();
+        (await IsDeletedAsync(hostOrphan.Id)).ShouldBeTrue();
+        (await IsDeletedAsync(tenantOrphan.Id)).ShouldBeTrue();
         (await IsDeletedAsync(survivor.Id)).ShouldBeFalse();
     }
 }

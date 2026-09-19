@@ -19,8 +19,10 @@ namespace Apya.Platform.Tasks;
 /// devam ediyor. Yeni silmeler artık görevleri de götürdüğü için bu katkı yalnız
 /// eski veriyi toplar: ilk çalıştırmadan sonra bulacak bir şey kalmaz.
 ///
-/// DbMigrator host'u ve her kiracıyı ayrı bağlamda tohumlar; katkı o bağlamın
-/// kiracı filtresiyle çalışır.
+/// Yalnız HOST bağlamında, kiracı filtresi KAPALI çalışır: DbMigrator
+/// (ApyaPlatformDbMigrationService) tohumlamayı tek sefer host bağlamında koşar,
+/// kiracıları tek tek dolaşmaz — kiracı bağlamını bekleseydi kiracı görevleri hiç
+/// temizlenmezdi (yerelde ölçüldü: 101 yetimin yalnız host'a ait 33'ü gitti).
 /// </summary>
 public class DeletedProjectTasksCleanupSeedContributor : IDataSeedContributor, ITransientDependency
 {
@@ -28,7 +30,6 @@ public class DeletedProjectTasksCleanupSeedContributor : IDataSeedContributor, I
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly TaskManager _taskManager;
     private readonly IDataFilter _dataFilter;
-    private readonly ICurrentTenant _currentTenant;
     private readonly IAsyncQueryableExecuter _asyncExecuter;
 
     public DeletedProjectTasksCleanupSeedContributor(
@@ -36,20 +37,23 @@ public class DeletedProjectTasksCleanupSeedContributor : IDataSeedContributor, I
         IRepository<Project, Guid> projectRepository,
         TaskManager taskManager,
         IDataFilter dataFilter,
-        ICurrentTenant currentTenant,
         IAsyncQueryableExecuter asyncExecuter)
     {
         _taskRepository = taskRepository;
         _projectRepository = projectRepository;
         _taskManager = taskManager;
         _dataFilter = dataFilter;
-        _currentTenant = currentTenant;
         _asyncExecuter = asyncExecuter;
     }
 
     public async Task SeedAsync(DataSeedContext context)
     {
-        using (_currentTenant.Change(context.TenantId))
+        if (context.TenantId != null)
+        {
+            return;
+        }
+
+        using (_dataFilter.Disable<IMultiTenant>())
         {
             Guid[] deletedProjectIds;
 
