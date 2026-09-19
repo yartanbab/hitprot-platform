@@ -6,6 +6,7 @@ using Apya.Platform.Grants.Dtos;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.TenantManagement;
 using Volo.Abp.Uow;
 using Xunit;
 
@@ -63,6 +64,29 @@ public class GrantDocumentsPage_Tests : PlatformWebTestBase
             application = new GrantApplication(Guid.NewGuid(), null, call.Id);
             await appRepo.InsertAsync(application, autoSave: true);
         }
+
+        await uow.CompleteAsync();
+        return application.Id;
+    }
+
+    /// <summary>
+    /// Kiracıya ait başvuru — canlıdaki gerçek durum: firma kiracıdadır, danışman
+    /// host'tan bakar. <see cref="CreateApplicationAsync"/> başvuruyu host'a kurar.
+    /// </summary>
+    private async Task<Guid> CreateTenantApplicationAsync()
+    {
+        await CreateApplicationAsync(); // çağrının evrak şartlarını kurar
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+
+        var tenant = await GetRequiredService<ITenantManager>().CreateAsync("Evrak-" + Guid.NewGuid().ToString("N")[..6]);
+        await GetRequiredService<ITenantRepository>().InsertAsync(tenant, autoSave: true);
+
+        var call = (await GetRequiredService<IRepository<GrantCall, Guid>>()
+            .GetListAsync(c => c.Status == GrantCallStatus.Acik)).First();
+        var application = new GrantApplication(Guid.NewGuid(), tenant.Id, call.Id);
+        await GetRequiredService<IRepository<GrantApplication, Guid>>().InsertAsync(application, autoSave: true);
 
         await uow.CompleteAsync();
         return application.Id;
@@ -143,6 +167,24 @@ public class GrantDocumentsPage_Tests : PlatformWebTestBase
         afterSecond.LatestVersionNo.ShouldBe(2);
         afterSecond.Versions.Count.ShouldBe(2, "sürümler silinmez, geçmiş denetim izidir");
         afterSecond.Versions.First().VersionNo.ShouldBe(2, "en yeni sürüm başta döner");
+    }
+
+    /// <summary>
+    /// 🔴 Sürüm satırı KİRACIYA aittir. Liste sürümleri filtre kapalı okuyup "İndir"
+    /// düğmesini gösteriyordu, indirme ise aynı satırı filtre açık arıyordu → host'taki
+    /// danışman için her indirme 404 "GrantApplicationDocumentVersion bulunamadı".
+    /// Diğer testler başvuruyu host'a kurduğu için bu yol hiç denenmemişti.
+    /// </summary>
+    [Fact]
+    public async Task Danisman_Kiracinin_Evrak_Surumunu_Indirebilir()
+    {
+        var id = await CreateTenantApplicationAsync();
+        var document = (await _documents.GetAsync(id)).Documents.First();
+        var versionId = await UploadAsync(document.Id, "taslak.docx");
+
+        var reference = await _documents.GetFileRefAsync(versionId);
+
+        reference.OriginalFileName.ShouldBe("taslak.docx");
     }
 
     [Fact]
