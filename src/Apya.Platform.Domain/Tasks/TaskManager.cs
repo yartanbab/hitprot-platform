@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
+using Apya.Platform.IssueTasks;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
@@ -22,6 +23,7 @@ public class TaskManager : DomainService
     private readonly IRepository<TaskTagAssignment, Guid> _tagAssignmentRepository;
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
+    private readonly IRepository<IssueTaskLink, Guid> _issueTaskLinkRepository;
 
     public TaskManager(
         IRepository<TaskItem, Guid> taskRepository,
@@ -31,7 +33,8 @@ public class TaskManager : DomainService
         IRepository<TaskDependency, Guid> dependencyRepository,
         IRepository<TaskTagAssignment, Guid> tagAssignmentRepository,
         IRepository<Expense, Guid> expenseRepository,
-        IRepository<IncomeEntry, Guid> incomeRepository)
+        IRepository<IncomeEntry, Guid> incomeRepository,
+        IRepository<IssueTaskLink, Guid> issueTaskLinkRepository)
     {
         _taskRepository = taskRepository;
         _checklistRepository = checklistRepository;
@@ -41,6 +44,38 @@ public class TaskManager : DomainService
         _tagAssignmentRepository = tagAssignmentRepository;
         _expenseRepository = expenseRepository;
         _incomeRepository = incomeRepository;
+        _issueTaskLinkRepository = issueTaskLinkRepository;
+    }
+
+    /// <summary>
+    /// Silinen projenin görevlerini (alt görevler dahil — ProjectId'leri üst görevle
+    /// aynı) soft-delete eder. Proje soft-delete olunca görevleri kendiliğinden gitmez:
+    /// TaskItem'da proje navigasyonu yok, görevi okuyan onlarca sorgu projenin
+    /// silindiğini bilmez ve pano/takvim/gösterge paneli yetim görevleri göstermeye
+    /// devam ediyordu. Tek görev silmedeki (TaskAppService.DeleteAsync) temizlik burada
+    /// da yapılır: bağımlılıklar ve sinyal köprüsü bağı.
+    /// <para>Kiracı kapsamını çağıran ayarlar — host başka kiracının projesini
+    /// silerken IMultiTenant filtresi kapalı olmalı.</para>
+    /// </summary>
+    public async Task DeleteByProjectAsync(Guid projectId)
+    {
+        var tasks = await _taskRepository.GetListAsync(x => x.ProjectId == projectId);
+        if (tasks.Count == 0)
+        {
+            return;
+        }
+
+        var taskIds = tasks.Select(x => x.Id).ToList();
+
+        // Başka projedeki bir görev bu görevlerden birine öncül olarak bağlıysa o bağ da gider.
+        await _dependencyRepository.DeleteDirectAsync(x =>
+            taskIds.Contains(x.TaskId) || taskIds.Contains(x.PredecessorTaskId));
+
+        // Bağ soft-delete DEĞİL ve (SourceType, SourceKey) unique — kalırsa kaynak bir
+        // daha göreve dönüştürülemezdi.
+        await _issueTaskLinkRepository.DeleteAsync(x => taskIds.Contains(x.TaskId));
+
+        await _taskRepository.DeleteManyAsync(tasks);
     }
 
     /// <summary>Tenant içindeki bir sonraki görev sırası. DB sequence kullanılmaz —

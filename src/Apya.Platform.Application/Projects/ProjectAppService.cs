@@ -341,6 +341,11 @@ public class ProjectAppService :
         using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
         {
             await base.DeleteAsync(id);
+
+            // Görevler projeyle birlikte gitmezse pano/takvim onları göstermeye devam
+            // ediyordu. Aynı filtre kapsamında: host kiracının projesini silerken
+            // kiracının görevlerini de görmeli.
+            await _taskManager.DeleteByProjectAsync(id);
         }
     }
 
