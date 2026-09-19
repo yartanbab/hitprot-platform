@@ -31,16 +31,23 @@ sonra derleme komutu çalıştırılır — üç çıktı da senkron kalır.
 | 05 | Ekranlar | Genel Bakış | Genel Bakış |
 | 06 | Ekranlar | Proje konsolu | Fon konsolu |
 | 07 | Ekranlar | Görevler: liste · kanban · takvim · Gantt | aynı |
-| 08 | Ekranlar | Finans akışı | Kaynak akışı (hibe · bağış · harcama) |
+| 08 | Ekranlar | Finans & Bütçe akışı | Kaynak akışı (hibe dilimi · bağış · harcama) |
 | 09 | Ekranlar | Dokümanlar & formlar | Belgeler & formlar (denetime hazırlık) |
-| 10 | Ekranlar | Raporlar | Raporlar (fon bütçesi · cari ekstre) |
-| 11 | Ekranlar | Hibe yönetimi | Fon yönetimi |
+| 10 | Ekranlar | Raporlar (proje bütçesi · bütçe kalemleri) | Raporlar (proje bütçesi · fon raporu derleyici) |
+| 11 | Ekranlar | Hibe yönetimi (danışmanlı yolculuk) | Hibe yönetimi (danışmanlı yolculuk) |
 | 12 | Güven | Roller ve yetkiler | Roller (yönetim/denetim kurulu dahil) |
 | 13 | Güven | Çok şirketli yapı + güvenlik | Şube / temsilcilik + şeffaflık |
 | 14 | Güven | Masaüstü / tablet / telefon | aynı |
 | 15 | Başlangıç | Dört adım | Dört adım |
 
 ## Kapsam dışı bırakılanlar
+
+**Cari ekstre, cari kartı ve kur değerlemesi anlatılmıyor (2026-09-17).** Bu ekranlar
+2026-09-07 sürümüyle menüden kaldırıldı (`ReleaseNoteCatalog` · #356); kayıtlar durur ama
+müşteri görmez. Raporlar slaytı proje bütçesi raporu + (şirket) bütçe kalemleri / (dernek)
+fon raporu derleyici anlatır. Maket sol menüsü üründeki kenar çubuğuyla aynıdır
+(`Menus/PlatformNavigationResolver.cs`): Genel Bakış · Projeler · Panolar · Takvim ·
+Hibe Yönetimi · Finans & Bütçe · Dokümanlar · Formlar.
 
 **Yapay zekâ ve mizan İKİ DESTEDEN DE çıkarıldı** (kullanıcı kararı, 2026-08-19).
 AI Değerlendirme Merkezi slaytı tamamen kaldırıldı (16 → 15 slayt); Raporlar
