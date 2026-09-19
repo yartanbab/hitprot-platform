@@ -123,6 +123,16 @@ public static class ReleaseNoteCatalog
                 "genişliğinde okunuyor. Liste daraldığında önce İş adımı, ardından Tür sütunu gizleniyor; ikisi de " +
                 "belgeye tıkladığınızda açılan detay panelinde yer alıyor. Telefonda liste yana kaydırılabiliyor."),
 
+            // ── Giriş ve şifre ────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Şifrenin başında ya da sonunda kalan boşluk artık girişi engellemiyor",
+                "Şifrenizi bir yerden kopyalayıp yapıştırdığınızda başına ya da sonuna fark edilmeyen bir boşluk " +
+                "eklenebiliyor, doğru şifre bu yüzden \"geçersiz\" sayılıyordu. Artık şifrenin başındaki ve sonundaki " +
+                "boşluklar dikkate alınmıyor; bu giriş ekranında, kayıtta, şifre değiştirmede ve şifre sıfırlamada " +
+                "aynı şekilde geçerli. Şifrenin ortasındaki boşluklar ise şifrenin parçası olmaya devam ediyor. " +
+                "Şifrenizi daha önce bilerek başında ya da sonunda boşluk bırakarak belirlediyseniz ve artık giriş " +
+                "yapamıyorsanız şifrenizi yenilemeniz yeterli."),
+
             // ── Hibe ──────────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Ödenen hibe dilimi artık \"Ödendi\" olarak görünüyor",
