@@ -4,6 +4,7 @@ $(function () {
 
     var createModal = new abp.ModalManager(abp.appPath + 'TenantManagement/Tenants/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'TenantManagement/Tenants/EditModal');
+    var setPasswordModal = new abp.ModalManager(abp.appPath + 'TenantManagement/Tenants/SetPasswordModal');
     var manageFeaturesModal = new abp.ModalManager(abp.appPath + 'TenantManagement/Tenants/FeatureManagementModal');
     var manageConnectionStringsModal = new abp.ModalManager(abp.appPath + 'TenantManagement/Tenants/ConnectionStringsModal');
 
@@ -48,6 +49,16 @@ $(function () {
                                 visible: abp.auth.isGranted('AbpTenantManagement.Tenants.Update'),
                                 action: function (data) {
                                     editModal.open({ id: data.record.tenantId });
+                                }
+                            },
+                            {
+                                text: 'Şifre Belirle',
+                                visible: abp.auth.isGranted('AbpTenantManagement.Tenants.Update'),
+                                action: function (data) {
+                                    setPasswordModal.open({
+                                        id: data.record.tenantId,
+                                        name: data.record.tenantName
+                                    });
                                 }
                             },
                             {
@@ -198,6 +209,11 @@ $(function () {
 
     editModal.onResult(function () {
         dataTable.ajax.reload();
+    });
+
+    // Şifre listeyi değiştirmez; tabloyu tazelemek yerine sonucu bildirmek yeterli.
+    setPasswordModal.onResult(function () {
+        abp.notify.success('Şifre belirlendi. Kullanıcının açık oturumları düştü.');
     });
 
     var PACKAGES = { 1: 'Basic', 2: 'Standard', 3: 'Premium', 4: 'Enterprise' };
