@@ -104,6 +104,16 @@ public static class ReleaseNoteCatalog
                 "Görünümler, zaman aralığı, yazdırma ve düzenleme aynı yerde ve aynı şekilde çalışmaya devam " +
                 "ediyor; telefonda bir değişiklik yok."),
 
+            // ── Görevler ──────────────────────────────────────────────────────
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Silinen projenin görevleri artık panolarda kalmıyor",
+                "Bir projeyi sildiğinizde görevleri silinmiyordu: Panolar ekranındaki liste, kanban, takvim ve " +
+                "Gantt görünümlerinde görünmeye devam ediyor, Genel Bakış'taki görev sayılarını da etkiliyordu. " +
+                "Artık proje silindiğinde görevleri ve alt görevleri de birlikte siliniyor; bu görevler Takvim " +
+                "sayfasında da çıkmıyor, son tarih bildirimi de göndermiyor. Daha önce silinmiş projelerden kalan " +
+                "görevler de bu güncellemeyle temizlendi. Başka bir projedeki görev, silinen projedeki bir göreve " +
+                "bağlıysa bu bağ kalkar; o görevin kendisi yerinde kalır."),
+
             // ── Belgeler ──────────────────────────────────────────────────────
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Belgeler listesinde belge adları yeniden görünüyor",
