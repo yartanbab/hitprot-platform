@@ -6,7 +6,8 @@ namespace Apya.Platform.Web.Pages.Account;
 /// Giriş / kayıt / şifre sıfırlama formlarındaki kimlik alanlarının baş ve sonundaki
 /// boşlukları kırpar. Kopyala-yapıştır ile gelen görünmez boşluk yüzünden doğru bilgi
 /// "geçersiz" sayılmasın diye.
-/// Şifre alanlarına HİÇ uygulanmaz — boşluk şifrenin geçerli bir parçası olabilir.
+/// Şifre alanlarına burada dokunulmaz; şifre kırpması her ekranda tekrarlanmasın diye
+/// tek çatı altında, <see cref="Apya.Platform.Identity.ApyaIdentityUserManager"/> içinde yapılır.
 /// </summary>
 internal static class AccountInputTrimmer
 {

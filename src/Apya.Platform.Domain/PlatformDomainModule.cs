@@ -67,6 +67,16 @@ public class PlatformDomainModule : AbpModule
             options.IsEnabled = MultiTenancyConsts.IsEnabled;
         });
 
+        // Şifrelerin baş/son boşluğunu kırpan UserManager. Bkz. ApyaIdentityUserManager.
+        // İki kayıt birden değiştirilir: SignInManager (yani giriş) UserManager<IdentityUser>'ı,
+        // ABP'nin kendi servisleri IdentityUserManager'ı ister. ASP.NET Identity ikisini aynı
+        // örneğe bağlar (AddUserManager); o düzeni bozmuyoruz, yalnızca sınıfı değiştiriyoruz.
+        context.Services.Replace(
+            ServiceDescriptor.Scoped<Microsoft.AspNetCore.Identity.UserManager<IdentityUser>, Identity.ApyaIdentityUserManager>());
+        context.Services.Replace(
+            ServiceDescriptor.Scoped<IdentityUserManager>(
+                sp => (IdentityUserManager)sp.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<IdentityUser>>()));
+
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
 #endif
