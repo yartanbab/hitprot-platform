@@ -44,26 +44,46 @@ $(function () {
                 esc(l('Grants:Party:' + k)) + '</option>';
         }).join('');
 
+        // Kart: üstte ad + sahibi + sil, altta etiketli üç alan. Evrak ve koşul
+        // textarea — uzun metin kırpılmaz, sarar.
         return $(
             '<div class="apya-tpl-row apya-tpl-step">' +
-            '  <span class="apya-tpl-grip"><i class="fa fa-grip-vertical"></i></span>' +
-            '  <span class="apya-tpl-name-cell">' +
-            '    <input type="text" class="form-control form-control-sm apya-tpl-step-name" maxlength="96" ' +
-            '           placeholder="' + esc(l('Grants:StageTemplates:StepNamePlaceholder')) + '" />' +
-            '    <input type="text" class="form-control form-control-sm apya-tpl-note" maxlength="128" ' +
-            '           placeholder="' + esc(l('Grants:StageTemplates:NotePlaceholder')) + '" />' +
-            '  </span>' +
-            '  <select class="form-select form-select-sm apya-tpl-owner">' + owner + '</select>' +
-            '  <input type="text" class="form-control form-control-sm apya-tpl-docs" maxlength="128" ' +
-            '         placeholder="' + esc(l('Grants:StageTemplates:DocumentsPlaceholder')) + '" />' +
-            '  <input type="text" class="form-control form-control-sm apya-tpl-completion" maxlength="128" ' +
-            '         placeholder="' + esc(l('Grants:StageTemplates:CompletionPlaceholder')) + '" />' +
-            '  <span class="apya-tpl-reminder">' +
-            '    <input type="number" min="0" max="365" class="form-control form-control-sm apya-tpl-days" />' +
-            '    <span>' + esc(l('Grants:StageTemplates:ReminderDays')) + '</span>' +
-            '  </span>' +
-            '  <button type="button" class="apya-tpl-remove" title="' + esc(l('Grants:Parameters:Documents:Remove')) + '">' +
-            '    <i class="fa fa-xmark"></i></button>' +
+            '  <span class="apya-tpl-grip"><span class="apya-tpl-num"></span><i class="fa fa-grip-vertical"></i></span>' +
+            '  <div class="apya-tpl-body">' +
+            '    <div class="apya-tpl-top">' +
+            '      <span class="apya-tpl-name-cell">' +
+            '        <input type="text" class="form-control apya-tpl-step-name" maxlength="96" ' +
+            '               aria-label="' + esc(l('Grants:StageTemplates:Col:Stage')) + '" ' +
+            '               placeholder="' + esc(l('Grants:StageTemplates:StepNamePlaceholder')) + '" />' +
+            '        <input type="text" class="form-control apya-tpl-note" maxlength="128" ' +
+            '               placeholder="' + esc(l('Grants:StageTemplates:NotePlaceholder')) + '" />' +
+            '      </span>' +
+            '      <select class="form-select apya-tpl-owner" aria-label="' + esc(l('Grants:StageTemplates:Col:Owner')) + '">' +
+            owner + '</select>' +
+            '      <button type="button" class="apya-tpl-remove" title="' + esc(l('Grants:Parameters:Documents:Remove')) + '">' +
+            '        <i class="fa fa-xmark"></i></button>' +
+            '    </div>' +
+            '    <div class="apya-tpl-fields">' +
+            '      <label class="apya-tpl-field">' +
+            '        <span class="apya-tpl-label">' + esc(l('Grants:StageTemplates:Col:Documents')) + '</span>' +
+            '        <textarea rows="1" class="form-control apya-tpl-docs" maxlength="128" ' +
+            '                  placeholder="' + esc(l('Grants:StageTemplates:DocumentsPlaceholder')) + '"></textarea>' +
+            '      </label>' +
+            '      <label class="apya-tpl-field">' +
+            '        <span class="apya-tpl-label">' + esc(l('Grants:StageTemplates:Col:Completion')) + '</span>' +
+            '        <textarea rows="1" class="form-control apya-tpl-completion" maxlength="128" ' +
+            '                  placeholder="' + esc(l('Grants:StageTemplates:CompletionPlaceholder')) + '"></textarea>' +
+            '      </label>' +
+            '      <label class="apya-tpl-field">' +
+            '        <span class="apya-tpl-label">' + esc(l('Grants:StageTemplates:Col:Reminder')) + '</span>' +
+            '        <span class="apya-tpl-reminder">' +
+            '          <input type="number" min="0" max="365" class="form-control apya-tpl-days" />' +
+            '          <span>' + esc(l('Grants:StageTemplates:ReminderDays')) + '</span>' +
+            '        </span>' +
+            '      </label>' +
+            '    </div>' +
+            '    <div class="apya-tpl-error">' + esc(l('Grants:StageTemplates:StepNameRequired')) + '</div>' +
+            '  </div>' +
             '</div>')
             // Değerler .val() ile veriliyor: HTML'e gömülse kullanıcı metnindeki
             // tırnak/işaretler markup'ı bozardı.
@@ -88,6 +108,7 @@ $(function () {
         var $steps = $('#TplSteps').empty();
         t.steps.forEach(function (s) { $steps.append(stepRow(s)); });
         $('#TplStepsEmpty').toggleClass('d-none', t.steps.length > 0);
+        syncRows();
     }
 
     function paintSide() {
@@ -95,9 +116,10 @@ $(function () {
         if (!t) { return; }
 
         var $board = $('#TplBoard').empty();
-        collectSteps().forEach(function (s) {
+        collectSteps().forEach(function (s, i) {
             $board.append(
-                '<div class="apya-tpl-column"><span>' + esc(s.name) + '</span>' +
+                '<div class="apya-tpl-column"><span class="apya-tpl-column-num">' + (i + 1) + '</span>' +
+                '<span class="apya-tpl-column-name">' + esc(s.name) + '</span>' +
                 '<span class="apya-tpl-column-owner">' + esc(l('Grants:Party:' + partyKeys[s.owner])) + '</span></div>');
         });
 
@@ -113,7 +135,7 @@ $(function () {
 
         $('#TplWarning')
             .toggleClass('d-none', !t.openApplicationCount)
-            .text(l('Grants:StageTemplates:ChangeWarning', t.openApplicationCount || 0));
+            .children('span').text(l('Grants:StageTemplates:ChangeWarning', t.openApplicationCount || 0));
     }
 
     function paintAll() {
@@ -152,10 +174,13 @@ $(function () {
     }
 
     // ---------- Aşama ekle / sil / sırala ----------
-    $('#TplAddStep').on('click', function () {
-        $('#TplSteps').append(stepRow({ owner: 2 }));
+    $('#TplAddStep, #TplAddFirstStep').on('click', function () {
+        var $row = stepRow({ owner: 2 });
+        $('#TplSteps').append($row);
         $('#TplStepsEmpty').addClass('d-none');
         refreshStepMeta();
+        // Boş durum butonu kaybolunca odak sayfa başına düşmesin; yeni satırın adına geçsin.
+        $row.find('.apya-tpl-step-name').trigger('focus');
     });
 
     $('#TplSteps').on('click', '.apya-tpl-remove', function () {
@@ -165,10 +190,33 @@ $(function () {
     });
 
     // Pano önizlemesi ve sayaç formla birlikte yaşar — kaydetmeyi beklemez.
-    $('#TplSteps').on('input change', 'input, select', refreshStepMeta);
+    $('#TplSteps').on('input change', 'input, select, textarea', refreshStepMeta);
+
+    // Adsız aşama ad kutusundan çıkınca işaretlenir; yeni eklenen satır hemen kızarmaz.
+    $('#TplSteps').on('focusout', '.apya-tpl-step-name', function () {
+        var $row = $(this).closest('.apya-tpl-step');
+        $row.toggleClass('is-invalid', isBlank($row));
+        syncRows();
+    });
+
+    function isBlank($row) {
+        return !($row.find('.apya-tpl-step-name').val() || '').trim();
+    }
+
+    // Sıra numarası ve hata durumu satırlarla birlikte yaşar: ad yazılınca işaret
+    // kalkar, işaretli satır kaldıkça Kaydet pasif.
+    function syncRows() {
+        $('#TplSteps .apya-tpl-step').each(function (i) {
+            var $row = $(this);
+            $row.find('.apya-tpl-num').text(i + 1);
+            if (!isBlank($row)) { $row.removeClass('is-invalid'); }
+        });
+        $('#TplSave').prop('disabled', $('#TplSteps .is-invalid').length > 0);
+    }
 
     function refreshStepMeta() {
         $('#TplStepCount').text(l('Grants:StageTemplates:StepCount', $('#TplSteps .apya-tpl-step').length));
+        syncRows();
         paintSide();
     }
 
@@ -180,7 +228,7 @@ $(function () {
     });
 
     // ---------- Yeni / kaydet / sil ----------
-    $('#TplNewBtn').on('click', function () {
+    $('#TplNewBtn, #TplEmptyNewBtn').on('click', function () {
         // Kaydedilmemiş taslak tekil: ikinci kez basılınca yenisi eskisinin yerini alır,
         // aksi halde current() id'si null olan iki kayıttan hep ilkini bulurdu.
         templates = templates.filter(function (t) { return t.id; });
@@ -202,6 +250,15 @@ $(function () {
     });
 
     $('#TplSave').on('click', function () {
+        // Hiç dokunulmamış adsız satırlar da kaydetmeden önce işaretlenir.
+        var $blank = $('#TplSteps .apya-tpl-step').filter(function () { return isBlank($(this)); });
+        if ($blank.length) {
+            $blank.addClass('is-invalid');
+            syncRows();
+            $blank.first().find('.apya-tpl-step-name').trigger('focus');
+            return;
+        }
+
         var $btn = $(this).prop('disabled', true);
         var input = collect();
         var t = current();
