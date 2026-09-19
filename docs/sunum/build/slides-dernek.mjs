@@ -68,13 +68,13 @@ const s03 = () => {
     <div class="grid3">
       ${pillar("#2563EB", "#EFF6FF", "1 · FAALİYET", "Faaliyeti planlarsınız",
         "Proje, görev ve takvim aynı yerde durur.",
-        ["Projeler ve alt görevler", "Kanban · Takvim · Gantt", "Kim neyi ne zaman yapacak"])}
+        ["Projeler ve alt görevler", "Kart Panosu · Takvim · Zaman Çizelgesi", "Kim neyi ne zaman yapacak"])}
       ${pillar("#059669", "#ECFDF5", "2 · KAYNAK", "Kaynağı takip edersiniz",
         "Hibe, bağış ve harcama tek defterde birleşir.",
-        ["Hibe ve bağış ayrı kategoride", "Kasa & banka hareketleri", "Çoklu para birimi + TCMB kuru"])}
+        ["Bütçe kalemleri, dilimler ve kesintiler", "Kasa & banka hareketleri", "Çoklu para birimi + TCMB kuru"])}
       ${pillar("#7C3AED", "#F5F3FF", "3 · KANIT", "Kanıtı saklarsınız",
         "Sözleşme, fatura ve faaliyet belgesi işin yanında yaşar.",
-        ["Belgeler + sürüm geçmişi", "Formlar ve şablonlar", "Excel / PDF raporu"])}
+        ["Belgeler + sürüm geçmişi", "Formlar ve şablonlar", "Rapor derleyici → Excel / PDF"])}
     </div>
     <div class="card" style="background:#0B1220;border:0;padding:22px 30px;display:flex;
          align-items:center;justify-content:space-between;gap:24px">
@@ -89,11 +89,11 @@ const s03 = () => {
 /* ── 04 · Uçtan uca akış (ana görsel) ────────────────────────────────── */
 const s04 = () => {
   const steps = [
-    ["1", "Kaynak", "Hibe veya bağış kaydedilir,", "kasaya işlenir."],
-    ["2", "Proje", "Fonun bütçesi, tarihi ve", "ekibi tanımlanır."],
+    ["1", "Kaynak", "Hibe çağrısı veya bağış", "kaydedilir, kasaya işlenir."],
+    ["2", "Proje", "Bütçe kalemleri, dilimler", "ve ekip tanımlanır."],
     ["3", "Faaliyet", "İş parçalara bölünür,", "kişilere atanır."],
-    ["4", "Harcama", "Fatura, fiş ve ödeme", "kaydı girilir."],
-    ["5", "Rapor", "Fon kullanımı raporu", "otomatik oluşur."],
+    ["4", "Harcama", "Fatura, fiş ve ödeme", "görevin içinden girilir."],
+    ["5", "Rapor", "Fon raporu belgelerden", "derlenir, teslim edilir."],
   ];
   const X = [0, 304, 608, 912, 1216];
   // Etiketler kutular arasındaki 104 px boşluğa sığmalı — ~11 karakteri geçme,
@@ -124,38 +124,56 @@ const s04 = () => {
 };
 
 /* ── Uygulama maketi sol menüsü ──────────────────────────────────────── */
-const MENU = ["Genel Bakış", "Projeler", "Görevler", "Takvim", "Kaynaklar", "Belgeler", "Raporlar"];
+// Üründeki kenar çubuğuyla aynı adlar (Menus/PlatformNavigationResolver.cs + tr.json).
+const MENU = ["Genel Bakış", "Projeler", "Panolar", "Takvim", "Hibe Yönetimi", "Finans & Bütçe", "Dokümanlar", "Formlar"];
 const sideNav = (active) => shellNav(MENU, MENU.indexOf(active));
 
 /* ── 05 · Genel Bakış ekranı ─────────────────────────────────────────── */
 const s05 = () => {
   const kpi = (k, v, d, c) => `<div class="kpi"><span class="k">${k}</span><span class="v">${v}</span><span class="d" style="color:${c}">${d}</span></div>`;
-  const bars = [62, 78, 54, 90, 71, 84, 96, 68];
-  const months = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu"];
+  const health = [
+    ["Çocuklar İçin Okuma Atölyeleri", 70, "Sağlıklı", "p", "#059669"],
+    ["Kadın Kooperatifi Eğitimleri", 46, "Dikkat", "w", "#B45309"],
+    ["Çevre Eğitimi Programı", 82, "Sağlıklı", "p", "#059669"],
+    ["Saha Ekipmanı Yenileme", 31, "Riskli", "n", "#DC2626"],
+  ];
   return `<div class="app">
     <div class="bar"><em></em><em></em><em></em><span>Genel Bakış</span></div>
     <div class="win">${sideNav("Genel Bakış")}
       <div class="main">
-        <div class="grid4">
-          ${kpi("Yürüyen proje", "12", "3 tanesi bu ay bitiyor", "#4B5563")}
-          ${kpi("Geciken görev", "5", "geçen haftaya göre +2", "#DC2626")}
-          ${kpi("Bu ay gelen kaynak", "482.000 ₺", "hibe + bağış toplamı", "#059669")}
-          ${kpi("Onay bekleyen harcama", "7", "toplam 318.400 ₺", "#B45309")}
+        <div style="display:flex;align-items:center;gap:8px">
+          ${["Proje Yönetimi", "Finans", "Bugün", "Hibe takibi"].map((t, i) =>
+            `<span class="chip ${i === 0 ? "a" : ""}">${t}</span>`).join("")}
+          <span style="flex:1"></span>
+          <span class="chip">Bu ay</span><span class="chip b">Yazdır</span>
         </div>
-        <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:16px;flex:1;min-height:0">
-          <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-height:0">
-            <b style="font:600 17px/1 var(--sans)">Aylık kaynak / harcama dengesi</b>
-            <div class="bars">
-              ${bars.map((h, i) => `<div class="b"><i style="height:${h}%"></i><u>${months[i]}</u></div>`).join("")}
+        <div class="grid4">
+          ${kpi("Bu dönem teslim", "14", "6 bu hafta", "#4B5563")}
+          ${kpi("Gecikmiş", "5", "3 projede · en eski 9 g", "#DC2626")}
+          ${kpi("Bende onay", "7", "ortalama bekleme 9 sa", "#B45309")}
+          ${kpi("Bütçe kullanımı", "%70", "840.000 / 1.200.000 ₺", "#059669")}
+        </div>
+        <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:16px;flex:1;min-height:0">
+          <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <b style="font:600 17px/1 var(--sans)">Proje sağlığı</b>
+              <span style="font:500 14px/1 var(--sans);color:var(--ink3)">4 aktif proje</span>
             </div>
+            ${health.map(([n, pct, st, cls, c]) => `
+              <div style="display:flex;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid var(--line-soft)">
+                <span style="flex:1;font:500 15px/1.2 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n}</span>
+                <div style="width:150px;height:8px;border-radius:4px;background:var(--sunken);overflow:hidden;flex:none">
+                  <div style="width:${pct}%;height:100%;background:${c}"></div></div>
+                <span class="num" style="width:44px;text-align:right;font:600 13px/1 var(--mono);color:var(--ink2)">%${pct}</span>
+                <span class="chip ${cls}" style="font-size:13px;padding:5px 10px">${st}</span>
+              </div>`).join("")}
           </div>
           <div class="card" style="overflow:hidden;display:flex;flex-direction:column;min-height:0">
-            <b style="font:600 17px/1 var(--sans);padding:16px 18px 12px">Bugün dikkat isteyenler</b>
+            <b style="font:600 17px/1 var(--sans);padding:16px 18px 12px">Bende bekleyen kararlar</b>
             <table class="tbl">
-              <tr><td>Fon ara raporu teslimi</td><td class="r"><span class="chip n">2 gün gecikti</span></td></tr>
-              <tr><td>Eğitmen sözleşmesi onayı</td><td class="r"><span class="chip w">bugün</span></td></tr>
-              <tr><td>Atölye fotoğrafları yüklenecek</td><td class="r"><span class="chip">yarın</span></td></tr>
-              <tr><td>Kur güncellendi (TCMB)</td><td class="r"><span class="chip p">tamam</span></td></tr>
+              <tr><td>Fon ara raporu · teslim</td><td class="r"><span class="chip n">2 gün gecikti</span></td></tr>
+              <tr><td>Eğitmen sözleşmesi · onay</td><td class="r"><span class="chip w">bugün</span></td></tr>
+              <tr><td>Fatura · Kitap alımı · 18 sa</td><td class="r"><span class="chip b">İncele</span></td></tr>
             </table>
           </div>
         </div>
@@ -187,15 +205,15 @@ const s06 = () => `<div class="app">
         <span class="chip p">%70 tamamlandı</span>
       </div>
       <div style="display:flex;gap:8px">
-        ${["Genel", "Faaliyetler", "Bütçe", "Belgeler", "Ekip"].map((t, i) =>
+        ${["Genel", "Görevler", "Finans", "Belgeler", "Takvim", "Galeri", "Ekip"].map((t, i) =>
           `<span class="chip ${i === 1 ? "a" : ""}">${t}</span>`).join("")}
       </div>
       <div class="card" style="overflow:hidden;flex:1;min-height:0">
         <table class="tbl">
-          <tr><th>Faaliyet</th><th>Sorumlu</th><th>Bitiş</th><th>Durum</th><th style="text-align:right">Harcanan</th></tr>
-          <tr><td>Okul ziyaretleri ve planlama</td><td><span class="avat" style="background:#2563EB">MK</span> M. Kaya</td><td class="r">12.09</td><td><span class="chip p">Tamam</span></td><td class="r">46.200 ₺</td></tr>
-          <tr><td>Kitap ve malzeme alımı</td><td><span class="avat" style="background:#7C3AED">AY</span> A. Yıldız</td><td class="r">28.09</td><td><span class="chip p">Tamam</span></td><td class="r">312.500 ₺</td></tr>
-          <tr><td>Atölyeler · 2. dönem</td><td><span class="avat" style="background:#DC2626">EÖ</span> E. Öz</td><td class="r">21.10</td><td><span class="chip n">Gecikti</span></td><td class="r">463.300 ₺</td></tr>
+          <tr><th>Faaliyet</th><th>Sorumlu</th><th>Bitiş</th><th>Durum</th><th style="text-align:right">Bütçe kalemi · harcanan</th></tr>
+          <tr><td>Okul ziyaretleri ve planlama</td><td><span class="avat" style="background:#2563EB">MK</span> M. Kaya</td><td class="r">12.09</td><td><span class="chip p">Tamam</span></td><td class="r">Saha · 46.200 ₺</td></tr>
+          <tr><td>Kitap ve malzeme alımı</td><td><span class="avat" style="background:#7C3AED">AY</span> A. Yıldız</td><td class="r">28.09</td><td><span class="chip p">Tamam</span></td><td class="r">Malzeme · 312.500 ₺</td></tr>
+          <tr><td>Atölyeler · 2. dönem</td><td><span class="avat" style="background:#DC2626">EÖ</span> E. Öz</td><td class="r">21.10</td><td><span class="chip n">Gecikti</span></td><td class="r">Eğitmen · 463.300 ₺</td></tr>
           <tr><td>Fon ara raporu</td><td><span class="avat" style="background:#4B5563">—</span> Atanmadı</td><td class="r">14.11</td><td><span class="chip">Bekliyor</span></td><td class="r">—</td></tr>
         </table>
       </div>
@@ -258,19 +276,19 @@ const s07 = () => {
 
   return `<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
        gap:20px;width:100%;height:100%">
-    ${frame("Liste", "filtrele, sırala, toplu düzenle", liste)}
-    ${frame("Kanban", "sürükle-bırak ile durum değiştir", kanban)}
-    ${frame("Takvim", "kim ne zaman müsait", takvim)}
-    ${frame("Gantt", "proje detayı içinde", gantt)}
+    ${frame("Liste", "yalnız kullandığınız filtreler görünür", liste)}
+    ${frame("Kart Panosu", "dört yoğunluk · sürükle-bırak", kanban)}
+    ${frame("Takvim", "Google / Outlook ile senkron", takvim)}
+    ${frame("Zaman Çizelgesi", "proje detayında ve Panolar'da", gantt)}
   </div>`;
 };
 
 /* ── 08 · Kaynak akışı ───────────────────────────────────────────────── */
 const s08 = () => {
   const lanes = [
-    ["Hibe / fon girişi", "#2563EB", "kaydedilir", "Kasa / banka girişi", "otomatik", "Projenin bütçesine bağlanır"],
-    ["Bağış / sponsorluk", "#059669", "kaydedilir", "Kasa / banka girişi", "otomatik", "Bağışçı kaydına işlenir"],
-    ["Harcama / fiş", "#DC2626", "ödeme yapılır", "Kasa / banka çıkışı", "otomatik", "Fon kullanımına düşer"],
+    ["Hibe / fon dilimi", "#2563EB", "tahsil edilir", "Kasa / banka girişi", "otomatik", "Projenin dilimine işlenir"],
+    ["Bağış / sponsorluk", "#059669", "kaydedilir", "Kasa / banka girişi", "otomatik", "Bağış & katılım'da toplanır"],
+    ["Harcama / fiş", "#DC2626", "görevden girilir", "Kasa / banka çıkışı", "otomatik", "Bütçe kalemine düşer"],
   ];
   const X = [0, 518, 1036];
   const box = (x, y, t, accent) => `
@@ -290,7 +308,7 @@ const s08 = () => {
     }).join("")}
     <rect x="0" y="396" width="1416" height="70" rx="16" fill="#EFF6FF"/>
     <text x="34" y="439" font-size="21" font-weight="600" fill="#1D4ED8">
-      Hibe ve bağış AYRI kategorilerde tutulur — satış geliriyle karışmaz, raporda ayrışır
+      Finans Merkezi: bütçe kalemleri · dilimler &amp; kesintiler · gelir-gider · faturalar · donör &amp; raporlama · kasa · belgeler
     </text>
   </svg></figure>`;
 };
@@ -300,8 +318,16 @@ const s09 = () => `<div class="grid2" style="height:100%">
   <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
     <div style="padding:15px 18px;border-bottom:1px solid var(--line);display:flex;
          justify-content:space-between;align-items:center">
-      <b style="font:700 21px/1 var(--sans)">Belgeler</b>
+      <b style="font:700 21px/1 var(--sans)">Dokümanlar</b>
       <span class="chip b">sürüm geçmişi açık</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;padding:11px 18px;border-bottom:1px solid var(--line);
+         background:var(--paper2)">
+      ${["Belgeler", "Uygunluk", "Derle", "Teslim"].map((t, i) => `
+        <span class="chip ${i === 0 ? "a" : ""}" style="font-size:13px;padding:5px 11px">${i + 1} · ${t}</span>
+        ${i < 3 ? `<span style="width:14px;height:2px;background:var(--line);display:block"></span>` : ""}`).join("")}
+      <span style="flex:1"></span>
+      <span style="font:500 13px/1 var(--sans);color:var(--ink3)">Sırada: uygunluk kontrolü</span>
     </div>
     <div style="flex:1;display:flex;min-height:0">
       <div style="width:200px;border-right:1px solid var(--line);padding:14px 12px;
@@ -334,8 +360,8 @@ const s09 = () => `<div class="grid2" style="height:100%">
     <div style="flex:1;padding:18px;display:flex;flex-direction:column;gap:14px;min-height:0">
       <div style="display:flex;flex-direction:column;gap:10px">
         ${[["Soru tipi seç", "Kısa yanıt · Çoktan seçmeli · Dosya · Tarih"],
-           ["Formu paylaş", "Bağlantı veya e-posta ile"],
-           ["Yanıtlar biriksin", "Tablo hâlinde, Excel'e aktarılır"]].map((r, i) => `
+           ["Formu paylaş", "Herkese açık bağlantıyla — üye olmayan da doldurur"],
+           ["Yanıtlar biriksin", "Göreve bağlanır, tablo hâlinde Excel'e aktarılır"]].map((r, i) => `
           <div style="display:flex;gap:14px;align-items:flex-start">
             <span class="stepnum" style="width:34px;height:34px;font-size:15px">${i + 1}</span>
             <div><div style="font:600 19px/1.2 var(--sans)">${r[0]}</div>
@@ -357,28 +383,38 @@ const s09 = () => `<div class="grid2" style="height:100%">
 
 /* ── 10 · Raporlar ───────────────────────────────────────────────────── */
 const s10 = () => {
-  const card = (title, desc, body) => `
+  const card = (title, desc, body, foot) => `
     <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
       <div style="padding:18px 20px 14px">
         <div style="font:700 24px/1.2 var(--sans);letter-spacing:-.02em">${title}</div>
         <div style="font:400 16px/1.4 var(--sans);color:var(--ink2);margin-top:7px">${desc}</div>
       </div>
       <div style="flex:1;padding:0 20px;min-height:0">${body}</div>
-      <div style="padding:14px 20px;display:flex;gap:8px;border-top:1px solid var(--line-soft)">
-        <span class="chip p">Excel</span><span class="chip n">PDF</span><span class="chip">Yazdır</span>
-      </div>
+      <div style="padding:14px 20px;display:flex;gap:8px;border-top:1px solid var(--line-soft)">${foot}</div>
     </div>`;
   const rows = (data) => `<table class="tbl" style="background:transparent">${data.map(
     ([a, b, c]) => `<tr><td>${a}</td><td class="r" style="color:${c || "inherit"}">${b}</td></tr>`).join("")}</table>`;
+  const compiler = `<div style="display:flex;flex-direction:column;gap:10px;padding-top:2px">
+    ${[["Kapsam", "Okuma Atölyeleri · 01.03 – 31.08.2026", "p", "hazır"],
+       ["Belgeler", "Fon sözleşmesi v3 · 4 faaliyet raporu · 38 fiş", "p", "hazır"],
+       ["Uygunluk", "3 harcamanın belgesi eksik", "w", "2 eksik"],
+       ["Derle", "Bütçe tablosu + harcama listesi + kanıtlar", "b", "taslak"],
+       ["Teslim", "Fon verene gönderim tarihi ve alıcı kayda geçer", "", "sırada"]].map(([t, d, cls, st]) => `
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line-soft)">
+        <span style="width:88px;font:700 15px/1 var(--sans);flex:none">${t}</span>
+        <span style="flex:1;font:400 15px/1.3 var(--sans);color:var(--ink2)">${d}</span>
+        <span class="chip ${cls}" style="font-size:13px;padding:5px 10px">${st}</span>
+      </div>`).join("")}
+  </div>`;
   return `<div class="grid2" style="height:100%">
-    ${card("Proje / Fon Bütçesi", "Bütçe, harcanan ve kalan — proje bazında.",
+    ${card("Proje Bütçesi raporu", "Bütçe, gerçekleşen ve kalan — proje ve kalem bazında.",
       rows([["Okuma Atölyeleri", "kalan 360.000 ₺", "#059669"], ["Kadın Kooperatifi", "kalan 142.500 ₺", "#059669"],
             ["Depo Yenileme", "aşım 28.400 ₺", "#DC2626"], ["Çevre Eğitimi", "kalan 96.000 ₺", "#059669"],
-            ["Saha Ekipmanı", "kalan 51.700 ₺", "#059669"], ["Toplam kalan", "621.800 ₺", "#059669"]]))}
-    ${card("Cari Ekstre", "Bir bağışçının / kurumun tüm hareketi.",
-      rows([["Devir", "0 ₺"], ["Bağış · Mart", "+ 285.000 ₺"], ["Bağış · Haziran", "+ 78.000 ₺"],
-            ["Proje harcaması", "− 150.000 ₺"], ["Proje harcaması", "− 78.000 ₺"],
-            ["Bakiye", "135.000 ₺", "#B45309"]]))}
+            ["Saha Ekipmanı", "kalan 51.700 ₺", "#059669"], ["Toplam kalan", "621.800 ₺", "#059669"]]),
+      `<span class="chip p">Excel</span><span class="chip n">PDF</span><span class="chip">Genel Bakış çıktısı</span>`)}
+    ${card("Fon raporu derleyici", "Belgeler ve harcamalardan fon verene gidecek dosya derlenir.",
+      compiler,
+      `<span class="chip">Taslak kaydet</span><span class="chip b">Önizle</span><span class="chip a">Üret ve teslime geç</span>`)}
   </div>`;
 };
 
@@ -387,24 +423,27 @@ const s12 = () => `<div style="display:grid;grid-template-columns:1.25fr 1fr;gap
   <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
     <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;
          justify-content:space-between;align-items:center">
-      <b style="font:700 21px/1 var(--sans)">Açık fon çağrıları</b>
-      <span class="chip b">güncel katalog</span>
+      <b style="font:700 21px/1 var(--sans)">Size uygun çağrılar</b>
+      <span style="display:flex;gap:6px">
+        <span class="chip a" style="font-size:13px">Bugün</span><span class="chip" style="font-size:13px">Çağrılar</span>
+        <span class="chip" style="font-size:13px">Başvurularım</span><span class="chip" style="font-size:13px">Hibe Yolculuğum</span>
+      </span>
     </div>
     <table class="tbl">
-      <tr><th>Çağrı</th><th>Kurum</th><th>Son başvuru</th><th style="text-align:right">Uygunluk</th></tr>
-      <tr><td>Sivil Toplum Destek Programı</td><td>AB / Sivil Düşün</td><td class="r">30.09.2026</td><td class="r"><span class="chip p">%92 uygun</span></td></tr>
-      <tr><td>Çevre Eğitimi Fonu</td><td>Çevre Bakanlığı</td><td class="r">18.10.2026</td><td class="r"><span class="chip p">%83 uygun</span></td></tr>
-      <tr><td>Yerel Kalkınma Hibesi</td><td>Kalkınma Ajansı</td><td class="r">15.10.2026</td><td class="r"><span class="chip p">%78 uygun</span></td></tr>
-      <tr><td>Gençlik Projeleri Desteği</td><td>Gençlik ve Spor Bak.</td><td class="r">01.11.2026</td><td class="r"><span class="chip w">%54 uygun</span></td></tr>
-      <tr><td>Kadın Kooperatifleri Desteği</td><td>Ticaret Bakanlığı</td><td class="r">05.12.2026</td><td class="r"><span class="chip w">%47 uygun</span></td></tr>
-      <tr><td>Erasmus+ Küçük Ölçekli Ortaklık</td><td>Ulusal Ajans</td><td class="r">22.11.2026</td><td class="r"><span class="chip">%31 uygun</span></td></tr>
+      <tr><th>Çağrı</th><th>Son başvuru</th><th>Üst limit</th><th style="text-align:right">Uyum</th></tr>
+      <tr><td>Sivil Toplum Destek Programı <span style="color:var(--ink3)">· AB</span></td><td class="r">30.09.2026</td><td class="r">1.200.000 ₺</td><td class="r"><span class="chip p">%92 · 7/7 şart</span></td></tr>
+      <tr><td>Çevre Eğitimi Fonu <span style="color:var(--ink3)">· Çevre Bak.</span></td><td class="r">18.10.2026</td><td class="r">650.000 ₺</td><td class="r"><span class="chip p">%83 · 6/6 şart</span></td></tr>
+      <tr><td>Yerel Kalkınma Hibesi <span style="color:var(--ink3)">· Kalkınma Aj.</span></td><td class="r">15.10.2026</td><td class="r">2.000.000 ₺</td><td class="r"><span class="chip p">%78 · 5/6 şart</span></td></tr>
+      <tr><td>Erasmus+ Gençlik Değişimi <span style="color:var(--ink3)">· Ulusal Ajans</span></td><td class="r">01.11.2026</td><td class="r">48.000 €</td><td class="r"><span class="chip w">%54 · 1 eksik</span></td></tr>
+      <tr><td>Kadın Kooperatifleri Desteği <span style="color:var(--ink3)">· Ticaret Bak.</span></td><td class="r">05.12.2026</td><td class="r">400.000 ₺</td><td class="r"><span class="chip w">%47 · giderilebilir</span></td></tr>
+      <tr><td>Gençlik Projeleri Desteği <span style="color:var(--ink3)">· GSB</span></td><td class="r">22.11.2026</td><td class="r">250.000 ₺</td><td class="r"><span class="chip">%31 · 3 eksik</span></td></tr>
     </table>
   </div>
   <div style="display:flex;flex-direction:column;gap:18px;min-height:0;justify-content:space-between">
-    ${[["Dernek profilinizi bir kez girin", "Faaliyet alanı, il, ölçek, hedef kitle, belgeler."],
-       ["Sistem eşleştirsin", "Uygun çağrılar uygunluk yüzdesiyle öne çıkar."],
-       ["Başvuruyu takip edin", "Belgeler, tarihler ve durum tek dosyada."],
-       ["Kazanılan fon projeye dönsün", "Bütçesi ve faaliyetleriyle aynı sistemde yürür."]]
+    ${[["Kurum profilinizi doldurun", "Uygunluk şart şart, tahmini destek baştan hesaplanır."],
+       ["“İlgileniyorum” deyin", "Proje fikrinizi anlatır, danışmanla ön görüşme saati seçersiniz."],
+       ["Başvuruyu birlikte hazırlayın", "Form danışmanla doldurulur; evrak listesi çağrıdan gelir."],
+       ["Karar, itiraz, tahsilat", "Onaylanan hibe projeye bağlanır; rapor ve dilimler tek zincirde."]]
       .map(([t, d], i) => `
       <div class="card" style="padding:16px 18px;display:flex;gap:15px;align-items:flex-start">
         <span class="stepnum">${i + 1}</span>
@@ -417,12 +456,12 @@ const s12 = () => `<div style="display:grid;grid-template-columns:1.25fr 1fr;gap
 /* ── 13 · Roller ve yetkiler ─────────────────────────────────────────── */
 const s13 = () => {
   const P = { t: ["Tümü", "p"], k: ["Kendi projesi", "b"], g: ["Sadece görüntüler", "a"], y: ["Yok", ""] };
-  const cols = ["Projeler", "Görevler", "Kaynaklar", "Belgeler", "Raporlar", "Ayarlar"];
+  const cols = ["Projeler", "Görevler", "Finans & Bütçe", "Hibeler", "Dokümanlar", "Ayarlar"];
   const rows = [
     ["Yönetim Kurulu", "başkan / yönetici", ["t", "t", "t", "t", "t", "t"]],
     ["Proje Koordinatörü", "fonu yürüten kişi", ["k", "k", "g", "k", "k", "y"]],
-    ["Ekip / Saha", "faaliyeti yürüten kişi", ["g", "k", "y", "k", "y", "y"]],
-    ["Sayman / Muhasebe", "mali işler", ["g", "y", "t", "g", "t", "y"]],
+    ["Ekip / Saha", "faaliyeti yürüten kişi", ["g", "k", "y", "y", "k", "y"]],
+    ["Sayman / Muhasebe", "mali işler", ["g", "y", "t", "g", "g", "y"]],
     ["Denetim Kurulu", "bağımsız denetim", ["g", "g", "g", "g", "g", "y"]],
   ];
   const cell = (k) => k === "y"
@@ -452,9 +491,9 @@ const s14 = () => {
   const names = [["Genel Merkez", "#2563EB"], ["İstanbul Şubesi", "#059669"], ["İzmir Temsilciliği", "#7C3AED"]];
   const chips = [
     ["Kim ne zaman ne değiştirdi", "işlem geçmişi kayıtlı"],
-    ["KVKK rıza kaydı", "onay metni ve tarihi saklanır"],
+    ["KVKK rıza ve protokol kaydı", "onay metni ve tarihi saklanır"],
     ["Rol bazlı yetki", "modül modül açılır / kapanır"],
-    ["Şifreli anahtar saklama", "dış servis anahtarları açıkta durmaz"],
+    ["Kurum Profili", "resmî unvan, vergi bilgisi, yetkili kişi"],
   ];
   return `<figure><svg class="flow" viewBox="0 0 1416 400" role="img"
       aria-label="Tek platform üzerinde her şubenin verisi ayrı bölmede tutulur; şubeler birbirinin verisini göremez">
@@ -512,8 +551,8 @@ const s15 = () => {
             <span style="font:600 10px/1 var(--sans);color:var(--ink3);margin-left:6px">Genel Bakış</span>
           </div>
           <div style="display:flex;gap:7px">
-            ${tile("Yürüyen proje", "12", "var(--ink)")}${tile("Geciken", "5", "#DC2626")}
-            ${tile("Kaynak", "482K", "#059669")}${tile("Onayda", "7", "#B45309")}
+            ${tile("Bu dönem teslim", "14", "var(--ink)")}${tile("Gecikmiş", "5", "#DC2626")}
+            ${tile("Bende onay", "7", "#B45309")}${tile("Bütçe", "%70", "#059669")}
           </div>
           <div style="display:flex;gap:9px;flex:1;min-height:0">
             <div style="flex:1.15;border:1px solid var(--line);border-radius:8px;padding:8px;
@@ -522,8 +561,8 @@ const s15 = () => {
                 `<div style="flex:1;height:${h}%;border-radius:3px 3px 0 0;background:#2563EB;opacity:.85"></div>`).join("")}
             </div>
             <div style="flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 9px;background:var(--paper)">
-              ${row("Fon ara raporu", "#DC2626")}${row("Sözleşme onayı", "#B45309")}
-              ${row("Atölye fotoğrafı", "#2563EB")}${row("Kur güncellendi", "#059669")}
+              ${row("Okuma Atölyeleri", "#059669")}${row("Kadın Kooperatifi", "#B45309")}
+              ${row("Çevre Eğitimi", "#059669")}${row("Saha Ekipmanı", "#DC2626")}
             </div>
           </div>
         </div>
@@ -565,13 +604,14 @@ const s15 = () => {
       <div class="card" style="padding:20px 22px">
         <div style="font:700 22px/1.2 var(--sans)">Kurulum yok</div>
         <div style="font:400 17px/1.4 var(--sans);color:var(--ink2);margin-top:8px">
-          Tarayıcıdan girilir. Telefonda menü alta iner, tabloların yerini kart listesi alır.
+          Tarayıcıdan girilir. Telefonda menü alta iner, tablolar karta dönüşür; açık / koyu tema ve
+          yoğunluk profil menüsünden seçilir.
         </div>
       </div>
       <div class="card" style="padding:20px 22px;flex:1;min-height:0">
         <div style="font:700 22px/1.2 var(--sans);margin-bottom:14px">Haberiniz olur</div>
         ${[["Görev size atandı", "#2563EB"], ["Fon ara raporu yaklaştı", "#B45309"],
-           ["Onayınız bekleniyor", "#7C3AED"], ["Proje bütçesi %90'a ulaştı", "#DC2626"]].map(([t, c]) => `
+           ["Danışmanınız görüşme saatini onayladı", "#7C3AED"], ["Proje bütçesi %90'a ulaştı", "#DC2626"]].map(([t, c]) => `
           <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line-soft)">
             <span style="width:9px;height:9px;border-radius:50%;background:${c};flex:none"></span>
             <span style="font:500 17px/1.2 var(--sans)">${t}</span>
@@ -587,8 +627,8 @@ const s15 = () => {
 /* ── 16 · Başlangıç ──────────────────────────────────────────────────── */
 const s16 = () => {
   const steps = [
-    ["Derneğinizi açalım", "Kullanıcılar, roller ve yetkiler tanımlanır."],
-    ["Mevcut veriyi taşıyalım", "Bağışçı listesi, yürüyen projeler ve kasa açılış bakiyeleri aktarılır."],
+    ["Derneğinizi açalım", "Kayıt talebi, davet bağlantısı ve protokol onayıyla hesap açılır; kullanıcılar ve roller tanımlanır."],
+    ["Mevcut veriyi taşıyalım", "Yürüyen projeler, bütçe kalemleri ve kasa açılış bakiyeleri aktarılır."],
     ["Bir fonla deneyelim", "Tek bir gerçek proje uçtan uca sistemde yürütülür."],
     ["Ekip devralsın", "Kısa eğitim sonrası tüm projeler taşınır."],
   ];
@@ -657,49 +697,49 @@ export const slides = [
     title: "Sabah açtığınızda gördüğünüz ekran",
     sub: "Gününüze nereden başlayacağınızı söyleyen tek sayfa.",
     canvas: s05(),
-    note: `Her rakam tıklanabilir: <b>“7 onay bekleyen harcama”</b> yazısına bastığınızda o harcamaların listesine inersiniz.`,
+    note: `Görünüm role göre gelir: <b>Proje Yönetimi, Finans, Bugün, Hibe takibi</b>. Kart ekler, çıkarır, sürükleyip boyutlandırırsınız; her rakam tıklanınca ilgili listeye iner, sayfa tek tıkla yazdırılır.`,
   },
   {
     section: "EKRANLAR", eyebrow: "02 · PROJELER",
     title: "Her fonun kendi konsolu var",
     sub: "Faaliyetin durumu ve fonun parası aynı ekranda, yan yana.",
     canvas: s06(),
-    note: `Fonun ne kadarı kaldı diye <b>tahmin etmezsiniz</b>: harcanan tutar faaliyetlerden, bütçe ise fon tanımından gelir; ikisi aynı satırda görünür.`,
+    note: `Fonun ne kadarı kaldı diye <b>tahmin etmezsiniz</b>: harcama görevin içinden bütçe kalemine bağlı girilir, bütçe rakamı her ekranda aynıdır. Projeden finans ve belge ekranlarına tek tıkla geçilir.`,
   },
   {
     section: "EKRANLAR", eyebrow: "03 · GÖREVLER",
     title: "Aynı faaliyetler, dört farklı bakış",
     sub: "Veri tek; herkes kendine uygun görünümü seçer.",
     canvas: s07(),
-    note: `Kanban'da bir kartı sürüklediğinizde <b>liste, takvim ve Gantt aynı anda</b> değişir — çünkü hepsi aynı faaliyeti gösterir.`,
+    note: `Kart Panosu'nda bir kartı sürüklediğinizde <b>liste, takvim ve zaman çizelgesi aynı anda</b> değişir — çünkü hepsi aynı faaliyeti gösterir. Bir görev ekip dışından birine de açılabilir; ekip içi yazışma dışarı çıkmaz.`,
   },
   {
-    section: "EKRANLAR", eyebrow: "04 · KAYNAKLAR",
+    section: "EKRANLAR", eyebrow: "04 · FİNANS & BÜTÇE",
     title: "Para nereden geldi, nereye gitti",
     sub: "Muhasebe bilgisi gerektirmeden, doğru kayıt otomatik oluşur.",
     canvas: s08(),
-    note: `Siz sadece <b>“bağış geldi”</b> veya <b>“şu gideri ödedim”</b> dersiniz; kasa, proje maliyeti ve bağışçı kaydı arkada kendiliğinden işlenir. Yabancı para cinsinden fonlarda kur TCMB'den otomatik çekilir.`,
+    note: `Siz sadece <b>“bağış geldi”</b> veya <b>“şu gideri ödedim”</b> dersiniz; kasa, bütçe kalemi ve dilim arkada kendiliğinden işlenir. Kesintiyi kalemlere dağıtıp yeni bütçe revizyonu üretirsiniz; döviz bütçeli fonda kur TCMB'den otomatik çekilir, üç rakam birden görünür.`,
   },
   {
-    section: "EKRANLAR", eyebrow: "05 · BELGELER",
+    section: "EKRANLAR", eyebrow: "05 · DOKÜMANLAR",
     title: "Denetime hazır durun",
-    sub: "Her belge ait olduğu projeye ve faaliyete bağlı durur.",
+    sub: "Her belge projesine bağlı durur; süreç şeridi sırada ne olduğunu söyler.",
     canvas: s09(),
-    note: `Aynı belgenin yeni sürümünü yüklediğinizde <b>eskisi silinmez</b>, arşive iner. “Fon sözleşmesinin son hali hangisi?” sorusu ortadan kalkar.`,
+    note: `Aynı belgenin yeni sürümünü yüklediğinizde <b>eskisi silinmez</b>, arşive iner. Belge açığı finans ekranında da görünür; “Fon sözleşmesinin son hali hangisi?” sorusu ortadan kalkar.`,
   },
   {
     section: "EKRANLAR", eyebrow: "06 · RAPORLAR",
     title: "Rapor için kimseden veri istemezsiniz",
     sub: "Günlük çalışırken girilen kayıtlar raporu zaten oluşturur.",
     canvas: s10(),
-    note: `Her rapor <b>Excel veya PDF</b> olarak indirilir; tarih aralığı, proje ve kurum filtreleri hazır gelir.`,
+    note: `Proje bütçesi raporu <b>Excel veya PDF</b> olarak iner; fon raporunu derleyici belgeler ve harcamalardan derler, teslim tarihi ve alıcısıyla kayda geçer.`,
   },
   {
-    section: "EKRANLAR", eyebrow: "07 · FON YÖNETİMİ",
+    section: "EKRANLAR", eyebrow: "07 · HİBE YÖNETİMİ",
     title: "Size uygun fonu kaçırmayın",
-    sub: "Açık çağrılar tek listede; derneğinizin profiline uyanlar öne çıkar.",
+    sub: "Uyan çağrılar öne çıkar; başvuruyu danışmanınızla birlikte hazırlarsınız.",
     canvas: s12(),
-    note: `Kazanılan fon <b>normal bir projeye dönüşür</b> — bütçesi, faaliyetleri ve harcama belgeleriyle aynı sistemde yürür.`,
+    note: `<b>Bugün</b> ekranı sıradaki işi risk ve tutara göre sıralar; <b>Hibe Yolculuğum</b> bütün süreçleri çağrı başına tek satırda gösterir. Kazanılan fon normal bir projeye dönüşür — bütçesi, faaliyetleri ve belgeleriyle aynı sistemde yürür.`,
   },
   {
     section: "GÜVEN", eyebrow: "YETKİ",
@@ -713,7 +753,7 @@ export const slides = [
     title: "Şubeniz kendi kapalı alanında",
     sub: "Genel merkez, şube ve temsilcilikleri tek platformda, birbirine karıştırmadan yönetirsiniz.",
     canvas: s14(),
-    note: `Her değişiklik <b>kim ve ne zaman</b> bilgisiyle kayda geçer; bağışçıya ve denetime karşı hesap verirken dayanağınız olur.`,
+    note: `Her değişiklik <b>kim ve ne zaman</b> bilgisiyle kayda geçer; fatura ve pano çıktılarında derneğinizin resmî unvanı yer alır — bağışçıya ve denetime karşı hesap verirken dayanağınız olur.`,
   },
   {
     section: "GÜVEN", eyebrow: "ERİŞİM",
