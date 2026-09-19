@@ -219,8 +219,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
 
     public async Task<GrantDocumentFileRefDto> GetFileRefAsync(Guid versionId)
     {
-        var version = await _versionRepo.FirstOrDefaultAsync(v => v.Id == versionId)
-                      ?? throw new EntityNotFoundException(typeof(GrantApplicationDocumentVersion), versionId);
+        var version = await GetVersionAsync(versionId);
 
         // Erişim kontrolü: sürümün bağlı olduğu başvuru okunabiliyor mu?
         var document = await GetDocumentAsync(version.DocumentId);
@@ -357,6 +356,26 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
 
         return await _docRepo.FirstOrDefaultAsync(d => d.Id == id)
                ?? throw new EntityNotFoundException(typeof(GrantApplicationDocument), id);
+    }
+
+    /// <summary>
+    /// 🔴 Sürüm de kiracıya ait: liste sürümleri filtre kapalı okuyup "İndir"
+    /// düğmesini gösterirken indirme filtre açık okuyordu → host'taki danışman için
+    /// her indirme 404. Kural <see cref="GetDocumentAsync"/> ile aynı.
+    /// </summary>
+    private async Task<GrantApplicationDocumentVersion> GetVersionAsync(Guid id)
+    {
+        if (_currentTenant.Id == null)
+        {
+            using (_mtFilter.Disable())
+            {
+                return await _versionRepo.FirstOrDefaultAsync(v => v.Id == id)
+                       ?? throw new EntityNotFoundException(typeof(GrantApplicationDocumentVersion), id);
+            }
+        }
+
+        return await _versionRepo.FirstOrDefaultAsync(v => v.Id == id)
+               ?? throw new EntityNotFoundException(typeof(GrantApplicationDocumentVersion), id);
     }
 
     private async Task<(GrantCall Call, Grant Grant)> GetCatalogAsync(GrantApplication application)
