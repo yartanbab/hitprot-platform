@@ -12,6 +12,8 @@ using Apya.Platform.Customers;
 using Apya.Platform.Expenses;
 using Apya.Platform.Grants;
 using Apya.Platform.Invoices;
+using Apya.Platform.Web.Controllers;
+using Volo.Abp.TenantManagement;
 
 namespace Apya.Platform.Pages;
 
@@ -109,5 +111,40 @@ public class Smoke_Tests : PlatformWebTestBase
         authorize.ShouldContain(a => a.Policy == expectedPolicy,
             $"{serviceType.Name}.{methodName} '{expectedPolicy}' beklerken " +
             $"'{string.Join(", ", authorize.Select(a => a.Policy ?? "(politikasız)"))}' taşıyor");
+    }
+
+    // ── Kiracı hesabına geçiş (SEC-00) ─────────────────────────────────────
+    // Uç, izni ne olursa olsun her host oturumuna açıktı. Test host'u
+    // AddAlwaysAllowAuthorization kullandığı için çalışma zamanında 403 gözlemlenemez;
+    // bu yüzden sözleşme öznitelik düzeyinde kilitlenir.
+    [Fact]
+    public void ImpersonateTenant_RequiresTenantManagementPermission()
+    {
+        var method = typeof(ImpersonationController)
+            .GetMethod(nameof(ImpersonationController.ImpersonateTenantAsync));
+        method.ShouldNotBeNull();
+
+        var policies = method!.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .Cast<AuthorizeAttribute>()
+            .Select(a => a.Policy)
+            .ToList();
+
+        policies.ShouldContain(TenantManagementPermissions.Tenants.Default,
+            "ImpersonateTenantAsync izin kapısı taşımıyor — host bağlamındaki her kullanıcı " +
+            "istediği kiracının admin oturumunu açabilir");
+    }
+
+    [Fact]
+    public void BackToImpersonator_StaysPermissionFree()
+    {
+        // Host izni konursa kullanıcı kiracının içinde kilitlenir: geçiş sırasında principal
+        // kiracının admin'idir ve tenant-management izinleri host tarafıdır. Dönüş yolu
+        // imzalı çerezdeki impersonator claim'ine dayandığı için zaten sahte üretilemez.
+        var method = typeof(ImpersonationController)
+            .GetMethod(nameof(ImpersonationController.BackToImpersonatorAsync));
+        method.ShouldNotBeNull();
+
+        method!.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .ShouldBeEmpty("BackToImpersonatorAsync'e izin konursa kullanıcı kiracı oturumunda kilitlenir");
     }
 }

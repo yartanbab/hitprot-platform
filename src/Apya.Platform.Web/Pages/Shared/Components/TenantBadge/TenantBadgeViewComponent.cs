@@ -20,10 +20,11 @@ namespace Apya.Platform.Web.Components.TenantBadge;
 /// GÜVENLİK: tenant LİSTESİ yalnızca <c>AbpTenantManagement.Tenants.Default</c>
 /// yetkisi olan kullanıcıya doldurulur. Yetkisiz kullanıcı yalnız kendi tenant
 /// adını gören, tıklanamaz bir rozet görür — sistemdeki diğer tenant'ların
-/// varlığı/adı sızmaz. Geçişin KENDİSİ burada yapılmaz: ABP'nin kendi
-/// denetlenmiş <c>/Account/ImpersonateTenant</c> uç noktasına antiforgery
-/// token'lı form POST'u ile devredilir, yani yeni bir yetkilendirme yüzeyi
-/// açılmaz (Tenant Yönetimi sayfasındaki "Hesabına Gir" ile aynı yol).
+/// varlığı/adı sızmaz. Geçişin KENDİSİ burada yapılmaz: bu uygulamanın kendi
+/// <c>ImpersonationController</c>'ındaki <c>/Account/ImpersonateTenant</c> ucuna
+/// antiforgery token'lı form POST'u ile devredilir (Tenant Yönetimi sayfasındaki
+/// "Hesabına Gir" ile aynı yol). O uç da aynı <c>Tenants.Default</c> iznini arar,
+/// yani buradaki görünürlük kapısı ile sunucu kapısı birebir örtüşür.
 /// </summary>
 public class TenantBadgeViewComponent : AbpViewComponent
 {
