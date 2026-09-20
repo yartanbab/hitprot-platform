@@ -1,0 +1,1202 @@
+<meta charset="utf-8">
+<title>Dikiş Denetimi</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ink:#141A22; --ink-2:#3D4854; --ink-3:#6B7684;
+  --paper:#F4F6F8; --surface:#FFFFFF; --surface-2:#EAEEF2;
+  --line:#D9DEE5; --line-2:#BFC7D2;
+  --accent:#1F5C6E; --accent-soft:#E0EDF1;
+  --ok:#2E6B4F; --ok-bg:#E2F0E8;
+  --warn:#8A6A12; --warn-bg:#F6EEDA;
+  --risk:#A9531B; --risk-bg:#F8E8DC;
+  --crit:#9E2B22; --crit-bg:#F8E2E0;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"IBM Plex Serif",Georgia,serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#E4E9EF; --ink-2:#AFB9C6; --ink-3:#7E8998;
+  --paper:#101419; --surface:#171C23; --surface-2:#202730;
+  --line:#2B333D; --line-2:#3B4552;
+  --accent:#72B4C5; --accent-soft:#15323B;
+  --ok:#74C098; --ok-bg:#162D24;
+  --warn:#D6AE52; --warn-bg:#2E2717;
+  --risk:#E08C55; --risk-bg:#332115;
+  --crit:#E8786C; --crit-bg:#351D1B;
+}}
+:root[data-theme="dark"]{
+  --ink:#E4E9EF; --ink-2:#AFB9C6; --ink-3:#7E8998;
+  --paper:#101419; --surface:#171C23; --surface-2:#202730;
+  --line:#2B333D; --line-2:#3B4552;
+  --accent:#72B4C5; --accent-soft:#15323B;
+  --ok:#74C098; --ok-bg:#162D24;
+  --warn:#D6AE52; --warn-bg:#2E2717;
+  --risk:#E08C55; --risk-bg:#332115;
+  --crit:#E8786C; --crit-bg:#351D1B;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.62;margin:0}
+.wrap{max-width:1140px;margin:0 auto;padding-inline:20px;padding-block:0 72px}
+.prose{max-width:74ch}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;text-wrap:balance;line-height:1.24;margin:0}
+h2{font-size:26px;margin-block:56px 6px;letter-spacing:-.01em}
+h3{font-size:19px;margin-block:34px 6px}
+h4{font-size:16px;margin-block:24px 4px;font-family:var(--sans);font-weight:600}
+p{margin-block:12px}
+a{color:var(--accent)}
+code,.mono{font-family:var(--mono);font-size:.855em}
+.path{font-family:var(--mono);font-size:12px;color:var(--ink-3);word-break:break-word}
+hr{border:0;border-top:1px solid var(--line);margin-block:44px}
+
+/* masthead */
+.mast{border-bottom:1px solid var(--line);background:var(--surface)}
+.mast .wrap{padding-block:34px 26px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.mast h1{font-size:clamp(30px,5.4vw,46px);margin-block:10px 8px;letter-spacing:-.022em}
+.lede{font-size:17px;color:var(--ink-2);max-width:66ch;margin-block:8px 0}
+.meta{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:20px;font-size:12.5px;color:var(--ink-3);font-family:var(--mono)}
+
+/* nav */
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+nav.toc ul{display:flex;gap:2px;list-style:none;margin:0;padding:0 20px;overflow-x:auto;max-width:1140px;margin-inline:auto}
+nav.toc a{display:block;padding:11px 10px;font-size:12.5px;color:var(--ink-2);text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent}
+nav.toc a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* pills */
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:500;padding:2px 7px;border-radius:3px;letter-spacing:.02em;white-space:nowrap}
+.p0{background:var(--crit-bg);color:var(--crit)}
+.p1{background:var(--risk-bg);color:var(--risk)}
+.p2{background:var(--warn-bg);color:var(--warn)}
+.p3{background:var(--surface-2);color:var(--ink-3)}
+.tag{display:inline-block;font-size:11px;padding:2px 7px;border:1px solid var(--line-2);border-radius:3px;color:var(--ink-3)}
+
+/* callout */
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:14px 18px;margin-block:20px;border-radius:0 4px 4px 0}
+.note p:first-child{margin-top:0}.note p:last-child{margin-bottom:0}
+.note.warn{border-left-color:var(--risk);background:var(--risk-bg)}
+.note strong{color:var(--ink)}
+
+/* finding */
+.find{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line-2);border-radius:0 5px 5px 0;padding:16px 18px;margin-block:14px}
+.find.lv0{border-left-color:var(--crit)}
+.find.lv1{border-left-color:var(--risk)}
+.find-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px;margin-bottom:8px}
+.find-h .id{font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--ink)}
+.find-h .ttl{font-weight:600;font-size:15px}
+.find dl{display:grid;grid-template-columns:78px 1fr;gap:5px 14px;margin:0;font-size:14px}
+.find dt{color:var(--ink-3);font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding-top:3px}
+.find dd{margin:0}
+@media(max-width:560px){.find dl{grid-template-columns:1fr;gap:2px}.find dt{padding-top:9px}}
+
+/* tables */
+.tw{overflow-x:auto;margin-block:18px;border:1px solid var(--line);border-radius:5px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:620px}
+th{text-align:left;font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.055em;color:var(--ink-3);padding:10px 13px;border-bottom:1px solid var(--line-2);white-space:nowrap;background:var(--surface-2)}
+td{padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+td.id{font-family:var(--mono);font-size:12px;white-space:nowrap}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+
+/* health matrix */
+.hm{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-block:20px}
+.hm-row{display:grid;grid-template-columns:8px 168px 1fr 150px;gap:0;background:var(--surface);align-items:stretch}
+.hm-row>div{padding:11px 14px}
+.hm-row .bar{padding:0}
+.hm-row .area{font-weight:600;font-size:14px;padding-left:12px}
+.hm-row .prob{color:var(--ink-2);font-size:13.5px}
+.hm-row .act{font-size:12.5px;color:var(--ink-3);font-family:var(--mono)}
+.hm-head{background:var(--surface-2);font-size:11.5px;text-transform:uppercase;letter-spacing:.055em;color:var(--ink-3);font-weight:600}
+.hm-head>div{padding:9px 14px}
+.hm-head .area{padding-left:12px}
+.g .bar{background:var(--ok)} .y .bar{background:var(--warn)} .o .bar{background:var(--risk)} .r .bar{background:var(--crit)}
+@media(max-width:760px){.hm-row{grid-template-columns:8px 1fr}.hm-row .prob,.hm-row .act{grid-column:2;padding-top:0}.hm-head{display:none}}
+
+/* seam diagram */
+.seams{display:grid;gap:10px;margin-block:22px}
+.seam{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:12px 16px}
+.seam .side{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+.seam .side.r{text-align:right}
+.seam .gap{font-size:11px;color:var(--crit);border:1px dashed var(--crit);border-radius:3px;padding:2px 8px;white-space:nowrap;background:var(--crit-bg)}
+@media(max-width:620px){.seam{grid-template-columns:1fr;gap:5px}.seam .side.r{text-align:left}.seam .gap{justify-self:start}}
+
+/* arch */
+.arch{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px 16px;margin-block:22px;overflow-x:auto}
+.layer{display:grid;gap:9px;margin-bottom:9px;min-width:560px}
+.layer.c3{grid-template-columns:repeat(3,1fr)}
+.layer.c1{grid-template-columns:1fr}
+.box{border:1px solid var(--line-2);border-radius:4px;padding:11px 13px;background:var(--surface-2)}
+.box .bt{font-weight:600;font-size:13.5px;margin-bottom:3px}
+.box .bi{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);line-height:1.6}
+.box.acc{background:var(--accent-soft);border-color:var(--accent)}
+.box.acc .bt{color:var(--accent)}
+.conn{text-align:center;color:var(--ink-3);font-family:var(--mono);font-size:11px;margin-block:2px 9px}
+
+ul.tight{margin-block:10px;padding-left:20px}
+ul.tight li{margin-block:5px}
+ol.tight{margin-block:10px;padding-left:22px}
+ol.tight li{margin-block:7px}
+.kv{font-family:var(--mono);font-size:12.5px;color:var(--ink-2)}
+.sec-sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="eyebrow">Apya.Platform · PHASE 0 — System Check-Up</div>
+    <h1>Dikiş Denetimi</h1>
+    <p class="lede">Hibe → başvuru → proje → finans → belge → raporlama ekseninin uçtan uca kod denetimi.
+    Modüller tek tek sağlam; kırılma modüllerin <em>arasında</em>. 99 bulgunun tamamı kaynak okunarak doğrulandı.</p>
+    <div class="meta">
+      <span>2026-09-21</span>
+      <span>main f3ed8f39</span>
+      <span>11 alan · 99 bulgu · 12 senaryo</span>
+      <span>salt-okunur — kod değiştirilmedi</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Bölümler">
+  <ul>
+    <li><a href="#ozet">Özet</a></li>
+    <li><a href="#tez">Tez</a></li>
+    <li><a href="#matris">Karar matrisi</a></li>
+    <li><a href="#p0">P0/P1 bulgular</a></li>
+    <li><a href="#domain">Domain</a></li>
+    <li><a href="#yolculuk">Yolculuk</a></li>
+    <li><a href="#finans">Finans</a></li>
+    <li><a href="#belge">Belge</a></li>
+    <li><a href="#rapor">Raporlama</a></li>
+    <li><a href="#bildirim">Bildirim</a></li>
+    <li><a href="#izin">İzin & güvenlik</a></li>
+    <li><a href="#senaryo">Senaryolar</a></li>
+    <li><a href="#itiraz">İtirazlarım</a></li>
+    <li><a href="#plan">Yol haritası</a></li>
+    <li><a href="#hedef">Hedef mimari</a></li>
+    <li><a href="#tumu">Tüm bulgular</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+<section id="ozet">
+<h2>A. Yönetici özeti</h2>
+<div class="prose">
+<ol class="tight">
+<li><strong>Modüller iyi, dikişler yok.</strong> Grants 30+ entity'lik, XML-doc'lu, bilinçli tasarım kararları belgelenmiş olgun bir alan. Finans çekirdeği (ProjectBudgets) tek-doğru-kaynak ilkesiyle kurulmuş. Belge modülü üç katmanlı, EAV meta şemalı, saf-fonksiyon eşleştirmeli. Hiçbir P0/P1 bulgu bir modülün <em>içinde</em> değil — hepsi iki modülün <em>birleştiği yerde</em>.</li>
+
+<li><strong>Kök desen: sistem her köprü noktasında “bağlamak” yerine “kopyalamayı” seçmiş.</strong> Hibe→proje dönüşümü bütçe kalemini, dilimi, görevi kopyalar; kopyada kaynak kimliği yoktur. Kopyalar o andan sonra bağımsız yaşar ve ayrışır. Bugünkü çelişkilerin çoğu tek bir mimari kararın sonucudur.</li>
+
+<li><strong>Para rakamları bugün sessizce yanlış olabiliyor.</strong> Dövizli bir gider TRY kasadan ödendiğinde kasa bakiyesine ham tutar yazılıyor (kur çevrimi yok); proje “Harcanan” toplamı farklı para birimlerindeki tutarları topluyor. İkisi de doğrulandı. Fatura yolu aynı işi doğru yapıyor — yani doğru desen kod tabanında zaten var, sadece iki yerde uygulanmamış.</li>
+
+<li><strong>Bir görüntüleme izni finansal mutasyon yetkisine dönüşüyor.</strong> <code>InvoiceAppService</code> yalnız sınıf seviyesinde korunuyor; fatura açma ve <em>ödeme kaydetme</em> (kasa + cari defterine yazar) alt-izinle ayrılmamış. Diğer bütün finans servisleri bu ayrımı yapıyor — tek istisna bu. Doğrulandı.</li>
+
+<li><strong>Başvurunun “nerede olduğu” sorusunun tek cevabı yok.</strong> Üç senkronsuz eksen var: 4 değerli <code>Stage</code> enum'u, şablon adımı <code>CurrentStepId</code> ve <code>GrantDecision</code>. Pano adım taşır ama Stage'i yazmaz; karar kaydı Stage'i ilerletmez; huni/bugün/istatistik yalnız Stage okur. Şablonlu bir başvuru panoda bitse bile firma ekranında hiç kapanmaz.</li>
+
+<li><strong>Aşama şablonunu düzenlemek tüm canlı başvuruları ilk aşamaya geri sarıyor.</strong> <code>SyncStepsAsync</code> her güncellemede adımları silip yeni GUID'lerle yaratıyor; o şablona bağlı başvuruların <code>CurrentStepId</code>'si yetim kalıyor ve pano kartı sessizce ilk sütuna düşüyor. Uyarı yok, akış kaydı yok, geri dönüş yok.</li>
+
+<li><strong>Kabul ile dönüşüm arasında kapı yok.</strong> <code>ConvertAsync</code> yalnız <code>ApprovedAmount &gt; 0</code> arıyor; <code>GrantDecision.Outcome</code>'a hiç bakmıyor ve hiçbir akış reddedilen başvurunun tutarını temizlemiyor. Sonuç: <em>reddedilmiş</em> bir başvuru projeye dönüştürülebiliyor.</li>
+
+<li><strong>Dönüşüm, kazanılan bağlamın yarısını düşürüyor.</strong> Başvurunun proje başlığı/özeti, kategorisi (proje “Hibe Projesi” yerine “Diğer” açılıyor — sistem kategorisi mevcut ama kullanılmıyor), carisi, döviz köprüsü, bütçe gerekçeleri ve <strong>tüm evrakı</strong> aktarılmıyor. Kullanıcı bunları projede ikinci kez giriyor — ürünün kendi temel vaadinin (“veri bir kez girilir”) en görünür ihlali.</li>
+
+<li><strong>Bir hibe kaleminin kategorisi sessizce yanlış eşleniyor.</strong> <code>CategorySuggestions.GetValueOrDefault</code> nullable olmayan bir sözlükte çalıştığı için, sözlükte bulunmayan <code>YazilimLisans</code> kalemi <code>null</code> yerine <code>Other</code> döndürüyor. Kodun kendi XML-doc'u “yanlış bir kategoriyi varsayılan yapmaktansa boş bırakmak daha az zarar verir” diyor; uygulama bu niyeti ihlal ediyor ve “eşlenmedi” uyarısı hiç çalışmıyor. Doğrulandı.</li>
+
+<li><strong>Tahsilat üç yerde, üç rakam.</strong> <code>GrantDisbursementTranche.Status</code>, <code>FundingTranche.ReceivedAmount</code> ve <code>IncomeEntry + CashMovement</code> arasında ne FK ne senkron var. Hibe ekranı “ödendi” derken proje finans paneli “bekliyor” gösterebiliyor. Bu, 18 Eylül CEO/CTO denetiminin H-04'ü — hâlâ açık ve hâlâ en pahalı dikiş.</li>
+
+<li><strong>Raporlama motoru var, beslemesi yok.</strong> <code>/Documents/ReportBuilder</code> şablon, bölüm aç/kapa, önizleme, preflight, zamanlama, sürümlü arşiv ve süreli dış paylaşım sunuyor — olgun bir altyapı. Ancak “üretilebilir” işaretli dört bölüm (Zaman çizelgesi, Harcama-belge eşleşmesi, <strong>Riskler</strong>, Ekip katkısı) exporter'da hiç çizilmiyor: kullanıcı şablonda açık görüyor, kuruma giden PDF'te bölüm yok.</li>
+
+<li><strong>Bütünleşik proje ilerleme raporu bugün üretilemiyor.</strong> Bütçe/görev kırılımı ayrı bir rapordadır, risk verisi rapora bağlanmamıştır, görev durum dağılımı hiçbir bölümde yoktur. §24'teki “yıllık rapor” senaryosunun cevabı <strong>hayır</strong> — ve eksik zincir kısa: iki bölüm anahtarı + iki servis bağlantısı.</li>
+
+<li><strong>Hibe ile raporlama motoru birbirini hiç tanımıyor.</strong> Grants katmanlarında <code>DeliveryPackage / ReportTemplate / ReportRun</code> araması sıfır; Documents katmanında <code>GrantApplicationId</code> araması sıfır. KOSGEB/TÜBİTAK şablonu var ama içeriği hibe verisinden (dilim, hibe bütçe gerçekleşmesi, rapor bölüm durumları) habersiz jenerik bir proje-belge raporu.</li>
+
+<li><strong>Hibe hunisinin üç kritik anı sessiz.</strong> “Başvuru gönderildi”, “projeye dönüşüm bekliyor” ve “görev gecikti” hiçbir bildirim üretmiyor. Bildirim altyapısı (34 tür, kategori tercihi, tekillik anahtarı, kritik e-posta + günlük özet) sağlam ve tek sistem — eksik olan altyapı değil, bu üç tetikleyici.</li>
+
+<li><strong>“Çıktı” ve “gösterge” kavramları kod tabanında hiç yok.</strong> Entity, DTO, lokalizasyon anahtarı — hiçbiri. Hibe odaklı bir üründe donör raporlamasının omurgası budur. Kilometre taşı yalnız başvuru tarafında var ve dönüşümde düz göreve çevriliyor. Bu, denetimin bulduğu tek gerçek <em>eksik yetenek</em>; geri kalan her şey var olanın birleştirilmesi.</li>
+
+<li><strong>İki ilerleme ekseni proje tarafında da tekrarlıyor.</strong> <code>ProjectWorkStep.ProgressPercent</code> elle giriliyor ve görevlere hiç bağlı değil (<code>TaskItem</code>'da <code>WorkStepId</code> yok). Gantt ve rapor, görevlerdeki gerçek tamamlanmadan kopuk bir sayı basıyor.</li>
+
+<li><strong>Belge altı ayrı depoda yaşıyor.</strong> Merkez zincir, Grants, TaskAttachment, TaskDocument, ProjectAttachment, FeedbackAttachment. Merkezin yetenekleri (tür şeması, EAV meta, uygunluk, eşleştirme, erişim izi, versiyon) diğerlerine uzanmıyor — kod bunu açıkça itiraf ediyor: görev ekinden gelen uygunluk kalemi “<code>DocumentFile</code>'ın <code>TaskId</code>'si yok” gerekçesiyle asla otomatik karşılanamıyor.</li>
+
+<li><strong>Finans Merkezi görüntülemede birleşti, yazmada birleşmedi.</strong> Hub'daki “Gider ekle” çıplak <code>/Expenses</code>'e gidiyor ve seçili proje bağlamını düşürüyor; aynı işi proje konsolu bağlamlı modalla doğru yapıyor. Bir hibe projesinin finansını uçtan uca yönetmek bugün 6–10 ekran istiyor.</li>
+
+<li><strong>Çağrı kapanışı tamamen host'un eline bakıyor.</strong> Son başvuru tarihi geçen çağrıyı kapatan hiçbir otomatik mekanizma yok; host unutursa bekleyen talepler süresiz “Yeni/İnceleniyor”da asılı kalır ve firma hiç cevap almaz.</li>
+
+<li><strong>En büyük tek risk teknik değil operasyonel: <code>main</code>'deki 40+ düzeltmenin hiçbiri canlıda değil.</strong> F0/F1 fazında kapatılan hataların tamamı (#427–#448) hâlâ müşteri tarafında yaşıyor. Bu rapordaki her “düzeltildi” ifadesi <em>main'de</em> düzeltildi demektir.</li>
+</ol>
+</div>
+</section>
+
+<section id="tez">
+<h2>B. Tez: bu bir modül sorunu değil, dikiş sorunu</h2>
+<div class="prose">
+<p>Denetim 11 alanı bağımsız ajanlarla taradı ve 99 bulgu üretti. Bulguları önem sırasına dizdiğimde ortaya tek bir desen çıktı: <strong>P0 ve P1 bulguların tamamı iki modülün birleştiği noktada.</strong> Tek bir modülün içinde kritik bir hata bulunamadı — domain modelleri özenli, iş kuralları <code>*Manager</code>'larda toplanmış, bilinçli ödünler yorumlarla belgelenmiş.</p>
+<p>Bunun sebebi sistemin nasıl büyüdüğü: her modül kendi içinde doğru kuruldu, ama ürünün asıl değer vaadi (“veri bir kez girilir, ilişkiler üzerinden her yerde kullanılır”) tam olarak modüllerin <em>arasında</em> yaşıyor — ve orası hiç inşa edilmedi.</p>
+</div>
+
+<div class="seams">
+  <div class="seam"><span class="side">GrantApplication.Stage</span><span class="gap">senkron yok</span><span class="side r">CurrentStepId · GrantDecision</span></div>
+  <div class="seam"><span class="side">GrantDisbursementTranche</span><span class="gap">FK yok</span><span class="side r">FundingTranche · IncomeEntry · CashMovement</span></div>
+  <div class="seam"><span class="side">GrantApplicationDocument</span><span class="gap">köprü yok</span><span class="side r">Document · DocumentFile</span></div>
+  <div class="seam"><span class="side">GrantReport (takvim)</span><span class="gap">sıfır referans</span><span class="side r">ReportRun · DeliveryPackage</span></div>
+  <div class="seam"><span class="side">ProjectWorkStep.ProgressPercent</span><span class="gap">bağ yok</span><span class="side r">TaskItem.Status</span></div>
+  <div class="seam"><span class="side">Expense.Currency</span><span class="gap">çevrim yok</span><span class="side r">CashAccount.Currency</span></div>
+  <div class="seam"><span class="side">Invoice (alış)</span><span class="gap">Expense üretmez</span><span class="side r">ProjectBudgetLine</span></div>
+  <div class="seam"><span class="side">ReportSectionAvailability</span><span class="gap">case yok</span><span class="side r">DeliveryPackageExporter switch</span></div>
+  <div class="seam"><span class="side">Finans Merkezi (proje bağlamı)</span><span class="gap">parametre taşınmaz</span><span class="side r">/Expenses · /Incomes</span></div>
+</div>
+
+<div class="prose">
+<p>Bu tablo aynı zamanda önceliklendirmenin kendisidir. <strong>Yeni yüzey açmak bu listeyi uzatır, kısaltmaz.</strong> 18 Eylül CEO/CTO denetiminin stratejik kararı da aynıydı: “yüzey genişlemesini durdur, iki sprint yalnız döngü kapat.” Bu denetim o kararı bağımsız olarak doğruluyor.</p>
+</div>
+
+<div class="note">
+<p><strong>İkinci desen — kopyala değil, bağla.</strong> Dönüşüm bütçe kalemini, dilimi ve görevi <em>kopyalıyor</em>; kopyada kaynak kimliği taşınmıyor. Bir kere kopyalandıktan sonra iki kayıt bağımsız yaşıyor ve ayrışıyor. Mimari düzeltmenin özü “kopyaları senkronlamak” değil, <strong>kimlik bağını kurmaktır</strong>: <code>FundingTranche.SourceGrantTrancheId</code>, <code>ProjectBudgetLine.SourceGrantLineId</code>, <code>Project.GrantApplicationId</code>. Bu üç alan bugünkü çelişkilerin çoğunu tek başına izlenebilir hale getirir.</p>
+</div>
+</section>
+
+<section id="matris">
+<h2>C. Karar matrisi</h2>
+<p class="sec-sub">🟢 sağlıklı · 🟡 iyileştirilmeli · 🟠 riskli · 🔴 kritik</p>
+
+<div class="hm">
+  <div class="hm-row hm-head"><div class="bar"></div><div class="area">Alan</div><div class="prob">Kritik problem</div><div class="act">Önerilen aksiyon</div></div>
+
+  <div class="hm-row y"><div class="bar"></div><div class="area">🟡 Hibe · Program/Çağrı</div>
+    <div class="prob">Kapanış tamamen manuel; Taslak/Kapandı çağrıya API'den ilgi bırakılabiliyor</div><div class="act">LIF-03, LIF-04 → S2</div></div>
+
+  <div class="hm-row o"><div class="bar"></div><div class="area">🟠 Başvuru</div>
+    <div class="prob">Üç senkronsuz ilerleme ekseni; şablon düzenleme canlı başvuruları geri sarıyor; Submit kapısız ve izsiz</div><div class="act">LIF-02 (P0), DOM-01, LIF-05 → S2</div></div>
+
+  <div class="hm-row o"><div class="bar"></div><div class="area">🟠 Dönüşüm</div>
+    <div class="prob">Karar kapısı yok (ret → proje mümkün); kategori sessiz yanlış; evrak ve bağlamın yarısı düşüyor</div><div class="act">CNV-02, CNV-03, CNV-04, DOC-02 → S1</div></div>
+
+  <div class="hm-row y"><div class="bar"></div><div class="area">🟡 Proje</div>
+    <div class="prob">Hibe bağı UI'dan kurulamıyor; <code>UpdateAsync</code> bağı sessizce koparabiliyor; WorkStep ⊥ Task</div><div class="act">PRJ-01, PRJ-02, PRJ-04 → S2</div></div>
+
+  <div class="hm-row g"><div class="bar"></div><div class="area">🟢 Görev</div>
+    <div class="prob">Tek canlı model, tutarlı uydu tabloları, temiz transfer/silme kuralları. Eksik: gecikme bildirimi</div><div class="act">NTF-03 → S1</div></div>
+
+  <div class="hm-row r"><div class="bar"></div><div class="area">🔴 Finans · Bütçe</div>
+    <div class="prob">Kasa hareketi kur çevrimsiz; bütçe toplamları para birimi karıştırıyor; kur çözümleme 4 ayrı yolda</div><div class="act">FIN-01, FIN-02 (P0) → S0</div></div>
+
+  <div class="hm-row r"><div class="bar"></div><div class="area">🔴 Fonlama · Tahsilat</div>
+    <div class="prob">Dilim → gelir → kasa zinciri FK'sız; “tahsil edildi” üç yerde üç rakam (H-04, açık)</div><div class="act">FIN-04, FIN-06, CNV-01 → S3</div></div>
+
+  <div class="hm-row o"><div class="bar"></div><div class="area">🟠 Belgeler</div>
+    <div class="prob">Altı ayrı depo; dönüşüm evrak taşımıyor; <code>Expired</code> hiç atanmıyor; çift kayıt tespiti ölü</div><div class="act">DOC-01, DOC-02, DOC-05 → S1/S4</div></div>
+
+  <div class="hm-row o"><div class="bar"></div><div class="area">🟠 Raporlama</div>
+    <div class="prob">Dört bölüm sessizce düşüyor; bütünleşik ilerleme raporu yok; hibe ile sıfır bağ</div><div class="act">RPT-01, RPT-02, RPT-03 → S4</div></div>
+
+  <div class="hm-row y"><div class="bar"></div><div class="area">🟡 Bildirimler</div>
+    <div class="prob">Altyapı sağlam ve tek sistem; hibe hunisinin üç kritik anı sessiz; tarayıcı kapalıyken ulaşmıyor</div><div class="act">NTF-01, NTF-02, NTF-03 → S1</div></div>
+
+  <div class="hm-row y"><div class="bar"></div><div class="area">🟡 İzinler</div>
+    <div class="prob">Genel olarak disiplinli; iki finansal mutasyon alt-izinsiz (fatura ödemesi, hibe dilimi)</div><div class="act">SEC-01 (P0), SEC-02 → S0</div></div>
+
+  <div class="hm-row y"><div class="bar"></div><div class="area">🟡 Audit · İz</div>
+    <div class="prob">Finansal işlemler alan-düzeyi geçmişte; proje bütçe ekseni (kalem, dilim tahsilatı) kapsam dışı</div><div class="act">SEC-04 → S3</div></div>
+
+  <div class="hm-row y"><div class="bar"></div><div class="area">🟡 Çok kiracılılık</div>
+    <div class="prob">Ana aggregate'ler <code>IMultiTenant</code>; alt tablolar (TaskComment/Attachment, InvoiceItem, OAuth token) disipline emanet</div><div class="act">SEC-03, SEC-06 → S6</div></div>
+
+  <div class="hm-row r"><div class="bar"></div><div class="area">🔴 Operasyon</div>
+    <div class="prob"><code>main</code>'deki 40+ düzeltmenin hiçbiri canlıda değil; sır rotasyonu gecikti; onaylı 5+3 IA uygulanmadı</div><div class="act">OPS-01, OPS-02, OPS-03 → derhal</div></div>
+</div>
+
+<div class="note warn">
+<p><strong>Operasyon satırı teknik borç değil, doğrudan müşteri etkisi.</strong> Kod tarafında kapatılmış onlarca hata (ödenen dilimin “İptal” görünmesi, hibe evrakı indirme 404'ü, silinen projenin görevlerinin panolarda kalması, şifre boşluk kırpma) canlıda yaşamaya devam ediyor. Bu rapordaki düzeltme önerilerinden herhangi birinin değeri, dağıtım yapılmadıkça sıfırdır.</p>
+</div>
+</section>
+
+<section id="p0">
+<h2>D. P0 ve P1 bulgular</h2>
+<p class="sec-sub">P0 = bugün sessizce yanlış sonuç üretiyor · P1 = yüksek. P2/P3'ün tamamı <a href="#tumu">son bölümdeki tabloda</a>.</p>
+
+<h3>P0 — bugün sessizce yanlış</h3>
+
+<div class="find lv0">
+  <div class="find-h"><span class="pill p0">P0</span><span class="id">FIN-01</span><span class="ttl">Gider/gelir kasa hareketi kur çevrimi yapmıyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>ExpenseAppService.CreateAsync</code> ve <code>IncomeEntryAppService</code>, kasa hareketini kaydın <strong>ham</strong> <code>Amount</code>'uyla yazıyor; giderin para birimi ile kasanın para birimi hiçbir yerde karşılaştırılmıyor. <code>CashMovement</code>'ta <code>Currency</code> kolonu yok — tutar örtük olarak kasanın para biriminde sayılıyor. Arayüz de engellemiyor: gider modalında para birimi serbest seçiliyor.</dd>
+    <dt>Etki</dt><dd>100 USD'lik bir gider TRY kasadan ödendiğinde kasa bakiyesi 100 TL düşüyor. Bakiye (<code>OpeningBalance + Σ SignedAmount</code>) kalıcı olarak bozuluyor ve kur değerleme bu bozuk bakiyeyi değerliyor. Hiçbir uyarı yok.</dd>
+    <dt>Neden P0</dt><dd>Doğru desen kod tabanında <strong>zaten var</strong>: <code>InvoiceManager.CreateCashMovementAsync</code> aynı durumda kuru çözüp <code>PaymentCashConverter</code> ile çeviriyor. Yani bu bir tasarım tartışması değil, iki serviste atlanmış bir adım.</dd>
+    <dt>Öneri</dt><dd>Ya <code>Expense.Currency == CashAccount.Currency</code> zorunlu kılınsın (en ucuz, migrationsuz), ya fatura yolundaki çevrim tek kapıya alınıp üç akış da oradan geçsin. Karar tek yerde verilmeli.</dd>
+    <dt>Kanıt</dt><dd class="path">ExpenseAppService.cs:164-174 · IncomeEntryAppService.cs:142-190 · CashMovement.cs:13-62 (Currency yok) · InvoiceManager.cs:184-215 (karşıt örnek) — <strong>bu denetimde elle doğrulandı</strong></dd>
+  </dl>
+</div>
+
+<div class="find lv0">
+  <div class="find-h"><span class="pill p0">P0</span><span class="id">FIN-02</span><span class="ttl">Proje bütçe toplamları para birimi karıştırıyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>ProjectBudgetAppService.GetOverviewAsync</code> harcanan, gelir ve görev kırılımı toplamlarını <code>expenses.Sum(x =&gt; x.Amount)</code> ile — ham tutarlar üzerinden — hesaplıyor. Kayıtlar farklı para birimlerinde olabilir. <code>ProjectBudgetLine</code> ve <code>FundingTranche</code> para birimi taşımıyor. Tam bu iş için saklanan TRY karşılığı (<code>Expense.BookAmount</code>) hiç kullanılmıyor; sonuç <code>project.Currency</code> etiketiyle sunuluyor.</dd>
+    <dt>Etki</dt><dd>Tek bir dövizli gider “Harcanan”ı ve kalem doluluk yüzdelerini anlamsızlaştırıyor (100 USD + 1.000 TRY = 1.100 “TRY” görünüyor). Bütçe risk uyarıları ve eşik bildirimleri de aynı karışık toplama dayanıyor.</dd>
+    <dt>Durum</dt><dd><span class="tag">KARAR BEKLİYOR</span> Bu, 18 Eylül denetiminin <strong>H-10 BookAmount</strong> maddesidir; kalemsiz-gider kısmı #436 ile kapandı, <code>BookAmount</code> kısmı hâlâ kullanıcı kararında. Yeni keşif değil — P0 sınıflandırması bu denetimin değerlendirmesi.</dd>
+    <dt>Öneri</dt><dd>Toplamlarda <code>Amount</code> yerine <code>BookAmount</code> kullanılsın; <code>BookAmount = 0</code> olan damgasız kayıtlar (FIN-08) ayrıca işaretlenmeli, yoksa eksik sayım gerçek sıfırla karışır. Bu karar kapanmadan bu toplamlara yeni ekran bağlanmamalı.</dd>
+    <dt>Kanıt</dt><dd class="path">ProjectBudgetAppService.cs:91,108,111 ve :262,356,379 · ProjectBudgetLine.cs (Currency yok) · Expense.cs:49 — <strong>elle doğrulandı</strong></dd>
+  </dl>
+</div>
+
+<div class="find lv0">
+  <div class="find-h"><span class="pill p0">P0</span><span class="id">SEC-01</span><span class="ttl">Fatura görüntüleme izni, ödeme kaydetme yetkisine dönüşüyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>InvoiceAppService</code> yalnız sınıf seviyesinde <code>[Authorize(Invoices.Default)]</code> taşıyor. <code>CreateAsync</code> ve <code>AddPaymentAsync</code> hiçbir alt izinle ayrılmamış — oysa <code>AddPaymentAsync</code> → <code>InvoiceManager.RecordPaymentAsync</code> kasa hareketi <em>ve</em> cari tahakkuk yazıyor. <code>Invoices.Create/Edit/Delete</code> izinleri tanımlı ama bu serviste hiç kullanılmıyor.</dd>
+    <dt>Etki</dt><dd>Yalnız “faturaları görsün” diye yetkilendirilen kullanıcı, otomatik API'den fatura açabiliyor ve ödeme kaydedebiliyor. Diğer <em>bütün</em> finans servisleri (Expense, Income, CashMovement, CashAccount, ExchangeRate) Create/Edit/Delete ayrımını uyguluyor — tek istisna bu.</dd>
+    <dt>Öneri</dt><dd><code>CreateAsync</code> → <code>[Authorize(Invoices.Create)]</code>, <code>AddPaymentAsync</code> → <code>[Authorize(Invoices.Edit)]</code>. SEC-007 düzeltmesinin doğrudan devamı; sınıfın başındaki yorum zaten aynı sınıf hatanın bir önceki turunu anlatıyor. Rol dağıtımını kırmamak için önce mevcut izin atamaları kontrol edilmeli.</dd>
+    <dt>Kanıt</dt><dd class="path">InvoiceAppService.cs:19 (sınıf), :102-127 (Create + AddPayment, alt-izinsiz) · InvoiceManager.cs:125-180 — <strong>elle doğrulandı</strong></dd>
+  </dl>
+</div>
+
+<div class="find lv0">
+  <div class="find-h"><span class="pill p0">P0</span><span class="id">LIF-02</span><span class="ttl">Aşama şablonunu düzenlemek canlı başvuruları ilk aşamaya geri sarıyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>GrantStageTemplateAppService.SyncStepsAsync</code> her şablon güncellemesinde <strong>tüm adımları silip yeni GUID'lerle yeniden ekliyor</strong>. O şablona bağlı başvuruların <code>CurrentStepId</code>'si artık var olmayan satırları gösteriyor; pano eşleşmeyen kartı sessizce ilk sütuna düşürüyor, “Başvurularım” bulunamayan indeksi 0 sayıyor.</dd>
+    <dt>Etki</dt><dd>Host bir adımın yalnızca <em>adını</em> düzeltse bile o programın bütün canlı başvuruları panoda ve firma ekranında ilk aşamaya geri sarıyor. Uyarı yok, akış kaydı yok, geri dönüş yolu yok. Şablon <em>silme</em> “kullanımda” kontrolüyle korunuyor — güncelleme korunmuyor.</dd>
+    <dt>Öneri</dt><dd>Sil-yarat yerine eşleştirerek güncelleme (mevcut Id'ler korunsun, yalnız gerçekten kaldırılan adım silinsin); adım silinirken üzerindeki başvurular sayılıp reddedilsin ya da taşınsın. Mevcut veride yetim <code>CurrentStepId</code> varsa düzeltme betiği gerekir.</dd>
+    <dt>Kanıt</dt><dd class="path">GrantStageTemplateAppService.cs:100-113,155-167 · GrantPipelineAppService.cs:369-385 · GrantMyApplicationsAppService.cs:160-166</dd>
+  </dl>
+</div>
+
+<h3>P1 — yüksek</h3>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">DOM-01</span><span class="ttl">Başvurunun ilerlemesi üç senkronsuz eksende</span></div>
+  <dl>
+    <dt>Problem</dt><dd>(1) 4 değerli <code>Stage</code> enum'u, (2) şablon adımı <code>CurrentStepId</code>, (3) <code>GrantDecision.Outcome</code>. <code>MoveToStep</code> Stage'i yazmıyor; karar kaydı Stage'i ilerletmiyor; buna karşın huni, “bugün”, istatistik, liste ve kapanma hesapları <strong>yalnız Stage okuyor</strong>.</dd>
+    <dt>Etki</dt><dd>Şablonlu başvuru panoda son adıma taşınsa bile firma “Yolculuk”ta hiç “tamamlandı” görmüyor, “Başvurularım”da satır kapanmıyor, huninin onay sayacı 0 kalıyor. Host iki ayrı ekrandan iki ekseni bağımsız oynatabiliyor.</dd>
+    <dt>Durum</dt><dd><span class="tag">ÜRÜN KARARI AÇIK</span> 17 Eylül UX/IA denetiminin <strong>S3</strong> maddesi. Kayıtlı öneri: şablon adımı = ayrıntı, sabit aşama = özet; pano sabit aşamaya sütunlanır.</dd>
+    <dt>Öneri</dt><dd>Tek doğruluk kaynağı seçilmeden yeni ekran bağlanmamalı. En düşük riskli yol: adım taşıma ve karar kaydı Stage'i adım sırasından türetip yazsın (eşleme şablonda tutulabilir).</dd>
+    <dt>Kanıt</dt><dd class="path">GrantApplication.cs:25-36,123-139 · GrantPipelineAppService.cs:99-119 · GrantAppealAppService.cs:77-108 · GrantFunnelAppService.cs:108 · GrantTodayAppService.cs:319 · GrantJourneyAppService.cs:155-160</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">LIF-03</span><span class="ttl">Çağrı kapanışı tamamen manuel — talepler süresiz asılı kalıyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Son başvuru tarihi geçen çağrıyı kapatan hiçbir otomatik mekanizma yok. “Kaçırıldı” işaretleme + kapanış bildirimi zinciri yalnız host çağrıyı elle <em>Kapandı</em>'ya çektiğinde tetikleniyor. Günlük worker yalnız hatırlatma üretiyor, durum değiştirmiyor.</dd>
+    <dt>Etki</dt><dd>Host unutunca tarihi geçmiş çağrı “Açık” görünmeye devam ediyor, bekleyen talepler süresiz “Yeni/İnceleniyor”da kalıyor (firmaya cevap hiç gitmiyor), kapanış bilgilendirmesi hiç çıkmıyor. Bazı ekranlar tarihi ayrıca süzüyor, bazıları süzmüyor — davranış ekrandan ekrana değişiyor.</dd>
+    <dt>Öneri</dt><dd>Günlük worker'a “tarih geçti → Kapandı + kapanış zincirini koştur” adımı (mükerrer bildirimi log tablosu zaten engelliyor). Asgari çözüm: host'a “tarihi geçmiş ama açık N çağrı” uyarısı.</dd>
+    <dt>Kanıt</dt><dd class="path">GrantCallAppService.cs:74-91 · GrantCallClosingManager.cs:80-130 · GrantDeadlineReminderWorker.cs:44-53 · GrantRecommendationAppService.cs:135 (süzmeyen tüketici)</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">CNV-01</span><span class="ttl">Dönüşüm ikinci bir gelir defteri açıyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Tahsilat dilimleri projeye <em>kopyalanıyor</em> ama iki defter arasında senkron yok. Hibe tarafındaki dilim başvuruda yaşamaya devam ediyor (uygulama ekranı tahsilatı oradan topluyor); projede aynı dilimlerin kopyası <code>Pending</code> ile açılıyor. Ödeme statüsü hiç taşınmıyor.</dd>
+    <dt>Etki</dt><dd>Daha önce ödenmiş dilim projede “bekliyor” görünüyor. Hibe tarafında “Ödendi” yapılan dilim proje gelir planında tahsil edilmemiş kalıyor; finansal ekranlar çelişiyor.</dd>
+    <dt>Öneri</dt><dd>Kısa vade: statüyü taşı. Doğru çözüm: <code>FundingTranche</code>'a <code>SourceGrantTrancheId</code> ekle ve iki kayıttan birini tek doğru kaynak ilan et (OPS-04/H-04 ile birlikte; çift migration + onay).</dd>
+    <dt>Kanıt</dt><dd class="path">GrantApplicationConversionAppService.cs:204-215 · FundingTranche.cs:36 · GrantDisbursementTranche.cs:15,45 · GrantImplementationAppService.cs:301-311</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">CNV-02</span><span class="ttl">Hibe kalemi sessizce yanlış gider kategorisine eşleniyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Kategori öneri sözlüğünün değer tipi nullable değil. Sözlükte karşılığı olmayan <code>YazilimLisans</code> için <code>GetValueOrDefault</code> <code>null</code> değil <code>default(ExpenseCategory)</code> = <strong>Other</strong> döndürüyor. Sonuç: DTO'daki “eşleşme yoksa null, host seçer” sözleşmesi hiç gerçekleşmiyor; eşleşmeyen sayacı hep 0, arayüzdeki boş seçenek ve “eşlenmedi” uyarısı ölü kod.</dd>
+    <dt>Etki</dt><dd>Yazılım/lisans kalemi “Genel/Diğer” kategorisine düşüyor ve önizlemede “n/n otomatik eşleşti” diye görünüyor — host yanlışı fark etmeden onaylıyor. Servisin kendi belgesi tam tersini söylüyor: <em>“yanlış bir kategoriyi varsayılan yapmaktansa boş bırakmak daha az zarar verir.”</em></dd>
+    <dt>Öneri</dt><dd><code>TryGetValue</code> ile gerçek null döndür. Tek satır; eşleşmeyen sayacı ve host seçim akışı kendiliğinden canlanır.</dd>
+    <dt>Kanıt</dt><dd class="path">GrantApplicationConversionAppService.cs:114-121 (sözlük), :321 (GetValueOrDefault) · GrantConversionDto.cs:56-57 · Convert.js:44-46 (ölü dal) — <strong>elle doğrulandı</strong></dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">FUX-01</span><span class="ttl">Finans Merkezi'nde kayıt eklerken proje bağlamı düşüyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Hub'ın Gelir-Gider sekmesindeki “Gelir ekle” / “Gider ekle” çıplak <code>/Incomes</code> ve <code>/Expenses</code>'e gidiyor; bu sayfalar hiçbir query parametresi okumuyor. Kullanıcı hub'da seçtiği projeyi kaybediyor ve modalda yeniden seçiyor. Aynı işi proje konsolu doğru yapıyor: modal <code>ProjectId</code> ön-seçili açılıyor.</dd>
+    <dt>Etki</dt><dd>Hub'ın temel vaadi “proje bağlamlı finans” iken en sık yapılan işlem bağlamı düşürüyor — yanlış projeye kayıt girme riski ve sürekli ekran değiştirme.</dd>
+    <dt>Öneri</dt><dd>Hub'da gider/gelir oluşturma modallarını ProjectId ön-seçili aç — proje konsolundaki desen birebir kopyalanabilir.</dd>
+    <dt>Kanıt</dt><dd class="path">_PanelLedger.cshtml:84-91 · Incomes/Index.cshtml.cs:9-16 · Expenses/Index.cshtml.cs:9-16 · ProjectDetails.js:767-769 (doğru emsal)</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">FUX-02</span><span class="ttl">Hibe projesinin faturaları gezinmede yetim</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Sekme seti Faturalar'ı yalnız <em>Corporate</em> şablonuna veriyor; Grant ve Event setlerinde yok. Ayrı Giderler/Gelirler/Faturalar menü öğeleri de “hub'dan erişilebilir” gerekçesiyle kaldırılmış. <code>Invoice.ProjectId</code> var — yani hibe projesinin faturası veri olarak mümkün, ama ona giden tek yol Genel sekmesindeki listeye tesadüfen bir fatura düşmesi.</dd>
+    <dt>Etki</dt><dd>Hibe veya etkinlik projesi yürüten kullanıcı faturalarına ne menüden ne hub'dan ulaşabiliyor; “her şey hub'da” varsayımı bu iki şablonda kırılıyor.</dd>
+    <dt>Öneri</dt><dd>Ürün kararı: ya Grant/Event setine Faturalar sekmesi eklensin (izin kapısı zaten hazır), ya Gelir-Gider sekmesine “Faturalar sayfasında aç” bağlantısı konsun.</dd>
+    <dt>Kanıt</dt><dd class="path">FinanceContext.cs:98-103 · PlatformNavigationResolver.cs:686-696 · Finance/Index.cshtml.cs:519-540</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">DOC-01</span><span class="ttl">Belge altı ayrı depoda; merkezin yetenekleri diğerlerine uzanmıyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Merkez zincir (<code>Document → DocumentFile → DocumentAttachment</code>), Grants, <code>TaskAttachment</code>, <code>TaskDocument</code>, <code>ProjectAttachment</code>, <code>FeedbackAttachment</code> — altı ayrı metadata deposu. Merkezin tür şeması, EAV meta alanları, uygunluk, eşleştirme, erişim izi ve versiyonlaması diğerlerinde çalışmıyor. Fiziksel dosya katmanı ise (Feedback hariç) ortak.</dd>
+    <dt>Etki</dt><dd>Görev ekindeki bir fatura eşleştirme tezgâhına, uygunluk listesine ve teslim paketine giremiyor. Kod bunu açıkça itiraf ediyor: görev-eki kaynaklı uygunluk kalemi “<code>DocumentFile</code>'ın <code>TaskId</code>'si yok” gerekçesiyle <strong>asla otomatik karşılanamıyor</strong>, yalnız elle bağlama veya feragatle kapanıyor.</dd>
+    <dt>Öneri</dt><dd>Ya görev/proje eklerinin yüklenmesi merkezi bir <code>DocumentFile</code> kaydı da açsın (köprü tablosu ya da <code>DocumentFile.TaskId</code>), ya da bilinçli ayrım ürün kararı olarak belgelenip arayüzde “yalnız elle kapanır” diye işaretlensin.</dd>
+    <dt>Kanıt</dt><dd class="path">ComplianceCalculator.cs:87-95 · ComplianceRequirementSource.cs:21-23 · TaskAttachment.cs:6-27 · ProjectAttachment.cs:11-27 · AppDocument.cs:15 (ad çakışması)</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">DOC-02</span><span class="ttl">Dönüşüm evrakı taşımıyor — aynı dosya iki kez yükleniyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Dönüşüm bütçe, üye, görev ve dilim aktarıyor; hibe evraklarını merkezi havuza ne kopyalıyor ne bağlıyor. Önizleme yalnız evrak <em>sayısını</em> gösteriyor. Üstelik arayüz metni “başvuruda kalır, <strong>projeden erişilir</strong>” diyor — proje tarafında böyle bir bağlantı yok (<code>Pages/Projects</code> altında hibe evrakına giden hiçbir link bulunamadı).</dd>
+    <dt>Etki</dt><dd>Onaylanan hibenin sözleşme/başvuru evrakı hibe modülünde kalıyor; proje yürütülürken uygunluk listesi aynı evrak merkeze <em>ikinci kez</em> yüklenmeden yeşile dönmüyor. Aynı fiziksel dosya depoda iki kez birikiyor.</dd>
+    <dt>Durum</dt><dd><span class="tag">H-12 · F3</span> Önceki denetimde planlı, henüz yapılmadı.</dd>
+    <dt>Öneri</dt><dd>Dönüşümde onaylı evrakların son sürümlerini yeni projenin klasörüne <em>bağlayan</em> opsiyonel adım — dosya zaten aynı depoda, kopyasız referans mümkün. Asgari: yerelleştirme metnindeki yanlış vaat düzeltilsin.</dd>
+    <dt>Kanıt</dt><dd class="path">GrantApplicationConversionAppService.cs:130-222, :348 · tr.json:1222 (“projeden erişilir”) · GrantApplicationDocument.cs:18-98</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">DOC-03</span><span class="ttl">Belge metadata kapsaması depoya göre tamamen değişiyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Aynı iş belgesi hangi modülden yüklendiğine göre farklı yeteneklere sahip oluyor:</dd>
+  </dl>
+  <div class="tw"><table>
+    <thead><tr><th>Depo</th><th>Proje</th><th>Görev</th><th>Faaliyet</th><th>Finans bağı</th><th>Tür</th><th>Tarih</th><th>Versiyon</th><th>Durum</th><th>Onay</th><th>Kiracı</th></tr></thead>
+    <tbody>
+      <tr><td class="id">DocumentFile</td><td>✓</td><td>✗</td><td>✓</td><td>✓ yalnız gider</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✓</td></tr>
+      <tr><td class="id">GrantApplicationDocument</td><td>dolaylı</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td class="id">TaskAttachment</td><td>✗</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td><strong>✗</strong></td></tr>
+      <tr><td class="id">ProjectAttachment</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✓</td></tr>
+    </tbody>
+  </table></div>
+  <dl>
+    <dt>Etki</dt><dd>“Projenin tüm evrakı” tek sorguda çıkarılamıyor — dört tablo artı hibe tarafı birleştirilmeli. Onay kavramı yalnız hibede var; merkezde “Kesin” damgası bir inceleme sürecine değil tek kullanıcının tercihine dayanıyor. <code>TaskAttachment</code>'ın kiracı sütunu hiç yok (SEC-03).</dd>
+    <dt>Öneri</dt><dd>Proje detayında “tüm belgeler” görünümü kurulacaksa union projeksiyonu gerekir; kalıcı çözüm DOC-01'deki köprüleme kararına bağlı.</dd>
+    <dt>Kanıt</dt><dd class="path">DocumentFile.cs:20-70 · GrantApplicationDocument.cs:18-45 · TaskAttachment.cs:6-27 · ProjectAttachment.cs:11-27</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">RPT-01</span><span class="ttl">Şablonda açık görünen dört rapor bölümü PDF'te sessizce yok</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>ReportSectionAvailability</code> dört bölümü (Zaman çizelgesi, Harcama-belge eşleşmesi, <strong>Riskler</strong>, Ekip katkısı) “üretilebilir” işaretliyor ve seed bunları kurum şablonlarında <em>açık</em> tohumluyor. Ancak rapor modeli bu bölümler için alan taşımıyor, builder doldurmuyor ve PDF üreticisinin switch'inde case'leri yok.</dd>
+    <dt>Etki</dt><dd>Kullanıcı şablonda Risk bölümünü açık görüyor; kuruma giden PDF'te bölüm hiç çıkmıyor ve hata da üretilmiyor. Arşiv metaverisi (<code>SectionCount</code>) render edilmeyen bölümleri sayıyor.</dd>
+    <dt>Öneri</dt><dd>Veri servisleri hazır (<code>ProjectTimelineAppService</code>, <code>DocumentMatchingAppService</code>, <code>ProjectRisk</code>, <code>TaskTimeLog</code>) — dört bölüm için model + builder + exporter tamamlansın. Alternatif: “üretilebilir” setinden geri çekilsin. Hangisi olursa olsun bayat doc yorumları aynı PR'da düzeltilmeli.</dd>
+    <dt>Kanıt</dt><dd class="path">ReportSectionAvailability.cs:22-37 · ReportTemplateDataSeedContributor.cs:79,133-138 · DeliveryPackageExporter.cs:43-65 · DeliveryReportModel.cs:37-42</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">RPT-02</span><span class="ttl">Bütünleşik proje ilerleme raporu üretilemiyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Özet + görevler + bütçe + gerçekleşen harcama + belgeler + riskler + göstergeler içeren tek çıktı yok. Teslim raporu belge/uygunluk eksenli; bütçe ve görev kırılımı yalnız ayrı bir raporda; risk verisi var ama bağlanmamış; görev durum dağılımı hiçbir bölümde yok; gösterge/kilometre taşı için varlık yok.</dd>
+    <dt>Etki</dt><dd>Danışman firmalar kuruma veya müşteriye tek dosyalık dönem raporu veremiyor; iki ekran çıktısını elle birleştiriyor.</dd>
+    <dt>Öneri</dt><dd>Eksik zincir kısa: bölüm anahtarlarına <code>BudgetSummary</code> ve <code>TaskProgress</code> eklenip builder'a iki servis bağlanırsa mevcut şablon/önizleme/zamanlama altyapısı üzerinden üretilebilir. Göstergeler için önce ürün kararı gerekir.</dd>
+    <dt>Kanıt</dt><dd class="path">DeliveryReportModelBuilder.cs:159-213 · Reports/ProjectBudget.cshtml.cs:37-65 · ReportingEnums.cs:17-31 · ReportSectionAvailability.cs:17-18</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">NTF-01</span><span class="ttl">“Başvuru gönderildi” hiçbir bildirim üretmiyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>SubmitAsync</code> yalnız <code>Submit(Clock.Now)</code> çağırıp alan kilitlerini siliyor — dispatcher çağrısı, ETO veya event yok. <code>Submit()</code>'in tek çağrı noktası bu metot. Ayrıca gönderim, sunucuda zorunlu evrak veya son tarih kapısından da geçmiyor (LIF-05).</dd>
+    <dt>Etki</dt><dd>Firma başvuruyu gönderdiğinde ne danışman ekibi haberdar oluyor ne firmaya teyit düşüyor. Huninin en kritik anı sessiz. <code>Submitted</code> ve <code>HandedOver</code> aktivite türleri hiçbir yerde kaydedilmiyor — entity'nin vaat ettiği süreç akışı bu iki olayı hiç içermiyor.</dd>
+    <dt>Öneri</dt><dd>Yeni bir tetikleyici (<code>ApplicationSubmitted</code>) tanımlanıp host'a bildirim gönderilsin (mevcut “talep geldi” deseni hazır) ve iki aktivite kaydı yazılsın.</dd>
+    <dt>Kanıt</dt><dd class="path">GrantApplicationWizardAppService.cs:172-186 · GrantApplication.cs:171-180 · GrantStatusCatalog.cs:143-144 (iki türün tek kullanımı)</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">NTF-02</span><span class="ttl">“Projeye dönüşüm bekliyor” hiç takip edilmiyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Onaylanmış ama dönüştürülmemiş başvuru durumu hiçbir bildirim üretmiyor; bu durumu tarayan worker da yok. Dönüşüm <em>gerçekleştiğinde</em> de ne aktivite kaydı ne bildirim çıkıyor.</dd>
+    <dt>Etki</dt><dd>Para bağlanmış başvuru süresiz askıda kalabiliyor. Firma için sürecin en sevindirici geçişi (“hibeniz projeye döndü”) tamamen sessiz.</dd>
+    <dt>Öneri</dt><dd>Günlük worker turuna “onaylandı + proje yok + N gün” taraması ekle; dönüşüm anında firmaya tetikleyici tanımla.</dd>
+    <dt>Kanıt</dt><dd class="path">GrantApplicationConversionAppService.cs:286-287 (dosyada bildirim referansı sıfır) · GrantNotificationTrigger.cs (dönüşüm tetikleyicisi yok)</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">NTF-03</span><span class="ttl">“Görev gecikti” bildirimi yok; ertelenen görev ikinci uyarı almıyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>TaskDeadlineWorker</code> yalnız “önümüzdeki 48 saat” penceresini tarıyor; vadesi <em>geçmiş</em> görev sorguya hiç girmiyor. Ayrıca uyarı-gönderildi bayrağı vade güncellenirken sıfırlanmıyor.</dd>
+    <dt>Etki</dt><dd>Geciken görevler sessiz. Kullanıcı “yaklaşıyor” uyarısını bir kez alıyor; vade ertelenirse yeni vade için hiçbir sinyal gelmiyor.</dd>
+    <dt>Öneri</dt><dd>Worker'a gecikme dalı (Done/Cancelled hariç, tekillik anahtarı <code>taskId+dueDate</code>) ve vade değişiminde bayrak sıfırlama.</dd>
+    <dt>Kanıt</dt><dd class="path">TaskDeadlineWorker.cs:46-52 · TaskItem.cs:272-284</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">SEC-02</span><span class="ttl">Hibe dilimini “Ödendi” işaretlemek alt-izin istemiyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>GrantImplementationAppService</code> sınıf seviyesinde <code>[Authorize(Grants.Default)]</code>. Mutasyonlar (rapor kaydetme, rapor/bölüm durumu, <strong>dilimi ödendi işaretleme</strong>) yalnız <code>EnsureConsultant()</code> = <code>CurrentTenant.Id == null</code> bağlam kontrolüyle korunuyor; <code>Grants.Edit</code> aranmıyor.</dd>
+    <dt>Etki</dt><dd>Host tarafında salt-görüntüleme yetkisi verilmiş kullanıcı hibe dilimini “Ödendi” işaretleyebiliyor ve rapor durumlarını değiştirebiliyor. İzin ağacındaki Edit ayrımı bu finansal uçlarda etkisiz — yetki izinden değil <em>bağlamdan</em> türüyor.</dd>
+    <dt>Öneri</dt><dd>Mutasyon metotlarına <code>[Authorize(Grants.Edit)]</code> ekle; bağlam kontrolü ikinci güvence olarak kalsın (<code>GrantFunnelAppService</code> bu deseni doğru uyguluyor).</dd>
+    <dt>Kanıt</dt><dd class="path">GrantImplementationAppService.cs:34, :157-175, :179-186</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">OPS-01</span><span class="ttl">main'deki düzeltmelerin hiçbiri canlıda değil</span></div>
+  <dl>
+    <dt>Problem</dt><dd>F0/F1 fazında kapatılan bulgular dahil #427–#448 arası tüm çalışma <code>main</code>'de; kayıtlara göre canlı hâlâ <code>d8a01af6</code>. Bu denetim depo içinden çalıştığı için canlı sürümü <strong>doğrulayamadı</strong> — sunucu ölçümü gerekiyor.</dd>
+    <dt>Etki</dt><dd>Düzeltilmiş hatalar müşteri tarafında yaşamaya devam ediyor. Önceki denetimin “bilinen düzeltmeler canlıya inmiyor” maddesi merge ile yalnız yarı kapandı.</dd>
+    <dt>Öneri</dt><dd>Bu rapordaki teknik işlerden önce dağıtım kapısı ele alınmalı; canlı sürüm her turda yeniden ölçülmeli.</dd>
+    <dt>Kanıt</dt><dd class="path">git log main: 565e9f6d (#430) … f3ed8f39 (#447) · canlı sürüm repo içinden doğrulanamadı</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">OPS-04</span><span class="ttl">Tahsilat köprüsü hâlâ açık (H-04)</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Dilim “Ödendi” işaretlenince gelir/kasa kaydı doğmuyor. “Tahsil edildi” bilgisi üç bağımsız yerde — hibe dilimi statüsü, proje fon dilimi tutarı, gelir kaydı + kasa hareketi — FK'sız ve senkronsuz duruyor.</dd>
+    <dt>Etki</dt><dd>Hibe ekranı, proje finans paneli ve kasa üç farklı rakam anlatıyor; kullanıcı Excel'e dönüyor. Önceki denetimin CEO kararı: “para doğruluğu pazarlanabilirlikten önce gelir.”</dd>
+    <dt>Durum</dt><dd><span class="tag">F3 · çift migration + onay</span> Planlı çözüm karara bağlı: “Ödendi → gelir önerisi” akışı + iki FK.</dd>
+    <dt>Kanıt</dt><dd class="path">GrantImplementationAppService.cs:157 · FundingTranche.cs (hibe geri referansı yok) · docs/design/hibe/denetim-ceo-cto.html (S-1 / H-04)</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">OPS-02</span><span class="ttl">Sır rotasyonu gecikti</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Commit'li sırlar (<code>OpenIddict ClientSecret</code>, <code>StringEncryption:DefaultPassPhrase</code>) güncel dosyalardan boşaltıldı ama <strong>git geçmişinde duruyor</strong>. Rotasyon yapılmadı; tam geçmiş sır taraması da yapılmadı.</dd>
+    <dt>Etki</dt><dd>Depoya erişen herkes prod passphrase'ine, dolayısıyla kiracı AI anahtarlarına ulaşabilir. Rotasyon takvim token'larını ve AI anahtarlarını yeniden bağlatmayı gerektirir.</dd>
+    <dt>Durum</dt><dd><span class="tag">YENİ BULGU DEĞİL</span> Mevcut sicil kayıtlarına (SEC-001/002/004) referanstır; aksiyon rotasyon planının yürütülmesidir.</dd>
+    <dt>Kanıt</dt><dd class="path">docs/denetim/bulgular.md:43,82-95,131-133</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">OPS-03</span><span class="ttl">Onaylı 5+3 menü kararı uygulanmadı</span></div>
+  <dl>
+    <dt>Problem</dt><dd>17 Eylül'de onaylanan bilgi mimarisi (host: Bugün · Çağrılar · Talepler · <strong>Başvurular</strong> · Raporlar, Fikir Havuzu → Talepler sekmesi; kiracı: Bugün · Fırsatlar · Başvurularım) kodda yok. Menü çözücü hâlâ eski düzeni basıyor.</dd>
+    <dt>Etki</dt><dd>Menüyü denetleyen her yeni bakış aynı bulguları yeniden üretiyor (bu denetimde de öyle oldu). Ayrıca 14 hibe ekranı menüsüz durumda.</dd>
+    <dt>Öneri</dt><dd>Uygulanırken iki tuzak: taşınan öğe <em>yeni ID</em> ile doğar (kayıtlı kullanıcı düzenleri eski ID'yi eski yerde tutar) ve menü adına bağlı rozet çapaları güncellenmeli.</dd>
+    <dt>Kanıt</dt><dd class="path">PlatformNavigationResolver.cs:654-673 · PlatformMenuContributor.cs:52-59</dd>
+  </dl>
+</div>
+</section>
+
+<section id="domain">
+<h2>E. Domain mimarisi</h2>
+<div class="prose">
+<p>Mevcut model — <strong>doğrulandı, sağlam</strong>. Program (<code>Grant</code>) → dönem (<code>GrantCall</code>) → başvuru (<code>GrantApplication</code>) → karar (<code>GrantDecision</code>) ayrımı doğru kurulmuş. Ürün vizyonundaki <code>Grant → Grant Application → Award → Project</code> zinciri kodda birebir var; üstelik aradaki <em>talep</em> adımı (<code>GrantInterest</code>) de modellenmiş.</p>
+<p>Bağımsız proje meşru bir senaryo: <code>Project.GrantId</code> nullable ve proje oluşturma akışı hibeden tamamen bağımsız. Bu soruya cevap: <strong>evet, ayrım domain seviyesinde doğru yapılmış.</strong></p>
+</div>
+
+<h3>Kasıtlı tasarım kararları — bunlar bulgu değil</h3>
+<div class="prose">
+<ul class="tight">
+<li><strong>Firma kendi başvurusunu açamaz.</strong> Kiracı “İlgileniyorum” bırakır; başvuruyu danışman (host) açar. Bu bir eksik değil, <em>iş modeli</em> kararıdır (S2, onaylı). Eksik olan tek şey arayüzün bunu anlatması: bugün firma neden başvuru açamadığını hiçbir yerde okumuyor.</li>
+<li><strong>Uygunluk değerlendirmesi tavsiye niteliğindedir</strong> ve hiçbir geçişi kilitlemez; firma verisi boşsa kural “bilinmiyor” döner ve <em>elemez</em>. Vizyon dokümanındaki “ÖN DEĞERLENDİRME” adımı bir kapı gibi okunuyor — kodda bilinçli olarak kapı değil.</li>
+<li><strong>Çift taraflı muhasebe defteri 2026-08-15'te kullanıcı onayıyla silindi</strong> (33 dosya, ARCH-001) ve muhasebe ekseni menüden bilinçle gömüldü. Bu denetim onu yeniden önermiyor.</li>
+<li><strong>Destek tutarı saklanmaz, hesaplanır</strong>; FK'sız bırakılan Guid kolonlarının her biri gerekçe yorumu taşıyor; soft-delete süzgeçli tekil indeksler bilinçli. Model, kendi ödünlerini belgeleyen ender kod tabanlarından.</li>
+</ul>
+</div>
+
+<h3>Önerilen model — üç alan ekle, hiçbir şeyi yeniden yazma</h3>
+<div class="prose">
+<p>Domain modeli yeniden tasarlanmamalı. Gereken, <strong>kopyalanan kayıtlara kaynak kimliği eklemek</strong> ve eksik tek kavramı modellemektir:</p>
+</div>
+
+<div class="tw"><table>
+  <thead><tr><th>Ekle</th><th>Nereye</th><th>Neyi çözer</th><th>Migration</th></tr></thead>
+  <tbody>
+    <tr><td class="id">GrantApplicationId</td><td>Project</td><td>Başvuru ↔ proje çift yönlü iz; “bu bütçe nereden geldi?” cevaplanabilir (H-20). Bugün yalnız <code>Project.GrantId</code> var ve o <em>programı</em> gösterir, başvuruyu değil.</td><td>çift</td></tr>
+    <tr><td class="id">SourceGrantTrancheId</td><td>FundingTranche</td><td>Dilim çift defteri (CNV-01) ve tahsilat köprüsü (OPS-04) izlenebilir olur</td><td>çift</td></tr>
+    <tr><td class="id">SourceGrantLineId</td><td>ProjectBudgetLine</td><td>Bütçe kalemi hibe kalemine geri bağlanır; revizyon bayatlaması görülebilir</td><td>çift</td></tr>
+    <tr><td class="id">WorkStepId (nullable)</td><td>TaskItem</td><td>İş adımı ilerlemesi görevlerden türetilebilir; ikinci ilerleme ekseni kapanır (PRJ-04)</td><td>çift</td></tr>
+    <tr><td class="id">Deliverable · Indicator</td><td>yeni (Projects)</td><td>Donör raporlamasının omurgası. <strong>Tek gerçek eksik yetenek</strong> — ürün kararı gerektirir</td><td>çift</td></tr>
+  </tbody>
+</table></div>
+
+<div class="note">
+<p><strong>Eksik kavram: çıktı ve gösterge.</strong> “Deliverable” ve “Indicator” kod tabanında hiç yok — entity, DTO, lokalizasyon anahtarı, hiçbiri. Kilometre taşı yalnız başvuru tarafında var ve dönüşümde düz göreve çevriliyor; rapor motorunda <code>Milestones</code> bölümü “karşılığı olan bir varlık yok” diye bilinçle kapalı. Hibe odaklı bir üründe fonlayıcıya raporlanan şey tam olarak budur. Denetimin bulduğu <em>tek</em> gerçek yeni yetenek ihtiyacı; geri kalan her şey var olanı birleştirmek.</p>
+</div>
+</section>
+
+<section id="yolculuk">
+<h2>F. Kullanıcı yolculuğu</h2>
+<div class="prose">
+<p>Hedeflenen zincirin kodda karşılığı <strong>var ve mutlu yol çalışıyor</strong>. Üç yerde sapıyor:</p>
+</div>
+
+<div class="tw"><table>
+  <thead><tr><th>Vizyondaki adım</th><th>Kodda</th><th>Sapma</th></tr></thead>
+  <tbody>
+    <tr><td>Hibe keşfi</td><td>Katalog + öneri motoru + “Bugün”</td><td>—</td></tr>
+    <tr><td>İlgileniyorum</td><td><code>GrantInterest</code> (6 durum)</td><td>Çağrı durumu kapısı yok: Taslak/Kapandı çağrıya API'den ilgi bırakılabiliyor (LIF-04)</td></tr>
+    <tr><td>Ön değerlendirme / uygunluk</td><td><code>GrantMatchManager.Evaluate</code></td><td>Tavsiye niteliğinde — <strong>hiçbir geçişi kilitlemiyor</strong> (kasıtlı)</td></tr>
+    <tr><td>Başvuru hazırlama</td><td>4 adımlı sihirbaz + evrak</td><td>Başvuruyu <em>danışman</em> açar (kasıtlı); arayüz bunu anlatmıyor</td></tr>
+    <tr><td>Başvuru (gönderim)</td><td><code>SubmittedAt</code></td><td>Sunucuda evrak/tarih kapısı yok, aktivite yazılmıyor, kimseye bildirim gitmiyor (LIF-05, NTF-01)</td></tr>
+    <tr><td>Değerlendirme</td><td><code>Stage</code> + <code>CurrentStepId</code></td><td><strong>İki eksen senkronsuz</strong> (DOM-01); şablon düzenleme geri sarıyor (LIF-02)</td></tr>
+    <tr><td>Kabul / Ret</td><td><code>GrantDecision</code> + itiraz</td><td>Karar kaydı aşamayı ilerletmiyor</td></tr>
+    <tr><td><strong>Projeye dönüştür</strong></td><td><code>/Grants/Convert</code></td><td><strong>Karar ile dönüşüm arasında kapı yok</strong> — reddedilmiş başvuru dönüşebiliyor (CNV-03)</td></tr>
+    <tr><td>Proje</td><td>Görev · ekip · takvim · finans · bütçe · belge · rapor · iz</td><td><strong>Çıktı ve gösterge yok</strong>; belge dönüşümde taşınmıyor; bağlamın yarısı elle yeniden giriliyor</td></tr>
+  </tbody>
+</table></div>
+
+<div class="prose">
+<h3>Önerilen yolculuk — akışı değil, kapıları düzelt</h3>
+<p>Zincir doğru. Eklenmesi gereken <strong>üç kapı ve üç sinyal</strong>:</p>
+<ol class="tight">
+<li><strong>Gönderim kapısı</strong> — zorunlu evrak onaylı mı, çağrı açık mı? (bugün tek istekle kilitlenebiliyor, geri alma yok)</li>
+<li><strong>Dönüşüm kapısı</strong> — karar <em>Onaylandı</em> veya <em>Kısmi onay</em> mı? (bugün yalnız tutara bakıyor)</li>
+<li><strong>Kapanış kapısı</strong> — çağrı tarihi geçtiyse otomatik kapan ve bekleyen talepleri cevapla</li>
+<li><strong>Sinyal:</strong> başvuru gönderildi → danışmana; onaylandı ama dönüştürülmedi → danışmana; projeye döndü → firmaya</li>
+</ol>
+<p>Bu altı madde, vizyondaki akışı yeniden tasarlamadan onu <em>güvenilir</em> hale getirir. Hiçbiri migration gerektirmez.</p>
+</div>
+</section>
+
+<section id="finans">
+<h2>G. Finans entegrasyonu</h2>
+<div class="prose">
+<p>Sorunun özeti: <strong>aynı paranın dört defteri var ve hiçbiri diğerine bağlı değil.</strong></p>
+</div>
+
+<div class="seams">
+  <div class="seam"><span class="side">1 · Hibe dilimi <span class="path">GrantDisbursementTranche.Status</span></span><span class="gap">FK yok</span><span class="side r">host “Ödendi” der</span></div>
+  <div class="seam"><span class="side">2 · Proje fon dilimi <span class="path">FundingTranche.ReceivedAmount</span></span><span class="gap">doğrulama yok</span><span class="side r">kiracı tahsilat kaydeder</span></div>
+  <div class="seam"><span class="side">3 · Gelir kaydı <span class="path">IncomeEntry</span></span><span class="gap">bağ opsiyonel</span><span class="side r">elle bağlanır, silinince bağ sarkar</span></div>
+  <div class="seam"><span class="side">4 · Kasa <span class="path">CashMovement</span></span><span class="gap">kur çevrimsiz</span><span class="side r">bakiye bozulur</span></div>
+</div>
+
+<div class="prose">
+<h3>Tek doğru kaynak — mevcut durum</h3>
+<p>Adil olmak gerekirse çekirdek bu ilkeyi <strong>doğru uyguluyor</strong>: “harcanan” denormalize edilmiyor, giderlerden toplanıyor; bütçe revizyonu zorunlu geçmiş bırakıyor; iş kuralları <code>ProjectBudgetManager</code>'da tek kapıda. İlke modülün <em>içinde</em> uygulanmış, <em>arasında</em> uygulanmamış.</p>
+<h3>Kopan bağlantılar</h3>
+<ul class="tight">
+<li><strong>Alış faturası bütçeye hiç akmıyor.</strong> <code>Invoice</code> proje ve görev taşıyor ama bütçe kalemi taşımıyor; alış faturası ödemesi kasa hareketi ve cari tahakkuk üretiyor fakat <code>Expense</code> üretmiyor. Proje “Harcanan” yalnız <code>Expense.BudgetLineId</code> üzerinden toplandığı için fatura ile yürüyen projeler <strong>sistematik eksik</strong> sayıyor. Aynı maliyet hem gider hem alış faturası girilirse kasadan iki kez çıkıyor.</li>
+<li><strong>Kur çevrimi dört ayrı yolda, dört farklı politikayla.</strong> Gider/gelir damgası tarih sınırlı ve ters-kur yedekli; fatura ve transfer yolları <em>en güncel</em> kuru alıyor (ileri tarihli kur bile seçilebiliyor), ters kur yedeği yok ve kur yoksa hata fırlatıyorlar. Yuvarlama mantığı dört statik metotta kopyalı.</li>
+<li><strong>Dilim tahsilatı doğrulanmıyor.</strong> Tahsilat kaydı gelen gelir kaydı kimliğini varlık/proje/kiracı kontrolü yapmadan yazıyor; gelir silinince dilim “tahsil edildi” + sarkık kimlikle kalıyor.</li>
+<li><strong>Cari bakiye para birimi gruplamıyor</strong> — satırlar para birimi taşıdığı hâlde tek sayıya toplanıyor.</li>
+<li><strong>Decimal hassasiyeti iki sağlayıcıda farklı</strong>: fatura/ödeme/proje bütçesi alanlarında açık precision yok → SQL Server'da <code>decimal(18,2)</code>, Postgres'te sınırsız <code>numeric</code>. Aynı fatura iki veritabanında farklı toplam verebilir.</li>
+</ul>
+
+<h3>Finans Merkezi ↔ Proje</h3>
+<p>Hub mimari olarak <strong>iyi kurulmuş</strong>: durum tamamen URL'de (bağlantı paylaşılabilir, geri tuşu çalışır), sekme seti proje kategorisinden türüyor, izinler sekme başına süzülüyor, fatura arayüzü duplike edilmek yerine gömülerek yeniden kullanılmış. Kırılma <strong>yazma</strong> tarafında: bağlam düşüyor (FUX-01), hibe şablonunda fatura yolu yok (FUX-02), kasa yüzeyi iki ekranda kopya, ve bir hibe projesinin finansını uçtan uca yönetmek 6–10 ekran istiyor.</p>
+</div>
+</section>
+
+<section id="belge">
+<h2>H. Belge yönetimi</h2>
+<div class="prose">
+<p>Merkez olgun: üç katmanlı zincir, tür + EAV meta şeması, saf-fonksiyon eşleştirme ve uygunluk hesapları, erişim izi, teslim paketi, kural motoru, süreli dış paylaşım. Sorun kapsam ve ölü yollar:</p>
+<ul class="tight">
+<li><strong>Altı ayrı depo</strong> (DOC-01) ve depoya göre değişen metadata (DOC-03).</li>
+<li><strong>Belge ↔ finansal işlem eşleşmesi yalnız gider için var.</strong> Fatura, gelir ve kasa hareketi için hiçbir eşleştirme tablosu yok. “Her mali kaydın evrakı” iddiası yalnız gider tarafında doğru.</li>
+<li><strong>Çift kayıt tespiti ölü.</strong> <code>DocumentAttachment.ContentHash</code> hiçbir kod yolunda doldurulmuyor; SHA-256 kolu hiç tetiklenemiyor — üstelik eşleştirme tezgâhı her açılışta bu boş hash'leri sorguluyor.</li>
+<li><strong><code>Expired</code> durumu hiç atanmıyor.</strong> Enum yorumu “worker işaretler” diyor; worker yalnız klasör seviyesinde 7 gün önceden uyarı üretiyor, dosya durumuna hiç dokunmuyor. Ayrıca iki paralel süre alanı var.</li>
+<li><strong>Versiyon zinciri dosya ADIYLA kuruluyor.</strong> Aynı klasöre aynı adla yüklenen <em>alakasız</em> bir dosya mevcut belgenin yeni sürümü sayılıyor.</li>
+<li><strong>Onay akışı yalnız hibede.</strong> Merkezde “Kesin” damgası bir incelemeye değil tek kullanıcının tercihine dayanıyor.</li>
+</ul>
+</div>
+</section>
+
+<section id="rapor">
+<h2>I. Raporlama — boşluk analizi</h2>
+
+<div class="tw"><table>
+  <thead><tr><th>Bugün üretilebilen</th><th>Çıktı</th><th>Durum</th></tr></thead>
+  <tbody>
+    <tr><td>Mizan</td><td>ekran · Excel · PDF</td><td>çalışır, <strong>menüden gömülü</strong> (bilinçli)</td></tr>
+    <tr><td>Cari ekstre</td><td>ekran · Excel · PDF</td><td>çalışır, <strong>menüden gömülü</strong> (bilinçli)</td></tr>
+    <tr><td>Proje bütçe raporu</td><td>ekran · Excel · PDF</td><td>çalışır, menüde</td></tr>
+    <tr><td>Teslim paketi (kurum/banka/müşteri/denetçi/iç)</td><td>PDF · ZIP · Excel</td><td>6 bölüm çiziliyor, <strong>4 bölüm sessizce düşüyor</strong></td></tr>
+    <tr><td>Görev detayı · AI özeti · form yanıtları · geri bildirim</td><td>PDF / Excel</td><td>çalışır</td></tr>
+    <tr><td><strong>Bütünleşik proje ilerleme raporu</strong></td><td>—</td><td><strong>YOK</strong></td></tr>
+    <tr><td><strong>Hibe dönem raporu (hibe verisiyle)</strong></td><td>—</td><td><strong>YOK</strong> — şablon var, veri bağı yok</td></tr>
+  </tbody>
+</table></div>
+
+<div class="note">
+<p><strong>Report Builder'a gerek yok — zaten var.</strong> Vizyon dokümanı §13'te “rapor şablonları seçilebilmeli mi, bloklar seçilebilmeli mi?” diye soruyor. Cevap: <code>/Documents/ReportBuilder</code> bunu <em>zaten</em> yapıyor — alıcı bazlı şablonlar (KOSGEB ara raporu, TÜBİTAK dönem raporu, banka dosyası, müşteri raporu, denetçi dosyası, iç yönetim özeti), bölüm aç/kapa, önizleme, preflight, haftalık/aylık/çeyreklik zamanlama, sürümlü arşiv ve süreli dış paylaşım linkleri. <strong>İkinci bir rapor üreticisi yapmayın; mevcudun beslemesini tamamlayın.</strong> Eksik olan üç şey: dört bölümün çizilmesi, bütçe/görev bölüm anahtarları, ve hibe verisine erişim.</p>
+</div>
+
+<div class="prose">
+<p><strong>§24 raporlanabilirlik testinin cevabı:</strong> 50 görev, 10 faaliyet, 200 finansal işlem, 100 belge ve 20 çıktı yönetmiş bir kurum “bu projenin yıllık raporunu oluştur” dediğinde sistem bunu bugün <strong>üretemez</strong>. Eksikler tek tek sayılabilir: (1) görev durum dağılımı hiçbir rapor bölümünde yok, (2) bütçe gerçekleşmesi ayrı bir raporda ve teslim raporuna bağlı değil, (3) risk verisi var ama exporter basmıyor, (4) “20 çıktı” diye bir kavram sistemde yok, (5) hibe dilimleri rapora giremiyor. İlk üçü kısa iştir; dördüncüsü ürün kararı.</p>
+</div>
+</section>
+
+<section id="bildirim">
+<h2>J. Bildirim — kapsama karnesi</h2>
+<div class="prose"><p>Altyapı sağlam ve <strong>tek sistem</strong>: hibe bildirim yığını merkezi yöneticiyi sarıyor, ayrı bir sistem değil. 34 tür, 8 kategori, tekillik anahtarı, gruplama, kritik e-posta + günlük özet. Eksik olan altyapı değil, tetikleyiciler.</p></div>
+
+<div class="tw"><table>
+  <thead><tr><th>Kritik olay</th><th>Durum</th><th>Not</th></tr></thead>
+  <tbody>
+    <tr><td>Başvuru son tarihi yaklaşıyor</td><td><span class="pill p2">KISMİ</span></td><td>Yalnız <em>zorunlu evrakı eksik</em> başvurulara. Evrakları tamam ama gönderilmemiş başvuru hiç uyarılmıyor — en riskli senaryo</td></tr>
+    <tr><td>Eksik belge var</td><td><span class="pill p3">VAR</span></td><td>7/3/1 gün + revizyon istendiğinde anlık</td></tr>
+    <tr><td><strong>Başvuru gönderildi</strong></td><td><span class="pill p0">YOK</span></td><td>NTF-01 — huninin en kritik anı sessiz</td></tr>
+    <tr><td>Başvuru kabul edildi</td><td><span class="pill p3">VAR</span></td><td>Zorunlu + kritik; tercih kapalı olsa bile üretilir</td></tr>
+    <tr><td>Başvuru reddedildi</td><td><span class="pill p3">VAR</span></td><td>İtiraz penceresi bilgisiyle</td></tr>
+    <tr><td><strong>Projeye dönüşüm bekliyor</strong></td><td><span class="pill p0">YOK</span></td><td>NTF-02 — dönüşümün kendisi de sessiz</td></tr>
+    <tr><td><strong>Görev gecikti</strong></td><td><span class="pill p0">YOK</span></td><td>NTF-03 — yalnız “yaklaşıyor” var</td></tr>
+    <tr><td>Bütçe aşılıyor</td><td><span class="pill p3">VAR</span></td><td>%50/75/90/100 eşikleri + aşım (kritik); anlık ve günlük</td></tr>
+    <tr><td>Finansman kaynağı azalıyor</td><td><span class="pill p2">YOK</span></td><td>NTF-06 — yalnız “dilim gecikti” vekili var</td></tr>
+    <tr><td>Rapor tarihi yaklaşıyor</td><td><span class="pill p3">VAR</span></td><td>30/14/3 gün</td></tr>
+    <tr><td>Belge süresi doluyor</td><td><span class="pill p2">KISMİ</span></td><td>Yalnız belgeyi yükleyene, tek seferlik; “süresi doldu” anı hiç bildirilmiyor</td></tr>
+    <tr><td>Proje bitiş tarihi yaklaşıyor</td><td><span class="pill p2">YOK</span></td><td>NTF-05 — kapanış hazırlığı için hiçbir tetik yok</td></tr>
+  </tbody>
+</table></div>
+
+<div class="prose"><p><strong>Kanal boşluğu:</strong> masaüstü bildirimi yalnız <em>sayfa açıkken</em> çalışıyor; Web Push sunucu tarafı yok (Faz 2, onay bekliyor). E-posta varsayılanı kapalı. Yani zorunlu/kritik bir bildirim (hibe kararı, itiraz süresi), kullanıcı uygulamayı açık tutmuyorsa ve e-postayı açmamışsa gerçek zamanlı ulaşmıyor. Kritik türlerde e-posta varsayılanını açmak, Web Push'a kadar makul bir ara çözüm.</p></div>
+</section>
+
+<section id="izin">
+<h2>K. İzin, çok kiracılılık ve iz</h2>
+<div class="prose">
+<p>İzin matrisi genel olarak <strong>disiplinli</strong>: finans ve hibe servisleri sınıf seviyesi varsayılan + Create/Edit/Delete politika ayrımını uyguluyor; önceki denetimlerin düzeltmeleri (SEC-007, SEC-013) çıplak yetkilendirme açıklarını kapatmış. İki istisna kaldı ve ikisi de finansal: SEC-01 (fatura ödemesi) ve SEC-02 (hibe dilimi). Her ikisi de aynı desende — <em>mutasyon, görüntüleme izniyle çalışıyor.</em></p>
+<p><strong>Vizyon §21'deki izin matrisi ile mevcut durum:</strong> Admin dışında hazır rol <em>üretimde seed edilmiyor</em>. Dört kademeli rol seti (CEO / Proje Yöneticisi / Çalışan / Stajyer) yalnız demo tohumlamasında var. Her yeni kiracı yöneticisi ~30 izinli matrisi sıfırdan elle kuruyor — yanlış yapılandırma riski (ör. finans izinlerinin herkese açılması) müşteriye itilmiş durumda. Demo dünyadaki izin setleri üretime taşınabilir şablon niteliğinde.</p>
+<h3>Tenant izolasyonu</h3>
+<p>Ana aggregate'lerin tamamı <code>IMultiTenant</code>; host→kiracı geçişleri <code>ICurrentTenant.Change</code> ile yapılıyor; filtre kapatmalarının çoğu ya host koşuluna bağlı ya elle predicate'li. <strong>Sızıntı bulunamadı.</strong> Risk yapısal: <code>TaskComment</code>, <code>TaskAttachment</code>, <code>InvoiceItem</code>, <code>BudgetRevisionLine</code> ve OAuth token taşıyan <code>ExternalCalendarAccount</code> gibi alt tablolar <code>IMultiTenant</code> uygulamıyor — izolasyon üst aggregate üzerinden <em>disiplinle</em> sağlanıyor. Bugün doğru uygulanmış; ancak bu tablolara doğrudan sorgu atan her yeni kod çapraz-kiracı açığıdır. Ayrıca hibe uygulama servisindeki üç yardımcı metot filtreyi koşulsuz kapatıp çıplak kimlikle tüm kiracılarda arıyor — bugünkü çağrı grafiği güvenli, gelecek değişikliklere karşı değil.</p>
+<h3>İzlenebilirlik</h3>
+<p>Alan-düzeyi geçmiş finansal işlem kayıtlarını (fatura, ödeme, kasa, cari, gider, gelir, başvuru, hibe dilimi, karar) kapsıyor. <strong>Proje bütçe ekseni dışarıda:</strong> bütçe kalemi, fon dilimi <em>tahsilatı</em> ve proje toplam bütçesi için “eski değer neydi” sorusu cevapsız. Bütçe revizyonu entity'si kısmi telafi sağlıyor ama kalem/dilim düzeyindeki doğrudan düzenlemeleri kapsamıyor.</p>
+</div>
+</section>
+
+<section id="senaryo">
+<h2>L. 12 kritik senaryo</h2>
+<p class="sec-sub">Her senaryo kod üzerinde uçtan uca izlendi. <strong>PASS</strong> = yol eksiksiz ve arayüzden erişilebilir · <strong>PARTIAL</strong> = yol var ama elle/eksik adımlarla · <strong>FAIL</strong> = yol yok.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>#</th><th>Senaryo</th><th>Hüküm</th><th>Kritik boşluk</th></tr></thead>
+  <tbody>
+    <tr><td class="num">1</td><td>Hibe → ilgi → uygunluk → başvuru → kabul → proje</td><td><span class="pill p2">PARTIAL</span></td><td>Kabul <strong>iki ayrı ekranda iki ayrı kayda</strong> giriliyor ve birbirini tetiklemiyor: karar bir ekranda, aşama + onaylanan tutar başka ekranda. Yalnız karar girilirse dönüşüm kapalı kalır; yalnız tutar girilirse firma zorunlu karar bildirimini hiç almaz. Engel mesajı üstelik <em>yanlış ekrana</em> yönlendiriyor.</td></tr>
+    <tr><td class="num">2</td><td>Hibe → ret → itiraz → sonuç</td><td><span class="pill p2">PARTIAL</span></td><td><strong>Kabul edilen itiraz hiçbir şeyi geri açmıyor</strong> — yalnız bir bayrak yazılıyor; başvuru reddedilmiş kalıyor ve host iki ekranda üçüncü kez veri giriyor. İtiraz gönderildikten sonra firma listesinde satır “kapanmış” görünüyor; “itiraz kurumda” diye bir durum yok. Sonuç firmaya bildirilmiyor.</td></tr>
+    <tr><td class="num">3</td><td>Bağımsız proje, bütçesiz</td><td><span class="pill p2">PARTIAL</span></td><td>Yeni proje formu <strong>varsayılan olarak “Hibe Projesi” kategorisini seçiyor</strong> ve 6 görevlik hibe takvimi kendiliğinden işaretli geliyor. Bağımsız proje açan kullanıcı elle başka karta tıklamazsa hibe akışına düşüyor ve istemediği altı görevi tek tek siliyor.</td></tr>
+    <tr><td class="num">4</td><td>Bağımsız proje, bütçeli</td><td><span class="pill p3">PASS</span></td><td>Yol çalışıyor. Ama oluşturmada girilen bütçe, kalem tanımlanınca <em>sessizce</em> devre dışı kalıyor (toplam kalemlerden alınıyor) — aynı para iki kez giriliyor, tutmazsa uyarı yok. Beş kalem girmek 5 modal + 5 tam sayfa yenilemesi.</td></tr>
+    <tr><td class="num">5</td><td>Hibe projesi → kaynak → kalem → kur politikası</td><td><span class="pill p2">PARTIAL</span></td><td><strong>Dönüşümle doğan hibe projesi hibe şablonunu almıyor</strong> (kategori “Diğer” kalıyor) → finans şablonu Kurumsal oluyor ve donör + kur köprüsü sekmeleri hiç basılmıyor. Kullanıcı projeye gidip kategoriyi elle “Hibe Projesi” yapmak zorunda — yani <em>hibe projesinin hibe olduğunu sisteme ikinci kez söylüyor</em>.</td></tr>
+    <tr><td class="num">6</td><td>Proje → görev → çıktı → belge</td><td><span class="pill p2">PARTIAL</span></td><td>“Çıktı” düğümü yok; kullanıcı alt görev veya kontrol listesi maddesiyle taklit ediyor. Göreve iliştirilen dosya merkezi havuza hiç girmiyor → raporlanabilir olması için <strong>aynı dosya ikinci kez yükleniyor</strong>.</td></tr>
+    <tr><td class="num">7</td><td>Proje → bütçe kalemi → harcama → belge</td><td><span class="pill p2">PARTIAL</span></td><td>Finansman kaynağı entity'si yok; iz proje düzeyinde duruyor. Çok kaynaklı projede hangi harcamanın hangi parayla yapıldığı <strong>belirlenemiyor</strong>. Harcama ekranlarından belgeye gidilemiyor (yalnız “var” ikonu, tıklanamaz). Proje konsolunun harcama tablosunda bütçe kalemi kolonu yok.</td></tr>
+    <tr><td class="num">8</td><td>Yıllık rapor üretimi</td><td><span class="pill p0">FAIL</span></td><td>Rapor üreticisine bütçe, gider/gelir, görev, risk ve hibe dilimi servisleri <strong>hiç enjekte edilmemiş</strong>. 50 görev rapora girmiyor, 200 finansal işlem girmiyor, 20 “çıktı” saklanamıyor bile, 10 “faaliyet” için kayıt tipi yok. Dönemleme serbest metin eşitliğiyle yapılıyor — tarih aralığı yok.</td></tr>
+    <tr><td class="num">9</td><td>Görev gecikti → bildirim</td><td><span class="pill p2">PARTIAL</span></td><td>Gecikme anında bildirim yok (yalnız “48 saat kaldı”). <strong>Atanmamış görev tamamen sessiz</strong>; görev sahibi, izleyiciler ve proje yöneticisi hiç uyarılmıyor. Vadesi olmayan görev hiç ölçülmüyor.</td></tr>
+    <tr><td class="num">10</td><td>Bütçe aşıldı → bildirim</td><td><span class="pill p3">PASS</span></td><td>Eşik + aşım bildirimi çalışıyor. Ama ölçüm FIN-02'nin karışık toplamına dayanıyor, fatura harcama sayılmıyor, kalemsiz gider hiç ölçülmüyor ve alıcı kümesi (yalnız proje lideri + bütçe görme izni) <strong>sessizce boş kalabiliyor</strong> — o zaman hiç kimse uyarılmıyor ve log da düşmüyor.</td></tr>
+    <tr><td class="num">11</td><td>Kiracı A → Kiracı B verisi</td><td><span class="pill p2">PARTIAL</span></td><td>Veri katmanında <strong>beş kat koruma</strong> ve temiz: kiracı çözümlemesi claim'den gelir (<code>__tenant</code> ile ezilemez), global EF süzgeci, filtre kapatan 54 çağrı noktasının tamamı iki güvenli kalıptan biri, host-bağlam ikinci kilidi, host-only izinler. <strong>Ancak</strong> ham dosya indirme ucu bu katmanların hiçbirine girmiyor (SEC-05) — bu yüzden hüküm PASS değil PARTIAL.</td></tr>
+    <tr><td class="num">12</td><td>Yetkisiz kullanıcı → finansal mutasyon</td><td><span class="pill p0">FAIL</span></td><td>Gider, gelir, kasa, kur, cari, proje bütçe kalemi ve fon dilimi <strong>korumalı</strong> (metot düzeyi alt izinler tam). Açık olan: <strong>fatura + ödeme</strong> (SEC-01). İzin sabitleri tanımlı ama yalnız iki Razor görünürlük kontrolünde kullanılıyor — hiçbir servis metodunda uygulanmıyor.</td></tr>
+  </tbody>
+</table></div>
+
+<div class="note">
+<p><strong>Senaryoların ortak cümlesi.</strong> On iki senaryonun yedisinde aynı ifade geçiyor: <em>“kullanıcı ikinci kez girmek zorunda.”</em> Faaliyet planı ilgi formunda alınıp başvuruya taşınmıyor; proje özeti sihirbazda sıfırdan yazılıyor; onay hem karar kaydına hem aşama modalına giriliyor; bütçe hem projede hem kalemlerde; tahsilat hem dilimde hem gelir kaydında; belge hem görevde hem merkezde; hibe projesinin kategorisi dönüşümden sonra elle. Vizyon dokümanının §32'deki ilkesi — <em>“veri bir kez oluşturulsun”</em> — doğru teşhis; bu denetim onun bugün <strong>yedi ayrı yerde ihlal edildiğini</strong> ölçtü.</p>
+</div>
+</section>
+
+<section id="kacak">
+<h2>M. Eleştirmenin bulduğu kaçaklar</h2>
+<div class="prose">
+<p>Alan taramaları bittikten sonra bir “ne kaçtı?” geçişi yapıldı. Üç katman hiç açılmamıştı: <strong>controller yüzeyi</strong>, <strong>worker çıktıları</strong> ve <strong>host/abonelik ekseni</strong>. En ciddi bulgular buradan çıktı — ve biri Test 11'in hükmünü değiştirdi. Aşağıdaki üç madde <strong>bu oturumda elle doğrulandı</strong>.</p>
+</div>
+
+<div class="find lv0">
+  <div class="find-h"><span class="pill p0">P0</span><span class="id">SEC-00</span><span class="ttl">Kiracı hesabına geçişte hiçbir izin kapısı yok</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>ImpersonationController</code> yalnız <code>[Authorize]</code> taşıyor. <code>ImpersonateTenantAsync</code>'in tek kapısı <code>if (CurrentUser.TenantId.HasValue) throw</code> — yani “host bağlamındaki <em>herhangi bir</em> oturum”. Hiçbir izin (<code>TenantManagement.Tenants.*</code>, rol, herhangi bir politika) aranmıyor. Metot hedef kiracıda <code>root</code> ya da <code>admin</code> kullanıcısını bulup onun principal'ıyla çerez oturumu açıyor.</dd>
+    <dt>Etki</dt><dd>Yalnız <code>Grants.Default</code> yetkili bir host danışmanı bile <code>POST /Account/ImpersonateTenant</code> ile <strong>istediği kiracının admin'i olabiliyor</strong>: tüm hibe, proje, finans verisi ve mutasyonları açılıyor. Eylemler kiracının <code>admin</code> kullanıcısına yazılıyor; geriye tek iz kalan bir claim. Bu, SEC-01 ve SEC-02'nin tarif ettiği yetki boşluklarını da anlamsızlaştıran bir üst yol.</dd>
+    <dt>Öneri</dt><dd>Uca bir izin kapısı eklensin (<code>TenantManagement.Tenants.Update</code> ya da yeni bir <code>Impersonation</code> izni) ve her geçiş denetim kaydına yazılsın. Kimin hangi kiracıya ne zaman geçtiği bugün raporlanabilir değil.</dd>
+    <dt>Kanıt</dt><dd class="path">Web/Controllers/ImpersonationController.cs:18 ([Authorize]), :37-41 (tek kapı), :49 (root/admin seçimi), :60-64 (claim + SignIn) — <strong>elle doğrulandı</strong></dd>
+  </dl>
+</div>
+
+<div class="find lv0">
+  <div class="find-h"><span class="pill p0">P0</span><span class="id">SEC-05</span><span class="ttl">Dosya indirme ucunda sahiplik kontrolü yok — kiracı sınırını aşıyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>FileController</code>: <code>[Authorize]</code> + <code>GET /file/get/{fileName}</code>. <code>ResolveSafePath</code> yalnız dizin-aşımını kesiyor; dosyanın <strong>hangi kiracıya, projeye ya da göreve ait olduğu hiç sorulmuyor</strong>. Depolama zaten tek düz klasör (GUID ad, alt klasör yok) ve aynı uç proje kapak görseli, görev eki, hibe afişi ve hibe evrakı için kullanılıyor.</dd>
+    <dt>Etki</dt><dd>Dosya adını bir kez görmüş <em>herhangi bir kimlikli kullanıcı</em> — projeden çıkarılmış, yetkisi geri alınmış, hatta <strong>başka kiracıdaki</strong> bir kullanıcı — dosyaya süresiz erişiyor. Belge silinse bile blob duruyor. Veri katmanındaki beş katlı kiracı izolasyonu bu uçta hiç devreye girmiyor çünkü uç veritabanına hiç dokunmuyor.</dd>
+    <dt>Neden hüküm değişti</dt><dd>Test 11 veri katmanını doğru değerlendirip PASS demişti. Bu uç o değerlendirmenin dışındaydı; hüküm <strong>PARTIAL</strong>'a çekildi. Kiracı izolasyonu <em>sorgu</em> düzeyinde sağlam, <em>dosya</em> düzeyinde yok.</dd>
+    <dt>Öneri</dt><dd>İndirme, dosyayı sahibine bağlayan bir kayıt üzerinden çözülsün (ek/belge kimliğiyle) ve o kaydın kiracı + erişim kontrolü uygulansın. Depolamaya kiracı önekli anahtar şeması, planlı blob geçişinde zaten gerekli.</dd>
+    <dt>Kanıt</dt><dd class="path">HttpApi/Controllers/FileController.cs:10 ([Authorize]), :22-30 (yalnız yol güvenliği) · Pages/Projects/Edit.cshtml:216,224 · Pages/Tasks/EditModal.cshtml:745 · Pages/Grants/Poster.js:14 — <strong>elle doğrulandı</strong></dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">FIN-12</span><span class="ttl">Üçüncü, sessiz bir “harcanan bütçe” ekseni</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Proje detayı <code>SpentBudget</code>'ı <strong>zaman kayıtlarından</strong> hesaplıyor: <code>Σ(saniye)/3600 × saatlik ücret</code>. Finans tarafı ise aynı projeyi <code>Σ Expense.Amount</code> ile ölçüyor. İki farklı rakam, iki farklı ekranda, ikisi de “bütçe kullanımı” diye sunuluyor ve hiçbiri diğerine referans vermiyor. Üstelik yüzde hesabı <code>Math.Min(100, …)</code> uyguluyor.</dd>
+    <dt>Etki</dt><dd>“Bu projede ne harcandı?” sorusunun <strong>üç</strong> cevabı var (emek maliyeti, gider toplamı, ve fatura yolu hiçbirine girmiyor). Ayrıca proje konsolunda <strong>bütçe aşımı asla %100'ün üstünde görünemiyor</strong> — aşım tam da görünmesi gereken ekranda gizleniyor.</dd>
+    <dt>Not</dt><dd>Emek maliyeti hesabının kendisi bilinçli (kodda yorumu var). Sorun hesap değil, <em>iki farklı şeyin aynı etiketle sunulması</em> ve yüzdenin tavanlanması.</dd>
+    <dt>Öneri</dt><dd>İki rakama ayrı ad ver (“emek maliyeti” ≠ “harcanan bütçe”); tavanı kaldır ve aşımı kırmızı olarak göster. FIN-02 kararıyla birlikte ele alınmalı.</dd>
+    <dt>Kanıt</dt><dd class="path">ProjectMetricsCalculator.cs:109-115, :117-121 (Math.Min tavanı) · ProjectAppService.cs:538-539 — <strong>elle doğrulandı</strong></dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">CNV-11</span><span class="ttl">Dönüşen hibe projesi “hibe projesi” olmuyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd>Dönüşüm projeye kategori geçmediği için proje varsayılan “Diğer/Genel” kategorisiyle doğuyor. Finans Merkezi sekme setini kategoriden türettiği için o proje <em>Kurumsal</em> şablon alıyor: <strong>donör ve kur köprüsü sekmeleri hiç basılmıyor</strong>. Donör para birimi ve kur politikası yalnız hibe şablonunda kurulabildiğinden, kullanıcı projeye gidip kategoriyi elle düzeltmek zorunda.</dd>
+    <dt>Etki</dt><dd>Hibe projesinin hibe olduğu sisteme ikinci kez, elle söyleniyor. Bunu bilmeyen kullanıcı kur köprüsünü hiç bulamıyor ve dövizli hibeyi tek defterde yürütüyor — FIN-01/FIN-02 hatalarının canlıda ortaya çıkma yolu tam olarak burası.</dd>
+    <dt>Öneri</dt><dd>Dönüşümde kategori olarak mevcut “Hibe Projesi” sistem kategorisi geçilsin. Tek parametre; sistem kategorisi zaten tanımlı ama kullanılmıyor (CNV-04 ile aynı satırda çözülür).</dd>
+    <dt>Kanıt</dt><dd class="path">GrantApplicationConversionAppService.cs:153-161 · ProjectCategoryConsts.cs:33 (GrantProject sistem kategorisi mevcut) · FinanceContext.cs:100-102 (kur-köprüsü yalnız Grant setinde)</dd>
+  </dl>
+</div>
+
+<div class="find lv1">
+  <div class="find-h"><span class="pill p1">P1</span><span class="id">RPT-07</span><span class="ttl">Eksik rapor, abonelere otomatik dağıtılıyor</span></div>
+  <dl>
+    <dt>Problem</dt><dd><code>ScheduledReportWorker</code> saatte bir çalışıp zamanlamayı kuran kullanıcının kimliğine bürünerek aynı PDF üreticisini çağırıyor ve aboneler'e gönderiyor.</dd>
+    <dt>Etki</dt><dd>RPT-01'in yarıçapı sanılandan büyük: sessizce düşen dört bölüm yalnız elle üretilen PDF'te değil, <strong>haftalık/aylık olarak kuruma ve abonelere otomatik giden</strong> periyodik raporda da eksik — ve kimse bakmıyor.</dd>
+    <dt>Öneri</dt><dd>RPT-01 çözülene kadar zamanlanmış üretimde, şablonda açık olup çizilemeyen bölüm varsa üretimi uyarıyla işaretle ya da bölümü şablondan geri çek.</dd>
+    <dt>Kanıt</dt><dd class="path">Web/Documents/ScheduledReportWorker.cs (saatlik, tur başına ≤10, kimliğe bürünerek) · DeliveryPackageExporter.cs:43-65</dd>
+  </dl>
+</div>
+
+<div class="prose">
+<h3>İkinci halka — doğrulandı, ayrı iş</h3>
+<ul class="tight">
+<li><strong>Ölü ama canlı köprü:</strong> <code>EntityLink</code> tablosu tam da “Project → Document” için kurulmuş, migrate edilmiş ve servisi otomatik API'de yayında — ama <strong>hiçbir tüketicisi yok</strong> ve servis yalnız <code>[Authorize]</code> taşıyor (kaynak/hedef varlık doğrulaması yok). DOC-02'nin çözümü için hazır bir altyapı kullanılmadan duruyor. <span class="tag">P2</span></li>
+<li><strong>Görev eki önce diske yazılıyor, sonra yetki kontrol ediliyor</strong> — yetkisiz istek hata alsa bile dosya yüklemeler klasöründe yetim kalıyor. <span class="tag">P2</span></li>
+<li><strong>Paket/abonelik geçişi hiç izlenmemiş:</strong> paket düşürülen ya da aboneliği biten kiracıda hibe özelliği ve izinleri kapanıyor, fakat başvuru/proje/dilim verisi yerinde kalıyor. Bu geçişte kullanıcının ne gördüğü denetlenmedi. <span class="tag">kapsam boşluğu</span></li>
+<li><strong>Host gelir ekseni denetlenmedi:</strong> abonelik faturaları, hizmet sözleşmeleri ve abonelik bitiş worker'ı bu denetimin kapsamı dışında kaldı. Kiracının defteri didik didik edildi; platformun kendi tahsilat defteri hiç açılmadı. <span class="tag">kapsam boşluğu</span></li>
+</ul>
+
+<h4>Yanlış alarm olarak elenenler</h4>
+<p>Eleştirmenin gündeme getirdiği bir iddia doğrulamada <strong>düştü</strong>: gösterge paneli servisinin finansal alanları izinsiz döndürdüğü öne sürülmüştü; kod okunduğunda finansal alanların ayrıca kontrol edildiği ve yetki yoksa sorgunun hiç atılmadığı görüldü. Benzer şekilde 12 arka plan işinin tamamının gerçekten kayıtlı olduğu, tohumlayıcıların idempotent olduğu, takvim aboneliğinin SSRF'e karşı korunduğu ve AI modülünün bu eksene hiç değmediği doğrulandı — bunlar bulgu değil, <em>temiz çıkan</em> kontrollerdir.</p>
+</div>
+</section>
+
+<section id="itiraz">
+<h2>N. Vizyon dokümanına itirazlarım</h2>
+<div class="prose">
+<p>Talimat açıkça “benim önerilerimi sorgula” diyordu. Dört yerde farklı düşünüyorum; her birinin gerekçesi kodda.</p>
+</div>
+
+<h3>1. Rapor üreticisi yapmayın — zaten var</h3>
+<div class="note">
+<p><strong>Vizyon §13</strong> hazır şablon seçimi ve blok bazlı özel rapor soruyor. <strong>Mevcut durum:</strong> <code>/Documents/ReportBuilder</code> bunların hepsini yapıyor — altı alıcı şablonu (KOSGEB ara raporu, TÜBİTAK dönem raporu, banka dosyası, müşteri raporu, denetçi dosyası, iç yönetim özeti), bölüm aç/kapa, önizleme, uçuş öncesi kontrol, haftalık/aylık/çeyreklik zamanlama, sürümlü arşiv, süreli dış paylaşım linkleri.</p>
+<p><strong>Öneri:</strong> yeni bir üretici yazmak, olgun bir altyapıyı ikiye bölerdi. Gereken üç şey var ve üçü de küçük: dört bölümün çizilmesi, bütçe + görev bölüm anahtarları, hibe verisine erişim. <strong>Etki:</strong> tahminen haftalar yerine günler, ve mevcut zamanlama/arşiv/paylaşım yetenekleri bedava gelir.</p>
+</div>
+
+<h3>2. Proje oluşturma sihirbazı zihinsel yükü artırır, azaltmaz</h3>
+<div class="note">
+<p><strong>Vizyon §7</strong> çok adımlı bir sihirbaz öneriyor: “Kaynak yönetimi kullanılacak mı? · Bütçe yönetilecek mi?” <strong>Mevcut durum:</strong> tek ekranlı 840px modal, kategori kartlarıyla ilerleyici açılım — hibe kategorisi seçilince amaç/hedef kitle/faaliyet alanları ve hazır görev takvimi açılıyor, diğerlerinde yalnız açıklama soruluyor. Bu <em>zaten</em> ilerleyici açılım ve sihirbazdan daha iyi: bir karar, gerisi uyarlanıyor.</p>
+<p><strong>İtirazım:</strong> “bütçe yönetecek misin?” diye sormak <em>yeni</em> bir soru eklemektir ve kalıcı bir yapılandırma durumu yaratır — kullanıcı “hayır” der, üç ay sonra bir gider girer, sistem çelişir. <strong>Daha iyisi:</strong> soruyu hiç sorma; panelleri <em>veri var mı</em> sorusuna göre aç. Bütçe kalemi yoksa bütçe paneli boş-durum gösterir; ilk kalem girilince açılır. Bu, vizyonun kendi §32 ilkesine (“daha az adımla daha fazla iş”) sihirbazdan daha sadık.</p>
+<p><strong>Ama mevcut formda gerçek bir hata var</strong> ve bu düzeltilmeli: form <strong>varsayılan olarak “Hibe Projesi”ni seçiyor</strong> ve altı görevlik hibe takvimini kendiliğinden işaretliyor. Bağımsız proje açmak isteyen kullanıcı elle başka karta tıklamazsa hibe akışına düşüyor. İlerleyici açılımın doğru varsayılanı <em>en dar</em> olandır, en geniş olan değil.</p>
+</div>
+
+<h3>3. Üçüncü bir menü tasarımı yapmayın — ikincisi henüz uygulanmadı</h3>
+<div class="note">
+<p><strong>Vizyon §16</strong> “mevcut menüyü korumak zorunda değilsin” diyor ve yeni bir üst seviye yapı öneriyor. <strong>Mevcut durum:</strong> 17 Eylül'de <em>onaylanmış</em> bir bilgi mimarisi kararı (5+3) var ve henüz uygulanmadı (OPS-03).</p>
+<p><strong>İtirazım:</strong> ikinci tasarım daha kodlanmadan üçüncüsünü tasarlamak, bilgi mimarisi savrulmasının tanımıdır. Ayrıca burada teknik bir maliyet var: <strong>menü kimlikleri kalıcı bir sözleşmedir</strong> — kullanıcıların kayıtlı menü düzenleri eski kimliklere bağlı, taşınan öğe yeni kimlikle doğar ve eski yerinde kalır. Her menü revizyonu bir göç işidir.</p>
+<p><strong>Öneri:</strong> onaylı 5+3'ü uygula, bir çeyrek dondur, sonra ölç. Vizyondaki gruplama (Hibe &amp; Fonlar / Projeler / Finans Merkezi / Belgeler / Raporlar) zaten büyük ölçüde mevcut yapıyla örtüşüyor — fark, hibe modülünün <em>içindeki</em> düzen ve orada onaylı karar var.</p>
+</div>
+
+<h3>4. “Tek doğru kaynak” doğru ilke — ama uygulaması senkron değil, kimlik</h3>
+<div class="note">
+<p><strong>Vizyon §10</strong> aynı finansal verinin iki yerde tutulmamasını istiyor — katılıyorum ve bu denetimin en güçlü bulgusu da bu. Ancak pratikteki refleks genelde “iki kaydı senkronla” olur; bu yanlış yoldur: senkron kodu her yeni alan eklendiğinde bozulur ve hangi tarafın kazandığı belirsiz kalır.</p>
+<p><strong>Doğru uygulama:</strong> kopyalanan kayda <em>kaynak kimliği</em> ekle ve türetilen değeri saklama, hesapla. Sistem bunu zaten bir yerde doğru yapıyor: “harcanan” denormalize edilmiyor, giderlerden toplanıyor. Aynı disiplin dilim, bütçe kalemi ve belge için de geçerli olmalı — üç alan (<code>SourceGrantTrancheId</code>, <code>SourceGrantLineId</code>, <code>GrantApplicationId</code>) bugünkü çelişkilerin çoğunu izlenebilir kılar.</p>
+</div>
+
+<h3>Katıldığım yerler</h3>
+<div class="prose">
+<ul class="tight">
+<li><strong>§5 — dönüşümde mükerrer veri girişini engelle.</strong> Doğru teşhis, ölçüldü: yedi ayrı yerde ihlal ediliyor.</li>
+<li><strong>§9/§18 — harcamadan kaynağa kadar izlenebilirlik.</strong> Bugün kurulamıyor; finansman kaynağı düğümü yok ve iz proje düzeyinde duruyor.</li>
+<li><strong>§14 — panoda “ne gecikti, ne riskli, ne eksik” tek bakışta görünsün.</strong> Bugün bu bilgiler en az altı ekrana dağılmış.</li>
+<li><strong>§8 — hedef → faaliyet → görev → çıktı → gösterge.</strong> Zincirin son iki halkası kod tabanında hiç yok. Bu, denetimin bulduğu tek gerçek eksik yetenek.</li>
+<li><strong>§32 — daha fazla özellik değil, daha az adımla daha fazla iş.</strong> Bu raporun yol haritası tamamen bu ilkeye göre sıralandı.</li>
+</ul>
+</div>
+</section>
+
+<section id="plan">
+<h2>O. Yol haritası</h2>
+<div class="prose">
+<p>Vizyon dokümanı 12 fazlık bir plan istiyor. Bulgular başka bir sıra dayatıyor: <strong>12 fazın çoğu yüzey genişletir, oysa kanıtlar dikiş kapatmayı gösteriyor.</strong> Aşağıdaki sıralama, her adımın bir öncekinin açtığı boşluğu kapatacak şekilde dizilmiştir. Devam eden F0–F5 yol haritasıyla çakışmaz; onun üstüne oturur.</p>
+</div>
+
+<div class="note warn">
+<p><strong>Kapı 0 — dağıtım.</strong> Hiçbir teknik iş, <code>main</code>'deki 40+ düzeltme canlıya inmeden değer üretmiyor. Bu kapı açılmadan S0'a başlamak, düzeltmeleri kuyruğa eklemekten ibaret. <span class="kv">OPS-01 · hazır paketler ve sürüm notu onayları bekliyor</span></p>
+</div>
+
+<h3>S0 · Para ve yetki doğruluğu <span class="tag">1 hafta</span> <span class="tag">migration YOK</span></h3>
+<div class="tw"><table>
+  <thead><tr><th>Alan</th><th>İçerik</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Amaç</strong></td><td>Bugün sessizce yanlış sonuç üreten beş noktayı kapatmak. Hepsi küçük, hiçbiri şema değiştirmiyor.</td></tr>
+    <tr><td><strong>Problem</strong></td><td>Kasa bakiyesi dövizli giderde bozuluyor; bütçe toplamı para birimi karıştırıyor; fatura ödemesi görüntüleme izniyle kaydedilebiliyor; hibe dilimi görüntüleme izniyle ödendi yapılabiliyor; <strong>herhangi bir host kullanıcısı istediği kiracının admin'i olabiliyor</strong>; dosya ucu kiracı sınırını tanımıyor.</td></tr>
+    <tr><td><strong>Yapılacaklar</strong></td><td>SEC-00 kimliğe bürünme izin kapısı + denetim kaydı · SEC-05 dosya ucunda sahiplik kontrolü · SEC-01 fatura Create/Edit alt izinleri · SEC-02 hibe uygulama mutasyonlarına <code>Grants.Edit</code> · FIN-01 gider/gelir kur kapısı · CNV-02 kategori <code>TryGetValue</code> · FIN-02 <strong>karar</strong>: <code>BookAmount</code> kullanılsın mı?</td></tr>
+    <tr><td><strong>Etkilenen</strong></td><td><span class="path">ImpersonationController · FileController · InvoiceAppService · GrantImplementationAppService · ExpenseAppService · IncomeEntryAppService · GrantApplicationConversionAppService · ProjectBudgetAppService</span></td></tr>
+    <tr><td><strong>Risk</strong></td><td>Alt izin eklemek mevcut rolleri kilitleyebilir — <strong>önce mevcut izin atamaları okunmalı</strong>. Dosya ucu değişikliği yükleme akışlarını kırabilir; her tüketici ekran tek tek denenmeli.</td></tr>
+    <tr><td><strong>Kabul</strong></td><td>Yalnız görüntüleme izinli kullanıcı fatura ödemesi kaydedemez · izinsiz host kullanıcısı kiracıya geçemez · A kiracısı B'nin dosyasını indiremez · farklı para birimli gider kasaya ham tutarla yazılamaz · yazılım/lisans kalemi “eşlenmedi” olarak gelir · <code>dotnet build</code> ve test paketi yeşil</td></tr>
+  </tbody>
+</table></div>
+
+<h3>S1 · Karar → dönüşüm → proje dikişi <span class="tag">1-2 hafta</span> <span class="tag">migration YOK</span></h3>
+<div class="tw"><table>
+  <tbody>
+    <tr><td><strong>Amaç</strong></td><td>Sürecin en değerli anını (onay) güvenilir ve sesli hale getirmek; dönüşümde düşen bağlamı taşımak.</td></tr>
+    <tr><td><strong>Problem</strong></td><td>Reddedilmiş başvuru projeye dönüşebiliyor; dönüşen proje “hibe projesi” olmuyor; başlık/özet/kategori/cari/döviz/evrak düşüyor; gönderim, dönüşüm ve “dönüşüm bekliyor” sessiz.</td></tr>
+    <tr><td><strong>Yapılacaklar</strong></td><td>CNV-03 karar kapısı · CNV-11 kategori aktarımı · CNV-04 başlık/özet/cari aktarımı · CNV-05 tutarları sunucudan yeniden oku · CNV-06 tamamlanmış kilometre taşını açık görev yapma · LIF-05 gönderim kapısı + aktivite kaydı · NTF-01/02/03 üç tetikleyici · DOC-02 evrak bağlama (ya da yanlış vaadi düzelt)</td></tr>
+    <tr><td><strong>Etkilenen</strong></td><td><span class="path">GrantApplicationConversionAppService · GrantApplicationWizardAppService · GrantDeadlineReminderWorker · TaskDeadlineWorker · GrantNotificationTrigger · tr.json</span></td></tr>
+    <tr><td><strong>Risk</strong></td><td>Dönüşüm kapısı, tutarı girilmiş ama kararı henüz kaydedilmemiş mevcut başvuruları bloklayabilir — geçiş için uyarı kipi düşünülmeli.</td></tr>
+    <tr><td><strong>Kabul</strong></td><td>Reddedilmiş başvuru dönüştürülemez · dönüşen proje hibe şablonuyla açılır ve kur köprüsü sekmesi görünür · gönderimde danışmana bildirim düşer · onaylı ama dönüştürülmemiş başvuru N gün sonra uyarı üretir</td></tr>
+  </tbody>
+</table></div>
+
+<h3>S2 · Tek ilerleme ekseni + onaylı bilgi mimarisi <span class="tag">1-2 hafta</span> <span class="tag">migration YOK</span></h3>
+<div class="tw"><table>
+  <tbody>
+    <tr><td><strong>Amaç</strong></td><td>“Bu başvuru nerede?” ve “bu proje ne kadar ilerledi?” sorularının tek cevabı olması.</td></tr>
+    <tr><td><strong>Problem</strong></td><td>Üç senkronsuz eksen (DOM-01); şablon düzenleme canlı başvuruları geri sarıyor (LIF-02); iş adımı yüzdesi görevlerden kopuk (PRJ-04); çağrı kapanışı manuel (LIF-03).</td></tr>
+    <tr><td><strong>Yapılacaklar</strong></td><td>Ürün kararı: şablon adımı = ayrıntı, sabit aşama = özet · LIF-02 eşleştirerek güncelleme + yetim veri düzeltmesi · LIF-03 otomatik kapanış · LIF-04 çağrı durumu kapısı · OPS-03 onaylı 5+3 menüsü · PRJ-10 proje formu varsayılanını “Diğer”e çek</td></tr>
+    <tr><td><strong>Etkilenen</strong></td><td><span class="path">GrantStageTemplateAppService · GrantPipelineAppService · GrantAppealAppService · GrantInterestAppService · PlatformNavigationResolver · Projects/CreateModal</span></td></tr>
+    <tr><td><strong>Risk</strong></td><td><strong>Menü kimlikleri sözleşmedir</strong> — taşınan öğe yeni kimlikle doğar, kullanıcıların kayıtlı düzenleri göç ister; rozet çapaları menü adına bağlı.</td></tr>
+    <tr><td><strong>Kabul</strong></td><td>Şablon adı düzenlemesi hiçbir başvuruyu taşımaz · panoda son adıma gelen başvuru firma ekranında da kapanır · tarihi geçen çağrı ertesi gün otomatik kapanır ve bekleyen talepler cevaplanır</td></tr>
+  </tbody>
+</table></div>
+
+<h3>S3 · Para döngüsü kimlik bağları <span class="tag">2 hafta</span> <span class="tag">ÇİFT MIGRATION + onay</span></h3>
+<div class="tw"><table>
+  <tbody>
+    <tr><td><strong>Amaç</strong></td><td>“Tahsil edildi” sorusunun tek cevabı olması ve paranın kaynağına kadar izlenebilmesi. Bu, önceki denetimin F3'ü.</td></tr>
+    <tr><td><strong>Problem</strong></td><td>Dilim üç yerde üç rakam (OPS-04); dönüşüm kopyaları kaynağa bağlı değil (CNV-01, FIN-04); tahsilat kaydı deftere para yazmıyor; gelir bağı doğrulanmıyor (FIN-06); bütçe ekseni denetim izi dışında (SEC-04).</td></tr>
+    <tr><td><strong>Yapılacaklar</strong></td><td><code>FundingTranche.SourceGrantTrancheId</code> · <code>ProjectBudgetLine.SourceGrantLineId</code> · <code>Project.GrantApplicationId</code> · “Ödendi → gelir önerisi” akışı · gelir bağı doğrulaması · bütçe ekseni entity history'ye · FIN-03 kur çözümlemeyi tek kapıya · FIN-07 decimal precision</td></tr>
+    <tr><td><strong>Etkilenen</strong></td><td><span class="path">Domain/ProjectBudgets · Domain/Grants · PlatformDbContext · SqlServer + PostgreSql migration · DbMigrator</span></td></tr>
+    <tr><td><strong>Risk</strong></td><td><strong>İlk kez veriye dokunuluyor.</strong> Çift sağlayıcı migration şart; mevcut kopyalar için geriye dönük eşleştirme betiği gerekir ve eşleşmeyen satırların ne olacağı ürün kararıdır.</td></tr>
+    <tr><td><strong>Kabul</strong></td><td>Hibe dilimi ödendi işaretlenince proje gelir planı ve kasa tutarlı görünür · bir harcamadan kaleme, kalemden kaynağa, kaynaktan hibeye gidilebilir · bütçe kaleminin eski değeri sorgulanabilir</td></tr>
+  </tbody>
+</table></div>
+
+<h3>S4 · Raporlama tamamlama <span class="tag">1-2 hafta</span> <span class="tag">migration YOK</span></h3>
+<div class="tw"><table>
+  <tbody>
+    <tr><td><strong>Amaç</strong></td><td>Var olan rapor motorunu besleyerek bütünleşik dönem raporunu mümkün kılmak. <strong>Yeni motor yazılmayacak.</strong></td></tr>
+    <tr><td><strong>Problem</strong></td><td>Dört bölüm sessizce düşüyor ve abonelere öyle gidiyor (RPT-01, RPT-07); bütçe ve görev rapora hiç girmiyor (RPT-02); hibe ile rapor motoru birbirini tanımıyor (RPT-03); dönemleme serbest metin eşitliği.</td></tr>
+    <tr><td><strong>Yapılacaklar</strong></td><td>Dört bölümün model + builder + çizim tamamlanması · <code>BudgetSummary</code> ve <code>TaskProgress</code> bölüm anahtarları · dönem için tarih aralığı · hibe verisine erişim (dilim, gerçekleşme, rapor durumları) · RPT-04 ölü servis kararı · bayat yorumların düzeltilmesi</td></tr>
+    <tr><td><strong>Etkilenen</strong></td><td><span class="path">DeliveryReportModel · DeliveryReportModelBuilder · DeliveryPackageExporter · ReportingEnums · ReportSectionAvailability · ScheduledReportWorker</span></td></tr>
+    <tr><td><strong>Risk</strong></td><td>Mevcut şablonlarda bu bölümler zaten açık tohumlanmış — çizim eklendiğinde üretilen PDF'ler <em>uzayacak</em>; abonelere giden rapor formatı değişir, önceden duyurulmalı.</td></tr>
+    <tr><td><strong>Kabul</strong></td><td>§24 senaryosu (50 görev, 200 işlem, 100 belge, 1 yıl) tek PDF'te üretilebilir · şablonda açık her bölüm çıktıda görünür · zamanlanmış rapor eksik bölümle gönderilmez</td></tr>
+  </tbody>
+</table></div>
+
+<h3>S5 · Çıktı ve gösterge modeli <span class="tag">2-3 hafta</span> <span class="tag">ÇİFT MIGRATION + ürün kararı</span></h3>
+<div class="tw"><table>
+  <tbody>
+    <tr><td><strong>Amaç</strong></td><td>Donör raporlamasının eksik omurgasını kurmak. <strong>Denetimin bulduğu tek gerçek yeni yetenek.</strong></td></tr>
+    <tr><td><strong>Problem</strong></td><td>“Çıktı” ve “gösterge” kavramları kod tabanında hiç yok; hedef → faaliyet → görev → çıktı → gösterge zincirinin son iki halkası eksik; kilometre taşı yalnız başvuruda ve dönüşümde düz göreve çevriliyor.</td></tr>
+    <tr><td><strong>Yapılacaklar</strong></td><td>Ürün kararı: kapsam ve donör raporlama gereksinimleri · <code>Deliverable</code> + <code>Indicator</code> modeli · <code>TaskItem.WorkStepId</code> (PRJ-04 ile birlikte) · iş adımı ilerlemesinin görevlerden türetilmesi · rapor bölümleri</td></tr>
+    <tr><td><strong>Risk</strong></td><td>S1–S4 tamamlanmadan başlanırsa yeni kavram da dikişsiz doğar. <strong>Sırayı bozmayın.</strong></td></tr>
+    <tr><td><strong>Kabul</strong></td><td>Bir hibe projesinde hedef → faaliyet → görev → çıktı → gösterge zinciri kurulabilir ve dönem raporunda görünür</td></tr>
+  </tbody>
+</table></div>
+
+<h3>S6 · Ölçek, sertleştirme, temizlik <span class="tag">1-2 hafta</span></h3>
+<div class="tw"><table>
+  <tbody>
+    <tr><td><strong>İçerik</strong></td><td>Sayfalama (32 liste ucunun 2'sinde var) · dağıtım önizlemesinin kiracı sayısıyla doğrusal sorgusu · alt tablolara kiracı sütunu (SEC-03) · koşulsuz filtre kapatmaların daraltılması (SEC-06) · hazır rol şablonları (SEC-07) · <code>EntityLink</code> kararı · ölü dosya temizliği (PRJ-05, RPT-04) · sır rotasyonu (OPS-02)</td></tr>
+    <tr><td><strong>Kabul</strong></td><td>200 kiracı benzetiminde dağıtım önizlemesi 3 saniyenin altında · yeni kiracıda hazır rol seti kurulur · geçmişteki sırlar rotasyona alınmış</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Vizyondaki 12 faz nereye düştü</h3>
+<div class="tw"><table>
+  <thead><tr><th>Vizyon fazı</th><th>Karşılık</th><th>Not</th></tr></thead>
+  <tbody>
+    <tr><td>1 · Domain &amp; veri modeli</td><td>S3 + S5</td><td>Yeniden tasarım gerekmiyor; üç kimlik alanı + iki yeni kavram</td></tr>
+    <tr><td>2 · Hibe/başvuru yaşam döngüsü</td><td>S2</td><td>Zincir var; kapılar ve kapanış eksik</td></tr>
+    <tr><td>3 · Hibe → proje dönüşümü</td><td>S1</td><td>En yüksek getirili tek adım</td></tr>
+    <tr><td>4 · Proje oluşturma + dinamik sihirbaz</td><td>S2 (kısmi)</td><td><strong>Sihirbaz önerilmiyor</strong> — varsayılan düzeltmesi yeterli (bkz. itirazlar)</td></tr>
+    <tr><td>5 · Görev/faaliyet/çıktı</td><td>S5</td><td>Çıktı ve gösterge yeni; faaliyet için iş adımı-görev bağı</td></tr>
+    <tr><td>6 · Finans/bütçe/fonlama</td><td>S0 + S3</td><td>Doğruluk önce (S0), izlenebilirlik sonra (S3)</td></tr>
+    <tr><td>7 · Belge yönetimi</td><td>S1 + S6</td><td>Dönüşüm evrakı acil; depo birleştirme ürün kararı</td></tr>
+    <tr><td>8 · Raporlama motoru</td><td>S4</td><td><strong>Motor var</strong> — besleme tamamlanacak</td></tr>
+    <tr><td>9 · Bildirimler</td><td>S1</td><td>Altyapı sağlam; üç tetikleyici eksik</td></tr>
+    <tr><td>10 · Pano &amp; UX</td><td>S4 sonrası</td><td>Veri birleşmeden pano birleşemez</td></tr>
+    <tr><td>11 · İzin/denetim/güvenlik</td><td>S0 + S3 + S6</td><td>İki P0 acil; iz ve sertleştirme sonra</td></tr>
+    <tr><td>12 · Test/QA/performans</td><td>S6</td><td>Ölçek eşiği: 200 kiracı</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<section id="hedef">
+<h2>P. Hedef mimari</h2>
+<div class="prose"><p>Katmanlar değişmiyor. Değişen, aralarındaki <strong>sözleşmeler</strong>: her köprü artık bir kimlik bağı taşıyor ve türetilen değer saklanmıyor, hesaplanıyor.</p></div>
+
+<div class="arch">
+  <div class="layer c3">
+    <div class="box acc"><div class="bt">HİBE</div><div class="bi">Grant · GrantCall<br>GrantInterest (talep/fikir)<br>GrantApplication<br>GrantDecision · Appeal</div></div>
+    <div class="box acc"><div class="bt">PROJE</div><div class="bi">Project · WorkStep<br>TaskItem → SubTask<br><strong>Deliverable · Indicator</strong> (yeni)<br>ProjectMember · Risk</div></div>
+    <div class="box acc"><div class="bt">FİNANS</div><div class="bi">FundingTranche · Deduction<br>ProjectBudgetLine · Revision<br>Expense · Income · Invoice<br>CashAccount · ExchangeRate</div></div>
+  </div>
+  <div class="conn">↑ üç köprü, üç kimlik alanı ↑</div>
+  <div class="layer c3">
+    <div class="box"><div class="bt">Başvuru → Proje</div><div class="bi">Project.GrantApplicationId<br><span style="color:var(--crit)">bugün: yok</span></div></div>
+    <div class="box"><div class="bt">Hibe kalemi → Bütçe</div><div class="bi">ProjectBudgetLine.SourceGrantLineId<br><span style="color:var(--crit)">bugün: kopya, bağsız</span></div></div>
+    <div class="box"><div class="bt">Hibe dilimi → Fon</div><div class="bi">FundingTranche.SourceGrantTrancheId<br><span style="color:var(--crit)">bugün: kopya, bağsız</span></div></div>
+  </div>
+  <div class="conn">↓ ortak omurga ↓</div>
+  <div class="layer c1">
+    <div class="box"><div class="bt">BELGE — tek havuz, çok çapa</div><div class="bi">Document → DocumentFile → DocumentAttachment · proje · iş adımı · <strong>görev</strong> (yeni) · gider · <strong>hibe evrakı</strong> (köprü) · tür + meta · versiyon · erişim izi · uygunluk</div></div>
+  </div>
+  <div class="layer c1">
+    <div class="box"><div class="bt">RAPORLAMA — tek motor, tam besleme</div><div class="bi">ReportTemplate · bölümler: özet · iş adımı · <strong>bütçe</strong> · <strong>görev</strong> · risk · zaman çizelgesi · eşleşme · uygunluk · ek dizini · iz — DeliveryPackage · ReportRun · zamanlama · dış paylaşım</div></div>
+  </div>
+  <div class="layer c1">
+    <div class="box"><div class="bt">BİLDİRİM — tek yönetici, tam kapsama</div><div class="bi">Notification · tercih · tekillik · gruplama · in-app + e-posta + <strong>web push</strong> — hibe şablon katmanı üstte</div></div>
+  </div>
+  <div class="layer c1">
+    <div class="box"><div class="bt">İZ VE YETKİ</div><div class="bi">Alan-düzeyi geçmiş: finansal işlemler + <strong>bütçe ekseni</strong> · her mutasyon alt izinli · <strong>kimliğe bürünme izinli ve kayıtlı</strong> · kiracı süzgeci veri <em>ve dosya</em> katmanında</div></div>
+  </div>
+</div>
+
+<div class="prose">
+<h3>Değişmeyen üç ilke</h3>
+<ol class="tight">
+<li><strong>Kopyalama, bağla.</strong> Bir kayıt başka bir modüle taşınıyorsa kaynak kimliğini taşısın. Senkron kodu yazma; kimliği koru, değeri hesapla.</li>
+<li><strong>Türetileni saklama.</strong> “Harcanan” zaten böyle çalışıyor ve doğru. Aynı disiplin ilerleme yüzdesi, tahsilat durumu ve kapanma için de geçerli olmalı.</li>
+<li><strong>Kapı sunucuda.</strong> Bugün üç koruma yalnız Razor sayfasında duruyor (hibe bağını koruma, bütçe alanını gizleme, dönüşüm düğmesini saklama) — arayüz dışından yapılan her çağrı bunları atlıyor.</li>
+</ol>
+</div>
+</section>
+
+<section id="tumu">
+<h2>R. Tüm bulgu envanteri</h2>
+<p class="sec-sub">P0/P1 bulgular yukarıda ayrıntılı. Aşağıdaki tablo kalan P2/P3 bulguları taşır. Kanıt dosya yolları alan raporlarındadır.</p>
+
+<h3>Hibe domain <span class="tag">DOM</span></h3>
+<div class="tw"><table>
+  <thead><tr><th>ID</th><th>Ö</th><th>Problem</th><th>Öneri</th></tr></thead>
+  <tbody>
+    <tr><td class="id">DOM-02</td><td><span class="pill p2">P2</span></td><td><code>Grant.MaxAmount</code> C#'ta nullable, veritabanında NOT NULL; ayrıca iki farklı “limit yok” işareti yan yana (alt limitte null, üst limitte 0). Null yazan yeni bir yol çalışma zamanı hatası üretir.</td><td>Özelliği <code>decimal</code> yap (migrationsuz) ya da kolonu nullable'a çevir</td></tr>
+    <tr><td class="id">DOM-03</td><td><span class="pill p3">P3</span></td><td>Başvuru tarihi doğrudan sunucu yerel saatinden atanıyor; alanın geri kalanı saati çağırandan alıyor</td><td>Kurucuya zaman parametresi ekle, çağıranlar <code>Clock.Now</code> geçsin</td></tr>
+    <tr><td class="id">DOM-04</td><td><span class="pill p3">P3</span></td><td>Fikir daveti çağrı kimliğinde ne yabancı anahtar ne indeks var; benzer yerlerdeki gerekçe yorumu da yok</td><td>En azından indeks ekle</td></tr>
+    <tr><td class="id">DOM-05</td><td><span class="pill p3">P3</span></td><td>Danışman ataması üç ayrı kayıtta yaşıyor (öneri, talep, başvuru); devir kuralı merkezî değil, servis servis dağınık</td><td>Devir tek bir noktada garanti edilsin ya da kopukluk belgelensin</td></tr>
+    <tr><td class="id">DOM-06</td><td><span class="pill p3">P3</span></td><td>Çağrı durumu serbestçe atanabiliyor; “taslak kiracıya asla çıkmaz” kuralı yalnız sorgu disiplinine emanet</td><td>Yayın/kapanış metotlaştırılsın veya kural kaynak okuyan testle kilitlensin</td></tr>
+    <tr><td class="id">DOM-07</td><td><span class="pill p3">P3</span></td><td>Neredeyse her tablo kendi başına aggregate kökü olmasına rağmen kökler arası koleksiyonlar var — stil borcu, hata değil</td><td>Değişiklik gerekmez; konvansiyon not edilsin</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Yaşam döngüsü <span class="tag">LIF</span></h3>
+<div class="tw"><table>
+  <thead><tr><th>ID</th><th>Ö</th><th>Problem</th><th>Öneri</th></tr></thead>
+  <tbody>
+    <tr><td class="id">LIF-04</td><td><span class="pill p2">P2</span></td><td>İlgi bildirme ucu çağrı durumunu hiç kontrol etmiyor: kimliğini bilen kiracı <strong>taslak</strong>, planlanan ya da kapanmış çağrıya ilgi bırakabiliyor</td><td>Açık + tarih içinde kapısı ekle (fikir bağlama ucunda aynı kapı zaten var)</td></tr>
+    <tr><td class="id">LIF-05</td><td><span class="pill p2">P2</span></td><td>Gönderim sunucuda yalnız “ikinci kez gönderilemez” kuralını uyguluyor; zorunlu evrak, çağrı tarihi ve sıranın kimde olduğu denetlenmiyor. Geri alma ucu da yok.</td><td>Evrak + tarih kapısı; en azından uyarı</td></tr>
+    <tr><td class="id">LIF-07</td><td><span class="pill p2">P2</span></td><td>Aşama değişikliği bildiriminin metni iki yolda ham enum adıyla doluyor — firma yerelleştirilmemiş, Türkçe karaktersiz metin görüyor ve bildirim kalıcı kayıt</td><td>İki noktada da yerelleştirilmiş karşılığı doldur (karar bildirimi doğru emsal)</td></tr>
+    <tr><td class="id">LIF-10</td><td><span class="pill p2">P2</span></td><td>Kabul edilen itiraz hiçbir şeyi geri açmıyor — yalnız bir bayrak yazılıyor; başvuru reddedilmiş kalıyor, host iki ekranda üçüncü kez veri giriyor</td><td>İtiraz kabulü kararı ve aşamayı güncellesin</td></tr>
+    <tr><td class="id">LIF-11</td><td><span class="pill p2">P2</span></td><td>İtiraz gönderilince firma listesinde satır “kapanmış” görünüyor; “itiraz kurumda, yanıt bekleniyor” diye bir durum yok. İtiraz sonucu firmaya hiç bildirilmiyor.</td><td>Ara durum + sonuç bildirimi</td></tr>
+    <tr><td class="id">LIF-13</td><td><span class="pill p2">P2</span></td><td>Kabul iki ayrı ekranda iki ayrı kayda giriliyor ve birbirini tetiklemiyor; dönüşüm engel mesajı <strong>yanlış ekrana</strong> yönlendiriyor</td><td>Tek karar ekranı; mesajdaki yönlendirmeyi düzelt</td></tr>
+    <tr><td class="id">LIF-08</td><td><span class="pill p3">P3</span></td><td>Öneri durumlarından “görüldü” ve “reddedildi” hiçbir kodla atanmıyor; üç sorgu yine de bunlara göre süzüyor. Kiracının öneriyi kapatma yolu yok.</td><td>Uçları ekle ya da enum'u sadeleştir</td></tr>
+    <tr><td class="id">LIF-09</td><td><span class="pill p3">P3</span></td><td>Talep içi geçişler tek alan çiftine yazılıyor; “incelemeye kim ne zaman aldı” bilgisi karar anında eziliyor</td><td>Kritik değilse belgele; analiz gerekirse hafif olay kaydı</td></tr>
+    <tr><td class="id">LIF-12</td><td><span class="pill p3">P3</span></td><td>İtiraz maddesi ve görüş girişi üç ardışık tek satırlık istem kutusuyla yapılıyor; iptal edilirse veri kayboluyor</td><td>Küçük modal form</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Dönüşüm <span class="tag">CNV</span></h3>
+<div class="tw"><table>
+  <thead><tr><th>ID</th><th>Ö</th><th>Problem</th><th>Öneri</th></tr></thead>
+  <tbody>
+    <tr><td class="id">CNV-03</td><td><span class="pill p2">P2</span></td><td>Dönüşüm yalnız onaylanan tutara bakıyor; karar sonucu hiç okunmuyor ve reddedilen başvurunun tutarı hiçbir akışta temizlenmiyor → <strong>ret → proje</strong> mümkün</td><td>Karar kapısı ekle</td></tr>
+    <tr><td class="id">CNV-04</td><td><span class="pill p2">P2</span></td><td>Başlık, özet, kategori, cari, para birimi, kalem gerekçeleri aktarılmıyor; proje “Diğer/Genel” ile açılıyor</td><td>Kategori + özet + başlık aktarımı (tek metot çağrısı)</td></tr>
+    <tr><td class="id">CNV-05</td><td><span class="pill p2">P2</span></td><td>Sunucu, istemciden gelen kalem tutarlarını başvurunun gerçek kayıtlarıyla karşılaştırmıyor; proje bütçesi istemci beyanıyla kuruluyor</td><td>Tutarları sunucudan yeniden oku; istemciden yalnız ad + kategori kabul et</td></tr>
+    <tr><td class="id">CNV-12</td><td><span class="pill p2">P2</span></td><td>Firmanın ilgi formunda yanıtladığı dokuz soru (problem tanımı, hedef kitle, planlanan faaliyetler…) başvuruya hiç taşınmıyor; sihirbaz proje özetini sıfırdan istiyor</td><td>İlgi cevaplarını sihirbaza ön-doldur</td></tr>
+    <tr><td class="id">CNV-06</td><td><span class="pill p3">P3</span></td><td>Tamamlanmış kilometre taşı da açık göreve çevriliyor — geçmişte biten iş yapılacak gibi listeleniyor</td><td>Tamamlananları atla veya kapalı statüyle aç</td></tr>
+    <tr><td class="id">CNV-07</td><td><span class="pill p3">P3</span></td><td>Proje kodu okuma + artırma ile üretiliyor; kod üzerinde tekillik indeksi yok — eşzamanlı iki oluşturma aynı kodu verebilir</td><td>Tekil indeks (migration) ya da çakışmada yeniden dene</td></tr>
+    <tr><td class="id">CNV-08</td><td><span class="pill p3">P3</span></td><td>İkinci dönüşüm ancak her şey yazıldıktan <em>sonra</em> yakalanıyor; işlem geri alınıyor ama boşa tam bir dönüşüm koşuyor</td><td>Başta erken kontrol</td></tr>
+    <tr><td class="id">CNV-09</td><td><span class="pill p3">P3</span></td><td>Arayüz “evrak projeden erişilir” diyor; proje tarafında böyle bir bağlantı yok</td><td>Bağlantıyı ekle ya da metni düzelt</td></tr>
+    <tr><td class="id">CNV-10</td><td><span class="pill p3">P3</span></td><td>Bütçe kalemi koduna İngilizce enum adı yazılıyor (“Personnel”); Türkçe arayüzde teknik kod görünüyor ve aynı kategoriye düşen kalemler aynı kodu alıyor</td><td>Sıra numarası ya da yerelleştirilmiş kısaltma</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Proje ve görev <span class="tag">PRJ</span></h3>
+<div class="tw"><table>
+  <thead><tr><th>ID</th><th>Ö</th><th>Problem</th><th>Öneri</th></tr></thead>
+  <tbody>
+    <tr><td class="id">PRJ-10</td><td><span class="pill p2">P2</span></td><td>Yeni proje formu varsayılan olarak “Hibe Projesi”ni seçiyor ve altı görevlik hibe takvimini işaretli getiriyor; bağımsız proje açan kullanıcı elle çıkmazsa hibe akışına düşüyor</td><td>Varsayılanı “Diğer/Genel” yap; takvim onay kutusu varsayılan kapalı</td></tr>
+    <tr><td class="id">PRJ-12</td><td><span class="pill p2">P2</span></td><td>Oluşturmada girilen bütçe, ilk kalem tanımlanınca sessizce devre dışı kalıyor (toplam kalemlerden alınıyor); iki rakam tutmazsa uyarı yok</td><td>Kalem varsa proje bütçesini salt-okunur göster veya farkı uyar</td></tr>
+    <tr><td class="id">PRJ-04</td><td><span class="pill p2">P2</span></td><td>İş adımı ilerleme yüzdesi elle giriliyor ve görevlere hiç bağlı değil; Gantt ve rapor gerçek tamamlanmadan kopuk bir sayı basıyor</td><td>Göreve iş adımı alanı ekleyip yüzdeyi türet (S5)</td></tr>
+    <tr><td class="id">PRJ-08</td><td><span class="pill p2">P2</span></td><td>“Çıktı” ve “gösterge” kavramları hiç yok; hiyerarşi görev–alt görev düzeyinde bitiyor</td><td>Ürün kararı + model (S5)</td></tr>
+    <tr><td class="id">PRJ-01</td><td><span class="pill p2">P2</span></td><td>Proje–hibe bağı arayüzden ne kurulabiliyor ne düzeltilebiliyor; tam bu iş için var olan uç hiçbir yerden çağrılmıyor</td><td>Düzenleme ekranına seçici ekle ya da ölü ucu kaldırıp kuralı belgele</td></tr>
+    <tr><td class="id">PRJ-02</td><td><span class="pill p2">P2</span></td><td>Proje güncelleme ucu hibe ve cari bağını koşulsuz yazıyor; alanı göndermeyen istemcide bağ sessizce kopuyor. Koruma sunucuda değil, Razor sayfasında.</td><td>Korumayı servise indir (“null geldi = dokunma”)</td></tr>
+    <tr><td class="id">PRJ-05</td><td><span class="pill p3">P3</span></td><td>Eski görev modeli tamamen ölü ama dokuz tek satırlık dosya duruyor; ikinci bir görev modeli izlenimi veriyor</td><td>Tek temizlik isteği (kullanıcı onayıyla)</td></tr>
+    <tr><td class="id">PRJ-06</td><td><span class="pill p3">P3</span></td><td>Bütçe görme izni düzenlemede uygulanıyor, oluşturmada uygulanmıyor — izin modeli yüzeyler arasında tutarsız</td><td>Oluşturmada da izne bağla</td></tr>
+    <tr><td class="id">PRJ-07</td><td><span class="pill p3">P3</span></td><td>Tek seviye alt görev varsayımı yalnız konvansiyonla duruyor; üst görev doğrulanmıyor, alt görevin altına görev açılabiliyor</td><td>İki satırlık doğrulama</td></tr>
+    <tr><td class="id">PRJ-09</td><td><span class="pill p3">P3</span></td><td>Risk kütüğü üç ardışık istem kutusuyla giriliyor ve yalnız zaman çizelgesi sayfasında yaşıyor; proje konsolundan köprü yok</td><td>Küçük modal + konsola bağlantı</td></tr>
+    <tr><td class="id">PRJ-11</td><td><span class="pill p3">P3</span></td><td>Proje para birimi hiçbir ekrandan ayarlanamıyor: oluşturmada gizli ve sabit, düzenlemede hiç gösterilmiyor. Oluşturma modelinde kurulan üç seçenekli liste ölü kod.</td><td>Para birimini görünür alan yap veya ölü listeyi kaldır</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Finans <span class="tag">FIN</span></h3>
+<div class="tw"><table>
+  <thead><tr><th>ID</th><th>Ö</th><th>Problem</th><th>Öneri</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FIN-13</td><td><span class="pill p2">P2</span></td><td>Dilim tahsilatı deftere para yazmıyor: yalnız dilim alanlarını güncelliyor, gelir kaydı ve kasa hareketi üretmiyor. Kullanıcı aynı tahsilatı ayrıca gelir olarak girip elle bağlıyor.</td><td>“Tahsil edildi → gelir önerisi” akışı (S3)</td></tr>
+    <tr><td class="id">FIN-05</td><td><span class="pill p2">P2</span></td><td>Alış faturası bütçe kalemine bağlanamıyor ve gider üretmiyor; fatura ile yürüyen projede bütçe doluluğu <strong>sistematik eksik</strong> sayıyor. Aynı maliyet iki yoldan girilirse kasadan iki kez çıkıyor.</td><td>Ürün kararı: faturaya kalem bağı mı, “harcama yalnız giderden” kuralı mı</td></tr>
+    <tr><td class="id">FIN-06</td><td><span class="pill p2">P2</span></td><td>Tahsilat, gelir kaydı kimliğini varlık/proje/kiracı kontrolü yapmadan yazıyor; gelir silinince dilim “tahsil edildi” + sarkık kimlikle kalıyor</td><td>Varlık + proje eşleşmesi + tekil bağ doğrulaması</td></tr>
+    <tr><td class="id">FIN-03</td><td><span class="pill p2">P2</span></td><td>Kur çevrimi dört bağımsız yolda, dört farklı politikayla; fatura ve transfer yolları tarih sınırı tanımıyor, ters kur yedeği yok ve kur yoksa hata fırlatıyor</td><td>Tek çözümleme kapısı; en azından tarih sınırı + yedek ekle</td></tr>
+    <tr><td class="id">FIN-04</td><td><span class="pill p2">P2</span></td><td>Hibe ile proje bütçesi arasında kalıcı köprü tek alan; kopyalar kaynak referansı taşımıyor, tutar revizyonunda kopya bayatlıyor</td><td>Kaynak kimliği alanları (S3)</td></tr>
+    <tr><td class="id">FIN-07</td><td><span class="pill p2">P2</span></td><td>Fatura, ödeme ve proje bütçesi alanlarında açık hassasiyet yok: SQL Server'da iki ondalık, PostgreSQL'de sınırsız → aynı fatura iki veritabanında farklı toplam verebilir</td><td>Hassasiyet tanımla + çift migration</td></tr>
+    <tr><td class="id">FIN-15</td><td><span class="pill p2">P2</span></td><td>Bütçe kalemi yazmak finans izni değil <em>proje</em> izni istiyor; finans ekibine gider/gelir izni verip proje düzenleme vermeyen kurulum bütçe kuramıyor</td><td>İzin modeli kararı</td></tr>
+    <tr><td class="id">FIN-08</td><td><span class="pill p3">P3</span></td><td>Kur bulunamayınca TRY defter damgası 0 yazılıyor ve hiçbir bayrakla işaretlenmiyor — damgasız kayıt gerçek sıfırla karışıyor</td><td>Nullable yap ya da “damga eksik” bayrağı</td></tr>
+    <tr><td class="id">FIN-09</td><td><span class="pill p3">P3</span></td><td>Kasa hareketindeki referans kimliği kaynağa göre farklı şey tutuyor (gider, gelir, <em>ödeme</em>, sentetik transfer) — ve sınıf yorumu yanlış bilgi veriyor</td><td>Yorumu düzelt; uzun vadede ayrı kolonlar</td></tr>
+    <tr><td class="id">FIN-10</td><td><span class="pill p3">P3</span></td><td>Fatura durumlarından “iptal” ve “gecikmiş” hiçbir yerde atanmıyor; iptal eklenirse cari tahakkuku geri alan kod bugün yok</td><td>İptal akışı tasarlanırken ters kayıt tek kapıdan</td></tr>
+    <tr><td class="id">FIN-11</td><td><span class="pill p3">P3</span></td><td>Cari bakiye para birimini yok sayarak topluyor; satırlar para birimi taşıdığı hâlde tek sayı üretiliyor</td><td>Para birimi bazında grupla</td></tr>
+    <tr><td class="id">FIN-14</td><td><span class="pill p3">P3</span></td><td>“İtiraz sürecinde” dilim durumu arayüzden hiç ayarlanamıyor</td><td>Uç ekle ya da durumu kaldır</td></tr>
+    <tr><td class="id">FIN-16</td><td><span class="pill p3">P3</span></td><td>Finans modal sayfalarının hiçbirinde sayfa düzeyi yetkilendirme yok (koruma uygulama servisinde duruyor)</td><td>Sayfa düzeyine de ekle</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Finans arayüzü <span class="tag">FUX</span></h3>
+<div class="tw"><table>
+  <thead><tr><th>ID</th><th>Ö</th><th>Problem</th><th>Öneri</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FUX-03</td><td><span class="pill p2">P2</span></td><td>Kasa yüzeyi hem hub sekmesinde hem ayrı sayfada; sunucu mantığı da iki yerde kopya (aynı hesap-başına bakiye döngüsü iki kez yazılmış)</td><td>Birini bağlantıya indir; yükleyiciyi tek yardımcıya al</td></tr>
+    <tr><td class="id">FUX-04</td><td><span class="pill p2">P2</span></td><td>Hibe projesinin finansını uçtan uca yönetmek 6–10 ekran istiyor; görüntüleme birleşmiş, yazma birleşmemiş</td><td>Önceliği yazma işlemlerine ver; görüntüleme yüzeyi çoğaltma</td></tr>
+    <tr><td class="id">FUX-05</td><td><span class="pill p2">P2</span></td><td>“Son İşlemler” satırları kayda değil modülün liste sayfasına gidiyor; kayıt kimliği taşınmıyor, proje süzgeci de kayboluyor</td><td>En azından proje süzgecini taşı; ideali odak parametresi</td></tr>
+    <tr><td class="id">FUX-11</td><td><span class="pill p2">P2</span></td><td>Her modal kaydından sonra tüm sayfa yeniden yükleniyor; beş bütçe kalemi girmek beş modal + beş tam sayfa yüklemesi</td><td>Kısmi güncelleme ya da toplu giriş yolunu öne çıkar</td></tr>
+    <tr><td class="id">FUX-06</td><td><span class="pill p3">P3</span></td><td>Finans menü öğesinin izin kapısı sayfanın gerçek yetenek kümesiyle uyuşmuyor: yalnız bütçe görme izinli proje yöneticisi menüde hub'ı hiç göremiyor</td><td>Menü kapısını sekme setinin birleşimiyle hizala</td></tr>
+    <tr><td class="id">FUX-07</td><td><span class="pill p3">P3</span></td><td>Etkinlik şablonundaki “Bağış” sekmesi kalıcı bir yer tutucu — tıklanınca “hazırlanıyor” diyor; modülün kendi ilkesiyle çelişiyor</td><td>Sekmeyi kaldır ya da yol haritası içeriğiyle doldur</td></tr>
+    <tr><td class="id">FUX-08</td><td><span class="pill p3">P3</span></td><td>Hibe şablonunda aynı gelir/gider satırları üç sekmede üç biçimde sunuluyor; donör sekmesi tek istekte sekiz servis çağırıyor</td><td>Sekme rollerini netleştir; en az bir tabloyu özet karta indir</td></tr>
+    <tr><td class="id">FUX-09</td><td><span class="pill p3">P3</span></td><td>Ölü değişken: iki dalı da aynı değeri veren ve hiç kullanılmayan bir kolon sayısı hesabı</td><td>Satırı kaldır (onayla)</td></tr>
+    <tr><td class="id">FUX-10</td><td><span class="pill p3">P3</span></td><td>Menüden bilinçle çıkarılmış ama izniyle birlikte canlı duran dört yüzey (cariler, cari ekstre, mizan, kur değerleme)</td><td>Değişiklik gerekmez; muhasebe ekseni yeniden ele alınırsa envanter burada</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Belge · Raporlama · Bildirim · Güvenlik · Operasyon</h3>
+<div class="tw"><table>
+  <thead><tr><th>ID</th><th>Ö</th><th>Problem</th><th>Öneri</th></tr></thead>
+  <tbody>
+    <tr><td class="id">DOC-04</td><td><span class="pill p2">P2</span></td><td>Dosya içerik özeti hiçbir kod yolunda doldurulmuyor → birebir aynı dosyanın ikinci kez yüklenmesi yakalanamıyor; eşleştirme tezgâhı yine de her açılışta boş özetleri sorguluyor</td><td>Yükleme akışında özeti hesapla ya da ölü sorguyu kaldır</td></tr>
+    <tr><td class="id">DOC-05</td><td><span class="pill p2">P2</span></td><td>“Süresi doldu” durumu hiçbir yerde atanmıyor (enum yorumu yanlış bilgi veriyor); ayrıca iki paralel süre alanı var</td><td>Worker'a adım ekle; yetkili alanı tek yerde belirle</td></tr>
+    <tr><td class="id">DOC-06</td><td><span class="pill p2">P2</span></td><td>Görev eki kiracı sütunu taşımıyor; izolasyon yalnız görev üzerinden disiplinle sağlanıyor</td><td>Bilinçliyse belgele; değilse kiracı sütunu + geri doldurma</td></tr>
+    <tr><td class="id">DOC-07</td><td><span class="pill p2">P2</span></td><td>Sürüm zinciri dosya <em>adıyla</em> kuruluyor: aynı klasöre aynı adla yüklenen alakasız dosya mevcut belgenin yeni sürümü sayılıyor</td><td>Yüklemede “yeni sürüm mü, ayrı belge mi?” sor; zinciri hedef belgeye bağla</td></tr>
+    <tr><td class="id">DOC-08</td><td><span class="pill p2">P2</span></td><td>Belge–finans eşleşmesi yalnız gider için var; fatura, gelir ve kasa hareketi için hiçbir eşleştirme yok</td><td>Hangi eksenlerde belge zorunlu — ürün kararı</td></tr>
+    <tr><td class="id">DOC-11</td><td><span class="pill p2">P2</span></td><td>Görev eki diske yazıldıktan <em>sonra</em> yetki kontrol ediliyor; yetkisiz istek hata alsa bile dosya klasörde yetim kalıyor</td><td>Kontrolü yazmadan önce yap</td></tr>
+    <tr><td class="id">DOC-12</td><td><span class="pill p2">P2</span></td><td>Harcama ekranlarından belgeye gidilemiyor: proje konsolunda yalnız “var” ikonu, tıklanamaz; gelir-gider sekmesinde belge kolonu bilinçle yok</td><td>Belge kimliğini taşı ve bağlantı yap</td></tr>
+    <tr><td class="id">DOC-09</td><td><span class="pill p3">P3</span></td><td>Onay akışı yalnız hibede; merkezde “Kesin” damgası tek kullanıcının tercihi</td><td>Teslim önizlemesinde kimin çektiğini göster</td></tr>
+    <tr><td class="id">DOC-10</td><td><span class="pill p3">P3</span></td><td>Tek düz yükleme klasörü (kiracı/modül ayrımı yok); bir depolama sınıfının gerekçe yorumu bayat ve yanlış güvenlik varsayımına yol açabilir</td><td>Yorumu düzelt; blob geçişinde kiracı önekli anahtar</td></tr>
+    <tr><td class="id">RPT-03</td><td><span class="pill p2">P2</span></td><td>Hibe ile raporlama motoru arasında tek referans bile yok; kurum şablonu hibe verisinden habersiz jenerik bir proje-belge raporu</td><td>Hibe raporuna üretim bağı + hibe bölümleri (migration)</td></tr>
+    <tr><td class="id">RPT-04</td><td><span class="pill p2">P2</span></td><td>Pano istatistik servisini hiçbir tüketici çağırmıyor ama otomatik API'de yayında ve host bağlamında tüm kiracı özetini açıyor</td><td>Silme kararı kullanıcıya; tutulacaksa gerekçe belgelensin</td></tr>
+    <tr><td class="id">RPT-08</td><td><span class="pill p2">P2</span></td><td>Dönemleme serbest metin <em>eşitliğiyle</em> yapılıyor; rapor üretiminde tarih aralığı yok</td><td>Tarih aralığı parametresi</td></tr>
+    <tr><td class="id">RPT-05</td><td><span class="pill p3">P3</span></td><td>Mizan ve cari ekstre tam işlevsel ama menüden gömülü; envanterde “var” görünüp kullanıcı için fiilen yok</td><td>Bilinçli karar; dokümantasyonda işaretlensin</td></tr>
+    <tr><td class="id">RPT-06</td><td><span class="pill p3">P3</span></td><td>İki belge yorumu bölümlerin kapalı olduğunu söylüyor; artık açıklar — kodu okuyanı yanıltıyor</td><td>İlgili düzeltmeyle aynı istekte güncelle</td></tr>
+    <tr><td class="id">NTF-04</td><td><span class="pill p2">P2</span></td><td>Son tarih hatırlatması yalnız zorunlu evrakı eksik başvurulara gidiyor; <strong>evrakları tamam ama gönderilmemiş</strong> başvuru hiç uyarılmıyor</td><td>İkinci dal: gönderilmemiş tüm başvurulara aynı eşiklerde</td></tr>
+    <tr><td class="id">NTF-05</td><td><span class="pill p2">P2</span></td><td>Proje bitiş tarihi hiçbir iş tarafından okunmuyor; kapanış hazırlığı için tetik yok</td><td>Günlük tura 30/14/3 eşiği</td></tr>
+    <tr><td class="id">NTF-06</td><td><span class="pill p2">P2</span></td><td>“Kaynak azalıyor” ölçümü yok; kapsam dilim odaklı, toplam tahsilat/harcama dengesi hiç ölçülmüyor</td><td>Proje düzeyinde oran eşiği</td></tr>
+    <tr><td class="id">NTF-11</td><td><span class="pill p2">P2</span></td><td>Görev uyarısı yalnız atanana gidiyor: <strong>atanmamış görev tamamen sessiz</strong>; görev sahibi, izleyiciler ve proje yöneticisi hiç uyarılmıyor (diğer görev bildirimleri sahibe de gidiyor — asimetri)</td><td>Alıcı kümesini diğer görev bildirimleriyle hizala</td></tr>
+    <tr><td class="id">NTF-12</td><td><span class="pill p2">P2</span></td><td>Bütçe aşımı alıcı kümesi (yalnız proje lideri + bütçe görme izni) sessizce boşalabiliyor; o durumda kimse uyarılmıyor ve log da düşmüyor</td><td>Boş alıcı kümesini logla; yedek alıcı tanımla</td></tr>
+    <tr><td class="id">NTF-07</td><td><span class="pill p3">P3</span></td><td>Belge süresi uyarısı yalnız yükleyene ve tek seferlik; “süresi doldu” anı hiç bildirilmiyor</td><td>Alıcıyı genişlet; iki eşik kullan</td></tr>
+    <tr><td class="id">NTF-08</td><td><span class="pill p3">P3</span></td><td>Masaüstü bildirimi yalnız sayfa açıkken; web push sunucu tarafı yok. Kritik bildirim, uygulama kapalıysa ve e-posta kapalıysa ulaşmıyor</td><td>Web push (onay bekliyor); ara çözüm: kritik türlerde e-posta varsayılanı açık</td></tr>
+    <tr><td class="id">NTF-09</td><td><span class="pill p3">P3</span></td><td>Tercih yalnız kategori düzeyinde; kritik e-posta ile günlük özet aynı bayrağa bağlı</td><td>İkisini ayrı bayrağa böl</td></tr>
+    <tr><td class="id">NTF-10</td><td><span class="pill p3">P3</span></td><td>Günlük özet doğrudan gönderiyor (kuyruğa almıyor); geçici e-posta hatasında o günün özeti tamamen düşüyor, yeniden başlatmada çift özet mümkün</td><td>Kuyruğa al; son özet zamanını kalıcı tut</td></tr>
+    <tr><td class="id">SEC-03</td><td><span class="pill p2">P2</span></td><td>Görev yorumu/eki, fatura kalemi, revizyon satırı ve <strong>takvim OAuth hesabı</strong> kiracı sütunu taşımıyor; izolasyon disiplinle sağlanıyor</td><td>Kod incelemesi maddesi yap; kritik olanlara kiracı sütunu</td></tr>
+    <tr><td class="id">SEC-04</td><td><span class="pill p2">P2</span></td><td>Alan-düzeyi geçmiş proje bütçe eksenini kapsamıyor: bütçe kalemi, <strong>fon dilimi tahsilatı</strong> ve proje toplam bütçesi için “eski değer neydi” cevapsız</td><td>Seçiciye ekle (S3)</td></tr>
+    <tr><td class="id">SEC-06</td><td><span class="pill p2">P2</span></td><td>Hibe uygulama servisindeki üç yardımcı metot kiracı süzgecini koşulsuz kapatıp çıplak kimlikle tüm kiracılarda arıyor; bugünkü çağrı grafiği güvenli, gelecek değişikliklere karşı değil</td><td>Danışman değilse süzgeci kapatma ya da kiracı koşulunu elle koy</td></tr>
+    <tr><td class="id">SEC-08</td><td><span class="pill p2">P2</span></td><td>Tam da “Proje → Belge” için kurulmuş çok biçimli bağ tablosu migrate edilmiş ve servisi otomatik API'de yayında; <strong>hiçbir tüketicisi yok</strong> ve servis yalnız kimlik doğrulaması istiyor, kaynak/hedef varlığı doğrulanmıyor</td><td>Ya DOC-02 için kullan ya da kaldır; her hâlde yetkilendir</td></tr>
+    <tr><td class="id">SEC-07</td><td><span class="pill p3">P3</span></td><td>Üretimde admin dışında hazır rol yok; dört kademeli rol seti yalnız demo tohumlamasında. Her kiracı yöneticisi ~30 izinli matrisi sıfırdan kuruyor</td><td>Kiracı kurulumuna rol şablonu (ürün kararı)</td></tr>
+    <tr><td class="id">OPS-05</td><td><span class="pill p2">P2</span></td><td>Sayfalama 32 liste ucunun 2'sinde; kiracı kataloğu tümünü çekip istemcide süzüyor; dağıtım önizlemesi kiracı sayısıyla doğrusal</td><td>F4 ölçek paketi; eşik 200 kiracıda 3 saniye</td></tr>
+    <tr><td class="id">OPS-06</td><td><span class="pill p2">P2</span></td><td>KVKK teknik dalga 1 tamam ve doğrulanmış; hukuki inceleme, aktarım onay akışı ve veri sahibi hakları dökümü açık</td><td>Süreç borcu — kod işi değil</td></tr>
+    <tr><td class="id">OPS-07</td><td><span class="pill p2">P2</span></td><td><strong>Kapsam boşluğu:</strong> platformun kendi gelir ekseni (abonelik faturaları, hizmet sözleşmeleri, abonelik bitiş işi) bu denetimde hiç açılmadı</td><td>Ayrı bir denetim turu</td></tr>
+    <tr><td class="id">OPS-08</td><td><span class="pill p2">P2</span></td><td><strong>Kapsam boşluğu:</strong> paket düşürme / abonelik bitişi geçişinde hibe özelliği ve izinleri kapanırken verinin ne olduğu incelenmedi</td><td>Geçiş senaryosu denetimi</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<hr>
+
+<section id="kapanis">
+<h2>Kapanış</h2>
+<div class="prose">
+<p>Bu rapor <strong>PHASE 0</strong>'dır: keşif ve teşhis. Hiçbir kod değiştirilmedi, hiçbir migration üretilmedi. Onay verilene kadar sonraki faza geçilmeyecek.</p>
+<p>Yöntem: 11 bağımsız alan ajanı kaynak kodu okuyarak tarandı, 12 senaryo uçtan uca izlendi, bir eksiklik eleştirmeni “ne kaçtı?” geçişi yaptı ve en ağır yedi iddia bu oturumda tek tek koda bakılarak doğrulandı. Doğrulamada <strong>düşen bir iddia</strong> da oldu ve rapora alınmadı — eleştirmenin bulduğu her şey otomatik olarak bulgu sayılmadı.</p>
+<p>Denetimin tek cümlelik sonucu: <strong>Apya.Platform iyi inşa edilmiş modüllerden oluşuyor ve tam olarak modüllerin arasında zayıf.</strong> Bu iyi haberdir — dikiş dikmek yeniden inşa etmekten çok daha ucuzdur, ve listelenen dikişlerin yarısı migration bile gerektirmiyor.</p>
+<h4>Karar bekleyen dört başlık</h4>
+<ol class="tight">
+<li><strong>S0'a başlansın mı?</strong> İki P0 güvenlik bulgusu (kimliğe bürünme, dosya ucu) dağıtım kapısından bağımsız olarak acil.</li>
+<li><strong>Bütçe toplamlarında TRY defter tutarı kullanılsın mı?</strong> (FIN-02 / H-10 — hâlâ açık karar)</li>
+<li><strong>Çıktı ve gösterge modeli ürün kapsamına alınsın mı?</strong> Alınacaksa S5, alınmayacaksa hibe raporlaması jenerik kalır.</li>
+<li><strong>Ölü kod temizliği için onay:</strong> eski görev modeli dosyaları, kullanılmayan pano servisi, öksüz hibe formları, ölü değişken.</li>
+</ol>
+<p class="kv" style="margin-top:26px">Apya.Platform · PHASE 0 System Check-Up · 2026-09-21 · main f3ed8f39 · salt-okunur denetim</p>
+</div>
+</section>
+</div>
