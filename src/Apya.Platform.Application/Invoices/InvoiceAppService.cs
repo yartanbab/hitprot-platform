@@ -99,6 +99,11 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         return dto;
     }
 
+    // SEC-01: Sınıf seviyesi Invoices.Default yalnız GÖRÜNTÜLEME yetkisidir. Fatura açmak ve
+    // ödeme kaydetmek (kasa hareketi + cari tahakkuk yazar) mutasyondur; diğer tüm finans
+    // servisleri gibi alt izin ister. UI zaten bu izinlere göre gizleniyordu (Invoices/Index.cshtml:15,
+    // Finance/_PanelInvoices.cshtml:24, Invoices/index.js:124) — sunucu şimdi o sözleşmeyle hizalandı.
+    [Authorize(PlatformPermissions.Invoices.Create)]
     public async Task<InvoiceDto> CreateAsync(CreateInvoiceDto input)
     {
         var items = input.Items
@@ -121,6 +126,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         return await GetAsync(invoice.Id);
     }
 
+    [Authorize(PlatformPermissions.Invoices.Edit)]
     public async Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference, Guid? cashAccountId = null)
     {
         await _invoiceManager.RecordPaymentAsync(invoiceId, amount, method, reference, cashAccountId);

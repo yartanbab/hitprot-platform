@@ -89,6 +89,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         return await BuildAsync(application);
     }
 
+    [Authorize(PlatformPermissions.Grants.Edit)]
     public async Task<GrantImplementationDto> SaveReportAsync(SaveGrantReportInput input)
     {
         EnsureConsultant();
@@ -113,6 +114,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         return await BuildAsync(application);
     }
 
+    [Authorize(PlatformPermissions.Grants.Edit)]
     public async Task<GrantImplementationDto> SetReportStatusAsync(SetGrantReportStatusInput input)
     {
         EnsureConsultant();
@@ -125,6 +127,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         return await BuildAsync(application);
     }
 
+    [Authorize(PlatformPermissions.Grants.Edit)]
     public async Task<GrantImplementationDto> AddSectionAsync(AddGrantReportSectionInput input)
     {
         EnsureConsultant();
@@ -140,6 +143,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         return await BuildAsync(application);
     }
 
+    [Authorize(PlatformPermissions.Grants.Edit)]
     public async Task<GrantImplementationDto> SetSectionStatusAsync(SetGrantReportSectionStatusInput input)
     {
         EnsureConsultant();
@@ -154,6 +158,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
     }
 
     /// <summary>Dilimi tahsil edildi olarak işaretler — raporu onaylanmamışsa reddeder.</summary>
+    [Authorize(PlatformPermissions.Grants.Edit)]
     public async Task<GrantImplementationDto> MarkTranchePaidAsync(Guid trancheId)
     {
         EnsureConsultant();
@@ -265,7 +270,10 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
             ApplicationId = application.Id,
             ApprovedAmount = application.ApprovedAmount ?? 0m,
             ContractStart = application.CreationTime.Date,
-            CanManage = IsConsultant,
+            // SEC-02: Yazma uçları artık Grants.Edit istiyor. Bayrak yalnız danışman
+            // bağlamına baksaydı, izinsiz host kullanıcısı düğmeleri görüp 403 alırdı.
+            CanManage = IsConsultant
+                        && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit),
             HasProject = application.ProjectId.HasValue,
             ProjectId = application.ProjectId
         };

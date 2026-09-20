@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +10,7 @@ using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Customers;
 using Apya.Platform.Expenses;
+using Apya.Platform.Grants;
 using Apya.Platform.Invoices;
 
 namespace Apya.Platform.Pages;
@@ -77,5 +79,35 @@ public class Smoke_Tests : PlatformWebTestBase
     {
         appServiceType.IsDefined(typeof(AuthorizeAttribute), inherit: true)
             .ShouldBeTrue($"{appServiceType.Name} [Authorize] taşımıyor — anonim API erişimi açık kalır");
+    }
+
+    // ── Finansal mutasyonlar alt izin ister (SEC-01, SEC-02) ───────────────
+    // Sınıf seviyesi [Authorize] yalnız GÖRÜNTÜLEME yetkisi verir; kasa/cari defterine
+    // yazan uçlar ayrıca Create/Edit ister. Bu ayrım yapılmazsa "yalnız görsün" diye
+    // yetkilendirilen kullanıcı otomatik API'den finansal kayıt üretebilir.
+    [Theory]
+    [InlineData(typeof(InvoiceAppService), nameof(InvoiceAppService.CreateAsync), "Platform.Invoices.Create")]
+    [InlineData(typeof(InvoiceAppService), nameof(InvoiceAppService.AddPaymentAsync), "Platform.Invoices.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.SaveReportAsync), "Platform.Grants.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.SetReportStatusAsync), "Platform.Grants.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.AddSectionAsync), "Platform.Grants.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.SetSectionStatusAsync), "Platform.Grants.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.MarkTranchePaidAsync), "Platform.Grants.Edit")]
+    public void MutationMethod_RequiresSubPermission(Type serviceType, string methodName, string expectedPolicy)
+    {
+        var method = serviceType.GetMethod(methodName);
+        method.ShouldNotBeNull($"{serviceType.Name}.{methodName} bulunamadı — test bayatlamış olabilir");
+
+        var authorize = method!.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .Cast<AuthorizeAttribute>()
+            .ToList();
+
+        authorize.ShouldNotBeEmpty(
+            $"{serviceType.Name}.{methodName} metot düzeyinde [Authorize] taşımıyor — " +
+            "sınıf seviyesi görüntüleme izni finansal mutasyon yetkisine dönüşür");
+
+        authorize.ShouldContain(a => a.Policy == expectedPolicy,
+            $"{serviceType.Name}.{methodName} '{expectedPolicy}' beklerken " +
+            $"'{string.Join(", ", authorize.Select(a => a.Policy ?? "(politikasız)"))}' taşıyor");
     }
 }
