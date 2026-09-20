@@ -111,7 +111,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
     /// kendisi seçer; yanlış bir kategoriyi varsayılan yapmaktansa boş bırakmak
     /// daha az zarar verir.
     /// </summary>
-    private static readonly Dictionary<GrantCostItemKind, ExpenseCategory> CategorySuggestions = new()
+    private static readonly Dictionary<GrantCostItemKind, ExpenseCategory?> CategorySuggestions = new()
     {
         [GrantCostItemKind.Personel] = ExpenseCategory.Personnel,
         [GrantCostItemKind.Danismanlik] = ExpenseCategory.Service,
