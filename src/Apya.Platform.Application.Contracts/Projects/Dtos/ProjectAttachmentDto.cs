@@ -5,7 +5,7 @@ namespace Apya.Platform.Projects.Dtos;
 
 /// <summary>
 /// Proje düzenleme ekranındaki dosya listesinin satırı.
-/// İndirme adresi StoredFileName'den kurulur: /api/file/get/{StoredFileName}
+/// İndirme adresi StoredFileName'den kurulur: /file/get/{StoredFileName}
 /// </summary>
 public class ProjectAttachmentDto : EntityDto<Guid>
 {
