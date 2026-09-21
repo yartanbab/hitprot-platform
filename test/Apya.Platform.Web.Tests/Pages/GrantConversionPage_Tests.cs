@@ -348,4 +348,86 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
             kayit!.Context.ShouldContain(result.ProjectCode, Case.Insensitive);
         }
     }
+
+    /// <summary>
+    /// 🔴 CNV-05: Proje bütçesi İSTEMCİ BEYANIYLA kuruluyordu. Uç doğrudan
+    /// çağrılabildiği için beyan edilen tutar başvurunun gerçek kaydıyla hiç
+    /// karşılaştırılmıyordu; şişirilmiş bir tutar sessizce proje bütçesi olurdu.
+    /// </summary>
+    [Fact]
+    public async Task Bütce_Tutari_Istemciden_Degil_Sunucudan_Okunur()
+    {
+        var (id, tenantId) = await SetupAsync();
+
+        var input = Input(id);
+        input.BudgetLines[0].Amount = 9_999_999m;   // başvuruda 600.000 yazıyor
+
+        var result = await _conversion.ConvertAsync(input);
+
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        using (currentTenant.Change(tenantId))
+        {
+            var budgetRepo = GetRequiredService<IRepository<ProjectBudgetLine, Guid>>();
+            var saved = (await budgetRepo.GetListAsync(b => b.ProjectId == result.ProjectId)).Single();
+
+            saved.PlannedAmount.ShouldBe(600_000m, "tutar başvurunun kendi kaydından gelmeli");
+            saved.ApprovedAmount.ShouldBe(600_000m);
+            saved.Name.ShouldBe("Personel gideri", "ad istemciden gelmeye devam eder");
+
+            var projectRepo = GetRequiredService<IRepository<Project, Guid>>();
+            (await projectRepo.GetAsync(result.ProjectId)).TotalBudget.ShouldBe(600_000m);
+        }
+    }
+
+    /// <summary>Başvuruda karşılığı olmayan kalem sessizce atlanmaz, dönüşüm reddedilir.</summary>
+    [Fact]
+    public async Task Basvuruda_Olmayan_Kalem_Donusumu_Durdurur()
+    {
+        var (id, _) = await SetupAsync();
+
+        var input = Input(id);
+        input.BudgetLines[0].Kind = GrantCostItemKind.Seyahat;   // başvuruda yalnız Personel var
+
+        var ex = await Should.ThrowAsync<BusinessException>(() => _conversion.ConvertAsync(input));
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantConversionBudgetLineUnknown);
+    }
+
+    /// <summary>
+    /// 🔴 CNV-06: Tamamlanmış kilometre taşı da AÇIK göreve çevriliyordu — geçmişte
+    /// biten iş panoda yapılacak gibi listeleniyordu. Atlanmıyor, KAPALI açılıyor:
+    /// iş gerçekten yapıldı, proje o izi korumalı.
+    /// </summary>
+    [Fact]
+    public async Task Tamamlanmis_Kilometre_Tasi_Kapali_Gorev_Olarak_Acilir()
+    {
+        var (id, tenantId) = await SetupAsync();
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+
+        // Kilometre taşı kiracıya aittir; host bağlamında okunursa filtre onu gizler.
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (currentTenant.Change(tenantId))
+        {
+            var milestoneRepo = GetRequiredService<IRepository<GrantMilestone, Guid>>();
+            var milestone = (await milestoneRepo.GetListAsync(m => m.GrantApplicationId == id)).Single();
+            milestone.Complete();
+            await milestoneRepo.UpdateAsync(milestone, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var result = await _conversion.ConvertAsync(Input(id));
+        using var readUow = uowManager.Begin(requiresNew: true);
+        using (currentTenant.Change(tenantId))
+        {
+            var taskRepo = GetRequiredService<IRepository<TaskItem, Guid>>();
+            var task = (await taskRepo.GetListAsync(t => t.ProjectId == result.ProjectId)).Single();
+
+            task.Status.ShouldBe(Apya.Platform.Tasks.TaskStatus.Done,
+                "tamamlanmış kilometre taşı yapılacak iş gibi görünmemeli");
+            task.CompletedDate.ShouldNotBeNull();
+        }
+    }
 }
