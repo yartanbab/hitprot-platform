@@ -360,12 +360,34 @@ $(function () {
         });
     }
 
-    $('#RuleAddMenu').on('click', '[data-add-rule]', function () {
-        var $row = $('.apya-rule[data-rule-key="' + $(this).data('add-rule') + '"]');
+    function openRule(key) {
+        var $row = $('.apya-rule[data-rule-key="' + key + '"]');
         toggleRow($row, true);
         paintRules();
         if ($row[0] && $row[0].scrollIntoView) { $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         $row.find('.apya-rule-editor').find('input:not([disabled]), button').first().trigger('focus');
+    }
+
+    $('#RuleAddMenu').on('click', '[data-add-rule]', function () { openRule($(this).data('add-rule')); });
+
+    // ---------- Eksik zorunlu alan → alanın kendisi ----------
+    // Anahtarlar GrantParameterAppService.Field* sabitleridir (GrantParametersMissingJump_Tests kilitler).
+    // Hedefleme etiketinin tek alanı yok — beş türden biri yeter; en genel tür olan Sektör açılır.
+    var MISSING_TARGETS = {
+        Issuer: { tab: 'identity', field: '#ParamIssuer' },
+        SupportRatePercent: { tab: 'financial', field: '#ParamSupportRate' },
+        ProjectDurationMonths: { tab: 'financial', field: '#ParamDuration' },
+        CriteriaTags: { tab: 'eligibility', rule: 'sector' }
+    };
+
+    $('#ParamMissingText').on('click', '[data-missing-field]', function () {
+        var target = MISSING_TARGETS[$(this).data('missing-field')];
+        showTab(target.tab);
+        if (target.rule) { openRule(target.rule); return; }
+        // Alt çubuk yapışkan: odak kaydırması alanı çubuğun altına itmesin, ortaya kaydırılır.
+        var el = $(target.field)[0];
+        el.focus({ preventScroll: true });
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
     // ---------- Çelişki: resmî metin ↔ program değeri ----------
@@ -678,10 +700,16 @@ $(function () {
 
         var missing = s.missingRequiredFields || [];
         if (missing.length) {
-            var names = missing.map(function (f) { return l('Grants:Field:' + f); }).join(' · ');
+            // Her ad kendi alanına götüren düğmedir; hedefi bilinmeyen anahtar düz metin kalır.
+            var names = missing.map(function (f) {
+                var name = esc(l('Grants:Field:' + f));
+                return MISSING_TARGETS[f]
+                    ? '<button type="button" class="apya-param-missing-link" data-missing-field="' + f + '">' + name + '</button>'
+                    : name;
+            }).join(' · ');
             $('#ParamMissingText')
                 .removeClass('text-muted').addClass('text-warning')
-                .text(l('Grants:Parameters:MissingRequired', missing.length) + ' — ' + names);
+                .html(esc(l('Grants:Parameters:MissingRequired', missing.length)) + ' — ' + names);
         } else {
             $('#ParamMissingText')
                 .removeClass('text-warning').addClass('text-muted')

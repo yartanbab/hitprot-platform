@@ -414,6 +414,27 @@
     font-size: var(--apya-fs-md);
 }
 
+/* Eksik zorunlu alanın adı: metnin rengini korur, alanına götüren bağlantı gibi davranır. */
+.apya-param-missing-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.apya-param-missing-link:hover { text-decoration-style: solid; }
+
+.apya-param-missing-link:focus-visible {
+    outline: 2px solid var(--apya-border-focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
 .apya-param-bar-actions {
     display: flex;
     flex-wrap: wrap;
