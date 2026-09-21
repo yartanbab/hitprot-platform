@@ -78,7 +78,19 @@ public static class ReleaseNoteCatalog
                 "Bütçe kalemleri, tahsilat planı ve kilometre taşları zaten projeye aktarılıyordu, ancak " +
                 "bunun gerçekleştiğini ekranı kendiniz açmadan öğrenemiyordunuz. " +
                 "Dönüşüm ayrıca başvurunun süreç akışına da işleniyor; hibe başvurunuzun zaman çizelgesinde " +
-                "projeye dönüştüğü anı görebilirsiniz.")
+                "projeye dönüştüğü anı görebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Son başvuru tarihi geçen çağrılar kendiliğinden kapanıyor",
+                "Bir hibe çağrısının son başvuru tarihi geçtiğinde çağrı artık ertesi gün otomatik olarak " +
+                "kapanıyor. Daha önce çağrının kapatılması tamamen elle yapılıyordu; unutulduğunda tarihi " +
+                "geçmiş çağrı 'Açık' görünmeye devam ediyor, bıraktığınız ilgi talebi süresiz beklemede " +
+                "kalıyor ve size hiçbir cevap gelmiyordu. " +
+                "Çağrı kapandığında yanıtlanmamış ilgi talepleriniz kapatılıyor ve size profilinize uyan " +
+                "açık çağrıları içeren bir bilgilendirme gönderiliyor — yazdıklarınız kayıtlı kalıyor. " +
+                "Kapanan çağrıya başvuru gönderimi de artık kapalı; hazırladığınız başvuru silinmez, " +
+                "danışmanınızla görüşerek devam edebilirsiniz. " +
+                "Son başvuru tarihi girilmemiş süresiz çağrılar bu değişiklikten etkilenmiyor.")
         ),
 
         new ReleaseNote(
