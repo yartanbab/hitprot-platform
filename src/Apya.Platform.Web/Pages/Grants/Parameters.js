@@ -720,7 +720,9 @@ $(function () {
         input.documentRequirements = input.documentRequirements.filter(function (d) {
             return (d.name || '').trim() !== '';
         });
-        service.previewMatch(grantId, input).then(paintPreview);
+        // Önizleme arka plan isteğidir: yazarken yarım kalan alan (silinmiş program adı, aralık
+        // dışı sayı) hata penceresi açmaz, panel son geçerli sonucu gösterir. Hata Kaydet'te çıkar.
+        service.previewMatch(grantId, input, { abpHandleError: false }).then(paintPreview);
     }
 
     function paintPreview(p) {
