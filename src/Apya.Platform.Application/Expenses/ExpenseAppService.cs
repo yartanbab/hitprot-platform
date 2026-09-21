@@ -31,6 +31,7 @@ public class ExpenseAppService :
     private readonly ProjectBudgetManager _budgetManager;
     private readonly FxLedgerStamper _fxStamper;
     private readonly BudgetRiskEvaluator _budgetRiskEvaluator;
+    private readonly CashMovementAmountResolver _cashAmountResolver;
 
     public ExpenseAppService(
         IRepository<Expense, Guid> repository,
@@ -40,7 +41,8 @@ public class ExpenseAppService :
         IRepository<Project, Guid> projectRepository,
         ProjectBudgetManager budgetManager,
         FxLedgerStamper fxStamper,
-        BudgetRiskEvaluator budgetRiskEvaluator)
+        BudgetRiskEvaluator budgetRiskEvaluator,
+        CashMovementAmountResolver cashAmountResolver)
         : base(repository)
     {
         _cashMovementRepository = cashMovementRepository;
@@ -50,6 +52,7 @@ public class ExpenseAppService :
         _budgetManager = budgetManager;
         _fxStamper = fxStamper;
         _budgetRiskEvaluator = budgetRiskEvaluator;
+        _cashAmountResolver = cashAmountResolver;
         GetPolicyName = PlatformPermissions.Expenses.Default;
         GetListPolicyName = PlatformPermissions.Expenses.Default;
         CreatePolicyName = PlatformPermissions.Expenses.Create;
@@ -161,14 +164,19 @@ public class ExpenseAppService :
 
         var dto = await base.CreateAsync(input);
 
+        // FIN-01: Kasa hareketinde para birimi alanı yok; tutar kasanın para biriminde
+        // sayılır. Kaydın para birimi farklıysa ham tutar yazmak bakiyeyi bozardı.
+        var cashAmount = await _cashAmountResolver.ResolveAsync(
+            input.CashAccountId, input.Currency, input.Amount, input.ExpenseDate);
+
         // Otomatik kasa çıkış hareketi
         await _cashMovementRepository.InsertAsync(new CashMovement(
             GuidGenerator.Create(),
             input.CashAccountId,
             CashMovementDirection.Out,
-            input.Amount,
+            cashAmount.Amount,
             input.ExpenseDate,
-            "Gider: " + input.Title,
+            "Gider: " + input.Title + cashAmount.DescribeRate(input.Currency),
             CashMovementSource.Expense,
             dto.Id,
             CurrentTenant.Id), autoSave: true);
@@ -190,10 +198,13 @@ public class ExpenseAppService :
             x => x.ReferenceId == id && x.Source == CashMovementSource.Expense);
         if (linked != null)
         {
+            var cashAmount = await _cashAmountResolver.ResolveAsync(
+                input.CashAccountId, input.Currency, input.Amount, input.ExpenseDate);
+
             linked.CashAccountId = input.CashAccountId;
-            linked.SetAmount(input.Amount);
+            linked.SetAmount(cashAmount.Amount);
             linked.MovementDate = input.ExpenseDate;
-            linked.Description = "Gider: " + input.Title;
+            linked.Description = "Gider: " + input.Title + cashAmount.DescribeRate(input.Currency);
             await _cashMovementRepository.UpdateAsync(linked, autoSave: true);
         }
 
