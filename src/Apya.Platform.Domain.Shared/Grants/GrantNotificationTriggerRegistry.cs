@@ -31,7 +31,8 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.IdeaInvited]               = NotificationType.GrantIdeaInvited,
             [GrantNotificationTrigger.ApplicationSubmitted]      = NotificationType.GrantApplicationSubmitted,
             [GrantNotificationTrigger.ConvertedToProject]        = NotificationType.GrantConvertedToProject,
-            [GrantNotificationTrigger.ConversionPending]         = NotificationType.GrantConversionPending
+            [GrantNotificationTrigger.ConversionPending]         = NotificationType.GrantConversionPending,
+            [GrantNotificationTrigger.SubmissionDeadlineNear]   = NotificationType.GrantSubmissionDeadlineNear
         };
 
     /// <summary>
@@ -107,7 +108,11 @@ public static class GrantNotificationTriggerRegistry
 
             // {bekleyen_gün} eşiğin kendisidir; danışman kutuyu açmadan aciliyeti görür.
             [GrantNotificationTrigger.ConversionPending] =
-                ["{firma_adı}", "{çağrı_adı}", "{karar_tarihi}", "{bekleyen_gün}"]
+                ["{firma_adı}", "{çağrı_adı}", "{karar_tarihi}", "{bekleyen_gün}"],
+
+            // Eksik evrak sayısı YOK: bu tetikleyici tam da evrakı TAMAM olanlara gidiyor.
+            [GrantNotificationTrigger.SubmissionDeadlineNear] =
+                ["{firma_adı}", "{çağrı_adı}", "{son_tarih}", "{kalan_gün}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

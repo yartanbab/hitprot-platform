@@ -57,5 +57,8 @@ public enum NotificationType
     // 🔴 NTF-02: Dönüşüm sürecin en sevindirici geçişiydi ve tamamen sessizdi;
     // onaylanmış ama dönüştürülmemiş başvuru da hiç takip edilmiyordu.
     GrantConvertedToProject     = 37, // Başvuru projeye dönüştü (FİRMAYA gider)
-    GrantConversionPending      = 38  // Karar onaylı, proje hâlâ kurulmadı (HOST'a gider)
+    GrantConversionPending      = 38, // Karar onaylı, proje hâlâ kurulmadı (HOST'a gider)
+
+    // 🔴 NTF-04: Evrakı tamam ama gönderilmemiş başvuru hiç uyarılmıyordu.
+    GrantSubmissionDeadlineNear = 39  // Son tarih yaklaşıyor, başvuru hâlâ gönderilmedi
 }

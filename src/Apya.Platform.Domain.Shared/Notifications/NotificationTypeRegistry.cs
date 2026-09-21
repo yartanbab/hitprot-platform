@@ -168,6 +168,12 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.High,
                 "fa fa-hourglass-half", "/Grants/DetailHost?id={0}", GroupSimilar: false),
 
+            // 🔴 NTF-04: Sırası kimdeyse ona gider; derin link sihirbazın gönderim adımına
+            // çıkar — kullanıcı bildirimden çıkıp başvuruyu ayrıca aramasın.
+            [NotificationType.GrantSubmissionDeadlineNear] = new(
+                NotificationCategory.Grants, NotificationSeverity.Critical,
+                "fa fa-paper-plane", "/Grants/Wizard?id={0}", GroupSimilar: false),
+
             // ── Finans ────────────────────────────────────────────────────────
             // Derin link hepsinde proje bütçe raporu: sayfa Projects.ViewBudget
             // denetimli olduğu için bildirimden gelen kullanıcı yetkisi yoksa
