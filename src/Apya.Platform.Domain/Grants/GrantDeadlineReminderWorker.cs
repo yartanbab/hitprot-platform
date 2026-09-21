@@ -232,6 +232,7 @@ public class GrantDeadlineReminderWorker : AsyncPeriodicBackgroundWorkerBase
         var callRepo = sp.GetRequiredService<IRepository<GrantCall, Guid>>();
         var docRepo = sp.GetRequiredService<IRepository<GrantApplicationDocument, Guid>>();
         var grantRepo = sp.GetRequiredService<IRepository<Grant, Guid>>();
+        var displayNames = sp.GetRequiredService<Apya.Platform.Tenants.TenantDisplayNameResolver>();
         var dataFilter = sp.GetRequiredService<IDataFilter<IMultiTenant>>();
 
         List<GrantCall> calls;
@@ -261,10 +262,10 @@ public class GrantDeadlineReminderWorker : AsyncPeriodicBackgroundWorkerBase
                 d => appIds.Contains(d.GrantApplicationId)
                      && d.Obligation == GrantDocumentObligation.Zorunlu
                      && d.Status != GrantDocumentStatus.Onaylandi);
-            if (documents.Count == 0)
-            {
-                return;
-            }
+
+            // 🔴 NTF-04: Burada "eksik evrak yoksa hiç çıkma" diye erken dönüş VARDI.
+            // Tam da o durum — evrakları tamam ama başvurusu gönderilmemiş firma —
+            // hatırlatma gerektiriyor; erken dönüş onu susturuyordu.
 
             var grantIds = calls.Select(c => c.GrantId).Distinct().ToList();
             _grantNames = (await grantRepo.GetListAsync(g => grantIds.Contains(g.Id)))
@@ -279,8 +280,36 @@ public class GrantDeadlineReminderWorker : AsyncPeriodicBackgroundWorkerBase
             var dayMark = (call.Deadline!.Value.Date - today).Days;
 
             var missing = documents.Where(d => d.GrantApplicationId == application.Id).ToList();
+
             if (missing.Count == 0)
             {
+                // 🔴 NTF-04: Evrak tamam, başvuru hâlâ gönderilmedi. Ayrı tetikleyici
+                // kullanılır çünkü evrak şablonunun gövdesi {eksik_evrak_sayısı} taşır
+                // ve burada o sayı sıfırdır — "0 eksik evrak" diye giden bir hatırlatma
+                // kullanıcıyı yanıltırdı.
+                //
+                // Alıcı SIRASI KİMDEYSE: gönderimi yapacak taraf odur. Firma tarafındaysa
+                // kiracıya, danışmandaysa host'a gider.
+                await SendAsync(sp,
+                    GrantNotificationTrigger.SubmissionDeadlineNear,
+                    entityId: application.Id,
+                    dayMark: dayMark,
+                    tenantId: application.PendingParty == GrantPartyRole.Firma
+                        ? application.TenantId
+                        : null,
+                    values: new Dictionary<string, string?>
+                    {
+                        // Firmaya giderken kendi adı gereksiz, host'a giderken şart;
+                        // host şablona ekleyebilsin diye her hâlükârda ÇÖZÜLÜR — boş
+                        // geçilseydi host metne yazdığı token ham görünürdü.
+                        ["{firma_adı}"] = application.TenantId is { } tenantId
+                            ? await displayNames.GetAsync(tenantId)
+                            : string.Empty,
+                        ["{çağrı_adı}"] = GrantName(call.GrantId),
+                        ["{son_tarih}"] = call.Deadline!.Value.ToString("dd.MM.yyyy"),
+                        ["{kalan_gün}"] = dayMark.ToString()
+                    },
+                    entityType: nameof(GrantApplication));
                 continue;
             }
 

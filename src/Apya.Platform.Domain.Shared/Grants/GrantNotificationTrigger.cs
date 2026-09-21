@@ -82,5 +82,13 @@ public enum GrantNotificationTrigger
     /// 🔴 NTF-02: Karar ONAYLI ama başvuru hâlâ projeye dönüştürülmedi. HOST'a gider:
     /// dönüşüm danışman eylemidir. Para bağlanmış başvuru süresiz askıda kalabiliyordu.
     /// </summary>
-    ConversionPending = 16
+    ConversionPending = 16,
+
+    /// <summary>
+    /// 🔴 NTF-04: Son başvuru tarihi yaklaşıyor ve başvuru HÂLÂ GÖNDERİLMEDİ.
+    /// <see cref="DocumentDeadlineNear"/> yalnız zorunlu evrakı EKSİK olanlara
+    /// gidiyordu; evrakları tamam ama gönderilmemiş başvuru hiç uyarılmıyordu.
+    /// Sırası kimdeyse ona gider (firma ya da danışman).
+    /// </summary>
+    SubmissionDeadlineNear = 17
 }
