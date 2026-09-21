@@ -9,6 +9,7 @@
       "Bash(gh --version)",
       "PowerShell(gh --version)",
       "Bash(git push *)",
+      "Bash(gh pr merge *)",
       "Bash(dotnet ef *)",
       "Bash(git commit -m ' *)",
       "PowerShell(& curl.exe -k -s -o NUL -w \"HTTP %{http_code}`n\" https://localhost:44386/Account/Login)",
