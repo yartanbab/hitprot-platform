@@ -1831,6 +1831,7 @@
         "Platform:Grant:CostLimitPercentInvalid": "Harcama kalemi üst limiti 0 ile 100 arasında olmalıdır.",
         "Platform:Grant:PublishRequiredFieldsMissing": "Zorunlu alanlar boş olduğu için yayınlanamadı: {Fields}",
         "Platform:Grant:StageTemplateInUse": "Bu şablon {GrantCount} programda kullanılıyor; silmeden önce programların şablonunu değiştirin.",
+        "Platform:Grant:StageTemplateStepInUse": "'{StepName}' adımı {ApplicationCount} başvuruda kullanılıyor; silmeden önce o başvuruları başka bir aşamaya taşıyın.",
         "Platform:Grant:DraftIdentityRequired": "Taslak kaydedilemedi: program adı ve kurum zorunludur.",
         "Platform:Grant:ParameterNoSourceValue": "Bu şart için resmî metinden okunmuş bir değer yok; kaynak karşılaştırması yapılamaz.",
         "Platform:DynamicAssets:SlugAlreadyExists": "Bu kısa ad (slug) zaten kullanımda. Lütfen farklı bir slug girin.",

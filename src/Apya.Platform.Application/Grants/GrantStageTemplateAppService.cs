@@ -152,17 +152,57 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
         await _templateRepo.UpdateAsync(template, autoSave: true);
     }
 
+    /// <summary>
+    /// Adımları EŞLEŞTİREREK günceller; sil-yarat YAPMAZ.
+    ///
+    /// <para>🔴 Önceki hâli her kayıtta tüm adımları silip YENİ GUID'lerle yeniden
+    /// yaratıyordu. Başvurunun <c>CurrentStepId</c>'si artık var olmayan satırı
+    /// gösterdiği için pano kartı sessizce İLK sütuna düşüyor, firma ekranında da
+    /// başvuru başa sarıyordu — host yalnız bir adımın adını düzeltse bile. Uyarı yok,
+    /// akış kaydı yok, geri dönüş yok (denetim bulgusu LIF-02).</para>
+    ///
+    /// <para>Eşleştirme SIRAYA göre yapılır: istemci adım kimliği göndermiyor
+    /// (<c>collectSteps</c> DOM'dan <c>order: i</c> üretir), dolayısıyla konum tek
+    /// kararlı anahtardır. Aynı konumdaki adım yerinde güncellenir ve Id'sini KORUR.</para>
+    /// </summary>
     private async Task SyncStepsAsync(Guid templateId, List<GrantStageTemplateStepDto> steps)
     {
+        var incoming = steps.Where(s => !string.IsNullOrWhiteSpace(s.Name)).ToList();
+
         // 🔴 autoSave ŞART: Create/Update aynı UoW içinde hemen GetAsync ile geri okuyor.
         // Flush edilmemiş satırlar o okumada GÖRÜNMEZ ve şablon adımsız dönerdi
         // (FirmProfileAppService'deki aynı tuzak, orada girdiden dönerek çözülmüştü).
-        var existing = await _stepRepo.GetListAsync(s => s.StageTemplateId == templateId);
-        await _stepRepo.DeleteManyAsync(existing, autoSave: true);
+        var existing = (await _stepRepo.GetListAsync(s => s.StageTemplateId == templateId))
+            .OrderBy(s => s.Order)
+            .ToList();
 
-        var order = 0;
-        foreach (var step in steps.Where(s => !string.IsNullOrWhiteSpace(s.Name)))
+        // Fazla kalan adımlar gerçekten siliniyor — üzerinde başvuru varsa önce reddet.
+        // Şablon SİLME zaten aynı gerekçeyle korunuyordu; adım silme korunmuyordu.
+        var removed = existing.Skip(incoming.Count).ToList();
+        if (removed.Count > 0)
         {
+            await EnsureStepsUnusedAsync(removed);
+            await _stepRepo.DeleteManyAsync(removed, autoSave: true);
+        }
+
+        for (var order = 0; order < incoming.Count; order++)
+        {
+            var step = incoming[order];
+
+            if (order < existing.Count)
+            {
+                var current = existing[order];
+                current.Order = order;
+                current.SetName(step.Name);
+                current.Note = step.Note;
+                current.Owner = step.Owner;
+                current.RequiredDocumentsNote = step.RequiredDocumentsNote;
+                current.CompletionCondition = step.CompletionCondition;
+                current.ReminderDays = step.ReminderDays;
+                await _stepRepo.UpdateAsync(current, autoSave: true);
+                continue;
+            }
+
             await _stepRepo.InsertAsync(new GrantStageTemplateStep(
                 GuidGenerator.Create(), templateId, order, step.Name)
             {
@@ -172,7 +212,33 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
                 CompletionCondition = step.CompletionCondition,
                 ReminderDays = step.ReminderDays
             }, autoSave: true);
-            order++;
+        }
+    }
+
+    /// <summary>
+    /// Silinecek adımların üzerinde başvuru varsa reddeder. Sessizce silmek, o
+    /// başvuruların <c>CurrentStepId</c>'sini yetim bırakır ve panoda ilk sütuna
+    /// düşürür — host'un göremeyeceği bir veri kaybı olurdu.
+    ///
+    /// <para>Başvurular kiracıya aittir; sayım için multi-tenant filtresi BİLEREK
+    /// kapatılır (host bağlamında filtre açık kalsaydı sayaç daima 0 çıkardı).</para>
+    /// </summary>
+    private async Task EnsureStepsUnusedAsync(List<GrantStageTemplateStep> removed)
+    {
+        var ids = removed.Select(s => s.Id).ToList();
+
+        int inUse;
+        using (_mtFilter.Disable())
+        {
+            inUse = (int)await _applicationRepo.CountAsync(
+                a => a.CurrentStepId != null && ids.Contains(a.CurrentStepId.Value));
+        }
+
+        if (inUse > 0)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantStageTemplateStepInUse)
+                .WithData("ApplicationCount", inUse)
+                .WithData("StepName", removed[0].Name);
         }
     }
 
