@@ -55,7 +55,9 @@ public class CashMovementAmountResolver : DomainService
             return new CashMovementAmount(amount, cashCurrency, AppliedRate: null);
         }
 
-        var rate = await _fxRateResolver.FindByDateAsync(source, cashCurrency, date.Date);
+        // Projeden bağımsız düz arama — ters yönde girilmiş kuru da bulur.
+        // FxLedgerStamper de proje yokken bu girişi kullanıyor; kur mantığı tek yerde.
+        var rate = await _fxRateResolver.ResolveByDateAsync(source, cashCurrency, date.Date);
         if (rate is null || rate <= 0)
         {
             throw new BusinessException(PlatformDomainErrorCodes.CashMovementSourceRateMissing)
