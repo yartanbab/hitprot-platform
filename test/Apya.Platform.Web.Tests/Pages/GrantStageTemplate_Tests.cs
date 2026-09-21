@@ -75,12 +75,86 @@ public class GrantStageTemplate_Tests : PlatformWebTestBase
         created.Steps.Select(s => s.Name).ShouldBe(new[] { "İlgi", "Hazırlık", "Sunum" });
         created.Steps.Select(s => s.Order).ShouldBe(new[] { 0, 1, 2 });
 
-        // Yeniden sıralama: adımlar sil-yeniden ekle ile yazılır, sıra girdiden gelir.
+        // Yeniden sıralama: adımlar konuma göre eşleştirilir, sıra girdiden gelir.
         var reordered = NewTemplate("KOSGEB Kısa Süreç", "Sunum", "İlgi");
         var updated = await service.UpdateAsync(created.Id, reordered);
 
         updated.Steps.Select(s => s.Name).ShouldBe(new[] { "Sunum", "İlgi" });
         updated.Steps.Select(s => s.Order).ShouldBe(new[] { 0, 1 });
+    }
+
+    /// <summary>
+    /// 🔴 LIF-02: Şablon kaydı adım KİMLİKLERİNİ korumalı. Önceki hâli her kayıtta
+    /// tüm adımları silip yeni GUID'lerle yaratıyordu; o şablona bağlı başvuruların
+    /// CurrentStepId'si yetim kalıyor ve pano kartı sessizce İLK sütuna düşüyordu —
+    /// host yalnız bir adımın adını düzeltse bile, uyarısız ve geri dönüşsüz.
+    /// </summary>
+    [Fact]
+    public async Task Adim_Adini_Duzeltmek_Adim_Kimliklerini_Bozmaz()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Kimlik Testi " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Hazırlık", "Sunum"));
+
+        async Task<Guid[]> StepIdsAsync()
+        {
+            using var uow = uowManager.Begin(requiresNew: true);
+            var repo = GetRequiredService<IRepository<GrantStageTemplateStep, Guid>>();
+            return (await repo.GetListAsync(s => s.StageTemplateId == created.Id))
+                .OrderBy(s => s.Order).Select(s => s.Id).ToArray();
+        }
+
+        var before = await StepIdsAsync();
+        before.Length.ShouldBe(3);
+
+        // Yalnız ortadaki adımın ADI değişiyor; sayı ve sıra aynı.
+        var renamed = NewTemplate(created.Name, "İlgi", "Hazırlık ve dosya", "Sunum");
+        await service.UpdateAsync(created.Id, renamed);
+
+        var after = await StepIdsAsync();
+        after.ShouldBe(before,
+            "adım kimlikleri korunmalı; değişirse o şablondaki tüm başvurular panoda başa sarar");
+    }
+
+    /// <summary>
+    /// Adım gerçekten siliniyorsa ve üzerinde başvuru varsa reddedilmeli — sessizce
+    /// silmek, o başvuruları görünmez biçimde ilk sütuna düşürürdü.
+    /// </summary>
+    [Fact]
+    public async Task Uzerinde_Basvuru_Olan_Adim_Silinemez()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Silme Testi " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Hazırlık", "Sunum"));
+
+        Guid sonAdimId;
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var stepRepo = GetRequiredService<IRepository<GrantStageTemplateStep, Guid>>();
+            sonAdimId = (await stepRepo.GetListAsync(s => s.StageTemplateId == created.Id))
+                .OrderBy(s => s.Order).Last().Id;
+
+            var callRepo = GetRequiredService<IRepository<GrantCall, Guid>>();
+            var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+            var call = (await callRepo.GetListAsync()).First();
+
+            var application = new GrantApplication(Guid.NewGuid(), Guid.NewGuid(), call.Id);
+            application.MoveToStep(sonAdimId);
+            await appRepo.InsertAsync(application, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        // Son adım çıkarılmak isteniyor — üzerinde başvuru var, reddedilmeli.
+        var kisaltilmis = NewTemplate(created.Name, "İlgi", "Hazırlık");
+
+        var ex = await Should.ThrowAsync<Volo.Abp.BusinessException>(
+            async () => await service.UpdateAsync(created.Id, kisaltilmis));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantStageTemplateStepInUse);
     }
 
     [Fact]

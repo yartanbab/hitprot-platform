@@ -94,6 +94,7 @@ public static class PlatformDomainErrorCodes
     public const string GrantCostLimitPercentInvalid = "Platform:Grant:CostLimitPercentInvalid";
     public const string GrantPublishRequiredFieldsMissing = "Platform:Grant:PublishRequiredFieldsMissing";
     public const string GrantStageTemplateInUse = "Platform:Grant:StageTemplateInUse";
+    public const string GrantStageTemplateStepInUse = "Platform:Grant:StageTemplateStepInUse";
     public const string GrantDraftIdentityRequired = "Platform:Grant:DraftIdentityRequired";
     public const string GrantParameterNoSourceValue = "Platform:Grant:ParameterNoSourceValue";
 
