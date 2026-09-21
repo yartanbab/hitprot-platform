@@ -92,7 +92,17 @@ public static class ReleaseNoteCatalog
                 "açık çağrıları içeren bir bilgilendirme gönderiliyor — yazdıklarınız kayıtlı kalıyor. " +
                 "Kapanan çağrıya başvuru gönderimi de artık kapalı; hazırladığınız başvuru silinmez, " +
                 "danışmanınızla görüşerek devam edebilirsiniz. " +
-                "Son başvuru tarihi girilmemiş süresiz çağrılar bu değişiklikten etkilenmiyor.")
+                "Son başvuru tarihi girilmemiş süresiz çağrılar bu değişiklikten etkilenmiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Başvurunuz hazır ama gönderilmemişse de hatırlatma alıyorsunuz",
+                "Son başvuru tarihi hatırlatmaları şimdiye kadar yalnız eksik zorunlu evrakı olan " +
+                "başvurulara gidiyordu. Evraklarını tamamlamış ama başvurusunu henüz göndermemiş " +
+                "firmalar hiçbir uyarı almıyordu — yani en hazır olan en az hatırlatılıyordu. " +
+                "Bundan sonra son başvuru tarihine 7, 3 ve 1 gün kala, gönderilmemiş başvurular için de " +
+                "hatırlatma gönderiliyor. Bildirim sırası kimdeyse ona gidiyor: başvuru sizde bekliyorsa " +
+                "size, danışmanınızdaysa danışman ekibine. " +
+                "Bildirimden doğrudan başvuru sihirbazının gönderim adımına geçebilirsiniz.")
         ),
 
         new ReleaseNote(
