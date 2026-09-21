@@ -156,6 +156,9 @@ public static class PlatformDomainErrorCodes
 
     // İlgi talepleri · kiracı bildirir, host karara bağlar
     public const string GrantInterestAlreadyOpen = "Platform:Grant:InterestAlreadyOpen";
+
+    /// <summary>🔴 LIF-04: Çağrı ilgi bildirmeye AÇIK değil (taslak, planlanmış ya da kapanmış).</summary>
+    public const string GrantInterestCallNotOpen = "Platform:Grant:InterestCallNotOpen";
     public const string GrantInterestNotFound = "Platform:Grant:InterestNotFound";
     public const string GrantInterestAlreadyAnswered = "Platform:Grant:InterestAlreadyAnswered";
     public const string GrantInterestReasonRequired = "Platform:Grant:InterestReasonRequired";

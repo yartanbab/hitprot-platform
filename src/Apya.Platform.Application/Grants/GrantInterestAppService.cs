@@ -90,6 +90,15 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
             throw new EntityNotFoundException(typeof(GrantCall), input.GrantCallId);
         }
 
+        // 🔴 LIF-04: Çağrı durumu kapısı. Kiracıya dönük katalog sorguları yalnız Acik okur,
+        // ama uç noktanın kendisinde kapı YOKTU: çağrı Id'si bilinen bir taslak ya da kapanmış
+        // çağrıya API'den talep bırakılabiliyordu. Kapı ekranın zaten yaptığı süzmeyi sunucuya
+        // taşır; görünür davranış değişmez.
+        if (call.Status != GrantCallStatus.Acik)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantInterestCallNotOpen);
+        }
+
         // Ortak sorusu yalnız konsorsiyum şartlı çağrıda sorulur ve orada cevapsız geçilemez:
         // danışmanın ilk bakacağı eksik budur. Şartsız çağrıda gelen cevap SAKLANMAZ —
         // soru ekranda hiç görünmediyse "ortak arıyor" diye bir bilgi de yoktur.
