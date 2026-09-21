@@ -15,6 +15,16 @@ namespace Apya.Platform.Tasks;
 
 public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
 {
+    /// <summary>
+    /// 🔴 NTF-03: Gecikme taraması ne kadar geriye bakar.
+    ///
+    /// <para>Sınırsız olsaydı özellik canlıya çıktığı gün, yıllardır açık duran
+    /// TÜM gecikmiş görevler tek turda bildirilir ve kullanıcının kutusu tarihsel
+    /// yığınla dolardı. Bu pencere yalnız İLK turu sınırlar: normal işleyişte görev
+    /// vadeyi geçtiği gün yakalanır ve tekillik anahtarı sayesinde bir kez uyarılır.</para>
+    /// </summary>
+    private const int OverdueLookbackDays = 30;
+
     public TaskDeadlineWorker(
             AbpAsyncTimer timer,
             IServiceScopeFactory serviceScopeFactory
@@ -37,8 +47,10 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
 
         var now = clock.Now;
         var limitDate = now.AddHours(48);
+        var overdueFloor = now.AddDays(-OverdueLookbackDays);
 
         List<TaskItem> dueTasks;
+        List<TaskItem> overdueTasks;
 
         // Tüm tenant'lardaki görevleri okuyabilmek için filtreyi geçici olarak devre dışı bırak
         using (dataFilter.Disable())
@@ -50,9 +62,21 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
                 t.DueDate > now &&
                 t.DueDate <= limitDate &&
                 !t.IsDeadlineWarningSent);
+
+            // 🔴 NTF-03: Vadesi GEÇMİŞ görevler. Bu dal IsDeadlineWarningSent
+            // bayrağına BAKMAZ ve onu YAZMAZ — bayrak "yaklaşıyor" uyarısının
+            // hafızasıdır; paylaşılsaydı 48 saat uyarısını alan görev gecikince
+            // sessiz kalırdı. Tekillik görev+vade anahtarıyla bildirim tarafında.
+            overdueTasks = await taskRepository.GetListAsync(t =>
+                t.Status != Apya.Platform.Tasks.TaskStatus.Done &&
+                t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled &&
+                t.DueDate != null &&
+                t.DueDate <= now &&
+                t.DueDate > overdueFloor &&
+                t.AssigneeId != null);
         }
 
-        if (!dueTasks.Any())
+        if (!dueTasks.Any() && !overdueTasks.Any())
         {
             Logger.LogInformation("Gönderilecek yeni bir deadline uyarısı bulunamadı.");
             return;
@@ -94,6 +118,37 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
             catch (Exception ex)
             {
                 Logger.LogError(ex, "TenantId={TenantId}: Deadline uyarıları işlenirken hata oluştu. Sonraki tenant'a geçiliyor.",
+                    tenantGroup.Key);
+            }
+        }
+
+        foreach (var tenantGroup in overdueTasks.GroupBy(t => t.TenantId))
+        {
+            try
+            {
+                using (currentTenant.Change(tenantGroup.Key))
+                {
+                    foreach (var task in tenantGroup)
+                    {
+                        await localEventBus.PublishAsync(new TaskOverdueEto
+                        {
+                            TaskId = task.Id,
+                            TaskTitle = task.Title,
+                            AssigneeId = task.AssigneeId!.Value,
+                            DueDate = task.DueDate!.Value,
+                            // Aynı gün geçen vade "0 gün önce" diye okunmasın: en az 1.
+                            DaysOverdue = Math.Max(1, (int)(now - task.DueDate!.Value).TotalDays)
+                        });
+                    }
+
+                    Logger.LogInformation(
+                        "TenantId={TenantId}: {Count} gecikmiş görev tarandı.",
+                        tenantGroup.Key, tenantGroup.Count());
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "TenantId={TenantId}: Gecikme uyarıları işlenirken hata oluştu. Sonraki tenant'a geçiliyor.",
                     tenantGroup.Key);
             }
         }

@@ -533,6 +533,8 @@
     "Notification:TaskStatus:Generic": "Updated",
     "Notification:TaskDueSoon:Title": "Task Due Soon",
     "Notification:TaskDueSoon:Body": "\"{0}\" is due in less than 48 hours.",
+    "Notification:TaskOverdue:Title": "Overdue Task",
+    "Notification:TaskOverdue:Body": "\"{0}\" was due {1} day(s) ago and is still open.",
     "Notification:DocumentExpiring:Title": "Document Expiring",
     "Notification:DocumentExpiring:Body": "\"{0}\" expires in less than 7 days.",
     "Tasks:Status:Todo": "Todo",

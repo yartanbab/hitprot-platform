@@ -280,6 +280,16 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public void UpdateSchedule(DateTime startDate, DateTime? dueDate)
     {
         StartDate = startDate;
+
+        // 🔴 NTF-03: Vade DEĞİŞTİYSE uyarı hafızası sıfırlanır. Bayrak bir kez
+        // açılınca kapanmadığı için ertelenen görev yeni vadesi için hiçbir sinyal
+        // almıyordu. Koşulsuz sıfırlanamaz: Update() her alan düzenlemesinde bu
+        // metodu çağırır, yalnız başlığı değişen görev aynı uyarıyı yeniden alırdı.
+        if (DueDate != dueDate)
+        {
+            IsDeadlineWarningSent = false;
+        }
+
         DueDate = dueDate;
     }
 

@@ -125,4 +125,42 @@ public class TaskItem_Tests
         task.StatusBeforeCancel.ShouldBeNull();
         task.CompletedDate.ShouldBe(now);
     }
+
+    /// <summary>
+    /// 🔴 NTF-03: Vade ertelenince uyarı hafızası sıfırlanmalı. Bayrak bir kez
+    /// açılınca kapanmadığı için ertelenen görev yeni vadesi için hiçbir sinyal
+    /// almıyordu — kullanıcı "yaklaşıyor" uyarısını ömründe tek kez alıyordu.
+    /// </summary>
+    [Fact]
+    public void Vade_Ertelenince_Uyari_Hafizasi_Sifirlanir()
+    {
+        var now = new DateTime(2026, 9, 21, 9, 0, 0, DateTimeKind.Utc);
+        var task = new TaskItem(Guid.NewGuid(), "Görev", now: now);
+        task.UpdateSchedule(now, now.AddDays(1));
+        task.MarkDeadlineWarningAsSent();
+
+        task.UpdateSchedule(now, now.AddDays(30));
+
+        task.IsDeadlineWarningSent.ShouldBeFalse("yeni vade için yeniden uyarılmalı");
+    }
+
+    /// <summary>
+    /// Bayrak KOŞULSUZ sıfırlanamaz: <c>Update()</c> her alan düzenlemesinde
+    /// <c>UpdateSchedule</c>'ı çağırır. Sıfırlansaydı yalnız başlığı düzeltilen
+    /// görev aynı uyarıyı yeniden gönderirdi.
+    /// </summary>
+    [Fact]
+    public void Vade_Degismeden_Kaydetmek_Uyariyi_Tekrarlatmaz()
+    {
+        var now = new DateTime(2026, 9, 21, 9, 0, 0, DateTimeKind.Utc);
+        var due = now.AddDays(1);
+        var task = new TaskItem(Guid.NewGuid(), "Görev", now: now);
+        task.UpdateSchedule(now, due);
+        task.MarkDeadlineWarningAsSent();
+
+        // Yalnız başlangıç tarihi değişiyor; vade aynı.
+        task.UpdateSchedule(now.AddHours(2), due);
+
+        task.IsDeadlineWarningSent.ShouldBeTrue("vade aynıyken uyarı yeniden gönderilmemeli");
+    }
 }

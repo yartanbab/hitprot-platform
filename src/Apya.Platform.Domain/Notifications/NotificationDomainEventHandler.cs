@@ -14,6 +14,7 @@ public class NotificationDomainEventHandler :
     ILocalEventHandler<TaskCommentAddedEto>,
     ILocalEventHandler<TaskStatusChangedEto>,
     ILocalEventHandler<TaskDueSoonEto>,
+    ILocalEventHandler<TaskOverdueEto>,
     ILocalEventHandler<DocumentExpiringEto>,
     ITransientDependency
 {
@@ -147,6 +148,29 @@ public class NotificationDomainEventHandler :
                 entityId: eventData.TaskId
             );
         }
+    }
+
+    /// <summary>
+    /// 🔴 NTF-03: Vadesi geçmiş görev. Tekillik anahtarı GÖREV + VADE'dir:
+    /// worker her saat çalıştığı için <c>PublishAsync</c> kullanılsaydı aynı
+    /// gecikme saatte bir yeniden bildirilirdi. Vade ertelenip yeniden geçilirse
+    /// anahtar değişir ve ikinci uyarı üretilir — istenen davranış budur.
+    /// </summary>
+    public async Task HandleEventAsync(TaskOverdueEto eventData)
+    {
+        if (eventData.AssigneeId == Guid.Empty) return;
+
+        var onceKey = $"{(int)NotificationType.TaskOverdue}:Task:{eventData.TaskId}:{eventData.DueDate:yyyyMMdd}";
+
+        await _notificationManager.PublishOnceAsync(
+            eventData.AssigneeId,
+            onceKey,
+            _l["Notification:TaskOverdue:Title"],
+            _l["Notification:TaskOverdue:Body", eventData.TaskTitle, eventData.DaysOverdue],
+            NotificationType.TaskOverdue,
+            entityType: "Task",
+            entityId: eventData.TaskId
+        );
     }
 
     // --- Belge Son Tarih Uyarısı ---

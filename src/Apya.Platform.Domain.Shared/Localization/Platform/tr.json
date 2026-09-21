@@ -423,6 +423,8 @@
         "Notification:TaskStatus:Generic": "Güncellendi",
         "Notification:TaskDueSoon:Title": "Süresi Yaklaşan Görev",
         "Notification:TaskDueSoon:Body": "\"{0}\" görevinin bitiş süresine 48 saatten az kaldı.",
+        "Notification:TaskOverdue:Title": "Vadesi Geçen Görev",
+        "Notification:TaskOverdue:Body": "\"{0}\" görevinin bitiş tarihi {1} gün önce geçti, görev hâlâ açık.",
         "Notification:DocumentExpiring:Title": "Son Tarihi Yaklaşan Belge",
         "Notification:DocumentExpiring:Body": "\"{0}\" belgesinin son tarihine 7 günden az kaldı.",
         "Notification:SubscriptionExpiring:Title": "Paket süreniz doluyor",
