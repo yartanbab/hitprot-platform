@@ -18,4 +18,12 @@ internal static class GrantIdeaInputExtensions
             input.PriorExperience,
             input.TeamStructure,
             input.Stakeholders);
+
+    /// <summary>Bildirimde fikir tırnak içinde anılır; uzun metin cümleyi boğmasın.</summary>
+    public static string? IdeaExcerpt(this GrantInterest interest)
+    {
+        const int max = 120;
+        var trimmed = interest.Note?.Trim();
+        return trimmed == null || trimmed.Length <= max ? trimmed : trimmed[..max].TrimEnd() + "…";
+    }
 }

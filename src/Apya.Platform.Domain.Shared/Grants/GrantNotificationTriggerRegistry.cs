@@ -32,7 +32,8 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.ApplicationSubmitted]      = NotificationType.GrantApplicationSubmitted,
             [GrantNotificationTrigger.ConvertedToProject]        = NotificationType.GrantConvertedToProject,
             [GrantNotificationTrigger.ConversionPending]         = NotificationType.GrantConversionPending,
-            [GrantNotificationTrigger.SubmissionDeadlineNear]   = NotificationType.GrantSubmissionDeadlineNear
+            [GrantNotificationTrigger.SubmissionDeadlineNear]   = NotificationType.GrantSubmissionDeadlineNear,
+            [GrantNotificationTrigger.IdeaShared]                = NotificationType.GrantIdeaShared
         };
 
     /// <summary>
@@ -112,7 +113,11 @@ public static class GrantNotificationTriggerRegistry
 
             // Eksik evrak sayısı YOK: bu tetikleyici tam da evrakı TAMAM olanlara gidiyor.
             [GrantNotificationTrigger.SubmissionDeadlineNear] =
-                ["{firma_adı}", "{çağrı_adı}", "{son_tarih}", "{kalan_gün}"]
+                ["{firma_adı}", "{çağrı_adı}", "{son_tarih}", "{kalan_gün}"],
+
+            // Çağrı YOK (havuz fikri): {çağrı_adı} verilmez, fikir kısaltılıp tırnakla anılır.
+            [GrantNotificationTrigger.IdeaShared] =
+                ["{firma_adı}", "{fikir}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

@@ -227,7 +227,7 @@ public class GrantIdeaPoolAppService : PlatformAppService, IGrantIdeaPoolAppServ
                 new Dictionary<string, string?>
                 {
                     ["{firma_adı}"] = firmNames.GetValueOrDefault(tenantId),
-                    ["{fikir}"] = Excerpt(idea.Note),
+                    ["{fikir}"] = idea.IdeaExcerpt(),
                     ["{çağrı_adı}"] = context.Grant.Name,
                     ["{eşleşme}"] = "%" + match.Total,
                     ["{danışman}"] = consultant == null ? null : DisplayName(consultant),
@@ -379,14 +379,6 @@ public class GrantIdeaPoolAppService : PlatformAppService, IGrantIdeaPoolAppServ
     private GrantIdeaMatch Score(GrantInterest idea, CallContext context, FirmSignals signals)
         => GrantIdeaMatcher.Match(idea, context.Grant, context.Tags,
             context.Tags.Count == 0 ? null : _matcher.Explain(signals, context.Grant, context.Tags, context.Weights).Total);
-
-    /// <summary>Bildirimde fikir tırnak içinde anılır; uzun metin cümleyi boğmasın.</summary>
-    private static string? Excerpt(string? text)
-    {
-        const int max = 120;
-        var trimmed = text?.Trim();
-        return trimmed == null || trimmed.Length <= max ? trimmed : trimmed[..max].TrimEnd() + "…";
-    }
 
     /// <summary>Giren kişi firma kullanıcısı ya da host kullanıcısı olabilir: filtre kapalı, Id ile.</summary>
     private async Task<Dictionary<Guid, string>> LoadCreatorNamesAsync(List<GrantInterest> ideas)

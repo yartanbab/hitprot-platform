@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Grants;
 using Apya.Platform.Grants.Dtos;
+using Apya.Platform.Notifications;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Authorization;
@@ -111,6 +112,25 @@ public class GrantIdeaPool_Tests : PlatformEntityFrameworkCoreTestBase
             // 🔴 Akış çağrısız kaydı null anahtarla sözlüğe koyup patlıyordu.
             await _recommendations.GetOpenCallsAsync();
         }
+    }
+
+    /// <summary>
+    /// 🔴 Regresyon: çağrıya ilgi host'a duyuruluyordu ama havuza bırakılan fikir hiçbir bildirim
+    /// üretmiyordu — danışman ancak Fikir Havuzu'nu elle açarsa görüyordu.
+    /// </summary>
+    [Fact]
+    public async Task Kiracinin_paylastigi_fikir_hosta_bildirilir()
+    {
+        var firm = await CreateTenantAsync("Kuzey Gıda");
+        var ideaId = await ShareAsync(firm.TenantId, "Soğuk zincirle köy ürünlerini şehre taşıma");
+
+        var notifications = await GetRequiredService<IRepository<Notification, Guid>>().GetListAsync(
+            n => n.Type == NotificationType.GrantIdeaShared && n.EntityId == ideaId);
+
+        notifications.ShouldNotBeEmpty("firma fikir paylaşınca danışman ekibi haberdar olmalı");
+        notifications.ShouldAllBe(n => n.TenantId == null, "alıcı host kullanıcısıdır, firma değil");
+        notifications[0].Title.ShouldContain(firm.Name);
+        notifications[0].Body.ShouldContain("Soğuk zincirle köy ürünlerini şehre taşıma");
     }
 
     [Fact]
