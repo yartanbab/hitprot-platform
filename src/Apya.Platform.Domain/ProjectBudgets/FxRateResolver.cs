@@ -86,17 +86,6 @@ public class FxRateResolver : DomainService
     }
 
     /// <summary>
-    /// Proje/politika bağlamı olmadan düz kur araması: tarihe kadarki en güncel kur,
-    /// o da yoksa ters yönde girilmiş kurun tersi. Kur yoksa null.
-    ///
-    /// <para>Kasa hareketi gibi projeden bağımsız akışlar için var. Kendi sorgusunu
-    /// yazmak yerine buradan geçsinler ki ters-kur yedeği tek yerde kalsın — denetim
-    /// bulgusu FIN-03 kur çözümlemesinin dört ayrı kopyaya dağıldığını ölçmüştü.</para>
-    /// </summary>
-    public Task<decimal?> FindByDateAsync(string from, string to, DateTime date)
-        => FindRateAsync(from, to, date, FxPolicy.SpendDate);
-
-    /// <summary>
     /// Kur kaydı arar. Aylık politikada kayıt AYININ kurları, diğerlerinde
     /// tarihe kadarki en güncel kur kullanılır.
     /// </summary>
