@@ -45,6 +45,17 @@ public class GrantDeadlineReminderWorker : AsyncPeriodicBackgroundWorkerBase
     /// </summary>
     public static readonly int[] ConversionDayMarks = [3, 7, 14];
 
+    /// <summary>
+    /// 🔴 LIF-03: Bir turda en çok kaç çağrı otomatik kapatılır.
+    ///
+    /// <para>Kapanış zinciri çağrı başına firmalara bildirim gönderir. Sınır olmasaydı
+    /// özellik canlıya çıktığı gün, tarihi geçtiği hâlde "Açık" kalmış TÜM çağrılar aynı
+    /// turda kapanır ve firmaların kutusu tek seferde dolardı. Sınır yalnız BİRİKMİŞ
+    /// devri yavaşlatır — günlük işleyişte tarihi geçen çağrı sayısı zaten tek hanelidir
+    /// ve kalanlar ertesi gün kapanır.</para>
+    /// </summary>
+    public const int MaxAutoClosePerRun = 20;
+
     public GrantDeadlineReminderWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory)
         : base(timer, serviceScopeFactory)
     {
@@ -58,9 +69,70 @@ public class GrantDeadlineReminderWorker : AsyncPeriodicBackgroundWorkerBase
         var clock = sp.GetRequiredService<IClock>();
         var today = clock.Now.Date;
 
+        // 🔴 Kapanış ÖNCE koşar: tarihi geçmiş çağrı aynı turda hatırlatma da üretmesin.
+        await RunAutoCloseAsync(sp, today);
         await RunDocumentRemindersAsync(sp, today);
         await RunReportRemindersAsync(sp, today);
         await RunConversionRemindersAsync(sp, today);
+    }
+
+    // ------------------------------------------------------------- kapanış
+
+    /// <summary>
+    /// 🔴 LIF-03: Son başvuru tarihi geçtiği hâlde "Açık" kalmış çağrıları kapatır ve
+    /// var olan kapanış zincirini koşturur.
+    ///
+    /// <para>Kapanış bugüne kadar TAMAMEN ELLEydi: host unutunca tarihi geçmiş çağrı
+    /// "Açık" görünmeye devam ediyor, karara bağlanmamış ilgi talepleri süresiz
+    /// "Yeni/İnceleniyor"da kalıyor ve firmaya hiçbir cevap gitmiyordu.</para>
+    ///
+    /// <para>Zincirin kendisi yeniden yazılmadı: <see cref="GrantCallClosingManager"/>
+    /// host elle kapattığında zaten koşuyor ve mükerrer bildirimi
+    /// <see cref="GrantNotificationLog"/> engelliyor. Worker yalnız durumu çeker ve
+    /// aynı zinciri çağırır — iki kapanış yolu böylece ayrışmaz.</para>
+    /// </summary>
+    private async Task RunAutoCloseAsync(IServiceProvider sp, DateTime today)
+    {
+        var callRepo = sp.GetRequiredService<IRepository<GrantCall, Guid>>();
+        var closingManager = sp.GetRequiredService<GrantCallClosingManager>();
+        var dataFilter = sp.GetRequiredService<IDataFilter<IMultiTenant>>();
+
+        List<GrantCall> expired;
+        using (dataFilter.Disable())
+        {
+            // Yalnız HOST kataloğu (TenantId == null) ve yalnız Acik. Taslak yayımlanmamıştır,
+            // Planlandi henüz açılmamıştır — ikisinin de kapanış zinciri anlamsız olurdu.
+            expired = (await callRepo.GetListAsync(c =>
+                    c.TenantId == null
+                    && c.Status == GrantCallStatus.Acik
+                    && c.Deadline != null
+                    && c.Deadline!.Value.Date < today))
+                .OrderBy(c => c.Deadline)
+                .Take(MaxAutoClosePerRun)
+                .ToList();
+        }
+
+        foreach (var call in expired)
+        {
+            try
+            {
+                call.Status = GrantCallStatus.Kapandi;
+                await callRepo.UpdateAsync(call, autoSave: true);
+
+                var result = await closingManager.RunAsync(call.Id);
+
+                Logger.LogInformation(
+                    "Çağrı {CallId} son başvuru tarihi ({Deadline:dd.MM.yyyy}) geçtiği için otomatik kapatıldı. " +
+                    "Kaçırılan talep: {Missed}, gönderilmemiş başvuru: {Unfinished}, bildirilen firma: {Notified}.",
+                    call.Id, call.Deadline, result.MissedInterestCount,
+                    result.UnfinishedApplicationCount, result.NotifiedFirmCount);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex,
+                    "Çağrı {CallId} otomatik kapatılırken hata oluştu. Sonraki çağrıya geçiliyor.", call.Id);
+            }
+        }
     }
 
     // ------------------------------------------------------------- dönüşüm
