@@ -67,13 +67,14 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
             // bayrağına BAKMAZ ve onu YAZMAZ — bayrak "yaklaşıyor" uyarısının
             // hafızasıdır; paylaşılsaydı 48 saat uyarısını alan görev gecikince
             // sessiz kalırdı. Tekillik görev+vade anahtarıyla bildirim tarafında.
+            // 🔴 NTF-11: Atanmamış görev de taranır. Alıcı kümesi atanan + görevi açan
+            // olduğu için atanmamış görev sahibine ulaşır; eskiden tamamen sessizdi.
             overdueTasks = await taskRepository.GetListAsync(t =>
                 t.Status != Apya.Platform.Tasks.TaskStatus.Done &&
                 t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled &&
                 t.DueDate != null &&
                 t.DueDate <= now &&
-                t.DueDate > overdueFloor &&
-                t.AssigneeId != null);
+                t.DueDate > overdueFloor);
         }
 
         if (!dueTasks.Any() && !overdueTasks.Any())
@@ -134,7 +135,8 @@ public class TaskDeadlineWorker : AsyncPeriodicBackgroundWorkerBase
                         {
                             TaskId = task.Id,
                             TaskTitle = task.Title,
-                            AssigneeId = task.AssigneeId!.Value,
+                            AssigneeId = task.AssigneeId ?? Guid.Empty,
+                            CreatorId = task.CreatorId ?? Guid.Empty,
                             DueDate = task.DueDate!.Value,
                             // Aynı gün geçen vade "0 gün önce" diye okunmasın: en az 1.
                             DaysOverdue = Math.Max(1, (int)(now - task.DueDate!.Value).TotalDays)

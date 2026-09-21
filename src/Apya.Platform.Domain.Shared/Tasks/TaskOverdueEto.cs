@@ -17,6 +17,14 @@ public class TaskOverdueEto
     public Guid TaskId { get; set; }
     public string TaskTitle { get; set; } = string.Empty;
     public Guid AssigneeId { get; set; }
+
+    /// <summary>
+    /// 🔴 NTF-11: Görevi açan kişi. Atanmamış görev yalnız atanana bakılsaydı
+    /// TAMAMEN sessiz kalırdı; diğer görev bildirimleri (atama, yorum, durum) zaten
+    /// sahibe de gidiyor — bu tetikleyici o kümenin dışında kalmıştı.
+    /// </summary>
+    public Guid CreatorId { get; set; }
+
     public DateTime DueDate { get; set; }
 
     /// <summary>Vadeyi kaç tam gün geçti — gövdede kullanıcıya gösterilir.</summary>

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Volo.Abp.DependencyInjection;
@@ -136,11 +138,12 @@ public class NotificationDomainEventHandler :
     // --- Deadline Uyarıları (FEA-002) ---
     public async Task HandleEventAsync(TaskDueSoonEto eventData)
     {
-        // Yalnızca atanan biri varsa bildirim gönder
-        if (eventData.AssigneeId != Guid.Empty)
+        // 🔴 NTF-11: Eskiden YALNIZ atanana gidiyordu — atanmamış görev tamamen
+        // sessizdi ve ETO'da zaten taşınan CreatorId hiç kullanılmıyordu.
+        foreach (var userId in Recipients(eventData.AssigneeId, eventData.CreatorId))
         {
             await _notificationManager.PublishAsync(
-                eventData.AssigneeId,
+                userId,
                 _l["Notification:TaskDueSoon:Title"],
                 _l["Notification:TaskDueSoon:Body", eventData.TaskTitle],
                 NotificationType.TaskDueSoon,
@@ -158,20 +161,31 @@ public class NotificationDomainEventHandler :
     /// </summary>
     public async Task HandleEventAsync(TaskOverdueEto eventData)
     {
-        if (eventData.AssigneeId == Guid.Empty) return;
-
         var onceKey = $"{(int)NotificationType.TaskOverdue}:Task:{eventData.TaskId}:{eventData.DueDate:yyyyMMdd}";
+        var title = _l["Notification:TaskOverdue:Title"];
+        var body = _l["Notification:TaskOverdue:Body", eventData.TaskTitle, eventData.DaysOverdue];
 
-        await _notificationManager.PublishOnceAsync(
-            eventData.AssigneeId,
-            onceKey,
-            _l["Notification:TaskOverdue:Title"],
-            _l["Notification:TaskOverdue:Body", eventData.TaskTitle, eventData.DaysOverdue],
-            NotificationType.TaskOverdue,
-            entityType: "Task",
-            entityId: eventData.TaskId
-        );
+        // 🔴 NTF-11: Atanan VE görevi açan. Yalnız atanana gönderilseydi atanmamış
+        // görev tamamen sessiz kalırdı; diğer görev bildirimleri (yorum, atama, durum)
+        // zaten sahibe de gidiyor.
+        foreach (var userId in Recipients(eventData.AssigneeId, eventData.CreatorId))
+        {
+            await _notificationManager.PublishOnceAsync(
+                userId, onceKey, title, body,
+                NotificationType.TaskOverdue,
+                entityType: "Task",
+                entityId: eventData.TaskId
+            );
+        }
     }
+
+    /// <summary>
+    /// Görev bildirimlerinin ortak alıcı kümesi: atanan + görevi açan. Boş kimlikler
+    /// (Guid.Empty) ve aynı kişinin iki rolde olması elenir — aksi halde tek kullanıcı
+    /// aynı olayı iki kez alırdı.
+    /// </summary>
+    private static IEnumerable<Guid> Recipients(params Guid[] candidates)
+        => candidates.Where(id => id != Guid.Empty).Distinct();
 
     // --- Belge Son Tarih Uyarısı ---
     public async Task HandleEventAsync(DocumentExpiringEto eventData)

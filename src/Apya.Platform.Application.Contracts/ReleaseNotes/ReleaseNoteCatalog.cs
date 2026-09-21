@@ -55,8 +55,10 @@ public static class ReleaseNoteCatalog
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Bitiş tarihi geçen görevler artık bildiriliyor",
                 "Şimdiye kadar yalnız 'bitiş tarihi yaklaşıyor' uyarısı vardı; tarih geçtiğinde hiçbir " +
-                "bildirim çıkmıyordu. Bundan sonra bitiş tarihi geçmiş ve hâlâ kapanmamış bir göreviniz " +
-                "varsa, göreve atanan kişiye bildirim gidiyor. " +
+                "bildirim çıkmıyordu. Bundan sonra bitiş tarihi geçmiş ve hâlâ kapanmamış bir görev için " +
+                "hem göreve atanan kişiye hem de görevi açan kişiye bildirim gidiyor. " +
+                "Böylece henüz kimseye atanmamış bir görev de sessiz kalmıyor — aynı kural 'bitiş tarihi " +
+                "yaklaşıyor' uyarısı için de geçerli. " +
                 "Bildirim görev ve tarih başına bir kez gönderilir; aynı gecikme için tekrar tekrar " +
                 "hatırlatma almazsınız. " +
                 "Görev bildirimlerini istemiyorsanız profil menüsündeki bildirim tercihlerinizden " +

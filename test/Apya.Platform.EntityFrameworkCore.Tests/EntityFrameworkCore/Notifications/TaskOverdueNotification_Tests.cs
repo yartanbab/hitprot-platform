@@ -31,12 +31,14 @@ public class TaskOverdueNotification_Tests : PlatformEntityFrameworkCoreTestBase
         _notifications = GetRequiredService<IRepository<Notification, Guid>>();
     }
 
-    private Task PublishAsync(Guid taskId, Guid assigneeId, DateTime dueDate, int daysOverdue = 3)
+    private Task PublishAsync(Guid taskId, Guid assigneeId, DateTime dueDate,
+        int daysOverdue = 3, Guid creatorId = default)
         => WithUnitOfWorkAsync(() => _eventBus.PublishAsync(new TaskOverdueEto
         {
             TaskId = taskId,
             TaskTitle = "Sözleşme taslağını gönder",
             AssigneeId = assigneeId,
+            CreatorId = creatorId,
             DueDate = dueDate,
             DaysOverdue = daysOverdue
         }));
@@ -75,18 +77,65 @@ public class TaskOverdueNotification_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     /// <summary>
-    /// Atanmamış görev için alıcı yoktur. Guid.Empty geçirilseydi var olmayan bir
-    /// kullanıcıya satır açılır ve kimsenin görmediği bildirim tabloyu şişirirdi.
+    /// 🔴 NTF-11: Atanmamış görev ESKİDEN TAMAMEN SESSİZDİ — uyarı yalnız atanana
+    /// gidiyordu. Diğer görev bildirimleri (yorum, atama, durum) zaten sahibe de
+    /// gidiyor; bu tetikleyici o kümenin dışında kalmıştı.
     /// </summary>
     [Fact]
-    public async Task Atanmamis_Gorev_Icin_Satir_Acilmaz()
+    public async Task Atanmamis_Gorev_Sahibine_Bildirilir()
+    {
+        var taskId = Guid.NewGuid();
+        var creatorId = Guid.NewGuid();
+
+        await PublishAsync(taskId, Guid.Empty,
+            new DateTime(2026, 9, 18, 17, 0, 0, DateTimeKind.Utc), creatorId: creatorId);
+
+        var rows = await _notifications.GetListAsync(n => n.EntityId == taskId);
+
+        rows.Count.ShouldBe(1, "atanmamış görev sahibine ulaşmalı");
+        rows[0].UserId.ShouldBe(creatorId);
+    }
+
+    /// <summary>Atanan ve sahip AYRI kişilerse ikisi de haberdar olur.</summary>
+    [Fact]
+    public async Task Atanan_Ve_Sahip_Ayriysa_Ikisi_De_Bildirilir()
+    {
+        var taskId = Guid.NewGuid();
+        var assigneeId = Guid.NewGuid();
+        var creatorId = Guid.NewGuid();
+
+        await PublishAsync(taskId, assigneeId,
+            new DateTime(2026, 9, 18, 17, 0, 0, DateTimeKind.Utc), creatorId: creatorId);
+
+        var rows = await _notifications.GetListAsync(n => n.EntityId == taskId);
+
+        rows.Count.ShouldBe(2);
+        rows.Select(r => r.UserId).ShouldBe(new[] { assigneeId, creatorId }, ignoreOrder: true);
+    }
+
+    /// <summary>Kendi görevini kendine atayan kişi aynı uyarıyı İKİ KEZ almamalı.</summary>
+    [Fact]
+    public async Task Atanan_Ile_Sahip_Ayniysa_Tek_Satir_Acilir()
+    {
+        var taskId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        await PublishAsync(taskId, userId,
+            new DateTime(2026, 9, 18, 17, 0, 0, DateTimeKind.Utc), creatorId: userId);
+
+        var rows = await _notifications.GetListAsync(n => n.EntityId == taskId);
+
+        rows.Count.ShouldBe(1);
+    }
+
+    /// <summary>Ne atanan ne sahip varsa satır açılmaz; var olmayan kullanıcıya bildirim yazılmaz.</summary>
+    [Fact]
+    public async Task Alici_Yoksa_Satir_Acilmaz()
     {
         var taskId = Guid.NewGuid();
 
         await PublishAsync(taskId, Guid.Empty, new DateTime(2026, 9, 18, 17, 0, 0, DateTimeKind.Utc));
 
-        var rows = await _notifications.GetListAsync(n => n.EntityId == taskId);
-
-        rows.ShouldBeEmpty();
+        (await _notifications.GetListAsync(n => n.EntityId == taskId)).ShouldBeEmpty();
     }
 }
