@@ -713,7 +713,14 @@ $(function () {
     }
 
     function refreshPreview() {
-        service.previewMatch(grantId, collect()).then(paintPreview);
+        // "Belge ekle" boş satır açar ve önizlemeyi tetikler; adı yazılmamış satır sunucunun
+        // "Belge adı zorunludur" doğrulamasına takılıp satır başına bir hata penceresi açıyordu.
+        // Önizleme zaten yalnız adlı belgeleri sayar; kural kayıtta (Kaydet/Yayınla) geçerli kalır.
+        var input = collect();
+        input.documentRequirements = input.documentRequirements.filter(function (d) {
+            return (d.name || '').trim() !== '';
+        });
+        service.previewMatch(grantId, input).then(paintPreview);
     }
 
     function paintPreview(p) {
