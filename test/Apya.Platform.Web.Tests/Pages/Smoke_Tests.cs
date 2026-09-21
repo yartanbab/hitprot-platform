@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +10,10 @@ using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.Customers;
 using Apya.Platform.Expenses;
+using Apya.Platform.Grants;
 using Apya.Platform.Invoices;
+using Apya.Platform.Web.Controllers;
+using Volo.Abp.TenantManagement;
 
 namespace Apya.Platform.Pages;
 
@@ -77,5 +81,70 @@ public class Smoke_Tests : PlatformWebTestBase
     {
         appServiceType.IsDefined(typeof(AuthorizeAttribute), inherit: true)
             .ShouldBeTrue($"{appServiceType.Name} [Authorize] taşımıyor — anonim API erişimi açık kalır");
+    }
+
+    // ── Finansal mutasyonlar alt izin ister (SEC-01, SEC-02) ───────────────
+    // Sınıf seviyesi [Authorize] yalnız GÖRÜNTÜLEME yetkisi verir; kasa/cari defterine
+    // yazan uçlar ayrıca Create/Edit ister. Bu ayrım yapılmazsa "yalnız görsün" diye
+    // yetkilendirilen kullanıcı otomatik API'den finansal kayıt üretebilir.
+    [Theory]
+    [InlineData(typeof(InvoiceAppService), nameof(InvoiceAppService.CreateAsync), "Platform.Invoices.Create")]
+    [InlineData(typeof(InvoiceAppService), nameof(InvoiceAppService.AddPaymentAsync), "Platform.Invoices.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.SaveReportAsync), "Platform.Grants.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.SetReportStatusAsync), "Platform.Grants.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.AddSectionAsync), "Platform.Grants.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.SetSectionStatusAsync), "Platform.Grants.Edit")]
+    [InlineData(typeof(GrantImplementationAppService), nameof(GrantImplementationAppService.MarkTranchePaidAsync), "Platform.Grants.Edit")]
+    public void MutationMethod_RequiresSubPermission(Type serviceType, string methodName, string expectedPolicy)
+    {
+        var method = serviceType.GetMethod(methodName);
+        method.ShouldNotBeNull($"{serviceType.Name}.{methodName} bulunamadı — test bayatlamış olabilir");
+
+        var authorize = method!.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .Cast<AuthorizeAttribute>()
+            .ToList();
+
+        authorize.ShouldNotBeEmpty(
+            $"{serviceType.Name}.{methodName} metot düzeyinde [Authorize] taşımıyor — " +
+            "sınıf seviyesi görüntüleme izni finansal mutasyon yetkisine dönüşür");
+
+        authorize.ShouldContain(a => a.Policy == expectedPolicy,
+            $"{serviceType.Name}.{methodName} '{expectedPolicy}' beklerken " +
+            $"'{string.Join(", ", authorize.Select(a => a.Policy ?? "(politikasız)"))}' taşıyor");
+    }
+
+    // ── Kiracı hesabına geçiş (SEC-00) ─────────────────────────────────────
+    // Uç, izni ne olursa olsun her host oturumuna açıktı. Test host'u
+    // AddAlwaysAllowAuthorization kullandığı için çalışma zamanında 403 gözlemlenemez;
+    // bu yüzden sözleşme öznitelik düzeyinde kilitlenir.
+    [Fact]
+    public void ImpersonateTenant_RequiresTenantManagementPermission()
+    {
+        var method = typeof(ImpersonationController)
+            .GetMethod(nameof(ImpersonationController.ImpersonateTenantAsync));
+        method.ShouldNotBeNull();
+
+        var policies = method!.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .Cast<AuthorizeAttribute>()
+            .Select(a => a.Policy)
+            .ToList();
+
+        policies.ShouldContain(TenantManagementPermissions.Tenants.Default,
+            "ImpersonateTenantAsync izin kapısı taşımıyor — host bağlamındaki her kullanıcı " +
+            "istediği kiracının admin oturumunu açabilir");
+    }
+
+    [Fact]
+    public void BackToImpersonator_StaysPermissionFree()
+    {
+        // Host izni konursa kullanıcı kiracının içinde kilitlenir: geçiş sırasında principal
+        // kiracının admin'idir ve tenant-management izinleri host tarafıdır. Dönüş yolu
+        // imzalı çerezdeki impersonator claim'ine dayandığı için zaten sahte üretilemez.
+        var method = typeof(ImpersonationController)
+            .GetMethod(nameof(ImpersonationController.BackToImpersonatorAsync));
+        method.ShouldNotBeNull();
+
+        method!.GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .ShouldBeEmpty("BackToImpersonatorAsync'e izin konursa kullanıcı kiracı oturumunda kilitlenir");
     }
 }
