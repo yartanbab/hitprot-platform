@@ -26,6 +26,33 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.21",
+            date: "21 Eylül 2026",
+            title: "Dosyalarınıza yalnız kurumunuz erişiyor; fatura kesme ve tahsilat ayrı yetki istiyor",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Yüklediğiniz dosyalara yalnız kurumunuz erişiyor",
+                "Proje kapak görselleri, proje ekleri ve görev ekleri gibi yüklenen dosyalar artık yalnız " +
+                "dosyanın ait olduğu kurumun kullanıcılarına açılıyor. Dosya adresini bir şekilde elde etmiş " +
+                "başka bir kurumun kullanıcısı dosyayı açamaz. " +
+                "Daha önce kopyalanıp paylaşılmış doğrudan dosya bağlantıları artık çalışmayabilir; dosyaya " +
+                "her zaman ilgili proje ya da görev ekranından ulaşabilirsiniz. " +
+                "Misafir paylaşım bağlantıları, dış paylaşım linkleri ve belge modülündeki indirmeler bu " +
+                "değişiklikten etkilenmedi, eskisi gibi çalışıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Fatura kesme ve tahsilat kaydetme ayrı yetki istiyor",
+                "Faturaları görüntüleme yetkisi bundan sonra yalnız görüntülemeyi kapsıyor. Yeni fatura " +
+                "oluşturmak için 'oluşturma', tahsilat kaydetmek için 'düzenleme' yetkisi gerekiyor — " +
+                "gider, gelir ve kasa işlemlerinde zaten geçerli olan ayrımın aynısı. " +
+                "Tahsilat kaydı kasa ve cari hesaba da yazıldığı için bu işlem artık salt görüntüleme " +
+                "yetkisiyle yapılamıyor. " +
+                "Ekibinizde yalnız görüntüleme yetkisi olduğu hâlde fatura giren bir kullanıcı varsa, kurum " +
+                "yöneticiniz o kullanıcının rolüne ilgili fatura yetkisini eklediğinde işlem kaldığı yerden " +
+                "devam eder.")
+        ),
+
+        new ReleaseNote(
             version: "2026.09.17",
             date: "17 Eylül 2026",
             title: "Bütçe uyarıları ve masaüstü bildirimleri; formlarda hazır listeler ve koşullu sorular; " +
