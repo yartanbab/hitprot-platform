@@ -3751,6 +3751,7 @@
         "Platform:Grant:PipelineNoNextStep": "Süreçte ilerlenecek bir sonraki adım yok.",
         "Platform:Grant:ApplicationAlreadyConverted": "Bu başvuru zaten projeye dönüştürüldü.",
         "Platform:Grant:ConversionNotApproved": "Projeye dönüştürmeden önce onaylanan destek tutarı girilmelidir.",
+        "Platform:Grant:ConversionRejected": "Bu başvurunun kurum kararı 'reddedildi'. Reddedilen bir başvuru projeye dönüştürülemez; karar değiştiyse önce başvuru detayından kararı güncelleyin.",
         "Platform:Grant:ConversionMappingMissing": "Projeye dönüştürmek için en az bir bütçe kalemi eşleştirilmelidir.",
         "Platform:Grant:AppealOnlyForRejection": "İtiraz yalnız reddedilen başvurular için açılabilir.",
         "Platform:Grant:AppealAlreadySubmitted": "İtiraz zaten gönderildi.",

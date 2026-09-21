@@ -122,6 +122,7 @@ public static class PlatformDomainErrorCodes
     // 2e · Projeye dönüştürme
     public const string GrantApplicationAlreadyConverted = "Platform:Grant:ApplicationAlreadyConverted";
     public const string GrantConversionNotApproved = "Platform:Grant:ConversionNotApproved";
+    public const string GrantConversionRejected = "Platform:Grant:ConversionRejected";
     public const string GrantConversionMappingMissing = "Platform:Grant:ConversionMappingMissing";
 
     // 6b · Red ve itiraz
