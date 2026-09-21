@@ -141,6 +141,13 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-lightbulb", "/Grants/Invitation?id={0}", GroupSimilar: false),
 
+            // 2d · HOST'a gider. Aynı gün birden çok firma gönderebilir; okunmamış satır
+            // varsa sayaç artar (InterestReceived ile aynı desen). Derin link danışmanın
+            // başvuruyu açtığı yere gider — kutuyu okuyup listeyi ayrıca aramasın.
+            [NotificationType.GrantApplicationSubmitted] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-paper-plane", "/Grants/DetailHost?id={0}", GroupSimilar: true),
+
             // ── Finans ────────────────────────────────────────────────────────
             // Derin link hepsinde proje bütçe raporu: sayfa Projects.ViewBudget
             // denetimli olduğu için bildirimden gelen kullanıcı yetkisi yoksa

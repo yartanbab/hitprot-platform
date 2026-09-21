@@ -28,7 +28,8 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.MeetingProposed]           = NotificationType.GrantMeetingProposed,
             [GrantNotificationTrigger.MeetingAnswered]           = NotificationType.GrantMeetingAnswered,
             [GrantNotificationTrigger.IdeaLinked]                = NotificationType.GrantIdeaLinked,
-            [GrantNotificationTrigger.IdeaInvited]               = NotificationType.GrantIdeaInvited
+            [GrantNotificationTrigger.IdeaInvited]               = NotificationType.GrantIdeaInvited,
+            [GrantNotificationTrigger.ApplicationSubmitted]      = NotificationType.GrantApplicationSubmitted
         };
 
     /// <summary>
@@ -73,6 +74,11 @@ public static class GrantNotificationTriggerRegistry
 
             [GrantNotificationTrigger.InterestReceived] =
                 ["{firma_adı}", "{çağrı_adı}", "{firma_notu}"],
+
+            // Gönderim anında evrak durumu bilinir; danışman kutuyu açmadan eksik olup
+            // olmadığını görsün diye tokena alındı.
+            [GrantNotificationTrigger.ApplicationSubmitted] =
+                ["{firma_adı}", "{çağrı_adı}", "{evrak_durumu}"],
 
             [GrantNotificationTrigger.CallClosed] =
                 ["{çağrı_adı}", "{benzer_çağrılar}"],
