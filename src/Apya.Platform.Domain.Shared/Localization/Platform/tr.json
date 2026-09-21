@@ -3441,6 +3441,7 @@
         "Platform:Grant:InterestAlreadyOpen": "Bu çağrı için süren bir talebiniz ya da başvurunuz zaten var.",
         "Platform:Grant:InterestCallNotOpen": "Bu çağrı şu anda ilgi bildirmeye açık değil. Çağrı kapanmış ya da henüz yayımlanmamış olabilir.",
         "Platform:Grant:ApplicationCallClosed": "Bu çağrı kapandı; başvuru artık gönderilemiyor. Yazdıklarınız kayıtlı kalır, danışmanınızla iletişime geçebilirsiniz.",
+        "Platform:Grant:ConversionBudgetLineUnknown": "Gönderilen bütçe kalemlerinden biri başvuruda bulunamadı. Sayfayı yenileyip tekrar deneyin.",
         "Platform:Grant:InterestNotFound": "İlgi talebi bulunamadı.",
         "Platform:Grant:InterestAssigneeNotFound": "Seçilen danışman bulunamadı ya da etkin değil.",
         "Platform:Grant:InterestIdeaNotLinked": "Bu fikir henüz bir çağrıyla ilişkilendirilmedi; başvuru ve görüşme çağrı üzerinden yürür.",

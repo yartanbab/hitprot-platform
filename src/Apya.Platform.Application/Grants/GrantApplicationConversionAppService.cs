@@ -159,6 +159,32 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         }
 
         var (call, grant) = await GetCatalogAsync(application);
+
+        // CNV-05: Tutarlar SUNUCUDAN yeniden okunur. İstemciden yalnız ad ve kategori
+        // kabul edilir — proje bütçesi istemci beyanıyla kuruluyordu ve uç doğrudan
+        // çağrılabildiği için beyan edilen tutar başvurunun gerçek kaydıyla hiç
+        // karşılaştırılmıyordu. Kalem türü başvuru başına tekildir (sihirbaz aynı türe
+        // ikinci satır açmaz), bu yüzden Kind güvenilir bir anahtardır.
+        Dictionary<GrantCostItemKind, decimal> serverAmounts;
+        using (_mtFilter.Disable())
+        {
+            serverAmounts = (await _budgetRepo.GetListAsync(l => l.GrantApplicationId == application.Id))
+                .ToDictionary(l => l.Kind, l => l.Amount);
+        }
+
+        var lines = new List<(ConvertGrantBudgetLineInput Input, decimal Amount)>();
+        foreach (var line in input.BudgetLines)
+        {
+            if (!serverAmounts.TryGetValue(line.Kind, out var amount) || amount <= 0)
+            {
+                // Sessizce atlamak, bütçesi eksik bir projeyi "başarıyla kuruldu" diye
+                // döndürürdü; tutarsızlığı burada durdurmak daha az zarar verir.
+                throw new BusinessException(PlatformDomainErrorCodes.GrantConversionBudgetLineUnknown)
+                    .WithData("Kind", line.Kind);
+            }
+            lines.Add((line, amount));
+        }
+
         var result = new GrantConversionResultDto();
 
         // 🔴 Proje kiracının bağlamında yazılır; host bağlamında yazılsaydı kiracı
@@ -171,7 +197,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                 name: input.ProjectName,
                 code: code,
                 description: $"{grant.Name} · {call.Period}",
-                totalBudget: input.BudgetLines.Sum(l => l.Amount),
+                totalBudget: lines.Sum(l => l.Amount),
                 // CNV-11: Kategori geçilmeyince proje "Diğer/Genel" ile doğuyordu; Finans
                 // Merkezi sekme setini kategoriden türettiği için donör ve kur köprüsü
                 // sekmeleri hiç basılmıyor, kullanıcı hibe projesinin hibe olduğunu
@@ -188,7 +214,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
             result.ProjectCode = project.Code;
 
             var order = 0;
-            foreach (var line in input.BudgetLines)
+            foreach (var (line, amount) in lines)
             {
                 await _projectBudgetRepo.InsertAsync(new ProjectBudgetLine(
                     GuidGenerator.Create(), application.TenantId, project.Id,
@@ -196,8 +222,8 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                     // kalem kodsuz kalır (bütçe ekranında elle girilebilir).
                     code: line.Category?.ToString() ?? string.Empty,
                     name: line.Name,
-                    plannedAmount: line.Amount,
-                    approvedAmount: line.Amount,
+                    plannedAmount: amount,
+                    approvedAmount: amount,
                     order: order++), autoSave: true);
                 result.BudgetLineCount++;
             }
@@ -215,11 +241,21 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                 var milestones = await _milestoneRepo.GetListAsync(m => m.GrantApplicationId == application.Id);
                 foreach (var milestone in milestones.OrderBy(m => m.DueDate ?? DateTime.MaxValue))
                 {
-                    await _taskRepo.InsertAsync(new TaskItem(
+                    var task = new TaskItem(
                         GuidGenerator.Create(), milestone.Title, project.Id,
                         dueDate: milestone.DueDate,
                         tenantId: application.TenantId,
-                        now: Clock.Now), autoSave: true);
+                        now: Clock.Now);
+
+                    // CNV-06: Tamamlanmış kilometre taşı da AÇIK göreve çevriliyordu —
+                    // geçmişte biten iş panoda yapılacak gibi listeleniyordu. Atlamak
+                    // yerine KAPALI açılır: iş gerçekten yapıldı, proje o izi korumalı.
+                    if (milestone.IsCompleted)
+                    {
+                        task.ChangeStatus(Apya.Platform.Tasks.TaskStatus.Done, Clock.Now);
+                    }
+
+                    await _taskRepo.InsertAsync(task, autoSave: true);
                     result.TaskCount++;
                 }
             }

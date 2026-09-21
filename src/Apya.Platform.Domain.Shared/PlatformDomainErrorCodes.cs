@@ -107,6 +107,9 @@ public static class PlatformDomainErrorCodes
 
     /// <summary>🔴 LIF-05: Çağrı KAPANMIŞ; kapanış zinciri firmaya zaten haber verdi.</summary>
     public const string GrantApplicationCallClosed = "Platform:Grant:ApplicationCallClosed";
+
+    /// <summary>🔴 CNV-05: İstemci, başvuruda karşılığı olmayan bir bütçe kalemi gönderdi.</summary>
+    public const string GrantConversionBudgetLineUnknown = "Platform:Grant:ConversionBudgetLineUnknown";
     public const string GrantFieldLockedByOther = "Platform:Grant:FieldLockedByOther";
     public const string GrantApplicationLocked = "Platform:Grant:ApplicationLocked";
 
