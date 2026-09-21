@@ -146,7 +146,8 @@ public static class GrantStatusCatalog
         [GrantActivityKind.TrancheAdded]          = "neutral",
         [GrantActivityKind.TrancheAmountChanged]  = "warning",
         [GrantActivityKind.TrancheRemoved]        = "negative",
-        [GrantActivityKind.TranchePaid]           = "positive"
+        [GrantActivityKind.TranchePaid]           = "positive",
+        [GrantActivityKind.ConvertedToProject]    = "positive"
     };
 
     // ── Başvuru detayı bölüm durumu ───────────────────────────────────────────
