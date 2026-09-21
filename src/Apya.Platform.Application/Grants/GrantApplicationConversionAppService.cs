@@ -62,6 +62,8 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
     private readonly IIdentityUserRepository _userRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly GrantActivityRecorder _activityRecorder;
+    private readonly GrantNotificationDispatcher _notifyDispatcher;
 
     public GrantApplicationConversionAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -84,7 +86,9 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         TenantDisplayNameResolver displayNames,
         IIdentityUserRepository userRepo,
         ICurrentTenant currentTenant,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        GrantActivityRecorder activityRecorder,
+        GrantNotificationDispatcher notifyDispatcher)
     {
         _appRepo = appRepo;
         _budgetRepo = budgetRepo;
@@ -107,6 +111,8 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         _userRepo = userRepo;
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
+        _activityRecorder = activityRecorder;
+        _notifyDispatcher = notifyDispatcher;
     }
 
     /// <summary>
@@ -235,7 +241,36 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         application.LinkToProject(result.ProjectId);
         await _appRepo.UpdateAsync(application, autoSave: true);
 
+        await AnnounceConversionAsync(application, grant, input.ProjectName, result);
+
         return result;
+    }
+
+    /// <summary>
+    /// 🔴 NTF-02: Dönüşüm bugüne kadar ne iz ne bildirim üretiyordu — sürecin en
+    /// sevindirici geçişi ("hibeniz projeye döndü") firma için tamamen sessizdi.
+    ///
+    /// <para>İz kaydı bildirimden ÖNCE yazılır: host şablonu kapatsa bile zaman
+    /// çizelgesi dönüşümü göstermeli.</para>
+    /// </summary>
+    private async Task AnnounceConversionAsync(
+        GrantApplication application, Grant grant, string projectName, GrantConversionResultDto result)
+    {
+        await _activityRecorder.RecordAsync(
+            application.TenantId, application.Id, GrantActivityKind.ConvertedToProject,
+            $"{result.ProjectCode} · {result.BudgetLineCount} bütçe kalemi");
+
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.ConvertedToProject,
+            application.TenantId,
+            new Dictionary<string, string?>
+            {
+                ["{çağrı_adı}"] = grant.Name,
+                ["{proje_adı}"] = projectName,
+                ["{proje_kodu}"] = result.ProjectCode
+            },
+            // Derin link PROJEYE çıkar: firmanın bundan sonra çalışacağı yer orası.
+            nameof(Project), result.ProjectId);
     }
 
     // ------------------------------------------------------------------ yardımcılar

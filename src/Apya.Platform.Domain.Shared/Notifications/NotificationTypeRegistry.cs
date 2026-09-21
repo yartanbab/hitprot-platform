@@ -155,6 +155,19 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-paper-plane", "/Grants/DetailHost?id={0}", GroupSimilar: true),
 
+            // 2e · FİRMAYA gider ve derin link PROJEYE çıkar: firmanın bundan sonra
+            // çalışacağı yer başvuru değil projedir.
+            [NotificationType.GrantConvertedToProject] = new(
+                NotificationCategory.Grants, NotificationSeverity.High,
+                "fa fa-diagram-project", "/Projects/ProjectDetails/{0}", GroupSimilar: false),
+
+            // 🔴 NTF-02: HOST'a gider. Gruplama KAPALI — gönderim GrantNotificationLog
+            // ile eşik başına işaretlenir; registry ikinci bir anahtar üretseydi
+            // "eşik başına bir kez" sözleşmesi sessizce bozulurdu.
+            [NotificationType.GrantConversionPending] = new(
+                NotificationCategory.Grants, NotificationSeverity.High,
+                "fa fa-hourglass-half", "/Grants/DetailHost?id={0}", GroupSimilar: false),
+
             // ── Finans ────────────────────────────────────────────────────────
             // Derin link hepsinde proje bütçe raporu: sayfa Projects.ViewBudget
             // denetimli olduğu için bildirimden gelen kullanıcı yetkisi yoksa

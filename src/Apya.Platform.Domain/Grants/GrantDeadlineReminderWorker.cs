@@ -35,6 +35,16 @@ public class GrantDeadlineReminderWorker : AsyncPeriodicBackgroundWorkerBase
     /// <summary>Rapor eşikleri — teslime kalan gün.</summary>
     public static readonly int[] ReportDayMarks = [30, 14, 3];
 
+    /// <summary>
+    /// 🔴 NTF-02: Dönüşüm eşikleri — karardan BU KADAR gün GEÇTİ ve proje hâlâ yok.
+    ///
+    /// <para>Diğer iki eşik kümesi geleceğe bakar ("son tarihe 7 gün kaldı"), bu
+    /// geçmişe: onaylanmış başvurunun askıda kalma süresi. Üç eşik, diğerlerindeki
+    /// gibi TAM O GÜN yakalanır; danışman 5. günde sisteme hiç girmese bile 7. gün
+    /// eşiği ayrıca ateşlenir.</para>
+    /// </summary>
+    public static readonly int[] ConversionDayMarks = [3, 7, 14];
+
     public GrantDeadlineReminderWorker(AbpAsyncTimer timer, IServiceScopeFactory serviceScopeFactory)
         : base(timer, serviceScopeFactory)
     {
@@ -50,6 +60,96 @@ public class GrantDeadlineReminderWorker : AsyncPeriodicBackgroundWorkerBase
 
         await RunDocumentRemindersAsync(sp, today);
         await RunReportRemindersAsync(sp, today);
+        await RunConversionRemindersAsync(sp, today);
+    }
+
+    // ------------------------------------------------------------- dönüşüm
+
+    /// <summary>
+    /// 🔴 NTF-02: Onaylanmış ama projeye dönüştürülmemiş başvuruları tarar.
+    ///
+    /// <para>Bu durumu bugüne kadar hiçbir iş taramıyordu: para bağlanmış bir
+    /// başvuru süresiz askıda kalabiliyor, proje kurulmadığı için bütçe takibi ve
+    /// tahsilat planı hiç işlemiyordu.</para>
+    ///
+    /// <para>Hatırlatma HOST'a gider: dönüşüm danışman eylemidir
+    /// (<c>GrantApplicationConversionAppService.EnsureHostContext</c>), firmanın
+    /// yapabileceği bir şey yok.</para>
+    /// </summary>
+    private async Task RunConversionRemindersAsync(IServiceProvider sp, DateTime today)
+    {
+        var decisionRepo = sp.GetRequiredService<IRepository<GrantDecision, Guid>>();
+        var appRepo = sp.GetRequiredService<IRepository<GrantApplication, Guid>>();
+        var callRepo = sp.GetRequiredService<IRepository<GrantCall, Guid>>();
+        var grantRepo = sp.GetRequiredService<IRepository<Grant, Guid>>();
+        var displayNames = sp.GetRequiredService<Apya.Platform.Tenants.TenantDisplayNameResolver>();
+        var dataFilter = sp.GetRequiredService<IDataFilter<IMultiTenant>>();
+
+        List<GrantDecision> decisions;
+        List<GrantApplication> applications;
+        List<GrantCall> calls;
+
+        using (dataFilter.Disable())
+        {
+            // Reddedilen karar dönüşüm beklemiyor; kısmi onay bekliyor (tutar indirilerek kabul).
+            var targets = ConversionDayMarks.Select(d => today.AddDays(-d)).ToList();
+            decisions = await decisionRepo.GetListAsync(
+                d => d.Outcome != GrantDecisionOutcome.Reddedildi
+                     && targets.Contains(d.DecidedOn.Date));
+            if (decisions.Count == 0)
+            {
+                return;
+            }
+
+            var appIds = decisions.Select(d => d.GrantApplicationId).Distinct().ToList();
+            applications = await appRepo.GetListAsync(a => appIds.Contains(a.Id) && a.ProjectId == null);
+            if (applications.Count == 0)
+            {
+                return;
+            }
+
+            var callIds = applications.Select(a => a.GrantCallId).Distinct().ToList();
+            calls = await callRepo.GetListAsync(c => callIds.Contains(c.Id));
+
+            var grantIds = calls.Select(c => c.GrantId).Distinct().ToList();
+            foreach (var grant in await grantRepo.GetListAsync(g => grantIds.Contains(g.Id)))
+            {
+                _grantNames[grant.Id] = grant.Name;
+            }
+        }
+
+        var appById = applications.ToDictionary(a => a.Id);
+        var callById = calls.ToDictionary(c => c.Id);
+
+        foreach (var decision in decisions)
+        {
+            if (!appById.TryGetValue(decision.GrantApplicationId, out var application))
+            {
+                continue;
+            }
+
+            var dayMark = (today - decision.DecidedOn.Date).Days;
+            var grantId = callById.TryGetValue(application.GrantCallId, out var call) ? call.GrantId : Guid.Empty;
+
+            var firmName = application.TenantId is { } tenantId
+                ? await displayNames.GetAsync(tenantId)
+                : string.Empty;
+
+            await SendAsync(sp,
+                GrantNotificationTrigger.ConversionPending,
+                entityId: application.Id,
+                dayMark: dayMark,
+                // 🔴 HOST'a gider: dönüşümü yapabilecek olan danışmandır.
+                tenantId: null,
+                values: new Dictionary<string, string?>
+                {
+                    ["{firma_adı}"] = firmName,
+                    ["{çağrı_adı}"] = GrantName(grantId),
+                    ["{karar_tarihi}"] = decision.DecidedOn.ToString("dd.MM.yyyy"),
+                    ["{bekleyen_gün}"] = dayMark.ToString()
+                },
+                entityType: nameof(GrantApplication));
+        }
     }
 
     // ---------------------------------------------------------------- evrak

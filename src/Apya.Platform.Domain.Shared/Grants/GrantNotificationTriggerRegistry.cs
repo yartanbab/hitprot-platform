@@ -29,7 +29,9 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.MeetingAnswered]           = NotificationType.GrantMeetingAnswered,
             [GrantNotificationTrigger.IdeaLinked]                = NotificationType.GrantIdeaLinked,
             [GrantNotificationTrigger.IdeaInvited]               = NotificationType.GrantIdeaInvited,
-            [GrantNotificationTrigger.ApplicationSubmitted]      = NotificationType.GrantApplicationSubmitted
+            [GrantNotificationTrigger.ApplicationSubmitted]      = NotificationType.GrantApplicationSubmitted,
+            [GrantNotificationTrigger.ConvertedToProject]        = NotificationType.GrantConvertedToProject,
+            [GrantNotificationTrigger.ConversionPending]         = NotificationType.GrantConversionPending
         };
 
     /// <summary>
@@ -97,7 +99,15 @@ public static class GrantNotificationTriggerRegistry
             // Mesajı danışman gönderim başına yazar. Hatırlatmada {hatırlatma} dolar ("Hatırlatma:"), ilk gönderimde boştur.
             // Çağrısız (havuz) davette {çağrı_adı} ve {son_tarih} boştur.
             [GrantNotificationTrigger.IdeaInvited] =
-                ["{hatırlatma}", "{firma_adı}", "{davet_mesajı}", "{çağrı_adı}", "{son_tarih}"]
+                ["{hatırlatma}", "{firma_adı}", "{davet_mesajı}", "{çağrı_adı}", "{son_tarih}"],
+
+            // Proje adı ve kodu AYRI tokenlar: kod dış sistemlere kopyalanır, ad okunur.
+            [GrantNotificationTrigger.ConvertedToProject] =
+                ["{çağrı_adı}", "{proje_adı}", "{proje_kodu}"],
+
+            // {bekleyen_gün} eşiğin kendisidir; danışman kutuyu açmadan aciliyeti görür.
+            [GrantNotificationTrigger.ConversionPending] =
+                ["{firma_adı}", "{çağrı_adı}", "{karar_tarihi}", "{bekleyen_gün}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

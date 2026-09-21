@@ -52,5 +52,10 @@ public enum NotificationType
     // 🔴 NTF-03: Yalnız "yaklaşıyor" (TaskDueSoon) vardı; vadeyi GEÇEN görev
     // hiçbir sinyal üretmiyordu. Tekillik anahtarı görev + vade olduğu için
     // ertelenen görev yeni vadesini de geçerse ikinci kez uyarılır.
-    TaskOverdue                 = 36  // Görevin vadesi geçti, hâlâ kapanmadı
+    TaskOverdue                 = 36, // Görevin vadesi geçti, hâlâ kapanmadı
+
+    // 🔴 NTF-02: Dönüşüm sürecin en sevindirici geçişiydi ve tamamen sessizdi;
+    // onaylanmış ama dönüştürülmemiş başvuru da hiç takip edilmiyordu.
+    GrantConvertedToProject     = 37, // Başvuru projeye dönüştü (FİRMAYA gider)
+    GrantConversionPending      = 38  // Karar onaylı, proje hâlâ kurulmadı (HOST'a gider)
 }
