@@ -47,5 +47,10 @@ public enum NotificationType
     FundingTrancheOverdue       = 32, // Planlanan tarihi geçti, hâlâ tahsil edilmedi
     TrancheDeductionAdded       = 33, // Dilime kesinti işlendi
     TrancheDisputed             = 34, // Dilim itirazlı olarak işaretlendi
-    GrantApplicationSubmitted   = 35  // Firma başvuruyu kuruma gönderdi (HOST'a gider)
+    GrantApplicationSubmitted   = 35, // Firma başvuruyu kuruma gönderdi (HOST'a gider)
+
+    // 🔴 NTF-03: Yalnız "yaklaşıyor" (TaskDueSoon) vardı; vadeyi GEÇEN görev
+    // hiçbir sinyal üretmiyordu. Tekillik anahtarı görev + vade olduğu için
+    // ertelenen görev yeni vadesini de geçerse ikinci kez uyarılır.
+    TaskOverdue                 = 36  // Görevin vadesi geçti, hâlâ kapanmadı
 }
