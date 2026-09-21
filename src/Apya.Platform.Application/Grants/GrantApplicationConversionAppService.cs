@@ -141,6 +141,15 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         EnsureHostContext();
         var application = await GetApplicationAsync(input.ApplicationId);
 
+        // CNV-08: İkinci dönüşüm ancak HER ŞEY yazıldıktan sonra, LinkToProject'te
+        // yakalanıyordu. İşlem geri alınıyordu ama o ana kadar proje, bütçe kalemleri,
+        // görevler ve gelir planı boşuna yazılıyor; sıralı proje kodu da boşa harcanıyordu.
+        // Aynı istisna kodu, yalnız daha erken.
+        if (application.ProjectId.HasValue)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantApplicationAlreadyConverted);
+        }
+
         if (application.ApprovedAmount is null or <= 0)
         {
             // Onaylanan destek girilmeden proje bütçesi kurulamaz.
@@ -216,15 +225,22 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
             var order = 0;
             foreach (var (line, amount) in lines)
             {
+                order++;
                 await _projectBudgetRepo.InsertAsync(new ProjectBudgetLine(
                     GuidGenerator.Create(), application.TenantId, project.Id,
-                    // Kalem kodu gider kategorisinden türetilir; kategori seçilmemişse
-                    // kalem kodsuz kalır (bütçe ekranında elle girilebilir).
-                    code: line.Category?.ToString() ?? string.Empty,
+                    // 🔴 CNV-10: Kod eskiden gider kategorisinin ENUM ADIydı ("Personnel").
+                    // İki sorun: Türkçe arayüzde İngilizce teknik ad görünüyordu ve —
+                    // daha kötüsü — aynı kategoriye düşen iki kalem AYNI kodu alıyordu
+                    // (SarfMalzeme ve MakineTechizat ikisi de Material). Kod proje içinde
+                    // TEKİL olmalı (ProjectBudgetManager.EnsureCodeIsFreeAsync); dönüşüm
+                    // depoya doğrudan yazdığı için bu kural atlanıyor ve kullanıcı sonradan
+                    // o kalemi düzenlemek istediğinde BudgetLineCodeAlreadyExists alıyordu.
+                    // Sıra numarası hem tekil hem dilden bağımsız.
+                    code: order.ToString("00"),
                     name: line.Name,
                     plannedAmount: amount,
                     approvedAmount: amount,
-                    order: order++), autoSave: true);
+                    order: order - 1), autoSave: true);
                 result.BudgetLineCount++;
             }
 

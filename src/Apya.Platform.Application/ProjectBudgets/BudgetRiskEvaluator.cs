@@ -107,6 +107,12 @@ public class BudgetRiskEvaluator : ITransientDependency
                 var recipients = await _recipientResolver.ResolveAsync(projectId);
                 if (recipients.Count == 0)
                 {
+                    // 🔴 NTF-12: Alıcı kümesi (proje lideri + bütçe görme izni) sessizce
+                    // boşalabiliyor; lider ayrılır ya da izni kaldırılırsa bütçe aşımı
+                    // KİMSEYE bildirilmiyor ve geriye hiçbir iz kalmıyordu.
+                    _logger.LogWarning(
+                        "Bütçe uyarısı gönderilemedi: {ProjectId} projesinde bütçe görme izni olan " +
+                        "alıcı yok (proje lideri ayrılmış ya da izni kaldırılmış olabilir).", projectId);
                     return;
                 }
 
@@ -175,6 +181,10 @@ public class BudgetRiskEvaluator : ITransientDependency
                     var recipients = await _recipientResolver.ResolveAsync(project.Id);
                     if (recipients.Count == 0)
                     {
+                        // 🔴 NTF-12: Günlük turda da sessiz atlama yok — bkz. yukarıdaki not.
+                        _logger.LogWarning(
+                            "Bütçe uyarısı gönderilemedi: {ProjectId} projesinde bütçe görme izni olan " +
+                            "alıcı yok (proje lideri ayrılmış ya da izni kaldırılmış olabilir).", project.Id);
                         continue;
                     }
 

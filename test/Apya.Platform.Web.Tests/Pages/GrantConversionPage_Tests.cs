@@ -430,4 +430,91 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
             task.CompletedDate.ShouldNotBeNull();
         }
     }
+
+    /// <summary>
+    /// 🔴 CNV-10: Kalem kodu gider kategorisinin ENUM ADIydı. Aynı kategoriye düşen
+    /// iki kalem (SarfMalzeme + MakineTechizat → Material) AYNI kodu alıyordu; kod
+    /// proje içinde tekil olmak zorunda olduğu için kullanıcı o kalemi sonradan
+    /// düzenlemek istediğinde BudgetLineCodeAlreadyExists ile kilitleniyordu.
+    /// </summary>
+    [Fact]
+    public async Task Ayni_Kategoriye_Dusen_Iki_Kalem_Farkli_Kod_Alir()
+    {
+        var (id, tenantId) = await SetupAsync();
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+
+        // Başvuruya ikinci bir kalem: farklı tür, AYNI gider kategorisi.
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (currentTenant.Change(tenantId))
+        {
+            var budgetRepo = GetRequiredService<IRepository<GrantApplicationBudgetLine, Guid>>();
+            var extra = new GrantApplicationBudgetLine(
+                Guid.NewGuid(), tenantId, id, GrantCostItemKind.SarfMalzeme);
+            extra.SetAmount(150_000m);
+            await budgetRepo.InsertAsync(extra, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var input = Input(id);
+        input.BudgetLines.Add(new ConvertGrantBudgetLineInput
+        {
+            Kind = GrantCostItemKind.SarfMalzeme,
+            Name = "Sarf malzeme",
+            Amount = 150_000m,
+            Category = ExpenseCategory.Material
+        });
+        input.BudgetLines[0].Category = ExpenseCategory.Material;   // ikisi de aynı kategori
+
+        var result = await _conversion.ConvertAsync(input);
+
+        using var readUow = uowManager.Begin(requiresNew: true);
+        using (currentTenant.Change(tenantId))
+        {
+            var budgetRepo = GetRequiredService<IRepository<ProjectBudgetLine, Guid>>();
+            var codes = (await budgetRepo.GetListAsync(b => b.ProjectId == result.ProjectId))
+                .Select(b => b.Code).ToList();
+
+            codes.Count.ShouldBe(2);
+            codes.ShouldBeUnique("kod proje içinde tekil olmalı");
+            codes.ShouldNotContain("Material", "Türkçe arayüzde İngilizce enum adı görünmemeli");
+        }
+    }
+
+    /// <summary>
+    /// 🔴 CNV-08: İkinci dönüşüm ancak HER ŞEY yazıldıktan sonra yakalanıyordu. İşlem
+    /// geri alınıyordu ama o ana kadar proje, bütçe, görev ve gelir planı boşuna
+    /// yazılıyor, sıralı proje kodu da boşa harcanıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Ikinci_Donusum_Hicbir_Sey_Yazmadan_Reddedilir()
+    {
+        var (id, tenantId) = await SetupAsync();
+        var first = await _conversion.ConvertAsync(Input(id));
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+
+        int projectCountBefore;
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (currentTenant.Change(tenantId))
+        {
+            var projectRepo = GetRequiredService<IRepository<Project, Guid>>();
+            projectCountBefore = (await projectRepo.GetListAsync()).Count;
+        }
+
+        var ex = await Should.ThrowAsync<BusinessException>(() => _conversion.ConvertAsync(Input(id)));
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantApplicationAlreadyConverted);
+
+        using var readUow = uowManager.Begin(requiresNew: true);
+        using (currentTenant.Change(tenantId))
+        {
+            var projectRepo = GetRequiredService<IRepository<Project, Guid>>();
+            var projects = await projectRepo.GetListAsync();
+
+            projects.Count.ShouldBe(projectCountBefore, "reddedilen dönüşüm proje yazmamalı");
+            projects.ShouldContain(p => p.Id == first.ProjectId);
+        }
+    }
 }
