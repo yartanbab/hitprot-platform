@@ -271,6 +271,30 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
             await _wizard.SaveSummaryAsync(new SaveWizardSummaryInput { ApplicationId = id, ProjectTitle = "X" }));
     }
 
+    /// <summary>
+    /// 🔴 NTF-01: Gönderim huninin en kritik anı ama hiçbir iz bırakmıyordu —
+    /// <see cref="GrantActivityKind.Submitted"/> kod tabanında HİÇ yazılmamıştı ve
+    /// danışman listeyi elle açmadıkça başvurunun geldiğini göremiyordu.
+    /// İz kaydı bildirimden ÖNCE yazılır: host şablonu kapatsa bile akış görünür kalmalı.
+    /// </summary>
+    [Fact]
+    public async Task Gonderim_Surec_Izine_Yazilir_Ve_Evrak_Durumunu_Tasir()
+    {
+        var (id, _) = await CreateApplicationAsync();
+
+        await _wizard.SubmitAsync(id);
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        var repo = GetRequiredService<IRepository<GrantApplicationActivity, Guid>>();
+
+        var kayit = (await repo.GetListAsync(a => a.GrantApplicationId == id))
+            .SingleOrDefault(a => a.Kind == GrantActivityKind.Submitted);
+
+        kayit.ShouldNotBeNull("gönderim süreç izine yazılmalı");
+        kayit!.Context.ShouldNotBeNullOrWhiteSpace("iz, evrak durumunu taşımalı");
+    }
+
     [Fact]
     public async Task Mesaj_Gonderilir_Ve_Listede_Doner()
     {

@@ -46,5 +46,6 @@ public enum NotificationType
     FundingTrancheCollected     = 31, // Fonlama dilimi tahsil edildi
     FundingTrancheOverdue       = 32, // Planlanan tarihi geçti, hâlâ tahsil edilmedi
     TrancheDeductionAdded       = 33, // Dilime kesinti işlendi
-    TrancheDisputed             = 34  // Dilim itirazlı olarak işaretlendi
+    TrancheDisputed             = 34, // Dilim itirazlı olarak işaretlendi
+    GrantApplicationSubmitted   = 35  // Firma başvuruyu kuruma gönderdi (HOST'a gider)
 }

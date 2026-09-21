@@ -64,5 +64,11 @@ public enum GrantNotificationTrigger
     /// 19b · Danışman firmayı proje fikrini paylaşmaya davet etti (elle gönderim). Yanıtlamayan firmaya aynı şablon
     /// bir kez hatırlatma olarak gider.
     /// </summary>
-    IdeaInvited = 13
+    IdeaInvited = 13,
+
+    /// <summary>
+    /// 2d · Firma başvuruyu kuruma gönderdi. 🔴 HOST'a gider: huninin en kritik anıydı
+    /// ve hiçbir bildirim üretmiyordu, danışman ancak listeyi elle açarsa görüyordu.
+    /// </summary>
+    ApplicationSubmitted = 14
 }

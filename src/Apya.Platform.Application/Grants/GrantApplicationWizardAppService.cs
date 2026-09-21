@@ -13,6 +13,7 @@ using Volo.Abp.MultiTenancy;
 using Volo.Abp.Users;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Grants;
 
@@ -44,6 +45,10 @@ public class GrantApplicationWizardAppService : ApplicationService, IGrantApplic
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
     private readonly IRepository<FirmProfileTag, Guid> _profileTagRepo;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly IRepository<GrantApplicationDocument, Guid> _docRepo;
+    private readonly GrantNotificationDispatcher _notifyDispatcher;
+    private readonly GrantActivityRecorder _activityRecorder;
+    private readonly TenantDisplayNameResolver _displayNames;
 
     public GrantApplicationWizardAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -55,7 +60,11 @@ public class GrantApplicationWizardAppService : ApplicationService, IGrantApplic
         IRepository<GrantEligibleCostItem, Guid> costItemRepo,
         IRepository<FirmProfile, Guid> profileRepo,
         IRepository<FirmProfileTag, Guid> profileTagRepo,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        IRepository<GrantApplicationDocument, Guid> docRepo,
+        GrantNotificationDispatcher notifyDispatcher,
+        GrantActivityRecorder activityRecorder,
+        TenantDisplayNameResolver displayNames)
     {
         _appRepo = appRepo;
         _budgetRepo = budgetRepo;
@@ -67,6 +76,10 @@ public class GrantApplicationWizardAppService : ApplicationService, IGrantApplic
         _profileRepo = profileRepo;
         _profileTagRepo = profileTagRepo;
         _mtFilter = mtFilter;
+        _docRepo = docRepo;
+        _notifyDispatcher = notifyDispatcher;
+        _activityRecorder = activityRecorder;
+        _displayNames = displayNames;
     }
 
     /// <summary>Alan anahtarları — istemci ile sunucu aynı sözlüğü konuşur.</summary>
@@ -182,7 +195,55 @@ public class GrantApplicationWizardAppService : ApplicationService, IGrantApplic
             await _lockRepo.DeleteManyAsync(locks, autoSave: true);
         }
 
+        await AnnounceSubmissionAsync(application);
+
         return await BuildAsync(application);
+    }
+
+    /// <summary>
+    /// 🔴 Gönderim huninin en kritik anıydı ve HİÇBİR iz bırakmıyordu: ne akış kaydı,
+    /// ne bildirim. Danışman firmanın gönderdiğini ancak listeyi elle açarsa görüyordu
+    /// ve <c>GrantActivityKind.Submitted</c> tüm kod tabanında hiç yazılmıyordu
+    /// (denetim bulguları NTF-01, LIF-05).
+    ///
+    /// <para>Akışı KIRMAZ: bildirim şablonu kapalıysa dispatcher sessizce false döner,
+    /// başvuru yine gönderilmiş olur. Aktivite kaydı da bildirimden önce yazılır ki
+    /// bildirim gitmese bile iz kalsın.</para>
+    /// </summary>
+    private async Task AnnounceSubmissionAsync(GrantApplication application)
+    {
+        var missing = await CountMissingRequiredDocumentsAsync(application.Id);
+        var documentState = missing == 0
+            ? L["Grants:Notify:Trigger:ApplicationSubmitted:DocumentsComplete"].Value
+            : L["Grants:Notify:Trigger:ApplicationSubmitted:DocumentsMissing", missing].Value;
+
+        await _activityRecorder.RecordAsync(
+            application.TenantId, application.Id, GrantActivityKind.Submitted, documentState);
+
+        var call = await _callRepo.FirstOrDefaultAsync(c => c.Id == application.GrantCallId);
+        var grant = call == null ? null : await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId);
+
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.ApplicationSubmitted,
+            tenantId: null,
+            new Dictionary<string, string?>
+            {
+                ["{firma_adı}"] = application.TenantId is { } tid
+                    ? await _displayNames.GetAsync(tid)
+                    : string.Empty,
+                ["{çağrı_adı}"] = grant?.Name ?? string.Empty,
+                ["{evrak_durumu}"] = documentState
+            },
+            nameof(GrantApplication), application.Id);
+    }
+
+    /// <summary>Zorunlu olup onaylanmamış evrak sayısı — gönderim bildiriminin gövdesine girer.</summary>
+    private async Task<int> CountMissingRequiredDocumentsAsync(Guid applicationId)
+    {
+        var documents = await _docRepo.GetListAsync(d => d.GrantApplicationId == applicationId);
+        return documents.Count(d =>
+            d.Obligation == GrantDocumentObligation.Zorunlu &&
+            d.Status != GrantDocumentStatus.Onaylandi);
     }
 
     // ------------------------------------------------------------------ kilit
