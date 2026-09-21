@@ -48,6 +48,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
     private readonly IRepository<GrantConsultingLog, Guid> _logRepo;
     private readonly IRepository<GrantDisbursementTranche, Guid> _grantTrancheRepo;
     private readonly IRepository<GrantMilestone, Guid> _milestoneRepo;
+    private readonly IRepository<GrantDecision, Guid> _decisionRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
     private readonly IRepository<GrantEligibleCostItem, Guid> _costItemRepo;
@@ -70,6 +71,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         IRepository<GrantConsultingLog, Guid> logRepo,
         IRepository<GrantDisbursementTranche, Guid> grantTrancheRepo,
         IRepository<GrantMilestone, Guid> milestoneRepo,
+        IRepository<GrantDecision, Guid> decisionRepo,
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
         IRepository<GrantEligibleCostItem, Guid> costItemRepo,
@@ -91,6 +93,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         _logRepo = logRepo;
         _grantTrancheRepo = grantTrancheRepo;
         _milestoneRepo = milestoneRepo;
+        _decisionRepo = decisionRepo;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
         _costItemRepo = costItemRepo;
@@ -137,6 +140,13 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
             // Onaylanan destek girilmeden proje bütçesi kurulamaz.
             throw new BusinessException(PlatformDomainErrorCodes.GrantConversionNotApproved);
         }
+
+        // CNV-03: Tutar tek başına "kabul edildi" demek değildi. Hiçbir akış reddedilen
+        // başvurunun ApprovedAmount'unu temizlemediği için, tutarı önce girilmiş sonra
+        // REDDEDİLMİŞ bir başvuru projeye dönüşebiliyordu — durum makinesinde
+        // "ret → proje" gibi çelişik bir yol açıktı.
+        await EnsureNotRejectedAsync(application);
+
         if (input.BudgetLines.Count == 0)
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantConversionMappingMissing);
@@ -156,6 +166,13 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                 code: code,
                 description: $"{grant.Name} · {call.Period}",
                 totalBudget: input.BudgetLines.Sum(l => l.Amount),
+                // CNV-11: Kategori geçilmeyince proje "Diğer/Genel" ile doğuyordu; Finans
+                // Merkezi sekme setini kategoriden türettiği için donör ve kur köprüsü
+                // sekmeleri hiç basılmıyor, kullanıcı hibe projesinin hibe olduğunu
+                // sisteme ikinci kez elle söylemek zorunda kalıyordu.
+                categoryId: ProjectCategoryConsts.SystemIds.GrantProject,
+                // CNV-04: Başvuruda ZATEN yazılmış özet projede tekrar sorulmasın.
+                purpose: application.ProjectSummary,
                 startDate: input.StartDate,
                 endDate: input.EndDate,
                 overrideTenantId: application.TenantId);
@@ -238,6 +255,23 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         {
             return await _appRepo.FirstOrDefaultAsync(a => a.Id == id)
                    ?? throw new EntityNotFoundException(typeof(GrantApplication), id);
+        }
+    }
+
+    /// <summary>
+    /// Kurum kararı reddse dönüşümü durdurur. Karar HENÜZ girilmemişse engellenmez:
+    /// bugüne kadar tutarı girip kararı ayrı ekranda kaydetmeyen host akışı var ve
+    /// onu kilitlemek çalışan bir süreci bozardı. Engellenen yalnız AÇIKÇA ret.
+    /// </summary>
+    private async Task EnsureNotRejectedAsync(GrantApplication application)
+    {
+        using (_mtFilter.Disable())
+        {
+            var decision = await _decisionRepo.FirstOrDefaultAsync(d => d.GrantApplicationId == application.Id);
+            if (decision is { Outcome: GrantDecisionOutcome.Reddedildi })
+            {
+                throw new BusinessException(PlatformDomainErrorCodes.GrantConversionRejected);
+            }
         }
     }
 

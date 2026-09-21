@@ -167,6 +167,74 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
         await Should.ThrowAsync<BusinessException>(async () => await _conversion.ConvertAsync(Input(id)));
     }
 
+    /// <summary>
+    /// CNV-03: Tutar tek başına "kabul edildi" değildir. Hiçbir akış reddedilen başvurunun
+    /// onaylanan tutarını temizlemediği için, tutarı önce girilmiş sonra reddedilmiş bir
+    /// başvuru projeye dönüşebiliyordu — durum makinesinde "ret → proje" yolu açıktı.
+    /// </summary>
+    [Fact]
+    public async Task Reddedilmis_Basvuru_Donusturulemez()
+    {
+        var (id, tenantId) = await SetupAsync();
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (currentTenant.Change(tenantId))
+        {
+            var decisionRepo = GetRequiredService<IRepository<GrantDecision, Guid>>();
+            await decisionRepo.InsertAsync(
+                new GrantDecision(Guid.NewGuid(), tenantId, id,
+                    GrantDecisionOutcome.Reddedildi, DateTime.Now.Date, referenceNo: null,
+                    appealDeadline: null),
+                autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var ex = await Should.ThrowAsync<BusinessException>(
+            async () => await _conversion.ConvertAsync(Input(id)));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantConversionRejected);
+    }
+
+    /// <summary>
+    /// CNV-11 + CNV-04: Dönüşen proje "Hibe Projesi" kategorisiyle doğmalı — kategori
+    /// geçilmediğinde proje "Diğer/Genel" oluyor, Finans Merkezi sekme setini kategoriden
+    /// türettiği için donör ve kur köprüsü sekmeleri hiç basılmıyordu. Başvuruda yazılmış
+    /// özet de projeye taşınmalı; aksi hâlde kullanıcı aynı metni ikinci kez giriyor.
+    /// </summary>
+    [Fact]
+    public async Task Donusen_Proje_Hibe_Kategorisi_Ve_Ozeti_Alir()
+    {
+        var (id, tenantId) = await SetupAsync();
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (currentTenant.Change(tenantId))
+        {
+            var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+            var application = await appRepo.GetAsync(id);
+            application.SetProjectSummary("Akıllı üretim", "Üretim hattının dijitalleştirilmesi", 24);
+            await appRepo.UpdateAsync(application, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var result = await _conversion.ConvertAsync(Input(id));
+
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (currentTenant.Change(tenantId))
+        {
+            var projectRepo = GetRequiredService<IRepository<Project, Guid>>();
+            var project = await projectRepo.GetAsync(result.ProjectId);
+
+            project.CategoryId.ShouldBe(ProjectCategoryConsts.SystemIds.GrantProject,
+                "hibe projesi 'Diğer/Genel' ile doğarsa kur köprüsü sekmesi hiç görünmez");
+            project.Purpose.ShouldBe("Üretim hattının dijitalleştirilmesi",
+                "başvuruda yazılmış özet projede tekrar sorulmamalı");
+        }
+    }
+
     [Fact]
     public async Task Bos_Esleme_Reddedilir()
     {
