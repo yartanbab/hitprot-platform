@@ -70,5 +70,17 @@ public enum GrantNotificationTrigger
     /// 2d · Firma başvuruyu kuruma gönderdi. 🔴 HOST'a gider: huninin en kritik anıydı
     /// ve hiçbir bildirim üretmiyordu, danışman ancak listeyi elle açarsa görüyordu.
     /// </summary>
-    ApplicationSubmitted = 14
+    ApplicationSubmitted = 14,
+
+    /// <summary>
+    /// 2e · Başvuru projeye dönüştürüldü. Firmaya gider — sürecin en sevindirici
+    /// geçişi ("hibeniz projeye döndü") tamamen sessizdi.
+    /// </summary>
+    ConvertedToProject = 15,
+
+    /// <summary>
+    /// 🔴 NTF-02: Karar ONAYLI ama başvuru hâlâ projeye dönüştürülmedi. HOST'a gider:
+    /// dönüşüm danışman eylemidir. Para bağlanmış başvuru süresiz askıda kalabiliyordu.
+    /// </summary>
+    ConversionPending = 16
 }

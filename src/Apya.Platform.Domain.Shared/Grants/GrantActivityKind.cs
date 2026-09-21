@@ -28,5 +28,11 @@ public enum GrantActivityKind
     /// <summary>Tahsilat dilimi silindi.</summary>
     TrancheRemoved = 7,
     /// <summary>Dilim tahsil edildi olarak işaretlendi.</summary>
-    TranchePaid = 8
+    TranchePaid = 8,
+
+    /// <summary>
+    /// 🔴 NTF-02: Başvuru projeye dönüştürüldü. Dönüşüm bugüne kadar hiçbir iz
+    /// bırakmıyordu; zaman çizelgesi başvurunun projeye döndüğü anı hiç göstermiyordu.
+    /// </summary>
+    ConvertedToProject = 9
 }

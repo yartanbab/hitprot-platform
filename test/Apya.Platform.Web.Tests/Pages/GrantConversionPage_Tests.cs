@@ -320,4 +320,32 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
         result.TrancheCount.ShouldBe(0);
         result.BudgetLineCount.ShouldBe(1, "bütçe kalemleri her hâlükârda kurulur");
     }
+
+    /// <summary>
+    /// 🔴 NTF-02: Dönüşüm ne iz ne bildirim üretiyordu — sürecin en sevindirici
+    /// geçişi firma için tamamen sessizdi ve zaman çizelgesi başvurunun projeye
+    /// döndüğü anı hiç göstermiyordu. İz kaydı bildirimden ÖNCE yazılır: host
+    /// şablonu kapatsa bile akış görünür kalmalı.
+    /// </summary>
+    [Fact]
+    public async Task Donusum_Surec_Izine_Yazilir()
+    {
+        var (id, _) = await SetupAsync();
+
+        var result = await _conversion.ConvertAsync(Input(id));
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        var activityRepo = GetRequiredService<IRepository<GrantApplicationActivity, Guid>>();
+        var mtFilter = GetRequiredService<Volo.Abp.Data.IDataFilter<IMultiTenant>>();
+
+        using (mtFilter.Disable())
+        {
+            var kayit = (await activityRepo.GetListAsync(a => a.GrantApplicationId == id))
+                .SingleOrDefault(a => a.Kind == GrantActivityKind.ConvertedToProject);
+
+            kayit.ShouldNotBeNull("dönüşüm süreç izine yazılmalı");
+            kayit!.Context.ShouldContain(result.ProjectCode, Case.Insensitive);
+        }
+    }
 }

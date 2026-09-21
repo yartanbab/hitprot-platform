@@ -9,7 +9,8 @@ $(function () {
     var triggerKeys = ['RecommendationSent', 'DocumentDeadlineNear', 'DocumentRevisionRequested',
                        'ApplicationStageChanged', 'DecisionIssued', 'ReportDeadlineNear', 'CallPublished',
                        'InterestAnswered', 'InterestReceived', 'CallClosed', 'MeetingProposed', 'MeetingAnswered',
-                       'IdeaLinked', 'IdeaInvited', 'ApplicationSubmitted'];
+                       'IdeaLinked', 'IdeaInvited', 'ApplicationSubmitted',
+                       'ConvertedToProject', 'ConversionPending'];
 
     var model = null;
     var selectedId = null;
