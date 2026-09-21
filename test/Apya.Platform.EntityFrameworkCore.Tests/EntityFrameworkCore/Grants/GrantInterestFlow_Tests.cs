@@ -331,6 +331,34 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         }
     }
 
+    /// <summary>
+    /// 🔴 LIF-04: Kiracıya dönük katalog sorguları yalnız <c>Acik</c> okuyor ama uç noktanın
+    /// KENDİSİNDE kapı yoktu — çağrı Id'si bilinen bir taslağa ya da kapanmış çağrıya API'den
+    /// talep bırakılabiliyordu. Ekranın zaten yaptığı süzme sunucuya taşındı.
+    /// </summary>
+    [Theory]
+    [InlineData(GrantCallStatus.Taslak)]
+    [InlineData(GrantCallStatus.Kapandi)]
+    [InlineData(GrantCallStatus.Planlandi)]
+    public async Task Acik_olmayan_cagriya_ilgi_bildirilemez(GrantCallStatus status)
+    {
+        var call = await CreateHostCallAsync("Kapalı Kapı Programı " + Guid.NewGuid().ToString("N")[..6]);
+        call.Status = status;
+        await _callRepository.UpdateAsync(call, autoSave: true);
+
+        var tenantId = await CreateTenantAsync("Kapı Firması " + Guid.NewGuid().ToString("N")[..6]);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            (await Should.ThrowAsync<BusinessException>(
+                    () => _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+                    {
+                        GrantCallId = call.Id, Note = "Proje fikri", ProblemStatement = "Sorun"
+                    })))
+                .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestCallNotOpen);
+        }
+    }
+
     [Fact]
     public async Task Uygun_bulunmayan_talepten_sonra_yeniden_ilgi_bildirilebilir()
     {
