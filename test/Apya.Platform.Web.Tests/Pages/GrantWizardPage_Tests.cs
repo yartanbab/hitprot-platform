@@ -295,6 +295,54 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
         kayit!.Context.ShouldNotBeNullOrWhiteSpace("iz, evrak durumunu taşımalı");
     }
 
+    /// <summary>
+    /// 🔴 LIF-05: Kapanmış çağrıya gönderim kapısı. Kapanış zinciri firmaya
+    /// "çağrı kapandı, başvurunuz gönderilmeden kaldı" bildirimini ZATEN gönderiyor;
+    /// sonrasında gönderime izin vermek o bildirimi yalanlardı.
+    /// </summary>
+    [Fact]
+    public async Task Kapanmis_Cagriya_Basvuru_Gonderilemez()
+    {
+        var (id, _) = await CreateApplicationAsync();
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+            var callRepo = GetRequiredService<IRepository<GrantCall, Guid>>();
+            var application = await appRepo.GetAsync(id);
+            var call = await callRepo.GetAsync(application.GrantCallId);
+            call.Status = GrantCallStatus.Kapandi;
+            await callRepo.UpdateAsync(call, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var ex = await Should.ThrowAsync<BusinessException>(async () => await _wizard.SubmitAsync(id));
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantApplicationCallClosed);
+    }
+
+    /// <summary>
+    /// 🔴 LIF-05: <c>HandedOver</c> enum'da tanımlıydı, ekranda etiketi vardı ama
+    /// kod tabanında HİÇBİR yerde yazılmıyordu — süreç akışı devretmeyi hiç göstermiyordu.
+    /// </summary>
+    [Fact]
+    public async Task Devretme_Surec_Izine_Yazilir()
+    {
+        var (id, _) = await CreateApplicationAsync();
+
+        await _wizard.HandOverAsync(id);
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        var repo = GetRequiredService<IRepository<GrantApplicationActivity, Guid>>();
+
+        var kayit = (await repo.GetListAsync(a => a.GrantApplicationId == id))
+            .SingleOrDefault(a => a.Kind == GrantActivityKind.HandedOver);
+
+        kayit.ShouldNotBeNull("devretme süreç izine yazılmalı");
+        kayit!.Context.ShouldNotBeNullOrWhiteSpace("iz, sıranın kime geçtiğini taşımalı");
+    }
+
     [Fact]
     public async Task Mesaj_Gonderilir_Ve_Listede_Doner()
     {

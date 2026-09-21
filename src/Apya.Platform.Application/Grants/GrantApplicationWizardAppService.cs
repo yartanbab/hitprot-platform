@@ -168,9 +168,17 @@ public class GrantApplicationWizardAppService : ApplicationService, IGrantApplic
 
         // Sıra karşı tarafa geçer. Devreden kişinin kilitleri bırakılır ki karşı taraf
         // devralma isteği göndermek zorunda kalmasın.
-        application.HandOverTo(
-            ViewerRole == GrantPartyRole.Firma ? GrantPartyRole.Danisman : GrantPartyRole.Firma);
+        var target = ViewerRole == GrantPartyRole.Firma ? GrantPartyRole.Danisman : GrantPartyRole.Firma;
+        application.HandOverTo(target);
         await _appRepo.UpdateAsync(application, autoSave: true);
+
+        // 🔴 LIF-05: `GrantActivityKind.HandedOver` enum'da tanımlıydı, ekranda etiketi
+        // vardı ama kod tabanında HİÇBİR yerde yazılmıyordu — süreç akışı devretmeyi
+        // hiç göstermiyordu. Hedef taraf bağlama yazılır: "kime devretti" akıştaki tek
+        // ayırt edici bilgidir.
+        await _activityRecorder.RecordAsync(
+            application.TenantId, application.Id, GrantActivityKind.HandedOver,
+            L[$"Grants:Party:{target}"].Value);
 
         var mine = await _lockRepo.GetListAsync(
             l => l.GrantApplicationId == application.Id && l.OwnerUserId == ViewerUserId);
@@ -185,6 +193,17 @@ public class GrantApplicationWizardAppService : ApplicationService, IGrantApplic
     public async Task<GrantApplicationWizardDto> SubmitAsync(Guid applicationId)
     {
         var application = await GetEditableApplicationAsync(applicationId);
+
+        // 🔴 LIF-05: Kapanmış çağrıya gönderim kapısı. Kapanış zinciri (18b) firmaya
+        // "çağrı kapandı, başvurunuz gönderilmeden kaldı" bildirimini ZATEN gönderiyor;
+        // sonrasında gönderime izin vermek o bildirimi yalanlardı.
+        //
+        // Kapı yalnız ÇAĞRI DURUMUNA bakar — eksik evraka ya da tamamlanma yüzdesine
+        // DEĞİL: ekran bunları bilerek uyarı olarak gösterip düğmeyi açık bırakıyor
+        // (bkz. Wizard.js paintSubmit), sunucuda bloklamak ürün kararını sessizce
+        // değiştirirdi. Eksik evrak sayısı gönderim bildiriminde danışmana taşınıyor.
+        await EnsureCallOpenAsync(application);
+
         application.Submit(Clock.Now);
         await _appRepo.UpdateAsync(application, autoSave: true);
 
@@ -210,6 +229,25 @@ public class GrantApplicationWizardAppService : ApplicationService, IGrantApplic
     /// başvuru yine gönderilmiş olur. Aktivite kaydı da bildirimden önce yazılır ki
     /// bildirim gitmese bile iz kalsın.</para>
     /// </summary>
+    /// <summary>
+    /// Başvurunun bağlı olduğu çağrı hâlâ gönderim kabul ediyor mu?
+    /// Çağrı okuması host kataloğundan yapılır; kiracı bağlamında çalışırken
+    /// filtre kapatılmazsa host satırı görünmez ve kapı sessizce açık kalırdı.
+    /// </summary>
+    private async Task EnsureCallOpenAsync(GrantApplication application)
+    {
+        GrantCall? call;
+        using (_mtFilter.Disable())
+        {
+            call = await _callRepo.FirstOrDefaultAsync(c => c.Id == application.GrantCallId);
+        }
+
+        if (call is { Status: GrantCallStatus.Kapandi })
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantApplicationCallClosed);
+        }
+    }
+
     private async Task AnnounceSubmissionAsync(GrantApplication application)
     {
         var missing = await CountMissingRequiredDocumentsAsync(application.Id);
