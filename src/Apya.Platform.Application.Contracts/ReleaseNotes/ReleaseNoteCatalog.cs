@@ -28,7 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.21",
             date: "21 Eylül 2026",
-            title: "Dosyalarınıza yalnız kurumunuz erişiyor; fatura kesme ve tahsilat ayrı yetki istiyor",
+            title: "Dosyalarınıza yalnız kurumunuz erişiyor; fatura kesme ve tahsilat ayrı yetki istiyor; " +
+                   "geciken görevler ve projeye dönüşen hibeler artık bildiriliyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Yüklediğiniz dosyalara yalnız kurumunuz erişiyor",
@@ -49,7 +50,35 @@ public static class ReleaseNoteCatalog
                 "yetkisiyle yapılamıyor. " +
                 "Ekibinizde yalnız görüntüleme yetkisi olduğu hâlde fatura giren bir kullanıcı varsa, kurum " +
                 "yöneticiniz o kullanıcının rolüne ilgili fatura yetkisini eklediğinde işlem kaldığı yerden " +
-                "devam eder.")
+                "devam eder."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bitiş tarihi geçen görevler artık bildiriliyor",
+                "Şimdiye kadar yalnız 'bitiş tarihi yaklaşıyor' uyarısı vardı; tarih geçtiğinde hiçbir " +
+                "bildirim çıkmıyordu. Bundan sonra bitiş tarihi geçmiş ve hâlâ kapanmamış bir göreviniz " +
+                "varsa, göreve atanan kişiye bildirim gidiyor. " +
+                "Bildirim görev ve tarih başına bir kez gönderilir; aynı gecikme için tekrar tekrar " +
+                "hatırlatma almazsınız. " +
+                "Görev bildirimlerini istemiyorsanız profil menüsündeki bildirim tercihlerinizden " +
+                "kapatabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bitiş tarihi ertelenen görev yeniden hatırlatılıyor",
+                "Bir görevin bitiş tarihi yaklaştığında uyarı alıyor, sonra tarihi ileri attığınızda yeni " +
+                "tarih için hiçbir hatırlatma gelmiyordu — uyarı ömürde bir kez gönderiliyordu. " +
+                "Artık bitiş tarihini değiştirdiğinizde hatırlatma yeniden devreye giriyor ve yeni tarih " +
+                "yaklaştığında uyarıyı tekrar alıyorsunuz. " +
+                "Görevin yalnız başlığını ya da başka bir alanını düzenlemek hatırlatmayı tekrarlatmaz; " +
+                "yalnız bitiş tarihi değiştiğinde sıfırlanır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibeniz projeye dönüştüğünde bildirim alıyorsunuz",
+                "Onaylanan hibe başvurunuz danışmanınız tarafından projeye dönüştürüldüğünde artık bildirim " +
+                "gönderiliyor; bildirimden doğrudan yeni projenizin ekranına geçebiliyorsunuz. " +
+                "Bütçe kalemleri, tahsilat planı ve kilometre taşları zaten projeye aktarılıyordu, ancak " +
+                "bunun gerçekleştiğini ekranı kendiniz açmadan öğrenemiyordunuz. " +
+                "Dönüşüm ayrıca başvurunun süreç akışına da işleniyor; hibe başvurunuzun zaman çizelgesinde " +
+                "projeye dönüştüğü anı görebilirsiniz.")
         ),
 
         new ReleaseNote(
