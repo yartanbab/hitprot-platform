@@ -30,6 +30,7 @@ public class IncomeEntryAppService :
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly ProjectBudgetManager _budgetManager;
     private readonly FxLedgerStamper _fxStamper;
+    private readonly CashMovementAmountResolver _cashAmountResolver;
 
     public IncomeEntryAppService(
         IRepository<IncomeEntry, Guid> repository,
@@ -38,7 +39,8 @@ public class IncomeEntryAppService :
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<Project, Guid> projectRepository,
         ProjectBudgetManager budgetManager,
-        FxLedgerStamper fxStamper)
+        FxLedgerStamper fxStamper,
+        CashMovementAmountResolver cashAmountResolver)
         : base(repository)
     {
         _cashMovementRepository = cashMovementRepository;
@@ -47,6 +49,7 @@ public class IncomeEntryAppService :
         _projectRepository = projectRepository;
         _budgetManager = budgetManager;
         _fxStamper = fxStamper;
+        _cashAmountResolver = cashAmountResolver;
         GetPolicyName = PlatformPermissions.Incomes.Default;
         GetListPolicyName = PlatformPermissions.Incomes.Default;
         CreatePolicyName = PlatformPermissions.Incomes.Create;
@@ -141,13 +144,18 @@ public class IncomeEntryAppService :
 
         if (input.CashAccountId.HasValue)
         {
+            // FIN-01: Kasa hareketinde para birimi alanı yok; tutar kasanın para biriminde
+            // sayılır. Kasasız gelirde çözümleme HİÇ çalışmaz — kur aranmaz, kilit doğmaz.
+            var cashAmount = await _cashAmountResolver.ResolveAsync(
+                input.CashAccountId.Value, input.Currency, input.Amount, input.IncomeDate);
+
             await _cashMovementRepository.InsertAsync(new CashMovement(
                 GuidGenerator.Create(),
                 input.CashAccountId.Value,
                 CashMovementDirection.In,
-                input.Amount,
+                cashAmount.Amount,
                 input.IncomeDate,
-                "Gelir: " + input.Title,
+                "Gelir: " + input.Title + cashAmount.DescribeRate(input.Currency),
                 CashMovementSource.Income,
                 dto.Id,
                 CurrentTenant.Id), autoSave: true);
@@ -168,19 +176,23 @@ public class IncomeEntryAppService :
 
         if (input.CashAccountId.HasValue)
         {
+            var cashAmount = await _cashAmountResolver.ResolveAsync(
+                input.CashAccountId.Value, input.Currency, input.Amount, input.IncomeDate);
+            var description = "Gelir: " + input.Title + cashAmount.DescribeRate(input.Currency);
+
             if (linked == null)
             {
                 await _cashMovementRepository.InsertAsync(new CashMovement(
                     GuidGenerator.Create(), input.CashAccountId.Value, CashMovementDirection.In,
-                    input.Amount, input.IncomeDate, "Gelir: " + input.Title,
+                    cashAmount.Amount, input.IncomeDate, description,
                     CashMovementSource.Income, id, CurrentTenant.Id), autoSave: true);
             }
             else
             {
                 linked.CashAccountId = input.CashAccountId.Value;
-                linked.SetAmount(input.Amount);
+                linked.SetAmount(cashAmount.Amount);
                 linked.MovementDate = input.IncomeDate;
-                linked.Description = "Gelir: " + input.Title;
+                linked.Description = description;
                 await _cashMovementRepository.UpdateAsync(linked, autoSave: true);
             }
         }

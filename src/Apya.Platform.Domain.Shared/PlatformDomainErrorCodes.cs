@@ -56,6 +56,7 @@ public static class PlatformDomainErrorCodes
     public const string CashMovementTransferSameAccount = "Platform:CashMovement:TransferSameAccount";
     public const string CashMovementTransferAccountInactive = "Platform:CashMovement:TransferAccountInactive";
     public const string CashMovementTransferRateMissing = "Platform:CashMovement:TransferRateMissing";
+    public const string CashMovementSourceRateMissing = "Platform:CashMovement:SourceRateMissing";
 
     // --- Gider (Expense) Modülü — APYA-135 ---
     public const string ExpenseTitleRequired = "Platform:Expense:TitleRequired";

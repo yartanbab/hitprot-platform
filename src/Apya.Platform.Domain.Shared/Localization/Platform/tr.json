@@ -1792,6 +1792,7 @@
         "Platform:CashMovement:TransferSameAccount": "Gönderen ve alıcı kasa aynı olamaz.",
         "Platform:CashMovement:TransferAccountInactive": "Pasif bir kasaya/kasadan transfer yapılamaz.",
         "Platform:CashMovement:TransferRateMissing": "Bu iki para birimi arasında güncel bir döviz kuru bulunamadı. Lütfen Kur Değerleme ekranından ilgili kuru tanımlayın.",
+        "Platform:CashMovement:SourceRateMissing": "Kaydın para birimi ile seçilen kasanın para birimi farklı ve bu tarih için bir döviz kuru bulunamadı. Kurlar ekranından ilgili kuru ekleyip tekrar deneyin ya da kaydı kasanın para biriminde girin.",
         "Platform:Expense:TitleRequired": "Gider başlığı boş bırakılamaz.",
         "Platform:Expense:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
         "Platform:Expense:AmountInvalid": "Geçersiz tutar. Gider tutarı sıfırdan büyük olmalıdır.",
