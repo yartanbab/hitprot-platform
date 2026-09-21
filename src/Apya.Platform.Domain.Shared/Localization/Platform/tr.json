@@ -1169,6 +1169,7 @@
         "Grants:DetailHost:Activity:TrancheAmountChanged": "dilim tutarını değiştirdi: {0}",
         "Grants:DetailHost:Activity:TrancheRemoved": "tahsilat dilimini sildi: {0}",
         "Grants:DetailHost:Activity:TranchePaid": "dilimi tahsil edildi olarak işaretledi: {0}",
+        "Grants:DetailHost:Activity:ConvertedToProject": "başvuruyu projeye dönüştürdü: {0}",
         "Grants:DetailHost:MessagePlaceholder": "Firmaya bir not yazın…",
         "Grants:DetailHost:Send": "Gönder",
         "Grants:DetailHost:Tranches": "Tahsilat dilimleri",

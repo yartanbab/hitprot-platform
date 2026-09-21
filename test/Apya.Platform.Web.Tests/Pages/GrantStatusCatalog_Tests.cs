@@ -197,4 +197,33 @@ public class GrantStatusCatalog_Tests
             }
         }
     }
+
+    /// <summary>
+    /// 🔴 Akış metni <c>l('Grants:DetailHost:Activity:' + keys[kind])</c> ile kurulur.
+    /// Ton sözlüğü Build() sırasında patlayarak kendini korur ama YERELLEŞTİRME
+    /// anahtarını hiçbir şey korumuyordu: tonu yazılıp etiketi unutulan bir olay
+    /// türü akışta HAM ANAHTAR olarak görünürdü.
+    /// </summary>
+    [Fact]
+    public void Her_akis_olayinin_yerellestirme_etiketi_var()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        string? trPath = null;
+        while (dir != null && trPath == null)
+        {
+            var candidate = Path.Combine(dir.FullName,
+                "src", "Apya.Platform.Domain.Shared", "Localization", "Platform", "tr.json");
+            if (File.Exists(candidate)) { trPath = candidate; }
+            dir = dir.Parent;
+        }
+
+        trPath.ShouldNotBeNull("tr.json bulunamadı");
+        var tr = File.ReadAllText(trPath!);
+
+        foreach (var kind in Enum.GetNames<Apya.Platform.Grants.GrantActivityKind>())
+        {
+            tr.ShouldContain($"\"Grants:DetailHost:Activity:{kind}\"", Case.Sensitive,
+                $"'{kind}' olayının akış etiketi yok; akışta ham anahtar görünür.");
+        }
+    }
 }
