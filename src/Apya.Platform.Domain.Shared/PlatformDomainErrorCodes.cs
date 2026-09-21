@@ -104,6 +104,9 @@ public static class PlatformDomainErrorCodes
     public const string GrantWizardStepInvalid = "Platform:Grant:WizardStepInvalid";
     public const string GrantWizardDurationInvalid = "Platform:Grant:WizardDurationInvalid";
     public const string GrantApplicationAlreadySubmitted = "Platform:Grant:ApplicationAlreadySubmitted";
+
+    /// <summary>🔴 LIF-05: Çağrı KAPANMIŞ; kapanış zinciri firmaya zaten haber verdi.</summary>
+    public const string GrantApplicationCallClosed = "Platform:Grant:ApplicationCallClosed";
     public const string GrantFieldLockedByOther = "Platform:Grant:FieldLockedByOther";
     public const string GrantApplicationLocked = "Platform:Grant:ApplicationLocked";
 
