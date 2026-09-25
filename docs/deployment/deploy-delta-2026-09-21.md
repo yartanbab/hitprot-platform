@@ -1,6 +1,20 @@
-# Deploy delta — 2026-09-21 (`f7919944` → `1333048b`)
+# Deploy delta — 2026-09-21 (`f7919944` → `c967be48`)
 
-**Paket 2026‑09‑25'te `1333048b`'den kesildi:** `Apya-Yayin-1333048b.zip` + `Apya-DbMigrator-1333048b.zip`.
+**Paket 2026‑09‑25'te `c967be48`'den kesildi** = main `1333048b` + tek anahtarlık yerelleştirme
+düzeltmesi (`DisplayName:NewPassword`; eksikliği `ValidationLocalization_Tests`'i main'de kırmızı
+bırakıyordu, kullanıcıya görünen etkisi yok).
+
+| Dosya | Boyut | Girdi |
+|---|---|---|
+| `Apya-Yayin-c967be48.zip` | 121.606.882 bayt | 4.209 |
+| `Apya-DbMigrator-c967be48.zip` | 56.259.193 bayt | 454 |
+
+Testler paket commit'inde: Domain 372 · Application 269 · EF 469 · Web 637 (14 öbek, listeyle
+birebir) · vitest 801 = **2548 / 0**. ZIP'ten ölçüldü: ters slash 0, iki pakette de runtime,
+sır/pfx yok, `web.config` kökte ve `hostingModel="OutOfProcess"` (betiğin InProcess uyarısı
+yorum satırına takılıyor), `+c967be48` Web.dll'de, üç migration iki sağlayıcıda iki pakette,
+2026.09.21 notunun son maddesi DLL'de, `NotificationTemplates.js` yeni tetikleyiciyi taşıyor.
+Vite demeti `npm ci` sonrası yeniden üretildi, commit'lenmiş demetle bit-bit aynı.
 
 Canlıda koşan kod **`f7919944`** = `d8a01af6` + şifre belirleme hotfix'i (2026‑09‑17 hotfix paketi).
 2026‑09‑25'te beş dosyanın blob'uyla ölçüldü:
