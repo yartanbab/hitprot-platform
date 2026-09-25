@@ -9,7 +9,7 @@
 # Handoff: Apya.Platform — Kapsamlı Arayüz Redesign'ı
 
 ## Genel Bakış
-Bu paket, Apya.Platform (Hitprot) ERP/AI platformunun **tüm ekranları için yeni bir arayüz tasarımını** içerir: modern, yoğunluk-ayarlı (density), light + dark temalı, tutarlı bir tasarım sistemi. Amaç, mevcut ABP tabanlı kod tabanının görünümünü bu tasarıma göre yenilemektir. Paket ayrıca aynı token sistemini paylaşan ayrı bir **mobil refakatçi uygulaması** tasarımı (`Apya Mobil.dc.html`) içerir — bkz. "Mobil Uygulama" bölümü.
+Bu paket, APYA Platform ERP/AI platformunun **tüm ekranları için yeni bir arayüz tasarımını** içerir: modern, yoğunluk-ayarlı (density), light + dark temalı, tutarlı bir tasarım sistemi. Amaç, mevcut ABP tabanlı kod tabanının görünümünü bu tasarıma göre yenilemektir. Paket ayrıca aynı token sistemini paylaşan ayrı bir **mobil refakatçi uygulaması** tasarımı (`Apya Mobil.dc.html`) içerir — bkz. "Mobil Uygulama" bölümü.
 
 Kapsanan ekranlar: Genel Bakış (Dashboard), Projeler, Hibeler, Görevler (tablo + detay drawer), Kanban, Takvim, Finans Hub, Faturalar, Cariler, Kasa & Banka, Proje Bütçesi, Cari Ekstre, Mizan, Kur Değerleme, Dokümanlar, Form Oluşturucu, Webhooks, AI Panosu, Prompt'lar, Workflow'lar, AI Kullanım, Kullanıcılar, Roller, Tenant'lar, Ayarlar, Tasarım Sistemi.
 
