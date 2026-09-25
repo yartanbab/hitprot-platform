@@ -1,18 +1,43 @@
-# Deploy delta — 2026-09-21 (`d8a01af6` → `2c7b3841`)
+# Deploy delta — 2026-09-21 (`f7919944` → `c967be48`)
 
-Canlıda koşan kod, kayıtlara göre **`d8a01af6`** (2026‑09‑14 gece paketi `337eaf55`; en son
-2026‑09‑17'de beş dosya blob'uyla ölçüldü). Bu belge onun üzerine gelecek **61 commit**'i anlatır.
+**Paket 2026‑09‑25'te `c967be48`'den kesildi** = main `1333048b` + tek anahtarlık yerelleştirme
+düzeltmesi (`DisplayName:NewPassword`; eksikliği `ValidationLocalization_Tests`'i main'de kırmızı
+bırakıyordu, kullanıcıya görünen etkisi yok).
+
+| Dosya | Boyut | Girdi |
+|---|---|---|
+| `Apya-Yayin-c967be48.zip` | 121.606.882 bayt | 4.209 |
+| `Apya-DbMigrator-c967be48.zip` | 56.259.193 bayt | 454 |
+
+Testler paket commit'inde: Domain 372 · Application 269 · EF 469 · Web 637 (14 öbek, listeyle
+birebir) · vitest 801 = **2548 / 0**. ZIP'ten ölçüldü: ters slash 0, iki pakette de runtime,
+sır/pfx yok, `web.config` kökte ve `hostingModel="OutOfProcess"` (betiğin InProcess uyarısı
+yorum satırına takılıyor), `+c967be48` Web.dll'de, üç migration iki sağlayıcıda iki pakette,
+2026.09.21 notunun son maddesi DLL'de, `NotificationTemplates.js` yeni tetikleyiciyi taşıyor.
+Vite demeti `npm ci` sonrası yeniden üretildi, commit'lenmiş demetle bit-bit aynı.
+
+Canlıda koşan kod **`f7919944`** = `d8a01af6` + şifre belirleme hotfix'i (2026‑09‑17 hotfix paketi).
+2026‑09‑25'te beş dosyanın blob'uyla ölçüldü:
+
+| Canlıdaki dosya | Canlı blob | `d8a01af6` | `f7919944` | `1333048b` |
+|---|---|---|---|---|
+| `Pages/TenantManagement/Tenants/Index.js` | `9b4d6eba` | `b9601ec3` | **`9b4d6eba`** | `9b4d6eba` |
+| `Pages/Grants/Detail.js` | `6035efaa` | `6035efaa` | **`6035efaa`** | `e3312aab` |
+| `Pages/Grants/NotificationTemplates.js` | `751e192f` | `751e192f` | **`751e192f`** | `da29af1a` |
+| `css/apya-shell.css` | `ce7baefa` | `ce7baefa` | **`ce7baefa`** | `8d304515` |
+| `Pages/Grants/Ideas.js` | 302 (yok) | yok | **yok** | `4c15c6c0` |
+
+Bu belge `d8a01af6` üzerine gelen **67 commit**'i anlatır. Hotfix'in içeriği main'e #425 olarak
+girdi, yani yeni paket şifre belirlemeyi **geri almaz**.
 
 > Belge ilk yazıldığında taban `ebe3ecd0`'daydı (50 commit). Aynı gün denetimin S1 ve S2 turları
-> eklendi: bildirim paketi (#461–#464), regresyon hotfix'i (#465) ve yaşam döngüsü kapıları
-> (#466–#469). **Hiçbiri migration getirmiyor**, şema tablosu değişmedi.
+> eklendi: bildirim paketi (#461–#464), regresyon hotfix'i (#465), yaşam döngüsü kapıları
+> (#466–#469), dönüşüm doğruluğu (#471–#472) ve bildirim alıcıları (#473–#475).
+> **Hiçbiri migration getirmiyor**, şema tablosu değişmedi.
 
-> 🔴 **Taban YENİDEN ÖLÇÜLMELİ.** Bu belge depo içinden yazıldı; canlı sürüm doğrulanamadı.
-> Paketlemeden önce `deploy-delta-2026-09-17.md`'deki blob ölçüm yöntemini tekrarlayın —
-> aradan dört gün ve iki hazır paket geçti.
-
-> 🔴 **Hazır `1db6556d` paketi ARTIK ESKİ.** O paket bu 50 commit'in ilk 12'sini içeriyordu.
-> Yüklenirse sonraki 38 commit'i (iki P0 güvenlik düzeltmesi dâhil) **içermez**.
+> 🔴 **Hazır `1db6556d` paketi ARTIK ESKİ — YÜKLEMEYİN.** O paket bu 67 commit'in yalnız ilk
+> 12'sini içeriyordu ve şifre belirleme hotfix'inden ÖNCE kesildi: yüklenirse hotfix'i ezer,
+> iki P0 güvenlik düzeltmesi de gelmez.
 
 ---
 
@@ -62,6 +87,12 @@ ters aralıklı program şartının reddi.
 "Hibe Projesi" kategorisiyle doğuyor (kur köprüsü sekmesi artık görünür) · başvuru özeti projeye
 taşınıyor · eşleşmeyen bütçe kalemi sessizce "Diğer"e düşmüyor.
 
+**Dönüşüm doğruluğu (#471–#472, host eylemi):** proje bütçesi istemcinin gönderdiği tutardan değil
+başvurunun kayıtlı kalemlerinden kuruluyor · başvuruda karşılığı olmayan kalem dönüşümü durduruyor ·
+tamamlanmış kilometre taşı **kapalı** görev olarak açılıyor · bütçe kalemi kodu sıra numarası
+(`01`, `02`, …) — aynı kategoriye düşen iki kalem artık çakışmıyor · ikinci dönüşüm hiçbir şey
+yazmadan reddediliyor · bütçe uyarısının alıcısı kalmadıysa log'a yazılıyor.
+
 **Yaşam döngüsü kapıları (#466–#468):** son başvuru tarihi geçen çağrı **kendiliğinden kapanıyor**
 ve var olan kapanış zinciri koşuyor (tur başına en çok 20 çağrı — birikmiş devir kutuları
 doldurmasın) · açık olmayan çağrıya API'den ilgi bildirilemiyor · kapanmış çağrıya başvuru
@@ -79,10 +110,14 @@ onaylanmış ama dönüştürülmemiş başvuru için host'a 3/7/14 gün hatırl
 
 **Görev bildirimleri (#462):** bitiş tarihi geçen görev artık bildiriliyor (görev+vade başına bir
 kez; ilk turda en fazla 30 gün geriye bakılır) · bitiş tarihi ertelenen görev yeni vadesi için
-yeniden hatırlatılıyor.
+yeniden hatırlatılıyor. **#473:** vade uyarıları atananla birlikte görevi açana da gidiyor —
+atanmamış görev artık sessiz kalmıyor; ikisi aynı kişiyse tek bildirim.
 
-> 🔴 **Yeni hibe tetikleyicileri DbMigrator ister.** `ApplicationSubmitted`, `ConvertedToProject`
-> ve `ConversionPending` şablonları tohumlayıcı tarafından eklenir (yalnız EKSİK tetikleyiciler
+**Gönderim hatırlatması (#474):** evrakı tamam ama henüz gönderilmemiş başvuru da son tarihe
+7/3/1 gün kala hatırlatılıyor; bildirim sırası kimdeyse ona (firma ya da danışman) gidiyor.
+
+> 🔴 **Yeni hibe tetikleyicileri DbMigrator ister.** `ApplicationSubmitted`, `ConvertedToProject`,
+> `ConversionPending` ve `SubmissionDeadlineNear` şablonları tohumlayıcı tarafından eklenir (yalnız EKSİK tetikleyiciler
 > eklenir, mevcut şablonlar EZİLMEZ). DbMigrator zaten üç migration için gerekli, ek adım doğmuyor.
 > Görev bildirimleri tohumlama gerektirmez.
 
@@ -92,7 +127,8 @@ Açılır liste veri kaynakları ve zincirli alan (tur 16) · koşullu alanlar (
 
 ### Diğer
 
-Host, müşteri kullanıcısının şifresini eski şifreyi bilmeden belirleyebiliyor · şifrenin baş/son
+Host, müşteri kullanıcısının şifresini eski şifreyi bilmeden belirleyebiliyor (canlıda zaten var —
+`f7919944`) · şifrenin baş/son
 boşluğu kırpılıyor · proje silinince görevleri de siliniyor (yetim görev kalmıyor) · Genel Bakış
 başlık şeridi 102px → 53px · dar panelde Belge sütunu ezilmesi · aşama şablonu düzenleyicisi ·
 tema düzeltmeleri · tek seferlik indeks bakım betiği.
@@ -182,8 +218,9 @@ pfx · secrets · `App_Data/uploads` · DataProtection‑Keys.
 7. Hibe ekranları açılmalı: `/Grants/DetailHost` · `/Grants/Ideas` · `/Grants/Interests` ·
    kiracı akışındaki katalog. (Bu sayfalar `_StatusMap` sözlüğünü basıyor; sözlükte eksik bir
    enum değeri **500** verir — bu turda bir kez yaşandı ve #465 ile kapatıldı.)
-8. `/Grants/NotificationTemplates` — üç yeni tetikleyici listede görünmeli ve adları **okunur**
-   olmalı ("Başvuru gönderildi" · "Projeye dönüştü" · "Projeye dönüşüm bekliyor").
+8. `/Grants/NotificationTemplates` — dört yeni tetikleyici listede görünmeli ve adları **okunur**
+   olmalı ("Başvuru gönderildi" · "Projeye dönüştü" · "Projeye dönüşüm bekliyor" ·
+   "Gönderim son tarihi yaklaşıyor").
    Ham anahtar (`Grants:Notify:Trigger:...`) görünüyorsa tohumlama koşmamıştır.
 9. Ertesi gün: tarihi geçmiş "Açık" çağrı kalmamalı (madde 5'teki ilk sorgu azalarak sıfıra
    inmeli); worker log'unda `"otomatik kapatıldı"` satırları görünmeli.
