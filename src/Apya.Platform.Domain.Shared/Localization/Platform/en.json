@@ -2588,6 +2588,7 @@
     "DisplayName:MovementId": "Cash movement",
     "DisplayName:Name": "Name",
     "DisplayName:NewAmount": "New amount",
+    "DisplayName:NewPassword": "New password",
     "DisplayName:Note": "Note",
     "DisplayName:EstimatedBudget": "Estimated budget",
     "DisplayName:PartnerName": "Partner organisation",
