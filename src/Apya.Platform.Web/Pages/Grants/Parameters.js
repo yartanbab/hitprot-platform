@@ -17,6 +17,8 @@ $(function () {
     var previewTimer = null;
     var loading = true;
     var lastDraftCount = 0;
+    var lastMissing = [];
+    var canCreateCall = abp.auth.isGranted('Platform.Grants.Create');
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function num(sel) {
@@ -380,15 +382,18 @@ $(function () {
         CriteriaTags: { tab: 'eligibility', rule: 'sector' }
     };
 
-    $('#ParamMissingText').on('click', '[data-missing-field]', function () {
-        var target = MISSING_TARGETS[$(this).data('missing-field')];
+    // Alt çubuktaki ad da "Eksik Alana Git" düğmesi de buraya gelir.
+    function jumpToMissing(key) {
+        var target = MISSING_TARGETS[key];
         showTab(target.tab);
         if (target.rule) { openRule(target.rule); return; }
         // Alt çubuk yapışkan: odak kaydırması alanı çubuğun altına itmesin, ortaya kaydırılır.
         var el = $(target.field)[0];
         el.focus({ preventScroll: true });
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
+    }
+
+    $('#ParamMissingText').on('click', '[data-missing-field]', function () { jumpToMissing($(this).data('missing-field')); });
 
     // ---------- Çelişki: resmî metin ↔ program değeri ----------
     function paintConflicts(s) {
@@ -699,6 +704,9 @@ $(function () {
         $('#ParamCompletionBar').css('width', (s.completionPercent || 0) + '%');
 
         var missing = s.missingRequiredFields || [];
+        var drafts = s.draftCallCount || 0;
+        lastMissing = missing;
+        lastDraftCount = drafts;
         if (missing.length) {
             // Her ad kendi alanına götüren düğmedir; hedefi bilinmeyen anahtar düz metin kalır.
             var names = missing.map(function (f) {
@@ -711,13 +719,16 @@ $(function () {
                 .removeClass('text-muted').addClass('text-warning')
                 .html(esc(l('Grants:Parameters:MissingRequired', missing.length)) + ' — ' + names);
         } else {
+            // Alanlar dolu ama taslak çağrı yoksa Yayınla yine kapalı: nedeni ipucunda değil burada yazar.
             $('#ParamMissingText')
                 .removeClass('text-warning').addClass('text-muted')
-                .text(l('Grants:Parameters:AllRequiredFilled'));
+                .text(l(drafts ? 'Grants:Parameters:AllRequiredFilled' : 'Grants:Parameters:NoDraftCallHint'));
         }
 
-        var drafts = s.draftCallCount || 0;
-        lastDraftCount = drafts;
+        // Kapı kapalıyken tek bir sonraki adım gösterilir: önce eksik alan, sonra taslak çağrı.
+        $('#ParamGoMissingBtn').toggleClass('d-none', missing.length === 0);
+        $('#ParamAddCallBtn').toggleClass('d-none', missing.length > 0 || drafts > 0 || !canCreateCall);
+
         $('#ParamDraftInfo')
             .toggleClass('d-none', drafts === 0)
             .text(l('Grants:Parameters:DraftCallCount', drafts));
@@ -783,6 +794,14 @@ $(function () {
                 fill(dto);
             })
             .fail(refreshPreview);
+    });
+
+    // ---------- Yayın kapısı kapalıyken sonraki adım ----------
+    $('#ParamGoMissingBtn').on('click', function () { jumpToMissing(lastMissing[0]); });
+
+    // Kaydedince taslak sayısı sunucudan yeniden okunur; Yayınla kendiliğinden açılır.
+    $('#ParamAddCallBtn').on('click', function () {
+        apyaGrantCallModal.open(grantId, null, refreshPreview);
     });
 
     // Alan değişimlerinde canlı panel yenilensin (300ms debounce).

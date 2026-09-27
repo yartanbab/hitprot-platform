@@ -415,4 +415,22 @@ public class GrantParametersPage_Tests : PlatformWebTestBase
         detail.MinAmount.ShouldBe(5_000_000m);
         detail.MaxAmount.ShouldBe(20_000_000m);
     }
+
+    /// <summary>
+    /// Yayın kapısı kapalıyken nedeni düğmeyle gösterilir: eksik alana git ya da taslak çağrı ekle.
+    /// Çağrı penceresi sayfanın içindedir; Taslak seçeneği olmadan yeni çağrı taslak doğamaz.
+    /// </summary>
+    [Fact]
+    public async Task Yayin_Kapisi_Sonraki_Adim_Dugmeleri_Ve_Cagri_Penceresi_Var()
+    {
+        var id = await FirstGrantIdAsync();
+
+        var html = await GetResponseAsStringAsync($"/Grants/Parameters?id={id}");
+
+        html.ShouldContain("ParamGoMissingBtn");
+        html.ShouldContain("ParamAddCallBtn");
+        html.ShouldContain("id=\"CallModal\"");
+        System.Text.RegularExpressions.Regex.IsMatch(html, @"<option value=""3"">\s*Taslak\s*</option>")
+            .ShouldBeTrue("çağrı penceresi Taslak seçeneğini taşımalı");
+    }
 }

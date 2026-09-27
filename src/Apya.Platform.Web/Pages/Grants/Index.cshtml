@@ -29,6 +29,7 @@
     <abp-script src="/Pages/Grants/Poster.js" />
     @if (Model.IsHost)
     {
+        <abp-script src="/Pages/Grants/CallModal.js" />
         <abp-script src="/Pages/Grants/Index.js" />
     }
     else
@@ -104,68 +105,7 @@
         <p id="CallEmpty" class="apya-src-empty d-none"></p>
     </div>
 
-    @* ---- Çağrı (GrantCall) modalı ---- *@
-    <div class="modal fade" id="CallModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form id="CallForm">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="CallModalTitle">Yeni Çağrı</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" id="CallId" />
-                        <input type="hidden" id="CallGrantId" />
-                        <div class="mb-3">
-                            <label class="form-label" for="CallPeriod">Dönem (örn. 2025/1)</label>
-                            <input type="text" class="form-control" id="CallPeriod" maxlength="32" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="CallStatus">Durum</label>
-                            @* Taslak seçeneği ŞART: yoksa taslak çağrı bu pencereden düzenlenince select ilk
-                               seçeneğe düşer ve çağrı sessizce "Planlandı" olarak kaydedilirdi. *@
-                            <select class="form-select" id="CallStatus">
-                                <option value="3">@L["Grants:Calls:State:Draft"]</option>
-                                <option value="0">Planlandı</option>
-                                <option value="1">Açık</option>
-                                <option value="2">Kapandı</option>
-                            </select>
-                            @* 18b · Kapanış zinciri sabit; host ne olacağını kaydetmeden önce görür. *@
-                            <div class="form-text">@L["Grants:CallClose:Hint"]</div>
-                        </div>
-                        @* Tarih alanlarında abp-data-datepicker="false" ŞART: ABP'nin genel
-                           başlatıcısı input[type=date] alanlarını type="text" yapıp değeri tr
-                           biçimine ("22.08.2026") çevirir. Index.js ise .val()'i ISO sanıp
-                           doğrudan API'ye gönderiyor — çağrı kaydı bu yüzden düşüyordu. *@
-                        <div class="row">
-                            <div class="col-6 mb-3">
-                                <label class="form-label" for="CallOpenDate">Açılış Tarihi</label>
-                                <input type="date" abp-data-datepicker="false" class="form-control" id="CallOpenDate" />
-                            </div>
-                            <div class="col-6 mb-3">
-                                <label class="form-label" for="CallDeadline">Son Başvuru Tarihi</label>
-                                <input type="date" abp-data-datepicker="false" class="form-control" id="CallDeadline" />
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6 mb-1">
-                                <label class="form-label" for="CallBudget">Bütçe (₺)</label>
-                                <input type="number" step="0.01" class="form-control" id="CallBudget" data-money-input="true" />
-                            </div>
-                            <div class="col-6 mb-1">
-                                <label class="form-label" for="CallReference">Referans No</label>
-                                <input type="text" class="form-control" id="CallReference" maxlength="64" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>
-                        <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i>Kaydet</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <partial name="_CallModal" />
 
 }
 else
