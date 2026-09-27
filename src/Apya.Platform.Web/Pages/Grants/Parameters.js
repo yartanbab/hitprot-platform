@@ -752,7 +752,16 @@ $(function () {
     }
 
     function refreshPreview() {
-        service.previewMatch(grantId, collect()).then(paintPreview);
+        // "Belge ekle" boş satır açar ve önizlemeyi tetikler; adı yazılmamış satır sunucunun
+        // "Belge adı zorunludur" doğrulamasına takılıp satır başına bir hata penceresi açıyordu.
+        // Önizleme zaten yalnız adlı belgeleri sayar; kural kayıtta (Kaydet/Yayınla) geçerli kalır.
+        var input = collect();
+        input.documentRequirements = input.documentRequirements.filter(function (d) {
+            return (d.name || '').trim() !== '';
+        });
+        // Önizleme arka plan isteğidir: yazarken yarım kalan alan (silinmiş program adı, aralık
+        // dışı sayı) hata penceresi açmaz, panel son geçerli sonucu gösterir. Hata Kaydet'te çıkar.
+        service.previewMatch(grantId, input, { abpHandleError: false }).then(paintPreview);
     }
 
     function paintPreview(p) {
