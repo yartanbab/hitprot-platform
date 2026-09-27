@@ -90,5 +90,12 @@ public enum GrantNotificationTrigger
     /// gidiyordu; evrakları tamam ama gönderilmemiş başvuru hiç uyarılmıyordu.
     /// Sırası kimdeyse ona gider (firma ya da danışman).
     /// </summary>
-    SubmissionDeadlineNear = 17
+    SubmissionDeadlineNear = 17,
+
+    /// <summary>
+    /// 19a · Firma çağrı beklemeden proje fikrini havuza bıraktı. HOST'a gider: çağrıya ilgi
+    /// (<see cref="InterestReceived"/>) duyuruluyordu ama havuz fikri sessizdi, danışman ancak
+    /// Fikir Havuzu'nu elle açarsa görüyordu.
+    /// </summary>
+    IdeaShared = 18
 }

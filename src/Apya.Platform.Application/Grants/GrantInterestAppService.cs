@@ -171,6 +171,18 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
 
         await _interestRepo.InsertAsync(interest, autoSave: true);
 
+        // Çağrıya ilgi host'a duyuruluyordu, havuz fikri sessizdi: danışman ancak Fikir Havuzu'nu
+        // elle açarsa görüyordu. Şablon kapalıysa dispatcher sessizce false döner, fikir yine kayıtlı.
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.IdeaShared,
+            tenantId: null,
+            new Dictionary<string, string?>
+            {
+                ["{firma_adı}"] = await GetFirmNameAsync(),
+                ["{fikir}"] = interest.IdeaExcerpt()
+            },
+            nameof(GrantInterest), interest.Id);
+
         return MapMine(interest, new Dictionary<Guid, (string Name, string? Period)>());
     }
 

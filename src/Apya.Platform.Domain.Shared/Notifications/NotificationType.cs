@@ -60,5 +60,7 @@ public enum NotificationType
     GrantConversionPending      = 38, // Karar onaylı, proje hâlâ kurulmadı (HOST'a gider)
 
     // 🔴 NTF-04: Evrakı tamam ama gönderilmemiş başvuru hiç uyarılmıyordu.
-    GrantSubmissionDeadlineNear = 39  // Son tarih yaklaşıyor, başvuru hâlâ gönderilmedi
+    GrantSubmissionDeadlineNear = 39, // Son tarih yaklaşıyor, başvuru hâlâ gönderilmedi
+
+    GrantIdeaShared             = 40  // Firma havuza proje fikri bıraktı (HOST'a gider)
 }
