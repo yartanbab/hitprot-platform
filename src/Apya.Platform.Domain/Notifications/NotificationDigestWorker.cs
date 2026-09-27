@@ -12,7 +12,6 @@ using Volo.Abp.Emailing;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.Threading;
-using Volo.Abp.Timing;
 using Volo.Abp.Uow;
 
 namespace Apya.Platform.Notifications;
@@ -39,11 +38,12 @@ public class NotificationDigestWorker : AsyncPeriodicBackgroundWorkerBase
         var preferenceRepository   = workerContext.ServiceProvider.GetRequiredService<IRepository<NotificationPreference, Guid>>();
         var userRepository         = workerContext.ServiceProvider.GetRequiredService<IIdentityUserRepository>();
         var emailSender            = workerContext.ServiceProvider.GetRequiredService<IEmailSender>();
-        var clock                  = workerContext.ServiceProvider.GetRequiredService<IClock>();
         var dataFilter             = workerContext.ServiceProvider.GetRequiredService<IDataFilter<IMultiTenant>>();
         var currentTenant          = workerContext.ServiceProvider.GetRequiredService<ICurrentTenant>();
 
-        var since = clock.Now.AddHours(-NotificationConsts.DigestWindowHours);
+        // LastOccurredAt UTC tutulur (bkz. Notification); yerel saatle kıyaslanınca
+        // pencere TR'de 21 saate iniyor, aradaki bildirimler hiçbir özete girmiyordu.
+        var since = DateTime.UtcNow.AddHours(-NotificationConsts.DigestWindowHours);
 
         List<NotificationPreference> emailPreferences;
         List<Notification> candidates;

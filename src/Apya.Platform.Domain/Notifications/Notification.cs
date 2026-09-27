@@ -7,6 +7,12 @@ namespace Apya.Platform.Notifications;
 /// <summary>
 /// Kullanıcıya gönderilen bir bildirimi temsil eder.
 /// FullAuditedAggregateRoot: CreationTime, CreatorId, SoftDelete otomatik.
+/// <para>
+/// <see cref="LastOccurredAt"/> ve <see cref="ReadAt"/> uygulamanın yerel saat
+/// kuralının İSTİSNASIDIR: UTC tutulur (<c>CreationTime</c> ise yereldir). Kıyaslayan
+/// kod <c>DateTime.UtcNow</c> kullanmalı, dışarı veren kod UTC işaretlemeli —
+/// bkz. <c>NotificationAppService.MapToDto</c>.
+/// </para>
 /// </summary>
 public class Notification : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {

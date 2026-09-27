@@ -10,7 +10,6 @@ using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.Threading;
-using Volo.Abp.Timing;
 using Volo.Abp.Uow;
 
 namespace Apya.Platform.Notifications;
@@ -38,11 +37,11 @@ public class NotificationCleanupWorker : AsyncPeriodicBackgroundWorkerBase
     protected override async Task DoWorkAsync(PeriodicBackgroundWorkerContext workerContext)
     {
         var repository     = workerContext.ServiceProvider.GetRequiredService<IRepository<Notification, Guid>>();
-        var clock          = workerContext.ServiceProvider.GetRequiredService<IClock>();
         var tenantFilter   = workerContext.ServiceProvider.GetRequiredService<IDataFilter<IMultiTenant>>();
         var softDeleteFilt = workerContext.ServiceProvider.GetRequiredService<IDataFilter<ISoftDelete>>();
 
-        var threshold = clock.Now.AddDays(-NotificationConsts.RetentionDays);
+        // LastOccurredAt UTC tutulur (bkz. Notification) — eşik de UTC olmalı.
+        var threshold = DateTime.UtcNow.AddDays(-NotificationConsts.RetentionDays);
 
         List<Notification> stale;
 
