@@ -243,6 +243,8 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
             UserId   = userId
         });
     // İkon ve derin link türün kaydından gelir — bkz. NotificationTypeRegistry.
+    // LastOccurredAt/ReadAt UTC tutulur ama DB'den türsüz döner: UTC işaretlenmezse
+    // JSON'a 'Z'siz gider, tarayıcı yerel saat sanar ve saat farkı kadar kayar.
     private static NotificationDto MapToDto(Notification n) => new()
     {
         Id              = n.Id,
@@ -254,9 +256,9 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
         EntityType      = n.EntityType,
         EntityId        = n.EntityId,
         IsRead          = n.IsRead,
-        ReadAt          = n.ReadAt,
+        ReadAt          = n.ReadAt.HasValue ? DateTime.SpecifyKind(n.ReadAt.Value, DateTimeKind.Utc) : null,
         CreationTime    = n.CreationTime,
-        LastOccurredAt  = n.LastOccurredAt,
+        LastOccurredAt  = DateTime.SpecifyKind(n.LastOccurredAt, DateTimeKind.Utc),
         OccurrenceCount = n.OccurrenceCount,
         ActorName       = n.ActorName,
         Icon            = NotificationTypeRegistry.Get(n.Type).Icon,

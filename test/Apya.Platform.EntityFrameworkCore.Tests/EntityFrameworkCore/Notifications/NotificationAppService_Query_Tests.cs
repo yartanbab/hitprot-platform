@@ -160,4 +160,19 @@ public class NotificationAppService_Query_Tests : PlatformEntityFrameworkCoreTes
         dto.DeepLinkUrl.ShouldBe($"/Tasks/Detail/{dto.EntityId}");
         dto.OccurrenceCount.ShouldBe(1);
     }
+
+    [Fact]
+    public async Task Dto_Should_Mark_Utc_Columns_As_Utc()
+    {
+        // LastOccurredAt/ReadAt UTC yazılır ama DB'den türsüz (Unspecified) döner;
+        // işaretlenmezse JSON'a 'Z'siz gider ve tarayıcı yerel saat sanar —
+        // TR'de yeni bildirim "3 saat önce" görünüyordu.
+        await SeedAsync(NotificationType.TaskAssigned, "görev", isRead: true);
+
+        var dto = (await _appService.GetMyNotificationsAsync(new GetNotificationsInput())).Items.Single();
+
+        dto.LastOccurredAt.Kind.ShouldBe(DateTimeKind.Utc);
+        dto.ReadAt!.Value.Kind.ShouldBe(DateTimeKind.Utc);
+        (DateTime.UtcNow - dto.LastOccurredAt).ShouldBeLessThan(TimeSpan.FromMinutes(1));
+    }
 }
