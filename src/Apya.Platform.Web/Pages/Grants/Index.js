@@ -16,7 +16,6 @@ $(function () {
     var ST = { Planlandi: 0, Acik: 1, Kapandi: 2, Taslak: 3 };
     var TAB = { live: 0, draft: 1 };
 
-    var callModal = new bootstrap.Modal(document.getElementById('CallModal'));
     var state = {
         tab: $('[data-call-tab]').first().attr('data-call-tab') === 'draft' ? 'draft' : 'live',
         closed: false,
@@ -29,13 +28,6 @@ $(function () {
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function num(v) { return Math.round(v).toLocaleString('tr-TR'); }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
-    function numOrNull(sel) {
-        // Maskeli tutar alanında .val() "1.234,56" döndürür; parseFloat onu 1'e indirir.
-        var el = $(sel)[0];
-        if (el && el.__apyaMoney) { return apya.moneyInput.getValue(el); }
-        var v = $(sel).val(); return v === '' || v == null ? null : parseFloat(v);
-    }
-    function setMoney(sel, v) { apya.moneyInput.setValue($(sel)[0], v); }
 
     // ---------- Kart parçaları ----------
     // Tavan belirtilmemiş program 0 ile saklanır (MaxAmount kolonu NOT NULL); asgari varsa aralık.
@@ -235,28 +227,7 @@ $(function () {
         load();
     });
 
-    // ---------- Çağrı penceresi ----------
-    function openCallModal(grantId, call) {
-        $('#CallForm')[0].reset();
-        $('#CallGrantId').val(grantId);
-        if (call) {
-            $('#CallId').val(call.id);
-            $('#CallPeriod').val(call.period);
-            $('#CallStatus').val(String(call.status));
-            $('#CallOpenDate').val(call.openDate ? call.openDate.substring(0, 10) : '');
-            $('#CallDeadline').val(call.deadline ? call.deadline.substring(0, 10) : '');
-            setMoney('#CallBudget', call.budget);
-            $('#CallReference').val(call.reference || '');
-            $('#CallModalTitle').text(l('Grants:Calls:Modal:EditTitle'));
-        } else {
-            // Yeni çağrı taslak doğar: yayına alma Parametreler'deki yayın kapısından geçer.
-            $('#CallId').val('');
-            $('#CallStatus').val(String(ST.Taslak));
-            $('#CallModalTitle').text(l('Grants:Calls:Modal:NewTitle'));
-        }
-        callModal.show();
-    }
-
+    // ---------- Çağrı penceresi (CallModal.js) ----------
     function target(el) {
         var $host = $(el).closest('[data-grant]');
         return {
@@ -281,11 +252,11 @@ $(function () {
         var t = target(this);
         switch ($(this).attr('data-act')) {
             case 'add-call':
-                openCallModal(t.grantId, null);
+                apyaGrantCallModal.open(t.grantId, null, load);
                 break;
             case 'edit-call':
                 // Kart bütçeyi taşımaz; pencere çağrının güncel hâliyle açılır.
-                callService.get(t.callId).then(function (call) { openCallModal(t.grantId, call); });
+                callService.get(t.callId).then(function (call) { apyaGrantCallModal.open(t.grantId, call, load); });
                 break;
             case 'delete-call':
                 confirmDelete('Grants:Calls:DeleteCall:Title', 'Grants:Calls:DeleteCall:Text', t.name + ' · ' + t.period).then(function (r) {
@@ -300,36 +271,6 @@ $(function () {
                 });
                 break;
         }
-    });
-
-    $('#CallForm').on('submit', function (e) {
-        e.preventDefault();
-        var period = $('#CallPeriod').val().trim();
-        if (!period) { abp.notify.warn(l('Grants:Calls:Modal:PeriodRequired')); return; }
-        var dto = {
-            grantId: $('#CallGrantId').val(),
-            period: period,
-            status: parseInt($('#CallStatus').val(), 10),
-            openDate: $('#CallOpenDate').val() || null,
-            deadline: $('#CallDeadline').val() || null,
-            budget: numOrNull('#CallBudget'),
-            reference: $('#CallReference').val().trim() || null
-        };
-        var id = $('#CallId').val();
-        var op = id ? callService.update(id, dto) : callService.create(dto);
-        op.then(function (saved) {
-            callModal.hide();
-            abp.notify.success(l(id ? 'Grants:Calls:Modal:Updated' : 'Grants:Calls:Modal:Created'));
-            // 18b · Bu kayıtta çağrı kapandıysa zincirin sonucu ayrıca duyurulur.
-            if (saved && saved.closingSummary) {
-                var s = saved.closingSummary;
-                abp.message.info(l('Grants:CallClose:Summary')
-                    .replace('{0}', s.missedInterestCount)
-                    .replace('{1}', s.unfinishedApplicationCount)
-                    .replace('{2}', s.notifiedFirmCount));
-            }
-            load();
-        });
     });
 
     // ---------- Tümünü tara (Kaynaklar sekmesindeki düğmeyle aynı uç) ----------

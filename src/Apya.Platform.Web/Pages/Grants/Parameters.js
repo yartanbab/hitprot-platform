@@ -17,6 +17,8 @@ $(function () {
     var previewTimer = null;
     var loading = true;
     var lastDraftCount = 0;
+    var lastMissing = [];
+    var canCreateCall = abp.auth.isGranted('Platform.Grants.Create');
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function num(sel) {
@@ -360,13 +362,38 @@ $(function () {
         });
     }
 
-    $('#RuleAddMenu').on('click', '[data-add-rule]', function () {
-        var $row = $('.apya-rule[data-rule-key="' + $(this).data('add-rule') + '"]');
+    function openRule(key) {
+        var $row = $('.apya-rule[data-rule-key="' + key + '"]');
         toggleRow($row, true);
         paintRules();
         if ($row[0] && $row[0].scrollIntoView) { $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         $row.find('.apya-rule-editor').find('input:not([disabled]), button').first().trigger('focus');
-    });
+    }
+
+    $('#RuleAddMenu').on('click', '[data-add-rule]', function () { openRule($(this).data('add-rule')); });
+
+    // ---------- Eksik zorunlu alan → alanın kendisi ----------
+    // Anahtarlar GrantParameterAppService.Field* sabitleridir (GrantParametersMissingJump_Tests kilitler).
+    // Hedefleme etiketinin tek alanı yok — beş türden biri yeter; en genel tür olan Sektör açılır.
+    var MISSING_TARGETS = {
+        Issuer: { tab: 'identity', field: '#ParamIssuer' },
+        SupportRatePercent: { tab: 'financial', field: '#ParamSupportRate' },
+        ProjectDurationMonths: { tab: 'financial', field: '#ParamDuration' },
+        CriteriaTags: { tab: 'eligibility', rule: 'sector' }
+    };
+
+    // Alt çubuktaki ad da "Eksik Alana Git" düğmesi de buraya gelir.
+    function jumpToMissing(key) {
+        var target = MISSING_TARGETS[key];
+        showTab(target.tab);
+        if (target.rule) { openRule(target.rule); return; }
+        // Alt çubuk yapışkan: odak kaydırması alanı çubuğun altına itmesin, ortaya kaydırılır.
+        var el = $(target.field)[0];
+        el.focus({ preventScroll: true });
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    $('#ParamMissingText').on('click', '[data-missing-field]', function () { jumpToMissing($(this).data('missing-field')); });
 
     // ---------- Çelişki: resmî metin ↔ program değeri ----------
     function paintConflicts(s) {
@@ -677,19 +704,31 @@ $(function () {
         $('#ParamCompletionBar').css('width', (s.completionPercent || 0) + '%');
 
         var missing = s.missingRequiredFields || [];
+        var drafts = s.draftCallCount || 0;
+        lastMissing = missing;
+        lastDraftCount = drafts;
         if (missing.length) {
-            var names = missing.map(function (f) { return l('Grants:Field:' + f); }).join(' · ');
+            // Her ad kendi alanına götüren düğmedir; hedefi bilinmeyen anahtar düz metin kalır.
+            var names = missing.map(function (f) {
+                var name = esc(l('Grants:Field:' + f));
+                return MISSING_TARGETS[f]
+                    ? '<button type="button" class="apya-param-missing-link" data-missing-field="' + f + '">' + name + '</button>'
+                    : name;
+            }).join(' · ');
             $('#ParamMissingText')
                 .removeClass('text-muted').addClass('text-warning')
-                .text(l('Grants:Parameters:MissingRequired', missing.length) + ' — ' + names);
+                .html(esc(l('Grants:Parameters:MissingRequired', missing.length)) + ' — ' + names);
         } else {
+            // Alanlar dolu ama taslak çağrı yoksa Yayınla yine kapalı: nedeni ipucunda değil burada yazar.
             $('#ParamMissingText')
                 .removeClass('text-warning').addClass('text-muted')
-                .text(l('Grants:Parameters:AllRequiredFilled'));
+                .text(l(drafts ? 'Grants:Parameters:AllRequiredFilled' : 'Grants:Parameters:NoDraftCallHint'));
         }
 
-        var drafts = s.draftCallCount || 0;
-        lastDraftCount = drafts;
+        // Kapı kapalıyken tek bir sonraki adım gösterilir: önce eksik alan, sonra taslak çağrı.
+        $('#ParamGoMissingBtn').toggleClass('d-none', missing.length === 0);
+        $('#ParamAddCallBtn').toggleClass('d-none', missing.length > 0 || drafts > 0 || !canCreateCall);
+
         $('#ParamDraftInfo')
             .toggleClass('d-none', drafts === 0)
             .text(l('Grants:Parameters:DraftCallCount', drafts));
@@ -755,6 +794,14 @@ $(function () {
                 fill(dto);
             })
             .fail(refreshPreview);
+    });
+
+    // ---------- Yayın kapısı kapalıyken sonraki adım ----------
+    $('#ParamGoMissingBtn').on('click', function () { jumpToMissing(lastMissing[0]); });
+
+    // Kaydedince taslak sayısı sunucudan yeniden okunur; Yayınla kendiliğinden açılır.
+    $('#ParamAddCallBtn').on('click', function () {
+        apyaGrantCallModal.open(grantId, null, refreshPreview);
     });
 
     // Alan değişimlerinde canlı panel yenilensin (300ms debounce).
