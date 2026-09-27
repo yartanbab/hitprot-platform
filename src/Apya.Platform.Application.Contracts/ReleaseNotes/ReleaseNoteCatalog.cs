@@ -26,6 +26,22 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.09.27",
+            date: "27 Eylül 2026",
+            title: "Bildirimlerin zamanı doğru görünüyor; günlük e-posta özeti hiçbir bildirimi atlamıyor",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bildirim zamanları doğru gösteriliyor",
+                "Zil menüsünde yeni gelen bir bildirim, birkaç saniye önce gelmiş olsa bile '3 saat önce' " +
+                "görünüyordu. Bildirim zamanları artık doğru gösteriliyor. Daha önce gelmiş bildirimleriniz " +
+                "de kendiliğinden düzeldi, sizin bir şey yapmanız gerekmiyor. " +
+                "Aynı hata günlük e-posta özetini de etkiliyordu: profil menüsündeki bildirim " +
+                "tercihlerinizden e-postayı açtığınız konular için gelen özet, her gün yalnız son 21 saate " +
+                "bakıyor ve aradaki okunmamış bildirimler hiçbir e-postaya girmiyordu. Özet artık son 24 " +
+                "saatin tamamını kapsıyor.")
+        ),
+
+        new ReleaseNote(
             version: "2026.09.21",
             date: "21 Eylül 2026",
             title: "Dosyalarınıza yalnız kurumunuz erişiyor; fatura kesme ve tahsilat ayrı yetki istiyor; " +
