@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTaskDetail } from '../../hooks/useTaskDetail';
 import { useTaskChecklist } from '../../hooks/useTaskChecklist';
 import { useTaskAttachments } from '../../hooks/useTaskAttachments';
+import { getTaskPermissions } from '../../taskPermissions';
 import { statusOf, priorityOf, initialsOf, avatarColorOf } from '../taskMetaV3';
 
 /**
@@ -119,6 +120,10 @@ export function SubtaskSheetV3({
 
     if (!sub) return null;
 
+    /* Yetki ALT GÖREVİN kendi kaydından (sunucu da alt görevin sahibine bakar): üst
+       görevin sahibi olmak alt görevi düzenletmez, tersi de. Yorum herkese açık. */
+    const { canEdit, canChangeStatus, canDelete } = getTaskPermissions(sub);
+
     const svc = window?.apya?.platform?.tasks?.task;
     const status = statusOf(sub.status);
     const priority = priorityOf(sub.priority);
@@ -230,10 +235,12 @@ export function SubtaskSheetV3({
                                 className={`${iconBtn} hover:bg-surface-hover hover:text-primary`}>
                                 <i className="fa-solid fa-up-right-from-square text-[11px]" />
                             </button>
-                            <button type="button" title="Alt görevi sil" onClick={deleteSubtask}
-                                className={`${iconBtn} hover:bg-negative-subtle hover:text-negative`}>
-                                <i className="fa-regular fa-trash-can text-[11px]" />
-                            </button>
+                            {canDelete && (
+                                <button type="button" title="Alt görevi sil" onClick={deleteSubtask}
+                                    className={`${iconBtn} hover:bg-negative-subtle hover:text-negative`}>
+                                    <i className="fa-regular fa-trash-can text-[11px]" />
+                                </button>
+                            )}
                             <button type="button" title="Kapat" onClick={onClose}
                                 className={`${iconBtn} hover:bg-surface-hover hover:text-text-primary`}>
                                 <i className="fa-solid fa-xmark text-[13px]" />
@@ -245,12 +252,12 @@ export function SubtaskSheetV3({
                         <span className="flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] border border-primary bg-primary-subtle text-primary font-mono text-[10.5px] font-bold tracking-[.04em]">
                             {sub.code}
                         </span>
-                        <button type="button" onClick={cycleStatus} title="Durumu değiştir"
-                            className={`flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] text-[11.5px] font-bold cursor-pointer ${status.bg} ${status.fg}`}>
+                        <button type="button" onClick={cycleStatus} title="Durumu değiştir" disabled={!canChangeStatus}
+                            className={`flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] text-[11.5px] font-bold ${canChangeStatus ? 'cursor-pointer' : 'cursor-default'} ${status.bg} ${status.fg}`}>
                             <i className={`fa-solid ${status.icon} text-[10px]`} />{status.label}
                         </button>
-                        <button type="button" onClick={cyclePriority} title="Önceliği değiştir"
-                            className={`flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] text-[11.5px] font-bold cursor-pointer ${priority.bg} ${priority.fg}`}>
+                        <button type="button" onClick={cyclePriority} title="Önceliği değiştir" disabled={!canEdit}
+                            className={`flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] text-[11.5px] font-bold ${canEdit ? 'cursor-pointer' : 'cursor-default'} ${priority.bg} ${priority.fg}`}>
                             <i className={`fa-solid ${priority.icon} text-[10px]`} />{priority.label}
                         </button>
                         {(sub.tags ?? []).map((t) => (
@@ -258,6 +265,15 @@ export function SubtaskSheetV3({
                                 {t.name}
                             </span>
                         ))}
+                        {!canEdit && (
+                            <span
+                                title="Bu alt görevi yalnız oluşturan, atanan kişi ya da ekip yöneticisi düzenleyebilir. Yorum yazabilirsiniz."
+                                className="flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] border border-subtle bg-neutral-subtle text-text-secondary text-[11px] font-semibold"
+                            >
+                                <i className="fa-solid fa-lock text-[10px]" />
+                                Salt okunur
+                            </span>
+                        )}
                     </div>
 
                     <h2 className="m-0 text-[18px] font-extrabold tracking-[-.02em] leading-[1.3] text-text-primary">
@@ -331,8 +347,9 @@ export function SubtaskSheetV3({
                                 rows={7}
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                onBlur={saveDescription}
-                                placeholder="Bu alt görevin detayları…"
+                                onBlur={canEdit ? saveDescription : undefined}
+                                readOnly={!canEdit}
+                                placeholder={canEdit ? 'Bu alt görevin detayları…' : 'Açıklama yok.'}
                                 className="w-full p-3 rounded-xl border border-default bg-surface-base text-text-primary text-[13px] leading-[1.65] resize-y focus:border-focus focus:shadow-focus focus:outline-none"
                             />
                             <div className="flex items-center gap-[9px] mt-1.5 p-3 rounded-xl border border-subtle bg-surface-base">
@@ -361,7 +378,8 @@ export function SubtaskSheetV3({
                                             type="button"
                                             aria-label="Tamamlandı işaretle"
                                             onClick={() => checklist.toggleItem(item.id)}
-                                            className={`flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white cursor-pointer ${
+                                            disabled={!canEdit}
+                                            className={`flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white ${canEdit ? 'cursor-pointer' : 'cursor-default'} ${
                                                 item.isDone ? 'bg-success border-success' : 'bg-transparent border-strong'
                                             }`}
                                         >
@@ -372,24 +390,28 @@ export function SubtaskSheetV3({
                                         }`}>
                                             {item.text}
                                         </span>
-                                        <button
-                                            type="button"
-                                            aria-label="Maddeyi sil"
-                                            onClick={() => checklist.removeItem(item.id)}
-                                            className="flex shrink-0 items-center justify-center h-6 w-6 rounded-md text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-negative-subtle hover:text-negative cursor-pointer"
-                                        >
-                                            <i className="fa-regular fa-trash-can text-[10px]" />
-                                        </button>
+                                        {canEdit && (
+                                            <button
+                                                type="button"
+                                                aria-label="Maddeyi sil"
+                                                onClick={() => checklist.removeItem(item.id)}
+                                                className="flex shrink-0 items-center justify-center h-6 w-6 rounded-md text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-negative-subtle hover:text-negative cursor-pointer"
+                                            >
+                                                <i className="fa-regular fa-trash-can text-[10px]" />
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
-                                <input
-                                    type="text"
-                                    value={checklistDraft}
-                                    onChange={(e) => setChecklistDraft(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') addChecklistItem(); }}
-                                    placeholder="Yeni madde yaz ve Enter'a bas…"
-                                    className="h-9 mt-1 px-3 rounded-[10px] border border-dashed border-strong bg-transparent text-text-primary text-[12.5px] focus:border-solid focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none"
-                                />
+                                {canEdit && (
+                                    <input
+                                        type="text"
+                                        value={checklistDraft}
+                                        onChange={(e) => setChecklistDraft(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') addChecklistItem(); }}
+                                        placeholder="Yeni madde yaz ve Enter'a bas…"
+                                        className="h-9 mt-1 px-3 rounded-[10px] border border-dashed border-strong bg-transparent text-text-primary text-[12.5px] focus:border-solid focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none"
+                                    />
+                                )}
                             </div>
                         </div>
                     )}

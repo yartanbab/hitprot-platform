@@ -110,6 +110,11 @@ public class DocumentSuggestionAppService : ApplicationService, IDocumentSuggest
         };
     }
 
+    // Öneriyi uygulamak belgenin künyesini (tür, iş adımı, dönem, klasör, gider eşleşmesi)
+    // yazar — DocumentFileAppService.UpdateMetaAsync ile aynı izin. Sınıf düzeyindeki
+    // Documents.Default yalnız okuma iznidir; ona düştüğünde künye yetkisi olmayan
+    // kullanıcı öneri yolundan belge sınıflandırabiliyordu.
+    [Authorize(PlatformPermissions.Documents.ManageMeta)]
     public virtual async Task<int> ApplyAsync(ApplyDocumentSuggestionsDto input)
     {
         if (input.Suggestions.Count == 0)

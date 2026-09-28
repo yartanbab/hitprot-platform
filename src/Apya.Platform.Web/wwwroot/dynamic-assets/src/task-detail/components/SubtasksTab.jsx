@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { statusOf } from '../v3/taskMetaV3';
+import { getTaskPermissions } from '../taskPermissions';
 import { TAB_CARD, RatioBadge, RowBadge, Avatar, fmtShortDate } from '../v3/tabPrimitives';
 
 /**
@@ -74,6 +75,8 @@ export function SubtasksTab({ taskId, task, onOpenSubtask }) {
                 {subtasks.map((sub) => {
                     const st = statusOf(sub.status);
                     const isDone = sub.status === 4;
+                    /* updateStatus ALT GÖREVİN sahibine bakar (ChangeStatus + sahiplik). */
+                    const canToggle = getTaskPermissions(sub).canChangeStatus;
                     return (
                         <div
                             key={sub.id}
@@ -87,7 +90,8 @@ export function SubtasksTab({ taskId, task, onOpenSubtask }) {
                                 type="button"
                                 aria-label={`${sub.title} tamamlandı işaretle`}
                                 onClick={(e) => toggleDone(e, sub)}
-                                className={`flex shrink-0 items-center justify-center h-[19px] w-[19px] p-0 rounded-md border-[1.5px] text-white cursor-pointer ${
+                                disabled={!canToggle}
+                                className={`flex shrink-0 items-center justify-center h-[19px] w-[19px] p-0 rounded-md border-[1.5px] text-white ${canToggle ? 'cursor-pointer' : 'cursor-default'} ${
                                     isDone ? 'bg-success border-success' : 'bg-transparent border-strong'
                                 }`}
                             >

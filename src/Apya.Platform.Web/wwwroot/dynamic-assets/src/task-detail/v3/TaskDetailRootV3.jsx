@@ -14,7 +14,8 @@ import { SubtaskSheetV3 } from './components/SubtaskSheetV3';
 import { getPickerEntries, getVisibleTabs, TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
 import { isUnbuilt } from './featureCatalogV3';
 import { useTabOrder } from './hooks/useTabOrder';
-import { useTaskDetail, isGranted } from '../hooks/useTaskDetail';
+import { useTaskDetail } from '../hooks/useTaskDetail';
+import { getTaskPermissions } from '../taskPermissions';
 import { useDirtyGuard } from '../hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
 import { useTaskForm } from '../hooks/useTaskForm';
@@ -315,13 +316,9 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
 
     /* ─── Yetki ─── Sunucudaki kuralın aynısı (TaskAppService.EnsureCanMutateTaskAsync):
        uç izni + görevin sahibi (oluşturan/atanan) ya da ekip yöneticisi. Eskiden detay
-       herkese düzenlenebilir çiziliyordu; stajyer değişiklik yapıp Kaydet'te 403 alıyordu. */
-    const me = window?.abp?.currentUser?.id;
-    const canManage = Boolean(me && (task?.creatorId === me || task?.assigneeId === me))
-        || isGranted('Platform.Projects.ManageTeam');
-    const canEdit = canManage && isGranted('Platform.Tasks.Edit');
-    const canChangeStatus = canManage && isGranted('Platform.Tasks.ChangeStatus');
-    const canDelete = canManage && isGranted('Platform.Tasks.Delete');
+       herkese düzenlenebilir çiziliyordu; stajyer değişiklik yapıp Kaydet'te 403 alıyordu.
+       Hesap ortak yardımcıda: alt görev paneli aynı kuralı alt görevin kendi kaydına uygular. */
+    const { canEdit, canChangeStatus, canDelete } = getTaskPermissions(task);
 
     /* ─── İçerik ─── */
     const isGeneral = activeTabCode === 'general';

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { statusOf, priorityOf, SELECTABLE_STATUSES } from '../taskMetaV3';
 import { Avatar, TabEmptyState, fmtShortDate } from '../tabPrimitives';
+import { getTaskPermissions } from '../../taskPermissions';
 
 /**
  * Kanban sekmesi (V3) — alt görevleri duruma göre sütunlarda gösterir.
@@ -22,7 +23,8 @@ export function SubtaskBoardTabV3({ taskId, task = {}, onOpenSubtask }) {
 
     const moveTo = async (subId, status) => {
         const sub = subtasks.find((s) => s.id === subId);
-        if (!sub || sub.status === status) return;
+        /* updateStatus ALT GÖREVİN sahibine bakar (ChangeStatus + sahiplik). */
+        if (!sub || sub.status === status || !getTaskPermissions(sub).canChangeStatus) return;
         setBusyId(subId);
         try {
             await Promise.resolve(window.apya.platform.tasks.task.updateStatus(subId, status));
@@ -79,10 +81,11 @@ export function SubtaskBoardTabV3({ taskId, task = {}, onOpenSubtask }) {
 
                         {items.map((sub) => {
                             const pr = priorityOf(sub.priority);
+                            const canMove = getTaskPermissions(sub).canChangeStatus;
                             return (
                                 <article
                                     key={sub.id}
-                                    draggable
+                                    draggable={canMove}
                                     onDragStart={(e) => e.dataTransfer?.setData('text/plain', sub.id)}
                                     role="button"
                                     tabIndex={0}
@@ -119,7 +122,8 @@ export function SubtaskBoardTabV3({ taskId, task = {}, onOpenSubtask }) {
                                             value={sub.status}
                                             onClick={(e) => e.stopPropagation()}
                                             onChange={(e) => moveTo(sub.id, Number(e.target.value))}
-                                            className="h-[24px] px-1.5 rounded-[6px] border border-subtle bg-surface-base text-[10.5px] text-text-secondary cursor-pointer"
+                                            disabled={!canMove}
+                                            className={`h-[24px] px-1.5 rounded-[6px] border border-subtle bg-surface-base text-[10.5px] text-text-secondary ${canMove ? 'cursor-pointer' : 'cursor-default'}`}
                                         >
                                             {SELECTABLE_STATUSES.map((s) => (
                                                 <option key={s} value={s}>{statusOf(s).label}</option>

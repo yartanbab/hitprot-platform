@@ -23,8 +23,11 @@ function GroupCard({ icon, iconTone, title, note, children }) {
  * ters yönlü sorgu (bu görevi öncül gösteren görevler) gerekiyor ve karşılığı
  * olan bir uç nokta YOK — o kart bilinçli olarak boş durumla render edilir,
  * uydurma satır gösterilmez.
+ *
+ * `readOnly`: bağlantı kaldırma görevin TAM güncellemesidir (UpdateAsync → Edit +
+ * sahiplik); yetkisiz kullanıcıya düğme çizilmez.
  */
-export function DependenciesTabV3({ task = {} }) {
+export function DependenciesTabV3({ task = {}, readOnly = false }) {
     const queryClient = useQueryClient();
     const ids = task.predecessorIds || [];
     const svc = () => window?.apya?.platform?.tasks?.task;
@@ -104,15 +107,17 @@ export function DependenciesTabV3({ task = {} }) {
                                     {d.title || 'Başlıksız görev'}
                                 </button>
                                 {st && <RowBadge bg={st.bg} fg={st.fg}>{st.label}</RowBadge>}
-                                <button
-                                    type="button"
-                                    title="Bağlantıyı kaldır"
-                                    aria-label={`${d.title} bağlantısını kaldır`}
-                                    onClick={() => unlink(d.id)}
-                                    className="flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer"
-                                >
-                                    <i className="fa-solid fa-link-slash text-[10px]" />
-                                </button>
+                                {!readOnly && (
+                                    <button
+                                        type="button"
+                                        title="Bağlantıyı kaldır"
+                                        aria-label={`${d.title} bağlantısını kaldır`}
+                                        onClick={() => unlink(d.id)}
+                                        className="flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer"
+                                    >
+                                        <i className="fa-solid fa-link-slash text-[10px]" />
+                                    </button>
+                                )}
                             </div>
                         );
                     })

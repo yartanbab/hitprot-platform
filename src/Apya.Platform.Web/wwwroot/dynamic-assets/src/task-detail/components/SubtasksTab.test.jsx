@@ -23,6 +23,8 @@ function renderWithQueryClient(component) {
 }
 
 beforeEach(() => {
+    // Varsayılan: ekip yöneticisi — her alt görevin durumunu değiştirebilir.
+    window.abp = { currentUser: { id: 'u-1' }, auth: { isGranted: () => true } };
     window.apya = {
         platform: {
             tasks: {
@@ -93,5 +95,38 @@ describe('SubtasksTab', () => {
         renderWithQueryClient(<SubtasksTab taskId="parent-1" task={TASK} onOpenSubtask={vi.fn()} />);
         fireEvent.click(screen.getByRole('button', { name: /Üçüncü alt görev tamamlandı işaretle/i }));
         await waitFor(() => expect(window.apya.platform.tasks.task.updateStatus).toHaveBeenCalledWith('sub-3', 1));
+    });
+});
+
+/* Yetki (ROL-04, Faz 1 devamı): updateStatus ALT GÖREVİN sahibine bakar
+   (ChangeStatus + oluşturan/atanan ya da ekip yöneticisi). Onay kutusu her satırda
+   o alt görevin kendi kaydına göre kilitlenir. */
+describe('SubtasksTab / yetki', () => {
+    const MIXED = {
+        id: 'parent-1',
+        subTasks: [
+            { id: 'sub-1', title: 'Başkasının alt görevi', status: 1, code: 'GRV-11', creatorId: 'u-2', assigneeId: 'u-3' },
+            { id: 'sub-2', title: 'Bana atanan alt görev', status: 1, code: 'GRV-12', creatorId: 'u-2', assigneeId: 'u-1' },
+        ],
+    };
+
+    beforeEach(() => {
+        window.abp = { currentUser: { id: 'u-1' }, auth: { isGranted: (p) => p !== 'Platform.Projects.ManageTeam' } };
+    });
+
+    it('sahibi olmadigi alt gorevin onay kutusu kilitli, istek atilmaz', () => {
+        renderWithQueryClient(<SubtasksTab taskId="parent-1" task={MIXED} onOpenSubtask={vi.fn()} />);
+        const locked = screen.getByRole('button', { name: /Başkasının alt görevi tamamlandı işaretle/i });
+        expect(locked).toBeDisabled();
+        fireEvent.click(locked);
+        expect(window.apya.platform.tasks.task.updateStatus).not.toHaveBeenCalled();
+    });
+
+    it('kendisine atanan alt gorevin durumunu degistirir', async () => {
+        renderWithQueryClient(<SubtasksTab taskId="parent-1" task={MIXED} onOpenSubtask={vi.fn()} />);
+        const own = screen.getByRole('button', { name: /Bana atanan alt görev tamamlandı işaretle/i });
+        expect(own).toBeEnabled();
+        fireEvent.click(own);
+        await waitFor(() => expect(window.apya.platform.tasks.task.updateStatus).toHaveBeenCalledWith('sub-2', 4));
     });
 });
