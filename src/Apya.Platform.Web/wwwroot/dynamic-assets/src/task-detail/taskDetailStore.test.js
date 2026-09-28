@@ -64,3 +64,50 @@ describe('taskDetailStore', () => {
         unsub();
     });
 });
+
+/* STA-19: modal yalniz bakip kapatilinca kanban/liste yeniden yuklenmemeli; yazma
+   olduysa bir kez yuklenmeli. */
+describe('taskDetailStore · yazma bayragi', () => {
+    it('markChanged cagrilmadan emitResultIfChanged dinleyici cagirmaz', () => {
+        const fn = vi.fn();
+        taskDetailStore.onResult(fn);
+        taskDetailStore.emitResultIfChanged();
+        expect(fn).not.toHaveBeenCalled();
+    });
+
+    it('markChanged sonrasi bir kez cagirir; ikinci emitResultIfChanged cagirmaz', () => {
+        const fn = vi.fn();
+        taskDetailStore.onResult(fn);
+        taskDetailStore.markChanged();
+        taskDetailStore.emitResultIfChanged();
+        taskDetailStore.emitResultIfChanged();
+        expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('emitResult bayragi sifirlar', () => {
+        const fn = vi.fn();
+        taskDetailStore.onResult(fn);
+        taskDetailStore.markChanged();
+        taskDetailStore.emitResult();
+        taskDetailStore.emitResultIfChanged();
+        expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('reset bayragi temizler', () => {
+        taskDetailStore.markChanged();
+        taskDetailStore.reset();
+        const fn = vi.fn();
+        taskDetailStore.onResult(fn);
+        taskDetailStore.emitResultIfChanged();
+        expect(fn).not.toHaveBeenCalled();
+    });
+
+    it('destructure edilmis markChanged/emitResultIfChanged de calisir', () => {
+        const { markChanged, emitResultIfChanged } = taskDetailStore;
+        const fn = vi.fn();
+        taskDetailStore.onResult(fn);
+        markChanged();
+        emitResultIfChanged();
+        expect(fn).toHaveBeenCalledTimes(1);
+    });
+});

@@ -11,6 +11,12 @@ function Ekran() {
     return <div>{data ?? 'yükleniyor'}</div>;
 }
 
+function IkiSorgu() {
+    const kalici = useQuery({ queryKey: ['kalici-sorgu'], queryFn: async () => 'kalıcı' });
+    const canli = useQuery({ queryKey: ['canli-sorgu'], queryFn: async () => 'canlı', meta: { persist: false } });
+    return <div>{kalici.data && canli.data ? 'ikisi de geldi' : 'yükleniyor'}</div>;
+}
+
 describe('QueryProvider kalıcılaştırma kablosu', () => {
     beforeEach(() => window.sessionStorage.clear());
     afterEach(() => { delete window.abp; window.sessionStorage.clear(); });
@@ -36,5 +42,17 @@ describe('QueryProvider kalıcılaştırma kablosu', () => {
 
         await new Promise(r => setTimeout(r, 1500));
         expect(window.sessionStorage.getItem(CACHE_KEY)).toBeNull();
+    });
+
+    it('meta.persist:false taşıyan sorguyu YAZMAZ, aynı ağaçtaki işaretsiz sorguyu yazar', async () => {
+        window.abp = { currentUser: { id: 'k1', tenantId: 't1' } };
+
+        render(<QueryProvider><IkiSorgu /></QueryProvider>);
+        await screen.findByText('ikisi de geldi');
+
+        await waitFor(() => expect(window.sessionStorage.getItem(CACHE_KEY)).toContain('kalici-sorgu'),
+                      { timeout: 4000 });
+
+        expect(window.sessionStorage.getItem(CACHE_KEY)).not.toContain('canli-sorgu');
     });
 });

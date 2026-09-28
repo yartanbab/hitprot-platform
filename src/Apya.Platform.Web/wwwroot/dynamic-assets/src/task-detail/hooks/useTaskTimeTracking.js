@@ -16,14 +16,19 @@ export function useTaskTimeTracking(taskId) {
         queryFn: () => Promise.resolve(svc()?.getTimeLogs(taskId)),
         enabled: Boolean(taskId) && Boolean(svc()),
         staleTime: 15_000,
+        meta: { persist: false },
         retry: false,
     });
 
     const activeQuery = useQuery({
         queryKey: activeKey,
-        queryFn: () => Promise.resolve(svc()?.getActiveTimeLog()),
+        /* Kayıt yokken uç 204 döner, proxy undefined çözer; TanStack v5 undefined'ı
+           hata sayıp önceki çalışan kaydı ekranda bırakır (sayaç durmazdı). */
+        queryFn: () => Promise.resolve(svc()?.getActiveTimeLog()).then((log) => log ?? null),
         enabled: Boolean(svc()),
         staleTime: 5_000,
+        /* Canlı sayaç kanbandan da başlatılıp durduruluyor; açılışlar arasında taşınmaz. */
+        meta: { persist: false },
         retry: false,
     });
 

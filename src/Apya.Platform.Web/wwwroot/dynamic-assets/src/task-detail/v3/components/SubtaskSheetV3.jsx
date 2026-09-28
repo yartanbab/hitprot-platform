@@ -111,6 +111,7 @@ export function SubtaskSheetV3({
         queryFn: () => Promise.resolve(window?.apya?.platform?.tasks?.task?.getComments(subtaskId)),
         enabled: Boolean(subtaskId),
         staleTime: 10_000,
+        meta: { persist: false },
     });
 
     useEffect(() => {

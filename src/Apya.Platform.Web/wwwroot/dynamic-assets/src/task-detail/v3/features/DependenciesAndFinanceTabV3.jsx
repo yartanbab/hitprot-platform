@@ -46,6 +46,7 @@ export function DependenciesTabV3({ task = {}, readOnly = false }) {
         },
         enabled: ids.length > 0,
         staleTime: 30_000,
+        meta: { persist: false },
         retry: false,
     });
 

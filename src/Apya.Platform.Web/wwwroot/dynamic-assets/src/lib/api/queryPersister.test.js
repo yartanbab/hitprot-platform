@@ -48,6 +48,13 @@ describe('createApyaPersistOptions', () => {
         expect(shouldDehydrateQuery({ state: { status: 'pending' } })).toBe(false);
     });
 
+    it('meta.persist:false taşıyan canlı kayıt saklanmaz; meta yoksa ya da persist:true ise saklanır', () => {
+        const { shouldDehydrateQuery } = createApyaPersistOptions().dehydrateOptions;
+        expect(shouldDehydrateQuery({ state: { status: 'success' }, meta: { persist: false } })).toBe(false);
+        expect(shouldDehydrateQuery({ state: { status: 'success' }, meta: undefined })).toBe(true);
+        expect(shouldDehydrateQuery({ state: { status: 'success' }, meta: { persist: true } })).toBe(true);
+    });
+
     it('gcTime kalıcılaştırma penceresinden KÜÇÜK OLAMAZ', () => {
         // Küçük olsaydı geri yüklenen sorgular anında çöpe gider,
         // kalıcılaştırma sessizce etkisiz kalırdı.

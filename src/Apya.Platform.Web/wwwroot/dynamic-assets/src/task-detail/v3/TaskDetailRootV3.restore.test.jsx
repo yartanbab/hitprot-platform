@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, dehydrate } from '@tanstack/react-query';
 import { QueryProvider } from '../../lib/api/QueryProvider';
 import { TaskDetailRootV3 } from './TaskDetailRootV3';
 
@@ -10,9 +11,12 @@ import { TaskDetailRootV3 } from './TaskDetailRootV3';
  * "restore" penceresini hiç görmüyor.
  *
  * O pencerede useQuery `fetchStatus:'idle'` döndürür → `isLoading` FALSE olduğu
- * hâlde `data` hâlâ undefined'dır. Önbellek DOLU geliyorsa (modal ikinci kez
- * açılıyor) hemen ardından iskelet aşaması HİÇ yaşanmaz; gövde undefined görevle
- * mount olmuş hâlde kalır.
+ * hâlde `data` hâlâ undefined'dır. Önbellek DOLU geliyorsa hemen ardından iskelet
+ * aşaması HİÇ yaşanmaz; gövde undefined görevle mount olmuş hâlde kalır.
+ *
+ * Görev detayı artık kalıcılaştırılmıyor (meta.persist:false, TSK-01) — yalnız
+ * lookup'lar saklanıyor. isPending kapısı yine de gerekli: yayın (deploy) geçişinde
+ * sekmede görev gövdesi taşıyan ESKİ biçim bir blob kalmış olabilir.
  */
 
 const TASK = {
@@ -84,12 +88,28 @@ describe('TaskDetailRootV3 — kalıcı önbellek geri yükleme penceresi', () =
         await waitFor(() => expect(editorText()).toBe('Kayıtlı açıklama metni'));
 
         // Persister throttleTime 1000 → yazma gecikmeli; oturum önbelleği dolsun.
-        await waitFor(() => expect(window.sessionStorage.getItem(CACHE_KEY)).toContain('task-detail'),
+        // Lookup'lar saklanır, görev gövdesi SAKLANMAZ.
+        await waitFor(() => expect(window.sessionStorage.getItem(CACHE_KEY)).toContain('users-lookup'),
                       { timeout: 4000 });
+        expect(window.sessionStorage.getItem(CACHE_KEY)).not.toContain(TASK.title);
 
         first.unmount();          // modalı kapat (island taskId=null → tüm ağaç sökülür)
 
-        openModal();              // yeniden aç — önbellek DOLU geliyor
+        openModal();              // yeniden aç — lookup önbelleği DOLU geliyor
+        await screen.findByText('Otel Konaklama Anlaşması');
+        await waitFor(() => expect(editorText()).toBe('Kayıtlı açıklama metni'));
+    });
+
+    it('görev gövdesi taşıyan ESKİ biçim blob geri yüklenirken de açıklama dolu gelir', async () => {
+        const old = new QueryClient();
+        old.setQueryData(['task-detail', TASK.id], TASK);
+        window.sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+            buster: 't1:u1',
+            timestamp: Date.now(),
+            clientState: dehydrate(old),
+        }));
+
+        openModal();
         await screen.findByText('Otel Konaklama Anlaşması');
         await waitFor(() => expect(editorText()).toBe('Kayıtlı açıklama metni'));
     });

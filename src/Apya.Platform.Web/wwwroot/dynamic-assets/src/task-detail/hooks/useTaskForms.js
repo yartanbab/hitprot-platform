@@ -27,6 +27,7 @@ export function useTaskForms(taskId) {
         queryFn: () => fetchLinks(taskId),
         enabled: Boolean(taskId),
         staleTime: 30_000,
+        meta: { persist: false },
         retry: false,
     });
 
@@ -63,6 +64,7 @@ export function useTaskFormOptions(taskId, enabled) {
         queryKey: ['task-form-options', taskId],
         queryFn: () => Promise.resolve(svc().getFormOptions(taskId)),
         enabled: Boolean(taskId) && Boolean(enabled),
+        meta: { persist: false },
         retry: false,
     });
 }
@@ -73,6 +75,7 @@ export function useTaskFormResponses(taskId, documentId) {
         queryKey: ['task-form-responses', taskId, documentId],
         queryFn: () => Promise.resolve(svc().getFormResponses(taskId, documentId)),
         enabled: Boolean(taskId) && Boolean(documentId),
+        meta: { persist: false },
         retry: false,
     });
 }

@@ -87,6 +87,20 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         if (form.isDirty) guard.markDirty(); else guard.markClean();
     });
 
+    /* STA-19 — adada yazma olduysa kapanışta liste/kanban tazelensin, olmadıysa
+       tazelenmesin. Yazmanın ortak izi ardından gelen invalidateQueries; MutationCache
+       'added' useMutation'lı hook yazmalarını istek BAŞLARKEN yakalar (modal istek
+       uçuştayken kapatılsa bile). Kök işleyicileri ayrıca açıkça markChanged çağırır. */
+    useEffect(() => {
+        const offQ = queryClient.getQueryCache().subscribe((e) => {
+            if (e.type === 'updated' && e.action?.type === 'invalidate') taskDetailStore.markChanged();
+        });
+        const offM = queryClient.getMutationCache().subscribe((e) => {
+            if (e.type === 'added') taskDetailStore.markChanged();
+        });
+        return () => { offQ(); offM(); };
+    }, [queryClient]);
+
     const closeNow = useCallback(() => { clearTaskUrl(); onClose?.(); }, [onClose]);
     const requestClose = useCallback(() => guard.requestClose(closeNow), [guard, closeNow]);
 
@@ -140,8 +154,15 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         }
         setIsSaving(true);
         try {
-            await Promise.resolve(window.apya.platform.tasks.task.update(currentTaskId, form.toUpdateDto()));
+            const sent = form.values;
+            const saved = await Promise.resolve(window.apya.platform.tasks.task.update(currentTaskId, form.toUpdateDto()));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
+            /* Sunucunun normalize ettiği değerleri (etiket yazımı/sırası) forma işle;
+               yoksa başarılı kayıttan sonra form sebepsiz "kirli" kalır. Birincil kaynak
+               yeniden çekilen kayıt (GetAsync'in etiket sırası 'initial' ile birebir),
+               çekme başarısızsa UpdateAsync'in döndürdüğü TaskDto. */
+            const st = queryClient.getQueryState(['task-detail', currentTaskId]);
+            form.commitSaved(sent, st?.status === 'success' ? st.data : saved);
             taskDetailStore.emitResult();
             setJustSaved(true);
             setTimeout(() => setJustSaved(false), 2000);
@@ -173,12 +194,16 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         return () => window.removeEventListener('keydown', onKey);
     }, [doSave, form.isDirty, isSaving, transfer]);
 
-    /* ─── ⋯ menüsü eylemleri ─── */
+    /* ─── ⋯ menüsü eylemleri ───
+       Her yazma taskDetailStore.markChanged()'i İLK await'ten ÖNCE çağırır: istek
+       uçuştayken modal kapatılsa da kanban/liste tazelenir. Başarısız yazmada en kötü
+       sonuç fazladan bir yenileme. */
     const svc = () => window?.apya?.platform?.tasks?.task;
 
     const handleToggleFavorite = async () => {
         const next = !isFavorite;
         setIsFavorite(next);
+        taskDetailStore.markChanged();
         try {
             await Promise.resolve(svc()?.toggleFavorite(currentTaskId));
         } catch (err) {
@@ -206,6 +231,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     const handleToggleWatch = async () => {
         const next = !isWatched;
         setIsWatched(next);
+        taskDetailStore.markChanged();
         try {
             await Promise.resolve(svc()?.toggleWatch(currentTaskId));
             notify.info(next ? 'Görev takip ediliyor.' : 'Takip bırakıldı.');
@@ -216,6 +242,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     };
 
     const handleDuplicate = async () => {
+        taskDetailStore.markChanged();
         try {
             const result = await Promise.resolve(svc()?.transfer(currentTaskId, {
                 mode: 2, // Copy
@@ -232,6 +259,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     };
 
     const handleArchive = async () => {
+        taskDetailStore.markChanged();
         try {
             await Promise.resolve(svc()?.updateStatus(currentTaskId, 4));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
@@ -243,6 +271,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
 
     const handleDelete = async () => {
         if (!window.confirm('Bu görev ve tüm alt görevleri kalıcı olarak silinecek. Devam edilsin mi?')) return;
+        /* closeNow() → onClose → emitResultIfChanged zinciri bayrağı görmeli. */
+        taskDetailStore.markChanged();
         try {
             await Promise.resolve(svc()?.delete(currentTaskId));
             notify.info('Görev silindi.');
@@ -292,6 +322,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     };
 
     const handleTransferConfirm = async ({ mode, targetProjectIds, include }) => {
+        taskDetailStore.markChanged();
         try {
             const result = await Promise.resolve(svc()?.transfer(currentTaskId, {
                 mode: mode === 'move' ? 1 : 2,

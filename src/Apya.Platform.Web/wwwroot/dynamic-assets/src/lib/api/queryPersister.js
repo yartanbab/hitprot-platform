@@ -22,6 +22,8 @@ import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persist
  * Bilinen sınır: yayın (deploy) oturum ORTASINDA olursa, DTO şekli değişmiş bir
  * yanıt eski şekliyle bir kare boyunca render edilebilir. staleTime kısa
  * olduğundan hemen arkasından tazeleme gelir; sekme kapanınca da iz kalmaz.
+ * İstisna: `meta: { persist: false }` taşıyan sorgular (görev detayı gibi canlı,
+ * düzenlenebilir kayıtlar) hiç saklanmaz; her açılışta sunucudan gelir.
  */
 
 const CACHE_KEY = 'apya-rq-cache';
@@ -64,8 +66,11 @@ export function createApyaPersistOptions() {
         buster: `${user.tenantId ?? 'host'}:${user.id}`,
         dehydrateOptions: {
             /* Hatalı ya da yüklenmekte olan sorgu saklanmaz: bir sonraki açılışta
-               hata ekranını "önbellekten" göstermenin anlamı yok. */
-            shouldDehydrateQuery: (query) => query.state.status === 'success',
+               hata ekranını "önbellekten" göstermenin anlamı yok.
+               meta.persist:false → canlı/düzenlenebilir kayıt; açılışlar ve sayfalar
+               arasında taşınmaz (başka ekranın yazmasından habersiz eski hâli
+               göstermesin, kullanıcı o eski hâlin üzerine yazmasın). */
+            shouldDehydrateQuery: (query) => query.state.status === 'success' && query.meta?.persist !== false,
         },
     };
 }
