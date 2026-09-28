@@ -1082,7 +1082,7 @@ describe('toplu ata / öncelik', () => {
 describe('İptal kolonu', () => {
     const cancelled = {
         id: 'tc', code: 'GRV-9', title: 'Eski hibe formu migrasyonu', status: 0, priority: 2,
-        cancelReason: 'kapsam dışı bırakıldı', cancelledDate: '2026-08-12T00:00:00Z'
+        cancelReason: 'kapsam dışı bırakıldı', cancelledDate: '2026-08-12T00:00:00Z', creatorId: 'u1'
     };
     const cancelCol = () => document.querySelector('.kanban-cancel-col');
 
@@ -1117,6 +1117,14 @@ describe('İptal kolonu', () => {
         expect(note.querySelector('.kanban-cancel-when').textContent).toContain('İPTAL');
         expect(note.querySelector('.kanban-cancel-why').textContent).toBe('Sebep: kapsam dışı bırakıldı');
         expect(note.querySelector('.js-restore-task')).not.toBeNull();
+    });
+
+    it('sahibi olmadığı iptal kartında geri alma düğmesi yok', async () => {
+        mountBoard(sysCols, [{ ...cancelled, creatorId: 'u2', assigneeId: 'u3' }]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-cancel-note .js-restore-task')).toBeNull();
     });
 
     it('sebepsiz iptalde sebep satırı basılmaz', async () => {
@@ -1531,7 +1539,9 @@ describe('görünüm tercihi (v2)', () => {
 // Eylemler toplu çubuğun tekil karşılıkları; yetki kapıları çubuktaki
 // düğmelerin VARLIĞINDAN okunur (sunucu neyi bastıysa o).
 describe('kart ⋯ menüsü (v2)', () => {
-    const task = { id: 't1', code: 'GRV-17', title: 'Kart', status: 1, priority: 2 };
+    // Değiştirme eylemleri yalnız kartın sahibine (oluşturan/atanan) ya da ekip
+    // yöneticisine açık — sunucudaki EnsureCanMutateTaskAsync ile aynı kural.
+    const task = { id: 't1', code: 'GRV-17', title: 'Kart', status: 1, priority: 2, creatorId: 'u1' };
     const openMenu = () => {
         document.querySelector('.js-card-menu').click();
         return document.querySelector('.kanban-card-popmenu');
@@ -1606,6 +1616,45 @@ describe('kart ⋯ menüsü (v2)', () => {
         expect(items).not.toContain('Taşı');
         expect(items).not.toContain('Ata');
         expect(items).toContain('Sil');
+    });
+
+    it('sahibi olmadığı kart kilitli: sürüklenmez, menüde değiştirme eylemi yok', async () => {
+        mountBoard(sysCols, [{ ...task, creatorId: 'u2', assigneeId: 'u3' }]);
+        granted['Platform.Tasks.ChangeStatus'] = true;
+        Sortable.calls.length = 0;
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-card').getAttribute('data-locked')).toBe('1');
+        const cardSortable = Sortable.calls.find((c) => c.opts.draggable === '.kanban-card');
+        expect(cardSortable.opts.filter).toBe('.kanban-card[data-locked]');
+        expect(cardSortable.opts.disabled).toBe(false);
+
+        const menu = openMenu();
+        const items = menu ? [...menu.querySelectorAll('.kanban-popmenu-item')].map((b) => b.textContent) : [];
+        expect(items).not.toContain('Taşı');
+        expect(items).not.toContain('Ata');
+    });
+
+    it('ekip yöneticisi herkesin kartını değiştirebilir', async () => {
+        mountBoard(sysCols, [{ ...task, creatorId: 'u2' }]);
+        granted['Platform.Projects.ManageTeam'] = true;
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelector('.kanban-card').hasAttribute('data-locked')).toBe(false);
+        const items = [...openMenu().querySelectorAll('.kanban-popmenu-item')].map((b) => b.textContent);
+        expect(items).toContain('Taşı');
+    });
+
+    it('durum izni yoksa pano sürüklemesi kapalı', async () => {
+        mountBoard(sysCols, [task]);
+        Sortable.calls.length = 0;
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const cardSortable = Sortable.calls.find((c) => c.opts.draggable === '.kanban-card');
+        expect(cardSortable.opts.disabled).toBe(true);
     });
 
     it('iptal edilmiş kartın menüsünde "İptali geri al" olur', async () => {

@@ -441,8 +441,10 @@
                     why.textContent = 'Sebep: ' + task.cancelReason;
                     cx.appendChild(why);
                 }
-                cx.innerHTML += '<button type="button" class="kanban-cancel-restore js-restore-task" ' +
-                    'data-id="' + task.id + '">İptali geri al</button>';
+                if (canEdit(task)) {
+                    cx.innerHTML += '<button type="button" class="kanban-cancel-restore js-restore-task" ' +
+                        'data-id="' + task.id + '">İptali geri al</button>';
+                }
                 card.appendChild(cx);
             }
 
@@ -611,6 +613,9 @@
             var isActive = enableTimer && activeLog && activeLog.taskId === task.id;
             if (isActive) { card.classList.add('timer-active'); }
             if (selected[task.id]) { card.classList.add('is-selected'); }
+            // Sunucu kuralı: durum/öncelik/atama/erteleme yalnız oluşturan, atanan ya da
+            // ekip yöneticisi. Kilitli kart sürüklenmez, ⋯ menüsünde değiştirme eylemi yok.
+            if (!canEdit(task)) { card.setAttribute('data-locked', '1'); }
             // Öncelik alanı kapalıyken kompakt şerit / başlık kenarı da söner.
             if (!fieldOn('pri')) { card.classList.add('kb-no-pri'); }
 
@@ -996,6 +1001,7 @@
 
         function openCardMenu(btn, task) {
             var caps = cardMenuCaps();
+            if (!canEdit(task)) { caps = { move: false, assign: false, defer: false, priority: false }; }
             var menu = el('div', 'kanban-card-popmenu');
             menu.setAttribute('data-task-id', task.id);
             menu.setAttribute('role', 'menu');
@@ -1103,7 +1109,7 @@
 
             var needsDivider = menu.childNodes.length > 1;
             var tail = [];
-            if (task.status === 0) {
+            if (task.status === 0 && canEdit(task)) {
                 var restore = menuRow('İptali geri al');
                 restore.addEventListener('click', function () {
                     runCardAction(taskSvc.restoreFromCancel(task.id), 'İptal geri alındı.');
@@ -1924,6 +1930,11 @@
                     ghostClass: 'sortable-ghost',
                     // Boş kolon metni de kabın çocuğu — sürüklenebilir sanılmasın.
                     draggable: '.kanban-card',
+                    // Durum izni yoksa pano salt-okur; başkasının kartı (data-locked)
+                    // sürüklenmez ama tıklanınca detayı yine açılır.
+                    disabled: !abp.auth.isGranted('Platform.Tasks.ChangeStatus'),
+                    filter: '.kanban-card[data-locked]',
+                    preventOnFilter: false,
                     // Dokunmatikte board yatay overflow-x:auto ile kaydırılıyor;
                     // gecikme'siz sürükleme bir kartın üstünden yana kaydırma
                     // hareketini anında "drag" sanıyordu (2026-08 tasarım denetimi).

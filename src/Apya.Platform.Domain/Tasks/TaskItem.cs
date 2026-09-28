@@ -114,6 +114,13 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? AssigneeId { get; private set; }
     public virtual IdentityUser? Assignee { get; set; }
 
+    /// <summary>
+    /// Görevi oluşturan ya da göreve atanan kişi mi? Görevi değiştiren her uçtaki
+    /// sahiplik kuralının tek tanımı (ekip yöneticisi istisnası izin katmanında).
+    /// </summary>
+    public bool IsOwnedBy(Guid? userId)
+        => userId.HasValue && (CreatorId == userId || AssigneeId == userId);
+
     // --- Alt Görevler ---
     public Guid? ParentTaskId { get; private set; }
     public virtual TaskItem? ParentTask { get; set; }

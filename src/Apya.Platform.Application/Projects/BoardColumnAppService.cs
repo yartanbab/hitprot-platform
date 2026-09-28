@@ -100,6 +100,14 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         var col = await _columnRepository.GetAsync(columnId);
         var task = await _taskRepository.GetAsync(taskId);
 
+        // Görevi değiştiren diğer uçlarla aynı sahiplik kuralı (TaskAppService.EnsureCanMutateTaskAsync):
+        // oluşturan ya da atanan; değilse ekip yöneticisi. Kanbanın özel kolon yolu bunu atlıyordu.
+        if (!task.IsOwnedBy(CurrentUser.Id)
+            && !await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
+        {
+            throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskUpdateDenied);
+        }
+
         // Durum eşlemesi olan HER kolon Status'u değiştirir; ayrım kolon bağında:
         // sistem kolonunda bağ TEMİZLENİR (kart durum kolonunda yaşar), özel
         // kolonda KORUNUR (kart kolonda durur, durumu da hizalanır — Faz 4a).
