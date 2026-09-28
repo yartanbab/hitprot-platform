@@ -567,6 +567,11 @@
                 state.tasks.forEach(function (t) { t.predecessorIds = preds[t.id] || []; });
                 state.loading = false;
                 refresh();
+            }, function (e) {
+                // Yalnız getList reddi buraya düşer (deps kendi catch'inde); ABP penceresi
+                // hatayı zaten gösterdi. Yakalanmazsa native ret telemetriye ikinci kez
+                // "UnhandledRejection" diye yazılıyordu. Başarı kolunun hatası yakalanmaz.
+                console.warn('[gantt] görevler alınamadı', e);
             });
         }
 

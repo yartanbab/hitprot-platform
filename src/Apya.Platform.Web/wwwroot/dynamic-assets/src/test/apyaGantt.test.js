@@ -31,6 +31,11 @@ describe('apya-gantt.js — kaynak metni pin (STA-01)', () => {
         expect(src).toContain('abpHandleError: false');
     });
 
+    it('liste reddi yakalanır — native ret telemetriye UnhandledRejection yazmaz', () => {
+        const load = src.slice(src.indexOf('function load()'), src.indexOf('bindUi();', src.indexOf('function load()')));
+        expect(load).toMatch(/refresh\(\);\s*\}, function \(e\) \{[^}]*console\.warn\('\[gantt\] görevler alınamadı'/);
+    });
+
     it('jQuery 4 ile uyumsuz .finally kullanılmaz', () => {
         expect(src).not.toContain('.finally(');
     });
