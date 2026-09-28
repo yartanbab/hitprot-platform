@@ -24,6 +24,7 @@ import { useAssigneeOptions } from '../hooks/useAssigneeOptions';
 import { useProjectOptions } from '../hooks/useProjectOptions';
 import { useTaskFeatures } from '../hooks/useTaskFeatures';
 import { taskDetailStore } from '../taskDetailStore';
+import { isTaskDerivedQuery } from '../../lib/api/dataChanged';
 
 const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 
@@ -90,10 +91,14 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     /* STA-19 — adada yazma olduysa kapanışta liste/kanban tazelensin, olmadıysa
        tazelenmesin. Yazmanın ortak izi ardından gelen invalidateQueries; MutationCache
        'added' useMutation'lı hook yazmalarını istek BAŞLARKEN yakalar (modal istek
-       uçuştayken kapatılsa bile). Kök işleyicileri ayrıca açıkça markChanged çağırır. */
+       uçuştayken kapatılsa bile). Kök işleyicileri ayrıca açıkça markChanged çağırır.
+       Görev türevi (pano/takvim) sorgular sayılmaz: ortak oturum önbelleği bu istemciye
+       de geri yüklenir ve QueryProvider'ın veri-değişti damgası onları geçersizler
+       (invalidateOlderThanLastChange) — yazma değil; modal bu anahtarları hiç yazmaz. */
     useEffect(() => {
         const offQ = queryClient.getQueryCache().subscribe((e) => {
-            if (e.type === 'updated' && e.action?.type === 'invalidate') taskDetailStore.markChanged();
+            if (e.type === 'updated' && e.action?.type === 'invalidate'
+                && !isTaskDerivedQuery(e.query.queryKey)) taskDetailStore.markChanged();
         });
         const offM = queryClient.getMutationCache().subscribe((e) => {
             if (e.type === 'added') taskDetailStore.markChanged();
@@ -263,6 +268,9 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         try {
             await Promise.resolve(svc()?.updateStatus(currentTaskId, 4));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
+            /* Rebase kullanıcının kaydetmediği durum seçimini korur; Kaydet arşivi geri
+               almasın diye eylemin yazdığı alan forma işlenir (diğer düzenlemeler kalır). */
+            form.setField('status', 4);
             notify.info('Görev arşivlendi (Tamamlandı).');
         } catch (err) {
             notify.err(err?.message || 'Görev arşivlenemedi.');
@@ -330,6 +338,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 include,
             }));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
+            /* Taşımada görev ilk hedefe geçer (TaskManager.TransferAsync); arşivle ile aynı gerekçe. */
+            if (mode === 'move') form.setField('projectId', targetProjectIds[0]);
             const names = targetProjectIds
                 .map((id) => projects.options.find((p) => p.value === id)?.label)
                 .filter(Boolean);

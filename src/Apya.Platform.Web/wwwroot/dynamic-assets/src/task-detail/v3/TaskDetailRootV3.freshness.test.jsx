@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, within, act } from '@testing-library/react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QueryProvider } from '../../lib/api/QueryProvider';
 import { TaskDetailRootV3 } from './TaskDetailRootV3';
 import { taskDetailStore } from '../taskDetailStore';
@@ -196,6 +196,57 @@ describe('TaskDetailRootV3 — form sunucu verisine yeniden temellenir (STA-04)'
         await screen.findByText('Konaklama');
         await waitFor(() => expect(screen.queryByText(DIRTY)).not.toBeInTheDocument());
     });
+
+    /* Açık eylem kendi yazdığı alanı forma işler: kullanıcının kaydetmediği durum/proje
+       seçimi rebase'de "dokunulmuş" sayılıp korunuyordu; Kaydet arşivi/taşımayı geri
+       alıyordu. Diğer kaydedilmemiş düzenleme (öncelik) korunmalı. */
+    it('kaydedilmemiş durum seçiminin üstüne Arşivle: Kaydet arşivi geri almaz', async () => {
+        await openLoaded();
+        fireEvent.click(screen.getByRole('button', { name: 'Orta' }));
+        fireEvent.click(within(screen.getByText('Öncelik seç').parentElement).getByText('Kritik'));
+        fireEvent.click(screen.getAllByRole('button', { name: 'Sürüyor' })[0]);
+        fireEvent.click(within(screen.getByText('Durumu değiştir').parentElement).getByText('Testte'));
+        await screen.findByText(DIRTY);
+        svc.get.mockImplementation(() => Promise.resolve({ ...TASK, status: 4 }));
+
+        clickMenuItem('Arşivle');
+
+        await waitFor(() => expect(svc.updateStatus).toHaveBeenCalledWith(TASK.id, 4));
+        await waitFor(() => expect(screen.getAllByText('Tamamlandı').length).toBeGreaterThan(0));
+        fireEvent.click(screen.getByRole('button', { name: 'Kaydet' }));
+
+        await waitFor(() => expect(svc.update).toHaveBeenCalledTimes(1));
+        expect(svc.update.mock.calls[0][1]).toMatchObject({ status: 4, priority: 4 });
+    });
+
+    it('kaydedilmemiş proje seçiminin üstüne Taşı: Kaydet taşımayı geri almaz', async () => {
+        svc.getProjectsLookup.mockImplementation(() => Promise.resolve([
+            { id: 'p1', name: 'Alfa' }, { id: 'p2', name: 'Beta' }, { id: 'p3', name: 'Gama' },
+        ]));
+        svc.get.mockImplementation(() => Promise.resolve({ ...TASK, projectId: 'p1' }));
+        svc.transfer = vi.fn(() => Promise.resolve({ createdTaskIds: [] }));
+        await openLoaded();
+        fireEvent.click(await screen.findByRole('button', { name: 'Alfa' }));
+        fireEvent.click(screen.getByText('Beta'));
+        fireEvent.click(screen.getByRole('button', { name: 'Orta' }));
+        fireEvent.click(within(screen.getByText('Öncelik seç').parentElement).getByText('Kritik'));
+        await screen.findByText(DIRTY);
+        svc.get.mockImplementation(() => Promise.resolve({ ...TASK, projectId: 'p3' }));
+
+        clickMenuItem('Taşı (başka proje)');
+        const dialog = screen.getAllByRole('dialog', { name: 'Başka projeye taşı' }).at(-1);   // katman + iç diyalog
+        fireEvent.click(within(dialog).getByText('Gama'));
+        const ctas = within(dialog).getAllByRole('button', { name: 'Taşı' });
+        fireEvent.click(ctas[ctas.length - 1]);
+
+        await waitFor(() => expect(svc.transfer).toHaveBeenCalledWith(
+            TASK.id, expect.objectContaining({ mode: 1, targetProjectIds: ['p3'] })));
+        await screen.findByRole('button', { name: 'Gama' });
+        fireEvent.click(screen.getByRole('button', { name: 'Kaydet' }));
+
+        await waitFor(() => expect(svc.update).toHaveBeenCalledTimes(1));
+        expect(svc.update.mock.calls[0][1]).toMatchObject({ projectId: 'p3', priority: 4 });
+    });
 });
 
 describe('TaskDetailRootV3 — yazma izi kapanıştan önce alınır (STA-19)', () => {
@@ -258,5 +309,30 @@ describe('TaskDetailRootV3 — yazma izi kapanıştan önce alınır (STA-19)', 
         await waitFor(() => expect(listener).toHaveBeenCalledTimes(1));
         taskDetailStore.emitResultIfChanged();                                  // kapanış
         expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    /* Ortak oturum önbelleği modalın istemcisine de geri yüklenir; QueryProvider'ın
+       veri-değişti damgası (lib/api/dataChanged.js) oradaki pano/takvim sorgularını
+       bayat işaretler. Bu bir yazma değil: bakıp kapatmak kanbanı yeniden yüklememeli. */
+    it('geri yüklemede damgayla bayat işaretlenen pano sorgusu yazma sayılmaz', async () => {
+        const qk = ['dashboard', 'summary', {}];
+        function Pano() {
+            const { data } = useQuery({ queryKey: qk, queryFn: async () => 'pano verisi' });
+            return <div>{data ?? 'yükleniyor'}</div>;
+        }
+        const pano = render(<QueryProvider><Pano /></QueryProvider>);
+        await screen.findByText('pano verisi');
+        await waitFor(() => expect(window.sessionStorage.getItem(CACHE_KEY)).toContain('summary'),
+                      { timeout: 4000 });
+        pano.unmount();
+        window.sessionStorage.setItem('apya-data-changed-at', String(Date.now()));   // kanbanda taşıma
+
+        const listener = vi.fn();
+        taskDetailStore.onResult(listener);
+        await openLoaded();
+        await waitFor(() => expect(client.getQueryState(qk)?.isInvalidated).toBe(true));
+
+        taskDetailStore.emitResultIfChanged();                                  // kapanış
+        expect(listener).not.toHaveBeenCalled();
     });
 });
