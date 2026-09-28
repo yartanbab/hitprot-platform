@@ -36,6 +36,24 @@ public class IndexModel : AbpPageModel
 
     public virtual async Task<IActionResult> OnGetAsync()
     {
+        await LoadAccountsAsync();
+        return Page();
+    }
+
+    /// <summary>
+    /// Konsolide toplam + hesap kartları parçası. Kartlar Razor'da TEK yerde çizilir; JS
+    /// hareket yazmalarından sonra yalnız bu parçayı yerine koyar (tam sayfa yenilemesi yok).
+    /// Tek kart değil özetin tamamı basılır: hareketin kasası düzenlemede değişebiliyor ve
+    /// transfer iki hesaba birden yazıyor.
+    /// </summary>
+    public virtual async Task<IActionResult> OnGetAccountSummaryAsync()
+    {
+        await LoadAccountsAsync();
+        return Partial("_AccountSummary", this);
+    }
+
+    private async Task LoadAccountsAsync()
+    {
         var result = await _cashAccountAppService.GetListAsync(
             new GetCashAccountsInput { MaxResultCount = 1000, IsActive = true });
 
@@ -61,8 +79,6 @@ public class IndexModel : AbpPageModel
 
         var ratesToTry = await CurrencyConversionHelper.LoadRatesToTryAsync(_exchangeRateAppService);
         TotalBalanceTry = accounts.Sum(a => CurrencyConversionHelper.ToTry(a.Balance, a.Currency, ratesToTry));
-
-        return Page();
     }
 
     public class AccountCardModel
