@@ -172,6 +172,13 @@ $(function () {
     // Durum ve kanal ayrı gruplar: biri seçilince diğeri sıfırlanmaz.
     var state = { status: null, kinds: null, sort: 'impact', filter: '' };
 
+    // Liste ve kanıt paneli için ayrı bilet: yalnız son isteğin yanıtı çizilir.
+    var nextList = apya.latest();
+    var nextDetail = apya.latest();
+    var lastDetailUrl = null;
+    var BACK_BUTTON = '<button type="button" class="apya-md-back" id="IssueBack">' +
+        '<i class="fa fa-chevron-left"></i> Listeye dön</button>';
+
     var FACETS = {
         open:     { group: 'status', isResolved: false },
         resolved: { group: 'status', isResolved: true },
@@ -191,10 +198,17 @@ $(function () {
         return basePath + '?' + $.param(params);
     }
 
-    function reloadList() {
-        return $.get(listUrl()).done(function (html) {
+    function reloadList(after) {
+        var isLatest = nextList();
+        Promise.resolve($.get(listUrl())).then(function (html) {
+            if (!isLatest()) { return; }
             $('#IssueList').html(html);
             paintFacets();
+            if (after) { after(); }
+        }, function () {
+            if (!isLatest()) { return; }
+            // Eski liste yeni süzgecin altında kalmaz; durum korunur, Tekrar dene aynı durumla ister.
+            $('#IssueList').html(apya.loadState.errorHtml('Olay listesi yüklenemedi.', 'js-issue-list-retry'));
         });
     }
 
@@ -234,10 +248,24 @@ $(function () {
         // Dar ekranda liste gizlenip detay gelir (.apya-md media query'si).
         $console.addClass('has-selection');
 
-        $.get(detailUrl($row)).done(function (html) {
-            $('#IssueDetail').html(
-                '<button type="button" class="apya-md-back" id="IssueBack">' +
-                '<i class="fa fa-chevron-left"></i> Listeye dön</button>' + html);
+        fetchDetail(detailUrl($row));
+    }
+
+    // Eski kanıt istek BAŞINDA silinir: seçim ile panel hiçbir anda ayrışmaz, eski olayın
+    // Kopyala/Çözüldü düğmeleri de kalkar (ADM-17).
+    function fetchDetail(url) {
+        lastDetailUrl = url;
+        var isLatest = nextDetail();
+        var $detail = $('#IssueDetail').attr('aria-busy', 'true')
+            .html(BACK_BUTTON + apya.loadState.loadingHtml('Olay yükleniyor…'));
+
+        Promise.resolve($.get(url)).then(function (html) {
+            if (!isLatest()) { return; }
+            $detail.removeAttr('aria-busy').html(BACK_BUTTON + html);
+        }, function () {
+            if (!isLatest()) { return; }
+            $detail.removeAttr('aria-busy')
+                .html(BACK_BUTTON + apya.loadState.errorHtml('Olay detayı yüklenemedi.', 'js-issue-detail-retry'));
         });
     }
 
@@ -336,6 +364,11 @@ $(function () {
         loadDetail($(this));
     });
 
+    $('#IssueList').on('click', '.js-issue-list-retry', function () {
+        $(this).prop('disabled', true);
+        reloadList();
+    });
+
     var searchDebounce;
     $('#Issue_Search').on('keyup search', function () {
         var value = $(this).val() || '';
@@ -374,6 +407,10 @@ $(function () {
         $console.removeClass('has-selection');
     });
 
+    $('#IssueDetail').on('click', '.js-issue-detail-retry', function () {
+        if (lastDetailUrl) { fetchDetail(lastDetailUrl); }
+    });
+
     $('#IssueDetail').on('click', '.apya-health-tab', function () {
         var key = $(this).data('tab');
         $('#IssueDetail .apya-health-tab').removeClass('active');
@@ -389,7 +426,7 @@ $(function () {
         // Üstteki blogun `service` degiskeni bu kapanisin disinda kaliyor.
         apya.platform.telemetry.systemHealth.setClientErrorResolved($btn.data('id'), next).then(function () {
             abp.notify.success(next ? 'Çözüldü olarak işaretlendi.' : 'Yeniden açıldı.');
-            reloadList().done(function () {
+            reloadList(function () {
                 var $row = $('#IssueList .apya-health-row[data-client-error-id="' + $btn.data('id') + '"]');
                 if ($row.length) { loadDetail($row); }
             });

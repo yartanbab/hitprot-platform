@@ -54,6 +54,39 @@ public class SubscriptionSettingsPage_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// ADM-11: kayıt ucu TAM güncellemedir. Ayarlar yüklenemezse boş form kaydedilip tüm
+    /// süre/yükseltme/bedel ayarlarını ezerdi. Kilit JS'e bırakılmaz, markup'ın varsayılanıdır:
+    /// JS hiç çalışmasa da Kaydet kapalı. Tekrar dene kutusu kilidin DIŞINDA olmalı, yoksa
+    /// yükleme hatasında düğme de kilitlenir ve sayfa bir daha açılamaz.
+    /// </summary>
+    [Fact]
+    public async Task Sure_ayarlari_formu_yuklenene_kadar_kilitli_basilir()
+    {
+        var doc = Parse(await GetResponseAsStringAsync("/PackageManagement"));
+
+        var form = doc.DocumentNode.SelectSingleNode("//fieldset[@id='SubSettingsForm']");
+        form.ShouldNotBeNull("Süre ayarları formu kilitlenebilir bir fieldset içinde basılmadı");
+        form!.Attributes.Contains("disabled").ShouldBeTrue("Form yüklenmeden kilitli basılmalı");
+
+        foreach (var id in new[]
+                 {
+                     "SubSaveBtn", "SubAutoDowngrade", "SubGraceDays", "SubWarningDays",
+                     "SubUpgradeEmail", "SubUpgradePhone", "SubUpgradeUrl",
+                     "PriceStandard", "PriceCorporate", "PriceJoint"
+                 })
+        {
+            doc.DocumentNode
+                .SelectSingleNode($"//fieldset[@id='SubSettingsForm']//*[@id='{id}']")
+                .ShouldNotBeNull($"'{id}' kilitli formun dışında kaldı; ayarlar yüklenmeden düzenlenebilir");
+        }
+
+        doc.DocumentNode.SelectSingleNode("//*[@id='SubLoadState']")
+            .ShouldNotBeNull("Yükleme hatası kutusu (#SubLoadState) basılmadı");
+        doc.DocumentNode.SelectSingleNode("//fieldset[@id='SubSettingsForm']//*[@id='SubLoadState']")
+            .ShouldBeNull("#SubLoadState kilitli formun içinde; Tekrar dene düğmesi de kilitlenir");
+    }
+
+    /// <summary>
     /// Ek süre alanı sunucuda 0–90'a clamp'lenir; girdi de aynı aralığı göstermeli ki
     /// kullanıcı 365 yazıp sessizce 90'a düşürülmesin.
     /// </summary>
