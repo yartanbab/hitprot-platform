@@ -118,11 +118,18 @@ describe('SubtaskSheetV3 / yetki', () => {
     });
 
     it('sahiplik uc iznini atlatmaz: yalniz ChangeStatus varsa durum acik, oncelik ve silme kapali', async () => {
-        setup({ me: 'u-owner', granted: (p) => p === 'Platform.Tasks.ChangeStatus' });
+        const svc = setup({ me: 'u-owner', granted: (p) => p === 'Platform.Tasks.ChangeStatus' });
         await screen.findByText('Alt iş');
 
-        expect(screen.getByTitle('Durumu değiştir')).toBeEnabled();
         expect(screen.getByTitle('Önceliği değiştir')).toBeDisabled();
         expect(screen.queryByTitle('Alt görevi sil')).not.toBeInTheDocument();
+
+        /* Kapı (ChangeStatus) ile çağrılan uç eşleşmeli: açık rozet Tasks.Edit isteyen
+           tam güncellemeye (update) giderse bu kullanıcı 403 alır. */
+        const statusBtn = screen.getByTitle('Durumu değiştir');
+        expect(statusBtn).toBeEnabled();
+        fireEvent.click(statusBtn);
+        await waitFor(() => expect(svc.updateStatus).toHaveBeenCalledWith('s-1', 2));
+        expect(svc.update).not.toHaveBeenCalled();
     });
 });
