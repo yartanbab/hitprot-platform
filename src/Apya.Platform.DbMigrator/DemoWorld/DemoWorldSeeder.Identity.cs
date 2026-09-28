@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Permissions;
+using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
+using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Identity;
+using Volo.Abp.MultiTenancy;
 using Volo.Abp.PermissionManagement;
 
 namespace Apya.Platform.DbMigrator.DemoWorld;
@@ -181,6 +184,7 @@ public partial class DemoWorldSeeder
         };
 
         var grants = new List<PermissionGrant>();
+        var definitions = _sp.GetRequiredService<IPermissionDefinitionManager>();
 
         foreach (var roleName in roleNames)
         {
@@ -189,6 +193,18 @@ public partial class DemoWorldSeeder
 
             foreach (var permission in PermissionsFor(roleName))
             {
+                // Host'a ait izin (MultiTenancySides.Host: geri bildirim yönetimi, Sistem
+                // Sağlığı) kiracı rolüne yazılmaz. ABP bu satırı zaten yok sayar, ama izin
+                // kiracıya verilmiş gibi görünüp yanıltırdı.
+                if (tenantId.HasValue)
+                {
+                    var definition = await definitions.GetOrNullAsync(permission);
+                    if (definition != null && !definition.MultiTenancySide.HasFlag(MultiTenancySides.Tenant))
+                    {
+                        continue;
+                    }
+                }
+
                 // "R" = RolePermissionValueProvider.ProviderName; sağlayıcı anahtarı rol adıdır.
                 grants.Add(new PermissionGrant(_guid.Create(), permission, "R", roleName, tenantId));
             }

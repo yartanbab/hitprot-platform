@@ -8,6 +8,7 @@ using Apya.Platform.Settings;
 using Apya.Platform.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Authorization;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.Settings;
 
@@ -63,6 +64,13 @@ public class FeedbackSettingsAppService : ApplicationService, IFeedbackSettingsA
     [Authorize(PlatformPermissions.Feedbacks.ManageSettings)]
     public async Task UpdateAsync(FeedbackSettingsDto input)
     {
+        // Savunma derinliği: ayarlar GLOBAL yazılıyor; izin host-only olsa da kiracı
+        // bağlamından asla yazılmamalı (FeedbackAdminAppService ile aynı kapı).
+        if (CurrentTenant.Id != null)
+        {
+            throw new AbpAuthorizationException("Bu işlem yalnızca host bağlamında yapılabilir.");
+        }
+
         var retention = Math.Clamp(
             input.TelemetryRetentionDays,
             TelemetryConsts.MinRetentionDays,
