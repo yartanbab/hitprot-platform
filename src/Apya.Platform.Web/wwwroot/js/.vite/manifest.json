@@ -48,13 +48,14 @@
       "_Dialog-Bky2XNdc.js"
     ]
   },
-  "_QueryProvider-B4436sFh.js": {
-    "file": "QueryProvider-B4436sFh.js",
+  "_QueryProvider-CMEXdgTM.js": {
+    "file": "QueryProvider-CMEXdgTM.js",
     "name": "QueryProvider",
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_query-vendor-Bf69L2iP.js",
-      "_httpClient-DePjXdo1.js"
+      "_httpClient-DePjXdo1.js",
+      "_dataChanged-DR0MWWqM.js"
     ]
   },
   "_RichTextEditorV3-mZ6z1BBZ.js": {
@@ -77,6 +78,14 @@
     "file": "api-DE9auhlW.js",
     "name": "api"
   },
+  "_dataChanged-DR0MWWqM.js": {
+    "file": "dataChanged-DR0MWWqM.js",
+    "name": "dataChanged",
+    "imports": [
+      "_react-vendor-D57GAUXd.js",
+      "_query-vendor-Bf69L2iP.js"
+    ]
+  },
   "_draggableActivation-Ybw9Upbh.js": {
     "file": "draggableActivation-Ybw9Upbh.js",
     "name": "draggableActivation"
@@ -85,8 +94,8 @@
     "file": "formChoices-DAx-kYeM.js",
     "name": "formChoices"
   },
-  "_formConditions-DMSgmMUB.js": {
-    "file": "formConditions-DMSgmMUB.js",
+  "_formConditions-DsejDGE1.js": {
+    "file": "formConditions-DsejDGE1.js",
     "name": "formConditions"
   },
   "_grid-vendor-D-Pdxerz.js": {
@@ -162,11 +171,12 @@
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
       "_useDeviceMode-Dk7fb2QY.js",
-      "_QueryProvider-B4436sFh.js",
+      "_QueryProvider-CMEXdgTM.js",
       "_EmptyState-D5m5kdmR.js",
       "_httpClient-DePjXdo1.js",
       "_draggableActivation-Ybw9Upbh.js",
       "_query-vendor-Bf69L2iP.js",
+      "_dataChanged-DR0MWWqM.js",
       "_storageScope-BcOJz0_P.js"
     ]
   },
@@ -188,7 +198,7 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
-      "_QueryProvider-B4436sFh.js",
+      "_QueryProvider-CMEXdgTM.js",
       "_signalr-vendor-CjTpd8t3.js",
       "_useDeviceMode-Dk7fb2QY.js",
       "_registerServiceWorker-MivfkJsD.js",
@@ -196,7 +206,8 @@
       "_EmptyState-D5m5kdmR.js",
       "_i18n-DkhYld-7.js",
       "_query-vendor-Bf69L2iP.js",
-      "_httpClient-DePjXdo1.js"
+      "_httpClient-DePjXdo1.js",
+      "_dataChanged-DR0MWWqM.js"
     ]
   },
   "src/deliveries.jsx": {
@@ -290,7 +301,7 @@
     "imports": [
       "_react-vendor-D57GAUXd.js",
       "_Dialog-Bky2XNdc.js",
-      "_QueryProvider-B4436sFh.js",
+      "_QueryProvider-CMEXdgTM.js",
       "_registerServiceWorker-MivfkJsD.js",
       "_Combobox-D5mSMyzC.js",
       "_i18n-DkhYld-7.js",
@@ -310,7 +321,7 @@
       "_Hint-CNW95h3H.js",
       "_publicFormLink-CJ_6ABDU.js",
       "_formChoices-DAx-kYeM.js",
-      "_formConditions-DMSgmMUB.js"
+      "_formConditions-DsejDGE1.js"
     ]
   },
   "src/forms.jsx": {
@@ -333,6 +344,7 @@
     "isEntry": true,
     "imports": [
       "_react-vendor-D57GAUXd.js",
+      "_dataChanged-DR0MWWqM.js",
       "_RichTextEditorV3-mZ6z1BBZ.js"
     ]
   },
@@ -346,7 +358,7 @@
       "_httpClient-DePjXdo1.js",
       "_publicFormLink-CJ_6ABDU.js",
       "_formChoices-DAx-kYeM.js",
-      "_formConditions-DMSgmMUB.js"
+      "_formConditions-DsejDGE1.js"
     ]
   },
   "src/responses.jsx": {
@@ -368,14 +380,15 @@
     "isEntry": true,
     "imports": [
       "_react-vendor-D57GAUXd.js",
-      "_QueryProvider-B4436sFh.js",
+      "_QueryProvider-CMEXdgTM.js",
       "_query-vendor-Bf69L2iP.js",
       "_Dialog-Bky2XNdc.js",
       "_Combobox-D5mSMyzC.js",
       "_RichTextEditorV3-mZ6z1BBZ.js",
       "_httpClient-DePjXdo1.js",
       "_ui-vendor-DaE-uom6.js",
-      "_draggableActivation-Ybw9Upbh.js"
+      "_draggableActivation-Ybw9Upbh.js",
+      "_dataChanged-DR0MWWqM.js"
     ]
   },
   "src/template-builder.jsx": {
