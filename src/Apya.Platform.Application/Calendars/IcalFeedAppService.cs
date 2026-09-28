@@ -1,3 +1,4 @@
+using Apya.Platform.Permissions;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
@@ -23,7 +24,7 @@ namespace Apya.Platform.Calendars;
 /// oturumsuz açılır, sızması hâlinde mali veri paylaşılmış olurdu.
 /// </para>
 /// </summary>
-[Authorize]
+[Authorize(PlatformPermissions.Calendars.Default)]
 public class IcalFeedAppService : ApplicationService, IIcalFeedAppService
 {
     private readonly IRepository<CalendarFeedToken, Guid> _tokenRepository;

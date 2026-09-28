@@ -1,3 +1,4 @@
+using Apya.Platform.Permissions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +22,7 @@ namespace Apya.Platform.Calendars;
 /// yapan "IcalClient" (DNS-rebinding'e karşı, yönlendirme kapalı).
 /// </para>
 /// </summary>
-[Authorize]
+[Authorize(PlatformPermissions.Calendars.Default)]
 public class IcalSubscriptionAppService : ApplicationService, IIcalSubscriptionAppService
 {
     private readonly IRepository<IcalSubscription, Guid> _repository;

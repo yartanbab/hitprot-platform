@@ -61,6 +61,12 @@ public class CalendarItemDto
     /// tarihleri muhasebe/kurum kaydıdır — takvimden sürüklenerek taşınmaz.
     /// </summary>
     public bool CanReschedule { get; set; }
+
+    /// <summary>
+    /// Takvimden tamamlanabilir mi? Yalnız görevler; durum değiştirme izni ve sahiplik
+    /// (oluşturan/atanan ya da ekip yöneticisi) ister — sunucu kuralının istemci yansıması.
+    /// </summary>
+    public bool CanComplete { get; set; }
 }
 
 /// <summary>Kaynak rayındaki satır: sayaç + izin durumu.</summary>
