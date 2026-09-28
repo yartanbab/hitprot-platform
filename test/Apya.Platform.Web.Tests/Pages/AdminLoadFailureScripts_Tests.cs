@@ -16,7 +16,8 @@ namespace Apya.Platform.Pages;
 ///
 /// <para>Bozulma ekranda hata vermez: süre formu yüklenmeden açılırsa boş form kaydedilip tüm
 /// host ayarlarını ezer; teşhis paneli yalnız başarıda değişirse seçili satır ile panel ayrışır
-/// ve "Çözüldü" ESKİ olaya yazar; yardımcı demetten düşerse iki sayfa da TypeError ile ölür.</para>
+/// ve "Çözüldü" ESKİ olaya yazar; yardımcı demetten düşerse teşhis konsolunda satır tıklaması
+/// TypeError atar, paket ekranında hata yolu çöker.</para>
 /// </summary>
 public class AdminLoadFailureScripts_Tests
 {
@@ -165,8 +166,10 @@ public class AdminLoadFailureScripts_Tests
     // ─────────────────────────── Ortak yardımcı ───────────────────────────
 
     /// <summary>
-    /// İki sayfa da <c>apya.loadState</c>'i betik başında kullanıyor. Kayıt unutulursa teşhis
-    /// konsolu ve paket ekranı TypeError ile tümden ölür; depoda demet kaydını ölçen başka test yok.
+    /// <c>apya.loadState</c> yükleme/hata dallarında kullanılıyor (betik başında yalnız
+    /// <c>apya.latest()</c> çağrılır). Kayıt unutulursa teşhis konsolunda satır tıklaması TypeError
+    /// atar ve seçim ile panel yeniden ayrışır (ADM-17 geri döner); paket ekranında hata yolu
+    /// çöker. Depoda demet kaydını ölçen başka test yok.
     /// </summary>
     [Fact]
     public void Yardimci_global_demette_apya_latest_altinda_kayitli()
