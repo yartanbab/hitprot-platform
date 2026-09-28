@@ -106,7 +106,9 @@
                 @if (Model.CanViewBudget)
                 {
                     <div>
-                        <abp-input asp-for="Project.TotalBudget" label="Bütçesi (₺)" />
+                        @* Tutar maskesi (diğer para alanlarıyla aynı): maskesiz alanda "1500.75"
+                           tr-TR bağlamada 150075'e dönüşüyor ve sessizce kaydediliyordu. *@
+                        <abp-input asp-for="Project.TotalBudget" label="Bütçesi (₺)" data-money-input="true" />
                     </div>
                 }
                 <div class="is-wide">
