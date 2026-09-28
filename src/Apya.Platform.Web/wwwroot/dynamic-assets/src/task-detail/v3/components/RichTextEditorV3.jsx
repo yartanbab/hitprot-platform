@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
+import { sanitizeHtml } from '../../../lib/sanitizeHtml';
 
 /**
  * WYSIWYG açıklama editörü — markdown işareti GÖRÜNMEZ, biçim doğrudan uygulanır.
@@ -48,7 +49,9 @@ const IMAGE_PLACEHOLDER_HTML =
 function toInitialHtml(value) {
     if (!value) return '';
     const looksLikeHtml = /<[a-z][\s\S]*>/i.test(value);
-    if (looksLikeHtml) return value;
+    // HTML kayıt izinli etiket listesiyle temizlenir: eskiden olduğu gibi basılıyordu
+    // ve açıklamadaki <img onerror> görevi açan herkesin oturumunda çalışıyordu.
+    if (looksLikeHtml) return sanitizeHtml(value);
     const escaped = value
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
