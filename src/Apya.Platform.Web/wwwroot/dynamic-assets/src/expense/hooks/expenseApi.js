@@ -40,17 +40,26 @@ export async function fetchBudgetLines(projectId) {
     };
 }
 
-/** Gideri oluşturur. Sunucu sözleşmesi: CreateUpdateExpenseDto. */
+/** ExpenseCategory enum değeri; boş/bilinmeyen (ör. eski kuyruktaki metin) → Other (0). */
+function toCategory(value) {
+    const n = Number.parseInt(value, 10);
+    return Number.isInteger(n) && n >= 0 ? n : 0;
+}
+
+/**
+ * Gideri oluşturur. Sunucu sözleşmesi: CreateUpdateExpenseDto.
+ * Formda ayrı başlık alanı yok: zorunlu Title = tedarikçi, not = açıklama.
+ */
 export function createExpense(payload) {
     return api.post('/api/app/expense', {
-        title: payload.title,
+        title: payload.title || payload.vendor,
         amount: payload.amount,
         currency: payload.currency || 'TRY',
         expenseDate: payload.date,
-        category: payload.category ?? 0,
+        category: toCategory(payload.category),
         cashAccountId: payload.cashAccountId,
         projectId: payload.projectId || null,
         budgetLineId: payload.budgetLineId || null,
-        description: payload.description || null,
+        description: payload.description || payload.note || null,
     });
 }

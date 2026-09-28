@@ -20,15 +20,17 @@ import { LOW_CONFIDENCE_THRESHOLD } from '../hooks/fixtures';
  *     (Button.isLoading + form submit guard).
  */
 
+/* Değer = sunucudaki ExpenseCategory enum'u; etiketler masaüstü gider formuyla
+   (Pages/Expenses/ExpenseLookups.cs) aynı. Eskiden serbest metin ('Seyahat')
+   gidiyordu ve sunucu enum'a çeviremeyip her kaydı 400 ile reddediyordu. */
 const CATEGORY_OPTIONS = [
-    { value: 'Ofis Sarfiyat',     label: 'Ofis Sarfiyat' },
-    { value: 'Donanım',           label: 'Donanım' },
-    { value: 'Yazılım Lisansı',   label: 'Yazılım Lisansı' },
-    { value: 'Internet/Telekom',  label: 'Internet/Telekom' },
-    { value: 'Seyahat',           label: 'Seyahat' },
-    { value: 'Yemek',             label: 'Yemek' },
-    { value: 'Kırtasiye',         label: 'Kırtasiye' },
-    { value: 'Diğer',             label: 'Diğer' },
+    { value: '0', label: 'Genel / Diğer' },
+    { value: '1', label: 'Ofis / Kira' },
+    { value: '2', label: 'Seyahat / Ulaşım' },
+    { value: '3', label: 'Personel / Maaş' },
+    { value: '4', label: 'Malzeme / Sarf' },
+    { value: '5', label: 'Hizmet / Danışmanlık' },
+    { value: '6', label: 'Vergi / Harç' },
 ];
 
 const CURRENCIES = ['TRY', 'USD', 'EUR'];
@@ -112,7 +114,9 @@ export function ExpenseFormSheet({
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <Sheet.Content title="Masraf detayları" description="AI tarafından okunan tutarları doğrulayın ve gönderin">
-                <form onSubmit={handleSubmit} className="flex flex-col h-full">
+                {/* flex-1 min-h-0: Sheet yalnız max-height taşıdığı için h-full auto'ya
+                    düşüyordu; gövde kaymıyor, mobilde Gönder ekran dışında kalıyordu. */}
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
                     <header className="px-4 pt-2 pb-3 border-b border-subtle flex items-center justify-between">
                         <h2 className="text-lg font-semibold">Masraf Detayları</h2>
                         <Badge variant={confVariant} size="sm" withDot>{confLabel}</Badge>

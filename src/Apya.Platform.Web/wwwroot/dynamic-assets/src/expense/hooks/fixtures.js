@@ -10,7 +10,7 @@
  *       currency: { value: 'TRY',  confidence: 0.99 },
  *       date:     { value: '2026-05-04', confidence: 0.85 },
  *       vendor:   { value: 'Migros A.Ş.', confidence: 0.62 },  // low → form sarı
- *       category: { value: 'Ofis Sarfiyat', confidence: 0.55 },
+ *       category: { value: '4', confidence: 0.55 },   // ExpenseCategory (Malzeme)
  *       taxRate:  { value: 20, confidence: 0.95 },
  *     },
  *     rawText: '...',
@@ -23,12 +23,13 @@
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/* category = ExpenseCategory enum değeri (form seçenekleriyle aynı). */
 const VENDOR_POOL = [
-    { vendor: 'Migros A.Ş.',     category: 'Ofis Sarfiyat' },
-    { vendor: 'BSH Ev Aletleri', category: 'Donanım' },
-    { vendor: 'Türk Telekom',    category: 'Internet/Telekom' },
-    { vendor: 'JetBrains s.r.o.', category: 'Yazılım Lisansı' },
-    { vendor: 'Lufthansa',       category: 'Seyahat' },
+    { vendor: 'Migros A.Ş.',     category: '4' },   // Malzeme / Sarf
+    { vendor: 'BSH Ev Aletleri', category: '4' },   // Malzeme / Sarf
+    { vendor: 'Türk Telekom',    category: '5' },   // Hizmet
+    { vendor: 'JetBrains s.r.o.', category: '5' },  // Hizmet
+    { vendor: 'Lufthansa',       category: '2' },   // Seyahat / Ulaşım
 ];
 
 /* Reproducible jitter — file size'tan deterministik. Test'lerde aynı dosya
