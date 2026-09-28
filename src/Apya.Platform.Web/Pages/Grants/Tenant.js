@@ -16,7 +16,9 @@ $(function () {
     var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
 
     var feed = [];
+    var feedFailed = false;
     var activeTab = 'eligible';
+    var nextLoad = apya.latest();
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
@@ -299,6 +301,8 @@ $(function () {
     }
 
     function paintFeed() {
+        // Akış yüklenemediyse sekme değişimi hata kutusunu "uygun çağrı yok" boş durumuyla ezmesin.
+        if (feedFailed) { return; }
         var eligible = sorted(feed.filter(function (r) { return r.isRecommended; }));
         var items = activeTab === 'bookmarked' ? sorted(feed.filter(function (r) { return r.isBookmarked; }))
             : activeTab === 'all' ? sorted(feed)
@@ -415,17 +419,49 @@ $(function () {
         });
     }
 
+    // Kayıt ucu profili ve etiketleri TAM değiştirir: yüklenmemiş boş form kaydedilirse profil
+    // ve tüm etiketler silinir. Form istek BAŞINDA kilitlenir, kilidi yalnız son isteğin başarılı
+    // profil okuması açar; hata dalı kilitli tutup Tekrar dene basar. Tek bilet iki aşamalı
+    // zinciri korur: kayıt sonrası yeniden yükleme ile yarışan eski yanıt çizilmez.
     function load() {
-        return recoSvc.getOpenCalls().then(function (items) {
+        var isLatest = nextLoad();
+        $('#ProfileForm').prop('disabled', true);
+        $('#ProfileLoadState').html(apya.loadState.loadingHtml('Kurum profili yükleniyor…'));
+        return Promise.resolve(recoSvc.getOpenCalls()).then(function (items) {
+            if (!isLatest()) { return; }
+            feedFailed = false;
             feed = items || [];
             $('#TabCountEligible').text(feed.filter(function (r) { return r.isRecommended; }).length);
             $('#TabCountAll').text(feed.length);
             $('#TabCountBookmarked').text(feed.filter(function (r) { return r.isBookmarked; }).length);
             paintHeading();
             paintFeed();
-            return profileSvc.getMyProfile();
-        }).then(paintProfile);
+        }, function () {
+            if (!isLatest()) { return; }
+            feedFailed = true;
+            $('#FeedHeading').removeClass('apya-skel-num');
+            $('#FeedEmpty, #BookmarkEmpty, #BookmarkHint, #FeedMore, #FeedBuckets').addClass('d-none');
+            $('#FeedGrid').removeClass('apya-skel-cards')
+                .html(apya.loadState.errorHtml('Hibe çağrıları yüklenemedi.', 'js-grants-load-retry'));
+        }).then(function () {
+            // Akış düşse de profil okunur; akışa bağlı tek şey "N çağrı ölçülebilir" cümlesi.
+            if (!isLatest()) { return; }
+            return Promise.resolve(profileSvc.getMyProfile()).then(function (p) {
+                if (!isLatest()) { return; }
+                paintProfile(p);
+                $('#ProfileLoadState').empty();
+                $('#ProfileForm').prop('disabled', false);
+            }, function () {
+                if (!isLatest()) { return; }
+                $('#ProfileLoadState').html(apya.loadState.errorHtml('Kurum profili yüklenemedi.', 'js-grants-load-retry'));
+            });
+        });
     }
+
+    $(document).on('click', '.js-grants-load-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     load();
     loadApplications();
