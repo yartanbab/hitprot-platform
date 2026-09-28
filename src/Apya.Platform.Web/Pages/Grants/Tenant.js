@@ -19,6 +19,10 @@ $(function () {
     var feedFailed = false;
     var activeTab = 'eligible';
     var nextLoad = apya.latest();
+    // Akışın kendi bileti: akışın Tekrar dene'si profil yüklemesini bayatlatmaz.
+    var nextFeed = apya.latest();
+    // Son başarılı profil okuması; null = form henüz boyanmadı ya da okuma düştü.
+    var profile = null;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
@@ -101,18 +105,24 @@ $(function () {
         applyOrgType(Number($(this).val()));
     });
 
+    // Eksik alan sayısı, "koşullu" kovadaki çağrı sayısıyla doğrudan ilişkili:
+    // profil dolunca o çağrılar ölçülebilir hâle gelir. Akış profilden sonra gelirse de yenilenir.
+    function paintGain() {
+        if (!profile) { return; }
+        var conditional = feed.filter(function (r) { return r.bucket === 1; }).length;
+        $('#ProfileGain').text(profile.missingFieldCount === 0
+            ? l('Grants:Feed:Profile:Full')
+            : l('Grants:Feed:Profile:Gain', conditional));
+    }
+
     function paintProfile(p) {
+        profile = p;
         $('#ProfileCompleteText').text(l('Grants:Feed:Profile:Complete', p.completionPercent));
         $('#ProfileBar').css('width', p.completionPercent + '%');
         $('#ProfileMissingChip')
             .toggleClass('d-none', p.missingFieldCount === 0)
             .text(l('Grants:Feed:Profile:Missing', p.missingFieldCount));
-        // Eksik alan sayısı, "koşullu" kovadaki çağrı sayısıyla doğrudan ilişkili:
-        // profil dolunca o çağrılar ölçülebilir hâle gelir.
-        var conditional = feed.filter(function (r) { return r.bucket === 1; }).length;
-        $('#ProfileGain').text(p.missingFieldCount === 0
-            ? l('Grants:Feed:Profile:Full')
-            : l('Grants:Feed:Profile:Gain', conditional));
+        paintGain();
 
         $('#ProfileSuggestedNote').toggleClass('d-none', !p.isSuggested);
 
@@ -419,14 +429,11 @@ $(function () {
         });
     }
 
-    // Kayıt ucu profili ve etiketleri TAM değiştirir: yüklenmemiş boş form kaydedilirse profil
-    // ve tüm etiketler silinir. Form istek BAŞINDA kilitlenir, kilidi yalnız son isteğin başarılı
-    // profil okuması açar; hata dalı kilitli tutup Tekrar dene basar. Tek bilet iki aşamalı
-    // zinciri korur: kayıt sonrası yeniden yükleme ile yarışan eski yanıt çizilmez.
-    function load() {
-        var isLatest = nextLoad();
-        $('#ProfileForm').prop('disabled', true);
-        $('#ProfileLoadState').html(apya.loadState.loadingHtml('Kurum profili yükleniyor…'));
+    // Akış kendi biletiyle yüklenir ve profil formuna DOKUNMAZ: akışın Tekrar dene'si açık
+    // editördeki kaydedilmemiş girdiyi ezmez, yalnız "N çağrı ölçülebilir" cümlesini yeniler.
+    // Hata dalı da çözülür; load() akış düşse de profil adımına geçer.
+    function loadFeed() {
+        var isLatest = nextFeed();
         return Promise.resolve(recoSvc.getOpenCalls()).then(function (items) {
             if (!isLatest()) { return; }
             feedFailed = false;
@@ -436,14 +443,27 @@ $(function () {
             $('#TabCountBookmarked').text(feed.filter(function (r) { return r.isBookmarked; }).length);
             paintHeading();
             paintFeed();
+            paintGain();
         }, function () {
             if (!isLatest()) { return; }
             feedFailed = true;
             $('#FeedHeading').removeClass('apya-skel-num');
             $('#FeedEmpty, #BookmarkEmpty, #BookmarkHint, #FeedMore, #FeedBuckets').addClass('d-none');
             $('#FeedGrid').removeClass('apya-skel-cards')
-                .html(apya.loadState.errorHtml('Hibe çağrıları yüklenemedi.', 'js-grants-load-retry'));
-        }).then(function () {
+                .html(apya.loadState.errorHtml('Hibe çağrıları yüklenemedi.', 'js-grants-feed-retry'));
+        });
+    }
+
+    // Kayıt ucu profili ve etiketleri TAM değiştirir: yüklenmemiş boş form kaydedilirse profil
+    // ve tüm etiketler silinir. Form istek BAŞINDA kilitlenir, kilidi yalnız son isteğin başarılı
+    // profil okuması açar; hata dalı kilitli tutup Tekrar dene basar. load() bileti profil adımını
+    // korur: kayıt sonrası yeniden yükleme ile yarışan eski yanıt çizilmez.
+    function load() {
+        var isLatest = nextLoad();
+        $('#ProfileForm').prop('disabled', true);
+        // Yükleniyor kutusu yalnız profil henüz boyanmamışken: açık editörde her Kaydet'te formu itmesin.
+        if (!profile) { $('#ProfileLoadState').html(apya.loadState.loadingHtml('Kurum profili yükleniyor…')); }
+        return loadFeed().then(function () {
             // Akış düşse de profil okunur; akışa bağlı tek şey "N çağrı ölçülebilir" cümlesi.
             if (!isLatest()) { return; }
             return Promise.resolve(profileSvc.getMyProfile()).then(function (p) {
@@ -453,6 +473,7 @@ $(function () {
                 $('#ProfileForm').prop('disabled', false);
             }, function () {
                 if (!isLatest()) { return; }
+                profile = null;
                 $('#ProfileLoadState').html(apya.loadState.errorHtml('Kurum profili yüklenemedi.', 'js-grants-load-retry'));
             });
         });
@@ -461,6 +482,11 @@ $(function () {
     $(document).on('click', '.js-grants-load-retry', function () {
         $(this).prop('disabled', true);
         load();
+    });
+
+    $('#FeedGrid').on('click', '.js-grants-feed-retry', function () {
+        $(this).prop('disabled', true);
+        loadFeed();
     });
 
     load();

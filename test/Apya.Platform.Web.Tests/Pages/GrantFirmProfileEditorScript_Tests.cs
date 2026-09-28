@@ -99,19 +99,53 @@ public class GrantFirmProfileEditorScript_Tests
         ShouldAppearInOrder(load,
             "nextLoad()",
             "$('#ProfileForm').prop('disabled', true)",
-            "Promise.resolve(recoSvc.getOpenCalls())",
-            "}, function () {",
-            "js-grants-load-retry",
-            "}).then(function () {",
+            "loadFeed().then(function () {",
+            "if (!isLatest())",
             "Promise.resolve(profileSvc.getMyProfile())",
             "paintProfile(p)",
             unlock,
             "}, function () {",
+            "profile = null;",
             "js-grants-load-retry");
-        Count(load, "if (!isLatest())").ShouldBe(5, "iki aşamanın başarı ve hata dalları ile ara adım bayat yanıtı yutmalı");
+        Count(load, "if (!isLatest())").ShouldBe(3, "profil adımının başarı ve hata dalları ile ara adım bayat yanıtı yutmalı");
+
+        // Yükleniyor kutusu yalnız profil henüz boyanmamışken: kayıt sonrası yeniden yükleme açık
+        // editörü büyük blokla aşağı itmez; kilit yine her yüklemede konur.
+        ShouldAppearInOrder(load, "if (!profile) {", "apya.loadState.loadingHtml(");
 
         script.ShouldContain("var nextLoad = apya.latest();");
         script.ShouldContain(".on('click', '.js-grants-load-retry'");
+    }
+
+    /// <summary>
+    /// Akışın Tekrar dene'si yalnız akışı yeniden yükler, kendi biletiyle. Eskiden profil kutusuyla
+    /// aynı load()'u çağırıyordu: form kilitlenip paintProfile sunucu değerlerini yeniden basıyor,
+    /// açık editördeki kaydedilmemiş alanlar ve çipler uyarısız siliniyordu.
+    /// </summary>
+    [Fact]
+    public void Akisin_Tekrar_denesi_profil_formuna_dokunmaz()
+    {
+        var script = Script();
+
+        var feed = Body(script, "function loadFeed()");
+        ShouldAppearInOrder(feed,
+            "nextFeed()",
+            "Promise.resolve(recoSvc.getOpenCalls())",
+            "paintGain();",
+            "}, function () {",
+            "js-grants-feed-retry");
+        Count(feed, "if (!isLatest())").ShouldBe(2);
+        feed.ShouldNotContain("#ProfileForm");
+        feed.ShouldNotContain("#ProfileLoadState");
+        feed.ShouldNotContain("paintProfile");
+        feed.ShouldNotContain("js-grants-load-retry");
+
+        script.ShouldContain("var nextFeed = apya.latest();");
+        script.ShouldContain(
+            "$('#FeedGrid').on('click', '.js-grants-feed-retry', function () {\n" +
+            "        $(this).prop('disabled', true);\n" +
+            "        loadFeed();\n" +
+            "    });");
     }
 
     /// <summary>Akış yüklenemediyse sekme değişimi hata kutusunu "uygun çağrı yok" ile ezmez.</summary>
@@ -121,6 +155,6 @@ public class GrantFirmProfileEditorScript_Tests
         var script = Script();
 
         Body(script, "function paintFeed()").ShouldContain("if (feedFailed) { return; }");
-        Body(script, "function load()").ShouldContain("feedFailed = true;");
+        Body(script, "function loadFeed()").ShouldContain("feedFailed = true;");
     }
 }
