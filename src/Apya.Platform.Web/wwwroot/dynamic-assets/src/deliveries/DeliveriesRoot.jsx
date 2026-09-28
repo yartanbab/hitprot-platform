@@ -124,13 +124,26 @@ export function DeliveriesRoot() {
     })();
   }, [resolvingProject]);
 
+  /* Yalnız son açılan paketin yanıtı yazılır. Ekle/çıkar/üret de açılıştaki
+     bileti alır: bu arada başka paket açıldıysa eski paketin detayı yeni seçimin
+     altına yazılmaz, sonraki "Üret" ve "Sil" eski paketi hedeflemez. */
+  const packageRequestRef = useRef(0);
+
   const openPackage = async (id) => {
+    const request = ++packageRequestRef.current;
+    // Yüklenirken önceki paketin Üret/Sil eylemleri görünmesin; önceki paketin
+    // arama metni ve yoldaki arama da düşsün.
     setSelectedId(id);
+    setDetail(null);
+    handleSearch('');
     try {
       const [pkg, links] = await Promise.all([getPackage(id), canShare ? getShareLinks(id) : Promise.resolve([])]);
+      if (request !== packageRequestRef.current) return;
       setDetail(pkg);
       setShareLinks(links ?? []);
     } catch (e) {
+      if (request !== packageRequestRef.current) return;
+      setSelectedId(null);
       abpNotify('error', 'Paket açılamadı.');
       console.error('[Deliveries] openPackage', e);
     }
@@ -182,23 +195,35 @@ export function DeliveriesRoot() {
     }
   };
 
-  const handleSearch = async (text) => {
+  /* Ek arama kutusu: her tuşta istek gitmez; yalnız son metnin yanıtı yazılır,
+     kutu temizlendikten sonra geç dönen yanıt listeyi geri doldurmaz. */
+  const searchRequestRef = useRef(0);
+  const searchTimerRef = useRef(null);
+
+  const handleSearch = (text) => {
     setPicker(text);
+    const request = ++searchRequestRef.current;
+    clearTimeout(searchTimerRef.current);
     if (!text.trim()) { setPickerResults([]); return; }
-    try {
-      const result = await searchDocuments(projectId, text.trim());
-      setPickerResults(result.items ?? []);
-    } catch (e) {
-      console.error('[Deliveries] search', e);
-    }
+    searchTimerRef.current = setTimeout(async () => {
+      try {
+        const result = await searchDocuments(projectId, text.trim());
+        if (request === searchRequestRef.current) setPickerResults(result.items ?? []);
+      } catch (e) {
+        console.error('[Deliveries] search', e);
+      }
+    }, 300);
   };
 
   const handleAdd = async (documentFileId) => {
+    const request = packageRequestRef.current;
     setBusy(true);
     try {
-      setDetail(await addItems(detail.id, [documentFileId]));
-      setPicker('');
-      setPickerResults([]);
+      const next = await addItems(detail.id, [documentFileId]);
+      if (request === packageRequestRef.current) {
+        setDetail(next);
+        handleSearch('');
+      }
       await load();
     } catch (e) {
       abpNotify('error', 'Ek eklenemedi.');
@@ -208,9 +233,11 @@ export function DeliveriesRoot() {
   };
 
   const handleRemove = async (itemId) => {
+    const request = packageRequestRef.current;
     setBusy(true);
     try {
-      setDetail(await removeItem(itemId));
+      const next = await removeItem(itemId);
+      if (request === packageRequestRef.current) setDetail(next);
       await load();
     } catch (e) {
       abpNotify('error', 'Ek çıkarılamadı.');
@@ -233,12 +260,14 @@ export function DeliveriesRoot() {
   };
 
   const handleGenerate = async () => {
+    const request = packageRequestRef.current;
     setBusy(true);
     try {
       const run = await generate(detail.id);
       setShowPreflight(false);
       setToast(`Paket üretildi — sürüm v${run.version}.`);
-      setDetail(await getPackage(detail.id));
+      const next = await getPackage(detail.id);
+      if (request === packageRequestRef.current) setDetail(next);
       await load();
     } catch (e) {
       // Sunucu bloke kalem bulursa buraya düşeriz; istemci düğmesi kapalı olsa bile.
@@ -389,7 +418,9 @@ export function DeliveriesRoot() {
         </div>
 
         <div className="apya-docs-main">
-          {!detail ? (
+          {!detail ? (selectedId ? (
+            <div className="p-3"><SkeletonList rows={3} /></div>
+          ) : (
             !loading && packages.length === 0 ? (
               <EmptyState
                 icon={<i className="fa fa-box" />}
@@ -409,7 +440,7 @@ export function DeliveriesRoot() {
                 description="Ekleri sıralayın, kontrolü çalıştırın ve paketi üretin."
               />
             )
-          ) : (
+          )) : (
             <div className="p-3 d-flex flex-column gap-3">
               <div className="d-flex align-items-start justify-content-between gap-3 flex-wrap">
                 <div style={{ minWidth: 0 }}>

@@ -60,8 +60,13 @@ $(function () {
         });
     }
 
+    var nextSummary = apya.latest();
+
     function refreshSummary() {
-        return notificationService.getSummary().then(renderCategories);
+        var isLatest = nextSummary();
+        return notificationService.getSummary().then(function (summary) {
+            if (isLatest()) { renderCategories(summary); }
+        });
     }
 
     // ── Liste ─────────────────────────────────────────────────────────────────
@@ -128,8 +133,14 @@ $(function () {
         return $row.append($body).append($actions);
     }
 
+    var nextList = apya.latest();
+    var isListLatest = function () { return true; };
+
     function loadNotifications(append) {
+        // 'Daha fazla' son yeniden yüklemenin devamıdır, onu bayatlatmaz; yeni yeniden yükleme ise hem eski listeyi hem eski 'daha fazla'yı bayatlatır.
+        var isLatest = append ? isListLatest : (isListLatest = nextList());
         return notificationService.getMyNotifications(buildInput()).then(function (result) {
+            if (!isLatest()) { return; }
             if (!append) $list.empty();
 
             if (result.items.length === 0 && !append) {

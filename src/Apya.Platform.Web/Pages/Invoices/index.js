@@ -6,12 +6,24 @@ $(function () {
     var createModal = new abp.ModalManager(abp.appPath + 'Invoices/CreateModal');
     var paymentModal = new abp.ModalManager(abp.appPath + 'Invoices/PaymentModal');
 
-    var state = { all: [], filtered: [], selectedId: null, status: '' };
+    var state = { all: [], filtered: [], selectedId: null, status: '', loading: false, loadFailed: false };
+    var nextList = apya.latest();
+    var nextDetail = apya.latest();
 
     var $md = $('#InvoicesMd');
     var $list = $('#InvoicesList');
     var $empty = $('#InvoicesListEmpty');
     var $detail = $('#InvoiceDetail');
+    // Boş/hata durumu markup'ı iki cshtml'de kopya; eylemler JS'ten basılır. Hata bloğu listbox'ın DIŞINDA durur.
+    var $clearFilters = $('<button type="button" class="btn btn-sm btn-outline-secondary" hidden>Filtreleri temizle</button>')
+        .appendTo($empty)
+        .on('click', function () {
+            $('#InvoiceFilter').val('');
+            $('#InvoiceStatusPills button[data-status=""]').trigger('click');
+        });
+    var $loadError = $('<div class="apya-md-empty" role="alert" hidden><i class="fa fa-triangle-exclamation" aria-hidden="true"></i><span>Faturalar yüklenemedi.</span></div>')
+        .append($('<button type="button" class="btn btn-sm btn-outline-secondary"></button>').text(l('Common:Retry')).on('click', function () { load(); }))
+        .insertAfter($empty);
 
     // Finans sekmesine gomuldugunde liste O PROJEYLE sinirlanir. /Invoices
     // sayfasinda oznitelik yoktur -> null -> davranis eskisiyle birebir ayni.
@@ -53,12 +65,34 @@ $(function () {
             return ((x.invoiceNumber || '').toLocaleLowerCase('tr-TR').indexOf(q) !== -1)
                 || ((x.customerName || '').toLocaleLowerCase('tr-TR').indexOf(q) !== -1);
         });
+        // Seçili fatura süzgeç dışına düştüyse panel onu göstermeye (ve "Ödeme Ekle"yi sunmaya) devam etmesin.
+        if (state.selectedId && !state.filtered.some(function (x) { return x.id === state.selectedId; })) {
+            state.selectedId = null;
+            renderDetailEmpty();
+        }
         renderList();
     }
 
     function renderList() {
+        // Yükleniyor ve hata durumu state'te: süzgece yazmak ya da çipe basmak onları "bulunamadı" ile ezmez.
+        var waiting = !state.all.length && state.loading;
+        var failed = !state.all.length && !state.loading && state.loadFailed;
         $list.empty();
-        $empty.prop('hidden', state.filtered.length > 0);
+        $list.attr('aria-busy', waiting ? 'true' : null);
+        $loadError.prop('hidden', !failed);
+        $empty.prop('hidden', waiting || failed || state.filtered.length > 0);
+        $clearFilters.prop('hidden', !(($('#InvoiceFilter').val() || '').trim() || state.status !== ''));
+        if (waiting) {
+            for (var i = 0; i < 6; i++) {
+                $list.append('<li aria-hidden="true"><div class="apya-md-item"><span class="apya-skeleton d-block" style="height:12px;width:70%"></span></div></li>');
+            }
+            $('#InvoicesPagerInfo').text('Yükleniyor…');
+            return;
+        }
+        if (failed) {
+            $('#InvoicesPagerInfo').text('—');
+            return;
+        }
         state.filtered.forEach(function (x) {
             var directionIcon = x.direction === 1 ? 'fa-arrow-down-long text-warning' : 'fa-arrow-up-long text-primary';
             var li = $(
@@ -84,6 +118,8 @@ $(function () {
     }
 
     function renderDetailEmpty() {
+        nextDetail(); // yoldaki detay yanıtı artık çizilmez
+        $detail.removeAttr('data-invoice-id');
         $md.removeClass('has-selection');
         $detail.html(
             '<div class="apya-md-empty">' +
@@ -155,7 +191,7 @@ $(function () {
 
             (d.notes ? '<div class="mt-3"><div class="apya-md-overline mb-1">Notlar</div><div style="font-size:12.5px">' + esc(d.notes) + '</div></div>' : '');
 
-        $detail.html(html);
+        $detail.html(html).attr('data-invoice-id', d.id);
         $md.addClass('has-selection');
 
         $('#InvoiceDetailBack').on('click', function () {
@@ -174,14 +210,42 @@ $(function () {
         });
     }
 
+    // Seçim işareti ile panel aynı faturayı gösterir: yüklenirken önceki faturanın eylemleri durmaz,
+    // geç dönen eski yanıt yeni seçimi ezmez, hata olursa seçim geri alınır.
+    function renderDetailLoading() {
+        $detail.removeAttr('data-invoice-id').html(
+            '<div class="apya-md-empty" role="status">' +
+            '  <i class="fa fa-spinner fa-spin" aria-hidden="true"></i>' +
+            '  <span>Fatura yükleniyor…</span>' +
+            '</div>'
+        );
+    }
+
     function select(id) {
+        var isLatest = nextDetail();
         state.selectedId = id;
         renderList();
-        service.get(id).then(renderDetail);
+        // Ödeme sonrası aynı fatura yenilenirken panel titremesin.
+        if ($detail.attr('data-invoice-id') !== String(id)) { renderDetailLoading(); }
+        Promise.resolve(service.get(id)).then(function (d) {
+            if (isLatest()) { renderDetail(d); }
+        }, function () {
+            if (!isLatest()) { return; }
+            state.selectedId = null;
+            renderList();
+            renderDetailEmpty();
+        });
     }
 
     function load(keepSelection) {
-        service.getList({ maxResultCount: 200, sorting: 'invoiceDate desc' }).then(function (result) {
+        var isLatest = nextList();
+        state.loading = true;
+        state.loadFailed = false;
+        if (!state.all.length) { renderList(); }
+        Promise.resolve(service.getList({ maxResultCount: 200, sorting: 'invoiceDate desc' })).then(function (result) {
+            if (!isLatest()) { return; }
+            state.loading = false;
+            state.loadFailed = false;
             state.all = result.items || [];
             if (!keepSelection) { state.selectedId = null; }
             applyFilter();
@@ -199,6 +263,12 @@ $(function () {
             }
             renderList();
             if (state.selectedId) { select(state.selectedId); }
+        }, function () {
+            // ABP hata penceresini zaten gösteriyor. Yenilemede hata olursa eldeki liste korunur.
+            if (!isLatest()) { return; }
+            state.loading = false;
+            state.loadFailed = true;
+            if (!state.all.length) { renderList(); }
         });
     }
 
