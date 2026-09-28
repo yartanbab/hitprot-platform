@@ -314,7 +314,9 @@ function AgingBar({ customerId }) {
     const svc = abpInvoice();
     if (!svc) { setLoading(false); return; }
 
-    svc.getList({ maxResultCount: 1000, sorting: 'dueDate asc' })
+    // ABP proxy'si jQuery 4 Deferred döndürür; onda .finally YOK (TypeError tüm adayı
+    // söküyordu). Promise.resolve ile yerel Promise'e çevir.
+    Promise.resolve(svc.getList({ maxResultCount: 1000, sorting: 'dueDate asc' }))
       .then((result) => {
         if (cancelled) return;
         const now = new Date();
@@ -386,7 +388,7 @@ function EmbeddedStatement({ customerId, onViewAll }) {
     const svc = abpLedger();
     if (!svc) { setLoading(false); return; }
 
-    svc.getStatement(customerId)
+    Promise.resolve(svc.getStatement(customerId)) // jQuery Deferred → Promise (.finally için)
       .then((result) => { if (!cancelled) setLines((result?.lines || []).slice(-5).reverse()); })
       .catch(() => { if (!cancelled) setLines([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
