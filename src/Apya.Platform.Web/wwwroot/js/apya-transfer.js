@@ -59,7 +59,7 @@
                 '  <label class="apya-overline d-block mb-1">Tutar</label>' +
                 '  <div class="input-group input-group-sm">' +
                 '    <span class="input-group-text" id="' + containerId + '_CurLabel">TRY</span>' +
-                '    <input type="number" min="0.01" step="0.01" class="form-control apya-numeric" id="' + containerId + '_Amount" placeholder="0,00" />' +
+                '    <input type="text" min="0.01" data-money-input class="form-control apya-numeric" id="' + containerId + '_Amount" placeholder="0,00" />' +
                 '  </div>' +
                 '</div>' +
                 '<div class="small text-muted mb-3" id="' + containerId + '_RateHint" style="min-height:1.2em"></div>' +
@@ -67,6 +67,10 @@
                 '  <i class="fa fa-paper-plane me-1" aria-hidden="true"></i>Transferi onayla' +
                 '</button>'
             );
+
+            // Diğer tutar alanlarıyla aynı maske: "1.500,00" 1500 olarak okunur. Eskiden
+            // type=number + parseFloat, tr girişini 1000 kat küçültüyordu (1.500,00 → 1,5).
+            apya.moneyInput.scan($root[0]);
 
             fillSelect($('#' + containerId + '_From'));
             fillSelect($('#' + containerId + '_To'));
@@ -136,7 +140,7 @@
         function submit() {
             var fromId = $('#' + containerId + '_From').val();
             var toId = $('#' + containerId + '_To').val();
-            var amount = parseFloat($('#' + containerId + '_Amount').val());
+            var amount = apya.moneyInput.getValue($('#' + containerId + '_Amount')[0]);
 
             if (!fromId || !toId || fromId === toId) {
                 abp.notify.warn('Gönderen ve alıcı kasa farklı olmalıdır.');
