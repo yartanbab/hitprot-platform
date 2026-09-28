@@ -15,11 +15,18 @@
  * (isFlushing kilidi) ve başarısız girdiyi kuyrukta bırakır.
  */
 
-const KEY = 'apya.expenseQueue.v1';
+import { scopedStorageKey } from '../../lib/storageScope';
 
-function read() {
+/* Kuyruk kiracı + kullanıcıya bağlı. Eski kullanıcısız anahtardaki ('apya.expenseQueue.v1')
+   kayıtların kime ait olduğu bilinmediği için otomatik gönderilmez; orada durur. */
+const KEY_BASE = 'apya.expenseQueue.v1';
+const REJECTED_BASE = 'apya.expenseQueue.rejected.v1';
+export const queueKey = () => scopedStorageKey(KEY_BASE);
+export const rejectedKey = () => scopedStorageKey(REJECTED_BASE);
+
+function read(key = queueKey()) {
     try {
-        const raw = window.localStorage.getItem(KEY);
+        const raw = window.localStorage.getItem(key);
         const parsed = raw ? JSON.parse(raw) : [];
         return Array.isArray(parsed) ? parsed : [];
     } catch {
@@ -28,9 +35,9 @@ function read() {
     }
 }
 
-function write(items) {
+function write(items, key = queueKey()) {
     try {
-        window.localStorage.setItem(KEY, JSON.stringify(items));
+        window.localStorage.setItem(key, JSON.stringify(items));
         return true;
     } catch {
         // Kota dolu ya da özel pencere: kuyruğa alamadık. Çağıran bunu
@@ -66,6 +73,11 @@ export const offlineQueue = {
         write(read().filter(x => x.clientId !== clientId));
     },
 
+    /** Sunucunun kalıcı olarak reddettiği (4xx) kayıtlar — silinmez, ayrı tutulur. */
+    rejected() {
+        return read(rejectedKey());
+    },
+
     clear() {
         write([]);
     },
@@ -74,11 +86,13 @@ export const offlineQueue = {
 let isFlushing = false;
 
 /**
- * Kuyruğu sırayla gönderir. İlk hatada DURUR: sıradaki kayıtlar da büyük
- * ihtimalle aynı sebepten düşecektir (bağlantı gitti, oturum kapandı) ve
- * denemeye devam etmek aynı hatayı N kez üretir.
+ * Kuyruğu sırayla gönderir. AĞ hatasında DURUR: sıradaki kayıtlar da büyük
+ * ihtimalle aynı sebepten düşecektir (bağlantı gitti) ve denemeye devam etmek
+ * aynı hatayı N kez üretir. Sunucu kaydı KALICI olarak reddettiyse (4xx: doğrulama,
+ * yetki) kayıt reddedilenler listesine taşınır ve sıradakilere geçilir — eskiden
+ * başta takılı kalıp arkasındaki geçerli kayıtların hiçbirini göndermiyordu.
  *
- * @returns {Promise<{sent:number, failed:number, remaining:number}>}
+ * @returns {Promise<{sent:number, failed:number, rejected:number, remaining:number}>}
  */
 export async function flushQueue(send) {
     if (isFlushing) { return { sent: 0, failed: 0, remaining: offlineQueue.count() }; }
@@ -86,13 +100,21 @@ export async function flushQueue(send) {
 
     let sent = 0;
     let failed = 0;
+    let rejected = 0;
     try {
         for (const item of offlineQueue.list()) {
             try {
                 await send(item.payload);
                 offlineQueue.remove(item.clientId);
                 sent++;
-            } catch {
+            } catch (err) {
+                const status = err?.status;
+                if (status >= 400 && status < 500) {
+                    write(read(rejectedKey()).concat({ ...item, rejectedAt: new Date().toISOString(), error: err?.message ?? null }), rejectedKey());
+                    offlineQueue.remove(item.clientId);
+                    rejected++;
+                    continue;
+                }
                 failed++;
                 break;
             }
@@ -101,5 +123,5 @@ export async function flushQueue(send) {
         isFlushing = false;
     }
 
-    return { sent, failed, remaining: offlineQueue.count() };
+    return { sent, failed, rejected, remaining: offlineQueue.count() };
 }

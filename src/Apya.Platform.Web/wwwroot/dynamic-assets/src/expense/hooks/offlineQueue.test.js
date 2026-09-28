@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { offlineQueue, flushQueue } from './offlineQueue';
+import { offlineQueue, flushQueue, queueKey } from './offlineQueue';
 
 /**
  * Saha kuyruğunun sözleşmesi (tasarım 1d).
@@ -42,7 +42,7 @@ describe('offlineQueue', () => {
     });
 
     it('bozuk depo icerigi kuyrugu BOS sayar, patlamaz', () => {
-        window.localStorage.setItem('apya.expenseQueue.v1', '{bozuk json');
+        window.localStorage.setItem(queueKey(), '{bozuk json');
 
         expect(offlineQueue.list()).toEqual([]);
         expect(offlineQueue.count()).toBe(0);
@@ -87,6 +87,30 @@ describe('flushQueue', () => {
 
         expect(send).toHaveBeenCalledTimes(1);
         expect(offlineQueue.count()).toBe(3);
+    });
+
+    it('sunucunun kalici reddi (4xx) kuyrugu kilitlemez; kayit reddedilenlere tasinir', async () => {
+        offlineQueue.enqueue({ title: 'Bozuk' });
+        offlineQueue.enqueue({ title: 'Saglam' });
+
+        const send = vi.fn()
+            .mockRejectedValueOnce(Object.assign(new Error('Kategori geçersiz'), { status: 400 }))
+            .mockResolvedValueOnce({ id: 'y' });
+
+        const summary = await flushQueue(send);
+
+        expect(summary).toMatchObject({ sent: 1, failed: 0, rejected: 1, remaining: 0 });
+        expect(offlineQueue.rejected()[0].payload.title).toBe('Bozuk');
+    });
+
+    it('kuyruk kullaniciya bagli: baska kullanicinin kaydi gorunmez', () => {
+        window.abp = { currentUser: { id: 'u1', tenantId: 't1' } };
+        offlineQueue.enqueue({ title: 'u1 masrafi' });
+        window.abp = { currentUser: { id: 'u2', tenantId: 't1' } };
+        expect(offlineQueue.count()).toBe(0);
+        window.abp = { currentUser: { id: 'u1', tenantId: 't1' } };
+        expect(offlineQueue.count()).toBe(1);
+        delete window.abp;
     });
 
     it('bos kuyrukta hicbir sey gondermez', async () => {

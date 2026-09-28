@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { scopedStorageKey } from '../../lib/storageScope';
 
 /**
  * Çevrimdışı kuyruk — bağlantı yokken yapılan değişiklikler kaybolmasın.
@@ -13,11 +14,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * eylemleri çevrimdışı kuyruğa almak, kullanıcı görmeden uygulanmaları
  * demektir — onlar bağlantı isteyip hata verir.
  */
-const STORAGE_KEY = 'apya.calendar.offlineQueue';
+/* Kiracı + kullanıcıya bağlı: sabit anahtarla sonraki kullanıcı öncekinin taşımalarını
+   kendi adına gönderiyordu (bkz. lib/storageScope.js). */
+const storageKey = () => scopedStorageKey('apya.calendar.offlineQueue');
 
 function readQueue() {
     try {
-        const raw = window.localStorage.getItem(STORAGE_KEY);
+        const raw = window.localStorage.getItem(storageKey());
         const parsed = raw ? JSON.parse(raw) : [];
         return Array.isArray(parsed) ? parsed : [];
     } catch {
@@ -27,7 +30,7 @@ function readQueue() {
 
 function writeQueue(queue) {
     try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+        window.localStorage.setItem(storageKey(), JSON.stringify(queue));
     } catch { /* kota dolu / özel mod: sessizce geç */ }
 }
 
@@ -56,10 +59,12 @@ export function useOfflineQueue({ onFlush }) {
             for (const entry of queue) {
                 try {
                     await onFlush(entry);
-                } catch {
-                    /* Hâlâ gönderilemiyorsa kuyrukta KALIR — sessizce düşürmek,
-                       kullanıcının değişikliğini kaybetmek olurdu. */
-                    remaining.push(entry);
+                } catch (err) {
+                    /* Sunucu kalıcı olarak reddettiyse (4xx: yetki, geçersiz tarih) tekrar
+                       denemek her sayfa açılışında aynı hatayı üretir — bırakılır; ekran
+                       sunucudaki gerçek hâli gösterir. Ağ hatasında kuyrukta KALIR. */
+                    const status = err?.status;
+                    if (!(status >= 400 && status < 500)) remaining.push(entry);
                 }
             }
             writeQueue(remaining);
