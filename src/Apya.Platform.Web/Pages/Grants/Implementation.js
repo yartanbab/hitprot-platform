@@ -92,7 +92,7 @@ $(function () {
         var options = {};
         reportKeys.forEach(function (k, i) { options[i] = l('Grants:Impl:Status:' + k); });
 
-        abp.message.prompt(l('Grants:Impl:StatusPrompt'), '', {
+        abp.message.prompt(l('Grants:Impl:StatusPrompt'), {
             input: 'select', inputOptions: options
         }).then(function (status) {
             if (status === null) { return; }
@@ -118,7 +118,7 @@ $(function () {
         var options = {};
         reportKeys.forEach(function (k, i) { options[i] = l('Grants:Impl:Status:' + k); });
 
-        abp.message.prompt(l('Grants:Impl:SectionStatusPrompt'), '', {
+        abp.message.prompt(l('Grants:Impl:SectionStatusPrompt'), {
             input: 'select', inputOptions: options
         }).then(function (status) {
             if (status === null) { return; }

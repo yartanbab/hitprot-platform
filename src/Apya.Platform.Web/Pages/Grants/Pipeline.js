@@ -93,7 +93,7 @@ $(function () {
         });
         options[''] = l('Grants:Dispatch:ConsultantNone');
 
-        abp.message.prompt(l('Grants:Pipeline:AssignPrompt'), '', { input: 'select', inputOptions: options })
+        abp.message.prompt(l('Grants:Pipeline:AssignPrompt'), { input: 'select', inputOptions: options })
             .then(function (userId) {
                 if (userId === null) { return; }
                 service.assign({
