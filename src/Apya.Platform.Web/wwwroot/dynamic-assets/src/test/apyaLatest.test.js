@@ -84,6 +84,13 @@ describe('DataTables bayat callback koruması', () => {
         expect(ajax).toBe(created.at(-1));
     });
 
+    it('canlı geçit: sarılmış createAjax kaynağı apya.latest() çağrısını taşır', () => {
+        // Global demet her ortamda küçültülür (BundleAndMinify, NUglify CrunchAll): yerel
+        // adlar (isLatest, next) tek harfe iner; küresel apya ve .latest özelliği korunur.
+        // Canlı geçit bu yüzden 'isLatest' değil bu ifadeyi arar.
+        expect(/apya\.latest\(\)/.test(abp.libs.datatables.createAjax.toString())).toBe(true);
+    });
+
     it('abp.libs yokken yüklenmek hata atmaz ve apya.latest yeniden tanımlanır', async () => {
         // Guard (apya.latest varsa çık) yüzünden latest silinmeden yeniden import hiçbir şey yapmaz.
         delete window.apya.latest;
