@@ -28,7 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.27",
             date: "27 Eylül 2026",
-            title: "Bildirimlerin zamanı doğru görünüyor; günlük e-posta özeti hiçbir bildirimi atlamıyor",
+            title: "Fatura, gider ve cari ekranları yeniden çalışıyor; tutarlar yazdığınız gibi kaydediliyor; " +
+                   "bildirim zamanları doğru görünüyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Bildirim zamanları doğru gösteriliyor",
@@ -38,7 +39,83 @@ public static class ReleaseNoteCatalog
                 "Aynı hata günlük e-posta özetini de etkiliyordu: profil menüsündeki bildirim " +
                 "tercihlerinizden e-postayı açtığınız konular için gelen özet, her gün yalnız son 21 saate " +
                 "bakıyor ve aradaki okunmamış bildirimler hiçbir e-postaya girmiyordu. Özet artık son 24 " +
-                "saatin tamamını kapsıyor.")
+                "saatin tamamını kapsıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yeni fatura yeniden kaydedilebiliyor",
+                "Yeni Fatura penceresinde bilgiler eksiksiz girilse bile fatura kaydedilmiyor, 'Fatura " +
+                "numarası boş bırakılamaz' uyarısı çıkıyordu. Fatura artık girdiğiniz bilgilerle " +
+                "kaydediliyor. 'Yeni Kalem Ekle' ile eklediğiniz satırlar da faturaya giriyor; aradan bir " +
+                "kalemi sildiğinizde kalan kalemler ve fatura toplamı doğru hesaplanıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Cari Yönetimi ekranı yeniden açılıyor",
+                "Cari Yönetimi bilgisayarda boş bir sayfa olarak açılıyor, telefonda bir cariye dokununca " +
+                "ekran boşalıyordu. Cari listesi, seçtiğiniz carinin bakiyesi, yaşlandırması ve son " +
+                "hareketleri yeniden görünüyor; yeni cari ekleme ve ekstre de bu ekrandan yine açılıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Gider, gelir ve kur kayıtları yeniden eklenebiliyor",
+                "Yeni Gider, Yeni Gelir ve Yeni Kur pencerelerinde para birimi seçili olduğu hâlde 'Para " +
+                "birimi en az 3 karakter olmalıdır' uyarısı çıkıyor ve kayıt yapılamıyordu. Var olan bir " +
+                "kaydı düzenlemek de aynı nedenle mümkün değildi. Bu kayıtlar artık sorunsuz ekleniyor ve " +
+                "düzenleniyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Tutar alanları 1.000 ve üstü tutarları kabul ediyor",
+                "Finans Merkezi'nde bütçe bağlamını kurarken ve bütçe revizyonunda 1.000 ve üstü ya da " +
+                "kuruşlu tutarlar 'Lütfen 0 değerine eşit ya da daha büyük bir değer giriniz' uyarısıyla " +
+                "reddediliyordu. Tutarları alışık olduğunuz biçimde, örneğin 7.500,25 olarak girebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kasalar arası hızlı transferde tutar doğru aktarılıyor",
+                "Hızlı Transfer'de '1.500,00' yazdığınızda kasalar arasında 1,50 aktarılıyordu. Tutar alanı " +
+                "artık diğer tutar alanları gibi çalışıyor ve yazdığınız tutarı aktarıyor. Daha önce hızlı " +
+                "transferle yaptığınız aktarımları kasa hareketlerinden kontrol etmenizi öneririz; yanlış " +
+                "tutarla yapılmış bir transferi ters yönde yeni bir transferle düzeltebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Proje düzenlemede bütçe yazdığınız gibi kaydediliyor",
+                "Proje düzenleme ekranında bütçeyi noktalı ondalıkla (örneğin 1500.75) yazdığınızda değer " +
+                "150.075 ₺ olarak kaydediliyordu. Bütçe alanı artık yazarken binlik ayraçlarını gösteriyor, " +
+                "böylece tutarı kaydetmeden önce görürsünüz; kuruşu virgülle girin (1.500,75). Daha önce " +
+                "düzenlediğiniz projelerin bütçesini bir kez kontrol etmenizi öneririz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Masraf Yakala ile masraf yeniden kaydedilebiliyor",
+                "Masraf Yakala ekranı kayıt oluşturamıyordu: telefonda Gönder düğmesi ekranın dışında " +
+                "kalıyor, bilgisayarda 'Kayıt başarısız' uyarısı çıkıyordu. Form artık kayıyor ve masraf " +
+                "kaydediliyor. Kategoriler Giderler ekranındakilerle aynı. Kayıt reddedilirse uyarı hangi " +
+                "alanın düzeltilmesi gerektiğini söylüyor. Formda önerilen tutar ve tedarikçiyi göndermeden " +
+                "önce fişinizle karşılaştırın."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görevler ekranından açılan yeni görev seçtiğiniz projeye bağlanıyor",
+                "Görevler ekranındaki Yeni Görev penceresinde proje seçseniz de görev projesiz " +
+                "kaydediliyordu. Görev artık seçtiğiniz projeye bağlanıyor ve o projenin panosunda ve " +
+                "raporlarında görünüyor. Bu yolla projesiz kalmış görevlerinizi görev detayındaki ⋯ " +
+                "menüsünden 'Taşı (başka proje)' ile projeye bağlayabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Başvuru sihirbazı yazdıklarınızı koruyor",
+                "Hibe başvuru sihirbazında yazıp hemen başka bir alana geçtiğinizde ya da bağlantı kısa " +
+                "süreliğine koptuğunda yazdığınız metin silinebiliyordu. Kaydedilemeyen değişiklikler artık " +
+                "sayfada kalıyor, üstteki rozet 'kaydedilemedi' uyarısına dönüyor ve kayıt kendiliğinden " +
+                "yeniden deneniyor. Kaydedilmemiş değişiklik varken sayfadan çıkmak istediğinizde uyarı " +
+                "alıyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "AI Merkezi pencereleri girdiğiniz değerleri kaydediyor",
+                "AI Merkezi'nde prompt kategorisi, yapay zekâ sağlayıcısı ve form bağlama ekleme ve " +
+                "düzenleme pencerelerinde girdiğiniz değerler kaydedilmiyor, kayıt boş ya da eski " +
+                "değerlerle yapılıyordu. Bu pencereler artık girdiğiniz değerleri kaydediyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Tablette ve küçük ekranlı bilgisayarda sol menü içeriği örtmüyor",
+                "Tablet ve küçük ekranlı dizüstü genişliğindeki pencerelerde sol menü sayfa içeriğinin bir " +
+                "kısmını örtüyordu. Bu genişlikte menü artık ince bir simge şeridi olarak duruyor ve " +
+                "üzerine gelince açılıyor. Dokunmatik tabletlerde menü açık kalıyor ve içerik onun yanına " +
+                "kayıyor.")
         ),
 
         new ReleaseNote(
