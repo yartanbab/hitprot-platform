@@ -1114,6 +1114,7 @@
     "Grants:Wizard:AutoSave": "saved automatically",
     "Grants:Wizard:Saving": "saving…",
     "Grants:Wizard:Saved": "saved",
+    "Grants:Wizard:SaveFailed": "not saved — your edits are kept on this page, retrying",
     "Grants:Wizard:DeadlineOn": "deadline {0}",
     "Grants:Wizard:Step:Firm": "Company details",
     "Grants:Wizard:Step:FirmHint": "These come from your company profile and drive eligibility and the match score. They are edited on the profile screen, not here.",
