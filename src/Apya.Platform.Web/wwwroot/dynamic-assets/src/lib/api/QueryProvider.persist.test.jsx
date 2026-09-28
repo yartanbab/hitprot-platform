@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { useQuery } from '@tanstack/react-query';
 import { QueryProvider } from './QueryProvider';
@@ -54,5 +54,69 @@ describe('QueryProvider kalıcılaştırma kablosu', () => {
                       { timeout: 4000 });
 
         expect(window.sessionStorage.getItem(CACHE_KEY)).not.toContain('canli-sorgu');
+    });
+});
+
+/* Veri-değişti damgası (lib/api/dataChanged.js): başka bir sayfada ya da adada
+   görev yazıldıysa, restore edilen görev türevi sorgu staleTime'a rağmen bayat
+   sayılır. Senaryo: Pano açıldı → başka sayfada görev değişti (damga) → Pano'ya
+   dönüldü. */
+describe('QueryProvider restore — veri-değişti damgası', () => {
+    const STAMP_KEY = 'apya-data-changed-at';
+
+    function Pano({ qk, fn }) {
+        const { data } = useQuery({ queryKey: qk, queryFn: fn, staleTime: 60_000 });
+        return <div>{data ?? 'yükleniyor'}</div>;
+    }
+
+    /** İlk açılış: 'eski' döner, sessionStorage'a yazılır (throttle 1 sn), sayfadan çıkılır. */
+    async function ilkAcilis(qk) {
+        const ilk = render(<QueryProvider><Pano qk={qk} fn={async () => 'eski'} /></QueryProvider>);
+        await screen.findByText('eski');
+        await waitFor(() => expect(window.sessionStorage.getItem(CACHE_KEY)).toContain(qk[1]),
+                      { timeout: 4000 });
+        ilk.unmount();
+    }
+
+    beforeEach(() => {
+        window.sessionStorage.clear();
+        window.abp = { currentUser: { id: 'k1', tenantId: 't1' } };
+    });
+    afterEach(() => { delete window.abp; window.sessionStorage.clear(); });
+
+    it('damga restore edilen veriden yeniyse görev türevi sorgu staleTime\'a rağmen yeniden çekilir', async () => {
+        const qk = ['dashboard', 'summary', {}];
+        await ilkAcilis(qk);
+        window.sessionStorage.setItem(STAMP_KEY, String(Date.now()));
+
+        render(<QueryProvider><Pano qk={qk} fn={async () => 'yeni'} /></QueryProvider>);
+
+        expect(await screen.findByText('yeni')).toBeInTheDocument();
+    });
+
+    it('damga yoksa restore edilen veri taze sayılır, yeniden çekilmez', async () => {
+        const qk = ['dashboard', 'summary', {}];
+        await ilkAcilis(qk);
+        const ikinci = vi.fn(async () => 'yeni');
+
+        render(<QueryProvider><Pano qk={qk} fn={ikinci} /></QueryProvider>);
+
+        expect(await screen.findByText('eski')).toBeInTheDocument();
+        await new Promise((r) => setTimeout(r, 100));
+        expect(ikinci).not.toHaveBeenCalled();
+        expect(screen.getByText('eski')).toBeInTheDocument();
+    });
+
+    it('pano düzeni (dashboard/layout) damgadan etkilenmez', async () => {
+        const qk = ['dashboard', 'layout', 'v'];
+        await ilkAcilis(qk);
+        window.sessionStorage.setItem(STAMP_KEY, String(Date.now()));
+        const ikinci = vi.fn(async () => 'yeni');
+
+        render(<QueryProvider><Pano qk={qk} fn={ikinci} /></QueryProvider>);
+
+        expect(await screen.findByText('eski')).toBeInTheDocument();
+        await new Promise((r) => setTimeout(r, 100));
+        expect(ikinci).not.toHaveBeenCalled();
     });
 });

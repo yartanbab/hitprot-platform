@@ -1,6 +1,6 @@
 import React from 'react';
 import { api, projectTasks, openTask } from './api';
-import { usePanelShown, useAsyncData } from './usePanel';
+import { usePanelShown, useAsyncData, usePanelRefresh } from './usePanel';
 import { blockedEdges, partitionByProject } from './grouping';
 import { PanelLoading, PanelError, PanelEmpty, StatusPill, ProjectGroupHeader } from './PanelChrome';
 
@@ -23,6 +23,7 @@ export function DependenciesPanel({ projectId, kind, mountEl }) {
         ]),
         shown,
     );
+    usePanelRefresh(kind, mountEl, panel);
 
     if (!shown || panel.status === 'idle' || panel.status === 'loading') { return <PanelLoading />; }
     if (panel.status === 'error') { return <PanelError onRetry={panel.reload} />; }

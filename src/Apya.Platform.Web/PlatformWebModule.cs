@@ -560,6 +560,8 @@ public class PlatformWebModule : AbpModule
                     // en son sarmalayan, kota kodlarını ilk gören olur.
                     bundle.AddFiles("/js/apya-quota-upsell.js");
                     bundle.AddFiles("/js/apya-hint.js"); // bilgi ipucu (ⓘ) — body'ye delege tooltip init
+                    // Veri-değişti köprüsü — Yeni Görev modalı ve görev konsolları yayınlar; modal AJAX ile yüklendiği için global.
+                    bundle.AddFiles("/js/apya-data-changed.js");
                     // Yeni Görev modalı (hızlı giriş ayrıştırıcısı + meta çipleri). Modal AJAX ile
                     // yüklendiği için modülün GLOBAL demette olması şart: modalın kendi <script>'i
                     // apya.taskCreate.init'i çağırır, o an dosya zaten yüklü olmalı.

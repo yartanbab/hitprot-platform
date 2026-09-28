@@ -70,7 +70,9 @@ $(function () {
     // Belge / Form / Kontrol Listesi / Bağımlılıklar — Proje Detayı'ndaki
     // project-panels island'ının ÇAPRAZ-PROJE kipi (kapta data-scope="all").
     // İçerik React'te; buradaki yükleyici yalnız tembel yükleme olayını
-    // yayınlar (usePanelShown ilk olayda veri çeker, sonrakiler zararsız).
+    // yayınlar (usePanelShown ilk olayda veri çeker, sonrakiler yüklenmiş paneli
+    // arka planda tazeler (usePanelRefresh); reloadAll aynı tick'te data-changed
+    // da yayınlar, tek isteğe iner).
     // Görev filtreleri bu panellerde süzmez → şerit switchView'da gizlenir.
     var ISLAND_VIEWS = ['documents', 'forms', 'checklist', 'dependencies'];
     ISLAND_VIEWS.forEach(function (kind) {
@@ -631,14 +633,22 @@ $(function () {
     if (bulk) {
         $('#bulk-clear').on('click', function () { bulk.clear(); });
 
+        // Özet başarısız görevi KODUYLA söyler; satır bu sayfada yoksa kısa kimlik yazılır.
+        function taskLabel(id) {
+            var d = dataTable.row('tr[data-id="' + id + '"]').data();
+            return d && d.code ? d.code : String(id).substring(0, 8);
+        }
+
+        // Kalem başına ABP penceresi yerine tek özet (abpHandleError:false); hata
+        // olsa da seçim temizlenir ve liste yenilenir.
         $(document).on('click', '[data-bulk-status]', function () {
             var status = parseInt($(this).data('bulk-status'), 10);
             var ids = bulk.ids();
             if (!ids.length) { return; }
             console_.runSequential(ids, function (id) {
-                return Promise.resolve(taskService.updateStatus(id, status));
-            }).then(function () {
-                abp.notify.success(ids.length + ' görevin durumu güncellendi.');
+                return Promise.resolve(taskService.updateStatus(id, status, { abpHandleError: false }));
+            }).then(function (result) {
+                console_.notifyBulkResult(ids, result, 'görevin durumu güncellendi.', taskLabel);
                 bulk.clear();
                 reloadAll();
             });
@@ -653,9 +663,9 @@ $(function () {
                 function (confirmed) {
                     if (!confirmed) { return; }
                     console_.runSequential(ids, function (id) {
-                        return Promise.resolve(taskService.delete(id));
-                    }).then(function () {
-                        abp.notify.success(ids.length + ' görev silindi.');
+                        return Promise.resolve(taskService.delete(id, { abpHandleError: false }));
+                    }).then(function (result) {
+                        console_.notifyBulkResult(ids, result, 'görev silindi.', taskLabel);
                         bulk.clear();
                         reloadAll();
                     });
@@ -711,6 +721,7 @@ $(function () {
             dataTable.ajax.reload(null, false);
             loadSummary();
             if (currentView === 'gantt') { loadGantt(); }
+            apya.dataChanged.emit({ entity: 'task' });
         }
     });
 
@@ -905,6 +916,7 @@ $(function () {
             hierarchy.reset();
             dataTable.ajax.reload(null, false);
             loadSummary();
+            apya.dataChanged.emit({ entity: 'task' });
         }
     });
 
@@ -938,11 +950,14 @@ $(function () {
     }) : null;
 
     // ─── Yenileme ──────────────────────────────────────────────────────────
+    // Çağıranların hepsi bir görev yazmasından sonra gelir → React adalarına
+    // (proje panelleri) ve sayfalar arası damgaya duyurulur.
     function reloadAll() {
         hierarchy.reset();
         dataTable.ajax.reload(null, false);
         loadSummary();
         reloadActiveView();
+        apya.dataChanged.emit({ entity: 'task' });
     }
 
     createModal.onResult(function () { reloadAll(); });

@@ -17,11 +17,18 @@ function sinceLabel(iso) {
     return gun === 1 ? 'dün' : `${gun} gün önce`;
 }
 
-/** Yeni görev — kabuğun kendi modal yöneticisi; yoksa sayfaya düşer. */
-function openNewTask() {
+/**
+ * Yeni görev — kabuğun kendi modal yöneticisi; yoksa sayfaya düşer.
+ * Tazeleme modalın yayınından gelir (CreateModal → apya:data-changed →
+ * useInvalidateTaskDerivedOnChange); burada yalnız başarı geri bildirimi.
+ * Takvimdeki diğer metinler gibi Türkçe metin kodda.
+ */
+export function openNewTask() {
     const url = '/Tasks/CreateModal';
-    if (window.abp?.ModalManager) new window.abp.ModalManager(url).open();
-    else window.location.href = url;
+    if (!window.abp?.ModalManager) { window.location.href = url; return; }
+    const modal = new window.abp.ModalManager(url);
+    modal.onResult(() => window.abp?.notify?.success?.('Görev oluşturuldu.'));
+    modal.open();
 }
 
 /**

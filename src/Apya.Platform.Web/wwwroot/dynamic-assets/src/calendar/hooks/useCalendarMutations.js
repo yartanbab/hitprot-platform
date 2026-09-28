@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api/httpClient';
+import { markDataChanged } from '../../lib/api/dataChanged';
 import { isoDay } from '../lib/model';
 
 /**
@@ -90,6 +91,11 @@ export function useCalendarMutations({ onOfflineFailure } = {}) {
             }));
         },
         onSuccess: (_data, { item, newDate }, context) => {
+            /* Yalnız damga, olay YOK: takvim kendi feed'ini onSettled'da geçersizliyor,
+               olay aynı feed'i ikinci kez çekerdi. Damga Pano'nun sonraki açılışını
+               tazeler. Kaynak filtresi yok: fatura vadesi ve hibe belgesi de Pano'yu
+               besliyor (bkz. DashboardRealtimeBridge). */
+            markDataChanged();
             setLastAction({
                 key: item.key,
                 message: `“${item.title}” ${isoDay(newDate)} tarihine taşındı.`,
@@ -130,6 +136,7 @@ export function useCalendarMutations({ onOfflineFailure } = {}) {
             }));
         },
         onSuccess: (_d, { item }) => {
+            markDataChanged();   // yukarıdaki reschedule notu
             /* Tamamlamanın geri alması yok: görev durumu takvimin işi değil,
                kullanıcı görev ekranından geri açar. Şerit yalnız bilgilendirir. */
             setLastAction({ key: item.key, message: `“${item.title}” tamamlandı.`, undo: null });
