@@ -171,6 +171,20 @@ describe('alanın yükseltilmesi', () => {
         expect(hidden.value).toBe('500');
     });
 
+    it('min/max/step görünür alandan data-* özniteliğine taşınır', () => {
+        // jQuery validate adsız görünür alanı da doğruluyordu: maskeli "7.500,25"i
+        // sayı sanıp min/step kuralıyla reddediyor, 1000 ve üstü tutar kaydedilemiyordu.
+        const { el } = upgradeFirst('<input name="A" type="number" min="0" max="100000" step="0.01" data-money-input />');
+        expect(el.hasAttribute('min')).toBe(false);
+        expect(el.hasAttribute('max')).toBe(false);
+        expect(el.hasAttribute('step')).toBe(false);
+        expect(el.getAttribute('data-min')).toBe('0');
+        expect(el.getAttribute('data-max')).toBe('100000');
+        expect(el.getAttribute('data-step')).toBe('0.01');
+        type(el, '-500');
+        expect(el.value).toBe('500'); // min=0 kısıtı maskede sürer
+    });
+
     it('min yoksa eksi değer korunur', () => {
         const { el, hidden } = upgradeFirst('<input name="A" data-money-input />');
         type(el, '-500');
