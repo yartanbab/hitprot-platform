@@ -46,4 +46,19 @@
         };
     }
 
+    // 7. jQuery Validate uzunluk kuralı <select>'te: getLength() tekli select için
+    //    seçili OPTION SAYISINI (1) döndürür. DTO'daki [StringLength(3, MinimumLength = 3)]
+    //    asp-for ile select'e data-val-length olarak indiğinde "TRY" seçiliyken bile
+    //    1 < 3 sayılıp form hiç gönderilmiyordu (gider, gelir, kur modalları).
+    //    Tekli select'te değerin uzunluğunu ölç; çoklu select'te sayım anlamı korunur.
+    if ($.validator && $.validator.prototype && typeof $.validator.prototype.getLength === 'function') {
+        var originalGetLength = $.validator.prototype.getLength;
+        $.validator.prototype.getLength = function (value, element) {
+            if (element && element.nodeName && element.nodeName.toLowerCase() === 'select' && !element.multiple) {
+                return value == null ? 0 : String(value).length;
+            }
+            return originalGetLength.call(this, value, element);
+        };
+    }
+
 })(jQuery);
