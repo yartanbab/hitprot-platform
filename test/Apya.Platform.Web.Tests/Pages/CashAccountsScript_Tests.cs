@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -26,6 +27,26 @@ public class CashAccountsScript_Tests
 
         File.Exists(path).ShouldBeTrue($"Kasa sayfa betiği bulunamadı: {Path.GetFullPath(path)}");
         return File.ReadAllText(path);
+    }
+
+    /// <summary>
+    /// <paramref name="name"/> fonksiyonunun gövdesi (süslü parantez sayılarak). Belirteci dosyanın
+    /// tamamında aramak davranışı kilitlemez: sabitler ve yorumlar da aynı belirteci taşır.
+    /// </summary>
+    private static string FunctionBody(string script, string name)
+    {
+        var start = script.IndexOf("function " + name + "(", StringComparison.Ordinal);
+        start.ShouldBeGreaterThanOrEqualTo(0, $"'{name}' fonksiyonu bulunamadı");
+
+        var open = script.IndexOf('{', start);
+        var depth = 0;
+        for (var i = open; i < script.Length; i++)
+        {
+            if (script[i] == '{') depth++;
+            else if (script[i] == '}' && --depth == 0) return script.Substring(open, i - open + 1);
+        }
+
+        throw new ShouldAssertException($"'{name}' gövdesi kapanmıyor");
     }
 
     /// <summary>
@@ -58,7 +79,20 @@ public class CashAccountsScript_Tests
 
         // Hareketler ve özet için ayrı bilet: biri diğerinin yanıtını bayatlatmasın.
         Regex.Matches(script, @"apya\.latest\(\)").Count.ShouldBe(2);
-        script.ShouldContain("isLatest()");
+
+        // Her yükleyici kendi biletini alır; başarı ve hata dalı ikisi de bayat yanıtı atar
+        // (hata dalı bekçisiz kalırsa eski kartın hatası yeni kartın satırlarını ezer).
+        var movements = FunctionBody(script, "loadMovements");
+        movements.ShouldContain("var isLatest = nextMovements();");
+        movements.ShouldContain(".html(SKELETON_ROWS)");
+        Regex.Matches(movements, @"if \(!isLatest\(\)\) return;").Count.ShouldBe(2);
+
+        var summary = FunctionBody(script, "refreshSummary");
+        summary.ShouldContain("var isLatest = nextSummary();");
+        Regex.Matches(summary, @"if \(!isLatest\(\)\) return;").Count.ShouldBe(2);
+
+        // Hesap değişince eski satırlar yanıt beklenirken yeni başlığın altında kalmaz (FIN-10).
+        FunctionBody(script, "selectAccount").ShouldContain("loadMovements(true);");
     }
 
     [Fact]
@@ -74,7 +108,12 @@ public class CashAccountsScript_Tests
     [Fact]
     public void Transfer_widgeti_yalniz_kirliyse_yeniden_baglanir()
     {
-        ReadScript().ShouldContain("transferDirty");
+        var script = ReadScript();
+
+        // Hareket yazımı kirletir, yeniden bağlama temizler, açılış yalnız kirliyse bağlar.
+        FunctionBody(script, "afterWrite").ShouldContain("transferDirty = true;");
+        FunctionBody(script, "mountTransfer").ShouldContain("transferDirty = false;");
+        script.ShouldMatch(@"if \(transferDirty\)\s*\{\s*mountTransfer\(\);\s*\}");
     }
 
     /// <summary>Faz 1 XSS düzeltmesi: gider başlığından gelen açıklama metin olarak basılır.</summary>
