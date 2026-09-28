@@ -67,6 +67,11 @@ export function TaskDetailHeaderV3({
     onSaveAsTemplate,
     onConvertToSubtask,
     onExportPdf,
+    /* Yetki (root hesaplar; sunucudaki EnsureCanMutateTaskAsync ile aynı kural). Eskiden
+       menü ve alanlar herkese açıktı, yetkisiz kullanıcı tıklayınca 403 alıyordu. */
+    canEdit = true,
+    canChangeStatus = true,
+    canDelete = true,
 }) {
     const [copied, setCopied] = useState(false);
     /* Kap DÜĞÜM olarak state'te tutulur, ref'te DEĞİL: `container` prop'u ana
@@ -98,19 +103,21 @@ export function TaskDetailHeaderV3({
     /* Menü eylemleri — her satır önce menüyü kapatır, sonra işi yapar. */
     const run = (fn) => () => { setMenuOpen(false); fn?.(); };
 
+    /* `allowed: false` olan madde hiç çizilmez: Çoğalt/Kopyala/Taşı sunucuda TransferAsync
+       (düzenleme), Arşivle UpdateStatus (durum), Sil DeleteAsync (silme) uçlarına gider. */
     const menuItems = [
         { label: 'Bağlantıyı kopyala', icon: 'fa-link', kbd: '⌘L', onClick: run(copyLink) },
-        { label: 'Çoğalt', icon: 'fa-copy', kbd: '⌘D', onClick: run(onDuplicate) },
-        { label: 'Başka projeye kopyala', icon: 'fa-clone', onClick: run(() => onOpenTransfer?.('copy')) },
-        { label: 'Şablon olarak kaydet', icon: 'fa-bookmark', onClick: run(onSaveAsTemplate) },
-        { label: 'Taşı (başka proje)', icon: 'fa-right-left', separator: true, onClick: run(() => onOpenTransfer?.('move')) },
-        { label: 'Alt göreve dönüştür', icon: 'fa-diagram-project', onClick: run(onConvertToSubtask) },
+        { label: 'Çoğalt', icon: 'fa-copy', kbd: '⌘D', allowed: canEdit, onClick: run(onDuplicate) },
+        { label: 'Başka projeye kopyala', icon: 'fa-clone', allowed: canEdit, onClick: run(() => onOpenTransfer?.('copy')) },
+        { label: 'Şablon olarak kaydet', icon: 'fa-bookmark', allowed: canEdit, onClick: run(onSaveAsTemplate) },
+        { label: 'Taşı (başka proje)', icon: 'fa-right-left', separator: true, allowed: canEdit, onClick: run(() => onOpenTransfer?.('move')) },
+        { label: 'Alt göreve dönüştür', icon: 'fa-diagram-project', allowed: canEdit, onClick: run(onConvertToSubtask) },
         { label: isWatched ? 'Takibi bırak' : 'Takip et', icon: 'fa-eye', onClick: run(onToggleWatch) },
-        { label: 'Arşivle', icon: 'fa-box-archive', separator: true, onClick: run(onArchive) },
+        { label: 'Arşivle', icon: 'fa-box-archive', separator: true, allowed: canChangeStatus, onClick: run(onArchive) },
         { label: 'Yazdır', icon: 'fa-print', kbd: '⌘P', onClick: run(() => window.print()) },
         { label: 'PDF olarak dışa aktar', icon: 'fa-file-pdf', onClick: run(onExportPdf) },
-        { label: 'Sil', icon: 'fa-trash-can', kbd: '⌫', separator: true, danger: true, onClick: run(onDelete) },
-    ];
+        { label: 'Sil', icon: 'fa-trash-can', kbd: '⌫', separator: true, danger: true, allowed: canDelete, onClick: run(onDelete) },
+    ].filter((item) => item.allowed !== false);
 
     return (
         <header ref={setRootEl} className="shrink-0 px-6 lt-860:px-4 pt-[18px] pb-4 border-b border-subtle bg-surface-base">
@@ -134,11 +141,12 @@ export function TaskDetailHeaderV3({
                         <Popover.Trigger asChild>
                             <button
                                 type="button"
-                                className={`flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] border border-default text-[12px] font-semibold cursor-pointer ${status.bg} ${status.fg}`}
+                                disabled={!canEdit}
+                                className={`flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] border border-default text-[12px] font-semibold ${canEdit ? 'cursor-pointer' : 'cursor-default'} ${status.bg} ${status.fg}`}
                             >
                                 <span className="h-[7px] w-[7px] rounded-full bg-current animate-pulse" />
                                 <span>{status.label}</span>
-                                <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />
+                                {canEdit && <i className="fa-solid fa-chevron-down text-[8px] opacity-60" />}
                             </button>
                         </Popover.Trigger>
                         <Popover.Portal container={portalContainer}>
@@ -175,6 +183,16 @@ export function TaskDetailHeaderV3({
                             Takip ediliyor
                         </span>
                     )}
+
+                    {!canEdit && (
+                        <span
+                            title="Bu görevi yalnız oluşturan, atanan kişi ya da ekip yöneticisi düzenleyebilir. Yorum yazabilirsiniz."
+                            className="flex items-center gap-1.5 h-[26px] px-2.5 rounded-[7px] border border-subtle bg-neutral-subtle text-text-secondary text-[11.5px] font-semibold"
+                        >
+                            <i className="fa-solid fa-lock text-[10px]" />
+                            Salt okunur
+                        </span>
+                    )}
                 </div>
 
                 {/* ---- Sağ: gizlilik · tam ekran · ⋯ · kapat ---- */}
@@ -183,6 +201,7 @@ export function TaskDetailHeaderV3({
                         <TaskPrivacyDialogV3
                             isPrivate={isPrivateValue ?? Boolean(task.isPrivate)}
                             onChange={(v) => onFieldChange('isPrivate', v)}
+                            disabled={!canEdit}
                         />
                     </div>
 
@@ -289,11 +308,13 @@ export function TaskDetailHeaderV3({
                     initial content'i React değil DOM tutar (suppressContentEditableWarning). */}
                 <div
                     ref={titleRef}
-                    contentEditable
+                    contentEditable={canEdit}
                     suppressContentEditableWarning
                     spellCheck={false}
-                    onBlur={(e) => onFieldChange('title', e.currentTarget.textContent.trim())}
-                    className="flex-1 min-w-0 text-[24px] lt-560:text-[20px] font-extrabold tracking-[-.025em] leading-[1.2] text-text-primary px-2 -ml-2 py-[3px] rounded-[9px] border border-transparent cursor-text hover:bg-neutral-subtle hover:border-subtle focus:bg-neutral-subtle focus:border-focus focus:shadow-focus focus:outline-none"
+                    onBlur={canEdit ? (e) => onFieldChange('title', e.currentTarget.textContent.trim()) : undefined}
+                    className={`flex-1 min-w-0 text-[24px] lt-560:text-[20px] font-extrabold tracking-[-.025em] leading-[1.2] text-text-primary px-2 -ml-2 py-[3px] rounded-[9px] border border-transparent ${
+                        canEdit ? 'cursor-text hover:bg-neutral-subtle hover:border-subtle focus:bg-neutral-subtle focus:border-focus focus:shadow-focus focus:outline-none' : ''
+                    }`}
                 >
                     {titleValue ?? task.title ?? 'Başlıksız görev'}
                 </div>

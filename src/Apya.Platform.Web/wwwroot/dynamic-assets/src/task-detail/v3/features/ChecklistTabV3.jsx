@@ -11,7 +11,7 @@ import { useTaskChecklist } from '../../hooks/useTaskChecklist';
  * `useTaskChecklist` hook'unu kullandığı için sorgu anahtarı ortak; birinde
  * yapılan değişiklik diğerine anında yansır.
  */
-export function ChecklistTabV3({ taskId }) {
+export function ChecklistTabV3({ taskId, readOnly = false }) {
     const { items, isLoading, addItem, toggleItem, removeItem } = useTaskChecklist(taskId);
     const [draft, setDraft] = useState('');
 
@@ -56,7 +56,7 @@ export function ChecklistTabV3({ taskId }) {
 
                 {!isLoading && items.length === 0 && (
                     <p className="m-0 py-2 text-[12.5px] text-text-tertiary">
-                        Henüz madde yok. Aşağıdan ilk maddeyi ekleyin.
+                        {readOnly ? 'Henüz madde yok.' : 'Henüz madde yok. Aşağıdan ilk maddeyi ekleyin.'}
                     </p>
                 )}
 
@@ -64,10 +64,11 @@ export function ChecklistTabV3({ taskId }) {
                     <div key={item.id} className="group flex items-center gap-[11px] px-2 py-[7px] rounded-[9px] hover:bg-surface-raised">
                         <button
                             type="button"
+                            disabled={readOnly}
                             aria-label={item.isDone ? 'Tamamlandı işaretini kaldır' : 'Tamamlandı işaretle'}
                             onClick={() => toggleItem(item.id).catch((err) =>
                                 window?.abp?.notify?.error?.(err?.message || 'Durum güncellenemedi.'))}
-                            className={`flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white cursor-pointer transition-colors duration-fast ${
+                            className={`flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white ${readOnly ? 'cursor-default' : 'cursor-pointer'} transition-colors duration-fast ${
                                 item.isDone ? 'bg-success border-success' : 'bg-transparent border-strong'
                             }`}
                         >
@@ -80,7 +81,7 @@ export function ChecklistTabV3({ taskId }) {
                             {item.text}
                         </span>
 
-                        <button
+                        {!readOnly && <button
                             type="button"
                             title="Sil"
                             aria-label={`${item.text} maddesini sil`}
@@ -89,11 +90,11 @@ export function ChecklistTabV3({ taskId }) {
                             className="flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-negative-subtle hover:text-negative cursor-pointer"
                         >
                             <i className="fa-regular fa-trash-can text-[11px]" />
-                        </button>
+                        </button>}
                     </div>
                 ))}
 
-                <input
+                {!readOnly && <input
                     type="text"
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
@@ -101,7 +102,7 @@ export function ChecklistTabV3({ taskId }) {
                     placeholder="Yeni madde yaz ve Enter'a bas…"
                     aria-label="Yeni kontrol listesi maddesi"
                     className="h-9 mt-1.5 px-3 rounded-[10px] border border-dashed border-strong bg-transparent text-text-primary text-[12.5px] focus:border-solid focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none"
-                />
+                />}
             </div>
         </div>
     );

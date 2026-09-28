@@ -73,6 +73,9 @@ export function TaskMetadataGridV3({
     progressPercent = 0,
     progressNote = '',
     onOpenTransfer,
+    /* Düzenleme yetkisi yoksa ızgara salt okunur: tüm alanlar forma, oradan UpdateAsync'e
+       gider; yetkisiz kullanıcı değiştirip Kaydet'te 403 alıyordu. */
+    readOnly = false,
 }) {
     const [assigneeQuery, setAssigneeQuery] = useState('');
     const [projectQuery, setProjectQuery] = useState('');
@@ -111,6 +114,12 @@ export function TaskMetadataGridV3({
 
     return (
         <div ref={setRootEl} className="px-6 lt-860:px-4 py-[18px] border-b border-subtle bg-surface-base">
+            {/* <fieldset disabled> içindeki her düğme/girdi yerel olarak kilitlenir; popover
+                tetikleyicileri de düğme olduğu için açılmaz. */}
+            <fieldset
+                disabled={readOnly}
+                className="m-0 p-0 border-0 min-w-0 [&:disabled_label]:pointer-events-none [&_:disabled]:pointer-events-none [&:disabled_.fa-chevron-down]:hidden"
+            >
             <div className="grid grid-cols-4 lt-860:grid-cols-2 lt-560:grid-cols-1 gap-y-5 gap-x-6">
 
                 {/* 1 — Sorumlu */}
@@ -321,18 +330,20 @@ export function TaskMetadataGridV3({
                                 className="inline-flex items-center gap-1.5 h-6 px-2 rounded-[7px] border border-primary bg-primary-subtle text-primary text-[11.5px] font-bold"
                             >
                                 <span>{tag}</span>
-                                <button
+                                {!readOnly && <button
                                     type="button"
                                     aria-label="Etiketi kaldır"
                                     onClick={() => onFieldChange('tagNames', tagsValue.filter((t) => t !== tag))}
                                     className="flex items-center p-0 border-0 bg-transparent text-current opacity-55 hover:opacity-100 hover:text-negative cursor-pointer"
                                 >
                                     <i className="fa-solid fa-xmark text-[9px]" />
-                                </button>
+                                </button>}
                             </span>
                         ))}
 
-                        {addingTag ? (
+                        {readOnly ? (
+                            tagsValue.length === 0 && <span className="text-[12px] text-text-tertiary">—</span>
+                        ) : addingTag ? (
                             <input
                                 autoFocus
                                 type="text"
@@ -456,6 +467,7 @@ export function TaskMetadataGridV3({
                 </Cell>
 
             </div>
+            </fieldset>
         </div>
     );
 }

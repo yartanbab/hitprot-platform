@@ -59,7 +59,7 @@ function toInitialHtml(value) {
     return `<p>${escaped.replace(/\n/g, '<br>')}</p>`;
 }
 
-export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaşı', placeholder }) {
+export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaşı', placeholder, readOnly = false }) {
     const editorRef = useRef(null);
     const initialHtmlRef = useRef(toInitialHtml(value));
     const [linkOpen, setLinkOpen] = useState(false);
@@ -127,7 +127,8 @@ export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaş
 
     return (
         <div className="rounded-[14px] border border-default bg-surface-base overflow-hidden shadow-xs">
-            <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-subtle bg-neutral-subtle overflow-x-auto custom-scrollbar">
+            {/* Salt okunurda araç çubuğu hiç çizilmez; içerik yine temizlenmiş HTML'dir. */}
+            {!readOnly && <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-subtle bg-neutral-subtle overflow-x-auto custom-scrollbar">
                 {TOOLBAR.map((btn) => {
                     const node = (
                         <button
@@ -181,16 +182,17 @@ export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaş
                         </Popover.Root>
                     );
                 })}
-            </div>
+            </div>}
 
             <div
                 ref={editorRef}
-                contentEditable
+                contentEditable={!readOnly}
                 suppressContentEditableWarning
                 role="textbox"
                 aria-multiline="true"
+                aria-readonly={readOnly || undefined}
                 aria-label="Görev açıklaması"
-                data-ph={placeholder ?? "Bu görevin detayları nelerdir? (@kişi, #etiket)…"}
+                data-ph={readOnly ? 'Açıklama eklenmemiş.' : (placeholder ?? "Bu görevin detayları nelerdir? (@kişi, #etiket)…")}
                 onInput={(e) => onChange?.(e.currentTarget.innerHTML)}
                 className="apya-rte-surface min-h-[150px] p-4 text-[13.5px] leading-[1.7] text-text-primary bg-surface-base focus:outline-none"
                 dangerouslySetInnerHTML={{ __html: initialHtmlRef.current }}

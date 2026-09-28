@@ -14,7 +14,7 @@ import { SubtaskSheetV3 } from './components/SubtaskSheetV3';
 import { getPickerEntries, getVisibleTabs, TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
 import { isUnbuilt } from './featureCatalogV3';
 import { useTabOrder } from './hooks/useTabOrder';
-import { useTaskDetail } from '../hooks/useTaskDetail';
+import { useTaskDetail, isGranted } from '../hooks/useTaskDetail';
 import { useDirtyGuard } from '../hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
 import { useTaskForm } from '../hooks/useTaskForm';
@@ -313,6 +313,16 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         }
     };
 
+    /* ─── Yetki ─── Sunucudaki kuralın aynısı (TaskAppService.EnsureCanMutateTaskAsync):
+       uç izni + görevin sahibi (oluşturan/atanan) ya da ekip yöneticisi. Eskiden detay
+       herkese düzenlenebilir çiziliyordu; stajyer değişiklik yapıp Kaydet'te 403 alıyordu. */
+    const me = window?.abp?.currentUser?.id;
+    const canManage = Boolean(me && (task?.creatorId === me || task?.assigneeId === me))
+        || isGranted('Platform.Projects.ManageTeam');
+    const canEdit = canManage && isGranted('Platform.Tasks.Edit');
+    const canChangeStatus = canManage && isGranted('Platform.Tasks.ChangeStatus');
+    const canDelete = canManage && isGranted('Platform.Tasks.Delete');
+
     /* ─── İçerik ─── */
     const isGeneral = activeTabCode === 'general';
 
@@ -323,6 +333,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 onFieldChange={form.setField}
                 descriptionValue={form.values.description}
                 checklist={checklist}
+                readOnly={!canEdit}
                 currentUserName={window?.abp?.currentUser?.name || window?.abp?.currentUser?.userName || 'Ben'}
             />
             <div className="w-full lt-1080:grid lt-1080:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] lt-1080:gap-3.5">
@@ -346,6 +357,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                     form={form}
                     nameById={assignees.nameById}
                     onOpenSubtask={setOpenSubtaskId}
+                    readOnly={!canEdit}
                 />
             ) : (
                 <TaskUnbuiltTabV3
@@ -394,6 +406,9 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 onSaveAsTemplate={() => notify.info('Şablon olarak kaydetme yakında.')}
                 onConvertToSubtask={() => notify.info('Alt göreve dönüştürme yakında.')}
                 onExportPdf={handleExportPdf}
+                canEdit={canEdit}
+                canChangeStatus={canChangeStatus}
+                canDelete={canDelete}
             />
 
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
@@ -412,6 +427,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                     progressPercent={progressPercent}
                     progressNote={`${clDone}/${clItems.length} madde`}
                     onOpenTransfer={(mode) => setTransfer({ mode })}
+                    readOnly={!canEdit}
                 />
 
                 <div className="flex items-stretch min-w-0">
