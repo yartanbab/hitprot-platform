@@ -5,6 +5,7 @@ import { useTaskDetail } from '../../hooks/useTaskDetail';
 import { useTaskChecklist } from '../../hooks/useTaskChecklist';
 import { useTaskAttachments } from '../../hooks/useTaskAttachments';
 import { getTaskPermissions } from '../../taskPermissions';
+import { taskToUpdateDto } from '../../taskUpdateDto';
 import { statusOf, priorityOf, initialsOf, avatarColorOf } from '../taskMetaV3';
 
 /**
@@ -138,37 +139,21 @@ export function SubtaskSheetV3({
         await queryClient.invalidateQueries({ queryKey: ['task-detail', subtaskId] });
     };
 
-    /** Alt görevin tek alanını günceller — CrudAppService tam DTO beklediği için
-     *  mevcut değerler taşınıp yalnız değişen alan ezilir. */
-    const patchSubtask = async (patch) => {
+    /* Durum/öncelik dar uçlarla (SubtaskBoardTabV3 emsali); açıklama tam DTO — ortak
+       yardımcıdan, bütçe bağı dahil (STA-01). */
+    const persist = async (call) => {
         try {
-            await Promise.resolve(svc.update(sub.id, {
-                title: sub.title,
-                description: sub.description ?? null,
-                startDate: (sub.startDate ?? '').slice(0, 10),
-                dueDate: sub.dueDate ? sub.dueDate.slice(0, 10) : null,
-                status: sub.status,
-                priority: sub.priority,
-                assigneeId: sub.assigneeId ?? null,
-                boardColumnId: sub.boardColumnId ?? null,
-                projectId: sub.projectId ?? null,
-                parentTaskId: sub.parentTaskId ?? null,
-                isPrivate: Boolean(sub.isPrivate),
-                predecessorIds: sub.predecessorIds ?? [],
-                tagNames: (sub.tags ?? []).map((t) => t.name),
-                estimatedHours: sub.estimatedHours ?? null,
-                taskType: sub.taskType ?? null,
-                sprint: sub.sprint ?? null,
-                ...patch,
-            }));
+            await Promise.resolve(call());
             await refreshSubtask();
         } catch (err) {
             window?.abp?.notify?.error?.(err?.message || 'Alt görev güncellenemedi.');
         }
     };
 
-    const cycleStatus = () => patchSubtask({ status: sub.status >= 4 ? 1 : sub.status + 1 });
-    const cyclePriority = () => patchSubtask({ priority: sub.priority >= 4 ? 1 : sub.priority + 1 });
+    const patchSubtask = (patch) => persist(() => svc.update(sub.id, taskToUpdateDto(sub, patch)));
+
+    const cycleStatus = () => persist(() => svc.updateStatus(sub.id, sub.status >= 4 ? 1 : sub.status + 1));
+    const cyclePriority = () => persist(() => svc.setPriority(sub.id, sub.priority >= 4 ? 1 : sub.priority + 1));
 
     const saveDescription = () => {
         if ((sub.description ?? '') === description) return;

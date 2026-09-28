@@ -2095,6 +2095,30 @@ namespace Apya.Platform.Tasks
             return ObjectMapper.Map<TaskItem, TaskDto>(task);
         }
 
+        /// <summary>
+        /// Gantt: yalnız tarih. UpdateAsync tam değiştirir; liste DTO'suyla beslenen Gantt
+        /// öncülleri ve bütçe bağını siliyordu (STA-01). Yetki UpdateAsync ile aynı:
+        /// Tasks.Edit + sahiplik.
+        /// </summary>
+        [Authorize(PlatformPermissions.Tasks.Edit)]
+        public async Task UpdateScheduleAsync(Guid id, UpdateTaskScheduleDto input)
+        {
+            var task = await Repository.GetAsync(id);
+            await EnsureCanMutateTaskAsync(task);
+
+            var start = input.StartDate!.Value;
+            var due = input.DueDate;
+
+            // DeferAsync ile aynı tutarlılık kuralı: bitiş esas, başlangıç ona çekilir.
+            if (due.HasValue && due.Value < start)
+            {
+                start = due.Value;
+            }
+
+            task.UpdateSchedule(start, due);
+            await Repository.UpdateAsync(task);
+        }
+
         // --- ZAMAN TAKİBİ ---
         public async Task StartTimeTrackingAsync(Guid taskId)
         {

@@ -9,7 +9,8 @@
  * bileşende sabit projectId YOKTUR.
  *
  * Veri: TaskDto.startDate / dueDate / status / assigneeName / parentTaskId /
- * predecessorIds. BASELINE ÇİZİLMEZ — backend'de baselineStart/End alanı yok.
+ * predecessorIds. predecessorIds liste DTO'sundan değil getProjectDependencies'ten
+ * eşlenir (liste DTO'su taşımaz). BASELINE ÇİZİLMEZ — backend'de baselineStart/End alanı yok.
  */
 (function (window) {
     'use strict';
@@ -502,30 +503,6 @@
             });
         }
 
-        // Kaydetme: kısmi güncelleme uç noktası yok → tam DTO round-trip.
-        // TaskDto'nun CreateUpdateTaskDto'da karşılığı olan HER alanı taşırız,
-        // yoksa sessizce veri kaybı olur (açıklama, etiket, öncelik…).
-        function toUpdateDto(t, pend) {
-            return {
-                title: t.title,
-                description: t.description,
-                startDate: pend.start,
-                dueDate: pend.due,
-                status: t.status,
-                boardColumnId: t.boardColumnId,
-                priority: t.priority,
-                projectId: t.projectId,
-                assigneeId: t.assigneeId,
-                parentTaskId: t.parentTaskId,
-                isPrivate: t.isPrivate,
-                estimatedHours: t.estimatedHours,
-                taskType: t.taskType,
-                sprint: t.sprint,
-                predecessorIds: t.predecessorIds || [],
-                tagNames: (t.tags || []).map(function (x) { return x.name || x; })
-            };
-        }
-
         function save() {
             var ids = Object.keys(state.pending);
             if (!ids.length) { return; }
@@ -536,7 +513,8 @@
                 return chain.then(function () {
                     var t = byId[id];
                     if (!t) { return null; }
-                    return taskSvc.update(id, toUpdateDto(t, state.pending[id]));
+                    // Yalnız tarih ucu — tam güncelleme öncül/bütçe bağını siliyordu (STA-01).
+                    return taskSvc.updateSchedule(id, { startDate: state.pending[id].start, dueDate: state.pending[id].due });
                 });
             }, Promise.resolve()).then(function () {
                 abp.notify.success(l('Tasks:Timeline:DatesUpdated', ids.length));
@@ -570,8 +548,23 @@
             state.loading = true;
             render();
             var filter = $.extend({ maxResultCount: 1000 }, getFilter());
-            return taskSvc.getList(filter).then(function (res) {
-                state.tasks = (res.items || []).filter(function (t) { return !!t.startDate; });
+            // Liste DTO'su predecessorIds taşımaz: oklar ve kritik yol gizlilik süzgeçli
+            // kenar ucundan gelir. Kenar ucu düşerse çubuklar yine çizilir; ABP hata
+            // penceresi açılmasın diye abpHandleError:false (emsal: Grants/Idea.js).
+            // Çapraz-proje kipte projectId yok: undefined verilince proxy parametreyi hiç
+            // yazmaz, sunucu null bağlar (project-panels/api.js ile aynı normalizasyon).
+            var deps = Promise.resolve(taskSvc.getProjectDependencies(filter.projectId || undefined, { abpHandleError: false }))
+                .catch(function (e) {
+                    console.warn('[gantt] bağımlılıklar alınamadı', e);
+                    return [];
+                });
+            return Promise.all([Promise.resolve(taskSvc.getList(filter)), deps]).then(function (r) {
+                var preds = {};
+                (r[1] || []).forEach(function (e) {
+                    (preds[e.taskId] = preds[e.taskId] || []).push(e.predecessorTaskId);
+                });
+                state.tasks = (r[0].items || []).filter(function (t) { return !!t.startDate; });
+                state.tasks.forEach(function (t) { t.predecessorIds = preds[t.id] || []; });
                 state.loading = false;
                 refresh();
             });
