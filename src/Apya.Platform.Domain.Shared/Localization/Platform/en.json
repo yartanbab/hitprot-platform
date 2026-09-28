@@ -1870,6 +1870,7 @@
     "Platform:DynamicAssets:FormAnswersTooLarge": "The submitted response is too large.",
     "Platform:DynamicAssets:FormAnswersInvalid": "The form answers are invalid. Please refresh the page and try again.",
     "Platform:DynamicAssets:FormRequiredAnswerMissing": "Please fill in all required fields.",
+    "Platform:DynamicAssets:FormBlocksOutOfDate": "The form was changed elsewhere while you were editing: this save would have removed {Count} field(s) that are not on your screen. Nothing was saved. Open the form in a new tab to review its current state.",
     "Platform:DynamicAssets:WebhookTargetUrlNotAllowed": "Invalid webhook URL. Only http/https public (internet) addresses are allowed; local/private network addresses are rejected.",
     "Permission:Ai.Generation": "AI Generation",
     "Permission:Ai.Generation.Request": "Request AI Generation",

@@ -58,6 +58,13 @@ public class CreateBlockDto
     /// </summary>
     public Guid? Id { get; set; }
 
+    /// <summary>
+    /// Editor-side temporary id of a new block. Only read by form block saves: when another block's
+    /// settings in the same request (visibleWhen.blockId, dependsOn) point at this value, the server
+    /// rewrites it to the new block's id.
+    /// </summary>
+    public string? ClientId { get; set; }
+
     public BlockType Type { get; set; }
     public int Order { get; set; }
     public string Content { get; set; } = null!;

@@ -78,6 +78,11 @@ describe('hiddenBlockIds', () => {
         expect([...hiddenBlockIds([block('p'), block('c', { op: OPS.ANSWERED })], {})]).toEqual([]);
     });
 
+    it('kosuldaki alan formda yoksa kural yok sayilir (sunucuyla ayni)', () => {
+        const dangling = [block('p'), block('c', { blockId: 'silinmis', op: OPS.EQ, value: 'Evet' })];
+        expect([...hiddenBlockIds(dangling, {})]).toEqual([]);
+    });
+
     it('ayar JSON metni olarak gelse de okunur (herkese acik form)', () => {
         const raw = [
             { id: 'p', type: 0, content: 'p', settings: '{}' },
