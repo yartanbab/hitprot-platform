@@ -450,7 +450,7 @@ $(function () {
             $('#FeedHeading').removeClass('apya-skel-num');
             $('#FeedEmpty, #BookmarkEmpty, #BookmarkHint, #FeedMore, #FeedBuckets').addClass('d-none');
             $('#FeedGrid').removeClass('apya-skel-cards')
-                .html(apya.loadState.errorHtml('Hibe çağrıları yüklenemedi.', 'js-grants-feed-retry'));
+                .html(apya.loadState.errorHtml(l('Grants:Feed:LoadFailed'), 'js-grants-feed-retry'));
         });
     }
 
@@ -462,7 +462,7 @@ $(function () {
         var isLatest = nextLoad();
         $('#ProfileForm').prop('disabled', true);
         // Yükleniyor kutusu yalnız profil henüz boyanmamışken: açık editörde her Kaydet'te formu itmesin.
-        if (!profile) { $('#ProfileLoadState').html(apya.loadState.loadingHtml('Kurum profili yükleniyor…')); }
+        if (!profile) { $('#ProfileLoadState').html(apya.loadState.loadingHtml(l('Grants:Feed:Profile:Loading'))); }
         return loadFeed().then(function () {
             // Akış düşse de profil okunur; akışa bağlı tek şey "N çağrı ölçülebilir" cümlesi.
             if (!isLatest()) { return; }
@@ -474,7 +474,7 @@ $(function () {
             }, function () {
                 if (!isLatest()) { return; }
                 profile = null;
-                $('#ProfileLoadState').html(apya.loadState.errorHtml('Kurum profili yüklenemedi.', 'js-grants-load-retry'));
+                $('#ProfileLoadState').html(apya.loadState.errorHtml(l('Grants:Feed:Profile:LoadFailed'), 'js-grants-load-retry'));
             });
         });
     }

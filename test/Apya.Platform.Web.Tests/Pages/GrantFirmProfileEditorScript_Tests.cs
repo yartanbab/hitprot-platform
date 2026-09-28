@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Shouldly;
 using Xunit;
@@ -156,5 +157,40 @@ public class GrantFirmProfileEditorScript_Tests
 
         Body(script, "function paintFeed()").ShouldContain("if (feedFailed) { return; }");
         Body(script, "function loadFeed()").ShouldContain("feedFailed = true;");
+    }
+
+    /// <summary>
+    /// Yükleme ve hata kutularının başlıkları tr/en kaynaklarından gelir. Gövde ve düğme zaten
+    /// apya.loadState'te Common:FetchError / Common:Retry'dan geliyordu; gömülü Türkçe başlık
+    /// İngilizce kiracıya Türkçe başlıklı, İngilizce gövdeli karışık kutu basıyordu.
+    /// </summary>
+    [Fact]
+    public void Yukleme_ve_hata_kutusu_basliklari_yerellestirilir()
+    {
+        var script = Script();
+        var keys = new[] { "Grants:Feed:Profile:Loading", "Grants:Feed:Profile:LoadFailed", "Grants:Feed:LoadFailed" };
+
+        script.ShouldNotContain("'Kurum profili yükleniyor…'");
+        script.ShouldNotContain("'Kurum profili yüklenemedi.'");
+        script.ShouldNotContain("'Hibe çağrıları yüklenemedi.'");
+
+        var load = Body(script, "function load()");
+        load.ShouldContain("apya.loadState.loadingHtml(l('Grants:Feed:Profile:Loading'))");
+        load.ShouldContain("apya.loadState.errorHtml(l('Grants:Feed:Profile:LoadFailed'), 'js-grants-load-retry')");
+        Body(script, "function loadFeed()")
+            .ShouldContain("apya.loadState.errorHtml(l('Grants:Feed:LoadFailed'), 'js-grants-feed-retry')");
+
+        foreach (var culture in new[] { "tr", "en" })
+        {
+            using var json = JsonDocument.Parse(ReadSource(
+                "src", "Apya.Platform.Domain.Shared", "Localization", "Platform", culture + ".json"));
+            var texts = json.RootElement.GetProperty("texts");
+            foreach (var key in keys)
+            {
+                texts.TryGetProperty(key, out var value)
+                    .ShouldBeTrue($"{key} anahtarı {culture}.json'da yok; ekranda ham anahtar görünür.");
+                value.GetString().ShouldNotBeNullOrWhiteSpace();
+            }
+        }
     }
 }
