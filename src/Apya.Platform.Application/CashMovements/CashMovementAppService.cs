@@ -40,6 +40,32 @@ public class CashMovementAppService :
         DeletePolicyName = PlatformPermissions.CashMovements.Delete;
     }
 
+    // Yalnız elle girilen hareket bu uçtan düzenlenir/silinir. Gider, gelir, fatura ve
+    // transfer hareketleri kaynak kayıtla birlikte yaşar: tek bacağı silmek bakiyeyi
+    // kaynağından koparıyordu. Kısıt yalnız arayüzdeydi, API'den aşılabiliyordu.
+    public override async Task<CashMovementDto> UpdateAsync(Guid id, CreateUpdateCashMovementDto input)
+    {
+        await CheckUpdatePolicyAsync();
+        await EnsureManualAsync(id);
+        return await base.UpdateAsync(id, input);
+    }
+
+    public override async Task DeleteAsync(Guid id)
+    {
+        await CheckDeletePolicyAsync();
+        await EnsureManualAsync(id);
+        await base.DeleteAsync(id);
+    }
+
+    private async Task EnsureManualAsync(Guid id)
+    {
+        var movement = await Repository.GetAsync(id);
+        if (movement.Source != CashMovementSource.Manual)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.CashMovementNotManual);
+        }
+    }
+
     protected override async Task<IQueryable<CashMovement>> CreateFilteredQueryAsync(GetCashMovementsInput input)
     {
         var query = await ReadOnlyRepository.GetQueryableAsync();
