@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { formTenantFromSearch } from './lib/publicFormLink';
-import { prefillChoice, sourceEmptyLabel } from './lib/formChoices';
+import { prefillChoice, sourceEmptyLabel, withoutStaleChoice } from './lib/formChoices';
 import { hiddenBlockIds, withoutHidden } from './lib/formConditions';
 import './index.css';
 
@@ -214,8 +214,10 @@ function PublicForm({ slug }) {
       const request = (chainedRequests.current[child.id] || 0) + 1;
       chainedRequests.current[child.id] = request;
       const isLatest = () => chainedRequests.current[child.id] === request;
+      // Eski üst seçimin listesi hemen boşalır: yeni liste gelene kadar alan kapalıdır ve
+      // önceki seçimin seçeneği seçilip cevaba yazılamaz.
+      setChained((p) => ({ ...p, [child.id]: [] }));
       if (!parentValue) {
-        setChained((p) => ({ ...p, [child.id]: [] }));
         // Bayatlayan isteğin finally'si atlandığı için yükleniyor burada kapanır.
         setChainedLoading((p) => ({ ...p, [child.id]: false }));
         continue;
@@ -223,9 +225,15 @@ function PublicForm({ slug }) {
       setChainedLoading((p) => ({ ...p, [child.id]: true }));
       const tenantQuery = formTenantId.current ? `&tenantId=${formTenantId.current}` : '';
       const url = `/api/app/public-document/block-choices?slug=${encodeURIComponent(slug)}&blockId=${child.id}&parentValue=${encodeURIComponent(parentValue)}${tenantQuery}`;
+      const applyChoices = (choices) => {
+        if (!isLatest()) return;
+        setChained((p) => ({ ...p, [child.id]: choices }));
+        // Savunma: yeni listede olmayan cevap kalmaz.
+        setAnswers((p) => withoutStaleChoice(p, child.id, choices));
+      };
       api.get(url)
-        .then((choices) => { if (isLatest()) setChained((p) => ({ ...p, [child.id]: choices || [] })); })
-        .catch(() => { if (isLatest()) setChained((p) => ({ ...p, [child.id]: [] })); })
+        .then((choices) => applyChoices(choices || []))
+        .catch(() => applyChoices([]))
         .finally(() => { if (isLatest()) setChainedLoading((p) => ({ ...p, [child.id]: false })); });
     }
   };
