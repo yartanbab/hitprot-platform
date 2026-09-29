@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
 // wwwroot/js/apya-kanban.js bir IIFE; jQuery + Sortable + abp + moment'i global
 // bekler. Burada YALNIZ kullanılan yüzeyleri sağlanır (apyaTaskRender.test.js ile
@@ -131,6 +131,8 @@ beforeAll(async () => {
         currentUser: { id: 'u1' },
         notify: { success() { }, error() { }, info() { }, warn() { } }
     };
+    // Ortak hata kanalı (ajax-error-detail.js) global demette her sayfada tanımlı.
+    window.apya = { ajaxErrors: { notify: vi.fn() } };
 
     // Global demette kanbandan ÖNCE yüklenir; create() apya.latest'i, yükleme hatası
     // apya.loadState.errorHtml'i çağırıyor.
@@ -1578,6 +1580,19 @@ describe('kart ⋯ menüsü (v2)', () => {
 
         expect(colCalls.priority).toEqual([{ id: 't1', p: 4 }]);
         expect(document.querySelector('.kanban-card-popmenu')).toBeNull(); // eylem menüyü kapatır
+    });
+
+    it('eylem düşerse hata ortak kanaldan bildirilir (pencere gösterildiyse ikinci bildirim yok)', async () => {
+        mountBoard(sysCols, [task]);
+        const err = { message: 'Bu görevi değiştirme yetkiniz yok.' };
+        apya.platform.tasks.task.setPriority = () => Promise.reject(err);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        openMenu().querySelector('.kanban-popmenu-dot[data-priority="4"]').click();
+        await flush();
+
+        expect(apya.ajaxErrors.notify).toHaveBeenCalledWith(err, 'İşlem tamamlanamadı.');
     });
 
     it('Ertele 1g tek kartı öteler', async () => {

@@ -101,7 +101,8 @@ $(function () {
         // Kilit 2 dakika dokunulmazsa açılır; 30 sn'de bir dokunmak yeter.
         heartbeat = setInterval(function () {
             var key = $(document.activeElement).closest('[data-field]').data('field');
-            if (key) { service.heartbeat({ applicationId: appId, fieldKey: key }); }
+            // Arka plan: hata penceresi yok; "Kapat"lanan oturum penceresini 30 sn'de bir yeniden açmaz.
+            if (key) { service.heartbeat({ applicationId: appId, fieldKey: key }, { abpHandleError: false, apyaBackground: true }); }
         }, 30000);
     }
 

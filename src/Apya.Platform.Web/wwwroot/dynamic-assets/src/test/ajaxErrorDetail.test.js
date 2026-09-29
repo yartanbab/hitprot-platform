@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { api } from '../lib/api/httpClient';
 
 // wwwroot/js/ajax-error-detail.js bir IIFE: jQuery'nin $.ajaxPrefilter'ına kanca takar
 // ve abp.ajax'ın hata yolunu SARAR. Repoda jQuery devDependency yok (bkz.
@@ -6,6 +7,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 // (ABP 10) ile AYNI mantıkla kurulur ve istekler jQuery 4'ün gerçek sırasıyla
 // canlandırılır: prefilter'ın eklediği fail geri çağrısı → ABP'nin (ya da
 // abpAjaxForm'un) hata işleyicisi. SweetAlert ve fetch (oturum yoklaması) sahtedir.
+// abp.message.* gömülü abp-sweetalert2.js (ABP 10) ile aynı: config.default + tür
+// birleştirilip Swal.fire, dönüş pencere kapanınca çözülen $.Deferred.
 
 let abpOriginals;
 let prefilters;
@@ -46,13 +49,23 @@ function installAbp({ authenticated = true, userId = 'u1' } = {}) {
         handleTargetUrl: vi.fn()
     };
 
+    // abp-sweetalert2.js showMessage ile aynı.
+    const showMessage = (type) => vi.fn((message, title) => {
+        const config = abp.libs.sweetAlert.config;
+        const $dfd = $.Deferred();
+        Swal.fire(Object.assign({}, config.default, config[type], { title, html: message })).then(() => $dfd.resolve());
+        return $dfd;
+    });
+
     window.abp = {
         appPath: '/',
         currentUser: { isAuthenticated: authenticated, id: authenticated ? userId : null },
         localization: { getResource: () => (key) => key },
-        libs: { sweetAlert: { config: { default: { confirmButtonText: 'Tamam' } } } },
+        // abp.js ile aynı
+        utils: { htmlEscape: (html) => html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') },
+        libs: { sweetAlert: { config: { default: { confirmButtonText: 'Tamam' }, error: { icon: 'error' }, warn: { icon: 'warning' }, info: { icon: 'info' } } } },
         notify: { error: vi.fn(), success: vi.fn(), warn: vi.fn() },
-        message: { warn: vi.fn() },
+        message: { error: showMessage('error'), warn: showMessage('warn'), info: showMessage('info') },
         ajax: {
             defaultError: { message: 'Bir hata oluştu!', details: 'Hata detayı sunucu tarafından gönderilmedi.' },
             defaultError401: { message: 'Giriş yapılmamış!', details: 'Bu işlem için giriş yapmalısınız.' },
@@ -91,7 +104,17 @@ function installJquery() {
     const pending = () => ({ done() { return this; }, then() { return this; } });
     window.jQuery = window.$ = {
         ajaxPrefilter: (fn) => { prefilters.push(fn); },
-        Deferred: () => ({ promise: pending })
+        // Kullanılan yüzey: bekleyen söz (showError) ve çözülen Deferred (abp.message).
+        Deferred: () => {
+            const callbacks = [];
+            const $dfd = {
+                resolved: false,
+                promise: pending,
+                resolve() { $dfd.resolved = true; callbacks.splice(0).forEach((cb) => cb()); return $dfd; },
+                done(cb) { if ($dfd.resolved) { cb(); } else { callbacks.push(cb); } return $dfd; }
+            };
+            return $dfd;
+        }
     };
 }
 
@@ -463,6 +486,33 @@ describe('401: oturum düştü', () => {
         expect(sessionDialogs()).toHaveLength(2);
     });
 
+    it('"Kapat"tan ÖNCE ilk 401 — GET de olsa — pencereyi açar', () => {
+        abpAjaxFails(request({ status: 401, method: 'GET' }));
+
+        expect(sessionDialogs()).toHaveLength(1);
+        expect(sessionDialogs()[0].closed).toBe(false);
+    });
+
+    it('"Kapat"tan sonra güvenli yöntemin (GET; zarflı ya da zarfsız) 401\'i pencereyi yeniden açmaz; değiştiren istek açar', async () => {
+        abpAjaxFails(request({ status: 401, method: 'GET' }));
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'esc' });
+        await flush();
+
+        const rejected = abpAjaxFails(request({ status: 401, method: 'GET' }), { abpHandleError: false });
+        abpAjaxFails(request({
+            status: 401,
+            method: 'GET',
+            headers: { _AbpErrorFormat: 'true' },
+            json: { error: { code: 'Volo.Authorization:010001', message: 'Giriş yapmalısınız.' } }
+        }));
+        expect(sessionDialogs()).toHaveLength(1);
+        // Pencere kapalı olsa da hata merkezi kanalda: sayfa içi ikinci metin basılmaz.
+        expect(apya.ajaxErrors.message(rejected, 'Liste yüklenemedi.')).toBeNull();
+
+        abpAjaxFails(request({ status: 401, method: 'DELETE' }));
+        expect(sessionDialogs()).toHaveLength(2);
+    });
+
     it('anonim sayfada ABP\'nin özgün 401 akışı korunur', async () => {
         await load({ authenticated: false });
 
@@ -472,6 +522,85 @@ describe('401: oturum düştü', () => {
         expect(abpOriginals.handleUnAuthorizedRequest).toHaveBeenCalled();
         expect(dialogs).toHaveLength(0);
         expect(apya.session.expired()).toBe(false);
+    });
+});
+
+describe('oturum penceresi açıkken ABP mesajı onu ezmez (SweetAlert tekil)', () => {
+    it('jQuery 401 → çağıranın abp.message.error\'u: oturum penceresi açık kalır, çözülmüş Deferred döner', () => {
+        abpAjaxFails(request({ status: 401 }));
+        const done = vi.fn();
+
+        abp.message.error('Başka bir aktif sayaç olabilir.', 'Zaman kaydı başlatılamadı').done(done);
+
+        expect(dialogs).toHaveLength(1);
+        expect(sessionDialogs()[0].closed).toBe(false);
+        expect(done).toHaveBeenCalledTimes(1);
+    });
+
+    it('fetch (httpClient) 401 → catch\'teki abp.message.error: oturum penceresi açık kalır', async () => {
+        window.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 401, text: () => Promise.resolve('') }));
+
+        await api.post('/api/app/form', { title: 'QA' }).catch((e) => abp.message.error(e.message));
+
+        expect(dialogs).toHaveLength(1);
+        expect(sessionDialogs()[0].closed).toBe(false);
+    });
+
+    it('"başka kullanıcı" penceresi açıkken de açılmaz (warn/info dahil)', async () => {
+        probeReturns({ isAuthenticated: true, id: 'baska' });
+        abpAjaxFails(request({ status: 400, method: 'DELETE' }));
+        await flush();
+
+        abp.message.warn('x');
+        abp.message.info('y');
+
+        expect(dialogs).toHaveLength(1);
+        expect(dialogs[0].opts.text).toContain('başka bir kullanıcıyla giriş yapılmış');
+        expect(dialogs[0].closed).toBe(false);
+    });
+
+    it('pencere yokken ya da kapatıldıktan sonra ABP mesajı normal açılır', async () => {
+        abp.message.error('Kilitli belge silinemez.', 'Silinemedi');
+        expect(dialogs).toHaveLength(1);
+        expect(dialogs[0].opts).toMatchObject({ icon: 'error', title: 'Silinemedi', html: 'Kilitli belge silinemez.' });
+
+        abpAjaxFails(request({ status: 401 }));
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+        abp.message.error('Sunucu hatası.');
+
+        const last = dialogs[dialogs.length - 1];
+        expect(last.opts.html).toBe('Sunucu hatası.');
+        expect(last.closed).toBe(false);
+    });
+});
+
+describe('httpClient (React adaları) aynı oturum penceresine gider', () => {
+    const fails401 = () => {
+        window.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 401, text: () => Promise.resolve('') }));
+    };
+
+    it('ilk 401 — odakta tazeleme (GET) de olsa — pencereyi açar', async () => {
+        fails401();
+
+        const err = await api.get('/api/app/task/1').catch((e) => e);
+
+        expect(sessionDialogs()).toHaveLength(1);
+        expect(err.apyaCentral).toBe(true);
+    });
+
+    it('"Kapat"tan sonra GET 401 (React Query odak/yeniden bağlanma) pencereyi yeniden açmaz; mutasyon açar', async () => {
+        fails401();
+        await api.get('/api/app/task/1').catch(() => null);
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+
+        const refetch = await api.get('/api/app/task/1').catch((e) => e);
+        expect(sessionDialogs()).toHaveLength(1);
+        expect(refetch.apyaCentral).toBe(true);
+
+        await api.put('/api/app/task/1', {}).catch(() => null);
+        expect(sessionDialogs()).toHaveLength(2);
     });
 });
 
@@ -611,6 +740,15 @@ describe('apya.ajaxErrors.message / notify', () => {
 
         expect(abp.notify.error).toHaveBeenCalledWith('Görev taşınamadı.');
     });
+
+    it('notify: sunucunun düz metni kaçışlanır (ABP toast\'ı innerHTML ile basar); htmlEscape yoksa düz metin', () => {
+        apya.ajaxErrors.notify({ message: '<img src=x onerror=alert(1)> "A&B"' }, 'x');
+        expect(abp.notify.error).toHaveBeenLastCalledWith('&lt;img src=x onerror=alert(1)&gt; &quot;A&amp;B&quot;');
+
+        delete abp.utils;
+        apya.ajaxErrors.notify({ message: 'Kilitli belge silinemez.' }, 'x');
+        expect(abp.notify.error).toHaveBeenLastCalledWith('Kilitli belge silinemez.');
+    });
 });
 
 describe('pencere yalıtımı (Radix/Bootstrap modalı üstünde)', () => {
@@ -651,5 +789,29 @@ describe('pencere yalıtımı (Radix/Bootstrap modalı üstünde)', () => {
 
         field.remove();
         document.removeEventListener('focusout', trap);
+    });
+
+    it('ABP\'nin kendi pencereleri de yalıtılır: config.default\'a birleşir, diğer alanlar korunur', () => {
+        const defaults = abp.libs.sweetAlert.config.default;
+        expect(defaults.confirmButtonText).toBe('Tamam');
+        expect(defaults.keydownListenerCapture).toBe(true);
+        expect(typeof defaults.willOpen).toBe('function');
+
+        const outside = vi.fn();
+        document.addEventListener('pointerdown', outside);
+        document.addEventListener('focusin', outside);
+
+        abp.message.error('WIP sınırı aşıldı.');
+        const { container, button, opts } = dialogs[0];
+
+        expect(opts.keydownListenerCapture).toBe(true);
+        expect(container.hasAttribute('data-apya-overlay')).toBe(true);
+        expect(container.style.pointerEvents).toBe('auto');
+        button.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+        button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        expect(outside).not.toHaveBeenCalled();
+
+        document.removeEventListener('pointerdown', outside);
+        document.removeEventListener('focusin', outside);
     });
 });

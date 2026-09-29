@@ -316,9 +316,7 @@
                 // Metin kaybolmaz: modal açık kalır, kullanıcı düzeltip yeniden dener.
                 // Oturum/anahtar hatasında merkezi pencere açılır; message null döner.
                 var fallback = 'Gönderim başarısız oldu. Lütfen tekrar deneyin.';
-                var message = (window.apya && apya.ajaxErrors)
-                    ? apya.ajaxErrors.message(err, fallback)
-                    : ((err && err.message) || fallback);
+                var message = apya.ajaxErrors.message(err, fallback);
                 if (message) { showError(message); }
             })
             .then(function () {

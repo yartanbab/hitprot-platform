@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { api, ApiError, readAntiForgeryToken } from './httpClient';
+import { api, apiFetch, ApiError, readAntiForgeryToken } from './httpClient';
 
 /**
  * fetch tabanlı adaların hata kanalı: ağ reddi Türkçe ApiError(0) olur, bilinçli iptal
@@ -9,6 +9,7 @@ import { api, ApiError, readAntiForgeryToken } from './httpClient';
 
 const NETWORK_TEXT = 'Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin; bu sayfada girdiğiniz bilgiler korunuyor.';
 const SERVER_TEXT = 'Sunucuda beklenmeyen bir hata oluştu. Biraz sonra tekrar deneyin; sorun sürerse Geri bildirim ile bize iletin.';
+const BAD_REQUEST_TEXT = 'İstek işlenemedi. Girdiğiniz bilgileri kontrol edip tekrar deneyin.';
 
 function respond(status, body = '', contentType = 'text/plain') {
     return Promise.resolve({
@@ -69,6 +70,19 @@ describe('oturum hataları merkezi pencereye', () => {
         expect(err.apyaCentral).toBe(true);
     });
 
+    it('401: güvenli yöntem (GET/HEAD) arka plan sayılır — "Kapat"tan sonra pencereyi yeniden açmaz; mutasyon açar', async () => {
+        vi.stubGlobal('fetch', vi.fn(() => respond(401)));
+
+        await api.get('/api/x').catch(() => null);
+        await apiFetch('/api/x', { method: 'HEAD' }).catch(() => null);
+        await api.post('/api/x', {}).catch(() => null);
+        await api.delete('/api/x').catch(() => null);
+
+        expect(session.expired.mock.calls).toEqual([
+            [{ background: true }], [{ background: true }], [{ background: false }], [{ background: false }],
+        ]);
+    });
+
     it('401 anonim sayfada (pencere yok): işaret yok, çağıranın metni kalır', async () => {
         session.expired.mockReturnValue(false);
         vi.stubGlobal('fetch', vi.fn(() => respond(401)));
@@ -79,23 +93,30 @@ describe('oturum hataları merkezi pencereye', () => {
         expect(err.message).toContain('Oturumunuz sona erdi');
     });
 
-    it('POST gövdesiz 400: yoklama (bayat anahtar / oturum kaybı ayrımı)', async () => {
+    it('POST gövdesiz 400: yoklama (bayat anahtar / oturum kaybı ayrımı), metin nedene uygun nötr', async () => {
         vi.stubGlobal('fetch', vi.fn(() => respond(400, '')));
 
         const err = await api.post('/api/x', { a: 1 }).catch((e) => e);
 
         expect(session.verify).toHaveBeenCalledTimes(1);
         expect(err.apyaShown).toBe(true);
+        // Göçürülmemiş tüketici (err.message) merkezi pencereyle çelişen "girdinizi kontrol edin" demez.
+        expect(err.message).toBe('İşlem doğrulanamadı');
     });
 
-    it('GET gövdesiz 400 ve zarflı 400: yoklama yok', async () => {
+    it('GET gövdesiz 400, zarflı ve HTML gövdeli 400: yoklama yok, metin değişmez', async () => {
         vi.stubGlobal('fetch', vi.fn(() => respond(400, '')));
-        await api.get('/api/x').catch(() => null);
+        const getErr = await api.get('/api/x').catch((e) => e);
+
+        vi.stubGlobal('fetch', vi.fn(() => respond(400, '<html>Bad Request</html>', 'text/html')));
+        const htmlErr = await api.post('/api/x', {}).catch((e) => e);
 
         vi.stubGlobal('fetch', vi.fn(() => respond(400, JSON.stringify({ error: { message: 'Tarih geçersiz.', code: 'X' } }), 'application/json')));
         const err = await api.post('/api/x', {}).catch((e) => e);
 
         expect(session.verify).not.toHaveBeenCalled();
+        expect(getErr.message).toBe(BAD_REQUEST_TEXT);
+        expect(htmlErr.message).toBe(BAD_REQUEST_TEXT);
         expect(err.message).toBe('Tarih geçersiz.');
         expect(err.code).toBe('X');
     });

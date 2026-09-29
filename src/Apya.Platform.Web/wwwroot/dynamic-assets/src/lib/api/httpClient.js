@@ -108,13 +108,17 @@ async function parseError(response) {
 }
 
 /** Oturum hataları merkezi pencereye (jQuery tarafıyla aynı window.apya.session). */
-function routeSessionError(error, bodylessMutation) {
+function routeSessionError(error, isMutation, empty) {
     const session = typeof window === 'undefined' ? null : window.apya?.session;
     if (!session) return;
     if (error.status === 401) {
-        if (session.expired()) error.apyaShown = error.apyaCentral = true;
-    } else if (error.status === 400 && bodylessMutation) {
+        /* "Kapat"tan sonra güvenli yöntem (React Query odak/yeniden bağlanma tazelemesi)
+           pencereyi yeniden açmaz; mutasyon açar. */
+        if (session.expired({ background: !isMutation })) error.apyaShown = error.apyaCentral = true;
+    } else if (error.status === 400 && isMutation && empty) {
         session.verify();
+        /* Neden bayat anahtar ya da oturum kaybı: "girdiğinizi kontrol edin" yanıltır. */
+        error.message = t('Api:Error:Antiforgery:Title', 'İşlem doğrulanamadı');
         error.apyaShown = error.apyaCentral = true;
     }
 }
@@ -145,7 +149,7 @@ export async function apiFetch(path, { method = 'GET', body, signal, headers = {
 
     if (!response.ok) {
         const { error, empty } = await parseError(response);
-        routeSessionError(error, isMutation && empty);
+        routeSessionError(error, isMutation, empty);
         throw error;
     }
 

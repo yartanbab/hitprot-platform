@@ -38,12 +38,20 @@
    • Arka plan isteği (telemetri, yoklama) → { abpHandleError: false,
      apyaBackground: true }: bayat anahtar sessizce tazelenir; oturum kaybında
      pencere yalnız kullanıcı onu daha önce "Kapat"la kapatmadıysa açılır.
+     Güvenli yöntemin (GET/HEAD: liste, odakta tazeleme) 401'i de böyle;
+     "Kapat"tan sonra pencereyi yalnız değiştiren istek (kaydet/sil) yeniden açar.
+   • Oturum (ya da "başka kullanıcı") penceresi açıkken abp.message.error/warn/info
+     pencere açmaz: SweetAlert tekil, çağıranın penceresi merkezi pencereyi ezerdi.
+     ABP'nin kendi pencereleri de Radix/Bootstrap modalından yalıtılır
+     (sweetAlert.config.default: willOpen + keydownListenerCapture).
 
    API
    apya.ajaxErrors.describe(xhrOrStatus) → { message: başlık, details: metin }
-   apya.ajaxErrors.message(err, yedek)   → metin | null (null: merkezi pencere)
+   apya.ajaxErrors.message(err, yedek)   → metin | null (null: merkezi pencere).
+     DÜZ METİN döner (sunucunun cümlesi olabilir): HTML'e textContent ya da
+     kaçışlanarak basılır.
    apya.ajaxErrors.wasShown(err)         → ABP ya da merkezi pencere gösterdi mi
-   apya.ajaxErrors.notify(err, yedek)    → gösterilmediyse abp.notify.error
+   apya.ajaxErrors.notify(err, yedek)    → gösterilmediyse abp.notify.error (kaçışlı)
      err: ABP zarf nesnesi, jqXHR, ApiError (React), Error.
    apya.session.expired([{ background }]) → oturum penceresi; anonim sayfada false
    apya.session.verify([{ quiet }])      → Promise<'expired' | 'user-changed' |
@@ -204,7 +212,8 @@
     function notify(err, fallback) {
         if (wasShown(err)) { return; }
         var m = message(err, fallback);
-        if (m && window.abp && abp.notify) { abp.notify.error(m); }
+        // ABP toast'ı metni innerHTML ile basar: sunucunun düz metni kaçışlanır.
+        if (m && window.abp && abp.notify) { abp.notify.error(abp.utils && abp.utils.htmlEscape ? abp.utils.htmlEscape(m) : m); }
     }
 
     window.apya.ajaxErrors = { describe: describe, message: message, wasShown: wasShown, notify: notify };
@@ -251,7 +260,8 @@
         if (xhr.apyaRouted) { return; }
         if (xhr.status === 401 && isPageAuthenticated()) {
             markCentral(xhr);
-            expired({ background: !!xhr.apyaBackground });
+            // "Kapat"tan sonra güvenli yöntem (liste, odakta tazeleme) pencereyi yeniden açmaz.
+            expired({ background: !!xhr.apyaBackground || !UNSAFE_METHODS[xhr.apyaMethod] });
         } else if (isAntiforgeryCandidate(xhr)) {
             markCentral(xhr);
             verify({ quiet: !!xhr.apyaBackground });
@@ -314,7 +324,8 @@
         var originalUnauthorized = ajax.handleUnAuthorizedRequest;
         ajax.handleUnAuthorizedRequest = function () {
             if (isPageAuthenticated()) {
-                expired();
+                // Zarflı 401: prefilter (route) zaten karar verdi; "Kapat" sonrası GET'i yeniden açma.
+                expired({ background: true });
                 return;
             }
             return originalUnauthorized.apply(this, arguments);
@@ -351,6 +362,31 @@
             e.stopPropagation();
         }
     }, true);
+
+    // ABP'nin kendi pencereleri (abp.message.*, dolayısıyla ABP hata penceresi) de
+    // yalıtılır: V3 görev modalı üstünde tıklanamıyor, Esc alttaki modala gidiyordu.
+    // ABP her çağrıda config.default'u birleştirir (abp-sweetalert2.js); diğer alanlara
+    // (düğme metinleri/sınıfları) dokunulmaz.
+    var sweetAlertDefaults = window.abp && abp.libs && abp.libs.sweetAlert &&
+        abp.libs.sweetAlert.config && abp.libs.sweetAlert.config['default'];
+    if (sweetAlertDefaults) {
+        sweetAlertDefaults.willOpen = isolate;
+        sweetAlertDefaults.keydownListenerCapture = true;
+    }
+
+    // SweetAlert tekil: oturum (ya da "başka kullanıcı") penceresi açıkken çağıranın
+    // abp.message.error'u onu ezer, "Yeni sekmede giriş yap" kaybolurdu. O sırada ABP
+    // mesajı açılmaz; ABP'nin döndürdüğüyle aynı türde (jQuery Deferred) çözülmüş
+    // değer döner. Pencere kapalıyken davranış aynen.
+    if ($ && window.abp && abp.message) {
+        ['error', 'warn', 'info'].forEach(function (type) {
+            var original = abp.message[type];
+            abp.message[type] = function () {
+                if (isOpen('session') || isOpen('user-changed')) { return $.Deferred().resolve(); }
+                return original.apply(this, arguments);
+            };
+        });
+    }
 
     function showDialog(kind, options, onDestroy) {
         if (!window.Swal || !Swal.fire) {

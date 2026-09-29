@@ -957,8 +957,7 @@
         // Hata tek kanaldan: ABP penceresi (ya da oturum penceresi) sunucunun nedenini
         // gösterdiyse ikinci bildirim basılmaz (apya.ajaxErrors — ajax-error-detail.js).
         function notifyFailure(err, msg) {
-            if (window.apya && apya.ajaxErrors) { apya.ajaxErrors.notify(err, msg); }
-            else { abp.notify.error(msg); }
+            apya.ajaxErrors.notify(err, msg);
         }
 
         // Tek kart eylemi: bildir + panoyu tazele (toplu akıştaki finishBulk'ın

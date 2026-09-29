@@ -8,6 +8,8 @@
  *   parametresi); sayfa içi metin errorMessage(err, yedek). null = merkezi oturum
  *   penceresi açık, ayrıntı metni basılmaz. 401 ve oturum kaybı abpHandleError'dan
  *   bağımsız merkezi pencereye gider (jQuery prefilter kancası; fetch için httpClient).
+ * - errorMessage() DÜZ METİN döner (sunucunun cümlesi olabilir): JSX metni olarak ya da
+ *   textContent ile basılır, HTML'e kaçışsız konmaz. notifyError toast için kaçışlar.
  *
  * Köprü yoksa (test, köprü yüklenmemiş) eski davranış: err.message || yedek gösterilir.
  */
@@ -31,5 +33,7 @@ export function errorMessage(err, fallback) {
 export function notifyError(err, fallback) {
     if (wasShown(err)) return;
     const message = errorMessage(err, fallback);
-    if (message) window?.abp?.notify?.error?.(message);
+    /* ABP toast'ı metni innerHTML ile basar: sunucunun düz metni kaçışlanır. */
+    const htmlEscape = window?.abp?.utils?.htmlEscape;
+    if (message) window?.abp?.notify?.error?.(htmlEscape ? htmlEscape(message) : message);
 }

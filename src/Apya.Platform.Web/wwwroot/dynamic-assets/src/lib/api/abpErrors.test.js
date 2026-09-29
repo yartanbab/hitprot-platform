@@ -31,6 +31,15 @@ describe('köprü yokken (eski davranış)', () => {
         notifyError(err, 'Kaydedilemedi.');
         expect(window.abp.notify.error).not.toHaveBeenCalled();
     });
+
+    it('sunucunun düz metni toast\'a kaçışlanarak gider (ABP toast\'ı innerHTML ile basar)', () => {
+        // abp.js ile aynı
+        window.abp.utils = { htmlEscape: (html) => html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') };
+
+        notifyError(new Error('<img src=x onerror=alert(1)> "A&B"'), 'Kaydedilemedi.');
+
+        expect(window.abp.notify.error).toHaveBeenCalledWith('&lt;img src=x onerror=alert(1)&gt; &quot;A&amp;B&quot;');
+    });
 });
 
 describe('köprü varken', () => {
