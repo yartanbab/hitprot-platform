@@ -15,7 +15,7 @@ vi.mock('./lib/api/httpClient', () => ({
 }));
 
 describe('Genel form · ada hata sınırı', () => {
-  it('abp ve telemetri yokken Türkçe kart; ikon FA\'sız', async () => {
+  it('abp ve telemetri yokken Türkçe kart; halka ikonu FA\'sız', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     delete window.abp;
     delete window.ApyaTelemetry;

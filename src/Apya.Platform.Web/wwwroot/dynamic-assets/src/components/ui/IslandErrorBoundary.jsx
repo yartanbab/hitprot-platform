@@ -27,7 +27,8 @@ import { EmptyState, RetryButton } from './EmptyState';
  * (query-vendor) içe aktarılmaz: sınır TÜM adalara girer, herkese açık form dahil hafif adalar
  * bu parçaları yüklemesin. Kilit: islandMount.wiring.test.js.
  * Herkese açık formda (/f/{slug}, Layout=null) abp ve Font Awesome yok: metinler t()'nin Türkçe
- * yedeğine düşer, kartın ikonu satır içi SVG.
+ * yedeğine düşer, kartın ikonu satır içi SVG; "Tekrar dene"nin boş FA ikonunu sayfanın satır içi
+ * stili gizler (Pages/F/Index.cshtml).
  */
 
 /* Button variant="outline" size="sm" ile aynı nötr ikincil düğme; Button'a dayanmaz (ui-vendor). */
@@ -47,6 +48,11 @@ const WARNING_ICON = (
         <path d="M12 17h.01" />
     </svg>
 );
+
+/* Falsy fırlatma (throw undefined/null/0/'') da yakalansın: sınır durumu hatanın doğruluğuyla
+   ölçülür; ham falsy değerle çocuklar yeniden çizilir, ikinci fırlatma köke gider ve ada yine
+   bembeyaz kalır. Sınır durumu da telemetri de bu normalleştirmeden geçer (Error aynen döner). */
+const toError = (error) => error || new Error(String(error));
 
 /**
  * Çökme kartı. retry/reload sınırdan gelir; onClose verilirse "Kapat" de çizilir (görev modalı).
@@ -102,7 +108,7 @@ export class IslandErrorBoundary extends React.Component {
     }
 
     static getDerivedStateFromError(error) {
-        return { error };
+        return { error: toError(error) };
     }
 
     componentDidCatch(error, info) {
@@ -110,7 +116,7 @@ export class IslandErrorBoundary extends React.Component {
         clearPersistedQueryCache();
         setTimeout(clearPersistedQueryCache, PERSIST_THROTTLE_MS + 100);
         try {
-            window.ApyaTelemetry?.reportIslandError?.(this.props.name, error, info?.componentStack);
+            window.ApyaTelemetry?.reportIslandError?.(this.props.name, toError(error), info?.componentStack);
         } catch {
             /* telemetri isteğe bağlı: raporlama hatası kartı engellemez */
         }

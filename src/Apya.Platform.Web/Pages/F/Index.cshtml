@@ -14,7 +14,8 @@
     <link rel="stylesheet" href="~/css/apya-fonts.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/dynamic-assets/src/styles/tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
-    <style>body { margin: 0; font-family: var(--apya-font-sans, system-ui), sans-serif; }</style>
+    @* Font Awesome da yok: boş <i class="fa">'lar flex boşluğuyla düğme yazısını kaydırmasın (ada hata kartı "Tekrar dene"). *@
+    <style>body { margin: 0; font-family: var(--apya-font-sans, system-ui), sans-serif; } i.fa { display: none; }</style>
     <island-preload entry="public-form" />
 </head>
 <body>

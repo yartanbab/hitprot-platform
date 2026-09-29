@@ -8,8 +8,8 @@ import { PERSIST_THROTTLE_MS, QUERY_CACHE_STORAGE_KEY } from '../../lib/api/quer
 /**
  * Ada hata sınırı (RES-11, CAL-24).
  *
- * 1) Hata yokken çocuklar sarmalayıcısız; render ya da efekt istisnasında EmptyState error
- *    kartı (Tekrar dene + Sayfayı yenile), abp yokken Türkçe varsayılan metinler.
+ * 1) Hata yokken çocuklar sarmalayıcısız; render ya da efekt istisnasında (falsy fırlatma dahil)
+ *    EmptyState error kartı (Tekrar dene + Sayfayı yenile), abp yokken Türkçe varsayılan metinler.
  * 2) Bir ada çökünce diğer ada çalışmaya devam eder (mountIsland, ayrı kökler).
  * 3) Önbellek (CAL-24): çökmede hemen ve kısıt süresi dolunca bir kez daha silinir; başka
  *    oturum anahtarlarına dokunulmaz. Tekrar dene / Sayfayı yenile de siler.
@@ -22,6 +22,11 @@ import { PERSIST_THROTTLE_MS, QUERY_CACHE_STORAGE_KEY } from '../../lib/api/quer
 
 function Bomb({ message = 'patladı' }) {
     throw new Error(message);
+}
+
+/* Verilen değeri olduğu gibi fırlatır: falsy (undefined/null/0/'') dahil. */
+function Thrower({ value }) {
+    throw value;
 }
 
 /* Bayrak açıkken her render'da fırlatır (React hata anında render'ı bir kez yeniden dener). */
@@ -91,6 +96,22 @@ describe('IslandErrorBoundary · kart', () => {
 
         expect(container.querySelector('[data-island-error="customers"] [role="alert"]')).not.toBeNull();
         expect(screen.queryByText('liste')).toBeNull();
+    });
+
+    it('falsy değer fırlatılsa da (throw undefined/null/0/\'\') kart çizilir; telemetriye Error gider', () => {
+        const reportIslandError = vi.fn();
+        window.ApyaTelemetry = { reportIslandError };
+
+        for (const value of [undefined, null, 0, '']) {
+            const { container, unmount } = render(
+                <IslandErrorBoundary name="calendar"><Thrower value={value} /></IslandErrorBoundary>,
+            );
+            expect(container.querySelector('[data-island-error="calendar"]')).toHaveTextContent('Bu bölüm gösterilemedi');
+            unmount();
+        }
+
+        expect(reportIslandError.mock.calls.map(([, error]) => error instanceof Error && error.message))
+            .toEqual(['undefined', 'null', '0', '']);
     });
 
     it('fallback verilirse { name, retry, reload, refocus } ile çağrılır', () => {

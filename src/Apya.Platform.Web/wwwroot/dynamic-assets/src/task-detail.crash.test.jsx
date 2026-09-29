@@ -7,8 +7,9 @@ import { taskDetailStore } from './task-detail/taskDetailStore';
  * Görev modalı çökünce (RES-11): kökün kabı (#task-detail-island) sayfanın sonunda; satır içi
  * kart orada görünmez kalırdı, kullanıcı "modal kendiliğinden kapandı" sanardı. İç sınır kartı
  * AYNI yerde, diyalogda gösterir: Tekrar dene / Sayfayı yenile / Kapat. Kapat ?task= derin
- * bağlantısını da siler (yenileme aynı görevi açıp yeniden çökmesin) ve V3 kapanış sözleşmesine
- * uyar (yalnız yazma olduysa kanban/liste tazelenir). Kapatınca sınır sökülür: takılı kalmaz.
+ * bağlantısını da siler (yenileme aynı görevi açıp yeniden çökmesin) ve kapanış sözleşmesine uyar
+ * (V3'te yalnız yazma olduysa, eski arayüzde her zaman kanban/liste tazelenir). Kapatınca sınır
+ * sökülür: takılı kalmaz.
  *
  * task-detail.entry.test.jsx'ten AYRI dosya: vi.mock dosya geneline yayılır. Modül bir kez
  * içe aktarılır (ES modülü tekil); testler SIRAYLA birbirinin durumuna dayanır.
@@ -25,6 +26,11 @@ vi.mock('./task-detail/v3/TaskDetailRootV3', async () => {
         },
     };
 });
+
+/* Eski arayüz (v1/v2, kullanıcı tercihiyle seçilir) da çöker: onun kapanış dalı ayrı kilitlenir. */
+vi.mock('./task-detail/TaskDetailRoot', () => ({
+    TaskDetailRoot: () => { throw new Error('eski arayüz çöktü'); },
+}));
 
 const reportIslandError = vi.fn();
 
@@ -100,5 +106,24 @@ describe('task-detail.jsx — çöken görev modalı', () => {
         fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Kapat' }));
         await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
         expect(onResult).toHaveBeenCalledTimes(1);
+    });
+
+    it('eski arayüzde (v1/v2) kapanış her zaman yayınlar: yazma işareti olmadan da kanban/liste tazelenir', async () => {
+        /* Eski kök markChanged çağırmaz (kendi kapanışı koşulsuz emitResult). Önceki vakanın
+           Kapat'ı yayınladığı için yazma işareti temiz: koşullu yayın burada sessiz kalırdı. */
+        window.apya.taskDetailV3Enabled = false;
+        const onResult = vi.fn();
+        window.apya.taskDetail.onResult(onResult);
+
+        await open();
+        const dialog = await screen.findByRole('dialog');
+        expect(reportIslandError).toHaveBeenLastCalledWith(
+            'task-detail', expect.objectContaining({ message: 'eski arayüz çöktü' }), expect.any(String));
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Kapat' }));
+
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        expect(onResult).toHaveBeenCalledTimes(1);
+
+        window.apya.taskDetailV3Enabled = true;
     });
 });
