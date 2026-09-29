@@ -195,10 +195,12 @@ function PublicForm({ slug }) {
 
   /**
    * 16b · Üst alan değişince ona bağlı alanın CEVABI DÜŞER ve listesi yeniden istenir: eski projenin görevi
-   * yeni projede geçerli değil, sunucu da onu reddederdi.
+   * yeni projede geçerli değil, sunucu da onu reddederdi. Üst alan bu cevapla GİZLENİRSE de aynısı olur:
+   * gizli üstün cevabı aşağıda düşer, çocuk onun listesi ve seçimiyle kalırsa gönderim reddedilirdi.
    */
   const onChange = (id, v) => {
-    const children = (doc?.blocks || []).filter((b) => b.dependsOnBlockId === id);
+    const hiddenNow = hiddenBlockIds(fields, { ...answers, [id]: v }, choicesOf);
+    const children = fields.filter((b) => b.dependsOnBlockId === id || hiddenNow.has(b.dependsOnBlockId));
     setAnswers((p) => {
       const next = { ...p, [id]: v };
       for (const c of children) delete next[c.id];
@@ -207,8 +209,10 @@ function PublicForm({ slug }) {
     // Bu cevapla gizlenen alanların cevabı da düşer (koşul sonradan bozulmuş olabilir).
     setAnswers((p) => withoutHidden(p, hiddenBlockIds(fields, p, choicesOf)));
 
-    const parentValue = v && typeof v === 'object' ? v.value : v;
+    const selected = v && typeof v === 'object' ? v.value : v;
     for (const child of children) {
+      // Gizlenen üstün değeri sayılmaz: çocuğun listesi boş kalır.
+      const parentValue = child.dependsOnBlockId === id ? selected : null;
       // Yalnız son üst seçimin seçenekleri yazılır; eski seçimin geç dönen listesi
       // yeni seçimin altına düşerse seçilen değer sunucuda reddedilirdi.
       const request = (chainedRequests.current[child.id] || 0) + 1;

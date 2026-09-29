@@ -22,13 +22,27 @@ const DOC = {
     { id: 'child', type: DROPDOWN, content: 'Çocuk alan', order: 1, settings: '{}', dependsOnBlockId: 'parent' },
   ],
 };
+// Üst alan bir koşula bağlı: kapı "Evet" değilse gizlenir, cevabı düşer.
+const GATED_DOC = {
+  title: 'QA-UX koşullu üst',
+  blocks: [
+    { id: 'gate', type: DROPDOWN, content: 'Kapı', order: 0, settings: JSON.stringify({ options: ['Evet', 'Hayır'] }) },
+    {
+      id: 'parent', type: DROPDOWN, content: 'Üst alan', order: 1,
+      settings: JSON.stringify({ visibleWhen: { blockId: 'gate', op: 'eq', value: 'Evet' } }),
+      choices: [{ value: 'A', label: 'A' }, { value: 'B', label: 'B' }],
+    },
+    { id: 'child', type: DROPDOWN, content: 'Çocuk alan', order: 2, settings: '{}', dependsOnBlockId: 'parent' },
+  ],
+};
+let currentDoc = DOC;
 const choiceCalls = [];
 const submits = [];
 
 vi.mock('./lib/api/httpClient', () => ({
   api: {
     get: (url) => {
-      if (url.includes('/by-slug')) return Promise.resolve(DOC);
+      if (url.includes('/by-slug')) return Promise.resolve(currentDoc);
       const parentValue = new URL(url, 'http://x').searchParams.get('parentValue');
       return new Promise((resolve) => { choiceCalls.push({ parentValue, resolve }); });
     },
@@ -106,5 +120,45 @@ describe('Genel form · bağlı alan', () => {
     const sent = JSON.parse(submits[0].answers);
     expect(sent.parent).toEqual({ value: 'A', label: 'A' });
     expect(sent.child?.value).toBeUndefined();
+  });
+
+  it('üst alan koşulla gizlenince bağlı alan boşalır, cevabı düşer; uçuştaki yanıt listeyi doldurmaz', async () => {
+    choiceCalls.length = 0;
+    submits.length = 0;
+    currentDoc = GATED_DOC;
+    vi.resetModules();
+    document.body.innerHTML = '<div id="public-form-root" data-slug="s"></div>';
+    await act(async () => { await import('./public-form.jsx'); });
+
+    expect(await screen.findByText('Çocuk alan')).toBeInTheDocument();
+    const [gate, child] = screen.getAllByRole('combobox'); // üst alan kapı yanıtlanmadan gizli
+
+    fireEvent.change(gate, { target: { value: 'Evet' } });
+    fireEvent.change(screen.getAllByRole('combobox')[1], { target: { value: 'A' } });
+    await waitFor(() => expect(choiceCalls).toHaveLength(1));
+    await settle(() => choiceCalls[0].resolve([{ value: 'a1', label: 'A-1' }]));
+    fireEvent.change(child, { target: { value: 'a1' } });
+    expect(progress()).toBe('100%');
+
+    // Kapı kapanır: üst gizlenip cevabı düşer; çocuğun A listesi ve seçimi de gider.
+    fireEvent.change(gate, { target: { value: 'Hayır' } });
+    expect(screen.queryByText('Üst alan')).not.toBeInTheDocument();
+    expect(optionTexts(child)).toEqual(['Listede kayıt yok']);
+    expect(child).toBeDisabled();
+    expect(progress()).toBe('50%');
+
+    // Kapı açılır, üst B olur; B listesi uçuştayken kapı yine kapanır ve geç yanıt yok sayılır.
+    fireEvent.change(gate, { target: { value: 'Evet' } });
+    fireEvent.change(screen.getAllByRole('combobox')[1], { target: { value: 'B' } });
+    await waitFor(() => expect(choiceCalls).toHaveLength(2));
+    fireEvent.change(gate, { target: { value: 'Hayır' } });
+    await settle(() => choiceCalls[1].resolve([{ value: 'b1', label: 'B-1' }]));
+    expect(optionTexts(child)).toEqual(['Listede kayıt yok']);
+    expect(child).toBeDisabled();
+    expect(progress()).toBe('50%');
+
+    fireEvent.click(screen.getByText('Gönder'));
+    await waitFor(() => expect(submits).toHaveLength(1));
+    expect(JSON.parse(submits[0].answers)).toEqual({ gate: 'Hayır' });
   });
 });
