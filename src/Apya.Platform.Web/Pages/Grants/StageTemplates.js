@@ -6,6 +6,8 @@ $(function () {
 
     var templates = [];
     var activeId = null;
+    // Kaydet/sil sonrası yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function num(v) { return v === '' || v == null ? null : Number(v); }
@@ -283,15 +285,28 @@ $(function () {
         });
     });
 
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2). Editör ve yan panel
+    // işaretlemede gizli (boş editör etkin "Şablonu kaydet" ile görünmesin); paintList açar.
     function load() {
-        return service.getList().then(function (list) {
+        var isLatest = nextLoad();
+        return Promise.resolve(service.getList({ abpHandleError: false })).then(function (list) {
+            if (!isLatest()) { return; }
             templates = list || [];
             if (!templates.some(function (t) { return t.id === activeId; })) {
                 activeId = templates.length ? templates[0].id : null;
             }
             paintAll();
+        }, function (err) {
+            if (!isLatest()) { return; }
+            $('#TplList').html(apya.loadState.errorHtml(l('Grants:StageTemplates:LoadFailed'), 'js-tpl-retry', err));
+            $('#TplEditor, .apya-tpl-side, #TplEmpty').addClass('d-none');
         });
     }
+
+    $('#TplList').on('click', '.js-tpl-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     load();
 });

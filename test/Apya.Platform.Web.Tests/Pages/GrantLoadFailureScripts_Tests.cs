@@ -84,6 +84,19 @@ public class GrantLoadFailureScripts_Tests
     [InlineData("Detail.js", "function load()", "service.getCallDetail(callId, { abpHandleError: false })", "Grants:Detail:LoadFailed", "js-detail-retry")]
     [InlineData("Wizard.js", "function load()", "service.get(appId, { abpHandleError: !initial })", "Grants:Wizard:LoadFailed", "js-wizard-retry")]
     [InlineData("Tenant.js", "function loadApplications()", "appSvc.getMyApplications({ abpHandleError: false })", "Grants:Mine:LoadFailed", "js-grants-apps-retry")]
+    // Host
+    [InlineData("Dispatch.js", "function load()", "service.preview(collectFilter(), { abpHandleError: false })", "Grants:Dispatch:LoadFailed", "js-dispatch-retry")]
+    [InlineData("Dispatch.js", "function loadIdeas()", "ideaService.getCallMatches(callId, { abpHandleError: false })", "Grants:Dispatch:Ideas:LoadFailed", "js-dispatch-ideas-retry")]
+    [InlineData("Ideas.js", "function load()", "service.getList(filters, { abpHandleError: false })", "Grants:Ideas:LoadFailed", "js-ideas-retry")]
+    [InlineData("Requests.js", "function load()", "service.getInbox(filters, { abpHandleError: false })", "Grants:Requests:LoadFailed", "js-requests-retry")]
+    [InlineData("Pipeline.js", "function load()", "service.getBoard(callId || null, userId || null, { abpHandleError: false })", "Grants:Pipeline:LoadFailed", "js-pipeline-retry")]
+    [InlineData("Leads.js", "function load()", "service.get({ abpHandleError: false })", "Grants:Leads:LoadFailed", "js-leads-retry")]
+    [InlineData("InterestReview.js", "function load()", "service.getReview(interestId, { abpHandleError: !initial })", "Grants:InterestReview:LoadFailed", "js-review-retry")]
+    [InlineData("NotificationTemplates.js", "function load()", "service.get({ abpHandleError: false })", "Grants:Notify:LoadFailed", "js-nt-retry")]
+    [InlineData("StageTemplates.js", "function load()", "service.getList({ abpHandleError: false })", "Grants:StageTemplates:LoadFailed", "js-tpl-retry")]
+    [InlineData("Applications.js", "function loadList()", "hostSvc.getList({ abpHandleError: false })", "Grants:Applications:LoadFailed", "js-apps-retry")]
+    [InlineData("MatchWeights.js", "function load()", "service.get(grantId, { abpHandleError: false })", "Grants:Weights:LoadFailed", "js-weights-retry")]
+    [InlineData("MatchWeights.js", "function loadCampaign()", "service.getMissingData({ abpHandleError: false })", "Common:ListLoadFailed", "js-weights-campaign-retry")]
     public void Yukleme_hatasi_sessiz_istek_kart_ve_Tekrar_dene_tasir(
         string file, string declaration, string call, string titleKey, string retryClass)
     {
@@ -111,6 +124,19 @@ public class GrantLoadFailureScripts_Tests
     [InlineData("Grants:Documents:LoadFailed")]
     [InlineData("Grants:Detail:LoadFailed")]
     [InlineData("Grants:Wizard:LoadFailed")]
+    [InlineData("Grants:Dispatch:LoadFailed")]
+    [InlineData("Grants:Dispatch:Ideas:LoadFailed")]
+    [InlineData("Grants:Ideas:LoadFailed")]
+    [InlineData("Grants:Requests:LoadFailed")]
+    [InlineData("Grants:Pipeline:LoadFailed")]
+    [InlineData("Grants:Leads:LoadFailed")]
+    [InlineData("Grants:InterestReview:LoadFailed")]
+    [InlineData("Grants:Notify:LoadFailed")]
+    [InlineData("Grants:Calls:LoadFailed")]
+    [InlineData("Grants:Parameters:LoadFailed")]
+    [InlineData("Grants:StageTemplates:LoadFailed")]
+    [InlineData("Grants:Applications:LoadFailed")]
+    [InlineData("Grants:Weights:LoadFailed")]
     public void Kart_basliklari_iki_dilde_de_var(string key)
     {
         foreach (var culture in new[] { "tr", "en" })
@@ -127,17 +153,27 @@ public class GrantLoadFailureScripts_Tests
 
     // ─────────────────────────── Yeniden girilen yüklemeler: bilet ───────────────────────────
 
+    /// <summary>Süzgeç, eylem, hub ya da pencere sonrası yeniden girilen yüklemeler: geç dönen eski yanıt (başarı ya da ret) yeniyi ezmez.</summary>
     [Theory]
-    [InlineData("Journey.js")]
-    [InlineData("Documents.js")]
-    [InlineData("Wizard.js")]
-    public void Yeniden_girilen_yukleme_bayat_yaniti_yutar(string file)
+    [InlineData("Journey.js", "function load()", "nextLoad")]
+    [InlineData("Documents.js", "function load()", "nextLoad")]
+    [InlineData("Wizard.js", "function load()", "nextLoad")]
+    [InlineData("Dispatch.js", "function load()", "nextLoad")]
+    [InlineData("Dispatch.js", "function loadIdeas()", "nextIdeas")]
+    [InlineData("Ideas.js", "function load()", "nextLoad")]
+    [InlineData("Requests.js", "function load()", "nextLoad")]
+    [InlineData("Pipeline.js", "function load()", "nextLoad")]
+    [InlineData("InterestReview.js", "function load()", "nextLoad")]
+    [InlineData("Index.js", "function load()", "nextLoad")]
+    [InlineData("StageTemplates.js", "function load()", "nextLoad")]
+    [InlineData("Applications.js", "function loadList()", "nextList")]
+    public void Yeniden_girilen_yukleme_bayat_yaniti_yutar(string file, string declaration, string ticket)
     {
         var script = Grants(file);
-        script.ShouldContain("var nextLoad = apya.latest();");
+        script.ShouldContain(ticket + " = apya.latest()");
 
-        var load = Body(script, "function load()");
-        load.ShouldContain("var isLatest = nextLoad();");
+        var load = Body(script, declaration);
+        load.ShouldContain($"var isLatest = {ticket}();");
         Count(load, "if (!isLatest()").ShouldBe(2, "başarı ve hata dalı ikisi de bayat yanıtı yutmalı");
     }
 
@@ -217,6 +253,148 @@ public class GrantLoadFailureScripts_Tests
             "}, function (err) {");
         load.Substring(load.IndexOf("}, function (err) {", StringComparison.Ordinal)).ShouldNotContain("connect(");
         Count(script, "connect();").ShouldBe(1, "canlı kanal yalnız başarılı yüklemede kurulmalı");
+    }
+
+    // ─────────────────────────── Host ekranları: sayfaya özgü korumalar ───────────────────────────
+
+    /// <summary>
+    /// Firmalara Gönder: aday listesi düşünce gönderim kapanır, "tümünü seç" hata kartını boş listeyle
+    /// ezmez; fikir eşleşmeleri düşünce eski eşleşmeler "Tümünü bağla"ya kalmaz.
+    /// </summary>
+    [Fact]
+    public void Firmalara_gonder_hata_aninda_gonderim_ve_toplu_baglama_kapali()
+    {
+        var script = Grants("Dispatch.js");
+
+        script.ShouldContain("$('#SelectAll').on('change', function () {\n        if (candidatesFailed) { return; }");
+
+        var load = Body(script, "function load()");
+        ShouldAppearInOrder(load,
+            "candidatesFailed = false;",
+            "}, function (err) {",
+            "candidatesFailed = true;",
+            "$('#SendBtn').prop('disabled', true);");
+
+        var ideas = Body(script, "function loadIdeas()");
+        ShouldAppearInOrder(ideas, "}, function (err) {", "ideaMatches = null;", "$('#IdeaEmpty, #IdeaStrip, #IdeaBelowBlock').addClass('d-none');");
+    }
+
+    [Fact]
+    public void Liste_hatasinda_sahte_bos_metin_ve_sifir_kalmaz()
+    {
+        // Fikir havuzu: "yalnız bekleyenler" düğmesi eski listeyle boyamaz.
+        Body(Grants("Ideas.js"), "function load()").ShouldContain("lastDto = null;");
+
+        // Talepler: "Kapanmış" süzgecindeki eski boş metin kalkar; gelmemiş sekme sayacı "—".
+        ShouldAppearInOrder(Body(Grants("Requests.js"), "function load()"),
+            "}, function (err) {",
+            "$('#RequestEmpty, #DueStrip').addClass('d-none');",
+            "$('[data-request-count]').filter(':empty').text('—');");
+
+        // Pano/Liste sekme sayaçları: iskelet sonsuza dek parlamaz.
+        var tabs = Grants("RequestTabs.js");
+        tabs.ShouldContain("Promise.resolve(apya.platform.grants.grantRequest.getTabCounts({ abpHandleError: false }))");
+        tabs.ShouldContain("}, function () {\n        $counts.text('—');");
+
+        // Pano: özetler hatada "—", işaretlemede de "0" yalanı yok; çağrı listesi düşse de pano yüklenir.
+        ShouldAppearInOrder(Body(Grants("Pipeline.js"), "function load()"),
+            "}, function (err) {",
+            "$('#SumRisky, #SumDocs, #SumReady, #SumAmount').text('—');");
+        Grants("Pipeline.js").ShouldContain("}, function () { }).then(load);");
+        var pipeline = Grants("Pipeline.cshtml");
+        foreach (var id in new[] { "SumRisky", "SumDocs", "SumReady", "SumAmount" })
+        {
+            Regex.IsMatch(pipeline, $"id=\"{id}\">—</span>").ShouldBeTrue($"{id} yer tutucusu '—' olmalı");
+        }
+
+        // Ön değerlendirme: beş KPI + sayaç "—".
+        Body(Grants("Leads.js"), "function load()")
+            .ShouldContain("$('#KpiWeek, #KpiQualified, #KpiMeetings, #KpiConverted, #KpiPipeline, #LeadCount').text('—');");
+    }
+
+    /// <summary>Çağrılar: kart 3 kolonlu ızgarada tek hücreye sıkışmaz; liste ve boş kutu gizlenir.</summary>
+    [Fact]
+    public void Cagrilar_hata_karti_izgarayi_kaplar()
+    {
+        var load = Body(Grants("Index.js"), "function load()");
+        ShouldAppearInOrder(load,
+            "return Promise.resolve(board.get({",
+            "}, { abpHandleError: false })).then(function (dto) {",
+            "}, function (err) {",
+            "$('#CallGrid').removeClass('apya-skel-cards d-none')",
+            "apya.loadState.errorHtml(l('Grants:Calls:LoadFailed'), 'js-calls-retry', err)",
+            "$('#CallList, #CallEmpty').addClass('d-none');");
+        Grants("Index.js").ShouldContain(
+            ".on('click', '.js-calls-retry', function () {\n        $(this).prop('disabled', true);");
+
+        Grants("Calls.css").ShouldContain("#CallGrid > .apya-console-state { grid-column: 1 / -1; }");
+    }
+
+    /// <summary>
+    /// İlgi incelemesi: "Başvuruya başlat / Reddet" veri görülmeden basılamaz, "Devret" pasif, not
+    /// kaydı (tam yazım) veri gelmeden boş notla eski notu silemez.
+    /// </summary>
+    [Fact]
+    public void Ilgi_incelemesi_veri_gelmeden_karar_ve_not_kilitli()
+    {
+        var markup = Grants("InterestReview.cshtml");
+        markup.ShouldContain("<div class=\"apya-irv-actions d-none\" id=\"ReviewActions\">");
+        markup.ShouldContain("id=\"AssignBtn\" disabled>");
+        markup.ShouldContain("id=\"SaveNoteBtn\" disabled>");
+        ShouldAppearInOrder(markup, "class=\"apya-irv-head\"", "<div id=\"ReviewLoadState\"></div>", "class=\"apya-irv-layout\"");
+
+        Body(Grants("InterestReview.js"), "function paint(d)").ShouldContain("$('#SaveNoteBtn').prop('disabled', false);");
+        ShouldAppearInOrder(Body(Grants("InterestReview.js"), "function load()"),
+            "var initial = !model;",
+            "}, function (err) {",
+            "if (!isLatest() || !initial || model) { return; }",
+            "apya.loadState.errorHtml(");
+    }
+
+    /// <summary>
+    /// VERİ KAYBI: Parametreler ve Eşleştirme ağırlıkları kayıt uçları TAM güncellemedir. Yükleme düşünce
+    /// etkin "Kaydet" boş formu yazıp program parametrelerini / ağırlıkları silebiliyordu. Kaydet
+    /// işaretlemede kilitli, yalnız fill() form sunucu değerleriyle dolunca açar.
+    /// </summary>
+    [Fact]
+    public void Tam_guncelleme_formlari_veri_gelmeden_kaydedilemez()
+    {
+        var parameters = Grants("Parameters.js");
+        Grants("Parameters.cshtml").ShouldContain("<button type=\"button\" id=\"ParamSaveBtn\" class=\"btn btn-outline-secondary\" disabled>");
+        Count(parameters, "$('#ParamSaveBtn').prop('disabled', false)").ShouldBe(1, "kilidi yalnız fill() açmalı");
+        ShouldAppearInOrder(Body(parameters, "function fill(dto)"), "loading = false;", "$('#ParamSaveBtn').prop('disabled', false);", "refreshPreview();");
+
+        // Açılış zinciri: şablon listesi → program → fill; TEK ret dalı iki adımı da kapsar.
+        var load = Body(parameters, "function load()");
+        ShouldAppearInOrder(load,
+            "Promise.resolve(templateService.getList({ abpHandleError: false }))",
+            "$sel.empty()",
+            "return service.get(grantId, { abpHandleError: false });",
+            "}).then(function (dto) {",
+            "fill(dto);",
+            "}, function (err) {",
+            "apya.loadState.errorHtml(l('Grants:Parameters:LoadFailed'), 'js-params-retry', err)");
+        Count(load, "function (err)").ShouldBe(1);
+        ShouldAppearInOrder(Grants("Parameters.cshtml"), "class=\"apya-param-hero\"", "<div id=\"ParamLoadState\"></div>", "apya-param-tabs");
+
+        var weights = Grants("MatchWeights.js");
+        var weightsMarkup = Grants("MatchWeights.cshtml");
+        weightsMarkup.ShouldContain("<button type=\"button\" id=\"WeightSaveBtn\" class=\"btn btn-sm btn-primary\" disabled>");
+        weightsMarkup.ShouldContain("<button type=\"button\" id=\"WeightResetBtn\" class=\"btn btn-sm btn-link text-secondary d-none\">");
+        Count(weights, "$('#WeightSaveBtn').prop('disabled', false)").ShouldBe(1, "kilidi yalnız fill() açmalı");
+        ShouldAppearInOrder(Body(weights, "function fill(dto)"), "loading = false;", "$('#WeightSaveBtn').prop('disabled', false);", "refreshImpact();");
+    }
+
+    /// <summary>Aşama şablonları: veri gelene kadar editör ve yan panel görünmez (boş editör etkin "Şablonu kaydet" ile açılıyordu).</summary>
+    [Fact]
+    public void Asama_sablonu_editoru_veri_gelmeden_gizli()
+    {
+        var markup = Grants("StageTemplates.cshtml");
+        markup.ShouldContain("<section class=\"card mb-0 apya-tpl-editor d-none\" id=\"TplEditor\">");
+        markup.ShouldContain("<aside class=\"apya-tpl-side d-none\">");
+
+        Body(Grants("StageTemplates.js"), "function load()")
+            .ShouldContain("$('#TplEditor, .apya-tpl-side, #TplEmpty').addClass('d-none');");
     }
 
     // ─────────────────────────── İşaretleme: kart kapları ───────────────────────────

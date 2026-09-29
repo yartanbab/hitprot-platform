@@ -24,10 +24,12 @@
                 <i class="fa fa-arrow-left me-1"></i>@L["Grants:Parameters:Title"]
             </a>
             <span id="WeightScopeChip" class="apya-chip apya-chip-neutral"></span>
-            <button type="button" id="WeightResetBtn" class="btn btn-sm btn-link text-secondary">
+            @* Veri gelmeden: "Varsayılana dön" gizli (programın kendi satırı var mı bilinmiyor),
+               "Kaydet" kilitli (kayıt TAM güncelleme; boş boyut listesi ağırlıkları silerdi). fill() açar. *@
+            <button type="button" id="WeightResetBtn" class="btn btn-sm btn-link text-secondary d-none">
                 @L["Grants:Weights:ResetToDefault"]
             </button>
-            <button type="button" id="WeightSaveBtn" class="btn btn-sm btn-primary">
+            <button type="button" id="WeightSaveBtn" class="btn btn-sm btn-primary" disabled>
                 <i class="fa fa-check me-1"></i>@L["Grants:Weights:Save"]
             </button>
         </div>

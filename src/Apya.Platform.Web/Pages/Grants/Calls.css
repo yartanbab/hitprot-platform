@@ -6,6 +6,8 @@
 
 /* 7b · İskelet yüksekliği gerçek kart yüksekliğine (afiş + gövde) yakın. */
 #CallGrid { --apya-skel-card: 320px; }
+/* Yükleme hatası kutusu 3 kolonlu ızgarada tek hücreye sıkışmaz (Tenant.css #FeedGrid emsali). */
+#CallGrid > .apya-console-state { grid-column: 1 / -1; }
 
 /* Host kartında köşede yer imi düğmesi yok: afiş üstü rozetler tüm genişliği kullanır. */
 .apya-call-card .apya-feed-poster-top { padding-right: 0; }

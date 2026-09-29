@@ -13,6 +13,8 @@ $(function () {
     var sizeKeys = { 1: 'Mikro', 2: 'Kucuk', 4: 'Orta', 8: 'Buyuk' };
 
     var model = null;
+    // Eylem sonrası yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return v == null ? '—' : Math.round(v).toLocaleString('tr-TR') + ' ₺'; }
@@ -196,9 +198,31 @@ $(function () {
         paintDecision(d);
         paintFirm(d);
         paintPartners(d);
+        // Not kaydı tam yazar: veri gelmeden boş notla eski notu silmesin (işaretlemede kilitli).
+        $('#SaveNoteBtn').prop('disabled', false);
     }
 
-    function load() { return service.getReview(interestId).then(paint); }
+    // İlk yükleme düşerse satır içi kart + Tekrar dene, ABP penceresi açılmaz (Faz 4 kararı 2).
+    // Veri ekrandayken (eylem sonrası) yenileme düşerse sayfa korunur: kart basılmaz, tek kanal
+    // ABP penceresidir. Karar düğmeleri işaretlemede gizli/pasif, paintDecision açar.
+    function load() {
+        var isLatest = nextLoad();
+        var initial = !model;
+        return Promise.resolve(service.getReview(interestId, { abpHandleError: !initial })).then(function (d) {
+            if (!isLatest()) { return; }
+            paint(d);
+            $('#ReviewLoadState').empty();
+        }, function (err) {
+            if (!isLatest() || !initial || model) { return; }
+            $('#ReviewLoadState').html(apya.loadState.errorHtml(l('Grants:InterestReview:LoadFailed'), 'js-review-retry', err));
+            $('#ReviewTitle').removeClass('apya-skel-num').text('');
+        });
+    }
+
+    $('#ReviewLoadState').on('click', '.js-review-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     // ---------- Eylemler ----------
     function busy($btn, promise) {

@@ -9,6 +9,8 @@ $(function () {
     // Varsayılan sıra eşleşme gücü (GrantIdeaPoolSort.Match = 2) — seçim kutusunun ilk seçeneği.
     var filters = { source: null, sort: 2 };
     var firmsFilled = false;
+    // Süzgeç ve kayıt sonrası yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
 
     // Dokuz sorunun etiketleri formdakiyle aynı; sıra da formun sırası.
     var questions = [
@@ -109,7 +111,27 @@ $(function () {
             .text(l(dto.totalCount > 0 ? 'Grants:Ideas:EmptyFiltered' : 'Grants:Ideas:Empty'));
     }
 
-    function load() { return service.getList(filters).then(paint); }
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2). Eski liste yeni süzgeçle
+    // uyuşmaz: kart listeyi değiştirir, "yalnız bekleyenler" düğmesi eski veriyle boyamaz.
+    function load() {
+        var isLatest = nextLoad();
+        return Promise.resolve(service.getList(filters, { abpHandleError: false })).then(function (dto) {
+            if (!isLatest()) { return; }
+            paint(dto);
+        }, function (err) {
+            if (!isLatest()) { return; }
+            lastDto = null;
+            $('#IdeaRows').removeClass('apya-skel-rows')
+                .html(apya.loadState.errorHtml(l('Grants:Ideas:LoadFailed'), 'js-ideas-retry', err));
+            $('#IdeaEmpty, #AwaitingStrip').addClass('d-none');
+            $('#IdeaCount').removeClass('apya-skel-num').text('');
+        });
+    }
+
+    $('#IdeaRows').on('click', '.js-ideas-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     $('#SourceFilter').on('change', function () { filters.source = $(this).val() === '' ? null : Number($(this).val()); load(); });
     $('#SortFilter').on('change', function () { filters.sort = Number($(this).val()); load(); });

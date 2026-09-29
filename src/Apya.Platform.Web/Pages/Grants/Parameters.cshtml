@@ -54,6 +54,9 @@
         </div>
     </div>
 
+    @* Yükleme hatası kartı (Parameters.js). *@
+    <div id="ParamLoadState"></div>
+
     @* ---------- Sekme grubu ---------- *@
     <div class="apya-grant-tabs apya-param-tabs" role="tablist" aria-label="@L["Grants:Parameters:Sections"]">
         <button type="button" class="apya-grant-tab" role="tab" data-tab="identity" aria-controls="SectionIdentity">
@@ -609,7 +612,8 @@
             <span class="apya-param-bar-message" id="ParamMissingText"></span>
         </div>
         <div class="apya-param-bar-actions">
-            <button type="button" id="ParamSaveBtn" class="btn btn-outline-secondary">
+            @* Kayıt TAM güncelleme: form sunucu değerleriyle dolmadan kilitli (fill() açar). *@
+            <button type="button" id="ParamSaveBtn" class="btn btn-outline-secondary" disabled>
                 @L["Grants:Parameters:SaveDraft"]
             </button>
             @* Yayın kapısı kapalıyken bir sonraki adım: önce eksik alan, sonra taslak çağrı. JS gösterir. *@

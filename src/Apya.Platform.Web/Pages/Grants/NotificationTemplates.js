@@ -123,11 +123,27 @@ $(function () {
     });
 
     // ---------- Açılış ----------
-    service.get().then(function (dto) {
-        model = dto;
-        var first = (dto.templates || [])[0];
-        selectedId = first ? first.id : null;
-        paintList();
-        paintEditor();
+    // Yalnız açılışta ve Tekrar dene ile çağrılır; kayıt modeli yanıttan günceller. Yükleme hatası
+    // ABP penceresi değil satır içi kart (Faz 4 kararı 2); editör işaretlemede gizli, kaydet
+    // seçili şablon olmadan çalışmaz.
+    function load() {
+        return Promise.resolve(service.get({ abpHandleError: false })).then(function (dto) {
+            model = dto;
+            var first = (dto.templates || [])[0];
+            selectedId = first ? first.id : null;
+            paintList();
+            paintEditor();
+        }, function (err) {
+            $('#NtRows').removeClass('apya-skel-rows')
+                .html(apya.loadState.errorHtml(l('Grants:Notify:LoadFailed'), 'js-nt-retry', err));
+            $('#NtCount').text('');
+        });
+    }
+
+    $('#NtRows').on('click', '.js-nt-retry', function () {
+        $(this).prop('disabled', true);
+        load();
     });
+
+    load();
 });
