@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, EmptyState, Sheet, SheetContent, Skeleton } from '../components/ui';
 import { cn } from '../lib/utils';
 import { api } from '../lib/api/httpClient';
+import { wasShown } from '../lib/api/abpErrors';
 import { AgendaView } from './AgendaView';
 import { DayPanel } from './DayPanel';
 import { MonthGrid } from './MonthGrid';
@@ -121,7 +122,12 @@ export function CalendarRoot() {
         };
     }, [view, month, today]);
 
-    const { data, isPending, isError, refetch } = useCalendarFeed(range);
+    const { data, error, isPending, isError, isPlaceholderData, refetch } = useCalendarFeed(range);
+    /* Feed hiç gelmediyse (hata ve veri yok) boş durum DEĞİL hata çizilir. Veri varsa
+       (önbellek ya da önceki başarılı yükleme; placeholder hatada TanStack v5'te düşer)
+       ızgara kalır, üstteki şerit uyarır. Kapı isPending: kalıcı önbellek geri
+       yüklenirken isLoading yalan söyler. */
+    const feedFailed = isError && !data;
     /* Dış etkinlikler ayrı sorgudan gelir: yavaş/kırılgan dış çağrı grid'i bekletmesin. */
     const external = useExternalEvents(range);
     const preferences = useCalendarPreferences();
@@ -275,9 +281,12 @@ export function CalendarRoot() {
                 canCreateTask={canCreateTask}
             />
 
-            {isError && (
-                <div className="rounded-card border border-negative-100 bg-negative-50 px-3 py-2.5 text-[12.5px] text-negative-700">
-                    Takvim yüklenemedi.
+            {/* Veri yokken tek hata yüzeyi ana alandaki kart; şerit yalnız eldeki veri
+                gösterilirken tazeleme düştüyse (çift gösterim yok). Oturum hatasını (401)
+                merkezi pencere gösteriyor: ikinci metin basılmaz. */}
+            {isError && !feedFailed && !wasShown(error) && (
+                <div role="alert" className="rounded-card border border-negative-100 bg-negative-50 px-3 py-2.5 text-[12.5px] text-negative-700">
+                    Takvim yenilenemedi; son yüklenen veriler gösteriliyor.
                     <button type="button" onClick={() => refetch()} className="ml-2 font-semibold underline">
                         Yeniden dene
                     </button>
@@ -334,7 +343,9 @@ export function CalendarRoot() {
             )}
 
             <div className={cn('flex gap-3', isNarrow ? 'flex-col' : 'flex-row items-start')}>
-                {!isNarrow && (
+                {/* Yüklenirken kap korunur (yatay sıçrama yok); feed düştüyse ya da izinli
+                    kaynak yoksa SourceRail null döner — 240px boş sütun çizilmez. */}
+                {!isNarrow && (isPending || availableSources.length > 0) && (
                     <div className={cn('shrink-0', layout === 'wide' ? 'w-[240px]' : 'w-auto')}>
                         <SourceRail
                             sources={data?.sources ?? []}
@@ -362,8 +373,29 @@ export function CalendarRoot() {
                 )}
 
                 <div className="min-w-0 flex-1">
+                    {/* Boş aralıkta ızgara kaybolmaz (gün seçme, sürükle-bırak, klavye çalışır);
+                        üstte ince ipucu. Henüz yüklenmemiş aralık (placeholder) için
+                        "planlanmış bir şey yok" denmez. Ajanda kendi boş kartını korur. */}
+                    {!isPending && !feedFailed && !isPlaceholderData && !hasAnyData && view !== 'agenda' && (
+                        <div
+                            role="status"
+                            className="mb-2 flex items-center gap-2 rounded-card border border-subtle bg-surface-raised px-3 py-2 text-[12.5px] text-text-secondary"
+                        >
+                            <i className="fa fa-calendar-plus text-text-tertiary" aria-hidden="true" />
+                            <span className="min-w-0 flex-1">Bu aralıkta planlanmış bir şey yok.</span>
+                            {canCreateTask && (
+                                <button type="button" onClick={openNewTask} className="font-semibold text-text-link hover:underline">
+                                    Görev oluştur
+                                </button>
+                            )}
+                        </div>
+                    )}
                     {isPending ? (
                         <MonthSkeleton />
+                    ) : feedFailed ? (
+                        <div className="rounded-card border border-subtle bg-surface-base p-6">
+                            <EmptyState variant="error" title="Takvim yüklenemedi" error={error} onRetry={() => refetch()} />
+                        </div>
                     ) : filteredToEmpty ? (
                         <div className="rounded-card border border-subtle bg-surface-base p-6">
                             <EmptyState
@@ -373,7 +405,7 @@ export function CalendarRoot() {
                                 action={<Button size="sm" variant="outline" onClick={resetSources}>Kaynakları aç</Button>}
                             />
                         </div>
-                    ) : !hasAnyData ? (
+                    ) : !hasAnyData && view === 'agenda' ? (
                         <div className="rounded-card border border-subtle bg-surface-base p-6">
                             <EmptyState
                                 icon={<i className="fa fa-calendar-plus" />}
@@ -422,7 +454,7 @@ export function CalendarRoot() {
                     {/* Efsane — hücrelerdeki çizgilerin ne anlama geldiği başka
                         hiçbir yerde yazmıyor. Yalnız çubukların göründüğü
                         görünümlerde çizilir; ajandada çubuk yok. */}
-                    {!isPending && view !== 'agenda' && (
+                    {!isPending && !feedFailed && view !== 'agenda' && (
                         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[10.5px] text-text-tertiary">
                             <span className="flex items-center gap-1.5">
                                 <span className="h-[3px] w-[18px] rounded-full bg-primary-subtle" aria-hidden="true" />

@@ -200,7 +200,9 @@ function StaleIndicator() {
 function formatRelative(when) {
     if (when == null) return null;
     const ts = when instanceof Date ? when.getTime() : Number(when);
-    if (!Number.isFinite(ts)) return null;
+    /* TanStack veri hiç gelmemişken dataUpdatedAt=0 döndürür: 1970'e göre "20.724 gün
+       önce" yazılıyordu (SHL-13). 0 = hiç başarılı yükleme yok. */
+    if (!Number.isFinite(ts) || ts <= 0) return null;
     const diffSec = Math.round((ts - Date.now()) / 1000);
     const abs = Math.abs(diffSec);
     const fmt = new Intl.RelativeTimeFormat(currentLocale(), { numeric: 'auto' });

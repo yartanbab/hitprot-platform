@@ -31,7 +31,8 @@ export function useComplianceOverview(projectId) {
     }));
 
     try {
-      const overview = await getComplianceOverview(projectId, null);
+      // Yükleme hatası çağıranda `failed` ile gösterilir; ABP penceresi açılmaz.
+      const overview = await getComplianceOverview(projectId, null, { abpHandleError: false });
       // Bu arada başka bir proje istendiyse eski yanıt yeni bağlamı ezmesin.
       if (request === requestRef.current) {
         setState({ projectId, overview: overview ?? null, loading: false, failed: false });

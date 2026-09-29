@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../../components/ui';
 import {
   abpAuth, abpNotify, applyCompliancePackage, getComplianceOverview,
@@ -103,27 +103,36 @@ export function ComplianceTab({ projectId, periodCode, onSummaryChange, document
   const [overview, setOverview] = useState(null);
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const canManage = abpAuth('Platform.Documents.ManageCompliance');
 
+  /* Yalnız son isteğin yanıtı yazılır: proje hızla değişince eski projenin özeti
+     (ya da hatası) yeni projenin üstüne düşmez. */
+  const requestRef = useRef(0);
+
   const load = useCallback(async () => {
-    if (!projectId) { setOverview(null); setLoading(false); return; }
+    const request = ++requestRef.current;
+    if (!projectId) { setOverview(null); setLoadError(null); setLoading(false); return; }
 
     setLoading(true);
+    setLoadError(null);
     try {
       const [data, catalog] = await Promise.all([
-        getComplianceOverview(projectId, periodCode),
-        getCompliancePackages(projectId),
+        getComplianceOverview(projectId, periodCode, { abpHandleError: false }),
+        getCompliancePackages(projectId, { abpHandleError: false }),
       ]);
+      if (request !== requestRef.current) return;
       setOverview(data);
       setPackages(catalog ?? []);
       onSummaryChange?.(data?.summary ?? null);
     } catch (e) {
-      abpNotify('error', 'Uygunluk verisi yüklenemedi.');
+      if (request !== requestRef.current) return;
+      setLoadError(e);
       console.error('[Documents] compliance load', e);
     } finally {
-      setLoading(false);
+      if (request === requestRef.current) setLoading(false);
     }
   }, [projectId, periodCode, onSummaryChange]);
 
@@ -190,6 +199,15 @@ export function ComplianceTab({ projectId, periodCode, onSummaryChange, document
 
   if (loading) {
     return <div className="p-4"><SkeletonList rows={6} /></div>;
+  }
+
+  // Okunamadıysa "paket uygulanmadı" denmez; önceki projenin özeti de gösterilmez.
+  if (loadError) {
+    return (
+      <div className="p-3">
+        <EmptyState variant="error" title="Uygunluk verisi yüklenemedi" error={loadError} onRetry={load} />
+      </div>
+    );
   }
 
   const applied = overview?.checklists ?? [];

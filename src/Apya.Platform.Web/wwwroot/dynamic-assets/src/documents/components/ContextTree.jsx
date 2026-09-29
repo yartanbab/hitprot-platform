@@ -1,5 +1,5 @@
 import React from 'react';
-import { SkeletonList } from '../../components/ui';
+import { EmptyState, SkeletonList } from '../../components/ui';
 import { cn } from '../format';
 
 /**
@@ -75,7 +75,7 @@ function TreeRow({
 }
 
 export function ContextTree({
-  loading, tree, activeKey, expanded, onToggle, onSelect, onDropFiles, dragTarget, setDragTarget,
+  loading, error = null, onRetry, tree, activeKey, expanded, onToggle, onSelect, onDropFiles, dragTarget, setDragTarget,
 }) {
   return (
     <div className="apya-docs-tree">
@@ -92,8 +92,14 @@ export function ContextTree({
         <span className="apya-md-item-title" style={{ fontWeight: 600 }}>Tüm Dokümanlar</span>
       </button>
 
+      {/* Ağaç okunamadıysa "Henüz klasör yok." YANLIŞ. Son iyi ağaç varsa (tazeleme
+          düştü) ağaç kalır: navigasyon kopmasın. Akıllı klasörler her durumda çizilir. */}
       {loading ? (
         <div className="p-2"><SkeletonList rows={5} /></div>
+      ) : error && tree.length === 0 ? (
+        <div className="p-2">
+          <EmptyState compact variant="error" title="Klasörler yüklenemedi" error={error} onRetry={onRetry} />
+        </div>
       ) : tree.length === 0 ? (
         <div className="text-[11px] text-center py-5 px-2" style={{ color: 'var(--apya-text-tertiary)' }}>
           Henüz klasör yok.

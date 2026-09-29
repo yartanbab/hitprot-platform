@@ -32,7 +32,10 @@ function ProjectHealthCard({ filter, editMode }) {
         <CardShell
             editMode={editMode}
             title={t('Dashboard:Health:Title', 'Proje sağlığı')}
-            subtitle={t('Dashboard:Health:Subtitle', '{0} aktif proje', projects.length)}
+            /* Yüklenirken ve hatada "0 aktif proje" yazılmaz (DeliveriesCard ile aynı desen). */
+            subtitle={query.isSuccess
+                ? t('Dashboard:Health:Subtitle', '{0} aktif proje', projects.length)
+                : undefined}
             isLoading={query.isPending}
             isError={query.isError}
             onRetry={query.refetch}

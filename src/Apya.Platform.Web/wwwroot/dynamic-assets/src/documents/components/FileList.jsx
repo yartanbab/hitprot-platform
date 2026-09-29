@@ -235,7 +235,7 @@ function FileCard({ file, selected, onSelect, onDragStart }) {
 }
 
 export function FileList({
-  loading, files, totalCount, view, sorting, onSort,
+  loading, loadError = null, onRetry, files, totalCount, view, sorting, onSort,
   selectedId, onSelect, checkedIds, onToggleCheck, onToggleAll,
   page, pageSize, onPageChange, onDragStart, emptyHint, emptyAction = null,
   missingItems = [], onUploadMissing, canUpload = false, isTrash = false, onRestore,
@@ -251,6 +251,14 @@ export function FileList({
     return view === 'grid'
       ? <div className="apya-tile-grid p-3">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} height={120} rounded="lg" />)}</div>
       : <div className="p-3 d-flex flex-column gap-2">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} height={40} rounded="md" />)}</div>;
+  }
+
+  // Yükleme hatası boş durum DEĞİL. Eldeki satırlar başka bağlama ait olabilir (bağlam
+  // değişiminde düşen istek) → hiç gösterilmez; liste bilinmediği için sayfalama ve eksik
+  // kalem satırları da çizilmez. Boş durum ve eylemleri (Yükle / Şemayı kur) yalnız
+  // başarılı-boş sonuçta.
+  if (loadError) {
+    return <EmptyState variant="error" title="Belge listesi yüklenemedi" error={loadError} onRetry={onRetry} />;
   }
 
   // Klasör boş ama eksik kalem varsa boş durum BASILMAZ — "burada bir şey yok"

@@ -74,8 +74,9 @@ function ConfirmDialog({ title, message, onConfirm, onCancel }) {
 }
 
 /** KPI şeridi. Uygunluk ve eksik belge yalnız bir proje bağlamı seçiliyken
-    doluyor — proje yokken kontrol listesi tanımsızdır ve sahte sayı basmıyoruz. */
-function KpiStrip({ uploadedThisMonth, expiring, compliance }) {
+    doluyor — proje yokken kontrol listesi tanımsızdır ve sahte sayı basmıyoruz.
+    Proje seçiliyken özet yükleniyorsa alt satır boş, okunamadıysa "Yüklenemedi". */
+function KpiStrip({ uploadedThisMonth, expiring, compliance, hasProject, complianceFailed }) {
   const tiles = [
     {
       key: 'compliance',
@@ -85,7 +86,7 @@ function KpiStrip({ uploadedThisMonth, expiring, compliance }) {
       tone: 'positive',
       foot: compliance
         ? `${compliance.satisfiedCount} / ${compliance.totalCount - compliance.waivedCount} kalem tamam`
-        : 'Proje bağlamı seçin',
+        : hasProject ? (complianceFailed ? 'Yüklenemedi' : null) : 'Proje bağlamı seçin',
     },
     {
       key: 'missing',
@@ -134,12 +135,15 @@ export function DocumentsRoot() {
   const [workSteps, setWorkSteps] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
   const [loadingTree, setLoadingTree] = useState(true);
+  // Yükleme hatası (null = yok). "Başarılı ve boş" ile karışmasın diye ayrı tutulur.
+  const [treeError, setTreeError] = useState(null);
 
   const [files, setFiles] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [expiringCount, setExpiringCount] = useState(null);
   const [uploadedThisMonth, setUploadedThisMonth] = useState(null);
   const [loadingFiles, setLoadingFiles] = useState(true);
+  const [filesError, setFilesError] = useState(null);
 
   /* --- URL, filtrelerin tek doğruluk kaynağı ---
      Üst bardaki kayıtlı görünüm çipi ekranın FİLTRE URL'İNİ adlandırıp saklıyor
@@ -230,20 +234,23 @@ export function DocumentsRoot() {
 
   const flash = useCallback((msg) => setToast(msg), []);
 
-  /* --- Ağaç verisi --- */
+  /* --- Ağaç verisi ---
+     Yükleme hatası ağaçta kart olarak gösterilir (toast ve ABP penceresi yok). Son
+     iyi ağaç varsa (mutasyon sonrası tazeleme düştü) ağaç kalır: tek bağlamı var. */
   const loadTree = useCallback(async () => {
     setLoadingTree(true);
     try {
       const [folderResult, steps, types] = await Promise.all([
-        abpDocument().getList({ maxResultCount: 1000, sorting: 'title asc' }),
-        getWorkSteps(),
-        getDocumentTypes(),
+        abpDocument().getList({ maxResultCount: 1000, sorting: 'title asc' }, { abpHandleError: false }),
+        getWorkSteps(null, { abpHandleError: false }),
+        getDocumentTypes({ abpHandleError: false }),
       ]);
       setFolders(folderResult.items ?? []);
       setWorkSteps(steps ?? []);
       setDocumentTypes(types ?? []);
+      setTreeError(null);
     } catch (e) {
-      abpNotify('error', 'Klasör ağacı yüklenemedi.');
+      setTreeError(e);
       console.error('[Documents] loadTree', e);
     } finally {
       setLoadingTree(false);
@@ -291,13 +298,15 @@ export function DocumentsRoot() {
     const request = ++filesRequestRef.current;
     setLoadingFiles(true);
     try {
-      const result = await getFiles(filterRef.current);
+      const result = await getFiles(filterRef.current, { abpHandleError: false });
       if (request !== filesRequestRef.current) return;
       setFiles(result.items ?? []);
       setTotalCount(result.totalCount ?? 0);
+      setFilesError(null);
     } catch (e) {
       if (request !== filesRequestRef.current) return;
-      abpNotify('error', 'Belge listesi yüklenemedi.');
+      // Liste bilinmiyor: eldeki satırlar başka bağlama ait olabilir, FileList hiç göstermez.
+      setFilesError(e);
       console.error('[Documents] loadFiles', e);
     } finally {
       if (request === filesRequestRef.current) setLoadingFiles(false);
@@ -318,8 +327,8 @@ export function DocumentsRoot() {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
       const [expiring, uploaded] = await Promise.all([
-        getFiles({ maxResultCount: 1, skipCount: 0, expiringWithinDays: 30 }),
-        getFiles({ maxResultCount: 1, skipCount: 0, uploadedAfter: monthStart }),
+        getFiles({ maxResultCount: 1, skipCount: 0, expiringWithinDays: 30 }, { abpHandleError: false }),
+        getFiles({ maxResultCount: 1, skipCount: 0, uploadedAfter: monthStart }, { abpHandleError: false }),
       ]);
 
       if (request !== kpiRequestRef.current) return;
@@ -372,7 +381,7 @@ export function DocumentsRoot() {
   const loadSuggestions = useCallback(async () => {
     const request = ++suggestionsRequestRef.current;
     try {
-      const next = await getSuggestions(projectIdRef.current);
+      const next = await getSuggestions(projectIdRef.current, { abpHandleError: false });
       if (request === suggestionsRequestRef.current) setSuggestions(next);
     } catch (e) {
       if (request !== suggestionsRequestRef.current) return;
@@ -392,7 +401,7 @@ export function DocumentsRoot() {
 
     (async () => {
       try {
-        setSetupState(await getSetupState());
+        setSetupState(await getSetupState({ abpHandleError: false }));
       } catch (e) {
         // Kurulum durumu okunamadıysa ekran normal çalışmaya devam etsin.
         console.error('[Documents] setupState', e);
@@ -731,6 +740,14 @@ export function DocumentsRoot() {
     modal.onResult(() => { loadTree(); flash('Klasör oluşturuldu.'); });
   };
 
+  /* İlk deneme boş ağaçla bittiği için adresteki klasör/adım/proje düğümü "geri
+     yüklendi" sayılmıştı; yeniden denemede geri yükleme tekrar koşar. Effect düğümü
+     yalnız kullanıcı başka düğüm seçmediyse değiştirir, seçimi ezilmez. */
+  const retryTree = () => {
+    restoredRef.current = false;
+    loadTree();
+  };
+
   const toggleExpand = (key) => setExpanded((prev) => {
     const next = new Set(prev);
     next.has(key) ? next.delete(key) : next.add(key);
@@ -768,8 +785,10 @@ export function DocumentsRoot() {
 
   /* --- Boş durum eylemi: tek birincil düğme + metin bağlantısı ---
      Yalnız "henüz bir şey yok" durumlarında; arama/süzgeç ve akıllı klasör
-     boşken eylem önermiyoruz (orada boş olmak iyi haber ya da süzgeç sonucu). */
-  const noFolders = !loadingTree && folders.length === 0;
+     boşken eylem önermiyoruz (orada boş olmak iyi haber ya da süzgeç sonucu).
+     Ağaç OKUNAMADIYSA klasör yok sayılmaz: "Şemayı kur" sihirbazı ikinci kez açılıp
+     mükerrer şema kurdururdu. */
+  const noFolders = !loadingTree && !treeError && folders.length === 0;
 
   let emptyAction = null;
   if (canCreate && !appliedSearch.trim() && node.kind !== 'smart') {
@@ -896,6 +915,8 @@ export function DocumentsRoot() {
         uploadedThisMonth={uploadedThisMonth}
         expiring={expiringCount}
         compliance={compliance.overview?.summary ?? null}
+        hasProject={Boolean(activeProjectId)}
+        complianceFailed={compliance.failed}
       />
 
       <div className="apya-doc-tabs" role="tablist">
@@ -920,6 +941,8 @@ export function DocumentsRoot() {
       <div className={cn('apya-docs-shell', tab !== 'files' && 'is-wide')}>
         <ContextTree
           loading={loadingTree}
+          error={treeError}
+          onRetry={retryTree}
           tree={tree}
           activeKey={node.key}
           expanded={expanded}
@@ -973,7 +996,8 @@ export function DocumentsRoot() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <span className="apya-grid-count apya-numeric">{totalCount} belge</span>
+            {/* Yüklenirken ve hatada sayı bilinmiyor: "0 belge" demek yanlış olur. */}
+            <span className="apya-grid-count apya-numeric">{loadingFiles || filesError ? '—' : totalCount} belge</span>
             <div className="apya-doc-viewtoggle">
               <button
                 type="button"
@@ -996,6 +1020,8 @@ export function DocumentsRoot() {
 
           <FileList
             loading={loadingFiles}
+            loadError={filesError}
+            onRetry={loadFiles}
             files={files}
             totalCount={totalCount}
             view={view}

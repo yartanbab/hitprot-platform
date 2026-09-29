@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
+import { EmptyState } from './components/ui/EmptyState';
 import { choiceLabel } from './lib/formChoices';
 import './index.css';
 
@@ -56,6 +57,12 @@ function ResponsesApp({ formId }) {
   const [rows, setRows] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  /* İki ayrı yükleme hatası: sayfa (istatistik/form) düşerse hiçbir şey çizilemez;
+     yalnız liste düşerse gerçek istatistikler görünür kalır. */
+  const [loadError, setLoadError] = useState(null);
+  const [rowsError, setRowsError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const rowsRequest = useRef(0);
   const [selected, setSelected] = useState(null); // detail dto
   const [detailLoading, setDetailLoading] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -66,11 +73,23 @@ function ResponsesApp({ formId }) {
   const columns = useMemo(() => blocks.filter((b) => b.type !== 16 && b.type !== 17), [blocks]);
   const chartableBlocks = useMemo(() => columns.filter((b) => CHARTABLE.has(b.type)), [columns]);
 
+  /* Fırlatmaz; yalnız son isteğin (son süzgecin) yanıtı ya da hatası yazılır. Hata
+     anında satırlar TEMİZLENİR: önceki süzgecin satırları yeni süzgeç adıyla görünür,
+     CSV onları dışa aktarır, Analiz onlardan grafik çizerdi. */
   const loadList = async (status) => {
+    const request = ++rowsRequest.current;
     let url = `/api/app/response-management?DocumentId=${formId}&MaxResultCount=200&SkipCount=0`;
     if (status !== '') url += `&Status=${status}`;
-    const res = await api.get(url);
-    setRows(res.items || []);
+    try {
+      const res = await api.get(url);
+      if (request !== rowsRequest.current) return;
+      setRows(res.items || []);
+      setRowsError(null);
+    } catch (e) {
+      if (request !== rowsRequest.current) return;
+      setRows([]);
+      setRowsError(e);
+    }
   };
 
   useEffect(() => {
@@ -84,16 +103,17 @@ function ResponsesApp({ formId }) {
         setBlocks((form.blocks || []).slice().sort((a, b) => a.order - b.order));
         await loadList('');
       } catch (e) {
-        notify('error', e?.message || 'Yanıtlar yüklenemedi.');
+        // Yalnız istatistik/form hatası buraya düşer; liste hatası loadList'te kalır.
+        setLoadError(e);
       } finally {
         setLoading(false);
       }
     })();
-  }, [formId]);
+  }, [formId, reloadKey]);
 
-  const onFilter = async (v) => {
+  const onFilter = (v) => {
     setStatusFilter(v);
-    try { await loadList(v); } catch (e) { notify('error', e?.message); }
+    loadList(v);
   };
 
   const openDetail = async (id) => {
@@ -160,6 +180,18 @@ function ResponsesApp({ formId }) {
 
   if (loading) return <div className="py-16 text-center text-text-tertiary">Yanıtlar yükleniyor…</div>;
 
+  // Sahte "Toplam Yanıt 0" kartları çizilmez (form-builder'daki reloadKey deseni).
+  if (loadError) {
+    return (
+      <EmptyState
+        variant="error"
+        title="Yanıtlar yüklenemedi"
+        error={loadError}
+        onRetry={() => { setLoadError(null); setLoading(true); setReloadKey((k) => k + 1); }}
+      />
+    );
+  }
+
   const tags = (j) => parse(j)?.tags || (Array.isArray(parse(j)) ? parse(j) : []);
 
   return (
@@ -174,7 +206,7 @@ function ResponsesApp({ formId }) {
 
       {/* toolbar */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-bold text-text-secondary">Yanıtlar ({rows.length})</h3>
+        <h3 className="text-sm font-bold text-text-secondary">Yanıtlar ({rowsError ? '—' : rows.length})</h3>
         <div className="flex items-center gap-2">
           <div className="flex rounded-xl border border-default bg-surface-raised p-0.5">
             <button onClick={() => setView('list')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'list' ? 'bg-accent text-white' : 'text-text-secondary'}`}>Liste</button>
@@ -192,8 +224,12 @@ function ResponsesApp({ formId }) {
         </div>
       </div>
 
-      {/* analytics */}
-      {view === 'analytics' ? (
+      {/* liste okunamadıysa ne tablo ne analiz: ikisi de o satırlardan çizilir */}
+      {rowsError ? (
+        <div className="mt-3 rounded-2xl border border-default bg-surface-raised">
+          <EmptyState variant="error" title="Yanıtlar yüklenemedi" error={rowsError} onRetry={() => loadList(statusFilter)} />
+        </div>
+      ) : view === 'analytics' ? (
         <div className="mt-3">
           {chartableBlocks.length === 0 ? (
             <div className="rounded-2xl border border-default bg-surface-raised py-16 text-center text-text-tertiary">

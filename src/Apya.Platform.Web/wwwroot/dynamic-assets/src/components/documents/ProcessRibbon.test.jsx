@@ -59,7 +59,8 @@ describe('ProcessRibbon', () => {
 
     expect(await screen.findByText('Yükle: SGK Borcu Yoktur Yazısı → uygunluk %80')).toBeInTheDocument();
     expect(screen.getByText('%70 · 3 eksik')).toBeInTheDocument();
-    expect(getComplianceOverview).toHaveBeenCalledWith('p1', null);
+    // Yükleme isteği: hata şeritte/ekranda sessizce ele alınır, ABP penceresi açılmaz.
+    expect(getComplianceOverview).toHaveBeenCalledWith('p1', null, { abpHandleError: false });
   });
 
   it('proje yoksa ağa gitmez, bağlam ister', () => {
