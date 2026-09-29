@@ -126,12 +126,16 @@ function installFakeJquery() {
     return { handlers, tables, reload };
 }
 
-// DataTables'ın boş tablo çizimi: tbody'de tek td.dt-empty (sLoadingRecords/sEmptyTable).
+// DataTables'ın boş tablo çizimi: tbody'de tek td.dt-empty (sLoadingRecords/sEmptyTable);
+// kap (nTableWrapper) bilgi satırını (.dt-info) taşır.
 function mountTable() {
-    document.body.innerHTML = '<table id="t"><tbody><tr><td class="dt-empty" colspan="3">Tabloda veri yok</td></tr></tbody></table>'
-        + '<button type="button" class="js-apya-table-retry" id="outside">x</button>';
+    document.body.innerHTML = '<div class="dt-container" id="w">'
+        + '<table id="t"><tbody><tr><td class="dt-empty" colspan="3">Tabloda veri yok</td></tr></tbody></table>'
+        + '<div class="dt-info" role="status">0 kayıttan 0 ile 0 arası gösteriliyor.</div></div>'
+        + '<button type="button" class="js-apya-table-retry" id="outside">x</button>'
+        + '<input id="search" />';
     const table = document.getElementById('t');
-    return { nTable: table, nTBody: table.querySelector('tbody') };
+    return { nTable: table, nTBody: table.querySelector('tbody'), nTableWrapper: document.getElementById('w') };
 }
 
 describe('failTable', () => {
@@ -213,6 +217,32 @@ describe('failTable', () => {
         expect(() => loadState.failTable(mountTable(), null)).not.toThrow();
         expect(fake.handlers).toHaveLength(0);
     });
+
+    it('başlık tablonun data-load-failed özniteliğinden gelir (sayfaya özgü), yoksa genel başlık', () => {
+        const settings = mountTable();
+        settings.nTable.setAttribute('data-load-failed', 'Görevler yüklenemedi.');
+
+        loadState.failTable(settings, (json) => drawWith(settings, json));
+        expect(settings.nTBody.querySelector('.apya-console-state strong').textContent).toBe('Görevler yüklenemedi.');
+
+        settings.nTable.removeAttribute('data-load-failed');
+        settings.nTBody.innerHTML = '<tr><td class="dt-empty">Tabloda veri yok</td></tr>';
+        drawWith(settings, settings.json);
+        expect(settings.nTBody.querySelector('.apya-console-state strong').textContent).toBe('Liste yüklenemedi.');
+    });
+
+    it('kart dururken bilgi satırı ("0 kayıttan 0 ile 0 arası") boşalır; başarılı çizimde DataTables\'ın yazdığına dokunulmaz', () => {
+        const settings = mountTable();
+        const info = settings.nTableWrapper.querySelector('.dt-info');
+
+        loadState.failTable(settings, (json) => drawWith(settings, json));
+        expect(info.textContent).toBe('');
+
+        // Başarılı yanıt: DataTables bilgi satırını drawCallback'te (olaydan önce) yeniden yazar.
+        info.textContent = '12 kayıttan 1 ile 10 arası gösteriliyor.';
+        drawWith(settings, { data: [], recordsTotal: 12, recordsFiltered: 12 });
+        expect(info.textContent).toBe('12 kayıttan 1 ile 10 arası gösteriliyor.');
+    });
 });
 
 describe('tableFailed', () => {
@@ -240,7 +270,7 @@ describe('tablo kartının Tekrar dene düğmesi', () => {
         document.body.innerHTML = '';
     });
 
-    it('tablo içinde tıklanınca düğmeyi pasifler ve DataTables\'ı sayfa konumunu koruyarak yeniden yükler', () => {
+    it('tablo içinde tıklanınca düğme meşgul olur (aria-disabled + aria-busy + dönen ikon, disabled DEĞİL) ve DataTables sayfa konumunu koruyarak yeniden yüklenir', () => {
         const settings = mountTable();
         fake.tables.add(settings.nTable);
         settings.nTBody.querySelector('td.dt-empty').innerHTML = loadState.errorHtml('Liste yüklenemedi.', 'js-apya-table-retry');
@@ -248,8 +278,24 @@ describe('tablo kartının Tekrar dene düğmesi', () => {
 
         button.querySelector('i').click();
 
-        expect(button.disabled).toBe(true);
+        expect(button.getAttribute('aria-disabled')).toBe('true');
+        expect(button.getAttribute('aria-busy')).toBe('true');
+        expect(button.querySelector('i').classList.contains('fa-spin')).toBe(true);
+        // disabled olsaydı Chromium odağı body'ye atardı (G2b ölçümü).
+        expect(button.disabled).toBe(false);
         expect(fake.reload).toHaveBeenCalledWith(null, false);
+    });
+
+    it('yeniden deneme sürerken ikinci tıklama yutulur (tek istek)', () => {
+        const settings = mountTable();
+        fake.tables.add(settings.nTable);
+        settings.nTBody.querySelector('td.dt-empty').innerHTML = loadState.errorHtml('x', 'js-apya-table-retry');
+        const button = settings.nTBody.querySelector('.js-apya-table-retry');
+
+        button.click();
+        button.click();
+
+        expect(fake.reload).toHaveBeenCalledTimes(1);
     });
 
     it('DataTable olmayan tablo ya da tablo dışındaki aynı sınıf tıklanınca hiçbir şey olmaz', () => {
@@ -260,7 +306,82 @@ describe('tablo kartının Tekrar dene düğmesi', () => {
         document.getElementById('outside').click();
 
         expect(fake.reload).not.toHaveBeenCalled();
-        expect(settings.nTBody.querySelector('.js-apya-table-retry').disabled).toBe(false);
+        expect(settings.nTBody.querySelector('.js-apya-table-retry').getAttribute('aria-disabled')).toBeNull();
+        expect(document.getElementById('outside').getAttribute('aria-disabled')).toBeNull();
+    });
+});
+
+/* Odak: "Tekrar dene" yeniden çizimde sökülür; klavye kullanıcısı sayfa başına düşmesin. */
+describe('tablo kartının Tekrar dene odağı', () => {
+    let fake;
+
+    beforeEach(() => {
+        fake = installFakeJquery();
+    });
+
+    afterEach(() => {
+        delete window.jQuery;
+        document.body.innerHTML = '';
+    });
+
+    // İlk hata: kart basılı, tablo DataTable; düğmeye odaklanıp basılır.
+    function failThenRetry({ focusButton = true } = {}) {
+        const settings = mountTable();
+        fake.tables.add(settings.nTable);
+        const draw = (json) => {
+            settings.json = json;
+            fake.handlers.filter((h) => h.el === settings.nTable).forEach((h) => h.fn());
+        };
+        loadState.failTable(settings, draw);
+        const button = settings.nTBody.querySelector('.js-apya-table-retry');
+        if (focusButton) { button.focus(); }
+        button.click();
+        return { settings, draw, button };
+    }
+
+    it('yine düşerse odak yeni kartın Tekrar dene düğmesine verilir', () => {
+        const { settings, draw, button } = failThenRetry();
+        expect(document.activeElement).toBe(button);
+
+        // DataTables yeni boş satırı basar (eski düğme sökülür), ardından failTable yeniden çizer.
+        settings.nTBody.innerHTML = '<tr><td class="dt-empty">Tabloda veri yok</td></tr>';
+        loadState.failTable(settings, draw);
+
+        const again = settings.nTBody.querySelector('.js-apya-table-retry');
+        expect(again).not.toBe(button);
+        expect(document.activeElement).toBe(again);
+        expect(again.getAttribute('aria-disabled')).toBeNull();
+    });
+
+    it('gelirse odak tablonun kendisine (tabindex=-1) verilir', () => {
+        const { settings, draw } = failThenRetry();
+
+        settings.nTBody.innerHTML = '<tr><td>Satır</td></tr>';
+        draw({ data: [{}], recordsTotal: 1, recordsFiltered: 1 });
+
+        expect(settings.nTable.getAttribute('tabindex')).toBe('-1');
+        expect(document.activeElement).toBe(settings.nTable);
+    });
+
+    it('düğme odaklı değilken basıldıysa (fare, Safari) odak taşınmaz', () => {
+        const { settings, draw } = failThenRetry({ focusButton: false });
+
+        settings.nTBody.innerHTML = '<tr><td>Satır</td></tr>';
+        draw({ data: [{}], recordsTotal: 1, recordsFiltered: 1 });
+
+        expect(settings.nTable.hasAttribute('tabindex')).toBe(false);
+        expect(document.activeElement).toBe(document.body);
+    });
+
+    it('kullanıcı arada başka alana geçtiyse (arama kutusu) odak çalınmaz', () => {
+        const { settings, draw } = failThenRetry();
+        const search = document.getElementById('search');
+        search.focus();
+
+        settings.nTBody.innerHTML = '<tr><td>Satır</td></tr>';
+        draw({ data: [{}], recordsTotal: 1, recordsFiltered: 1 });
+
+        expect(document.activeElement).toBe(search);
     });
 });
 

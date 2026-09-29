@@ -62,11 +62,13 @@ $(function () {
 
     var nextSummary = apya.latest();
 
+    // Yan yükleme (Faz 4 kararı 2): düşerse ABP penceresi açılmaz, kategori ağacı olduğu gibi
+    // kalır — yükleme hatasını listenin kartı söyler.
     function refreshSummary() {
         var isLatest = nextSummary();
-        return notificationService.getSummary().then(function (summary) {
+        return Promise.resolve(notificationService.getSummary({ abpHandleError: false })).then(function (summary) {
             if (isLatest()) { renderCategories(summary); }
-        });
+        }, function () { });
     }
 
     // ── Liste ─────────────────────────────────────────────────────────────────
@@ -218,8 +220,10 @@ $(function () {
     });
 
     $('#load-more-btn').click(function () {
+        // İstek sürerken pasif: çift tıklamada ilk istek düşerse ofset geri alma yanlış sayfaya çekerdi.
+        var $btn = $(this).prop('disabled', true);
         state.skipCount += PAGE_SIZE;
-        loadNotifications(true);
+        loadNotifications(true).then(function () { $btn.prop('disabled', false); });
     });
 
     $list.on('click', '.js-notif-retry', function () {

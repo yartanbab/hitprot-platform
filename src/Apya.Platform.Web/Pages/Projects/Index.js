@@ -891,6 +891,7 @@ $(function () {
     function load(append) {
         state.loading = true;
         state.loadFailed = false;
+        $('#ProjectsMoreError').prop('hidden', true).empty();
         // Liste boşken (açılış, reload, Tekrar dene) hemen iskelet: hata kartı istek sürerken kalmaz.
         if (!append && !state.items.length) { render(); }
         return projectService.getList({
@@ -914,8 +915,9 @@ $(function () {
             render();
         }).catch(function (e) {
             // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2). Liste hiç
-            // gelmediyse kart + Tekrar dene; devam sayfası düştüyse eldeki liste korunur,
-            // "(ilk N)" etiketi ve "Daha fazla yükle" tekrar yolu olarak kalır.
+            // gelmediyse kart + Tekrar dene; devam sayfası (otomatik devam ya da "Daha fazla
+            // yükle") düştüyse eldeki liste korunur, "(ilk N)" etiketi kalır ve kart düğmenin
+            // altına basılır — sessiz kalsaydı eksik küme tam sanılırdı.
             // jQuery zincirinde kalır: Promise.resolve'a sarılsaydı "throw e" yakalanmamış
             // ret (unhandledrejection → telemetri) olurdu.
             state.loading = false;
@@ -924,6 +926,8 @@ $(function () {
                 $('#ProjectsLoadError').html(apya.loadState.errorHtml(l('Project:List:LoadFailed'), 'js-projects-retry', e));
             } else {
                 state.truncated = true;
+                $('#ProjectsMoreError').html(apya.loadState.errorHtml(l('Project:List:LoadFailed'), 'js-projects-more-retry', e))
+                    .prop('hidden', false);
             }
             render();
             throw e;
@@ -939,17 +943,18 @@ $(function () {
 
     // Gecikmiş / 48 saat içinde dolacak GÖREV sayıları — proje kaydında değil,
     // görev servisinde. Şeritteki iki hücre bunları gösterir.
+    // Yan yükleme (Faz 4 kararı 2): düşerse ABP penceresi açılmaz; sayaç gelmemişse "—" kalır.
     function loadTaskKpis() {
         if (!taskService) { return; }
         var now = moment();
         taskService.getList({
             maxDueDate: now.format(), statuses: [1, 2, 3], maxResultCount: 1
-        }).then(function (r) { state.taskKpi.overdue = r.totalCount; renderKpis(); });
+        }, { abpHandleError: false }).then(function (r) { state.taskKpi.overdue = r.totalCount; renderKpis(); }, function () { });
 
         taskService.getList({
             minDueDate: now.format(), maxDueDate: now.clone().add(48, 'hours').format(),
             statuses: [1, 2, 3], maxResultCount: 1
-        }).then(function (r) { state.taskKpi.upcoming = r.totalCount; renderKpis(); });
+        }, { abpHandleError: false }).then(function (r) { state.taskKpi.upcoming = r.totalCount; renderKpis(); }, function () { });
     }
 
     // ============================================================== OLAYLAR
@@ -1217,6 +1222,11 @@ $(function () {
     $('#ProjectsLoadError').on('click', '.js-projects-retry', function () {
         $(this).prop('disabled', true);
         reload();
+    });
+    // Devam sayfası kartı: aynı sayfa yeniden istenir (skipCount = yüklenen sayısı).
+    $('#ProjectsMoreError').on('click', '.js-projects-more-retry', function () {
+        $(this).prop('disabled', true);
+        load(true);
     });
 
     // ------------------------------------------- KAP ÖLÇÜMÜ (viewport DEĞİL)
