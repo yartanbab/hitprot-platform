@@ -169,6 +169,11 @@ $(function () {
         e.preventDefault();
         createAccountModal.open();
     });
+    // Boş durumdaki "Yeni Kasa Ekle": parça yeniden basıldığı için kart tıklaması gibi sarmalayıcıya delege.
+    $('#AccountSummary').on('click', '[data-cash-account-new]', function (e) {
+        e.preventDefault();
+        createAccountModal.open();
+    });
     createAccountModal.onResult(function () { window.location.reload(); });
     editAccountModal.onResult(function () { window.location.reload(); });
 

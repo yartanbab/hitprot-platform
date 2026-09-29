@@ -1,5 +1,8 @@
 @using Apya.Platform.CashAccounts
+@using Apya.Platform.Permissions
 @using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.CashAccounts.IndexModel
 @*
     Konsolide toplam + hesap kartları. Sayfa ilk basımda bu parçayı #AccountSummary içine
@@ -37,9 +40,23 @@
 
 @if (!Model.Accounts.Any())
 {
+    @* Metinle "yukarıdan…" yönlendirmesi yerine eylem; yalnız hesap açma yetkisi olana basılır.
+       Index.js #AccountSummary'ye delege bağlar (parça ?handler=AccountSummary ile yeniden basılıyor). *@
+    var emptyState = new EmptyStateModel
+    {
+        Icon = "fa-cash-register",
+        Title = "Henüz kasa/banka hesabı yok.",
+        Description = "Nakit ve banka hareketlerini izlemek için ilk hesabı ekleyin."
+    };
+    if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashAccounts.Create))
+    {
+        emptyState.ActionText = "Yeni Kasa Ekle";
+        emptyState.ActionIcon = "fa-plus";
+        emptyState.ActionAttributes = new Dictionary<string, string> { ["data-cash-account-new"] = "" };
+    }
     <div class="card">
         <div class="card-body">
-            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-cash-register", Title = "Henüz kasa/banka hesabı yok.", Description = "Yukarıdan \"Yeni Kasa Ekle\" ile başlayın." }' />
+            <partial name="_EmptyState" model="emptyState" />
         </div>
     </div>
 }

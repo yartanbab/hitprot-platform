@@ -1,15 +1,31 @@
 @*
-    Ortak empty-state (tek kaynak) — boş liste/veri durumları.
+    Ortak boş durum (tek kaynak) — boş liste/veri, yükleme hatası ve kilit durumları.
+    Görsel sözleşme apya-shell.css .apya-console-state: ikon balonu + başlık + açıklama +
+    isteğe bağlı eylem. JS karşılığı apya.loadState.errorHtml, React karşılığı
+    components/ui/EmptyState.jsx. Id / CssClass KÖKE basılır — JS kancaları
+    (NoSubTasksPlaceholder, no-file-text) ona bağlı.
     Kullanım:
       <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-comments", Title = "Henüz yorum yapılmamış." }' />
+    Eylemli (CTA): ActionText + ActionIcon + ActionAttributes (data-* kancası; parça yeniden
+    basılıyorsa JS sarmalayıcıya delege bağlar) — örnek CashAccounts/_AccountSummary.cshtml.
+    ActionUrl verilirse eylem <a href>, yoksa <button type="button">.
+    Hata: Variant = EmptyStateVariant.Error → soluk balon + uyarı üçgeni + role="alert"; eylem
+    kanonik "Tekrar dene" (btn-outline-primary + fa-rotate-right). Kilit: EmptyStateVariant.Locked.
 *@
 @model Apya.Platform.Web.Pages.Shared.EmptyStateModel
+@{
+    var action = Model.BuildAction();
+}
 
-<div class="text-center text-muted py-5 @Model.CssClass" id="@Model.Id">
-    <i class="fa @Model.Icon fa-2x d-block mb-3 text-secondary opacity-50"></i>
-    <p class="fw-semibold mb-1">@Model.Title</p>
+<div class="apya-console-state @Model.CssClass" id="@Model.Id" role="@Model.Role">
+    <span class="apya-console-state-icon @(Model.IsMuted ? "is-muted" : null)"><i class="fa @Model.IconClass" aria-hidden="true"></i></span>
+    <strong>@Model.Title</strong>
     @if (!string.IsNullOrEmpty(Model.Description))
     {
-        <p class="small mb-0">@Model.Description</p>
+        <p>@Model.Description</p>
+    }
+    @if (action != null)
+    {
+        <span class="apya-console-state-actions">@action</span>
     }
 </div>

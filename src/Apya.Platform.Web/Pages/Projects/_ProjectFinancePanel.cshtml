@@ -314,11 +314,7 @@
 
             @if (xp.Rows.Count == 0)
             {
-                <div class="apya-console-state">
-                    <span class="apya-console-state-icon"><i class="fa fa-coins" aria-hidden="true"></i></span>
-                    <strong>Henüz harcama kaydı yok</strong>
-                    <p>İlk harcamayı ekleyin — bir göreve bağlı ya da doğrudan projeye.</p>
-                </div>
+                <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-coins", Title = "Henüz harcama kaydı yok", Description = "İlk harcamayı ekleyin — bir göreve bağlı ya da doğrudan projeye." }' />
             }
             else
             {

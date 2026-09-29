@@ -239,6 +239,32 @@ public class ListLoadFailureScripts_Tests
             "$('#load-more-btn').trigger('click');");
     }
 
+    // ─────────────────────────── CON-14: Kasalar boş durum eylemi ───────────────────────────
+
+    /// <summary>
+    /// "Yeni Kasa Ekle" eylemi yalnız CashAccounts.Create yetkisinde basılır (izinli dalın çıktısı
+    /// CashAccountsPage_Tests'te); parça ?handler=AccountSummary ile yeniden basıldığı için Index.js
+    /// kancaya #AccountSummary üzerinden delege bağlanır — doğrudan bağlama ilk tazelemede ölürdü.
+    /// </summary>
+    [Fact]
+    public void Kasalar_bos_durum_eylemi_izne_bagli_ve_delege_baglanir()
+    {
+        var summary = Web("Pages", "CashAccounts", "_AccountSummary.cshtml");
+
+        Between(summary, "var emptyState = new EmptyStateModel", "if (await").ShouldNotContain("Action");
+        var granted = Between(summary,
+            "if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashAccounts.Create))",
+            "<partial name=\"_EmptyState\" model=\"emptyState\" />");
+        granted.ShouldContain("emptyState.ActionText = \"Yeni Kasa Ekle\";");
+        granted.ShouldContain("[\"data-cash-account-new\"] = \"\"");
+        Count(summary, "data-cash-account-new").ShouldBe(1, "eylem kancası izin bloğunun dışında basılmamalı");
+
+        Web("Pages", "CashAccounts", "Index.js").ShouldContain(
+            "$('#AccountSummary').on('click', '[data-cash-account-new]', function (e) {\n" +
+            "        e.preventDefault();\n" +
+            "        createAccountModal.open();");
+    }
+
     [Theory]
     [InlineData("Project:List:LoadFailed")]
     [InlineData("Notification:List:LoadFailed")]
