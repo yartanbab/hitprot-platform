@@ -10,7 +10,10 @@
       · Belge → doküman entegrasyonu 7. adımda.
     Uydurma kolon basmak yerine, geldiklerinde eklenecekler.
 *@
+@using Apya.Platform.Localization
 @using Apya.Platform.Web.Pages.Finance
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
 @model IndexModel
 
 @functions {
@@ -35,10 +38,17 @@
 
     <a href="@Model.LedgerUrl(null, Model.LineId, Model.AccountId)"
        class="apya-filter-chip text-decoration-none @(string.IsNullOrEmpty(Model.Kind) ? "is-active" : "")">Tümü</a>
-    <a href="@Model.LedgerUrl("gelir", Model.LineId, Model.AccountId)"
-       class="apya-filter-chip text-decoration-none @(Model.Kind == "gelir" ? "is-active" : "")">Gelir</a>
-    <a href="@Model.LedgerUrl("gider", Model.LineId, Model.AccountId)"
-       class="apya-filter-chip text-decoration-none @(Model.Kind == "gider" ? "is-active" : "")">Gider</a>
+    @* Okunamayan tür süzgeç, "ekle" (403) ve dip toplamda "0" olarak görünmez. *@
+    @if (!Model.IncomesLocked)
+    {
+        <a href="@Model.LedgerUrl("gelir", Model.LineId, Model.AccountId)"
+           class="apya-filter-chip text-decoration-none @(Model.Kind == "gelir" ? "is-active" : "")">Gelir</a>
+    }
+    @if (!Model.ExpensesLocked)
+    {
+        <a href="@Model.LedgerUrl("gider", Model.LineId, Model.AccountId)"
+           class="apya-filter-chip text-decoration-none @(Model.Kind == "gider" ? "is-active" : "")">Gider</a>
+    }
 
     @if (Model.LedgerLineOptions.Any())
     {
@@ -82,12 +92,18 @@
     }
 
     <span class="ms-auto d-flex gap-2">
-        <a href="/Incomes" class="btn btn-sm btn-outline-secondary">
-            <i class="fa fa-arrow-down-long me-1" aria-hidden="true"></i>Gelir ekle
-        </a>
-        <a href="/Expenses" class="btn btn-sm btn-outline-secondary">
-            <i class="fa fa-arrow-up-long me-1" aria-hidden="true"></i>Gider ekle
-        </a>
+        @if (!Model.IncomesLocked)
+        {
+            <a href="/Incomes" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-down-long me-1" aria-hidden="true"></i>Gelir ekle
+            </a>
+        }
+        @if (!Model.ExpensesLocked)
+        {
+            <a href="/Expenses" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-up-long me-1" aria-hidden="true"></i>Gider ekle
+            </a>
+        }
     </span>
 </div>
 
@@ -96,7 +112,9 @@
     <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel {
         Icon = "fa-right-left",
         Title = "Kayıt bulunamadı",
-        Description = "Seçilen süzgeçlerle eşleşen gelir/gider kaydı yok." }' />
+        Description = Model.IncomesLocked || Model.ExpensesLocked
+            ? L["Finance:Ledger:EmptyVisible"].Value
+            : "Seçilen süzgeçlerle eşleşen gelir/gider kaydı yok." }' />
 }
 else
 {
@@ -180,12 +198,30 @@ else
                     <td class="text-end apya-numeric text-muted fw-normal" style="font-size:11.5px">karışık PB</td>
                     <td class="text-end apya-numeric">
                         @* İşaret satır hücreleriyle aynı yazılır: kültürün "-" karakteri
-                           yerine tabloda kullanılan "−" (U+2212). *@
-                        <div class="text-success">+@Money(gelir) ₺</div>
-                        <div class="text-danger">−@Money(gider) ₺</div>
-                        <div class="@(gelir - gider >= 0 ? "text-success" : "text-danger")">
-                            = @(gelir - gider >= 0 ? "+" : "−")@Money(Math.Abs(gelir - gider)) ₺
-                        </div>
+                           yerine tabloda kullanılan "−" (U+2212). Okunamayan taraf "−0,00 ₺"
+                           değil "—"; bir taraf okunamadıysa net uydurulmaz. *@
+                        @if (Model.IncomesLocked)
+                        {
+                            <div class="text-muted">—</div>
+                        }
+                        else
+                        {
+                            <div class="text-success">+@Money(gelir) ₺</div>
+                        }
+                        @if (Model.ExpensesLocked)
+                        {
+                            <div class="text-muted">—</div>
+                        }
+                        else
+                        {
+                            <div class="text-danger">−@Money(gider) ₺</div>
+                        }
+                        @if (!Model.IncomesLocked && !Model.ExpensesLocked)
+                        {
+                            <div class="@(gelir - gider >= 0 ? "text-success" : "text-danger")">
+                                = @(gelir - gider >= 0 ? "+" : "−")@Money(Math.Abs(gelir - gider)) ₺
+                            </div>
+                        }
                     </td>
                     @if (donorCurrency != null)
                     {

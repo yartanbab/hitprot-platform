@@ -31,7 +31,9 @@ namespace Apya.Platform.Web.Pages.Finance;
 /// sorgusu hiç koşmaz.
 ///
 /// Her kaynak kendi app service'i üzerinden çekilir (yetki/tenant filtresi
-/// korunur); yetkisi olmayan kaynak sessizce atlanır.
+/// korunur); yetkisi olmayan kaynak atlanır AMA panel onu "kayıt yok" değil
+/// "görme yetkiniz yok" diye çizer (…Locked bayrakları); hiçbir finans izni
+/// yoksa sayfa 403 (<see cref="FinanceContext.PageAnyOfPermissions"/>).
 /// </summary>
 [Authorize]
 public class IndexModel : AbpPageModel
@@ -162,6 +164,29 @@ public class IndexModel : AbpPageModel
     public decimal TotalBalanceTry { get; private set; }
     public int DistinctCurrencyCount { get; private set; }
 
+    /* ─── "Okunamadı" ≠ "yok" (ROL-06) ────────────────────────────────
+       Yetkisi (rol izni, paket tavanı ya da kapalı özellik) olmayan kaynak
+       boş gelir; panel bunu "kayıt yok" diye ÇİZEMEZ. Bayrak panel başına:
+       her panelin sorusu farklı (liste mi, toplam mı). */
+
+    /// <summary>"Son İşlemler"in denenen kaynaklarının HEPSİ okunamadı.</summary>
+    public bool TransactionsLocked { get; private set; }
+
+    /// <summary>Bir kısmı okunamadı: boş liste yalnız "görebildiklerinizde yok" diyebilir.</summary>
+    public bool TransactionsPartiallyLocked { get; private set; }
+
+    /// <summary>Kasa/banka listesi ya da bakiyesi okunamadı (hesaplar ve toplam gösterilmez).</summary>
+    public bool AccountsLocked { get; private set; }
+
+    /// <summary>Kurlar okunamadı: ₺ dışındaki hesaplar toplama katılamadı.</summary>
+    public bool RatesLocked { get; private set; }
+
+    /// <summary>Gelir-Gider: gelir kaynağı denendi ve okunamadı (denenmeyen taraf kilitli sayılmaz).</summary>
+    public bool IncomesLocked { get; private set; }
+
+    /// <summary>Gelir-Gider: gider kaynağı denendi ve okunamadı.</summary>
+    public bool ExpensesLocked { get; private set; }
+
     public IndexModel(
         IExpenseAppService expenseAppService,
         IIncomeEntryAppService incomeAppService,
@@ -190,8 +215,15 @@ public class IndexModel : AbpPageModel
         _deliveryPackageAppService = deliveryPackageAppService;
     }
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
+        // Hiçbir finans izni yoksa sayfa anlamsız bir kilit panosuna döner → 403 (tam sayfa
+        // gezinmesinde erişim reddi sayfası). POST işleyicileri kendi servis izinleriyle kalır.
+        if (!await AuthorizationService.IsGrantedAnyAsync(FinanceContext.PageAnyOfPermissions))
+        {
+            return Forbid();
+        }
+
         await LoadProjectContextAsync();
         await LoadTabsAsync();
 
@@ -256,6 +288,8 @@ public class IndexModel : AbpPageModel
                 FxBridge = await _projectFxAppService.GetBridgeAsync(SelectedProject.Id));
             await LoadDonorReportingAsync();
         }
+
+        return Page();
     }
 
     /// <summary>
@@ -300,7 +334,7 @@ public class IndexModel : AbpPageModel
 
         if (Kind != "gider")
         {
-            await TryAddAsync(async () =>
+            IncomesLocked = !await TryAddAsync(async () =>
             {
                 var page = await _incomeAppService.GetListAsync(new GetIncomeEntriesInput
                 {
@@ -335,7 +369,7 @@ public class IndexModel : AbpPageModel
 
         if (Kind != "gelir")
         {
-            await TryAddAsync(async () =>
+            ExpensesLocked = !await TryAddAsync(async () =>
             {
                 var page = await _expenseAppService.GetListAsync(new GetExpensesInput
                 {
@@ -471,8 +505,10 @@ public class IndexModel : AbpPageModel
             (await _invoiceAppService.GetCustomerLookupAsync()).Items.ToDictionary(x => x.Id, x => x.Name));
 
         var rows = new List<TransactionRow>();
+        // Kaynak başına okundu mu: hepsi okunamadıysa liste kilitli, bir kısmıysa kısmi.
+        var readable = new List<bool>();
 
-        await TryAddAsync(async () =>
+        readable.Add(await TryAddAsync(async () =>
         {
             var page = await _incomeAppService.GetListAsync(
                 new GetIncomeEntriesInput { MaxResultCount = MaxPerSource, ProjectId = ProjectId });
@@ -492,9 +528,9 @@ public class IndexModel : AbpPageModel
                     Url = "/Incomes"
                 });
             }
-        });
+        }));
 
-        await TryAddAsync(async () =>
+        readable.Add(await TryAddAsync(async () =>
         {
             var page = await _expenseAppService.GetListAsync(
                 new GetExpensesInput { MaxResultCount = MaxPerSource, ProjectId = ProjectId });
@@ -514,9 +550,9 @@ public class IndexModel : AbpPageModel
                     Url = "/Expenses"
                 });
             }
-        });
+        }));
 
-        await TryAddAsync(async () =>
+        readable.Add(await TryAddAsync(async () =>
         {
             // Fatura ucunda proje süzgeci yok; sayfalanmış sonuç bellekte süzülür.
             var page = await _invoiceAppService.GetListAsync(new PagedAndSortedResultRequestDto { MaxResultCount = MaxPerSource });
@@ -537,12 +573,12 @@ public class IndexModel : AbpPageModel
                     Url = "/Invoices"
                 });
             }
-        });
+        }));
 
         // Transferin projesi yoktur — proje seçiliyken listeye hiç girmez.
         if (!ProjectId.HasValue)
         {
-            await TryAddAsync(async () =>
+            readable.Add(await TryAddAsync(async () =>
             {
                 // Yalnızca Transfer kaynaklı hareketler eklenir — Invoice/Expense/Income
                 // kaynaklı hareketler zaten kendi listelerinden geldi (çift sayım olmasın).
@@ -561,17 +597,21 @@ public class IndexModel : AbpPageModel
                         Url = "/CashAccounts"
                     });
                 }
-            });
+            }));
         }
 
         Transactions = rows.OrderByDescending(r => r.Date).Take(MaxTransactionsShown).ToList();
+        TransactionsLocked = readable.All(ok => !ok);
+        TransactionsPartiallyLocked = !TransactionsLocked && readable.Any(ok => !ok);
     }
 
     private async Task LoadAccountsAsync()
     {
         var accounts = new List<AccountSummary>();
 
-        await TryAddAsync(async () =>
+        // Liste (CashAccounts) ve bakiye (CashMovements) FARKLI izin; bakiye izni ilk hesapta
+        // düştüğü için kısmi liste birikmez — ikisinden biri yoksa hesaplar kilitli.
+        AccountsLocked = !await TryAddAsync(async () =>
         {
             var result = await _cashAccountAppService.GetListAsync(
                 new GetCashAccountsInput { MaxResultCount = 1000, IsActive = true });
@@ -594,11 +634,12 @@ public class IndexModel : AbpPageModel
         Accounts = accounts.OrderByDescending(a => a.Balance).ToList();
         DistinctCurrencyCount = accounts.Select(a => a.Currency).Distinct().Count();
 
-        await TryAddAsync(async () =>
-        {
-            var ratesToTry = await CurrencyConversionHelper.LoadRatesToTryAsync(_exchangeRateAppService);
-            TotalBalanceTry = accounts.Sum(a => CurrencyConversionHelper.ToTry(a.Balance, a.Currency, ratesToTry));
-        });
+        // Toplam try DIŞINDA: kurlar okunamasa da ₺ hesaplar toplanır (ToTry kur bulamayanı 0
+        // sayar); panel bunu "yalnız ₺ hesaplar" diye açıkça yazar — sahte ₺0 yok.
+        var ratesToTry = new Dictionary<string, decimal>();
+        RatesLocked = !await TryAddAsync(async () =>
+            ratesToTry = await CurrencyConversionHelper.LoadRatesToTryAsync(_exchangeRateAppService));
+        TotalBalanceTry = accounts.Sum(a => CurrencyConversionHelper.ToTry(a.Balance, a.Currency, ratesToTry));
     }
 
     // ─── Tek tıklık işlemler ───
@@ -820,10 +861,22 @@ public class IndexModel : AbpPageModel
             DonorPackages = await _deliveryPackageAppService.GetListAsync(projectId));
     }
 
-    private static async Task TryAddAsync(Func<Task> fetch)
+    /// <summary>
+    /// Kaynağı okur; false = okunamadı (rol izni, paket tavanı ya da kapalı özellik —
+    /// Volo.Abp.Features da aynı istisnayı atar). Çağıran false'u "kayıt yok" diye
+    /// GÖSTEREMEZ; panel bayrağına yazar (…Locked).
+    /// </summary>
+    private static async Task<bool> TryAddAsync(Func<Task> fetch)
     {
-        try { await fetch(); }
-        catch (AbpAuthorizationException) { /* kullanıcının bu kaynağa yetkisi yok → atla */ }
+        try
+        {
+            await fetch();
+            return true;
+        }
+        catch (AbpAuthorizationException)
+        {
+            return false;
+        }
     }
 
     public enum TxType { Income, Expense, Invoice, Transfer }

@@ -147,6 +147,43 @@ public class FinanceContext_Tests
         overview.AnyOfPermissions.ShouldBeEmpty();
     }
 
+    /// <summary>
+    /// Sayfa kapısı (ROL-06): beş finans izninden biri. Documents BİLEREK yok — stajyer/çalışan
+    /// belge iznine sahip ama finans görmez.
+    /// </summary>
+    [Fact]
+    public void Sayfa_kapisi_bes_finans_iznidir_belge_izni_degildir()
+    {
+        FinanceContext.PageAnyOfPermissions.ShouldBe(new[]
+        {
+            PlatformPermissions.Projects.ViewBudget,
+            PlatformPermissions.Incomes.Default,
+            PlatformPermissions.Expenses.Default,
+            PlatformPermissions.Invoices.Default,
+            PlatformPermissions.CashAccounts.Default
+        }, ignoreOrder: true);
+
+        FinanceContext.PageAnyOfPermissions.ShouldNotContain(PlatformPermissions.Documents.Default);
+    }
+
+    /// <summary>
+    /// Değişmez: kapı, belge dışındaki bir sekmeyi görebilen kullanıcıyı asla dışarıda bırakmaz.
+    /// Sekme seti ya da izni değişip kapı güncellenmezse burası kırmızı verir.
+    /// </summary>
+    [Fact]
+    public void Sayfa_kapisi_belge_disindaki_her_sekme_iznini_kapsar()
+    {
+        foreach (var template in Enum.GetValues<FinanceContextTemplate>())
+        {
+            foreach (var tab in FinanceContext.TabsFor(template)
+                         .Where(t => t.AnyOfPermissions.Length > 0 && t.Code != FinanceContext.TabDocuments))
+            {
+                tab.AnyOfPermissions.Intersect(FinanceContext.PageAnyOfPermissions)
+                    .ShouldNotBeEmpty($"{template}/{tab.Code} sekmesinin izni sayfa kapısında yok");
+            }
+        }
+    }
+
     private static string[] Codes(FinanceContextTemplate template)
         => FinanceContext.TabsFor(template).Select(t => t.Code).ToArray();
 }

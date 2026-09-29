@@ -3,7 +3,11 @@
     (tasarımda liste her iki ekranda da var; iki kopya markup istemiyoruz).
 *@
 @using Apya.Platform.CashAccounts
+@using Apya.Platform.Localization
 @using Apya.Platform.Web.Pages.Finance
+@using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
 @model IndexModel
 
 @functions {
@@ -24,7 +28,14 @@
     };
 }
 
-@if (!Model.Accounts.Any())
+@if (Model.AccountsLocked)
+{
+    @* Liste ya da bakiye okunamadı: "henüz hesap yok" DEĞİL; /CashAccounts (403) bağlantısı yok. *@
+    <partial name="_EmptyState" model='new EmptyStateModel {
+        Variant = EmptyStateVariant.Locked,
+        Title = L["Finance:Locked:Accounts"].Value }' />
+}
+else if (!Model.Accounts.Any())
 {
     <div class="card-body text-muted text-center py-4" style="font-size:13px">
         Henüz kasa/banka hesabı yok. <a href="/CashAccounts">Kasa &amp; Banka</a>'dan ekleyin.

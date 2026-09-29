@@ -5,8 +5,11 @@
     Proje seçilmemişken (portföy) ya da bütçe yetkisi yokken KPI şeridi hiç
     basılmaz; alt bloklar yine çalışır.
 *@
+@using Apya.Platform.Localization
 @using Apya.Platform.Web.Pages.Finance
 @using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
 @model IndexModel
 
 @functions {
@@ -64,9 +67,12 @@ else if (Model.SelectedProject == null && Model.Portfolio != null)
 }
 else if (Model.SelectedProject == null)
 {
+    @* Bu dala YALNIZ bütçe yetkisi yokken düşülür (Portfolio ancak GetPortfolioAsync yetki
+       hatasında null kalır). Eski "bir proje seçin" yönlendirmesi yanlıştı — proje seçince de
+       bütçe gelmez (aynı ViewBudget izni). *@
     <div class="apya-chip apya-chip-neutral d-inline-flex mb-3">
-        <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
-        Bütçe, harcama ve kalan tutarları görmek için bir proje seçin.
+        <i class="fa fa-lock me-1" aria-hidden="true"></i>
+        @L["Finance:Locked:Budget"]
     </div>
 }
 
@@ -80,9 +86,17 @@ else if (Model.SelectedProject == null)
                 </div>
             </div>
             <div class="list-group list-group-flush">
-                @if (!Model.Transactions.Any())
+                @if (Model.TransactionsLocked)
                 {
-                    <div class="list-group-item text-muted text-center py-4" style="font-size:13px">Henüz işlem yok.</div>
+                    @* Kaynakların hiçbiri okunamadı: "Henüz işlem yok" DEĞİL; yasak sayfaya bağlantı yok. *@
+                    <partial name="_EmptyState" model='new EmptyStateModel {
+                        Variant = EmptyStateVariant.Locked,
+                        Title = L["Finance:Locked:Transactions"].Value }' />
+                }
+                else if (!Model.Transactions.Any())
+                {
+                    @* Satırlar yalnız okunabilen kaynaklardan gelir; kısmi okumada boş liste "hiç yok" diyemez. *@
+                    <div class="list-group-item text-muted text-center py-4" style="font-size:13px">@(Model.TransactionsPartiallyLocked ? L["Finance:Transactions:EmptyVisible"].Value : "Henüz işlem yok.")</div>
                 }
                 @foreach (var t in Model.Transactions)
                 {
