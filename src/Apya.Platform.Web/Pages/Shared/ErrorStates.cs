@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Apya.Platform.Permissions;
+using Apya.Platform.Tenants;
 using Microsoft.Extensions.Localization;
 using Volo.Abp;
 using Volo.Abp.Authorization;
@@ -12,8 +13,8 @@ using Volo.Abp.Validation;
 namespace Apya.Platform.Web.Pages.Shared;
 
 /// <summary>
-/// Tam sayfa hata durumunun (Views/Error/Default.cshtml, SHL-19) metin/eylem kararı — tek yerde ve
-/// SAF (birim test edilir). Çıktı ortak
+/// Tam sayfa hata (Views/Error/Default.cshtml, SHL-19) ve erişim reddi (/AccessDenied; ROL-05, ACC-12,
+/// SHL-11, GRT-14) durumlarının metin/eylem kararı — tek yerde ve SAF (birim test edilir). Çıktı ortak
 /// <c>_EmptyState</c> partial'ının modelidir (<see cref="EmptyStateVariant.Page"/>): görsel dil boş
 /// durumlar ve yükleme hatalarıyla aynı (.apya-console-state), yeni CSS yok.
 /// </summary>
@@ -28,6 +29,7 @@ public static class ErrorStates
     public const string DashboardPermission = PlatformPermissions.Projects.Default;
 
     public const string DashboardUrl = "/Dashboard";
+    public const string SubscriptionUrl = "/Subscription";
     public const string LoginUrl = "/Account/Login";
 
     /// <summary>
@@ -124,6 +126,87 @@ public static class ErrorStates
         return state;
     }
 
+    /// <summary>
+    /// Oturumlu kullanıcının erişim reddi. "Paketimi görüntüle" yalnız Paketim'i açabilene
+    /// (<paramref name="canViewSubscription"/>: kiracı + TenantSettings; apya-quota-upsell.js ile aynı
+    /// kural), "Genel Bakış'a dön" yalnız <see cref="DashboardPermission"/> sahibine.
+    /// </summary>
+    public static EmptyStateModel ForAccessDenial(
+        AccessDenialExplanation explanation,
+        bool canOpenDashboard,
+        bool canViewSubscription,
+        IStringLocalizer l)
+    {
+        var state = NewPageState();
+        state.Kind = "denied-" + explanation.Reason.ToString().ToLowerInvariant();
+        state.Icon = explanation.Reason == AccessDenialReason.Package ? "fa-gem" : "fa-lock";
+        state.Title = l["AccessDenied:Title"].Value;
+
+        switch (explanation.Reason)
+        {
+            case AccessDenialReason.Package:
+                state.Description = explanation.ModuleDisplayName != null
+                    ? l["AccessDenied:Package", explanation.ModuleDisplayName].Value
+                    : l["AccessDenied:Package:Generic"].Value;
+                state.Hint = l[canViewSubscription ? "AccessDenied:Package:CanView" : "AccessDenied:Package:AskAdmin"].Value;
+                if (canViewSubscription)
+                {
+                    SetSubscriptionAction(state, l);
+                    if (canOpenDashboard)
+                    {
+                        state.SecondaryActions.Add(new EmptyStateAction(l["ErrorPage:BackToDashboard"].Value, DashboardUrl, "fa-chart-line"));
+                    }
+                }
+                else if (canOpenDashboard)
+                {
+                    SetDashboardAction(state, l);
+                }
+
+                break;
+            case AccessDenialReason.HostOnly:
+            case AccessDenialReason.TenantOnly:
+                state.Description = l[explanation.Reason == AccessDenialReason.HostOnly
+                    ? "AccessDenied:HostOnly"
+                    : "AccessDenied:TenantOnly"].Value;
+                if (canOpenDashboard)
+                {
+                    SetDashboardAction(state, l);
+                }
+
+                break;
+            case AccessDenialReason.NotGranted:
+                state.Description = l["AccessDenied:NotGranted"].Value;
+                state.Hint = (string.IsNullOrWhiteSpace(explanation.PermissionDisplayName)
+                        ? string.Empty
+                        : l["AccessDenied:NotGranted:Permission", explanation.PermissionDisplayName].Value + " ")
+                    + l["AccessDenied:AskAdmin"].Value;
+                if (canOpenDashboard)
+                {
+                    SetDashboardAction(state, l);
+                }
+
+                break;
+            default:
+                // Sebep bilinmiyor (açık Forbid(), eski yer imi): iki olasılık birlikte söylenir.
+                state.Description = l["AccessDenied:Unknown"].Value;
+                state.Hint = l[canViewSubscription ? "AccessDenied:Unknown:CanView" : "AccessDenied:AskAdmin"].Value;
+                if (canOpenDashboard)
+                {
+                    SetDashboardAction(state, l);
+                }
+
+                if (canViewSubscription)
+                {
+                    state.SecondaryActions.Add(new EmptyStateAction(l["AccessDenied:ViewPackage"].Value, SubscriptionUrl, "fa-gem"));
+                }
+
+                break;
+        }
+
+        state.SecondaryActions.Add(EmptyStateAction.Back(l["ErrorPage:GoBack"].Value));
+        return state;
+    }
+
     private static EmptyStateModel NewPageState()
         => new() { Variant = EmptyStateVariant.Page, CssClass = "is-denied" };
 
@@ -140,6 +223,13 @@ public static class ErrorStates
         state.ActionText = l["ErrorPage:BackToDashboard"].Value;
         state.ActionUrl = DashboardUrl;
         state.ActionIcon = "fa-chart-line";
+    }
+
+    private static void SetSubscriptionAction(EmptyStateModel state, IStringLocalizer l)
+    {
+        state.ActionText = l["AccessDenied:ViewPackage"].Value;
+        state.ActionUrl = SubscriptionUrl;
+        state.ActionIcon = "fa-gem";
     }
 
     /// <summary>Açık yönlendirme olmasın: yalnız "/x" biçimli yerel yol ("//" ve "/\" değil).</summary>
