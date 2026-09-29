@@ -2,7 +2,7 @@ import { b as D, j as e, r as l } from "./react-vendor-D57GAUXd.js";
 import { a as p } from "./httpClient-DePjXdo1.js";
 import { H as M } from "./Hint-CNW95h3H.js";
 import { p as O } from "./publicFormLink-CJ_6ABDU.js";
-import { s as E, a as R, C as I } from "./formChoices-DAx-kYeM.js";
+import { s as E, a as R, C as I } from "./formChoices-CDoZfRj7.js";
 /* empty css               */
 const F = {
   0: { label: "Taslak", cls: "bg-neutral-100 text-neutral-700" },
