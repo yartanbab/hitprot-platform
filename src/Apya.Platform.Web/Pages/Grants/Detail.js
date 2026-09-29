@@ -409,12 +409,26 @@ $(function () {
         });
     });
 
-    service.getCallDetail(callId).then(function (d) {
-        detail = d;
-        paintHead(d);
-        paintRules(d);
-        paintBudget(d);
-        paintProcess(d);
-        paintSide(d);
+    // Yalnız açılışta ve Tekrar dene ile çağrılır (ilgi/geri çekme kendi okumasını yapar).
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
+    function load() {
+        return Promise.resolve(service.getCallDetail(callId, { abpHandleError: false })).then(function (d) {
+            detail = d;
+            $('#DetailLoadState').empty();
+            paintHead(d);
+            paintRules(d);
+            paintBudget(d);
+            paintProcess(d);
+            paintSide(d);
+        }, function (err) {
+            $('#DetailLoadState').html(apya.loadState.errorHtml(l('Grants:Detail:LoadFailed'), 'js-detail-retry', err));
+        });
+    }
+
+    $('#DetailLoadState').on('click', '.js-detail-retry', function () {
+        $(this).prop('disabled', true);
+        load();
     });
+
+    load();
 });

@@ -212,5 +212,24 @@ $(function () {
         paintObligations();
     }
 
-    service.get(appId).then(function (dto) { model = dto; paint(); });
+    // Yalnız açılışta ve Tekrar dene ile çağrılır; eylemler modeli yanıttan günceller.
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2); eylem düğmeleri
+    // işaretlemede gizli, paint açar.
+    function load() {
+        return Promise.resolve(service.get(appId, { abpHandleError: false })).then(function (dto) {
+            model = dto;
+            paint();
+        }, function (err) {
+            $('#Chain').removeClass('apya-skel-rows')
+                .html(apya.loadState.errorHtml(l('Grants:Impl:LoadFailed'), 'js-impl-retry', err));
+            $('#ChainEmpty').addClass('d-none');
+        });
+    }
+
+    $('#Chain').on('click', '.js-impl-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
+
+    load();
 });

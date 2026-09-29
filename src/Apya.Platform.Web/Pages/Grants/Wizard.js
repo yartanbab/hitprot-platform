@@ -14,6 +14,10 @@ $(function () {
     var hub = null;
     var saveTimers = {};
     var heartbeat = null;
+    // Hub olayı ve kilit al/bırak sonrası yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
+    // Canlı kanal (hub + kilit nabzı) ilk BAŞARILI yüklemeden sonra bir kez kurulur.
+    var live = false;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return (v || 0).toLocaleString('tr-TR', { maximumFractionDigits: 0 }); }
@@ -447,10 +451,34 @@ $(function () {
         }
     }
 
+    // İlk yükleme düşerse satır içi kart + Tekrar dene, ABP penceresi açılmaz (Faz 4 kararı 2).
+    // Veri ekrandayken (hub olayı, kilit sonrası) yenileme düşerse açık form SİLİNMEZ: kart
+    // basılmaz, tek kanal ABP penceresidir.
     function load() {
-        return service.get(appId).then(function (dto) { model = dto; paint(); });
+        var isLatest = nextLoad();
+        var initial = !model;
+        return Promise.resolve(service.get(appId, { abpHandleError: !initial })).then(function (dto) {
+            if (!isLatest()) { return; }
+            model = dto;
+            paint();
+            $('#WizardLoadState').empty();
+            // Başarısız yüklemede de bağlanılıyordu: PresenceChanged boş modelle boyanıyordu.
+            if (!live) {
+                live = true;
+                connect();
+                startHeartbeat();
+            }
+        }, function (err) {
+            if (!isLatest() || !initial || model) { return; }
+            $('#WizardLoadState').html(apya.loadState.errorHtml(l('Grants:Wizard:LoadFailed'), 'js-wizard-retry', err));
+        });
     }
 
+    $('#WizardLoadState').on('click', '.js-wizard-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
+
     $('#SaveChip').text(l('Grants:Wizard:AutoSave'));
-    load().then(function () { connect(); startHeartbeat(); });
+    load();
 });

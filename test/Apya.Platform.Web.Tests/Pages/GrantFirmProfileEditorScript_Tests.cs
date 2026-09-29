@@ -100,11 +100,11 @@ public class GrantFirmProfileEditorScript_Tests
         ShouldAppearInOrder(load,
             "nextLoad()",
             "$('#ProfileForm').prop('disabled', true)",
-            "Promise.resolve(profileSvc.getMyProfile())",
+            "Promise.resolve(profileSvc.getMyProfile({ abpHandleError: false }))",
             "if (!isLatest())",
             "paintProfile(p)",
             unlock,
-            "}, function () {",
+            "}, function (err) {",
             "if (!isLatest())",
             "profile = null;",
             "js-grants-load-retry");
@@ -134,7 +134,7 @@ public class GrantFirmProfileEditorScript_Tests
         Count(load, "loadFeed(").ShouldBe(1);
         ShouldAppearInOrder(load,
             "        loadFeed();\n",
-            "        return Promise.resolve(profileSvc.getMyProfile()).then(function (p) {");
+            "        return Promise.resolve(profileSvc.getMyProfile({ abpHandleError: false })).then(function (p) {");
     }
 
     /// <summary>
@@ -163,11 +163,11 @@ public class GrantFirmProfileEditorScript_Tests
         ShouldAppearInOrder(feed,
             "nextFeed()",
             "feedLoaded = false;",
-            "recoSvc.getOpenCalls()",
+            "recoSvc.getOpenCalls({ abpHandleError: false })",
             "if (!isLatest())",
             "feedLoaded = true;",
             "paintGain();",
-            "}, function () {",
+            "}, function (err) {",
             "if (!isLatest())",
             "feedFailed = true;",
             "paintGain();");
@@ -186,9 +186,9 @@ public class GrantFirmProfileEditorScript_Tests
         var feed = Body(script, "function loadFeed()");
         ShouldAppearInOrder(feed,
             "nextFeed()",
-            "Promise.resolve(recoSvc.getOpenCalls())",
+            "Promise.resolve(recoSvc.getOpenCalls({ abpHandleError: false }))",
             "paintGain();",
-            "}, function () {",
+            "}, function (err) {",
             "js-grants-feed-retry");
         Count(feed, "if (!isLatest())").ShouldBe(2);
         feed.ShouldNotContain("#ProfileForm");
@@ -218,6 +218,8 @@ public class GrantFirmProfileEditorScript_Tests
     /// Yükleme ve hata kutularının başlıkları tr/en kaynaklarından gelir. Gövde ve düğme zaten
     /// apya.loadState'te Common:FetchError / Common:Retry'dan geliyordu; gömülü Türkçe başlık
     /// İngilizce kiracıya Türkçe başlıklı, İngilizce gövdeli karışık kutu basıyordu.
+    /// Faz 4 (karar 2): yükleme istekleri <c>{ abpHandleError: false }</c> taşır — ABP penceresi
+    /// açılmaz, nedeni kutunun açıklaması söyler (hata nesnesi errorHtml'e verilir).
     /// </summary>
     [Fact]
     public void Yukleme_ve_hata_kutusu_basliklari_yerellestirilir()
@@ -231,9 +233,9 @@ public class GrantFirmProfileEditorScript_Tests
 
         var load = Body(script, "function load()");
         load.ShouldContain("apya.loadState.loadingHtml(l('Grants:Feed:Profile:Loading'))");
-        load.ShouldContain("apya.loadState.errorHtml(l('Grants:Feed:Profile:LoadFailed'), 'js-grants-load-retry')");
+        load.ShouldContain("apya.loadState.errorHtml(l('Grants:Feed:Profile:LoadFailed'), 'js-grants-load-retry', err)");
         Body(script, "function loadFeed()")
-            .ShouldContain("apya.loadState.errorHtml(l('Grants:Feed:LoadFailed'), 'js-grants-feed-retry')");
+            .ShouldContain("apya.loadState.errorHtml(l('Grants:Feed:LoadFailed'), 'js-grants-feed-retry', err)");
 
         foreach (var culture in new[] { "tr", "en" })
         {

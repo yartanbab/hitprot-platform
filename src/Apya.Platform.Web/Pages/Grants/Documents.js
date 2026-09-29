@@ -12,6 +12,8 @@ $(function () {
     var model = null;
     var filter = 'all';
     var selectedId = null;
+    // Yükleme ve onay sonrası yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function size(bytes) {
@@ -23,6 +25,8 @@ $(function () {
 
     // ---------- Süzgeç ----------
     $('.apya-choice-row').on('click', '.apya-choice', function () {
+        // Yükleme düştüyse süzülecek model yok (hata kartı kalır).
+        if (!model) { return; }
         $('.apya-choice-row .apya-choice').removeClass('is-on');
         $(this).addClass('is-on');
         filter = $(this).data('filter');
@@ -249,9 +253,31 @@ $(function () {
         $('#AddDocBtn').toggleClass('d-none', model.isReadOnly);
     }
 
+    // İlk yükleme düşerse satır içi kart + Tekrar dene, ABP penceresi açılmaz (Faz 4 kararı 2).
+    // Veri ekrandayken (yükleme/onay sonrası) yenileme düşerse ekran korunur: kart basılmaz,
+    // tek kanal ABP penceresidir. Veri gelmeden evrak ekle / hatırlat / paket kapalı kalır.
     function load() {
-        return service.get(appId).then(function (dto) { model = dto; paint(); });
+        var isLatest = nextLoad();
+        var initial = !model;
+        return Promise.resolve(service.get(appId, { abpHandleError: !initial })).then(function (dto) {
+            if (!isLatest()) { return; }
+            model = dto;
+            paint();
+        }, function (err) {
+            if (!isLatest() || !initial || model) { return; }
+            $('#DocumentRows').removeClass('apya-skel-rows')
+                .html(apya.loadState.errorHtml(l('Grants:Documents:LoadFailed'), 'js-docs-retry', err));
+            $('#DocumentEmpty').addClass('d-none');
+            $('#KpiTotal, #KpiApproved, #KpiOnYou, #KpiOnOther, #KpiReady').text('—');
+            $('#AddDocBtn, #RemindBtn').addClass('d-none');
+            $('#CreatePackageBtn').prop('disabled', true);
+        });
     }
+
+    $('#DocumentRows').on('click', '.js-docs-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     load();
 });
