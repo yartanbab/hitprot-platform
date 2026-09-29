@@ -3580,6 +3580,9 @@ i.apya-priority-dot {
 .apya-console-state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 /* 403 paneli tablo yerine geçer → kalan alanı doldurup dikey ortalanır. */
 .apya-console-state.is-denied { flex: 1 1 auto; justify-content: center; }
+/* Yükleme hatası kartı DataTables'ın boş hücresine basılır (apya-load-state.js failTable);
+   .nowrap tablolarda (Kurlar, Giderler) metin kırılsın, dar ekranda yatay taşma olmasın. */
+table.dataTable td.dt-empty > .apya-console-state { white-space: normal; }
 
 /* §9'daki .card-body > .view-panel zincirinin konsol karşılığı — konsolda
    .card-body yok, görünümler doğrudan bu kapta. */

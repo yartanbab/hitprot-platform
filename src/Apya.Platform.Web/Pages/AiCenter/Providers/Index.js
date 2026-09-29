@@ -11,11 +11,10 @@ $(function () {
             order: [[1, 'asc']],
             searching: false,
             scrollX: true,
-            ajax: function (data, callback) {
-                service.getList().then(function (result) {
-                    callback({ data: result });
-                });
-            },
+            // createAjax: son-istek bileti + yükleme hatasında tablo kartı (apya-latest.js).
+            ajax: abp.libs.datatables.createAjax(function () { return service.getList(); }, null, function (result) {
+                return { data: result };
+            }),
             columnDefs: [
                 {
                     title: 'İşlemler',

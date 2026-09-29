@@ -441,19 +441,24 @@ $(function () {
 
     // Sekme sayacı + boş hâl + seçim senkronu
     dataTable.on('draw', function () {
+        // Yükleme hatası "0 görev" ya da "Henüz görev yok" DEĞİLDİR: boş hücreyi
+        // apya.loadState hata kartıyla (Tekrar dene) doldurur.
+        var failed = apya.loadState.tableFailed(dataTable);
         var info = dataTable.page.info();
-        $('#console-task-count').text(
-            info.recordsDisplay === info.recordsTotal
+        $('#console-task-count').text(failed ? '—'
+            : info.recordsDisplay === info.recordsTotal
                 ? info.recordsTotal + ' görev'
                 : info.recordsDisplay + ' / ' + info.recordsTotal + ' görev');
 
         // "Hiç görev yok" ile "filtreye uyan yok" ayrı metinler.
-        console_.renderEmptyState({
-            table: '#TasksTable',
-            hasFilters: state.hasActive() || !!dataTable.search(),
-            emptyTemplate: 'tpl-state-empty',
-            nomatchTemplate: 'tpl-state-nomatch'
-        });
+        if (!failed) {
+            console_.renderEmptyState({
+                table: '#TasksTable',
+                hasFilters: state.hasActive() || !!dataTable.search(),
+                emptyTemplate: 'tpl-state-empty',
+                nomatchTemplate: 'tpl-state-nomatch'
+            });
+        }
 
         if (bulk) { bulk.syncRowChecks(); }
 

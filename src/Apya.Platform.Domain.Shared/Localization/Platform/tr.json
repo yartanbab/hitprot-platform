@@ -2275,6 +2275,7 @@
         "Common:LoadFailed": "Yüklenemedi",
         "Common:FetchError": "Veri alınırken bir hata oluştu.",
         "Common:Retry": "Tekrar dene",
+        "Common:ListLoadFailed": "Liste yüklenemedi.",
         "Common:LastSuccessfulUpdate": "Son başarılı güncelleme",
         "Common:Updating": "güncelleniyor",
         "Common:UpdatingInBackground": "Arka planda güncelleniyor",

@@ -1891,6 +1891,7 @@
     "Common:LoadFailed": "Failed to load",
     "Common:FetchError": "An error occurred while fetching data.",
     "Common:Retry": "Try again",
+    "Common:ListLoadFailed": "The list could not be loaded.",
     "Common:LastSuccessfulUpdate": "Last successful update",
     "Common:Updating": "updating",
     "Common:UpdatingInBackground": "Updating in background",
