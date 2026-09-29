@@ -16,6 +16,7 @@
  */
 
 import { scopedStorageKey } from '../../lib/storageScope';
+import { isPermanentRejection } from '../../lib/api/permanentRejection';
 
 /* Kuyruk kiracı + kullanıcıya bağlı. Eski kullanıcısız anahtardaki ('apya.expenseQueue.v1')
    kayıtların kime ait olduğu bilinmediği için otomatik gönderilmez; orada durur. */
@@ -108,8 +109,9 @@ export async function flushQueue(send) {
                 offlineQueue.remove(item.clientId);
                 sent++;
             } catch (err) {
-                const status = err?.status;
-                if (status >= 400 && status < 500) {
+                // Oturum düşmesi ve bayat belirteç (401, gövdesiz 400) kalıcı ret DEĞİL:
+                // kayıt kuyrukta kalır, gönderim durur (bkz. lib/api/permanentRejection).
+                if (isPermanentRejection(err)) {
                     write(read(rejectedKey()).concat({ ...item, rejectedAt: new Date().toISOString(), error: err?.message ?? null }), rejectedKey());
                     offlineQueue.remove(item.clientId);
                     rejected++;
