@@ -37,9 +37,12 @@ function boardHtml(canBulk, viewJson) {
             </button>
         </div>
         <div class="kanban-wrap">
+            <p class="js-kanban-cap" role="status" hidden></p>
             <div class="kanban-board"
                 data-col-1="Yapılacak" data-col-2="Sürüyor"
                 data-col-3="Testte" data-col-4="Tamamlandı"
+                data-load-failed="Görevler yüklenemedi."
+                data-capped="Pano yalnız ilk {0} görevi gösteriyor (toplam {1}). Tümünü görmek için süzgeci daraltın."
                 data-can-bulk="${canBulk}" data-kanban-view='${view}'></div>
             <div class="apya-console-bulkbar d-none js-kb-bar">
                 <span class="js-kb-count">0 kart seçili</span>
@@ -129,8 +132,10 @@ beforeAll(async () => {
         notify: { success() { }, error() { }, info() { }, warn() { } }
     };
 
-    // Global demette kanbandan ÖNCE yüklenir; create() apya.latest'i çağırıyor.
+    // Global demette kanbandan ÖNCE yüklenir; create() apya.latest'i, yükleme hatası
+    // apya.loadState.errorHtml'i çağırıyor.
     await import('../../../js/apya-latest.js');
+    await import('../../../js/apya-load-state.js');
     await import('../../../js/apya-kanban.js');
 });
 
@@ -1762,5 +1767,132 @@ describe('proje hızla değişince', () => {
 
         expect(document.querySelector('.kanban-card[data-id="tB"]')).not.toBeNull();
         expect(document.querySelector('.kanban-card[data-id="tA"]')).toBeNull();
+    });
+});
+
+// STA-08 / TSK-10 (Faz 4): yükleniyor ve hata durumu yoktu — kolonlar "0" sayaçla boş
+// çiziliyor, istek düşünce pano "hiç görev yok" gibi kalıyordu; 1000 tavanı sessizdi.
+describe('yükleme durumu', () => {
+    function deferred() {
+        let resolve;
+        let reject;
+        const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+        return { promise, resolve, reject };
+    }
+    const alert = () => document.querySelector('.kanban-board > .apya-console-state[role="alert"]');
+    const cap = () => document.querySelector('.js-kanban-cap');
+    const oneTask = [{ id: 't1', code: 'GRV-1', title: 'A', status: 1, priority: 2 }];
+
+    it('görevler gelene kadar kolonlarda iskelet kart, sayaçlar "0" değil boş', async () => {
+        mountBoard(sysCols, []);
+        const pending = deferred();
+        apya.platform.tasks.task.getList = () => pending.promise;
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const cols = document.querySelectorAll('.kanban-column .kanban-cards');
+        expect(cols.length).toBeGreaterThan(0);
+        cols.forEach((c) => expect(c.querySelectorAll('.apya-skeleton').length).toBe(2));
+        expect(document.querySelector('.kanban-card')).toBeNull();
+        document.querySelectorAll('.kanban-count').forEach((n) => expect(n.textContent).toBe(''));
+
+        pending.resolve({ items: oneTask });
+        await flush();
+        expect(document.querySelector('.apya-skeleton')).toBeNull();
+        expect(col(1).querySelector('.kanban-count').textContent).toBe('1');
+    });
+
+    it('görev isteği düşerse pano hata kartı + Tekrar dene basar; istek ABP penceresini açmaz', async () => {
+        mountBoard(sysCols, []);
+        const ajaxParams = [];
+        apya.platform.tasks.task.getList = (filter, params) => { ajaxParams.push(params); return Promise.reject({ status: 500 }); };
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(alert()).not.toBeNull();
+        expect(alert().querySelector('strong').textContent).toBe('Görevler yüklenemedi.');
+        expect(alert().querySelector('.js-kanban-retry')).not.toBeNull();
+        expect(document.querySelector('.kanban-column')).toBeNull();
+        expect(ajaxParams[0]).toEqual({ abpHandleError: false });
+    });
+
+    it('Tekrar dene yeniden yükler ve başarıda kartlar çizilir', async () => {
+        mountBoard(sysCols, []);
+        let fail = true;
+        apya.platform.tasks.task.getList = () => (fail ? Promise.reject({}) : Promise.resolve({ items: oneTask }));
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        fail = false;
+        alert().querySelector('.js-kanban-retry').click();
+        await flush();
+
+        expect(alert()).toBeNull();
+        expect(document.querySelector('.kanban-card[data-id="t1"]')).not.toBeNull();
+    });
+
+    it('kolon isteği düşerse aynı hata kartı çizilir', async () => {
+        mountBoard(sysCols, oneTask);
+        const ajaxParams = [];
+        apya.platform.projects.boardColumn.getListByProject = (pid, params) => { ajaxParams.push(params); return Promise.reject({}); };
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(alert()).not.toBeNull();
+        expect(ajaxParams[0]).toEqual({ abpHandleError: false });
+    });
+
+    it('hata anında seçim bırakılır, toplu işlem çubuğu gizlenir', async () => {
+        mountBoard(sysCols, oneTask);
+        const kb = apya.kanban.create({ projectId: 'p1' });
+        kb.load();
+        await flush();
+        // Kart tıklaması belge düzeyinde jQuery delegesi (bu kabukta yok): açık çubuk elle kurulur.
+        document.querySelector('.js-kb-bar').classList.remove('d-none');
+
+        apya.platform.tasks.task.getList = () => Promise.reject({});
+        kb.load();
+        await flush();
+
+        expect(alert()).not.toBeNull();
+        expect(document.querySelector('.js-kb-bar').classList.contains('d-none')).toBe(true);
+    });
+
+    it('proje hızla değişince eski projenin REDDİ yeni panoyu ezmez', async () => {
+        mountBoard(sysCols, []);
+        const pending = { pA: deferred(), pB: deferred() };
+        apya.platform.projects.boardColumn.getListByProject = (pid) => pending[pid].promise;
+        const kb = apya.kanban.create({ projectId: null });
+
+        kb.setProject('pA');
+        kb.setProject('pB');
+        pending.pB.resolve(sysCols);
+        await flush();
+        pending.pA.reject({ status: 500 });
+        await flush();
+
+        expect(alert()).toBeNull();
+        expect(document.querySelectorAll('.kanban-column').length).toBeGreaterThan(0);
+    });
+
+    it('1000 tavanı: toplam gösterilenden fazlaysa not görünür, eşitse ya da toplam yoksa gizli', async () => {
+        mountBoard(sysCols, []);
+        apya.platform.tasks.task.getList = () => Promise.resolve({ items: oneTask.concat([{ id: 't2', code: 'GRV-2', title: 'B', status: 2, priority: 2 }]), totalCount: 1500 });
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(cap().hidden).toBe(false);
+        expect(cap().textContent).toBe('Pano yalnız ilk 2 görevi gösteriyor (toplam 1500). Tümünü görmek için süzgeci daraltın.');
+
+        mountBoard(sysCols, oneTask);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+        expect(cap().hidden).toBe(true);
+
+        mountBoard(sysCols, []);
+        apya.platform.tasks.task.getList = () => Promise.resolve({ items: oneTask, totalCount: 1 });
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+        expect(cap().hidden).toBe(true);
     });
 });

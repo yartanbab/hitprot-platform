@@ -11,6 +11,7 @@ import { installJqueryShim } from './jqueryShim';
 
 let mount;
 let groupedResult;
+let groupedImpl;       // varsayılan: groupedResult ile çözülür; yükleme hatası testleri ezer
 let scopeOpen;
 let setProjectSpy;
 
@@ -24,10 +25,14 @@ beforeAll(async () => {
     global.apya = {
         financeScope: { open: (o) => scopeOpen(o) },
         platform: { expenses: { expense: {
-            getProjectGrouped: () => Promise.resolve(groupedResult)
+            getProjectGrouped: (...args) => groupedImpl(...args)
         } } }
     };
 
+    // Global demette panelden ÖNCE yüklenir: create() apya.latest'i, hata dalı
+    // apya.loadState.errorHtml'i çağırıyor.
+    await import('../../../js/apya-latest.js');
+    await import('../../../js/apya-load-state.js');
     await import('../../../js/apya-task-finance.js');
 });
 
@@ -76,6 +81,7 @@ beforeEach(() => {
     document.body.innerHTML = '<div id="mount"></div>';
     mount = document.getElementById('mount');
     groupedResult = GROUPS();
+    groupedImpl = () => Promise.resolve(groupedResult);
     scopeOpen.mockClear?.();
 });
 
@@ -155,5 +161,54 @@ describe('apya.taskFinance', () => {
 
         expect(mount.querySelector('.apya-console-state')).not.toBeNull();
         expect(mount.textContent).toContain('Tasks:Finance:Empty');
+    });
+});
+
+// CON-04 / STA-08 (Faz 4): ret dalı yoktu — iskelet sonsuza dek kalıyordu.
+describe('apya.taskFinance yükleme hatası', () => {
+    const card = () => mount.querySelector('.apya-console-state[role="alert"]');
+
+    it('ret: iskelet kalmaz, hata kartı + Tekrar dene; istek ABP penceresini açmaz', async () => {
+        const params = [];
+        groupedImpl = (input, ajaxParams) => { params.push(ajaxParams); return Promise.reject({ status: 502 }); };
+
+        await create().load(); await flush();
+
+        expect(mount.querySelector('.apya-skeleton')).toBeNull();
+        expect(card()).not.toBeNull();
+        expect(card().querySelector('strong').textContent).toBe('Tasks:Finance:LoadFailed');
+        expect(card().querySelector('.js-fin-retry')).not.toBeNull();
+        expect(params[0]).toEqual({ abpHandleError: false });
+    });
+
+    it('Tekrar dene başarılı veriyle grupları çizer', async () => {
+        let fail = true;
+        groupedImpl = () => (fail ? Promise.reject({}) : Promise.resolve(groupedResult));
+        await create().load(); await flush();
+
+        fail = false;
+        mount.querySelector('.js-fin-retry').click();
+        await flush();
+
+        expect(card()).toBeNull();
+        expect(mount.querySelectorAll('.apya-fin-group').length).toBe(2);
+    });
+
+    it('geç düşen eski istek yeni başarının üstüne hata basmaz', async () => {
+        let rejectFirst;
+        let n = 0;
+        groupedImpl = () => {
+            n += 1;
+            return n === 1 ? new Promise((res, rej) => { rejectFirst = rej; }) : Promise.resolve(groupedResult);
+        };
+        const fin = create();
+
+        fin.load();
+        await fin.load(); await flush();
+        rejectFirst({});
+        await flush();
+
+        expect(card()).toBeNull();
+        expect(mount.querySelectorAll('.apya-fin-group').length).toBe(2);
     });
 });

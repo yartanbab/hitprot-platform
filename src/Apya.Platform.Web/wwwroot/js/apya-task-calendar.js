@@ -54,10 +54,14 @@
         var getFilter = typeof opts.getFilter === 'function' ? opts.getFilter : function () { return {}; };
         var editModal = opts.editModal || null;
         var taskSvc = apya.platform.tasks.task;
+        // Süzgeç hızla değişince yanıtlar sırasız dönebilir: yalnız son istek çizer.
+        var nextLoad = apya.latest();
 
         var now = new Date();
         var state = {
             loading: false,
+            loadFailed: false,
+            loadError: null,
             tasks: [],
             year: now.getFullYear(),
             month: now.getMonth(),
@@ -97,6 +101,12 @@
         function render() {
             if (state.loading) {
                 $mount.html('<div class="apya-cal-loading apya-skeleton" style="height:420px"></div>');
+                return;
+            }
+            // Hata anında ay başlığı ve gezinme çizilmez: gezinme veri istemez, boş ay "planlanmış
+            // bir şey yok" yalanını basardı.
+            if (state.loadFailed) {
+                $mount.html(apya.loadState.errorHtml(l('Tasks:View:LoadFailed'), 'js-cal-retry', state.loadError));
                 return;
             }
 
@@ -191,19 +201,31 @@
             $mount.on('click', '[data-open]', function () {
                 if (editModal) { editModal.open($(this).data('open')); }
             });
+
+            $mount.on('click', '.js-cal-retry', function () { load(); });
         }
 
         function load() {
+            var isLatest = nextLoad();
             state.loading = true;
+            state.loadFailed = false;
             render();
             // getPoints: yalın projeksiyon (getList'in altı zenginleştirme turu
             // bu görünümde kullanılmıyordu). RootOnly sunucuda zaten kapatılıyor.
+            // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
             var filter = $.extend({ maxResultCount: 1000 }, getFilter());
-            return taskSvc.getPoints(filter).then(function (items) {
+            return Promise.resolve(taskSvc.getPoints(filter, { abpHandleError: false })).then(function (items) {
+                if (!isLatest()) { return; }
                 state.tasks = (items || []).filter(function (t) {
                     return !!(t.startDate || t.dueDate);
                 });
                 state.loading = false;
+                render();
+            }, function (err) {
+                if (!isLatest()) { return; }
+                state.loading = false;
+                state.loadFailed = true;
+                state.loadError = err;
                 render();
             });
         }

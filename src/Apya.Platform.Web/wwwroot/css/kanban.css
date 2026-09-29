@@ -25,6 +25,9 @@
     padding-bottom: 1rem;
     min-height: 400px;
 }
+/* Yükleme hatası kartı board'un tek çocuğu olur (apya-kanban.js showLoadError); board yatay
+   flex satırı olduğu için tek kolon genişliğine sıkışmasın (.apya-console-state.is-denied emsali). */
+.kanban-board > .apya-console-state { flex: 1 1 auto; }
 .kanban-board[data-kb-density="card"]  { --kb-col-w: 300px; --kb-gap: 8px; }
 .kanban-board[data-kb-density="list"]  { --kb-col-w: 250px; --kb-gap: 4px; }
 .kanban-board[data-kb-density="title"] { --kb-col-w: 250px; --kb-gap: 3px; }

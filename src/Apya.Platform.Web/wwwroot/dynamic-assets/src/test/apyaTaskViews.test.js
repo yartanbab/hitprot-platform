@@ -14,6 +14,8 @@ import { installJqueryShim } from './jqueryShim';
 let mount;
 let pointsResult;      // Takvim + Gösterge Paneli → getPoints (yalın uç, DÜZ DİZİ)
 let galleryResult;    // Dosya Galerisi → getGallery
+let pointsImpl;        // varsayılan: pointsResult ile çözülür; yükleme hatası testleri ezer
+let galleryImpl;
 
 beforeAll(async () => {
     installJqueryShim();
@@ -23,11 +25,15 @@ beforeAll(async () => {
     };
     global.apya = {
         platform: { tasks: { task: {
-            getPoints: () => Promise.resolve(pointsResult),
-            getGallery: () => Promise.resolve(galleryResult)
+            getPoints: (...args) => pointsImpl(...args),
+            getGallery: (...args) => galleryImpl(...args)
         } } }
     };
 
+    // Global demette görünümlerden ÖNCE yüklenir: create() apya.latest'i, hata dalı
+    // apya.loadState.errorHtml'i çağırıyor.
+    await import('../../../js/apya-latest.js');
+    await import('../../../js/apya-load-state.js');
     await import('../../../js/apya-task-calendar.js');
     await import('../../../js/apya-task-dashboard.js');
     await import('../../../js/apya-task-gallery.js');
@@ -38,6 +44,8 @@ beforeEach(() => {
     mount = document.getElementById('mount');
     pointsResult = [];
     galleryResult = [];
+    pointsImpl = () => Promise.resolve(pointsResult);
+    galleryImpl = () => Promise.resolve(galleryResult);
 });
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -234,5 +242,72 @@ describe('apya.taskGallery', () => {
         await load();
         expect(mount.querySelector('script')).toBeNull();
         expect(mount.querySelector('.apya-gal-title').textContent).toContain('<script>');
+    });
+});
+
+/* ───────────── Yükleme hatası (CON-04, STA-08 — Faz 4) ─────────────
+   Eskiden ret dalı yoktu: iskelet sonsuza dek parlıyordu, Tekrar dene yolu yoktu.
+   Hata dalı biletle birlikte gelir: süzgeç hızla değişince geç düşen eski istek
+   yeni başarının üstüne hata kartı basmamalı. */
+function deferred() {
+    let resolve;
+    let reject;
+    const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+    return { promise, resolve, reject };
+}
+
+describe.each([
+    ['takvim', () => apya.taskCalendar, 'points', '.js-cal-retry'],
+    ['gösterge paneli', () => apya.taskDashboard, 'points', '.js-dash-retry'],
+    ['dosya galerisi', () => apya.taskGallery, 'gallery', '.js-gal-retry']
+])('%s: yükleme hatası', (name, view, source, retrySel) => {
+    const setImpl = (fn) => {
+        if (source === 'points') { pointsImpl = fn; } else { galleryImpl = fn; }
+    };
+    const create = () => view().create({ mount: '#mount', getFilter: () => ({}) });
+    const card = () => mount.querySelector('.apya-console-state[role="alert"]');
+
+    it('ret: iskelet kalmaz, hata kartı + Tekrar dene; istek ABP penceresini açmaz', async () => {
+        const params = [];
+        setImpl((filter, ajaxParams) => { params.push(ajaxParams); return Promise.reject({ status: 500 }); });
+
+        await create().load();
+        await flush();
+
+        expect(mount.querySelector('.apya-skeleton')).toBeNull();
+        expect(card()).not.toBeNull();
+        expect(card().querySelector(retrySel)).not.toBeNull();
+        expect(params[0]).toEqual({ abpHandleError: false });
+    });
+
+    it('Tekrar dene yeni istek atar; başarıda hata kartı kalkar', async () => {
+        let fail = true;
+        let calls = 0;
+        setImpl(() => { calls += 1; return fail ? Promise.reject({}) : Promise.resolve([]); });
+        await create().load();
+        await flush();
+
+        fail = false;
+        mount.querySelector(retrySel).click();
+        await flush();
+
+        expect(calls).toBe(2);
+        expect(card()).toBeNull();
+        expect(mount.querySelector('.apya-console-state')).not.toBeNull(); // gerçek boş durum
+    });
+
+    it('geç düşen eski istek yeni başarının üstüne hata basmaz', async () => {
+        const first = deferred();
+        let n = 0;
+        setImpl(() => { n += 1; return n === 1 ? first.promise : Promise.resolve([]); });
+        const v = create();
+
+        v.load();
+        await v.load();
+        first.reject({});
+        await flush();
+
+        expect(card()).toBeNull();
+        expect(mount.querySelector('.apya-console-state')).not.toBeNull();
     });
 });

@@ -52,8 +52,10 @@
         var $mount = $(opts.mount);
         var getFilter = typeof opts.getFilter === 'function' ? opts.getFilter : function () { return {}; };
         var taskSvc = apya.platform.tasks.task;
+        // Süzgeç hızla değişince yanıtlar sırasız dönebilir: yalnız son istek çizer.
+        var nextLoad = apya.latest();
 
-        var state = { loading: false, tasks: [] };
+        var state = { loading: false, loadFailed: false, loadError: null, tasks: [] };
         var charts = [];
 
         function destroyCharts() {
@@ -73,6 +75,10 @@
 
             if (state.loading) {
                 $mount.html('<div class="apya-dash apya-skeleton" style="height:420px"></div>');
+                return;
+            }
+            if (state.loadFailed) {
+                $mount.html(apya.loadState.errorHtml(l('Tasks:View:LoadFailed'), 'js-dash-retry', state.loadError));
                 return;
             }
             if (state.tasks.length === 0) {
@@ -173,17 +179,29 @@
         }
 
         function load() {
+            var isLatest = nextLoad();
             state.loading = true;
+            state.loadFailed = false;
             render();
             // getPoints: yalın projeksiyon — dağılım için başlık/durum/öncelik/
             // atanan/termin yetiyor. RootOnly sunucuda kapatılıyor (tüm görevler).
+            // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
             var filter = $.extend({ maxResultCount: 1000 }, getFilter());
-            return taskSvc.getPoints(filter).then(function (items) {
+            return Promise.resolve(taskSvc.getPoints(filter, { abpHandleError: false })).then(function (items) {
+                if (!isLatest()) { return; }
                 state.tasks = items || [];
                 state.loading = false;
                 render();
+            }, function (err) {
+                if (!isLatest()) { return; }
+                state.loading = false;
+                state.loadFailed = true;
+                state.loadError = err;
+                render();
             });
         }
+
+        $mount.on('click', '.js-dash-retry', function () { load(); });
 
         if (typeof apyaChart !== 'undefined') {
             // Tema değişiminde renkler token'lardan yeniden okunsun.
