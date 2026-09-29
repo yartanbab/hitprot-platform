@@ -10,7 +10,7 @@
  *        #project-scope-island     (Documents/Scope.cshtml)
  */
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import './index.css';
 import { TimelineRoot } from './documents-project/TimelineRoot';
 import { MatchingRoot } from './documents-project/MatchingRoot';
@@ -18,15 +18,15 @@ import { ScopeRoot } from './documents-project/ScopeRoot';
 
 const timeline = document.getElementById('project-timeline-island');
 if (timeline) {
-  createRoot(timeline).render(<TimelineRoot />);
+  mountIsland(timeline, 'documents-timeline', <TimelineRoot />);
 }
 
 const matching = document.getElementById('document-matching-island');
 if (matching) {
-  createRoot(matching).render(<MatchingRoot />);
+  mountIsland(matching, 'documents-matching', <MatchingRoot />);
 }
 
 const scope = document.getElementById('project-scope-island');
 if (scope) {
-  createRoot(scope).render(<ScopeRoot />);
+  mountIsland(scope, 'documents-scope', <ScopeRoot />);
 }

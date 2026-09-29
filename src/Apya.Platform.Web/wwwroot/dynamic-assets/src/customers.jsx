@@ -18,7 +18,7 @@
  * Razor mount  : <div id="customers-island"></div>  (Customers/Index.cshtml)
  */
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import { Hint } from './components/ui/Hint';
 import { wasShown } from './lib/api/abpErrors';
 import './index.css';
@@ -910,5 +910,5 @@ function CustomersIsland() {
 /* ─── Mount ─────────────────────────────────────────────────────────── */
 const container = document.getElementById('customers-island');
 if (container) {
-  createRoot(container).render(<CustomersIsland />);
+  mountIsland(container, 'customers', <CustomersIsland />);
 }

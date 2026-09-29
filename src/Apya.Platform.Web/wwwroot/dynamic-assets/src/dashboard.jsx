@@ -1,5 +1,5 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import { ThemeProvider } from './lib/theme/ThemeProvider';
 import { QueryProvider } from './lib/api/QueryProvider';
 import { SignalRProvider } from './lib/realtime/SignalRProvider';
@@ -32,8 +32,7 @@ registerServiceWorker();
 
 const rootElement = document.getElementById('apya-dashboard-root');
 if (rootElement) {
-    const root = createRoot(rootElement);
-    root.render(
+    mountIsland(rootElement, 'dashboard',
         <ThemeProvider>
             <DeviceModeProvider>
                 <QueryProvider>

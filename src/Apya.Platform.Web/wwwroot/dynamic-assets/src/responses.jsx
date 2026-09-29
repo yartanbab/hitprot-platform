@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
 import { EmptyState } from './components/ui/EmptyState';
@@ -479,4 +479,4 @@ function notify(kind, msg) {
 }
 
 const root = document.getElementById('responses-root');
-if (root) createRoot(root).render(<ResponsesApp formId={root.getAttribute('data-form-id')} />);
+if (root) mountIsland(root, 'responses', <ResponsesApp formId={root.getAttribute('data-form-id')} />);

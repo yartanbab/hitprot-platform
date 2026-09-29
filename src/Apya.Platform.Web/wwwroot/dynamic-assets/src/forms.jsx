@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
 import { EmptyState } from './components/ui/EmptyState';
@@ -338,4 +338,4 @@ function confirmDelete(title) {
 }
 
 const root = document.getElementById('forms-list-root');
-if (root) createRoot(root).render(<FormsList />);
+if (root) mountIsland(root, 'forms', <FormsList />);

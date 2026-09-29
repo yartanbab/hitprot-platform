@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import { api } from './lib/api/httpClient';
 import { formTenantFromSearch } from './lib/publicFormLink';
 import { prefillChoice, sourceEmptyLabel, withoutStaleChoice } from './lib/formChoices';
@@ -380,5 +380,5 @@ const Centered = ({ children }) => (
 const root = document.getElementById('public-form-root');
 if (root) {
   const slug = root.getAttribute('data-slug');
-  createRoot(root).render(<PublicForm slug={slug} />);
+  mountIsland(root, 'public-form', <PublicForm slug={slug} />);
 }

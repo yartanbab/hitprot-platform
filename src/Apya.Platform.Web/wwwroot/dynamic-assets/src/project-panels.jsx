@@ -17,7 +17,7 @@
  * Vite → /wwwroot/js/project-panels.js
  */
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import './index.css';
 import { DocumentsPanel } from './project-panels/DocumentsPanel';
 import { FormsPanel } from './project-panels/FormsPanel';
@@ -35,6 +35,6 @@ for (const [elementId, kind, Panel] of PANELS) {
     const el = document.getElementById(elementId);
     const projectId = el?.getAttribute('data-project-id');
     if (el && (projectId || el.getAttribute('data-scope') === 'all')) {
-        createRoot(el).render(<Panel projectId={projectId || null} kind={kind} mountEl={el} />);
+        mountIsland(el, `project-panels:${kind}`, <Panel projectId={projectId || null} kind={kind} mountEl={el} />);
     }
 }

@@ -5,11 +5,11 @@
  * Mount: #report-builder-island (Documents/ReportBuilder.cshtml)
  */
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import './index.css';
 import { ReportBuilderRoot } from './documents-report/ReportBuilderRoot';
 
 const el = document.getElementById('report-builder-island');
 if (el) {
-  createRoot(el).render(<ReportBuilderRoot />);
+  mountIsland(el, 'documents-report', <ReportBuilderRoot />);
 }
