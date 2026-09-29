@@ -11,7 +11,7 @@ namespace Apya.Platform.Dashboard;
 /// <para>
 /// Sınıf seviyesi izin <c>Platform.Projects</c>; finansal alanlar servis içinde
 /// <c>Platform.Invoices</c> / <c>Platform.Projects.ViewBudget</c> ile ayrıca kontrol edilir.
-/// Yetki yoksa değer HESAPLANMAZ (sorgu atılmaz) ve null döner.
+/// Yetki yoksa değer HESAPLANMAZ (sorgu atılmaz) ve null ya da Locked=true döner.
 /// </para>
 /// <para>
 /// AI önerileri bu serviste DEĞİL — çekirdek modül AI modülüne referans vermez.
@@ -26,7 +26,7 @@ public interface IDashboardAppService : IApplicationService
 
     Task<List<ProjectHealthDto>> GetProjectHealthAsync(DashboardQueryDto input);
 
-    Task<List<PendingApprovalDto>> GetPendingApprovalsAsync();
+    Task<PendingApprovalListDto> GetPendingApprovalsAsync();
 
     Task<List<BlockedTaskDto>> GetBlockedTasksAsync();
 

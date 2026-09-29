@@ -13,7 +13,12 @@ import { t } from '../../lib/i18n';
  */
 function ApprovalsCard({ editMode }) {
     const query = usePendingApprovals();
-    const items = query.data ?? [];
+    /* Sözleşme {items, locked}. Dizi gelirse yayın öncesi kalıcı önbellekten gelen ESKİ
+       şekildir (queryPersister.js "bilinen sınır") — çökmesin, bir tazelemeye kadar eskisi
+       gibi çizilsin. locked: Platform.Invoices yok, sunucu sorgu atmadı (boş kuyruk DEĞİL). */
+    const data = query.data;
+    const locked = data?.locked === true;
+    const items = Array.isArray(data) ? data : (data?.items ?? []);
 
     const total = items.reduce((sum, i) => sum + (i.amount ?? 0), 0);
     const avgAge = items.length
@@ -33,11 +38,19 @@ function ApprovalsCard({ editMode }) {
             isLoading={query.isPending}
             isError={query.isError}
             onRetry={query.refetch}
-            isEmpty={items.length === 0}
+            isEmpty={locked || items.length === 0}
             isFetching={query.isFetching}
             isStale={query.isStale}
             dataUpdatedAt={query.dataUpdatedAt}
-            emptyState={
+            emptyState={locked ? (
+                /* Kilitli kart yasak sayfaya (/Invoices → 403) bağlantı VERMEZ. */
+                <EmptyState
+                    compact
+                    variant="locked"
+                    title={t('Common:Locked:Title', 'Bu bilgiyi görme yetkiniz yok')}
+                    description={t('Dashboard:Approvals:LockedDescription', 'Taslak faturalar {0} izni gerektirir.', 'Platform.Invoices')}
+                />
+            ) : (
                 <EmptyState
                     compact
                     title={t('Dashboard:Approvals:EmptyTitle', 'Karar bekleyen yok')}
@@ -48,7 +61,7 @@ function ApprovalsCard({ editMode }) {
                         </a>
                     }
                 />
-            }
+            )}
             footer={items.length > 0 && (
                 /* Satır başlıkları serbest metin olduğu için kırpılabilir, ama bu
                    özet SABİT biçimli — dar kartta kırpmak yerine alt satıra sarsın. */

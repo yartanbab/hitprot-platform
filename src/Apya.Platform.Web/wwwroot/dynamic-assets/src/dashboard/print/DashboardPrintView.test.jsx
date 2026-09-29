@@ -43,7 +43,7 @@ const YANITLAR = {
         { taskId: 't1', title: 'Sözleşme teslimi', projectName: 'Sözleşme Projesi', dueDate: '2026-09-10T00:00:00Z', state: 3, overdueDays: 4, assigneeName: 'Ayşe', assigneeInitials: 'A', groupKey: 0 },
     ],
     'project-health': PROJELER,
-    'pending-approvals': [],
+    'pending-approvals': { items: [], locked: false },
     'blocked-tasks': [
         { taskId: 'b1', code: 'APY-9', title: 'Ödeme talebi', blockReason: 2, idleDays: 11, dependentCount: 1 },
     ],
@@ -154,5 +154,34 @@ describe('Dashboard baskı çıktısı', () => {
            okuyan "bu bölüm basılmamış mı, gerçekten boş mu" diye bilemez. */
         await waitFor(() => expect(screen.getByText('Bende bekleyen kararlar')).toBeInTheDocument());
         expect(screen.getByText('Taslak durumdaki fatura bulunmuyor.')).toBeInTheDocument();
+    });
+
+    it('kilitli finans bölümü "kayıt yok" değil "görme yetkiniz yok" basar (SHL-15)', async () => {
+        stubFetch({
+            'pending-approvals': { items: [], locked: true },
+            'income-expense': { points: [], currency: 'TRY', net: 0, locked: true },
+        });
+        const onReady = vi.fn();
+
+        ciz({ onReady });
+
+        /* Kilitli bölüm de "sonuca bağlanmış" sayılır: baskı beklemede kalmaz. */
+        await waitFor(() => expect(onReady).toHaveBeenCalled());
+        expect(screen.getByText('Bu bölümü görme yetkiniz yok (Platform.Invoices).')).toBeInTheDocument();
+        expect(screen.getByText('Bu bölümü görme yetkiniz yok (Platform.Incomes + Platform.Expenses).')).toBeInTheDocument();
+        expect(screen.queryByText('Taslak durumdaki fatura bulunmuyor.')).not.toBeInTheDocument();
+        expect(screen.queryByText('Son 6 ayda gelir veya gider kaydı bulunmuyor.')).not.toBeInTheDocument();
+    });
+
+    it('kalıcı önbellekteki ESKİ dizi şekli çökmeden basılır', async () => {
+        stubFetch({
+            'pending-approvals': [{ id: 'a1', type: 0, title: 'QA-UX eski-sekil', requesterName: '', amount: 1, currency: 'TRY', ageHours: 1, targetUrl: '#' }],
+        });
+        const onReady = vi.fn();
+
+        ciz({ onReady });
+
+        await waitFor(() => expect(onReady).toHaveBeenCalled());
+        expect(screen.getByText('QA-UX eski-sekil')).toBeInTheDocument();
     });
 });

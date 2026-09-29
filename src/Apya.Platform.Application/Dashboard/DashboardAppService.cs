@@ -23,7 +23,7 @@ namespace Apya.Platform.Dashboard;
 
 /// <summary>
 /// /Dashboard ekranının okuma servisi. Sınıf seviyesi izin <c>Platform.Projects</c>;
-/// finansal alanlar ayrıca kontrol edilir ve yetki yoksa SORGU ATILMAZ, null döner.
+/// finansal alanlar ayrıca kontrol edilir ve yetki yoksa SORGU ATILMAZ, null ya da Locked=true döner.
 /// </summary>
 [Authorize(PlatformPermissions.Projects.Default)]
 public class DashboardAppService : PlatformAppService, IDashboardAppService
@@ -278,20 +278,20 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
     // ─────────────────────────── Onay kuyruğu ───────────────────────────
 
     /// <summary>
-    /// Taslak faturalar. <c>Platform.Invoices</c> yoksa BOŞ liste döner (403 değil) —
-    /// dashboard'ın geri kalanı çalışmaya devam etsin, kart boş durumunu çizsin.
+    /// Taslak faturalar. <c>Platform.Invoices</c> yoksa 403 DEĞİL kilitli sonuç (sorgu yok):
+    /// dashboard'ın geri kalanı çalışsın, kart "karar bekleyen yok" DEĞİL "görme yetkiniz yok" çizsin.
     /// </summary>
-    public async Task<List<PendingApprovalDto>> GetPendingApprovalsAsync()
+    public async Task<PendingApprovalListDto> GetPendingApprovalsAsync()
     {
         if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Invoices.Default))
         {
-            return new List<PendingApprovalDto>();
+            return new PendingApprovalListDto { Locked = true };
         }
 
         var drafts = await ListDraftInvoicesAsync(null);
         var users = await GetUserLabelsAsync(drafts.Select(i => i.CreatorId));
 
-        return drafts.Select(i => new PendingApprovalDto
+        var items = drafts.Select(i => new PendingApprovalDto
         {
             Id = i.Id,
             Type = DashboardApprovalType.Invoice,
@@ -304,6 +304,8 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
             AgeHours = (int)Math.Max(0, (Clock.Now - i.CreationTime).TotalHours),
             TargetUrl = $"/Invoices?invoiceId={i.Id}"
         }).ToList();
+
+        return new PendingApprovalListDto { Items = items };
     }
 
     // ─────────────────────────── Tıkanan işler ───────────────────────────
@@ -379,28 +381,30 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
         var canSeeIncome = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Incomes.Default);
         var canSeeExpense = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Default);
 
+        // Net iki seriyi ister; biri görünmüyorsa net uydurulur → kilit. Sorgu yok,
+        // para birimi bile çözülmez (DashboardStatisticsProvider kilit sözleşmesiyle aynı).
+        if (!canSeeIncome || !canSeeExpense)
+        {
+            return new IncomeExpenseDto { Locked = true };
+        }
+
         var dto = new IncomeExpenseDto { Currency = await ResolveCurrencyAsync(input.ProjectId) };
-        if (!canSeeIncome && !canSeeExpense) return dto;
 
         var now = Clock.Now.Date;
         var firstMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, now.Kind)
             .AddMonths(-(_options.IncomeExpenseMonths - 1));
 
-        var incomes = canSeeIncome
-            ? await SumByMonthAsync(
-                (await _incomeRepo.GetQueryableAsync())
-                    .Where(i => i.IncomeDate >= firstMonth
-                                && (input.ProjectId == null || i.ProjectId == input.ProjectId))
-                    .Select(i => new MonthlyAmount { Date = i.IncomeDate, Amount = i.Amount }))
-            : new Dictionary<DateTime, decimal>();
+        var incomes = await SumByMonthAsync(
+            (await _incomeRepo.GetQueryableAsync())
+                .Where(i => i.IncomeDate >= firstMonth
+                            && (input.ProjectId == null || i.ProjectId == input.ProjectId))
+                .Select(i => new MonthlyAmount { Date = i.IncomeDate, Amount = i.Amount }));
 
-        var expenses = canSeeExpense
-            ? await SumByMonthAsync(
-                (await _expenseRepo.GetQueryableAsync())
-                    .Where(e => e.ExpenseDate >= firstMonth
-                                && (input.ProjectId == null || e.ProjectId == input.ProjectId))
-                    .Select(e => new MonthlyAmount { Date = e.ExpenseDate, Amount = e.Amount }))
-            : new Dictionary<DateTime, decimal>();
+        var expenses = await SumByMonthAsync(
+            (await _expenseRepo.GetQueryableAsync())
+                .Where(e => e.ExpenseDate >= firstMonth
+                            && (input.ProjectId == null || e.ProjectId == input.ProjectId))
+                .Select(e => new MonthlyAmount { Date = e.ExpenseDate, Amount = e.Amount }));
 
         for (var i = 0; i < _options.IncomeExpenseMonths; i++)
         {

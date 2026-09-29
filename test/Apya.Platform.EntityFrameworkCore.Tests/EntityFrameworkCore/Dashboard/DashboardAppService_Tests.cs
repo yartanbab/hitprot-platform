@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Apya.Platform.Dashboard;
 using Apya.Platform.Dashboard.Dtos;
 using Apya.Platform.Tasks;
+using Microsoft.Extensions.Options;
 using Shouldly;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
@@ -155,5 +156,22 @@ public class DashboardAppService_Tests : PlatformEntityFrameworkCoreTestBase
         var saved = await _dashboard.GetLayoutAsync(DashboardDefaultLayouts.Grants);
         saved.IsDefault.ShouldBeFalse();
         saved.Cards.ShouldHaveSingleItem().CardKey.ShouldBe("deliveries");
+    }
+
+    /// <summary>
+    /// Yetkili yolun şekli (SHL-15): finans kartları kilitsiz döner; gelir/gider kaydı olmasa da
+    /// altı ayın tamamı gelir — boş-ama-kilitsiz ile kilitli ayrımı bu bayrağa dayanır. Kilit
+    /// yolu <c>DashboardFinanceCardLock_Tests</c>'te birim testle ölçülür.
+    /// </summary>
+    [Fact]
+    public async Task Yetkili_kullanicida_finans_kartlari_kilitsiz_doner()
+    {
+        var approvals = await _dashboard.GetPendingApprovalsAsync();
+        approvals.Locked.ShouldBeFalse();
+        approvals.Items.ShouldNotBeNull();
+
+        var incomeExpense = await _dashboard.GetIncomeExpenseAsync(new DashboardQueryDto());
+        incomeExpense.Locked.ShouldBeFalse();
+        incomeExpense.Points.Count.ShouldBe(GetRequiredService<IOptions<DashboardOptions>>().Value.IncomeExpenseMonths);
     }
 }

@@ -14,7 +14,15 @@ public class IncomeExpensePointDto
     public decimal Expense { get; set; }
 }
 
-/// <summary>Gelir/gider kartının tamamı — 6 ay geriye.</summary>
+/// <summary>
+/// Gelir/gider kartının tamamı — 6 ay geriye.
+/// <para>
+/// KİLİT SÖZLEŞMESİ: kart net = gelir − gider gösterir; <c>Platform.Incomes</c> VE
+/// <c>Platform.Expenses</c> ikisi de gerekir — tek seriyle net uydurulur. Kilitliyken sorgu
+/// atılmaz, <see cref="Points"/> boştur, <see cref="Currency"/>/<see cref="Net"/> anlamsızdır;
+/// kart "kayıtlı hareket yok" DEĞİL "görme yetkiniz yok" çizer.
+/// </para>
+/// </summary>
 public class IncomeExpenseDto
 {
     public List<IncomeExpensePointDto> Points { get; set; } = new();
@@ -23,4 +31,7 @@ public class IncomeExpenseDto
 
     /// <summary>Dönem toplamı: gelir − gider.</summary>
     public decimal Net { get; set; }
+
+    /// <summary>İki izinden biri yoksa true (ad <see cref="DashboardStatDto.Locked"/> ile aynı).</summary>
+    public bool Locked { get; set; }
 }
