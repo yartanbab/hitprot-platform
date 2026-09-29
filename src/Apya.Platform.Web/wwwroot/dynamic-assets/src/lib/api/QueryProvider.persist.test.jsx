@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { useQuery } from '@tanstack/react-query';
 import { QueryProvider } from './QueryProvider';
 
@@ -82,7 +82,15 @@ describe('QueryProvider restore — veri-değişti damgası', () => {
         window.sessionStorage.clear();
         window.abp = { currentUser: { id: 'k1', tenantId: 't1' } };
     });
-    afterEach(() => { delete window.abp; window.sessionStorage.clear(); });
+    // Testin son render'ı kalıcılaştırıcıya gecikmeli (throttleTime 1000) bir yazma bırakır ve bu
+    // yazma bileşen kaldırıldıktan sonra da düşer. Beklenmezse önceki testin 'yeni' önbelleği
+    // sonraki testin 'eski' kaydını ezip onu kararsız yapıyordu (10 koşuda ~3 kırmızı).
+    afterEach(async () => {
+        cleanup();
+        await new Promise((r) => setTimeout(r, 1200));
+        delete window.abp;
+        window.sessionStorage.clear();
+    });
 
     it('damga restore edilen veriden yeniyse görev türevi sorgu staleTime\'a rağmen yeniden çekilir', async () => {
         const qk = ['dashboard', 'summary', {}];
