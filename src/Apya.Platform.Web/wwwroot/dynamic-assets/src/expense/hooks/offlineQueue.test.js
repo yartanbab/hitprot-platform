@@ -93,14 +93,38 @@ describe('flushQueue', () => {
         offlineQueue.enqueue({ title: 'Bozuk' });
         offlineQueue.enqueue({ title: 'Saglam' });
 
+        // ABP doğrulama reddi zarfla gelir (validationErrors); gövdesiz 400 ile karışmamalı.
         const send = vi.fn()
-            .mockRejectedValueOnce(Object.assign(new Error('Kategori geçersiz'), { status: 400 }))
+            .mockRejectedValueOnce(Object.assign(new Error('Kategori geçersiz'), {
+                status: 400, validationErrors: [{ message: 'Kategori geçersiz', members: ['category'] }],
+            }))
             .mockResolvedValueOnce({ id: 'y' });
 
         const summary = await flushQueue(send);
 
         expect(summary).toMatchObject({ sent: 1, failed: 0, rejected: 1, remaining: 0 });
         expect(offlineQueue.rejected()[0].payload.title).toBe('Bozuk');
+    });
+
+    it('oturum dusmusse (401) kayitlar kuyrukta KALIR ve gonderim durur — silinmez', async () => {
+        offlineQueue.enqueue({ title: 'A' });
+        offlineQueue.enqueue({ title: 'B' });
+        const send = vi.fn().mockRejectedValue(Object.assign(new Error('Oturum'), { status: 401 }));
+
+        const summary = await flushQueue(send);
+
+        expect(send).toHaveBeenCalledTimes(1);
+        expect(summary).toMatchObject({ sent: 0, failed: 1, rejected: 0, remaining: 2 });
+        expect(offlineQueue.rejected()).toHaveLength(0);
+    });
+
+    it('govdesiz 400 (bayat guvenlik belirteci) kalici ret sayilmaz; kayit kuyrukta kalir', async () => {
+        offlineQueue.enqueue({ title: 'A' });
+        const send = vi.fn().mockRejectedValue(Object.assign(new Error('İstek doğrulanamadı'), { status: 400 }));
+
+        const summary = await flushQueue(send);
+
+        expect(summary).toMatchObject({ sent: 0, failed: 1, rejected: 0, remaining: 1 });
     });
 
     it('kuyruk kullaniciya bagli: baska kullanicinin kaydi gorunmez', () => {

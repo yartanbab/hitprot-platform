@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { scopedStorageKey } from '../../lib/storageScope';
+import { isPermanentRejection } from '../../lib/api/permanentRejection';
 
 /**
  * Çevrimdışı kuyruk — bağlantı yokken yapılan değişiklikler kaybolmasın.
@@ -60,11 +61,11 @@ export function useOfflineQueue({ onFlush }) {
                 try {
                     await onFlush(entry);
                 } catch (err) {
-                    /* Sunucu kalıcı olarak reddettiyse (4xx: yetki, geçersiz tarih) tekrar
+                    /* Sunucu kalıcı olarak reddettiyse (yetki, geçersiz tarih) tekrar
                        denemek her sayfa açılışında aynı hatayı üretir — bırakılır; ekran
-                       sunucudaki gerçek hâli gösterir. Ağ hatasında kuyrukta KALIR. */
-                    const status = err?.status;
-                    if (!(status >= 400 && status < 500)) remaining.push(entry);
+                       sunucudaki gerçek hâli gösterir. Ağ hatasında, oturum düşmüşken (401)
+                       ya da belirteç bayatken (gövdesiz 400) kuyrukta KALIR. */
+                    if (!isPermanentRejection(err)) remaining.push(entry);
                 }
             }
             writeQueue(remaining);
