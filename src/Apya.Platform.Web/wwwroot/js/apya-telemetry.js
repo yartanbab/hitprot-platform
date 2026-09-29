@@ -120,7 +120,9 @@
             return;
         }
 
-        apya.platform.telemetry.telemetry.reportClientError(dto)
+        // Arka plan isteği: ABP penceresi açılmaz, bayat anahtar sessizce tazelenir
+        // (ajax-error-detail.js). Oturum düşmüşse merkezi oturum penceresi yine açılır.
+        apya.platform.telemetry.telemetry.reportClientError(dto, { abpHandleError: false, apyaBackground: true })
             .then(function (errorId) {
                 // Son hata referansı — geri bildirim gönderilirse otomatik iliştirilir.
                 if (errorId) {
