@@ -17,6 +17,9 @@ $(function () {
 
     var feed = [];
     var feedFailed = false;
+    // Son akış okuması başarıyla geldi mi. Okuma sürerken ya da düştüyse false: "N çağrı" cümlesi
+    // eldeki boş ya da eski diziyi sayıp "0 çağrı" veya yeni profille uyuşmayan sayı basmasın.
+    var feedLoaded = false;
     var activeTab = 'eligible';
     var nextLoad = apya.latest();
     // Akışın kendi bileti: akışın Tekrar dene'si profil yüklemesini bayatlatmaz.
@@ -107,12 +110,13 @@ $(function () {
 
     // Eksik alan sayısı, "koşullu" kovadaki çağrı sayısıyla doğrudan ilişkili:
     // profil dolunca o çağrılar ölçülebilir hâle gelir. Akış profilden sonra gelirse de yenilenir.
+    // Sayı akıştan gelir: akış henüz gelmediyse ya da düştüyse cümle boş kalır, akış gelince boyanır.
     function paintGain() {
         if (!profile) { return; }
         var conditional = feed.filter(function (r) { return r.bucket === 1; }).length;
         $('#ProfileGain').text(profile.missingFieldCount === 0
             ? l('Grants:Feed:Profile:Full')
-            : l('Grants:Feed:Profile:Gain', conditional));
+            : feedLoaded ? l('Grants:Feed:Profile:Gain', conditional) : '');
     }
 
     function paintProfile(p) {
@@ -431,12 +435,14 @@ $(function () {
 
     // Akış kendi biletiyle yüklenir ve profil formuna DOKUNMAZ: akışın Tekrar dene'si açık
     // editördeki kaydedilmemiş girdiyi ezmez, yalnız "N çağrı ölçülebilir" cümlesini yeniler.
-    // Hata dalı da çözülür; load() akış düşse de profil adımına geçer.
+    // Hata dalı da çözülür ve cümleyi boşaltır (eski sayı kalmasın).
     function loadFeed() {
         var isLatest = nextFeed();
+        feedLoaded = false;
         return Promise.resolve(recoSvc.getOpenCalls()).then(function (items) {
             if (!isLatest()) { return; }
             feedFailed = false;
+            feedLoaded = true;
             feed = items || [];
             $('#TabCountEligible').text(feed.filter(function (r) { return r.isRecommended; }).length);
             $('#TabCountAll').text(feed.length);
@@ -451,6 +457,7 @@ $(function () {
             $('#FeedEmpty, #BookmarkEmpty, #BookmarkHint, #FeedMore, #FeedBuckets').addClass('d-none');
             $('#FeedGrid').removeClass('apya-skel-cards')
                 .html(apya.loadState.errorHtml(l('Grants:Feed:LoadFailed'), 'js-grants-feed-retry'));
+            paintGain();
         });
     }
 
@@ -458,24 +465,24 @@ $(function () {
     // ve tüm etiketler silinir. Form istek BAŞINDA kilitlenir, kilidi yalnız son isteğin başarılı
     // profil okuması açar; hata dalı kilitli tutup Tekrar dene basar. load() bileti profil adımını
     // korur: kayıt sonrası yeniden yükleme ile yarışan eski yanıt çizilmez.
+    // Akış ve profil PARALEL okunur: kilit yavaş ya da düşen akışı beklemez. Akışa bağlı tek şey
+    // "N çağrı ölçülebilir" cümlesi; hangisi sonra gelirse paintGain onu boyar. Dönen söz yalnız
+    // profil okumasıdır, Kaydet de akışı beklemez.
     function load() {
         var isLatest = nextLoad();
         $('#ProfileForm').prop('disabled', true);
         // Yükleniyor kutusu yalnız profil henüz boyanmamışken: açık editörde her Kaydet'te formu itmesin.
         if (!profile) { $('#ProfileLoadState').html(apya.loadState.loadingHtml(l('Grants:Feed:Profile:Loading'))); }
-        return loadFeed().then(function () {
-            // Akış düşse de profil okunur; akışa bağlı tek şey "N çağrı ölçülebilir" cümlesi.
+        loadFeed();
+        return Promise.resolve(profileSvc.getMyProfile()).then(function (p) {
             if (!isLatest()) { return; }
-            return Promise.resolve(profileSvc.getMyProfile()).then(function (p) {
-                if (!isLatest()) { return; }
-                paintProfile(p);
-                $('#ProfileLoadState').empty();
-                $('#ProfileForm').prop('disabled', false);
-            }, function () {
-                if (!isLatest()) { return; }
-                profile = null;
-                $('#ProfileLoadState').html(apya.loadState.errorHtml(l('Grants:Feed:Profile:LoadFailed'), 'js-grants-load-retry'));
-            });
+            paintProfile(p);
+            $('#ProfileLoadState').empty();
+            $('#ProfileForm').prop('disabled', false);
+        }, function () {
+            if (!isLatest()) { return; }
+            profile = null;
+            $('#ProfileLoadState').html(apya.loadState.errorHtml(l('Grants:Feed:Profile:LoadFailed'), 'js-grants-load-retry'));
         });
     }
 

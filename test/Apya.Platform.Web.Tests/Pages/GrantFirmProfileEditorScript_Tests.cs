@@ -100,15 +100,15 @@ public class GrantFirmProfileEditorScript_Tests
         ShouldAppearInOrder(load,
             "nextLoad()",
             "$('#ProfileForm').prop('disabled', true)",
-            "loadFeed().then(function () {",
-            "if (!isLatest())",
             "Promise.resolve(profileSvc.getMyProfile())",
+            "if (!isLatest())",
             "paintProfile(p)",
             unlock,
             "}, function () {",
+            "if (!isLatest())",
             "profile = null;",
             "js-grants-load-retry");
-        Count(load, "if (!isLatest())").ShouldBe(3, "profil adımının başarı ve hata dalları ile ara adım bayat yanıtı yutmalı");
+        Count(load, "if (!isLatest())").ShouldBe(2, "profil okumasının başarı ve hata dalları bayat yanıtı yutmalı");
 
         // Yükleniyor kutusu yalnız profil henüz boyanmamışken: kayıt sonrası yeniden yükleme açık
         // editörü büyük blokla aşağı itmez; kilit yine her yüklemede konur.
@@ -116,6 +116,61 @@ public class GrantFirmProfileEditorScript_Tests
 
         script.ShouldContain("var nextLoad = apya.latest();");
         script.ShouldContain(".on('click', '.js-grants-load-retry'");
+    }
+
+    /// <summary>
+    /// Profil okuması akışı BEKLEMEZ: iki istek aynı anda başlar, form kilidini ve Kaydet'i yalnız
+    /// profil okuması açar. Eskiden profil akıştan SONRA okunuyordu; canlıda open-calls 15 sn'de
+    /// düşerken my-profile 2,6 sn'de gelmişti ve editör akış boyunca "yükleniyor" kilidinde kaldı.
+    /// Akış sözü zincirlenmez ve döndürülmez: load()'un sözünü bekleyen Kaydet de akışı beklemez.
+    /// </summary>
+    [Fact]
+    public void Profil_okumasi_akisi_beklemez()
+    {
+        var load = Body(Script(), "function load()");
+
+        load.ShouldNotContain("loadFeed().then(");
+        load.ShouldNotContain("Promise.all");
+        Count(load, "loadFeed(").ShouldBe(1);
+        ShouldAppearInOrder(load,
+            "        loadFeed();\n",
+            "        return Promise.resolve(profileSvc.getMyProfile()).then(function (p) {");
+    }
+
+    /// <summary>
+    /// "N çağrı daha ölçülebilir" sayısı akıştan gelir. Akış gelmeden ya da düşünce boş dizi
+    /// "0 çağrı" diye okunuyordu (canlı: gerçek değer 1 iken open-calls 500'de "0 çağrı"). Sayı
+    /// yalnız son akış okuması başarıyla gelince basılır; bayrak her okumanın başında düşer, böylece
+    /// kayıt sonrası yeni profil eski akışın sayısıyla eşlenmez. Hata dalı cümleyi yeniden boyayıp
+    /// boşaltır. Eksiksiz profilin cümlesi akışa bağlı değil.
+    /// </summary>
+    [Fact]
+    public void Kazanc_cumlesi_akis_gelmeden_ya_da_dusunce_sayi_basmaz()
+    {
+        var script = Script();
+        script.ShouldContain("var feedLoaded = false;");
+        Count(script, "feedLoaded = true;").ShouldBe(1, "sayıyı yalnız akışın başarı dalı açmalı");
+
+        var gain = Body(script, "function paintGain()");
+        ShouldAppearInOrder(gain,
+            "if (!profile) { return; }",
+            "profile.missingFieldCount === 0",
+            "l('Grants:Feed:Profile:Full')",
+            ": feedLoaded ? l('Grants:Feed:Profile:Gain', conditional) : ''");
+        Count(gain, "l('Grants:Feed:Profile:Gain'").ShouldBe(1);
+
+        var feed = Body(script, "function loadFeed()");
+        ShouldAppearInOrder(feed,
+            "nextFeed()",
+            "feedLoaded = false;",
+            "recoSvc.getOpenCalls()",
+            "if (!isLatest())",
+            "feedLoaded = true;",
+            "paintGain();",
+            "}, function () {",
+            "if (!isLatest())",
+            "feedFailed = true;",
+            "paintGain();");
     }
 
     /// <summary>
