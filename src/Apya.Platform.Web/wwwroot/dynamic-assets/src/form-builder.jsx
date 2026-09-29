@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
+import { ModalPortal } from './components/ui/ModalPortal';
 import { publicFormPath } from './lib/publicFormLink';
 import { OPEN_GRANT_CALLS, withChoiceParam, CHOICE_SOURCES, sourceLabel } from './lib/formChoices';
 import { VISIBLE_WHEN, OPS, OP_LABELS, flagLabel } from './lib/formConditions';
@@ -793,8 +794,10 @@ export function FormBuilder() {
 
   return (
     <div className="min-h-[calc(100vh-120px)] bg-surface-sunken pb-24">
-      {/* top bar */}
-      <div className="sticky top-0 z-20 border-b border-default bg-surface-raised">
+      {/* top bar — kabuğun yapışkan üst çubuğunun (--apya-header-h) ALTINA yapışır; top-0 iken onun
+          altında kalıyor, Kaydet/Yayınla kaydırınca görünmüyordu. z-index bilerek düşük: üst çubuğun
+          açılır menüleri bu çubuğun üstünde kalmalı. */}
+      <div className="sticky top-[var(--apya-header-h,0px)] z-20 border-b border-default bg-surface-raised">
         <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div className="flex items-center gap-3">
             <a href="/DynamicAssets" className="text-sm font-semibold text-text-secondary hover:text-text-primary">← Formlar</a>
@@ -890,11 +893,25 @@ export function PublishModal({ formId, slug, settingsJson, published, onPublishe
   const [captcha, setCaptcha] = useState(!!initial.captcha);
   const [publishing, setPublishing] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState(null);
+  // Onay kutusu açıkken Escape onu kapatır; pencereyi de kapatmasın.
+  const confirmOpenRef = useRef(false);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !confirmOpenRef.current && !publishing) onClose?.();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose, publishing]);
 
   const doPublish = async () => {
     const nextSlug = slugVal?.trim() || null;
-    if (published && nextSlug && nextSlug !== slug
-      && !(await confirmAction('Bağlantı adresi değişecek. Daha önce paylaşılan bağlantı artık açılmaz. Devam edilsin mi?'))) return;
+    if (published && nextSlug && nextSlug !== slug) {
+      confirmOpenRef.current = true;
+      const ok = await confirmAction('Bağlantı adresi değişecek. Daha önce paylaşılan bağlantı artık açılmaz. Devam edilsin mi?');
+      confirmOpenRef.current = false;
+      if (!ok) return;
+    }
     setPublishing(true);
     try {
       const dto = await api.post(`/api/app/form/${formId}/publish`, {
@@ -915,12 +932,22 @@ export function PublishModal({ formId, slug, settingsJson, published, onPublishe
   const publicUrl = publishedSlug ? `${window.location.origin}${publicFormPath(publishedSlug)}` : null;
   const copyLink = (url) => { if (url) navigator.clipboard?.writeText(url); notify('success', 'Bağlantı kopyalandı.'); };
 
+  /* Portal + z-modal: ada sarmalayıcısının transform'u fixed katmanı sarmalayıcıya hizalıyordu
+     (karartma kenar/üst çubuğu örtmüyor, başlık ve ✕ üst çubuğun altında kalıyordu; bkz. ModalPortal).
+     Gövde görünür alanla sınırlı ve kaydırılabilir: yayındaki formun bağlantı satırı pencereyi uzatıyor. */
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-surface-raised p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+    <ModalPortal>
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-surface-overlay p-4" onClick={onClose}>
+      <div
+        className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-surface-raised p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="publish-modal-title"
+      >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-text-primary">Formu Yayınla</h2>
-          <button onClick={onClose} className="rounded p-1 text-text-tertiary hover:bg-surface-sunken">✕</button>
+          <h2 id="publish-modal-title" className="text-lg font-bold text-text-primary">Formu Yayınla</h2>
+          <button onClick={onClose} aria-label="Kapat" className="rounded p-1 text-text-tertiary hover:bg-surface-sunken">✕</button>
         </div>
         {!publicUrl ? (
           <div className="flex flex-col gap-4">
@@ -966,6 +993,7 @@ export function PublishModal({ formId, slug, settingsJson, published, onPublishe
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 }
 

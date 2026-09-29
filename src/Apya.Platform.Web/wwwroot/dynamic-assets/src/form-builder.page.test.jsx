@@ -294,6 +294,56 @@ describe('Form oluşturucu · yayın penceresi (STA-07, DOC-03)', () => {
   });
 });
 
+describe('Form oluşturucu · yayın penceresi katmanı ve Escape', () => {
+  const dialog = () => screen.getByRole('dialog', { name: 'Formu Yayınla' });
+  const escape = () => fireEvent.keyDown(document, { key: 'Escape' });
+
+  it('pencere gövdeye taşınır, görünür alanla sınırlı ve kaydırılabilir', async () => {
+    await renderLoaded();
+    fireEvent.click(publishButton());
+    await screen.findByText('Formu Yayınla');
+
+    // Portal: ada kökünün (transform'lu sarmalayıcı) dışında, doğrudan gövdenin çocuğu.
+    const overlay = dialog().parentElement;
+    expect(overlay.parentElement).toBe(document.body);
+    expect(overlay.className).toContain('z-modal');
+    expect(dialog().className).toContain('overflow-y-auto');
+    expect(dialog().className).toContain('max-h-[calc(100vh-2rem)]');
+    expect(dialog()).toHaveAttribute('aria-modal', 'true');
+  });
+
+  it('Escape pencereyi kapatır', async () => {
+    await renderLoaded();
+    fireEvent.click(publishButton());
+    await screen.findByText('Formu Yayınla');
+
+    escape();
+    await waitFor(() => expect(screen.queryByText('Formu Yayınla')).not.toBeInTheDocument());
+  });
+
+  it('bağlantı onayı açıkken Escape pencereyi kapatmaz', async () => {
+    loadForm = () => Promise.resolve(formDto({ status: 1 }));
+    let answer;
+    window.abp.message.confirm = vi.fn((message, title, cb) => { answer = cb; });
+    await renderLoaded();
+    fireEvent.click(publishButton());
+    await screen.findByText('Formu Yayınla');
+
+    fireEvent.change(modal().getByPlaceholderText('musteri-memnuniyet'), { target: { value: 'yeni-adres' } });
+    fireEvent.click(modal().getByRole('button', { name: 'Ayarları güncelle' }));
+    await waitFor(() => expect(window.abp.message.confirm).toHaveBeenCalledTimes(1));
+
+    escape();
+    await settle();
+    expect(screen.getByText('Formu Yayınla')).toBeInTheDocument();
+
+    await act(async () => { answer(false); });
+    escape();
+    await waitFor(() => expect(screen.queryByText('Formu Yayınla')).not.toBeInTheDocument());
+    expect(api.post).not.toHaveBeenCalled();
+  });
+});
+
 describe('Form oluşturucu · bozuk koşul (DOC-02)', () => {
   const brokenForm = (over = {}) => formDto({
     blocks: [
