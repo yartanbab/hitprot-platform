@@ -218,6 +218,10 @@
         </button>
     </div>
 
+    @* --- Liste yüklenemedi: hata kartı + Tekrar dene (Index.js basar). Izgaranın
+         DIŞINDA — kart tek ızgara hücresine sıkışmasın. --- *@
+    <div id="ProjectsLoadError" hidden></div>
+
     @* --- Hiç proje yok: boş durum + şablon kartları --- *@
     <div id="ProjectsEmpty" hidden>
         <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-rocket", Title = "Henüz proje yok", Description = "İlk projenizi ekleyin; bütçe, görev ve gecikme takibi bu ekranda kendiliğinden oluşur." }' />

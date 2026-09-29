@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Shouldly;
 using Xunit;
@@ -124,5 +125,134 @@ public class ListLoadFailureScripts_Tests
         var loadState = Web("wwwroot", "js", "apya-load-state.js");
         loadState.ShouldContain("failTable: failTable");
         loadState.ShouldContain("tableFailed: tableFailed");
+    }
+
+    // ─────────────────────────── PRJ-04, RES-05: Projeler ───────────────────────────
+
+    /// <summary>
+    /// Projeler iskeletle açılır; "Henüz proje yok" + şablon kartları yalnız başarılı ve gerçekten boş
+    /// yanıtta basılır, KPI'lar liste gelene kadar "—". Liste hiç gelmeden yükleme düşerse ızgaranın
+    /// DIŞINDAKİ kutuya kart + Tekrar dene (reload); devam sayfası düşerse eldeki liste korunur.
+    /// </summary>
+    [Fact]
+    public void Projeler_yuklenirken_ve_hatada_bos_durum_ve_sifir_KPI_basmaz()
+    {
+        var script = Web("Pages", "Projects", "Index.js");
+
+        ShouldAppearInOrder(Between(script, "var state = {", "};"), "loading: true,", "loadFailed: false,");
+
+        var kpis = Between(script, "function renderKpis() {", "function renderFilters()");
+        ShouldAppearInOrder(kpis,
+            "if (!all.length && (state.loading || state.loadFailed)) {",
+            "$('#KpiActiveProjects, #KpiTotalBudget, #KpiAvgProgress, #KpiAtRisk').text('—');",
+            "} else {",
+            "$('#KpiActiveProjects').text(");
+
+        var body = Between(script, "function renderBody() {", "function renderSortIndicators()");
+        ShouldAppearInOrder(body,
+            "var waiting = !state.items.length && state.loading;",
+            "var failed = !state.items.length && !state.loading && state.loadFailed;",
+            "var noProjectsAtAll = !state.items.length && !waiting && !failed;",
+            "$('#ProjectsEmpty').prop('hidden', !noProjectsAtAll);",
+            "$('#ProjectsLoadError').prop('hidden', !failed);",
+            "$('#ProjectsList').prop('hidden', failed || noProjectsAtAll",
+            "$('#ProjectsGrid').prop('hidden', failed || noProjectsAtAll",
+            "if (waiting) {",
+            "$('#ProjectsListBody').html(ROW_SKELETON);",
+            "$('#ProjectsGrid').html(CARD_SKELETON);",
+            "} else if (noResult) {");
+        // İskelet .apya-tile taşımaz: kutunun zemini parıltıyı ezer.
+        Between(script, "var CARD_SKELETON", "function renderBody()").ShouldNotContain("apya-tile");
+
+        var page = Web("Pages", "Projects", "Index.cshtml");
+        ShouldAppearInOrder(page,
+            "id=\"ProjectsGrid\"",
+            "<div id=\"ProjectsLoadError\" hidden></div>",
+            "<div id=\"ProjectsEmpty\" hidden>");
+    }
+
+    /// <summary>
+    /// Yükleme isteği ABP penceresini açmaz (karar 2); hata kartı yalnız liste hiç gelmediyse basılır.
+    /// jQuery zincirinde kalır: Promise.resolve'a sarılsaydı "throw e" yakalanmamış ret (telemetri) olurdu.
+    /// </summary>
+    [Fact]
+    public void Projeler_yukleme_hatasi_kart_ve_Tekrar_dene_tasir_devam_hatasi_listeyi_korur()
+    {
+        var script = Web("Pages", "Projects", "Index.js");
+
+        var load = Between(script, "function load(append) {", "function reload()");
+        ShouldAppearInOrder(load,
+            "state.loadFailed = false;",
+            "if (!append && !state.items.length) { render(); }",
+            "}, { abpHandleError: false }).then(function (res) {",
+            "}).catch(function (e) {",
+            "state.loading = false;",
+            "if (!state.items.length) {",
+            "state.loadFailed = true;",
+            "apya.loadState.errorHtml(l('Project:List:LoadFailed'), 'js-projects-retry', e)",
+            "} else {",
+            "state.truncated = true;",
+            "render();",
+            "throw e;");
+        Count(load, "state.loadFailed = true;").ShouldBe(1);
+        load.ShouldNotContain("Promise.resolve(");
+
+        script.ShouldContain(
+            "$('#ProjectsLoadError').on('click', '.js-projects-retry', function () {\n" +
+            "        $(this).prop('disabled', true);\n" +
+            "        reload();");
+    }
+
+    // ─────────────────────────── RES-06: Bildirimler ───────────────────────────
+
+    /// <summary>
+    /// Spinner sonsuza dek dönmez: ilk yükleme/süzgeç hatası listeyi kartla değiştirir. "Daha fazla"
+    /// düşerse eldeki liste korunur, ofset geri alınır (tekrar deneme aynı sayfayı ister — eskiden
+    /// 15 bildirim sessizce atlanıyordu) ve kart listenin sonuna basılır. Bayat ret de yutulur.
+    /// </summary>
+    [Fact]
+    public void Bildirimler_yukleme_hatasinda_kart_basar_Daha_fazla_hatasi_kayit_atlatmaz()
+    {
+        var script = Web("Pages", "Notifications", "Index.js");
+
+        var load = Between(script, "function loadNotifications", "function reload");
+        ShouldAppearInOrder(load,
+            "Promise.resolve(notificationService.getMyNotifications(buildInput(), { abpHandleError: false }))",
+            "if (!isLatest()) { return; }",
+            "}, function (err) {",
+            "if (!isLatest()) { return; }",
+            "if (append) {",
+            "state.skipCount = Math.max(0, state.skipCount - PAGE_SIZE);",
+            "$list.append(apya.loadState.errorHtml(l('Notification:List:LoadFailed'), 'js-notif-more-retry', err));",
+            "return;",
+            "$list.html(apya.loadState.errorHtml(l('Notification:List:LoadFailed'), 'js-notif-retry', err));",
+            "$('#load-more-btn, #no-more-notif').addClass('d-none');");
+        Count(load, "if (!isLatest())").ShouldBe(2);
+
+        script.ShouldContain(
+            "$list.on('click', '.js-notif-retry', function () {\n" +
+            "        $(this).prop('disabled', true);\n" +
+            "        reload();");
+        // "Daha fazla" kartı kalkar ve AYNI sayfa istenir (ofset düğmenin işleyicisinde yeniden artar).
+        ShouldAppearInOrder(Between(script, "$list.on('click', '.js-notif-more-retry'", "});"),
+            ".remove();",
+            "$('#load-more-btn').trigger('click');");
+    }
+
+    [Theory]
+    [InlineData("Project:List:LoadFailed")]
+    [InlineData("Notification:List:LoadFailed")]
+    public void Kart_basliklari_iki_dilde_de_var(string key)
+    {
+        foreach (var culture in new[] { "tr", "en" })
+        {
+            var raw = ReadSource("src", "Apya.Platform.Domain.Shared", "Localization", "Platform", culture + ".json");
+            // Yinelenen anahtar sessizce ezer (JSON birleştirmesi hata vermez).
+            Count(raw, $"\"{key}\":").ShouldBe(1, $"{key} {culture}.json'da tam bir kez olmalı.");
+
+            using var json = JsonDocument.Parse(raw);
+            json.RootElement.GetProperty("texts").GetProperty(key).GetString()
+                .ShouldNotBeNullOrWhiteSpace();
+        }
     }
 }

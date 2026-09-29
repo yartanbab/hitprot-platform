@@ -49,8 +49,10 @@ $(function () {
     var state = {
         items: [],
         totalCount: 0,
-        loading: false,
-        truncated: false,      // AUTOLOAD_MAX'a takıldı mı?
+        // İlk çizim iskeletle açılır: liste gelmeden "Henüz proje yok" ve 0 KPI basılmaz.
+        loading: true,
+        loadFailed: false,     // liste hiç gelmeden yükleme düştü mü? (hata kartı)
+        truncated: false,      // AUTOLOAD_MAX'a takıldı ya da devam sayfası yüklenemedi mi?
         query: '',
         filter: 'all',         // all | risk | overdue | week | grant | event
         sort: 'urgency',       // urgency | name | budget | progress
@@ -485,23 +487,32 @@ $(function () {
     function renderKpis() {
         var all = state.items;
 
-        $('#KpiActiveProjects').text(all.filter(function (p) { return p.displayStatus !== 'Planlama'; }).length);
-        if (CAN_VIEW_BUDGET) {
-            $('#KpiTotalBudget').text(money(all.reduce(function (s, p) { return s + (p.totalBudget || 0); }, 0)));
-        }
-        $('#KpiAvgProgress').text('%' + (all.length
-            ? Math.round(all.reduce(function (s, p) { return s + (p.progressPercent || 0); }, 0) / all.length)
-            : 0));
-        // Risk KPI'ı çip sayacıyla ve satır kenarlarıyla AYNI fonksiyondan gelir;
-        // aksi hâlde "şeritte 2, ekranda 3 kırmızı kenar" tutarsızlığı olurdu.
-        $('#KpiAtRisk').text(all.filter(function (p) { return riskOf(p) === 'high'; }).length);
+        // Liste hiç gelmediyse (yükleniyor ya da yüklenemedi) proje sayaçları "—": boş
+        // diziden hesaplanan "0 aktif proje · %0" yalan olurdu. Görev sayaçları ayrı
+        // servisten gelir; gelmişse yazılır.
+        if (!all.length && (state.loading || state.loadFailed)) {
+            $('#KpiActiveProjects, #KpiTotalBudget, #KpiAvgProgress, #KpiAtRisk').text('—');
+            $('#KpiOverdueTasks').text(state.taskKpi.overdue !== null ? state.taskKpi.overdue : '—');
+            $('#KpiUpcomingTasks').text(state.taskKpi.upcoming !== null ? state.taskKpi.upcoming : '—');
+        } else {
+            $('#KpiActiveProjects').text(all.filter(function (p) { return p.displayStatus !== 'Planlama'; }).length);
+            if (CAN_VIEW_BUDGET) {
+                $('#KpiTotalBudget').text(money(all.reduce(function (s, p) { return s + (p.totalBudget || 0); }, 0)));
+            }
+            $('#KpiAvgProgress').text('%' + (all.length
+                ? Math.round(all.reduce(function (s, p) { return s + (p.progressPercent || 0); }, 0) / all.length)
+                : 0));
+            // Risk KPI'ı çip sayacıyla ve satır kenarlarıyla AYNI fonksiyondan gelir;
+            // aksi hâlde "şeritte 2, ekranda 3 kırmızı kenar" tutarsızlığı olurdu.
+            $('#KpiAtRisk').text(all.filter(function (p) { return riskOf(p) === 'high'; }).length);
 
-        // Görev sayaçları proje kaydında değil, görev servisinde. Yüklenene kadar
-        // yerel toplam gösterilir ki şerit hiç boş kalmasın.
-        $('#KpiOverdueTasks').text(state.taskKpi.overdue !== null
-            ? state.taskKpi.overdue
-            : all.reduce(function (s, p) { return s + (p.overdueTaskCount || 0); }, 0));
-        $('#KpiUpcomingTasks').text(state.taskKpi.upcoming !== null ? state.taskKpi.upcoming : '—');
+            // Görev sayaçları proje kaydında değil, görev servisinde. Yüklenene kadar
+            // yerel toplam gösterilir ki şerit hiç boş kalmasın.
+            $('#KpiOverdueTasks').text(state.taskKpi.overdue !== null
+                ? state.taskKpi.overdue
+                : all.reduce(function (s, p) { return s + (p.overdueTaskCount || 0); }, 0));
+            $('#KpiUpcomingTasks').text(state.taskKpi.upcoming !== null ? state.taskKpi.upcoming : '—');
+        }
 
         $console.find('[data-kpi-filter]').each(function () {
             var active = $(this).data('kpi-filter') === state.filter;
@@ -573,11 +584,21 @@ $(function () {
         );
     }
 
+    // Yükleniyor iskeleti: yalın .apya-skeleton blokları (galeri/fatura emsali). .apya-tile
+    // KULLANILMAZ — apya-shell.css'te iskeletten sonra tanımlı zemini parıltıyı ezer.
+    var CARD_SKELETON = new Array(7).join('<div class="apya-skeleton" aria-hidden="true" style="height:220px;border-radius:var(--apya-radius-xl)"></div>');
+    var ROW_SKELETON = new Array(7).join('<div class="apya-skeleton" aria-hidden="true" style="height:44px;margin:8px 12px"></div>');
+
     function renderBody() {
         var list = visible();
         var effectiveView = state.narrow ? 'card' : state.view;
 
-        var noProjectsAtAll = state.items.length === 0 && !state.loading;
+        // Liste hiç gelmediyse: yüklenirken iskelet, yükleme düştüyse hata kartı. İkisi de
+        // "Henüz proje yok" boş durumunu ve şablon kartlarını bastırır — boş durum yalnız
+        // başarılı ve gerçekten 0 kayıtlı yanıtta basılır.
+        var waiting = !state.items.length && state.loading;
+        var failed = !state.items.length && !state.loading && state.loadFailed;
+        var noProjectsAtAll = !state.items.length && !waiting && !failed;
         var noResult = state.items.length > 0 && list.length === 0;
         // Kurulum ipucu şeridi YALNIZ kiracının gerçekten tek projesi varken —
         // filtre bir sonuca indiği için değil. Görünüm biçimi değişmez, yalnız
@@ -586,12 +607,22 @@ $(function () {
         var stepsMarkup = singleProject ? stepsHtml(list[0]) : '';
 
         $('#ProjectsEmpty').prop('hidden', !noProjectsAtAll);
+        $('#ProjectsLoadError').prop('hidden', !failed);
         $('#ProjectsNoResult').prop('hidden', !noResult);
         $('#ProjectsSteps').prop('hidden', !stepsMarkup).html(stepsMarkup);
-        $('#ProjectsList').prop('hidden', noProjectsAtAll || noResult || effectiveView !== 'list');
-        $('#ProjectsGrid').prop('hidden', noProjectsAtAll || noResult || effectiveView !== 'card');
+        $('#ProjectsList').prop('hidden', failed || noProjectsAtAll || noResult || effectiveView !== 'list');
+        $('#ProjectsGrid').prop('hidden', failed || noProjectsAtAll || noResult || effectiveView !== 'card');
 
-        if (noResult) {
+        if (waiting) {
+            // Etkin görünümün kabına iskelet; yeni proje kartı iskelette basılmaz.
+            if (effectiveView === 'list') {
+                $('#ProjectsListBody').html(ROW_SKELETON);
+                $('#ProjectsGrid').empty();
+            } else {
+                $('#ProjectsGrid').html(CARD_SKELETON);
+                $('#ProjectsListBody').empty();
+            }
+        } else if (noResult) {
             $('#ProjectsNoResultHint').text(state.query
                 ? '"' + state.query + '" için ' + filterByKey(state.filter).label.toLocaleLowerCase('tr') + ' filtresinde sonuç yok.'
                 : filterByKey(state.filter).label + ' filtresinde proje yok.');
@@ -859,11 +890,14 @@ $(function () {
     // ============================================================== YÜKLEME
     function load(append) {
         state.loading = true;
+        state.loadFailed = false;
+        // Liste boşken (açılış, reload, Tekrar dene) hemen iskelet: hata kartı istek sürerken kalmaz.
+        if (!append && !state.items.length) { render(); }
         return projectService.getList({
             skipCount: append ? state.items.length : 0,
             maxResultCount: PAGE_SIZE,
             sorting: 'name asc'
-        }).then(function (res) {
+        }, { abpHandleError: false }).then(function (res) {
             state.totalCount = res.totalCount;
             state.items = append ? state.items.concat(res.items || []) : (res.items || []);
             state.loading = false;
@@ -879,7 +913,18 @@ $(function () {
             }
             render();
         }).catch(function (e) {
+            // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2). Liste hiç
+            // gelmediyse kart + Tekrar dene; devam sayfası düştüyse eldeki liste korunur,
+            // "(ilk N)" etiketi ve "Daha fazla yükle" tekrar yolu olarak kalır.
+            // jQuery zincirinde kalır: Promise.resolve'a sarılsaydı "throw e" yakalanmamış
+            // ret (unhandledrejection → telemetri) olurdu.
             state.loading = false;
+            if (!state.items.length) {
+                state.loadFailed = true;
+                $('#ProjectsLoadError').html(apya.loadState.errorHtml(l('Project:List:LoadFailed'), 'js-projects-retry', e));
+            } else {
+                state.truncated = true;
+            }
             render();
             throw e;
         });
@@ -1169,6 +1214,10 @@ $(function () {
     });
 
     $('#ProjectsLoadMore').on('click', function () { load(true); });
+    $('#ProjectsLoadError').on('click', '.js-projects-retry', function () {
+        $(this).prop('disabled', true);
+        reload();
+    });
 
     // ------------------------------------------- KAP ÖLÇÜMÜ (viewport DEĞİL)
     // Genişlik HER render'da yeniden okunur; gözlemci yalnız "başka hiçbir şey
