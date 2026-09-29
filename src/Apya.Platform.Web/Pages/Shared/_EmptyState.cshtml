@@ -11,21 +11,62 @@
     ActionUrl verilirse eylem <a href>, yoksa <button type="button">.
     Hata: Variant = EmptyStateVariant.Error → soluk balon + uyarı üçgeni + role="alert"; eylem
     kanonik "Tekrar dene" (btn-outline-primary + fa-rotate-right). Kilit: EmptyStateVariant.Locked.
+    Tam sayfa (hata sayfası, /AccessDenied): EmptyStateVariant.Page + ErrorStates → başlık sayfa
+    başlığıdır, Kind (data-apya-state), Details/Hint/Footnote, SecondaryActions. Geri/yeniden yükle
+    (EmptyStateAction.Back/Retry) aşağıdaki küçük betiğe bağlanır; betik yalnız onlar varken basılır.
 *@
 @model Apya.Platform.Web.Pages.Shared.EmptyStateModel
 @{
     var action = Model.BuildAction();
+    var secondaryActions = Model.BuildSecondaryActions();
 }
 
-<div class="apya-console-state @Model.CssClass" id="@Model.Id" role="@Model.Role">
+<div class="apya-console-state @Model.CssClass" id="@Model.Id" role="@Model.Role" data-apya-state="@Model.Kind">
     <span class="apya-console-state-icon @(Model.IsMuted ? "is-muted" : null)"><i class="fa @Model.IconClass" aria-hidden="true"></i></span>
-    <strong>@Model.Title</strong>
+    <strong role="@(Model.IsPageHeading ? "heading" : null)" aria-level="@(Model.IsPageHeading ? "1" : null)">@Model.Title</strong>
     @if (!string.IsNullOrEmpty(Model.Description))
     {
         <p>@Model.Description</p>
     }
-    @if (action != null)
+    @if (Model.Details is { Count: > 0 })
     {
-        <span class="apya-console-state-actions">@action</span>
+        <ul class="small text-start mb-0">
+            @foreach (var detail in Model.Details)
+            {
+                <li>@detail</li>
+            }
+        </ul>
+    }
+    @if (!string.IsNullOrEmpty(Model.Hint))
+    {
+        <p>@Model.Hint</p>
+    }
+    @if (action != null || secondaryActions.Count > 0)
+    {
+        <span class="apya-console-state-actions">@(action)@foreach (var secondary in secondaryActions) { @secondary }</span>
+    }
+    @if (!string.IsNullOrEmpty(Model.Footnote))
+    {
+        <p class="apya-numeric">@Model.Footnote</p>
     }
 </div>
+@if (Model.HasClientHooks)
+{
+    @* jQuery'siz (sayfa demetinden önce çalışır); yalnız kendi kökünü bağlar. Geçmiş yoksa
+       (yeni sekme) "Geri dön" gizli kalır; JS yoksa da gizlidir. *@
+    <script>
+        (function () {
+            var root = document.currentScript && document.currentScript.previousElementSibling;
+            if (!root) { return; }
+            var back = root.querySelector('[data-apya-back]');
+            if (back && window.history.length > 1) {
+                back.hidden = false;
+                back.addEventListener('click', function () { window.history.back(); });
+            }
+            var retry = root.querySelector('[data-apya-retry]');
+            if (retry) {
+                retry.addEventListener('click', function () { window.location.reload(); });
+            }
+        })();
+    </script>
+}

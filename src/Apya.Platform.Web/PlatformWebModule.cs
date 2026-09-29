@@ -833,7 +833,7 @@ public class PlatformWebModule : AbpModule
     /// Her iki durumda da istemci gerçek hata zarfını hiç göremez. Bu yüzden hata
     /// sayfası yalnız HTML gezinmelerine bağlanır; API/AJAX ham durum kodunu alır.
     /// </summary>
-    private static bool IsHtmlNavigation(HttpContext ctx)
+    internal static bool IsHtmlNavigation(HttpContext ctx)
     {
         var request = ctx.Request;
 
