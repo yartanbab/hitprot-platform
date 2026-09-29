@@ -113,15 +113,18 @@
     </div>
 
     <div id="TplEmpty" class="d-none text-center pb-5">
-        <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel
-        {
-            Icon = "fa-diagram-project",
-            Title = L["Grants:StageTemplates:Empty"].Value,
-            Description = L["Grants:StageTemplates:EmptyHint"].Value,
-            CssClass = "pb-3"
-        }' />
-        <button type="button" id="TplEmptyNewBtn" class="btn btn-outline-secondary">
-            <i class="fa fa-plus me-1"></i>@L["Grants:StageTemplates:New"]
-        </button>
+        @* Eylem partial'ın yuvasında (CON-14); id JS kancasıdır (StageTemplates.js #TplEmptyNewBtn). *@
+        @{
+            var tplEmpty = new Apya.Platform.Web.Pages.Shared.EmptyStateModel
+            {
+                Icon = "fa-diagram-project",
+                Title = L["Grants:StageTemplates:Empty"].Value,
+                Description = L["Grants:StageTemplates:EmptyHint"].Value,
+                ActionText = L["Grants:StageTemplates:New"].Value,
+                ActionIcon = "fa-plus",
+                ActionAttributes = new Dictionary<string, string> { ["id"] = "TplEmptyNewBtn", ["class"] = "btn btn-outline-secondary" }
+            };
+        }
+        <partial name="_EmptyState" model="tplEmpty" />
     </div>
 </div>

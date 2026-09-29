@@ -96,7 +96,8 @@ public class EmptyStateModel
 
     /// <summary>
     /// Eyleme eklenecek öznitelikler (data-* JS kancaları). "class" verilirse varsayılan düğme
-    /// sınıfının YERİNE geçer.
+    /// sınıfının YERİNE geçer — JS kancası için class VERME, data-* (ya da id) kullan: class kanonik
+    /// sınıfları (Error'da "Tekrar dene" görünümü) ezer. class yalnız görünümü bilerek değiştirmek içindir.
     /// </summary>
     public IDictionary<string, string>? ActionAttributes { get; set; }
 

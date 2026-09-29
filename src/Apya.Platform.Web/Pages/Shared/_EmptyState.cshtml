@@ -11,12 +11,26 @@
     ActionUrl verilirse eylem <a href>, yoksa <button type="button">.
     Hata: Variant = EmptyStateVariant.Error → soluk balon + uyarı üçgeni + role="alert"; eylem
     kanonik "Tekrar dene" (btn-outline-primary + fa-rotate-right). Kilit: EmptyStateVariant.Locked.
+    Hatanın varsayılan metinleri burada (model yerelleştirmeye erişmez; errorHtml / React ile aynı):
+    Description null → Common:FetchError ("" → açıklama yok); eylem hedefi (ActionUrl ya da
+    ActionAttributes kancası) verilip ActionText boşsa → Common:Retry.
     Tam sayfa (hata sayfası, /AccessDenied): EmptyStateVariant.Page + ErrorStates → başlık sayfa
     başlığıdır, Kind (data-apya-state), Details/Hint/Footnote, SecondaryActions. Geri/yeniden yükle
     (EmptyStateAction.Back/Retry) aşağıdaki küçük betiğe bağlanır; betik yalnız onlar varken basılır.
 *@
+@using Apya.Platform.Web.Pages.Shared
 @model Apya.Platform.Web.Pages.Shared.EmptyStateModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
+    if (Model.Variant == EmptyStateVariant.Error)
+    {
+        Model.Description ??= L["Common:FetchError"].Value;
+        if (string.IsNullOrWhiteSpace(Model.ActionText)
+            && (!string.IsNullOrEmpty(Model.ActionUrl) || Model.ActionAttributes is { Count: > 0 }))
+        {
+            Model.ActionText = L["Common:Retry"].Value;
+        }
+    }
     var action = Model.BuildAction();
     var secondaryActions = Model.BuildSecondaryActions();
 }

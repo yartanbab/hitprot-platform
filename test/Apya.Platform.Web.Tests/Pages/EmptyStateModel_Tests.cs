@@ -163,6 +163,100 @@ public class EmptyStateModel_Tests
         model.Role.ShouldBe(role);
     }
 
+    // ─────────────── Kaynak sözleşmesi (partial ve eylem yuvası kullanımları) ───────────────
+
+    /// <summary>Web projesindeki kaynak; çalışma ağacı CRLF (autocrlf), eşleşmeler LF üzerinden.</summary>
+    private static string WebSource(params string[] relative)
+    {
+        // Test, Web.Tests'in bin klasöründen koşar; kaynaklar depodan okunur.
+        var root = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "src", "Apya.Platform.Web");
+        var path = Path.Combine(root, Path.Combine(relative));
+        File.Exists(path).ShouldBeTrue($"Kaynak bulunamadı: {Path.GetFullPath(path)}");
+        return File.ReadAllText(path).Replace("\r\n", "\n");
+    }
+
+    private static void ShouldAppearInOrder(string text, params string[] parts)
+    {
+        var at = 0;
+        foreach (var part in parts)
+        {
+            var next = text.IndexOf(part, at, System.StringComparison.Ordinal);
+            next.ShouldBeGreaterThanOrEqualTo(0, $"'{part}' beklenen sırada bulunamadı.");
+            at = next + part.Length;
+        }
+    }
+
+    /// <summary>
+    /// PD3 metin ortaklığı: hata varyantının varsayılan metinleri JS errorHtml ve React EmptyState ile
+    /// aynı — açıklama verilmezse Common:FetchError, eylem hedefi (adres ya da kanca) verilip metin
+    /// verilmezse kanonik Common:Retry. Model C#'ta yerelleştirmeye erişmediği için kural partial'da;
+    /// hata varyantını basan sayfa henüz olmadığından kaynaktan kilitlenir (ilk tüketici G6).
+    /// Bozulma ekranda hata vermez: açıklamasız kart ya da metinsiz (hiç basılmayan) "Tekrar dene".
+    /// </summary>
+    [Fact]
+    public void Hata_varyantinin_varsayilan_metinleri_partialda()
+    {
+        var partial = WebSource("Pages", "Shared", "_EmptyState.cshtml");
+
+        partial.ShouldContain("@inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L");
+        ShouldAppearInOrder(partial,
+            "if (Model.Variant == EmptyStateVariant.Error)",
+            "Model.Description ??= L[\"Common:FetchError\"].Value;",
+            "if (string.IsNullOrWhiteSpace(Model.ActionText)",
+            "&& (!string.IsNullOrEmpty(Model.ActionUrl) || Model.ActionAttributes is { Count: > 0 }))",
+            "Model.ActionText = L[\"Common:Retry\"].Value;",
+            "var action = Model.BuildAction();");
+    }
+
+    /// <summary>
+    /// CON-14 eylem yuvası: partial'ın altına elle konan CTA'lar kartın 44 px alt dolgusundan kopuyordu
+    /// (aynı "boş durum + eylem" deseni iki biçimde yaşıyordu; Aşama şablonları bunu CssClass="pb-3" ile
+    /// yamıyordu). Görünüm ActionAttributes["class"] ile korunur, JS kancası id ile (StageTemplates.js).
+    /// </summary>
+    [Fact]
+    public void Elle_konan_CTA_lar_eylem_yuvasinda()
+    {
+        var panel = WebSource("Pages", "Projects", "_ProjectFinancePanel.cshtml");
+        ShouldAppearInOrder(panel,
+            "var noBudgetLines = new EmptyStateModel",
+            "Title = \"Bu projede bütçe kalemi yok\",",
+            "ActionText = \"Kalem tanımla\",",
+            "ActionUrl = $\"/Finance?projectId={Model.Id}&tab=kalemler\",",
+            "ActionIcon = \"fa-plus\",",
+            "ActionAttributes = new Dictionary<string, string> { [\"class\"] = \"btn btn-sm btn-outline-secondary\" }",
+            "<partial name=\"_EmptyState\" model=\"noBudgetLines\" />");
+        panel.ShouldNotContain("<a href=\"@($\"/Finance?projectId={Model.Id}&tab=kalemler\")\"");
+
+        var templates = WebSource("Pages", "Grants", "StageTemplates.cshtml");
+        ShouldAppearInOrder(templates,
+            "<div id=\"TplEmpty\"",
+            "ActionText = L[\"Grants:StageTemplates:New\"].Value,",
+            "ActionIcon = \"fa-plus\",",
+            "ActionAttributes = new Dictionary<string, string> { [\"id\"] = \"TplEmptyNewBtn\", [\"class\"] = \"btn btn-outline-secondary\" }",
+            "<partial name=\"_EmptyState\" model=\"tplEmpty\" />");
+        templates.ShouldNotContain("CssClass = \"pb-3\"");
+        templates.ShouldNotContain("<button type=\"button\" id=\"TplEmptyNewBtn\"");
+        WebSource("Pages", "Grants", "StageTemplates.js").ShouldContain("$('#TplNewBtn, #TplEmptyNewBtn').on('click', function () {");
+    }
+
+    /// <summary>
+    /// İlk yorum AJAX'la eklenince "Henüz yorum yapılmamış." boş durumu listede kalıyordu — yeni
+    /// yorumun altında "henüz yorum yok" yalanı (E ile blok büyüdüğü için daha görünür).
+    /// </summary>
+    [Fact]
+    public void Gorev_penceresi_ilk_yorumda_bos_durumu_kaldirir()
+    {
+        var modal = WebSource("Pages", "Tasks", "EditModal.cshtml");
+        var from = modal.IndexOf("$('#BtnAddComment').click(function () {", System.StringComparison.Ordinal);
+        from.ShouldBeGreaterThanOrEqualTo(0);
+
+        ShouldAppearInOrder(modal.Substring(from),
+            "$item.find('.comment-text').text(text);",
+            "$('#CommentList > .apya-console-state').remove();",
+            "$('#CommentList').prepend($item);",
+            "error: function (xhr)");
+    }
+
     /// <summary>
     /// Görünüm sözleşmesi sayfa render'ıyla (PD2=A: tüm kullanımlar .apya-console-state diline geçti).
     /// Ayrı sınıf: birim testleri test host'u kurmasın.
