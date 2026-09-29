@@ -12,7 +12,10 @@
     eksik kayıt, proje tarihleri dışındaki kayıt).
 *@
 @using Apya.Platform.Documents
+@using Apya.Platform.Localization
 @using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
 @model Apya.Platform.Web.Pages.Finance.IndexModel
 
 @functions {
@@ -42,15 +45,18 @@
 
 @if (fx == null || string.IsNullOrWhiteSpace(donorCur))
 {
-    <partial name="_EmptyState" model='new EmptyStateModel {
+    @* Eylem partial'ın yuvasında (CON-14): kartın alt dolgusu elle konan bağlantıyı koparmasın. *@
+    var noDonor = new EmptyStateModel
+    {
         Icon = "fa-file-export",
         Title = "Bu projede donör para birimi tanımlı değil",
-        Description = "Donör raporlaması, projenin donör para birimi ve kur politikası tanımlandıktan sonra anlam kazanır." }' />
-    <div class="text-center">
-        <a href="@Model.TabUrl(Apya.Platform.Web.Pages.Finance.FinanceContext.TabFxBridge)" class="btn btn-sm btn-outline-secondary">
-            <i class="fa fa-arrow-right-arrow-left me-1" aria-hidden="true"></i>Kur köprüsünü aç
-        </a>
-    </div>
+        Description = "Donör raporlaması, projenin donör para birimi ve kur politikası tanımlandıktan sonra anlam kazanır.",
+        ActionText = "Kur köprüsünü aç",
+        ActionUrl = Model.TabUrl(Apya.Platform.Web.Pages.Finance.FinanceContext.TabFxBridge),
+        ActionIcon = "fa-arrow-right-arrow-left",
+        ActionAttributes = new Dictionary<string, string> { ["class"] = "btn btn-sm btn-outline-secondary" }
+    };
+    <partial name="_EmptyState" model="noDonor" />
     return;
 }
 
@@ -169,8 +175,19 @@
                     <div class="d-flex flex-column gap-2">
                         @foreach (var f in Model.EligibilityFindings)
                         {
-                            <div class="d-flex align-items-start gap-2">
-                                <span class="apya-chip apya-chip-@f.Tone flex-shrink-0">@f.Count</span>
+                            @* Denetlenemeyen başlık sayı taşımaz (sayılmadı): soru simgesi. data-eligibility
+                               kültürden bağımsız test/canlı doğrulama kancası (null'da basılmaz). *@
+                            <div class="d-flex align-items-start gap-2" data-eligibility="@(f.Unverified ? "unverified" : null)">
+                                <span class="apya-chip apya-chip-@f.Tone flex-shrink-0">
+                                    @if (f.Unverified)
+                                    {
+                                        <i class="fa fa-circle-question" aria-hidden="true"></i>
+                                    }
+                                    else
+                                    {
+                                        @f.Count
+                                    }
+                                </span>
                                 <div class="flex-grow-1" style="min-width:0">
                                     <div class="fw-semibold" style="font-size:12.5px">
                                         @f.Title
@@ -207,12 +224,24 @@
                     <span class="fw-semibold">Rapor dönemleri</span>
                     <div class="small text-muted">Donöre giden paketler ve durumları</div>
                 </div>
-                <a href="@($"/Documents/Deliveries?projectId={projectId}")" class="btn btn-sm btn-outline-secondary">
-                    <i class="fa fa-file-export me-1" aria-hidden="true"></i>Teslimler
-                </a>
+                @if (!Model.DonorPackagesLocked)
+                {
+                    <a href="@($"/Documents/Deliveries?projectId={projectId}")" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-file-export me-1" aria-hidden="true"></i>Teslimler
+                    </a>
+                }
             </div>
 
-            @if (Model.DonorPackages.Count == 0)
+            @if (Model.DonorPackagesLocked)
+            {
+                @* Paketler okunamadı (Belgeler izni/paketi yok): "paket yok" DEĞİL, Teslimler (403) yok. *@
+                <div class="card-body">
+                    <partial name="_EmptyState" model='new EmptyStateModel {
+                        Variant = EmptyStateVariant.Locked,
+                        Title = L["Finance:Locked:DonorPackages"].Value }' />
+                </div>
+            }
+            else if (Model.DonorPackages.Count == 0)
             {
                 <div class="card-body">
                     <p class="text-muted mb-0" style="font-size:12.5px">

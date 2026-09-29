@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Shouldly;
@@ -90,8 +91,16 @@ public class FinanceIndexLocks_Tests
                 ? AuthorizationResult.Success()
                 : AuthorizationResult.Failed()));
 
+        // AbpPageModel.L → IStringLocalizerFactory.CreateDefaultOrNull() (IAbpStringLocalizerFactory):
+        // anahtarı aynen döndüren yerelleştirici — testler kültürden bağımsız anahtara bakar.
+        var localizer = Substitute.For<IStringLocalizer>();
+        localizer[Arg.Any<string>()].Returns(call => new LocalizedString(call.Arg<string>(), call.Arg<string>()));
+        var localizerFactory = Substitute.For<IStringLocalizerFactory, IAbpStringLocalizerFactory>();
+        ((IAbpStringLocalizerFactory)localizerFactory).CreateDefaultOrNull().Returns(localizer);
+
         var services = new ServiceCollection();
         services.AddSingleton<IAuthorizationService>(authorization);
+        services.AddSingleton(localizerFactory);
 
         return new IndexModel(
             _expenses, _incomes, _invoices, _cashAccounts, _cashMovements, _rates,
@@ -235,5 +244,123 @@ public class FinanceIndexLocks_Tests
         page.ActiveTab.ShouldBe(FinanceContext.TabLedger);
         page.IncomesLocked.ShouldBeFalse();
         page.ExpensesLocked.ShouldBeTrue();
+    }
+
+    // ─────────────────────────── Donör uygunluk denetimi (FIN-07) ───────────────────────────
+
+    private static readonly string[] DonorGrants =
+    {
+        PlatformPermissions.Projects.Default, PlatformPermissions.Projects.ViewBudget,
+        PlatformPermissions.Incomes.Default, PlatformPermissions.Expenses.Default
+    };
+
+    /// <summary>Hibe şablonlu proje + donör sekmesi; her kaynak okunur ve temizdir (test bozacağını bozar).</summary>
+    private IndexModel DonorPage(bool withDates = true)
+    {
+        var project = new ProjectDto
+        {
+            Id = Guid.NewGuid(),
+            Name = "Hibe projesi",
+            Currency = "TRY",
+            CategorySystemKey = ProjectCategory.GrantProject,
+            StartDate = withDates ? new DateTime(2026, 1, 1) : null,
+            EndDate = withDates ? new DateTime(2026, 12, 31) : null
+        };
+        _projects.GetListAsync(Arg.Any<PagedAndSortedResultRequestDto>())
+            .Returns(new PagedResultDto<ProjectDto>(1, new List<ProjectDto> { project }));
+        _budget.GetLinesAsync(project.Id).Returns(new List<ProjectBudgetLineDto>());
+        _fx.GetPolicyAsync(project.Id).Returns(new ProjectFxPolicyDto { ProjectId = project.Id, DonorCurrency = "EUR" });
+        _fx.GetBridgeAsync(project.Id).Returns(new ProjectFxBridgeDto
+        {
+            Policy = new ProjectFxPolicyDto { ProjectId = project.Id, DonorCurrency = "EUR" }
+        });
+        _matching.GetBoardAsync(project.Id).Returns(new MatchingBoardDto { ProjectId = project.Id });
+        _packages.GetListAsync(project.Id).Returns(new List<DeliveryPackageDto>());
+
+        var page = BuildPage(DonorGrants);
+        page.ProjectId = project.Id;
+        page.Tab = FinanceContext.TabDonor;
+        return page;
+    }
+
+    private static void ShouldBeUnverified(IndexModel page, string titleKey, string detailKey)
+    {
+        var row = page.EligibilityFindings.SingleOrDefault(f => f.Title == titleKey && f.Detail == detailKey);
+        row.ShouldNotBeNull($"'{titleKey}' / '{detailKey}' denetlenemedi satırı yok");
+        row.Unverified.ShouldBeTrue();
+        row.Count.ShouldBe(0);
+        row.Amount.ShouldBe(0m);
+    }
+
+    /// <summary>
+    /// Asıl canlı vaka: Basic pakette Documents kapalı → tahta okunamaz. "Bulgu yok" DEĞİL,
+    /// "Belge denetimi yapılamadı"; liste dolu olduğu için olumlu cümle basılamaz. Paketler de kilitli.
+    /// </summary>
+    [Fact]
+    public async Task Belge_tahtasi_okunamazsa_belge_denetimi_yapilamadi_ve_paketler_kilitli()
+    {
+        var page = DonorPage();
+        _matching.GetBoardAsync(Arg.Any<Guid>()).ThrowsAsync(new AbpAuthorizationException());
+        _packages.GetListAsync(Arg.Any<Guid>()).ThrowsAsync(new AbpAuthorizationException());
+
+        await page.OnGetAsync();
+
+        page.ActiveTab.ShouldBe(FinanceContext.TabDonor);
+        ShouldBeUnverified(page, "Finance:Donor:Unverified:Documents:Title", "Finance:Donor:Unverified:Documents:Detail");
+        page.EligibilityFindings.ShouldNotBeEmpty();
+        page.DonorPackagesLocked.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Gider_okunamazsa_tarih_denetimi_yapilamadi()
+    {
+        var page = DonorPage();
+        _expenses.GetListAsync(Arg.Any<GetExpensesInput>()).ThrowsAsync(new AbpAuthorizationException());
+
+        await page.OnGetAsync();
+
+        ShouldBeUnverified(page, "Finance:Donor:Unverified:Dates:Title", "Finance:Donor:Unverified:Dates:NoAccess");
+    }
+
+    /// <summary>
+    /// Kaynak başına 100 kayıt, tarih azalan: başlangıçtan ÖNCEKİ en eski kayıtlar tam da kesilen
+    /// kısım → okunan 100 temiz olsa da "aralıkta" denemez.
+    /// </summary>
+    [Fact]
+    public async Task Gider_listesi_kesikse_tarih_denetimi_eksik()
+    {
+        var page = DonorPage();
+        var first100 = Enumerable.Range(0, 100)
+            .Select(i => new ExpenseDto { Id = Guid.NewGuid(), Title = "Gider " + i, Amount = 1m, ExpenseDate = new DateTime(2026, 6, 1) })
+            .ToList();
+        _expenses.GetListAsync(Arg.Any<GetExpensesInput>()).Returns(new PagedResultDto<ExpenseDto>(150, first100));
+
+        await page.OnGetAsync();
+
+        page.LedgerTruncated.ShouldBeTrue();
+        ShouldBeUnverified(page, "Finance:Donor:Unverified:Dates:PartialTitle", "Finance:Donor:Unverified:Dates:Partial");
+    }
+
+    [Fact]
+    public async Task Tarihsiz_projede_tarih_denetimi_yapilamadi()
+    {
+        var page = DonorPage(withDates: false);
+
+        await page.OnGetAsync();
+
+        ShouldBeUnverified(page, "Finance:Donor:Unverified:Dates:Title", "Finance:Donor:Unverified:Dates:NoProjectDates");
+    }
+
+    /// <summary>Her başlık gerçekten koştu ve temiz → liste boş (panelin olumlu özeti bu yolda basılır).</summary>
+    [Fact]
+    public async Task Her_sey_okunur_ve_temizse_bulgu_yok()
+    {
+        var page = DonorPage();
+
+        await page.OnGetAsync();
+
+        page.EligibilityFindings.ShouldBeEmpty();
+        page.DonorPackagesLocked.ShouldBeFalse();
+        page.LedgerTruncated.ShouldBeFalse();
     }
 }

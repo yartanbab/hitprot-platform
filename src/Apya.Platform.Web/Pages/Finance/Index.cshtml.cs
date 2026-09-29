@@ -143,11 +143,20 @@ public class IndexModel : AbpPageModel
 
     /* ─── "Donör & raporlama" sekmesi (tasarım 2a) ───────────────────── */
 
-    /// <summary>Uygunluk denetiminin bulguları; her satır GERÇEK bir sayıya dayanır.</summary>
+    /// <summary>
+    /// Uygunluk denetiminin bulguları; her satır GERÇEK bir sayıya dayanır ya da denetlenemeyen
+    /// başlıktır (<see cref="EligibilityFinding.Unverified"/>). Boşsa üç başlık da GERÇEKTEN temizdir.
+    /// </summary>
     public List<EligibilityFinding> EligibilityFindings { get; private set; } = new();
 
     /// <summary>Donör raporunun teslim paketleri (dönem + durum).</summary>
     public List<Apya.Platform.Documents.DeliveryPackageDto> DonorPackages { get; private set; } = new();
+
+    /// <summary>Teslim paketleri okunamadı: "paket yok" denmez, Teslimler (403) bağlantısı çıkmaz.</summary>
+    public bool DonorPackagesLocked { get; private set; }
+
+    /// <summary>Gelir-Gider kaynaklarından biri <see cref="MaxPerSource"/> kesiğine takıldı (TotalCount &gt; okunan).</summary>
+    public bool LedgerTruncated { get; private set; }
 
     public class EligibilityFinding
     {
@@ -157,6 +166,12 @@ public class IndexModel : AbpPageModel
         public int Count { get; set; }
         public decimal Amount { get; set; }
         public string? Url { get; set; }
+
+        /// <summary>
+        /// Denetlenemeyen başlık (FIN-07): sayı ve tutar YOK, çünkü sayılmadı.
+        /// <see cref="EligibilityFindings"/>'e girdiği için panelin olumlu özeti yapısal olarak basılamaz.
+        /// </summary>
+        public bool Unverified { get; set; }
     }
 
     public List<TransactionRow> Transactions { get; private set; } = new();
@@ -343,6 +358,10 @@ public class IndexModel : AbpPageModel
                     CashAccountId = AccountId,
                     Sorting = "IncomeDate desc"
                 });
+                if (page.TotalCount > page.Items.Count)
+                {
+                    LedgerTruncated = true;
+                }
 
                 foreach (var x in page.Items)
                 {
@@ -378,6 +397,10 @@ public class IndexModel : AbpPageModel
                     CashAccountId = AccountId,
                     Sorting = "ExpenseDate desc"
                 });
+                if (page.TotalCount > page.Items.Count)
+                {
+                    LedgerTruncated = true;
+                }
 
                 foreach (var x in page.Items)
                 {
@@ -797,13 +820,19 @@ public class IndexModel : AbpPageModel
     /// bir kavramı ekrana yazmak, kullanıcının denetlediğini sandığı ama hiç
     /// denetlenmeyen bir rakam üretirdi. Buradaki üç bulgunun üçü de sayılabilir
     /// gerçeklere dayanıyor.
+    ///
+    /// Her başlık ÜÇ durumlu (FIN-07): bulgu / temiz / denetlenemedi. Kaynak okunamadıysa,
+    /// eksik okunduysa ya da proje tarihsizse başlık "bulgu yok" sayılmaz, denetlenemedi
+    /// satırı üretir; panelin olumlu özeti yalnız liste boşken basıldığı için yapısal olarak
+    /// engellenir.
     /// </summary>
     private async Task LoadDonorReportingAsync()
     {
         var projectId = SelectedProject!.Id;
 
-        // 1) Belgesiz harcama — donör denetiminin ilk sorduğu şey.
-        await TryAddAsync(async () =>
+        // 1) Belgesiz harcama — donör denetiminin ilk sorduğu şey. Tahta okunamazsa (Belgeler
+        //    izni yok ya da paket kapsamı dışında — Basic) belgesiz harcama olup olmadığı bilinmez.
+        if (!await TryAddAsync(async () =>
         {
             var board = await _matchingAppService.GetBoardAsync(projectId);
             if (board.Expenses.Count > 0)
@@ -818,7 +847,12 @@ public class IndexModel : AbpPageModel
                     Url = $"/Documents/Matching?projectId={projectId}"
                 });
             }
-        });
+        }))
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Documents:Title",
+                "Finance:Donor:Unverified:Documents:Detail"));
+        }
 
         // 2) Donör karşılığı hesaplanamayan kayıt — kur eksikse rapor tutmaz.
         if (FxBridge is { MissingDonorRateCount: > 0 })
@@ -857,9 +891,42 @@ public class IndexModel : AbpPageModel
             }
         }
 
-        await TryAddAsync(async () =>
+        // Okunabilen kümedeki gerçek ihlal yukarıda yine gösterilir; ama tarih yoksa başlık hiç
+        // koşmadı, küme eksikse (izin yok, kaynak başına 100 kayıt kesiği — en eski kayıtlar tam
+        // da kesilen kısım — ya da URL süzgeci) aralık dışı kayıt görünmeden kalmış olabilir.
+        if (start == null && end == null)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Dates:Title",
+                "Finance:Donor:Unverified:Dates:NoProjectDates",
+                CanEditBudget ? $"/Projects/Edit/{projectId}" : null));
+        }
+        else if (IncomesLocked || ExpensesLocked)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Dates:Title",
+                "Finance:Donor:Unverified:Dates:NoAccess"));
+        }
+        else if (LedgerTruncated || !string.IsNullOrEmpty(Kind) || LineId.HasValue || AccountId.HasValue)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Dates:PartialTitle",
+                "Finance:Donor:Unverified:Dates:Partial"));
+        }
+
+        DonorPackagesLocked = !await TryAddAsync(async () =>
             DonorPackages = await _deliveryPackageAppService.GetListAsync(projectId));
     }
+
+    /// <summary>Denetlenemeyen başlık satırı: sayı ve tutar yok (sayılmadı), uyarı tonu.</summary>
+    private EligibilityFinding Unverified(string titleKey, string detailKey, string? url = null) => new()
+    {
+        Tone = "warning",
+        Unverified = true,
+        Title = L[titleKey].Value,
+        Detail = L[detailKey].Value,
+        Url = url
+    };
 
     /// <summary>
     /// Kaynağı okur; false = okunamadı (rol izni, paket tavanı ya da kapalı özellik —
