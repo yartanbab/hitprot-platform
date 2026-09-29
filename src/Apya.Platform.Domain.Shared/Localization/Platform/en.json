@@ -988,6 +988,7 @@
     "Grants:StageTemplates:LoadFailed": "Stage templates could not be loaded.",
     "Grants:Applications:LoadFailed": "Ongoing applications could not be loaded.",
     "Grants:Weights:LoadFailed": "Matching weights could not be loaded.",
+    "Grants:Weights:Campaign:LoadFailed": "The missing-data list could not be loaded.",
     "Grants:Feed:Card:WhyEligible": "Why it fits",
     "Grants:Feed:Card:Missing": "Missing information",
     "Grants:Feed:Card:HostRecommended": "Recommended by your consultant",

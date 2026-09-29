@@ -927,6 +927,9 @@ $(function () {
     // her denemede boşaltılarak doldurulur (Tekrar dene çoğaltmasın).
     function load() {
         var $sel = $('#ParamStageTemplate');
+        // İşaretlemedeki kilidi JS de kurar: Firefox form durumu geri yüklemesi (F5) açık bırakabilir.
+        // fill() Kaydet'i, paintStatus Yayınla'yı yeniden açar.
+        $('#ParamSaveBtn, #ParamPublishBtn').prop('disabled', true);
         return Promise.resolve(templateService.getList({ abpHandleError: false })).then(function (list) {
             stageTemplates = list || [];
             $sel.empty().append($('<option>').val('').text(l('Grants:Parameters:Process:None')));

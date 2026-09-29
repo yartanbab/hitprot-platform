@@ -108,7 +108,9 @@ $(function () {
     }
 
     function refreshImpact() {
-        service.previewImpact(grantId, collect()).then(paintImpact);
+        // Önizleme arka plan isteğidir (Parametreler'deki gibi): hata penceresi açmaz, panel son
+        // sonucu gösterir. Yükleme/kayıt hatası kendi kanalında (kart / ABP penceresi).
+        service.previewImpact(grantId, collect(), { abpHandleError: false }).then(paintImpact);
     }
 
     function paintImpact(p) {
@@ -167,7 +169,7 @@ $(function () {
             });
             $('#WeightCampaignEmpty').toggleClass('d-none', (rows || []).length > 0);
         }, function (err) {
-            $('#WeightCampaign').html(apya.loadState.errorHtml(l('Common:ListLoadFailed'), 'js-weights-campaign-retry', err));
+            $('#WeightCampaign').html(apya.loadState.errorHtml(l('Grants:Weights:Campaign:LoadFailed'), 'js-weights-campaign-retry', err));
             $('#WeightCampaignEmpty').addClass('d-none');
         });
     }
@@ -203,6 +205,8 @@ $(function () {
     // Yalnız açılışta ve Tekrar dene ile çağrılır; kaydet/sıfırla modeli yanıttan doldurur.
     // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2); Kaydet kilitli kalır.
     function load() {
+        // İşaretlemedeki kilidi JS de kurar: Firefox form durumu geri yüklemesi (F5) açık bırakabilir.
+        $('#WeightSaveBtn').prop('disabled', true);
         return Promise.resolve(service.get(grantId, { abpHandleError: false })).then(function (dto) {
             fill(dto);
         }, function (err) {

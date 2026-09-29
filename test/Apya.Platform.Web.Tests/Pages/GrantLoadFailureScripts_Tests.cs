@@ -82,7 +82,7 @@ public class GrantLoadFailureScripts_Tests
     [InlineData("Appeal.js", "function load()", "service.get(appId, { abpHandleError: false })", "Grants:Appeal:LoadFailed", "js-appeal-retry")]
     [InlineData("Documents.js", "function load()", "service.get(appId, { abpHandleError: !initial })", "Grants:Documents:LoadFailed", "js-docs-retry")]
     [InlineData("Detail.js", "function load()", "service.getCallDetail(callId, { abpHandleError: false })", "Grants:Detail:LoadFailed", "js-detail-retry")]
-    [InlineData("Wizard.js", "function load()", "service.get(appId, { abpHandleError: !initial })", "Grants:Wizard:LoadFailed", "js-wizard-retry")]
+    [InlineData("Wizard.js", "function load(background)", "service.get(appId, background\n            ? { abpHandleError: false, apyaBackground: true }\n            : { abpHandleError: !initial })", "Grants:Wizard:LoadFailed", "js-wizard-retry")]
     [InlineData("Tenant.js", "function loadApplications()", "appSvc.getMyApplications({ abpHandleError: false })", "Grants:Mine:LoadFailed", "js-grants-apps-retry")]
     // Host
     [InlineData("Dispatch.js", "function load()", "service.preview(collectFilter(), { abpHandleError: false })", "Grants:Dispatch:LoadFailed", "js-dispatch-retry")]
@@ -96,7 +96,7 @@ public class GrantLoadFailureScripts_Tests
     [InlineData("StageTemplates.js", "function load()", "service.getList({ abpHandleError: false })", "Grants:StageTemplates:LoadFailed", "js-tpl-retry")]
     [InlineData("Applications.js", "function loadList()", "hostSvc.getList({ abpHandleError: false })", "Grants:Applications:LoadFailed", "js-apps-retry")]
     [InlineData("MatchWeights.js", "function load()", "service.get(grantId, { abpHandleError: false })", "Grants:Weights:LoadFailed", "js-weights-retry")]
-    [InlineData("MatchWeights.js", "function loadCampaign()", "service.getMissingData({ abpHandleError: false })", "Common:ListLoadFailed", "js-weights-campaign-retry")]
+    [InlineData("MatchWeights.js", "function loadCampaign()", "service.getMissingData({ abpHandleError: false })", "Grants:Weights:Campaign:LoadFailed", "js-weights-campaign-retry")]
     public void Yukleme_hatasi_sessiz_istek_kart_ve_Tekrar_dene_tasir(
         string file, string declaration, string call, string titleKey, string retryClass)
     {
@@ -137,6 +137,7 @@ public class GrantLoadFailureScripts_Tests
     [InlineData("Grants:StageTemplates:LoadFailed")]
     [InlineData("Grants:Applications:LoadFailed")]
     [InlineData("Grants:Weights:LoadFailed")]
+    [InlineData("Grants:Weights:Campaign:LoadFailed")]
     public void Kart_basliklari_iki_dilde_de_var(string key)
     {
         foreach (var culture in new[] { "tr", "en" })
@@ -157,7 +158,7 @@ public class GrantLoadFailureScripts_Tests
     [Theory]
     [InlineData("Journey.js", "function load()", "nextLoad")]
     [InlineData("Documents.js", "function load()", "nextLoad")]
-    [InlineData("Wizard.js", "function load()", "nextLoad")]
+    [InlineData("Wizard.js", "function load(background)", "nextLoad")]
     [InlineData("Dispatch.js", "function load()", "nextLoad")]
     [InlineData("Dispatch.js", "function loadIdeas()", "nextIdeas")]
     [InlineData("Ideas.js", "function load()", "nextLoad")]
@@ -203,30 +204,108 @@ public class GrantLoadFailureScripts_Tests
     // ─────────────────────────── Detay/form: veri ekrandayken yenileme ───────────────────────────
 
     /// <summary>
-    /// İlk yükleme düşerse kart; veri ekrandayken (yükleme/onay, hub olayı, kilit) yenileme düşerse
-    /// ekran ve açık form korunur — kart basılmaz, pencere bildirir (tek kanal). Evraklarda veri
-    /// gelmeden "Evrak ekle / Hatırlat" gizli, "Paketi oluştur" pasif kalır.
+    /// İlk yükleme düşerse kart; veri ekrandayken yenileme düşerse ekran ve açık form korunur, kart
+    /// basılmaz. Kullanıcı eylemi sonrası yenilemede (yükleme/onay, mesaj) tek kanal ABP penceresidir
+    /// (R2 istisnası); arka plan yenilemesi (hub olayı, yeniden bağlanma, kilit al/bırak) sessizdir —
+    /// kullanıcı yazarken engelleyici pencere açılmaz. Evraklarda veri gelmeden "Evrak ekle / Hatırlat"
+    /// gizli, "Paketi oluştur" pasif kalır ("Hatırlat" gerçek bildirim gönderir) — işaretlemede de.
     /// </summary>
-    [Fact]
-    public void Detay_ve_form_sayfalari_veri_ekrandayken_ekrani_korur()
+    [Theory]
+    [InlineData("Documents.js", "function load()")]
+    [InlineData("Wizard.js", "function load(background)")]
+    public void Detay_ve_form_sayfalari_veri_ekrandayken_ekrani_korur(string file, string declaration)
     {
-        foreach (var file in new[] { "Documents.js", "Wizard.js" })
-        {
-            var load = Body(Grants(file), "function load()");
-            ShouldAppearInOrder(load,
-                "var initial = !model;",
-                "{ abpHandleError: !initial }",
-                "}, function (err) {",
-                "if (!isLatest() || !initial || model) { return",
-                "apya.loadState.errorHtml(");
-        }
+        var load = Body(Grants(file), declaration);
+        ShouldAppearInOrder(load,
+            "var initial = !model;",
+            "{ abpHandleError: !initial }",
+            "}, function (err) {",
+            "if (!isLatest() || !initial || model) { return",
+            "apya.loadState.errorHtml(");
+    }
 
+    [Fact]
+    public void Evraklar_veri_gelmeden_ekle_hatirlat_ve_paket_kapali()
+    {
         var docs = Body(Grants("Documents.js"), "function load()");
         ShouldAppearInOrder(docs,
             "apya.loadState.errorHtml(",
             "$('#KpiTotal, #KpiApproved, #KpiOnYou, #KpiOnOther, #KpiReady').text('—');",
             "$('#AddDocBtn, #RemindBtn').addClass('d-none');",
             "$('#CreatePackageBtn').prop('disabled', true);");
+
+        // İşaretlemede de kapalı başlar: yükleme sürerken basılıp model yokken TypeError atmaz,
+        // salt okunur kullanıcıya görünmez; paint() açar.
+        var markup = Grants("Documents.cshtml");
+        markup.ShouldContain("<button type=\"button\" class=\"btn btn-sm btn-outline-secondary d-none\" id=\"AddDocBtn\">");
+        markup.ShouldContain("<button type=\"button\" class=\"btn btn-sm btn-outline-secondary d-none\" id=\"RemindBtn\">");
+        markup.ShouldContain("<button type=\"button\" class=\"btn btn-sm btn-primary\" id=\"CreatePackageBtn\" disabled>");
+
+        var paint = Body(Grants("Documents.js"), "function paint()");
+        paint.ShouldContain("$('#CreatePackageBtn').prop('disabled', model.approvedCount === 0);");
+        paint.ShouldContain("$('#RemindBtn').toggleClass('d-none', model.isReadOnly);");
+        paint.ShouldContain("$('#AddDocBtn').toggleClass('d-none', model.isReadOnly);");
+    }
+
+    /// <summary>
+    /// Sihirbaz: arka plan tetikli yenilemeler sessiz (karar 2 — uyum incelemesi [1], seçenek a);
+    /// mesaj gönderme sonrası (kullanıcı eylemi) yenileme ABP penceresiyle bildirir.
+    /// </summary>
+    [Fact]
+    public void Sihirbaz_arka_plan_yenilemesi_sessiz_kullanici_eylemi_penceresi_kalir()
+    {
+        var script = Grants("Wizard.js");
+
+        script.ShouldContain("hub.on('ApplicationChanged', function () { load(true); });");
+        script.ShouldContain("hub.onreconnected(function () { setLive(true); hub.invoke('Subscribe', appId); load(true); });");
+        Body(script, "function acquire(fieldKey, $el)").ShouldContain("load(true);");
+        Body(script, "function release(fieldKey)").ShouldContain("load(true);");
+        Count(script, "load(true)").ShouldBe(4, "yalnız hub, yeniden bağlanma ve kilit al/bırak arka plandır");
+
+        var send = Body(script, "function sendMessage()");
+        send.ShouldContain("load();");
+        send.ShouldNotContain("load(true)");
+
+        Body(script, "function load(background)").ShouldContain(
+            "service.get(appId, background\n            ? { abpHandleError: false, apyaBackground: true }\n            : { abpHandleError: !initial })");
+    }
+
+    /// <summary>
+    /// GRT-07 "başlıksız boş etiket yığını": ilk yükleme düşünce Detay'da başlık kartı + ana düzen,
+    /// Sihirbaz'da ana düzen gizlenir — veri yazan denetimler (yer imi, Devret, Önceki/Sonraki, mesaj)
+    /// modelsiz basılamaz. Yer imi düzen DIŞINDA (sayfa başlığında) olduğu için işaretlemede gizli
+    /// başlar, paintBookmark açar. Tekrar dene başarısında düzen geri açılır.
+    /// </summary>
+    [Fact]
+    public void Detay_ve_sihirbaz_ilk_yukleme_hatasinda_ana_duzen_gizli()
+    {
+        var detail = Body(Grants("Detail.js"), "function load()");
+        ShouldAppearInOrder(detail,
+            "$('#DetailLoadState').empty();",
+            "$('.apya-detail-head, .apya-detail-layout').removeClass('d-none');",
+            "}, function (err) {",
+            "$('.apya-detail-head, .apya-detail-layout').addClass('d-none');",
+            "apya.loadState.errorHtml(l('Grants:Detail:LoadFailed'), 'js-detail-retry', err)");
+        Grants("Detail.cshtml").ShouldContain("<button type=\"button\" id=\"BookmarkBtn\" class=\"btn btn-sm btn-outline-secondary d-none\">");
+        Body(Grants("Detail.js"), "function paintBookmark(on)").ShouldContain("$('#BookmarkBtn').removeClass('d-none')");
+
+        var wizard = Body(Grants("Wizard.js"), "function load(background)");
+        ShouldAppearInOrder(wizard,
+            "$('#WizardLoadState').empty();",
+            "$('.apya-wiz-layout').removeClass('d-none');",
+            "}, function (err) {",
+            "if (!isLatest() || !initial || model) { return; }",
+            "$('.apya-wiz-layout').addClass('d-none');",
+            "apya.loadState.errorHtml(l('Grants:Wizard:LoadFailed'), 'js-wizard-retry', err)");
+
+        // Devret / Önceki / Sonraki / mesaj gönder gerçekten gizlenen kabın içinde.
+        var wizardMarkup = Grants("Wizard.cshtml");
+        ShouldAppearInOrder(wizardMarkup,
+            "<div class=\"apya-wiz-layout\">",
+            "id=\"PrevBtn\"",
+            "id=\"HandOverBtn\"",
+            "id=\"NextBtn\"",
+            "id=\"SendMessageBtn\"");
     }
 
     /// <summary>
@@ -242,7 +321,7 @@ public class GrantLoadFailureScripts_Tests
         script.ShouldNotContain("load().then(function () { connect();");
         script.ShouldContain("var live = false;");
 
-        var load = Body(script, "function load()");
+        var load = Body(script, "function load(background)");
         ShouldAppearInOrder(load,
             "if (!isLatest()) { return; }",
             "paint();",
@@ -346,6 +425,9 @@ public class GrantLoadFailureScripts_Tests
         Body(Grants("InterestReview.js"), "function paint(d)").ShouldContain("$('#SaveNoteBtn').prop('disabled', false);");
         ShouldAppearInOrder(Body(Grants("InterestReview.js"), "function load()"),
             "var initial = !model;",
+            // Firefox form durumu geri yüklemesine (F5) karşı kilit ilk yüklemede JS'te de kurulur.
+            "if (initial) { $('#SaveNoteBtn').prop('disabled', true); }",
+            "Promise.resolve(service.getReview(",
             "}, function (err) {",
             "if (!isLatest() || !initial || model) { return; }",
             "apya.loadState.errorHtml(");
@@ -383,6 +465,44 @@ public class GrantLoadFailureScripts_Tests
         weightsMarkup.ShouldContain("<button type=\"button\" id=\"WeightResetBtn\" class=\"btn btn-sm btn-link text-secondary d-none\">");
         Count(weights, "$('#WeightSaveBtn').prop('disabled', false)").ShouldBe(1, "kilidi yalnız fill() açmalı");
         ShouldAppearInOrder(Body(weights, "function fill(dto)"), "loading = false;", "$('#WeightSaveBtn').prop('disabled', false);", "refreshImpact();");
+
+        // İşaretlemedeki kilit Firefox'un form durumu geri yüklemesinde (F5) açık kalabilir: yükleme
+        // başında JS de kilitler (fill/paintStatus yeniden açar).
+        ShouldAppearInOrder(load, "$('#ParamSaveBtn, #ParamPublishBtn').prop('disabled', true);", "Promise.resolve(templateService.getList(");
+        ShouldAppearInOrder(Body(weights, "function load()"), "$('#WeightSaveBtn').prop('disabled', true);", "Promise.resolve(service.get(grantId, { abpHandleError: false }))");
+    }
+
+    /// <summary>
+    /// Eşleştirme ağırlıkları önizlemesi arka plan isteğidir (Parametreler'deki previewMatch gibi): açılışta
+    /// ve her değişiklikte koşar; düşerse ABP penceresi açmaz, panel son sonucu gösterir (karar 2).
+    /// </summary>
+    [Fact]
+    public void Agirlik_onizlemesi_pencere_acmaz()
+    {
+        Body(Grants("MatchWeights.js"), "function refreshImpact()")
+            .ShouldContain("service.previewImpact(grantId, collect(), { abpHandleError: false }).then(paintImpact);");
+        Body(Grants("Parameters.js"), "function refreshPreview()")
+            .ShouldContain("service.previewMatch(grantId, input, { abpHandleError: false }).then(paintPreview);");
+    }
+
+    /// <summary>
+    /// GRH-08 "Kimler başvurabilir 0": sekme rozetleri işaretlemede "0" başlıyor, yükleme düşünce
+    /// yanlış sıfır kalıyordu. Yer tutucu "—"; gerçek sayıyı fill/paint yazar.
+    /// </summary>
+    [Fact]
+    public void Parametreler_sekme_rozetleri_yuklenmeden_sifir_demez()
+    {
+        var markup = Grants("Parameters.cshtml");
+        foreach (var id in new[] { "NavEligibilityBadge", "NavFinancialBadge", "NavDocumentsBadge" })
+        {
+            Regex.IsMatch(markup, $"id=\"{id}\">—</span>").ShouldBeTrue($"{id} yer tutucusu '—' olmalı");
+            Regex.IsMatch(markup, $"id=\"{id}\">0<").ShouldBeFalse($"{id} işaretlemede '0' basmamalı");
+        }
+
+        var script = Grants("Parameters.js");
+        Body(script, "function paintRules()").ShouldContain("$('#NavEligibilityBadge').text(visible);");
+        Body(script, "function refreshDocMeta()").ShouldContain("$('#NavDocumentsBadge').text(n);");
+        Body(script, "function fill(dto)").ShouldContain("$('#NavFinancialBadge').text((dto.eligibleCostItems || []).length);");
     }
 
     /// <summary>Aşama şablonları: veri gelene kadar editör ve yan panel görünmez (boş editör etkin "Şablonu kaydet" ile açılıyordu).</summary>

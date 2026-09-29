@@ -168,7 +168,8 @@ $(function () {
     }
 
     function paintBookmark(on) {
-        $('#BookmarkBtn').toggleClass('btn-primary', on).toggleClass('btn-outline-secondary', !on);
+        // İşaretlemede gizli: yer imi sunucuya yazar, veri gelmeden basılamasın (GRT-07).
+        $('#BookmarkBtn').removeClass('d-none').toggleClass('btn-primary', on).toggleClass('btn-outline-secondary', !on);
         $('#BookmarkText').text(l(on ? 'Grants:Catalog:Unbookmark' : 'Grants:Catalog:Bookmark'));
     }
 
@@ -415,12 +416,15 @@ $(function () {
         return Promise.resolve(service.getCallDetail(callId, { abpHandleError: false })).then(function (d) {
             detail = d;
             $('#DetailLoadState').empty();
+            $('.apya-detail-head, .apya-detail-layout').removeClass('d-none');
             paintHead(d);
             paintRules(d);
             paintBudget(d);
             paintProcess(d);
             paintSide(d);
         }, function (err) {
+            // Boş başlık kartı ve "—" metrikli kart yığını kartın altında kalmasın.
+            $('.apya-detail-head, .apya-detail-layout').addClass('d-none');
             $('#DetailLoadState').html(apya.loadState.errorHtml(l('Grants:Detail:LoadFailed'), 'js-detail-retry', err));
         });
     }

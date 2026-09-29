@@ -897,6 +897,7 @@
         "Grants:StageTemplates:LoadFailed": "Aşama şablonları yüklenemedi.",
         "Grants:Applications:LoadFailed": "Yürüyen başvurular yüklenemedi.",
         "Grants:Weights:LoadFailed": "Eşleştirme ağırlıkları yüklenemedi.",
+        "Grants:Weights:Campaign:LoadFailed": "Eksik veri listesi yüklenemedi.",
         "Grants:Feed:Card:WhyEligible": "Neden uygun",
         "Grants:Feed:Card:Missing": "Eksik bilgi",
         "Grants:Feed:Card:HostRecommended": "Danışmanınız önerdi",

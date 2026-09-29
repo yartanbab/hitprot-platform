@@ -208,6 +208,9 @@ $(function () {
     function load() {
         var isLatest = nextLoad();
         var initial = !model;
+        // İşaretlemedeki not kilidini ilk yüklemede JS de kurar: Firefox form durumu geri yüklemesi
+        // (F5) açık bırakabilir; paint açar.
+        if (initial) { $('#SaveNoteBtn').prop('disabled', true); }
         return Promise.resolve(service.getReview(interestId, { abpHandleError: !initial })).then(function (d) {
             if (!isLatest()) { return; }
             paint(d);
