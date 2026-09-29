@@ -92,10 +92,11 @@ export function ActivityTab({ projectId, documentFileId }) {
         </span>
       </div>
 
-      {loading ? (
+      {/* Hata varken yükleniyor = yeniden deneniyor: kart iskelete dönmez (odak düğmede kalır). */}
+      {loading && !loadError ? (
         <div className="p-3"><SkeletonList rows={8} /></div>
       ) : loadError ? (
-        <EmptyState variant="error" title="Etkinlik kaydı yüklenemedi" error={loadError} onRetry={load} />
+        <EmptyState variant="error" title="Etkinlik kaydı yüklenemedi" error={loadError} onRetry={load} retrying={loading} />
       ) : rows.length === 0 ? (
         <EmptyState
           icon={<i className="fa fa-clock-rotate-left" />}

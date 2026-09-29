@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, EmptyState, Sheet, SheetContent, Skeleton } from '../components/ui';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { Button, EmptyState, RetryButton, Sheet, SheetContent, Skeleton } from '../components/ui';
 import { cn } from '../lib/utils';
 import { api } from '../lib/api/httpClient';
 import { wasShown } from '../lib/api/abpErrors';
@@ -122,12 +122,23 @@ export function CalendarRoot() {
         };
     }, [view, month, today]);
 
-    const { data, error, isPending, isError, isPlaceholderData, refetch } = useCalendarFeed(range);
+    const { data, error, isPending, isError, isFetching, isPlaceholderData, refetch } = useCalendarFeed(range);
     /* Feed hiç gelmediyse (hata ve veri yok) boş durum DEĞİL hata çizilir. Veri varsa
        (önbellek ya da önceki başarılı yükleme; placeholder hatada TanStack v5'te düşer)
        ızgara kalır, üstteki şerit uyarır. Kapı isPending: kalıcı önbellek geri
        yüklenirken isLoading yalan söyler. */
     const feedFailed = isError && !data;
+    /* Kartın "Tekrar dene"si sürerken kart sökülmez (odak düğmede kalır): TanStack verisi
+       olmayan sorguyu yeniden çekerken durumu 'pending'e çekip hatayı siler ya da önceki
+       aralığın verisini yer tutucu yapar. Yeniden denenen aralık ve son hatası burada durur. */
+    const feedKey = `${isoDay(range.from)}/${isoDay(range.to)}`;
+    const [retryOf, setRetryOf] = useState(null);
+    const retrying = retryOf?.feedKey === feedKey;
+    const retryFeed = () => {
+        setRetryOf({ feedKey, error });
+        refetch().finally(() => setRetryOf((current) => (current?.feedKey === feedKey ? null : current)));
+    };
+    const staleNoticeId = useId();
     /* Dış etkinlikler ayrı sorgudan gelir: yavaş/kırılgan dış çağrı grid'i bekletmesin. */
     const external = useExternalEvents(range);
     const preferences = useCalendarPreferences();
@@ -285,11 +296,10 @@ export function CalendarRoot() {
                 gösterilirken tazeleme düştüyse (çift gösterim yok). Oturum hatasını (401)
                 merkezi pencere gösteriyor: ikinci metin basılmaz. */}
             {isError && !feedFailed && !wasShown(error) && (
-                <div role="alert" className="rounded-card border border-negative-100 bg-negative-50 px-3 py-2.5 text-[12.5px] text-negative-700">
-                    Takvim yenilenemedi; son yüklenen veriler gösteriliyor.
-                    <button type="button" onClick={() => refetch()} className="ml-2 font-semibold underline">
-                        Yeniden dene
-                    </button>
+                <div role="alert" className="flex flex-wrap items-center gap-2 rounded-card border border-negative-100 bg-negative-50 px-3 py-2 text-[12.5px] text-negative-700">
+                    <span id={staleNoticeId} className="min-w-0 flex-1">Takvim yenilenemedi; son yüklenen veriler gösteriliyor.</span>
+                    {/* Kanonik düğme (karar 10); veri ekranda kaldığı için şerit tazelemede sökülmez. */}
+                    <RetryButton onRetry={refetch} retrying={isFetching} aria-describedby={staleNoticeId} />
                 </div>
             )}
 
@@ -344,8 +354,9 @@ export function CalendarRoot() {
 
             <div className={cn('flex gap-3', isNarrow ? 'flex-col' : 'flex-row items-start')}>
                 {/* Yüklenirken kap korunur (yatay sıçrama yok); feed düştüyse ya da izinli
-                    kaynak yoksa SourceRail null döner — 240px boş sütun çizilmez. */}
-                {!isNarrow && (isPending || availableSources.length > 0) && (
+                    kaynak yoksa SourceRail null döner — 240px boş sütun çizilmez. Kart yeniden
+                    denenirken de yerleşim hata anındaki gibi kalır. */}
+                {!isNarrow && !retrying && (isPending || availableSources.length > 0) && (
                     <div className={cn('shrink-0', layout === 'wide' ? 'w-[240px]' : 'w-auto')}>
                         <SourceRail
                             sources={data?.sources ?? []}
@@ -390,11 +401,17 @@ export function CalendarRoot() {
                             )}
                         </div>
                     )}
-                    {isPending ? (
+                    {isPending && !retrying ? (
                         <MonthSkeleton />
-                    ) : feedFailed ? (
+                    ) : feedFailed || retrying ? (
                         <div className="rounded-card border border-subtle bg-surface-base p-6">
-                            <EmptyState variant="error" title="Takvim yüklenemedi" error={error} onRetry={() => refetch()} />
+                            <EmptyState
+                                variant="error"
+                                title="Takvim yüklenemedi"
+                                error={retrying ? retryOf.error : error}
+                                onRetry={retryFeed}
+                                retrying={retrying}
+                            />
                         </div>
                     ) : filteredToEmpty ? (
                         <div className="rounded-card border border-subtle bg-surface-base p-6">
@@ -454,7 +471,7 @@ export function CalendarRoot() {
                     {/* Efsane — hücrelerdeki çizgilerin ne anlama geldiği başka
                         hiçbir yerde yazmıyor. Yalnız çubukların göründüğü
                         görünümlerde çizilir; ajandada çubuk yok. */}
-                    {!isPending && !feedFailed && view !== 'agenda' && (
+                    {!isPending && !feedFailed && !retrying && view !== 'agenda' && (
                         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[10.5px] text-text-tertiary">
                             <span className="flex items-center gap-1.5">
                                 <span className="h-[3px] w-[18px] rounded-full bg-primary-subtle" aria-hidden="true" />

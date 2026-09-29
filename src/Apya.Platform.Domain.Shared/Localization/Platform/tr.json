@@ -2304,6 +2304,7 @@
         "Common:FetchError": "Veri alınırken bir hata oluştu.",
         "Common:Retry": "Tekrar dene",
         "Common:ListLoadFailed": "Liste yüklenemedi.",
+        "Documents:Tree:RefreshFailed": "Klasörler yenilenemedi.",
         "Common:LastSuccessfulUpdate": "Son başarılı güncelleme",
         "Common:Updating": "güncelleniyor",
         "Common:UpdatingInBackground": "Arka planda güncelleniyor",

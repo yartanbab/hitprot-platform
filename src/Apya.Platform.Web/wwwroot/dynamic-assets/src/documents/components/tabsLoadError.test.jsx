@@ -6,7 +6,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
  * Dokümanlar · Uygunluk ve Etkinlik sekmeleri — yükleme hatası (DOC-13).
  *
  * Kilitlenen davranışlar:
- *  1) Okunamayan veri "paket uygulanmadı" / "henüz etkinlik yok" DEĞİL: hata kartı + Tekrar dene.
+ *  1) Okunamayan veri "paket uygulanmadı" / "henüz etkinlik yok" DEĞİL: hata kartı + Tekrar dene;
+ *     yeniden deneme sürerken kart iskelete dönmez (düğme meşgul, odak düğmede).
  *  2) Yükleme hatasında toast yok; istek ABP penceresini kapatır ({ abpHandleError: false }).
  *  3) Sayaç yüklenirken ve hatada "—"; hata anında sayfalama çizilmez.
  *  4) Son istek kazanır: geç dönen eski hata yeni bağlamın verisini ezmez.
@@ -67,9 +68,10 @@ describe('ComplianceTab · yükleme hatası', () => {
   const onSummaryChange = () => {};
 
   it('okunamazsa "paket uygulanmadı" değil hata kartı; toast yok; Tekrar dene veriyi getirir', async () => {
+    const retry = deferred();
     mocks.getComplianceOverview
       .mockImplementationOnce(() => Promise.reject(new Error('500')))
-      .mockImplementation(() => Promise.resolve(overviewFor('P1')));
+      .mockImplementation(() => retry.promise);
 
     render(<ComplianceTab projectId="p1" periodCode={null} onSummaryChange={onSummaryChange} />);
 
@@ -79,7 +81,15 @@ describe('ComplianceTab · yükleme hatası', () => {
     expect(mocks.getComplianceOverview).toHaveBeenCalledWith('p1', null, QUIET);
     expect(mocks.getCompliancePackages).toHaveBeenCalledWith('p1', QUIET);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Tekrar dene' }));
+    // Yeniden deneme sürerken kart iskelete dönmez: düğme meşgul, odak onda kalır.
+    const button = screen.getByRole('button', { name: 'Tekrar dene' });
+    button.focus();
+    fireEvent.click(button);
+    await waitFor(() => expect(button).toHaveAttribute('aria-busy', 'true'));
+    expect(screen.getByText('Uygunluk verisi yüklenemedi')).toBeInTheDocument();
+    expect(document.activeElement).toBe(button);
+
+    retry.resolve(overviewFor('P1'));
 
     expect(await screen.findByText('Paket P1')).toBeInTheDocument();
     expect(screen.queryByText('Uygunluk verisi yüklenemedi')).not.toBeInTheDocument();
@@ -105,10 +115,11 @@ describe('ComplianceTab · yükleme hatası', () => {
 
 describe('ActivityTab · yükleme hatası', () => {
   it('okunamazsa "henüz etkinlik yok" değil hata kartı; sayaç "—"; sayfalama yok; toast yok', async () => {
+    const retry = deferred();
     mocks.getActivity
       .mockImplementationOnce(() => Promise.resolve({ items: [activityRow('e1')], totalCount: 60 }))
       .mockImplementationOnce(() => Promise.reject(new Error('500')))
-      .mockImplementation(() => Promise.resolve({ items: [activityRow('e2')], totalCount: 1 }));
+      .mockImplementation(() => retry.promise);
 
     render(<ActivityTab projectId="p1" documentFileId={null} />);
 
@@ -126,7 +137,14 @@ describe('ActivityTab · yükleme hatası', () => {
     expect(mocks.notify).not.toHaveBeenCalled();
     expect(mocks.getActivity.mock.calls.at(-1)).toEqual([expect.objectContaining({ action: '1' }), QUIET]);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Tekrar dene' }));
+    // Yeniden deneme sürerken kart yerinde, düğme meşgul, sayaç "—".
+    const button = screen.getByRole('button', { name: 'Tekrar dene' });
+    fireEvent.click(button);
+    await waitFor(() => expect(button).toHaveAttribute('aria-busy', 'true'));
+    expect(screen.getByText('Etkinlik kaydı yüklenemedi')).toBeInTheDocument();
+    expect(screen.getByText('— kayıt')).toBeInTheDocument();
+
+    retry.resolve({ items: [activityRow('e2')], totalCount: 1 });
 
     expect(await screen.findByText('Belge e2')).toBeInTheDocument();
     expect(screen.getByText('1 kayıt')).toBeInTheDocument();

@@ -116,8 +116,8 @@ export function ComplianceTab({ projectId, periodCode, onSummaryChange, document
     const request = ++requestRef.current;
     if (!projectId) { setOverview(null); setLoadError(null); setLoading(false); return; }
 
+    // Hata burada silinmez: yeniden deneme sürerken kart yerinde kalır (odak düğmede).
     setLoading(true);
-    setLoadError(null);
     try {
       const [data, catalog] = await Promise.all([
         getComplianceOverview(projectId, periodCode, { abpHandleError: false }),
@@ -126,6 +126,7 @@ export function ComplianceTab({ projectId, periodCode, onSummaryChange, document
       if (request !== requestRef.current) return;
       setOverview(data);
       setPackages(catalog ?? []);
+      setLoadError(null);
       onSummaryChange?.(data?.summary ?? null);
     } catch (e) {
       if (request !== requestRef.current) return;
@@ -197,7 +198,7 @@ export function ComplianceTab({ projectId, periodCode, onSummaryChange, document
     );
   }
 
-  if (loading) {
+  if (loading && !loadError) {
     return <div className="p-4"><SkeletonList rows={6} /></div>;
   }
 
@@ -205,7 +206,7 @@ export function ComplianceTab({ projectId, periodCode, onSummaryChange, document
   if (loadError) {
     return (
       <div className="p-3">
-        <EmptyState variant="error" title="Uygunluk verisi yüklenemedi" error={loadError} onRetry={load} />
+        <EmptyState variant="error" title="Uygunluk verisi yüklenemedi" error={loadError} onRetry={load} retrying={loading} />
       </div>
     );
   }

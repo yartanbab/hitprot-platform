@@ -222,6 +222,8 @@ export function DocumentsRoot() {
 
   const [setupState, setSetupState] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState(null);
   const [suggestionBusy, setSuggestionBusy] = useState(false);
 
   // "Yükle" düğmesine basılan eksik kalem; yükleme bitince buna bağlanır.
@@ -236,24 +238,31 @@ export function DocumentsRoot() {
 
   /* --- Ağaç verisi ---
      Yükleme hatası ağaçta kart olarak gösterilir (toast ve ABP penceresi yok). Son
-     iyi ağaç varsa (mutasyon sonrası tazeleme düştü) ağaç kalır: tek bağlamı var. */
+     iyi ağaç varsa (mutasyon sonrası tazeleme düştü) ağaç kalır, üstünde uyarı durur.
+     Yalnız son istek yazar: eşzamanlı iki tazelemede geç dönen eski yanıt yeniyi ezmez.
+     Klasör listesi zorunlu; iş adımları ve belge türleri zenginleştirme — okunamazlarsa
+     (ör. Projeler izni olmayan rolde 403) ağaç onlarsız çizilir, hata kartı çıkmaz. */
+  const treeRequestRef = useRef(0);
   const loadTree = useCallback(async () => {
+    const request = ++treeRequestRef.current;
     setLoadingTree(true);
     try {
       const [folderResult, steps, types] = await Promise.all([
         abpDocument().getList({ maxResultCount: 1000, sorting: 'title asc' }, { abpHandleError: false }),
-        getWorkSteps(null, { abpHandleError: false }),
-        getDocumentTypes({ abpHandleError: false }),
+        getWorkSteps(null, { abpHandleError: false }).catch(() => []),
+        getDocumentTypes({ abpHandleError: false }).catch(() => []),
       ]);
+      if (request !== treeRequestRef.current) return;
       setFolders(folderResult.items ?? []);
       setWorkSteps(steps ?? []);
       setDocumentTypes(types ?? []);
       setTreeError(null);
     } catch (e) {
+      if (request !== treeRequestRef.current) return;
       setTreeError(e);
       console.error('[Documents] loadTree', e);
     } finally {
-      setLoadingTree(false);
+      if (request === treeRequestRef.current) setLoadingTree(false);
     }
   }, []);
 
@@ -335,6 +344,10 @@ export function DocumentsRoot() {
       setExpiringCount(expiring.totalCount ?? 0);
       setUploadedThisMonth(uploaded.totalCount ?? 0);
     } catch (e) {
+      if (request !== kpiRequestRef.current) return;
+      // Sayılar bilinmiyor: tazeleme düştüyse eski değer kalmaz, "—" görünür.
+      setExpiringCount(null);
+      setUploadedThisMonth(null);
       console.error('[Documents] loadKpis', e);
     }
   }, []);
@@ -373,21 +386,28 @@ export function DocumentsRoot() {
   }, []);
 
   /* --- Öneriler ---
-     Proje ref'ten okunur: öneri işlemi sonrası yenileme o an seçili projeyi ister. */
+     Proje ref'ten okunur: öneri işlemi sonrası yenileme o an seçili projeyi ister.
+     Okunamazsa ekranın geri kalanı çalışır; yalnız "Öneri bekleyen" klasörü (listesi
+     önerilerden kurulur) "henüz belge yok" demez, hata kartı + Tekrar dene gösterir. */
   const projectIdRef = useRef(activeProjectId);
   projectIdRef.current = activeProjectId;
   const suggestionsRequestRef = useRef(0);
 
   const loadSuggestions = useCallback(async () => {
     const request = ++suggestionsRequestRef.current;
+    setLoadingSuggestions(true);
     try {
       const next = await getSuggestions(projectIdRef.current, { abpHandleError: false });
-      if (request === suggestionsRequestRef.current) setSuggestions(next);
+      if (request !== suggestionsRequestRef.current) return;
+      setSuggestions(next);
+      setSuggestionsError(null);
     } catch (e) {
       if (request !== suggestionsRequestRef.current) return;
-      // Öneri üretilemediyse ekranın geri kalanı çalışmaya devam etmeli.
       setSuggestions(null);
+      setSuggestionsError(e);
       console.error('[Documents] loadSuggestions', e);
+    } finally {
+      if (request === suggestionsRequestRef.current) setLoadingSuggestions(false);
     }
   }, []);
 
@@ -820,6 +840,13 @@ export function DocumentsRoot() {
       ? 'Dosyaları buraya sürükleyin ya da "Yükle" ile ekleyin.'
       : 'Sol taraftan bir klasör seçin; yükleme klasör bağlamında yapılır.';
 
+  /* "Öneri bekleyen" klasörünün listesi önerilerden kurulur: öneriler yüklenirken ya da
+     okunamadıysa liste de bilinmiyor — "henüz belge yok" yerine iskelet / hata kartı. */
+  const isSuggested = node.kind === 'smart' && node.smart === 'suggested';
+  const suggestionsFailed = isSuggested && Boolean(suggestionsError);
+  const listLoading = loadingFiles || (isSuggested && loadingSuggestions);
+  const listError = suggestionsFailed ? suggestionsError : filesError;
+
   return (
     <div
       className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto"
@@ -997,7 +1024,7 @@ export function DocumentsRoot() {
               onChange={(e) => setSearch(e.target.value)}
             />
             {/* Yüklenirken ve hatada sayı bilinmiyor: "0 belge" demek yanlış olur. */}
-            <span className="apya-grid-count apya-numeric">{loadingFiles || filesError ? '—' : totalCount} belge</span>
+            <span className="apya-grid-count apya-numeric">{listLoading || listError ? '—' : totalCount} belge</span>
             <div className="apya-doc-viewtoggle">
               <button
                 type="button"
@@ -1019,9 +1046,9 @@ export function DocumentsRoot() {
           </div>
 
           <FileList
-            loading={loadingFiles}
-            loadError={filesError}
-            onRetry={loadFiles}
+            loading={listLoading}
+            loadError={listError}
+            onRetry={suggestionsFailed ? loadSuggestions : loadFiles}
             files={files}
             totalCount={totalCount}
             view={view}

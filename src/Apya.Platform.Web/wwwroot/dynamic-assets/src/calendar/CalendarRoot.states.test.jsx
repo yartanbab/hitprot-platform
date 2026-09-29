@@ -8,11 +8,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  *
  * Kilitlenen davranışlar:
  *  1) Feed hiç gelmediyse boş durum DEĞİL tek hata kartı + Tekrar dene; efsane, üst şerit
- *     ve 240px'lik boş ray kabı çizilmez.
+ *     ve 240px'lik boş ray kabı çizilmez (ay ve hafta görünümü). Yeniden deneme sürerken
+ *     kart sökülmez (odak düğmede); yine düşerse aynı kart yeni hatayla kalır.
  *  2) Boş ayda ızgara kaybolmaz (42 gün hücresi) + ince ipucu şeridi; "Görev oluştur"
  *     araç çubuğundaki "Yeni görev" ile aynı modalı açar. Ajanda kendi boş kartını korur.
- *  3) Veri varken tazeleme düşerse ızgara kalır, üstte "yenilenemedi" şeridi; hata kartı yok.
+ *  3) Veri varken tazeleme düşerse ızgara kalır, üstte "yenilenemedi" şeridi (kanonik
+ *     "Tekrar dene"); hata kartı yok.
  *  4) Kalıcı önbellek geri yüklenirken (isLoading yalan söyler) iskelet; sahte hata/boş yok.
+ *  5) Feed geldi ama izinli kaynak yoksa 240px boş ray kabı yok.
  */
 
 const state = vi.hoisted(() => ({ feed: null }));
@@ -94,12 +97,74 @@ describe('CalendarRoot · yükleme ve boş durumları (CAL-09)', () => {
     expect(container.querySelector('.w-\\[240px\\]')).toBeNull();
     expect(screen.queryByRole('grid')).toBeNull();
 
-    state.feed = () => Promise.resolve(feedWith([ITEM]));
-    fireEvent.click(screen.getByRole('button', { name: 'Tekrar dene' }));
+    // Yeniden deneme sürerken kart sökülmez (TanStack durumu 'pending'e çekse de): iskelet,
+    // 240px ray kabı ve efsane yok; düğme meşgul, odak düğmede kalır, açıklama korunur.
+    let answer;
+    state.feed = () => new Promise((resolve) => { answer = resolve; });
+    const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+    expect(retry).toHaveAccessibleDescription('Takvim yüklenemedi');
+    retry.focus();
+    fireEvent.click(retry);
+
+    await vi.waitFor(() => expect(answer).toBeTypeOf('function'));
+    await act(() => new Promise((r) => setTimeout(r, 20)));
+    expect(screen.getByText('Takvim yüklenemedi')).toBeInTheDocument();
+    expect(screen.getByText('Sunucuda beklenmeyen bir hata oluştu.')).toBeInTheDocument();
+    expect(retry).toHaveAttribute('aria-busy', 'true');
+    expect(retry).toHaveAttribute('aria-disabled', 'true');
+    expect(document.activeElement).toBe(retry);
+    expect(container.querySelector('.skeleton')).toBeNull();
+    expect(container.querySelector('.w-\\[240px\\]')).toBeNull();
+    expect(screen.queryByText('gün yükü')).not.toBeInTheDocument();
+
+    await act(async () => { answer(feedWith([ITEM])); });
 
     expect(within(await screen.findByRole('grid')).getByText('Rapor teslimi')).toBeInTheDocument();
     expect(screen.queryByText('Takvim yüklenemedi')).not.toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Takvim kaynakları' })).toBeInTheDocument();
+  });
+
+  it('yeniden deneme yine düşerse aynı kart yeni hatayla kalır; düğme tekrar etkin', async () => {
+    state.feed = () => Promise.reject(apiError('Sunucuda beklenmeyen bir hata oluştu.', 500));
+    renderCalendar();
+    const retry = await screen.findByRole('button', { name: 'Tekrar dene' });
+
+    state.feed = () => Promise.reject(apiError('Sunucu geçici olarak kullanılamıyor.', 503));
+    fireEvent.click(retry);
+
+    expect(await screen.findByText('Sunucu geçici olarak kullanılamıyor.')).toBeInTheDocument();
+    await vi.waitFor(() => expect(retry).not.toHaveAttribute('aria-busy'));
+    expect(retry).toBeInTheDocument();
+    expect(screen.getByText('Takvim yüklenemedi')).toBeInTheDocument();
+  });
+
+  it('hafta görünümünde de feed düşerse yalnız hata kartı: ızgara ve efsane yok', async () => {
+    window.localStorage.setItem('apya.calendar.view', 'week');
+    state.feed = () => Promise.reject(apiError('Sunucuda beklenmeyen bir hata oluştu.', 500));
+    renderCalendar();
+
+    expect(await screen.findByText('Takvim yüklenemedi')).toBeInTheDocument();
+    expect(screen.queryByText('gün yükü')).not.toBeInTheDocument();
+    expect(screen.queryByText(/planlanmış bir şey yok/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Rapor teslimi')).not.toBeInTheDocument();
+
+    state.feed = () => Promise.resolve(feedWith([ITEM]));
+    fireEvent.click(screen.getByRole('button', { name: 'Tekrar dene' }));
+
+    // Hafta ızgarası: son tarih şeridindeki öğe ve efsane geri gelir.
+    expect(await screen.findByRole('button', { name: /Rapor teslimi/ })).toBeInTheDocument();
+    expect(screen.getByText('gün yükü')).toBeInTheDocument();
+    expect(screen.queryByText('Takvim yüklenemedi')).not.toBeInTheDocument();
+  });
+
+  it('feed geldi ama izinli kaynak yoksa 240px boş ray kabı çizilmez; ızgara çizilir', async () => {
+    state.feed = () => Promise.resolve({ items: [], sources: [{ source: 1, isAvailable: false, count: 0 }], dailyCapacityHours: 8 });
+    const { container } = renderCalendar();
+
+    expect(await screen.findByRole('grid')).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Takvim kaynakları' })).toBeNull();
+    expect(container.querySelector('.w-\\[240px\\]')).toBeNull();
+    expect(screen.queryByText('Takvim yüklenemedi')).not.toBeInTheDocument();
   });
 
   it('boş ayda ızgara çizilir (42 gün) + ipucu şeridi; "Görev oluştur" Yeni görev modalını açar', async () => {
@@ -137,6 +202,18 @@ describe('CalendarRoot · yükleme ve boş durumları (CAL-09)', () => {
     expect(await screen.findByText('Takvim yenilenemedi; son yüklenen veriler gösteriliyor.')).toBeInTheDocument();
     expect(within(screen.getByRole('grid')).getByText('Rapor teslimi')).toBeInTheDocument();
     expect(screen.queryByText('Takvim yüklenemedi')).not.toBeInTheDocument();
+
+    // Şeritteki düğme de kanonik "Tekrar dene" ("Yeniden dene" yok), şeridin metniyle betimlenir.
+    expect(screen.queryByText('Yeniden dene')).not.toBeInTheDocument();
+    const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+    expect(retry).toHaveClass('border-accent', 'text-accent');
+    expect(retry).toHaveAccessibleDescription('Takvim yenilenemedi; son yüklenen veriler gösteriliyor.');
+
+    state.feed = () => Promise.resolve(feedWith([{ ...ITEM, title: 'Rapor teslimi (güncel)' }]));
+    fireEvent.click(retry);
+
+    expect(await within(screen.getByRole('grid')).findByText('Rapor teslimi (güncel)')).toBeInTheDocument();
+    expect(screen.queryByText(/Takvim yenilenemedi/)).not.toBeInTheDocument();
   });
 
   it('oturum düştüyse (401) ilk yüklemede kart ayrıntısız: merkezi pencerenin metni tekrarlanmaz', async () => {

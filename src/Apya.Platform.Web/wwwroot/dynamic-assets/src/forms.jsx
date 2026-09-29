@@ -110,12 +110,13 @@ function FormsList() {
       </div>
 
       {/* Hata anında eldeki formlar başka kategoriye ait olabilir: gösterilmez;
-          "Henüz formun yok" + oluşturma çağrısı da yalnız başarılı-boş sonuçta. */}
-      {loading ? (
+          "Henüz formun yok" + oluşturma çağrısı da yalnız başarılı-boş sonuçta.
+          Hata varken yükleniyor = yeniden deneniyor: kart kalır (odak düğmede). */}
+      {loading && !loadError ? (
         <div className="py-16 text-center text-text-tertiary">Formlar yükleniyor…</div>
       ) : loadError ? (
         <div className="rounded-2xl border-2 border-dashed border-default py-12">
-          <EmptyState variant="error" title="Formlar yüklenemedi" error={loadError} onRetry={() => load(categoryFilter)} />
+          <EmptyState variant="error" title="Formlar yüklenemedi" error={loadError} onRetry={() => load(categoryFilter)} retrying={loading} />
         </div>
       ) : forms.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-default py-20 text-center">
@@ -184,14 +185,17 @@ function FormsList() {
 function ChoiceSourceCatalogModal({ onClose }) {
   const [sources, setSources] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Katalog kodla gelir: okunamadığında "Tanımlı veri kaynağı yok." demek yanlış olur.
+  // Hata yeniden denemede silinmez: kart yerinde kalır, düğme meşgul (odak düğmede).
   const load = () => {
-    setLoadError(null);
+    setLoading(true);
     setSources(null);
     api.get('/api/app/form/choice-sources')
-      .then((list) => setSources(list || []))
-      .catch((e) => setLoadError(e));
+      .then((list) => { setSources(list || []); setLoadError(null); })
+      .catch((e) => setLoadError(e))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { load(); }, []);
@@ -206,7 +210,7 @@ function ChoiceSourceCatalogModal({ onClose }) {
         <p className="mb-4 text-sm text-text-secondary">Açılır liste alanını bu listelerden birine bağlayabilirsiniz; seçenekler form her açıldığında güncel veriden gelir.</p>
 
         {loadError ? (
-          <EmptyState compact variant="error" title="Veri kaynakları yüklenemedi" error={loadError} onRetry={load} />
+          <EmptyState compact variant="error" title="Veri kaynakları yüklenemedi" error={loadError} onRetry={load} retrying={loading} />
         ) : sources == null ? (
           <p className="py-8 text-center text-sm text-text-tertiary">Yükleniyor…</p>
         ) : sources.length === 0 ? (

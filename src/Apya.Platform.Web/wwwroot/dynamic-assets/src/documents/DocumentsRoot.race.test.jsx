@@ -1,6 +1,9 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 /**
  * Dokümanlar — bağlantı bağlamı ve bayat yanıt (DOC-V01, STA-09).
@@ -19,12 +22,18 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
  * (maxResultCount 1) bu kurallara dahil değil ve kendiliğinden çözülür.
  *
  * Yükleme hatası (DOC-13): boş durum değil hata kartı; toast/ABP penceresi yok
- * (her yükleme isteği { abpHandleError: false } taşır).
+ * (her yükleme isteği { abpHandleError: false } taşır). Dolu ağacın tazelemesi düşerse
+ * ağaç kalır, üstünde ince uyarı; ağaçta yalnız son istek yazar; iş adımı/belge türü
+ * okunamazsa ağaç onlarsız çizilir. "Öneri bekleyen" öneriler okunamazsa hata kartı (S14).
  */
 
 let treeImpl;
 let fileImpl;
 let uploadImpl;
+let kpiImpl;
+let workStepsImpl;
+let documentTypesImpl;
+let suggestionsImpl;
 let listCalls;
 let holdFiles;
 let notifyCalls;
@@ -47,7 +56,7 @@ const fileFor = (input) => {
 function getFilesMock(input, ajax) {
   if (input.maxResultCount === 1) {
     kpiAjax.push(ajax);
-    return Promise.resolve({ items: [], totalCount: 0 });
+    return kpiImpl(input);
   }
   return new Promise((resolve, reject) => {
     const call = {
@@ -72,9 +81,9 @@ vi.mock('./api', async (importOriginal) => ({
   getFiles: (input, ajax) => getFilesMock(input, ajax),
   getFile: (id) => fileImpl(id),
   getSetupState: recording('setupState', () => Promise.resolve({ setupCompleted: true })),
-  getWorkSteps: recording('workSteps', () => Promise.resolve([])),
-  getDocumentTypes: recording('documentTypes', () => Promise.resolve([])),
-  getSuggestions: recording('suggestions', () => Promise.resolve(null)),
+  getWorkSteps: recording('workSteps', () => workStepsImpl()),
+  getDocumentTypes: recording('documentTypes', () => documentTypesImpl()),
+  getSuggestions: recording('suggestions', () => suggestionsImpl()),
   uploadAttachment: (...args) => uploadImpl(...args),
 }));
 
@@ -106,6 +115,10 @@ beforeEach(() => {
   treeImpl = () => Promise.resolve({ items: FOLDERS });
   fileImpl = () => Promise.reject(new Error('kullanılmadı'));
   uploadImpl = () => Promise.resolve({ documentFileId: 'yeni' });
+  kpiImpl = () => Promise.resolve({ items: [], totalCount: 0 });
+  workStepsImpl = () => Promise.resolve([]);
+  documentTypesImpl = () => Promise.resolve([]);
+  suggestionsImpl = () => Promise.resolve(null);
   window.abp = { appPath: '/' };
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
@@ -396,13 +409,16 @@ describe('DocumentsRoot · yükleme hatası (DOC-13)', () => {
     expect(screen.queryByText('Klasörler yüklenemedi')).not.toBeInTheDocument();
   });
 
-  it('proje seçiliyken uygunluk özeti okunamazsa KPI alt satırı "Yüklenemedi" der, "Proje bağlamı seçin" demez', async () => {
+  it('proje seçiliyken uygunluk özeti okunamazsa KPI alt satırı ve süreç şeridi "Yüklenemedi" der, "Proje bağlamı seçin" demez', async () => {
     complianceFailed = true;
     window.history.replaceState({}, '', '/Documents?folder=f1');
-    render(<DocumentsRoot />);
+    const { container } = render(<DocumentsRoot />);
 
-    expect(await screen.findByText('Yüklenemedi')).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: '2. Uygunluk · Yüklenemedi' })).toBeInTheDocument();
+    expect(container.querySelector('.apya-doc-kpis')).toHaveTextContent('Yüklenemedi');
     expect(screen.queryAllByText('Proje bağlamı seçin')).toHaveLength(0);
+    // Veriyi ekran verdi (şerit kendisi çekmedi): şeritte Tekrar dene yok.
+    expect(screen.queryByRole('button', { name: 'Tekrar dene' })).not.toBeInTheDocument();
   });
 
   it('ağaç yeniden denenince adresteki klasör projesiyle geri yüklenir', async () => {
@@ -422,5 +438,122 @@ describe('DocumentsRoot · yükleme hatası (DOC-13)', () => {
     await waitFor(() => expect(screen.queryAllByText('Proje bağlamı seçin')).toHaveLength(0));
     expect(screen.getByText('Klasör 1').closest('button')).toHaveClass('selected');
     expect(window.location.search).toContain('folder=f1');
+  });
+
+  const uploadOne = (container) => fireEvent.change(
+    container.querySelector('input[type="file"][multiple]'),
+    { target: { files: [new File(['x'], 'yeni.pdf', { type: 'application/pdf' })] } },
+  );
+  const kpiValue = (label) => screen.getByText(label).closest('.apya-doc-kpi').querySelector('.apya-doc-kpi-value');
+
+  it('dolu ağacın tazelemesi düşerse ağaç kalır, üstünde ince uyarı + Tekrar dene; KPI sayıları "—" olur', async () => {
+    window.history.replaceState({}, '', '/Documents?folder=f1');
+    kpiImpl = () => Promise.resolve({ items: [], totalCount: 4 });
+    const { container } = render(<DocumentsRoot />);
+    expect(await screen.findByText('Klasör 2')).toBeInTheDocument();
+    await waitFor(() => expect(kpiValue('Bu ay yüklenen')).toHaveTextContent('4'));
+
+    // Yükleme sonrası tazeleme: ağaç ve KPI istekleri düşer.
+    treeImpl = () => Promise.reject(new Error('500'));
+    kpiImpl = () => Promise.reject(new Error('500'));
+    uploadOne(container);
+
+    const notice = await screen.findByText('Klasörler yenilenemedi.');
+    expect(notice.closest('[role="alert"]')).not.toBeNull();
+    expect(screen.getByText('Klasör 1')).toBeInTheDocument();
+    expect(screen.getByText('Klasör 2')).toBeInTheDocument();
+    expect(screen.queryByText('Klasörler yüklenemedi')).not.toBeInTheDocument();
+    await waitFor(() => expect(kpiValue('Bu ay yüklenen')).toHaveTextContent('—'));
+    expect(kpiValue('Süresi dolan')).toHaveTextContent('—');
+    expect(notifyCalls).toEqual([]);
+
+    // Uyarının Tekrar dene'si: istek sürerken uyarı ve ağaç yerinde, düğme meşgul.
+    const tree = deferred();
+    treeImpl = () => tree.promise;
+    const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+    expect(retry).toHaveAccessibleDescription('Klasörler yenilenemedi.');
+    fireEvent.click(retry);
+    await waitFor(() => expect(retry).toHaveAttribute('aria-busy', 'true'));
+    expect(screen.getByText('Klasör 1')).toBeInTheDocument();
+    expect(screen.getByText('Klasörler yenilenemedi.')).toBeInTheDocument();
+
+    tree.resolve({ items: FOLDERS });
+    await waitFor(() => expect(screen.queryByText('Klasörler yenilenemedi.')).not.toBeInTheDocument());
+    expect(screen.getByText('Klasör 1')).toBeInTheDocument();
+  });
+
+  it('uyarının JS yedeği tr.json ile aynı, en.json\'da karşılığı var (metin sessizce kaymasın)', () => {
+    const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)),
+      '../../../../../Apya.Platform.Domain.Shared/Localization/Platform');
+    const texts = (file) => JSON.parse(readFileSync(path.join(dir, file), 'utf8').replace(/^﻿/, '')).texts;
+    expect(texts('tr.json')['Documents:Tree:RefreshFailed']).toBe('Klasörler yenilenemedi.');
+    expect(texts('en.json')['Documents:Tree:RefreshFailed']).toBeTruthy();
+  });
+
+  it('ağaçta yalnız son istek yazar: geç dönen eski hata yeni ağacın üstüne uyarı basmaz', async () => {
+    window.history.replaceState({}, '', '/Documents?folder=f1');
+    const first = deferred();
+    treeImpl = () => first.promise;
+    const { container } = render(<DocumentsRoot />);
+    expect(await screen.findByText('Belge f1')).toBeInTheDocument();
+
+    // İlk ağaç isteği sürerken yükleme sonrası tazeleme ikinci isteği atar; o kazanır.
+    treeImpl = () => Promise.resolve({ items: FOLDERS });
+    uploadOne(container);
+    expect(await screen.findByText('Klasör 2')).toBeInTheDocument();
+
+    first.reject(new Error('500'));
+    await tick();
+
+    expect(screen.getByText('Klasör 2')).toBeInTheDocument();
+    expect(screen.queryByText('Klasörler yenilenemedi.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Klasörler yüklenemedi')).not.toBeInTheDocument();
+  });
+
+  it('iş adımları ve belge türleri okunamazsa (ör. 403) ağaç onlarsız çizilir, hata kartı çıkmaz', async () => {
+    window.history.replaceState({}, '', '/Documents');
+    const forbidden = () => Promise.reject(Object.assign(new Error('Bu işlem için yetkiniz yok.'), { status: 403 }));
+    workStepsImpl = forbidden;
+    documentTypesImpl = forbidden;
+    render(<DocumentsRoot />);
+
+    expect(await screen.findByText('Klasör 1')).toBeInTheDocument();
+    expect(screen.getByText('Klasör 2')).toBeInTheDocument();
+    expect(screen.queryByText('Klasörler yüklenemedi')).not.toBeInTheDocument();
+    expect(screen.queryByText('Klasörler yenilenemedi.')).not.toBeInTheDocument();
+    expect(loadArgs.workSteps.at(-1)).toEqual(QUIET);
+  });
+
+  it('"Öneri bekleyen" klasöründe öneriler okunamazsa "henüz belge yok" değil hata kartı; Tekrar dene önerileri getirir (S14)', async () => {
+    window.history.replaceState({}, '', '/Documents?smart=suggested');
+    suggestionsImpl = () => Promise.reject(new Error('500'));
+    render(<DocumentsRoot />);
+
+    expect(await screen.findByText('Belge listesi yüklenemedi')).toBeInTheDocument();
+    expect(screen.queryByText('Burada henüz belge yok')).not.toBeInTheDocument();
+    expect(screen.getByText('— belge')).toBeInTheDocument();
+    expect(notifyCalls).toEqual([]);
+
+    const answer = deferred();
+    suggestionsImpl = () => answer.promise;
+    const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+    fireEvent.click(retry);
+    await waitFor(() => expect(retry).toHaveAttribute('aria-busy', 'true'));
+    expect(screen.getByText('Belge listesi yüklenemedi')).toBeInTheDocument();
+
+    answer.resolve({ documentCount: 1, items: [{ documentFileId: 'd-x', kind: 1 }] });
+    await waitFor(() => expect(lastList().input.documentFileIds).toEqual(['d-x']));
+    expect(await screen.findByText('Belge tümü')).toBeInTheDocument();
+    expect(screen.queryByText('Belge listesi yüklenemedi')).not.toBeInTheDocument();
+  });
+
+  it('başka klasörde öneri hatası listeyi etkilemez', async () => {
+    window.history.replaceState({}, '', '/Documents');
+    suggestionsImpl = () => Promise.reject(new Error('500'));
+    render(<DocumentsRoot />);
+
+    expect(await screen.findByText('Belge tümü')).toBeInTheDocument();
+    expect(screen.getByText('1 belge')).toBeInTheDocument();
+    expect(screen.queryByText('Belge listesi yüklenemedi')).not.toBeInTheDocument();
   });
 });

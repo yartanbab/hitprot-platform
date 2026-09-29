@@ -1,8 +1,6 @@
-import React from 'react';
-import { cn } from '../../lib/utils';
+import React, { useId } from 'react';
 import { t } from '../../lib/i18n';
 import { errorMessage } from '../../lib/api/abpErrors';
-import { Button } from './Button';
 
 /**
  * EmptyState — "veri yok" yerine ikon + 1 satır + 1 CTA.
@@ -27,9 +25,22 @@ import { Button } from './Button';
  *   error/locked tonu Razor .apya-console-state-icon.is-muted ile aynı (sessiz halka, alarm
  *   kırmızısı yok); jQuery karşılığı wwwroot/js/apya-load-state.js errorHtml.
  *
- * onRetry: verilirse "Tekrar dene" (Common:Retry) düğmesi çizilir ve ARGÜMANSIZ çağrılır
- * (react-query refetch'ine MouseEvent sızmaz). Açık `action` her zaman onu ezer.
+ * onRetry: verilirse kanonik "Tekrar dene" (RetryButton, aşağıda) çizilir ve ARGÜMANSIZ
+ * çağrılır (react-query refetch'ine MouseEvent sızmaz). Açık `action` her zaman onu ezer.
+ * retrying: yeniden deneme sürüyor — kart yerinde kalır, düğme meşgul (bkz. madde 7).
  * description: undefined → varsayılan (yukarıda), null → açıklama yok.
+ *
+ * BAĞIMLILIKSIZ (Faz 4 karar 11): yalnız react, lib/i18n ve lib/api/abpErrors içe aktarılır.
+ * `cn` (clsx + tailwind-merge) ve `Button` (radix Slot + cva) ui-vendor parçasını (~55 KB gz)
+ * getirir; Formlar/Yanıtlar gibi hafif adalar bu bileşen yüzünden onu yüklemesin diye sınıflar
+ * düz birleştirilir (className sona eklenir), düğme sabit sınıflıdır. Kilit: EmptyState.test.
+ *
+ * KANONİK "TEKRAR DENE" (Faz 4 karar 10 — React ve Razor ortak): outline + accent.
+ *   Razor: <button type="button" class="btn btn-sm btn-outline-primary …">
+ *            <i class="fa fa-rotate-right me-1" aria-hidden="true"></i>Tekrar dene</button>
+ *   React: RetryButton — accent çerçeve ve metin, üzerine gelince accent dolgu + ters metin,
+ *          basılıyken accent-600 (apya-theme-bridge.css .btn-outline-primary ile aynı);
+ *          fa-rotate-right (aria-hidden); metin HER YERDE Common:Retry ("Yeniden dene" yok).
  *
  * YÜKLEME DURUMU SÖZLEŞMESİ (React adaları)
  *   1) Boş durum yalnız BAŞARILI ve boş sonuçta; oluşturma CTA'sı hata anında görünmez.
@@ -40,7 +51,14 @@ import { Button } from './Button';
  *   4) Sayaç/özet sayıları yüklenirken ve hatada "—", asla 0.
  *   5) Yükleme hatasının tek kanalı bu kart: toast/pencere yok (isteğe
  *      { abpHandleError: false }); toast/pencere İŞLEM hatalarına. 401 yine merkezi pencerede.
+ *      Yardımcı yüklemeler (KPI, süreç şeridi özeti, öneri şeridi, kurulum durumu) kart
+ *      çizmez: "—" / "Yüklenemedi" ya da sessiz, nötr düşüş — sahte boş/sıfır iddiası yok.
  *   6) Hata/veri bayrakları "son istek kazanır" bekçisinin arkasında yazılır.
+ *   7) Odak: "Tekrar dene" kendini sökmez. Yeniden deneme sürerken (hata varken yükleniyor)
+ *      kart iskelete DÖNMEZ; çağıran `retrying` verir → düğme aria-disabled + aria-busy +
+ *      dönen ikon, tıklama yutulur. `disabled` DEĞİL: Chromium odaklı düğme disabled olunca
+ *      odağı body'ye atar (ölçüldü). Düğme aria-describedby ile kartın başlığına bağlı:
+ *      aynı ekrandaki birden çok "Tekrar dene" kendi başlığıyla okunur.
  *
  * Standalone kullanılabilir; WidgetShell tarafından da inline gösterilir.
  */
@@ -53,7 +71,41 @@ const VARIANTS = {
     locked:  { ring: 'bg-surface-sunken text-text-secondary', text: 'text-text-secondary', icon: 'fa-lock' },
 };
 
+/* cn yerine: tailwind-merge'e gerek yok (çakışan sınıf üretilmiyor), ui-vendor gelmesin. */
+const classes = (...list) => list.filter(Boolean).join(' ');
+
 const fetchErrorText = () => t('Common:FetchError', 'Veri alınırken bir hata oluştu.');
+
+/* Button size="sm" ölçüsü + Razor .btn-outline-primary renkleri. Sabit dize: Button'a dayanmaz. */
+const RETRY_BUTTON_CLASS = classes(
+    'inline-flex items-center justify-center gap-2 h-8 px-3 rounded-md text-sm font-medium',
+    'select-none whitespace-nowrap bg-transparent text-accent border border-accent',
+    'transition-colors duration-fast hover:bg-accent hover:text-text-inverse',
+    'active:bg-accent-600 active:border-accent-600 active:text-text-inverse',
+    'focus-visible:outline-none focus-visible:shadow-focus',
+    'aria-disabled:opacity-50 aria-disabled:pointer-events-none',
+);
+
+/**
+ * RetryButton — kanonik "Tekrar dene" (kart dışı yerler için: şerit, satır içi uyarı).
+ * onRetry ARGÜMANSIZ çağrılır. retrying: aria-disabled + aria-busy + dönen ikon; tıklama
+ * yutulur, odak düğmede kalır. Diğer özellikler (aria-describedby…) düğmeye geçer.
+ */
+function RetryButton({ onRetry, retrying = false, ...rest }) {
+    return (
+        <button
+            {...rest}
+            type="button"
+            className={RETRY_BUTTON_CLASS}
+            aria-disabled={retrying || undefined}
+            aria-busy={retrying || undefined}
+            onClick={() => { if (!retrying) onRetry(); }}
+        >
+            <i className={retrying ? 'fa fa-rotate-right fa-spin' : 'fa fa-rotate-right'} aria-hidden="true" />
+            <span>{t('Common:Retry', 'Tekrar dene')}</span>
+        </button>
+    );
+}
 
 function EmptyState({
     icon,
@@ -63,31 +115,28 @@ function EmptyState({
     variant = 'default',
     compact = false,   /* compact: ikonu küçült, padding düşür — Bento widget için */
     onRetry,           /* () => void — "Tekrar dene" düğmesi (argümansız çağrılır) */
+    retrying = false,  /* yeniden deneme sürüyor: kart kalır, düğme meşgul */
     error,             /* yalnız variant="error": yükleme hatası nesnesi (açıklama kaynağı) */
     className,
 }) {
+    const titleId = useId();
     const v = VARIANTS[variant] ?? VARIANTS.default;
     const isError = variant === 'error';
     const shownIcon = icon ?? (v.icon ? <i className={`fa ${v.icon}`} /> : null);
     const shownDescription = description !== undefined || !isError
         ? description
         : error !== undefined ? errorMessage(error, fetchErrorText()) : fetchErrorText();
+    // Başlık kimliği yalnız düğme ona bağlanırken basılır: diğer kullanımların çıktısı aynı kalır.
+    const describedBy = !action && onRetry && title ? titleId : undefined;
     const shownAction = action ?? (onRetry ? (
-        <Button
-            size="sm"
-            variant="outline"
-            leadingIcon={<i className="fa fa-rotate-right" aria-hidden="true" />}
-            onClick={() => onRetry()}
-        >
-            {t('Common:Retry', 'Tekrar dene')}
-        </Button>
+        <RetryButton onRetry={onRetry} retrying={retrying} aria-describedby={describedBy} />
     ) : null);
     return (
         <div
             /* Hata hemen duyurulur (alert zaten assertive); diğerleri nazik. */
             role={isError ? 'alert' : 'status'}
             aria-live={isError ? undefined : 'polite'}
-            className={cn(
+            className={classes(
                 'flex flex-col items-center justify-center text-center',
                 compact ? 'gap-2 py-3' : 'gap-3 py-6',
                 className,
@@ -95,7 +144,7 @@ function EmptyState({
         >
             {shownIcon && (
                 <span
-                    className={cn(
+                    className={classes(
                         'inline-flex items-center justify-center rounded-full',
                         v.ring,
                         compact ? 'h-8 w-8' : 'h-12 w-12',
@@ -106,7 +155,7 @@ function EmptyState({
                 </span>
             )}
             {title && (
-                <p className={cn(
+                <p id={describedBy} className={classes(
                     'font-medium text-text-primary',
                     compact ? 'text-sm' : 'text-base',
                 )}>
@@ -114,7 +163,7 @@ function EmptyState({
                 </p>
             )}
             {shownDescription && (
-                <p className={cn('max-w-sm', v.text, compact ? 'text-xs' : 'text-sm')}>
+                <p className={classes('max-w-sm', v.text, compact ? 'text-xs' : 'text-sm')}>
                     {shownDescription}
                 </p>
             )}
@@ -123,4 +172,4 @@ function EmptyState({
     );
 }
 
-export { EmptyState };
+export { EmptyState, RetryButton };

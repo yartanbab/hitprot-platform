@@ -27,7 +27,9 @@ export function useComplianceOverview(projectId) {
       projectId,
       overview: prev.projectId === projectId ? prev.overview : null,
       loading: true,
-      failed: false,
+      // Aynı projede yeniden denenirken hata bayrağı kalır: şeridin "Tekrar dene"si
+      // istek sürerken sökülmez (odak düğmede), "Yüklenemedi" nötr etikete dönmez.
+      failed: prev.projectId === projectId && prev.failed,
     }));
 
     try {

@@ -61,6 +61,7 @@ function ResponsesApp({ formId }) {
      yalnız liste düşerse gerçek istatistikler görünür kalır. */
   const [loadError, setLoadError] = useState(null);
   const [rowsError, setRowsError] = useState(null);
+  const [rowsLoading, setRowsLoading] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const rowsRequest = useRef(0);
   const [selected, setSelected] = useState(null); // detail dto
@@ -75,9 +76,11 @@ function ResponsesApp({ formId }) {
 
   /* Fırlatmaz; yalnız son isteğin (son süzgecin) yanıtı ya da hatası yazılır. Hata
      anında satırlar TEMİZLENİR: önceki süzgecin satırları yeni süzgeç adıyla görünür,
-     CSV onları dışa aktarır, Analiz onlardan grafik çizerdi. */
+     CSV onları dışa aktarır, Analiz onlardan grafik çizerdi. Yüklenirken de aynı sebeple
+     sayaç "—", CSV pasif, liste/analiz yerine "yükleniyor". */
   const loadList = async (status) => {
     const request = ++rowsRequest.current;
+    setRowsLoading(true);
     let url = `/api/app/response-management?DocumentId=${formId}&MaxResultCount=200&SkipCount=0`;
     if (status !== '') url += `&Status=${status}`;
     try {
@@ -89,6 +92,8 @@ function ResponsesApp({ formId }) {
       if (request !== rowsRequest.current) return;
       setRows([]);
       setRowsError(e);
+    } finally {
+      if (request === rowsRequest.current) setRowsLoading(false);
     }
   };
 
@@ -101,6 +106,7 @@ function ResponsesApp({ formId }) {
         ]);
         setStats(st);
         setBlocks((form.blocks || []).slice().sort((a, b) => a.order - b.order));
+        setLoadError(null);
         await loadList('');
       } catch (e) {
         // Yalnız istatistik/form hatası buraya düşer; liste hatası loadList'te kalır.
@@ -178,16 +184,18 @@ function ResponsesApp({ formId }) {
   const excelHref = `/DynamicAssets/Responses?handler=Excel&formId=${formId}${statusFilter !== '' ? `&status=${statusFilter}` : ''}`;
   const canExport = abpAuth('Platform.DynamicAssets.Export');
 
-  if (loading) return <div className="py-16 text-center text-text-tertiary">Yanıtlar yükleniyor…</div>;
+  if (loading && !loadError) return <div className="py-16 text-center text-text-tertiary">Yanıtlar yükleniyor…</div>;
 
-  // Sahte "Toplam Yanıt 0" kartları çizilmez (form-builder'daki reloadKey deseni).
+  // Sahte "Toplam Yanıt 0" kartları çizilmez (form-builder'daki reloadKey deseni). Hata
+  // yeniden denemede silinmez: kart yerinde kalır, düğme meşgul (odak düğmede).
   if (loadError) {
     return (
       <EmptyState
         variant="error"
         title="Yanıtlar yüklenemedi"
         error={loadError}
-        onRetry={() => { setLoadError(null); setLoading(true); setReloadKey((k) => k + 1); }}
+        onRetry={() => { setLoading(true); setReloadKey((k) => k + 1); }}
+        retrying={loading}
       />
     );
   }
@@ -206,7 +214,7 @@ function ResponsesApp({ formId }) {
 
       {/* toolbar */}
       <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-bold text-text-secondary">Yanıtlar ({rowsError ? '—' : rows.length})</h3>
+        <h3 className="text-sm font-bold text-text-secondary">Yanıtlar ({rowsLoading || rowsError ? '—' : rows.length})</h3>
         <div className="flex items-center gap-2">
           <div className="flex rounded-xl border border-default bg-surface-raised p-0.5">
             <button onClick={() => setView('list')} className={`rounded-lg px-3 py-1 text-xs font-semibold ${view === 'list' ? 'bg-accent text-white' : 'text-text-secondary'}`}>Liste</button>
@@ -216,7 +224,7 @@ function ResponsesApp({ formId }) {
           <select value={statusFilter} onChange={(e) => onFilter(e.target.value)} className="rounded-xl border border-default bg-surface-raised px-3 py-1.5 text-sm">
             {STATUS_OPTIONS.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
           </select>
-          <button onClick={exportCsv} disabled={rows.length === 0} className="rounded-xl border border-default bg-surface-raised px-3 py-1.5 text-sm font-medium hover:bg-surface-sunken disabled:opacity-50">⬇ CSV</button>
+          <button onClick={exportCsv} disabled={rowsLoading || rows.length === 0} className="rounded-xl border border-default bg-surface-raised px-3 py-1.5 text-sm font-medium hover:bg-surface-sunken disabled:opacity-50">⬇ CSV</button>
           <Hint placement="bottom" text="CSV dosyası tarayıcıda, ekranda yüklü yanıtlardan üretilir — en fazla 200 kayıt. Tüm yanıtlar için Excel'i kullanın." />
           {canExport && (
             <a href={excelHref} className="rounded-xl border border-default bg-surface-raised px-3 py-1.5 text-sm font-medium hover:bg-surface-sunken">⬇ Excel</a>
@@ -224,11 +232,14 @@ function ResponsesApp({ formId }) {
         </div>
       </div>
 
-      {/* liste okunamadıysa ne tablo ne analiz: ikisi de o satırlardan çizilir */}
+      {/* liste okunamadıysa ya da yükleniyorsa ne tablo ne analiz: ikisi de o satırlardan
+          çizilir. Hata varken yükleniyor = yeniden deneniyor: kart kalır (odak düğmede). */}
       {rowsError ? (
         <div className="mt-3 rounded-2xl border border-default bg-surface-raised">
-          <EmptyState variant="error" title="Yanıtlar yüklenemedi" error={rowsError} onRetry={() => loadList(statusFilter)} />
+          <EmptyState variant="error" title="Yanıtlar yüklenemedi" error={rowsError} onRetry={() => loadList(statusFilter)} retrying={rowsLoading} />
         </div>
+      ) : rowsLoading ? (
+        <div className="mt-3 rounded-2xl border border-default bg-surface-raised py-16 text-center text-text-tertiary">Yanıtlar yükleniyor…</div>
       ) : view === 'analytics' ? (
         <div className="mt-3">
           {chartableBlocks.length === 0 ? (

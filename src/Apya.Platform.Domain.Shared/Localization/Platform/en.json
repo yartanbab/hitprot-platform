@@ -1920,6 +1920,7 @@
     "Common:FetchError": "An error occurred while fetching data.",
     "Common:Retry": "Try again",
     "Common:ListLoadFailed": "The list could not be loaded.",
+    "Documents:Tree:RefreshFailed": "Folders could not be refreshed.",
     "Common:LastSuccessfulUpdate": "Last successful update",
     "Common:Updating": "updating",
     "Common:UpdatingInBackground": "Updating in background",

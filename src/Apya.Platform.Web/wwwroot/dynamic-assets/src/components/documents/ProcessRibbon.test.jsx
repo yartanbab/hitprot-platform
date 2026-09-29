@@ -1,13 +1,16 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 /**
  * Süreç şeridi.
  *
  * Kilitlenen davranışlar: adımlar proje bağlamını taşıyan GERÇEK bağlantıdır,
  * etkin adım `aria-current="step"` taşır, ipucu uygunluk özetinden gelir ve
- * veriyi ekran zaten verdiyse şerit ikinci kez ağa gitmez.
+ * veriyi ekran zaten verdiyse şerit ikinci kez ağa gitmez. Özet okunamazsa alt
+ * etiket "Yüklenemedi" (nötr "Kontrol listesi" değil); şerit kendi çektiyse
+ * "Tekrar dene" sunar ve istek sürerken onu sökmez. Bu şerit 7 adada ortak:
+ * Dokümanlar, Teslimler, Eşleştirme, Zaman çizelgesi, Kapsam, Rapor derleyici, Toplu yükleme.
  */
 
 const getComplianceOverview = vi.fn();
@@ -69,6 +72,52 @@ describe('ProcessRibbon', () => {
     expect(getComplianceOverview).not.toHaveBeenCalled();
     expect(screen.getByText('Proje bağlamı seçin')).toBeInTheDocument();
     expect(screen.getAllByRole('link')[3]).toHaveAttribute('href', '/Documents/Deliveries');
+  });
+
+  it('özet okunamazsa alt etiket "Yüklenemedi"; şerit kendi çektiyse Tekrar dene sunar, istek sürerken sökmez', async () => {
+    let answer;
+    getComplianceOverview
+      .mockImplementationOnce(() => Promise.reject(new Error('500')))
+      .mockImplementationOnce(() => new Promise((resolve) => { answer = resolve; }));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<ProcessRibbon active="deliver" projectId="p1" />);
+
+    expect(await screen.findByText('Yüklenemedi')).toBeInTheDocument();
+    expect(screen.queryByText('Kontrol listesi')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link')[1]).toHaveAccessibleName('2. Uygunluk · Yüklenemedi');
+    // Uydurma ipucu yok ("Paketi üret" gibi): veri bilinmiyor.
+    expect(screen.queryByText('Sırada:')).not.toBeInTheDocument();
+
+    const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+    expect(retry).toHaveAccessibleDescription('Uygunluk Yüklenemedi');
+    retry.focus();
+    fireEvent.click(retry);
+
+    await waitFor(() => expect(retry).toHaveAttribute('aria-busy', 'true'));
+    expect(document.activeElement).toBe(retry);
+    expect(screen.getByText('Yüklenemedi')).toBeInTheDocument();
+    expect(getComplianceOverview).toHaveBeenCalledTimes(2);
+
+    answer(OVERVIEW);
+
+    expect(await screen.findByText('1 bloke kalemi çöz, paketi üret')).toBeInTheDocument();
+    expect(screen.getByText('%70 · 3 eksik')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tekrar dene' })).not.toBeInTheDocument();
+  });
+
+  it('veriyi ekran verdiyse hata alt etikette görünür, yeniden denemeyi ekran sunar', () => {
+    render(
+      <ProcessRibbon
+        active="docs"
+        projectId="p1"
+        compliance={{ overview: null, loading: false, failed: true }}
+      />,
+    );
+
+    expect(getComplianceOverview).not.toHaveBeenCalled();
+    expect(screen.getByText('Yüklenemedi')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tekrar dene' })).not.toBeInTheDocument();
   });
 
   it('veriyi ekran verdiyse ikinci istek atmaz', () => {
