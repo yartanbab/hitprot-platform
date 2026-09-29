@@ -108,6 +108,10 @@
     "file": "i18n-DkhYld-7.js",
     "name": "i18n"
   },
+  "_permanentRejection-SvaBclz0.js": {
+    "file": "permanentRejection-SvaBclz0.js",
+    "name": "permanentRejection"
+  },
   "_publicFormLink-CJ_6ABDU.js": {
     "file": "publicFormLink-CJ_6ABDU.js",
     "name": "publicFormLink"
@@ -134,10 +138,6 @@
   "_signalr-vendor-CjTpd8t3.js": {
     "file": "signalr-vendor-CjTpd8t3.js",
     "name": "signalr-vendor"
-  },
-  "_storageScope-BcOJz0_P.js": {
-    "file": "storageScope-BcOJz0_P.js",
-    "name": "storageScope"
   },
   "_ui-vendor-DaE-uom6.js": {
     "file": "ui-vendor-DaE-uom6.js",
@@ -167,7 +167,7 @@
       "_httpClient-DePjXdo1.js",
       "_draggableActivation-Ybw9Upbh.js",
       "_query-vendor-Bf69L2iP.js",
-      "_storageScope-BcOJz0_P.js"
+      "_permanentRejection-SvaBclz0.js"
     ]
   },
   "src/customers.jsx": {
@@ -296,7 +296,7 @@
       "_i18n-DkhYld-7.js",
       "_query-vendor-Bf69L2iP.js",
       "_httpClient-DePjXdo1.js",
-      "_storageScope-BcOJz0_P.js"
+      "_permanentRejection-SvaBclz0.js"
     ]
   },
   "src/form-builder.jsx": {
