@@ -10,6 +10,7 @@ import {
   getWorkSteps, linkComplianceDocument, moveFile, restoreFile, updateFileMeta, uploadAttachment,
 } from './api';
 import { cn, fmt } from './format';
+import { wasShown } from '../lib/api/abpErrors';
 import { ContextTree } from './components/ContextTree';
 import { BulkBar, FileList } from './components/FileList';
 import { DetailPanel } from './components/DetailPanel';
@@ -412,7 +413,7 @@ export function DocumentsRoot() {
       flash(message);
       await Promise.all([loadSuggestions(), loadFiles(), loadTree()]);
     } catch (e) {
-      abpNotify('error', 'Öneri işlenemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Öneri işlenemedi.');
       console.error('[Documents] suggestion action', e);
     } finally {
       setSuggestionBusy(false);
@@ -575,7 +576,7 @@ export function DocumentsRoot() {
       if (request === detailRequestRef.current) setDetail(next);
       await loadFiles();
     } catch (e) {
-      abpNotify('error', 'Belge güncellenemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Belge güncellenemedi.');
       console.error('[Documents] handleSave', e);
     } finally {
       setSaving(false);
@@ -590,7 +591,7 @@ export function DocumentsRoot() {
       flash('Belge silindi.');
       await Promise.all([loadFiles(), loadKpis()]);
     } catch (e) {
-      abpNotify('error', 'Belge silinemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Belge silinemedi.');
       console.error('[Documents] handleDelete', e);
     } finally {
       setDeleteTarget(null);
@@ -617,7 +618,7 @@ export function DocumentsRoot() {
       setCheckedIds(new Set());
       await loadFiles();
     } catch (e) {
-      abpNotify('error', 'Taşıma başarısız oldu.');
+      if (!wasShown(e)) abpNotify('error', 'Taşıma başarısız oldu.');
       console.error('[Documents] move', e);
     } finally {
       draggedRef.current = [];
@@ -637,7 +638,7 @@ export function DocumentsRoot() {
       setCheckedIds(new Set());
       await loadFiles();
     } catch (e) {
-      abpNotify('error', 'Toplu taşıma başarısız oldu.');
+      if (!wasShown(e)) abpNotify('error', 'Toplu taşıma başarısız oldu.');
       console.error('[Documents] bulkMove', e);
     }
   };
@@ -654,7 +655,7 @@ export function DocumentsRoot() {
       setCheckedIds(new Set());
       await loadFiles();
     } catch (e) {
-      abpNotify('error', 'Etiketleme başarısız oldu.');
+      if (!wasShown(e)) abpNotify('error', 'Etiketleme başarısız oldu.');
       console.error('[Documents] bulkTag', e);
     }
   };
@@ -694,7 +695,7 @@ export function DocumentsRoot() {
       // kalır ve güncel proje için sonsuza dek "yükleniyor" görünürdü.
       await Promise.all([loadFiles(), loadKpis(), loadTree(), complianceRef.current.reload()]);
     } catch (e) {
-      abpNotify('error', 'Dosya yüklenemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Dosya yüklenemedi.');
       console.error('[Documents] upload', e);
     } finally {
       setUploading(false);
@@ -708,7 +709,7 @@ export function DocumentsRoot() {
       flash(`"${file.displayName}" geri alındı.`);
       await Promise.all([loadFiles(), loadKpis(), loadTree()]);
     } catch (e) {
-      abpNotify('error', 'Belge geri alınamadı.');
+      if (!wasShown(e)) abpNotify('error', 'Belge geri alınamadı.');
       console.error('[Documents] restore', e);
     }
   };

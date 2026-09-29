@@ -7,6 +7,7 @@ import {
   getTemplates, removeItem, revokeShareLink, searchDocuments,
 } from './api';
 import { PreflightDialog } from './PreflightDialog';
+import { wasShown } from '../lib/api/abpErrors';
 
 /**
  * Teslimler & arşiv.
@@ -175,7 +176,7 @@ export function DeliveriesRoot() {
       await load();
       await openPackage(created.id);
     } catch (e) {
-      abpNotify('error', 'Paket oluşturulamadı.');
+      if (!wasShown(e)) abpNotify('error', 'Paket oluşturulamadı.');
       console.error('[Deliveries] create', e);
     } finally {
       setBusy(false);
@@ -189,7 +190,7 @@ export function DeliveriesRoot() {
       if (selectedId === id) { setSelectedId(null); setDetail(null); }
       await load();
     } catch (e) {
-      abpNotify('error', 'Paket silinemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Paket silinemedi.');
     } finally {
       setBusy(false);
     }
@@ -226,7 +227,7 @@ export function DeliveriesRoot() {
       }
       await load();
     } catch (e) {
-      abpNotify('error', 'Ek eklenemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Ek eklenemedi.');
     } finally {
       setBusy(false);
     }
@@ -240,7 +241,7 @@ export function DeliveriesRoot() {
       if (request === packageRequestRef.current) setDetail(next);
       await load();
     } catch (e) {
-      abpNotify('error', 'Ek çıkarılamadı.');
+      if (!wasShown(e)) abpNotify('error', 'Ek çıkarılamadı.');
     } finally {
       setBusy(false);
     }
@@ -252,7 +253,7 @@ export function DeliveriesRoot() {
     try {
       setPreflight(await getPreflight(detail.id));
     } catch (e) {
-      abpNotify('error', 'Kontrol çalıştırılamadı.');
+      if (!wasShown(e)) abpNotify('error', 'Kontrol çalıştırılamadı.');
       setShowPreflight(false);
     } finally {
       setPreflightLoading(false);
@@ -271,7 +272,7 @@ export function DeliveriesRoot() {
       await load();
     } catch (e) {
       // Sunucu bloke kalem bulursa buraya düşeriz; istemci düğmesi kapalı olsa bile.
-      abpNotify('error', 'Paket üretilemedi — engelleyen kalemler olabilir.');
+      if (!wasShown(e)) abpNotify('error', 'Paket üretilemedi — engelleyen kalemler olabilir.');
       console.error('[Deliveries] generate', e);
     } finally {
       setBusy(false);
@@ -294,7 +295,7 @@ export function DeliveriesRoot() {
       // Token yalnız bu yanıtta döner — kullanıcıya hemen gösterilmeli.
       window.prompt('Bağlantı (yalnız şimdi gösterilir, kopyalayın):', window.location.origin + link.url);
     } catch (e) {
-      abpNotify('error', 'Bağlantı oluşturulamadı.');
+      if (!wasShown(e)) abpNotify('error', 'Bağlantı oluşturulamadı.');
     } finally {
       setBusy(false);
     }

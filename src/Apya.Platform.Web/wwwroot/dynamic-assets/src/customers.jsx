@@ -20,6 +20,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Hint } from './components/ui/Hint';
+import { wasShown } from './lib/api/abpErrors';
 import './index.css';
 
 /* ─── Yardımcılar ─────────────────────────────────────────────────────── */
@@ -725,8 +726,9 @@ function CustomersIsland() {
       setCustomers((l) => l.filter((c) => c.id !== deleteTarget.id));
       if (selectedId === deleteTarget.id) setSelectedId(null);
       flash(`"${deleteTarget.name}" silindi.`);
-    } catch {
-      abpNotify('error', 'Silme işlemi başarısız oldu.');
+    } catch (e) {
+      // Silme reddinin sunucu nedenini ABP penceresi zaten gösterdi — ikinci bildirim yok.
+      if (!wasShown(e)) abpNotify('error', 'Silme işlemi başarısız oldu.');
     } finally {
       setDeleteTarget(null);
     }

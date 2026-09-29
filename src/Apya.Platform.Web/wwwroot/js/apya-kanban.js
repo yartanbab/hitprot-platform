@@ -954,6 +954,13 @@
             if (e.key === 'Escape') { closeCardMenu(); }
         }
 
+        // Hata tek kanaldan: ABP penceresi (ya da oturum penceresi) sunucunun nedenini
+        // gösterdiyse ikinci bildirim basılmaz (apya.ajaxErrors — ajax-error-detail.js).
+        function notifyFailure(err, msg) {
+            if (window.apya && apya.ajaxErrors) { apya.ajaxErrors.notify(err, msg); }
+            else { abp.notify.error(msg); }
+        }
+
         // Tek kart eylemi: bildir + panoyu tazele (toplu akıştaki finishBulk'ın
         // tekil karşılığı; geri alma yok — tek kartta maliyeti düşük).
         function runCardAction(promise, okMsg) {
@@ -962,8 +969,8 @@
                 abp.notify.success(okMsg);
                 load();
                 onChanged();
-            }).catch(function () {
-                abp.notify.error('İşlem tamamlanamadı.');
+            }).catch(function (err) {
+                notifyFailure(err, 'İşlem tamamlanamadı.');
                 load();
             });
         }
@@ -1568,8 +1575,8 @@
                         closeColumnPanel();
                         load();
                     })
-                    .catch(function () {
-                        abp.notify.error('Kolonlar kaydedilemedi.');
+                    .catch(function (err) {
+                        notifyFailure(err, 'Kolonlar kaydedilemedi.');
                         saveBtn.disabled = false;
                     });
             });
@@ -1988,8 +1995,8 @@
                                     abp.notify.info('Görev iptal edildi.');
                                     load();
                                     onChanged();
-                                }).catch(function () {
-                                    abp.notify.error('Görev iptal edilemedi.');
+                                }).catch(function (err) {
+                                    notifyFailure(err, 'Görev iptal edilemedi.');
                                     load();
                                 });
                             });
@@ -2005,8 +2012,8 @@
                             if (grouping) { load(); onChanged(); return; }
                             updateCounts();
                             onChanged();
-                        }).catch(function () {
-                            abp.notify.error('Görev taşınamadı.');
+                        }).catch(function (err) {
+                            notifyFailure(err, 'Görev taşınamadı.');
                             load();
                         });
                     }
@@ -2068,9 +2075,9 @@
                         if (!ids.length) { return; }
                         colSvc.reorder(projectId, ids)
                             .then(function () { abp.notify.success('Kolon sırası kaydedildi.'); })
-                            .catch(function () {
+                            .catch(function (err) {
                                 // Sıra sunucuda değişmedi → DB düzenine geri dön.
-                                abp.notify.error('Sıralama kaydedilemedi.');
+                                notifyFailure(err, 'Sıralama kaydedilemedi.');
                                 load();
                             });
                     }
@@ -2141,7 +2148,7 @@
                 abp.notify.success('İptal geri alındı.');
                 load();
                 onChanged();
-            }).catch(function () { abp.notify.error('İptal geri alınamadı.'); });
+            }).catch(function (err) { notifyFailure(err, 'İptal geri alınamadı.'); });
         });
 
         // Taşı: hedef sistem kolonuysa durum, özel kolonsa kolon bağı üzerinden.

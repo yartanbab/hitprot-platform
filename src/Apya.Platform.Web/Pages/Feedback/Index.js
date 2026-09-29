@@ -162,7 +162,8 @@ $(function () {
                 loadFeedbackReset();
             })
             .catch(function (err) {
-                abp.notify.error((err && err.message) || 'Yorum gönderilemedi.');
+                // ABP penceresi sunucu mesajını gösterdiyse aynı metin ikinci kez basılmaz.
+                apya.ajaxErrors.notify(err, 'Yorum gönderilemedi.');
             })
             .then(function () { $btn.prop('disabled', false); });
     });

@@ -1080,11 +1080,12 @@ $(function () {
         taskService.updateStatus(id, t.status).then(function () {
             drawer.busy[id] = false;
             renderDrawer();
-        }).catch(function () {
+        }).catch(function (err) {
             t.status = previous;                 // iyimser güncelleme geri alınır
             drawer.busy[id] = false;
             afterTaskMutation();
-            abp.notify.error('Görev durumu güncellenemedi.');
+            // ABP penceresi nedeni gösterdiyse ikinci bildirim yok (tek kanal).
+            apya.ajaxErrors.notify(err, 'Görev durumu güncellenemedi.');
         });
     });
 
@@ -1106,11 +1107,11 @@ $(function () {
             if (updated && updated.dueDate) { t.dueDate = updated.dueDate; }
             drawer.busy[id] = false;
             afterTaskMutation();
-        }).catch(function () {
+        }).catch(function (err) {
             t.dueDate = previous;
             drawer.busy[id] = false;
             afterTaskMutation();
-            abp.notify.error('Görev ötelenemedi.');
+            apya.ajaxErrors.notify(err, 'Görev ötelenemedi.');
         });
     });
 

@@ -145,7 +145,9 @@ $(function () {
             abp.notify.success(l('Grants:Documents:Uploaded'));
             load();
         }).fail(function (x) {
-            abp.message.error(x.responseText || l('Grants:Documents:UploadFailed'));
+            // Ham gövde (JSON zarfı / HTML) basılmaz; oturum hatasında merkezi pencere (null).
+            var m = apya.ajaxErrors.message(x, l('Grants:Documents:UploadFailed'));
+            if (m) { abp.message.error(m); }
         });
     });
 
@@ -206,7 +208,8 @@ $(function () {
             abp.notify.success(l('Grants:Documents:PackageCreated', r.entryCount));
             load();
         }).fail(function (x) {
-            abp.message.error(x.responseText || l('Grants:Documents:PackageFailed'));
+            var m = apya.ajaxErrors.message(x, l('Grants:Documents:PackageFailed'));
+            if (m) { abp.message.error(m); }
         }).always(function () { $btn.prop('disabled', false); });
     });
 

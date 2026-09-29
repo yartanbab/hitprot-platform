@@ -25,6 +25,7 @@ import { useProjectOptions } from '../hooks/useProjectOptions';
 import { useTaskFeatures } from '../hooks/useTaskFeatures';
 import { taskDetailStore } from '../taskDetailStore';
 import { isTaskDerivedQuery } from '../../lib/api/dataChanged';
+import { notifyError } from '../../lib/api/abpErrors';
 
 const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 
@@ -174,7 +175,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             notify.ok('Görev başarıyla güncellendi.');
             return true;
         } catch (err) {
-            notify.err(err?.message || 'Kaydedilemedi.');
+            notifyError(err, 'Kaydedilemedi.');
             return false;
         } finally {
             setIsSaving(false);
@@ -213,7 +214,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             await Promise.resolve(svc()?.toggleFavorite(currentTaskId));
         } catch (err) {
             setIsFavorite(!next);
-            notify.err(err?.message || 'Favori güncellenemedi.');
+            notifyError(err, 'Favori güncellenemedi.');
         }
     };
 
@@ -242,7 +243,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             notify.info(next ? 'Görev takip ediliyor.' : 'Takip bırakıldı.');
         } catch (err) {
             setIsWatched(!next);
-            notify.err(err?.message || 'Takip durumu güncellenemedi.');
+            notifyError(err, 'Takip durumu güncellenemedi.');
         }
     };
 
@@ -259,7 +260,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             const newId = result?.createdTaskIds?.[0];
             if (newId) setCurrentTaskId(newId);
         } catch (err) {
-            notify.err(err?.message || 'Görev çoğaltılamadı.');
+            notifyError(err, 'Görev çoğaltılamadı.');
         }
     };
 
@@ -273,7 +274,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             form.setField('status', 4);
             notify.info('Görev arşivlendi (Tamamlandı).');
         } catch (err) {
-            notify.err(err?.message || 'Görev arşivlenemedi.');
+            notifyError(err, 'Görev arşivlenemedi.');
         }
     };
 
@@ -287,7 +288,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             guard.markClean();
             closeNow();
         } catch (err) {
-            notify.err(err?.message || 'Görev silinemedi.');
+            notifyError(err, 'Görev silinemedi.');
         }
     };
 
@@ -298,7 +299,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             setActiveTabCode(code);
             notify.ok('Özellik başarıyla eklendi.');
         } catch (err) {
-            notify.err(err?.message || 'Özellik eklenemedi.');
+            notifyError(err, 'Özellik eklenemedi.');
         }
     };
 
@@ -308,7 +309,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             setActiveTabCode('general');
             notify.info('Özellik görevden kaldırıldı.');
         } catch (err) {
-            notify.err(err?.message || 'Özellik kaldırılamadı.');
+            notifyError(err, 'Özellik kaldırılamadı.');
         }
     };
 
@@ -351,7 +352,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 : (copies > 1 ? `${copies} projeye kopyalandı.` : `Kopya “${names[0]}” projesinde oluşturuldu.`));
             setTransfer(null);
         } catch (err) {
-            notify.err(err?.message || 'Transfer tamamlanamadı.');
+            notifyError(err, 'Transfer tamamlanamadı.');
         }
     };
 
