@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -221,25 +222,50 @@ public class ProjectEditPage_Tests : PlatformWebTestBase
             .ShouldContain("Geçersiz tarih aralığı.");
     }
 
-    [Fact]
-    public async Task Desteklenmeyen_dosya_turu_dosyalar_sekmesinde_hata_verir()
+    /// <summary>
+    /// Dosya sekmesi hatası aynı sayfada, TEK hata olarak. Yükleme formu Project.* göndermez ama Razor Pages
+    /// bağlı Project'i yine doğrular: durum temizlenmezse özete sahte "… boş bırakılamaz" hataları düşer ve
+    /// Bilgiler formu boş basılırdı (Bilgiler'e geçip Kaydet'leyen tarih/bütçe/açıklamayı boşla ezerdi).
+    /// Form kayıttan dolu gelmeli.
+    /// </summary>
+    [Theory]
+    [InlineData("EDIT-5", "UploadAttachment", "AttachmentFile", "kurulum.exe", "Desteklenmeyen dosya türü")]
+    [InlineData("EDIT-6", "UploadAttachment", "AttachmentFile", null, "Bir dosya seçin.")]
+    [InlineData("EDIT-7", "UploadCover", "CoverFile", "kapak.exe", "Kapak görseli yalnız PNG, JPG veya GIF olabilir.")]
+    public async Task Dosya_hatasi_dosyalar_sekmesinde_tek_hata_Bilgiler_formu_kayittan_dolu(
+        string code, string handler, string field, string? fileName, string expected)
     {
-        var projectId = await CreateProjectAsync("EDIT-5");
+        var projectId = await CreateProjectAsync(code);
         var url = $"/Projects/Edit/{projectId}";
         var token = AntiforgeryToken(await GetResponseAsStringAsync(url));
 
         using var form = new MultipartFormDataContent
         {
             { new StringContent(token), "__RequestVerificationToken" },
-            { new ByteArrayContent(new byte[] { 0x4D, 0x5A, 0x90, 0x00 }), "AttachmentFile", "kurulum.exe" },
             { new StringContent("QA-UX"), "AttachmentTitle" }
         };
+        if (fileName != null)
+        {
+            form.Add(new ByteArrayContent(new byte[] { 0x4D, 0x5A, 0x90, 0x00 }), field, fileName);
+        }
 
-        var response = await Client.PostAsync(url + "?handler=UploadAttachment", form);
+        var response = await Client.PostAsync(url + "?handler=" + handler, form);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
-        html.ShouldContain("data-active-tab=\"files\"");
-        html.ShouldContain("Desteklenmeyen dosya türü");
+        var doc = Parse(await response.Content.ReadAsStringAsync());
+        doc.DocumentNode.SelectSingleNode("//*[@data-active-tab]")!
+            .GetAttributeValue("data-active-tab", "").ShouldBe("files");
+
+        var errors = doc.DocumentNode.SelectNodes("//div[@data-valmsg-summary='true']//li");
+        errors.ShouldNotBeNull("hata özette gösterilmeli");
+        errors!.Count.ShouldBe(1, "yalnız dosya hatası — sahte 'boş bırakılamaz' yok: "
+            + string.Join(" | ", errors.Select(e => WebUtility.HtmlDecode(e.InnerText))));
+        WebUtility.HtmlDecode(errors[0].InnerText).ShouldContain(expected);
+
+        // Razor Türkçe harfleri sayısal varlığa kodlar → çözülür.
+        WebUtility.HtmlDecode(doc.DocumentNode.SelectSingleNode("//input[@name='Project.Name']")!
+            .GetAttributeValue("value", "")).ShouldBe("Düzenleme Testi");
+        doc.DocumentNode.SelectSingleNode("//input[@name='Project.Code']")!
+            .GetAttributeValue("value", "").ShouldBe(code);
     }
 }

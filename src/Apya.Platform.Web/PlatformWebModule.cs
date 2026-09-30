@@ -627,7 +627,8 @@ public class PlatformWebModule : AbpModule
 
     // ABP varsayılanı her iş kuralı istisnasını 403 yapar; "bulunamadı" anlamındaki kod 404 dönsün
     // (GRH-22 — metin tr.json'da aynen kalır). PlatformPageModel'in 404 kancası aynı bulucuyu kullandığı
-    // için Razor sayfaları da aynı kuralı izler. IsHtmlNavigation / UseErrorPage sözleşmesine dokunulmaz.
+    // için bu kodla düşen PlatformPageModel sayfası da hata görünümünü (Views/Error) AYNI ADRESTE 404 ile
+    // basar — yönlendirme yok. IsHtmlNavigation / UseErrorPage sözleşmesine dokunulmaz.
     private void ConfigureExceptionStatusCodes()
     {
         Configure<Volo.Abp.AspNetCore.ExceptionHandling.AbpExceptionHttpStatusCodeOptions>(options =>

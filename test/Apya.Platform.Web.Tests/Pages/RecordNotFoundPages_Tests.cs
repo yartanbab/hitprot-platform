@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Apya.Platform.Projects;
 using Apya.Platform.Web.Pages;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +21,9 @@ using Volo.Abp.AspNetCore.ExceptionHandling;
 using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared.Views.Error;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Entities;
+using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Security.Claims;
+using Volo.Abp.Uow;
 using Xunit;
 
 namespace Apya.Platform.Pages;
@@ -162,6 +167,58 @@ public class RecordNotFoundPages_Tests : PlatformWebTestBase
         var state = doc.DocumentNode.SelectSingleNode("//div[@data-apya-state='task-not-found']");
         state.ShouldNotBeNull("görev bulunamadı durumu basılmalı");
         WebUtility.HtmlDecode(state!.InnerText).ShouldContain("Bu görev bulunamadı");
+        state.SelectSingleNode(".//a[@href='/Tasks']").ShouldNotBeNull("Görevlere dön bağlantısı");
+        doc.GetElementbyId("task-detail-page-island").ShouldBeNull("ada bağlanmamalı");
+    }
+
+    /// <summary>
+    /// TSK-23 gizli görev: 403 + sunucunun cümlesiyle durum + "Görevlere dön"; sessiz yönlendirme ve ada yok.
+    /// Dal geri alınırsa istek genel catch'e düşer ve sessizce /Tasks'a yönlenir.
+    /// <para>Test host'u AddAlwaysAllowAuthorization ile her izni verdiği için (Projects.ManageTeam hep var)
+    /// "oluşturan/atanan değil" reddi (TaskViewPrivateDenied) burada üretilemiyor; aynı catch dalının diğer
+    /// kodu destek oturumuyla (impersonation) üretilir: TaskViewImpersonationDenied.</para>
+    /// </summary>
+    [Fact]
+    public async Task Gizli_gorev_sayfasi_sessizce_listeye_atmaz_403_ve_durum_basar()
+    {
+        var taskId = Guid.NewGuid();
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            await GetRequiredService<IRepository<Apya.Platform.Tasks.TaskItem, Guid>>().InsertAsync(
+                new Apya.Platform.Tasks.TaskItem(taskId, "QA-UX gizli görev", isPrivate: true, now: DateTime.Now),
+                autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        // İstek destek oturumundan: principal AsyncLocal ile sunucuya taşınır (PlatformWebTestBase.WithTenantClientAsync
+        // emsali — PreserveExecutionContext açık ve istemci bundan SONRA kurulur).
+        Server.PreserveExecutionContext = true;
+        var impersonated = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(AbpClaimTypes.UserId, Guid.NewGuid().ToString()),
+            new Claim(AbpClaimTypes.UserName, "qa-ux-destek"),
+            new Claim(AbpClaimTypes.ImpersonatorUserId, Guid.NewGuid().ToString())
+        }, "Test"));
+
+        HttpResponseMessage response;
+        string html;
+        using (GetRequiredService<ICurrentPrincipalAccessor>().Change(impersonated))
+        {
+            using var client = CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            response = await client.GetAsync($"/Tasks/Detail/{taskId}");
+            html = await response.Content.ReadAsStringAsync();
+        }
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        response.Headers.Location.ShouldBeNull("sessiz yönlendirme olmamalı");
+
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+        var state = doc.DocumentNode.SelectSingleNode("//div[@data-apya-state='task-forbidden']");
+        state.ShouldNotBeNull("gizli görev durumu basılmalı");
+        var text = WebUtility.HtmlDecode(state!.InnerText);
+        text.ShouldContain("Bu görevi görüntüleyemezsiniz");
+        text.ShouldContain("Bu gizli görevi destek yetkisiyle (Impersonation) görüntüleyemezsiniz.");
         state.SelectSingleNode(".//a[@href='/Tasks']").ShouldNotBeNull("Görevlere dön bağlantısı");
         doc.GetElementbyId("task-detail-page-island").ShouldBeNull("ada bağlanmamalı");
     }

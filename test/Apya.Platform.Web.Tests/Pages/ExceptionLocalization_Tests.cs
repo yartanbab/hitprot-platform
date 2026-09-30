@@ -13,12 +13,15 @@ namespace Apya.Platform.Pages;
 /// AppDocument, Project…) ve kimliği kullanıcıya basıyordu — API zarfı, ABP penceresi, adalar
 /// (DOC-15, TSK-23). Metin tüm uygulamada dostane (Domain.Shared/Localization/ExceptionHandling,
 /// yapılandırma PlatformWebModule); ayrıntı log ve denetim kaydında kalır.
+/// <para>en-GB ayrı dosya ister: ABP'nin kendi en-GB metni var ve yerelleştirici önce TAM kültürü arar —
+/// yalnız "en" ezilirse dil seçicideki English (UK) ham metni görür.</para>
 /// </summary>
 public class ExceptionLocalization_Tests : PlatformWebTestBase
 {
     [Theory]
     [InlineData("tr", "bulunamadı")]
     [InlineData("en", "could not be found")]
+    [InlineData("en-GB", "could not be found")]
     public void Bulunamayan_kayit_metni_tur_adi_ve_kimlik_tasimaz(string culture, string expected)
     {
         var converter = GetRequiredService<IExceptionToErrorInfoConverter>();
