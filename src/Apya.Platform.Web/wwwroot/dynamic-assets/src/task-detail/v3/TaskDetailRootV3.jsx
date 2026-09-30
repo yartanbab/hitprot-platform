@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Dialog, DialogContent, Skeleton, Button } from '../../components/ui';
+import { Dialog, DialogContent, Skeleton, Button, EmptyState } from '../../components/ui';
 import { TaskDetailHeaderV3 } from './components/TaskDetailHeaderV3';
 import { TaskMetadataGridV3 } from './components/TaskMetadataGridV3';
 import { TaskFeatureNavbarV3 } from './components/TaskFeatureNavbarV3';
@@ -25,7 +25,8 @@ import { useProjectOptions } from '../hooks/useProjectOptions';
 import { useTaskFeatures } from '../hooks/useTaskFeatures';
 import { taskDetailStore } from '../taskDetailStore';
 import { isTaskDerivedQuery } from '../../lib/api/dataChanged';
-import { notifyError } from '../../lib/api/abpErrors';
+import { errorMessage, notifyError } from '../../lib/api/abpErrors';
+import { t } from '../../lib/i18n';
 
 const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 
@@ -54,7 +55,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
        dolu geldiği için (modalın ikinci açılışı) ardından iskelet aşaması hiç
        yaşanmaz, remount olmaz ve mount anında değerini yakalayan çocuklar
        (RichTextEditorV3'ün contentEditable'ı) sonsuza kadar BOŞ kalırdı. */
-    const { data: task, isPending, isError, refetch } = useTaskDetail(currentTaskId);
+    const { data: task, isPending, isError, error, refetch } = useTaskDetail(currentTaskId);
     const queryClient = useQueryClient();
     const guard = useDirtyGuard();
     const form = useTaskForm(task);
@@ -410,12 +411,38 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         </Suspense>
     );
 
+    /* TSK-23 — görev yok (404) ya da gizli (403): "Tekrar Dene" anlamsız; ne olduğunu söyleyen durum
+       + çıkış. Metinler tam sayfayla (Pages/Tasks/Detail) aynı anahtarlar. Diğer hatalar aşağıda aynen.
+       Durum useTaskDetail'de isteğin jqXHR'ından hataya yazılır. */
+    const unavailableStatus = isError && (error?.status === 404 || error?.status === 403) ? error.status : null;
+
     const body = isPending ? (
         <div className="p-8 space-y-4">
             <Skeleton className="h-8 w-1/3" />
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-64 w-full" />
         </div>
+    ) : unavailableStatus ? (
+        <EmptyState
+            variant={unavailableStatus === 404 ? 'error' : 'locked'}
+            icon={unavailableStatus === 404 ? <i className="fa fa-magnifying-glass" /> : undefined}
+            title={unavailableStatus === 404
+                ? t('Tasks:Detail:NotFound:Title', 'Bu görev bulunamadı')
+                : t('Tasks:Detail:Forbidden:Title', 'Bu görevi görüntüleyemezsiniz')}
+            description={unavailableStatus === 404
+                ? t('Tasks:Detail:NotFound:Body', 'Görev silinmiş ya da bağlantı eskimiş olabilir.')
+                : errorMessage(error)}
+            action={presentation === 'page' ? (
+                <Button asChild variant="ghost">
+                    <a href="/Tasks">
+                        <i className="fa fa-arrow-left" aria-hidden="true" />
+                        {t('Tasks:Detail:BackToList', 'Görevlere dön')}
+                    </a>
+                </Button>
+            ) : (
+                <Button variant="ghost" onClick={requestClose}>{t('Common:Close', 'Kapat')}</Button>
+            )}
+        />
     ) : isError ? (
         <div className="p-12 text-center flex flex-col items-center gap-3">
             <i className="fa-solid fa-triangle-exclamation text-3xl text-warning" />

@@ -1,27 +1,22 @@
 @page
 @model Apya.Platform.Web.Pages.Documents.CreateModalModel
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@inject IHtmlLocalizer<PlatformResource> L
 @{
     Layout = null;
 }
+@* DOC-06: pencerenin tek çağıranı klasör oluşturma (DocumentsRoot.jsx openCreateFolder). İkon ve İçerik
+   arayüzde hiç gösterilmiyordu → kaldırıldı (DTO'da duruyor; gönderilmeyen içerik "" kaydedilir). Son Tarih
+   DocumentExpiryWorker ile işlevsel (7 gün kala hatırlatma) → kalır. EditModal'a DOKUNULMADI: tam değiştirme
+   ucunda formdan düşen alan mevcut değeri siler. *@
 <form method="post" action="@Url.Page("/Documents/CreateModal")">
     <abp-modal>
-        <abp-modal-header title="Yeni Belge"></abp-modal-header>
+        <abp-modal-header title="@L["Documents:NewFolder:Title"].Value"></abp-modal-header>
         <abp-modal-body>
             <abp-input asp-for="ParentDocumentId" />
-            <abp-row>
-                <abp-column size-md="_2">
-                    <abp-input asp-for="Document.Icon" label="İkon" placeholder="📄" />
-                </abp-column>
-                <abp-column size-md="_10">
-                    <abp-input asp-for="Document.Title" label="Başlık" />
-                </abp-column>
-            </abp-row>
-            <div class="mb-3">
-                <label class="form-label">İçerik</label>
-                <textarea asp-for="Document.Content" class="form-control" rows="8"></textarea>
-                <span asp-validation-for="Document.Content" class="text-danger"></span>
-            </div>
+            <abp-input asp-for="Document.Title" label="@L["Documents:NewFolder:Name"].Value" />
             <label class="form-label" for="Document_ExpiryDate">
                 Son Tarih
                 <apya-hint text="Belgenin geçerlilik bitiş tarihi. Bu tarihe 7 gün kala sistem otomatik hatırlatma bildirimi gönderir. Boş bırakırsanız hiç hatırlatma yapılmaz." />

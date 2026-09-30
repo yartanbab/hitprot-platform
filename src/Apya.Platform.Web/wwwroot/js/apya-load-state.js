@@ -18,6 +18,10 @@
      varsayılana düşülür. Kanonik düğme: btn-outline-primary + fa-rotate-right.
    • "Tekrar dene" düğmesine delege bağlama çağıranın işi (retryClass sabit bir sınıf adı).
      İstisna: DataTables kartı (failTable) — onun düğmesini bu dosya bağlar.
+   • notFoundHtml(başlık?, açıklama?, geriHref?, geriMetni?) — kayıt yok (404): "Tekrar dene"
+     anlamsız, yerine isteğe bağlı geri bağlantısı. Boş başlık/açıklama → ErrorPage:RecordNotFound:*
+     (hata sayfasıyla aynı metin). geriHref yalnız uygulama içi yol ("/x"; "//" ve "/\" değil).
+     $kutu.html(apya.loadState.notFoundHtml(l('…:NotFound'), null, '/Liste', l('…:Back')));
 
    DataTables (abp.libs.datatables.createAjax sarmalayıcısı çağırır, apya-latest.js):
    • failTable(settings, callback, hata?) — DataTables'a boş yanıt verir (işleniyor ve
@@ -80,6 +84,27 @@
         return '<div class="apya-console-state" role="status">'
             + '<span class="apya-console-state-icon is-muted"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i></span>'
             + '<p>' + esc(message) + '</p></div>';
+    }
+
+    // Açık yönlendirme olmasın: yalnız "/x" biçimli uygulama yolu ("//host" ve "/\host" değil).
+    function isAppPath(href) {
+        return typeof href === 'string' && /^\/(?![\/\\])/.test(href);
+    }
+
+    // Kayıt yok (404, GRH-22): Tekrar dene yok; geri bağlantısı isteğe bağlı. esc() tırnak kaçışlamaz,
+    // öznitelikte ayrıca &quot; yapılır.
+    function notFoundHtml(title, message, backHref, backText) {
+        var back = isAppPath(backHref)
+            ? '<span class="apya-console-state-actions">'
+                + '<a class="btn btn-sm btn-outline-primary" href="' + esc(backHref).replace(/"/g, '&quot;') + '">'
+                + '<i class="fa fa-arrow-left me-1" aria-hidden="true"></i>' + esc(backText || backHref)
+                + '</a></span>'
+            : '';
+        return '<div class="apya-console-state is-denied" role="alert">'
+            + '<span class="apya-console-state-icon is-muted"><i class="fa fa-magnifying-glass" aria-hidden="true"></i></span>'
+            + '<strong>' + esc(title || text('ErrorPage:RecordNotFound:Title', 'Aradığınız kayıt bulunamadı')) + '</strong>'
+            + '<p>' + esc(message || text('ErrorPage:RecordNotFound:Description', 'Kayıt silinmiş olabilir ya da bu hesaptan görüntülenemiyor.')) + '</p>'
+            + back + '</div>';
     }
 
     /* ---------- DataTables ---------- */
@@ -159,6 +184,7 @@
     window.apya.loadState = {
         errorHtml: errorHtml,
         loadingHtml: loadingHtml,
+        notFoundHtml: notFoundHtml,
         failTable: failTable,
         tableFailed: tableFailed
     };

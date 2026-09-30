@@ -7,11 +7,25 @@ import { useQuery } from '@tanstack/react-query';
  *
  * jQuery Deferred döner; native Promise'e sarmak zorundayız (documents.jsx
  * ile aynı köprü deseni).
+ *
+ * TSK-23: abp.ajax zarflı hatada yalnız hata zarfıyla reddeder (Promise.resolve ikinci
+ * argümanı — jqXHR — düşürür); HTTP durumu isteğin kendisinde (abp.jquery.js
+ * `promise.jqXHR`). 404 (görev yok) / 403 (gizli görev) / geçici hata ayrımı için durum
+ * reddedilen nesnenin ÜSTÜNE yazılır — yeni nesne kurulmaz: G1'in "gösterildi"
+ * işaretleri (apyaShown / apyaCentral) ve zarfın code/details alanları korunur.
+ * abpHandleError değişmez (401 akışı G1'in; çift gösterim STA-10).
  */
 function fetchTask(taskId) {
     const svc = window?.apya?.platform?.tasks?.task;
     if (!svc) return Promise.reject(new Error('ABP görev servisi yüklenmedi.'));
-    return Promise.resolve(svc.get(taskId));
+    const request = svc.get(taskId);
+    return Promise.resolve(request).catch((error) => {
+        const status = request?.jqXHR?.status;
+        if (error && typeof error === 'object' && error.status == null && status) {
+            error.status = status;
+        }
+        throw error;
+    });
 }
 
 export function useTaskDetail(taskId) {

@@ -395,3 +395,80 @@ describe('loadingHtml', () => {
         expect(box.querySelector('p').textContent).toBe('<b>Olay</b> yükleniyor…');
     });
 });
+
+/* ─────────────── notFoundHtml: kayıt yok (404, GRH-22) ─────────────── */
+
+describe('notFoundHtml', () => {
+    it('role=alert + .is-denied; Tekrar dene YOK (404\'te anlamsız)', () => {
+        const body = parse(loadState.notFoundHtml('Bu ilgi talebi bulunamadı', null, '/Grants/Requests', 'Talepler'));
+
+        const box = body.querySelector('.apya-console-state');
+        expect(box.getAttribute('role')).toBe('alert');
+        expect(box.classList.contains('is-denied')).toBe(true);
+        expect(box.querySelector('i.fa-magnifying-glass')).not.toBeNull();
+        expect(box.querySelector('strong').textContent).toBe('Bu ilgi talebi bulunamadı');
+        expect(box.querySelector('button')).toBeNull();
+        expect(box.querySelector('.fa-rotate-right')).toBeNull();
+    });
+
+    it('başlık ve açıklama kaçışlanır: HTML metin olarak basılır, öğe oluşmaz', () => {
+        const body = parse(loadState.notFoundHtml('<img src=x onerror=alert(1)>', '<b>kalın</b>'));
+
+        expect(body.querySelector('img')).toBeNull();
+        expect(body.querySelector('b')).toBeNull();
+        expect(body.querySelector('strong').textContent).toBe('<img src=x onerror=alert(1)>');
+        expect(body.querySelector('p').textContent).toBe('<b>kalın</b>');
+    });
+
+    it('abp yokken başlık/açıklama boşsa hata sayfasıyla aynı Türkçe varsayılanlar', () => {
+        const body = parse(loadState.notFoundHtml());
+
+        expect(body.querySelector('strong').textContent).toBe('Aradığınız kayıt bulunamadı');
+        expect(body.querySelector('p').textContent).toBe('Kayıt silinmiş olabilir ya da bu hesaptan görüntülenemiyor.');
+        expect(body.querySelector('a')).toBeNull();
+    });
+
+    it('varsayılanlar Platform kaynağındaki ErrorPage:RecordNotFound:* anahtarlarından', () => {
+        global.abp = {
+            localization: {
+                getResource: () => (k) => ({
+                    'ErrorPage:RecordNotFound:Title': 'Record not found',
+                    'ErrorPage:RecordNotFound:Description': 'The record may have been deleted.',
+                }[k] || k)
+            }
+        };
+
+        const body = parse(loadState.notFoundHtml());
+
+        expect(body.querySelector('strong').textContent).toBe('Record not found');
+        expect(body.querySelector('p').textContent).toBe('The record may have been deleted.');
+    });
+
+    it('uygulama içi yol geri bağlantısı olur (outline + fa-arrow-left)', () => {
+        const link = parse(loadState.notFoundHtml('x', null, '/Grants/Requests', 'Talepler')).querySelector('a');
+
+        expect(link.getAttribute('href')).toBe('/Grants/Requests');
+        expect(link.className).toBe('btn btn-sm btn-outline-primary');
+        expect(link.textContent).toBe('Talepler');
+        expect(link.querySelector('i.fa.fa-arrow-left').getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it.each([
+        ['javascript:alert(1)'],
+        ['//evil.example'],
+        ['/\\evil.example'],
+        ['https://evil.example'],
+        [''],
+    ])('açık yönlendirme olmasın: %s → bağlantı basılmaz', (href) => {
+        const body = parse(loadState.notFoundHtml('x', null, href, 'Geri'));
+
+        expect(body.querySelector('a')).toBeNull();
+    });
+
+    it('href\'teki tırnak kaçışlanır: öznitelikten taşıp yeni öznitelik kuramaz', () => {
+        const link = parse(loadState.notFoundHtml('x', null, '/Grants/Requests" onclick="alert(1)', 'Geri')).querySelector('a');
+
+        expect(link.getAttribute('onclick')).toBeNull();
+        expect(link.getAttribute('href')).toBe('/Grants/Requests" onclick="alert(1)');
+    });
+});

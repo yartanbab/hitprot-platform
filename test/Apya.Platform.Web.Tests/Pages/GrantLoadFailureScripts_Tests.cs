@@ -91,7 +91,8 @@ public class GrantLoadFailureScripts_Tests
     [InlineData("Requests.js", "function load()", "service.getInbox(filters, { abpHandleError: false })", "Grants:Requests:LoadFailed", "js-requests-retry")]
     [InlineData("Pipeline.js", "function load()", "service.getBoard(callId || null, userId || null, { abpHandleError: false })", "Grants:Pipeline:LoadFailed", "js-pipeline-retry")]
     [InlineData("Leads.js", "function load()", "service.get({ abpHandleError: false })", "Grants:Leads:LoadFailed", "js-leads-retry")]
-    [InlineData("InterestReview.js", "function load()", "service.getReview(interestId, { abpHandleError: !initial })", "Grants:InterestReview:LoadFailed", "js-review-retry")]
+    // İstek önce değişkene alınır (404 ayrımı jqXHR durumunu okur); sessiz istek Ilgi_incelemesi_… testinde.
+    [InlineData("InterestReview.js", "function load()", "request", "Grants:InterestReview:LoadFailed", "js-review-retry")]
     [InlineData("NotificationTemplates.js", "function load()", "service.get({ abpHandleError: false })", "Grants:Notify:LoadFailed", "js-nt-retry")]
     [InlineData("StageTemplates.js", "function load()", "service.getList({ abpHandleError: false })", "Grants:StageTemplates:LoadFailed", "js-tpl-retry")]
     [InlineData("Applications.js", "function loadList()", "hostSvc.getList({ abpHandleError: false })", "Grants:Applications:LoadFailed", "js-apps-retry")]
@@ -427,7 +428,9 @@ public class GrantLoadFailureScripts_Tests
             "var initial = !model;",
             // Firefox form durumu geri yüklemesine (F5) karşı kilit ilk yüklemede JS'te de kurulur.
             "if (initial) { $('#SaveNoteBtn').prop('disabled', true); }",
-            "Promise.resolve(service.getReview(",
+            // İstek değişkende: 404 ayrımı (GRH-22) durumu isteğin jqXHR'ından okur.
+            "var request = service.getReview(interestId, { abpHandleError: !initial });",
+            "Promise.resolve(request)",
             "}, function (err) {",
             "if (!isLatest() || !initial || model) { return; }",
             "apya.loadState.errorHtml(");

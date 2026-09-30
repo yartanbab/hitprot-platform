@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.ExceptionHandling;
@@ -56,6 +57,28 @@ public class RecordNotFoundPages_Tests : PlatformWebTestBase
         json.ShouldContain("\"error\"");
         json.ShouldNotContain(id.ToString());
         json.ShouldNotContain("Project", Case.Sensitive);
+    }
+
+    /// <summary>
+    /// TSK-23: bildirimden silinmiş göreve giden bağlantı sessizce listeye atmıyor; 404 + ne olduğunu
+    /// söyleyen durum + "Görevlere dön". Ada bağlanmaz (API çağrısı ve ABP penceresi olmaz).
+    /// </summary>
+    [Fact]
+    public async Task Olmayan_gorev_sayfasi_sessizce_listeye_atmaz_404_ve_durum_basar()
+    {
+        var response = await Client.GetAsync($"/Tasks/Detail/{Guid.NewGuid()}");
+        var html = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        response.Headers.Location.ShouldBeNull("sessiz yönlendirme olmamalı");
+
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+        var state = doc.DocumentNode.SelectSingleNode("//div[@data-apya-state='task-not-found']");
+        state.ShouldNotBeNull("görev bulunamadı durumu basılmalı");
+        WebUtility.HtmlDecode(state!.InnerText).ShouldContain("Bu görev bulunamadı");
+        state.SelectSingleNode(".//a[@href='/Tasks']").ShouldNotBeNull("Görevlere dön bağlantısı");
+        doc.GetElementbyId("task-detail-page-island").ShouldBeNull("ada bağlanmamalı");
     }
 
     /// <summary>

@@ -211,14 +211,24 @@ $(function () {
         // İşaretlemedeki not kilidini ilk yüklemede JS de kurar: Firefox form durumu geri yüklemesi
         // (F5) açık bırakabilir; paint açar.
         if (initial) { $('#SaveNoteBtn').prop('disabled', true); }
-        return Promise.resolve(service.getReview(interestId, { abpHandleError: !initial })).then(function (d) {
+        // Durum kodu isteğin jqXHR'ında: zarflı hatada söz yalnız zarfla reddeder.
+        var request = service.getReview(interestId, { abpHandleError: !initial });
+        return Promise.resolve(request).then(function (d) {
             if (!isLatest()) { return; }
             paint(d);
             $('#ReviewLoadState').empty();
         }, function (err) {
             if (!isLatest() || !initial || model) { return; }
-            $('#ReviewLoadState').html(apya.loadState.errorHtml(l('Grants:InterestReview:LoadFailed'), 'js-review-retry', err));
             $('#ReviewTitle').removeClass('apya-skel-num').text('');
+            // GRH-22: kayıt yok (silinmiş talep, eski bağlantı) → Tekrar dene anlamsız; karar/firma
+            // kartları hiç gelmez, yalnız "bulunamadı" + Taleplere dönüş. Genel hata dalından ÖNCE.
+            if (request.jqXHR && request.jqXHR.status === 404) {
+                $('.apya-irv-state, .apya-irv-layout').addClass('d-none');
+                $('#ReviewLoadState').html(apya.loadState.notFoundHtml(
+                    l('Grants:InterestReview:NotFound'), null, '/Grants/Requests', l('Grants:InterestReview:Back')));
+                return;
+            }
+            $('#ReviewLoadState').html(apya.loadState.errorHtml(l('Grants:InterestReview:LoadFailed'), 'js-review-retry', err));
         });
     }
 
