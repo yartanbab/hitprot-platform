@@ -19,8 +19,9 @@ namespace Apya.Platform.Middleware;
 
 /// <summary>
 /// Yetkilendirme sonucu kancası (ROL-05, SHL-11, GRT-14, ACC-12): yalnız "yasak + şemasız politika +
-/// WebSocket değil + HTML gezinmesi" /AccessDenied'a eksik izin adıyla yönlenir; geri kalan HER ŞEY
-/// varsayılan işleyiciye birebir gider (AJAX/ModalManager 403'ü, challenge, başarı, şemalı politika).
+/// WebSocket değil + Bearer değil + HTML gezinmesi" /AccessDenied'a eksik izin adıyla yönlenir; geri kalan
+/// HER ŞEY varsayılan işleyiciye birebir gider (AJAX/ModalManager 403'ü, challenge, başarı, şemalı
+/// politika, Bearer istemcisi).
 ///
 /// <para>Test host'u <c>AddAlwaysAllowAuthorization</c> kullandığı için gerçek "yasak" üretilemez;
 /// kanca burada <see cref="DefaultHttpContext"/> ve çağrıları kaydeden sahte kimlik doğrulama
@@ -189,6 +190,26 @@ public class AccessDeniedResultHandler_Tests
 
         auth.Forbidden.ShouldBe(new[] { "Bearer" });
         Location(context).ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// OpenIddict Bearer istemcisi: ForwardIdentityAuthenticationForBearer kimliği çerez şemasından
+    /// aktardığı için politika şemasız görünür, Accept'siz HttpClient isteği de HTML gezinmesi sayılır —
+    /// yine de varsayılan 403 (sayfaya yönlendirme yok).
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("text/html")]
+    public async Task Bearer_istegi_varsayilan_islemciye_gider(string? accept)
+    {
+        var (context, auth) = Request(accept: accept);
+        context.Request.Headers.Authorization = "Bearer eyJhbGciOiJSUzI1NiJ9.x.y";
+
+        await HandleAsync(context, Forbid(new PermissionRequirement("Platform.Grants")));
+
+        auth.Forbidden.Count.ShouldBe(1);
+        Location(context).ShouldBeEmpty();
+        context.Response.StatusCode.ShouldBe(StatusCodes.Status403Forbidden);
     }
 
     [Fact]

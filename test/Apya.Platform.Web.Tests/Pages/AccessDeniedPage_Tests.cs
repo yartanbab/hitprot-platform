@@ -137,7 +137,7 @@ public class AccessDeniedPage_Tests
         {
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
-            return doc.DocumentNode.SelectSingleNode("//div[@data-apya-state]")!;
+            return doc.DocumentNode.SelectSingleNode("//div[starts-with(@data-apya-state,'denied-')]")!;
         }
 
         /// <summary>İsteği OTURUMSUZ atar (sahte principal boş kimlikle değiştirilir).</summary>
@@ -160,10 +160,14 @@ public class AccessDeniedPage_Tests
             html.ShouldContain("lpx-sidebar", customMessage: "uygulama düzeni (kabuk) basılmalı");
             html.ShouldNotContain("apya-auth__card", customMessage: "hesap (giriş) düzeni basılmamalı");
 
-            // Host bağlamı: paket tavanından muaf → sebep rol.
+            // Host bağlamı (paket tavanından muaf) ve test host'u her izni verir (AlwaysAllow): istenen
+            // yetki hesapta VAR — elle yazılan adres senaryosu. "Tanımlı değil" yazılmaz, sebep bilinmiyor.
             var state = StateOf(html);
-            state.GetAttributeValue("data-apya-state", "").ShouldBe("denied-notgranted");
-            WebUtility.HtmlDecode(state.InnerText).ShouldContain("Gereken yetki: Faturalar.");
+            state.GetAttributeValue("data-apya-state", "").ShouldBe("denied-unknown");
+            var text = WebUtility.HtmlDecode(state.InnerText);
+            text.ShouldContain("Bu sayfa için gereken yetki hesabınızda ya da paketinizde bulunmuyor.");
+            text.ShouldNotContain("tanımlı değil");
+            text.ShouldNotContain("Gereken yetki:");
 
             var hrefs = state.SelectNodes(".//a")!.Select(a => a.GetAttributeValue("href", "")).ToList();
             hrefs.ShouldContain("/Dashboard");
@@ -262,6 +266,7 @@ public class AccessDeniedPage_Tests
                 var missing = keys.Where(k => localizer[k].ResourceNotFound || localizer[k].Value == k).ToList();
                 missing.ShouldBeEmpty("çözülmeyen anahtar ekranda ham görünür: " + string.Join(", ", missing));
                 localizer["ErrorPage:StatusCode", 404].Value.ShouldBe("Hata kodu 404");
+                localizer["AccessDenied:NotGranted:Permission", "Faturalar"].Value.ShouldBe("Gereken yetki: Faturalar.");
             }
         }
     }

@@ -17,10 +17,10 @@ namespace Apya.Platform.Web.Middleware;
 /// izinden mi geldiğini kesin ayırmanın tek güvenilir yolu, başarısız gereksinimi yetkilendirme anında
 /// yakalamaktır (açıklama: <see cref="Apya.Platform.Tenants.AccessDenialExplainer"/>).
 ///
-/// <para>Kural dar: yalnız "yasak + şemasız politika + WebSocket değil + HTML gezinmesi"
+/// <para>Kural dar: yalnız "yasak + şemasız politika + WebSocket değil + Bearer değil + HTML gezinmesi"
 /// (<see cref="PlatformWebModule.IsHtmlNavigation"/> — hata sayfası dalıyla TEK tanım). Geri kalan HER
-/// ŞEY (AJAX/ModalManager 403'ü, challenge, başarı, şemalı politika) varsayılan işleyiciye birebir
-/// devredilir. ABP bağımlılık işaretçisi arayüzü UYGULANMAZ: kayıt yalnız
+/// ŞEY (AJAX/ModalManager 403'ü, challenge, başarı, şemalı politika, Bearer istemcisi) varsayılan
+/// işleyiciye birebir devredilir. ABP bağımlılık işaretçisi arayüzü UYGULANMAZ: kayıt yalnız
 /// PlatformWebModule.ConfigureAuthentication'daki Replace'tir (çift kayıt olmasın).</para>
 /// </summary>
 public sealed class AccessDeniedResultHandler : IAuthorizationMiddlewareResultHandler
@@ -42,6 +42,7 @@ public sealed class AccessDeniedResultHandler : IAuthorizationMiddlewareResultHa
         if (authorizeResult.Forbidden
             && policy.AuthenticationSchemes.Count == 0
             && !context.WebSockets.IsWebSocketRequest
+            && !IsBearerRequest(context.Request)
             && PlatformWebModule.IsHtmlNavigation(context))
         {
             context.Response.Redirect(BuildRedirectUrl(
@@ -52,6 +53,14 @@ public sealed class AccessDeniedResultHandler : IAuthorizationMiddlewareResultHa
 
         return _default.HandleAsync(next, context, policy, authorizeResult);
     }
+
+    /// <summary>
+    /// Bearer (OpenIddict) istemcisi — ForwardIdentityAuthenticationForBearer'ın seçicisiyle AYNI kural.
+    /// Kimlik çerez şemasından Bearer'a aktarıldığı için politika şemasız görünür ve Accept'siz HttpClient
+    /// isteği HTML gezinmesi sayılır; oysa istemci API istemcisidir, varsayılan 403'ü almalıdır.
+    /// </summary>
+    private static bool IsBearerRequest(HttpRequest request)
+        => request.Headers.Authorization.ToString().StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Başarısız izin gereksinimlerinin adları (tekil, en fazla <see cref="MaxPermissionNames"/>).</summary>
     internal static IReadOnlyList<string> FailedPermissionNames(AuthorizationFailure? failure)

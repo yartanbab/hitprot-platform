@@ -3,10 +3,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Permissions;
 using Apya.Platform.Tenants;
+using Microsoft.Extensions.Localization;
+using NSubstitute;
 using Shouldly;
+using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Features;
 using Volo.Abp.Localization;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.SimpleStateChecking;
 using Volo.Abp.TenantManagement;
 using Xunit;
 
@@ -20,23 +25,36 @@ namespace Apya.Platform.EntityFrameworkCore.Tenants;
 /// giremediği için kiracıda state de "kapalı" döner. Açıklayıcı o sırayı taklit etseydi
 /// /TenantManagement için "paketinizde yok" derdi — hiçbir paket onu açmaz.</para>
 ///
-/// <para>Açıklayıcı izin VERİLİ Mİ sorusunu sormaz; test host'unun AlwaysAllow'undan etkilenmez.
-/// Profilsiz kiracı Basic sayılır; profil yine de kurulur (PackagePermissionCeiling_Tests deseni).</para>
+/// <para>Rol sebebi izin VERİLİ Mİ diye sorar; test host'u AddAlwaysAllowAuthorization ile her izni
+/// verdiği için açıklayıcı sahte <see cref="IPermissionChecker"/> ile kurulur (varsayılan: hiçbir izin
+/// verilmemiş). Profilsiz kiracı Basic sayılır; profil yine de kurulur (PackagePermissionCeiling_Tests
+/// deseni). Kiracıya feature değeri YAZILMAZ (paket uygulanmaz): modül feature'ları varsayılanında —
+/// Hibe/Finans açık, Gelişmiş Raporlar kapalı (ROL-07'deki profilsiz demo kiracının durumu).</para>
 /// </summary>
 [Collection(PlatformTestConsts.CollectionDefinitionName)]
 public class AccessDenialExplainer_Tests : PlatformEntityFrameworkCoreTestBase
 {
     private readonly AccessDenialExplainer _explainer;
+    private readonly IPermissionChecker _permissionChecker = Substitute.For<IPermissionChecker>();
     private readonly TenantPackageManager _packageManager;
+    private readonly IPackageAppService _packageAppService;
     private readonly IRepository<TenantProfile, Guid> _profileRepository;
     private readonly ICurrentTenant _currentTenant;
 
     public AccessDenialExplainer_Tests()
     {
-        _explainer = GetRequiredService<AccessDenialExplainer>();
         _packageManager = GetRequiredService<TenantPackageManager>();
+        _packageAppService = GetRequiredService<IPackageAppService>();
         _profileRepository = GetRequiredService<IRepository<TenantProfile, Guid>>();
         _currentTenant = GetRequiredService<ICurrentTenant>();
+        _explainer = new AccessDenialExplainer(
+            GetRequiredService<IPermissionDefinitionManager>(),
+            GetRequiredService<ISimpleStateCheckerManager<PermissionDefinition>>(),
+            GetRequiredService<IFeatureChecker>(),
+            _currentTenant,
+            GetRequiredService<IStringLocalizerFactory>(),
+            _permissionChecker,
+            GetRequiredService<PackageCeilingStore>());
     }
 
     private async Task<Guid> CreateBasicTenantAsync()
@@ -71,6 +89,8 @@ public class AccessDenialExplainer_Tests : PlatformEntityFrameworkCoreTestBase
     {
         var tenantId = await CreateBasicTenantAsync();
 
+        // Hibe feature'ı varsayılanla AÇIK; modül, kapısının arkasındaki hiçbir izin Basic tavanında
+        // olmadığı için pakette yok sayılır.
         var grants = await ExplainInTenantAsync(tenantId, PlatformPermissions.Grants.Default);
         grants.Reason.ShouldBe(AccessDenialReason.Package);
         grants.ModuleDisplayName.ShouldBe("Hibe Yönetimi");
@@ -80,6 +100,35 @@ public class AccessDenialExplainer_Tests : PlatformEntityFrameworkCoreTestBase
         var fx = await ExplainInTenantAsync(tenantId, PlatformPermissions.FxRevaluations.Default);
         fx.Reason.ShouldBe(AccessDenialReason.Package);
         fx.ModuleDisplayName.ShouldBe("Gelişmiş Raporlar");
+    }
+
+    /// <summary>
+    /// Host paket tavanından TEK bir izni çıkardıysa modül pakette kalır (Finans'ın diğer izinleri
+    /// tavanda, feature açık): Faturalar'ı açamayan kullanıcıya "Finans &amp; Muhasebe paketinizde yer
+    /// almıyor" denmez — sebep yine paket, metin modülsüz genel cümle.
+    /// </summary>
+    [Fact]
+    public async Task Tavandan_tek_izin_cikarilmissa_modul_adlandirilmaz()
+    {
+        var tenantId = await CreateBasicTenantAsync();
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var tree = await _packageAppService.GetPermissionsAsync(PackageCode.Basic);
+            await _packageAppService.UpdatePermissionsAsync(new UpdatePackagePermissionsDto
+            {
+                Code = PackageCode.Basic,
+                PermissionNames = tree.Groups
+                    .SelectMany(g => g.Permissions)
+                    .Where(p => p.IsIncluded && p.Name != PlatformPermissions.Invoices.Default)
+                    .Select(p => p.Name)
+                    .ToList()
+            });
+        });
+
+        var invoices = await ExplainInTenantAsync(tenantId, PlatformPermissions.Invoices.Default);
+
+        invoices.Reason.ShouldBe(AccessDenialReason.Package);
+        invoices.ModuleDisplayName.ShouldBeNull("Finans modülü pakette: Gelirler/Giderler hâlâ tavanda");
     }
 
     [Fact]
@@ -95,6 +144,24 @@ public class AccessDenialExplainer_Tests : PlatformEntityFrameworkCoreTestBase
             projects.PermissionName.ShouldBe(PlatformPermissions.Projects.Default);
             projects.PermissionDisplayName.ShouldBe("Projeler");
         }
+    }
+
+    /// <summary>
+    /// Rol sebebi yalnız izin GERÇEKTEN verilmemişse: elle yazılan adres sahip olunan yetki için
+    /// "tanımlı değil" yazdıramaz; çoklu gereksinimde karşılanmış ad "gereken yetki" diye seçilmez.
+    /// </summary>
+    [Fact]
+    public async Task Verilmis_izin_rol_sebebi_sayilmaz()
+    {
+        var tenantId = await CreateBasicTenantAsync();
+        _permissionChecker.IsGrantedAsync(PlatformPermissions.Projects.Default).Returns(true);
+
+        (await ExplainInTenantAsync(tenantId, PlatformPermissions.Projects.Default)).Reason
+            .ShouldBe(AccessDenialReason.Unknown);
+
+        var mixed = await ExplainInTenantAsync(tenantId, PlatformPermissions.Projects.Default, PlatformPermissions.CashAccounts.Default);
+        mixed.Reason.ShouldBe(AccessDenialReason.NotGranted);
+        mixed.PermissionName.ShouldBe(PlatformPermissions.CashAccounts.Default);
     }
 
     /// <summary>SIRA KİLİDİ: kiracıda state de kapalı olduğu halde sebep paket DEĞİL, taraf.</summary>

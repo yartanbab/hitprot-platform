@@ -12,35 +12,6 @@ using Volo.Abp.SimpleStateChecking;
 
 namespace Apya.Platform.Tenants;
 
-/// <summary>Yasaklı sayfanın sebebi — /AccessDenied sayfası metnini ve eylemini buna göre seçer.</summary>
-public enum AccessDenialReason
-{
-    /// <summary>İzin adı yok ya da tanınmıyor (açık Forbid(), eski yer imi).</summary>
-    Unknown,
-
-    /// <summary>İzin tanımlı ve açık; kullanıcının rolüne verilmemiş.</summary>
-    NotGranted,
-
-    /// <summary>Kiracının paketi (feature ya da paket izin tavanı) kapatıyor.</summary>
-    Package,
-
-    /// <summary>Platform yönetimine (host) ait ekran; hiçbir kiracı paketi açmaz.</summary>
-    HostOnly,
-
-    /// <summary>Kiracıya ait ekran; host hesabından açılmaz.</summary>
-    TenantOnly
-}
-
-/// <summary>Reddin açıklaması: sebep + (varsa) iznin ve modülün görünen adları.</summary>
-public sealed record AccessDenialExplanation(
-    AccessDenialReason Reason,
-    string? PermissionName = null,
-    string? PermissionDisplayName = null,
-    string? ModuleDisplayName = null)
-{
-    public static AccessDenialExplanation Unknown { get; } = new(AccessDenialReason.Unknown);
-}
-
 /// <summary>
 /// Yetkilendirmenin REDDETTİĞİ bir iznin neden reddedildiğini açıklar (ROL-05, SHL-11, GRT-14, ACC-12).
 ///
@@ -49,9 +20,10 @@ public sealed record AccessDenialExplanation(
 /// sorar: host'a özel izinler hiçbir paket tavanına giremediği için kiracıda state de "kapalı" der; state
 /// önce gelseydi kiracıya /TenantManagement için "paketinizde yok" denirdi — hiçbir paket onu açmaz.</para>
 ///
-/// <para>İzin VERİLİ Mİ sorusu sorulmaz: açıklayıcı raporlanmış bir reddi açıklar. Sebep kullanıcının
-/// KENDİ kiracı durumundan hesaplanır; adres çubuğundaki izin adıyla oynamak en fazla başka bir iznin
-/// doğru açıklamasını gösterir.</para>
+/// <para>Rol sebebi ("yetki hesabınıza tanımlı değil") yalnız izin kullanıcıya GERÇEKTEN verilmemişse
+/// söylenir (<see cref="IPermissionChecker"/>): elle yazılan ya da bayat adres ve çoklu gereksinimin
+/// (PermissionsRequirement) karşılanmış adları, sahip olunan yetki için "tanımlı değil" yazdıramaz — o ad
+/// bilinmiyor sayılır. Taraf ve paket sebebi kullanıcının KENDİ kiracı durumundan hesaplanır.</para>
 /// </summary>
 public class AccessDenialExplainer : ITransientDependency
 {
@@ -66,19 +38,25 @@ public class AccessDenialExplainer : ITransientDependency
     private readonly IFeatureChecker _featureChecker;
     private readonly ICurrentTenant _currentTenant;
     private readonly IStringLocalizerFactory _stringLocalizerFactory;
+    private readonly IPermissionChecker _permissionChecker;
+    private readonly PackageCeilingStore _ceilingStore;
 
     public AccessDenialExplainer(
         IPermissionDefinitionManager permissionDefinitionManager,
         ISimpleStateCheckerManager<PermissionDefinition> stateCheckerManager,
         IFeatureChecker featureChecker,
         ICurrentTenant currentTenant,
-        IStringLocalizerFactory stringLocalizerFactory)
+        IStringLocalizerFactory stringLocalizerFactory,
+        IPermissionChecker permissionChecker,
+        PackageCeilingStore ceilingStore)
     {
         _permissionDefinitionManager = permissionDefinitionManager;
         _stateCheckerManager = stateCheckerManager;
         _featureChecker = featureChecker;
         _currentTenant = currentTenant;
         _stringLocalizerFactory = stringLocalizerFactory;
+        _permissionChecker = permissionChecker;
+        _ceilingStore = ceilingStore;
     }
 
     /// <summary>
@@ -142,36 +120,49 @@ public class AccessDenialExplainer : ITransientDependency
                     AccessDenialReason.Package,
                     permissionName,
                     displayName,
-                    await FindModuleDisplayNameAsync(permissionName));
+                    await FindModuleDisplayNameAsync(_currentTenant.Id.Value, permissionName));
         }
 
-        // (3) Rol.
+        // (3) Rol — yalnız izin GERÇEKTEN verilmemişse (sınıf özeti); verilmiş ad bilinmiyor sayılır.
+        if (await _permissionChecker.IsGrantedAsync(permissionName))
+        {
+            return AccessDenialExplanation.Unknown;
+        }
+
         return new AccessDenialExplanation(AccessDenialReason.NotGranted, permissionName, displayName);
     }
 
     /// <summary>
     /// İzni kapsayan modüllerden kiracıda KAPALI olan ilki (Finans açık ama Gelişmiş Raporlar kapalıysa
-    /// kur değerleme için "Gelişmiş Raporlar"); hiçbiri kapalı değilse izin yalnız tavan dışıdır
-    /// (ROL-07 ile aynı ayrım) ve kapsayan ilk modül söylenir. Ad Paketim ekranındakiyle aynıdır.
+    /// kur değerleme için "Gelişmiş Raporlar"). Hiçbiri kapalı değilse izin yalnız tavan dışıdır: modül
+    /// ancak kapısının arkasındaki izinlerin HİÇBİRİ kiracının tavanında değilse pakette yoktur (profilsiz
+    /// kiracı, ROL-07: feature varsayılanı açık). Host tavandan tek bir alt izni çıkardıysa modül pakettedir
+    /// — Faturalar'ı kullanana "Finans &amp; Muhasebe paketinizde yok" denmez: null, ekranda modülsüz genel
+    /// metin. Ad Paketim ekranındakiyle aynıdır.
     /// </summary>
-    private async Task<string?> FindModuleDisplayNameAsync(string permissionName)
+    private async Task<string?> FindModuleDisplayNameAsync(Guid tenantId, string permissionName)
     {
-        string? firstCovering = null;
-        foreach (var feature in PackageFeatureGates.Map.Keys)
-        {
-            if (!PackageFeatureGates.IsGatedBy(feature, permissionName))
-            {
-                continue;
-            }
+        var covering = PackageFeatureGates.Map.Keys
+            .Where(feature => PackageFeatureGates.IsGatedBy(feature, permissionName))
+            .ToList();
 
-            firstCovering ??= feature;
+        foreach (var feature in covering)
+        {
             if (!await _featureChecker.IsEnabledAsync(feature))
             {
                 return DisplayNameOf(feature);
             }
         }
 
-        return firstCovering == null ? null : DisplayNameOf(firstCovering);
+        // null tavan = kısıt yok (PackageCeilingStore): hiçbir modül "pakette yok" sayılmaz.
+        var ceiling = covering.Count == 0 ? null : await _ceilingStore.GetCeilingOrNullAsync(tenantId);
+        if (ceiling == null)
+        {
+            return null;
+        }
+
+        var absent = covering.FirstOrDefault(feature => !ceiling.Any(name => PackageFeatureGates.IsGatedBy(feature, name)));
+        return absent == null ? null : DisplayNameOf(absent);
     }
 
     private static string? DisplayNameOf(string featureName)
