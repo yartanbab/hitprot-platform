@@ -146,6 +146,22 @@ public class AccessDenialExplainer_Tests : PlatformEntityFrameworkCoreTestBase
         }
     }
 
+    /// <summary>Alt iznin adı ("Düzenleme") tek başına ekranı söylemez: üst izinle birlikte yazılır.</summary>
+    [Fact]
+    public async Task Alt_iznin_gorunen_adi_ust_izinle_birlikte_yazilir()
+    {
+        var tenantId = await CreateBasicTenantAsync();
+
+        using (CultureHelper.Use("tr"))
+        {
+            var create = await ExplainInTenantAsync(tenantId, PlatformPermissions.Projects.Create);
+
+            create.Reason.ShouldBe(AccessDenialReason.NotGranted);
+            create.PermissionDisplayName.ShouldStartWith("Projeler › ");
+            create.PermissionDisplayName!.Length.ShouldBeGreaterThan("Projeler › ".Length);
+        }
+    }
+
     /// <summary>
     /// Rol sebebi yalnız izin GERÇEKTEN verilmemişse: elle yazılan adres sahip olunan yetki için
     /// "tanımlı değil" yazdıramaz; çoklu gereksinimde karşılanmış ad "gereken yetki" diye seçilmez.

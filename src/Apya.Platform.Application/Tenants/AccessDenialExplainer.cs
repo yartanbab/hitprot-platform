@@ -98,7 +98,7 @@ public class AccessDenialExplainer : ITransientDependency
             return AccessDenialExplanation.Unknown;
         }
 
-        var displayName = definition.DisplayName.Localize(_stringLocalizerFactory).Value;
+        var displayName = PermissionDisplayNameOf(definition);
 
         // (1) Taraf — paketten ÖNCE (sınıf özeti).
         var side = _currentTenant.GetMultiTenancySide();
@@ -167,6 +167,18 @@ public class AccessDenialExplainer : ITransientDependency
 
     private static string? DisplayNameOf(string featureName)
         => PackageFeatureCatalog.Managed.FirstOrDefault(meta => meta.Name == featureName)?.DisplayName;
+
+    /// <summary>
+    /// Alt iznin adı ("Düzenleme", "Silme") tek başına hangi ekranın yetkisi olduğunu söylemez;
+    /// üst izinle birlikte yazılır ("Kiracılar › Düzenleme").
+    /// </summary>
+    private string PermissionDisplayNameOf(PermissionDefinition definition)
+    {
+        var name = definition.DisplayName.Localize(_stringLocalizerFactory).Value;
+        return definition.Parent == null
+            ? name
+            : definition.Parent.DisplayName.Localize(_stringLocalizerFactory).Value + " › " + name;
+    }
 
     private static int Rank(AccessDenialReason reason) => reason switch
     {
