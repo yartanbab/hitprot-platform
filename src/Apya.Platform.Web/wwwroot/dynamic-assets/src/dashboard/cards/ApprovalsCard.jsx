@@ -48,7 +48,7 @@ function ApprovalsCard({ editMode }) {
                     compact
                     variant="locked"
                     title={t('Common:Locked:Title', 'Bu bilgiyi görme yetkiniz yok')}
-                    description={t('Dashboard:Approvals:LockedDescription', 'Taslak faturalar {0} izni gerektirir.', 'Platform.Invoices')}
+                    description={t('Dashboard:Approvals:LockedDescription', 'Taslak faturaları görmek için "{0}" yetkisi gerekir.', t('Permission:Invoices', 'Faturalar'))}
                 />
             ) : (
                 <EmptyState

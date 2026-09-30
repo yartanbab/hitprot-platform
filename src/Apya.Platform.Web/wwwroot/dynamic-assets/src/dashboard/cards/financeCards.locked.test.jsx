@@ -38,13 +38,15 @@ afterEach(() => {
 });
 
 describe('ApprovalsCard · kilit', () => {
-    it('locked → "görme yetkiniz yok" + izin adı; "Karar bekleyen yok" ve /Invoices bağlantısı YOK', async () => {
+    it('locked → "görme yetkiniz yok" + yerelleştirilmiş izin adı; "Karar bekleyen yok" ve /Invoices bağlantısı YOK', async () => {
         stubBody({ items: [], locked: true });
 
         renderWithClient(<ApprovalsCard />);
 
         expect(await screen.findByText(LOCK_TITLE)).toBeInTheDocument();
-        expect(screen.getByText('Taslak faturalar Platform.Invoices izni gerektirir.')).toBeInTheDocument();
+        /* Müşteri cümlesinde ham izin kodu (Platform.Invoices) değil, izin tanımının görünen adı. */
+        expect(screen.getByText('Taslak faturaları görmek için "Faturalar" yetkisi gerekir.')).toBeInTheDocument();
+        expect(screen.queryByText(/Platform\.Invoices/)).not.toBeInTheDocument();
         expect(screen.queryByText('Karar bekleyen yok')).not.toBeInTheDocument();
         expect(screen.queryByText('Faturaları aç →')).not.toBeInTheDocument();
         expect(document.querySelector('a[href="/Invoices"]')).toBeNull();
@@ -86,13 +88,14 @@ describe('ApprovalsCard · kilit', () => {
 });
 
 describe('IncomeExpenseCard · kilit', () => {
-    it('locked → "görme yetkiniz yok" + iki izin adı; "Kayıtlı hareket yok" ve lejant YOK', async () => {
+    it('locked → "görme yetkiniz yok" + iki yerelleştirilmiş izin adı; "Kayıtlı hareket yok" ve lejant YOK', async () => {
         stubBody({ points: [], currency: 'TRY', net: 0, locked: true });
 
         renderWithClient(<IncomeExpenseCard filter={FILTER} />);
 
         expect(await screen.findByText(LOCK_TITLE)).toBeInTheDocument();
-        expect(screen.getByText('Bu kart Platform.Incomes ve Platform.Expenses izinlerinin ikisini de gerektirir.')).toBeInTheDocument();
+        expect(screen.getByText('Bu kart "Gelirler" ve "Giderler" yetkilerinin ikisini de ister.')).toBeInTheDocument();
+        expect(screen.queryByText(/Platform\.(Incomes|Expenses)/)).not.toBeInTheDocument();
         expect(screen.queryByText('Kayıtlı hareket yok')).not.toBeInTheDocument();
         expect(screen.queryByText('Gelir')).not.toBeInTheDocument();
         expect(screen.queryByText('Gider')).not.toBeInTheDocument();

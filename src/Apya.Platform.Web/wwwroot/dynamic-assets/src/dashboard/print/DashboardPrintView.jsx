@@ -513,7 +513,7 @@ function ApprovalsBlock({ query, locale }) {
             query={query}
             isEmpty={locked || items.length === 0}
             emptyText={locked
-                ? t('Dashboard:Print:Locked', 'Bu bölümü görme yetkiniz yok ({0}).', 'Platform.Invoices')
+                ? t('Dashboard:Print:Locked', 'Bu bölümü görme yetkiniz yok ({0}).', t('Permission:Invoices', 'Faturalar'))
                 : t('Dashboard:Approvals:EmptyDescription', 'Taslak durumdaki fatura bulunmuyor.')}
         >
             <table className="w-full border-collapse">
@@ -559,7 +559,7 @@ function IncomeExpenseBlock({ query, locale }) {
             query={query}
             isEmpty={locked || !hasValues}
             emptyText={locked
-                ? t('Dashboard:Print:Locked', 'Bu bölümü görme yetkiniz yok ({0}).', 'Platform.Incomes + Platform.Expenses')
+                ? t('Dashboard:Print:LockedBoth', 'Bu bölümü görme yetkiniz yok ({0} ve {1}).', t('Permission:Incomes', 'Gelirler'), t('Permission:Expenses', 'Giderler'))
                 : t('Dashboard:IncomeExpense:EmptyDescription', 'Son 6 ayda gelir veya gider kaydı bulunmuyor.')}
         >
             <table className="w-full border-collapse break-inside-avoid">

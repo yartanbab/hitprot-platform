@@ -54,7 +54,7 @@ function IncomeExpenseCard({ filter, editMode }) {
                     compact
                     variant="locked"
                     title={t('Common:Locked:Title', 'Bu bilgiyi görme yetkiniz yok')}
-                    description={t('Dashboard:IncomeExpense:LockedDescription', 'Bu kart {0} ve {1} izinlerinin ikisini de gerektirir.', 'Platform.Incomes', 'Platform.Expenses')}
+                    description={t('Dashboard:IncomeExpense:LockedDescription', 'Bu kart "{0}" ve "{1}" yetkilerinin ikisini de ister.', t('Permission:Incomes', 'Gelirler'), t('Permission:Expenses', 'Giderler'))}
                 />
             ) : (
                 <EmptyState

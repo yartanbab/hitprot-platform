@@ -149,6 +149,32 @@ public class DashboardStatisticsProvider_Tests
             .RequiredPermission.ShouldBe(PlatformPermissions.Projects.ViewBudget);
     }
 
+    /// <summary>
+    /// "Dönem net" = gelir − gider: iki toplamı da okur → Gelir VE Gider izni ister (Genel Bakış
+    /// Gelir/Gider kartıyla aynı kural, G6 karar 6). Tek izinle net, öbür toplamı dolaylı sızdırırdı.
+    /// Önbellek kiracı genelinde paylaşıldığı için kilit önbellekten ÖNCE: izinli kullanıcının
+    /// hesapladığı değer (burada 42) tek izinli kullanıcıya gitmez.
+    /// </summary>
+    [Theory]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(true, true, false)]
+    public async Task Aylik_net_gelir_ve_gider_izninin_ikisini_de_ister(bool income, bool expense, bool locked)
+    {
+        _permissionChecker.IsGrantedAsync(Arg.Any<string>()).Returns(false);
+        _permissionChecker.IsGrantedAsync(PlatformPermissions.Incomes.Default).Returns(income);
+        _permissionChecker.IsGrantedAsync(PlatformPermissions.Expenses.Default).Returns(expense);
+        _statCache.GetOrAddAsync(default!, default!)
+            .ReturnsForAnyArgs(new DashboardStatCacheItem { Current = 42m });
+
+        var stats = await BuildSut(dashboardCacheSeconds: 180).BuildAsync(new DashboardQueryDto());
+
+        var net = stats.Single(s => s.Key == "monthly-net");
+        net.Locked.ShouldBe(locked);
+        net.Value.ShouldBe(locked ? (decimal?)null : 42m);
+        net.RequiredPermission.ShouldBe($"{PlatformPermissions.Incomes.Default} + {PlatformPermissions.Expenses.Default}");
+    }
+
     [Fact]
     public async Task Cache_acikken_izinli_istatistik_cache_ten_okunur_hesap_calismaz()
     {

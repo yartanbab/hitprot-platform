@@ -167,8 +167,9 @@ describe('Dashboard baskı çıktısı', () => {
 
         /* Kilitli bölüm de "sonuca bağlanmış" sayılır: baskı beklemede kalmaz. */
         await waitFor(() => expect(onReady).toHaveBeenCalled());
-        expect(screen.getByText('Bu bölümü görme yetkiniz yok (Platform.Invoices).')).toBeInTheDocument();
-        expect(screen.getByText('Bu bölümü görme yetkiniz yok (Platform.Incomes + Platform.Expenses).')).toBeInTheDocument();
+        /* Kağıtta da ham izin kodu değil görünen ad; iki izin " + " ile değil kendi metniyle birleşir. */
+        expect(screen.getByText('Bu bölümü görme yetkiniz yok (Faturalar).')).toBeInTheDocument();
+        expect(screen.getByText('Bu bölümü görme yetkiniz yok (Gelirler ve Giderler).')).toBeInTheDocument();
         expect(screen.queryByText('Taslak durumdaki fatura bulunmuyor.')).not.toBeInTheDocument();
         expect(screen.queryByText('Son 6 ayda gelir veya gider kaydı bulunmuyor.')).not.toBeInTheDocument();
     });
