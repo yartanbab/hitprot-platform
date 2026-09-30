@@ -2,10 +2,23 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Apya.Platform.Projects;
+using Apya.Platform.Web.Pages;
 using HtmlAgilityPack;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.ExceptionHandling;
+using Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared.Views.Error;
+using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Entities;
 using Xunit;
 
 namespace Apya.Platform.Pages;
@@ -13,29 +26,101 @@ namespace Apya.Platform.Pages;
 /// <summary>
 /// Silinmiş / var olmayan kayda tam sayfa gezinmesi (PRJ-13, TSK-23, GRH-22).
 ///
-/// <para>PlatformPageModel kancası: işleyici istisnası ABP'nin durum bulucusuna göre 404 ise sonuç
-/// NotFound() olur (API ile aynı kural). Test host'u ÜRETİM hata hattıyla koşar (UseErrorPage — ölçüldü:
-/// yığında ExceptionHandlerMiddleware): kanca istisnayı işler, gövdesiz 404'ü durum sayfası ara katmanı
-/// /Error?httpStatusCode=404'e yönlendirir. Kancasız istisna /Error yeniden yürütmesine düşer (404 +
-/// G5'in "kayıt bulunamadı" görünümü); Development'ta ise geliştirici hata sayfası (500).</para>
+/// <para>PlatformPageModel kancası: işleyici istisnası ABP'nin durum bulucusuna göre 404 ise hata görünümü
+/// (Views/Error/Default.cshtml) AYNI ADRESTE 404 ile basılır — üretimdeki istisna yeniden yürütmesinin
+/// verdiği "Aradığınız kayıt bulunamadı" sayfasıyla birebir, yönlendirme yok; Development'ta da aynı sayfa.
+/// Test host'u üretim hata hattıyla koşuyor (ölçüldü: yığında ExceptionHandlerMiddleware), bu yüzden HTTP
+/// düzeyinde kancalı ve kancasız yanıt tasarım gereği aynıdır; kancanın kendisini birim testi kilitler.</para>
 /// </summary>
 public class RecordNotFoundPages_Tests : PlatformWebTestBase
 {
     [Theory]
     [InlineData("/Projects/ProjectDetails/{0}")]
     [InlineData("/Projects/Edit/{0}?tab=danger")]
-    public async Task Olmayan_proje_sayfasi_istisna_degil_404_durumu(string pattern)
+    public async Task Olmayan_proje_sayfasi_ayni_adreste_404_ve_kayit_bulunamadi(string pattern)
     {
         var id = Guid.NewGuid();
 
         var response = await Client.GetAsync(string.Format(pattern, id));
-        var body = await response.Content.ReadAsStringAsync();
+        var html = await response.Content.ReadAsStringAsync();
 
-        // Kanca istisnayı sayfada işledi: istisna yolu (yeniden yürütme / geliştirici sayfası) değil,
-        // gövdesiz 404 → HTML gezinmesinde durum sayfası yönlendirmesi.
-        response.StatusCode.ShouldBe(HttpStatusCode.Redirect, $"durum: {(int)response.StatusCode}");
-        (response.Headers.Location?.ToString() ?? string.Empty).ShouldContain("httpStatusCode=404");
-        body.ShouldNotContain(id.ToString(), customMessage: "istisna yolundaki ham ABP metni eksik kimliği basardı");
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        response.Headers.Location.ShouldBeNull("yönlendirme yok — adres korunur");
+
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+        var state = doc.DocumentNode.SelectSingleNode("//div[@data-apya-state='error-404-record']");
+        state.ShouldNotBeNull("hata görünümünün 'kayıt bulunamadı' durumu basılmalı");
+        var text = WebUtility.HtmlDecode(state!.InnerText);
+        text.ShouldContain("Aradığınız kayıt bulunamadı");
+        text.ShouldNotContain("Project", Case.Sensitive);
+
+        // Sayfa aynı adreste basıldığı için kimlik yalnız adresin kendisinde (dil seçicinin returnUrl'ü,
+        // "%2F" + kimlik) geçer; hata metnine ya da ham ABP iletisine sızmaz.
+        html.Replace("%2F" + id, string.Empty, StringComparison.OrdinalIgnoreCase)
+            .ShouldNotContain(id.ToString(), customMessage: "kimlik hata metnine sızmamalı");
+        WebUtility.HtmlDecode(html).ShouldNotContain("türünden bir nesne");
+    }
+
+    /// <summary>
+    /// Kancanın kendisi: 404'e eşlenen istisna → hata görünümü (aynı adres, 404, istisna yeniden yürütmesinin
+    /// özelliği); başka durum kodu (iş kuralı → 403) ve ABP'nin zaten işlediği (AJAX) istisna olduğu gibi kalır.
+    /// </summary>
+    [Fact]
+    public void Kanca_404_istisnasini_ayni_adreste_hata_gorunumune_cevirir_digerlerine_dokunmaz()
+    {
+        using var scope = GetRequiredService<IServiceScopeFactory>().CreateScope();
+        var services = scope.ServiceProvider;
+
+        var (page, notFound) = Probe(services, new EntityNotFoundException(typeof(Project), Guid.NewGuid()));
+        page.OnPageHandlerExecuted(notFound);
+
+        notFound.ExceptionHandled.ShouldBeTrue();
+        var view = notFound.Result.ShouldBeOfType<ViewResult>();
+        view.ViewName.ShouldBe("~/Views/Error/Default.cshtml");
+        view.StatusCode.ShouldBe(404);
+        view.ViewData!.Model.ShouldBeOfType<AbpErrorViewModel>().HttpStatusCode.ShouldBe(404);
+        var feature = page.HttpContext.Features.Get<IExceptionHandlerPathFeature>();
+        feature.ShouldNotBeNull("hata görünümü istisnayı yeniden yürütmedeki gibi bu özellikten okur");
+        feature!.Error.ShouldBeOfType<EntityNotFoundException>();
+        feature.Path.ShouldBe(ProbePath);
+
+        var (businessPage, business) = Probe(services, new BusinessException(PlatformDomainErrorCodes.GrantLeadCallNotOpen));
+        businessPage.OnPageHandlerExecuted(business);
+        business.ExceptionHandled.ShouldBeFalse("iş kuralı (403) kancaya ait değil");
+        business.Result.ShouldBeNull();
+
+        var (ajaxPage, ajax) = Probe(services, new EntityNotFoundException(typeof(Project), Guid.NewGuid()), handledByAbp: true);
+        ajaxPage.OnPageHandlerExecuted(ajax);
+        ajax.Result.ShouldBeNull("ABP'nin işlediği (AJAX/JSON) istisnaya dokunulmaz");
+    }
+
+    private const string ProbePath = "/Projects/Edit/qa-ux";
+
+    private sealed class ProbePage : PlatformPageModel
+    {
+    }
+
+    private static (ProbePage Page, PageHandlerExecutedContext Executed) Probe(
+        IServiceProvider services, Exception exception, bool handledByAbp = false)
+    {
+        var httpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext { RequestServices = services };
+        httpContext.Request.Path = ProbePath;
+        var pageContext = new PageContext(new ActionContext(httpContext, new RouteData(), new CompiledPageActionDescriptor()))
+        {
+            ViewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary())
+        };
+        var page = new ProbePage
+        {
+            PageContext = pageContext,
+            LazyServiceProvider = services.GetRequiredService<IAbpLazyServiceProvider>()
+        };
+        var executed = new PageHandlerExecutedContext(pageContext, Array.Empty<IFilterMetadata>(), null, page)
+        {
+            Exception = exception,
+            ExceptionHandled = handledByAbp
+        };
+        return (page, executed);
     }
 
     /// <summary>
