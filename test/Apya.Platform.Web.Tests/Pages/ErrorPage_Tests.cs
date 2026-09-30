@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using Apya.Platform.Dashboard;
@@ -9,6 +10,10 @@ using Apya.Platform.Projects;
 using Apya.Platform.Web.Pages.Shared;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Localization;
 using Shouldly;
 using Volo.Abp;
@@ -28,7 +33,7 @@ namespace Apya.Platform.Pages;
 /// yerelleştiriciyle ölçülür — hangi metnin seçildiği kesin görünür). Görünümün ABP'ninkini gerçekten
 /// ezdiği ve kodla birlikte doğru basıldığı <see cref="Render"/>'da, /Error?httpStatusCode= ucuyla
 /// (üretimdeki yönlendirme/yeniden yürütme hattı yerelde görünmez; ortak tanımı HtmlNavigation_Tests
-/// kilitler).</para>
+/// kilitler, yeniden yürütmenin görünüme kablolamasını <see cref="ExceptionReexecutionFilter"/>).</para>
 /// </summary>
 public class ErrorPage_Tests
 {
@@ -107,10 +112,16 @@ public class ErrorPage_Tests
         state.Hint.ShouldBe("Ayrıntı satırı");
     }
 
+    /// <summary>
+    /// ABP doğrulama istisnasında Details'i maddelerden kurar ("…aşağıdaki hatalar tespit edildi. - A - B");
+    /// maddeler basılınca aynı anlatı ipucu olarak listenin ALTINA ikinci kez yazılmaz.
+    /// </summary>
     [Fact]
     public void Dogrulama_hatalari_madde_olarak_basilir()
     {
-        var errorInfo = new RemoteServiceErrorInfo("İsteğiniz geçerli değil!")
+        var errorInfo = new RemoteServiceErrorInfo(
+            "İsteğiniz geçerli değil!",
+            "Doğrulama sırasında aşağıdaki hatalar tespit edildi.\r\n - Ad zorunludur.\r\n - Tutar sıfırdan büyük olmalı.\r\n")
         {
             ValidationErrors = new[]
             {
@@ -123,6 +134,7 @@ public class ErrorPage_Tests
 
         state.Kind.ShouldBe("error-business");
         state.Details.ShouldBe(new[] { "Ad zorunludur.", "Tutar sıfırdan büyük olmalı." });
+        state.Hint.ShouldBeNull("hatalar iki kez basılmasın");
     }
 
     [Fact]
@@ -214,7 +226,7 @@ public class ErrorPage_Tests
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            var state = doc.DocumentNode.SelectSingleNode("//div[@data-apya-state]");
+            var state = doc.DocumentNode.SelectSingleNode("//div[starts-with(@data-apya-state,'error-')]");
             state.ShouldNotBeNull("özel hata görünümü ABP'nin Views/Error/Default.cshtml'ini ezmeli");
             state!.GetAttributeValue("data-apya-state", "").ShouldBe(kind);
             state.GetAttributeValue("class", "").ShouldContain("apya-console-state");
@@ -223,6 +235,8 @@ public class ErrorPage_Tests
             var decoded = WebUtility.HtmlDecode(html);
             decoded.ShouldNotContain("sunucu tarafında beklenmedik");
             decoded.ShouldContain("Hata kodu " + statusCode);
+            // Sayfa oturumsuza da basılır; Geri Bildirim düğmesi yalnız oturumluda (ve açıksa) var.
+            WebUtility.HtmlDecode(state.InnerText).ShouldNotContain("Geri Bildirim");
 
             var title = WebUtility.HtmlDecode(doc.DocumentNode.SelectSingleNode("//title")!.InnerText).Trim();
             title.ShouldNotBe("Apya", "sekme/üst çubuk başlığı artık yalnız uygulama adı değil");
@@ -246,5 +260,84 @@ public class ErrorPage_Tests
             state.SelectSingleNode(".//*[@data-apya-retry]").ShouldBeNull();
             state.SelectSingleNode(".//button[@data-apya-back]").ShouldNotBeNull();
         }
+
+        /// <summary>
+        /// İstisna yeniden yürütmesinin (UseExceptionHandler — yalnız üretimde) görünüme kablolaması:
+        /// iş kuralı mesajı korunur, "Tekrar dene" yalnız GET 5xx'te, 401'de girişe dönüş adresi.
+        /// Özellik <see cref="ExceptionReexecutionFilter"/> ile kurulur.
+        /// </summary>
+        [Fact]
+        public async Task Istisna_yeniden_yurutmesi_gorunume_baglanir()
+        {
+            var business = await ErrorStateAsync(HttpMethod.Get, 403, "business");
+            business.GetAttributeValue("data-apya-state", "").ShouldBe("error-business");
+            WebUtility.HtmlDecode(business.InnerText).ShouldContain(ExceptionReexecutionFilter.BusinessMessage);
+
+            (await ErrorStateAsync(HttpMethod.Get, 500, "server")).SelectSingleNode(".//*[@data-apya-retry]")
+                .ShouldNotBeNull("GET 5xx: tarayıcı adresi orijinal sayfa, yenileme isteği tekrarlar");
+            (await ErrorStateAsync(HttpMethod.Post, 500, "server")).SelectSingleNode(".//*[@data-apya-retry]")
+                .ShouldBeNull("POST'u yeniden göndertmek mükerrer kayıt riski");
+
+            var hrefs = (await ErrorStateAsync(HttpMethod.Get, 401, "unauthorized")).SelectNodes(".//a")!
+                .Select(a => WebUtility.HtmlDecode(a.GetAttributeValue("href", "")))
+                .ToList();
+            hrefs.ShouldContain("/Account/Login?returnUrl=" + Uri.EscapeDataString(ExceptionReexecutionFilter.OriginalPath));
+        }
+
+        /// <summary>Çerezsiz istemci: önceki yanıtların antiforgery çerezi POST'u 400'e çevirmesin.</summary>
+        private async Task<HtmlNode> ErrorStateAsync(HttpMethod method, int statusCode, string exception)
+        {
+            using var client = CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
+            client.Timeout = TimeSpan.FromMinutes(10);
+            var request = new HttpRequestMessage(method, $"/Error?httpStatusCode={statusCode}&culture=tr&ui-culture=tr");
+            request.Headers.Add(ExceptionReexecutionFilter.Header, exception);
+
+            var response = await client.SendAsync(request);
+
+            response.StatusCode.ShouldBe((HttpStatusCode)statusCode);
+            var doc = new HtmlDocument();
+            doc.LoadHtml(await response.Content.ReadAsStringAsync());
+            var state = doc.DocumentNode.SelectSingleNode("//div[starts-with(@data-apya-state,'error-')]");
+            state.ShouldNotBeNull();
+            return state!;
+        }
+    }
+
+    /// <summary>
+    /// Yalnız test (PlatformWebTestModule kaydeder): <see cref="Header"/> başlıklı istekte istisna yeniden
+    /// yürütmesinin bıraktığı özelliği (IExceptionHandlerFeature + IExceptionHandlerPathFeature) kurar —
+    /// test host'u Development'ta koştuğu için UseExceptionHandler hattı başka türlü görünmez.
+    /// </summary>
+    internal sealed class ExceptionReexecutionFilter : IStartupFilter
+    {
+        public const string Header = "X-Apya-Test-Exception";
+        public const string OriginalPath = "/Finance";
+        public const string BusinessMessage = "Özel kural";
+
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use(async (context, nextMiddleware) =>
+            {
+                var kind = context.Request.Headers[Header].ToString();
+                if (kind.Length > 0)
+                {
+                    var feature = new ExceptionHandlerFeature
+                    {
+                        Error = kind switch
+                        {
+                            "business" => new UserFriendlyException(BusinessMessage),
+                            "unauthorized" => new AbpAuthorizationException("x"),
+                            _ => new InvalidOperationException("boom")
+                        },
+                        Path = OriginalPath
+                    };
+                    context.Features.Set<IExceptionHandlerFeature>(feature);
+                    context.Features.Set<IExceptionHandlerPathFeature>(feature);
+                }
+
+                await nextMiddleware(context);
+            });
+            next(app);
+        };
     }
 }

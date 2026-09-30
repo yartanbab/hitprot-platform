@@ -15,8 +15,10 @@
     Description null → Common:FetchError ("" → açıklama yok); eylem hedefi (ActionUrl ya da
     ActionAttributes kancası) verilip ActionText boşsa → Common:Retry.
     Tam sayfa (hata sayfası, /AccessDenied): EmptyStateVariant.Page + ErrorStates → başlık sayfa
-    başlığıdır, Kind (data-apya-state), Details/Hint/Footnote, SecondaryActions. Geri/yeniden yükle
-    (EmptyStateAction.Back/Retry) aşağıdaki küçük betiğe bağlanır; betik yalnız onlar varken basılır.
+    başlığıdır, Kind (data-apya-state; yalnız doluyken basılır), Details/Hint/Footnote, SecondaryActions.
+    Geri/yeniden yükle (EmptyStateAction.Back/Retry) YALNIZ tam sayfada (Page) basılır ve aşağıdaki
+    küçük betiğe bağlanır: betik kökü document.currentScript ile bulur, AJAX (jQuery .html(),
+    ModalManager) ya da innerHTML ile eklenen parçada çalışmaz (gizli "Geri", ölü "Tekrar dene").
 *@
 @using Apya.Platform.Web.Pages.Shared
 @model Apya.Platform.Web.Pages.Shared.EmptyStateModel
@@ -33,9 +35,14 @@
     }
     var action = Model.BuildAction();
     var secondaryActions = Model.BuildSecondaryActions();
+    // data-* öznitelikleri Razor'da koşullu DEĞİL (null değerde de ="" basılır): yalnız Kind doluyken,
+    // önündeki boşlukla birlikte — Kind'sız kök G5 öncesiyle birebir aynı basılır.
+    var kindAttribute = string.IsNullOrEmpty(Model.Kind)
+        ? null
+        : Html.Raw(" data-apya-state=\"" + Html.Encode(Model.Kind) + "\"");
 }
 
-<div class="apya-console-state @Model.CssClass" id="@Model.Id" role="@Model.Role" data-apya-state="@Model.Kind">
+<div class="apya-console-state @Model.CssClass" id="@Model.Id" role="@Model.Role"@kindAttribute>
     <span class="apya-console-state-icon @(Model.IsMuted ? "is-muted" : null)"><i class="fa @Model.IconClass" aria-hidden="true"></i></span>
     <strong role="@(Model.IsPageHeading ? "heading" : null)" aria-level="@(Model.IsPageHeading ? "1" : null)">@Model.Title</strong>
     @if (!string.IsNullOrEmpty(Model.Description))
@@ -66,8 +73,8 @@
 </div>
 @if (Model.HasClientHooks)
 {
-    @* jQuery'siz (sayfa demetinden önce çalışır); yalnız kendi kökünü bağlar. Geçmiş yoksa
-       (yeni sekme) "Geri dön" gizli kalır; JS yoksa da gizlidir. *@
+    @* Yalnız tam sayfa (Page). jQuery'siz (sayfa demetinden önce çalışır); yalnız kendi kökünü bağlar.
+       Geçmiş yoksa (yeni sekme) "Geri dön" gizli kalır; JS yoksa da gizlidir. *@
     <script>
         (function () {
             var root = document.currentScript && document.currentScript.previousElementSibling;

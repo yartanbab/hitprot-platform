@@ -68,11 +68,13 @@ public static class ErrorStates
                 state.Icon = "fa-triangle-exclamation";
                 state.Title = l["ErrorPage:Business:Title"].Value;
                 state.Description = errorInfo!.Message;
-                state.Hint = errorInfo.Details;
                 state.Details = errorInfo.ValidationErrors?
                     .Select(error => error.Message)
                     .Where(message => !string.IsNullOrWhiteSpace(message))
                     .ToList();
+                // Doğrulama istisnasında ABP Details'i maddelerden kurar ("…aşağıdaki hatalar… - A - B"):
+                // maddeler basılıyorsa ipucu yok, hatalar iki kez yazılmasın.
+                state.Hint = state.Details is { Count: > 0 } ? null : errorInfo.Details;
                 break;
             default:
                 switch (statusCode)

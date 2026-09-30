@@ -163,6 +163,38 @@ public class EmptyStateModel_Tests
         model.Role.ShouldBe(role);
     }
 
+    /// <summary>
+    /// Geri/Tekrar dene kancalarının betiği kökü document.currentScript ile bulur: AJAX (jQuery .html(),
+    /// ModalManager) ya da innerHTML ile eklenen parçada bağlanamaz — "Geri dön" gizli kalır, "Tekrar
+    /// dene" ölü düğme olurdu. Bu yüzden kancalar ve betik yalnız tam sayfada (Page); kancasız ikincil
+    /// eylem her varyantta kalır.
+    /// </summary>
+    [Theory]
+    [InlineData(EmptyStateVariant.Default)]
+    [InlineData(EmptyStateVariant.Error)]
+    [InlineData(EmptyStateVariant.Locked)]
+    public void Geri_ve_Tekrar_dene_kancalari_yalniz_tam_sayfada(EmptyStateVariant variant)
+    {
+        static EmptyStateModel WithHooks(EmptyStateVariant v)
+        {
+            var model = new EmptyStateModel { Variant = v, Title = "Görev bulunamadı" };
+            model.SecondaryActions.Add(EmptyStateAction.Retry("Tekrar dene"));
+            model.SecondaryActions.Add(new EmptyStateAction("Görevlere dön", "/Tasks"));
+            model.SecondaryActions.Add(EmptyStateAction.Back("Geri dön"));
+            return model;
+        }
+
+        var fragment = WithHooks(variant);
+        fragment.HasClientHooks.ShouldBeFalse("parçada betik basılmaz");
+        var actions = fragment.BuildSecondaryActions();
+        actions.Count.ShouldBe(1, "kancalı eylemler basılmaz");
+        actions[0].Attributes["href"].ShouldBe("/Tasks");
+
+        var page = WithHooks(EmptyStateVariant.Page);
+        page.HasClientHooks.ShouldBeTrue();
+        page.BuildSecondaryActions().Count.ShouldBe(3);
+    }
+
     // ─────────────── Kaynak sözleşmesi (partial ve eylem yuvası kullanımları) ───────────────
 
     /// <summary>Web projesindeki kaynak; çalışma ağacı CRLF (autocrlf), eşleşmeler LF üzerinden.</summary>
@@ -266,15 +298,20 @@ public class EmptyStateModel_Tests
         [Fact]
         public async Task Projeler_bos_durumu_konsol_diliyle_basilir()
         {
+            var html = await GetResponseAsStringAsync("/Projects");
             var doc = new HtmlDocument();
-            doc.LoadHtml(await GetResponseAsStringAsync("/Projects"));
+            doc.LoadHtml(html);
 
             var state = doc.DocumentNode.SelectSingleNode("//div[@id='ProjectsEmpty']/div[contains(@class,'apya-console-state')]");
             state.ShouldNotBeNull("boş durum .apya-console-state köküyle basılmalı");
-            // Id/CssClass/Role verilmediyse öznitelik ya da artık boşluk basılmaz.
+            // Id/CssClass/Role/Kind verilmediyse öznitelik ya da artık boşluk basılmaz: Razor data-*
+            // özniteliğini null'da da basar — Kind'sız kök G5 öncesiyle birebir aynı kalmalı.
             state!.GetAttributeValue("class", "").ShouldBe("apya-console-state");
             state.Attributes.Contains("id").ShouldBeFalse();
             state.Attributes.Contains("role").ShouldBeFalse();
+            state.Attributes.Contains("data-apya-state").ShouldBeFalse();
+            var root = html.IndexOf("<div class=\"apya-console-state", html.IndexOf("id=\"ProjectsEmpty\"", System.StringComparison.Ordinal), System.StringComparison.Ordinal);
+            html.Substring(root, "<div class=\"apya-console-state\">".Length).ShouldBe("<div class=\"apya-console-state\">");
 
             var bubble = state.SelectSingleNode("span[contains(@class,'apya-console-state-icon')]");
             bubble.ShouldNotBeNull();

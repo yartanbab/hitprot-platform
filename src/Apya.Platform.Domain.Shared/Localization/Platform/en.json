@@ -2199,7 +2199,7 @@
     "ErrorPage:RecordNotFound:Title": "Record not found",
     "ErrorPage:RecordNotFound:Description": "The record may have been deleted or cannot be viewed from this account.",
     "ErrorPage:ServerError:Title": "Something went wrong",
-    "ErrorPage:ServerError:Description": "There was a problem processing your request. Try again in a few seconds; if the problem persists, let us know via Feedback.",
+    "ErrorPage:ServerError:Description": "There was a problem processing your request. Try again in a few seconds; if the problem persists, let us know.",
     "ErrorPage:Generic:Title": "The request could not be completed",
     "ErrorPage:Generic:Description": "This request can't be fulfilled right now. You can go back and try again.",
     "ErrorPage:Business:Title": "The operation could not be completed",

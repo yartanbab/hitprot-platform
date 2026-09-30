@@ -46,15 +46,23 @@ public sealed record EmptyStateAction(
     /// <summary>Sayfayı yeniden yükler.</summary>
     public const string RetryHook = "data-apya-retry";
 
-    /// <summary>"Geri dön" — yeni sekmede (geçmiş yok) ve JS yokken görünmez.</summary>
+    /// <summary>"Geri dön" — yeni sekmede (geçmiş yok) ve JS yokken görünmez. Yalnız tam sayfa (<see cref="EmptyStateVariant.Page"/>).</summary>
     public static EmptyStateAction Back(string text) => new(text, Icon: "fa-arrow-left",
         Attributes: new Dictionary<string, string> { [BackHook] = "", ["hidden"] = "hidden" });
 
-    /// <summary>Kanonik "Tekrar dene" (karar 10: btn-outline-primary + fa-rotate-right) — sayfayı yeniler.</summary>
+    /// <summary>
+    /// Kanonik "Tekrar dene" (karar 10: btn-outline-primary + fa-rotate-right) — sayfayı yeniler. Yalnız tam
+    /// sayfa (<see cref="EmptyStateVariant.Page"/>); sayfa içi yükleme hatası kartının "Tekrar dene"si
+    /// Error varyantının birincil eylemidir (ActionAttributes kancası).
+    /// </summary>
     public static EmptyStateAction Retry(string text) => new(text, Icon: "fa-rotate-right",
         Attributes: new Dictionary<string, string> { [RetryHook] = "", ["class"] = "btn btn-sm btn-outline-primary" });
 
-    /// <summary>Partial'ın küçük betiğine bağlanan eylem mi (geri / yeniden yükle)?</summary>
+    /// <summary>
+    /// Partial'ın küçük betiğine bağlanan eylem mi (geri / yeniden yükle)? Böyle eylem YALNIZ tam sayfada
+    /// basılır: betik kökü document.currentScript ile bulur; AJAX (jQuery .html(), ModalManager) ya da
+    /// innerHTML ile eklenen parçada bağlanamaz — "Geri dön" gizli kalır, "Tekrar dene" ölü düğme olurdu.
+    /// </summary>
     public bool IsClientHook => Attributes != null
         && (Attributes.ContainsKey(BackHook) || Attributes.ContainsKey(RetryHook));
 }
@@ -116,8 +124,8 @@ public class EmptyStateModel
     /// <summary>Birincil eylemden sonra basılan ikincil eylemler.</summary>
     public IList<EmptyStateAction> SecondaryActions { get; } = new List<EmptyStateAction>();
 
-    /// <summary>Partial geri/yeniden yükle betiğini basmalı mı?</summary>
-    public bool HasClientHooks => SecondaryActions.Any(action => action.IsClientHook);
+    /// <summary>Partial geri/yeniden yükle betiğini basmalı mı? Yalnız tam sayfada (<see cref="EmptyStateAction.IsClientHook"/>).</summary>
+    public bool HasClientHooks => Variant == EmptyStateVariant.Page && SecondaryActions.Any(action => action.IsClientHook);
 
     /// <summary>Balondaki ikon: <see cref="Icon"/> ya da türün varsayılanı.</summary>
     public string IconClass => !string.IsNullOrWhiteSpace(Icon)
@@ -162,10 +170,14 @@ public class EmptyStateModel
             Variant == EmptyStateVariant.Error ? "btn btn-sm btn-outline-primary" : "btn btn-sm btn-primary");
     }
 
-    /// <summary>İkincil eylemler (metni boş olanlar atlanır); kodlama ve öznitelik kuralı birincilinkiyle aynı.</summary>
+    /// <summary>
+    /// İkincil eylemler (metni boş olanlar ve tam sayfa dışında geri/yeniden yükle kancaları atlanır);
+    /// kodlama ve öznitelik kuralı birincilinkiyle aynı.
+    /// </summary>
     public IReadOnlyList<TagBuilder> BuildSecondaryActions()
         => SecondaryActions
-            .Where(action => !string.IsNullOrWhiteSpace(action.Text))
+            .Where(action => !string.IsNullOrWhiteSpace(action.Text)
+                             && (Variant == EmptyStateVariant.Page || !action.IsClientHook))
             .Select(action => Build(
                 action.Text,
                 action.Url,
