@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Volo.Abp;
 
 namespace Apya.Platform.Web.Pages.Projects;
 
@@ -129,7 +130,20 @@ public class EditModel : PlatformPageModel
         // göndermiyor, koşulsuz geri yazılmazsa bağlı proje her kayıtta cariyi kaybederdi.
         Project.CustomerId = Current.CustomerId;
 
-        await _projectAppService.UpdateAsync(Id, Project);
+        // PRJ-01: negatif bütçe / ters tarih 500 yerine aynı ekranda alan altı hata; yazılan
+        // değerler bağlanmış modelden korunur. Yakalamak GÜVENLİ çünkü Project.Update kuralı
+        // hiçbir atamadan ÖNCE denetler (bkz. Project.cs): iş birimi tamamlansa da yarım
+        // değişiklik yazılmaz. Silinmiş proje (EntityNotFound) PlatformPageModel'in 404'üne kalır.
+        try
+        {
+            await _projectAppService.UpdateAsync(Id, Project);
+        }
+        catch (BusinessException ex)
+        {
+            ModelState.AddModelError(FieldOf(ex.Code), this.UserMessage(ex));
+            Tab = "info";
+            return Page();
+        }
 
         TempData["Saved"] = true;
         return RedirectToPage(new { id = Id, tab = "info" });
@@ -155,7 +169,19 @@ public class EditModel : PlatformPageModel
             return Page();
         }
 
-        var storedFileName = await _fileStorage.StoreAsync(CoverFile);
+        // Depolama kuralı (tür/boyut) DB yazımından ÖNCE düşer: yakalamak güvenli.
+        string storedFileName;
+        try
+        {
+            storedFileName = await _fileStorage.StoreAsync(CoverFile);
+        }
+        catch (BusinessException ex)
+        {
+            ModelState.AddModelError(string.Empty, this.UserMessage(ex));
+            Tab = "files";
+            return Page();
+        }
+
         var replaced = await _projectAppService.SetCoverImageAsync(Id, storedFileName);
         DeletePhysicalFile(replaced);
 
@@ -184,7 +210,19 @@ public class EditModel : PlatformPageModel
             return Page();
         }
 
-        var storedFileName = await _fileStorage.StoreAsync(AttachmentFile);
+        // Depolama kuralı (tür/boyut) DB yazımından ÖNCE düşer: yakalamak güvenli.
+        string storedFileName;
+        try
+        {
+            storedFileName = await _fileStorage.StoreAsync(AttachmentFile);
+        }
+        catch (BusinessException ex)
+        {
+            ModelState.AddModelError(string.Empty, this.UserMessage(ex));
+            Tab = "files";
+            return Page();
+        }
+
         await _projectAppService.AddAttachmentAsync(
             Id,
             AttachmentFile.FileName,
@@ -264,6 +302,15 @@ public class EditModel : PlatformPageModel
             Tab = "info";
         }
     }
+
+    /// <summary>İş kuralı hatasının alan altında gösterileceği form alanı; eşleşmeyen kod özete düşer.</summary>
+    private static string FieldOf(string? code) => code switch
+    {
+        PlatformDomainErrorCodes.ProjectNameRequired => "Project.Name",
+        PlatformDomainErrorCodes.ProjectBudgetInvalid => "Project.TotalBudget",
+        PlatformDomainErrorCodes.ProjectScheduleInvalid => "Project.EndDate",
+        _ => string.Empty
+    };
 
     /// <summary>
     /// Diskteki dosyayı siler. Kayıt zaten silindiği için burada hata fırlatmak

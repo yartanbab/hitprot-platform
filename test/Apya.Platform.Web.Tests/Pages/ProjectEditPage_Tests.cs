@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Apya.Platform.Application.Projects;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Web.Pages.Projects;
+using HtmlAgilityPack;
 using Microsoft.AspNetCore.Authorization;
 using Shouldly;
 using Volo.Abp.Domain.Repositories;
@@ -111,5 +115,131 @@ public class ProjectEditPage_Tests : PlatformWebTestBase
 
         attribute.ShouldNotBeNull($"{methodName} [Authorize] taşımıyor");
         attribute!.Policy.ShouldBe(expectedPolicy);
+    }
+
+    // ── PRJ-01: iş kuralı hatası aynı sayfada; yazılan değer korunur, yarım kayıt olmaz ──────────
+    // Düzeltme öncesi negatif bütçe / ters tarih / desteklenmeyen dosya 500 veriyordu. Sayfa hatayı
+    // yakalayınca iş birimi tamamlanır → Project.Update'in "önce doğrula" sırası da burada kilitlenir
+    // (ad bütçe kuralından ÖNCE atanıyordu; test host'u işlemsiz koştuğu için yarım hâl kalıcı olurdu).
+
+    private static string AntiforgeryToken(string html)
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+
+        var input = doc.DocumentNode.SelectSingleNode("//input[@name='__RequestVerificationToken']");
+        input.ShouldNotBeNull("Sayfada antiforgery jetonu yok — POST kurulamaz.");
+
+        return input!.GetAttributeValue("value", "");
+    }
+
+    private async Task<HttpResponseMessage> PostInfoAsync(Guid projectId, params (string Key, string Value)[] fields)
+    {
+        var url = $"/Projects/Edit/{projectId}";
+        var form = new List<KeyValuePair<string, string>>
+        {
+            new("__RequestVerificationToken", AntiforgeryToken(await GetResponseAsStringAsync(url)))
+        };
+
+        foreach (var (key, value) in fields)
+        {
+            form.Add(new KeyValuePair<string, string>(key, value));
+        }
+
+        return await Client.PostAsync(url, new FormUrlEncodedContent(form));
+    }
+
+    private static HtmlDocument Parse(string html)
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+        return doc;
+    }
+
+    /// <summary>abp-input'un alan altı doğrulama satırı (Razor Türkçe harfleri sayısal varlığa kodlar → çözülür).</summary>
+    private static string FieldError(HtmlDocument doc, string field)
+        => WebUtility.HtmlDecode(
+            doc.DocumentNode.SelectSingleNode($"//span[@data-valmsg-for='{field}']")?.InnerText ?? string.Empty);
+
+    /// <summary>Servis okuması tuzağı gizleyebilir: yeni iş biriminde doğrudan depodan okunur.</summary>
+    private async Task<Project> ReadStoredAsync(Guid projectId)
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        var project = await GetRequiredService<IRepository<Project, Guid>>().GetAsync(projectId);
+        await uow.CompleteAsync();
+        return project;
+    }
+
+    [Fact]
+    public async Task Negatif_butce_ayni_sayfada_alan_alti_hata_verir_yazilan_deger_korunur()
+    {
+        var projectId = await CreateProjectAsync("EDIT-3");
+
+        var response = await PostInfoAsync(projectId,
+            ("Project.Name", "QA-UX yeni ad"),
+            ("Project.Code", "EDIT-3"),
+            ("Project.TotalBudget", "-5"));
+
+        // 500 (istisna) ya da 302 (kaydedildi) değil: form aynı sayfada yeniden çizilir.
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var doc = Parse(await response.Content.ReadAsStringAsync());
+
+        FieldError(doc, "Project.TotalBudget").ShouldContain("Geçersiz bütçe. Bütçe negatif olamaz.");
+        doc.DocumentNode.SelectSingleNode("//input[@name='Project.Name']")!
+            .GetAttributeValue("value", "").ShouldBe("QA-UX yeni ad");
+        doc.DocumentNode.SelectSingleNode("//*[@data-active-tab]")!
+            .GetAttributeValue("data-active-tab", "").ShouldBe("info");
+
+        (await ReadStoredAsync(projectId)).Name.ShouldBe("Düzenleme Testi", "reddedilen kayıttan ad yazılmamalı");
+    }
+
+    [Fact]
+    public async Task Ters_tarih_araligi_ayni_sayfada_alan_alti_hata_verir_yarim_kayit_olmaz()
+    {
+        var projectId = await CreateProjectAsync("EDIT-4");
+
+        var response = await PostInfoAsync(projectId,
+            ("Project.Name", "QA-UX yeni ad"),
+            ("Project.Code", "EDIT-4"),
+            ("Project.StartDate", "2026-09-27"),
+            ("Project.EndDate", "2026-09-01"),
+            // Tarayıcı tarih alanlarının yanına bu işaretçiyi basar: ISO değer değişmez kültürle çözülür.
+            ("__Invariant", "Project.StartDate"),
+            ("__Invariant", "Project.EndDate"));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var doc = Parse(await response.Content.ReadAsStringAsync());
+
+        FieldError(doc, "Project.EndDate").ShouldContain("Geçersiz tarih aralığı.");
+        (await ReadStoredAsync(projectId)).Name.ShouldBe("Düzenleme Testi", "reddedilen kayıttan ad yazılmamalı");
+
+        // İstemci kuralı: bitiş alanı aynı metni taşır (min'i Edit.js başlangıçtan kurar).
+        var endInput = doc.DocumentNode.SelectSingleNode("//input[@name='Project.EndDate']");
+        endInput.ShouldNotBeNull();
+        WebUtility.HtmlDecode(endInput!.GetAttributeValue("data-msg-min", ""))
+            .ShouldContain("Geçersiz tarih aralığı.");
+    }
+
+    [Fact]
+    public async Task Desteklenmeyen_dosya_turu_dosyalar_sekmesinde_hata_verir()
+    {
+        var projectId = await CreateProjectAsync("EDIT-5");
+        var url = $"/Projects/Edit/{projectId}";
+        var token = AntiforgeryToken(await GetResponseAsStringAsync(url));
+
+        using var form = new MultipartFormDataContent
+        {
+            { new StringContent(token), "__RequestVerificationToken" },
+            { new ByteArrayContent(new byte[] { 0x4D, 0x5A, 0x90, 0x00 }), "AttachmentFile", "kurulum.exe" },
+            { new StringContent("QA-UX"), "AttachmentTitle" }
+        };
+
+        var response = await Client.PostAsync(url + "?handler=UploadAttachment", form);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var html = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+        html.ShouldContain("data-active-tab=\"files\"");
+        html.ShouldContain("Desteklenmeyen dosya türü");
     }
 }

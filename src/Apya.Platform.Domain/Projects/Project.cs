@@ -121,10 +121,7 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public void SetBudgetInfo(decimal totalBudget, decimal hourlyRate, string currency)
     {
-        if (totalBudget < 0 || hourlyRate < 0)
-            throw new BusinessException(PlatformDomainErrorCodes.ProjectBudgetInvalid)
-                .WithData("TotalBudget", totalBudget)
-                .WithData("HourlyRate", hourlyRate);
+        EnsureBudgetValid(totalBudget, hourlyRate);
 
         TotalBudget = totalBudget;
         HourlyRate = hourlyRate;
@@ -140,18 +137,35 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public void SetSchedule(DateTime? startDate, DateTime? endDate)
     {
-        if (startDate.HasValue && endDate.HasValue && endDate.Value < startDate.Value)
-            throw new BusinessException(PlatformDomainErrorCodes.ProjectScheduleInvalid)
-                .WithData("StartDate", startDate)
-                .WithData("EndDate", endDate);
+        EnsureScheduleValid(startDate, endDate);
 
         StartDate = startDate;
         EndDate = endDate;
     }
 
+    private static void EnsureBudgetValid(decimal totalBudget, decimal hourlyRate)
+    {
+        if (totalBudget < 0 || hourlyRate < 0)
+            throw new BusinessException(PlatformDomainErrorCodes.ProjectBudgetInvalid)
+                .WithData("TotalBudget", totalBudget)
+                .WithData("HourlyRate", hourlyRate);
+    }
+
+    private static void EnsureScheduleValid(DateTime? startDate, DateTime? endDate)
+    {
+        if (startDate.HasValue && endDate.HasValue && endDate.Value < startDate.Value)
+            throw new BusinessException(PlatformDomainErrorCodes.ProjectScheduleInvalid)
+                .WithData("StartDate", startDate)
+                .WithData("EndDate", endDate);
+    }
+
     /// <summary>
     /// Projenin tüm değiştirilebilir alanlarını tek metotta günceller.
     /// TenantId değiştirilemez — yaşam döngüsü boyunca sabittir.
+    /// <para>ÖNCE DOĞRULA, SONRA DEĞİŞTİR (PRJ-01): bütçe ve tarih kuralı hiçbir atamadan önce
+    /// denetlenir. İhlal yarım değiştirilmiş entity bırakırsa istisnayı yakalayıp formu yeniden
+    /// çizen çağıran (Projects/Edit) iş birimini tamamlar ve ihlalden önce yazılan ad/kod/açıklama
+    /// kaydedilirdi (ABP denetim önleyicisi istisnada da SaveChanges çağırır).</para>
     /// </summary>
     public void Update(
         string name,
@@ -169,6 +183,9 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         DateTime? startDate,
         DateTime? endDate)
     {
+        EnsureBudgetValid(totalBudget, hourlyRate);
+        EnsureScheduleValid(startDate, endDate);
+
         SetName(name);
         Code = code;
         Description = description;

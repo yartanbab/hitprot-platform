@@ -90,4 +90,55 @@ public class Project_Tests
         project.GrantId.ShouldBeNull();
         project.CustomerId.ShouldBe(customerId);
     }
+
+    // --- PRJ-01: önce doğrula, sonra değiştir ---
+    // Update ihlalde yarım değişmiş entity bırakırsa istisnayı yakalayıp formu yeniden çizen
+    // Projects/Edit iş birimini tamamlar ve ihlalden önce yazılan alanlar kaydedilirdi.
+
+    private static Project ExistingProject() => new(
+        Guid.NewGuid(), null, null, "Eski Ad", "ESKI-1", "Eski açıklama",
+        totalBudget: 100m,
+        startDate: new DateTime(2026, 1, 1),
+        endDate: new DateTime(2026, 12, 31));
+
+    [Fact]
+    public void Update_gecersiz_butcede_hic_alan_degismez()
+    {
+        var project = ExistingProject();
+        var categoryId = project.CategoryId;
+
+        var ex = Assert.Throws<BusinessException>(() => project.Update(
+            name: "Yeni Ad", code: "YENI-1", description: "Yeni açıklama",
+            grantId: null, customerId: null, categoryId: ProjectCategoryConsts.SystemIds.Event,
+            totalBudget: -5m, hourlyRate: 0m, currency: "TRY",
+            purpose: "Yeni amaç", targetAudience: null, activities: null,
+            startDate: new DateTime(2026, 1, 1), endDate: new DateTime(2026, 12, 31)));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.ProjectBudgetInvalid);
+        project.Name.ShouldBe("Eski Ad");
+        project.Code.ShouldBe("ESKI-1");
+        project.Description.ShouldBe("Eski açıklama");
+        project.CategoryId.ShouldBe(categoryId);
+        project.Purpose.ShouldBeNull();
+        project.TotalBudget.ShouldBe(100m);
+    }
+
+    [Fact]
+    public void Update_ters_tarihte_hic_alan_degismez()
+    {
+        var project = ExistingProject();
+
+        var ex = Assert.Throws<BusinessException>(() => project.Update(
+            name: "Yeni Ad", code: "YENI-1", description: "Yeni açıklama",
+            grantId: null, customerId: null, categoryId: project.CategoryId,
+            totalBudget: 200m, hourlyRate: 0m, currency: "TRY",
+            purpose: null, targetAudience: null, activities: null,
+            startDate: new DateTime(2026, 9, 27), endDate: new DateTime(2026, 9, 1)));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.ProjectScheduleInvalid);
+        project.Name.ShouldBe("Eski Ad");
+        project.Code.ShouldBe("ESKI-1");
+        project.TotalBudget.ShouldBe(100m, "bütçe kontrolü geçse de tarih ihlalinde bütçe de yazılmamalı");
+        project.StartDate.ShouldBe(new DateTime(2026, 1, 1));
+    }
 }
