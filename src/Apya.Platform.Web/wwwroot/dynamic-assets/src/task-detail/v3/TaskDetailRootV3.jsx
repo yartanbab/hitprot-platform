@@ -413,7 +413,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
 
     /* TSK-23 — görev yok (404) ya da gizli (403): "Tekrar Dene" anlamsız; ne olduğunu söyleyen durum
        + çıkış. Metinler tam sayfayla (Pages/Tasks/Detail) aynı anahtarlar. Diğer hatalar aşağıda aynen.
-       Durum useTaskDetail'de isteğin jqXHR'ından hataya yazılır. */
+       Durum useTaskDetail'de isteğin jqXHR'ından hataya yazılır. "Görevlere dön" birincil küçük düğme
+       (tam sayfa _EmptyState ve apya.loadState.notFoundHtml ile aynı kural); modalın "Kapat"ı ikincil. */
     const unavailableStatus = isError && (error?.status === 404 || error?.status === 403) ? error.status : null;
 
     const body = isPending ? (
@@ -433,14 +434,14 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 ? t('Tasks:Detail:NotFound:Body', 'Görev silinmiş ya da bağlantı eskimiş olabilir.')
                 : errorMessage(error)}
             action={presentation === 'page' ? (
-                <Button asChild variant="ghost">
+                <Button asChild size="sm">
                     <a href="/Tasks">
                         <i className="fa fa-arrow-left" aria-hidden="true" />
                         {t('Tasks:Detail:BackToList', 'Görevlere dön')}
                     </a>
                 </Button>
             ) : (
-                <Button variant="ghost" onClick={requestClose}>{t('Common:Close', 'Kapat')}</Button>
+                <Button variant="secondary" size="sm" onClick={requestClose}>{t('Common:Close', 'Kapat')}</Button>
             )}
         />
     ) : isError ? (

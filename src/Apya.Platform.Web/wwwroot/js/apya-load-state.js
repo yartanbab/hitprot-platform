@@ -20,8 +20,10 @@
      İstisna: DataTables kartı (failTable) — onun düğmesini bu dosya bağlar.
    • notFoundHtml(başlık?, açıklama?, geriHref?, geriMetni?) — kayıt yok (404): "Tekrar dene"
      anlamsız, yerine isteğe bağlı geri bağlantısı. Boş başlık/açıklama → ErrorPage:RecordNotFound:*
-     (hata sayfasıyla aynı metin). geriHref yalnız uygulama içi yol ("/x"; "//" ve "/\" değil).
+     (hata sayfasıyla aynı metin). geriHref yalnız uygulama içi yol ("/x"; "//", "/\", denetim
+     karakteri ya da boşluk içeren değil).
      $kutu.html(apya.loadState.notFoundHtml(l('…:NotFound'), null, '/Liste', l('…:Back')));
+   • "Bulunamadı"nın geri eylemi her yüzeyde birincil küçük düğme: btn btn-sm btn-primary / React Button size="sm".
 
    DataTables (abp.libs.datatables.createAjax sarmalayıcısı çağırır, apya-latest.js):
    • failTable(settings, callback, hata?) — DataTables'a boş yanıt verir (işleniyor ve
@@ -86,9 +88,10 @@
             + '<p>' + esc(message) + '</p></div>';
     }
 
-    // Açık yönlendirme olmasın: yalnız "/x" biçimli uygulama yolu ("//host" ve "/\host" değil).
+    // Açık yönlendirme olmasın: yalnız "/x" biçimli uygulama yolu ("//host" ve "/\host" değil). Denetim
+    // karakteri ve boşluk da reddedilir: tarayıcı URL'den sekme/satır sonunu atar, "/<SEKME>/host" "//host" olur.
     function isAppPath(href) {
-        return typeof href === 'string' && /^\/(?![\/\\])/.test(href);
+        return typeof href === 'string' && /^\/(?![\/\\])/.test(href) && !/[\u0000-\u001F\u007F\s]/.test(href);
     }
 
     // Kayıt yok (404, GRH-22): Tekrar dene yok; geri bağlantısı isteğe bağlı. esc() tırnak kaçışlamaz,
@@ -96,7 +99,7 @@
     function notFoundHtml(title, message, backHref, backText) {
         var back = isAppPath(backHref)
             ? '<span class="apya-console-state-actions">'
-                + '<a class="btn btn-sm btn-outline-primary" href="' + esc(backHref).replace(/"/g, '&quot;') + '">'
+                + '<a class="btn btn-sm btn-primary" href="' + esc(backHref).replace(/"/g, '&quot;') + '">'
                 + '<i class="fa fa-arrow-left me-1" aria-hidden="true"></i>' + esc(backText || backHref)
                 + '</a></span>'
             : '';

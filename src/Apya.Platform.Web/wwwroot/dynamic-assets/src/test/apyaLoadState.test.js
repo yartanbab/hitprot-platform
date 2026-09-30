@@ -444,11 +444,11 @@ describe('notFoundHtml', () => {
         expect(body.querySelector('p').textContent).toBe('The record may have been deleted.');
     });
 
-    it('uygulama içi yol geri bağlantısı olur (outline + fa-arrow-left)', () => {
+    it('uygulama içi yol geri bağlantısı olur (birincil küçük düğme — Razor _EmptyState Page ile aynı — + fa-arrow-left)', () => {
         const link = parse(loadState.notFoundHtml('x', null, '/Grants/Requests', 'Talepler')).querySelector('a');
 
         expect(link.getAttribute('href')).toBe('/Grants/Requests');
-        expect(link.className).toBe('btn btn-sm btn-outline-primary');
+        expect(link.className).toBe('btn btn-sm btn-primary');
         expect(link.textContent).toBe('Talepler');
         expect(link.querySelector('i.fa.fa-arrow-left').getAttribute('aria-hidden')).toBe('true');
     });
@@ -459,16 +459,21 @@ describe('notFoundHtml', () => {
         ['/\\evil.example'],
         ['https://evil.example'],
         [''],
-    ])('açık yönlendirme olmasın: %s → bağlantı basılmaz', (href) => {
+        // Tarayıcı URL ayrıştırıcısı sekme/satır sonunu atar: "/<SEKME>/evil.example" → "//evil.example".
+        ['/\t/evil.example'],
+        ['/\n/evil.example'],
+    ])('açık yönlendirme olmasın: %j → bağlantı basılmaz', (href) => {
         const body = parse(loadState.notFoundHtml('x', null, href, 'Geri'));
 
         expect(body.querySelector('a')).toBeNull();
     });
 
     it('href\'teki tırnak kaçışlanır: öznitelikten taşıp yeni öznitelik kuramaz', () => {
-        const link = parse(loadState.notFoundHtml('x', null, '/Grants/Requests" onclick="alert(1)', 'Geri')).querySelector('a');
+        // Boşluksuz: boşluklu değer zaten reddedilir; HTML ayrıştırıcısı tırnaktan sonra boşluk olmadan da
+        // yeni öznitelik açar.
+        const link = parse(loadState.notFoundHtml('x', null, '/Grants/Requests"onclick="alert(1)', 'Geri')).querySelector('a');
 
         expect(link.getAttribute('onclick')).toBeNull();
-        expect(link.getAttribute('href')).toBe('/Grants/Requests" onclick="alert(1)');
+        expect(link.getAttribute('href')).toBe('/Grants/Requests"onclick="alert(1)');
     });
 });
