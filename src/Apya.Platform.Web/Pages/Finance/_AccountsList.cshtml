@@ -8,6 +8,7 @@
 @using Apya.Platform.Web.Pages.Shared
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<PlatformResource> L
+@inject Microsoft.Extensions.Localization.IStringLocalizer<PlatformResource> S
 @model IndexModel
 
 @functions {
@@ -30,10 +31,12 @@
 
 @if (Model.AccountsLocked)
 {
-    @* Liste ya da bakiye okunamadı: "henüz hesap yok" DEĞİL; /CashAccounts (403) bağlantısı yok. *@
+    @* Liste ya da bakiye okunamadı: "henüz hesap yok" DEĞİL; /CashAccounts (403) bağlantısı yok.
+       Açıklama gereken izinleri görünen adlarıyla söyler (ham kod değil; argümanlı metin → IStringLocalizer). *@
     <partial name="_EmptyState" model='new EmptyStateModel {
         Variant = EmptyStateVariant.Locked,
-        Title = L["Finance:Locked:Accounts"].Value }' />
+        Title = L["Finance:Locked:Accounts"].Value,
+        Description = S["Finance:Locked:Accounts:Requires", S["Permission:CashAccounts"].Value, S["Permission:CashMovements"].Value].Value }' />
 }
 else if (!Model.Accounts.Any())
 {

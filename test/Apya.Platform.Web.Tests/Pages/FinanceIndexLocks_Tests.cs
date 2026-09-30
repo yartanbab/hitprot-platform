@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -28,6 +29,7 @@ using Shouldly;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Authorization;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.MultiTenancy;
 using Xunit;
 
 namespace Apya.Platform.Pages;
@@ -57,6 +59,9 @@ public class FinanceIndexLocks_Tests
     private readonly IDocumentMatchingAppService _matching = Substitute.For<IDocumentMatchingAppService>();
     private readonly IComplianceAppService _compliance = Substitute.For<IComplianceAppService>();
     private readonly IDeliveryPackageAppService _packages = Substitute.For<IDeliveryPackageAppService>();
+
+    /// <summary>Oturumun kiracısı (AbpPageModel.CurrentTenant): varsayılan kiracı kullanıcısı; host vakası null yapar.</summary>
+    private Guid? _currentTenantId = Guid.NewGuid();
 
     public FinanceIndexLocks_Tests()
     {
@@ -98,9 +103,13 @@ public class FinanceIndexLocks_Tests
         var localizerFactory = Substitute.For<IStringLocalizerFactory, IAbpStringLocalizerFactory>();
         ((IAbpStringLocalizerFactory)localizerFactory).CreateDefaultOrNull().Returns(localizer);
 
+        var currentTenant = Substitute.For<ICurrentTenant>();
+        currentTenant.Id.Returns(_ => _currentTenantId);
+
         var services = new ServiceCollection();
         services.AddSingleton<IAuthorizationService>(authorization);
         services.AddSingleton(localizerFactory);
+        services.AddSingleton(currentTenant);
 
         return new IndexModel(
             _expenses, _incomes, _invoices, _cashAccounts, _cashMovements, _rates,
@@ -124,6 +133,16 @@ public class FinanceIndexLocks_Tests
             _cashMovements.GetBalanceAsync(account.Id)
                 .Returns(new CashAccountBalanceDto { CashAccountId = account.Id, Currency = account.Currency, CurrentBalance = balance });
         }
+    }
+
+    private static string ReadSource(params string[] relative)
+    {
+        // Test, Web.Tests'in bin klasöründen koşar; kaynaklar depodan okunur.
+        var root = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..");
+        var path = Path.Combine(root, Path.Combine(relative));
+
+        File.Exists(path).ShouldBeTrue($"Kaynak bulunamadı: {Path.GetFullPath(path)}");
+        return File.ReadAllText(path).Replace("\r\n", "\n");
     }
 
     // ─────────────────────────── Sayfa kapısı ───────────────────────────
@@ -195,6 +214,33 @@ public class FinanceIndexLocks_Tests
         page.RatesLocked.ShouldBeFalse();
     }
 
+    /// <summary>
+    /// Proje seçiliyken de bütçe izni yoksa Budget null kalır ve Genel'in bütçe kilidi (çip) basılmalı —
+    /// eskiden çip yalnız portföy kipindeydi, proje seçince bütçe bloğu açıklamasız kayboluyordu.
+    /// Render testi AlwaysAllow'da bu dalı göremediği için Razor dalı kaynaktan kilitlenir.
+    /// </summary>
+    [Fact]
+    public async Task Proje_seciliyken_butce_izni_yoksa_butce_kilidi_gorunur()
+    {
+        var project = new ProjectDto { Id = Guid.NewGuid(), TenantId = _currentTenantId, Name = "Kurumsal proje", Currency = "TRY" };
+        _projects.GetListAsync(Arg.Any<PagedAndSortedResultRequestDto>())
+            .Returns(new PagedResultDto<ProjectDto>(1, new List<ProjectDto> { project }));
+        _budget.GetOverviewAsync(project.Id).ThrowsAsync(new AbpAuthorizationException());
+
+        var page = BuildPage(PlatformPermissions.Projects.Default, PlatformPermissions.Incomes.Default);
+        page.ProjectId = project.Id;
+        await page.OnGetAsync();
+
+        page.ActiveTab.ShouldBe(FinanceContext.TabOverview);
+        page.SelectedProject.ShouldNotBeNull();
+        page.Budget.ShouldBeNull();
+
+        var overview = ReadSource("src", "Apya.Platform.Web", "Pages", "Finance", "_PanelOverview.cshtml");
+        overview.ShouldContain("Finance:Locked:Budget");
+        overview.ShouldNotContain("else if (Model.SelectedProject == null)",
+            customMessage: "bütçe kilidi yalnız portföyde basılıyor; proje seçiliyken Budget null olunca hiçbir şey görünmez");
+    }
+
     // ─────────────────────────── Kasa sekmesi ───────────────────────────
 
     /// <summary>Liste CashAccounts, bakiye CashMovements ister: bakiye okunamazsa hesaplar kilitli.</summary>
@@ -246,6 +292,21 @@ public class FinanceIndexLocks_Tests
         page.ExpensesLocked.ShouldBeTrue();
     }
 
+    /// <summary>
+    /// Gelir-Gider'in kesik notu modelin kesin bayrağına bağlı (donör tarih denetimiyle aynı sinyal): eski
+    /// "LedgerRows.Count &gt;= 100" sezgisi 60+60 kayıtta yanlış alarm veriyor, kalem süzgeci kesik bir
+    /// kaynaktan 30 satır bırakınca notu hiç göstermiyordu. Render testi 100+ kayıt kurmadan bu dalı
+    /// göremediği için Razor koşulu kaynaktan kilitlenir; bayrağın kendisi donör testlerinde.
+    /// </summary>
+    [Fact]
+    public void Gelir_gider_kesik_notu_LedgerTruncated_bayragina_bagli()
+    {
+        var ledger = ReadSource("src", "Apya.Platform.Web", "Pages", "Finance", "_PanelLedger.cshtml");
+
+        ledger.ShouldContain("@if (Model.LedgerTruncated)");
+        ledger.ShouldNotContain("LedgerRows.Count >= 100");
+    }
+
     // ─────────────────────────── Donör uygunluk denetimi (FIN-07) ───────────────────────────
 
     private static readonly string[] DonorGrants =
@@ -255,11 +316,13 @@ public class FinanceIndexLocks_Tests
     };
 
     /// <summary>Hibe şablonlu proje + donör sekmesi; her kaynak okunur ve temizdir (test bozacağını bozar).</summary>
-    private IndexModel DonorPage(bool withDates = true)
+    /// <param name="projectTenantId">Projenin kiracısı; verilmezse oturumun kiracısı (kullanıcı kendi projesine bakar).</param>
+    private IndexModel DonorPage(bool withDates = true, Guid? projectTenantId = null)
     {
         var project = new ProjectDto
         {
             Id = Guid.NewGuid(),
+            TenantId = projectTenantId ?? _currentTenantId,
             Name = "Hibe projesi",
             Currency = "TRY",
             CategorySystemKey = ProjectCategory.GrantProject,
@@ -339,6 +402,81 @@ public class FinanceIndexLocks_Tests
 
         page.LedgerTruncated.ShouldBeTrue();
         ShouldBeUnverified(page, "Finance:Donor:Unverified:Dates:PartialTitle", "Finance:Donor:Unverified:Dates:Partial");
+    }
+
+    /// <summary>Gelir tarafının kesiği de aynı bayrağı kurar (gider kesiğiyle simetrik).</summary>
+    [Fact]
+    public async Task Gelir_listesi_kesikse_tarih_denetimi_eksik()
+    {
+        var page = DonorPage();
+        var first100 = Enumerable.Range(0, 100)
+            .Select(i => new IncomeEntryDto { Id = Guid.NewGuid(), Title = "Gelir " + i, Amount = 1m, IncomeDate = new DateTime(2026, 6, 1) })
+            .ToList();
+        _incomes.GetListAsync(Arg.Any<GetIncomeEntriesInput>()).Returns(new PagedResultDto<IncomeEntryDto>(150, first100));
+
+        await page.OnGetAsync();
+
+        page.LedgerTruncated.ShouldBeTrue();
+        ShouldBeUnverified(page, "Finance:Donor:Unverified:Dates:PartialTitle", "Finance:Donor:Unverified:Dates:Partial");
+    }
+
+    /// <summary>
+    /// Adresteki Gelir-Gider süzgeci (tür, kalem, kasa) denetim kümesini daraltır: okunan kayıtlar temiz ve
+    /// hiçbir kaynak kesik olmasa da "tarih aralığında" denemez.
+    /// </summary>
+    [Theory]
+    [InlineData("kind")]
+    [InlineData("line")]
+    [InlineData("account")]
+    public async Task Suzgecli_listede_tarih_denetimi_eksik(string filter)
+    {
+        var page = DonorPage();
+        switch (filter)
+        {
+            case "kind": page.Kind = "gider"; break;
+            case "line": page.LineId = Guid.NewGuid(); break;
+            default: page.AccountId = Guid.NewGuid(); break;
+        }
+
+        await page.OnGetAsync();
+
+        page.LedgerTruncated.ShouldBeFalse();
+        ShouldBeUnverified(page, "Finance:Donor:Unverified:Dates:PartialTitle", "Finance:Donor:Unverified:Dates:Partial");
+    }
+
+    /// <summary>
+    /// Host hesabıyla ("Hesabına Gir" kullanmadan) kiracının hibe projesi: proje seçici ve bütçe/kur
+    /// servisleri kiracı süzgecini kapatır, belge tahtası, gelir/gider ve paketler kapatmaz → boş küme
+    /// "temiz" görünür. Belge ve tarih başlıkları denetlenemedi (olumlu özet basılamaz), paketler
+    /// kilitli ve hiç okunmaz.
+    /// </summary>
+    [Fact]
+    public async Task Host_baglaminda_kiraci_projesinde_belge_ve_tarih_denetlenemedi()
+    {
+        _currentTenantId = null;
+        var page = DonorPage(projectTenantId: Guid.NewGuid());
+
+        await page.OnGetAsync();
+
+        ShouldBeUnverified(page, "Finance:Donor:Unverified:Documents:Title", "Finance:Donor:Unverified:HostScope");
+        ShouldBeUnverified(page, "Finance:Donor:Unverified:Dates:Title", "Finance:Donor:Unverified:HostScope");
+        page.DonorPackagesLocked.ShouldBeTrue();
+        await _matching.DidNotReceive().GetBoardAsync(Arg.Any<Guid>());
+        await _packages.DidNotReceive().GetListAsync(Arg.Any<Guid>());
+    }
+
+    /// <summary>Host kendi projesine bakıyorsa (kiracısız) denetim her zamanki gibi koşar.</summary>
+    [Fact]
+    public async Task Host_kendi_projesinde_denetim_kosar()
+    {
+        _currentTenantId = null;
+        var page = DonorPage();
+
+        await page.OnGetAsync();
+
+        page.EligibilityFindings.ShouldBeEmpty();
+        page.DonorPackagesLocked.ShouldBeFalse();
+        await _matching.Received().GetBoardAsync(Arg.Any<Guid>());
     }
 
     [Fact]

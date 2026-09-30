@@ -830,9 +830,20 @@ public class IndexModel : AbpPageModel
     {
         var projectId = SelectedProject!.Id;
 
+        // Host bağlamında ("Hesabına Gir" kullanılmadan) kiracının projesi: proje seçici ile bütçe/kur
+        // servisleri kiracı süzgecini kapatır (HostScope), belge tahtası, gelir/gider ve teslim paketleri
+        // kapatmaz → boş küme "temiz" sayılırdı. Belge ve tarih başlıkları denetlenemedi, paketler kilitli.
+        var hostScope = CurrentTenant.Id == null && SelectedProject.TenantId.HasValue;
+
         // 1) Belgesiz harcama — donör denetiminin ilk sorduğu şey. Tahta okunamazsa (Belgeler
         //    izni yok ya da paket kapsamı dışında — Basic) belgesiz harcama olup olmadığı bilinmez.
-        if (!await TryAddAsync(async () =>
+        if (hostScope)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Documents:Title",
+                "Finance:Donor:Unverified:HostScope"));
+        }
+        else if (!await TryAddAsync(async () =>
         {
             var board = await _matchingAppService.GetBoardAsync(projectId);
             if (board.Expenses.Count > 0)
@@ -894,7 +905,14 @@ public class IndexModel : AbpPageModel
         // Okunabilen kümedeki gerçek ihlal yukarıda yine gösterilir; ama tarih yoksa başlık hiç
         // koşmadı, küme eksikse (izin yok, kaynak başına 100 kayıt kesiği — en eski kayıtlar tam
         // da kesilen kısım — ya da URL süzgeci) aralık dışı kayıt görünmeden kalmış olabilir.
-        if (start == null && end == null)
+        // Host bağlamında küme kiracı süzgecinden dolayı boştur.
+        if (hostScope)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Dates:Title",
+                "Finance:Donor:Unverified:HostScope"));
+        }
+        else if (start == null && end == null)
         {
             EligibilityFindings.Add(Unverified(
                 "Finance:Donor:Unverified:Dates:Title",
@@ -914,7 +932,7 @@ public class IndexModel : AbpPageModel
                 "Finance:Donor:Unverified:Dates:Partial"));
         }
 
-        DonorPackagesLocked = !await TryAddAsync(async () =>
+        DonorPackagesLocked = hostScope || !await TryAddAsync(async () =>
             DonorPackages = await _deliveryPackageAppService.GetListAsync(projectId));
     }
 

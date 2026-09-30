@@ -10,6 +10,7 @@
 @using Apya.Platform.Web.Pages.Shared
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<PlatformResource> L
+@inject Microsoft.Extensions.Localization.IStringLocalizer<PlatformResource> S
 @model IndexModel
 
 @functions {
@@ -65,11 +66,11 @@ else if (Model.SelectedProject == null && Model.Portfolio != null)
     @* Tasarım 2d: proje seçilmemişken şerit boş kalmaz, portföy gelir. *@
     <partial name="_PanelPortfolio" model="Model" />
 }
-else if (Model.SelectedProject == null)
+else
 {
-    @* Bu dala YALNIZ bütçe yetkisi yokken düşülür (Portfolio ancak GetPortfolioAsync yetki
-       hatasında null kalır). Eski "bir proje seçin" yönlendirmesi yanlıştı — proje seçince de
-       bütçe gelmez (aynı ViewBudget izni). *@
+    @* Bu dala YALNIZ bütçe yetkisi yokken düşülür — iki kipte de: portföyde Portfolio ancak
+       GetPortfolioAsync, proje seçiliyken Budget ancak GetOverviewAsync yetki hatasında null kalır
+       (aynı ViewBudget izni). Eski "bir proje seçin" yönlendirmesi yanlıştı. *@
     <div class="apya-chip apya-chip-neutral d-inline-flex mb-3">
         <i class="fa fa-lock me-1" aria-hidden="true"></i>
         @L["Finance:Locked:Budget"]
@@ -88,10 +89,12 @@ else if (Model.SelectedProject == null)
             <div class="list-group list-group-flush">
                 @if (Model.TransactionsLocked)
                 {
-                    @* Kaynakların hiçbiri okunamadı: "Henüz işlem yok" DEĞİL; yasak sayfaya bağlantı yok. *@
+                    @* Kaynakların hiçbiri okunamadı: "Henüz işlem yok" DEĞİL; yasak sayfaya bağlantı yok.
+                       Açıklama, birini açınca listenin geleceği izinleri görünen adlarıyla söyler. *@
                     <partial name="_EmptyState" model='new EmptyStateModel {
                         Variant = EmptyStateVariant.Locked,
-                        Title = L["Finance:Locked:Transactions"].Value }' />
+                        Title = L["Finance:Locked:Transactions"].Value,
+                        Description = S["Finance:Locked:Transactions:Requires", S["Permission:Incomes"].Value, S["Permission:Expenses"].Value, S["Permission:Invoices"].Value].Value }' />
                 }
                 else if (!Model.Transactions.Any())
                 {

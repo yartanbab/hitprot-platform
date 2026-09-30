@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Web.Pages.Finance;
@@ -168,7 +170,9 @@ public class FinanceContext_Tests
 
     /// <summary>
     /// Değişmez: kapı, belge dışındaki bir sekmeyi görebilen kullanıcıyı asla dışarıda bırakmaz.
-    /// Sekme seti ya da izni değişip kapı güncellenmezse burası kırmızı verir.
+    /// Sekme izinleri "en az biri" okunduğu için kesişim yetmez, ALT KÜME gerekir: sekmeye kapıda
+    /// olmayan ikinci bir izin eklenirse (ör. Kasa = CashAccounts|CashMovements) yalnız o izne sahip
+    /// kullanıcı sekmeyi görür ama sayfa ona 403 döner. Kapı güncellenmezse burası kırmızı verir.
     /// </summary>
     [Fact]
     public void Sayfa_kapisi_belge_disindaki_her_sekme_iznini_kapsar()
@@ -178,12 +182,48 @@ public class FinanceContext_Tests
             foreach (var tab in FinanceContext.TabsFor(template)
                          .Where(t => t.AnyOfPermissions.Length > 0 && t.Code != FinanceContext.TabDocuments))
             {
-                tab.AnyOfPermissions.Intersect(FinanceContext.PageAnyOfPermissions)
-                    .ShouldNotBeEmpty($"{template}/{tab.Code} sekmesinin izni sayfa kapısında yok");
+                tab.AnyOfPermissions.Except(FinanceContext.PageAnyOfPermissions)
+                    .ShouldBeEmpty($"{template}/{tab.Code} sekmesinin izni sayfa kapısında yok");
             }
         }
     }
 
+    /// <summary>
+    /// Menü kapısı ⊆ sayfa kapısı: menüde "Finans Merkezi"ni gören kullanıcı /Finance'ta 403'e düşmez
+    /// (ROL-06'nın "yasak sayfaya çağrı" sınıfı). Menü koşulu kapıdan ayrı, elle yazılmış izinler
+    /// olduğu için kaynaktan okunur: koşula kapıda olmayan bir izin eklenirse burası kırmızı verir.
+    /// </summary>
+    [Fact]
+    public void Menu_kapisi_sayfa_kapisinin_alt_kumesidir()
+    {
+        var resolver = ReadSource("src", "Apya.Platform.Web", "Menus", "PlatformNavigationResolver.cs");
+
+        var item = resolver.IndexOf("\"Apya.Finance.Hub\"", StringComparison.Ordinal);
+        item.ShouldBeGreaterThan(0, "Apya.Finance.Hub menü öğesi bulunamadı");
+        var condition = resolver.LastIndexOf("if (", item, StringComparison.Ordinal);
+        condition.ShouldBeGreaterThan(0, "Apya.Finance.Hub menü öğesinin koşulu bulunamadı");
+
+        // Koşuldaki "PlatformPermissions.Incomes.Default" gibi başvurular sabitin DEĞERİNE çevrilir.
+        var menuPermissions = Regex.Matches(resolver[condition..item], @"PlatformPermissions\.(\w+)\.(\w+)")
+            .Select(m => (string)typeof(PlatformPermissions).GetNestedType(m.Groups[1].Value)!
+                .GetField(m.Groups[2].Value)!.GetValue(null)!)
+            .ToList();
+
+        menuPermissions.ShouldNotBeEmpty("menü koşulunda izin okunamadı");
+        menuPermissions.Except(FinanceContext.PageAnyOfPermissions)
+            .ShouldBeEmpty("menü öğesi sayfa kapısında olmayan bir izinle görünüyor → /Finance 403");
+    }
+
     private static string[] Codes(FinanceContextTemplate template)
         => FinanceContext.TabsFor(template).Select(t => t.Code).ToArray();
+
+    private static string ReadSource(params string[] relative)
+    {
+        // Test, Web.Tests'in bin klasöründen koşar; kaynaklar depodan okunur.
+        var root = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..");
+        var path = Path.Combine(root, Path.Combine(relative));
+
+        File.Exists(path).ShouldBeTrue($"Kaynak bulunamadı: {Path.GetFullPath(path)}");
+        return File.ReadAllText(path).Replace("\r\n", "\n");
+    }
 }

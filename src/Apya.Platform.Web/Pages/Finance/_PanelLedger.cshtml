@@ -232,11 +232,11 @@ else
         </table>
     </div>
 
-    @if (Model.LedgerRows.Count >= 100)
+    @if (Model.LedgerTruncated)
     {
-        @* Sessiz kırpma yapmıyoruz: kaynak başına 100 kayıt çekiliyor, sınıra
-           dayanıldıysa kullanıcı bunu BİLMELİ — aksi halde toplam satırı
-           "dönemin tamamı" sanılır. *@
+        @* Sessiz kırpma yapmıyoruz: kaynak başına 100 kayıt çekiliyor, bir kaynak
+           kesildiyse (TotalCount > okunan — donör tarih denetimiyle aynı bayrak)
+           kullanıcı bunu BİLMELİ — aksi halde toplam satırı "dönemin tamamı" sanılır. *@
         <p class="text-muted mt-3 mb-0" style="font-size:12.5px">
             <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
             Liste kaynak başına en fazla 100 kayıt gösterir; toplam bu kesitin toplamıdır.
