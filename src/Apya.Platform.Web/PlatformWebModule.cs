@@ -300,6 +300,8 @@ public class PlatformWebModule : AbpModule
         ConfigureBundles(context);
         ConfigureVirtualFileSystem(hostingEnvironment);
         ConfigureMultiTenancyLocalization();
+        ConfigureExceptionHandlingLocalization();
+        ConfigureExceptionStatusCodes();
         ConfigureNavigationServices();
         ConfigureAutoApiControllers();
         ConfigureSwaggerServices(context.Services);
@@ -605,6 +607,32 @@ public class PlatformWebModule : AbpModule
             options.Resources
                 .Get<AbpUiMultiTenancyResource>()
                 .AddVirtualJson("/Localization/MultiTenancyUi");
+        });
+    }
+
+    // ABP'nin "Id değeri {1} olan {0} türünden bir nesne bulunamadı!" metni iç tür adını (TaskItem,
+    // AppDocument, Project…) ve kimliği kullanıcıya basıyordu — API zarfı, ABP penceresi, adalar, hata
+    // sayfası. Dostane metinle ezilir (tr/en); ayrıntı log ve denetim kaydında kalır. JSON Domain.Shared'ın
+    // sanal dosya sisteminde; o proje Volo.Abp.ExceptionHandling'e başvurmadığı için yapılandırma burada
+    // (ConfigureMultiTenancyLocalization emsali).
+    private void ConfigureExceptionHandlingLocalization()
+    {
+        Configure<AbpLocalizationOptions>(options =>
+        {
+            options.Resources
+                .Get<Volo.Abp.ExceptionHandling.Localization.AbpExceptionHandlingResource>()
+                .AddVirtualJson("/Localization/ExceptionHandling");
+        });
+    }
+
+    // ABP varsayılanı her iş kuralı istisnasını 403 yapar; "bulunamadı" anlamındaki kod 404 dönsün
+    // (GRH-22 — metin tr.json'da aynen kalır). PlatformPageModel'in 404 kancası aynı bulucuyu kullandığı
+    // için Razor sayfaları da aynı kuralı izler. IsHtmlNavigation / UseErrorPage sözleşmesine dokunulmaz.
+    private void ConfigureExceptionStatusCodes()
+    {
+        Configure<Volo.Abp.AspNetCore.ExceptionHandling.AbpExceptionHttpStatusCodeOptions>(options =>
+        {
+            options.Map(PlatformDomainErrorCodes.GrantInterestNotFound, System.Net.HttpStatusCode.NotFound);
         });
     }
 
