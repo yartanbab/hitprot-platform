@@ -17,6 +17,13 @@ const LAYOUT_ONLY = new Set([BT.SectionHeader, BT.Paragraph]);
 
 const parse = (j) => { try { return typeof j === 'string' ? JSON.parse(j) : (j || {}); } catch { return {}; } };
 
+/* DOC-15 · Silinmiş / slug'ı değişmiş form bağlantısı: sunucunun varlık metni ("… AppDocument
+   türünden bir nesne bulunamadı!") misafire gösterilmez. Sayfa Layout=null, abp yerelleştirmesi
+   yüklü değil → metinler dosyanın diğerleri gibi sabit Türkçe. Taslak/pencere hataları (403) sunucunun
+   yerelleştirilmiş cümlesiyle aynen kalır. */
+const FORM_NOT_FOUND = 'Bu form bulunamadı ya da yayından kaldırılmış. Bağlantıyı size gönderen kişiye başvurun.';
+const friendlyError = (e, fallback) => (e?.status === 404 ? FORM_NOT_FOUND : e?.message || fallback);
+
 /* text-base (16px), text-sm (14px) DEĞİL: misafir kullanıcı bu formu iOS Safari'de
    dolduruyor, 16px altı input odaklanınca sayfayı otomatik büyütüyordu
    (2026-08 tasarım denetimi — herkese açık form standardı en yüksek olmalı). */
@@ -153,6 +160,8 @@ function PublicForm({ slug }) {
         const tenantQuery = formTenantId.current ? `&tenantId=${formTenantId.current}` : '';
         const dto = await api.get(`/api/app/public-document/by-slug?slug=${encodeURIComponent(slug)}${tenantQuery}`);
         setDoc(dto);
+        // Sekme başlığı sunucuda slug'dır; form adı ancak burada bilinir.
+        document.title = dto.title || slug;
         // Bağlantıdaki ?grant= listede varsa ilgili alan ön seçili açılır (ör. hibe detayından gelen firma).
         const initial = {};
         for (const b of dto.blocks || []) {
@@ -165,7 +174,8 @@ function PublicForm({ slug }) {
         setStatus('ready');
         startedAt.current = Date.now();
       } catch (e) {
-        setErrorMsg(e?.message || 'Form yüklenemedi.');
+        setErrorMsg(friendlyError(e, 'Form yüklenemedi.'));
+        if (e?.status === 404) document.title = 'Form bulunamadı';
         setStatus('error');
       }
     })();
@@ -270,7 +280,8 @@ function PublicForm({ slug }) {
       });
       setStatus('done');
     } catch (e) {
-      setErrorMsg(e?.message || 'Gönderim başarısız.');
+      // Form doldurulurken silinirse gönderim de 404 alır (ResponseAppService).
+      setErrorMsg(friendlyError(e, 'Gönderim başarısız.'));
       setStatus('ready');
     }
   };
