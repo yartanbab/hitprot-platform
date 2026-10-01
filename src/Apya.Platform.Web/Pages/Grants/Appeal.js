@@ -56,7 +56,7 @@ $(function () {
         var id = $(this).closest('.apya-ap-item').data('id');
         var current = (model.items || []).filter(function (i) { return i.id === id; })[0];
 
-        abp.message.prompt(l('Grants:Appeal:OpinionPrompt'), '', {
+        abp.message.prompt(l('Grants:Appeal:OpinionPrompt'), {
             input: 'select',
             inputOptions: {
                 1: l('Grants:Appeal:Stance:Itiraz'),
@@ -64,7 +64,7 @@ $(function () {
             }
         }).then(function (stance) {
             if (stance === null) { return; }
-            abp.message.prompt(l('Grants:Appeal:OpinionDetailPrompt'), '', {
+            abp.message.prompt(l('Grants:Appeal:OpinionDetailPrompt'), {
                 inputValue: (current && current.opinionDetail) || ''
             }).then(function (detail) {
                 if (detail === null) { return; }

@@ -1,7 +1,7 @@
 import { j as e, r as l } from "./react-vendor-D7YDiBbi.js";
 import { m as ce, w as xe } from "./index-DgpuJ91w.js";
-import { H as F } from "./Hint-BhMztyJX.js";
-const h = {
+import { H as P } from "./Hint-BhMztyJX.js";
+const v = {
   money: (a) => new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a || 0) + " ₺",
   int: (a) => new Intl.NumberFormat("tr-TR").format(Math.round(a || 0))
 }, g = (...a) => a.filter(Boolean).join(" "), Z = () => {
@@ -54,7 +54,7 @@ function M({ label: a, value: n, icon: t, tone: i = "muted", loading: d, index: 
         /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 text-[var(--apya-text-tertiary)] text-xs font-medium", children: [
           /* @__PURE__ */ e.jsx("i", { className: `fa ${t}`, "aria-hidden": "true" }),
           a,
-          /* @__PURE__ */ e.jsx(F, { text: s })
+          /* @__PURE__ */ e.jsx(P, { text: s })
         ] }),
         /* @__PURE__ */ e.jsx("div", { className: g("mt-2 text-xl font-bold font-tabular", x || "text-[var(--apya-text-primary)]"), children: n })
       ]
@@ -122,13 +122,13 @@ function fe({ active: a }) {
   );
 }
 function ye({ page: a, pageCount: n, pageSize: t, total: i, rangeFrom: d, rangeTo: c, onPage: s, onPageSize: x }) {
-  const m = ({ label: u, onClick: f, disabled: b, ariaLabel: v }) => /* @__PURE__ */ e.jsx(
+  const m = ({ label: u, onClick: f, disabled: b, ariaLabel: h }) => /* @__PURE__ */ e.jsx(
     "button",
     {
       type: "button",
       disabled: b,
       onClick: f,
-      "aria-label": v,
+      "aria-label": h,
       className: g(
         "min-w-[40px] h-[40px] px-2 rounded-md text-xs font-semibold flex items-center justify-center transition-colors",
         !b && "text-[var(--apya-text-secondary)] hover:bg-[var(--apya-border-subtle)]",
@@ -140,7 +140,7 @@ function ye({ page: a, pageCount: n, pageSize: t, total: i, rangeFrom: d, rangeT
   return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between flex-wrap gap-2 px-3 py-2.5 border-t border-[var(--apya-border-subtle)] mt-auto", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 text-[11px] text-[var(--apya-text-tertiary)]", children: [
       /* @__PURE__ */ e.jsxs("span", { children: [
-        /* @__PURE__ */ e.jsx("strong", { className: "text-[var(--apya-text-secondary)] font-semibold", children: h.int(i) }),
+        /* @__PURE__ */ e.jsx("strong", { className: "text-[var(--apya-text-secondary)] font-semibold", children: v.int(i) }),
         " ",
         "kayıttan ",
         d,
@@ -234,7 +234,7 @@ function be({ customer: a, onConfirm: n, onCancel: t }) {
     }
   );
 }
-function he({ message: a, onDone: n }) {
+function ve({ message: a, onDone: n }) {
   return l.useEffect(() => {
     const t = setTimeout(n, 2800);
     return () => clearTimeout(t);
@@ -258,7 +258,7 @@ function he({ message: a, onDone: n }) {
     }
   );
 }
-function ve({ c: a, selected: n, onSelect: t }) {
+function he({ c: a, selected: n, onSelect: t }) {
   const i = a.balance > 0 ? "var(--apya-positive-500)" : a.balance < 0 ? "var(--apya-negative-500)" : "var(--apya-text-tertiary)";
   return /* @__PURE__ */ e.jsxs(
     "button",
@@ -288,7 +288,7 @@ function ve({ c: a, selected: n, onSelect: t }) {
             a.taxNumber || a.email || (a.isActive ? "Aktif" : "Pasif")
           ] })
         ] }),
-        /* @__PURE__ */ e.jsx("div", { className: "text-right flex-shrink-0", children: /* @__PURE__ */ e.jsx("div", { className: "text-[12px] font-bold font-tabular", style: { color: i }, children: h.money(a.balance) }) })
+        /* @__PURE__ */ e.jsx("div", { className: "text-right flex-shrink-0", children: /* @__PURE__ */ e.jsx("div", { className: "text-[12px] font-bold font-tabular", style: { color: i }, children: v.money(a.balance) }) })
       ]
     }
   );
@@ -318,15 +318,15 @@ function ge({ customerId: a }) {
       t(!1);
       return;
     }
-    return x.getList({ maxResultCount: 1e3, sorting: "dueDate asc" }).then((m) => {
+    return Promise.resolve(x.getList({ maxResultCount: 1e3, sorting: "dueDate asc" })).then((m) => {
       if (s) return;
       const u = /* @__PURE__ */ new Date(), f = { b0: 0, b30: 0, b60: 0, b90: 0 };
       (m.items || []).forEach((b) => {
         if (b.customerId !== a) return;
-        const v = (b.totalAmount || 0) - (b.paidAmount || 0);
-        if (v <= 5e-3) return;
+        const h = (b.totalAmount || 0) - (b.paidAmount || 0);
+        if (h <= 5e-3) return;
         const w = Math.floor((u - new Date(b.dueDate)) / 864e5);
-        w <= 30 ? f.b0 += v : w <= 60 ? f.b30 += v : w <= 90 ? f.b60 += v : f.b90 += v;
+        w <= 30 ? f.b0 += h : w <= 60 ? f.b30 += h : w <= 90 ? f.b60 += h : f.b90 += h;
       }), d(f);
     }).catch(() => {
       s || d(null);
@@ -345,20 +345,20 @@ function ge({ customerId: a }) {
   return c <= 5e-3 ? null : /* @__PURE__ */ e.jsxs("div", { children: [
     /* @__PURE__ */ e.jsxs("div", { className: "text-[10.5px] font-bold uppercase tracking-wide text-[var(--apya-text-tertiary)] mb-1.5 flex items-center", children: [
       "Yaşlandırma",
-      /* @__PURE__ */ e.jsx(F, { text: "Ödenmemiş faturaların bekleme süresine göre dağılımı. Gün sayısı vade tarihinden bugüne kadar geçen süredir; vadesi henüz gelmemiş faturalar da 0-30 gün diliminde görünür." })
+      /* @__PURE__ */ e.jsx(P, { text: "Ödenmemiş faturaların bekleme süresine göre dağılımı. Gün sayısı vade tarihinden bugüne kadar geçen süredir; vadesi henüz gelmemiş faturalar da 0-30 gün diliminde görünür." })
     ] }),
     /* @__PURE__ */ e.jsx("div", { className: "flex h-2 rounded-full overflow-hidden", style: { background: "var(--apya-border-subtle)" }, children: q.map((s) => i[s.key] > 0 && /* @__PURE__ */ e.jsx(
       "div",
       {
         style: { width: `${i[s.key] / c * 100}%`, background: s.color },
-        title: `${s.label}: ${h.money(i[s.key])}`
+        title: `${s.label}: ${v.money(i[s.key])}`
       },
       s.key
     )) }),
     /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-1.5 mt-2.5", children: q.map((s) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-1.5 text-[11px] min-w-0", children: [
       /* @__PURE__ */ e.jsx("span", { className: "w-1.5 h-1.5 rounded-full flex-shrink-0", style: { background: s.color } }),
       /* @__PURE__ */ e.jsx("span", { className: "text-[var(--apya-text-tertiary)] truncate", children: s.label }),
-      /* @__PURE__ */ e.jsx("span", { className: "font-semibold text-[var(--apya-text-secondary)] font-tabular ms-auto", children: h.money(i[s.key]) })
+      /* @__PURE__ */ e.jsx("span", { className: "font-semibold text-[var(--apya-text-secondary)] font-tabular ms-auto", children: v.money(i[s.key]) })
     ] }, s.key)) })
   ] });
 }
@@ -372,7 +372,7 @@ function je({ customerId: a, onViewAll: n }) {
       i(!1);
       return;
     }
-    return x.getStatement(a).then((m) => {
+    return Promise.resolve(x.getStatement(a)).then((m) => {
       s || c(((m == null ? void 0 : m.lines) || []).slice(-5).reverse());
     }).catch(() => {
       s || c([]);
@@ -409,16 +409,16 @@ function je({ customerId: a, onViewAll: n }) {
           {
             className: "px-2.5 py-1.5 text-right font-tabular",
             style: { color: s.debit > 0 ? "var(--apya-negative-500)" : "var(--apya-positive-500)" },
-            children: s.debit > 0 ? h.money(s.debit) : "−" + h.money(s.credit)
+            children: s.debit > 0 ? v.money(s.debit) : "−" + v.money(s.credit)
           }
         ),
-        /* @__PURE__ */ e.jsx("td", { className: "px-2.5 py-1.5 text-right font-tabular text-[var(--apya-text-primary)]", children: h.money(s.runningBalance) })
+        /* @__PURE__ */ e.jsx("td", { className: "px-2.5 py-1.5 text-right font-tabular text-[var(--apya-text-primary)]", children: v.money(s.runningBalance) })
       ] }, s.id)) })
     ] }) })
   ] });
 }
 function ke({ c: a, canEdit: n, canDelete: t, onBack: i, onEdit: d, onStatement: c, onDelete: s }) {
-  const x = a.balance > 0 ? "var(--apya-positive-500)" : a.balance < 0 ? "var(--apya-negative-500)" : "var(--apya-text-tertiary)", m = a.balance > 0 ? "Alacak" : a.balance < 0 ? "Borç" : "Bakiye yok", u = ({ icon: b, label: v, onClick: w, danger: j = !1 }) => /* @__PURE__ */ e.jsxs(
+  const x = a.balance > 0 ? "var(--apya-positive-500)" : a.balance < 0 ? "var(--apya-negative-500)" : "var(--apya-text-tertiary)", m = a.balance > 0 ? "Alacak" : a.balance < 0 ? "Borç" : "Bakiye yok", u = ({ icon: b, label: h, onClick: w, danger: j = !1 }) => /* @__PURE__ */ e.jsxs(
     "button",
     {
       type: "button",
@@ -429,7 +429,7 @@ function ke({ c: a, canEdit: n, canDelete: t, onBack: i, onEdit: d, onStatement:
       ),
       children: [
         /* @__PURE__ */ e.jsx("i", { className: `fa ${b}`, style: { fontSize: 12 }, "aria-hidden": "true" }),
-        v
+        h
       ]
     }
   ), f = () => {
@@ -459,17 +459,17 @@ function ke({ c: a, canEdit: n, canDelete: t, onBack: i, onEdit: d, onStatement:
       /* @__PURE__ */ e.jsxs("div", { className: "flex gap-1.5 flex-wrap", children: [
         n && /* @__PURE__ */ e.jsx(u, { icon: "fa-pencil", label: "Düzenle", onClick: d }),
         /* @__PURE__ */ e.jsx(u, { icon: "fa-file-text", label: "Cari Ekstre", onClick: c }),
-        /* @__PURE__ */ e.jsx(F, { className: "self-center", text: "Carinin tüm hesap hareketlerini (fatura, tahsilat, açılış) tarih sırasıyla listeler; toplam borç, toplam alacak ve net bakiyeyi gösterir.", placement: "bottom" }),
+        /* @__PURE__ */ e.jsx(P, { className: "self-center", text: "Carinin tüm hesap hareketlerini (fatura, tahsilat, açılış) tarih sırasıyla listeler; toplam borç, toplam alacak ve net bakiyeyi gösterir.", placement: "bottom" }),
         t && /* @__PURE__ */ e.jsx(u, { icon: "fa-trash", label: "Sil", onClick: s, danger: !0 })
       ] })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "rounded-xl border border-[var(--apya-border-default)] bg-[var(--apya-surface-sunken)] px-4 py-3.5 flex items-baseline justify-between flex-wrap gap-2", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "text-[10.5px] font-bold uppercase tracking-wide text-[var(--apya-text-tertiary)] flex items-center", children: [
         "Güncel Bakiye",
-        /* @__PURE__ */ e.jsx(F, { text: "Artı bakiye carinin size olan borcunu (sizin alacağınızı), eksi bakiye sizin ona olan borcunuzu gösterir." })
+        /* @__PURE__ */ e.jsx(P, { text: "Artı bakiye carinin size olan borcunu (sizin alacağınızı), eksi bakiye sizin ona olan borcunuzu gösterir." })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline gap-2", children: [
-        /* @__PURE__ */ e.jsx("span", { className: "text-[22px] font-bold font-tabular", style: { color: x }, children: h.money(a.balance) }),
+        /* @__PURE__ */ e.jsx("span", { className: "text-[22px] font-bold font-tabular", style: { color: x }, children: v.money(a.balance) }),
         /* @__PURE__ */ e.jsx("span", { className: "text-[11px] font-semibold text-[var(--apya-text-tertiary)]", children: m })
       ] })
     ] }),
@@ -529,7 +529,7 @@ const we = [
   { value: "taxOffice|asc", label: "Vergi dairesi (A→Z)" }
 ];
 function Ce() {
-  const [a, n] = l.useState([]), [t, i] = l.useState(!0), [d, c] = l.useState(null), [s, x] = l.useState(""), [m, u] = l.useState("all"), [f, b] = l.useState({ key: "name", dir: "asc" }), [v, w] = l.useState(1), [j, J] = l.useState(10), [C, E] = l.useState(null), [D, P] = l.useState(null), [H, V] = l.useState(null), X = l.useRef(null), _ = l.useCallback((r) => V(r), []), z = l.useCallback(async () => {
+  const [a, n] = l.useState([]), [t, i] = l.useState(!0), [d, c] = l.useState(null), [s, x] = l.useState(""), [m, u] = l.useState("all"), [f, b] = l.useState({ key: "name", dir: "asc" }), [h, w] = l.useState(1), [j, J] = l.useState(10), [C, E] = l.useState(null), [D, F] = l.useState(null), [H, V] = l.useState(null), X = l.useRef(null), _ = l.useCallback((r) => V(r), []), z = l.useCallback(async () => {
     i(!0), c(null);
     try {
       const r = await Z().getList({
@@ -569,7 +569,7 @@ function Ce() {
       const R = y[f.key] ?? "", K = $[f.key] ?? "";
       return typeof R == "number" ? (R - K) * p : String(R).localeCompare(String(K), "tr") * p;
     }), o;
-  }, [a, s, m, f]), Y = Math.max(1, Math.ceil(k.length / j)), B = Math.min(v, Y), A = k.slice((B - 1) * j, B * j), ee = k.length === 0 ? 0 : (B - 1) * j + 1, ae = Math.min(B * j, k.length);
+  }, [a, s, m, f]), Y = Math.max(1, Math.ceil(k.length / j)), B = Math.min(h, Y), A = k.slice((B - 1) * j, B * j), ee = k.length === 0 ? 0 : (B - 1) * j + 1, ae = Math.min(B * j, k.length);
   l.useEffect(() => {
     w(1);
   }, [s, m, j]);
@@ -603,7 +603,7 @@ function Ce() {
     } catch (r) {
       xe(r) || O("error", "Silme işlemi başarısız oldu.");
     } finally {
-      P(null);
+      F(null);
     }
   }, le = G("Platform.Customers.Create"), oe = G("Platform.Customers.Edit"), de = G("Platform.Customers.Delete");
   return /* @__PURE__ */ e.jsxs("div", { className: "apya-fade-in px-7 py-7 max-w-[1440px] mx-auto", children: [
@@ -643,8 +643,8 @@ function Ce() {
       ] })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "grid gap-3 mb-4", style: { gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }, children: [
-      /* @__PURE__ */ e.jsx(M, { loading: t, index: 0, icon: "fa-id-card", label: "Toplam Cari", value: h.int(T.all) }),
-      /* @__PURE__ */ e.jsx(M, { loading: t, index: 1, icon: "fa-check-circle", label: "Aktif Cari", value: h.int(T.Aktif) }),
+      /* @__PURE__ */ e.jsx(M, { loading: t, index: 0, icon: "fa-id-card", label: "Toplam Cari", value: v.int(T.all) }),
+      /* @__PURE__ */ e.jsx(M, { loading: t, index: 1, icon: "fa-check-circle", label: "Aktif Cari", value: v.int(T.Aktif) }),
       /* @__PURE__ */ e.jsx(
         M,
         {
@@ -652,7 +652,7 @@ function Ce() {
           index: 2,
           icon: "fa-arrow-up",
           label: "Toplam Alacak",
-          value: h.money(U.alacak),
+          value: v.money(U.alacak),
           tone: "success",
           hint: "Bakiyesi artıda olan carilerin toplamı — sizin tahsil edeceğiniz tutar."
         }
@@ -664,7 +664,7 @@ function Ce() {
           index: 3,
           icon: "fa-arrow-down",
           label: "Toplam Borç",
-          value: h.money(U.borc),
+          value: v.money(U.borc),
           tone: "danger",
           hint: "Bakiyesi eksideki carilerin toplamı — sizin ödeyeceğiniz tutar."
         }
@@ -762,7 +762,7 @@ function Ce() {
                 tabIndex: 0,
                 onKeyDown: te,
                 className: "flex-1 divide-y divide-[var(--apya-border-subtle)] outline-none focus-visible:ring-1 focus-visible:ring-[var(--apya-accent-500)]",
-                children: A.map((r) => /* @__PURE__ */ e.jsx(ve, { c: r, selected: r.id === C, onSelect: E }, r.id))
+                children: A.map((r) => /* @__PURE__ */ e.jsx(he, { c: r, selected: r.id === C, onSelect: E }, r.id))
               }
             ),
             !t && k.length > 0 && /* @__PURE__ */ e.jsx(
@@ -788,14 +788,14 @@ function Ce() {
               onBack: () => E(null),
               onEdit: se,
               onStatement: ne,
-              onDelete: () => P(N)
+              onDelete: () => F(N)
             }
           ) : /* @__PURE__ */ e.jsx(Ne, {}) })
         ]
       }
     ),
-    D && /* @__PURE__ */ e.jsx(be, { customer: D, onConfirm: ie, onCancel: () => P(null) }),
-    H && /* @__PURE__ */ e.jsx(he, { message: H, onDone: () => V(null) })
+    D && /* @__PURE__ */ e.jsx(be, { customer: D, onConfirm: ie, onCancel: () => F(null) }),
+    H && /* @__PURE__ */ e.jsx(ve, { message: H, onDone: () => V(null) })
   ] });
 }
 const W = document.getElementById("customers-island");

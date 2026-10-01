@@ -21,7 +21,13 @@
         <abp-modal-header title="@L["Tasks:Create:Title"].Value"></abp-modal-header>
 
         <abp-modal-body class="p-0">
-            <input type="hidden" asp-for="Task.ProjectId" />
+            @* Gizli alan YALNIZ proje bağlamıyla açılışta: bağlam yokken aşağıdaki proje
+               seçicisi aynı name'i taşır ve model bağlama İLK (boş) değeri aldığı için
+               seçilen proje kaydedilmiyordu. *@
+            @if (Model.ProjectId.HasValue)
+            {
+                <input type="hidden" asp-for="Task.ProjectId" />
+            }
 
             <div class="apya-tc"
                  data-quick-entry="@Model.ShowQuickEntry.ToString().ToLowerInvariant()"

@@ -5382,6 +5382,61 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     }
 }
 
+/* ============================================================================
+   OTOMATİK RAY (768–1199px, fare) — daraltılmış modun ray kuralları
+   ----------------------------------------------------------------------------
+   Tema bu aralıkta kenar çubuğunu kendiliğinden 72px raya indirir (bkz.
+   apya-theme-bridge.css "Ray GEOMETRİSİ"). Yukarıdaki ray kuralları yalnız
+   ≥1200px + html[data-sidebar="collapsed"] için yazılmıştı; otomatik rayda
+   sabitlenenler, proje alt listesi, rozetler ve logo 72px'lik rayda kırpık
+   metin olarak kalıyordu. Aynı kurallar, attribute şartı olmadan buraya.
+   `html` öneki: rakip genişlik kuralları ID + 4 sınıf taşıyor.
+   ============================================================================ */
+@media (min-width: 768px) and (max-width: 1199.98px) and (hover: hover) {
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-pin,
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-rowbtn,
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-badge,
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-subnav,
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar .apya-shell-section-chevron,
+    .lpx-sidebar-container:not(:hover) .apya-pinned-section,
+    .lpx-sidebar-container:not(:hover) .apya-shell-foot-item .lpx-menu-item-text {
+        display: none !important;
+    }
+    html #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-nav,
+    html #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-nav-menu {
+        min-width: var(--apya-sidebar-w-collapsed) !important;
+        max-width: var(--apya-sidebar-w-collapsed) !important;
+        margin-left: 0 !important;
+        transform: none !important;
+        overflow-x: hidden;
+    }
+    html #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-sidebar .lpx-logo-container {
+        width: var(--apya-sidebar-w-collapsed) !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    html #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-sidebar .lpx-logo-container::after {
+        content: "A";
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: var(--apya-radius-lg);
+        background: var(--apya-accent-500);
+        color: var(--apya-text-inverse);
+        font-family: var(--apya-font-sans);
+        font-size: 15px;
+        font-weight: var(--apya-weight-bold);
+        letter-spacing: -0.03em;
+        line-height: 1;
+    }
+    html #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-sidebar .lpx-logo-container > * {
+        display: none !important;
+    }
+}
+
 /* ----------------------------------------------------------------------------
    DASHBOARD REACT ISLAND — TAM KANAMALI
    ----------------------------------------------------------------------------

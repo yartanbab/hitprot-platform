@@ -1,7 +1,13 @@
 $(function () {
     var service = apya.platform.ai.bindings.aiFormBinding;
 
-    var createModal = new abp.ModalManager(abp.appPath + 'AiCenter/Bindings/CreateModal');
+    // Odak açıkça ilk alana (Form seçimi): ABP varsayılanı penceredeki ilk <input>'a — burada sayı
+    // alanı "Sıra"ya — odaklanıp setSelectionRange çağırır; sayı alanında bu çağrı istisna fırlatır
+    // (her açılışta yakalanmamış hata + istemci hata telemetrisi).
+    var createModal = new abp.ModalManager({
+        viewUrl: abp.appPath + 'AiCenter/Bindings/CreateModal',
+        focusElement: '#Binding_DocumentId'
+    });
     var editModal = new abp.ModalManager(abp.appPath + 'AiCenter/Bindings/EditModal');
 
     var dataTable = $('#AiFormBindingsTable').DataTable(

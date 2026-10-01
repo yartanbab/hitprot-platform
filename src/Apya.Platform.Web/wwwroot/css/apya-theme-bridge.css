@@ -1213,8 +1213,30 @@ html, body {
    tasarım denetimi). Aşağıdaki ikinci blok dokunmatik'te sidebar'ı zorla
    genişletilmiş tutar — bkz. "SIDEBAR — DOKUNMATİK GENİŞLETME". */
 @media (min-width: 768px) and (max-width: 1199.98px) and (hover: hover) {
+    /* Ray GEOMETRİSİ: KABUK GEOMETRİSİ bölümündeki medya sorgusuz 320px genişlik
+       bağlaması temanın bu aralıktaki 72px ray kuralını eziyordu; kenar çubuğu 320px
+       açık kalıp içeriğin (margin-left 72px) ~248px'ini örtüyordu. Kurallar ≥1200px
+       "collapsed" modunun kopyası; hover'da taban kural (320px) overlay olarak açar. */
     .lpx-sidebar-container:not(:hover) {
+        min-width: var(--apya-sidebar-w-collapsed);
+        max-width: var(--apya-sidebar-w-collapsed);
         overflow-y: hidden;
+    }
+    .lpx-sidebar-container:not(:hover) #lpx-sidebar {
+        overflow-y: hidden;
+    }
+    .lpx-sidebar-container:not(:hover) .lpx-nav {
+        min-width: var(--apya-sidebar-w-collapsed);
+    }
+    .lpx-sidebar-container:not(:hover) .lpx-logo-container {
+        width: var(--apya-sidebar-w-collapsed);
+    }
+    .lpx-sidebar-container:not(:hover) .lpx-brand-logo {
+        background-image: var(--lpx-logo-icon);
+    }
+    .lpx-sidebar-container:not(:hover) .lpx-brand-name,
+    .lpx-sidebar-container:not(:hover) .hidden-in-hover-trigger {
+        display: none;
     }
     .lpx-sidebar-container:not(:hover) #lpx-sidebar a.lpx-menu-item-link {
         justify-content: center;
@@ -1247,6 +1269,11 @@ html, body {
         min-width: var(--apya-sidebar-w) !important;
         max-width: var(--apya-sidebar-w) !important;
         overflow-y: auto !important;
+    }
+    /* Açık tutulan kenar çubuğu içeriğin ÜSTÜNE binmesin: içerik de kayar
+       (tema bu aralıkta ray varsayımıyla 72px bırakıyordu). */
+    .lpx-content-container {
+        margin-left: var(--apya-sidebar-w);
     }
 }
 

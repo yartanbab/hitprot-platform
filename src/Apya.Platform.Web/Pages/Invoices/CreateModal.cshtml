@@ -1,12 +1,16 @@
 @page
 @model Apya.Platform.Web.Pages.Invoices.CreateModalModel
+@using Apya.Platform.Invoices
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
 @inject IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     Layout = null;
 }
-<abp-dynamic-form abp-model="InvoiceInfo" asp-page="/Invoices/CreateModal" id="ViewModelForm">
+@* Düz form (Customers deseni): abp-dynamic-form, içinde <abp-form-content/> olmadan
+   modelin tüm alanlarını formun başına İKİNCİ kez basıyordu; bağlama ilk (boş)
+   kopyayı aldığı için fatura numarası boş gidiyor ve fatura HİÇ kaydedilemiyordu. *@
+<form method="post" action="@Url.Page("/Invoices/CreateModal")" id="ViewModelForm">
     <abp-modal size="Large">
         <abp-modal-header title="Yeni Fatura Oluştur"></abp-modal-header>
         <abp-modal-body>
@@ -23,13 +27,19 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Yön</label>
+                    @* Seçim modelden AÇIKÇA kurulur: radyo değerleri sayısal ("0"/"1"), etiket
+                       yardımcısı ise modelin enum ADIYLA ("Sales") karşılaştırdığı için hiçbirini
+                       seçili basmıyordu. Dinamik formun fazladan bastığı kopya alan varsayılanı
+                       taşıyordu; düz formda yön seçilmeden "Kaydet" doğrulamada sessizce takılıyordu. *@
                     <div class="d-flex gap-3 pt-1">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="0" id="DirSales" />
+                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="0" id="DirSales"
+                                   checked="@(Model.InvoiceInfo.Direction == InvoiceDirection.Sales)" />
                             <label class="form-check-label" for="DirSales">Satış Faturası</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="1" id="DirPurchase" />
+                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="1" id="DirPurchase"
+                                   checked="@(Model.InvoiceInfo.Direction == InvoiceDirection.Purchase)" />
                             <label class="form-check-label" for="DirPurchase">Alış Faturası</label>
                         </div>
                     </div>
@@ -106,25 +116,25 @@
                     var itemIndex = 1;
                     $('#AddInvoiceItemBtn').click(function () {
                         var html = `
-                        <div class="row invoice-item mb-2 align-items-end" data-index="\${itemIndex}">
+                        <div class="row invoice-item mb-2 align-items-end" data-index="${itemIndex}">
                             <div class="col-md-5">
                                 <label class="form-label">Açıklama</label>
-                                <input name="InvoiceInfo.Items[\${itemIndex}].Description" class="form-control" required />
+                                <input name="InvoiceInfo.Items[${itemIndex}].Description" class="form-control" required />
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Miktar</label>
                                 @* __Invariant ŞART: bu alanlar asp-for ile değil elle name= ile yazıldığı
                                    için ASP.NET işaretçiyi kendiliğinden eklemiyor. Onsuz "2.5" tr-TR ile
                                    bağlanır ve 25 olur; type="number" ise değeri DAİMA noktalı gönderir. *@
-                                <input name="InvoiceInfo.Items[\${itemIndex}].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" data-money-input="true" required />
-                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[\${itemIndex}].Quantity" />
+                                <input name="InvoiceInfo.Items[${itemIndex}].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" data-money-input="true" required />
+                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[${itemIndex}].Quantity" />
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Birim Fiyat</label>
                                 @* data-money-input gizli alana String(num) yazar, yani NOKTALI invariant
                                    değer — __Invariant olmadan o da 1234.56'yı 123456 yapardı. *@
-                                <input name="InvoiceInfo.Items[\${itemIndex}].UnitPrice" type="number" step="0.01" data-money-input class="form-control input-price" required />
-                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[\${itemIndex}].UnitPrice" />
+                                <input name="InvoiceInfo.Items[${itemIndex}].UnitPrice" type="number" step="0.01" data-money-input class="form-control input-price" required />
+                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[${itemIndex}].UnitPrice" />
                             </div>
                             <div class="col-md-1 text-end">
                                 <button type="button" class="btn btn-outline-danger btn-remove-item" aria-label="Kalemi sil" title="Kalemi sil"><i class="fa fa-trash"></i></button>
@@ -135,9 +145,30 @@
                         itemIndex++;
                     });
 
-                    $(document).on('click', '.btn-remove-item', function () {
-                        if ($('.invoice-item').length > 1) {
+                    // Liste bağlama 0'dan başlayan KESİNTİSİZ indeks ister: ortadan satır
+                    // silinince kalanları yeniden numarala (tutar maskesinin gizli alanı ve
+                    // __Invariant işaretçisi dahil), yoksa boşluktan sonraki kalemler düşer.
+                    function reindexItems() {
+                        var $rows = $('#InvoiceItemsContainer .invoice-item');
+                        $rows.each(function (i) {
+                            var prefix = 'InvoiceInfo.Items[' + i + ']';
+                            $(this).attr('data-index', i);
+                            $(this).find('[name^="InvoiceInfo.Items["]').each(function () {
+                                this.name = this.name.replace(/^InvoiceInfo\.Items\[\d+\]/, prefix);
+                            });
+                            $(this).find('input[name="__Invariant"]').each(function () {
+                                this.value = this.value.replace(/^InvoiceInfo\.Items\[\d+\]/, prefix);
+                            });
+                        });
+                        itemIndex = $rows.length;
+                    }
+
+                    // document yerine kaba bağlı: modal her açılışta yeniden yüklenir,
+                    // document'a bağlanan dinleyici her seferinde birikiyordu.
+                    $('#InvoiceItemsContainer').on('click', '.btn-remove-item', function () {
+                        if ($('#InvoiceItemsContainer .invoice-item').length > 1) {
                             $(this).closest('.invoice-item').remove();
+                            reindexItems();
                         } else {
                             abp.notify.warn(abp.localization.getResource('Platform')('Notify:Invoice:ItemRequired'));
                         }
@@ -147,4 +178,4 @@
         </abp-modal-body>
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>
-</abp-dynamic-form>
+</form>

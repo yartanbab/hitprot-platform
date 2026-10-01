@@ -272,6 +272,23 @@ public class GrantLoadFailureScripts_Tests
     }
 
     /// <summary>
+    /// Sihirbaz'ın zamanlayıcıyla giden istekleri (30 sn'lik kilit nabzı, başarısız otomatik kaydın 10 sn'lik
+    /// yeniden denemesi) arka plan isteğidir: ABP penceresi açmaz, kullanıcının "Kapat"la kapattığı oturum
+    /// penceresini yeniden açtırmaz. Bayrak düşerse oturumu kapanmış sekmede pencere her denemede geri gelir.
+    /// Yazmayla giden İLK kayıt bayraksızdır (kullanıcı eylemi): hatasını ABP penceresi bildirir.
+    /// </summary>
+    [Fact]
+    public void Sihirbaz_zamanlayici_istekleri_arka_plandir()
+    {
+        var script = Grants("Wizard.js");
+
+        Body(script, "function startHeartbeat()").ShouldContain(
+            "service.heartbeat({ applicationId: appId, fieldKey: key }, { abpHandleError: false, apyaBackground: true });");
+        Body(script, "function runSave(key, isRetry)").ShouldContain(
+            "saveFns[key](isRetry ? { abpHandleError: false, apyaBackground: true } : undefined)");
+    }
+
+    /// <summary>
     /// GRT-07 "başlıksız boş etiket yığını": ilk yükleme düşünce Detay'da başlık kartı + ana düzen,
     /// Sihirbaz'da künye kartı + adım şeridi + ana düzen gizlenir — veri yazan denetimler (yer imi,
     /// Devret, Önceki/Sonraki, mesaj) modelsiz basılamaz, hata kartının üstünde boş künye kartı

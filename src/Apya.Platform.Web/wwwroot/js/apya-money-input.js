@@ -21,8 +21,10 @@
          data-group="false"  binlik ayracını kapat (oran/yüzde alanları)
 
      • Markup'taki `min` OKUNUR: min >= 0 ise eksi işareti kabul edilmez.
-       Alan type="text"e döndüğü ve `name`'ini kaybettiği için ne tarayıcı ne de
-       jQuery validate bu kısıtı artık uygulayabiliyor — maske sürdürüyor.
+       Alan type="text"e döndüğü için tarayıcı bu kısıtı uygulayamaz — maske sürdürür.
+       🔴 min/max/step, yükseltmede data-min/data-max/data-step'e TAŞINIR: jQuery
+       validate adsız alanı da doğruluyor ve maskeli "7.500,25"i sayı sanıp min/step
+       kuralıyla reddediyordu (1000 ve üstü HER tutar kaydedilemiyordu).
 
      • Dinamik satırlar (JS ile eklenen fatura kalemleri):
        apya.moneyInput.upgrade(el) veya apya.moneyInput.scan(container).
@@ -120,7 +122,7 @@
         // ifade etmiyor; yazarın niyetini burada sürdürüyoruz. min >= 0 ise eksi
         // işareti kabul edilmez. (Alan `name`'ini kaybettiği için jQuery validate
         // de bu kısıtı uygulamıyordu — sessizce negatif tutar girilebiliyordu.)
-        var min = parseFloat(el.getAttribute('min'));
+        var min = parseFloat(el.hasAttribute('min') ? el.getAttribute('min') : el.getAttribute('data-min'));
         return {
             decimals: d,
             group: el.getAttribute('data-group') !== 'false',
@@ -164,6 +166,14 @@
         if (!el || el.__apyaMoney) { return; }
         el.__apyaMoney = true;
         el.__apyaOpts = optionsOf(el);
+
+        // Tarayıcı/jQuery validate kısıtları maskeli metne uygulanmasın (bkz. baştaki not).
+        ['min', 'max', 'step'].forEach(function (attr) {
+            if (el.hasAttribute(attr)) {
+                el.setAttribute('data-' + attr, el.getAttribute(attr));
+                el.removeAttribute(attr);
+            }
+        });
 
         var name = el.name;
         el.__apyaInvariant = hasInvariantMarker(el, name);

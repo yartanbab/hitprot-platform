@@ -13,6 +13,13 @@ $(function () {
     var presence = [];
     var hub = null;
     var saveTimers = {};
+    var saveFns = {};
+    var saveSeq = {};
+    // Kaydı bekleyen ya da başarısız alanlar. Yeniden çizim bunları sunucudaki
+    // eski değerle EZMEZ; sayfadan çıkışta uyarı buna bakar.
+    var dirty = {};
+    // Yeniden çizimin geri verdiği odak, kullanıcı odağı değil: kilit isteme.
+    var restoringFocus = false;
     var heartbeat = null;
     // Hub olayı ve kilit al/bırak sonrası yeniden yüklenir: yalnız son istek çizer.
     var nextLoad = apya.latest();
@@ -28,6 +35,9 @@ $(function () {
     function myLock(key) {
         var k = (model.locks || []).filter(function (x) { return x.fieldKey === key; })[0];
         return k && k.ownerUserId === model.viewerUserId ? k : null;
+    }
+    function isDirty(prefix) {
+        return Object.keys(dirty).some(function (k) { return k.indexOf(prefix) === 0; });
     }
     function foreignLock(key) {
         var k = (model.locks || []).filter(function (x) { return x.fieldKey === key; })[0];
@@ -80,6 +90,9 @@ $(function () {
 
     // ---------- Alan kilidi ----------
     function acquire(fieldKey, $el) {
+        // Zaten tutulan kilidi yeniden isteme: focus → acquire → load → paint →
+        // odak geri → focus zinciri saniyede onlarca kilit + GET üretiyordu.
+        if (model && myLock(fieldKey)) { return; }
         service.acquireLock({ applicationId: appId, fieldKey: fieldKey }).then(function (r) {
             if (!r.acquired) {
                 abp.message.warn(l('Grants:Wizard:LockedBy', (r.lock || {}).ownerName || '?'));
@@ -109,16 +122,44 @@ $(function () {
     // ---------- Otomatik kayıt ----------
     function scheduleSave(key, fn) {
         clearTimeout(saveTimers[key]);
-        saveTimers[key] = setTimeout(function () {
-            $('#SaveChip').text(l('Grants:Wizard:Saving'));
-            fn().then(function (dto) {
-                model = dto;
-                paint();
-                $('#SaveChip').text(l('Grants:Wizard:Saved'));
-                announce(key);
-            });
-        }, 600);
+        saveFns[key] = fn;
+        dirty[key] = true;
+        saveTimers[key] = setTimeout(function () { runSave(key, false); }, 600);
     }
+
+    function setSaveChip(text, failed) {
+        $('#SaveChip').text(text)
+            .toggleClass('apya-chip-warning', !!failed)
+            .toggleClass('apya-chip-neutral', !failed);
+    }
+
+    // Başarısız kayıtta yazılan alanda KALIR (dirty), rozet uyarıya döner ve kayıt
+    // arka planda yeniden denenir. Eskiden hata yolu yoktu: rozet "kaydediliyor…"da
+    // takılıyor, sonraki yeniden çizim alanı sunucudaki eski değerle eziyordu.
+    function runSave(key, isRetry) {
+        var seq = saveSeq[key] = (saveSeq[key] || 0) + 1;
+        saveTimers[key] = null;
+        setSaveChip(l('Grants:Wizard:Saving'), false);
+        // Yeniden deneme zamanlayıcıyla gider (arka plan): ABP hata penceresi tekrar tekrar açılmaz,
+        // "Kapat"lanan oturum penceresi 10 sn'de bir geri gelmez; durum rozette.
+        saveFns[key](isRetry ? { abpHandleError: false, apyaBackground: true } : undefined).then(function (dto) {
+            if (saveSeq[key] === seq && !saveTimers[key]) { delete dirty[key]; }
+            model = dto;
+            paint();
+            setSaveChip(l('Grants:Wizard:Saved'), false);
+            announce(key);
+        }, function () {
+            if (saveSeq[key] !== seq) { return; }
+            setSaveChip(l('Grants:Wizard:SaveFailed'), true);
+            if (!saveTimers[key]) {
+                saveTimers[key] = setTimeout(function () { runSave(key, true); }, 10000);
+            }
+        });
+    }
+
+    window.addEventListener('beforeunload', function (e) {
+        if (Object.keys(dirty).length) { e.preventDefault(); e.returnValue = ''; }
+    });
 
     // ---------- Adımlar ----------
     function paintSteps() {
@@ -206,19 +247,23 @@ $(function () {
 
     // ---------- Adım 2 · özet ----------
     function paintSummary() {
+        // Kayıt tek istekte üç alanı birden yazar: biri kaydedilmemişken hiçbirini ezme.
+        // (Yaz → 600 ms dolmadan Tab: blur → release → load buradan geçip alanı
+        // boşaltıyor, ardından zamanlayıcı boş değeri kaydediyordu.)
+        if (isDirty('summary:')) { return; }
         if (!$('#ProjectTitle').is(':focus')) { $('#ProjectTitle').val(model.projectTitle || ''); }
         if (!$('#ProjectSummary').is(':focus')) { $('#ProjectSummary').val(model.projectSummary || ''); }
         if (!$('#ProjectDuration').is(':focus')) { $('#ProjectDuration').val(model.projectDurationMonths || ''); }
     }
 
     function saveSummary(fieldKey) {
-        scheduleSave(fieldKey, function () {
+        scheduleSave(fieldKey, function (ajax) {
             return service.saveSummary({
                 applicationId: appId,
                 projectTitle: $('#ProjectTitle').val() || null,
                 projectSummary: $('#ProjectSummary').val() || null,
                 projectDurationMonths: Number($('#ProjectDuration').val()) || null
-            });
+            }, ajax);
         });
     }
 
@@ -261,10 +306,28 @@ $(function () {
     }
 
     function paintBudget() {
-        var focusKey = $(document.activeElement).closest('[data-field]').data('field');
-        var caret = document.activeElement && document.activeElement.selectionStart;
+        // Yalnız bütçe satırındaki odak geri verilir; özet alanları yeniden çizilmez.
+        var active = document.activeElement;
+        var $activeRow = $(active).closest('#BudgetRows [data-field]');
+        var focusKey = $activeRow.data('field');
+        var focusIndex = focusKey ? $activeRow.find('input').index(active) : -1;
+        var caret = active && active.selectionStart;
+
+        // Kaydı bekleyen/başarısız satırın yazılanı yeniden çizimde kaybolmasın.
+        var typed = {};
+        $('#BudgetRows [data-field]').each(function () {
+            var k = $(this).data('field');
+            if (dirty[k]) {
+                typed[k] = { amount: $(this).find('.apya-wiz-amount').val(), note: $(this).find('.apya-wiz-note').val() };
+            }
+        });
 
         $('#BudgetRows').html((model.budgetLines || []).map(budgetRow).join(''));
+        Object.keys(typed).forEach(function (k) {
+            var $row = $('#BudgetRows [data-field="' + k + '"]');
+            $row.find('.apya-wiz-amount').val(typed[k].amount);
+            $row.find('.apya-wiz-note').val(typed[k].note);
+        });
         $('#TotalProject').text(money(model.totalProject) + ' ₺');
         $('#TotalSupport').text(money(model.totalSupport) + ' ₺');
         $('#OwnContribution').text(money(model.ownContribution) + ' ₺');
@@ -274,10 +337,13 @@ $(function () {
         $('#CoEditChip').toggleClass('d-none', presence.length < 2);
 
         // Yeniden çizim odağı düşürmesin — canlı düzenlemede kullanıcı hâlâ yazıyor olabilir.
+        // Native focus + bayrak: jQuery trigger('focus') odaktaki öğede işleyicileri
+        // yeniden çalıştırıp kilit isteğini sonsuz döngüye sokuyordu.
         if (focusKey) {
-            var $back = $('[data-field="' + focusKey + '"]').find('input').first();
+            var $back = $('#BudgetRows [data-field="' + focusKey + '"]').find('input').eq(Math.max(focusIndex, 0));
             if ($back.length) {
-                $back.trigger('focus');
+                restoringFocus = true;
+                try { $back[0].focus(); } finally { restoringFocus = false; }
                 if (caret != null && $back[0].setSelectionRange && $back.attr('type') === 'text') {
                     $back[0].setSelectionRange(caret, caret);
                 }
@@ -288,6 +354,7 @@ $(function () {
     function kindOf($row) { return costKeys.indexOf($row.data('field').split(':')[1]); }
 
     $('#BudgetRows').on('focus', 'input', function () {
+        if (restoringFocus) { return; }
         var $row = $(this).closest('[data-field]');
         focusField($row.data('field'));
         acquire($row.data('field'), $(this));
@@ -302,13 +369,16 @@ $(function () {
     $('#BudgetRows').on('input', '.apya-wiz-amount, .apya-wiz-note', function () {
         var $row = $(this).closest('[data-field]');
         var kind = kindOf($row);
-        scheduleSave($row.data('field'), function () {
+        var key = $row.data('field');
+        // Satır yeniden çizilebilir: kayıt anında GÜNCEL satırı key ile bul.
+        scheduleSave(key, function (ajax) {
+            var $current = $('#BudgetRows [data-field="' + key + '"]');
             return service.saveBudgetLine({
                 applicationId: appId,
                 kind: kind,
-                amount: Number($row.find('.apya-wiz-amount').val()) || 0,
-                justification: $row.find('.apya-wiz-note').val() || null
-            });
+                amount: Number($current.find('.apya-wiz-amount').val()) || 0,
+                justification: $current.find('.apya-wiz-note').val() || null
+            }, ajax);
         });
     });
 

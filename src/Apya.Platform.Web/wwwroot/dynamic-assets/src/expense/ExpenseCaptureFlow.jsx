@@ -95,8 +95,11 @@ export function ExpenseCaptureFlow() {
                 resetForCapture();
             }, SUCCESS_AUTO_RESET_MS);
         } catch (err) {
+            // Doğrulama hatasında hangi alanın reddedildiğini göster; genel
+            // "İşleminiz geçerli değil" tek başına ne düzeltileceğini söylemiyor.
+            const fieldErrors = (err?.validationErrors ?? []).map((v) => v?.message).filter(Boolean);
             toast.error('Kayıt başarısız', {
-                description: err?.message ?? 'Tekrar deneyebilirsin.',
+                description: fieldErrors.length ? fieldErrors.join(' · ') : (err?.message ?? 'Tekrar deneyebilirsin.'),
             });
             /* Form açık kalsın — kullanıcı düzeltsin */
         }
