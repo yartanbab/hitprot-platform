@@ -315,6 +315,25 @@ namespace Apya.Platform.Tasks
             }
         }
 
+        /// <summary>
+        /// Görevi DEĞİŞTİREN her ucun ortak kapısı: gizli görev kontrolü + sahiplik kuralı
+        /// (oluşturan ya da atanan; değilse Projects.ManageTeam). Uca özgü izin (Edit,
+        /// ChangeStatus, Assign) metot özniteliğindedir. Tam güncelleme bu kuralı
+        /// uyguluyordu ama durum, öncelik, erteleme, iptal, atama ve kontrol listesi uçları
+        /// atlıyordu: salt-okur stajyer takvimden görev tamamlayıp erteleyebiliyor, çalışan
+        /// başkasının görevinin önceliğini değiştirebiliyordu.
+        /// </summary>
+        private async Task EnsureCanMutateTaskAsync(TaskItem task)
+        {
+            await EnsureTaskPrivacyAllowedAsync(task);
+
+            if (!task.IsOwnedBy(CurrentUser.Id)
+                && !await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
+            {
+                throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskUpdateDenied);
+            }
+        }
+
         // Yorum/dosya entity'leri IMultiTenant DEĞİL (TaskComment: FullAuditedEntity,
         // TaskAttachment: CreationAuditedEntity) → üzerlerinde global tenant filtresi
         // YOK. TaskId ile doğrudan sorgulamak çapraz-tenant okuma açığı yaratıyordu.
@@ -554,15 +573,7 @@ namespace Apya.Platform.Tasks
             await CheckUpdatePolicyAsync();
 
             var task = await Repository.GetAsync(id);
-            await EnsureTaskPrivacyAllowedAsync(task);
-
-            if (task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
-            {
-                if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
-                {
-                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskUpdateDenied);
-                }
-            }
+            await EnsureCanMutateTaskAsync(task);
 
             var options = new TaskTransferOptions
             {
@@ -937,14 +948,8 @@ namespace Apya.Platform.Tasks
 
             var task = await Repository.GetAsync(id);
 
-            // Özel Yetki Kuralı
-            if (task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
-            {
-                if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam))
-                {
-                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskUpdateDenied);
-                }
-            }
+            // Özel Yetki Kuralı (gizlilik + oluşturan/atanan ya da ekip yöneticisi)
+            await EnsureCanMutateTaskAsync(task);
 
             // Rich Domain: tüm alanları tek metotta güncelle
             var previousAssigneeId = task.Update(
@@ -1662,9 +1667,10 @@ namespace Apya.Platform.Tasks
                 .ToList();
         }
 
+        [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task<Guid> AddChecklistItemAsync(Guid taskId, string text)
         {
-            await EnsureTaskAccessAllowedAsync(taskId);
+            await EnsureCanMutateTaskAsync(await Repository.GetAsync(taskId));
 
             var item = await _checklistRepository.InsertAsync(new TaskChecklistItem
             {
@@ -1681,6 +1687,7 @@ namespace Apya.Platform.Tasks
         /// <summary>PR-3a hiyerarşik kapsam: doğrudan PROJEYE bağlı madde
         /// (TaskId boş). Görev maddeleriyle aynı doğrulama ve aynı toggle/delete
         /// uçları; erişim proje üzerinden denetlenir.</summary>
+        [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task<Guid> AddProjectChecklistItemAsync(Guid projectId, string text)
         {
             await EnsureProjectAccessAllowedAsync(projectId);
@@ -1729,6 +1736,19 @@ namespace Apya.Platform.Tasks
             }
         }
 
+        /// <summary>Yazma için kapsam kapısı: görev maddesinde görevin sahiplik kuralı,
+        /// proje maddesinde proje erişimi (maddenin sahibi yok).</summary>
+        private async Task EnsureChecklistScopeCanMutateAsync(TaskChecklistItem item)
+        {
+            if (item.TaskId.HasValue)
+            {
+                await EnsureCanMutateTaskAsync(await Repository.GetAsync(item.TaskId.Value));
+                return;
+            }
+
+            await EnsureChecklistScopeAccessAsync(item);
+        }
+
         /// <summary>Projenin varlığını ve kiracıya aitliğini doğrular —
         /// IMultiTenant süzgeçli GetAsync başka kiracının projesini getiremez.</summary>
         private async Task EnsureProjectAccessAllowedAsync(Guid projectId)
@@ -1736,19 +1756,21 @@ namespace Apya.Platform.Tasks
             await _projectLookupRepository.GetAsync(projectId);
         }
 
+        [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task ToggleChecklistItemAsync(Guid itemId)
         {
             var item = await _checklistRepository.GetAsync(itemId);
-            await EnsureChecklistScopeAccessAsync(item);
+            await EnsureChecklistScopeCanMutateAsync(item);
 
             item.IsDone = !item.IsDone;
             await _checklistRepository.UpdateAsync(item, autoSave: true);
         }
 
+        [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task DeleteChecklistItemAsync(Guid itemId)
         {
             var item = await _checklistRepository.GetAsync(itemId);
-            await EnsureChecklistScopeAccessAsync(item);
+            await EnsureChecklistScopeCanMutateAsync(item);
 
             await _checklistRepository.DeleteAsync(item, autoSave: true);
         }
@@ -1936,9 +1958,11 @@ namespace Apya.Platform.Tasks
                 });
         }
 
+        [Authorize(PlatformPermissions.Tasks.ChangeStatus)]
         public async Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status)
         {
             var task = await Repository.GetAsync(id);
+            await EnsureCanMutateTaskAsync(task);
             var oldStatus = task.Status;
             // REV-001: Rich Domain Model kullan
             task.ChangeStatus(status, Clock.Now);
@@ -1967,6 +1991,7 @@ namespace Apya.Platform.Tasks
         public async Task SetAssigneeAsync(Guid id, Guid? assigneeId)
         {
             var task = await Repository.GetAsync(id);
+            await EnsureCanMutateTaskAsync(task);
             var previousAssigneeId = task.AssigneeId;
 
             task.AssignTo(assigneeId);
@@ -1992,6 +2017,7 @@ namespace Apya.Platform.Tasks
         public async Task SetPriorityAsync(Guid id, Apya.Platform.Tasks.TaskPriority priority)
         {
             var task = await Repository.GetAsync(id);
+            await EnsureCanMutateTaskAsync(task);
             task.ChangePriority(priority);
             await Repository.UpdateAsync(task);
         }
@@ -2005,6 +2031,7 @@ namespace Apya.Platform.Tasks
         public async Task CancelAsync(Guid id, string? reason)
         {
             var task = await Repository.GetAsync(id);
+            await EnsureCanMutateTaskAsync(task);
             var oldStatus = task.Status;
             task.Cancel(reason, Clock.Now);
             await Repository.UpdateAsync(task);
@@ -2027,6 +2054,7 @@ namespace Apya.Platform.Tasks
         public async Task RestoreFromCancelAsync(Guid id)
         {
             var task = await Repository.GetAsync(id);
+            await EnsureCanMutateTaskAsync(task);
             if (task.Status != Apya.Platform.Tasks.TaskStatus.Cancelled) { return; }
 
             task.RestoreFromCancel(Clock.Now);
@@ -2051,10 +2079,11 @@ namespace Apya.Platform.Tasks
         /// yalnız yeni son tarih başlangıcın gerisinde kalırsa başlangıç da kayar
         /// (aksi halde başlangıcı bitişinden sonra olan geçersiz görev oluşurdu).
         /// </summary>
+        [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task<TaskDto> DeferAsync(Guid id, int days)
         {
             var task = await Repository.GetAsync(id);
-            await EnsureTaskPrivacyAllowedAsync(task);
+            await EnsureCanMutateTaskAsync(task);
 
             var basis = task.DueDate ?? Clock.Now;
             var newDue = basis.AddDays(days);

@@ -89,11 +89,21 @@ public class CalendarFeedProvider_Tests
             Substitute.For<IRepository<IdentityUser, Guid>>(),
             _permissionChecker,
             _executer,
-            Substitute.For<ICurrentUser>(),
+            _currentUser,
             Substitute.For<IDataFilter>(),
             _settingProvider,
             clock);
     }
+
+    private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
+
+    private static TaskItem CreatedBy(TaskItem task, Guid creatorId)
+    {
+        typeof(TaskItem).GetProperty(nameof(TaskItem.CreatorId))!
+            .GetSetMethod(nonPublic: true)!.Invoke(task, new object?[] { creatorId });
+        return task;
+    }
+    private static readonly Guid Me = Guid.NewGuid();
 
     /// <summary>Sorguyu bellek içinde çalıştıran executer — gerçek LINQ davranışı ölçülür.</summary>
     private void StubExecuter<T>()
@@ -254,6 +264,8 @@ public class CalendarFeedProvider_Tests
     {
         _permissionChecker.IsGrantedAsync(Arg.Any<string>()).Returns(false);
         _permissionChecker.IsGrantedAsync(PlatformPermissions.Tasks.Default).Returns(true);
+        _permissionChecker.IsGrantedAsync(PlatformPermissions.Tasks.Edit).Returns(true);
+        _permissionChecker.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam).Returns(true);
         _permissionChecker.IsGrantedAsync(PlatformPermissions.Invoices.Default).Returns(true);
         GivenTasks(Task("Görev", Today));
         GivenInvoices(Invoice("FTR-2026-0151", Today));
@@ -262,6 +274,44 @@ public class CalendarFeedProvider_Tests
 
         feed.Items.Single(i => i.Source == CalendarSourceType.Task).CanReschedule.ShouldBeTrue();
         feed.Items.Single(i => i.Source == CalendarSourceType.Invoice).CanReschedule.ShouldBeFalse();
+    }
+
+    // --- Görev eylemleri yetkiyi yansıtır (2026-09-28 UX denetimi, CAL-01) ---
+
+    [Fact]
+    public async Task Salt_okur_kullanici_gorevi_ne_erteler_ne_tamamlar()
+    {
+        _permissionChecker.IsGrantedAsync(Arg.Any<string>()).Returns(false);
+        _permissionChecker.IsGrantedAsync(PlatformPermissions.Tasks.Default).Returns(true);
+        GivenTasks(Task("Görev", Today));
+
+        var item = (await BuildSut().BuildAsync(Range(Today, Today))).Items.Single();
+
+        item.CanReschedule.ShouldBeFalse();
+        item.CanComplete.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Izinli_calisan_yalniz_kendi_gorevinde_eylem_gorur()
+    {
+        _permissionChecker.IsGrantedAsync(Arg.Any<string>()).Returns(false);
+        _permissionChecker.IsGrantedAsync(PlatformPermissions.Tasks.Default).Returns(true);
+        _permissionChecker.IsGrantedAsync(PlatformPermissions.Tasks.Edit).Returns(true);
+        _permissionChecker.IsGrantedAsync(PlatformPermissions.Tasks.ChangeStatus).Returns(true);
+        _currentUser.Id.Returns(Me);
+
+        // Sahiplik oluşturan üzerinden kurulur (atanan adı kullanıcı deposundan çözülür,
+        // bu birim testinde depo yok); kural ikisini de aynı sayar (TaskItem.IsOwnedBy).
+        GivenTasks(CreatedBy(Task("Benim", Today), Me), CreatedBy(Task("Başkasının", Today), Guid.NewGuid()));
+
+        var items = (await BuildSut().BuildAsync(Range(Today, Today))).Items;
+
+        var m = items.Single(i => i.Title == "Benim");
+        m.CanReschedule.ShouldBeTrue();
+        m.CanComplete.ShouldBeTrue();
+        var o = items.Single(i => i.Title == "Başkasının");
+        o.CanReschedule.ShouldBeFalse();
+        o.CanComplete.ShouldBeFalse();
     }
 
     [Fact]

@@ -412,7 +412,10 @@ $(function () {
                     // Satır üstüne gelince hızlı aksiyon. Yalnız "Tamamla" var:
                     // Ata/Tarih tam DTO ile UpdateAsync gerektiriyor.
                     var closed = row.status === 4 || row.status === 0;
-                    if (!canChangeStatus || closed) { return chip; }
+                    // Sunucu kuralıyla aynı: oluşturan/atanan ya da ekip yöneticisi.
+                    var owns = abp.auth.isGranted('Platform.Projects.ManageTeam') ||
+                        row.creatorId === abp.currentUser.id || row.assigneeId === abp.currentUser.id;
+                    if (!canChangeStatus || closed || !owns) { return chip; }
                     return '<span class="apya-console-due">' + chip +
                         '<span class="apya-row-actions apya-console-row-actions">' +
                         '<button type="button" class="apya-console-row-action" data-complete-id="' + row.id +

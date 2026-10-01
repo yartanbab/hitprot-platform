@@ -209,6 +209,10 @@ export function CalendarRoot() {
 
     const mutations = useCalendarMutations({ onOfflineFailure: offline.enqueue });
 
+    // Görev oluşturma izni yoksa "Yeni görev", mobil FAB ve boş durum düğmesi çizilmez;
+    // eskiden herkese çıkıyor, form doldurulduktan sonra kayıt 403 ile reddediliyordu.
+    const canCreateTask = !!(window.abp?.auth?.isGranted?.('Platform.Tasks.Create'));
+
     /* Klavye: sürükle-bırakla yapılabilen her şey klavyeyle de yapılabilmeli. */
     const deferFocusedDay = useCallback((days) => {
         const key = focusedDay ?? selectedDay;
@@ -265,6 +269,7 @@ export function CalendarRoot() {
                 lastSyncAt={lastSyncAt}
                 syncError={riskCounts.syncError > 0}
                 compact={isNarrow}
+                canCreateTask={canCreateTask}
             />
 
             {isError && (
@@ -371,7 +376,9 @@ export function CalendarRoot() {
                                 icon={<i className="fa fa-calendar-plus" />}
                                 title="Bu aralıkta planlanmış bir şey yok"
                                 description="Son tarihi olan görevler, fatura vadeleri, hibe son tarihleri ve tarihli finans kayıtları burada birlikte görünür."
-                                action={<Button size="sm" variant="outline" onClick={() => { window.location.href = '/Tasks'; }}>Görev oluştur</Button>}
+                                action={canCreateTask
+                                    ? <Button size="sm" variant="outline" onClick={() => { window.location.href = '/Tasks'; }}>Görev oluştur</Button>
+                                    : null}
                             />
                         </div>
                     ) : view === 'month' ? (
@@ -454,7 +461,7 @@ export function CalendarRoot() {
             {/* Dar kapta birincil eylem araç çubuğundan FAB'a taşınır: sığmıyordu
                 ve satırı ekran dışına taşırıyordu. Koşul Toolbar'ın `compact`
                 prop'uyla AYNI değer — ikisi tek `isNarrow`dan okur. */}
-            {isNarrow && <NewTaskFab />}
+            {isNarrow && canCreateTask && <NewTaskFab />}
 
             {/* Baskı çıktısı yalnız  print içinde görünür; ekranda yer kaplamaz. */}
             <PrintView

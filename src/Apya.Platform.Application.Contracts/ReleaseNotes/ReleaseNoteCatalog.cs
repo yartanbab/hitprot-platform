@@ -28,8 +28,50 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.27",
             date: "27 Eylül 2026",
-            title: "Fatura, gider ve cari ekranları yeniden çalışıyor; tutarlar yazdığınız gibi kaydediliyor; " +
+            title: "Görev yetkileri her ekranda aynı; Paketim kullanabildiğiniz modülleri gösteriyor; " +
+                   "fatura, gider ve cari ekranları yeniden çalışıyor; tutarlar yazdığınız gibi kaydediliyor; " +
                    "bildirim zamanları doğru görünüyor",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevleri yalnız sorumluları değiştirebiliyor",
+                "Bir görevin durumunu, önceliğini, tarihlerini, sorumlusunu ve kontrol listesini artık görevi " +
+                "oluşturan, göreve atanan kişi ya da 'Ekip Yönetimi' izni olan kullanıcılar değiştirebiliyor. " +
+                "Önceki sürümde ekranlar bu kuralı farklı uyguluyordu: panoda başkasının kartı " +
+                "sürüklenebiliyor, takvimden başkasının görevi tamamlanabiliyor, görev detayında ise değişiklik " +
+                "yapılıp kaydederken hata alınıyordu. Başkasının görevini açtığınızda başlıkta 'Salt okunur' " +
+                "etiketi görünüyor; panoda bu kartlar kilitli, takvimde 'Tamamla' ve 'Ertele' yalnız kendi " +
+                "görevlerinizde çıkıyor. Görebildiğiniz her göreve yorum yazmaya devam edebilirsiniz. Ekip " +
+                "arkadaşlarının görevlerini düzenlemesi gereken kişilere, rol izinlerinde Projeler altındaki " +
+                "'Ekip Yönetimi' iznini verebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Paketim ekranı kullanabildiğiniz modülleri doğru gösteriyor",
+                "Paketim ekranı Hibe, Doküman, Form ve Takvim gibi bazı modülleri paketinizde açık " +
+                "gösteriyor, ama bu modüller menüde yer almıyor ve açılmıyordu. Ekran artık yalnız gerçekten " +
+                "kullanabildiğiniz modülleri açık gösteriyor; diğerleri kilitli görünüyor ve hangi paketle " +
+                "açıldıkları yükseltme kartlarında yazıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Görev açıklamaları güvenli biçimde gösteriliyor",
+                "Görev açıklamasına yapıştırılan içerik artık güvenli biçimde gösteriliyor: kalın, italik, " +
+                "liste, tablo, bağlantı ve görseller korunuyor; betik, gömülü sayfa ve form gibi öğeler " +
+                "çalıştırılmıyor ve gösterilmiyor. Kasa hareketlerinin açıklamaları da düz metin olarak " +
+                "görünüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Ortak kullanılan cihazda taslaklar ve bekleyen kayıtlar kişiye özel",
+                "Aynı tarayıcıda farklı kullanıcılar oturum açtığında, yarım kalan yeni proje taslağı ve " +
+                "internet yokken kaydedilip gönderilmeyi bekleyen masraf ve takvim değişiklikleri bir sonraki " +
+                "kullanıcıya geçebiliyordu. Bunlar artık yalnız onları oluşturan kullanıcıya ait. Bekleyen " +
+                "kayıtlardan biri reddedilirse sıradakiler gönderilmeye devam ediyor. Bu güncellemeden önce " +
+                "kalmış proje taslakları ve henüz gönderilmemiş çevrimdışı kayıtlar geri getirilmiyor; " +
+                "bunları yeniden girmeniz gerekebilir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yönetici menüsündeki açılmayan bağlantılar kaldırıldı",
+                "Yönetici menüsünde görünen 'Sistem Sağlığı' ve 'Geri Bildirimler' yönetim bağlantıları hata " +
+                "sayfası açıyordu. Bu ekranlar platform yönetimine ait olduğu için menünüzden kaldırıldı. " +
+                "Geri bildirim göndermeye üst çubuktaki 'Geri Bildirim' düğmesinden devam edebilirsiniz."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Bildirim zamanları doğru gösteriliyor",

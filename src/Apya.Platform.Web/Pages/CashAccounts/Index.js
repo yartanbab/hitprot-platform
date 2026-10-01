@@ -9,6 +9,13 @@ $(function () {
     var selectedAccountId = null;
     var selectedAccountName = null;
 
+    // Kullanıcı metni HTML'e metin olarak girer. Gider başlığı kasa hareketi açıklamasına
+    // yazıldığı için ("Gider: " + başlık) gider girme yetkisi olan herkes kasayı açan
+    // finans yöneticisinin oturumunda betik çalıştırabiliyordu.
+    function esc(s) {
+        return $('<div>').text(s == null ? '' : String(s)).html();
+    }
+
     function fmt(n) {
         return Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 });
     }
@@ -40,7 +47,7 @@ $(function () {
                 '<tr>' +
                 '<td class="text-nowrap">' + (m.movementDate ? new Date(m.movementDate).toLocaleDateString('tr-TR') : '-') + '</td>' +
                 '<td>' + directionBadge(m.direction) + '</td>' +
-                '<td>' + (m.description || (m.source === 3 ? 'Transfer' : '—')) + '</td>' +
+                '<td>' + esc(m.description || (m.source === 3 ? 'Transfer' : '—')) + '</td>' +
                 '<td class="text-end apya-numeric fw-semibold">' + fmt(m.amount) + '</td>' +
                 '<td class="text-end">' + actions + '</td>' +
                 '</tr>'

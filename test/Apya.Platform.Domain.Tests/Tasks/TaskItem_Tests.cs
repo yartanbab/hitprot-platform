@@ -163,4 +163,42 @@ public class TaskItem_Tests
 
         task.IsDeadlineWarningSent.ShouldBeTrue("vade aynıyken uyarı yeniden gönderilmemeli");
     }
+
+    // --- Sahiplik kuralı (görevi değiştiren uçların ortak kapısı) ---
+
+    private static TaskItem OwnedTask(Guid? creatorId, Guid? assigneeId)
+    {
+        var task = new TaskItem(Guid.NewGuid(), "Sahiplik", now: DateTime.UtcNow);
+        typeof(TaskItem).GetProperty(nameof(TaskItem.CreatorId))!
+            .GetSetMethod(nonPublic: true)!.Invoke(task, new object?[] { creatorId });
+        task.AssignTo(assigneeId);
+        return task;
+    }
+
+    [Fact]
+    public void IsOwnedBy_olusturan_ve_atanan_icin_dogru()
+    {
+        var creator = Guid.NewGuid();
+        var assignee = Guid.NewGuid();
+        var task = OwnedTask(creator, assignee);
+
+        task.IsOwnedBy(creator).ShouldBeTrue();
+        task.IsOwnedBy(assignee).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void IsOwnedBy_baskasi_ve_anonim_icin_yanlis()
+    {
+        var task = OwnedTask(Guid.NewGuid(), Guid.NewGuid());
+
+        task.IsOwnedBy(Guid.NewGuid()).ShouldBeFalse();
+        task.IsOwnedBy(null).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void IsOwnedBy_atanmamis_gorevde_null_kullanici_sahip_sayilmaz()
+    {
+        // CreatorId ve AssigneeId ikisi de null iken null kullanıcı "eşit" sayılmamalı.
+        OwnedTask(null, null).IsOwnedBy(null).ShouldBeFalse();
+    }
 }

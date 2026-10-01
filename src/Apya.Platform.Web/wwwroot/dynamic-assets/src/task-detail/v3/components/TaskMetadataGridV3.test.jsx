@@ -36,3 +36,22 @@ describe('TaskMetadataGridV3 / oncelik', () => {
         expect(screen.getByRole('button', { name: /orta/i })).toBeInTheDocument();
     });
 });
+
+/* Yetki (ROL-04): duzenleme izni yoksa izgara salt okunur — alanlar forma, oradan
+   UpdateAsync'e gidiyor ve yetkisiz kullanici Kaydet'te 403 aliyordu. */
+describe('TaskMetadataGridV3 / salt okunur', () => {
+    it('readOnly iken tum dugme ve tarih girdileri kilitli, etiket ekleme yok', () => {
+        renderGrid({ readOnly: true, tagsValue: ['acil'] });
+        screen.getAllByRole('button').forEach((b) => expect(b).toBeDisabled());
+        document.querySelectorAll('input[type=date]').forEach((i) => expect(i).toBeDisabled());
+        expect(screen.queryByLabelText('Yeni etiket ekle')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Etiketi kaldır')).not.toBeInTheDocument();
+        expect(screen.getByText('acil')).toBeInTheDocument();
+    });
+
+    it('varsayilan durumda alanlar duzenlenebilir', () => {
+        renderGrid();
+        expect(screen.getByRole('button', { name: /orta/i })).not.toBeDisabled();
+        expect(screen.getByLabelText('Yeni etiket ekle')).toBeInTheDocument();
+    });
+});

@@ -7,10 +7,14 @@ using Volo.Abp.TenantManagement;
 using Apya.Platform.Ai.Tenants;
 using Microsoft.AspNetCore.Authorization;
 using Apya.Platform.Permissions;
+using Apya.Platform.Ai.Permissions;
 
 namespace Apya.Platform.Web.Pages.TenantManagement.AiSettings;
 
+// İki kapı birlikte (AND): sayfa ManageAi, çağırdığı servis AiPermissions.TenantSettings.Default
+// istiyor. Yalnız ilki varken sayfa açılıp servis çağrısında 500 veriyordu.
 [Authorize(PlatformPermissions.TenantSettings.ManageAi)]
+[Authorize(AiPermissions.TenantSettings.Default)]
 public class IndexModel : AbpPageModel
 {
     [BindProperty(SupportsGet = true)]
@@ -55,8 +59,16 @@ public class IndexModel : AbpPageModel
 
     private async Task LoadTenantsAsync()
     {
-        var tenants = await _tenantAppService.GetListAsync(new GetTenantsInput { MaxResultCount = 100 });
         TenantOptions.Add(new TenantSelectItem(null, "(Host)"));
+
+        // Kiracı listesi ayrı izin (AbpTenantManagement.Tenants) ister; yoksa seçici yalnız
+        // host'u gösterir — sayfa tümden düşmez.
+        if (!await AuthorizationService.IsGrantedAsync(TenantManagementPermissions.Tenants.Default))
+        {
+            return;
+        }
+
+        var tenants = await _tenantAppService.GetListAsync(new GetTenantsInput { MaxResultCount = 100 });
         foreach (var t in tenants.Items)
             TenantOptions.Add(new TenantSelectItem(t.Id, t.Name));
     }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Apya.Platform.Features;
@@ -14,6 +15,9 @@ using Volo.Abp.SettingManagement;
 
 namespace Apya.Platform.Web.Pages.Tasks;
 
+// Sayfa izni servisinkiyle aynı: izin yokken form açılıyor, doldurulduktan sonra
+// kayıt 403 ile reddediliyordu (takvim "Yeni görev" düğmesi herkese çıkıyordu).
+[Authorize(PlatformPermissions.Tasks.Create)]
 public class CreateModalModel : PlatformPageModel
 {
     [BindProperty(SupportsGet = true)]

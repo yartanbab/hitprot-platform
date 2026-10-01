@@ -88,17 +88,21 @@ export function ItemDrawer({ item, capacity, onClose, onReschedule, onComplete, 
                     </div>
                 )}
 
-                {item.canReschedule && !item.isDone && (
+                {(item.canComplete || item.canReschedule) && !item.isDone && (
                     <div className="flex flex-wrap gap-2 border-b border-subtle px-4 py-3">
-                        <Button size="sm" variant="secondary" onClick={() => onComplete(item)}>
-                            <i className="fa fa-check me-1.5" aria-hidden="true" />Tamamla
-                        </Button>
-                        <Button
-                            size="sm" variant="outline"
-                            onClick={() => onReschedule(item, addDays(new Date(`${currentDay}T00:00:00`), 1))}
-                        >
-                            +1 gün ertele
-                        </Button>
+                        {item.canComplete && (
+                            <Button size="sm" variant="secondary" onClick={() => onComplete(item)}>
+                                <i className="fa fa-check me-1.5" aria-hidden="true" />Tamamla
+                            </Button>
+                        )}
+                        {item.canReschedule && (
+                            <Button
+                                size="sm" variant="outline"
+                                onClick={() => onReschedule(item, addDays(new Date(`${currentDay}T00:00:00`), 1))}
+                            >
+                                +1 gün ertele
+                            </Button>
+                        )}
                     </div>
                 )}
 
