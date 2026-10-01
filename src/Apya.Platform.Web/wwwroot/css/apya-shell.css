@@ -3627,6 +3627,9 @@ table.dataTable td.dt-empty > .apya-console-state { white-space: normal; }
 table.dataTable td.dt-empty:has(> .apya-console-state) { padding-inline: 0; }
 table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; max-width: 100cqi; }
 
+/* Meşgul kilidi (apya-busy.js): disabled DEĞİL — odak düğmede kalır, tıklama yardımcıda yutulur. Kap hedefinde içindeki denetimler de tıklanamaz. */
+[data-apya-busy] { opacity: .65; pointer-events: none; }
+
 /* §9'daki .card-body > .view-panel zincirinin konsol karşılığı — konsolda
    .card-body yok, görünümler doğrudan bu kapta. */
 .apya-console-views { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }

@@ -579,6 +579,16 @@ describe('kablolama: metinler, global demet, koyu tema', () => {
         expect(at('/js/ajax-error-detail.js')).toBeGreaterThan(0);
     });
 
+    // Sonraki ortak parçalar (meşgul kilidi, kirli-form koruması) belge düzeyinde dinler; onay
+    // delegesi onlardan ÖNCE kaydolmalı ki onaylanmamış tıklama onlara ulaşmasın.
+    it('meşgul kilidi demette onaydan SONRA; meşgul görünümü ortak stilde (disabled değil)', () => {
+        const module = readFileSync(path.join(web, 'PlatformWebModule.cs'), 'utf8');
+        const css = readFileSync(path.join(web, 'wwwroot', 'css', 'apya-shell.css'), 'utf8');
+
+        expect(module.indexOf('bundle.AddFiles("/js/apya-busy.js")')).toBeGreaterThan(module.indexOf('bundle.AddFiles("/js/apya-confirm.js")'));
+        expect(css).toContain('[data-apya-busy] { opacity: .65; pointer-events: none; }');
+    });
+
     it('koyu temada tehlike düğmesi negatif tonda, doğrulama satırı okunur (sabit hex yok)', () => {
         const css = readFileSync(path.join(web, 'wwwroot', 'css', 'apya-shell.css'), 'utf8').replace(/\r\n/g, '\n');
 
