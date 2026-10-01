@@ -1,6 +1,7 @@
 import React from 'react';
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { cn } from '../../lib/utils';
+import { OpenerContext, useOpenerRef, restoreOpenerFocus } from './openerFocus';
 
 /**
  * Dialog — merkezi modal. Sheet.jsx'in kardeşi (o kenardan açılan panel için).
@@ -11,6 +12,16 @@ import { cn } from '../../lib/utils';
  *               h: min(88svh, 940px)
  *   fullscreen→ viewport - 2*space-4   ← "büyüt" aksiyonu
  *   mobile    → 100vw × 100svh, köşesiz, safe-area padding'li
+ *   compact   → size="compact": içeriğe göre boylanan küçük pencere (onay, kısa form).
+ *               Genişlik max-w-md (çağıran className ile ezer), yükseklik içerik kadar,
+ *               taşarsa kendi içinde kayar. Telefonda da 16 px boşluklu KART kalır:
+ *               mobile:* tam ekran sınıfları basılmaz. fullscreen verilirse o kazanır.
+ *
+ * Başlık: `title` özelliği sr-only başlık basar. Görünür başlık için <DialogTitle>
+ * (açıklama için <DialogDescription>) kullanılır — aynı metin iki kez okunmaz.
+ *
+ * Odak: kapanışta odak pencereyi açan öğeye döner (openerFocus.js). Çağıran
+ * onCloseAutoFocus'ta preventDefault ederse kendi hedefi geçerli olur.
  *
  * BİRİM svh, dvh DEĞİL: panel `position:fixed` olduğu için sayfa hiç kaydırılmaz,
  * dolayısıyla mobil tarayıcı çubukları hiç gizlenmez — geçerli viewport DAİMA
@@ -20,21 +31,36 @@ import { cn } from '../../lib/utils';
  */
 
 function Dialog({ open, onOpenChange, children }) {
+    const openerRef = useOpenerRef(open);
     return (
         <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
-            {children}
+            <OpenerContext.Provider value={openerRef}>
+                {children}
+            </OpenerContext.Provider>
         </RadixDialog.Root>
     );
 }
 
 const DialogContent = React.forwardRef(function DialogContent(
-    { title, description, fullscreen = false, className, children, onOpenChange, ...props },
+    {
+        title, description, size = 'default', fullscreen = false, className, children,
+        onOpenChange, onCloseAutoFocus, ...props
+    },
     ref,
 ) {
+    const openerRef = React.useContext(OpenerContext);
+    const compact = size === 'compact' && !fullscreen;
+
     const sizeClass = fullscreen
         ? cn(
             'w-[calc(100vw-2*var(--apya-space-4))]',
             'h-[calc(100svh-2*var(--apya-space-4))]',
+        )
+        : compact
+        ? cn(
+            'w-[calc(100vw-2*var(--apya-space-4))] max-w-md',
+            'h-auto max-h-[calc(100svh-2*var(--apya-space-4))]',
+            'overflow-y-auto overflow-x-hidden',
         )
         : cn(
             'w-[min(92vw,1400px)]',
@@ -74,20 +100,29 @@ const DialogContent = React.forwardRef(function DialogContent(
                         'relative pointer-events-auto',
                         'bg-surface-base text-text-primary',
                         'border border-default rounded-[var(--apya-radius-xl)] shadow-xl',
-                        'flex flex-col overflow-hidden',
+                        'flex flex-col',
+                        !compact && 'overflow-hidden',
                         'focus-visible:outline-none',
                         'animate-dialog-in',
                         sizeClass,
                         /* Mobil: tam ekran, köşesiz, safe-area. Modal içi footer'ın
-                           iOS home indicator'ın altında kalmaması için padding. */
-                        'mobile:w-screen mobile:h-[100svh] mobile:max-w-none',
-                        'mobile:rounded-none mobile:border-0',
-                        'mobile:pb-[env(safe-area-inset-bottom)]',
+                           iOS home indicator'ın altında kalmaması için padding.
+                           compact'ta basılmaz: küçük pencere telefonda da kart kalır. */
+                        !compact && 'mobile:w-screen mobile:h-[100svh] mobile:max-w-none',
+                        !compact && 'mobile:rounded-none mobile:border-0',
+                        !compact && 'mobile:pb-[env(safe-area-inset-bottom)]',
                         className,
                     )}
                     {...props}
+                    onCloseAutoFocus={(e) => {
+                        onCloseAutoFocus?.(e);
+                        restoreOpenerFocus(e, openerRef);
+                    }}
                 >
-                    <RadixDialog.Title className="sr-only">{title}</RadixDialog.Title>
+                    {/* title verilmezse boş başlık BASILMAZ: görünür başlık <DialogTitle> ile gelir. */}
+                    {title != null
+                        ? <RadixDialog.Title className="sr-only">{title}</RadixDialog.Title>
+                        : null}
                     {description
                         ? <RadixDialog.Description className="sr-only">{description}</RadixDialog.Description>
                         : null}
@@ -99,8 +134,14 @@ const DialogContent = React.forwardRef(function DialogContent(
 });
 
 const DialogClose = RadixDialog.Close;
+/* Görünür başlık / açıklama: pencereye aria-labelledby / aria-describedby ile bağlanır.
+   İkisi de asChild destekler (Bootstrap sınıflı sayfada div biçimi bozulmadan). */
+const DialogTitle = RadixDialog.Title;
+const DialogDescription = RadixDialog.Description;
 
 Dialog.Content = DialogContent;
 Dialog.Close = DialogClose;
+Dialog.Title = DialogTitle;
+Dialog.Description = DialogDescription;
 
-export { Dialog, DialogContent, DialogClose };
+export { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription };
