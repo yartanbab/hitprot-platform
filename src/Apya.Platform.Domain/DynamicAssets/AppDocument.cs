@@ -133,6 +133,29 @@ public class AppDocument : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     /// <summary>
+    /// Removes every block whose id is not in <paramref name="keptIds"/>, provided the editor announced
+    /// each of them in <paramref name="expectedRemovals"/>. If any removal was not announced, the
+    /// editor's copy of the form is out of date (failed load, stale tab): nothing is changed and a
+    /// <see cref="BusinessException"/> (FormBlocksOutOfDate, data "Count") is thrown before any mutation.
+    /// Announced ids that are no longer on the form are ignored.
+    /// </summary>
+    public void RemoveBlocksNotIn(IReadOnlyCollection<Guid> keptIds, IReadOnlyCollection<Guid> expectedRemovals)
+    {
+        var removed = _blocks.Where(b => !keptIds.Contains(b.Id)).ToList();
+        var unexpected = removed.Count(b => !expectedRemovals.Contains(b.Id));
+        if (unexpected > 0)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.FormBlocksOutOfDate)
+                .WithData("Count", unexpected);
+        }
+
+        foreach (var block in removed)
+        {
+            _blocks.Remove(block);
+        }
+    }
+
+    /// <summary>
     /// Updates the display order of a specific block.
     /// Throws <see cref="BusinessException"/> if the block is not found.
     /// </summary>

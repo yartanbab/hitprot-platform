@@ -3,7 +3,7 @@ import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
 import { DocsPageHeader, EmptyActions, ProcessRibbon } from '../components/documents';
 import {
   ALLOWED_EXTENSIONS, abpAppPath, abpDocument, abpNotify, fmtSize,
-  getDocumentTypes, setMeta, uploadFile, validate,
+  getDocumentTypes, setBulkMeta, uploadFile, validate,
 } from './api';
 
 /**
@@ -124,29 +124,30 @@ export function UploadRoot() {
     setRunning(false);
   };
 
-  /** Yüklenen partiye toplu künye atar — kuyruğun asıl kazancı bu adım. */
+  /** Yüklenen partiye toplu künye atar — kuyruğun asıl kazancı bu adım.
+   *  Tek istek, kısmi semantik: yalnız doldurulan tür/dönem yazılır, belgenin diğer
+   *  künyesi (proje, tutar, durum, etiket, görünen ad) korunur (DOC-01). Aynı belgenin
+   *  iki sürümü kuyruktaysa kimlik tekilleştirilir; kilitli belge sunucuda atlanır. */
   const applyBulkMeta = async () => {
-    const done = items.filter((i) => i.status === 'done' && i.documentFileId);
-    if (done.length === 0) return;
+    const ids = [...new Set(items
+      .filter((i) => i.status === 'done' && i.documentFileId)
+      .map((i) => i.documentFileId))];
+    if (ids.length === 0) return;
 
     setRunning(true);
-    let ok = 0;
-
-    for (const item of done) {
-      try {
-        await setMeta(item.documentFileId, {
-          displayName: item.name,
-          documentTypeId: bulkTypeId || null,
-          periodCode: bulkPeriod || null,
-        });
-        ok++;
-      } catch (e) {
-        console.error('[Upload] setMeta', item.name, e);
-      }
+    try {
+      const applied = await setBulkMeta({
+        documentFileIds: ids,
+        documentTypeId: bulkTypeId || null,
+        periodCode: bulkPeriod.trim() || null,
+      });
+      abpNotify(applied === ids.length ? 'success' : 'warn', `${applied}/${ids.length} belgeye künye atandı.`);
+    } catch (e) {
+      abpNotify('error', 'Künye atanamadı.');
+      console.error('[Upload] setBulkMeta', e);
+    } finally {
+      setRunning(false);
     }
-
-    setRunning(false);
-    abpNotify(ok === done.length ? 'success' : 'warn', `${ok}/${done.length} belgeye künye atandı.`);
   };
 
   const counts = useMemo(() => {
@@ -238,7 +239,7 @@ export function UploadRoot() {
               <input className="apya-doc-input w-100 mb-2" placeholder="Dönem (örn. 2026-Q1)"
                 value={bulkPeriod} onChange={(e) => setBulkPeriod(e.target.value)} aria-label="Dönem kodu" />
               <Button variant="outline" size="sm" className="w-100"
-                disabled={running || (!bulkTypeId && !bulkPeriod)} onClick={applyBulkMeta}>
+                disabled={running || (!bulkTypeId && !bulkPeriod.trim())} onClick={applyBulkMeta}>
                 Yüklenenlere uygula
               </Button>
             </>

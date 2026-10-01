@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from '../components/ui';
 import { api } from '../lib/api/httpClient';
+import { emitDataChanged } from '../lib/api/dataChanged';
 import { cn } from '../lib/utils';
 
 /**
@@ -47,6 +48,8 @@ export function MeetingActions({ item }) {
             projectId,
             approvedTasks: (parse.data?.suggestions ?? []).filter((_, i) => approved.has(i)),
         }),
+        /* Olay takvimin kendi dinleyicisiyle feed ve ekip yükünü tazeler, damga Pano'yu. */
+        onSuccess: () => emitDataChanged({ entity: 'task', action: 'create' }),
     });
 
     const suggestions = parse.data?.suggestions ?? [];

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api, projectTasks } from './api';
-import { usePanelShown, useAsyncData } from './usePanel';
+import { usePanelShown, useAsyncData, usePanelRefresh } from './usePanel';
 import { groupByTask, partitionByProject } from './grouping';
 import { PanelLoading, PanelError, PanelEmpty, TaskGroupHeader, ProjectGroupHeader } from './PanelChrome';
 
@@ -31,6 +31,7 @@ export function ChecklistPanel({ projectId, kind, mountEl }) {
         ]),
         shown,
     );
+    usePanelRefresh(kind, mountEl, panel);
     const [addingFor, setAddingFor] = useState(null);   // projectScopeKey(pid) | taskId | null
     const [draft, setDraft] = useState('');
     const [busy, setBusy] = useState(false);

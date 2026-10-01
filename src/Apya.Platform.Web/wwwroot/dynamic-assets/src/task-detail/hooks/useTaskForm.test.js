@@ -157,3 +157,119 @@ describe('useTaskForm · butce bagi', () => {
         expect(result.current.toUpdateDto()).toMatchObject({ budgetLineId: 'b2', plannedAmount: 3000 });
     });
 });
+
+/* TSK-01 / STA-04: ayni gorev icin sunucudan gelen yeni veri (kanbanda tasima,
+   arsivle, odak tazelemesi, kayit sonrasi yeniden cekme) forma yansimiyordu; Kaydet
+   eski durumu geri yaziyor, form sebepsiz "kirli" gorunuyordu. */
+describe('useTaskForm · sunucu verisine yeniden temellenme', () => {
+    const SERVER = { ...TASK, status: 2, priority: 2, tags: [] };
+    const renderForm = (task = SERVER) =>
+        renderHook(({ task: t }) => useTaskForm(t), { initialProps: { task } });
+
+    it('ayni id ile sunucudan yeni durum gelince form onu alir, kirli olmaz, DTO yeni durumu tasir', () => {
+        const { result, rerender } = renderForm();
+
+        rerender({ task: { ...SERVER, status: 1 } });
+
+        expect(result.current.values.status).toBe(1);
+        expect(result.current.isDirty).toBe(false);
+        expect(result.current.toUpdateDto().status).toBe(1);
+    });
+
+    it('kullanicinin degistirdigi alan korunur, dokunmadigi alan sunucudan gelir', () => {
+        const { result, rerender } = renderForm();
+        act(() => result.current.setField('priority', 3));
+
+        rerender({ task: { ...SERVER, status: 1 } });
+
+        expect(result.current.values.priority).toBe(3);
+        expect(result.current.values.status).toBe(1);
+        expect(result.current.isDirty).toBe(true);
+        expect(result.current.toUpdateDto()).toMatchObject({ status: 1, priority: 3 });
+    });
+
+    it('farkli goreve geciste form tamamen sifirlanir ve hatalar temizlenir', () => {
+        const { result, rerender } = renderForm();
+        act(() => result.current.setField('title', '   '));
+        act(() => { result.current.validate(); });
+        expect(result.current.errors.title).toBeTruthy();
+
+        rerender({ task: { ...SERVER, id: 't2', title: 'Baska gorev' } });
+
+        expect(result.current.values.title).toBe('Baska gorev');
+        expect(result.current.errors).toEqual({});
+        expect(result.current.isDirty).toBe(false);
+    });
+
+    it('commitSaved: sunucunun duzelttigi etiket yazimi formu kirli birakmaz', () => {
+        const { result, rerender } = renderForm();
+        act(() => result.current.setField('tagNames', ['konaklama']));
+        const sent = result.current.values;
+        const saved = { ...SERVER, tags: [{ id: 'g1', name: 'Konaklama' }] };
+
+        rerender({ task: saved });                       // kayit sonrasi yeniden cekme
+        act(() => result.current.commitSaved(sent, saved));
+
+        expect(result.current.values.tagNames).toEqual(['Konaklama']);
+        expect(result.current.isDirty).toBe(false);
+    });
+
+    it('commitSaved: yeniden cekmeden ONCE cagrilsa da ayni sonuca varir', () => {
+        const { result, rerender } = renderForm();
+        act(() => result.current.setField('tagNames', ['konaklama']));
+        const sent = result.current.values;
+        const saved = { ...SERVER, tags: [{ id: 'g1', name: 'Konaklama' }] };
+
+        act(() => result.current.commitSaved(sent, saved));
+        rerender({ task: saved });
+
+        expect(result.current.values.tagNames).toEqual(['Konaklama']);
+        expect(result.current.isDirty).toBe(false);
+    });
+
+    it('commitSaved: iki etiketli kayitta sunucunun sirasi ve yazimi alinir', () => {
+        const { result, rerender } = renderForm();
+        act(() => result.current.setField('tagNames', ['konaklama', 'anlaşma']));
+        const sent = result.current.values;
+        const saved = { ...SERVER, tags: [{ id: 'g2', name: 'Anlaşma' }, { id: 'g1', name: 'Konaklama' }] };
+
+        rerender({ task: saved });
+        act(() => result.current.commitSaved(sent, saved));
+
+        expect(result.current.values.tagNames).toEqual(['Anlaşma', 'Konaklama']);
+        expect(result.current.isDirty).toBe(false);
+    });
+
+    it('commitSaved: kayit surerken degisen aciklama korunur', () => {
+        const { result, rerender } = renderForm();
+        act(() => result.current.setField('tagNames', ['konaklama']));
+        const sent = result.current.values;
+        act(() => result.current.setField('description', 'Kayit surerken yazildi'));
+        const saved = { ...SERVER, tags: [{ id: 'g1', name: 'Konaklama' }] };
+
+        rerender({ task: saved });
+        act(() => result.current.commitSaved(sent, saved));
+
+        expect(result.current.values.tagNames).toEqual(['Konaklama']);
+        expect(result.current.values.description).toBe('Kayit surerken yazildi');
+        expect(result.current.isDirty).toBe(true);
+    });
+
+    it('commitSaved(sent, undefined) hicbir sey yapmaz', () => {
+        const { result } = renderForm();
+        act(() => result.current.setField('tagNames', ['konaklama']));
+        const before = result.current.values;
+
+        act(() => result.current.commitSaved(before, undefined));
+
+        expect(result.current.values).toBe(before);
+    });
+
+    it('ayni icerikli satir ici nesneyle art arda render sonsuz donguye girmez', () => {
+        const { result, rerender } = renderHook(() => useTaskForm({ ...SERVER }));
+        rerender();
+        rerender();
+        expect(result.current.isDirty).toBe(false);
+        expect(result.current.values.status).toBe(2);
+    });
+});

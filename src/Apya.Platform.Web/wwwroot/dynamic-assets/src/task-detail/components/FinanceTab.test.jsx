@@ -228,6 +228,34 @@ describe('FinanceTab · butce bagi atamasi', () => {
         expect(screen.queryByPlaceholderText('Kalem seç')).not.toBeInTheDocument();
     });
 
+    /* Yetki (ROL-04, Faz 1 devamı): bağ Kaydet ile UpdateAsync'e gider (Edit + sahiplik).
+       Görevi düzenleyemeyen kullanıcıya seçici değil yalnız mevcut bağın özeti basılır. */
+    it('readOnly iken kalem secici ve Bagi kaldir yok, mevcut bagin ozeti basilir', async () => {
+        window.abp = { appPath: '/', auth: { isGranted: (p) => p === 'Platform.Projects.ViewBudget' } };
+        window.apya = {
+            platform: {
+                projectBudgets: {
+                    projectBudget: {
+                        getRecordFormLookup: vi.fn(() => Promise.resolve({ projectId: 'p1', currency: 'TRY', lines: LINES })),
+                    },
+                },
+            },
+        };
+        const form = { values: { projectId: 'p1', budgetLineId: 'b1', plannedAmount: 5000 }, setField: vi.fn() };
+        renderWithClient(
+            <FinanceTab
+                taskId="t-1"
+                task={{ id: 't-1', projectId: 'p1', budgetLineId: 'b1', plannedAmount: 5000, budgetLineName: 'A.1 · Personel', expenses: [], incomes: [] }}
+                form={form}
+                readOnly
+            />,
+        );
+
+        expect(await screen.findByText('A.1 · Personel')).toBeInTheDocument();
+        expect(screen.queryByPlaceholderText('Kalem seç')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /bağı kaldır/i })).not.toBeInTheDocument();
+    });
+
     it('butce gorme yetkisi yoksa duzenleme acilmaz ve lookup CAGRILMAZ', async () => {
         setup({ canViewBudget: false });
 

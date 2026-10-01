@@ -158,10 +158,37 @@
 
     // İstekleri SIRAYLA çalıştırır. Paralel (Promise.all) çağrı bu backend'de
     // sahte eşzamanlılık hatası + sessiz çift yazma riski taşıyor.
+    // Kanban toplu akışıyla aynı semantik: bir kalemin hatası zinciri KESMEZ,
+    // her kalem denenir. Hiç reddetmez → { failed: [kalemler], error: ilk hata }.
     function runSequential(items, fn) {
+        var failed = [], firstError = null;
         return items.reduce(function (chain, item) {
-            return chain.then(function () { return fn(item); });
-        }, Promise.resolve());
+            return chain.then(function () {
+                // fn senkron fırlatsa da zincir kopmasın.
+                return Promise.resolve().then(function () { return fn(item); }).catch(function (err) {
+                    failed.push(item);
+                    if (!firstError) { firstError = err || null; }
+                });
+            });
+        }, Promise.resolve()).then(function () {
+            return { failed: failed, error: firstError };
+        });
+    }
+
+    // runSequential sonucunu bildirir (kanban finishBulk ile aynı dil): başarısızlar
+    // KODUYLA ve ilk sebeple, başarılılar sayıyla. labelOf yoksa kısa kimlik yazılır.
+    // Sebep yalnız ABP hata gövdesinde (message) var; ABP dışı jqXHR'de yok.
+    function notifyBulkResult(ids, result, doneMsg, labelOf) {
+        var label = labelOf || function (id) { return String(id).substring(0, 8); };
+        var failed = (result && result.failed) || [];
+        if (failed.length) {
+            var reason = result.error && result.error.message;
+            abp.notify.error(failed.map(label).join(', ') + ' işlenemedi.' + (reason ? ' ' + reason : ''));
+        }
+        var ok = ids.length - failed.length;
+        if (ok > 0) {
+            abp.notify.success(ok + ' ' + doneMsg);
+        }
     }
 
     // --- Satır yoğunluğu ----------------------------------------------------
@@ -881,6 +908,7 @@
         createSubtaskHierarchy: createSubtaskHierarchy,
         bindShortcuts: bindShortcuts,
         runSequential: runSequential,
+        notifyBulkResult: notifyBulkResult,
         createTabs: createTabs
     };
 })(window, jQuery);

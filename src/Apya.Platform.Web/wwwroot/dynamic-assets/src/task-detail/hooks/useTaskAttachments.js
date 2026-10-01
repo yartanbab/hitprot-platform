@@ -50,6 +50,7 @@ export function useTaskAttachments(taskId) {
         queryFn: () => fetchAttachments(taskId),
         enabled: Boolean(taskId),
         staleTime: 30_000,
+        meta: { persist: false },
         retry: false,
     });
 

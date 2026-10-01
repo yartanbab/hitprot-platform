@@ -233,4 +233,72 @@ public class FormConditionalFields_Tests : PlatformEntityFrameworkCoreTestBase
             missing.Code.ShouldBe(PlatformDomainErrorCodes.FormRequiredAnswerMissing);
         }
     }
+
+    /// <summary>
+    /// DOC-02 · Oluşturucuda tek kayıtla kurulan koşul (üst alan da o kayıtta yeni) yayında çalışır. Önceden
+    /// koşul üst alanın geçici kimliğiyle saklanıyor, sunucu kuralı okuyamayıp zorunlu alanı hep arıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Ilk_kayitta_kurulan_kosul_yayinda_calisir()
+    {
+        var form = await _formAppService.CreateAsync(new CreateUpdateFormDto
+        {
+            Title = "Katılım bilgisi",
+            Blocks = new List<CreateBlockDto>
+            {
+                new() { ClientId = "w06hu9nb", Type = BlockType.Dropdown, Order = 1, Content = "Katılacak mısınız?", Settings = "{\"required\":true,\"options\":[\"Evet\",\"Hayır\"]}" },
+                new()
+                {
+                    ClientId = "k3j9x0aa", Type = BlockType.ShortText, Order = 2, Content = "Kaç kişi?",
+                    Settings = "{\"required\":true,\"visibleWhen\":{\"blockId\":\"w06hu9nb\",\"op\":\"eq\",\"value\":\"Evet\"}}"
+                }
+            }
+        });
+
+        await _formAppService.PublishAsync(form.Id, new PublishFormDto { Slug = "katilim-" + Guid.NewGuid().ToString("N")[..6] });
+        var published = await _formAppService.GetAsync(form.Id);
+        var parentId = published.Blocks.Single(b => b.Order == 1).Id;
+
+        using (_currentTenant.Change(await CreateTenantAsync()))
+        {
+            await SubmitAsync(published, new Dictionary<string, object> { [parentId.ToString()] = "Hayır" });
+
+            var missing = await Should.ThrowAsync<BusinessException>(() => SubmitAsync(
+                published, new Dictionary<string, object> { [parentId.ToString()] = "Evet" }));
+            missing.Code.ShouldBe(PlatformDomainErrorCodes.FormRequiredAnswerMissing);
+        }
+    }
+
+    /// <summary>
+    /// Koşuldaki alan formda yoksa (silinmiş) kural YOK sayılır: alan görünür, zorunluysa aranır. İstemci de
+    /// aynı kuralı uygular; önceden sunucu alanı gizli, istemci görünür sayabiliyordu.
+    /// </summary>
+    [Fact]
+    public async Task Formda_olmayan_alana_bagli_kosul_yok_sayilir()
+    {
+        var form = await _formAppService.CreateAsync(new CreateUpdateFormDto
+        {
+            Title = "Sarkık koşul",
+            Blocks = new List<CreateBlockDto>
+            {
+                new() { Type = BlockType.ShortText, Order = 1, Content = "Firma adı", Settings = "{}" },
+                new()
+                {
+                    Type = BlockType.ShortText, Order = 2, Content = "Ortak firma adı",
+                    Settings = $"{{\"required\":true,\"visibleWhen\":{{\"blockId\":\"{Guid.NewGuid()}\",\"op\":\"answered\"}}}}"
+                }
+            }
+        });
+
+        await _formAppService.PublishAsync(form.Id, new PublishFormDto { Slug = "sarkik-" + Guid.NewGuid().ToString("N")[..6] });
+        var published = await _formAppService.GetAsync(form.Id);
+        var firstId = published.Blocks.Single(b => b.Order == 1).Id;
+
+        using (_currentTenant.Change(await CreateTenantAsync()))
+        {
+            var missing = await Should.ThrowAsync<BusinessException>(() => SubmitAsync(
+                published, new Dictionary<string, object> { [firstId.ToString()] = "Gediz Cam A.Ş." }));
+            missing.Code.ShouldBe(PlatformDomainErrorCodes.FormRequiredAnswerMissing);
+        }
+    }
 }

@@ -35,6 +35,11 @@
             <strong>Süresi olmayan</strong> (süresiz) müşteriler bu kurallardan hiç etkilenmez.
             <apya-hint text="Müşteriye süre, kiracı yönetimi ekranındaki 'Paket Değiştir' ile verilir. Süre verilmemiş müşteri süresiz sayılır ve hiçbir zaman düşürülmez." />
         </p>
+        @* Form JS ayarları YÜKLEYENE kadar kilitli: uç tam güncellemedir, boş/yarım form kaydedilirse
+           tüm süre/yükseltme/bedel ayarları ezilir (ADM-11). Tekrar dene kutusu fieldset'in DIŞINDA —
+           içeride olsaydı düğme de kilitlenirdi. *@
+        <div id="SubLoadState"></div>
+        <fieldset id="SubSettingsForm" disabled>
         <div class="row g-3 align-items-end">
             <div class="col-12 col-md-4">
                 <div class="form-check form-switch">
@@ -118,6 +123,7 @@
                 </button>
             </div>
         </div>
+        </fieldset>
     </abp-card-body>
 </abp-card>
 </div>

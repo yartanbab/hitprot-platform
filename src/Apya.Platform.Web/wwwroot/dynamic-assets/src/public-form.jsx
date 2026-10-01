@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { formTenantFromSearch } from './lib/publicFormLink';
-import { prefillChoice, sourceEmptyLabel } from './lib/formChoices';
+import { prefillChoice, sourceEmptyLabel, withoutStaleChoice } from './lib/formChoices';
 import { hiddenBlockIds, withoutHidden } from './lib/formConditions';
 import './index.css';
 
@@ -131,6 +131,7 @@ function PublicForm({ slug }) {
   const [prefilled, setPrefilled] = useState({}); // alan kimliği → bağlantıdan ön seçilen değer
   const [chained, setChained] = useState({}); // zincirli alan kimliği → üst seçime göre gelen liste
   const [chainedLoading, setChainedLoading] = useState({});
+  const chainedRequests = useRef({}); // zincirli alan kimliği → son istek sırası
   const honeypot = useRef(''); // bot doldurur, insan boş bırakır
 
   // GÖREV BAĞLAMI — form bir görevin süreli paylaşım linkinden açıldıysa adreste
@@ -194,10 +195,12 @@ function PublicForm({ slug }) {
 
   /**
    * 16b · Üst alan değişince ona bağlı alanın CEVABI DÜŞER ve listesi yeniden istenir: eski projenin görevi
-   * yeni projede geçerli değil, sunucu da onu reddederdi.
+   * yeni projede geçerli değil, sunucu da onu reddederdi. Üst alan bu cevapla GİZLENİRSE de aynısı olur:
+   * gizli üstün cevabı aşağıda düşer, çocuk onun listesi ve seçimiyle kalırsa gönderim reddedilirdi.
    */
   const onChange = (id, v) => {
-    const children = (doc?.blocks || []).filter((b) => b.dependsOnBlockId === id);
+    const hiddenNow = hiddenBlockIds(fields, { ...answers, [id]: v }, choicesOf);
+    const children = fields.filter((b) => b.dependsOnBlockId === id || hiddenNow.has(b.dependsOnBlockId));
     setAnswers((p) => {
       const next = { ...p, [id]: v };
       for (const c of children) delete next[c.id];
@@ -206,19 +209,36 @@ function PublicForm({ slug }) {
     // Bu cevapla gizlenen alanların cevabı da düşer (koşul sonradan bozulmuş olabilir).
     setAnswers((p) => withoutHidden(p, hiddenBlockIds(fields, p, choicesOf)));
 
-    const parentValue = v && typeof v === 'object' ? v.value : v;
+    const selected = v && typeof v === 'object' ? v.value : v;
     for (const child of children) {
+      // Gizlenen üstün değeri sayılmaz: çocuğun listesi boş kalır.
+      const parentValue = child.dependsOnBlockId === id ? selected : null;
+      // Yalnız son üst seçimin seçenekleri yazılır; eski seçimin geç dönen listesi
+      // yeni seçimin altına düşerse seçilen değer sunucuda reddedilirdi.
+      const request = (chainedRequests.current[child.id] || 0) + 1;
+      chainedRequests.current[child.id] = request;
+      const isLatest = () => chainedRequests.current[child.id] === request;
+      // Eski üst seçimin listesi hemen boşalır: yeni liste gelene kadar alan kapalıdır ve
+      // önceki seçimin seçeneği seçilip cevaba yazılamaz.
+      setChained((p) => ({ ...p, [child.id]: [] }));
       if (!parentValue) {
-        setChained((p) => ({ ...p, [child.id]: [] }));
+        // Bayatlayan isteğin finally'si atlandığı için yükleniyor burada kapanır.
+        setChainedLoading((p) => ({ ...p, [child.id]: false }));
         continue;
       }
       setChainedLoading((p) => ({ ...p, [child.id]: true }));
       const tenantQuery = formTenantId.current ? `&tenantId=${formTenantId.current}` : '';
       const url = `/api/app/public-document/block-choices?slug=${encodeURIComponent(slug)}&blockId=${child.id}&parentValue=${encodeURIComponent(parentValue)}${tenantQuery}`;
+      const applyChoices = (choices) => {
+        if (!isLatest()) return;
+        setChained((p) => ({ ...p, [child.id]: choices }));
+        // Savunma: yeni listede olmayan cevap kalmaz.
+        setAnswers((p) => withoutStaleChoice(p, child.id, choices));
+      };
       api.get(url)
-        .then((choices) => setChained((p) => ({ ...p, [child.id]: choices || [] })))
-        .catch(() => setChained((p) => ({ ...p, [child.id]: [] })))
-        .finally(() => setChainedLoading((p) => ({ ...p, [child.id]: false })));
+        .then((choices) => applyChoices(choices || []))
+        .catch(() => applyChoices([]))
+        .finally(() => { if (isLatest()) setChainedLoading((p) => ({ ...p, [child.id]: false })); });
     }
   };
 

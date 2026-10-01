@@ -8,6 +8,8 @@
  *
  * Kural HER ZAMAN yukarıdaki bir alanı gösterir (düzenleyici başkasını seçtirmez), bu yüzden
  * sıraya göre tek geçiş yeter: üst alan gizliyse ona bağlı alan da gizlenir.
+ *
+ * Koşuldaki alan formda yoksa kural YOK sayılır (alan görünür), sunucudaki FormConditionEvaluator ile aynı.
  */
 
 export const VISIBLE_WHEN = 'visibleWhen';
@@ -67,9 +69,10 @@ const matches = (values, expected) =>
  */
 export function hiddenBlockIds(blocks, answers, choicesOf = () => []) {
     const hidden = new Set();
+    const ids = new Set(blocks.map((b) => b.id));
     for (const block of blocks) {
         const rule = visibilityRule(block);
-        if (!rule) continue;
+        if (!rule || !ids.has(rule.blockId)) continue;
         if (hidden.has(rule.blockId)) { hidden.add(block.id); continue; }
 
         const values = answerValues(answers?.[rule.blockId]);

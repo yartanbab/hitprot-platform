@@ -24,6 +24,7 @@ export function useTaskFeatures(taskId) {
         queryFn: () => fetchFeatures(taskId),
         enabled: Boolean(taskId),
         staleTime: 30_000,
+        meta: { persist: false },
         retry: false,
     });
 

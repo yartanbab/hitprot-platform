@@ -14,7 +14,8 @@ import { SubtaskSheetV3 } from './components/SubtaskSheetV3';
 import { getPickerEntries, getVisibleTabs, TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
 import { isUnbuilt } from './featureCatalogV3';
 import { useTabOrder } from './hooks/useTabOrder';
-import { useTaskDetail, isGranted } from '../hooks/useTaskDetail';
+import { useTaskDetail } from '../hooks/useTaskDetail';
+import { getTaskPermissions } from '../taskPermissions';
 import { useDirtyGuard } from '../hooks/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
 import { useTaskForm } from '../hooks/useTaskForm';
@@ -23,6 +24,7 @@ import { useAssigneeOptions } from '../hooks/useAssigneeOptions';
 import { useProjectOptions } from '../hooks/useProjectOptions';
 import { useTaskFeatures } from '../hooks/useTaskFeatures';
 import { taskDetailStore } from '../taskDetailStore';
+import { isTaskDerivedQuery } from '../../lib/api/dataChanged';
 
 const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 
@@ -86,6 +88,24 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         if (form.isDirty) guard.markDirty(); else guard.markClean();
     });
 
+    /* STA-19 — adada yazma olduysa kapanışta liste/kanban tazelensin, olmadıysa
+       tazelenmesin. Yazmanın ortak izi ardından gelen invalidateQueries; MutationCache
+       'added' useMutation'lı hook yazmalarını istek BAŞLARKEN yakalar (modal istek
+       uçuştayken kapatılsa bile). Kök işleyicileri ayrıca açıkça markChanged çağırır.
+       Görev türevi (pano/takvim) sorgular sayılmaz: ortak oturum önbelleği bu istemciye
+       de geri yüklenir ve QueryProvider'ın veri-değişti damgası onları geçersizler
+       (invalidateOlderThanLastChange) — yazma değil; modal bu anahtarları hiç yazmaz. */
+    useEffect(() => {
+        const offQ = queryClient.getQueryCache().subscribe((e) => {
+            if (e.type === 'updated' && e.action?.type === 'invalidate'
+                && !isTaskDerivedQuery(e.query.queryKey)) taskDetailStore.markChanged();
+        });
+        const offM = queryClient.getMutationCache().subscribe((e) => {
+            if (e.type === 'added') taskDetailStore.markChanged();
+        });
+        return () => { offQ(); offM(); };
+    }, [queryClient]);
+
     const closeNow = useCallback(() => { clearTaskUrl(); onClose?.(); }, [onClose]);
     const requestClose = useCallback(() => guard.requestClose(closeNow), [guard, closeNow]);
 
@@ -139,8 +159,15 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         }
         setIsSaving(true);
         try {
-            await Promise.resolve(window.apya.platform.tasks.task.update(currentTaskId, form.toUpdateDto()));
+            const sent = form.values;
+            const saved = await Promise.resolve(window.apya.platform.tasks.task.update(currentTaskId, form.toUpdateDto()));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
+            /* Sunucunun normalize ettiği değerleri (etiket yazımı/sırası) forma işle;
+               yoksa başarılı kayıttan sonra form sebepsiz "kirli" kalır. Birincil kaynak
+               yeniden çekilen kayıt (GetAsync'in etiket sırası 'initial' ile birebir),
+               çekme başarısızsa UpdateAsync'in döndürdüğü TaskDto. */
+            const st = queryClient.getQueryState(['task-detail', currentTaskId]);
+            form.commitSaved(sent, st?.status === 'success' ? st.data : saved);
             taskDetailStore.emitResult();
             setJustSaved(true);
             setTimeout(() => setJustSaved(false), 2000);
@@ -172,12 +199,16 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         return () => window.removeEventListener('keydown', onKey);
     }, [doSave, form.isDirty, isSaving, transfer]);
 
-    /* ─── ⋯ menüsü eylemleri ─── */
+    /* ─── ⋯ menüsü eylemleri ───
+       Her yazma taskDetailStore.markChanged()'i İLK await'ten ÖNCE çağırır: istek
+       uçuştayken modal kapatılsa da kanban/liste tazelenir. Başarısız yazmada en kötü
+       sonuç fazladan bir yenileme. */
     const svc = () => window?.apya?.platform?.tasks?.task;
 
     const handleToggleFavorite = async () => {
         const next = !isFavorite;
         setIsFavorite(next);
+        taskDetailStore.markChanged();
         try {
             await Promise.resolve(svc()?.toggleFavorite(currentTaskId));
         } catch (err) {
@@ -205,6 +236,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     const handleToggleWatch = async () => {
         const next = !isWatched;
         setIsWatched(next);
+        taskDetailStore.markChanged();
         try {
             await Promise.resolve(svc()?.toggleWatch(currentTaskId));
             notify.info(next ? 'Görev takip ediliyor.' : 'Takip bırakıldı.');
@@ -215,6 +247,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     };
 
     const handleDuplicate = async () => {
+        taskDetailStore.markChanged();
         try {
             const result = await Promise.resolve(svc()?.transfer(currentTaskId, {
                 mode: 2, // Copy
@@ -231,9 +264,13 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     };
 
     const handleArchive = async () => {
+        taskDetailStore.markChanged();
         try {
             await Promise.resolve(svc()?.updateStatus(currentTaskId, 4));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
+            /* Rebase kullanıcının kaydetmediği durum seçimini korur; Kaydet arşivi geri
+               almasın diye eylemin yazdığı alan forma işlenir (diğer düzenlemeler kalır). */
+            form.setField('status', 4);
             notify.info('Görev arşivlendi (Tamamlandı).');
         } catch (err) {
             notify.err(err?.message || 'Görev arşivlenemedi.');
@@ -242,6 +279,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
 
     const handleDelete = async () => {
         if (!window.confirm('Bu görev ve tüm alt görevleri kalıcı olarak silinecek. Devam edilsin mi?')) return;
+        /* closeNow() → onClose → emitResultIfChanged zinciri bayrağı görmeli. */
+        taskDetailStore.markChanged();
         try {
             await Promise.resolve(svc()?.delete(currentTaskId));
             notify.info('Görev silindi.');
@@ -291,6 +330,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     };
 
     const handleTransferConfirm = async ({ mode, targetProjectIds, include }) => {
+        taskDetailStore.markChanged();
         try {
             const result = await Promise.resolve(svc()?.transfer(currentTaskId, {
                 mode: mode === 'move' ? 1 : 2,
@@ -298,6 +338,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 include,
             }));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
+            /* Taşımada görev ilk hedefe geçer (TaskManager.TransferAsync); arşivle ile aynı gerekçe. */
+            if (mode === 'move') form.setField('projectId', targetProjectIds[0]);
             const names = targetProjectIds
                 .map((id) => projects.options.find((p) => p.value === id)?.label)
                 .filter(Boolean);
@@ -315,13 +357,9 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
 
     /* ─── Yetki ─── Sunucudaki kuralın aynısı (TaskAppService.EnsureCanMutateTaskAsync):
        uç izni + görevin sahibi (oluşturan/atanan) ya da ekip yöneticisi. Eskiden detay
-       herkese düzenlenebilir çiziliyordu; stajyer değişiklik yapıp Kaydet'te 403 alıyordu. */
-    const me = window?.abp?.currentUser?.id;
-    const canManage = Boolean(me && (task?.creatorId === me || task?.assigneeId === me))
-        || isGranted('Platform.Projects.ManageTeam');
-    const canEdit = canManage && isGranted('Platform.Tasks.Edit');
-    const canChangeStatus = canManage && isGranted('Platform.Tasks.ChangeStatus');
-    const canDelete = canManage && isGranted('Platform.Tasks.Delete');
+       herkese düzenlenebilir çiziliyordu; stajyer değişiklik yapıp Kaydet'te 403 alıyordu.
+       Hesap ortak yardımcıda: alt görev paneli aynı kuralı alt görevin kendi kaydına uygular. */
+    const { canEdit, canChangeStatus, canDelete } = getTaskPermissions(task);
 
     /* ─── İçerik ─── */
     const isGeneral = activeTabCode === 'general';

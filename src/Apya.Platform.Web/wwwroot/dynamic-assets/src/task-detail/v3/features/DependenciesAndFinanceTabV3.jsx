@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { statusOf } from '../taskMetaV3';
 import { TAB_CARD, RowBadge, TabEmptyState } from '../tabPrimitives';
+import { taskToUpdateDto } from '../../taskUpdateDto';
 
 function GroupCard({ icon, iconTone, title, note, children }) {
     return (
@@ -23,8 +24,11 @@ function GroupCard({ icon, iconTone, title, note, children }) {
  * ters yönlü sorgu (bu görevi öncül gösteren görevler) gerekiyor ve karşılığı
  * olan bir uç nokta YOK — o kart bilinçli olarak boş durumla render edilir,
  * uydurma satır gösterilmez.
+ *
+ * `readOnly`: bağlantı kaldırma görevin TAM güncellemesidir (UpdateAsync → Edit +
+ * sahiplik); yetkisiz kullanıcıya düğme çizilmez.
  */
-export function DependenciesTabV3({ task = {} }) {
+export function DependenciesTabV3({ task = {}, readOnly = false }) {
     const queryClient = useQueryClient();
     const ids = task.predecessorIds || [];
     const svc = () => window?.apya?.platform?.tasks?.task;
@@ -42,30 +46,17 @@ export function DependenciesTabV3({ task = {} }) {
         },
         enabled: ids.length > 0,
         staleTime: 30_000,
+        meta: { persist: false },
         retry: false,
     });
 
-    /** Bağlantıyı kaldır — görevi kalan öncüllerle günceller (anında persist eder). */
+    /** Bağlantıyı kaldır — görevi kalan öncüllerle günceller (anında persist eder).
+     *  DTO ortak yardımcıdan: elle kurulan kopya bütçe bağını düşürüp siliyordu (STA-01). */
     const unlink = async (predecessorId) => {
         try {
-            await Promise.resolve(svc().update(task.id, {
-                title: task.title,
-                description: task.description ?? null,
-                startDate: (task.startDate ?? '').slice(0, 10),
-                dueDate: task.dueDate ? task.dueDate.slice(0, 10) : null,
-                status: task.status,
-                priority: task.priority,
-                assigneeId: task.assigneeId ?? null,
-                boardColumnId: task.boardColumnId ?? null,
-                projectId: task.projectId ?? null,
-                parentTaskId: task.parentTaskId ?? null,
-                isPrivate: Boolean(task.isPrivate),
+            await Promise.resolve(svc().update(task.id, taskToUpdateDto(task, {
                 predecessorIds: ids.filter((x) => x !== predecessorId),
-                tagNames: (task.tags ?? []).map((t) => t.name),
-                estimatedHours: task.estimatedHours ?? null,
-                taskType: task.taskType ?? null,
-                sprint: task.sprint ?? null,
-            }));
+            })));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] });
             window?.abp?.notify?.info?.('Bağlantı kaldırıldı.');
         } catch (err) {
@@ -104,15 +95,17 @@ export function DependenciesTabV3({ task = {} }) {
                                     {d.title || 'Başlıksız görev'}
                                 </button>
                                 {st && <RowBadge bg={st.bg} fg={st.fg}>{st.label}</RowBadge>}
-                                <button
-                                    type="button"
-                                    title="Bağlantıyı kaldır"
-                                    aria-label={`${d.title} bağlantısını kaldır`}
-                                    onClick={() => unlink(d.id)}
-                                    className="flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer"
-                                >
-                                    <i className="fa-solid fa-link-slash text-[10px]" />
-                                </button>
+                                {!readOnly && (
+                                    <button
+                                        type="button"
+                                        title="Bağlantıyı kaldır"
+                                        aria-label={`${d.title} bağlantısını kaldır`}
+                                        onClick={() => unlink(d.id)}
+                                        className="flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer"
+                                    >
+                                        <i className="fa-solid fa-link-slash text-[10px]" />
+                                    </button>
+                                )}
                             </div>
                         );
                     })

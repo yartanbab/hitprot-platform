@@ -1,6 +1,6 @@
 import { j as e, r as u, d as Q, b as pe } from "./react-vendor-D57GAUXd.js";
 import { u as be, B, c as D, S as K, b as U, e as ye, M as ve, I as _, a as Y, T as je } from "./Dialog-Bky2XNdc.js";
-import { a as ke } from "./QueryProvider-B4436sFh.js";
+import { a as ke } from "./QueryProvider-CMEXdgTM.js";
 import { u as ce, r as we, T as Ce } from "./registerServiceWorker-MivfkJsD.js";
 import { C as Se } from "./Combobox-D5mSMyzC.js";
 import { t as N } from "./i18n-DkhYld-7.js";

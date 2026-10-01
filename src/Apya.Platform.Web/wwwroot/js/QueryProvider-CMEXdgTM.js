@@ -1,8 +1,9 @@
-import { r, j as a } from "./react-vendor-D57GAUXd.js";
-import { c as i, Q as d, d as u, P as c } from "./query-vendor-Bf69L2iP.js";
-import { A as l } from "./httpClient-DePjXdo1.js";
-const p = "apya-rq-cache", o = 60 * 60 * 1e3;
-function h() {
+import { r as o, j as n } from "./react-vendor-D57GAUXd.js";
+import { c as d, Q as u, d as c, P as l } from "./query-vendor-Bf69L2iP.js";
+import { A as p } from "./httpClient-DePjXdo1.js";
+import { a as h } from "./dataChanged-DR0MWWqM.js";
+const m = "apya-rq-cache", i = 60 * 60 * 1e3;
+function f() {
   try {
     const e = window.sessionStorage, t = "__apya_probe__";
     return e.setItem(t, "1"), e.removeItem(t), e;
@@ -12,27 +13,33 @@ function h() {
 }
 function y() {
   var s;
-  const e = h();
+  const e = f();
   if (!e) return null;
   const t = typeof window < "u" ? (s = window.abp) == null ? void 0 : s.currentUser : null;
   return t != null && t.id ? {
-    persister: i({
+    persister: d({
       storage: e,
-      key: p,
+      key: m,
       /* Her mutasyonda değil, saniyede bir yaz — ana iş parçacığını meşgul etme. */
       throttleTime: 1e3
     }),
-    maxAge: o,
+    maxAge: i,
     buster: `${t.tenantId ?? "host"}:${t.id}`,
     dehydrateOptions: {
       /* Hatalı ya da yüklenmekte olan sorgu saklanmaz: bir sonraki açılışta
-         hata ekranını "önbellekten" göstermenin anlamı yok. */
-      shouldDehydrateQuery: (n) => n.state.status === "success"
+         hata ekranını "önbellekten" göstermenin anlamı yok.
+         meta.persist:false → canlı/düzenlenebilir kayıt; açılışlar ve sayfalar
+         arasında taşınmaz (başka ekranın yazmasından habersiz eski hâli
+         göstermesin, kullanıcı o eski hâlin üzerine yazmasın). */
+      shouldDehydrateQuery: (r) => {
+        var a;
+        return r.state.status === "success" && ((a = r.meta) == null ? void 0 : a.persist) !== !1;
+      }
     }
   } : null;
 }
-function f() {
-  return new d({
+function b() {
+  return new u({
     defaultOptions: {
       queries: {
         staleTime: 3e4,
@@ -40,10 +47,10 @@ function f() {
            geri yüklenen sorgular gcTime dolduğu anda çöpe gider ve
            kalıcılaştırma sessizce etkisiz kalırdı. İkisi tek yerden
            (PERSIST_MAX_AGE_MS) besleniyor ki ayrışmasınlar. */
-        gcTime: o,
+        gcTime: i,
         refetchOnWindowFocus: !0,
         refetchOnReconnect: !0,
-        retry: (e, t) => t instanceof l && t.status >= 400 && t.status < 500 ? !1 : e < 2
+        retry: (e, t) => t instanceof p && t.status >= 400 && t.status < 500 ? !1 : e < 2
       },
       mutations: {
         /* Mutation default'ta retry YAPMAZ — duplicate finansal işlem riski. */
@@ -52,7 +59,7 @@ function f() {
     }
   });
 }
-const v = {
+const x = {
   dashboard: {
     /* Desen: ['dashboard', <bölüm>, { range, projectId }] — filtre değişince
        yeni key, eski veri cache'te kalır (sekme geçişi anında). */
@@ -69,11 +76,21 @@ const v = {
     aiSuggestions: (e) => e ? ["dashboard", "ai-suggestions", e] : ["dashboard", "ai-suggestions"]
   }
 };
-function S({ children: e }) {
-  const [t] = r.useState(() => f()), [s] = r.useState(() => y());
-  return s ? /* @__PURE__ */ a.jsx(c, { client: t, persistOptions: s, children: e }) : /* @__PURE__ */ a.jsx(u, { client: t, children: e });
+function Q({ children: e }) {
+  const [t] = o.useState(() => b()), [s] = o.useState(() => y());
+  return s ? /* @__PURE__ */ n.jsx(
+    l,
+    {
+      client: t,
+      persistOptions: s,
+      onSuccess: () => {
+        h(t);
+      },
+      children: e
+    }
+  ) : /* @__PURE__ */ n.jsx(c, { client: t, children: e });
 }
 export {
-  v as Q,
-  S as a
+  x as Q,
+  Q as a
 };

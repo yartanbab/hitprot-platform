@@ -21,9 +21,11 @@ const handler = (name, params = {}) => {
 
 export const getDocumentTypes = () => abpAjax({ url: handler('DocumentTypes'), type: 'GET' });
 
-export const setMeta = (id, dto) =>
+/* Toplu künye: { documentFileIds, documentTypeId?, periodCode? } — yalnız dolu alan
+   yazılır, uygulanan belge sayısı döner (DOC-01). */
+export const setBulkMeta = (dto) =>
   abpAjax({
-    url: handler('SetMeta', { id }),
+    url: handler('ApplyBulkMeta'),
     type: 'POST',
     contentType: 'application/json',
     data: JSON.stringify(dto),

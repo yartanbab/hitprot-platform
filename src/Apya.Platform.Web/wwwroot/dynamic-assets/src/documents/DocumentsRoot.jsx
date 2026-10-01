@@ -150,18 +150,27 @@ export function DocumentsRoot() {
     const smart = initialQuery.get('smart');
     if (smart) return { key: smart, kind: 'smart', smart };
 
+    // Klasör ve iş adımı süzgeci ağaca ihtiyaç duymaz: ilk istek doğru bağlamla
+    // gider, ağaç yüklenemese de bağlam ve adres korunur. Ağaç gelince aşağıdaki
+    // geri yükleme effect'i düğümü projeyle zenginleştirir; anahtarlar ağaçtakiyle
+    // aynı biçimde olduğu için vurgu da kendiliğinden oturur (DOC-V01).
+    const folderId = initialQuery.get('folder');
+    if (folderId) return { key: `folder-${folderId}`, kind: 'folder', documentId: folderId };
+    const stepId = initialQuery.get('step');
+    if (stepId) return { key: `step-${stepId}`, kind: 'workstep', workStepId: stepId };
+
     // Süreç şeridinden (?projectId=) gelindi: bağlam ağaç yüklenmeden de proje
     // düzeyinde kurulur. Projenin klasörü ağaçta varsa aşağıdaki geri yükleme
     // effect'i düğümü o klasöre çevirir; yoksa proje düğümü olarak kalır.
     const projectId = initialQuery.get('projectId');
-    if (projectId && !initialQuery.get('folder') && !initialQuery.get('step')) {
-      return { key: `project-${projectId}`, kind: 'project', projectId };
-    }
+    if (projectId) return { key: `project-${projectId}`, kind: 'project', projectId };
 
-    // Klasör/iş adımı düğümü ağaç yüklenmeden çözülemez (projeyi ağaç taşıyor);
-    // onu aşağıdaki geri yükleme effect'i tamamlar.
     return { key: 'all', kind: 'all' };
   });
+  const initialNodeRef = useRef(node);
+  // ?projectId= ağaçtaki proje klasörüne çevrilecek; liste önce proje, sonra
+  // klasörle iki kez gelip yanıp sönmesin diye ağaç çözülene kadar beklenir.
+  const [restoring, setRestoring] = useState(() => node.kind === 'project');
 
   // Yükleme yalnız klasör bağlamında yapılır; uygunluk ve etkinlik ise proje
   // kapsamında çalışır — klasör de iş adımı da projeyi taşır. Aşağıdaki
@@ -176,6 +185,15 @@ export function DocumentsRoot() {
   const [sorting, setSorting] = useState(initialQuery.get('sort') || 'creationTime desc');
   const [view, setView] = useState(initialQuery.get('view') === 'grid' ? 'grid' : 'list');
   const [page, setPage] = useState(Number(initialQuery.get('page')) || 0);
+
+  // Arama her tuşta istek atmasın; sayfa sıfırlaması da aynı anda, uygulanan
+  // metinle yapılır. Eşitlik koşulu açılışta ?page= derin bağlantısını sıfırlamaz.
+  const [appliedSearch, setAppliedSearch] = useState(search);
+  useEffect(() => {
+    if (search === appliedSearch) return undefined;
+    const id = setTimeout(() => { setAppliedSearch(search); setPage(0); }, 300);
+    return () => clearTimeout(id);
+  }, [search, appliedSearch]);
 
   const [tab, setTab] = useState(() => {
     const requested = initialQuery.get('tab');
@@ -236,7 +254,7 @@ export function DocumentsRoot() {
   /* --- Aktif düğüm → sorgu filtresi --- */
   const filter = useMemo(() => {
     const base = { maxResultCount: PAGE_SIZE, skipCount: page * PAGE_SIZE, sorting };
-    if (search.trim()) base.filterText = search.trim();
+    if (appliedSearch.trim()) base.filterText = appliedSearch.trim();
 
     if (node.kind === 'folder') {
       base.documentId = node.documentId;
@@ -259,26 +277,41 @@ export function DocumentsRoot() {
     }
 
     return base;
-  }, [node, page, sorting, search, suggestions]);
+  }, [node, page, sorting, appliedSearch, suggestions]);
+
+  /* Bağlam ref'ten okunur: mutasyon sonrası yenilemeler (yükleme, taşıma, öneri)
+     o sırada başka düğüme geçildiyse eski bağlamı değil güncelini ister. Sayaç
+     yalnız son isteğin yanıtını yazar; böylece "güncel bağlam kazanır". */
+  const filterRef = useRef(filter);
+  filterRef.current = filter;
+  const filesRequestRef = useRef(0);
 
   const loadFiles = useCallback(async () => {
+    const request = ++filesRequestRef.current;
     setLoadingFiles(true);
     try {
-      const result = await getFiles(filter);
+      const result = await getFiles(filterRef.current);
+      if (request !== filesRequestRef.current) return;
       setFiles(result.items ?? []);
       setTotalCount(result.totalCount ?? 0);
     } catch (e) {
+      if (request !== filesRequestRef.current) return;
       abpNotify('error', 'Belge listesi yüklenemedi.');
       console.error('[Documents] loadFiles', e);
     } finally {
-      setLoadingFiles(false);
+      if (request === filesRequestRef.current) setLoadingFiles(false);
     }
-  }, [filter]);
+  }, []);
 
-  useEffect(() => { loadFiles(); }, [loadFiles]);
+  // İçerik anahtarı: ağaç gelince aynı klasör düğümü projeyle zenginleşir; aynı
+  // isteği ikinci kez atıp iskeleti yeniden göstermesin.
+  const filterKey = JSON.stringify(filter);
+  useEffect(() => { if (!restoring) loadFiles(); }, [filterKey, restoring, loadFiles]);
 
   /* --- KPI: tek satırlık sorgular, yalnız totalCount okunur --- */
+  const kpiRequestRef = useRef(0);
   const loadKpis = useCallback(async () => {
+    const request = ++kpiRequestRef.current;
     try {
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -288,6 +321,7 @@ export function DocumentsRoot() {
         getFiles({ maxResultCount: 1, skipCount: 0, uploadedAfter: monthStart }),
       ]);
 
+      if (request !== kpiRequestRef.current) return;
       setExpiringCount(expiring.totalCount ?? 0);
       setUploadedThisMonth(uploaded.totalCount ?? 0);
     } catch (e) {
@@ -302,7 +336,6 @@ export function DocumentsRoot() {
      özetten okur. Kontrol listesi PROJE kapsamında tanımlı; proje bağlamı
      yoksa özet de yok. Okunamazsa dosya listesi yine çalışır (eksik satırı basılmaz). */
   const compliance = useComplianceOverview(activeProjectId);
-  const reloadCompliance = compliance.reload;
 
   /* İş adımı seçiliyse yalnız o adımın kalemleri süzülür. */
   const missingItems = useMemo(() => {
@@ -329,18 +362,26 @@ export function DocumentsRoot() {
     if (!sameSummary(summary, current.overview?.summary)) current.reload();
   }, []);
 
-  /* --- Öneriler --- */
+  /* --- Öneriler ---
+     Proje ref'ten okunur: öneri işlemi sonrası yenileme o an seçili projeyi ister. */
+  const projectIdRef = useRef(activeProjectId);
+  projectIdRef.current = activeProjectId;
+  const suggestionsRequestRef = useRef(0);
+
   const loadSuggestions = useCallback(async () => {
+    const request = ++suggestionsRequestRef.current;
     try {
-      setSuggestions(await getSuggestions(activeProjectId));
+      const next = await getSuggestions(projectIdRef.current);
+      if (request === suggestionsRequestRef.current) setSuggestions(next);
     } catch (e) {
+      if (request !== suggestionsRequestRef.current) return;
       // Öneri üretilemediyse ekranın geri kalanı çalışmaya devam etmeli.
       setSuggestions(null);
       console.error('[Documents] loadSuggestions', e);
     }
-  }, [activeProjectId]);
+  }, []);
 
-  useEffect(() => { loadSuggestions(); }, [loadSuggestions]);
+  useEffect(() => { loadSuggestions(); }, [activeProjectId, loadSuggestions]);
 
   /* --- İlk kurulum sihirbazı ---
      Yalnız kurulum HİÇ yapılmamışsa açılır. Bayrak kiracı ayarında olduğu için
@@ -429,19 +470,19 @@ export function DocumentsRoot() {
   }, [folders, workSteps]);
 
   /* --- URL'deki klasör/iş adımı düğümünü ağaç gelince geri yükle ---
-     Bir kez çalışır: kullanıcı sonradan başka düğüme geçtiğinde geri sürüklemez. */
+     Bir kez çalışır: kullanıcı sonradan başka düğüme geçtiğinde geri sürüklemez.
+     Ağaç yüklenemezse (boş) adresten kurulan düğüm ve adres korunur. Kullanıcı
+     bu arada "Tüm Dokümanlar" ya da akıllı klasör seçtiyse seçimi ezilmez. */
   const restoredRef = useRef(false);
 
   useEffect(() => {
-    if (restoredRef.current || loadingTree || tree.length === 0) return;
+    if (restoredRef.current || loadingTree) return;
+    restoredRef.current = true;
 
     const folderId = initialQuery.get('folder');
     const stepId = initialQuery.get('step');
     const projectId = initialQuery.get('projectId');
-    if (!folderId && !stepId && !projectId) {
-      restoredRef.current = true;
-      return;
-    }
+    if (!folderId && !stepId && !projectId) return;
 
     const flatten = (nodes) => nodes.flatMap((n) => [n, ...flatten(n.children || [])]);
     const sameId = (a, b) => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
@@ -452,12 +493,15 @@ export function DocumentsRoot() {
       : stepId ? all.find((n) => n.workStepId === stepId)
         : all.find((n) => n.kind === 'folder' && sameId(n.projectId, projectId));
 
-    restoredRef.current = true;
     if (found) {
-      setNode(found);
+      setNode((current) => (current === initialNodeRef.current ? found : current));
       // Geri yüklenen düğümün üstleri açık gelsin ki ağaçta görünsün.
       setExpanded((prev) => new Set([...prev, found.key]));
+    } else if (tree.length > 0 && (folderId || stepId)) {
+      // Bağlantıdaki klasör/adım artık yok: eski davranış, "Tüm Dokümanlar".
+      setNode((current) => (current === initialNodeRef.current ? { key: 'all', kind: 'all' } : current));
     }
+    setRestoring(false);
   }, [loadingTree, tree, initialQuery]);
 
   /* --- Durum → URL --- */
@@ -469,30 +513,40 @@ export function DocumentsRoot() {
     else if (node.kind === 'workstep') params.set('step', node.workStepId);
     else if (node.kind === 'project') params.set('projectId', node.projectId);
     else if (node.kind === 'smart') params.set('smart', node.smart);
-    if (search.trim()) params.set('q', search.trim());
+    if (appliedSearch.trim()) params.set('q', appliedSearch.trim());
     if (view !== 'list') params.set('view', view);
     if (sorting !== 'creationTime desc') params.set('sort', sorting);
     if (page > 0) params.set('page', String(page));
 
     const qs = params.toString();
     window.history.replaceState(null, '', qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
-  }, [tab, node, search, view, sorting, page]);
+  }, [tab, node, appliedSearch, view, sorting, page]);
 
-  /* --- Seçim / detay --- */
+  /* --- Seçim / detay ---
+     Yalnız son açılan satırın detayı yazılır; hata olursa vurgulanan satır ile
+     panel ayrışmasın diye seçim de düşer. */
+  const detailRequestRef = useRef(0);
+
   const openDetail = useCallback(async (file) => {
+    const request = ++detailRequestRef.current;
     setSelectedId(file.id);
     setLoadingDetail(true);
     try {
-      setDetail(await getFile(file.id));
+      const next = await getFile(file.id);
+      if (request === detailRequestRef.current) setDetail(next);
     } catch (e) {
+      if (request !== detailRequestRef.current) return;
+      setSelectedId(null);
+      setDetail(null);
       abpNotify('error', 'Belge detayı açılamadı.');
       console.error('[Documents] openDetail', e);
     } finally {
-      setLoadingDetail(false);
+      if (request === detailRequestRef.current) setLoadingDetail(false);
     }
   }, []);
 
   const handleSave = async (draft) => {
+    const request = detailRequestRef.current;
     setSaving(true);
     try {
       await updateFileMeta(draft.id, {
@@ -516,7 +570,9 @@ export function DocumentsRoot() {
         tags: draft.tags || [],
       });
       flash('Belge güncellendi.');
-      setDetail(await getFile(draft.id));
+      // Bu arada başka satır açıldıysa eski belgenin detayı onun yerine yazılmaz.
+      const next = await getFile(draft.id);
+      if (request === detailRequestRef.current) setDetail(next);
       await loadFiles();
     } catch (e) {
       abpNotify('error', 'Belge güncellenemedi.');
@@ -634,7 +690,9 @@ export function DocumentsRoot() {
         flash(fileList.length === 1 ? 'Dosya yüklendi.' : `${fileList.length} dosya yüklendi.`);
       }
 
-      await Promise.all([loadFiles(), loadKpis(), loadTree(), reloadCompliance()]);
+      // Uygunluk ref'ten: eski projenin reload'u en son istek olursa özet eski projede
+      // kalır ve güncel proje için sonsuza dek "yükleniyor" görünürdü.
+      await Promise.all([loadFiles(), loadKpis(), loadTree(), complianceRef.current.reload()]);
     } catch (e) {
       abpNotify('error', 'Dosya yüklenemedi.');
       console.error('[Documents] upload', e);
@@ -679,6 +737,8 @@ export function DocumentsRoot() {
   });
 
   const selectNode = (next) => {
+    // Kullanıcının açık seçimi geri yüklemeyi beklemez.
+    setRestoring(false);
     setNode(next);
     setPage(0);
     setCheckedIds(new Set());
@@ -711,7 +771,7 @@ export function DocumentsRoot() {
   const noFolders = !loadingTree && folders.length === 0;
 
   let emptyAction = null;
-  if (canCreate && !search.trim() && node.kind !== 'smart') {
+  if (canCreate && !appliedSearch.trim() && node.kind !== 'smart') {
     if (noFolders) {
       // Tasarımdaki ilk kurulum boş durumu: şema sihirbazı ya da boş klasör.
       // Sihirbaz ağaç BOŞKEN yeniden açılabilir — kurulacak hiçbir şey yokken
@@ -910,7 +970,7 @@ export function DocumentsRoot() {
               leading={<i className="fa fa-search" style={{ fontSize: 11 }} />}
               placeholder="Bu bağlamda filtrele"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+              onChange={(e) => setSearch(e.target.value)}
             />
             <span className="apya-grid-count apya-numeric">{totalCount} belge</span>
             <div className="apya-doc-viewtoggle">

@@ -29,6 +29,7 @@ export function useTaskDocuments(taskId) {
         queryFn: () => fetchDocuments(taskId),
         enabled: Boolean(taskId),
         staleTime: 30_000,
+        meta: { persist: false },
         retry: false,
     });
 
@@ -71,6 +72,9 @@ export function useTaskDocument(documentId) {
         queryKey: ['task-document', documentId],
         queryFn: () => Promise.resolve(svc().getDocument(documentId)),
         enabled: Boolean(documentId),
+        /* Kayıt tam değiştirir (updateDocument {id,title,content}); bayat gövdeden
+           kaydetmek başka ekranda yapılan değişikliği ezer. */
+        meta: { persist: false },
         retry: false,
     });
 }

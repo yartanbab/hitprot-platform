@@ -38,7 +38,9 @@ public class FormConditionEvaluator : ITransientDependency
         foreach (var block in document.Blocks.OrderBy(b => b.Order))
         {
             var rule = FormVisibilityRule.Parse(block.Settings);
-            if (rule == null)
+
+            // Koşuldaki alan formda yoksa kural YOK sayılır (alan görünür) — istemciyle (formConditions.js) aynı.
+            if (rule == null || document.Blocks.All(b => b.Id != rule.BlockId))
             {
                 continue;
             }

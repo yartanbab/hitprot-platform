@@ -45,6 +45,7 @@ export function useExpenseMatches(projectId) {
         queryFn: () => ajax({ url: handlerUrl('Matches', { projectId }), type: 'GET' }),
         enabled,
         staleTime: 60_000,
+        meta: { persist: false },
         retry: false,
     });
 
@@ -64,6 +65,7 @@ export function useExpenseCandidates(expenseId, enabled) {
         queryFn: () => ajax({ url: handlerUrl('Candidates', { expenseId }), type: 'GET' }),
         enabled: Boolean(expenseId) && enabled && canSeeDocuments(),
         staleTime: 30_000,
+        meta: { persist: false },
         retry: false,
     });
 

@@ -257,6 +257,13 @@ namespace Apya.Platform.Web.Pages.Tasks
                     Task.PlannedAmount = current.PlannedAmount;
                 }
 
+                // Form planlama alanlarını (tahmini süre, tür, sprint) BASMIYOR; UpdateAsync
+                // bunları koşulsuz yazdığı için her otomatik kayıt siliyordu (STA-01 ile aynı
+                // sınıf). Form bu alanları basarsa BudgetFormRendered deseniyle koşula bağlanmalı.
+                Task.EstimatedHours = current.EstimatedHours;
+                Task.TaskType = current.TaskType;
+                Task.Sprint = current.Sprint;
+
                 ApplyStatusOrColumn(current.Status);
 
                 await _taskAppService.UpdateAsync(Id, Task);

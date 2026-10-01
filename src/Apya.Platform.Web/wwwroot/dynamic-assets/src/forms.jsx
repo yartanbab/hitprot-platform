@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
@@ -31,17 +31,22 @@ function FormsList() {
   const [showSourceModal, setShowSourceModal] = useState(false);
   const canManageCategories = abpAuth('Platform.DynamicAssets.ManageCategories');
 
+  // Kategori çipi hızla değişince yalnız son çipin formları yazılır.
+  const loadRequest = useRef(0);
   const load = async (catId) => {
+    const request = ++loadRequest.current;
     setLoading(true);
     try {
       const qs = new URLSearchParams({ MaxResultCount: '200', SkipCount: '0' });
       if (catId) qs.set('CategoryId', catId);
       const res = await api.get(`/api/app/form?${qs.toString()}`);
+      if (request !== loadRequest.current) return;
       setForms(res.items || []);
     } catch (e) {
+      if (request !== loadRequest.current) return;
       notify('error', e?.message || 'Formlar yüklenemedi.');
     } finally {
-      setLoading(false);
+      if (request === loadRequest.current) setLoading(false);
     }
   };
   const loadCategories = () => {

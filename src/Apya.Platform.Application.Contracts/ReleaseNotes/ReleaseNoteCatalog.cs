@@ -28,9 +28,9 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.09.27",
             date: "27 Eylül 2026",
-            title: "Görev yetkileri her ekranda aynı; Paketim kullanabildiğiniz modülleri gösteriyor; " +
-                   "fatura, gider ve cari ekranları yeniden çalışıyor; tutarlar yazdığınız gibi kaydediliyor; " +
-                   "bildirim zamanları doğru görünüyor",
+            title: "Görev yetkileri her ekranda aynı; kaydetmek başka bilgileri silmiyor; ekranlar " +
+                   "değişiklikleri hemen gösteriyor; fatura, gider ve cari ekranları yeniden çalışıyor; " +
+                   "tutarlar yazdığınız gibi kaydediliyor; bildirim zamanları doğru görünüyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Görevleri yalnız sorumluları değiştirebiliyor",
@@ -40,7 +40,8 @@ public static class ReleaseNoteCatalog
                 "sürüklenebiliyor, takvimden başkasının görevi tamamlanabiliyor, görev detayında ise değişiklik " +
                 "yapılıp kaydederken hata alınıyordu. Başkasının görevini açtığınızda başlıkta 'Salt okunur' " +
                 "etiketi görünüyor; panoda bu kartlar kilitli, takvimde 'Tamamla' ve 'Ertele' yalnız kendi " +
-                "görevlerinizde çıkıyor. Görebildiğiniz her göreve yorum yazmaya devam edebilirsiniz. Ekip " +
+                "görevlerinizde çıkıyor. Aynı kural alt görev panelinde ve görevin Bağımlılıklar ve Finans " +
+                "sekmelerinde de geçerli. Görebildiğiniz her göreve yorum yazmaya devam edebilirsiniz. Ekip " +
                 "arkadaşlarının görevlerini düzenlemesi gereken kişilere, rol izinlerinde Projeler altındaki " +
                 "'Ekip Yönetimi' iznini verebilirsiniz."),
 
@@ -72,6 +73,78 @@ public static class ReleaseNoteCatalog
                 "Yönetici menüsünde görünen 'Sistem Sağlığı' ve 'Geri Bildirimler' yönetim bağlantıları hata " +
                 "sayfası açıyordu. Bu ekranlar platform yönetimine ait olduğu için menünüzden kaldırıldı. " +
                 "Geri bildirim göndermeye üst çubuktaki 'Geri Bildirim' düğmesinden devam edebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Zaman çizelgesinde tarih değiştirmek bağımlılıkları silmiyor",
+                "Zaman çizelgesinde bir görevin tarihini değiştirip kaydetmek, görevin öncül bağımlılıklarını " +
+                "ve bütçe bağını siliyordu; aynı nedenle bağımlılık okları ve kritik yol çizilmiyordu. Artık " +
+                "yalnız tarihler kaydediliyor, oklar ve kritik yol görünüyor. Görev detayında bir öncülü " +
+                "kaldırmak ya da alt görevin durumunu, önceliğini veya açıklamasını değiştirmek de artık bütçe " +
+                "bağını silmiyor. Alt görevin durumunu değiştirdiğinizde, diğer ekranlarda olduğu gibi göreve " +
+                "atanan kişiye bildirim gidiyor. Daha önce zaman çizelgesinden tarihini değiştirdiğiniz " +
+                "görevlerin bağımlılıklarını kontrol etmenizi öneririz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Toplu künye belgenin diğer bilgilerini silmiyor",
+                "Belge yükleme ekranında 'Yüklenenlere uygula' ile tür ya da dönem atadığınızda belgenin proje " +
+                "bağı, tutarı, tarihleri, etiketleri ve görünen adı siliniyor, durumu Taslak'a düşüyordu. Artık " +
+                "yalnız seçtiğiniz tür ve dönem yazılıyor; kilitli belgeler atlanıp sayısı bildiriliyor. Sistem " +
+                "türlerinde saklama bitişi de artık doğru hesaplanıyor. Daha önce toplu künye uyguladığınız " +
+                "belgelerin bilgilerini kontrol etmenizi öneririz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev detayı her açılışta güncel bilgiyle açılıyor",
+                "Görev detayı kısa süre önce açtığınız hâliyle, panoda ya da listede yaptığınız son " +
+                "değişiklikler olmadan açılabiliyordu; bu durumda 'Kaydet' başka yerde yaptığınız değişikliği, " +
+                "örneğin panoda taşıdığınız durumu, geri alıyordu. Detay artık her açılışta güncel bilgiyle " +
+                "açılıyor ve kontrol listesi işaretleri doğru görünüyor. Arşivle ya da başka projeye taşı " +
+                "sonrasında form kaydedilmemiş değişiklik göstermiyor, zaman takibinde 'Sayacı durdur' sonrası " +
+                "sayaç duruyor. Görevi yalnız açıp kapattığınızda pano yeniden yüklenmiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Pano, takvim ve proje panelleri görev değişikliklerini hemen gösteriyor",
+                "Listede, panoda, zaman çizelgesinde ya da takvimde bir görevi değiştirdiğinizde Genel Bakış, " +
+                "takvim ve proje sayfasındaki paneller (Belgeler, Formlar, Kontrol listesi, Bağımlılıklar) eski " +
+                "bilgiyi bir dakikaya kadar göstermeye devam ediyordu. Değişiklik artık aynı sayfada hemen, " +
+                "diğer sayfalarda açtığınızda yansıyor. Takvimden oluşturduğunuz yeni görev takvime hemen " +
+                "ekleniyor. Görevler listesinde toplu durum değiştirme ve silme ilk hatada durmuyor: seçili " +
+                "görevlerin hepsi deneniyor, işlenemeyenler tek bildirimde listeleniyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Arama ve filtrelerde her zaman son sonucunuz görünüyor",
+                "Hızlı arama yaptığınızda ya da filtre değiştirdiğinizde geç dönen eski sonuç yenisinin üstüne " +
+                "yazılabiliyordu (Görevler, Bildirimler, pano, Dokümanlar, Teslimler, Formlarım). Artık yalnız " +
+                "son isteğin sonucu gösteriliyor. Klasör bağlantısıyla açılan Dokümanlar doğrudan o klasörün " +
+                "belgelerini listeliyor. Faturalar ekranında yükleniyor ve hata durumu var; liste yüklenemezse " +
+                "'Tekrar dene' çıkıyor, filtre dışında kalan faturanın detayı açık kalmıyor. Genel formda üst " +
+                "seçimi değiştirdiğinizde bağlı listedeki eski seçenekler seçilemiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Form oluşturucu başka yerde yapılmış değişiklikleri silmiyor",
+                "Form oluşturucu, form yüklenemediğinde boş açılıyordu; bu hâlde ya da aynı formu başka bir " +
+                "sekmede açık tutarken 'Kaydet'e basmak formun sorularını silebiliyordu. Artık yüklenemeyen " +
+                "formda 'Form yüklenemedi' ve 'Tekrar dene' görünüyor; form siz düzenlerken başka yerde " +
+                "değiştiyse hiçbir şey kaydedilmiyor ve bunu söyleyen bir uyarı çıkıyor. Yanıt almış bir " +
+                "formdan soru silerken onay isteniyor. Yeni bir soruya aynı kayıtta kurduğunuz koşul ilk " +
+                "kayıtta doğru bağlanıyor; bağlı olduğu soru silinmiş koşullu sorular gizli kalıp gönderimi " +
+                "kilitlemiyor. 'Yayınla' penceresi mevcut KVKK, bot koruması, yayın tarihleri ve bağlantıyla " +
+                "açılıyor; yeniden yayınlamak bu ayarları sıfırlamıyor, bağlantı adresini değiştirmeden önce " +
+                "onay isteniyor. Pencere küçük ekranda da tamamen görünüyor ve Esc ile kapanıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Kasa & Banka işlemlerden sonra sayfayı yenilemiyor",
+                "Hareket ekleme, düzenleme ve transfer sonrasında sayfa yenileniyor, seçili hesap ve başarı " +
+                "mesajı kayboluyordu; hareket silindiğinde ise bakiye ve toplam güncellenmiyordu. Artık her " +
+                "işlemden sonra hesap kartları, toplam ve hareket listesi sayfa yenilenmeden güncelleniyor, " +
+                "seçili hesap korunuyor ve adres çubuğundaki bağlantıyla da açılıyor. Hesap değiştirirken " +
+                "önceki hesabın hareketleri görünmüyor; liste yüklenemezse 'Tekrar dene' çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kurum profiliniz yüklenmeden kaydedilemiyor",
+                "Hibe ekranındaki kurum profili formu yüklenemediğinde boş açılıyordu; bu hâlde kaydetmek profil " +
+                "bilgilerini ve etiketleri (NACE, sektör, bölge, anahtar kelime, tematik alan) siliyordu. Artık " +
+                "form yüklenene kadar kilitli, yüklenemezse 'Tekrar dene' çıkıyor. Hibe çağrıları geç gelse ya " +
+                "da yüklenemese de profilinizi hemen düzenleyebiliyorsunuz."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Bildirim zamanları doğru gösteriliyor",

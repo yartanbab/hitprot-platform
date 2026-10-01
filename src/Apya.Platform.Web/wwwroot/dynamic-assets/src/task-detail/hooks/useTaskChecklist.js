@@ -22,6 +22,9 @@ export function useTaskChecklist(taskId) {
         queryFn: () => fetchItems(taskId),
         enabled: Boolean(taskId),
         staleTime: 30_000,
+        /* toggleChecklistItem ters çevirir; bayat gösterim yanlış yöne yazar (proje
+           konsolu paneli aynı maddeyi React Query dışından değiştiriyor). */
+        meta: { persist: false },
         retry: false,
     });
 

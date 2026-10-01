@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
@@ -25,6 +28,9 @@ public class FormAppService : PlatformAppService, IFormAppService
     private readonly IRepository<AppResponse, Guid> _responseRepository;
     private readonly ILogger<FormAppService> _logger;
     private readonly FormChoiceProvider _choiceProvider;
+
+    /// <summary>Yeniden yazılan alan ayarında Türkçe metin (ı, ş, ğ) \uXXXX kaçışına dönüşmesin.</summary>
+    private static readonly JsonSerializerOptions RelaxedJson = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     public FormAppService(
         IAppDocumentRepository documentRepository,
@@ -93,16 +99,7 @@ public class FormAppService : PlatformAppService, IFormAppService
         document.SetCategory(input.CategoryId);
         document.SetTheme(input.ThemeJson);
 
-        foreach (var blockDto in input.Blocks.OrderBy(b => b.Order))
-        {
-            document.AddBlock(
-                GuidGenerator.Create(),
-                blockDto.Type,
-                blockDto.Order,
-                blockDto.Content,
-                blockDto.Settings,
-                blockDto.AgentContext);
-        }
+        ApplyBlocks(document, input.Blocks);
 
         await _documentRepository.InsertAsync(document, autoSave: true);
 
@@ -133,31 +130,13 @@ public class FormAppService : PlatformAppService, IFormAppService
 
         // Yanıtlar alan kimliğiyle saklanır (yanıt ekranı, rapor dışa aktarımı, webhook). Hepsini
         // silip yeniden eklemek her kayıtta kimlikleri değiştirir ve eski yanıtları sorularından
-        // koparırdı: kimliği gelen alan YERİNDE güncellenir, listede olmayan silinir.
-        var incomingIds = input.Blocks.Where(b => b.Id.HasValue).Select(b => b.Id!.Value).ToHashSet();
-        foreach (var removedId in document.Blocks.Where(b => !incomingIds.Contains(b.Id)).Select(b => b.Id).ToList())
-        {
-            document.RemoveBlock(removedId);
-        }
+        // koparırdı: kimliği gelen alan YERİNDE güncellenir. Listede olmayan alan yalnız
+        // RemovedBlockIds'te bildirildiyse silinir; yüklenemeyen editör ya da bayat sekme başkasının
+        // sorusunu silmesin diye bildirilmemiş silmede hiçbir şey yazılmadan reddedilir.
+        var keptIds = input.Blocks.Where(b => b.Id.HasValue).Select(b => b.Id!.Value).ToHashSet();
+        document.RemoveBlocksNotIn(keptIds, input.RemovedBlockIds);
 
-        var updatedIds = new HashSet<Guid>();
-        foreach (var blockDto in input.Blocks.OrderBy(b => b.Order))
-        {
-            // Formda olmayan ya da aynı istekte ikinci kez gelen kimlik yeni alan sayılır.
-            if (blockDto.Id is { } blockId && document.Blocks.Any(b => b.Id == blockId) && updatedIds.Add(blockId))
-            {
-                document.UpdateBlock(blockId, blockDto.Type, blockDto.Order, blockDto.Content, blockDto.Settings, blockDto.AgentContext);
-                continue;
-            }
-
-            document.AddBlock(
-                GuidGenerator.Create(),
-                blockDto.Type,
-                blockDto.Order,
-                blockDto.Content,
-                blockDto.Settings,
-                blockDto.AgentContext);
-        }
+        ApplyBlocks(document, input.Blocks);
 
         await _documentRepository.UpdateAsync(document, autoSave: true);
 
@@ -288,6 +267,100 @@ public class FormAppService : PlatformAppService, IFormAppService
         }
 
         return catalog;
+    }
+
+    /// <summary>
+    /// Kaydedilen alanları forma uygular: kimliği formda olan alan YERİNDE güncellenir, formda olmayan ya da
+    /// aynı istekte ikinci kez gelen kimlik yeni alan sayılır. Yeni alanın kimliği önceden üretilir; aynı
+    /// istekteki koşul (visibleWhen.blockId) ve zincir (dependsOn) ayarları, alanın düzenleyicideki geçici
+    /// kimliğini (ClientId) ya da formda olmayan eski kimliğini gösteriyorsa yeni kimliğe çevrilir. Böylece
+    /// ilk kayıtta kurulan koşul, ikinci bir kayda gerek kalmadan kalıcı alana bağlanır.
+    /// </summary>
+    private void ApplyBlocks(AppDocument document, IEnumerable<CreateBlockDto> blocks)
+    {
+        var existing = document.Blocks.Select(b => b.Id).ToHashSet();
+        var updated = new HashSet<Guid>();
+        var refs = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+        var plan = new List<(CreateBlockDto Dto, Guid Id, bool IsNew)>();
+
+        foreach (var dto in blocks.OrderBy(b => b.Order))
+        {
+            if (dto.Id is { } id && existing.Contains(id) && updated.Add(id))
+            {
+                plan.Add((dto, id, false));
+                continue;
+            }
+
+            // Formda VAR olan kimliğin ikinci kopyası anahtar olmaz: orijinale bağlı ayarlar kopyaya kaymasın.
+            var newId = GuidGenerator.Create();
+            var key = dto.ClientId ?? (dto.Id is { } stale && !existing.Contains(stale) ? stale.ToString() : null);
+            if (key != null)
+            {
+                refs.TryAdd(key, newId);
+            }
+
+            plan.Add((dto, newId, true));
+        }
+
+        foreach (var (dto, id, isNew) in plan)
+        {
+            var settings = RemapBlockReferences(dto.Settings, refs);
+            if (isNew)
+            {
+                document.AddBlock(id, dto.Type, dto.Order, dto.Content, settings, dto.AgentContext);
+            }
+            else
+            {
+                document.UpdateBlock(id, dto.Type, dto.Order, dto.Content, settings, dto.AgentContext);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Ayardaki alan referanslarını (kökteki dependsOn ve visibleWhen.blockId) eşlemeye göre yeni kimliğe
+    /// çevirir. Eşleşme yoksa ya da ayar JSON nesnesi değilse ayar AYNEN döner.
+    /// </summary>
+    private static string RemapBlockReferences(string settings, IReadOnlyDictionary<string, Guid> refs)
+    {
+        if (refs.Count == 0 || string.IsNullOrWhiteSpace(settings))
+        {
+            return settings;
+        }
+
+        JsonNode? root;
+        try
+        {
+            root = JsonNode.Parse(settings);
+        }
+        catch (JsonException)
+        {
+            return settings;
+        }
+
+        if (root is not JsonObject obj)
+        {
+            return settings;
+        }
+
+        var changed = false;
+        if (obj[FormChoiceSources.DependsOnSetting] is JsonValue dependsOn
+            && dependsOn.TryGetValue<string>(out var parentKey)
+            && refs.TryGetValue(parentKey, out var parentId))
+        {
+            obj[FormChoiceSources.DependsOnSetting] = parentId.ToString();
+            changed = true;
+        }
+
+        if (obj[FormChoiceSources.VisibleWhenSetting] is JsonObject rule
+            && rule["blockId"] is JsonValue blockId
+            && blockId.TryGetValue<string>(out var ruleKey)
+            && refs.TryGetValue(ruleKey, out var ruleId))
+        {
+            rule["blockId"] = ruleId.ToString();
+            changed = true;
+        }
+
+        return changed ? obj.ToJsonString(RelaxedJson) : settings;
     }
 
     /// <summary>

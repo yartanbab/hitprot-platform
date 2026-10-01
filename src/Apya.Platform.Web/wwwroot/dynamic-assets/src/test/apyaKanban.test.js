@@ -129,6 +129,8 @@ beforeAll(async () => {
         notify: { success() { }, error() { }, info() { }, warn() { } }
     };
 
+    // Global demette kanbandan ÖNCE yüklenir; create() apya.latest'i çağırıyor.
+    await import('../../../js/apya-latest.js');
     await import('../../../js/apya-kanban.js');
 });
 
@@ -1706,5 +1708,59 @@ describe('görünüm tercihi API (kayıtlı görünümler)', () => {
         await flush();
 
         expect(kb.getViewPrefs().density).toBe('compact');
+    });
+});
+
+// STA-09: proje seçicisi hızla değişince kolon ve görev yanıtları sırasız
+// dönebilir. Tek bilet: yeni load() hem eski kolonları hem eski kartları bayatlatır.
+describe('proje hızla değişince', () => {
+    function deferred() {
+        let resolve;
+        const promise = new Promise((r) => { resolve = r; });
+        return { promise, resolve };
+    }
+    const titles = () => Array.from(document.querySelectorAll('.kanban-column .kanban-title'))
+        .map((n) => n.textContent.trim());
+    const colsFor = (name) => sysCols.concat([{ ...customCol, id: `x-${name}`, name }]);
+
+    it('geç dönen eski projenin kolonları yeni projenin panosunu ezmez', async () => {
+        mountBoard(sysCols, []);
+        const pending = { pA: deferred(), pB: deferred() };
+        apya.platform.projects.boardColumn.getListByProject = (pid) => pending[pid].promise;
+        const kb = apya.kanban.create({ projectId: null });
+
+        kb.setProject('pA');
+        kb.setProject('pB');
+        pending.pB.resolve(colsFor('B-özel'));
+        await flush();
+        pending.pA.resolve(colsFor('A-özel'));
+        await flush();
+
+        expect(titles().some((t) => t.includes('B-özel'))).toBe(true);
+        expect(titles().some((t) => t.includes('A-özel'))).toBe(false);
+    });
+
+    it('geçiş anında uçuştaki eski görev yanıtı yeni panoya kart çizmez', async () => {
+        mountBoard(sysCols, []);
+        const tasks = {
+            pA: deferred(),
+            pB: deferred()
+        };
+        apya.platform.projects.boardColumn.getListByProject = () => Promise.resolve(sysCols);
+        apya.platform.tasks.task.getList = (filter) => tasks[filter.projectId].promise;
+        const kb = apya.kanban.create({ projectId: null });
+
+        kb.setProject('pA');
+        await flush(); // pA kolonları çizildi, pA görev isteği bekliyor
+
+        kb.setProject('pB');
+        await flush();
+        tasks.pB.resolve({ items: [{ id: 'tB', code: 'GRV-B', title: 'B görevi', status: 1, priority: 2 }] });
+        await flush();
+        tasks.pA.resolve({ items: [{ id: 'tA', code: 'GRV-A', title: 'A görevi', status: 1, priority: 2 }] });
+        await flush();
+
+        expect(document.querySelector('.kanban-card[data-id="tB"]')).not.toBeNull();
+        expect(document.querySelector('.kanban-card[data-id="tA"]')).toBeNull();
     });
 });

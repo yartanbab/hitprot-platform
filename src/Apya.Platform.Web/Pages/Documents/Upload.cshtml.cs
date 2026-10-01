@@ -102,7 +102,11 @@ public class UploadModel : AbpPageModel
     public async Task<IActionResult> OnGetDocumentTypesAsync()
         => new JsonResult(await _documentTypeAppService.GetListAsync());
 
-    /// <summary>Yükleme bitince partiye toplu künye (tür / dönem) atamak için.</summary>
-    public async Task<IActionResult> OnPostSetMetaAsync(Guid id, [FromBody] UpdateDocumentFileMetaDto input)
-        => new JsonResult(await _documentFileAppService.UpdateMetaAsync(id, input));
+    /// <summary>
+    /// Yükleme bitince partiye toplu künye (tür / dönem) — yalnız dolu gelen alan yazılır
+    /// (DOC-01). Eski SetMeta handler'ı tam değiştirme ucuna gidip belgenin diğer künyesini
+    /// siliyordu.
+    /// </summary>
+    public async Task<IActionResult> OnPostApplyBulkMetaAsync([FromBody] BulkApplyDocumentFileMetaDto input)
+        => new JsonResult(await _documentFileAppService.ApplyBulkMetaAsync(input));
 }

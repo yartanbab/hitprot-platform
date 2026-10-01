@@ -10,6 +10,9 @@
 let currentTaskId = null;
 const listeners = new Set();
 const resultHandlers = new Set();
+/* Adada son sonuç yayınından beri yazma oldu (ya da başladı) mı? Modül düzeyinde:
+   bayrağı okuyan onClose kökün DIŞINDA (task-detail.jsx) ve kök kapanışta sökülüyor. */
+let changedSinceEmit = false;
 
 function emit() {
     listeners.forEach((l) => l());
@@ -44,11 +47,22 @@ export const taskDetailStore = {
         if (typeof fn === 'function') resultHandlers.add(fn);
     },
     emitResult() {
+        changedSinceEmit = false;
         resultHandlers.forEach((fn) => fn());
+    },
+    /** Adada bir yazma oldu ya da başladı — kapanışta liste/kanban tazelensin. */
+    markChanged() {
+        changedSinceEmit = true;
+    },
+    /** Yalnız yazma olduysa sonuç yayınlar: salt bakıp kapatmak sayfayı yeniden yüklemez.
+        'this' kullanılmaz; metot referansla da geçirilebilir. */
+    emitResultIfChanged() {
+        if (changedSinceEmit) taskDetailStore.emitResult();
     },
     /** Yalnız testler için. */
     reset() {
         currentTaskId = null;
+        changedSinceEmit = false;
         listeners.clear();
         resultHandlers.clear();
     },

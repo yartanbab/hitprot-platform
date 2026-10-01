@@ -80,6 +80,8 @@
         // Özel kolonlara izin (false ise asla); izin varsa AKTİF projede çalışır.
         var customColumnsAllowed = opts.enableCustomColumns !== false;
         function effectiveCols() { return customColumnsAllowed && !!projectId; }
+        // Proje hızla değişince kolon ve görev yanıtları sırasız dönebilir. Tek bilet: yeni load() hem eski kolonları hem eski kartları bayatlatır.
+        var nextLoad = apya.latest();
         // Kolon DÜZENLEME yetkisi ayrıdır: özel kolonlar herkese GÖRÜNÜR (kartlar
         // orada durur), ama ⋯ menüsü ve "Kolon ekle" karosu yalnız Projects.Edit
         // ile çizilir. Eskiden hiç kontrol yoktu; yetkisiz kullanıcı düğmeleri
@@ -1783,14 +1785,16 @@
         function load() {
             var board = document.querySelector(boardSel);
             if (!board) { return; }
+            var isLatest = nextLoad();
             if (effectiveCols()) {
                 colSvc.getListByProject(projectId).then(function (cols) {
+                    if (!isLatest()) { return; }
                     renderColumns(cols);
-                    fetchTasks();
+                    fetchTasks(isLatest);
                 });
             } else {
                 renderColumns(defaultColumns(board));
-                fetchTasks();
+                fetchTasks(isLatest);
             }
         }
 
@@ -1800,12 +1804,12 @@
             load();
         }
 
-        function fetchTasks() {
+        function fetchTasks(isLatest) {
             var filter = $.extend({ maxResultCount: 1000 }, getFilter());
             if (projectId) { filter.projectId = projectId; }
             var calls = [taskSvc.getList(filter)];
             calls.push(enableTimer ? taskSvc.getActiveTimeLog() : Promise.resolve(null));
-            Promise.all(calls).then(function (res) { render(res[0].items, res[1]); });
+            Promise.all(calls).then(function (res) { if (isLatest()) { render(res[0].items, res[1]); } });
         }
 
         function render(tasks, activeLog) {

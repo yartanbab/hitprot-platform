@@ -35,7 +35,9 @@ function TaskDetailIsland() {
                     presentation="modal"
                     onClose={() => {
                         taskDetailStore.close();
-                        taskDetailStore.emitResult();
+                        /* Yalnız bakıp kapatınca kanban/liste yeniden yüklenmesin
+                           (kaydırma ve odak kaybolur); Kaydet zaten kendisi yayınlıyor. */
+                        taskDetailStore.emitResultIfChanged();
                     }}
                 />
             </QueryProvider>
