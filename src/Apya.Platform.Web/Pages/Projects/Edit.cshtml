@@ -193,7 +193,7 @@
                 {
                     <form method="post" asp-page-handler="RemoveCover" asp-route-id="@Model.Id">
                         <button type="submit" class="btn btn-outline-secondary btn-sm"
-                                data-confirm="Kapak görseli kaldırılsın mı?">
+                                data-confirm="Kapak görseli kaldırılsın mı?" data-confirm-danger>
                             <i class="fa fa-xmark me-1" aria-hidden="true"></i>Kapağı kaldır
                         </button>
                     </form>
@@ -254,7 +254,7 @@
                             <input type="hidden" name="attachmentId" value="@file.Id" />
                             <button type="submit" class="btn btn-sm btn-outline-secondary"
                                     title="Dosyayı sil" aria-label="Dosyayı sil"
-                                    data-confirm="&quot;@file.FileName&quot; dosyası silinsin mi?">
+                                    data-confirm="&quot;@file.FileName&quot; dosyası silinsin mi?" data-confirm-danger>
                                 <i class="fa fa-trash" aria-hidden="true"></i>
                             </button>
                         </form>
