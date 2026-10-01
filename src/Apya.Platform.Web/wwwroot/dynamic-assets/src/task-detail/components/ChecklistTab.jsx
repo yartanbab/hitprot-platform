@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Input } from '../../components/ui';
 import { useTaskChecklist } from '../hooks/useTaskChecklist';
+import { notifyError } from '../../lib/api/abpErrors';
 
 export function ChecklistTab({ taskId }) {
     const { items, addItem, toggleItem, removeItem } = useTaskChecklist(taskId);
@@ -13,7 +14,7 @@ export function ChecklistTab({ taskId }) {
             await addItem(text);
             setDraft('');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Madde eklenemedi.');
+            notifyError(err, 'Madde eklenemedi.');
         }
     };
 
@@ -21,7 +22,7 @@ export function ChecklistTab({ taskId }) {
         try {
             await toggleItem(itemId);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Madde güncellenemedi.');
+            notifyError(err, 'Madde güncellenemedi.');
         }
     };
 
@@ -29,7 +30,7 @@ export function ChecklistTab({ taskId }) {
         try {
             await removeItem(itemId);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || `${text} silinemedi.`);
+            notifyError(err, `${text} silinemedi.`);
         }
     };
 

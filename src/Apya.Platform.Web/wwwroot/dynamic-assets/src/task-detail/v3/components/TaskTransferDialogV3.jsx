@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { OverlayLayerV3 } from './OverlayLayerV3';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 /**
  * Projeler arası taşıma / kopyalama diyaloğu.
@@ -99,7 +100,7 @@ export function TaskTransferDialogV3({
             if (id) setTargets((prev) => [...prev, id]);
             setNewName('');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Proje oluşturulamadı.');
+            notifyError(err, 'Proje oluşturulamadı.');
         } finally {
             setBusy(false);
         }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Skeleton } from '../../components/ui';
+import { notifyError } from '../../lib/api/abpErrors';
 
 export function CommentsTab({ taskId, task }) {
     const [text, setText] = useState('');
@@ -24,7 +25,7 @@ export function CommentsTab({ taskId, task }) {
             queryClient.invalidateQueries({ queryKey: ['task-detail', taskId] });
             window?.abp?.notify?.success?.('Yorum eklendi.');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Yorum eklenemedi.');
+            notifyError(err, 'Yorum eklenemedi.');
         } finally {
             setSubmitting(false);
         }
@@ -43,7 +44,7 @@ export function CommentsTab({ taskId, task }) {
             queryClient.invalidateQueries({ queryKey: ['task-detail', taskId] });
             window?.abp?.notify?.success?.('Yanıt eklendi.');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Yanıt eklenemedi.');
+            notifyError(err, 'Yanıt eklenemedi.');
         } finally {
             setSubmitting(false);
         }

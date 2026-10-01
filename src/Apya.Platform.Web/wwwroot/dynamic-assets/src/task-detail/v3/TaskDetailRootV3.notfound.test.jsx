@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryProvider } from '../../lib/api/QueryProvider';
 import { buttonVariants } from '../../components/ui';
 import { cn } from '../../lib/utils';
@@ -107,13 +107,19 @@ describe('TaskDetailRootV3 — bulunamayan / gizli görev (TSK-23)', () => {
         expect(screen.queryByRole('button', { name: 'Kapat' })).not.toBeInTheDocument();
     });
 
-    it('geçici hata (500): eski kart ve Tekrar Dene aynen (gerileme yok)', async () => {
+    it('geçici hata (500) ilk yüklemede: genel kart + kanonik "Tekrar dene" yeniden çeker', async () => {
         svc.get.mockImplementation(() => abpReject(500, { code: null, message: 'Sunucu hatası' }));
 
         open('modal');
 
         expect(await screen.findByText('Görev detayları yüklenemedi.')).toBeInTheDocument();
-        expect(screen.getByRole('button', RETRY)).toBeInTheDocument();
         expect(screen.queryByText('Bu görev bulunamadı')).not.toBeInTheDocument();
+        // Kanonik düğme (Common:Retry, karar 10): tam metin "Tekrar dene" + fa-rotate-right.
+        const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+        expect(retry.querySelector('i.fa-rotate-right')).not.toBeNull();
+
+        fireEvent.click(retry);
+
+        await waitFor(() => expect(svc.get).toHaveBeenCalledTimes(2));
     });
 });

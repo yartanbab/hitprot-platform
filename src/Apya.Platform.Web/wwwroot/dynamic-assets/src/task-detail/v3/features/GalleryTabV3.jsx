@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useTaskAttachments } from '../../hooks/useTaskAttachments';
 import { isImageFile, fmtSize } from '../tabPrimitives';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 /**
  * Dosya Galerisi sekmesi (V3). Ayrı bir depo YOK — görevin mevcut ekleri
@@ -25,7 +26,7 @@ export function GalleryTabV3({ taskId }) {
             await upload(file);
             window?.abp?.notify?.success?.('Görsel yüklendi.');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Görsel yüklenemedi.');
+            notifyError(err, 'Görsel yüklenemedi.');
         } finally {
             if (inputRef.current) inputRef.current.value = '';
         }
@@ -35,7 +36,7 @@ export function GalleryTabV3({ taskId }) {
         try {
             await remove(attachmentId);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || `${fileName} silinemedi.`);
+            notifyError(err, `${fileName} silinemedi.`);
         }
     };
 

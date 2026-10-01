@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { statusOf, priorityOf, SELECTABLE_STATUSES } from '../taskMetaV3';
 import { Avatar, TabEmptyState, fmtShortDate } from '../tabPrimitives';
 import { getTaskPermissions } from '../../taskPermissions';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 /**
  * Kanban sekmesi (V3) — alt görevleri duruma göre sütunlarda gösterir.
@@ -30,7 +31,7 @@ export function SubtaskBoardTabV3({ taskId, task = {}, onOpenSubtask }) {
             await Promise.resolve(window.apya.platform.tasks.task.updateStatus(subId, status));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', taskId] });
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Alt görev durumu güncellenemedi.');
+            notifyError(err, 'Alt görev durumu güncellenemedi.');
         } finally {
             setBusyId(null);
         }

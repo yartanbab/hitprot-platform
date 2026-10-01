@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -14,6 +14,15 @@ const web = path.resolve(src, '../../..');
 const shared = path.resolve(web, '..', 'Apya.Platform.Domain.Shared', 'Localization', 'Platform');
 const read = (...p) => readFileSync(path.join(...p), 'utf8');
 const count = (text, needle) => text.split(needle).length - 1;
+
+/** Dizin altındaki kaynak dosyaları (testler hariç), özyinelemeli. */
+function sourceFiles(dir) {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) { return sourceFiles(full); }
+        return /\.jsx?$/.test(entry.name) && !/\.test\.jsx?$/.test(entry.name) ? [full] : [];
+    });
+}
 
 const errorDetail = read(web, 'wwwroot', 'js', 'ajax-error-detail.js');
 const httpClient = read(src, 'lib', 'api', 'httpClient.js');
@@ -42,6 +51,12 @@ describe('kök neden kalıcı olarak kapalı (ACC-06, RES-01)', () => {
         const hardReload = errorDetail.slice(errorDetail.indexOf('function hardReload()'));
         const body = hardReload.slice(0, hardReload.indexOf('\n    }'));
         expect(body).toContain('location.reload(');
+    });
+
+    it('yönlendirme yalnız kullanıcının bastığı "Giriş sayfasına git"te (başka sekmedeki giriş/çıkış dahil hiçbir yolda otomatik değil)', () => {
+        expect(count(errorDetail, 'location.assign(')).toBe(1);
+        expect(errorDetail).toContain('location.assign(loginUrl());');
+        expect(errorDetail).not.toMatch(/location\.(?:href|replace)\b\s*[=(]/);
     });
 
     it('global demette kota sarmalayıcısından ÖNCE (showError zinciri)', () => {
@@ -102,6 +117,20 @@ describe('tek kanal: pencere gösterildiyse ikinci bildirim yok (STA-10, CON-03,
         expect(text).not.toContain('notify?.error?.(err?.message ||');
         expect(text).toContain("from '");
         expect(text).toContain('notifyError(err, ');
+    });
+
+    /* Canlı doğrulama (L1-19, L1-07): görev modalının Dosyalar sekmesi sunucunun metnini toast'a
+       kaçışsız basıyor (ABP toast'ı innerHTML kullanır), Zaman Takibi oturum penceresinin yanında
+       ikinci toast açıyordu. Görev detayının tamamı ortak kanala (notifyError) geçti. */
+    it('görev detayı (task-detail/**) hata metnini doğrudan toast\'a basmaz', () => {
+        const files = sourceFiles(path.join(src, 'task-detail'));
+        expect(files.length).toBeGreaterThan(40);
+
+        const offenders = files
+            .filter((file) => /notify\??\.(?:error|err)\??\.?\(\s*\w+\??\.message/.test(readFileSync(file, 'utf8')))
+            .map((file) => path.relative(src, file).replace(/\\/g, '/'));
+
+        expect(offenders).toEqual([]);
     });
 
     it.each([

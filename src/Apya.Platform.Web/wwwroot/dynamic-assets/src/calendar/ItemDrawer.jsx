@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Sheet, SheetContent } from '../components/ui';
+import { Button, RetryButton, Sheet, SheetContent } from '../components/ui';
 import { cn } from '../lib/utils';
 import { RISK, SOURCES, addDays, fmt } from './lib/model';
 import { MeetingActions } from './MeetingActions';
@@ -78,7 +78,7 @@ export function ItemDrawer({ item, capacity, onClose, onReschedule, onComplete, 
                     <div className="flex items-center gap-2 border-b border-negative-100 bg-negative-50 px-4 py-2.5 text-[12px] text-negative-700">
                         <i className="fa fa-triangle-exclamation" aria-hidden="true" />
                         <span className="flex-1">{error}</span>
-                        <button type="button" onClick={onRetry} className="font-semibold underline">Yeniden dene</button>
+                        <RetryButton onRetry={onRetry} />
                     </div>
                 )}
 

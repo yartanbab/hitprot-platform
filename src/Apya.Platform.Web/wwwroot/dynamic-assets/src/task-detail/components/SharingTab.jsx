@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTaskShareLinks } from '../hooks/useTaskShareLinks';
 import { isGranted } from '../hooks/useTaskDetail';
+import { notifyError } from '../../lib/api/abpErrors';
 
 const DEFAULT_FORM = {
     recipientName: '',
@@ -54,7 +55,7 @@ export function SharingTab({ taskId }) {
             setJustCreated(created);
             setForm(DEFAULT_FORM);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Paylaşım linki üretilemedi.');
+            notifyError(err, 'Paylaşım linki üretilemedi.');
         }
     };
 
@@ -69,7 +70,7 @@ export function SharingTab({ taskId }) {
         try {
             await revoke(id);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Bağlantı iptal edilemedi.');
+            notifyError(err, 'Bağlantı iptal edilemedi.');
         }
     };
 

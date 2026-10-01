@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTaskTimeTracking } from '../../hooks/useTaskTimeTracking';
 import { TAB_CARD, TabCardHeader, TabEmptyState, Avatar, fmtDuration, fmtClock } from '../tabPrimitives';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 // FAZ 10-B: RisksTabV3 kaldırıldı — uydurma bir risk kaydı basıyordu ("Otel
 // Kontenjan Doluluk Riski / Orta Risk"). Kodu zaten UNBUILT_CODES'ta olduğu için
@@ -51,7 +52,7 @@ export function TimeTrackingTabV3({ taskId, task = {} }) {
         try {
             if (activeForThis) await tt.stop(); else await tt.start();
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Zaman takibi güncellenemedi.');
+            notifyError(err, 'Zaman takibi güncellenemedi.');
         }
     };
 

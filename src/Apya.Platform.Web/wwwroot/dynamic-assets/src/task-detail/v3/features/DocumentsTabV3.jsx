@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTaskDocuments, useTaskDocument } from '../../hooks/useTaskDocuments';
 import { RichTextEditorV3 } from '../components/RichTextEditorV3';
 import { TabEmptyState, fmtDateTime } from '../tabPrimitives';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 /**
  * Belge sekmesi (V3) — göreve bağlı zengin metin belgeleri.
@@ -42,7 +43,7 @@ export function DocumentsTabV3({ taskId }) {
             const created = await createDocument('Yeni belge');
             if (created?.id) setOpenId(created.id);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Belge oluşturulamadı.');
+            notifyError(err, 'Belge oluşturulamadı.');
         }
     };
 
@@ -57,7 +58,7 @@ export function DocumentsTabV3({ taskId }) {
             setDirty(false);
             window?.abp?.notify?.success?.('Belge kaydedildi.');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Belge kaydedilemedi.');
+            notifyError(err, 'Belge kaydedilemedi.');
         }
     };
 
@@ -66,7 +67,7 @@ export function DocumentsTabV3({ taskId }) {
             await removeDocument(id);
             if (openId === id) setOpenId(null);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || `“${title}” silinemedi.`);
+            notifyError(err, `“${title}” silinemedi.`);
         }
     };
 

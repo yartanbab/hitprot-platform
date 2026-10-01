@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Dialog, DialogContent, Skeleton, Button, EmptyState } from '../../components/ui';
+import { Dialog, DialogContent, Skeleton, Button, EmptyState, RetryButton } from '../../components/ui';
 import { TaskDetailHeaderV3 } from './components/TaskDetailHeaderV3';
 import { TaskMetadataGridV3 } from './components/TaskMetadataGridV3';
 import { TaskFeatureNavbarV3 } from './components/TaskFeatureNavbarV3';
@@ -444,11 +444,14 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 <Button variant="secondary" size="sm" onClick={requestClose}>{t('Common:Close', 'Kapat')}</Button>
             )}
         />
-    ) : isError ? (
+    ) : isError && !task ? (
+        /* Yalnız İLK yükleme hatası. Görev ekrandayken düşen tazeleme (odak dönüşü, kayıt sonrası
+           yeniden çekme; oturum düşünce 401) formu sökmez: yazılanlar görünür kalır, sonraki
+           başarılı tazeleme forma işlenir (useTaskForm rebase). */
         <div className="p-12 text-center flex flex-col items-center gap-3">
             <i className="fa-solid fa-triangle-exclamation text-3xl text-warning" />
             <p className="text-text-secondary font-medium">Görev detayları yüklenemedi.</p>
-            <Button variant="ghost" onClick={() => refetch()}>Tekrar Dene</Button>
+            <RetryButton onRetry={refetch} />
         </div>
     ) : (
         <div className="flex flex-col flex-1 min-h-0 bg-surface-base">
