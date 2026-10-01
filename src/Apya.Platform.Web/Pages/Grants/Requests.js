@@ -8,6 +8,8 @@ $(function () {
 
     var filters = { consultantUserId: null, grantCallId: null, closed: false };
     var optionsFilled = false;
+    // Süzgeç değişince yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function pad(n) { return n < 10 ? '0' + n : String(n); }
@@ -132,9 +134,27 @@ $(function () {
                 : l('Grants:Requests:Empty'));
     }
 
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2): "Kapanmış" süzgecinde
+    // eski "Yanıt bekleyen talep yok" metni kalmaz. Sekme sayaçları süzgeçten bağımsız — dolu
+    // olan korunur, hiç gelmemiş olan "—".
     function load() {
-        service.getInbox(filters).then(paint);
+        var isLatest = nextLoad();
+        return Promise.resolve(service.getInbox(filters, { abpHandleError: false })).then(function (dto) {
+            if (!isLatest()) { return; }
+            paint(dto);
+        }, function (err) {
+            if (!isLatest()) { return; }
+            $('#RequestRows').removeClass('apya-skel-rows')
+                .html(apya.loadState.errorHtml(l('Grants:Requests:LoadFailed'), 'js-requests-retry', err));
+            $('#RequestEmpty, #DueStrip').addClass('d-none');
+            $('[data-request-count]').filter(':empty').text('—');
+        });
     }
+
+    $('#RequestRows').on('click', '.js-requests-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     $('#ConsultantFilter').on('change', function () { filters.consultantUserId = $(this).val() || null; load(); });
     $('#CallFilter').on('change', function () { filters.grantCallId = $(this).val() || null; load(); });

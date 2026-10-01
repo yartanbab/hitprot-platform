@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { statusOf } from '../taskMetaV3';
 import { TAB_CARD, RowBadge, TabEmptyState } from '../tabPrimitives';
 import { taskToUpdateDto } from '../../taskUpdateDto';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 function GroupCard({ icon, iconTone, title, note, children }) {
     return (
@@ -60,7 +61,7 @@ export function DependenciesTabV3({ task = {}, readOnly = false }) {
             await queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] });
             window?.abp?.notify?.info?.('Bağlantı kaldırıldı.');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Bağlantı kaldırılamadı.');
+            notifyError(err, 'Bağlantı kaldırılamadı.');
         }
     };
 

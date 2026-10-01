@@ -615,6 +615,8 @@
                     '<div class="comment-replies ms-4 mt-2 ps-2 border-start"></div>' +
                 '</div>');
                 $item.find('.comment-text').text(text); // HTML enjeksiyonunu önle
+                // İlk yorum: "Henüz yorum yapılmamış." boş durumu listede kalmasın.
+                $('#CommentList > .apya-console-state').remove();
                 $('#CommentList').prepend($item);
                 $('#NewCommentText').val('');
             },

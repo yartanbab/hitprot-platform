@@ -122,4 +122,31 @@ public class CashAccountsPage_Tests : PlatformWebTestBase
         CardBalance(after, from).ShouldNotBe(fromBefore, "transferin çıkış bacağı parçaya yansımadı");
         CardBalance(after, to).ShouldNotBe(toBefore, "transferin giriş bacağı parçaya yansımadı");
     }
+
+    /// <summary>
+    /// Hiç hesap yokken boş durum metinle "yukarıdan…" yönlendirmez; yetkiliye ortak _EmptyState
+    /// eylem yuvasında "Yeni Kasa Ekle" basılır (CON-14). Index.js düğmeye data-cash-account-new
+    /// kancasıyla #AccountSummary üzerinden delege bağlanır. Taze test veritabanında kasa yok;
+    /// test host'u her izni verir (izinsiz dal kaynaktan: ListLoadFailureScripts_Tests).
+    /// </summary>
+    [Fact]
+    public async Task Hesap_yokken_bos_durum_yetkiliye_Yeni_Kasa_Ekle_eylemi_basar()
+    {
+        var doc = Parse(await GetResponseAsStringAsync(SummaryUrl));
+        doc.DocumentNode.SelectSingleNode("//button[contains(@class,'apya-account-card')]")
+            .ShouldBeNull("taze veritabanında kasa kartı beklenmiyordu");
+
+        var state = doc.DocumentNode.SelectSingleNode("//div[@class='apya-console-state']");
+        state.ShouldNotBeNull("hesap yokken boş durum basılmalı");
+        HtmlEntity.DeEntitize(state!.SelectSingleNode("p")!.InnerText)
+            .ShouldNotContain("Yukarıdan", Case.Insensitive, "metinle yönlendirme yerine eylem");
+
+        var action = state.SelectSingleNode("span[@class='apya-console-state-actions']/button");
+        action.ShouldNotBeNull("CashAccounts.Create yetkisi olana eylem basılmalı");
+        action!.Attributes.Contains("data-cash-account-new").ShouldBeTrue("Index.js bu kancaya delege bağlanıyor");
+        action.GetAttributeValue("type", "").ShouldBe("button");
+        action.GetAttributeValue("class", "").ShouldBe("btn btn-sm btn-primary");
+        action.SelectSingleNode("i")!.GetAttributeValue("class", "").ShouldBe("fa fa-plus me-1");
+        HtmlEntity.DeEntitize(action.InnerText).Trim().ShouldBe("Yeni Kasa Ekle");
+    }
 }

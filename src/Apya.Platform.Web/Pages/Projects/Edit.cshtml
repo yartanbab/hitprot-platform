@@ -1,6 +1,8 @@
 @page "{id:Guid}"
+@using Apya.Platform.Localization
 @using Apya.Platform.Permissions
 @model Apya.Platform.Web.Pages.Projects.EditModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<PlatformResource> L
 @{
     ViewBag.Title = "Projeyi Düzenle";
 
@@ -52,8 +54,20 @@
         </div>
     }
 
-    <div asp-validation-summary="All" class="alert alert-danger apya-proj-edit-alert"
-         role="alert" data-validation-summary></div>
+    @* ABP'nin doğrulama tag helper'ı özetin KENDİ class'ını bozar (yalnız text-danger kalır): sunucu
+       hatasında kutu sınıfları sarmalayıcıda durur; hata yokken özet eskisi gibi basılır (istemci
+       doğrulaması onu doldurur). *@
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger apya-proj-edit-alert" role="alert" data-validation-summary>
+            <div asp-validation-summary="All"></div>
+        </div>
+    }
+    else
+    {
+        <div asp-validation-summary="All" class="alert alert-danger apya-proj-edit-alert"
+             role="alert" data-validation-summary></div>
+    }
 
     @* ─── Sekmeler ─── *@
     <div class="apya-proj-edit-tabs" role="tablist">
@@ -100,8 +114,11 @@
                 <div>
                     <abp-input asp-for="Project.StartDate" type="date" abp-data-datepicker="false" label="Başlangıç Tarihi" />
                 </div>
+                @* PRJ-01: bitiş, başlangıçtan önce seçilemesin — min'i Edit.js başlangıçtan kurar
+                   (ISO değer dize karşılaştırılır, eşit tarih geçerli). Asıl kapı sunucu (Project.Update). *@
                 <div>
-                    <abp-input asp-for="Project.EndDate" type="date" abp-data-datepicker="false" label="Bitiş Tarihi" />
+                    <abp-input asp-for="Project.EndDate" type="date" abp-data-datepicker="false" label="Bitiş Tarihi"
+                               data-msg-min="@L["Platform:Project:ScheduleInvalid"].Value" />
                 </div>
                 @if (Model.CanViewBudget)
                 {

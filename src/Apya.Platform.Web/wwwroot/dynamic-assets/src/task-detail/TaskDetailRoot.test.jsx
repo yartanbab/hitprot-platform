@@ -74,6 +74,21 @@ describe('TaskDetailRoot', () => {
         expect(screen.getByRole('button', { name: 'Tekrar dene' })).toBeInTheDocument();
     });
 
+    it('veri ekrandayken tazeleme duserse form kalir (hata govdesine donmez)', async () => {
+        const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        render(<QueryClientProvider client={qc}><TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={() => {}} /></QueryClientProvider>);
+        await screen.findByText('Otel Konaklama Anlaşması');
+
+        window.apya.platform.tasks.task.get = vi.fn(() => Promise.reject(Object.assign(new Error('401'), { status: 401 })));
+        await qc.invalidateQueries();
+        await waitFor(() => expect(window.apya.platform.tasks.task.get).toHaveBeenCalled());
+        // TanStack gözlemci bildirimini makro görevle dağıtır: olumsuz iddiadan önce bekle.
+        await new Promise((resolve) => setTimeout(resolve, 30));
+
+        expect(screen.getByText('Otel Konaklama Anlaşması')).toBeInTheDocument();
+        expect(screen.queryByText(/Görev yüklenemedi/)).toBeNull();
+    });
+
     it('acilinca URLe ?task ekler', async () => {
         wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={() => {}} />);
         await waitFor(() => expect(window.location.search).toBe(`?task=${TASK.id}`));

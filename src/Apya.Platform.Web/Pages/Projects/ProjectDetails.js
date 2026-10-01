@@ -368,12 +368,15 @@ $(function () {
     if (dataTable) {
         // Sekme sayacı — DataTables'ın bildirdiği süzülmüş/toplam kayıt sayısı.
         dataTable.on('draw', function () {
+            // Yükleme hatası "0 görev" / "Henüz görev yok" değildir: boş hücreyi
+            // apya.loadState hata kartıyla (Tekrar dene) doldurur.
+            var failed = apya.loadState.tableFailed(dataTable);
             var info = dataTable.page.info();
-            $('#console-task-count').text(
-                info.recordsDisplay === info.recordsTotal
+            $('#console-task-count').text(failed ? '—'
+                : info.recordsDisplay === info.recordsTotal
                     ? info.recordsTotal + ' görev'
                     : info.recordsDisplay + ' / ' + info.recordsTotal + ' görev');
-            renderEmptyState();
+            if (!failed) { renderEmptyState(); }
             syncRowChecks(); // yeniden çizimde seçim işaretlerini geri koy
             // Açık alt görev satırları her draw'da kaybolur → geri açılır.
             hierarchy.restore();

@@ -8,12 +8,26 @@
 @inject Volo.Abp.Settings.ISettingProvider SettingProvider
 @model DetailModel
 @{
-    ViewBag.Title = Model.Task?.Title ?? "Görev Detayı";
+    ViewBag.Title = Model.Unavailable?.Title ?? Model.Task?.Title ?? "Görev Detayı";
 
     // Sekme sırası — _TaskDetailIsland.cshtml ile aynı mekanizma (taskdetail scope'u).
     var tabOrder = Apya.Platform.Shell.ShellBoardTabsSetting.ExtractScopeJson(
         await SettingProvider.GetOrNullAsync(Apya.Platform.Settings.PlatformSettings.Shell.BoardTabs),
         Apya.Platform.Shell.ShellBoardTabsSetting.TaskDetailScope);
+}
+
+@* TSK-23: görev yok (404) ya da gizli (403) — sayfa içi durum, ada bağlanmaz (API çağrısı ve ABP
+   penceresi olmaz). Erken dönüş bölümlerden ÖNCE: task-detail.js basılmaz. *@
+@if (Model.Unavailable != null)
+{
+    <div class="apya-page">
+        <div class="card">
+            <div class="card-body">
+                <partial name="~/Pages/Shared/_EmptyState.cshtml" model="Model.Unavailable" />
+            </div>
+        </div>
+    </div>
+    return;
 }
 
 @* Tailwind island stylesheet (js/style.css) *@

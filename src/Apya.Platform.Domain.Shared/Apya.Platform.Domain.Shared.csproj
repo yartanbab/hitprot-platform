@@ -29,6 +29,8 @@
     <Content Remove="Localization\MultiTenancyUi\*.json" />
     <EmbeddedResource Include="Localization\Validation\*.json" />
     <Content Remove="Localization\Validation\*.json" />
+    <EmbeddedResource Include="Localization\ExceptionHandling\*.json" />
+    <Content Remove="Localization\ExceptionHandling\*.json" />
   </ItemGroup>
 
   <ItemGroup>

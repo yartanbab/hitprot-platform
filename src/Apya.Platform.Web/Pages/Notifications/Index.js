@@ -62,11 +62,13 @@ $(function () {
 
     var nextSummary = apya.latest();
 
+    // Yan yükleme (Faz 4 kararı 2): düşerse ABP penceresi açılmaz, kategori ağacı olduğu gibi
+    // kalır — yükleme hatasını listenin kartı söyler.
     function refreshSummary() {
         var isLatest = nextSummary();
-        return notificationService.getSummary().then(function (summary) {
+        return Promise.resolve(notificationService.getSummary({ abpHandleError: false })).then(function (summary) {
             if (isLatest()) { renderCategories(summary); }
-        });
+        }, function () { });
     }
 
     // ── Liste ─────────────────────────────────────────────────────────────────
@@ -139,7 +141,8 @@ $(function () {
     function loadNotifications(append) {
         // 'Daha fazla' son yeniden yüklemenin devamıdır, onu bayatlatmaz; yeni yeniden yükleme ise hem eski listeyi hem eski 'daha fazla'yı bayatlatır.
         var isLatest = append ? isListLatest : (isListLatest = nextList());
-        return notificationService.getMyNotifications(buildInput()).then(function (result) {
+        // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
+        return Promise.resolve(notificationService.getMyNotifications(buildInput(), { abpHandleError: false })).then(function (result) {
             if (!isLatest()) { return; }
             if (!append) $list.empty();
 
@@ -157,6 +160,19 @@ $(function () {
             var hasMore = shown < result.totalCount;
             $('#load-more-btn').toggleClass('d-none', !hasMore);
             $('#no-more-notif').toggleClass('d-none', hasMore);
+        }, function (err) {
+            if (!isLatest()) { return; }
+            if (append) {
+                // 'Daha fazla' düştü: eldeki liste korunur, ofset geri alınır (tekrar deneme aynı
+                // sayfayı ister, 15 kayıt atlanmaz); kart listenin sonuna, düğmenin yerine basılır.
+                state.skipCount = Math.max(0, state.skipCount - PAGE_SIZE);
+                $list.append(apya.loadState.errorHtml(l('Notification:List:LoadFailed'), 'js-notif-more-retry', err));
+                $('#load-more-btn').addClass('d-none');
+                return;
+            }
+            // Spinner ya da eski liste kalkar: süzgeç değiştiyse eski liste yeni süzgeçle uyuşmaz.
+            $list.html(apya.loadState.errorHtml(l('Notification:List:LoadFailed'), 'js-notif-retry', err));
+            $('#load-more-btn, #no-more-notif').addClass('d-none');
         });
     }
 
@@ -204,8 +220,20 @@ $(function () {
     });
 
     $('#load-more-btn').click(function () {
+        // İstek sürerken pasif: çift tıklamada ilk istek düşerse ofset geri alma yanlış sayfaya çekerdi.
+        var $btn = $(this).prop('disabled', true);
         state.skipCount += PAGE_SIZE;
-        loadNotifications(true);
+        loadNotifications(true).then(function () { $btn.prop('disabled', false); });
+    });
+
+    $list.on('click', '.js-notif-retry', function () {
+        $(this).prop('disabled', true);
+        reload();
+    });
+    // 'Daha fazla' kartı: kart kalkar (yeni satırlar onun altına düşmesin), aynı sayfa yeniden istenir.
+    $list.on('click', '.js-notif-more-retry', function () {
+        $(this).closest('.apya-console-state').remove();
+        $('#load-more-btn').trigger('click');
     });
 
     $('#btn-mark-all-page').click(function () {

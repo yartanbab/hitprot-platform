@@ -1,7 +1,7 @@
-import { r as j, j as e, b as se } from "./react-vendor-D57GAUXd.js";
-/* empty css               */
-import { o as ee } from "./dataChanged-DR0MWWqM.js";
-import { S as Z, R as re } from "./RichTextEditorV3-mZ6z1BBZ.js";
+import { r as j, j as e } from "./react-vendor-D7YDiBbi.js";
+import { m as se } from "./index-DgpuJ91w.js";
+import { o as ee } from "./dataChanged-CDwwWMH8.js";
+import { S as Z, R as re } from "./RichTextEditorV3-no6ovBqq.js";
 function k() {
   var s, r, a;
   const t = (a = (r = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : r.tasks) == null ? void 0 : a.task;
@@ -25,17 +25,17 @@ const v = (t) => Promise.resolve(t), L = (t) => t ?? void 0, g = {
   addProjectChecklistItem: (t, s) => v(k().addProjectChecklistItem(t, s)),
   toggleChecklistItem: (t) => v(k().toggleChecklistItem(t)),
   deleteChecklistItem: (t) => v(k().deleteChecklistItem(t))
-}, R = /* @__PURE__ */ new Map();
+}, E = /* @__PURE__ */ new Map();
 ee(() => {
-  R.clear();
+  E.clear();
 }, "task");
 function _(t, { force: s = !1 } = {}) {
   const r = t ?? "__all__";
-  if (!s && R.has(r))
-    return R.get(r);
+  if (!s && E.has(r))
+    return E.get(r);
   const a = v(k().getList({ projectId: L(t), maxResultCount: 1e3, rootOnly: !1 })).then((l) => (l == null ? void 0 : l.items) ?? []);
-  return R.set(r, a), a.catch(() => {
-    R.delete(r);
+  return E.set(r, a), a.catch(() => {
+    E.delete(r);
   }), a;
 }
 function te(t) {
@@ -145,7 +145,7 @@ function z({ onRetry: t }) {
     )
   ] });
 }
-function E({ icon: t, title: s, desc: r, action: a = null, tone: l = "primary" }) {
+function R({ icon: t, title: s, desc: r, action: a = null, tone: l = "primary" }) {
   const n = l === "success" ? "bg-success-subtle text-success" : "bg-primary-subtle text-primary";
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center gap-2 py-14 px-6 text-center", children: [
     /* @__PURE__ */ e.jsx("span", { className: `flex h-11 w-11 items-center justify-center rounded-xl ${n}`, children: /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${t} text-[18px]`, "aria-hidden": "true" }) }),
@@ -238,7 +238,7 @@ function le({ projectId: t, kind: s, mountEl: r }) {
   );
   if (x.length === 0)
     return /* @__PURE__ */ e.jsx(
-      E,
+      R,
       {
         icon: "fa-file-lines",
         title: a ? "Henüz belge yok" : "Bu projede henüz belge yok",
@@ -446,7 +446,7 @@ function de({ projectId: t, kind: s, mountEl: r }) {
   const [c, d, b] = n.data;
   if (d.length === 0)
     return /* @__PURE__ */ e.jsx(
-      E,
+      R,
       {
         icon: "fa-clipboard-list",
         title: "Henüz form bağlanmadı",
@@ -610,7 +610,7 @@ function ue({ projectId: t, kind: s, mountEl: r }) {
   if (a) {
     const f = H(h, i, y, (p) => p.taskId, (p) => p.projectId);
     return f.length === 0 ? /* @__PURE__ */ e.jsx(
-      E,
+      R,
       {
         icon: "fa-square-check",
         tone: "success",
@@ -629,7 +629,7 @@ function ue({ projectId: t, kind: s, mountEl: r }) {
   }
   const Q = u.length > 0 || c === A(t);
   return !Q && C.length === 0 ? /* @__PURE__ */ e.jsx(
-    E,
+    R,
     {
       icon: "fa-square-check",
       tone: "success",
@@ -681,7 +681,7 @@ function xe({ projectId: t, kind: s, mountEl: r }) {
   const [c, d, b] = n.data, m = new Map(c.map((h) => [h.id, h])), o = ne(d, m), x = new Set(o.map((h) => h.predecessorTaskId + "→" + h.taskId));
   if (d.length === 0)
     return /* @__PURE__ */ e.jsx(
-      E,
+      R,
       {
         icon: "fa-link",
         title: a ? "Görevler arası bağ yok" : "Bu projede görevler arası bağ yok",
@@ -763,5 +763,5 @@ const pe = [
 ];
 for (const [t, s, r] of pe) {
   const a = document.getElementById(t), l = a == null ? void 0 : a.getAttribute("data-project-id");
-  a && (l || a.getAttribute("data-scope") === "all") && se(a).render(/* @__PURE__ */ e.jsx(r, { projectId: l || null, kind: s, mountEl: a }));
+  a && (l || a.getAttribute("data-scope") === "all") && se(a, `project-panels:${s}`, /* @__PURE__ */ e.jsx(r, { projectId: l || null, kind: s, mountEl: a }));
 }

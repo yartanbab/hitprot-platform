@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { abpAppPath } from '../../documents/api';
+import { RetryButton } from '../ui/EmptyState';
 import { FLOW_STEPS, complianceSub, nextHint, stepHref } from './flow';
 import { useComplianceOverview } from './useComplianceOverview';
 
@@ -10,7 +11,9 @@ const cx = (...classes) => classes.filter(Boolean).join(' ');
  *
  * Her süreç ekranında başlığın hemen altında durur. Etkin adım vurgulanır,
  * adımlar gerçek bağlantıdır (yeni sekmede de açılır) ve proje bağlamını
- * taşır. Sağdaki "Sırada" ipucu projenin uygunluk özetinden türetilir.
+ * taşır. Sağdaki "Sırada" ipucu projenin uygunluk özetinden türetilir. Özet
+ * okunamazsa Uygunluk alt etiketi "Yüklenemedi" der; veriyi şerit kendisi çektiyse
+ * ipucunun yerinde kanonik "Tekrar dene" durur (sayfada başka yeniden deneme yok).
  *
  * @param {object} props
  * @param {'docs'|'compliance'|'report'|'deliver'|null} props.active
@@ -27,9 +30,11 @@ export function ProcessRibbon({ active = null, projectId = null, compliance, onS
   // ve ağa gitmez.
   const own = useComplianceOverview(compliance ? null : projectId);
   const data = compliance ?? own;
+  const complianceTextId = useId();
 
-  const state = { hasProject: Boolean(projectId), loading: data.loading, overview: data.overview };
+  const state = { hasProject: Boolean(projectId), loading: data.loading, failed: data.failed, overview: data.overview };
   const hint = nextHint(active, state);
+  const canRetry = !compliance && state.hasProject && own.failed;
   const appPath = abpAppPath();
 
   const handleClick = (stepKey, event) => {
@@ -56,7 +61,11 @@ export function ProcessRibbon({ active = null, projectId = null, compliance, onS
                 onClick={(event) => handleClick(step.key, event)}
               >
                 <span className="apya-flow-no" aria-hidden="true">{step.no}</span>
-                <span className="apya-flow-text" aria-hidden="true">
+                <span
+                  className="apya-flow-text"
+                  aria-hidden="true"
+                  id={step.key === 'compliance' ? complianceTextId : undefined}
+                >
                   <span className="apya-flow-label">{step.label}</span>
                   <span className="apya-flow-sub">{sub}</span>
                 </span>
@@ -67,12 +76,17 @@ export function ProcessRibbon({ active = null, projectId = null, compliance, onS
         })}
       </ol>
 
-      {hint && (
+      {hint ? (
         <p className={cx('apya-flow-next', `is-${hint.tone}`)}>
           <span className="apya-flow-next-label">Sırada:</span>
           <span className="apya-flow-next-text" title={hint.pending ? undefined : hint.text}>
             {hint.text}
           </span>
+        </p>
+      ) : canRetry && (
+        // Yeniden deneme sürerken de durur (bayrak kancada korunur): odak düğmede kalır.
+        <p className="apya-flow-next">
+          <RetryButton onRetry={own.reload} retrying={own.loading} aria-describedby={complianceTextId} />
         </p>
       )}
     </nav>

@@ -179,7 +179,7 @@ describe('TaskDetailRootV3 — form sunucu verisine yeniden temellenir (STA-04)'
         expect(screen.queryByText('konaklama')).not.toBeInTheDocument();
     });
 
-    it('kayıttan sonraki yeniden çekme başarısızsa Tekrar Dene sonrası form kirli kalmaz', async () => {
+    it('kayıttan sonraki yeniden çekme başarısızsa form yerinde kalır; sonraki tazelemede kirli kalmaz', async () => {
         await openLoaded();
         await addTag('konaklama');
 
@@ -189,12 +189,16 @@ describe('TaskDetailRootV3 — form sunucu verisine yeniden temellenir (STA-04)'
 
         fireEvent.click(screen.getByRole('button', { name: 'Kaydet' }));
 
-        await screen.findByText('Görev detayları yüklenemedi.');
-        svc.get.mockImplementation(() => Promise.resolve(saved));
-        fireEvent.click(screen.getByRole('button', { name: 'Tekrar Dene' }));
-
+        // Yenileme hatası ilk yükleme hatası değil: form sökülmez, UpdateAsync'in döndürdüğü kayıt işlenir.
         await screen.findByText('Konaklama');
+        expect(screen.queryByText('Görev detayları yüklenemedi.')).not.toBeInTheDocument();
+
+        // Sonraki tazeleme (sekme odağı, yeniden bağlanma) başarılı.
+        svc.get.mockImplementation(() => Promise.resolve(saved));
+        await act(async () => { await client.invalidateQueries({ queryKey: ['task-detail', TASK.id] }); });
+
         await waitFor(() => expect(screen.queryByText(DIRTY)).not.toBeInTheDocument());
+        expect(screen.getByText('Konaklama')).toBeInTheDocument();
     });
 
     /* Açık eylem kendi yazdığı alanı forma işler: kullanıcının kaydetmediği durum/proje
@@ -246,6 +250,41 @@ describe('TaskDetailRootV3 — form sunucu verisine yeniden temellenir (STA-04)'
 
         await waitFor(() => expect(svc.update).toHaveBeenCalledTimes(1));
         expect(svc.update.mock.calls[0][1]).toMatchObject({ projectId: 'p3', priority: 4 });
+    });
+});
+
+/* Canlı doğrulama L1-10: oturum düşüp pencere "Kapat"la kapatıldıktan sonra sekmeye dönüşteki
+   odak tazelemesi (GET 401) kirli formu "Görev detayları yüklenemedi"ye çeviriyordu — yazılan
+   metin görünmüyor, kopyalanamıyordu. Tazeleme hatası ilk yükleme hatası değildir. */
+describe('TaskDetailRootV3 — görev ekrandayken tazeleme düşerse form kalır (RES-01)', () => {
+    it.each([
+        ['oturum düştü (401, merkezi pencereye gitmiş)',
+            () => Object.assign(new Error('Oturumunuz sona erdi.'), { status: 401, apyaShown: true, apyaCentral: true })],
+        ['sunucu hatası (500)', () => Object.assign(new Error('Sunucu hatası'), { status: 500 })],
+    ])('%s: kirli form ve Kaydet ekranda, hata gövdesi yok', async (_name, makeError) => {
+        await openLoaded();
+        await addTag('konaklama');
+
+        svc.get.mockImplementation(() => Promise.reject(makeError()));
+        await act(async () => {
+            await client.invalidateQueries({ queryKey: ['task-detail', TASK.id] });
+            /* TanStack gözlemci bildirimini bir sonraki görevde (setTimeout 0) dağıtır: beklenmezse
+               bileşen hatayı henüz görmeden "hata gövdesi yok" denmiş olur (sahte geçiş). */
+            for (let i = 0; i < 3; i++) await new Promise((r) => setTimeout(r, 0));
+        });
+
+        expect(client.getQueryState(['task-detail', TASK.id]).status).toBe('error');   // tazeleme gerçekten düştü
+        expect(screen.queryByText('Görev detayları yüklenemedi.')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /tekrar dene/i })).toBeNull();
+        expect(screen.getByText('konaklama')).toBeInTheDocument();
+        expect(screen.getByText(DIRTY)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Kaydet' })).toBeEnabled();
+
+        // Oturum geri gelince (ya da sunucu düzelince) aynı form kaydedilir.
+        svc.get.mockImplementation(() => Promise.resolve(TASK));
+        fireEvent.click(screen.getByRole('button', { name: 'Kaydet' }));
+        await waitFor(() => expect(svc.update).toHaveBeenCalledTimes(1));
+        expect(svc.update.mock.calls[0][1].tagNames).toEqual(['konaklama']);
     });
 });
 

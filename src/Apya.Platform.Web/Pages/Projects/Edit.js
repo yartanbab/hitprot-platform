@@ -42,6 +42,25 @@ $(function () {
 
     activate(String($page.data('active-tab') || 'info'));
 
+    // ---------------------------------------------------------- TARİH SIRASI
+    // PRJ-01: bitiş başlangıçtan önce olamaz. min başlangıçtan kurulur: tarayıcı seçicisi
+    // önceki günleri kapatır, jQuery Validation type=date'te min'i ISO dize olarak karşılaştırır
+    // (eşit tarih geçerli; mesaj data-msg-min). Asıl kapı sunucu — Project.Update.
+    var $start = $('#Project_StartDate');
+    var $end = $('#Project_EndDate');
+
+    function syncEndMin() {
+        var start = String($start.val() || '');
+        if (start) {
+            $end.attr('min', start);
+        } else {
+            $end.removeAttr('min');
+        }
+    }
+
+    $start.on('change input', syncEndMin);
+    syncEndMin();
+
     // --------------------------------------------------------- SİLME ONAYI
     // Buton yalnız proje kodu BİREBİR yazılınca açılır. Sunucu da aynı kontrolü
     // yapıyor (asıl kapı orası); buradaki yalnız kullanıcıya geri bildirim.

@@ -14,7 +14,19 @@
     <link rel="stylesheet" href="~/css/apya-fonts.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/dynamic-assets/src/styles/tokens.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
-    <style>body { margin: 0; font-family: var(--apya-font-sans, system-ui), sans-serif; }</style>
+    @* Font Awesome ve Bootstrap da yok. Ada hata kartının düğmeleri uygulamada Razor'la aynı Bootstrap sınıflarını
+       taşır (btn btn-sm btn-outline-primary / btn-outline-secondary; "Tekrar dene"de <i class="fa … me-1">): burada
+       karşılıklarını bu kurallar verir. Boş <i class="fa"> kenar boşluğuyla düğme yazısını kaydırmasın diye gizlenir. *@
+    <style>
+        body { margin: 0; font-family: var(--apya-font-sans, system-ui), sans-serif; }
+        i.fa { display: none; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; height: 2rem; padding: 0 .75rem; border: 1px solid transparent; border-radius: var(--apya-radius-md, 6px); background: transparent; font-size: .875rem; font-weight: 500; line-height: 1.25rem; white-space: nowrap; cursor: pointer; }
+        .btn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+        .btn-outline-primary { border-color: var(--apya-accent-500); color: var(--apya-accent-500); }
+        .btn-outline-primary:hover { background: var(--apya-accent-500); color: var(--apya-text-inverse); }
+        .btn-outline-secondary { border-color: var(--apya-border-strong); color: var(--apya-text-primary); }
+        .btn-outline-secondary:hover { background: var(--apya-surface-raised); }
+    </style>
     <island-preload entry="public-form" />
 </head>
 <body>

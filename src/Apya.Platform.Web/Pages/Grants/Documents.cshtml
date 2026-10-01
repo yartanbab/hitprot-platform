@@ -79,11 +79,12 @@
                     </div>
                 </div>
 
+                @* Evrak ekle / hatırlat veri gelene kadar gizli ("Hatırlat" gerçek bildirim gönderir); paint açar. *@
                 <div class="d-flex align-items-center gap-2 flex-wrap pt-3 border-top">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="AddDocBtn">
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="AddDocBtn">
                         <i class="fa fa-plus me-1"></i>@L["Grants:Documents:Add"]
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="RemindBtn">
+                    <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="RemindBtn">
                         <i class="fa fa-bell me-1"></i>@L["Grants:Documents:Remind"]
                     </button>
                     <div class="flex-fill"></div>
@@ -121,7 +122,7 @@
                         <i class="fa fa-triangle-exclamation mt-1"></i>
                         <span id="PackageWarningText"></span>
                     </div>
-                    <button type="button" class="btn btn-sm btn-primary" id="CreatePackageBtn">
+                    <button type="button" class="btn btn-sm btn-primary" id="CreatePackageBtn" disabled>
                         <i class="fa fa-file-zipper me-1"></i>@L["Grants:Documents:CreatePackage"]
                     </button>
                     <a class="btn btn-sm btn-outline-secondary d-none" id="DownloadPackageBtn"

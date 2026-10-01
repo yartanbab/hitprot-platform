@@ -10,8 +10,8 @@
 @model Apya.Platform.Web.Pages.Hibeler.DetayModel
 @{
     Layout = "_PublicLayout";
-    ViewBag.Title = Model.Detail.GrantName;
-    ViewBag.MetaDescription = Model.Detail.Description;
+    ViewBag.Title = Model.CallUnavailable ? L["Grants:Public:Unavailable:Title"].Value : Model.Detail.GrantName;
+    ViewBag.MetaDescription = Model.CallUnavailable ? null : Model.Detail.Description;
 
     string Money(decimal? v) => v.HasValue ? v.Value.ToString("N0") + " ₺" : "—";
 
@@ -66,6 +66,21 @@
             _ => raw
         };
     }
+}
+
+@* ACC-04, GRT-06: kapanmış / taslak / hiç olmayan çağrı AYNI yanıtı alır — 404 + kendi düzeninde
+   durum (DetayModel.TryLoadDetailAsync). Erken dönüş @section scripts'TEN ÖNCE: TestData ve Detay.js
+   hiç basılmaz (Detay.js .apya-pub-detail kökü olmadan patlardı). *@
+@if (Model.CallUnavailable)
+{
+    <div class="apya-pub-wrap">
+        <section class="apya-pub-unavailable">
+            <h1>@L["Grants:Public:Unavailable:Title"]</h1>
+            <p>@L["Grants:Public:Unavailable:Body"]</p>
+            <a class="apya-pub-btn" href="/Hibeler">@L["Grants:Public:Unavailable:Cta"]</a>
+        </section>
+    </div>
+    return;
 }
 
 @section scripts {

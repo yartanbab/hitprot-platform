@@ -74,8 +74,6 @@ public class CashAccountsScript_Tests
         var script = ReadScript();
 
         script.ShouldContain("apya-skeleton");
-        script.ShouldContain("Tekrar dene");
-        script.ShouldContain("data-action=\"retry\"");
 
         // Hareketler ve özet için ayrı bilet: biri diğerinin yanıtını bayatlatmasın.
         Regex.Matches(script, @"apya\.latest\(\)").Count.ShouldBe(2);
@@ -93,6 +91,27 @@ public class CashAccountsScript_Tests
 
         // Hesap değişince eski satırlar yanıt beklenirken yeni başlığın altında kalmaz (FIN-10).
         FunctionBody(script, "selectAccount").ShouldContain("loadMovements(true);");
+    }
+
+    /// <summary>
+    /// Hareket listesi yükleme hatası (Faz 4 kararları 2, 10): ABP penceresi açılmaz, hata tablo
+    /// hücresinde kanonik kartla söylenir (açıklama hata nesnesinden, "Tekrar dene" outline-primary +
+    /// fa-rotate-right). Eskiden pencere + gömülü kırmızı metin + btn-link "Tekrar dene" birlikteydi.
+    /// </summary>
+    [Fact]
+    public void Hareket_listesi_yukleme_hatasi_tek_kanal_kanonik_kart()
+    {
+        var script = ReadScript();
+        var movements = FunctionBody(script, "loadMovements");
+
+        movements.ShouldContain("sorting: 'movementDate desc' }, { abpHandleError: false }))");
+        movements.ShouldContain("'<tr><td colspan=\"5\">' +");
+        movements.ShouldContain("apya.loadState.errorHtml('Hareketler yüklenemedi.', 'js-movements-retry', err) + '</td></tr>'");
+
+        script.ShouldContain("$('#CashMovementsTable').on('click', '.js-movements-retry', function () {");
+        FunctionBody(script, "loadMovements").ShouldNotContain("data-action=\"retry\"");
+        script.ShouldNotContain("action === 'retry'");
+        script.ShouldNotContain("btn-link p-0 ms-1 align-baseline");
     }
 
     [Fact]

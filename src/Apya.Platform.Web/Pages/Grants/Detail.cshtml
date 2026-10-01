@@ -27,7 +27,8 @@
             <a href="/Grants" class="btn btn-sm btn-outline-secondary">
                 <i class="fa fa-arrow-left me-1"></i>@L["Grants:Detail:BackToList"]
             </a>
-            <button type="button" id="BookmarkBtn" class="btn btn-sm btn-outline-secondary">
+            @* Veri gelene kadar gizli (sunucuya yazar); paintBookmark açar. *@
+            <button type="button" id="BookmarkBtn" class="btn btn-sm btn-outline-secondary d-none">
                 <i class="fa fa-bookmark me-1"></i><span id="BookmarkText"></span>
             </button>
             @* Kiracı başvuruyu kendi açmaz: ilgi bildirir, host değerlendirir (tur 14).
@@ -63,6 +64,9 @@
             <div class="apya-detail-metrics" id="CallMetrics"></div>
         </div>
     </div>
+
+    @* Yükleme hatası kartı (Detail.js). *@
+    <div id="DetailLoadState"></div>
 
     @* Tur 14 · "İlginiz iletildi" + dört adımlı ilerleme. Talep sürerken ve başvuruya
        döndüğünde görünür; reddedilen / geri çekilen talep başlık kartındaki notla anlatılır. *@

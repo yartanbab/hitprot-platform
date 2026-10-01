@@ -5,7 +5,20 @@
 @model Apya.Platform.Web.Pages.Hibeler.RandevuModel
 @{
     Layout = "_PublicLayout";
-    ViewBag.Title = L["Grants:Public:Meeting:Title"].Value;
+    ViewBag.Title = Model.LinkInvalid ? L["Grants:Public:Meeting:Invalid:Title"].Value : L["Grants:Public:Meeting:Title"].Value;
+}
+
+@* ACC-04, GRT-06: talep yok ya da çağrısı kapanmış — 404 + kendi düzeninde durum (RandevuModel.TryLoadPrefillAsync). *@
+@if (Model.LinkInvalid)
+{
+    <div class="apya-pub-wrap">
+        <section class="apya-pub-unavailable">
+            <h1>@L["Grants:Public:Meeting:Invalid:Title"]</h1>
+            <p>@L["Grants:Public:Meeting:Invalid:Body"]</p>
+            <a class="apya-pub-btn" href="/Hibeler">@L["Grants:Public:Unavailable:Cta"]</a>
+        </section>
+    </div>
+    return;
 }
 
 <div class="apya-pub-wrap apya-pub-detail">

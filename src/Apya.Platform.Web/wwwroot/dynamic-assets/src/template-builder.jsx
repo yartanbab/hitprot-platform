@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import './index.css';
 
 // --- Premium İkonlar ---
@@ -228,6 +228,5 @@ const TemplateBuilder = () => {
 
 const rootElement = document.getElementById("dynamic-assets-app-root");
 if (rootElement) {
-    const root = createRoot(rootElement);
-    root.render(<TemplateBuilder />);
+    mountIsland(rootElement, 'template-builder', <TemplateBuilder />);
 }

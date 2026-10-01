@@ -1,0 +1,43 @@
+@using Apya.Platform.Localization
+@using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Diagnostics
+@using Microsoft.AspNetCore.Http
+@using Microsoft.Extensions.Localization
+@using Volo.Abp.Users
+@model Volo.Abp.AspNetCore.Mvc.UI.Theme.Shared.Views.Error.AbpErrorViewModel
+@inject IStringLocalizer<PlatformResource> L
+@inject ICurrentUser CurrentUser
+@inject IAuthorizationService AuthorizationService
+@*
+    Genel hata sayfası (SHL-19). ABP Theme.Shared'in AYNI yoldaki görünümünü ezer (ErrorController
+    ErrorViewUrls boşken "~/Views/Error/Default.cshtml" ister): her kodda "sunucu tarafında beklenmedik
+    hata" + eylemsizlik yerine durum koduna göre Türkçe başlık/açıklama ve eylemler. İş kuralı
+    istisnasının mesajı KORUNUR. Metin/eylem kararı ErrorStates.ForStatusCode'da.
+    Boru hattına dokunulmaz: UseErrorPage yalnız üretimde ve yalnız HTML gezinmesinde
+    (PlatformWebModule.IsHtmlNavigation); görünüm /Error?httpStatusCode= ile her ortamda açılır.
+    İstisna bilgisi yalnız yeniden yürütmede vardır (durum kodu yönlendirmesinde yok).
+*@
+@{
+    var handled = Context.Features.Get<IExceptionHandlerPathFeature>();
+    var canOpenDashboard = CurrentUser.IsAuthenticated
+        && await AuthorizationService.IsGrantedAsync(ErrorStates.DashboardPermission);
+    var state = ErrorStates.ForStatusCode(
+        Model.HttpStatusCode,
+        handled?.Error,
+        Model.ErrorInfo,
+        CurrentUser.IsAuthenticated,
+        canOpenDashboard,
+        HttpMethods.IsGet(Context.Request.Method),
+        handled?.Path,
+        L);
+    ViewBag.Title = state.Title;
+}
+
+<div class="apya-page" data-page-description="@state.Footnote">
+    <div class="card">
+        <div class="card-body">
+            <partial name="~/Pages/Shared/_EmptyState.cshtml" model="state" />
+        </div>
+    </div>
+</div>

@@ -34,14 +34,21 @@
         var getFilter = typeof opts.getFilter === 'function' ? opts.getFilter : function () { return {}; };
         var editModal = opts.editModal || null;
         var taskSvc = apya.platform.tasks.task;
+        // Süzgeç hızla değişince yanıtlar sırasız dönebilir: yalnız son istek çizer.
+        var nextLoad = apya.latest();
 
-        var state = { loading: false, items: [] };
+        var state = { loading: false, loadFailed: false, loadError: null, items: [] };
 
         function render() {
             if (state.loading) {
                 $mount.html('<div class="apya-gal-grid">'
                     + new Array(9).join('<div class="apya-gal-card apya-skeleton" style="height:190px"></div>')
                     + '</div>');
+                return;
+            }
+
+            if (state.loadFailed) {
+                $mount.html(apya.loadState.errorHtml(l('Tasks:Gallery:LoadFailed'), 'js-gal-retry', state.loadError));
                 return;
             }
 
@@ -82,17 +89,28 @@
             $mount.on('click', '[data-open]', function () {
                 if (editModal) { editModal.open($(this).data('open')); }
             });
+            $mount.on('click', '.js-gal-retry', function () { load(); });
         }
 
         function load() {
+            var isLatest = nextLoad();
             state.loading = true;
+            state.loadFailed = false;
             render();
             // maxResultCount sunucudaki görev süzgecine gider; galeri satırı görev
             // değil EK olduğu için dönen sayı bundan fazla olabilir, bu beklenendir.
+            // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
             var filter = $.extend({ maxResultCount: 1000 }, getFilter());
-            return taskSvc.getGallery(filter).then(function (items) {
+            return Promise.resolve(taskSvc.getGallery(filter, { abpHandleError: false })).then(function (items) {
+                if (!isLatest()) { return; }
                 state.items = items || [];
                 state.loading = false;
+                render();
+            }, function (err) {
+                if (!isLatest()) { return; }
+                state.loading = false;
+                state.loadFailed = true;
+                state.loadError = err;
                 render();
             });
         }

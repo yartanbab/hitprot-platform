@@ -40,8 +40,9 @@
             </div>
         </nav>
 
-        @* ---------- Orta: aşama tablosu ---------- *@
-        <section class="card mb-0 apya-tpl-editor" id="TplEditor">
+        @* ---------- Orta: aşama tablosu ----------
+           Veri gelene kadar gizli (boş editör etkin "Şablonu kaydet" ile görünmesin); paintList açar. *@
+        <section class="card mb-0 apya-tpl-editor d-none" id="TplEditor">
             <div class="card-body d-flex flex-column gap-3">
                 <div class="d-flex align-items-start justify-content-between gap-3">
                     <div class="apya-field flex-grow-1">
@@ -90,7 +91,7 @@
         </section>
 
         @* ---------- Sağ: pano önizlemesi + kullanım ---------- *@
-        <aside class="apya-tpl-side">
+        <aside class="apya-tpl-side d-none">
             <div class="card mb-0">
                 <div class="card-body d-flex flex-column gap-2">
                     <span class="apya-overline">@L["Grants:StageTemplates:BoardPreview"]</span>
@@ -112,15 +113,18 @@
     </div>
 
     <div id="TplEmpty" class="d-none text-center pb-5">
-        <partial name="_EmptyState" model='new Apya.Platform.Web.Pages.Shared.EmptyStateModel
-        {
-            Icon = "fa-diagram-project",
-            Title = L["Grants:StageTemplates:Empty"].Value,
-            Description = L["Grants:StageTemplates:EmptyHint"].Value,
-            CssClass = "pb-3"
-        }' />
-        <button type="button" id="TplEmptyNewBtn" class="btn btn-outline-secondary">
-            <i class="fa fa-plus me-1"></i>@L["Grants:StageTemplates:New"]
-        </button>
+        @* Eylem partial'ın yuvasında (CON-14); id JS kancasıdır (StageTemplates.js #TplEmptyNewBtn). *@
+        @{
+            var tplEmpty = new Apya.Platform.Web.Pages.Shared.EmptyStateModel
+            {
+                Icon = "fa-diagram-project",
+                Title = L["Grants:StageTemplates:Empty"].Value,
+                Description = L["Grants:StageTemplates:EmptyHint"].Value,
+                ActionText = L["Grants:StageTemplates:New"].Value,
+                ActionIcon = "fa-plus",
+                ActionAttributes = new Dictionary<string, string> { ["id"] = "TplEmptyNewBtn", ["class"] = "btn btn-outline-secondary" }
+            };
+        }
+        <partial name="_EmptyState" model="tplEmpty" />
     </div>
 </div>

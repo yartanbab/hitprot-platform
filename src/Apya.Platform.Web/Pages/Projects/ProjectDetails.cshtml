@@ -608,7 +608,8 @@
         <div id="view-list" class="view-panel" role="tabpanel" aria-labelledby="btn-view-list">
             @if (canViewTasks)
             {
-                <abp-table class="apya-clean-table" id="ProjectTasksTable"></abp-table>
+                @* data-load-failed: yükleme hatası kartının başlığı (apya-load-state.js failTable). *@
+                <abp-table class="apya-clean-table" id="ProjectTasksTable" data-load-failed="@L["Tasks:View:LoadFailed"]"></abp-table>
 
                 @* Yükleniyor — spinner değil, tablo hizasında iskelet satırlar. *@
                 <div class="apya-console-skeleton d-none" id="state-loading" aria-hidden="true">

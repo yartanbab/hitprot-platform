@@ -31,7 +31,9 @@ namespace Apya.Platform.Web.Pages.Finance;
 /// sorgusu hiç koşmaz.
 ///
 /// Her kaynak kendi app service'i üzerinden çekilir (yetki/tenant filtresi
-/// korunur); yetkisi olmayan kaynak sessizce atlanır.
+/// korunur); yetkisi olmayan kaynak atlanır AMA panel onu "kayıt yok" değil
+/// "görme yetkiniz yok" diye çizer (…Locked bayrakları); hiçbir finans izni
+/// yoksa sayfa 403 (<see cref="FinanceContext.PageAnyOfPermissions"/>).
 /// </summary>
 [Authorize]
 public class IndexModel : AbpPageModel
@@ -141,11 +143,20 @@ public class IndexModel : AbpPageModel
 
     /* ─── "Donör & raporlama" sekmesi (tasarım 2a) ───────────────────── */
 
-    /// <summary>Uygunluk denetiminin bulguları; her satır GERÇEK bir sayıya dayanır.</summary>
+    /// <summary>
+    /// Uygunluk denetiminin bulguları; her satır GERÇEK bir sayıya dayanır ya da denetlenemeyen
+    /// başlıktır (<see cref="EligibilityFinding.Unverified"/>). Boşsa üç başlık da GERÇEKTEN temizdir.
+    /// </summary>
     public List<EligibilityFinding> EligibilityFindings { get; private set; } = new();
 
     /// <summary>Donör raporunun teslim paketleri (dönem + durum).</summary>
     public List<Apya.Platform.Documents.DeliveryPackageDto> DonorPackages { get; private set; } = new();
+
+    /// <summary>Teslim paketleri okunamadı: "paket yok" denmez, Teslimler (403) bağlantısı çıkmaz.</summary>
+    public bool DonorPackagesLocked { get; private set; }
+
+    /// <summary>Gelir-Gider kaynaklarından biri <see cref="MaxPerSource"/> kesiğine takıldı (TotalCount &gt; okunan).</summary>
+    public bool LedgerTruncated { get; private set; }
 
     public class EligibilityFinding
     {
@@ -155,12 +166,63 @@ public class IndexModel : AbpPageModel
         public int Count { get; set; }
         public decimal Amount { get; set; }
         public string? Url { get; set; }
+
+        /// <summary>
+        /// Denetlenemeyen başlık (FIN-07): sayı ve tutar YOK, çünkü sayılmadı.
+        /// <see cref="EligibilityFindings"/>'e girdiği için panelin olumlu özeti yapısal olarak basılamaz.
+        /// </summary>
+        public bool Unverified { get; set; }
     }
 
     public List<TransactionRow> Transactions { get; private set; } = new();
     public List<AccountSummary> Accounts { get; private set; } = new();
     public decimal TotalBalanceTry { get; private set; }
     public int DistinctCurrencyCount { get; private set; }
+
+    /* ─── "Okunamadı" ≠ "yok" (ROL-06) ────────────────────────────────
+       Yetkisi (rol izni, paket tavanı ya da kapalı özellik) olmayan kaynak
+       boş gelir; panel bunu "kayıt yok" diye ÇİZEMEZ. Bayrak panel başına:
+       her panelin sorusu farklı (liste mi, toplam mı). */
+
+    /// <summary>"Son İşlemler"in denenen kaynaklarının HEPSİ okunamadı.</summary>
+    public bool TransactionsLocked { get; private set; }
+
+    /// <summary>Bir kısmı okunamadı: boş liste yalnız "görebildiklerinizde yok" diyebilir.</summary>
+    public bool TransactionsPartiallyLocked { get; private set; }
+
+    /// <summary>Kasa/banka listesi ya da bakiyesi okunamadı (hesaplar ve toplam gösterilmez).</summary>
+    public bool AccountsLocked { get; private set; }
+
+    /// <summary>Kurlar okunamadı: ₺ dışındaki hesaplar toplama katılamadı.</summary>
+    public bool RatesLocked { get; private set; }
+
+    /// <summary>Gelir-Gider: gelir kaynağı denendi ve okunamadı (denenmeyen taraf kilitli sayılmaz).</summary>
+    public bool IncomesLocked { get; private set; }
+
+    /// <summary>Gelir-Gider: gider kaynağı denendi ve okunamadı.</summary>
+    public bool ExpensesLocked { get; private set; }
+
+    /// <summary>
+    /// Host hesabıyla ("Hesabına Gir" kullanılmadan) bir KİRACININ projesi seçili. Proje seçici ile
+    /// bütçe/kur servisleri kiracı süzgecini kapatır; gelir, gider, fatura, kasa ve belge servisleri
+    /// kapatmaz — kiracının kayıtları bu bağlamda boş küme gelir (hesap listesi host'un kendi hesapları
+    /// olurdu, uygunluk servisi projeyi bulamayıp sayfayı hataya düşürürdü). Boş küme "kayıt yok" diye
+    /// ÇİZİLEMEZ (FIN-07): işlem ve hesap panelleri ile Gelir-Gider, Faturalar, Kasa ve Belgeler
+    /// sekmeleri sorgu atmadan <see cref="HostScopeState"/> basar; donör denetimi aynı bayrakla
+    /// denetlenemedi satırı üretir.
+    /// </summary>
+    public bool HostScope { get; private set; }
+
+    /// <summary>
+    /// Host kapsamında panelin yerine basılan durum — tek kaynak: metin ve kültürden bağımsız
+    /// <c>data-apya-state="host-scope"</c> kancası (test ve canlı doğrulama anahtarı).
+    /// </summary>
+    public EmptyStateModel HostScopeState => new()
+    {
+        Variant = EmptyStateVariant.Locked,
+        Kind = "host-scope",
+        Title = L["Finance:Locked:HostScope"].Value
+    };
 
     public IndexModel(
         IExpenseAppService expenseAppService,
@@ -190,8 +252,15 @@ public class IndexModel : AbpPageModel
         _deliveryPackageAppService = deliveryPackageAppService;
     }
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
+        // Hiçbir finans izni yoksa sayfa anlamsız bir kilit panosuna döner → 403 (tam sayfa
+        // gezinmesinde erişim reddi sayfası). POST işleyicileri kendi servis izinleriyle kalır.
+        if (!await AuthorizationService.IsGrantedAnyAsync(FinanceContext.PageAnyOfPermissions))
+        {
+            return Forbid();
+        }
+
         await LoadProjectContextAsync();
         await LoadTabsAsync();
 
@@ -256,6 +325,8 @@ public class IndexModel : AbpPageModel
                 FxBridge = await _projectFxAppService.GetBridgeAsync(SelectedProject.Id));
             await LoadDonorReportingAsync();
         }
+
+        return Page();
     }
 
     /// <summary>
@@ -265,6 +336,13 @@ public class IndexModel : AbpPageModel
     /// </summary>
     private async Task LoadLedgerAsync()
     {
+        // Host kapsamı: kiracının gelir/gider kayıtları bu bağlamda boş küme gelir — sorgu atılmaz
+        // (Gelir-Gider sekmesi HostScopeState basar; donör tarih denetimi denetlenemedi satırı üretir).
+        if (HostScope)
+        {
+            return;
+        }
+
         var accountNames = new Dictionary<Guid, string>();
         await TryAddAsync(async () =>
         {
@@ -300,7 +378,7 @@ public class IndexModel : AbpPageModel
 
         if (Kind != "gider")
         {
-            await TryAddAsync(async () =>
+            IncomesLocked = !await TryAddAsync(async () =>
             {
                 var page = await _incomeAppService.GetListAsync(new GetIncomeEntriesInput
                 {
@@ -309,6 +387,10 @@ public class IndexModel : AbpPageModel
                     CashAccountId = AccountId,
                     Sorting = "IncomeDate desc"
                 });
+                if (page.TotalCount > page.Items.Count)
+                {
+                    LedgerTruncated = true;
+                }
 
                 foreach (var x in page.Items)
                 {
@@ -335,7 +417,7 @@ public class IndexModel : AbpPageModel
 
         if (Kind != "gelir")
         {
-            await TryAddAsync(async () =>
+            ExpensesLocked = !await TryAddAsync(async () =>
             {
                 var page = await _expenseAppService.GetListAsync(new GetExpensesInput
                 {
@@ -344,6 +426,10 @@ public class IndexModel : AbpPageModel
                     CashAccountId = AccountId,
                     Sorting = "ExpenseDate desc"
                 });
+                if (page.TotalCount > page.Items.Count)
+                {
+                    LedgerTruncated = true;
+                }
 
                 foreach (var x in page.Items)
                 {
@@ -421,6 +507,7 @@ public class IndexModel : AbpPageModel
         }
 
         Template = FinanceContext.Resolve(SelectedProject?.CategorySystemKey);
+        HostScope = CurrentTenant.Id == null && SelectedProject?.TenantId != null;
     }
 
     /// <summary>
@@ -465,14 +552,23 @@ public class IndexModel : AbpPageModel
 
     private async Task LoadTransactionsAsync()
     {
+        // Host kapsamı: kiracının işlemleri bu bağlamda boş küme gelir — sorgu atılmaz, panel
+        // "Henüz işlem yok" yerine HostScopeState basar.
+        if (HostScope)
+        {
+            return;
+        }
+
         var projects = await SafeLookupAsync(async () =>
             (await _invoiceAppService.GetProjectLookupAsync()).Items.ToDictionary(x => x.Id, x => x.Name));
         var customers = await SafeLookupAsync(async () =>
             (await _invoiceAppService.GetCustomerLookupAsync()).Items.ToDictionary(x => x.Id, x => x.Name));
 
         var rows = new List<TransactionRow>();
+        // Kaynak başına okundu mu: hepsi okunamadıysa liste kilitli, bir kısmıysa kısmi.
+        var readable = new List<bool>();
 
-        await TryAddAsync(async () =>
+        readable.Add(await TryAddAsync(async () =>
         {
             var page = await _incomeAppService.GetListAsync(
                 new GetIncomeEntriesInput { MaxResultCount = MaxPerSource, ProjectId = ProjectId });
@@ -492,9 +588,9 @@ public class IndexModel : AbpPageModel
                     Url = "/Incomes"
                 });
             }
-        });
+        }));
 
-        await TryAddAsync(async () =>
+        readable.Add(await TryAddAsync(async () =>
         {
             var page = await _expenseAppService.GetListAsync(
                 new GetExpensesInput { MaxResultCount = MaxPerSource, ProjectId = ProjectId });
@@ -514,9 +610,9 @@ public class IndexModel : AbpPageModel
                     Url = "/Expenses"
                 });
             }
-        });
+        }));
 
-        await TryAddAsync(async () =>
+        readable.Add(await TryAddAsync(async () =>
         {
             // Fatura ucunda proje süzgeci yok; sayfalanmış sonuç bellekte süzülür.
             var page = await _invoiceAppService.GetListAsync(new PagedAndSortedResultRequestDto { MaxResultCount = MaxPerSource });
@@ -537,12 +633,12 @@ public class IndexModel : AbpPageModel
                     Url = "/Invoices"
                 });
             }
-        });
+        }));
 
         // Transferin projesi yoktur — proje seçiliyken listeye hiç girmez.
         if (!ProjectId.HasValue)
         {
-            await TryAddAsync(async () =>
+            readable.Add(await TryAddAsync(async () =>
             {
                 // Yalnızca Transfer kaynaklı hareketler eklenir — Invoice/Expense/Income
                 // kaynaklı hareketler zaten kendi listelerinden geldi (çift sayım olmasın).
@@ -561,17 +657,28 @@ public class IndexModel : AbpPageModel
                         Url = "/CashAccounts"
                     });
                 }
-            });
+            }));
         }
 
         Transactions = rows.OrderByDescending(r => r.Date).Take(MaxTransactionsShown).ToList();
+        TransactionsLocked = readable.All(ok => !ok);
+        TransactionsPartiallyLocked = !TransactionsLocked && readable.Any(ok => !ok);
     }
 
     private async Task LoadAccountsAsync()
     {
+        // Host kapsamı: okunacak liste kiracının değil host'un kendi hesapları olurdu — sorgu atılmaz,
+        // hesap paneli ve Kasa sekmesi HostScopeState basar ("henüz hesap yok" / "₺0" değil).
+        if (HostScope)
+        {
+            return;
+        }
+
         var accounts = new List<AccountSummary>();
 
-        await TryAddAsync(async () =>
+        // Liste (CashAccounts) ve bakiye (CashMovements) FARKLI izin; bakiye izni ilk hesapta
+        // düştüğü için kısmi liste birikmez — ikisinden biri yoksa hesaplar kilitli.
+        AccountsLocked = !await TryAddAsync(async () =>
         {
             var result = await _cashAccountAppService.GetListAsync(
                 new GetCashAccountsInput { MaxResultCount = 1000, IsActive = true });
@@ -594,11 +701,12 @@ public class IndexModel : AbpPageModel
         Accounts = accounts.OrderByDescending(a => a.Balance).ToList();
         DistinctCurrencyCount = accounts.Select(a => a.Currency).Distinct().Count();
 
-        await TryAddAsync(async () =>
-        {
-            var ratesToTry = await CurrencyConversionHelper.LoadRatesToTryAsync(_exchangeRateAppService);
-            TotalBalanceTry = accounts.Sum(a => CurrencyConversionHelper.ToTry(a.Balance, a.Currency, ratesToTry));
-        });
+        // Toplam try DIŞINDA: kurlar okunamasa da ₺ hesaplar toplanır (ToTry kur bulamayanı 0
+        // sayar); panel bunu "yalnız ₺ hesaplar" diye açıkça yazar — sahte ₺0 yok.
+        var ratesToTry = new Dictionary<string, decimal>();
+        RatesLocked = !await TryAddAsync(async () =>
+            ratesToTry = await CurrencyConversionHelper.LoadRatesToTryAsync(_exchangeRateAppService));
+        TotalBalanceTry = accounts.Sum(a => CurrencyConversionHelper.ToTry(a.Balance, a.Currency, ratesToTry));
     }
 
     // ─── Tek tıklık işlemler ───
@@ -687,6 +795,15 @@ public class IndexModel : AbpPageModel
     /// </summary>
     private async Task LoadDocumentsAsync()
     {
+        // Host kapsamı: belge servisleri kiracı süzgecini kapatmaz — tahta boş küme gelir ("Açık yok: her
+        // harcamanın belgesi…" olumlu cümlesi basılırdı), uygunluk servisi projeyi bulamayıp
+        // EntityNotFound atar (TryAddAsync yutmaz, sayfa hataya düşerdi). Hiçbiri çağrılmaz; sekme
+        // HostScopeState basar.
+        if (HostScope)
+        {
+            return;
+        }
+
         var projectId = SelectedProject!.Id;
 
         await TryAddAsync(async () => DocumentBoard = await _matchingAppService.GetBoardAsync(projectId));
@@ -756,13 +873,31 @@ public class IndexModel : AbpPageModel
     /// bir kavramı ekrana yazmak, kullanıcının denetlediğini sandığı ama hiç
     /// denetlenmeyen bir rakam üretirdi. Buradaki üç bulgunun üçü de sayılabilir
     /// gerçeklere dayanıyor.
+    ///
+    /// Her başlık ÜÇ durumlu (FIN-07): bulgu / temiz / denetlenemedi. Kaynak okunamadıysa,
+    /// eksik okunduysa ya da proje tarihsizse başlık "bulgu yok" sayılmaz, denetlenemedi
+    /// satırı üretir; panelin olumlu özeti yalnız liste boşken basıldığı için yapısal olarak
+    /// engellenir.
     /// </summary>
     private async Task LoadDonorReportingAsync()
     {
         var projectId = SelectedProject!.Id;
 
-        // 1) Belgesiz harcama — donör denetiminin ilk sorduğu şey.
-        await TryAddAsync(async () =>
+        // Host bağlamında ("Hesabına Gir" kullanılmadan) kiracının projesi: proje seçici ile bütçe/kur
+        // servisleri kiracı süzgecini kapatır (HostScope), belge tahtası, gelir/gider ve teslim paketleri
+        // kapatmaz → boş küme "temiz" sayılırdı. Belge ve tarih başlıkları denetlenemedi, paketler kilitli.
+        // Bayrak sayfanın tek kaynağından (işlem/hesap/Gelir-Gider panelleriyle aynı).
+        var hostScope = HostScope;
+
+        // 1) Belgesiz harcama — donör denetiminin ilk sorduğu şey. Tahta okunamazsa (Belgeler
+        //    izni yok ya da paket kapsamı dışında — Basic) belgesiz harcama olup olmadığı bilinmez.
+        if (hostScope)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Documents:Title",
+                "Finance:Donor:Unverified:HostScope"));
+        }
+        else if (!await TryAddAsync(async () =>
         {
             var board = await _matchingAppService.GetBoardAsync(projectId);
             if (board.Expenses.Count > 0)
@@ -777,7 +912,12 @@ public class IndexModel : AbpPageModel
                     Url = $"/Documents/Matching?projectId={projectId}"
                 });
             }
-        });
+        }))
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Documents:Title",
+                "Finance:Donor:Unverified:Documents:Detail"));
+        }
 
         // 2) Donör karşılığı hesaplanamayan kayıt — kur eksikse rapor tutmaz.
         if (FxBridge is { MissingDonorRateCount: > 0 })
@@ -816,14 +956,66 @@ public class IndexModel : AbpPageModel
             }
         }
 
-        await TryAddAsync(async () =>
+        // Okunabilen kümedeki gerçek ihlal yukarıda yine gösterilir; ama tarih yoksa başlık hiç
+        // koşmadı, küme eksikse (izin yok, kaynak başına 100 kayıt kesiği — en eski kayıtlar tam
+        // da kesilen kısım — ya da URL süzgeci) aralık dışı kayıt görünmeden kalmış olabilir.
+        // Host bağlamında küme kiracı süzgecinden dolayı boştur.
+        if (hostScope)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Dates:Title",
+                "Finance:Donor:Unverified:HostScope"));
+        }
+        else if (start == null && end == null)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Dates:Title",
+                "Finance:Donor:Unverified:Dates:NoProjectDates",
+                CanEditBudget ? $"/Projects/Edit/{projectId}" : null));
+        }
+        else if (IncomesLocked || ExpensesLocked)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Dates:Title",
+                "Finance:Donor:Unverified:Dates:NoAccess"));
+        }
+        else if (LedgerTruncated || !string.IsNullOrEmpty(Kind) || LineId.HasValue || AccountId.HasValue)
+        {
+            EligibilityFindings.Add(Unverified(
+                "Finance:Donor:Unverified:Dates:PartialTitle",
+                "Finance:Donor:Unverified:Dates:Partial"));
+        }
+
+        DonorPackagesLocked = hostScope || !await TryAddAsync(async () =>
             DonorPackages = await _deliveryPackageAppService.GetListAsync(projectId));
     }
 
-    private static async Task TryAddAsync(Func<Task> fetch)
+    /// <summary>Denetlenemeyen başlık satırı: sayı ve tutar yok (sayılmadı), uyarı tonu.</summary>
+    private EligibilityFinding Unverified(string titleKey, string detailKey, string? url = null) => new()
     {
-        try { await fetch(); }
-        catch (AbpAuthorizationException) { /* kullanıcının bu kaynağa yetkisi yok → atla */ }
+        Tone = "warning",
+        Unverified = true,
+        Title = L[titleKey].Value,
+        Detail = L[detailKey].Value,
+        Url = url
+    };
+
+    /// <summary>
+    /// Kaynağı okur; false = okunamadı (rol izni, paket tavanı ya da kapalı özellik —
+    /// Volo.Abp.Features da aynı istisnayı atar). Çağıran false'u "kayıt yok" diye
+    /// GÖSTEREMEZ; panel bayrağına yazar (…Locked).
+    /// </summary>
+    private static async Task<bool> TryAddAsync(Func<Task> fetch)
+    {
+        try
+        {
+            await fetch();
+            return true;
+        }
+        catch (AbpAuthorizationException)
+        {
+            return false;
+        }
     }
 
     public enum TxType { Income, Expense, Invoice, Transfer }

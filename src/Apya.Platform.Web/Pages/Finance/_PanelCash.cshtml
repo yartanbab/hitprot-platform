@@ -2,7 +2,10 @@
     "Kasa" sekmesi — eski Finans Hub'ın işlem yüzeyi, birebir korunur:
     toplam bakiye kartı + hesap listesi + hızlı transfer.
 *@
+@using Apya.Platform.Localization
 @using Apya.Platform.Web.Pages.Finance
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
 @model IndexModel
 
 <div class="row g-3">
@@ -13,11 +16,30 @@
                     Toplam Bakiye (₺ karşılığı)
                     <apya-hint placement="bottom" text="Her hesabın bakiyesi, o para birimi için kayıtlı EN GÜNCEL kurla ₺'ye çevrilip toplanır. Kuru hiç girilmemiş bir para birimi toplama 0 olarak katılır — eksik görünüyorsa Kurlar sayfasından kur ekleyin." />
                 </div>
-                <h2 class="fw-bold apya-numeric mb-1">₺@Model.TotalBalanceTry.ToString("N0")</h2>
-                <div class="small text-white-50">
-                    <i class="fa fa-arrow-trend-up me-1" aria-hidden="true"></i>
-                    @Model.Accounts.Count hesap · @Model.DistinctCurrencyCount para birimi
-                </div>
+                @* Toplam bir kaynağı sessizce dışlayamaz: hesaplar okunamıyorsa toplam yok ("₺0"
+                   değil); kurlar okunamıyorsa "yalnız ₺ hesaplar" açıkça yazılır. Degrade kart
+                   üstünde _EmptyState yerine satır içi kilit. *@
+                @if (Model.AccountsLocked)
+                {
+                    <h2 class="fw-bold apya-numeric mb-1">— —</h2>
+                    <div class="small text-white-50">
+                        <i class="fa fa-lock me-1" aria-hidden="true"></i>@L["Finance:Locked:Accounts"]
+                    </div>
+                }
+                else
+                {
+                    <h2 class="fw-bold apya-numeric mb-1">₺@Model.TotalBalanceTry.ToString("N0")</h2>
+                    <div class="small text-white-50">
+                        <i class="fa fa-arrow-trend-up me-1" aria-hidden="true"></i>
+                        @Model.Accounts.Count hesap · @Model.DistinctCurrencyCount para birimi
+                    </div>
+                    @if (Model.RatesLocked && Model.Accounts.Any(a => !string.Equals(a.Currency?.Trim(), "TRY", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        <div class="small text-white-50 mt-1">
+                            <i class="fa fa-lock me-1" aria-hidden="true"></i>@L["Finance:Locked:RatesPartialTotal"]
+                        </div>
+                    }
+                }
             </div>
         </div>
 

@@ -75,6 +75,10 @@ public class AdminLoadFailureScripts_Tests
         load.ShouldContain("nextCards()");
         Count(load, "if (!isLatest())").ShouldBe(2, "başarı ve hata dalı ikisi de bayat yanıtı yutmalı");
         load.ShouldContain("js-pkg-retry");
+        // Faz 4 kararı 2: yükleme hatası ABP penceresi açmaz (kart + pencere çift kanaldı); kartın
+        // açıklaması hata nesnesinden (G1 kanalı).
+        load.ShouldContain("Promise.resolve(svc.getList({ abpHandleError: false }))");
+        load.ShouldContain("apya.loadState.errorHtml('Paketler yüklenemedi.', 'js-pkg-retry', err)");
 
         script.ShouldContain(".on('click', '.js-pkg-retry'");
     }
@@ -96,10 +100,10 @@ public class AdminLoadFailureScripts_Tests
         ShouldAppearInOrder(body,
             "$('#SubSettingsForm').prop('disabled', true)",
             "nextSub()",
-            "getSubscriptionSettings()",
+            "getSubscriptionSettings({ abpHandleError: false })",
             "setPrice('#PriceJoint'",
             unlock,
-            "js-sub-retry");
+            "'js-sub-retry', err)");
         Count(body, "if (!isLatest())").ShouldBe(2, "başarı ve hata dalı ikisi de bayat yanıtı yutmalı");
 
         script.ShouldContain(".on('click', '.js-sub-retry'");

@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTaskAttachments } from '../hooks/useTaskAttachments';
 import { isGranted } from '../hooks/useTaskDetail';
 import { fileKindOf, fmtSize } from '../v3/tabPrimitives';
+import { notifyError } from '../../lib/api/abpErrors';
 
 /**
  * Dosyalar sekmesi (V4 tasarım dili) — sürükle-bırak alanı + kart ızgarası.
@@ -21,7 +22,7 @@ export function FilesTab({ taskId }) {
             await window.apya.platform.tasks.taskShare.setAttachmentGuestVisibility(attachmentId, isVisible);
             queryClient.invalidateQueries({ queryKey: ['task-attachments', taskId] });
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Görünürlük değiştirilemedi.');
+            notifyError(err, 'Görünürlük değiştirilemedi.');
         }
     };
 
@@ -31,7 +32,7 @@ export function FilesTab({ taskId }) {
             await upload(file);
             window?.abp?.notify?.success?.('Dosya yüklendi.');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Dosya yüklenemedi.');
+            notifyError(err, 'Dosya yüklenemedi.');
         } finally {
             if (inputRef.current) inputRef.current.value = '';
         }
@@ -41,7 +42,7 @@ export function FilesTab({ taskId }) {
         try {
             await remove(attachmentId);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || `${fileName} silinemedi.`);
+            notifyError(err, `${fileName} silinemedi.`);
         }
     };
 

@@ -12,11 +12,10 @@ $(function () {
             searching: true,
             scrollX: true,
             // GetListAsync returns a plain List (not paged) → client-side mode.
-            ajax: function (data, callback) {
-                service.getList().then(function (result) {
-                    callback({ data: result });
-                });
-            },
+            // createAjax: son-istek bileti + yükleme hatasında tablo kartı (apya-latest.js).
+            ajax: abp.libs.datatables.createAjax(function () { return service.getList(); }, null, function (result) {
+                return { data: result };
+            }),
             columnDefs: [
                 {
                     title: 'İşlemler',

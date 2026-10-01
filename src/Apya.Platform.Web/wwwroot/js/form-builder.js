@@ -1,11 +1,11 @@
-import { b as Te, j as e, r as p } from "./react-vendor-D57GAUXd.js";
-import { a as R } from "./httpClient-DePjXdo1.js";
-import { H as Le } from "./Hint-CNW95h3H.js";
-import { M as Re } from "./ModalPortal-8QCz-DZi.js";
+import { j as e, r as p } from "./react-vendor-D7YDiBbi.js";
+import { m as Te } from "./index-DgpuJ91w.js";
+import { a as R } from "./httpClient-BNoyY5yK.js";
+import { H as Le } from "./Hint-BhMztyJX.js";
+import { M as Re } from "./ModalPortal-CVz5ohco.js";
 import { p as re } from "./publicFormLink-CJ_6ABDU.js";
 import { O as _, s as ae, C as ze, w as $e } from "./formChoices-CDoZfRj7.js";
 import { V as z, O as I, a as Fe, f as Ye } from "./formConditions-DsejDGE1.js";
-/* empty css               */
 const c = {
   ShortText: 0,
   LongText: 1,
@@ -684,7 +684,7 @@ function ie(t) {
   return (n = a == null ? void 0 : a.message) != null && n.confirm ? new Promise((i) => a.message.confirm(t, "Onay", (d) => i(!!d))) : Promise.resolve(window.confirm(t));
 }
 const ge = document.getElementById("dynamic-assets-app-root");
-ge && Te(ge).render(/* @__PURE__ */ e.jsx(Qe, {}));
+ge && Te(ge, "form-builder", /* @__PURE__ */ e.jsx(Qe, {}));
 export {
   Qe as FormBuilder,
   qe as PublishModal,

@@ -120,7 +120,9 @@
             return;
         }
 
-        apya.platform.telemetry.telemetry.reportClientError(dto)
+        // Arka plan isteği: ABP penceresi açılmaz, bayat anahtar sessizce tazelenir
+        // (ajax-error-detail.js). Oturum düşmüşse merkezi oturum penceresi yine açılır.
+        apya.platform.telemetry.telemetry.reportClientError(dto, { abpHandleError: false, apyaBackground: true })
             .then(function (errorId) {
                 // Son hata referansı — geri bildirim gönderilirse otomatik iliştirilir.
                 if (errorId) {
@@ -185,6 +187,22 @@
         },
         getLastClientErrorId: function () {
             return lastClientErrorId;
+        },
+        // React adası hata sınırı (dynamic-assets IslandErrorBoundary) çökmeyi buradan bildirir:
+        // React yakaladığı hatayı window.onerror'a İLETMEZ (üretimde yalnız console.error), bu
+        // kanal olmasa ada çökmeleri telemetriden düşerdi; onerror'dan geçmediği için çift kayıt
+        // yok. Aynı reportError yolu: arka plan isteği (pencere açmaz), sayfa başına tekilleştirme
+        // ("Tekrar dene" spam'i yok). Kaynak JsError: yeni bir değer HealthIssueKind eşlemesinde
+        // (Kind = (int)Source) 4 = ServerError olarak görünürdü.
+        reportIslandError: function (island, error, componentStack) {
+            try {
+                var message = '[ada:' + island + '] ' + ((error && error.message) || String(error));
+                var stack = (error && error.stack) || '';
+                if (componentStack) {
+                    stack += '\n--- React bileşen yığını ---' + componentStack;
+                }
+                reportError(message, stack || null, 1 /* ClientErrorSource.JsError */);
+            } catch (e) { /* teşhis kodu kendi hatasını raporlamaya çalışmaz */ }
         }
     };
 })();

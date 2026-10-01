@@ -21,10 +21,12 @@ export function createApyaQueryClient() {
                 gcTime: PERSIST_MAX_AGE_MS,
                 refetchOnWindowFocus: true,
                 refetchOnReconnect: true,
+                /* Yalnız httpClient hatası (ApiError) yeniden denenir: ABP proxy reddi (zarf
+                   nesnesi ya da jqXHR) ApiError değildir ve her denemede ABP hata penceresini
+                   yeniden açar. Ağ hatası artık ApiError(0) → yeniden denenir. */
                 retry: (failureCount, error) => {
-                    if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
-                        return false;
-                    }
+                    if (!(error instanceof ApiError)) return false;
+                    if (error.status >= 400 && error.status < 500) return false;
                     return failureCount < 2;
                 },
             },

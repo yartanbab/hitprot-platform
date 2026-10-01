@@ -176,7 +176,12 @@ $(function () {
         $('#InviteLatestText').text(parts.join(' · '));
     }
 
-    function loadLatest() { return service.getLatest().then(paintLatest); }
+    // Yan yükleme (Faz 4 kararı 2): düşerse ABP penceresi açılmaz, özet gizlenir — gönderim sonrası
+    // yenileme düştüyse eski davetin özeti yenisinin yerine okunmasın. Havuz listesinin kendi kartı var.
+    function loadLatest() {
+        return Promise.resolve(service.getLatest({ abpHandleError: false }))
+            .then(paintLatest, function () { paintLatest(null); });
+    }
 
     loadLatest();
 });

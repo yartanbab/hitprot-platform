@@ -103,6 +103,8 @@ $(function () {
     }
 
     $('.apya-choice-row').on('click', '.apya-choice', function () {
+        // Yükleme düştüyse süzülecek model yok (hata kartı kalır).
+        if (!model) { return; }
         $('.apya-choice-row .apya-choice').removeClass('is-on');
         $(this).addClass('is-on');
         filter = $(this).data('filter');
@@ -165,6 +167,39 @@ $(function () {
         $('#InterestEmpty').toggleClass('d-none', rows.length > 0);
     }
 
-    service.get().then(function (dto) { model = dto; paint(); });
-    interestService.getMine().then(paintInterests);
+    // İkisi de yalnız açılışta ve Tekrar dene ile çağrılır (düğme basılınca pasifleşir): bilet
+    // gerekmez. Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
+    function load() {
+        return Promise.resolve(service.get({ abpHandleError: false })).then(function (dto) {
+            model = dto;
+            paint();
+        }, function (err) {
+            $('#Rows').removeClass('apya-skel-rows')
+                .html(apya.loadState.errorHtml(l('Grants:Mine:LoadFailed'), 'js-mine-retry', err));
+            $('#MineSummary').removeClass('apya-skel-num').text('');
+            $('#Empty').addClass('d-none');
+        });
+    }
+
+    function loadInterests() {
+        return Promise.resolve(interestService.getMine({ abpHandleError: false })).then(function (items) {
+            paintInterests(items);
+        }, function (err) {
+            $('#InterestRows').html(apya.loadState.errorHtml(l('Grants:Mine:Interests:LoadFailed'), 'js-mine-interests-retry', err));
+            $('#InterestEmpty').addClass('d-none');
+        });
+    }
+
+    $('#Rows').on('click', '.js-mine-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
+
+    $('#InterestRows').on('click', '.js-mine-interests-retry', function () {
+        $(this).prop('disabled', true);
+        loadInterests();
+    });
+
+    load();
+    loadInterests();
 });

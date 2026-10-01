@@ -1,4 +1,5 @@
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { QUERY_CACHE_STORAGE_KEY, PERSIST_THROTTLE_MS } from './queryCacheStorage';
 
 /**
  * react-query önbelleğinin sayfa yüklemeleri arasında yaşaması.
@@ -25,8 +26,6 @@ import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persist
  * İstisna: `meta: { persist: false }` taşıyan sorgular (görev detayı gibi canlı,
  * düzenlenebilir kayıtlar) hiç saklanmaz; her açılışta sunucudan gelir.
  */
-
-const CACHE_KEY = 'apya-rq-cache';
 
 /** gcTime ile AYNI olmalı — bkz. createApyaQueryClient. */
 export const PERSIST_MAX_AGE_MS = 60 * 60 * 1000;
@@ -58,9 +57,9 @@ export function createApyaPersistOptions() {
     return {
         persister: createSyncStoragePersister({
             storage,
-            key: CACHE_KEY,
+            key: QUERY_CACHE_STORAGE_KEY,
             /* Her mutasyonda değil, saniyede bir yaz — ana iş parçacığını meşgul etme. */
-            throttleTime: 1000,
+            throttleTime: PERSIST_THROTTLE_MS,
         }),
         maxAge: PERSIST_MAX_AGE_MS,
         buster: `${user.tenantId ?? 'host'}:${user.id}`,

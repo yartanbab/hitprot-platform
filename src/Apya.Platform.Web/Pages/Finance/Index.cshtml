@@ -22,9 +22,10 @@
     {
         <abp-script src="/Pages/Finance/Budget.js" />
     }
-    @if (Model.ActiveTab == FinanceContext.TabInvoices)
+    @if (Model.ActiveTab == FinanceContext.TabInvoices && !Model.HostScope)
     {
-        @* Faturaların ikinci bir arayüzü yok: /Invoices'ın script'i aynen kullanılır. *@
+        @* Faturaların ikinci bir arayüzü yok: /Invoices'ın script'i aynen kullanılır. Host kapsamında
+           yüklenmez: liste kurulmaz, istek atılmaz (boş küme "Eşleşen fatura bulunamadı" derdi). *@
         <abp-script src="/Pages/Invoices/index.js" />
     }
 }
@@ -100,7 +101,16 @@
                 break;
 
             case FinanceContext.TabCash:
-                <partial name="_PanelCash" model="Model" />
+                @if (Model.HostScope)
+                {
+                    @* Host hesabıyla kiracının projesi: kasa/banka kayıtları kiracınındır, bu bağlamda
+                       görünmez — host'un kendi hesapları ve "₺0" basılmaz (IndexModel.HostScope). *@
+                    <partial name="_EmptyState" model="Model.HostScopeState" />
+                }
+                else
+                {
+                    <partial name="_PanelCash" model="Model" />
+                }
                 break;
 
             case FinanceContext.TabBudgetLines:
@@ -112,11 +122,29 @@
                 break;
 
             case FinanceContext.TabLedger:
-                <partial name="_PanelLedger" model="Model" />
+                @if (Model.HostScope)
+                {
+                    @* Host kapsamı: gelir/gider bu bağlamda boş küme gelir — "Kayıt bulunamadı" ve
+                       host'a kayıt açan "Gelir/Gider ekle" yerine durum basılır. *@
+                    <partial name="_EmptyState" model="Model.HostScopeState" />
+                }
+                else
+                {
+                    <partial name="_PanelLedger" model="Model" />
+                }
                 break;
 
             case FinanceContext.TabInvoices:
-                <partial name="_PanelInvoices" model="Model" />
+                @if (Model.HostScope)
+                {
+                    @* Host kapsamı: fatura ucu kiracı süzgecini kapatmaz; liste host'un faturalarını
+                       projeye süzüp "Eşleşen fatura bulunamadı" derdi — liste hiç kurulmaz. *@
+                    <partial name="_EmptyState" model="Model.HostScopeState" />
+                }
+                else
+                {
+                    <partial name="_PanelInvoices" model="Model" />
+                }
                 break;
 
             case FinanceContext.TabFxBridge:
@@ -130,6 +158,12 @@
                         Icon = "fa-folder-open",
                         Title = "Önce bir proje seçin",
                         Description = "Belge açığı, uygunluk ve teslim paketi proje bağlamında anlamlıdır." }' />
+                }
+                else if (Model.HostScope)
+                {
+                    @* Host kapsamı: belge servisleri kiracı süzgecini kapatmaz — boş tahta "Açık yok: her
+                       harcamanın belgesi…" derdi, uygunluk servisi projeyi bulamayıp sayfayı hataya düşürürdü. *@
+                    <partial name="_EmptyState" model="Model.HostScopeState" />
                 }
                 else
                 {

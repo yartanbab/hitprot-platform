@@ -5,8 +5,12 @@
     Proje seçilmemişken (portföy) ya da bütçe yetkisi yokken KPI şeridi hiç
     basılmaz; alt bloklar yine çalışır.
 *@
+@using Apya.Platform.Localization
 @using Apya.Platform.Web.Pages.Finance
 @using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@inject Microsoft.Extensions.Localization.IStringLocalizer<PlatformResource> S
 @model IndexModel
 
 @functions {
@@ -62,11 +66,14 @@ else if (Model.SelectedProject == null && Model.Portfolio != null)
     @* Tasarım 2d: proje seçilmemişken şerit boş kalmaz, portföy gelir. *@
     <partial name="_PanelPortfolio" model="Model" />
 }
-else if (Model.SelectedProject == null)
+else
 {
+    @* Bu dala YALNIZ bütçe yetkisi yokken düşülür — iki kipte de: portföyde Portfolio ancak
+       GetPortfolioAsync, proje seçiliyken Budget ancak GetOverviewAsync yetki hatasında null kalır
+       (aynı ViewBudget izni). Eski "bir proje seçin" yönlendirmesi yanlıştı. *@
     <div class="apya-chip apya-chip-neutral d-inline-flex mb-3">
-        <i class="fa fa-circle-info me-1" aria-hidden="true"></i>
-        Bütçe, harcama ve kalan tutarları görmek için bir proje seçin.
+        <i class="fa fa-lock me-1" aria-hidden="true"></i>
+        @L["Finance:Locked:Budget"]
     </div>
 }
 
@@ -80,9 +87,25 @@ else if (Model.SelectedProject == null)
                 </div>
             </div>
             <div class="list-group list-group-flush">
-                @if (!Model.Transactions.Any())
+                @if (Model.HostScope)
                 {
-                    <div class="list-group-item text-muted text-center py-4" style="font-size:13px">Henüz işlem yok.</div>
+                    @* Host hesabıyla kiracının projesi: işlemler bu bağlamda boş küme gelir (sorgu
+                       atılmadı) — "Henüz işlem yok" DEĞİL, kiracının hesabından bakılacağı söylenir. *@
+                    <partial name="_EmptyState" model="Model.HostScopeState" />
+                }
+                else if (Model.TransactionsLocked)
+                {
+                    @* Kaynakların hiçbiri okunamadı: "Henüz işlem yok" DEĞİL; yasak sayfaya bağlantı yok.
+                       Açıklama, birini açınca listenin geleceği izinleri görünen adlarıyla söyler. *@
+                    <partial name="_EmptyState" model='new EmptyStateModel {
+                        Variant = EmptyStateVariant.Locked,
+                        Title = L["Finance:Locked:Transactions"].Value,
+                        Description = S["Finance:Locked:Transactions:Requires", S["Permission:Incomes"].Value, S["Permission:Expenses"].Value, S["Permission:Invoices"].Value].Value }' />
+                }
+                else if (!Model.Transactions.Any())
+                {
+                    @* Satırlar yalnız okunabilen kaynaklardan gelir; kısmi okumada boş liste "hiç yok" diyemez. *@
+                    <div class="list-group-item text-muted text-center py-4" style="font-size:13px">@(Model.TransactionsPartiallyLocked ? L["Finance:Transactions:EmptyVisible"].Value : "Henüz işlem yok.")</div>
                 }
                 @foreach (var t in Model.Transactions)
                 {

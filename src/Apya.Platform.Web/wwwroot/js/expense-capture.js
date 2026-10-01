@@ -1,13 +1,12 @@
-import { j as e, r as u, d as _, b as pe } from "./react-vendor-D57GAUXd.js";
-import { u as be, B as D, c as R, S as F, b as K, e as ye, M as ve, I as P, a as Q, T as je } from "./Dialog-Bky2XNdc.js";
-import { a as ke } from "./QueryProvider-CMEXdgTM.js";
-import { u as ce, r as we, T as Ce } from "./registerServiceWorker-MivfkJsD.js";
-import { C as Se } from "./Combobox-D5mSMyzC.js";
-import { t as N } from "./i18n-DkhYld-7.js";
-import { u as ue, b as de } from "./query-vendor-Bf69L2iP.js";
-import { a as B } from "./httpClient-DePjXdo1.js";
+import { j as e, r as u, b as _ } from "./react-vendor-D7YDiBbi.js";
+import { t as N, m as pe } from "./index-DgpuJ91w.js";
+import { u as be, B as R, c as D, S as F, b as K, e as ye, M as ve, I as P, a as Q, T as je } from "./Dialog-BEQtx1HL.js";
+import { a as ke } from "./QueryProvider-D2Hvqdr9.js";
+import { u as ce, r as we, T as Ce } from "./registerServiceWorker-DPq4UUem.js";
+import { C as Se } from "./Combobox-VWBB0dEF.js";
+import { u as ue, b as de } from "./query-vendor-Db2mwxYI.js";
+import { a as B } from "./httpClient-BNoyY5yK.js";
 import { i as Ne, s as me } from "./permanentRejection-SvaBclz0.js";
-/* empty css               */
 const Le = {
   light: { key: "Theme:Light", fallback: "Açık tema (Sıradaki: Koyu)" },
   dark: { key: "Theme:Dark", fallback: "Koyu tema (Sıradaki: Sistem)" },
@@ -139,7 +138,7 @@ function Ae({ onFile: t }) {
         var g;
         s.preventDefault(), i(!1), d((g = s.dataTransfer.files) == null ? void 0 : g[0]);
       },
-      className: R(
+      className: D(
         "flex flex-col items-center justify-center gap-4",
         "border-2 border-dashed rounded-xl p-8",
         "min-h-[60vh] mobile:min-h-[50vh]",
@@ -155,7 +154,7 @@ function Ae({ onFile: t }) {
           /* @__PURE__ */ e.jsx("p", { className: "text-sm text-text-secondary mt-1", children: "Mobilde direkt kamera açılır. Masaüstünde dosya sürükle ya da tıkla. AI tutarı, tarihi ve tedarikçiyi otomatik okur." })
         ] }),
         /* @__PURE__ */ e.jsx(
-          D,
+          R,
           {
             size: "lg",
             variant: "primary",
@@ -205,12 +204,12 @@ function Oe() {
     }
   );
 }
-const Re = [
+const De = [
   "Görüntü temizleniyor...",
   "Metin tanınıyor (OCR)...",
   "Alanlar çıkartılıyor..."
 ];
-function De({ previewUrl: t }) {
+function Re({ previewUrl: t }) {
   const [n, a] = _.useState(0);
   return _.useEffect(() => {
     const i = setTimeout(() => a(1), 350), r = setTimeout(() => a(2), 800);
@@ -226,7 +225,7 @@ function De({ previewUrl: t }) {
         className: "max-h-48 rounded-md border border-default object-contain"
       }
     ),
-    /* @__PURE__ */ e.jsx("div", { className: "w-full max-w-xs flex flex-col gap-2", children: Re.map((i, r) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 text-sm", children: [
+    /* @__PURE__ */ e.jsx("div", { className: "w-full max-w-xs flex flex-col gap-2", children: De.map((i, r) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 text-sm", children: [
       r < n && /* @__PURE__ */ e.jsx(ze, {}),
       r === n && /* @__PURE__ */ e.jsx(Be, {}),
       r > n && /* @__PURE__ */ e.jsx(qe, {}),
@@ -281,13 +280,13 @@ function W({ score: t, label: n, size: a = "md", showLabel: i = !0, className: r
   return /* @__PURE__ */ e.jsxs(
     "span",
     {
-      className: R("inline-flex items-center gap-1 text-xs text-text-tertiary", r),
+      className: D("inline-flex items-center gap-1 text-xs text-text-tertiary", r),
       title: `${d.label} (%${c})`,
       children: [
-        /* @__PURE__ */ e.jsx("span", { className: R("inline-flex items-center", s.gap), "aria-hidden": "true", children: Array.from({ length: 5 }, (p, C) => /* @__PURE__ */ e.jsx(
+        /* @__PURE__ */ e.jsx("span", { className: D("inline-flex items-center", s.gap), "aria-hidden": "true", children: Array.from({ length: 5 }, (p, C) => /* @__PURE__ */ e.jsx(
           "span",
           {
-            className: R(
+            className: D(
               "inline-block rounded-full",
               s.dot,
               C < d.dots ? "bg-ai-500" : "bg-neutral-200"
@@ -540,7 +539,7 @@ function Ue({
             rows: 2,
             value: c.note,
             onChange: v("note"),
-            className: R(
+            className: D(
               "block w-full rounded-md border border-default bg-surface-base text-text-primary",
               "px-3 py-2 text-sm resize-none",
               "focus-visible:outline-none focus-visible:shadow-focus focus-visible:border-focus",
@@ -557,9 +556,9 @@ function Ue({
         /* @__PURE__ */ e.jsx("span", { className: "font-tabular font-semibold text-text-primary", children: typeof c.amount == "number" && c.amount > 0 ? Q(c.amount, c.currency) : "—" })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex gap-2", children: [
-        /* @__PURE__ */ e.jsx(K.Close, { asChild: !0, children: /* @__PURE__ */ e.jsx(D, { type: "button", variant: "ghost", size: "md", children: "İptal" }) }),
+        /* @__PURE__ */ e.jsx(K.Close, { asChild: !0, children: /* @__PURE__ */ e.jsx(R, { type: "button", variant: "ghost", size: "md", children: "İptal" }) }),
         /* @__PURE__ */ e.jsx(
-          D,
+          R,
           {
             type: "submit",
             variant: "primary",
@@ -612,8 +611,8 @@ function Ye({ result: t, onAddAnother: n, onClose: a }) {
       /* @__PURE__ */ e.jsx("p", { className: "text-xs text-text-tertiary mt-1", children: "Onaya gitti. Bildirim ile durumu takip edebilirsin." })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-2 w-full max-w-xs", children: [
-      /* @__PURE__ */ e.jsx(D, { variant: "primary", size: "lg", onClick: n, children: "Bir tane daha çek" }),
-      /* @__PURE__ */ e.jsx(D, { variant: "ghost", size: "md", onClick: a, children: "Bitir" })
+      /* @__PURE__ */ e.jsx(R, { variant: "primary", size: "lg", onClick: n, children: "Bir tane daha çek" }),
+      /* @__PURE__ */ e.jsx(R, { variant: "ghost", size: "md", onClick: a, children: "Bitir" })
     ] })
   ] });
 }
@@ -856,7 +855,7 @@ function rt() {
     ] }),
     /* @__PURE__ */ e.jsxs("main", { className: "max-w-2xl mx-auto p-4", children: [
       t === b.CAPTURE && /* @__PURE__ */ e.jsx(Ae, { onFile: v }),
-      t === b.OCR && /* @__PURE__ */ e.jsx(De, { previewUrl: a }),
+      t === b.OCR && /* @__PURE__ */ e.jsx(Re, { previewUrl: a }),
       t === b.SUCCESS && /* @__PURE__ */ e.jsx(
         Ye,
         {
@@ -886,6 +885,8 @@ function rt() {
 }
 we();
 const le = document.getElementById("apya-expense-capture-root");
-le && pe(le).render(
+le && pe(
+  le,
+  "expense-capture",
   /* @__PURE__ */ e.jsx(je, { children: /* @__PURE__ */ e.jsx(ke, { children: /* @__PURE__ */ e.jsx(Ce, { children: /* @__PURE__ */ e.jsx(rt, {}) }) }) })
 );

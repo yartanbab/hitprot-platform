@@ -14,6 +14,10 @@ $(function () {
     var hub = null;
     var saveTimers = {};
     var heartbeat = null;
+    // Hub olayı ve kilit al/bırak sonrası yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
+    // Canlı kanal (hub + kilit nabzı) ilk BAŞARILI yüklemeden sonra bir kez kurulur.
+    var live = false;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return (v || 0).toLocaleString('tr-TR', { maximumFractionDigits: 0 }); }
@@ -44,7 +48,7 @@ $(function () {
             presence = people || [];
             paintPresence();
         });
-        hub.on('ApplicationChanged', function () { load(); });
+        hub.on('ApplicationChanged', function () { load(true); });
 
         // 7c · Bağlantıyı gizlemek yetmez, durumu SÖYLE. Kaydetme ve alan kilitleri
         // HTTP üzerinden gittiği için çalışmaya devam ediyor; kaybolan yalnız
@@ -63,7 +67,7 @@ $(function () {
             .catch(function () { setLive(false); });
 
         hub.onreconnecting(function () { setLive(false); });
-        hub.onreconnected(function () { setLive(true); hub.invoke('Subscribe', appId); load(); });
+        hub.onreconnected(function () { setLive(true); hub.invoke('Subscribe', appId); load(true); });
         hub.onclose(function () { setLive(false); });
     }
 
@@ -81,14 +85,14 @@ $(function () {
                 abp.message.warn(l('Grants:Wizard:LockedBy', (r.lock || {}).ownerName || '?'));
                 $el.blur();
             }
-            load();
+            load(true);
         });
     }
 
     function release(fieldKey) {
         service.releaseLock({ applicationId: appId, fieldKey: fieldKey }).then(function () {
             announce(fieldKey);
-            load();
+            load(true);
         });
     }
 
@@ -97,7 +101,8 @@ $(function () {
         // Kilit 2 dakika dokunulmazsa açılır; 30 sn'de bir dokunmak yeter.
         heartbeat = setInterval(function () {
             var key = $(document.activeElement).closest('[data-field]').data('field');
-            if (key) { service.heartbeat({ applicationId: appId, fieldKey: key }); }
+            // Arka plan: hata penceresi yok; "Kapat"lanan oturum penceresini 30 sn'de bir yeniden açmaz.
+            if (key) { service.heartbeat({ applicationId: appId, fieldKey: key }, { abpHandleError: false, apyaBackground: true }); }
         }, 30000);
     }
 
@@ -447,10 +452,41 @@ $(function () {
         }
     }
 
-    function load() {
-        return service.get(appId).then(function (dto) { model = dto; paint(); });
+    // İlk yükleme düşerse satır içi kart + Tekrar dene, ABP penceresi açılmaz (Faz 4 kararı 2).
+    // Veri ekrandayken yenileme düşerse açık form SİLİNMEZ, kart basılmaz: arka plan yenilemesi
+    // (background: hub olayı, yeniden bağlanma, kilit al/bırak) sessizdir; kullanıcı eylemi
+    // sonrası (mesaj gönder) tek kanal ABP penceresidir.
+    function load(background) {
+        var isLatest = nextLoad();
+        var initial = !model;
+        return Promise.resolve(service.get(appId, background
+            ? { abpHandleError: false, apyaBackground: true }
+            : { abpHandleError: !initial })).then(function (dto) {
+            if (!isLatest()) { return; }
+            model = dto;
+            paint();
+            $('#WizardLoadState').empty();
+            $('.apya-wiz-head, .apya-wiz-head + .card, .apya-wiz-layout').removeClass('d-none');
+            // Başarısız yüklemede de bağlanılıyordu: PresenceChanged boş modelle boyanıyordu.
+            if (!live) {
+                live = true;
+                connect();
+                startHeartbeat();
+            }
+        }, function (err) {
+            if (!isLatest() || !initial || model) { return; }
+            // Veri yokken veri yazan denetimler (Önceki/Sonraki, Devret, mesaj) erişilemez kalsın; boş künye
+            // kartı ve hemen ardındaki adım şeridi (boş "Tamamlanma" çubuğu) da kartın üstünde durmasın.
+            $('.apya-wiz-head, .apya-wiz-head + .card, .apya-wiz-layout').addClass('d-none');
+            $('#WizardLoadState').html(apya.loadState.errorHtml(l('Grants:Wizard:LoadFailed'), 'js-wizard-retry', err));
+        });
     }
 
+    $('#WizardLoadState').on('click', '.js-wizard-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
+
     $('#SaveChip').text(l('Grants:Wizard:AutoSave'));
-    load().then(function () { connect(); startHeartbeat(); });
+    load();
 });

@@ -29,6 +29,8 @@
     function create(opts) {
         var $mount = $(opts.mount);
         var state = { data: null, sort: 'date', collapsed: {} };
+        // Proje seçimi hızla değişince yanıtlar sırasız dönebilir: yalnız son istek çizer.
+        var nextLoad = apya.latest();
 
         function svc() { return window.apya.platform.expenses.expense; }
 
@@ -76,16 +78,24 @@
                     },
                     onSaved: load
                 });
-            });
+            })
+            .on('click', '.js-fin-retry', function () { load(); });
 
         function load() {
+            var isLatest = nextLoad();
             $mount.html('<div class="apya-fin apya-skeleton" style="height:320px"></div>');
             var input = {};
             var projectId = opts.getProject && opts.getProject();
             if (projectId) { input.projectId = projectId; }
-            return svc().getProjectGrouped(input).then(function (data) {
+            // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2). state.data
+            // SIFIRLANMAZ: hata kartında sıralama/katlama düğmesi yok, render çağrılamaz.
+            return Promise.resolve(svc().getProjectGrouped(input, { abpHandleError: false })).then(function (data) {
+                if (!isLatest()) { return; }
                 state.data = data;
                 render();
+            }, function (err) {
+                if (!isLatest()) { return; }
+                $mount.html(apya.loadState.errorHtml(l('Tasks:Finance:LoadFailed'), 'js-fin-retry', err));
             });
         }
 

@@ -40,3 +40,31 @@ describe('apya-gantt.js — kaynak metni pin (STA-01)', () => {
         expect(src).not.toContain('.finally(');
     });
 });
+
+/**
+ * Yükleme hatası (CON-04, STA-08 — Faz 4): ret dalı vardı ama durumu güncellemiyordu,
+ * "Zaman çizelgesi yükleniyor…" kalıcı kalıyordu. Hata dalı biletle gelir (süzgeç
+ * hızla değişince geç düşen eski istek yeni çizelgenin üstüne hata basmasın) ve
+ * ABP penceresi değil satır içi kart + Tekrar dene basar.
+ */
+describe('apya-gantt.js — yükleme hatası pini (Faz 4)', () => {
+    const load = src.slice(src.indexOf('function load()'), src.indexOf('bindUi();', src.indexOf('function load()')));
+    const render = src.slice(src.indexOf('function render()'), src.indexOf('var w = window_();'));
+    const bindUi = src.slice(src.indexOf('function bindUi()'), src.indexOf('function refresh()'));
+
+    it('her yükleme bilet alır; başarı ve hata dalı bayat yanıtı yutar', () => {
+        expect(src).toContain('var nextLoad = apya.latest();');
+        expect(load).toContain('var isLatest = nextLoad();');
+        expect(load.split('if (!isLatest()) { return; }').length - 1).toBe(2);
+    });
+
+    it('liste isteği ABP penceresini açmaz; ret dalı hata durumuna geçer', () => {
+        expect(load).toContain('taskSvc.getList(filter, { abpHandleError: false })');
+        expect(load).toMatch(/console\.warn\('\[gantt\] görevler alınamadı', e\);\s*if \(!isLatest\(\)\) \{ return; \}\s*state\.loading = false;\s*state\.loadFailed = true;/);
+    });
+
+    it('render hata durumunda kart + Tekrar dene basar; tıklama yeniden yükler', () => {
+        expect(render).toMatch(/if \(state\.loadFailed\) \{\s*\$mount\.html\(apya\.loadState\.errorHtml\(l\('Tasks:View:LoadFailed'\), 'js-gantt-retry', state\.loadError\)\);\s*return;/);
+        expect(bindUi).toContain("if ($(e.target).closest('.js-gantt-retry').length) { return load(); }");
+    });
+});

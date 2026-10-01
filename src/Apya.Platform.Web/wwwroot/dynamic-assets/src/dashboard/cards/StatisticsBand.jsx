@@ -23,6 +23,27 @@ export const STAT_GROUPS = [
     ['System',        'Dashboard:StatTab:System',        'Sistem'],
 ];
 
+/**
+ * İstatistiğin gerektirdiği izin(ler)in GÖRÜNEN adı — ham kod ("Platform.Incomes") müşteriye basılmaz.
+ *
+ * Sunucu kodları " + " ile birleştirir (DashboardStatisticsProvider → RequiredPermission). Ad, izin
+ * tanımının yerelleştirme anahtarından gelir: "Platform.X" ↔ "Permission:X"
+ * (PlatformPermissionDefinitionProvider; erişim reddi sayfası ve kilitli kart cümleleriyle aynı kaynak).
+ * İki izin " + " ile değil kendi metniyle birleşir. Sözleşme iki uçta kilitli:
+ * DashboardStatisticsProvider_Tests (anahtar adı), DashboardLockContract_Tests (ayraç + ham kod yok).
+ * Anahtar çözülemezse kod kalır. Baskı çıktısı da bunu kullanır (bkz print/DashboardPrintView).
+ */
+export function permissionLabel(requiredPermission) {
+    const names = String(requiredPermission ?? '')
+        .split(' + ')
+        .filter(Boolean)
+        .map((code) => t(`Permission:${code.replace(/^Platform\./, '')}`, code));
+
+    return names.length === 2
+        ? t('Dashboard:Stat:PermissionPair', '{0} ve {1}', names[0], names[1])
+        : names.join(', ');
+}
+
 function StatisticsBand({ filter, editMode }) {
     const query = useStatistics(filter);
     const stats = query.data ?? [];
@@ -94,7 +115,7 @@ function StatTile({ stat }) {
                 <span className="text-[11.5px] text-text-tertiary truncate">{stat.label}</span>
                 <span className="font-mono text-xl font-semibold leading-none tracking-[-0.03em] text-text-tertiary">— —</span>
                 <span className="text-[10.5px] text-text-tertiary">{t('Dashboard:Stat:Locked', 'yetki gerekli')}</span>
-                <span className="font-mono text-[9px] text-text-tertiary truncate">{stat.requiredPermission}</span>
+                <span className="font-mono text-[9px] text-text-tertiary truncate">{permissionLabel(stat.requiredPermission)}</span>
             </div>
         );
     }
@@ -108,7 +129,7 @@ function StatTile({ stat }) {
             {stat.deltaFormatted
                 ? <TrendDelta trend={stat.trend}>{stat.deltaFormatted}</TrendDelta>
                 : <span className="font-mono text-[10.5px] text-text-tertiary">{t('Dashboard:Stat:Flat', '• sabit')}</span>}
-            <span className="font-mono text-[9px] text-text-tertiary truncate">{stat.requiredPermission}</span>
+            <span className="font-mono text-[9px] text-text-tertiary truncate">{permissionLabel(stat.requiredPermission)}</span>
         </div>
     );
 }

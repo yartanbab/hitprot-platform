@@ -8,6 +8,7 @@
  * ve sağdaki "Sırada" ipucu burada türetilir. React'e dokunmaz — ekranlar
  * arasında sapmasın ve test edilebilsin diye.
  */
+import { t } from '../../lib/i18n';
 
 export const FLOW_STEPS = [
   { key: 'docs', no: 1, label: 'Belgeler', sub: 'Yükle · sınıflandır', path: 'Documents' },
@@ -70,11 +71,13 @@ export function sameSummary(a, b) {
 }
 
 /**
- * Uygunluk adımının alt etiketi.
- * @param {{ hasProject: boolean, loading: boolean, overview: object|null }} state
+ * Uygunluk adımının alt etiketi. Özet okunamadıysa (yeniden denenirken de) nötr
+ * "Kontrol listesi" hatayı gizlerdi: KPI şeridiyle aynı kelime, "Yüklenemedi".
+ * @param {{ hasProject: boolean, loading: boolean, failed?: boolean, overview: object|null }} state
  */
-export function complianceSub({ hasProject, loading, overview }) {
+export function complianceSub({ hasProject, loading, failed, overview }) {
   if (!hasProject) return 'Proje seçin';
+  if (failed) return t('Common:LoadFailed', 'Yüklenemedi');
   if (loading || !overview) return 'Kontrol listesi';
   if (!overview.checklists?.length) return 'Paket uygulanmadı';
 
@@ -84,14 +87,15 @@ export function complianceSub({ hasProject, loading, overview }) {
 
 /**
  * "Sırada" ipucu: bu ekranda sürecin bir sonraki işi. Metin yoksa null döner
- * (veri okunamadıysa uydurma bir öneri basmıyoruz).
+ * (veri okunamadıysa — yeniden denenirken de — uydurma bir öneri basmıyoruz).
  *
  * @param {'docs'|'compliance'|'report'|'deliver'|null} active
- * @param {{ hasProject: boolean, loading: boolean, overview: object|null }} state
+ * @param {{ hasProject: boolean, loading: boolean, failed?: boolean, overview: object|null }} state
  * @returns {{ text: string, tone: 'neutral'|'accent'|'warning', pending?: boolean } | null}
  */
-export function nextHint(active, { hasProject, loading, overview }) {
+export function nextHint(active, { hasProject, loading, failed, overview }) {
   if (!hasProject) return { text: 'Proje bağlamı seçin', tone: 'neutral' };
+  if (failed) return null;
   if (loading) return { text: '…', tone: 'neutral', pending: true };
   if (!overview) return null;
 

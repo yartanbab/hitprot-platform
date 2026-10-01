@@ -178,15 +178,31 @@ $(function () {
     });
 
     // ---------- Açılış ----------
-    service.get().then(function (dto) {
-        model = dto;
-        var items = dto.items || [];
-        // 22b · Talepler'den gelindiyse o talep seçili açılır; bulunamazsa ilk talep.
-        var requested = String($('[data-lead-id]').attr('data-lead-id') || '').toLowerCase();
-        var match = requested && items.find(function (i) { return String(i.id).toLowerCase() === requested; });
-        var first = match || items[0];
-        selectedId = first ? first.id : null;
-        paintList();
-        if (selectedId) { loadDetail(selectedId); }
+    // Yalnız açılışta ve Tekrar dene ile çağrılır (düğme basılınca pasifleşir): bilet gerekmez.
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2); KPI'lar "—".
+    function load() {
+        return Promise.resolve(service.get({ abpHandleError: false })).then(function (dto) {
+            model = dto;
+            var items = dto.items || [];
+            // 22b · Talepler'den gelindiyse o talep seçili açılır; bulunamazsa ilk talep.
+            var requested = String($('[data-lead-id]').attr('data-lead-id') || '').toLowerCase();
+            var match = requested && items.find(function (i) { return String(i.id).toLowerCase() === requested; });
+            var first = match || items[0];
+            selectedId = first ? first.id : null;
+            paintList();
+            if (selectedId) { loadDetail(selectedId); }
+        }, function (err) {
+            $('#LeadRows').removeClass('apya-skel-rows')
+                .html(apya.loadState.errorHtml(l('Grants:Leads:LoadFailed'), 'js-leads-retry', err));
+            $('#LeadEmpty').addClass('d-none');
+            $('#KpiWeek, #KpiQualified, #KpiMeetings, #KpiConverted, #KpiPipeline, #LeadCount').text('—');
+        });
+    }
+
+    $('#LeadRows').on('click', '.js-leads-retry', function () {
+        $(this).prop('disabled', true);
+        load();
     });
+
+    load();
 });

@@ -252,11 +252,16 @@ $(function () {
     // ─── Şerit sayaçları ───────────────────────────────────────────────────
     // Barlar kapsam sayaçlarıdır: yalnız proje kapsamını izler, chip
     // filtrelerinden etkilenmez (sunucu tarafı da böyle davranır).
+    // Yan yükleme (Faz 4 kararı 2): düşerse ABP penceresi açılmaz, sayaçlar "—" olur (eski
+    // kapsamın sayısı kalmaz). Bilet: geç düşen eski istek yeni kapsamın sayılarını ezmez.
+    var nextSummary = apya.latest();
     function loadSummary() {
         var scope = {};
         if (state.get('project')) { scope.projectId = state.get('project'); }
 
-        taskService.getSummary(scope).then(function (s) {
+        var isLatest = nextSummary();
+        Promise.resolve(taskService.getSummary(scope, { abpHandleError: false })).then(function (s) {
+            if (!isLatest()) { return; }
             var pct = s.total > 0 ? Math.round(s.done * 100 / s.total) : 0;
             $('#sum-progress-pct').text('%' + pct);
             $('#sum-progress-ratio').text('· ' + s.done + '/' + s.total);
@@ -274,6 +279,12 @@ $(function () {
 
             $('#sum-mine').text(s.assignedToMe);
             $('#sum-mine-bar').find('span').css('width', (s.total > 0 ? s.assignedToMe * 100 / s.total : 0) + '%');
+        }, function () {
+            if (!isLatest()) { return; }
+            $('#sum-progress-pct, #sum-overdue, #sum-due7, #sum-mine').text('—');
+            $('#sum-progress-ratio').text('');
+            $('#sum-progress-bar, #sum-overdue-bar, #sum-due7-bar, #sum-mine-bar').find('span').css('width', '0%');
+            $('#chip-overdue-text').text('Gecikmiş');
         });
     }
 
@@ -431,6 +442,9 @@ $(function () {
     // Yükleniyor: spinner değil, tablo hizasında iskelet satırlar. İlk yüklemede
     // ve her filtre değişiminde tabloyu iskeletle değiştirir.
     dataTable.on('preXhr', function () {
+        // Hata kartı dururken (Tekrar dene) takas yok: kart meşgul düğmesiyle kalır. Tablo gizlenseydi
+        // klavyeyle basılan odaklı düğme de gizlenir, odak sayfa başına (body) düşerdi.
+        if (apya.loadState.tableFailed(dataTable)) { return; }
         $('#state-loading').removeClass('d-none');
         $('#TasksTable_wrapper').addClass('d-none');
     });
@@ -441,19 +455,24 @@ $(function () {
 
     // Sekme sayacı + boş hâl + seçim senkronu
     dataTable.on('draw', function () {
+        // Yükleme hatası "0 görev" ya da "Henüz görev yok" DEĞİLDİR: boş hücreyi
+        // apya.loadState hata kartıyla (Tekrar dene) doldurur.
+        var failed = apya.loadState.tableFailed(dataTable);
         var info = dataTable.page.info();
-        $('#console-task-count').text(
-            info.recordsDisplay === info.recordsTotal
+        $('#console-task-count').text(failed ? '—'
+            : info.recordsDisplay === info.recordsTotal
                 ? info.recordsTotal + ' görev'
                 : info.recordsDisplay + ' / ' + info.recordsTotal + ' görev');
 
         // "Hiç görev yok" ile "filtreye uyan yok" ayrı metinler.
-        console_.renderEmptyState({
-            table: '#TasksTable',
-            hasFilters: state.hasActive() || !!dataTable.search(),
-            emptyTemplate: 'tpl-state-empty',
-            nomatchTemplate: 'tpl-state-nomatch'
-        });
+        if (!failed) {
+            console_.renderEmptyState({
+                table: '#TasksTable',
+                hasFilters: state.hasActive() || !!dataTable.search(),
+                emptyTemplate: 'tpl-state-empty',
+                nomatchTemplate: 'tpl-state-nomatch'
+            });
+        }
 
         if (bulk) { bulk.syncRowChecks(); }
 
@@ -578,7 +597,8 @@ $(function () {
     }
 
     // ─── Lookup'lar: Atanan + Proje chip menüleri ──────────────────────────
-    taskService.getUsersLookup().then(function (res) {
+    // Yan yüklemeler (Faz 4 kararı 2): düşerse ABP penceresi açılmaz, menü boş kalır.
+    taskService.getUsersLookup({ abpHandleError: false }).then(function (res) {
         var $menu = $('#chip-assignee-menu');
         (res.items || []).forEach(function (u) {
             // Etiket ad+soyad; ikisi de boşsa kullanıcı adına düşülür — listedeki
@@ -601,12 +621,12 @@ $(function () {
             );
         });
         renderFilterUi();
-    });
+    }, function () { });
 
     // Hafif seçici ucu: yalnız id/ad/kod döner. Önce project.getList({maxResultCount:1000})
     // çağrılıyordu — 1000 TAM proje DTO'su (bütçe, tarihler, açıklama…) yalnız bu açılır
     // listeyi doldurmak için indiriliyor ve görev listesi isteğiyle yarışıyordu.
-    taskService.getProjectsLookup().then(function (items) {
+    taskService.getProjectsLookup({ abpHandleError: false }).then(function (items) {
         // Aynı liste "＋ Pano ekle" menüsünün "Proje panoları" bölümünü de
         // besler — ikinci bir istek atmıyoruz.
         projectLookup = items || [];
@@ -620,7 +640,7 @@ $(function () {
             );
         });
         renderFilterUi();
-    });
+    }, function () { });
 
     // ─── Toplu seçim ───────────────────────────────────────────────────────
     var bulk = !canBulk ? null : console_.createBulkSelection({

@@ -5,7 +5,7 @@ import {
     usePendingApprovals, useBlockedTasks, useIncomeExpense, useDeliveryHeatmap,
 } from '../hooks/useDashboard';
 import { VIEWS, DEFAULT_VIEW } from '../layouts/viewPresets';
-import { STAT_GROUPS } from '../cards/StatisticsBand';
+import { STAT_GROUPS, permissionLabel } from '../cards/StatisticsBand';
 import { GROUP_ORDER, GROUP_LABEL } from '../cards/DeliveriesCard';
 import { STATE_BADGE } from '../cards/ProjectHealthCard';
 import { REASON } from '../cards/BlockersCard';
@@ -216,7 +216,7 @@ function SummaryBlock({ query, locale }) {
                         label={t('Dashboard:Summary:PendingApprovals', 'Bende onay')}
                         value={data.pendingApprovals}
                         locked={data.pendingApprovals == null}
-                        permission="Platform.Invoices"
+                        permission={t('Permission:Invoices', 'Faturalar')}
                         note={[
                             data.pendingApprovalAmount != null
                                 ? formatMoney(data.pendingApprovalAmount, data.currency, locale)
@@ -230,7 +230,7 @@ function SummaryBlock({ query, locale }) {
                         label={t('Dashboard:Summary:BudgetUsage', 'Bütçe kullanımı')}
                         value={data.budgetUsedRatio != null ? `%${Math.round(data.budgetUsedRatio * 100)}` : null}
                         locked={data.budgetUsedRatio == null && data.budgetTotal == null}
-                        permission="Platform.Projects.ViewBudget"
+                        permission={t('Permission:Projects.ViewBudget', 'Bütçe Görüntüleme')}
                         note={data.budgetTotal != null
                             ? `${formatMoney(data.budgetSpent, data.currency, locale)} / ${formatMoney(data.budgetTotal, data.currency, locale)}`
                             : null}
@@ -241,7 +241,10 @@ function SummaryBlock({ query, locale }) {
     );
 }
 
-/** Kilitli kutucuk sayı YAZMAZ — sunucu değeri hiç göndermedi, uydurulmaz. */
+/**
+ * Kilitli kutucuk sayı YAZMAZ — sunucu değeri hiç göndermedi, uydurulmaz.
+ * `permission`: izin tanımının görünen adı (ham kod kağıda basılmaz).
+ */
 function SummaryTile({ label, value, note, locked, permission }) {
     return (
         <div className="border-b border-e border-neutral-400 p-2">
@@ -299,7 +302,7 @@ function StatisticsBlock({ query }) {
                                             <td className={TD}>
                                                 {stat.label}
                                                 <span className="block font-mono text-[6.5pt] text-neutral-400">
-                                                    {stat.requiredPermission}
+                                                    {permissionLabel(stat.requiredPermission)}
                                                 </span>
                                             </td>
                                             <td className={TD_NUM}>
@@ -490,9 +493,14 @@ function BlockersBlock({ query }) {
 
 /* ─────────────────────────── Onaylar ─────────────────────────── */
 
-/** Ekranda ilk 4 satır çizilir; kağıtta hepsi + toplam. */
+/**
+ * Ekranda ilk 4 satır çizilir; kağıtta hepsi + toplam. Kilitli kuyruk kağıda "fatura
+ * bulunmuyor" diye basılmaz. Dizi = kalıcı önbellekteki eski şekil (bkz ApprovalsCard).
+ */
 function ApprovalsBlock({ query, locale }) {
-    const items = query.data ?? [];
+    const data = query.data;
+    const locked = data?.locked === true;
+    const items = Array.isArray(data) ? data : (data?.items ?? []);
     const total = items.reduce((sum, i) => sum + (i.amount ?? 0), 0);
     const avgAge = items.length
         ? Math.round(items.reduce((sum, i) => sum + i.ageHours, 0) / items.length)
@@ -506,8 +514,10 @@ function ApprovalsBlock({ query, locale }) {
                 ? t('Dashboard:Approvals:Total', 'Toplam {0} · ort. bekleme {1} sa', formatMoney(total, currency, locale), avgAge)
                 : null}
             query={query}
-            isEmpty={items.length === 0}
-            emptyText={t('Dashboard:Approvals:EmptyDescription', 'Taslak durumdaki fatura bulunmuyor.')}
+            isEmpty={locked || items.length === 0}
+            emptyText={locked
+                ? t('Dashboard:Print:Locked', 'Bu bölümü görme yetkiniz yok ({0}).', t('Permission:Invoices', 'Faturalar'))
+                : t('Dashboard:Approvals:EmptyDescription', 'Taslak durumdaki fatura bulunmuyor.')}
         >
             <table className="w-full border-collapse">
                 <thead>
@@ -540,6 +550,7 @@ function ApprovalsBlock({ query, locale }) {
 /** Ekranda 6 ay bar grafiği; kağıtta aynı 6 ay SAYIYLA — bar okunmaz, rakam okunur. */
 function IncomeExpenseBlock({ query, locale }) {
     const data = query.data;
+    const locked = data?.locked === true;
     const points = data?.points ?? [];
     const currency = data?.currency ?? 'TRY';
     const hasValues = points.some((p) => p.income > 0 || p.expense > 0);
@@ -549,8 +560,10 @@ function IncomeExpenseBlock({ query, locale }) {
             title={t('Dashboard:IncomeExpense:Title', 'Gelir / gider')}
             meta={t('Dashboard:IncomeExpense:Subtitle', 'Son 6 ay')}
             query={query}
-            isEmpty={!hasValues}
-            emptyText={t('Dashboard:IncomeExpense:EmptyDescription', 'Son 6 ayda gelir veya gider kaydı bulunmuyor.')}
+            isEmpty={locked || !hasValues}
+            emptyText={locked
+                ? t('Dashboard:Print:LockedBoth', 'Bu bölümü görme yetkiniz yok ({0} ve {1}).', t('Permission:Incomes', 'Gelirler'), t('Permission:Expenses', 'Giderler'))
+                : t('Dashboard:IncomeExpense:EmptyDescription', 'Son 6 ayda gelir veya gider kaydı bulunmuyor.')}
         >
             <table className="w-full border-collapse break-inside-avoid">
                 <thead>

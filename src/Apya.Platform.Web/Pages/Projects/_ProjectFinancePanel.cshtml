@@ -194,15 +194,18 @@
     }
     else
     {
-        <partial name="_EmptyState" model='new EmptyStateModel {
+        @* Eylem partial'ın yuvasında (CON-14): kartın alt dolgusu elle konan bağlantıyı koparmasın. *@
+        var noBudgetLines = new EmptyStateModel
+        {
             Icon = "fa-list-ul",
             Title = "Bu projede bütçe kalemi yok",
-            Description = "Kalem tanımlayana kadar bütçe tek tutar olarak yönetilir." }' />
-        <div class="text-center">
-            <a href="@($"/Finance?projectId={Model.Id}&tab=kalemler")" class="btn btn-sm btn-outline-secondary">
-                <i class="fa fa-plus me-1" aria-hidden="true"></i>Kalem tanımla
-            </a>
-        </div>
+            Description = "Kalem tanımlayana kadar bütçe tek tutar olarak yönetilir.",
+            ActionText = "Kalem tanımla",
+            ActionUrl = $"/Finance?projectId={Model.Id}&tab=kalemler",
+            ActionIcon = "fa-plus",
+            ActionAttributes = new Dictionary<string, string> { ["class"] = "btn btn-sm btn-outline-secondary" }
+        };
+        <partial name="_EmptyState" model="noBudgetLines" />
     }
     @* --- GOREV BAZLI KIRILIM --- *@
     @if (taskRows.Count > 0 || untaggedSpent > 0)
@@ -314,11 +317,7 @@
 
             @if (xp.Rows.Count == 0)
             {
-                <div class="apya-console-state">
-                    <span class="apya-console-state-icon"><i class="fa fa-coins" aria-hidden="true"></i></span>
-                    <strong>Henüz harcama kaydı yok</strong>
-                    <p>İlk harcamayı ekleyin — bir göreve bağlı ya da doğrudan projeye.</p>
-                </div>
+                <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-coins", Title = "Henüz harcama kaydı yok", Description = "İlk harcamayı ekleyin — bir göreve bağlı ya da doğrudan projeye." }' />
             }
             else
             {

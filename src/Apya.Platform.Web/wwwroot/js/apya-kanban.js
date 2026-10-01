@@ -954,6 +954,12 @@
             if (e.key === 'Escape') { closeCardMenu(); }
         }
 
+        // Hata tek kanaldan: ABP penceresi (ya da oturum penceresi) sunucunun nedenini
+        // gösterdiyse ikinci bildirim basılmaz (apya.ajaxErrors — ajax-error-detail.js).
+        function notifyFailure(err, msg) {
+            apya.ajaxErrors.notify(err, msg);
+        }
+
         // Tek kart eylemi: bildir + panoyu tazele (toplu akıştaki finishBulk'ın
         // tekil karşılığı; geri alma yok — tek kartta maliyeti düşük).
         function runCardAction(promise, okMsg) {
@@ -962,8 +968,8 @@
                 abp.notify.success(okMsg);
                 load();
                 onChanged();
-            }).catch(function () {
-                abp.notify.error('İşlem tamamlanamadı.');
+            }).catch(function (err) {
+                notifyFailure(err, 'İşlem tamamlanamadı.');
                 load();
             });
         }
@@ -1568,8 +1574,8 @@
                         closeColumnPanel();
                         load();
                     })
-                    .catch(function () {
-                        abp.notify.error('Kolonlar kaydedilemedi.');
+                    .catch(function (err) {
+                        notifyFailure(err, 'Kolonlar kaydedilemedi.');
                         saveBtn.disabled = false;
                     });
             });
@@ -1782,19 +1788,70 @@
         // Proje seçiliyse kolonlar DB'den (sistem + özel), değilse partial'daki
         // varsayılan adlardan kurulur. Her iki yolda da board baştan çizilir —
         // böylece proje değiştirince bayat kolon/limit kalmaz.
+        // Yükleme hatası ABP penceresi değil pano kartıdır (Faz 4 kararı 2); kolon ya da görev
+        // isteği düşerse eski "0 sayaçlı boş kolonlar" yerine hata kartı + Tekrar dene.
         function load() {
             var board = document.querySelector(boardSel);
             if (!board) { return; }
             var isLatest = nextLoad();
             if (effectiveCols()) {
-                colSvc.getListByProject(projectId).then(function (cols) {
+                Promise.resolve(colSvc.getListByProject(projectId, { abpHandleError: false })).then(function (cols) {
                     if (!isLatest()) { return; }
                     renderColumns(cols);
                     fetchTasks(isLatest);
+                }, function (err) {
+                    if (!isLatest()) { return; }
+                    showLoadError(err);
                 });
             } else {
                 renderColumns(defaultColumns(board));
                 fetchTasks(isLatest);
+            }
+        }
+
+        // Görevler gelene kadar kolonlarda iskelet kart, sayaçlar boş ("0" yalanı yok).
+        // Sınıf 'kanban-card' KULLANILMAZ: updateCounts onu sayardı. render ilk iş kolon
+        // içlerini boşaltır, updateCounts gerçek sayıyı yazar.
+        function showCardSkeletons() {
+            var board = document.querySelector(boardSel);
+            if (!board) { return; }
+            board.querySelectorAll('.kanban-cards').forEach(function (n) {
+                n.innerHTML = '<div class="apya-skeleton" aria-hidden="true" style="height:64px"></div>' +
+                    '<div class="apya-skeleton" aria-hidden="true" style="height:64px"></div>';
+            });
+            board.querySelectorAll('.kanban-count').forEach(function (n) { n.textContent = ''; });
+        }
+
+        // Pano düzeyi hata kartı. Seçim temizlenir (toplu çubuk görünmeyen kartlara iş
+        // yapmasın), açık kart menüsü kapanır; görünüm tercihi değişirse eski kartlar
+        // değil yeni bir yükleme denenir. Metin partial'dan (data-load-failed).
+        function showLoadError(err) {
+            var board = document.querySelector(boardSel);
+            if (!board) { return; }
+            closeCardMenu();
+            clearSelection();
+            lastTasks = null;
+            showCap(null);
+            board.innerHTML = apya.loadState.errorHtml(
+                board.getAttribute('data-load-failed') || 'Görevler yüklenemedi.', 'js-kanban-retry', err);
+            board.querySelector('.js-kanban-retry').addEventListener('click', function () {
+                this.disabled = true;
+                load();
+            });
+        }
+
+        // Pano tek istekte en çok maxResultCount görev çeker; fazlası sessizce düşmesin
+        // (TSK-10). Metin partial'dan (data-capped, {0} gösterilen · {1} toplam).
+        function showCap(res) {
+            var cap = nearBoard('.js-kanban-cap');
+            if (!cap) { return; }
+            var total = res && res.totalCount;
+            var shown = ((res && res.items) || []).length;
+            cap.hidden = !(total > shown);
+            if (!cap.hidden) {
+                var board = document.querySelector(boardSel);
+                cap.textContent = ((board && board.getAttribute('data-capped')) || '')
+                    .replace('{0}', shown).replace('{1}', total);
             }
         }
 
@@ -1807,9 +1864,18 @@
         function fetchTasks(isLatest) {
             var filter = $.extend({ maxResultCount: 1000 }, getFilter());
             if (projectId) { filter.projectId = projectId; }
-            var calls = [taskSvc.getList(filter)];
-            calls.push(enableTimer ? taskSvc.getActiveTimeLog() : Promise.resolve(null));
-            Promise.all(calls).then(function (res) { if (isLatest()) { render(res[0].items, res[1]); } });
+            showCardSkeletons();
+            var calls = [Promise.resolve(taskSvc.getList(filter, { abpHandleError: false }))];
+            calls.push(enableTimer ? Promise.resolve(taskSvc.getActiveTimeLog({ abpHandleError: false })) : Promise.resolve(null));
+            // Ret dalı şart: native Promise.all'ın reddi yakalanmazsa telemetriye UnhandledRejection düşer.
+            Promise.all(calls).then(function (res) {
+                if (!isLatest()) { return; }
+                render(res[0].items, res[1]);
+                showCap(res[0]);
+            }, function (err) {
+                if (!isLatest()) { return; }
+                showLoadError(err);
+            });
         }
 
         function render(tasks, activeLog) {
@@ -1988,8 +2054,8 @@
                                     abp.notify.info('Görev iptal edildi.');
                                     load();
                                     onChanged();
-                                }).catch(function () {
-                                    abp.notify.error('Görev iptal edilemedi.');
+                                }).catch(function (err) {
+                                    notifyFailure(err, 'Görev iptal edilemedi.');
                                     load();
                                 });
                             });
@@ -2005,8 +2071,8 @@
                             if (grouping) { load(); onChanged(); return; }
                             updateCounts();
                             onChanged();
-                        }).catch(function () {
-                            abp.notify.error('Görev taşınamadı.');
+                        }).catch(function (err) {
+                            notifyFailure(err, 'Görev taşınamadı.');
                             load();
                         });
                     }
@@ -2068,9 +2134,9 @@
                         if (!ids.length) { return; }
                         colSvc.reorder(projectId, ids)
                             .then(function () { abp.notify.success('Kolon sırası kaydedildi.'); })
-                            .catch(function () {
+                            .catch(function (err) {
                                 // Sıra sunucuda değişmedi → DB düzenine geri dön.
-                                abp.notify.error('Sıralama kaydedilemedi.');
+                                notifyFailure(err, 'Sıralama kaydedilemedi.');
                                 load();
                             });
                     }
@@ -2141,7 +2207,7 @@
                 abp.notify.success('İptal geri alındı.');
                 load();
                 onChanged();
-            }).catch(function () { abp.notify.error('İptal geri alınamadı.'); });
+            }).catch(function (err) { notifyFailure(err, 'İptal geri alınamadı.'); });
         });
 
         // Taşı: hedef sistem kolonuysa durum, özel kolonsa kolon bağı üzerinden.

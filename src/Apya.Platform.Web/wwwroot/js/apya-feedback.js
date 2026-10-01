@@ -306,15 +306,18 @@
         var $submitBtn = $form.find('.apya-feedback-submit');
         $submitBtn.prop('disabled', true);
 
-        apya.platform.feedbacks.feedback.submit(dto)
+        // Tek kanal: ABP penceresi kapalı, hata form içinde gösterilir.
+        apya.platform.feedbacks.feedback.submit(dto, { abpHandleError: false })
             .then(function (created) {
                 clearDraft();
                 showSuccess(created && created.feedbackNumber);
             })
             .catch(function (err) {
                 // Metin kaybolmaz: modal açık kalır, kullanıcı düzeltip yeniden dener.
-                var message = (err && err.message) || 'Gönderim başarısız oldu. Lütfen tekrar deneyin.';
-                showError(message);
+                // Oturum/anahtar hatasında merkezi pencere açılır; message null döner.
+                var fallback = 'Gönderim başarısız oldu. Lütfen tekrar deneyin.';
+                var message = apya.ajaxErrors.message(err, fallback);
+                if (message) { showError(message); }
             })
             .then(function () {
                 $submitBtn.prop('disabled', false);

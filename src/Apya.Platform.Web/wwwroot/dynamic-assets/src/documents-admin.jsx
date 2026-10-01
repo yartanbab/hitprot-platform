@@ -9,11 +9,11 @@
  * Razor mount  : <div id="documents-admin-island"></div>
  */
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import './index.css';
 import { AdminRoot } from './documents-admin/AdminRoot';
 
 const container = document.getElementById('documents-admin-island');
 if (container) {
-  createRoot(container).render(<AdminRoot />);
+  mountIsland(container, 'documents-admin', <AdminRoot />);
 }

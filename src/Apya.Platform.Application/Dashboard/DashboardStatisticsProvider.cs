@@ -40,8 +40,9 @@ namespace Apya.Platform.Dashboard;
 /// <summary>
 /// İstatistik bandının veri sağlayıcısı.
 /// <para>
-/// KİLİT SÖZLEŞMESİ: her istatistik bir izne bağlıdır. İzin yoksa hesaplama fonksiyonu
-/// HİÇ ÇAĞRILMAZ — sorgu atılmaz, <c>Locked=true</c> ve <c>Value=null</c> döner.
+/// KİLİT SÖZLEŞMESİ: her istatistik bir izne (hesabı iki kaynağı okuyorsa ikisine) bağlıdır.
+/// İzin yoksa hesaplama fonksiyonu HİÇ ÇAĞRILMAZ — sorgu atılmaz, <c>Locked=true</c> ve
+/// <c>Value=null</c> döner.
 /// Kilitli kutucuk sayı sızdırmaz.
 /// </para>
 /// <para>
@@ -157,7 +158,17 @@ public class DashboardStatisticsProvider : ITransientDependency
         string Permission,
         StatUnit Unit,
         Func<DashboardPeriod, Guid?, Task<StatValue>> Compute,
-        string? RequiredFeature = null);
+        string? RequiredFeature = null,
+        string? AlsoRequiredPermission = null)
+    {
+        /// <summary>
+        /// Kutucuğun gerektirdiği TÜM izinler; biri yoksa kilitli. İkinci izin, hesabı iki kaynağı
+        /// birden okuyan kutucuk içindir (net = gelir − gider): tek izinle öbür toplam dolaylı sızardı.
+        /// </summary>
+        public string[] Permissions => AlsoRequiredPermission == null
+            ? new[] { Permission }
+            : new[] { Permission, AlsoRequiredPermission };
+    }
 
     private enum StatUnit { None, Percent, Days, Hours, Money, Count }
 
@@ -170,7 +181,7 @@ public class DashboardStatisticsProvider : ITransientDependency
         // İzinler istatistik başına değil, benzersiz izin başına bir kez sorulur.
         var definitions = BuildDefinitions();
         var grants = new Dictionary<string, bool>();
-        foreach (var permission in definitions.Select(d => d.Permission).Distinct())
+        foreach (var permission in definitions.SelectMany(d => d.Permissions).Distinct())
         {
             grants[permission] = await _permissionChecker.IsGrantedAsync(permission);
         }
@@ -189,10 +200,12 @@ public class DashboardStatisticsProvider : ITransientDependency
                 Group = def.Group,
                 Label = _l[$"Dashboard:Stat:{def.Key}"],
                 Unit = UnitSymbol(def.Unit),
-                RequiredPermission = def.Permission
+                // İzin KODU gider; UI ham kodu basmaz, görünen ada çevirir (StatisticsBand.jsx permissionLabel).
+                // " + " ayracı ve "Platform.X" ↔ "Permission:X" anahtar kuralı sözleşmedir (DashboardLockContract_Tests).
+                RequiredPermission = string.Join(" + ", def.Permissions)
             };
 
-            if (!grants[def.Permission])
+            if (!def.Permissions.All(permission => grants[permission]))
             {
                 // Yetki yok → Compute ÇAĞRILMAZ. Değer hesaplanmaz, sorgu atılmaz.
                 dto.Locked = true;
@@ -321,8 +334,9 @@ public class DashboardStatisticsProvider : ITransientDependency
             StatUnit.Money, PendingApprovalAmountAsync),
         new("expense-items", DashboardStatGroup.Finance, PlatformPermissions.Expenses.Default,
             StatUnit.Count, ExpenseItemsAsync),
+        // Net iki toplamı da okur → iki izni de ister (Genel Bakış Gelir/Gider kartıyla aynı kural).
         new("monthly-net", DashboardStatGroup.Finance, PlatformPermissions.Incomes.Default,
-            StatUnit.Money, MonthlyNetAsync),
+            StatUnit.Money, MonthlyNetAsync, AlsoRequiredPermission: PlatformPermissions.Expenses.Default),
         new("cash-balance", DashboardStatGroup.Finance, PlatformPermissions.CashAccounts.Default,
             StatUnit.Money, CashBalanceAsync),
         new("receivables-payables", DashboardStatGroup.Finance, PlatformPermissions.Customers.Default,

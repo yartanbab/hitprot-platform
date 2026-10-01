@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Badge, Button, EmptyState, SkeletonList } from '../../components/ui';
-import { abpNotify, getActivity } from '../api';
+import { getActivity } from '../api';
 import { ACCESS_ACTION_LABEL, cn, fmt } from '../format';
 
 /**
@@ -36,8 +36,13 @@ export function ActivityTab({ projectId, documentFileId }) {
   const [page, setPage] = useState(0);
   const [action, setAction] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+
+  /* Süzgeç çipi ya da sayfa hızla değişince yalnız son isteğin yanıtı (ya da hatası) yazılır. */
+  const requestRef = useRef(0);
 
   const load = useCallback(async () => {
+    const request = ++requestRef.current;
     setLoading(true);
     try {
       const result = await getActivity({
@@ -46,14 +51,17 @@ export function ActivityTab({ projectId, documentFileId }) {
         projectId: projectId || undefined,
         documentFileId: documentFileId || undefined,
         action: action || undefined,
-      });
+      }, { abpHandleError: false });
+      if (request !== requestRef.current) return;
       setRows(result.items ?? []);
       setTotalCount(result.totalCount ?? 0);
+      setLoadError(null);
     } catch (e) {
-      abpNotify('error', 'Etkinlik kaydı yüklenemedi.');
+      if (request !== requestRef.current) return;
+      setLoadError(e);
       console.error('[Documents] activity load', e);
     } finally {
-      setLoading(false);
+      if (request === requestRef.current) setLoading(false);
     }
   }, [projectId, documentFileId, action, page]);
 
@@ -78,13 +86,17 @@ export function ActivityTab({ projectId, documentFileId }) {
           </button>
         ))}
         <div style={{ flex: 1 }} />
+        {/* Yüklenirken ve hatada sayı bilinmiyor: "0 kayıt" denetim izini boş gösterirdi. */}
         <span className="apya-numeric" style={{ fontSize: 11.5, color: 'var(--apya-text-tertiary)' }}>
-          {totalCount} kayıt
+          {loading || loadError ? '—' : totalCount} kayıt
         </span>
       </div>
 
-      {loading ? (
+      {/* Hata varken yükleniyor = yeniden deneniyor: kart iskelete dönmez (odak düğmede kalır). */}
+      {loading && !loadError ? (
         <div className="p-3"><SkeletonList rows={8} /></div>
+      ) : loadError ? (
+        <EmptyState variant="error" title="Etkinlik kaydı yüklenemedi" error={loadError} onRetry={load} retrying={loading} />
       ) : rows.length === 0 ? (
         <EmptyState
           icon={<i className="fa fa-clock-rotate-left" />}
@@ -123,7 +135,7 @@ export function ActivityTab({ projectId, documentFileId }) {
         </div>
       )}
 
-      {pageCount > 1 && (
+      {!loadError && pageCount > 1 && (
         <div
           className="d-flex align-items-center justify-content-between px-3 py-2"
           style={{ borderTop: '1px solid var(--apya-border-subtle)' }}

@@ -408,7 +408,8 @@
 
         @* --- LİSTE GÖRÜNÜMÜ --- *@
         <div id="view-list" class="view-panel" role="tabpanel" aria-labelledby="btn-view-list">
-            <abp-table class="apya-clean-table" id="TasksTable"></abp-table>
+            @* data-load-failed: yükleme hatası kartının başlığı (apya-load-state.js failTable) — kanban/galeri ile aynı. *@
+            <abp-table class="apya-clean-table" id="TasksTable" data-load-failed="@L["Tasks:View:LoadFailed"]"></abp-table>
 
             @* Yükleniyor — spinner değil, tablo hizasında iskelet satırlar. *@
             <div class="apya-console-skeleton d-none" id="state-loading" aria-hidden="true">

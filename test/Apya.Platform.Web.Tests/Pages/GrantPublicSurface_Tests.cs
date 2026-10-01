@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Apya.Platform.Grants;
 using Apya.Platform.Grants.Dtos;
@@ -49,6 +50,11 @@ public class GrantPublicSurface_Tests : PlatformWebTestBase
         html.ShouldContain("Türkiye'nin açık hibe çağrıları");
         // Uygulama kabuğu KULLANILMAZ; kenar çubuğu bu sayfada olmamalı.
         html.ShouldNotContain("lpx-nav-menu");
+
+        // Font Awesome bağlantısı bozuk basılıyordu ("~/…" içinde "@@" → href=" content="…): ikonlar yüklenmiyordu.
+        System.Net.WebUtility.HtmlDecode(html)
+            .ShouldContain("href=\"/libs/@fortawesome/fontawesome-free/css/all.css\"");
+        html.ShouldNotContain("href=\" content=");
     }
 
     [Fact]
@@ -221,6 +227,63 @@ public class GrantPublicSurface_Tests : PlatformWebTestBase
         html.ShouldContain("satış görüşmesi değil");
         // 🔴 Müsaitlik takvimi olmadığı ekranda AÇIKÇA yazmalı.
         html.ShouldContain("Onaylanmış bir randevu saati değildir");
+    }
+
+    // ─────────────────────────────────────────── yayında olmayan çağrı / geçersiz bağlantı (ACC-04, GRT-06)
+
+    /// <summary>
+    /// Kamu düzeninde (uygulama kabuğu değil) dostane durum; teknik metin yok; Detay.js basılmaz
+    /// (kökü olmadan patlardı). Düzeltme öncesi bu uçlar 500 veriyordu.
+    /// </summary>
+    private static void ShouldBeUnavailablePage(string html, string title)
+    {
+        var decoded = WebUtility.HtmlDecode(html);
+        decoded.ShouldContain("apya-pub-header", customMessage: "kamu düzeninde basılmalı");
+        decoded.ShouldContain(title);
+        decoded.ShouldContain("href=\"/Hibeler\"");
+        decoded.ShouldNotContain("lpx-nav-menu");
+        decoded.ShouldNotContain("Exception", Case.Sensitive);
+        decoded.ShouldNotContain("Platform:Grant", Case.Sensitive);
+        decoded.ShouldNotContain("Detay.js", customMessage: "detay betiği kökü olmadan basılmamalı");
+    }
+
+    [Fact]
+    public async Task Olmayan_cagri_404_ve_yayinda_degil_durumu()
+    {
+        var response = await Client.GetAsync($"/Hibeler/{Guid.NewGuid()}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        ShouldBeUnavailablePage(await response.Content.ReadAsStringAsync(), "Bu çağrı artık yayında değil");
+    }
+
+    /// <summary>
+    /// Taslak çağrı hiç olmayan çağrıyla AYNI yanıtı alır: ayrı bir durum taslağın varlığını sızdırırdı.
+    /// </summary>
+    [Fact]
+    public async Task Taslak_cagri_olmayan_cagriyla_ayni_yaniti_alir()
+    {
+        var repo = GetRequiredService<IRepository<GrantCall, Guid>>();
+        var open = await OpenCallAsync();
+        var draft = new GrantCall(Guid.NewGuid(), open.GrantId, "Gizli dönem", GrantCallStatus.Taslak);
+        await repo.InsertAsync(draft, autoSave: true);
+
+        var draftResponse = await Client.GetAsync($"/Hibeler/{draft.Id}");
+        var missingResponse = await Client.GetAsync($"/Hibeler/{Guid.NewGuid()}");
+
+        draftResponse.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        missingResponse.StatusCode.ShouldBe(draftResponse.StatusCode);
+        var html = await draftResponse.Content.ReadAsStringAsync();
+        ShouldBeUnavailablePage(html, "Bu çağrı artık yayında değil");
+        WebUtility.HtmlDecode(html).ShouldNotContain("Gizli dönem");
+    }
+
+    [Fact]
+    public async Task Gecersiz_randevu_baglantisi_404_ve_durum()
+    {
+        var response = await Client.GetAsync($"/Hibeler/Randevu?lead={Guid.NewGuid()}");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        ShouldBeUnavailablePage(await response.Content.ReadAsStringAsync(), "Bu randevu bağlantısı geçerli değil");
     }
 
     // ─────────────────────────────────────────── 5a

@@ -3580,6 +3580,18 @@ i.apya-priority-dot {
 .apya-console-state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 /* 403 paneli tablo yerine geçer → kalan alanı doldurup dikey ortalanır. */
 .apya-console-state.is-denied { flex: 1 1 auto; justify-content: center; }
+/* Yükleme hatası kartı DataTables'ın boş hücresine basılır (apya-load-state.js failTable);
+   .nowrap tablolarda (Kurlar, Giderler) metin kırılsın, dar ekranda yatay taşma olmasın. */
+table.dataTable td.dt-empty > .apya-console-state { white-space: normal; }
+/* Yatay kaydırmalı tabloda (dar ekran: Kurlar 680px, Kiracılar 1301px) boş hücre TABLO genişliğindedir;
+   içinde ortalanan kart görünür kaydırma alanının (.dt-scroll-body, ≈311px) dışında kalıyordu. Kart
+   yapışkan + en çok görünür alan genişliğinde: kaydırma gövdesi kap olur, 100cqi = görünür genişlik.
+   Tablo sığıyorsa hücre zaten o genişliktedir — ortalı görünüm değişmez. Kap YALNIZ kart dururken ve
+   konsol DIŞINDA: konsol tablosu taşmaz (§21 table-layout:fixed), içindeki adsız @container kuralları
+   da en yakın kaba bakar — gövde kap olsaydı kart düzeni kırılımını konsoldan değil gövdeden okurlardı. */
+.dt-scroll-body:has(> table > tbody > tr > td.dt-empty > .apya-console-state):not(.apya-console-views .dt-scroll-body) { container-type: inline-size; }
+table.dataTable td.dt-empty:has(> .apya-console-state) { padding-inline: 0; }
+table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; max-width: 100cqi; }
 
 /* §9'daki .card-body > .view-panel zincirinin konsol karşılığı — konsolda
    .card-body yok, görünümler doğrudan bu kapta. */

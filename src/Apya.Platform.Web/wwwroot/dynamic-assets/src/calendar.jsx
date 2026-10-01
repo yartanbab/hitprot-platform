@@ -1,5 +1,5 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import { ThemeProvider } from './lib/theme/ThemeProvider';
 import { DeviceModeProvider } from './lib/device';
 import { QueryProvider } from './lib/api/QueryProvider';
@@ -17,7 +17,7 @@ import './index.css';
  */
 const rootElement = document.getElementById('apya-calendar-root');
 if (rootElement) {
-    createRoot(rootElement).render(
+    mountIsland(rootElement, 'calendar',
         <ThemeProvider>
             <DeviceModeProvider>
                 <QueryProvider>
