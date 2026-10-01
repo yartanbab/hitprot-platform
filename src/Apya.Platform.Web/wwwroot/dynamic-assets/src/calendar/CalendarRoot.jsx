@@ -557,7 +557,7 @@ export function CalendarRoot() {
                     onComplete={mutations.complete}
                     isPending={!!mutations.pending[selectedItem.key]}
                     error={mutations.errors[selectedItem.key]}
-                    onRetry={() => mutations.clearError(selectedItem.key)}
+                    onRetry={() => mutations.retryFailed(selectedItem.key)}
                 />
             )}
         </div>

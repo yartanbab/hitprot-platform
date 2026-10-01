@@ -65,3 +65,39 @@ describe('useCalendarMutations — veri-değişti damgası', () => {
         expect(events).toBe(0);
     });
 });
+
+/* Çekmecedeki kanonik "Tekrar dene": reddedilen işlemi gerçekten yineler (eskiden yalnız hata şeridini kapatıyordu). */
+describe('useCalendarMutations — reddedilen işlemi yeniden deneme', () => {
+    it('reddedilen taşıma retryFailed ile AYNI gövdeyle yeniden gönderilir; başarıda hata kalkar', async () => {
+        api.post.mockReset();
+        api.post.mockRejectedValueOnce(new Error('Reddedildi'));
+        const { result } = renderHook(() => useCalendarMutations(), { wrapper });
+
+        result.current.reschedule(ITEM, new Date('2026-09-05T00:00:00'));
+        await waitFor(() => expect(result.current.errors[ITEM.key]).toBe('Reddedildi'));
+
+        api.post.mockResolvedValueOnce(undefined);
+        result.current.retryFailed(ITEM.key);
+
+        await waitFor(() => expect(api.post).toHaveBeenCalledTimes(2));
+        expect(api.post.mock.calls[1]).toEqual(api.post.mock.calls[0]);
+        await waitFor(() => expect(result.current.errors[ITEM.key]).toBeUndefined());
+    });
+
+    it('reddedilen tamamlama da yinelenir; kayıt yokken retryFailed istek atmaz', async () => {
+        api.post.mockReset();
+        api.post.mockRejectedValueOnce(new Error('Tamamlanamadı'));
+        const { result } = renderHook(() => useCalendarMutations(), { wrapper });
+
+        result.current.retryFailed('task:yok');
+        expect(api.post).not.toHaveBeenCalled();
+
+        result.current.complete(ITEM);
+        await waitFor(() => expect(result.current.errors[ITEM.key]).toBe('Tamamlanamadı'));
+        api.post.mockResolvedValueOnce(undefined);
+        result.current.retryFailed(ITEM.key);
+
+        await waitFor(() => expect(api.post).toHaveBeenCalledTimes(2));
+        expect(api.post.mock.calls[1][0]).toBe('/api/app/calendar/complete-item');
+    });
+});

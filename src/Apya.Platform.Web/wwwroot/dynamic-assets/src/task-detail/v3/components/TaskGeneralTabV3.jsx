@@ -62,6 +62,8 @@ export function TaskGeneralTabV3({
         try {
             await checklist.addItem(text);
         } catch (err) {
+            // Eklenemedi: yazılan madde kaybolmasın (kullanıcı arada yenisini yazmadıysa geri konur).
+            setChecklistDraft((current) => current || text);
             notifyError(err, 'Madde eklenemedi.');
         }
     };

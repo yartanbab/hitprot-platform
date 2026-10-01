@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TaskGeneralTabV3 } from './TaskGeneralTabV3';
 
@@ -45,5 +46,23 @@ describe('TaskGeneralTabV3 açıklama editörü', () => {
 
         view.rerender(wrap(B, B.description));
         await waitFor(() => expect(editorText()).toBe('B görevinin açıklaması'));
+    });
+});
+
+describe('TaskGeneralTabV3 kontrol listesi', () => {
+    it('madde eklenemezse yazılan metin giriş alanına geri konur', async () => {
+        const addItem = vi.fn(() => Promise.reject(new Error('Sunucu reddetti')));
+        const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        render(
+            <QueryClientProvider client={qc}>
+                <TaskGeneralTabV3 task={A} descriptionValue={A.description} checklist={{ items: [], addItem }} />
+            </QueryClientProvider>,
+        );
+        const input = await screen.findByPlaceholderText(/Yeni madde yaz/);
+
+        await userEvent.type(input, 'QA-UX madde{Enter}');
+
+        await waitFor(() => expect(addItem).toHaveBeenCalledWith('QA-UX madde'));
+        await waitFor(() => expect(input).toHaveValue('QA-UX madde'));
     });
 });
