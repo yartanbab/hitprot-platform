@@ -150,6 +150,9 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
         EnsureHostContext();
 
         var lead = await GetLeadAsync(input.LeadId);
+        // Kiracı AÇILMADAN önce: dönüştürülmüş talep ikinci kiracıyı (ve profilini) açamaz — çift tık,
+        // eski sekme. MarkConverted'ın denetimi kiracı yazıldıktan sonra çalışıyordu.
+        lead.EnsureNotConverted();
         var name = (input.TenantName ?? lead.FirmName).Trim();
 
         var tenant = await _tenantManager.CreateAsync(name);
