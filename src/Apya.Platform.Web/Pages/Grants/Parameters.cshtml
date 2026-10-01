@@ -54,6 +54,9 @@
         </div>
     </div>
 
+    @* Yükleme hatası kartı (Parameters.js). *@
+    <div id="ParamLoadState"></div>
+
     @* ---------- Sekme grubu ---------- *@
     <div class="apya-grant-tabs apya-param-tabs" role="tablist" aria-label="@L["Grants:Parameters:Sections"]">
         <button type="button" class="apya-grant-tab" role="tab" data-tab="identity" aria-controls="SectionIdentity">
@@ -61,15 +64,15 @@
         </button>
         <button type="button" class="apya-grant-tab is-active" role="tab" data-tab="eligibility" aria-controls="SectionEligibility">
             @L["Grants:Parameters:Tab:Eligibility"]
-            <span class="apya-chip apya-chip-accent apya-numeric" id="NavEligibilityBadge">0</span>
+            <span class="apya-chip apya-chip-accent apya-numeric" id="NavEligibilityBadge">—</span>
         </button>
         <button type="button" class="apya-grant-tab" role="tab" data-tab="financial" aria-controls="SectionFinancial">
             @L["Grants:Parameters:Tab:Financial"]
-            <span class="apya-chip apya-chip-neutral apya-numeric" id="NavFinancialBadge">0</span>
+            <span class="apya-chip apya-chip-neutral apya-numeric" id="NavFinancialBadge">—</span>
         </button>
         <button type="button" class="apya-grant-tab" role="tab" data-tab="documents" aria-controls="SectionDocuments">
             @L["Grants:Parameters:Tab:Documents"]
-            <span class="apya-chip apya-chip-neutral apya-numeric" id="NavDocumentsBadge">0</span>
+            <span class="apya-chip apya-chip-neutral apya-numeric" id="NavDocumentsBadge">—</span>
         </button>
         <button type="button" class="apya-grant-tab" role="tab" data-tab="process" aria-controls="SectionProcess">
             @L["Grants:Parameters:Tab:Process"]
@@ -601,7 +604,7 @@
             <div class="apya-param-progress">
                 <div class="apya-param-progress-head">
                     <span>@L["Grants:Parameters:Completion"]</span>
-                    <span class="apya-numeric" id="ParamCompletionText">%0</span>
+                    <span class="apya-numeric" id="ParamCompletionText">—</span>
                 </div>
                 <div class="apya-mini-bar"><span id="ParamCompletionBar" style="width:0"></span></div>
             </div>
@@ -609,7 +612,8 @@
             <span class="apya-param-bar-message" id="ParamMissingText"></span>
         </div>
         <div class="apya-param-bar-actions">
-            <button type="button" id="ParamSaveBtn" class="btn btn-outline-secondary">
+            @* Kayıt TAM güncelleme: form sunucu değerleriyle dolmadan kilitli (fill() açar). *@
+            <button type="button" id="ParamSaveBtn" class="btn btn-outline-secondary" disabled>
                 @L["Grants:Parameters:SaveDraft"]
             </button>
             @* Yayın kapısı kapalıyken bir sonraki adım: önce eksik alan, sonra taslak çağrı. JS gösterir. *@

@@ -39,11 +39,16 @@
    Burada yalnız board ve toplu işlem çubuğu kalır — çubuk .apya-console-bulkbar
    position:absolute olduğu için konumlandırılmış sarmalayıcıyı paylaşırlar. *@
 <div class="kanban-wrap">
+    @* 1000 görev tavanı notu (JS doldurur). data-capped ham {0}/{1} taşır: .Value biçimlendirmez,
+       IHtmlLocalizer'ın argümansız yazımı ise {0} yüzünden FormatException atardı. *@
+    <p class="small text-muted mb-1 js-kanban-cap" role="status" hidden></p>
     <div class="kanban-board mt-2"
          data-col-1="@L["Tasks:Status:Todo"]"
          data-col-2="@L["Tasks:Status:InProgress"]"
          data-col-3="@L["Tasks:Status:InReview"]"
          data-col-4="@L["Tasks:Status:Done"]"
+         data-load-failed="@L["Tasks:View:LoadFailed"]"
+         data-capped="@L["Tasks:Kanban:Capped"].Value"
          data-can-bulk="@((kbCanChangeStatus || kbCanDelete).ToString().ToLowerInvariant())"
          data-kanban-view="@kbViewJson"></div>
 

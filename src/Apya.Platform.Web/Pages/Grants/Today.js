@@ -144,6 +144,8 @@ $(function () {
     }
 
     $('.apya-today-tabs').on('click', '[data-owner]', function () {
+        // Yükleme düştüyse boyanacak model yok (hata kartı kalır).
+        if (!model) { return; }
         owner = Number($(this).data('owner'));
         $('.apya-today-tabs [data-owner]').removeClass('is-active');
         $(this).addClass('is-active');
@@ -204,28 +206,44 @@ $(function () {
         $('#ConsultantLink').attr('href', '/Grants/Wizard?id=' + c.applicationId);
     }
 
-    service.get().then(function (m) {
-        model = m;
-        paintHead(m);
-        if (isHost) {
-            paintHostTabs(m);
-            // İlk açılışta "Benim işlerim" boşsa dolu olan ilk sekmeye geç — boş ekranla karşılamayalım.
-            var all = m.items.concat(m.moreItems);
-            if (!all.some(function (i) { return i.owner === 0; })) {
-                var first = all[0];
-                if (first) {
-                    owner = first.owner;
-                    $('.apya-today-tabs [data-owner]').removeClass('is-active')
-                        .filter('[data-owner="' + owner + '"]').addClass('is-active');
+    // Yalnız açılışta ve Tekrar dene ile çağrılır (düğme basılınca pasifleşir): bilet gerekmez.
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
+    function load() {
+        return Promise.resolve(service.get({ abpHandleError: false })).then(function (m) {
+            model = m;
+            paintHead(m);
+            if (isHost) {
+                paintHostTabs(m);
+                // İlk açılışta "Benim işlerim" boşsa dolu olan ilk sekmeye geç — boş ekranla karşılamayalım.
+                var all = m.items.concat(m.moreItems);
+                if (!all.some(function (i) { return i.owner === 0; })) {
+                    var first = all[0];
+                    if (first) {
+                        owner = first.owner;
+                        $('.apya-today-tabs [data-owner]').removeClass('is-active')
+                            .filter('[data-owner="' + owner + '"]').addClass('is-active');
+                    }
                 }
             }
-        }
-        paintItems();
-        if (!isHost) {
-            paintOpportunity(m.opportunity);
-            paintConsultantItems(m);
-            paintApps(m.applications || []);
-            paintConsultant(m.consultant);
-        }
+            paintItems();
+            if (!isHost) {
+                paintOpportunity(m.opportunity);
+                paintConsultantItems(m);
+                paintApps(m.applications || []);
+                paintConsultant(m.consultant);
+            }
+        }, function (err) {
+            $('#TodayItems').removeClass('apya-skel-cards')
+                .html(apya.loadState.errorHtml(l('Grants:Today:LoadFailed'), 'js-today-retry', err));
+            $('#TodayEmpty').addClass('d-none');
+            $('#TabCountMine, #TabCountFirm, #TabCountInstitution').text('—');
+        });
+    }
+
+    $('#TodayItems').on('click', '.js-today-retry', function () {
+        $(this).prop('disabled', true);
+        load();
     });
+
+    load();
 });

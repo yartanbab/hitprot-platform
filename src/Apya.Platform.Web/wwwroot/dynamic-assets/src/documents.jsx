@@ -12,11 +12,11 @@
  * Razor mount  : <div id="documents-island"></div>  (Documents/Index.cshtml)
  */
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import './index.css';
 import { DocumentsRoot } from './documents/DocumentsRoot';
 
 const container = document.getElementById('documents-island');
 if (container) {
-  createRoot(container).render(<DocumentsRoot />);
+  mountIsland(container, 'documents', <DocumentsRoot />);
 }

@@ -95,6 +95,22 @@ public static class FinanceContext
     private static readonly FinanceTabDefinition Documents =
         new(TabDocuments, "Finance:Tab:Documents", "fa-folder-open", new[] { PlatformPermissions.Documents.Default });
 
+    /// <summary>
+    /// Sayfanın kendi kapısı (ROL-06): hiçbiri yoksa /Finance açılmaz (403 → erişim reddi sayfası).
+    /// Documents BİLEREK yok — stajyer/çalışan belge iznine sahip ama finans görmez; tek başına belge
+    /// izni finans çatısını anlamlı kılmaz (aynı içerik /Documents altında). Liste, belge dışındaki
+    /// her sekme iznini kapsar (FinanceContext_Tests kilitler): kapı, bir sekmeyi görebilen
+    /// kullanıcıyı dışarıda bırakmaz. Menü kapısı (Incomes|Expenses|Invoices) bunun alt kümesidir.
+    /// </summary>
+    public static readonly string[] PageAnyOfPermissions =
+    {
+        PlatformPermissions.Projects.ViewBudget,
+        PlatformPermissions.Incomes.Default,
+        PlatformPermissions.Expenses.Default,
+        PlatformPermissions.Invoices.Default,
+        PlatformPermissions.CashAccounts.Default
+    };
+
     private static readonly Dictionary<FinanceContextTemplate, FinanceTabDefinition[]> Sets = new()
     {
         [FinanceContextTemplate.Corporate] = new[] { Overview, BudgetLines, Tranches, Ledger, Invoices, Cash, Documents },

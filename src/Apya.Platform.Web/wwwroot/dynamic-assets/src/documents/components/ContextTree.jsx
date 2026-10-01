@@ -1,5 +1,6 @@
-import React from 'react';
-import { SkeletonList } from '../../components/ui';
+import React, { useId } from 'react';
+import { EmptyState, RetryButton, SkeletonList } from '../../components/ui';
+import { t } from '../../lib/i18n';
 import { cn } from '../format';
 
 /**
@@ -75,8 +76,12 @@ function TreeRow({
 }
 
 export function ContextTree({
-  loading, tree, activeKey, expanded, onToggle, onSelect, onDropFiles, dragTarget, setDragTarget,
+  loading, error = null, onRetry, tree, activeKey, expanded, onToggle, onSelect, onDropFiles, dragTarget, setDragTarget,
 }) {
+  const staleNoticeId = useId();
+  // Hata varken yükleniyor = yeniden deneniyor: kart ya da uyarı sökülmez, odak düğmede kalır.
+  const retrying = loading && Boolean(error);
+
   return (
     <div className="apya-docs-tree">
       <div className="apya-md-overline" style={{ padding: '4px 8px 6px' }}>Bağlam</div>
@@ -92,19 +97,41 @@ export function ContextTree({
         <span className="apya-md-item-title" style={{ fontWeight: 600 }}>Tüm Dokümanlar</span>
       </button>
 
-      {loading ? (
+      {/* Ağaç okunamadıysa "Henüz klasör yok." YANLIŞ. Son iyi ağaç varsa (tazeleme
+          düştü) ağaç kalır — navigasyon kopmasın — ve üstünde ince uyarı durur (takvimin
+          "yenilenemedi" şeridi deseni). Akıllı klasörler her durumda çizilir. */}
+      {loading && !error ? (
         <div className="p-2"><SkeletonList rows={5} /></div>
-      ) : tree.length === 0 ? (
-        <div className="text-[11px] text-center py-5 px-2" style={{ color: 'var(--apya-text-tertiary)' }}>
-          Henüz klasör yok.
+      ) : error && tree.length === 0 ? (
+        <div className="p-2">
+          <EmptyState compact variant="error" title="Klasörler yüklenemedi" error={error} onRetry={onRetry} retrying={retrying} />
         </div>
-      ) : tree.map((node) => (
-        <TreeRow
-          key={node.key} node={node} depth={0} activeKey={activeKey}
-          expanded={expanded} onToggle={onToggle} onSelect={onSelect}
-          onDropFiles={onDropFiles} dragTarget={dragTarget} setDragTarget={setDragTarget}
-        />
-      ))}
+      ) : (
+        <>
+          {error && (
+            <div
+              role="alert"
+              className="mx-1 mb-2 flex flex-wrap items-center gap-2 rounded-card border border-negative-100 bg-negative-50 px-3 py-2 text-[12.5px] text-negative-700"
+            >
+              <span id={staleNoticeId} className="min-w-0 flex-1">
+                {t('Documents:Tree:RefreshFailed', 'Klasörler yenilenemedi.')}
+              </span>
+              <RetryButton onRetry={onRetry} retrying={retrying} aria-describedby={staleNoticeId} />
+            </div>
+          )}
+          {tree.length === 0 ? (
+            <div className="text-[11px] text-center py-5 px-2" style={{ color: 'var(--apya-text-tertiary)' }}>
+              Henüz klasör yok.
+            </div>
+          ) : tree.map((node) => (
+            <TreeRow
+              key={node.key} node={node} depth={0} activeKey={activeKey}
+              expanded={expanded} onToggle={onToggle} onSelect={onSelect}
+              onDropFiles={onDropFiles} dragTarget={dragTarget} setDragTarget={setDragTarget}
+            />
+          ))}
+        </>
+      )}
 
       <div style={{ height: 1, background: 'var(--apya-border-subtle)', margin: '8px 4px' }} />
       <div className="apya-md-overline" style={{ padding: '0 8px 6px' }}>Akıllı klasörler</div>

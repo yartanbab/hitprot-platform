@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Dialog, DialogContent, Skeleton, Button } from '../../components/ui';
+import { Dialog, DialogContent, Skeleton, Button, EmptyState, RetryButton } from '../../components/ui';
 import { TaskDetailHeaderV3 } from './components/TaskDetailHeaderV3';
 import { TaskMetadataGridV3 } from './components/TaskMetadataGridV3';
 import { TaskFeatureNavbarV3 } from './components/TaskFeatureNavbarV3';
@@ -25,6 +25,8 @@ import { useProjectOptions } from '../hooks/useProjectOptions';
 import { useTaskFeatures } from '../hooks/useTaskFeatures';
 import { taskDetailStore } from '../taskDetailStore';
 import { isTaskDerivedQuery } from '../../lib/api/dataChanged';
+import { errorMessage, notifyError } from '../../lib/api/abpErrors';
+import { t } from '../../lib/i18n';
 
 const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 
@@ -53,7 +55,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
        dolu geldiği için (modalın ikinci açılışı) ardından iskelet aşaması hiç
        yaşanmaz, remount olmaz ve mount anında değerini yakalayan çocuklar
        (RichTextEditorV3'ün contentEditable'ı) sonsuza kadar BOŞ kalırdı. */
-    const { data: task, isPending, isError, refetch } = useTaskDetail(currentTaskId);
+    const { data: task, isPending, isError, error, refetch } = useTaskDetail(currentTaskId);
     const queryClient = useQueryClient();
     const guard = useDirtyGuard();
     const form = useTaskForm(task);
@@ -174,7 +176,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             notify.ok('Görev başarıyla güncellendi.');
             return true;
         } catch (err) {
-            notify.err(err?.message || 'Kaydedilemedi.');
+            notifyError(err, 'Kaydedilemedi.');
             return false;
         } finally {
             setIsSaving(false);
@@ -213,7 +215,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             await Promise.resolve(svc()?.toggleFavorite(currentTaskId));
         } catch (err) {
             setIsFavorite(!next);
-            notify.err(err?.message || 'Favori güncellenemedi.');
+            notifyError(err, 'Favori güncellenemedi.');
         }
     };
 
@@ -242,7 +244,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             notify.info(next ? 'Görev takip ediliyor.' : 'Takip bırakıldı.');
         } catch (err) {
             setIsWatched(!next);
-            notify.err(err?.message || 'Takip durumu güncellenemedi.');
+            notifyError(err, 'Takip durumu güncellenemedi.');
         }
     };
 
@@ -259,7 +261,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             const newId = result?.createdTaskIds?.[0];
             if (newId) setCurrentTaskId(newId);
         } catch (err) {
-            notify.err(err?.message || 'Görev çoğaltılamadı.');
+            notifyError(err, 'Görev çoğaltılamadı.');
         }
     };
 
@@ -273,7 +275,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             form.setField('status', 4);
             notify.info('Görev arşivlendi (Tamamlandı).');
         } catch (err) {
-            notify.err(err?.message || 'Görev arşivlenemedi.');
+            notifyError(err, 'Görev arşivlenemedi.');
         }
     };
 
@@ -287,7 +289,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             guard.markClean();
             closeNow();
         } catch (err) {
-            notify.err(err?.message || 'Görev silinemedi.');
+            notifyError(err, 'Görev silinemedi.');
         }
     };
 
@@ -298,7 +300,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             setActiveTabCode(code);
             notify.ok('Özellik başarıyla eklendi.');
         } catch (err) {
-            notify.err(err?.message || 'Özellik eklenemedi.');
+            notifyError(err, 'Özellik eklenemedi.');
         }
     };
 
@@ -308,7 +310,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             setActiveTabCode('general');
             notify.info('Özellik görevden kaldırıldı.');
         } catch (err) {
-            notify.err(err?.message || 'Özellik kaldırılamadı.');
+            notifyError(err, 'Özellik kaldırılamadı.');
         }
     };
 
@@ -351,7 +353,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 : (copies > 1 ? `${copies} projeye kopyalandı.` : `Kopya “${names[0]}” projesinde oluşturuldu.`));
             setTransfer(null);
         } catch (err) {
-            notify.err(err?.message || 'Transfer tamamlanamadı.');
+            notifyError(err, 'Transfer tamamlanamadı.');
         }
     };
 
@@ -409,17 +411,47 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         </Suspense>
     );
 
+    /* TSK-23 — görev yok (404) ya da gizli (403): "Tekrar Dene" anlamsız; ne olduğunu söyleyen durum
+       + çıkış. Metinler tam sayfayla (Pages/Tasks/Detail) aynı anahtarlar. Diğer hatalar aşağıda aynen.
+       Durum useTaskDetail'de isteğin jqXHR'ından hataya yazılır. "Görevlere dön" birincil küçük düğme
+       (tam sayfa _EmptyState ve apya.loadState.notFoundHtml ile aynı kural); modalın "Kapat"ı ikincil. */
+    const unavailableStatus = isError && (error?.status === 404 || error?.status === 403) ? error.status : null;
+
     const body = isPending ? (
         <div className="p-8 space-y-4">
             <Skeleton className="h-8 w-1/3" />
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-64 w-full" />
         </div>
-    ) : isError ? (
+    ) : unavailableStatus ? (
+        <EmptyState
+            variant={unavailableStatus === 404 ? 'error' : 'locked'}
+            icon={unavailableStatus === 404 ? <i className="fa fa-magnifying-glass" /> : undefined}
+            title={unavailableStatus === 404
+                ? t('Tasks:Detail:NotFound:Title', 'Bu görev bulunamadı')
+                : t('Tasks:Detail:Forbidden:Title', 'Bu görevi görüntüleyemezsiniz')}
+            description={unavailableStatus === 404
+                ? t('Tasks:Detail:NotFound:Body', 'Görev silinmiş ya da bağlantı eskimiş olabilir.')
+                : errorMessage(error)}
+            action={presentation === 'page' ? (
+                <Button asChild size="sm">
+                    <a href="/Tasks">
+                        <i className="fa fa-arrow-left" aria-hidden="true" />
+                        {t('Tasks:Detail:BackToList', 'Görevlere dön')}
+                    </a>
+                </Button>
+            ) : (
+                <Button variant="secondary" size="sm" onClick={requestClose}>{t('Common:Close', 'Kapat')}</Button>
+            )}
+        />
+    ) : isError && !task ? (
+        /* Yalnız İLK yükleme hatası. Görev ekrandayken düşen tazeleme (odak dönüşü, kayıt sonrası
+           yeniden çekme; oturum düşünce 401) formu sökmez: yazılanlar görünür kalır, sonraki
+           başarılı tazeleme forma işlenir (useTaskForm rebase). */
         <div className="p-12 text-center flex flex-col items-center gap-3">
             <i className="fa-solid fa-triangle-exclamation text-3xl text-warning" />
             <p className="text-text-secondary font-medium">Görev detayları yüklenemedi.</p>
-            <Button variant="ghost" onClick={() => refetch()}>Tekrar Dene</Button>
+            <RetryButton onRetry={refetch} />
         </div>
     ) : (
         <div className="flex flex-col flex-1 min-h-0 bg-surface-base">

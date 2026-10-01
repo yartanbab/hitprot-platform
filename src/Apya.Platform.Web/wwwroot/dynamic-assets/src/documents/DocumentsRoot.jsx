@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, ModalPortal } from '../components/ui';
+import { Button, Input, ModalPortal, useRetryFocus } from '../components/ui';
 import {
   DocsPageHeader, EmptyActions, ProcessRibbon, sameSummary, useComplianceOverview,
 } from '../components/documents';
@@ -10,6 +10,7 @@ import {
   getWorkSteps, linkComplianceDocument, moveFile, restoreFile, updateFileMeta, uploadAttachment,
 } from './api';
 import { cn, fmt } from './format';
+import { wasShown } from '../lib/api/abpErrors';
 import { ContextTree } from './components/ContextTree';
 import { BulkBar, FileList } from './components/FileList';
 import { DetailPanel } from './components/DetailPanel';
@@ -73,8 +74,9 @@ function ConfirmDialog({ title, message, onConfirm, onCancel }) {
 }
 
 /** KPI şeridi. Uygunluk ve eksik belge yalnız bir proje bağlamı seçiliyken
-    doluyor — proje yokken kontrol listesi tanımsızdır ve sahte sayı basmıyoruz. */
-function KpiStrip({ uploadedThisMonth, expiring, compliance }) {
+    doluyor — proje yokken kontrol listesi tanımsızdır ve sahte sayı basmıyoruz.
+    Proje seçiliyken özet yükleniyorsa alt satır boş, okunamadıysa "Yüklenemedi". */
+function KpiStrip({ uploadedThisMonth, expiring, compliance, hasProject, complianceFailed }) {
   const tiles = [
     {
       key: 'compliance',
@@ -84,7 +86,7 @@ function KpiStrip({ uploadedThisMonth, expiring, compliance }) {
       tone: 'positive',
       foot: compliance
         ? `${compliance.satisfiedCount} / ${compliance.totalCount - compliance.waivedCount} kalem tamam`
-        : 'Proje bağlamı seçin',
+        : hasProject ? (complianceFailed ? 'Yüklenemedi' : null) : 'Proje bağlamı seçin',
     },
     {
       key: 'missing',
@@ -133,12 +135,15 @@ export function DocumentsRoot() {
   const [workSteps, setWorkSteps] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
   const [loadingTree, setLoadingTree] = useState(true);
+  // Yükleme hatası (null = yok). "Başarılı ve boş" ile karışmasın diye ayrı tutulur.
+  const [treeError, setTreeError] = useState(null);
 
   const [files, setFiles] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [expiringCount, setExpiringCount] = useState(null);
   const [uploadedThisMonth, setUploadedThisMonth] = useState(null);
   const [loadingFiles, setLoadingFiles] = useState(true);
+  const [filesError, setFilesError] = useState(null);
 
   /* --- URL, filtrelerin tek doğruluk kaynağı ---
      Üst bardaki kayıtlı görünüm çipi ekranın FİLTRE URL'İNİ adlandırıp saklıyor
@@ -217,6 +222,8 @@ export function DocumentsRoot() {
 
   const [setupState, setSetupState] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState(null);
   const [suggestionBusy, setSuggestionBusy] = useState(false);
 
   // "Yükle" düğmesine basılan eksik kalem; yükleme bitince buna bağlanır.
@@ -229,23 +236,33 @@ export function DocumentsRoot() {
 
   const flash = useCallback((msg) => setToast(msg), []);
 
-  /* --- Ağaç verisi --- */
+  /* --- Ağaç verisi ---
+     Yükleme hatası ağaçta kart olarak gösterilir (toast ve ABP penceresi yok). Son
+     iyi ağaç varsa (mutasyon sonrası tazeleme düştü) ağaç kalır, üstünde uyarı durur.
+     Yalnız son istek yazar: eşzamanlı iki tazelemede geç dönen eski yanıt yeniyi ezmez.
+     Klasör listesi zorunlu; iş adımları ve belge türleri zenginleştirme — okunamazlarsa
+     (ör. Projeler izni olmayan rolde 403) ağaç onlarsız çizilir, hata kartı çıkmaz. */
+  const treeRequestRef = useRef(0);
   const loadTree = useCallback(async () => {
+    const request = ++treeRequestRef.current;
     setLoadingTree(true);
     try {
       const [folderResult, steps, types] = await Promise.all([
-        abpDocument().getList({ maxResultCount: 1000, sorting: 'title asc' }),
-        getWorkSteps(),
-        getDocumentTypes(),
+        abpDocument().getList({ maxResultCount: 1000, sorting: 'title asc' }, { abpHandleError: false }),
+        getWorkSteps(null, { abpHandleError: false }).catch(() => []),
+        getDocumentTypes({ abpHandleError: false }).catch(() => []),
       ]);
+      if (request !== treeRequestRef.current) return;
       setFolders(folderResult.items ?? []);
       setWorkSteps(steps ?? []);
       setDocumentTypes(types ?? []);
+      setTreeError(null);
     } catch (e) {
-      abpNotify('error', 'Klasör ağacı yüklenemedi.');
+      if (request !== treeRequestRef.current) return;
+      setTreeError(e);
       console.error('[Documents] loadTree', e);
     } finally {
-      setLoadingTree(false);
+      if (request === treeRequestRef.current) setLoadingTree(false);
     }
   }, []);
 
@@ -290,13 +307,15 @@ export function DocumentsRoot() {
     const request = ++filesRequestRef.current;
     setLoadingFiles(true);
     try {
-      const result = await getFiles(filterRef.current);
+      const result = await getFiles(filterRef.current, { abpHandleError: false });
       if (request !== filesRequestRef.current) return;
       setFiles(result.items ?? []);
       setTotalCount(result.totalCount ?? 0);
+      setFilesError(null);
     } catch (e) {
       if (request !== filesRequestRef.current) return;
-      abpNotify('error', 'Belge listesi yüklenemedi.');
+      // Liste bilinmiyor: eldeki satırlar başka bağlama ait olabilir, FileList hiç göstermez.
+      setFilesError(e);
       console.error('[Documents] loadFiles', e);
     } finally {
       if (request === filesRequestRef.current) setLoadingFiles(false);
@@ -317,14 +336,18 @@ export function DocumentsRoot() {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
       const [expiring, uploaded] = await Promise.all([
-        getFiles({ maxResultCount: 1, skipCount: 0, expiringWithinDays: 30 }),
-        getFiles({ maxResultCount: 1, skipCount: 0, uploadedAfter: monthStart }),
+        getFiles({ maxResultCount: 1, skipCount: 0, expiringWithinDays: 30 }, { abpHandleError: false }),
+        getFiles({ maxResultCount: 1, skipCount: 0, uploadedAfter: monthStart }, { abpHandleError: false }),
       ]);
 
       if (request !== kpiRequestRef.current) return;
       setExpiringCount(expiring.totalCount ?? 0);
       setUploadedThisMonth(uploaded.totalCount ?? 0);
     } catch (e) {
+      if (request !== kpiRequestRef.current) return;
+      // Sayılar bilinmiyor: tazeleme düştüyse eski değer kalmaz, "—" görünür.
+      setExpiringCount(null);
+      setUploadedThisMonth(null);
       console.error('[Documents] loadKpis', e);
     }
   }, []);
@@ -363,21 +386,28 @@ export function DocumentsRoot() {
   }, []);
 
   /* --- Öneriler ---
-     Proje ref'ten okunur: öneri işlemi sonrası yenileme o an seçili projeyi ister. */
+     Proje ref'ten okunur: öneri işlemi sonrası yenileme o an seçili projeyi ister.
+     Okunamazsa ekranın geri kalanı çalışır; yalnız "Öneri bekleyen" klasörü (listesi
+     önerilerden kurulur) "henüz belge yok" demez, hata kartı + Tekrar dene gösterir. */
   const projectIdRef = useRef(activeProjectId);
   projectIdRef.current = activeProjectId;
   const suggestionsRequestRef = useRef(0);
 
   const loadSuggestions = useCallback(async () => {
     const request = ++suggestionsRequestRef.current;
+    setLoadingSuggestions(true);
     try {
-      const next = await getSuggestions(projectIdRef.current);
-      if (request === suggestionsRequestRef.current) setSuggestions(next);
+      const next = await getSuggestions(projectIdRef.current, { abpHandleError: false });
+      if (request !== suggestionsRequestRef.current) return;
+      setSuggestions(next);
+      setSuggestionsError(null);
     } catch (e) {
       if (request !== suggestionsRequestRef.current) return;
-      // Öneri üretilemediyse ekranın geri kalanı çalışmaya devam etmeli.
       setSuggestions(null);
+      setSuggestionsError(e);
       console.error('[Documents] loadSuggestions', e);
+    } finally {
+      if (request === suggestionsRequestRef.current) setLoadingSuggestions(false);
     }
   }, []);
 
@@ -391,7 +421,7 @@ export function DocumentsRoot() {
 
     (async () => {
       try {
-        setSetupState(await getSetupState());
+        setSetupState(await getSetupState({ abpHandleError: false }));
       } catch (e) {
         // Kurulum durumu okunamadıysa ekran normal çalışmaya devam etsin.
         console.error('[Documents] setupState', e);
@@ -412,7 +442,7 @@ export function DocumentsRoot() {
       flash(message);
       await Promise.all([loadSuggestions(), loadFiles(), loadTree()]);
     } catch (e) {
-      abpNotify('error', 'Öneri işlenemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Öneri işlenemedi.');
       console.error('[Documents] suggestion action', e);
     } finally {
       setSuggestionBusy(false);
@@ -575,7 +605,7 @@ export function DocumentsRoot() {
       if (request === detailRequestRef.current) setDetail(next);
       await loadFiles();
     } catch (e) {
-      abpNotify('error', 'Belge güncellenemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Belge güncellenemedi.');
       console.error('[Documents] handleSave', e);
     } finally {
       setSaving(false);
@@ -590,7 +620,7 @@ export function DocumentsRoot() {
       flash('Belge silindi.');
       await Promise.all([loadFiles(), loadKpis()]);
     } catch (e) {
-      abpNotify('error', 'Belge silinemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Belge silinemedi.');
       console.error('[Documents] handleDelete', e);
     } finally {
       setDeleteTarget(null);
@@ -617,7 +647,7 @@ export function DocumentsRoot() {
       setCheckedIds(new Set());
       await loadFiles();
     } catch (e) {
-      abpNotify('error', 'Taşıma başarısız oldu.');
+      if (!wasShown(e)) abpNotify('error', 'Taşıma başarısız oldu.');
       console.error('[Documents] move', e);
     } finally {
       draggedRef.current = [];
@@ -637,7 +667,7 @@ export function DocumentsRoot() {
       setCheckedIds(new Set());
       await loadFiles();
     } catch (e) {
-      abpNotify('error', 'Toplu taşıma başarısız oldu.');
+      if (!wasShown(e)) abpNotify('error', 'Toplu taşıma başarısız oldu.');
       console.error('[Documents] bulkMove', e);
     }
   };
@@ -654,7 +684,7 @@ export function DocumentsRoot() {
       setCheckedIds(new Set());
       await loadFiles();
     } catch (e) {
-      abpNotify('error', 'Etiketleme başarısız oldu.');
+      if (!wasShown(e)) abpNotify('error', 'Etiketleme başarısız oldu.');
       console.error('[Documents] bulkTag', e);
     }
   };
@@ -694,7 +724,7 @@ export function DocumentsRoot() {
       // kalır ve güncel proje için sonsuza dek "yükleniyor" görünürdü.
       await Promise.all([loadFiles(), loadKpis(), loadTree(), complianceRef.current.reload()]);
     } catch (e) {
-      abpNotify('error', 'Dosya yüklenemedi.');
+      if (!wasShown(e)) abpNotify('error', 'Dosya yüklenemedi.');
       console.error('[Documents] upload', e);
     } finally {
       setUploading(false);
@@ -708,7 +738,7 @@ export function DocumentsRoot() {
       flash(`"${file.displayName}" geri alındı.`);
       await Promise.all([loadFiles(), loadKpis(), loadTree()]);
     } catch (e) {
-      abpNotify('error', 'Belge geri alınamadı.');
+      if (!wasShown(e)) abpNotify('error', 'Belge geri alınamadı.');
       console.error('[Documents] restore', e);
     }
   };
@@ -728,6 +758,14 @@ export function DocumentsRoot() {
     const modal = new window.abp.ModalManager(abpAppPath() + 'Documents/CreateModal');
     modal.open({ parentDocumentId: activeFolderId || undefined });
     modal.onResult(() => { loadTree(); flash('Klasör oluşturuldu.'); });
+  };
+
+  /* İlk deneme boş ağaçla bittiği için adresteki klasör/adım/proje düğümü "geri
+     yüklendi" sayılmıştı; yeniden denemede geri yükleme tekrar koşar. Effect düğümü
+     yalnız kullanıcı başka düğüm seçmediyse değiştirir, seçimi ezilmez. */
+  const retryTree = () => {
+    restoredRef.current = false;
+    loadTree();
   };
 
   const toggleExpand = (key) => setExpanded((prev) => {
@@ -767,8 +805,10 @@ export function DocumentsRoot() {
 
   /* --- Boş durum eylemi: tek birincil düğme + metin bağlantısı ---
      Yalnız "henüz bir şey yok" durumlarında; arama/süzgeç ve akıllı klasör
-     boşken eylem önermiyoruz (orada boş olmak iyi haber ya da süzgeç sonucu). */
-  const noFolders = !loadingTree && folders.length === 0;
+     boşken eylem önermiyoruz (orada boş olmak iyi haber ya da süzgeç sonucu).
+     Ağaç OKUNAMADIYSA klasör yok sayılmaz: "Şemayı kur" sihirbazı ikinci kez açılıp
+     mükerrer şema kurdururdu. */
+  const noFolders = !loadingTree && !treeError && folders.length === 0;
 
   let emptyAction = null;
   if (canCreate && !appliedSearch.trim() && node.kind !== 'smart') {
@@ -799,6 +839,23 @@ export function DocumentsRoot() {
     : activeFolderId
       ? 'Dosyaları buraya sürükleyin ya da "Yükle" ile ekleyin.'
       : 'Sol taraftan bir klasör seçin; yükleme klasör bağlamında yapılır.';
+
+  /* "Öneri bekleyen" klasörünün listesi önerilerden kurulur: öneriler yüklenirken ya da
+     okunamadıysa liste de bilinmiyor — "henüz belge yok" yerine iskelet / hata kartı. */
+  const isSuggested = node.kind === 'smart' && node.smart === 'suggested';
+  const suggestionsFailed = isSuggested && Boolean(suggestionsError);
+  const listLoading = loadingFiles || (isSuggested && loadingSuggestions);
+  const listError = suggestionsFailed ? suggestionsError : filesError;
+
+  /* Liste kartının "Tekrar dene"si KPI'ları da yeniden ister: aynı uçtan okunurlar ve yalnız
+     açılışta/mutasyonda yüklendikleri için liste düzelse de sayfa yenilenene dek "—" kalıyorlardı.
+     Başarıda kart listeyle yer değiştirir: odak sayfaya düşmesin, listeye geçsin. */
+  const listFocus = useRetryFocus(!listLoading && !listError);
+  const retryList = listFocus.retry(() => {
+    loadKpis();
+    if (suggestionsFailed) loadSuggestions();
+    else loadFiles();
+  });
 
   return (
     <div
@@ -895,6 +952,8 @@ export function DocumentsRoot() {
         uploadedThisMonth={uploadedThisMonth}
         expiring={expiringCount}
         compliance={compliance.overview?.summary ?? null}
+        hasProject={Boolean(activeProjectId)}
+        complianceFailed={compliance.failed}
       />
 
       <div className="apya-doc-tabs" role="tablist">
@@ -919,6 +978,8 @@ export function DocumentsRoot() {
       <div className={cn('apya-docs-shell', tab !== 'files' && 'is-wide')}>
         <ContextTree
           loading={loadingTree}
+          error={treeError}
+          onRetry={retryTree}
           tree={tree}
           activeKey={node.key}
           expanded={expanded}
@@ -972,7 +1033,8 @@ export function DocumentsRoot() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <span className="apya-grid-count apya-numeric">{totalCount} belge</span>
+            {/* Yüklenirken ve hatada sayı bilinmiyor: "0 belge" demek yanlış olur. */}
+            <span className="apya-grid-count apya-numeric">{listLoading || listError ? '—' : totalCount} belge</span>
             <div className="apya-doc-viewtoggle">
               <button
                 type="button"
@@ -993,8 +1055,12 @@ export function DocumentsRoot() {
             </div>
           </div>
 
+          {/* Başarılı "Tekrar dene"de odağın taşındığı içerik kabı (useRetryFocus). */}
+          <div ref={listFocus.contentRef} tabIndex={-1}>
           <FileList
-            loading={loadingFiles}
+            loading={listLoading}
+            loadError={listError}
+            onRetry={retryList}
             files={files}
             totalCount={totalCount}
             view={view}
@@ -1017,6 +1083,7 @@ export function DocumentsRoot() {
             isTrash={isTrash}
             onRestore={handleRestore}
           />
+          </div>
 
           {canBulk && (
             <BulkBar

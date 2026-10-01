@@ -11,6 +11,8 @@ $(function () {
     var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
 
     var items = [];
+    // Süzgeç, yükleme düştüyse hata kartını "uygun çağrı yok" ile ezmesin.
+    var loaded = false;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
@@ -77,7 +79,7 @@ $(function () {
         $('#CatalogEmpty').toggleClass('d-none', shown.length > 0);
     }
 
-    $('#OnlyFixable').on('change', paint);
+    $('#OnlyFixable').on('change', function () { if (loaded) { paint(); } });
 
     $('#CatalogRows').on('click', '.apya-cat-bookmark', function () {
         var $btn = $(this).prop('disabled', true);
@@ -91,13 +93,29 @@ $(function () {
             .always(function () { $btn.prop('disabled', false); });
     });
 
-    service.getOpenCalls().then(function (list) {
-        items = list || [];
-        $('#TabCountEligible').text(items.filter(function (r) { return r.isRecommended; }).length);
-        $('#TabCountAll').text(items.length);
-        $('#BucketEligible').text(items.filter(function (r) { return r.bucket === UYGUN; }).length);
-        $('#BucketConditional').text(items.filter(function (r) { return r.bucket === KOSULLU; }).length);
-        $('#BucketIneligible').text(items.filter(function (r) { return r.bucket === UYGUN_DEGIL; }).length);
-        paint();
+    // Yalnız açılışta ve Tekrar dene ile çağrılır (düğme basılınca pasifleşir): bilet gerekmez.
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2); sayaçlar işaretlemede "—".
+    function load() {
+        return Promise.resolve(service.getOpenCalls({ abpHandleError: false })).then(function (list) {
+            items = list || [];
+            loaded = true;
+            $('#TabCountEligible').text(items.filter(function (r) { return r.isRecommended; }).length);
+            $('#TabCountAll').text(items.length);
+            $('#BucketEligible').text(items.filter(function (r) { return r.bucket === UYGUN; }).length);
+            $('#BucketConditional').text(items.filter(function (r) { return r.bucket === KOSULLU; }).length);
+            $('#BucketIneligible').text(items.filter(function (r) { return r.bucket === UYGUN_DEGIL; }).length);
+            paint();
+        }, function (err) {
+            $('#CatalogRows').removeClass('apya-skel-rows')
+                .html(apya.loadState.errorHtml(l('Grants:Catalog:LoadFailed'), 'js-catalog-retry', err));
+            $('#CatalogEmpty').addClass('d-none');
+        });
+    }
+
+    $('#CatalogRows').on('click', '.js-catalog-retry', function () {
+        $(this).prop('disabled', true);
+        load();
     });
+
+    load();
 });

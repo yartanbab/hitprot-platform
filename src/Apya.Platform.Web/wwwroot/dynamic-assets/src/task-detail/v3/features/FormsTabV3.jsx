@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTaskForms, useTaskFormOptions, useTaskFormResponses } from '../../hooks/useTaskForms';
 import { isGranted } from '../../hooks/useTaskDetail';
 import { TabEmptyState, RatioBadge, fmtDateTime } from '../tabPrimitives';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 /**
  * Form sekmesi (V3) — göreve bağlanmış formlar ve bu görevde toplanan yanıtlar.
@@ -56,7 +57,7 @@ export function FormsTabV3({ taskId }) {
             await linkForm(documentId);
             setPickerOpen(false);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Form bağlanamadı.');
+            notifyError(err, 'Form bağlanamadı.');
         }
     };
 
@@ -65,7 +66,7 @@ export function FormsTabV3({ taskId }) {
         try {
             await unlinkForm(link.id);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Bağlantı kaldırılamadı.');
+            notifyError(err, 'Bağlantı kaldırılamadı.');
         }
     };
 
@@ -73,7 +74,7 @@ export function FormsTabV3({ taskId }) {
         try {
             await setGuestFillable({ linkId: link.id, value });
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Ayar değiştirilemedi.');
+            notifyError(err, 'Ayar değiştirilemedi.');
         }
     };
 

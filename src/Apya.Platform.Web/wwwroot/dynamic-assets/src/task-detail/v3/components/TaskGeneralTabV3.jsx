@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { RichTextEditorV3 } from './RichTextEditorV3';
 import { initialsOf, avatarColorOf } from '../taskMetaV3';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 const CARD_CLS = 'flex flex-col rounded-2xl border border-subtle bg-surface-base p-[18px] shadow-xs';
 
@@ -61,7 +62,9 @@ export function TaskGeneralTabV3({
         try {
             await checklist.addItem(text);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Madde eklenemedi.');
+            // Eklenemedi: yazılan madde kaybolmasın (kullanıcı arada yenisini yazmadıysa geri konur).
+            setChecklistDraft((current) => current || text);
+            notifyError(err, 'Madde eklenemedi.');
         }
     };
 
@@ -97,7 +100,7 @@ export function TaskGeneralTabV3({
             await invalidateComments();
             setCommentDraft('');
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Yorum gönderilemedi.');
+            notifyError(err, 'Yorum gönderilemedi.');
         } finally {
             setSending(false);
         }
@@ -112,7 +115,7 @@ export function TaskGeneralTabV3({
             setReplyDraft('');
             setReplyingToId(null);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Yanıt gönderilemedi.');
+            notifyError(err, 'Yanıt gönderilemedi.');
         }
     };
 
@@ -174,7 +177,7 @@ export function TaskGeneralTabV3({
                                     disabled={readOnly}
                                     aria-label={item.isDone ? 'Tamamlandı işaretini kaldır' : 'Tamamlandı işaretle'}
                                     onClick={() => checklist.toggleItem(item.id).catch((err) =>
-                                        window?.abp?.notify?.error?.(err?.message || 'Durum güncellenemedi.'))}
+                                        notifyError(err, 'Durum güncellenemedi.'))}
                                     className={`flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white ${readOnly ? 'cursor-default' : 'cursor-pointer'} transition-colors duration-fast ${
                                         item.isDone ? 'bg-success border-success' : 'bg-transparent border-strong'
                                     }`}
@@ -192,7 +195,7 @@ export function TaskGeneralTabV3({
                                     type="button"
                                     title="Sil"
                                     onClick={() => checklist.removeItem(item.id).catch((err) =>
-                                        window?.abp?.notify?.error?.(err?.message || 'Madde silinemedi.'))}
+                                        notifyError(err, 'Madde silinemedi.'))}
                                     className="flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-negative-subtle hover:text-negative cursor-pointer"
                                 >
                                     <i className="fa-regular fa-trash-can text-[11px]" />

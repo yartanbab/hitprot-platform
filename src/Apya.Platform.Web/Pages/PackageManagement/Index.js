@@ -50,14 +50,15 @@ $(function () {
     }
 
     // Kayıt sonrası load() çağrıları da buradan geçer: geç düşen eski bir hata taze kartları silmesin.
+    // Yükleme hatası ABP penceresi değil kart (Faz 4 kararı 2); açıklama hata nesnesinden.
     function load() {
         var isLatest = nextCards();
-        Promise.resolve(svc.getList()).then(function (packages) {
+        Promise.resolve(svc.getList({ abpHandleError: false })).then(function (packages) {
             if (!isLatest()) { return; }
             render(packages);
-        }, function () {
+        }, function (err) {
             if (!isLatest()) { return; }
-            $cards.html('<div class="col-12">' + apya.loadState.errorHtml('Paketler yüklenemedi.', 'js-pkg-retry') + '</div>');
+            $cards.html('<div class="col-12">' + apya.loadState.errorHtml('Paketler yüklenemedi.', 'js-pkg-retry', err) + '</div>');
         });
     }
 
@@ -285,7 +286,7 @@ $(function () {
         // yükleme sürerken girilen değer geç gelen yanıtla ezilemez.
         $('#SubSettingsForm').prop('disabled', true);
         var isLatest = nextSub();
-        Promise.resolve(svc.getSubscriptionSettings()).then(function (s) {
+        Promise.resolve(svc.getSubscriptionSettings({ abpHandleError: false })).then(function (s) {
             if (!isLatest()) { return; }
             $('#SubAutoDowngrade').prop('checked', !!s.autoDowngradeEnabled);
             $('#SubGraceDays').val(s.graceDays);
@@ -302,9 +303,9 @@ $(function () {
 
             $('#SubLoadState').empty();
             $('#SubSettingsForm').prop('disabled', false);
-        }, function () {
+        }, function (err) {
             if (!isLatest()) { return; }
-            $('#SubLoadState').html(apya.loadState.errorHtml('Paket süresi ve bedel ayarları yüklenemedi.', 'js-sub-retry'));
+            $('#SubLoadState').html(apya.loadState.errorHtml('Paket süresi ve bedel ayarları yüklenemedi.', 'js-sub-retry', err));
         });
     }
 

@@ -9,8 +9,12 @@ $(function () {
     var sizeKeys = { 1: 'Mikro', 2: 'Kucuk', 4: 'Orta', 8: 'Buyuk' };
 
     var candidates = [];
+    // Son aday yüklemesi düştüyse "tümünü seç" hata kartını boş listeyle ezmesin.
+    var candidatesFailed = false;
     var selected = {};
     var previewTimer = null;
+    // Süzgeç kaydırıcısı hızlı istek üretir; gönderim sonrası da yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest(), nextIdeas = apya.latest();
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function num(sel) {
@@ -129,6 +133,7 @@ $(function () {
     });
 
     $('#SelectAll').on('change', function () {
+        if (candidatesFailed) { return; }
         var on = this.checked;
         candidates.forEach(function (c) { selected[c.tenantId] = on; });
         paintCandidates();
@@ -169,8 +174,13 @@ $(function () {
     });
 
     // ---------- Yükleme ----------
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2); liste süzgeçle
+    // uyuşmayacağı için hata kartı listeyi değiştirir, gönderim kapanır.
     function load() {
-        return service.preview(collectFilter()).then(function (c) {
+        var isLatest = nextLoad();
+        return Promise.resolve(service.preview(collectFilter(), { abpHandleError: false })).then(function (c) {
+            if (!isLatest()) { return; }
+            candidatesFailed = false;
             candidates = c.candidates || [];
             $('#CallTitle').text(c.grantName);
             $('#CallPeriod').text(c.period);
@@ -194,8 +204,23 @@ $(function () {
                 : '<div class="small text-muted">' + esc(l('Grants:Dispatch:NoOpportunity')) + '</div>');
 
             paintCandidates();
+        }, function (err) {
+            if (!isLatest()) { return; }
+            candidatesFailed = true;
+            candidates = [];
+            $('#CandidateRows').removeClass('apya-skel-rows')
+                .html(apya.loadState.errorHtml(l('Grants:Dispatch:LoadFailed'), 'js-dispatch-retry', err));
+            $('#CandidateEmpty').addClass('d-none');
+            $('#FirmTabCount').removeClass('apya-skel-num').text('—');
+            $('#CandidateCount').text('');
+            $('#SendBtn').prop('disabled', true);
         });
     }
+
+    $('#CandidateRows').on('click', '.js-dispatch-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     // ---------- 20a · Havuzdaki fikirler ----------
     // Sekme ve şerit yalnız Grants.Edit izninde basılır; yoksa havuz ucu hiç çağrılmaz.
@@ -285,7 +310,27 @@ $(function () {
         $('#IdeaBelowCards').html(below.map(function (i) { return ideaCard(i, false, false); }).join(''));
     }
 
-    function loadIdeas() { return ideaService.getCallMatches(callId).then(paintIdeas); }
+    // Bağlama sonrası yeniden yüklenir: kendi biletiyle. Hata ABP penceresi değil kart.
+    function loadIdeas() {
+        var isLatest = nextIdeas();
+        return Promise.resolve(ideaService.getCallMatches(callId, { abpHandleError: false })).then(function (d) {
+            if (!isLatest()) { return; }
+            paintIdeas(d);
+        }, function (err) {
+            if (!isLatest()) { return; }
+            // Eski eşleşmeler "Tümünü bağla"ya kalmasın: şerit ve eşik altı blok da kalkar.
+            ideaMatches = null;
+            $('#IdeaCards').removeClass('apya-skel-cards')
+                .html(apya.loadState.errorHtml(l('Grants:Dispatch:Ideas:LoadFailed'), 'js-dispatch-ideas-retry', err));
+            $('#IdeaEmpty, #IdeaStrip, #IdeaBelowBlock').addClass('d-none');
+            $('#IdeaTabCount').removeClass('apya-skel-num').text('—');
+        });
+    }
+
+    $('#IdeaCards').on('click', '.js-dispatch-ideas-retry', function () {
+        $(this).prop('disabled', true);
+        loadIdeas();
+    });
 
     function linkIdeas(ids, $btn) {
         abp.message.confirm(l('Grants:Dispatch:Ideas:LinkConfirm', ids.length), l('Grants:Dispatch:Ideas:LinkConfirmTitle')).then(function (ok) {

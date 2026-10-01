@@ -81,15 +81,30 @@ $(function () {
         if (!(a.milestones || []).length) { $m.append('<div class="text-muted small py-1">Milestone yok.</div>'); }
     }
 
+    // Beş eylemden sonra yeniden yüklenir: yalnız son istek çizer. Yükleme hatası ABP penceresi
+    // değil satır içi kart (Faz 4 kararı 2).
+    var nextList = apya.latest();
+
     function loadList() {
-        hostSvc.getList().then(function (items) {
+        var isLatest = nextList();
+        return Promise.resolve(hostSvc.getList({ abpHandleError: false })).then(function (items) {
+            if (!isLatest()) { return; }
             apps = items;
             var $list = $('#AppList').empty();
             if (!items.length) { $('#AppListEmpty').removeClass('d-none'); return; }
             $('#AppListEmpty').addClass('d-none');
             items.forEach(function (a) { $list.append(appRow(a)); });
+        }, function (err) {
+            if (!isLatest()) { return; }
+            $('#AppList').html(apya.loadState.errorHtml(l('Grants:Applications:LoadFailed'), 'js-apps-retry', err));
+            $('#AppListEmpty').addClass('d-none');
         });
     }
+
+    $('#AppList').on('click', '.js-apps-retry', function () {
+        $(this).prop('disabled', true);
+        loadList();
+    });
 
     $('#AppList').on('click', '.apya-toggle-detail', function (e) {
         e.preventDefault();

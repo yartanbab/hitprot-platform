@@ -80,19 +80,17 @@ $(function () {
         if (withSkeleton) {
             $table.find('tbody').html(SKELETON_ROWS);
         }
-        Promise.resolve(movementSvc.getList({ cashAccountId: selectedAccountId, maxResultCount: 200, sorting: 'movementDate desc' }))
+        // Yükleme hatası ABP penceresi değil satır içi kart + kanonik Tekrar dene (Faz 4 kararları 2, 10).
+        Promise.resolve(movementSvc.getList({ cashAccountId: selectedAccountId, maxResultCount: 200, sorting: 'movementDate desc' }, { abpHandleError: false }))
             .then(function (result) {
                 if (!isLatest()) return;
                 $table.removeAttr('aria-busy');
                 renderMovements(result.items || []);
-            }, function () {
+            }, function (err) {
                 if (!isLatest()) return;
                 $table.removeAttr('aria-busy');
-                $table.find('tbody').html(
-                    '<tr><td colspan="5" class="text-center py-4">' +
-                    '<span class="text-danger" role="alert">Hareketler yüklenemedi.</span> ' +
-                    '<button type="button" class="btn btn-sm btn-link p-0 ms-1 align-baseline" data-action="retry">Tekrar dene</button>' +
-                    '</td></tr>');
+                $table.find('tbody').html('<tr><td colspan="5">' +
+                    apya.loadState.errorHtml('Hareketler yüklenemedi.', 'js-movements-retry', err) + '</td></tr>');
             });
     }
 
@@ -124,12 +122,15 @@ $(function () {
         transferDirty = true;
     }
 
+    $('#CashMovementsTable').on('click', '.js-movements-retry', function () {
+        $(this).prop('disabled', true);
+        loadMovements(true);
+    });
+
     $('#CashMovementsTable').on('click', 'button[data-action]', function () {
         var id = $(this).data('id');
         var action = $(this).data('action');
-        if (action === 'retry') {
-            loadMovements(true);
-        } else if (action === 'edit') {
+        if (action === 'edit') {
             editMovementModal.open({ id: id });
         } else if (action === 'delete') {
             abp.message.confirm('Hareket silinecek?').then(function (confirmed) {
@@ -166,6 +167,11 @@ $(function () {
     });
 
     $('#NewCashAccountButton').click(function (e) {
+        e.preventDefault();
+        createAccountModal.open();
+    });
+    // Boş durumdaki "Yeni Kasa Ekle": parça yeniden basıldığı için kart tıklaması gibi sarmalayıcıya delege.
+    $('#AccountSummary').on('click', '[data-cash-account-new]', function (e) {
         e.preventDefault();
         createAccountModal.open();
     });

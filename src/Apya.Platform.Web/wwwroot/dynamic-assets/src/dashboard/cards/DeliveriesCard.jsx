@@ -41,7 +41,11 @@ function DeliveriesCard({ filter, editMode }) {
         <CardShell
             editMode={editMode}
             title={t('Dashboard:Deliveries:Title', 'Bu ay teslim edilecekler')}
-            subtitle={t('Dashboard:Deliveries:Subtitle', '{0} iş · {1} gecikmiş', items.length, overdueCount)}
+            /* Yüklenirken (geri yükleme penceresi dahil) ve hatada items=[] "sıfır iş" demek
+               değildir; EffortDistributionCard/StatisticsBand'deki koşullu alt başlık deseni. */
+            subtitle={query.isSuccess
+                ? t('Dashboard:Deliveries:Subtitle', '{0} iş · {1} gecikmiş', items.length, overdueCount)
+                : undefined}
             actions={
                 <a href="/Tasks" className="text-[12.5px] font-medium text-text-link hover:underline">
                     {t('Dashboard:Deliveries:AllTasks', 'Görev listesi →')}

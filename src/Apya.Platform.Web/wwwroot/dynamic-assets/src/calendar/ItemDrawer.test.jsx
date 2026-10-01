@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ItemDrawer } from './ItemDrawer';
 
 /**
@@ -16,7 +16,7 @@ const BASE = {
     assigneeName: 'pm1', href: '/Tasks',
 };
 
-function renderDrawer(item) {
+function renderDrawer(item, props = {}) {
     render(
         <ItemDrawer
             item={{ ...BASE, ...item }}
@@ -27,6 +27,7 @@ function renderDrawer(item) {
             isPending={false}
             error={null}
             onRetry={vi.fn()}
+            {...props}
         />,
     );
 }
@@ -50,5 +51,29 @@ describe('ItemDrawer yetki bayrakları', () => {
         expect(screen.queryByRole('button', { name: /ertele/ })).toBeNull();
         expect(screen.queryByLabelText('Son tarih')).toBeNull();
         expect(screen.getByText(/takvimden değiştirilemez/)).toBeInTheDocument();
+    });
+});
+
+/* Kaydedilemeyen işlem şeridi: düğme kanonik "Tekrar dene" (Common:Retry, Faz 4 karar 10) —
+   "Yeniden dene" altı çizili bağlantısı uygulamanın geri kalanından ayrışıyordu. */
+describe('ItemDrawer hata şeridi', () => {
+    it('kanonik "Tekrar dene" düğmesi çizilir ve onRetry\'ı argümansız çağırır', () => {
+        const onRetry = vi.fn();
+        renderDrawer({ canReschedule: true }, { error: 'Kaydedilemedi — tarih değişmedi.', onRetry });
+
+        expect(screen.getByText('Kaydedilemedi — tarih değişmedi.')).toBeInTheDocument();
+        expect(screen.queryByText('Yeniden dene')).toBeNull();
+        const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+        expect(retry.querySelector('i.fa-rotate-right')).not.toBeNull();
+
+        fireEvent.click(retry);
+
+        expect(onRetry).toHaveBeenCalledTimes(1);
+        expect(onRetry).toHaveBeenCalledWith();
+    });
+
+    it('hata yokken düğme yok', () => {
+        renderDrawer({ canReschedule: true });
+        expect(screen.queryByRole('button', { name: 'Tekrar dene' })).toBeNull();
     });
 });

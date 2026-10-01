@@ -31,6 +31,9 @@
         </div>
     </div>
 
+    @* Yükleme hatası kartı (InterestReview.js). *@
+    <div id="ReviewLoadState"></div>
+
     <div class="apya-irv-layout">
         <div class="apya-irv-main">
             @* --- Proje fikri --- *@
@@ -72,7 +75,8 @@
                     </div>
                     <textarea class="form-control" id="ConsultantNote" rows="3" maxlength="2000"></textarea>
                     <div class="apya-irv-note-actions">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="SaveNoteBtn">@L["Grants:InterestReview:Note:Save"]</button>
+                        @* Veri gelmeden kilitli: boş notla kayıt eski notu silerdi (paint açar). *@
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="SaveNoteBtn" disabled>@L["Grants:InterestReview:Note:Save"]</button>
                     </div>
                 </div>
             </section>
@@ -95,7 +99,8 @@
             <section class="card mb-0 apya-irv-card">
                 <div class="card-body">
                     <div class="apya-irv-decision d-none" id="DecisionText"></div>
-                    <div class="apya-irv-actions" id="ReviewActions">
+                    @* Karar ve devret veri gelmeden görünmez/pasif (paintDecision açar). *@
+                    <div class="apya-irv-actions d-none" id="ReviewActions">
                         <button type="button" class="btn btn-outline-secondary d-none" id="StartReviewBtn">@L["Grants:Interests:Action:Review"]</button>
                         <button type="button" class="btn btn-primary" id="StartApplicationBtn">@L["Grants:Interests:Action:Start"]</button>
                         <button type="button" class="btn btn-outline-danger" id="RejectBtn">@L["Grants:InterestReview:Action:Reject"]</button>
@@ -104,7 +109,7 @@
                         <label class="apya-irv-stat-label" for="AssignSelect">@L["Grants:InterestReview:Assign:Title"]</label>
                         <div class="apya-irv-assign-row">
                             <select class="form-select form-select-sm" id="AssignSelect"></select>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="AssignBtn">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="AssignBtn" disabled>
                                 <i class="fa fa-user-plus me-1"></i>@L["Grants:InterestReview:Assign:Submit"]
                             </button>
                         </div>

@@ -3,7 +3,12 @@
     (tasarımda liste her iki ekranda da var; iki kopya markup istemiyoruz).
 *@
 @using Apya.Platform.CashAccounts
+@using Apya.Platform.Localization
 @using Apya.Platform.Web.Pages.Finance
+@using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@inject Microsoft.Extensions.Localization.IStringLocalizer<PlatformResource> S
 @model IndexModel
 
 @functions {
@@ -24,7 +29,22 @@
     };
 }
 
-@if (!Model.Accounts.Any())
+@if (Model.HostScope)
+{
+    @* Host hesabıyla kiracının projesi: listelenecek hesaplar kiracının değil host'un olurdu (sorgu
+       atılmadı) — "henüz hesap yok" DEĞİL. *@
+    <partial name="_EmptyState" model="Model.HostScopeState" />
+}
+else if (Model.AccountsLocked)
+{
+    @* Liste ya da bakiye okunamadı: "henüz hesap yok" DEĞİL; /CashAccounts (403) bağlantısı yok.
+       Açıklama gereken izinleri görünen adlarıyla söyler (ham kod değil; argümanlı metin → IStringLocalizer). *@
+    <partial name="_EmptyState" model='new EmptyStateModel {
+        Variant = EmptyStateVariant.Locked,
+        Title = L["Finance:Locked:Accounts"].Value,
+        Description = S["Finance:Locked:Accounts:Requires", S["Permission:CashAccounts"].Value, S["Permission:CashMovements"].Value].Value }' />
+}
+else if (!Model.Accounts.Any())
 {
     <div class="card-body text-muted text-center py-4" style="font-size:13px">
         Henüz kasa/banka hesabı yok. <a href="/CashAccounts">Kasa &amp; Banka</a>'dan ekleyin.

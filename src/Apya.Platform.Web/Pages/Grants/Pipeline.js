@@ -11,6 +11,8 @@ $(function () {
 
     var board = null;
     var sortables = [];
+    // Süzgeç ve taşıma hatası sonrası yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return (v || 0).toLocaleString('tr-TR', { maximumFractionDigits: 0 }); }
@@ -148,20 +150,35 @@ $(function () {
         wireSortables();
     }
 
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2); özetler "—" (yanlış "0" yok).
     function load() {
+        var isLatest = nextLoad();
         var callId = $('#CallSelect').val();
         var userId = $('#ConsultantFilter').val();
-        return service.getBoard(callId || null, userId || null).then(function (dto) {
+        return Promise.resolve(service.getBoard(callId || null, userId || null, { abpHandleError: false })).then(function (dto) {
+            if (!isLatest()) { return; }
             board = dto; paint();
+        }, function (err) {
+            if (!isLatest()) { return; }
+            $('#Board').removeClass('apya-skel-cards')
+                .html(apya.loadState.errorHtml(l('Grants:Pipeline:LoadFailed'), 'js-pipeline-retry', err));
+            $('#BoardEmpty').addClass('d-none');
+            $('#SumRisky, #SumDocs, #SumReady, #SumAmount').text('—');
+            $('#SumRiskySub, #SumDocsSub, #SumReadySub').text('');
         });
     }
 
-    // Çağrı listesi: pano tek çağrı seçilince şablon sütunlarına geçer.
-    callService.getList({ maxResultCount: 200 }).then(function (result) {
-        var $sel = $('#CallSelect').append($('<option>').val('').text(l('Grants:Pipeline:AllCalls')));
-        (result.items || []).forEach(function (c) {
-            $sel.append($('<option>').val(c.id).text((c.grantName || '') + ' · ' + c.period));
-        });
+    $('#Board').on('click', '.js-pipeline-retry', function () {
+        $(this).prop('disabled', true);
         load();
     });
+
+    // Çağrı listesi: pano tek çağrı seçilince şablon sütunlarına geçer. Liste düşerse süzgeç
+    // yalnız "Tüm çağrılar"la kalır, pano yine yüklenir (eskiden hiç yüklenmiyordu).
+    var $callSelect = $('#CallSelect').append($('<option>').val('').text(l('Grants:Pipeline:AllCalls')));
+    Promise.resolve(callService.getList({ maxResultCount: 200 }, { abpHandleError: false })).then(function (result) {
+        (result.items || []).forEach(function (c) {
+            $callSelect.append($('<option>').val(c.id).text((c.grantName || '') + ' · ' + c.period));
+        });
+    }, function () { }).then(load);
 });

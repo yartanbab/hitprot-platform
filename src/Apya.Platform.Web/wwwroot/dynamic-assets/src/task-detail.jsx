@@ -8,15 +8,24 @@
  * wwwroot/js/apya-kanban.js hiç değiştirilmeden çalışmaya devam eder.
  */
 import React from 'react';
-import { createRoot } from 'react-dom/client';
 import { useSyncExternalStore } from 'react';
 import './index.css';
+import { mountIsland } from './lib/mountIsland';
+import { t } from './lib/i18n';
+import { IslandErrorBoundary, IslandErrorFallback } from './components/ui/IslandErrorBoundary';
+import { Dialog, DialogContent } from './components/ui/Dialog';
 import { QueryProvider } from './lib/api/QueryProvider';
 import { TaskDetailRoot } from './task-detail/TaskDetailRoot';
 import { TaskDetailRootV3 } from './task-detail/v3/TaskDetailRootV3';
 import { taskDetailStore } from './task-detail/taskDetailStore';
-import { readTaskIdFromUrl } from './task-detail/hooks/useTaskUrlSync';
+import { readTaskIdFromUrl, clearTaskUrl } from './task-detail/hooks/useTaskUrlSync';
 
+/**
+ * Modalın içinde ikinci bir hata sınırı: kökün kabı (#task-detail-island) sayfanın sonunda,
+ * oradaki satır içi kart görünmez kalır ve kullanıcı "modal kendiliğinden kapandı" sanardı.
+ * Çökmede kart AYNI yerde, bir diyalogda çıkar. Kapatınca ada null döndürüp sınırı söker:
+ * sonraki açılış yeni sınırla başlar (hata durumunda takılı kalmaz).
+ */
 function TaskDetailIsland() {
     const taskId = useSyncExternalStore(
         taskDetailStore.subscribe,
@@ -26,6 +35,36 @@ function TaskDetailIsland() {
 
     if (!taskId) return null;
 
+    return (
+        <IslandErrorBoundary name="task-detail" fallback={(actions) => <TaskDetailCrashDialog {...actions} />}>
+            <TaskDetailModal taskId={taskId} />
+        </IslandErrorBoundary>
+    );
+}
+
+/** Çöken görev modalının yerine: aynı yerde diyalog; "Kapat" / Esc / arka plan modalı kapatır. */
+function TaskDetailCrashDialog(actions) {
+    const close = () => {
+        /* Yenileme ?task= derin bağlantısıyla aynı görevi açıp yeniden çökmesin. */
+        clearTaskUrl();
+        taskDetailStore.close();
+        /* Kapanış sözleşmesi dalıyla aynı: V3 yalnız yazma olduysa, eski arayüz her zaman yayınlar. */
+        if (window.apya?.taskDetailV3Enabled) taskDetailStore.emitResultIfChanged();
+        else taskDetailStore.emitResult();
+    };
+    return (
+        <Dialog open onOpenChange={(next) => { if (!next) close(); }}>
+            <DialogContent
+                title={t('Common:SectionError:Title', 'Bu bölüm gösterilemedi')}
+                className="w-full max-w-[480px] h-auto tablet:min-h-0 justify-center p-6"
+            >
+                <IslandErrorFallback {...actions} onClose={close} />
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function TaskDetailModal({ taskId }) {
     if (window.apya?.taskDetailV3Enabled) {
         return (
             <QueryProvider>
@@ -108,7 +147,7 @@ if (typeof window.apya._taskDetailFlush === 'function') {
     window.apya.taskDetail = taskDetailApi;
 }
 
-function mountIsland() {
+function mountTaskDetailIsland() {
     let container = document.getElementById('task-detail-island');
     if (!container) {
         container = document.createElement('div');
@@ -116,8 +155,7 @@ function mountIsland() {
         document.body.appendChild(container);
     }
     if (!container._reactRoot) {
-        container._reactRoot = createRoot(container);
-        container._reactRoot.render(<TaskDetailIsland />);
+        container._reactRoot = mountIsland(container, 'task-detail', <TaskDetailIsland />);
     }
 
     /* Derin bağlantı: /Tasks?task=<guid> ile gelindiyse doğrudan aç. */
@@ -128,9 +166,9 @@ function mountIsland() {
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountIsland);
+    document.addEventListener('DOMContentLoaded', mountTaskDetailIsland);
 } else {
-    mountIsland();
+    mountTaskDetailIsland();
 }
 
 function TaskDetailPageIsland({ taskId }) {
@@ -169,7 +207,7 @@ const pageContainer = document.getElementById('task-detail-page-island');
 if (pageContainer) {
     const pageTaskId = pageContainer.getAttribute('data-task-id');
     if (pageTaskId) {
-        createRoot(pageContainer).render(<TaskDetailPageIsland taskId={pageTaskId} />);
+        mountIsland(pageContainer, 'task-detail-page', <TaskDetailPageIsland taskId={pageTaskId} />);
     }
 }
 

@@ -30,7 +30,8 @@ public static class ReleaseNoteCatalog
             date: "27 Eylül 2026",
             title: "Görev yetkileri her ekranda aynı; kaydetmek başka bilgileri silmiyor; ekranlar " +
                    "değişiklikleri hemen gösteriyor; fatura, gider ve cari ekranları yeniden çalışıyor; " +
-                   "tutarlar yazdığınız gibi kaydediliyor; bildirim zamanları doğru görünüyor",
+                   "tutarlar yazdığınız gibi kaydediliyor; hata ve yetki durumları açıkça anlatılıyor; " +
+                   "bildirim zamanları doğru görünüyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Görevleri yalnız sorumluları değiştirebiliyor",
@@ -145,6 +146,84 @@ public static class ReleaseNoteCatalog
                 "bilgilerini ve etiketleri (NACE, sektör, bölge, anahtar kelime, tematik alan) siliyordu. Artık " +
                 "form yüklenene kadar kilitli, yüklenemezse 'Tekrar dene' çıkıyor. Hibe çağrıları geç gelse ya " +
                 "da yüklenemese de profilinizi hemen düzenleyebiliyorsunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bağlantı ve sunucu hataları doğru açıklanıyor",
+                "Bağlantı koptuğunda ya da sunucu hata verdiğinde ekran 'İşlem doğrulanamadı… Ctrl+Shift+R' " +
+                "diyordu; aynı hata hem pencerede hem ayrı bir bildirimde görünüyor, görev yorumları " +
+                "yüklenemediğinde pencere üç kez açılıyordu. Artık her hata kendi nedenini söylüyor (bağlantı " +
+                "kurulamadı, sunucu geçici olarak kullanılamıyor, kayıt bulunamadı) ve yalnız bir kez " +
+                "gösteriliyor. Görev penceresi açıkken çıkan uyarılar fareyle ve klavyeyle kullanılabiliyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Oturumunuz kapandığında yazdıklarınız kaybolmuyor",
+                "Oturum süresi dolduğunda sayfa kendiliğinden yenileniyor ya da giriş sayfasına gidiyor, formda " +
+                "yazdıklarınız kayboluyordu. Artık 'Yeni sekmede giriş yap' ile başka bir sekmede giriş yapıp " +
+                "bu sekmeye dönebilir ve kaydı tekrar deneyebilirsiniz; 'Giriş sayfasına git' girişten sonra " +
+                "sizi aynı sayfaya geri getiriyor. Oturumunuz düştüğünde sayfa kendiliğinden yenilenmiyor. " +
+                "Pencereyi kapatırsanız arka planda yapılan yenilemeler onu yeniden açmıyor, açık formunuz da " +
+                "ekranda kalıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yüklenemeyen ekranlar 'Tekrar dene' seçeneğiyle gösteriliyor",
+                "Bir liste ya da ekran yüklenemediğinde 'İşleniyor…' sonsuza dek dönüyor ya da ekran 'Henüz " +
+                "kayıt yok' deyip oluşturma düğmesi gösteriyordu; sayaçlar 0, Genel Bakış '20.724 gün önce' " +
+                "yazabiliyordu. Artık Görevler (liste, pano, takvim, zaman çizelgesi, galeri), Projeler, " +
+                "Bildirimler, Faturalar, Kasa & Banka, Dokümanlar, Formlar ve Yanıtlar, Takvim, Genel Bakış ve " +
+                "hibe başvuru ekranları 'yüklenemedi' deyip 'Tekrar dene' sunuyor; sayaçlar yüklenirken ve " +
+                "hatada '—' gösteriyor. Ekrandaki veriler görünürken yenileme başarısız olursa veriler yerinde " +
+                "kalıyor ve ince bir uyarı çıkıyor. Hibe başvuru ekranlarında bilgiler gelmeden 'Evrak ekle', " +
+                "'Hatırlat' ve 'Devret' gibi işlemler kapalı. 'Daha fazla göster' başarısız olursa bir sonraki " +
+                "denemede kayıt atlanmıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Boş ekranlar tek görünümde ve eylem düğmeli",
+                "Boş liste ve bölümler artık her ekranda aynı görünümde; izniniz varsa ilgili eylem düğmesi " +
+                "boş durumun içinde yer alıyor (örneğin Kasa & Banka'da 'Yeni Kasa Ekle'). 'Tekrar dene' " +
+                "düğmesi bütün ekranlarda aynı görünüyor ve klavyeyle kullanıldığında odak kaybolmuyor. Görev " +
+                "penceresinde ilk yorumu yazdığınızda 'Henüz yorum yapılmamış' uyarısı kalkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bir ekran bölümü hata verdiğinde sayfa bembeyaz kalmıyor",
+                "Bir ekran bölümü beklenmedik bir hatayla karşılaştığında artık bembeyaz kalmıyor: yerinde " +
+                "'Tekrar dene' ve 'Sayfayı yenile' seçenekli bir uyarı çıkıyor, sayfanın geri kalanı çalışmaya " +
+                "devam ediyor. Takvim böyle bir hatadan sonra sayfayı yenileyince düzeliyor; sekmeyi kapatmanız " +
+                "gerekmiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Erişiminiz olmayan sayfada nedeni yazıyor",
+                "Yetkiniz olmayan bir sayfayı açtığınızda hesap sayfalarının düzeninde genel bir 'Erişim " +
+                "reddedildi' ekranı çıkıyor, 'Girişe dön' oturumunuz açıkken sizi yeniden giriş formuna " +
+                "götürüyordu. Artık sayfa uygulamanın içinde açılıyor ve nedeni söylüyor: ekran platform " +
+                "yönetimine ait, modül paketinizde yer almıyor (izniniz varsa 'Paketimi görüntüle' bağlantısıyla) " +
+                "ya da hesabınıza gereken yetki tanımlı değil (yetkinin adıyla). Genel Bakış'a dönebilir ya da " +
+                "geri gidebilirsiniz. Hata sayfaları (bulunamadı, sunucu hatası ve benzeri) ne olduğunu ve ne " +
+                "yapabileceğinizi Türkçe anlatıyor. Oturumunuz açıkken giriş sayfası bunu söylüyor ve başka " +
+                "hesapla girmek için çıkış seçeneği sunuyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Silinmiş ya da olmayan kayıtlar 'bulunamadı' diyor",
+                "Silinmiş ya da olmayan bir projenin adresini açmak sunucu hatası veriyordu; artık aynı adreste " +
+                "'Aradığınız kayıt bulunamadı' sayfası çıkıyor. Silinmiş bir göreve giden bağlantı sizi sessizce " +
+                "görev listesine atıyordu; artık 'Bu görev bulunamadı' ve 'Görevlere dön' görünüyor. Proje " +
+                "düzenlemede bütçe gibi bir kural ihlalinde hata ilgili alanın altında görünüyor ve yazdığınız " +
+                "değerler korunuyor; dosya yükleme hatası formdaki diğer bilgileri boşaltmıyor. 'Yeni klasör' " +
+                "penceresi yalnız klasöre uygun alanları soruyor. Yayında olmayan hibe çağrısı ve form " +
+                "bağlantıları anlaşılır bir 'yayında değil' ya da 'bulunamadı' mesajı gösteriyor; eksik ya da " +
+                "geçersiz şifre sıfırlama bağlantısı 'bağlantı geçersiz' deyip 'Şifremi unuttum'a yönlendiriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Yetkiniz olmayan finans bilgileri kilitli görünüyor",
+                "Finans Merkezi hiçbir finans yetkisi olmayan kullanıcılara da açılıyor, göremediğiniz paneller " +
+                "'Henüz kayıt yok' diyordu; Genel Bakış'taki Gelir/Gider kartı yalnız bir tarafı " +
+                "görebildiğinizde net tutarı eksik veriden hesaplıyordu. Artık Finans Merkezi en az bir finans " +
+                "yetkisi istiyor; göremediğiniz paneller ve kartlar 'Bu bilgiyi görme yetkiniz yok' diyor ve " +
+                "gereken yetkiyi adıyla gösteriyor. Gelir/Gider kartı ve 'Dönem net' yalnız gelir ve gider " +
+                "yetkilerinin ikisine de sahip kullanıcılara açık. Donör & raporlama sekmesindeki uygunluk " +
+                "denetimi, denetleyemediği başlığı artık uygun saymıyor: belgelere erişiminiz yoksa (örneğin " +
+                "paketinizde Dokümanlar modülü yoksa) 'Belge denetimi yapılamadı', projenin başlangıç ve bitiş " +
+                "tarihi tanımlı değilse 'Tarih denetimi yapılamadı', projede 100'den fazla gelir ya da gider " +
+                "kaydı varsa 'Tarih denetimi eksik' satırı görünüyor; bu durumlarda olumlu özet çıkmıyor."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Bildirim zamanları doğru gösteriliyor",

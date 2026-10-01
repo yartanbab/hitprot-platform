@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api/httpClient';
 import { markDataChanged } from '../../lib/api/dataChanged';
@@ -48,8 +48,11 @@ export function useCalendarMutations({ onOfflineFailure } = {}) {
     const [errors, setErrors] = useState({});
     /** Kaydedilmeyi bekleyen öğeler — satırda "kaydediliyor" göstergesi. */
     const [pending, setPending] = useState({});
+    /** { [itemKey]: { item, newDate? } } — reddedilen son işlem; çekmecedeki "Tekrar dene" bunu yineler. */
+    const failed = useRef({});
 
     const clearError = useCallback((key) => {
+        delete failed.current[key];
         setErrors((prev) => {
             if (!prev[key]) return prev;
             const next = { ...prev };
@@ -85,6 +88,7 @@ export function useCalendarMutations({ onOfflineFailure } = {}) {
 
             /* Geri sarma: sunucu reddettiyse öğe eski gününde kalmalı. */
             context?.snapshot?.forEach(([key, data]) => queryClient.setQueryData(key, data));
+            failed.current[item.key] = { item, newDate };
             setErrors((prev) => ({
                 ...prev,
                 [item.key]: error?.message || 'Kaydedilemedi — tarih değişmedi.',
@@ -130,6 +134,7 @@ export function useCalendarMutations({ onOfflineFailure } = {}) {
         },
         onError: (error, { item }, context) => {
             context?.snapshot?.forEach(([key, data]) => queryClient.setQueryData(key, data));
+            failed.current[item.key] = { item };
             setErrors((prev) => ({
                 ...prev,
                 [item.key]: error?.message || 'Tamamlanamadı.',
@@ -157,6 +162,13 @@ export function useCalendarMutations({ onOfflineFailure } = {}) {
         retry: (item, newDate) => (newDate
             ? reschedule.mutate({ item, newDate })
             : complete.mutate({ item })),
+        /** Reddedilen son işlemi aynen yineler; kayıt yoksa yalnız hata şeridini kapatır. */
+        retryFailed: (key) => {
+            const last = failed.current[key];
+            if (!last) { clearError(key); return; }
+            if (last.newDate) reschedule.mutate({ item: last.item, newDate: last.newDate });
+            else complete.mutate({ item: last.item });
+        },
         lastAction,
         dismissAction: () => setLastAction(null),
         errors,

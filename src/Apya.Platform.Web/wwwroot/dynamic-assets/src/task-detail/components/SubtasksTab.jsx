@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { statusOf } from '../v3/taskMetaV3';
 import { getTaskPermissions } from '../taskPermissions';
 import { TAB_CARD, RatioBadge, RowBadge, Avatar, fmtShortDate } from '../v3/tabPrimitives';
+import { notifyError } from '../../lib/api/abpErrors';
 
 /**
  * Alt Görevler sekmesi (V4 tasarım dili).
@@ -34,7 +35,7 @@ export function SubtasksTab({ taskId, task, onOpenSubtask }) {
             setDraft('');
             await invalidateParent();
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Alt görev eklenemedi.');
+            notifyError(err, 'Alt görev eklenemedi.');
         } finally {
             setBusy(false);
         }
@@ -47,7 +48,7 @@ export function SubtasksTab({ taskId, task, onOpenSubtask }) {
             await Promise.resolve(window.apya.platform.tasks.task.updateStatus(sub.id, sub.status === 4 ? 1 : 4));
             await invalidateParent();
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Alt görev durumu güncellenemedi.');
+            notifyError(err, 'Alt görev durumu güncellenemedi.');
         }
     };
 

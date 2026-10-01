@@ -43,7 +43,7 @@ const YANITLAR = {
         { taskId: 't1', title: 'Sözleşme teslimi', projectName: 'Sözleşme Projesi', dueDate: '2026-09-10T00:00:00Z', state: 3, overdueDays: 4, assigneeName: 'Ayşe', assigneeInitials: 'A', groupKey: 0 },
     ],
     'project-health': PROJELER,
-    'pending-approvals': [],
+    'pending-approvals': { items: [], locked: false },
     'blocked-tasks': [
         { taskId: 'b1', code: 'APY-9', title: 'Ödeme talebi', blockReason: 2, idleDays: 11, dependentCount: 1 },
     ],
@@ -51,6 +51,17 @@ const YANITLAR = {
     'delivery-heatmap': Array.from({ length: 7 }, (_, i) => ({
         date: `2026-09-0${i + 1}T00:00:00Z`, count: i, isGrantDeadline: i === 3,
     })),
+};
+
+/* İstatistiğin izni sunucudan KOD olarak gelir ("Platform.CashAccounts"); görünen ad gerçek uygulamada
+   ABP yerelleştirmesinden çözülür ("Permission:CashAccounts"). lib/i18n kaynağı ilk çözülüşte önbelleğe
+   aldığı için sahte kaynak dosya boyunca aynıdır: yalnız izin adlarını bilir, diğer her anahtar
+   bileşenin Türkçe yedeğine düşer (öbür testlerin metinleri değişmez). */
+const IZIN_ADLARI = {
+    'Permission:Tasks': 'Görevler',
+    'Permission:CashAccounts': 'Kasalar',
+    'Permission:Incomes': 'Gelirler',
+    'Permission:Expenses': 'Giderler',
 };
 
 function stubFetch(override = {}) {
@@ -86,6 +97,7 @@ function ciz(props = {}) {
 
 beforeEach(() => {
     document.body.innerHTML = '';
+    window.abp = { localization: { getResource: () => (key) => IZIN_ADLARI[key] ?? key } };
     gomKunye();
     stubFetch();
 });
@@ -123,9 +135,11 @@ describe('Dashboard baskı çıktısı', () => {
         await waitFor(() => expect(screen.getByText('Zamanında teslim')).toBeInTheDocument());
         expect(screen.getByText('Kasa bakiyesi')).toBeInTheDocument();
 
-        /* Kilitli kutucuk: değer yerine tire, gerekçe olarak izin adı. */
+        /* Kilitli kutucuk: değer yerine tire, gerekçe olarak izin tanımının GÖRÜNEN adı (ham kod değil);
+           açık istatistiğin altındaki izin satırı da aynı. */
         expect(screen.getAllByText('yetki gerekli').length).toBeGreaterThan(0);
-        expect(screen.getByText('Platform.CashAccounts')).toBeInTheDocument();
+        expect(screen.getByText('Kasalar')).toBeInTheDocument();
+        expect(screen.getByText('Görevler')).toBeInTheDocument();
     });
 
     it('yetkisiz özet kutucuğu sıfır değil "— —" basar', async () => {
@@ -133,7 +147,28 @@ describe('Dashboard baskı çıktısı', () => {
 
         /* pendingApprovals null geldi → sunucu değeri hiç göndermedi, uydurulmaz. */
         await waitFor(() => expect(screen.getAllByText('— —').length).toBeGreaterThan(0));
-        expect(screen.getByText(/Platform.Invoices/)).toBeInTheDocument();
+        expect(screen.getByText('Faturalar')).toBeInTheDocument();
+    });
+
+    it('kağıda ham izin kodu basılmaz; iki izin " + " ile değil kendi metniyle birleşir', async () => {
+        stubFetch({
+            'summary': { ...YANITLAR.summary, budgetUsedRatio: null, budgetSpent: null, budgetTotal: null },
+            'statistics': [
+                ...ISTATISTIKLER,
+                { key: 'monthly-net', group: 1, label: 'Dönem net', value: null, formatted: '', deltaFormatted: '', trend: 0, requiredPermission: 'Platform.Incomes + Platform.Expenses', locked: true },
+            ],
+        });
+        const onReady = vi.fn();
+
+        const { container } = ciz({ onReady });
+
+        await waitFor(() => expect(onReady).toHaveBeenCalled());
+        await waitFor(() => expect(screen.getByText('Dönem net')).toBeInTheDocument());
+        expect(screen.getByText('Gelirler ve Giderler')).toBeInTheDocument();
+        /* Özet kutucuklarının iki kilidi: "yetki gerekli · <izin adı>". */
+        expect(screen.getByText('Faturalar')).toBeInTheDocument();
+        expect(screen.getByText('Bütçe Görüntüleme')).toBeInTheDocument();
+        expect(container.textContent).not.toMatch(/Platform\./);
     });
 
     it('bir bölüm hata verse bile kalanı basılır ve baskı BEKLEMEDE kalmaz', async () => {
@@ -154,5 +189,35 @@ describe('Dashboard baskı çıktısı', () => {
            okuyan "bu bölüm basılmamış mı, gerçekten boş mu" diye bilemez. */
         await waitFor(() => expect(screen.getByText('Bende bekleyen kararlar')).toBeInTheDocument());
         expect(screen.getByText('Taslak durumdaki fatura bulunmuyor.')).toBeInTheDocument();
+    });
+
+    it('kilitli finans bölümü "kayıt yok" değil "görme yetkiniz yok" basar (SHL-15)', async () => {
+        stubFetch({
+            'pending-approvals': { items: [], locked: true },
+            'income-expense': { points: [], currency: 'TRY', net: 0, locked: true },
+        });
+        const onReady = vi.fn();
+
+        ciz({ onReady });
+
+        /* Kilitli bölüm de "sonuca bağlanmış" sayılır: baskı beklemede kalmaz. */
+        await waitFor(() => expect(onReady).toHaveBeenCalled());
+        /* Kağıtta da ham izin kodu değil görünen ad; iki izin " + " ile değil kendi metniyle birleşir. */
+        expect(screen.getByText('Bu bölümü görme yetkiniz yok (Faturalar).')).toBeInTheDocument();
+        expect(screen.getByText('Bu bölümü görme yetkiniz yok (Gelirler ve Giderler).')).toBeInTheDocument();
+        expect(screen.queryByText('Taslak durumdaki fatura bulunmuyor.')).not.toBeInTheDocument();
+        expect(screen.queryByText('Son 6 ayda gelir veya gider kaydı bulunmuyor.')).not.toBeInTheDocument();
+    });
+
+    it('kalıcı önbellekteki ESKİ dizi şekli çökmeden basılır', async () => {
+        stubFetch({
+            'pending-approvals': [{ id: 'a1', type: 0, title: 'QA-UX eski-sekil', requesterName: '', amount: 1, currency: 'TRY', ageHours: 1, targetUrl: '#' }],
+        });
+        const onReady = vi.fn();
+
+        ciz({ onReady });
+
+        await waitFor(() => expect(onReady).toHaveBeenCalled());
+        expect(screen.getByText('QA-UX eski-sekil')).toBeInTheDocument();
     });
 });

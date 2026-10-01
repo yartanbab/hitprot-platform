@@ -41,9 +41,13 @@ const handler = (name, params = {}) => {
 const postJson = (url, body) =>
   abpAjax({ url, type: 'POST', contentType: 'application/json', data: JSON.stringify(body) });
 
+/* Yükleme uçlarının son parametresi abp.ajax seçenekleridir (ABP proxy'siyle aynı sözleşme):
+   ekran yüklemesi { abpHandleError: false } verir — hata sayfa içinde gösterilir, ABP
+   penceresi açılmaz; 401 ve oturum kaybı yine merkezi pencereye gider (ajax-error-detail.js). */
+
 /* ─── Belge listesi ve detayı ─────────────────────────────────────────── */
 
-export const getFiles = (input) => abpAjax({ url: handler('Files', input), type: 'GET' });
+export const getFiles = (input, ajax) => abpAjax({ url: handler('Files', input), type: 'GET', ...ajax });
 
 export const getFile = (id) => abpAjax({ url: handler('File', { id }), type: 'GET' });
 
@@ -65,19 +69,20 @@ export const restoreFile = (id) => abpAjax({ url: handler('RestoreFile', { id })
 
 /* ─── Yardımcı kaynaklar ──────────────────────────────────────────────── */
 
-export const getDocumentTypes = () => abpAjax({ url: handler('DocumentTypes'), type: 'GET' });
+export const getDocumentTypes = (ajax) => abpAjax({ url: handler('DocumentTypes'), type: 'GET', ...ajax });
 
-export const getWorkSteps = (projectId) => abpAjax({ url: handler('WorkSteps', { projectId }), type: 'GET' });
+export const getWorkSteps = (projectId, ajax) =>
+  abpAjax({ url: handler('WorkSteps', { projectId }), type: 'GET', ...ajax });
 
 export const getTagList = () => abpAjax({ url: handler('TagList'), type: 'GET' });
 
 /* ─── Uygunluk (Faz B) ────────────────────────────────────────────────── */
 
-export const getCompliancePackages = (projectId) =>
-  abpAjax({ url: handler('CompliancePackages', { projectId }), type: 'GET' });
+export const getCompliancePackages = (projectId, ajax) =>
+  abpAjax({ url: handler('CompliancePackages', { projectId }), type: 'GET', ...ajax });
 
-export const getComplianceOverview = (projectId, periodCode) =>
-  abpAjax({ url: handler('ComplianceOverview', { projectId, periodCode }), type: 'GET' });
+export const getComplianceOverview = (projectId, periodCode, ajax) =>
+  abpAjax({ url: handler('ComplianceOverview', { projectId, periodCode }), type: 'GET', ...ajax });
 
 export const applyCompliancePackage = (projectId, packageId, periodCode) =>
   postJson(handler('ApplyCompliancePackage'), { projectId, packageId, periodCode });
@@ -91,7 +96,7 @@ export const linkComplianceDocument = (payload) => postJson(handler('LinkComplia
 
 /* ─── İlk kurulum (Faz F) ─────────────────────────────────────────────── */
 
-export const getSetupState = () => abpAjax({ url: handler('SetupState'), type: 'GET' });
+export const getSetupState = (ajax) => abpAjax({ url: handler('SetupState'), type: 'GET', ...ajax });
 
 export const applySetup = (dto) => postJson(handler('ApplySetup'), dto);
 
@@ -99,8 +104,8 @@ export const completeSetup = () => abpAjax({ url: handler('CompleteSetup'), type
 
 /* ─── Öneriler (Faz D) ────────────────────────────────────────────────── */
 
-export const getSuggestions = (projectId) =>
-  abpAjax({ url: handler('Suggestions', { projectId }), type: 'GET' });
+export const getSuggestions = (projectId, ajax) =>
+  abpAjax({ url: handler('Suggestions', { projectId }), type: 'GET', ...ajax });
 
 export const applySuggestions = (suggestions) => postJson(handler('ApplySuggestions'), { suggestions });
 
@@ -132,7 +137,7 @@ export const deleteComplianceRequirement = (id) =>
 
 /* ─── Etkinlik / denetim izi (Faz B) ──────────────────────────────────── */
 
-export const getActivity = (input) => abpAjax({ url: handler('Activity', input), type: 'GET' });
+export const getActivity = (input, ajax) => abpAjax({ url: handler('Activity', input), type: 'GET', ...ajax });
 
 /* ─── Ekler (mevcut uçlar, değişmedi) ─────────────────────────────────── */
 

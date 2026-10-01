@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '../../components/ui';
 import { fmtShortDate } from '../v3/tabPrimitives';
 import { canLinkDocuments, useExpenseCandidates, useMatchActions } from '../hooks/useExpenseDocuments';
+import { notifyError } from '../../lib/api/abpErrors';
 
 function fmtAmount(value) {
     if (value == null) return '—';
@@ -25,8 +26,6 @@ export function ExpenseDocumentsPanel({ expenseId, projectId, matches }) {
 
     const linkedIds = new Set(matches.map((m) => m.documentFileId));
     const available = candidates.filter((c) => !linkedIds.has(c.documentFileId));
-
-    const notify = (err, fallback) => window?.abp?.notify?.error?.(err?.message || fallback);
 
     return (
         <div className="flex flex-col gap-3 px-4 pb-3.5 pt-1 bg-surface-raised">
@@ -52,7 +51,7 @@ export function ExpenseDocumentsPanel({ expenseId, projectId, matches }) {
                                     disabled={isBusy}
                                     onClick={() => unlink.mutate(
                                         { matchId: m.id, expenseId },
-                                        { onError: (err) => notify(err, 'Evrak bağı kaldırılamadı.') },
+                                        { onError: (err) => notifyError(err, 'Evrak bağı kaldırılamadı.') },
                                     )}
                                 >
                                     Kaldır
@@ -95,7 +94,7 @@ export function ExpenseDocumentsPanel({ expenseId, projectId, matches }) {
                                 disabled={isBusy}
                                 onClick={() => link.mutate(
                                     { documentFileId: c.documentFileId, expenseId, score: c.score },
-                                    { onError: (err) => notify(err, 'Evrak bağlanamadı.') },
+                                    { onError: (err) => notifyError(err, 'Evrak bağlanamadı.') },
                                 )}
                             >
                                 Bağla

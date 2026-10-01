@@ -34,7 +34,11 @@ public class DashboardStatDto
 
     public DashboardTrend Trend { get; set; }
 
-    /// <summary>Kutucuğun gerektirdiği izin adı — tasarımda mono 9px olarak gösterilir.</summary>
+    /// <summary>
+    /// Kutucuğun gerektirdiği izin KODU (iki izin " + " ile birleşir). Ekrana ve kağıda ham kod
+    /// basılmaz: UI görünen adı izin tanımının anahtarından çözer ("Platform.X" ↔ "Permission:X",
+    /// bkz. StatisticsBand.jsx <c>permissionLabel</c>) — tasarımda mono 9px satır.
+    /// </summary>
     public string RequiredPermission { get; set; } = string.Empty;
 
     public bool Locked { get; set; }

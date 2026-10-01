@@ -24,6 +24,8 @@ $(function () {
         view: 'cards'
     };
     var issuersFilled = false;
+    // Sekme/süzgeç/görünüm ve pencere sonrası yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function num(v) { return Math.round(v).toLocaleString('tr-TR'); }
@@ -192,15 +194,32 @@ $(function () {
         $('#CallEmpty').toggleClass('d-none', items.length > 0).text(emptyText());
     }
 
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2); kart ızgaranın tüm
+    // genişliğini alır (Calls.css), liste/boş kutu gizlenir, gelmemiş sekme sayaçları "—".
     function load() {
+        var isLatest = nextLoad();
         $('.apya-call-live-only').toggleClass('d-none', state.tab !== 'live');
-        return board.get({
+        return Promise.resolve(board.get({
             tab: TAB[state.tab],
             closed: state.tab === 'live' && state.closed,
             issuer: state.issuer || null,
             sort: state.sort
-        }).then(paint);
+        }, { abpHandleError: false })).then(function (dto) {
+            if (!isLatest()) { return; }
+            paint(dto);
+        }, function (err) {
+            if (!isLatest()) { return; }
+            $('#CallGrid').removeClass('apya-skel-cards d-none')
+                .html(apya.loadState.errorHtml(l('Grants:Calls:LoadFailed'), 'js-calls-retry', err));
+            $('#CallList, #CallEmpty').addClass('d-none');
+            $('[data-call-count]').filter(':empty').text('—');
+        });
     }
+
+    $('#CallGrid').on('click', '.js-calls-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     // ---------- Sekme, süzgeç, görünüm ----------
     $('.apya-call-tabs').on('click', 'a[data-call-tab]', function (e) {

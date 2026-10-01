@@ -21,8 +21,9 @@ $(function () {
             $('#InvoiceFilter').val('');
             $('#InvoiceStatusPills button[data-status=""]').trigger('click');
         });
-    var $loadError = $('<div class="apya-md-empty" role="alert" hidden><i class="fa fa-triangle-exclamation" aria-hidden="true"></i><span>Faturalar yüklenemedi.</span></div>')
-        .append($('<button type="button" class="btn btn-sm btn-outline-secondary"></button>').text(l('Common:Retry')).on('click', function () { load(); }))
+    // Yükleme hatası kartı (Faz 4 kararları 2, 10): kanonik apya.loadState.errorHtml, load() reddinde basılır.
+    var $loadError = $('<div hidden></div>')
+        .on('click', '.js-invoices-retry', function () { $(this).prop('disabled', true); load(); })
         .insertAfter($empty);
 
     // Finans sekmesine gomuldugunde liste O PROJEYLE sinirlanir. /Invoices
@@ -237,12 +238,16 @@ $(function () {
         });
     }
 
+    // Liste hiç gelmemişken (açılış, Tekrar dene) yükleme hatası ABP penceresi açmaz, liste yerine
+    // kart basılır (Faz 4 kararı 2). Veri ekrandayken (oluştur/ödeme sonrası) yenileme düşerse liste
+    // korunur ve tek kanal ABP penceresidir — sessiz kalsaydı yeni fatura "kayboldu" sanılırdı.
     function load(keepSelection) {
         var isLatest = nextList();
+        var initial = !state.all.length;
         state.loading = true;
         state.loadFailed = false;
         if (!state.all.length) { renderList(); }
-        Promise.resolve(service.getList({ maxResultCount: 200, sorting: 'invoiceDate desc' })).then(function (result) {
+        Promise.resolve(service.getList({ maxResultCount: 200, sorting: 'invoiceDate desc' }, { abpHandleError: !initial })).then(function (result) {
             if (!isLatest()) { return; }
             state.loading = false;
             state.loadFailed = false;
@@ -263,12 +268,14 @@ $(function () {
             }
             renderList();
             if (state.selectedId) { select(state.selectedId); }
-        }, function () {
-            // ABP hata penceresini zaten gösteriyor. Yenilemede hata olursa eldeki liste korunur.
+        }, function (err) {
             if (!isLatest()) { return; }
             state.loading = false;
             state.loadFailed = true;
-            if (!state.all.length) { renderList(); }
+            if (!state.all.length) {
+                $loadError.html(apya.loadState.errorHtml('Faturalar yüklenemedi.', 'js-invoices-retry', err));
+                renderList();
+            }
         });
     }
 

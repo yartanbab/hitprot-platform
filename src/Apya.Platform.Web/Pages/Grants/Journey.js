@@ -12,6 +12,8 @@ $(function () {
     var SOURCE_CONSULTANT = 1;
     var IDEA_TITLE_MAX = 120;
     var nextKeys = ['CompleteForm', 'UploadDocuments', 'WaitingOnConsultant', 'WaitingOnInstitution', 'InProject', 'Done'];
+    // Geri çekme/görüşme sonrası yeniden yüklenir: yalnız son istek çizer.
+    var nextLoad = apya.latest();
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function slotText(v) {
@@ -170,7 +172,27 @@ $(function () {
         $('#JourneyEmpty').toggleClass('d-none', items.length > 0);
     }
 
-    function load() { return service.get().then(paint); }
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2). Kart <ol> içine
+    // basılmaz (geçersiz liste yapısı + zaman çizgisi ::before): ayrı kaba (#JourneyLoadState).
+    function load() {
+        var isLatest = nextLoad();
+        return Promise.resolve(service.get({ abpHandleError: false })).then(function (d) {
+            if (!isLatest()) { return; }
+            $('#JourneyLoadState').empty();
+            paint(d);
+        }, function (err) {
+            if (!isLatest()) { return; }
+            $('#JourneyItems').removeClass('apya-skel-cards').empty();
+            $('#JourneyLoadState').html(apya.loadState.errorHtml(l('Grants:Journey:LoadFailed'), 'js-journey-retry', err));
+            $('#JourneySub').removeClass('apya-skel-num').text('');
+            $('#JourneyEmpty, #JourneyWon').addClass('d-none');
+        });
+    }
+
+    $('#JourneyLoadState').on('click', '.js-journey-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     $('#JourneyItems').on('click', '[data-withdraw]', function () {
         var id = $(this).data('withdraw');

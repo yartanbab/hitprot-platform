@@ -168,7 +168,8 @@ $(function () {
     }
 
     function paintBookmark(on) {
-        $('#BookmarkBtn').toggleClass('btn-primary', on).toggleClass('btn-outline-secondary', !on);
+        // İşaretlemede gizli: yer imi sunucuya yazar, veri gelmeden basılamasın (GRT-07).
+        $('#BookmarkBtn').removeClass('d-none').toggleClass('btn-primary', on).toggleClass('btn-outline-secondary', !on);
         $('#BookmarkText').text(l(on ? 'Grants:Catalog:Unbookmark' : 'Grants:Catalog:Bookmark'));
     }
 
@@ -409,12 +410,29 @@ $(function () {
         });
     });
 
-    service.getCallDetail(callId).then(function (d) {
-        detail = d;
-        paintHead(d);
-        paintRules(d);
-        paintBudget(d);
-        paintProcess(d);
-        paintSide(d);
+    // Yalnız açılışta ve Tekrar dene ile çağrılır (ilgi/geri çekme kendi okumasını yapar).
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
+    function load() {
+        return Promise.resolve(service.getCallDetail(callId, { abpHandleError: false })).then(function (d) {
+            detail = d;
+            $('#DetailLoadState').empty();
+            $('.apya-detail-head, .apya-detail-layout').removeClass('d-none');
+            paintHead(d);
+            paintRules(d);
+            paintBudget(d);
+            paintProcess(d);
+            paintSide(d);
+        }, function (err) {
+            // Boş başlık kartı ve "—" metrikli kart yığını kartın altında kalmasın.
+            $('.apya-detail-head, .apya-detail-layout').addClass('d-none');
+            $('#DetailLoadState').html(apya.loadState.errorHtml(l('Grants:Detail:LoadFailed'), 'js-detail-retry', err));
+        });
+    }
+
+    $('#DetailLoadState').on('click', '.js-detail-retry', function () {
+        $(this).prop('disabled', true);
+        load();
     });
+
+    load();
 });

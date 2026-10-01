@@ -3,6 +3,8 @@
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Apya.Platform.Accounts
 @using Apya.Platform.Localization
+@using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Authorization
 @using Volo.Abp.Account.Localization
 @using Volo.Abp.Account.Web.Pages.Account
 @using Volo.Abp.Identity
@@ -10,6 +12,8 @@
 @inject IHtmlLocalizer<AccountResource> L
 @inject IHtmlLocalizer<PlatformResource> PL
 @inject ILoginScreenSettingsAppService LoginScreenSettings
+@inject Volo.Abp.Users.ICurrentUser CurrentUser
+@inject IAuthorizationService AuthorizationService
 @{
     Layout = "~/Pages/Account/_ApyaAccountLayout.cshtml";
     ViewBag.Title = L["Login"].Value;
@@ -18,6 +22,10 @@
     // Ayar açık OLSA BİLE yapılandırılmış sağlayıcı yoksa hiçbir şey gösterilmez —
     // ölü düğme çıkmasın.
     var showSocial = loginScreen.ShowSocialLogin && Model.VisibleExternalProviders.Any();
+
+    // Genel Bakış bağlantısı yalnız onu açabilene (hata/erişim sayfasıyla aynı kural).
+    var canOpenDashboard = CurrentUser.IsAuthenticated
+        && await AuthorizationService.IsGrantedAsync(ErrorStates.DashboardPermission);
 }
 
 @if (Model.ShowRequireMigrateSeedMessage)
@@ -25,6 +33,25 @@
     <div class="alert alert-danger apya-auth__alert" role="alert">
         <strong>@L["RequireMigrateSeedTitle"]</strong>
         <div>@L["RequireMigrateSeedMessage"]</div>
+    </div>
+}
+
+@* ACC-12: oturum açıkken bu form yine basılır — hesap değiştirme yolu ve OpenIddict prompt=login
+   akışı için bilinçli olarak YÖNLENDİRME YOK; kullanıcıya yalnız durum ve çıkış yolu söylenir. *@
+@if (CurrentUser.IsAuthenticated)
+{
+    <div class="alert alert-info apya-auth__alert" role="status">
+        <div>
+            @PL["Login:AlreadySignedIn", CurrentUser.Email ?? CurrentUser.UserName ?? string.Empty]
+            @if (canOpenDashboard)
+            {
+                <a class="alert-link" href="~/Dashboard">@PL["ErrorPage:BackToDashboard"]</a>
+            }
+        </div>
+        <div>
+            @PL["Login:AlreadySignedIn:Hint"]
+            <a class="alert-link" href="~/Account/Logout">@PL["Login:SignOut"]</a>
+        </div>
     </div>
 }
 

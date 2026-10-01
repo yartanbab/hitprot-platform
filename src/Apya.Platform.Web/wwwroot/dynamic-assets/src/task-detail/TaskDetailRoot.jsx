@@ -18,6 +18,7 @@ import { useTaskFeatures } from './hooks/useTaskFeatures';
 import { getVisibleTabs, getPickerEntries } from './TaskFeatureRegistry';
 import { taskDetailStore } from './taskDetailStore';
 import { Skeleton, Button } from '../components/ui';
+import { notifyError } from '../lib/api/abpErrors';
 
 const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 
@@ -106,7 +107,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
             guard.markClean();
             closeNow();
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Görev silinemedi.');
+            notifyError(err, 'Görev silinemedi.');
         } finally {
             setDeleting(false);
         }
@@ -130,7 +131,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
             window?.abp?.notify?.success?.('Kaydedildi.');
             return true;
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Kaydedilemedi.');
+            notifyError(err, 'Kaydedilemedi.');
             return false;
         } finally {
             setIsSaving(false);
@@ -175,7 +176,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
             setActiveCode(code);
             setPickerOpen(false);
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Özellik eklenemedi.');
+            notifyError(err, 'Özellik eklenemedi.');
         }
     }, [features]);
 
@@ -184,7 +185,7 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
             await features.removeFeature(code);
             setActiveCode((current) => (current === code ? 'general' : current));
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Özellik kaldırılamadı.');
+            notifyError(err, 'Özellik kaldırılamadı.');
         }
     }, [features]);
 
@@ -214,7 +215,8 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                 <Skeleton className="h-24 w-full" />
             </div>
         )
-        : isError
+        // Yenileme hatası ≠ ilk yükleme hatası: veri ekrandayken tazeleme düşerse form kalır (yazılan görünür).
+        : isError && !task
             ? (
                 <div className="grid place-items-center gap-3 py-[var(--apya-space-12)] text-center">
                     <i className="fa fa-triangle-exclamation text-2xl text-text-tertiary" aria-hidden="true" />

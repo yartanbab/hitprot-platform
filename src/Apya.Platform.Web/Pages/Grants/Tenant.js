@@ -403,8 +403,10 @@ $(function () {
     }
 
     // ---------- Başvurularım ----------
+    // Yalnız açılışta ve Tekrar dene ile çağrılır (düğme basılınca pasifleşir): bilet gerekmez.
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
     function loadApplications() {
-        return appSvc.getMyApplications().then(function (items) {
+        return Promise.resolve(appSvc.getMyApplications({ abpHandleError: false })).then(function (items) {
             var $l = $('#AppsList').empty();
             $('#AppsEmpty').toggleClass('d-none', items.length > 0);
             items.forEach(function (a) {
@@ -430,16 +432,25 @@ $(function () {
                     (detail ? '<div class="small text-muted mt-1">' + detail + '</div>' : '') +
                     '</div></div>');
             });
+        }, function (err) {
+            $('#AppsList').html(apya.loadState.errorHtml(l('Grants:Mine:LoadFailed'), 'js-grants-apps-retry', err));
+            $('#AppsEmpty').addClass('d-none');
         });
     }
 
+    $('#AppsList').on('click', '.js-grants-apps-retry', function () {
+        $(this).prop('disabled', true);
+        loadApplications();
+    });
+
     // Akış kendi biletiyle yüklenir ve profil formuna DOKUNMAZ: akışın Tekrar dene'si açık
     // editördeki kaydedilmemiş girdiyi ezmez, yalnız "N çağrı ölçülebilir" cümlesini yeniler.
-    // Hata dalı da çözülür ve cümleyi boşaltır (eski sayı kalmasın).
+    // Hata dalı da çözülür ve cümleyi boşaltır (eski sayı kalmasın). Yükleme hatası ABP
+    // penceresi değil kutu (Faz 4 kararı 2); nedeni kutunun açıklaması söyler.
     function loadFeed() {
         var isLatest = nextFeed();
         feedLoaded = false;
-        return Promise.resolve(recoSvc.getOpenCalls()).then(function (items) {
+        return Promise.resolve(recoSvc.getOpenCalls({ abpHandleError: false })).then(function (items) {
             if (!isLatest()) { return; }
             feedFailed = false;
             feedLoaded = true;
@@ -450,13 +461,13 @@ $(function () {
             paintHeading();
             paintFeed();
             paintGain();
-        }, function () {
+        }, function (err) {
             if (!isLatest()) { return; }
             feedFailed = true;
             $('#FeedHeading').removeClass('apya-skel-num');
             $('#FeedEmpty, #BookmarkEmpty, #BookmarkHint, #FeedMore, #FeedBuckets').addClass('d-none');
             $('#FeedGrid').removeClass('apya-skel-cards')
-                .html(apya.loadState.errorHtml(l('Grants:Feed:LoadFailed'), 'js-grants-feed-retry'));
+                .html(apya.loadState.errorHtml(l('Grants:Feed:LoadFailed'), 'js-grants-feed-retry', err));
             paintGain();
         });
     }
@@ -474,15 +485,15 @@ $(function () {
         // Yükleniyor kutusu yalnız profil henüz boyanmamışken: açık editörde her Kaydet'te formu itmesin.
         if (!profile) { $('#ProfileLoadState').html(apya.loadState.loadingHtml(l('Grants:Feed:Profile:Loading'))); }
         loadFeed();
-        return Promise.resolve(profileSvc.getMyProfile()).then(function (p) {
+        return Promise.resolve(profileSvc.getMyProfile({ abpHandleError: false })).then(function (p) {
             if (!isLatest()) { return; }
             paintProfile(p);
             $('#ProfileLoadState').empty();
             $('#ProfileForm').prop('disabled', false);
-        }, function () {
+        }, function (err) {
             if (!isLatest()) { return; }
             profile = null;
-            $('#ProfileLoadState').html(apya.loadState.errorHtml(l('Grants:Feed:Profile:LoadFailed'), 'js-grants-load-retry'));
+            $('#ProfileLoadState').html(apya.loadState.errorHtml(l('Grants:Feed:Profile:LoadFailed'), 'js-grants-load-retry', err));
         });
     }
 

@@ -59,6 +59,9 @@ public class PlatformWebTestModule : AbpModule
     {
         ConfigureLocalizationServices(context.Services);
         ConfigureNavigationServices(context.Services);
+
+        // Yalnız özel başlıkla devreye girer: /Error'un istisna yeniden yürütmesi kablolaması (ErrorPage_Tests).
+        context.Services.AddTransient<Microsoft.AspNetCore.Hosting.IStartupFilter, Pages.ErrorPage_Tests.ExceptionReexecutionFilter>();
     }
 
     private static void ConfigureLocalizationServices(IServiceCollection services)

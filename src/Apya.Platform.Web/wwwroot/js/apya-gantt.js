@@ -43,6 +43,8 @@
         var canEdit = opts.canEdit !== false;
         var onSaved = typeof opts.onSaved === 'function' ? opts.onSaved : function () { };
         var taskSvc = apya.platform.tasks.task;
+        // Süzgeç hızla değişince yanıtlar sırasız dönebilir: yalnız son istek çizer.
+        var nextLoad = apya.latest();
 
         var state = {
             zoom: 'ay',
@@ -51,7 +53,9 @@
             capacity: true,
             tasks: [],
             pending: {},        // taskId -> {start, due} (kaydedilmemiş sürükleme)
-            loading: false
+            loading: false,
+            loadFailed: false,
+            loadError: null
         };
 
         // ---------- yardımcılar ----------
@@ -249,6 +253,10 @@
         function render() {
             if (state.loading) {
                 $mount.html('<div class="apya-gantt-empty">' + l('Tasks:Timeline:Loading') + '</div>');
+                return;
+            }
+            if (state.loadFailed) {
+                $mount.html(apya.loadState.errorHtml(l('Tasks:View:LoadFailed'), 'js-gantt-retry', state.loadError));
                 return;
             }
             if (!state.tasks.length) {
@@ -526,6 +534,7 @@
 
         function bindUi() {
             $mount.off('click.gantt').on('click.gantt', function (e) {
+                if ($(e.target).closest('.js-gantt-retry').length) { return load(); }
                 var $z = $(e.target).closest('[data-zoom]');
                 if ($z.length) { state.zoom = $z.data('zoom'); return refresh(); }
                 var $g = $(e.target).closest('[data-group]');
@@ -545,7 +554,9 @@
         function refresh() { render(); bindDrag(); }
 
         function load() {
+            var isLatest = nextLoad();
             state.loading = true;
+            state.loadFailed = false;
             render();
             var filter = $.extend({ maxResultCount: 1000 }, getFilter());
             // Liste DTO'su predecessorIds taşımaz: oklar ve kritik yol gizlilik süzgeçli
@@ -558,7 +569,9 @@
                     console.warn('[gantt] bağımlılıklar alınamadı', e);
                     return [];
                 });
-            return Promise.all([Promise.resolve(taskSvc.getList(filter)), deps]).then(function (r) {
+            // Liste yükleme hatası da ABP penceresi değil satır içi kart (Faz 4 kararı 2).
+            return Promise.all([Promise.resolve(taskSvc.getList(filter, { abpHandleError: false })), deps]).then(function (r) {
+                if (!isLatest()) { return; }
                 var preds = {};
                 (r[1] || []).forEach(function (e) {
                     (preds[e.taskId] = preds[e.taskId] || []).push(e.predecessorTaskId);
@@ -568,10 +581,15 @@
                 state.loading = false;
                 refresh();
             }, function (e) {
-                // Yalnız getList reddi buraya düşer (deps kendi catch'inde); ABP penceresi
-                // hatayı zaten gösterdi. Yakalanmazsa native ret telemetriye ikinci kez
-                // "UnhandledRejection" diye yazılıyordu. Başarı kolunun hatası yakalanmaz.
+                // Yalnız getList reddi buraya düşer (deps kendi catch'inde). Yakalanmazsa native
+                // ret telemetriye "UnhandledRejection" diye yazılıyordu. Başarı kolunun hatası
+                // yakalanmaz. Durum güncellenmezse "Zaman çizelgesi yükleniyor…" kalıcı kalıyordu.
                 console.warn('[gantt] görevler alınamadı', e);
+                if (!isLatest()) { return; }
+                state.loading = false;
+                state.loadFailed = true;
+                state.loadError = e;
+                render();
             });
         }
 

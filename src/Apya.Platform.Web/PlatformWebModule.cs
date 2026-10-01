@@ -300,6 +300,8 @@ public class PlatformWebModule : AbpModule
         ConfigureBundles(context);
         ConfigureVirtualFileSystem(hostingEnvironment);
         ConfigureMultiTenancyLocalization();
+        ConfigureExceptionHandlingLocalization();
+        ConfigureExceptionStatusCodes();
         ConfigureNavigationServices();
         ConfigureAutoApiControllers();
         ConfigureSwaggerServices(context.Services);
@@ -422,6 +424,13 @@ public class PlatformWebModule : AbpModule
         {
             options.IsDynamicClaimsEnabled = true;
         });
+
+        // Yasaklı TAM SAYFA gezinmesi uygulama kabuğundaki /AccessDenied'a eksik izin adıyla gider;
+        // geri kalan her şey varsayılan işleyiciye birebir devredilir. Replace: çerçevenin TryAdd
+        // kaydı önce de sonra da gelse tek kayıt bizimki kalır.
+        context.Services.Replace(ServiceDescriptor.Singleton<
+            Microsoft.AspNetCore.Authorization.IAuthorizationMiddlewareResultHandler,
+            Middleware.AccessDeniedResultHandler>());
     }
 
     /// <summary>
@@ -598,6 +607,33 @@ public class PlatformWebModule : AbpModule
             options.Resources
                 .Get<AbpUiMultiTenancyResource>()
                 .AddVirtualJson("/Localization/MultiTenancyUi");
+        });
+    }
+
+    // ABP'nin "Id değeri {1} olan {0} türünden bir nesne bulunamadı!" metni iç tür adını (TaskItem,
+    // AppDocument, Project…) ve kimliği kullanıcıya basıyordu — API zarfı, ABP penceresi, adalar, hata
+    // sayfası. Dostane metinle ezilir (tr/en); ayrıntı log ve denetim kaydında kalır. JSON Domain.Shared'ın
+    // sanal dosya sisteminde; o proje Volo.Abp.ExceptionHandling'e başvurmadığı için yapılandırma burada
+    // (ConfigureMultiTenancyLocalization emsali).
+    private void ConfigureExceptionHandlingLocalization()
+    {
+        Configure<AbpLocalizationOptions>(options =>
+        {
+            options.Resources
+                .Get<Volo.Abp.ExceptionHandling.Localization.AbpExceptionHandlingResource>()
+                .AddVirtualJson("/Localization/ExceptionHandling");
+        });
+    }
+
+    // ABP varsayılanı her iş kuralı istisnasını 403 yapar; "bulunamadı" anlamındaki kod 404 dönsün
+    // (GRH-22 — metin tr.json'da aynen kalır). PlatformPageModel'in 404 kancası aynı bulucuyu kullandığı
+    // için bu kodla düşen PlatformPageModel sayfası da hata görünümünü (Views/Error) AYNI ADRESTE 404 ile
+    // basar — yönlendirme yok. IsHtmlNavigation / UseErrorPage sözleşmesine dokunulmaz.
+    private void ConfigureExceptionStatusCodes()
+    {
+        Configure<Volo.Abp.AspNetCore.ExceptionHandling.AbpExceptionHttpStatusCodeOptions>(options =>
+        {
+            options.Map(PlatformDomainErrorCodes.GrantInterestNotFound, System.Net.HttpStatusCode.NotFound);
         });
     }
 
@@ -832,8 +868,10 @@ public class PlatformWebModule : AbpModule
     /// </list>
     /// Her iki durumda da istemci gerçek hata zarfını hiç göremez. Bu yüzden hata
     /// sayfası yalnız HTML gezinmelerine bağlanır; API/AJAX ham durum kodunu alır.
+    /// <para>Aynı tanımı yasak yönlendirmesi de kullanır (<see cref="Middleware.AccessDeniedResultHandler"/>,
+    /// /AccessDenied sayfası); ikisi ayrışmasın diye davranış HtmlNavigation_Tests ile sabit.</para>
     /// </summary>
-    private static bool IsHtmlNavigation(HttpContext ctx)
+    internal static bool IsHtmlNavigation(HttpContext ctx)
     {
         var request = ctx.Request;
 

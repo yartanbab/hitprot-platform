@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
 import { ModalPortal } from './components/ui/ModalPortal';
@@ -1021,4 +1021,4 @@ function confirmAction(message) {
 }
 
 const root = document.getElementById('dynamic-assets-app-root');
-if (root) createRoot(root).render(<FormBuilder />);
+if (root) mountIsland(root, 'form-builder', <FormBuilder />);

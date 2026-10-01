@@ -1,5 +1,5 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import { ThemeProvider } from './lib/theme/ThemeProvider';
 import { QueryProvider } from './lib/api/QueryProvider';
 import { ToastProvider } from './lib/feedback';
@@ -11,8 +11,7 @@ registerServiceWorker();
 
 const rootElement = document.getElementById('apya-expense-capture-root');
 if (rootElement) {
-    const root = createRoot(rootElement);
-    root.render(
+    mountIsland(rootElement, 'expense-capture',
         <ThemeProvider>
             <QueryProvider>
                 <ToastProvider>

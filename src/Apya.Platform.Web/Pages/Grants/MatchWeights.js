@@ -80,6 +80,10 @@ $(function () {
         paintScopeWarning();
         paintDimensionNotes();
         loading = false;
+        // Kayıt ucu TAM güncellemedir (boyut listesi dahil): "Kaydet" yalnız form sunucu
+        // değerleriyle dolunca açılır (işaretlemede kilitli). Yükleme düşünce boş boyut listesi
+        // kaydedilip — "tüm programlar" seçiliyse küresel — ağırlıklar silinirdi.
+        $('#WeightSaveBtn').prop('disabled', false);
         refreshImpact();
     }
 
@@ -104,7 +108,9 @@ $(function () {
     }
 
     function refreshImpact() {
-        service.previewImpact(grantId, collect()).then(paintImpact);
+        // Önizleme arka plan isteğidir (Parametreler'deki gibi): hata penceresi açmaz, panel son
+        // sonucu gösterir. Yükleme/kayıt hatası kendi kanalında (kart / ABP penceresi).
+        service.previewImpact(grantId, collect(), { abpHandleError: false }).then(paintImpact);
     }
 
     function paintImpact(p) {
@@ -141,8 +147,9 @@ $(function () {
     }
 
     // ---------- Eksik veri kampanyası ----------
+    // Yalnız açılışta ve Tekrar dene ile çağrılır. Yükleme hatası ABP penceresi değil kart (Faz 4 kararı 2).
     function loadCampaign() {
-        return service.getMissingData().then(function (rows) {
+        return Promise.resolve(service.getMissingData({ abpHandleError: false })).then(function (rows) {
             missingByField = {};
             (rows || []).forEach(function (r) { missingByField[r.field] = r.firmCount; });
             paintDimensionNotes();
@@ -161,8 +168,16 @@ $(function () {
                     '</div>');
             });
             $('#WeightCampaignEmpty').toggleClass('d-none', (rows || []).length > 0);
+        }, function (err) {
+            $('#WeightCampaign').html(apya.loadState.errorHtml(l('Grants:Weights:Campaign:LoadFailed'), 'js-weights-campaign-retry', err));
+            $('#WeightCampaignEmpty').addClass('d-none');
         });
     }
+
+    $('#WeightCampaign').on('click', '.js-weights-campaign-retry', function () {
+        $(this).prop('disabled', true);
+        loadCampaign();
+    });
 
     // ---------- Kaydet / sıfırla ----------
     $('#WeightSaveBtn').on('click', function () {
@@ -187,6 +202,23 @@ $(function () {
 
     $('#WeightSizePenalty, #WeightSkipMissing').on('change', schedulePreview);
 
+    // Yalnız açılışta ve Tekrar dene ile çağrılır; kaydet/sıfırla modeli yanıttan doldurur.
+    // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2); Kaydet kilitli kalır.
+    function load() {
+        // İşaretlemedeki kilidi JS de kurar: Firefox form durumu geri yüklemesi (F5) açık bırakabilir.
+        $('#WeightSaveBtn').prop('disabled', true);
+        return Promise.resolve(service.get(grantId, { abpHandleError: false })).then(function (dto) {
+            fill(dto);
+        }, function (err) {
+            $('#WeightDimensions').html(apya.loadState.errorHtml(l('Grants:Weights:LoadFailed'), 'js-weights-retry', err));
+        });
+    }
+
+    $('#WeightDimensions').on('click', '.js-weights-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
+
     loadCampaign();
-    service.get(grantId).then(fill);
+    load();
 });

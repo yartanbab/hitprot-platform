@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTaskChecklist } from '../../hooks/useTaskChecklist';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 /**
  * Kontrol Listesi sekmesi (V3). Gerçek backend'e yazar:
@@ -26,7 +27,7 @@ export function ChecklistTabV3({ taskId, readOnly = false }) {
             await addItem(text);
         } catch (err) {
             setDraft(text); // yazdığı metni kaybetmesin
-            window?.abp?.notify?.error?.(err?.message || 'Madde eklenemedi.');
+            notifyError(err, 'Madde eklenemedi.');
         }
     };
 
@@ -67,7 +68,7 @@ export function ChecklistTabV3({ taskId, readOnly = false }) {
                             disabled={readOnly}
                             aria-label={item.isDone ? 'Tamamlandı işaretini kaldır' : 'Tamamlandı işaretle'}
                             onClick={() => toggleItem(item.id).catch((err) =>
-                                window?.abp?.notify?.error?.(err?.message || 'Durum güncellenemedi.'))}
+                                notifyError(err, 'Durum güncellenemedi.'))}
                             className={`flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white ${readOnly ? 'cursor-default' : 'cursor-pointer'} transition-colors duration-fast ${
                                 item.isDone ? 'bg-success border-success' : 'bg-transparent border-strong'
                             }`}
@@ -86,7 +87,7 @@ export function ChecklistTabV3({ taskId, readOnly = false }) {
                             title="Sil"
                             aria-label={`${item.text} maddesini sil`}
                             onClick={() => removeItem(item.id).catch((err) =>
-                                window?.abp?.notify?.error?.(err?.message || 'Madde silinemedi.'))}
+                                notifyError(err, 'Madde silinemedi.'))}
                             className="flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-negative-subtle hover:text-negative cursor-pointer"
                         >
                             <i className="fa-regular fa-trash-can text-[11px]" />

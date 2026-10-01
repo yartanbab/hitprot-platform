@@ -1,13 +1,12 @@
-import { j as e, r as u, d as Q, b as pe } from "./react-vendor-D57GAUXd.js";
-import { u as be, B, c as D, S as K, b as U, e as ye, M as ve, I as _, a as Y, T as je } from "./Dialog-Bky2XNdc.js";
-import { a as ke } from "./QueryProvider-CMEXdgTM.js";
-import { u as ce, r as we, T as Ce } from "./registerServiceWorker-MivfkJsD.js";
-import { C as Se } from "./Combobox-D5mSMyzC.js";
-import { t as N } from "./i18n-DkhYld-7.js";
-import { u as ue, b as de } from "./query-vendor-Bf69L2iP.js";
-import { a as F } from "./httpClient-DePjXdo1.js";
+import { j as e, r as u, b as Q } from "./react-vendor-D7YDiBbi.js";
+import { t as N, m as pe } from "./index-DgpuJ91w.js";
+import { u as be, B, c as D, S as K, b as U, e as ye, M as ve, I as _, a as Y, T as je } from "./Dialog-BEQtx1HL.js";
+import { a as ke } from "./QueryProvider-D2Hvqdr9.js";
+import { u as ce, r as we, T as Ce } from "./registerServiceWorker-DPq4UUem.js";
+import { C as Se } from "./Combobox-VWBB0dEF.js";
+import { u as ue, b as de } from "./query-vendor-Db2mwxYI.js";
+import { a as F } from "./httpClient-BNoyY5yK.js";
 import { i as Ne, s as me } from "./permanentRejection-SvaBclz0.js";
-/* empty css               */
 const Le = {
   light: { key: "Theme:Light", fallback: "Açık tema (Sıradaki: Koyu)" },
   dark: { key: "Theme:Dark", fallback: "Koyu tema (Sıradaki: Sistem)" },
@@ -895,6 +894,8 @@ function st() {
 }
 we();
 const le = document.getElementById("apya-expense-capture-root");
-le && pe(le).render(
+le && pe(
+  le,
+  "expense-capture",
   /* @__PURE__ */ e.jsx(je, { children: /* @__PURE__ */ e.jsx(ke, { children: /* @__PURE__ */ e.jsx(Ce, { children: /* @__PURE__ */ e.jsx(st, {}) }) }) })
 );

@@ -422,6 +422,25 @@ body {
     color: var(--apya-text-secondary, #4B5563);
 }
 
+/* Tam sayfa "yayında değil / bağlantı geçersiz" durumu (ACC-04, GRT-06) — kapalı/taslak/yok çağrı
+   ve geçersiz randevu bağlantısı. .apya-pub-empty liste içi boş durum; bu ortalı dar kutu. */
+.apya-pub-unavailable {
+    max-width: 560px;
+    margin: 56px auto;
+    text-align: center;
+}
+
+.apya-pub-unavailable h1 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    letter-spacing: -.02em;
+}
+
+.apya-pub-unavailable p {
+    margin: 0 0 20px;
+    color: var(--apya-text-secondary, #4B5563);
+}
+
 /* --- Alt CTA bandı ------------------------------------------------------- */
 
 .apya-pub-cta {

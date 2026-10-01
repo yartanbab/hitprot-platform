@@ -37,7 +37,7 @@ public class DashboardController : PlatformController
         => _dashboardAppService.GetProjectHealthAsync(input);
 
     [HttpGet("pending-approvals")]
-    public Task<List<PendingApprovalDto>> GetPendingApprovalsAsync()
+    public Task<PendingApprovalListDto> GetPendingApprovalsAsync()
         => _dashboardAppService.GetPendingApprovalsAsync();
 
     [HttpGet("blocked-tasks")]

@@ -7,6 +7,7 @@ import { useTaskAttachments } from '../../hooks/useTaskAttachments';
 import { getTaskPermissions } from '../../taskPermissions';
 import { taskToUpdateDto } from '../../taskUpdateDto';
 import { statusOf, priorityOf, initialsOf, avatarColorOf } from '../taskMetaV3';
+import { notifyError } from '../../../lib/api/abpErrors';
 
 /**
  * Alt görev detay paneli — sağdan açılan sheet.
@@ -147,7 +148,7 @@ export function SubtaskSheetV3({
             await Promise.resolve(call());
             await refreshSubtask();
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Alt görev güncellenemedi.');
+            notifyError(err, 'Alt görev güncellenemedi.');
         }
     };
 
@@ -166,7 +167,7 @@ export function SubtaskSheetV3({
         if (!text) return;
         setChecklistDraft('');
         try { await checklist.addItem(text); }
-        catch (err) { window?.abp?.notify?.error?.(err?.message || 'Madde eklenemedi.'); }
+        catch (err) { notifyError(err, 'Madde eklenemedi.'); }
     };
 
     const sendComment = async () => {
@@ -177,7 +178,7 @@ export function SubtaskSheetV3({
             await Promise.resolve(svc.addComment(sub.id, text));
             await queryClient.invalidateQueries({ queryKey: ['task-comments', subtaskId] });
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Yorum gönderilemedi.');
+            notifyError(err, 'Yorum gönderilemedi.');
         }
     };
 
@@ -188,7 +189,7 @@ export function SubtaskSheetV3({
             onDeleted?.(sub.id);
             onClose?.();
         } catch (err) {
-            window?.abp?.notify?.error?.(err?.message || 'Alt görev silinemedi.');
+            notifyError(err, 'Alt görev silinemedi.');
         }
     };
 
@@ -458,7 +459,7 @@ export function SubtaskSheetV3({
                                     const file = e.target.files?.[0];
                                     e.target.value = '';
                                     if (file) attachments.upload(file).catch((err) =>
-                                        window?.abp?.notify?.error?.(err?.message || 'Dosya yüklenemedi.'));
+                                        notifyError(err, 'Dosya yüklenemedi.'));
                                 }}
                             />
                             <button
@@ -497,7 +498,7 @@ export function SubtaskSheetV3({
                                             type="button"
                                             title="Sil"
                                             onClick={() => attachments.remove(f.id).catch((err) =>
-                                                window?.abp?.notify?.error?.(err?.message || 'Dosya silinemedi.'))}
+                                                notifyError(err, 'Dosya silinemedi.'))}
                                             className="flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer"
                                         >
                                             <i className="fa-regular fa-trash-can text-[11px]" />

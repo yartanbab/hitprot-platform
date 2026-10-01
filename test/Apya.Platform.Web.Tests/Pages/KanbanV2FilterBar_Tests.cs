@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using Shouldly;
 using Xunit;
 
@@ -46,5 +47,28 @@ public class KanbanV2FilterBar_Tests : PlatformWebTestBase
         // Shell.KanbanView sayfayla gelir (ikinci istek yok) — boş olabilir ama
         // attribute mutlaka basılmalı; apya-kanban.js varsayılanı buradan kurar.
         html.ShouldContain("data-kanban-view=");
+    }
+
+    /// <summary>
+    /// Yükleme hatası kartının başlığı ve 1000 tavanı notu partial'dan data-* ile gelir (JS'te ikinci
+    /// Türkçe kopya yok). Tavan metni HAM {0}/{1} taşımalı: JS doldurur. IHtmlLocalizer'ın argümansız
+    /// yazımı {0} yüzünden FormatException atardı; .Value biçimlendirmeden kodlanmış metin verir.
+    /// </summary>
+    [Fact]
+    public async Task Kanban_panosu_yukleme_hatasi_ve_tavan_metinlerini_tasir()
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync("/Tasks"));
+
+        var board = doc.DocumentNode.SelectSingleNode("//div[contains(@class,'kanban-board')]");
+        board.ShouldNotBeNull("kanban panosu basılmadı");
+        HtmlEntity.DeEntitize(board!.GetAttributeValue("data-load-failed", ""))
+            .ShouldBe("Görevler yüklenemedi.");
+        HtmlEntity.DeEntitize(board.GetAttributeValue("data-capped", ""))
+            .ShouldBe("Pano yalnız ilk {0} görevi gösteriyor (toplam {1}). Tümünü görmek için süzgeci daraltın.");
+
+        var cap = board.ParentNode.SelectSingleNode("./p[contains(@class,'js-kanban-cap')]");
+        cap.ShouldNotBeNull("tavan notu panoyla aynı sarmalayıcıda olmalı (JS nearBoard ile bulur)");
+        cap!.Attributes.Contains("hidden").ShouldBeTrue("not yalnız toplam gösterilenden fazlaysa görünür");
     }
 }

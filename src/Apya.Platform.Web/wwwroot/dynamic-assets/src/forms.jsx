@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { mountIsland } from './lib/mountIsland';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
+import { EmptyState, useRetryFocus } from './components/ui/EmptyState';
 import { publicFormPath } from './lib/publicFormLink';
 import { CHOICE_SOURCES, CHOICE_SCOPES, sourceLabel } from './lib/formChoices';
 import './index.css';
@@ -25,6 +26,7 @@ const DEFAULT_NEW_CAT_COLOR = () => token('--apya-accent-500', '#4F46E5');
 function FormsList() {
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [showCatModal, setShowCatModal] = useState(false);
@@ -42,9 +44,11 @@ function FormsList() {
       const res = await api.get(`/api/app/form?${qs.toString()}`);
       if (request !== loadRequest.current) return;
       setForms(res.items || []);
+      setLoadError(null);
     } catch (e) {
       if (request !== loadRequest.current) return;
-      notify('error', e?.message || 'Formlar yüklenemedi.');
+      // Yükleme hatasının tek kanalı liste alanındaki kart (engelleyici pencere yok).
+      setLoadError(e);
     } finally {
       if (request === loadRequest.current) setLoading(false);
     }
@@ -55,6 +59,9 @@ function FormsList() {
 
   useEffect(() => { loadCategories(); }, []);
   useEffect(() => { load(categoryFilter); }, [categoryFilter]);
+
+  // Başarılı "Tekrar dene"de kart listeyle yer değiştirir: odak sayfaya düşmesin, listeye geçsin.
+  const listFocus = useRetryFocus(!loading && !loadError);
 
   const catById = (id) => categories.find((c) => c.id === id);
 
@@ -75,7 +82,7 @@ function FormsList() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Formlarım</h1>
-          <p className="text-sm text-text-secondary">{forms.length} form</p>
+          <p className="text-sm text-text-secondary">{loading || loadError ? '—' : `${forms.length} form`}</p>
         </div>
         <a href="/DynamicAssets/Builder" className="rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-accent-600">
           + Yeni Form
@@ -105,8 +112,16 @@ function FormsList() {
         </button>
       </div>
 
-      {loading ? (
+      {/* Hata anında eldeki formlar başka kategoriye ait olabilir: gösterilmez;
+          "Henüz formun yok" + oluşturma çağrısı da yalnız başarılı-boş sonuçta.
+          Hata varken yükleniyor = yeniden deneniyor: kart kalır (odak düğmede). */}
+      <div ref={listFocus.contentRef} tabIndex={-1}>
+      {loading && !loadError ? (
         <div className="py-16 text-center text-text-tertiary">Formlar yükleniyor…</div>
+      ) : loadError ? (
+        <div className="rounded-2xl border-2 border-dashed border-default py-12">
+          <EmptyState variant="error" title="Formlar yüklenemedi" error={loadError} onRetry={listFocus.retry(() => load(categoryFilter))} retrying={loading} />
+        </div>
       ) : forms.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-default py-20 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent-soft text-3xl">📝</div>
@@ -153,6 +168,7 @@ function FormsList() {
           })}
         </div>
       )}
+      </div>
 
       {showSourceModal && <ChoiceSourceCatalogModal onClose={() => setShowSourceModal(false)} />}
 
@@ -173,12 +189,24 @@ function FormsList() {
  */
 function ChoiceSourceCatalogModal({ onClose }) {
   const [sources, setSources] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  // Katalog kodla gelir: okunamadığında "Tanımlı veri kaynağı yok." demek yanlış olur.
+  // Hata yeniden denemede silinmez: kart yerinde kalır, düğme meşgul (odak düğmede).
+  const load = () => {
+    setLoading(true);
+    setSources(null);
     api.get('/api/app/form/choice-sources')
-      .then((list) => setSources(list || []))
-      .catch((e) => { notify('error', e?.message || 'Veri kaynakları yüklenemedi.'); setSources([]); });
-  }, []);
+      .then((list) => { setSources(list || []); setLoadError(null); })
+      .catch((e) => setLoadError(e))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  // Başarılı "Tekrar dene"de odak pencerenin arkasındaki sayfaya düşmesin, kataloğa geçsin.
+  const listFocus = useRetryFocus(!loading && !loadError);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay p-4" onClick={onClose}>
@@ -189,7 +217,10 @@ function ChoiceSourceCatalogModal({ onClose }) {
         </div>
         <p className="mb-4 text-sm text-text-secondary">Açılır liste alanını bu listelerden birine bağlayabilirsiniz; seçenekler form her açıldığında güncel veriden gelir.</p>
 
-        {sources == null ? (
+        <div ref={listFocus.contentRef} tabIndex={-1}>
+        {loadError ? (
+          <EmptyState compact variant="error" title="Veri kaynakları yüklenemedi" error={loadError} onRetry={listFocus.retry(load)} retrying={loading} />
+        ) : sources == null ? (
           <p className="py-8 text-center text-sm text-text-tertiary">Yükleniyor…</p>
         ) : sources.length === 0 ? (
           <p className="py-8 text-center text-sm text-text-tertiary">Tanımlı veri kaynağı yok.</p>
@@ -214,6 +245,7 @@ function ChoiceSourceCatalogModal({ onClose }) {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
@@ -316,4 +348,4 @@ function confirmDelete(title) {
 }
 
 const root = document.getElementById('forms-list-root');
-if (root) createRoot(root).render(<FormsList />);
+if (root) mountIsland(root, 'forms', <FormsList />);

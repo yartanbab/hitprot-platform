@@ -81,6 +81,12 @@ describe('complianceSub', () => {
     expect(complianceSub(ready(overview([])))).toBe('%78 · 14 eksik');
     expect(complianceSub(ready(overview([], { ...SUMMARY, missingCount: 0, percent: 100 })))).toBe('%100 · tamam');
   });
+
+  it('özet okunamadıysa (yeniden denenirken de) nötr "Kontrol listesi" değil "Yüklenemedi"', () => {
+    expect(complianceSub({ hasProject: true, loading: false, failed: true, overview: null })).toBe('Yüklenemedi');
+    expect(complianceSub({ hasProject: true, loading: true, failed: true, overview: null })).toBe('Yüklenemedi');
+    expect(complianceSub({ hasProject: false, loading: false, failed: true, overview: null })).toBe('Proje seçin');
+  });
 });
 
 describe('nextHint', () => {
@@ -91,6 +97,9 @@ describe('nextHint', () => {
 
   it('veri okunamadıysa uydurma ipucu basmaz', () => {
     expect(nextHint('docs', ready(null))).toBeNull();
+    // Yeniden denenirken de "…" bekleme ipucu değil: yerinde şeridin Tekrar dene'si durur.
+    expect(nextHint('deliver', { hasProject: true, loading: true, failed: true, overview: null })).toBeNull();
+    expect(nextHint('docs', { hasProject: true, loading: false, failed: true, overview: null })).toBeNull();
   });
 
   it('Belgeler: en kritik eksiği ve yükleme sonrası yüzdeyi söyler', () => {

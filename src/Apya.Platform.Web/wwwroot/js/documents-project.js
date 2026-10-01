@@ -1,9 +1,8 @@
-import { r, j as e, d as de, b as K } from "./react-vendor-D57GAUXd.js";
-/* empty css               */
-import { B as I, e as L } from "./Dialog-Bky2XNdc.js";
-import { S as H } from "./SkeletonShape-BzeBQ1R3.js";
-import { E as _ } from "./EmptyState-D5m5kdmR.js";
-import { E as Y, D as q, P as V } from "./ProcessRibbon-BtZ1ri4F.js";
+import { r, j as e, b as de } from "./react-vendor-D7YDiBbi.js";
+import { E as K, m as H } from "./index-DgpuJ91w.js";
+import { B as I, e as L } from "./Dialog-BEQtx1HL.js";
+import { S as _ } from "./SkeletonShape-Cev7M69F.js";
+import { E as Y, D as q, P as V } from "./ProcessRibbon-CHjVpooY.js";
 const A = (a, t) => {
   var m, c, d;
   return (d = (c = (m = window == null ? void 0 : window.abp) == null ? void 0 : m.notify) == null ? void 0 : c[a]) == null ? void 0 : d.call(c, t);
@@ -89,7 +88,7 @@ function Ne() {
   if (!a)
     return T(
       /* @__PURE__ */ e.jsx(
-        _,
+        K,
         {
           icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-diagram-project" }),
           title: "Proje bağlamı gerekiyor",
@@ -104,7 +103,7 @@ function Ne() {
         }
       )
     );
-  if (c) return T(/* @__PURE__ */ e.jsx(H, { rows: 8 }));
+  if (c) return T(/* @__PURE__ */ e.jsx(_, { rows: 8 }));
   if (!t) return null;
   const C = t.startDate ? new Date(t.startDate) : null, N = t.endDate ? new Date(t.endDate) : null, y = t.budget;
   return T(
@@ -303,7 +302,7 @@ function ze() {
     /* @__PURE__ */ e.jsx(V, { active: "docs", projectId: a }),
     n
   ] });
-  return a ? T ? E(/* @__PURE__ */ e.jsx(H, { rows: 8 })) : t ? E(
+  return a ? T ? E(/* @__PURE__ */ e.jsx(_, { rows: 8 })) : t ? E(
     /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-matchboard", children: [
         /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-check-card", children: [
@@ -429,7 +428,7 @@ function ze() {
     ] })
   ) : null : E(
     /* @__PURE__ */ e.jsx(
-      _,
+      K,
       {
         icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-link" }),
         title: "Proje bağlamı gerekiyor",
@@ -627,11 +626,11 @@ function Me() {
     oe,
     s
   ] });
-  if (j) return G(/* @__PURE__ */ e.jsx(H, { rows: 8 }));
+  if (j) return G(/* @__PURE__ */ e.jsx(_, { rows: 8 }));
   if (!F)
     return G(
       /* @__PURE__ */ e.jsx(
-        _,
+        K,
         {
           icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-diagram-project" }),
           title: "Henüz proje yok",
@@ -765,8 +764,8 @@ function Me() {
   );
 }
 const ae = document.getElementById("project-timeline-island");
-ae && K(ae).render(/* @__PURE__ */ e.jsx(Ne, {}));
+ae && H(ae, "documents-timeline", /* @__PURE__ */ e.jsx(Ne, {}));
 const te = document.getElementById("document-matching-island");
-te && K(te).render(/* @__PURE__ */ e.jsx(ze, {}));
+te && H(te, "documents-matching", /* @__PURE__ */ e.jsx(ze, {}));
 const ne = document.getElementById("project-scope-island");
-ne && K(ne).render(/* @__PURE__ */ e.jsx(Me, {}));
+ne && H(ne, "documents-scope", /* @__PURE__ */ e.jsx(Me, {}));

@@ -27,11 +27,14 @@ export function useComplianceOverview(projectId) {
       projectId,
       overview: prev.projectId === projectId ? prev.overview : null,
       loading: true,
-      failed: false,
+      // Aynı projede yeniden denenirken hata bayrağı kalır: şeridin "Tekrar dene"si
+      // istek sürerken sökülmez (odak düğmede), "Yüklenemedi" nötr etikete dönmez.
+      failed: prev.projectId === projectId && prev.failed,
     }));
 
     try {
-      const overview = await getComplianceOverview(projectId, null);
+      // Yükleme hatası çağıranda `failed` ile gösterilir; ABP penceresi açılmaz.
+      const overview = await getComplianceOverview(projectId, null, { abpHandleError: false });
       // Bu arada başka bir proje istendiyse eski yanıt yeni bağlamı ezmesin.
       if (request === requestRef.current) {
         setState({ projectId, overview: overview ?? null, loading: false, failed: false });

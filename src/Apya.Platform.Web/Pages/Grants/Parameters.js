@@ -682,6 +682,9 @@ $(function () {
         paintStatus(dto);
         paintRules();
         loading = false;
+        // Kayıt ucu TAM güncellemedir: "Taslağı kaydet" yalnız form sunucu değerleriyle dolunca
+        // açılır (işaretlemede kilitli). Yükleme düşünce boş form kaydedilip parametreler silinirdi.
+        $('#ParamSaveBtn').prop('disabled', false);
         refreshPreview();
     }
 
@@ -835,7 +838,10 @@ $(function () {
         });
     }
 
-    weightService.get(grantId).then(paintWeights);
+    // Yan özet: yükleme hatası ABP penceresi açmaz (Faz 4 kararı 2); rozet "—" kalır, bağlantı çalışır.
+    Promise.resolve(weightService.get(grantId, { abpHandleError: false })).then(paintWeights, function () {
+        $('#NavWeightsBadge').text('—');
+    });
 
     // ---------- 12b · Program afişi ----------
     // Tasarım ölçüsü: 16:9, en az 1280×720, JPG/PNG. Boyut ve tür sunucuda da denetlenir;
@@ -915,14 +921,37 @@ $(function () {
         });
     });
 
-    // Şablon listesi önce yüklenir: seçim kutusu dolmadan fill() değeri atayamaz.
-    templateService.getList().then(function (list) {
-        stageTemplates = list || [];
+    // Şablon listesi önce yüklenir: seçim kutusu dolmadan fill() değeri atayamaz. Tek ret dalı iki
+    // adımı da kapsar — şablon listesi düşerse de kilit açılmaz (boş seçimle kayıt aşama şablonunu
+    // temizlerdi). Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2). Seçenekler
+    // her denemede boşaltılarak doldurulur (Tekrar dene çoğaltmasın).
+    function load() {
         var $sel = $('#ParamStageTemplate');
-        $sel.append($('<option>').val('').text(l('Grants:Parameters:Process:None')));
-        stageTemplates.forEach(function (t) {
-            $sel.append($('<option>').val(t.id).text(t.name));
+        // İşaretlemedeki kilidi JS de kurar: Firefox form durumu geri yüklemesi (F5) açık bırakabilir.
+        // fill() Kaydet'i, paintStatus Yayınla'yı yeniden açar.
+        $('#ParamSaveBtn, #ParamPublishBtn').prop('disabled', true);
+        return Promise.resolve(templateService.getList({ abpHandleError: false })).then(function (list) {
+            stageTemplates = list || [];
+            $sel.empty().append($('<option>').val('').text(l('Grants:Parameters:Process:None')));
+            stageTemplates.forEach(function (t) {
+                $sel.append($('<option>').val(t.id).text(t.name));
+            });
+            return service.get(grantId, { abpHandleError: false });
+        }).then(function (dto) {
+            fill(dto);
+            $('#ParamLoadState').empty();
+            $('.apya-param-tabs, .apya-param-panels').removeClass('d-none');
+        }, function (err) {
+            // Veri yokken boş editör etkileşimli kalmasın (sekmeler, "Şart ekle"); Kaydet/Yayınla zaten kilitli.
+            $('.apya-param-tabs, .apya-param-panels').addClass('d-none');
+            $('#ParamLoadState').html(apya.loadState.errorHtml(l('Grants:Parameters:LoadFailed'), 'js-params-retry', err));
         });
-        return service.get(grantId).then(fill);
+    }
+
+    $('#ParamLoadState').on('click', '.js-params-retry', function () {
+        $(this).prop('disabled', true);
+        load();
     });
+
+    load();
 });
