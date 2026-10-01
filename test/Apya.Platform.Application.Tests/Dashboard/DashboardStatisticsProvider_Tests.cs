@@ -150,6 +150,38 @@ public class DashboardStatisticsProvider_Tests
     }
 
     /// <summary>
+    /// UI ham izin kodunu basmaz; kodu "Permission:…" anahtarına çevirip görünen adı oradan çözer
+    /// ("Platform.X" ↔ "Permission:X" — StatisticsBand.jsx <c>permissionLabel</c>). Bu, izin tanımındaki
+    /// yerelleştirme anahtarının ADINA bağlı bir sözleşmedir: istatistiklerin bildirdiği her izin tanımlı
+    /// olmalı ve görünen adı o anahtardan gelmeli. Kural dışı adlandırılmış bir izne istatistik bağlanırsa
+    /// kutucukta ham kod kalır — derleyici görmez, bu test kırılır.
+    /// </summary>
+    [Fact]
+    public async Task Her_istatistik_izninin_gorunen_adi_Permission_anahtarindan_gelir()
+    {
+        _permissionChecker.IsGrantedAsync(Arg.Any<string>()).Returns(false);
+
+        var stats = await BuildSut().BuildAsync(new DashboardQueryDto());
+
+        var context = new PermissionDefinitionContext(null!);
+        new PlatformPermissionDefinitionProvider().Define(context);
+
+        var codes = stats.SelectMany(s => s.RequiredPermission.Split(" + ")).Distinct().ToList();
+        codes.ShouldNotBeEmpty();
+
+        foreach (var code in codes)
+        {
+            code.ShouldStartWith(PlatformPermissions.GroupName + ".");
+
+            var definition = context.GetPermissionOrNull(code);
+            definition.ShouldNotBeNull($"{code} tanımlı bir izin değil");
+
+            var displayName = definition!.DisplayName.ShouldBeOfType<Volo.Abp.Localization.LocalizableString>();
+            displayName.Name.ShouldBe("Permission:" + code.Substring(PlatformPermissions.GroupName.Length + 1));
+        }
+    }
+
+    /// <summary>
     /// "Dönem net" = gelir − gider: iki toplamı da okur → Gelir VE Gider izni ister (Genel Bakış
     /// Gelir/Gider kartıyla aynı kural, G6 karar 6). Tek izinle net, öbür toplamı dolaylı sızdırırdı.
     /// Önbellek kiracı genelinde paylaşıldığı için kilit önbellekten ÖNCE: izinli kullanıcının

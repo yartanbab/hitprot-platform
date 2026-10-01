@@ -2499,6 +2499,7 @@
         "Dashboard:StatTab:Communication": "İletişim",
         "Dashboard:StatTab:System": "Sistem",
         "Dashboard:Stat:Locked": "yetki gerekli",
+        "Dashboard:Stat:PermissionPair": "{0} ve {1}",
         "Dashboard:Stat:Flat": "• sabit",
         "Dashboard:Funnel:Share": "%{0}",
         "Dashboard:Catalog:Title": "Kart ekle",

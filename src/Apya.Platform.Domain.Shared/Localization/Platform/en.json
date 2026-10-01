@@ -2116,6 +2116,7 @@
     "Dashboard:StatTab:Communication": "Communication",
     "Dashboard:StatTab:System": "System",
     "Dashboard:Stat:Locked": "permission required",
+    "Dashboard:Stat:PermissionPair": "{0} and {1}",
     "Dashboard:Stat:Flat": "• flat",
     "Dashboard:Funnel:Share": "{0}%",
     "Dashboard:Catalog:Title": "Add card",

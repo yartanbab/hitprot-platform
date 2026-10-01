@@ -5,7 +5,7 @@ import {
     usePendingApprovals, useBlockedTasks, useIncomeExpense, useDeliveryHeatmap,
 } from '../hooks/useDashboard';
 import { VIEWS, DEFAULT_VIEW } from '../layouts/viewPresets';
-import { STAT_GROUPS } from '../cards/StatisticsBand';
+import { STAT_GROUPS, permissionLabel } from '../cards/StatisticsBand';
 import { GROUP_ORDER, GROUP_LABEL } from '../cards/DeliveriesCard';
 import { STATE_BADGE } from '../cards/ProjectHealthCard';
 import { REASON } from '../cards/BlockersCard';
@@ -216,7 +216,7 @@ function SummaryBlock({ query, locale }) {
                         label={t('Dashboard:Summary:PendingApprovals', 'Bende onay')}
                         value={data.pendingApprovals}
                         locked={data.pendingApprovals == null}
-                        permission="Platform.Invoices"
+                        permission={t('Permission:Invoices', 'Faturalar')}
                         note={[
                             data.pendingApprovalAmount != null
                                 ? formatMoney(data.pendingApprovalAmount, data.currency, locale)
@@ -230,7 +230,7 @@ function SummaryBlock({ query, locale }) {
                         label={t('Dashboard:Summary:BudgetUsage', 'Bütçe kullanımı')}
                         value={data.budgetUsedRatio != null ? `%${Math.round(data.budgetUsedRatio * 100)}` : null}
                         locked={data.budgetUsedRatio == null && data.budgetTotal == null}
-                        permission="Platform.Projects.ViewBudget"
+                        permission={t('Permission:Projects.ViewBudget', 'Bütçe Görüntüleme')}
                         note={data.budgetTotal != null
                             ? `${formatMoney(data.budgetSpent, data.currency, locale)} / ${formatMoney(data.budgetTotal, data.currency, locale)}`
                             : null}
@@ -241,7 +241,10 @@ function SummaryBlock({ query, locale }) {
     );
 }
 
-/** Kilitli kutucuk sayı YAZMAZ — sunucu değeri hiç göndermedi, uydurulmaz. */
+/**
+ * Kilitli kutucuk sayı YAZMAZ — sunucu değeri hiç göndermedi, uydurulmaz.
+ * `permission`: izin tanımının görünen adı (ham kod kağıda basılmaz).
+ */
 function SummaryTile({ label, value, note, locked, permission }) {
     return (
         <div className="border-b border-e border-neutral-400 p-2">
@@ -299,7 +302,7 @@ function StatisticsBlock({ query }) {
                                             <td className={TD}>
                                                 {stat.label}
                                                 <span className="block font-mono text-[6.5pt] text-neutral-400">
-                                                    {stat.requiredPermission}
+                                                    {permissionLabel(stat.requiredPermission)}
                                                 </span>
                                             </td>
                                             <td className={TD_NUM}>

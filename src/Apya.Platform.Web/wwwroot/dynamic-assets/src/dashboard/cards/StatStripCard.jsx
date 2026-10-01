@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { AreaSpark, Gauge } from '../charts';
 import { useSummary } from '../hooks/useDashboard';
 import { cn, formatMoneyCompact } from '../../lib/utils';
 import { t } from '../../lib/i18n';
 import { Skeleton } from '../../components/ui';
+import { RetryButton } from '../../components/ui/EmptyState';
 
 /**
  * Sayısal özet şeridi — 5 kutucuk. Tek sorgudan beslenir (useSummary).
@@ -16,7 +17,10 @@ function StatStripCard({ filter, template, compact }) {
        `fetchStatus:'idle'` döner → isLoading FALSE olur ama `data` hâlâ
        undefined'dır ve aşağıdaki `!data` dalı devreye girip şeridi bir kare
        "Özet yüklenemedi." hatasıyla çizerdi. */
-    const { data, isPending, isError, refetch } = useSummary(filter);
+    const { data, isPending, isError, isFetching, refetch } = useSummary(filter);
+    /* Hata satırının "Tekrar dene"si kendi mesajıyla betimlenir: aynı anda birkaç kart
+       düşebilir (CardShell'deki kuralın aynısı). */
+    const errorId = useId();
 
     /* Kolon şablonu DashboardRoot'tan gelir: şeridin ÖLÇÜLEN genişliğinden
        türetilir (bkz stripLayoutFor). Buradaki `lt-1080:`/`mobile:` gibi viewport
@@ -40,12 +44,12 @@ function StatStripCard({ filter, template, compact }) {
     if (isError || !data) {
         return (
             <div className="rounded-card shadow-card bg-surface-base border border-default p-[16px] flex items-center justify-between gap-[12px]">
-                <span className="text-[12.5px] text-text-secondary">
+                <span id={errorId} className="text-[12.5px] text-text-secondary">
                     {t('Dashboard:Summary:Error', 'Özet yüklenemedi.')}
                 </span>
-                <button type="button" onClick={() => refetch()} className="text-[12.5px] text-text-link hover:underline">
-                    {t('Common:Retry', 'Tekrar dene')}
-                </button>
+                {/* Kanonik "Tekrar dene" (Faz 4 karar 10): metin bağlantısı değil. Yeniden deneme
+                    sürerken satır yerinde kalır, düğme meşgul olur (odak düşmez). */}
+                <RetryButton onRetry={() => refetch()} retrying={isFetching} aria-describedby={errorId} />
             </div>
         );
     }
@@ -99,7 +103,8 @@ function StatStripCard({ filter, template, compact }) {
                 label={t('Dashboard:Summary:PendingApprovals', 'Bende onay')}
                 value={data.pendingApprovals}
                 locked={data.pendingApprovals == null}
-                lockedPermission="Platform.Invoices"
+                /* Ham izin kodu değil, izin tanımının görünen adı (kilitli kart cümleleriyle aynı kaynak). */
+                lockedPermission={t('Permission:Invoices', 'Faturalar')}
                 pill={data.pendingApprovalAmount != null
                     ? formatMoneyCompact(data.pendingApprovalAmount, data.currency)
                     : null}
@@ -215,7 +220,11 @@ function BudgetTile({ data, compact }) {
                 {locked ? (
                     <>
                         <span className={cn('font-mono font-semibold tracking-[-0.03em] text-text-tertiary', compact ? 'text-[22px]' : 'text-[28px]', 'leading-none')}>— —</span>
-                        <span className="font-mono text-[9px] text-text-tertiary">Platform.Projects.ViewBudget</span>
+                        {/* Kod "yetki" olduğunu kendi söylüyordu; görünen ad tek başına etiket gibi okunur →
+                            baskıdaki özet kutucuğuyla aynı kalıp: "yetki gerekli · <izin adı>". */}
+                        <span className="font-mono text-[9px] text-text-tertiary">
+                            {t('Dashboard:Stat:Locked', 'yetki gerekli')} · {t('Permission:Projects.ViewBudget', 'Bütçe Görüntüleme')}
+                        </span>
                     </>
                 ) : (
                     <>

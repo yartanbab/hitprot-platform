@@ -2,6 +2,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Apya.Platform.Dashboard;
 using Apya.Platform.Dashboard.Dtos;
+using Apya.Platform.Permissions;
 using Shouldly;
 using Xunit;
 
@@ -59,5 +60,49 @@ public class DashboardLockContract_Tests
         print.ShouldContain("data?.locked === true");
         print.ShouldContain("data?.items");
         print.ShouldContain("Array.isArray(data)");
+    }
+
+    /// <summary>
+    /// Ham izin kodu ("Platform.Invoices") müşteri yüzeyine basılmaz (canlı doğrulama L3 E7): istatistik
+    /// kutucukları ve baskı, sunucunun KOD olarak yolladığı <c>RequiredPermission</c>'ı izin tanımının
+    /// görünen adına çevirir. İki uç BİÇİMLE bağlı: sunucu kodları " + " ile birleştirir, JS aynı ayraçla
+    /// böler ve "Platform." önekini atıp "Permission:" ekleyerek yerelleştirme anahtarını kurar
+    /// (anahtarın izin tanımındaki adla eşleştiği Application.Tests DashboardStatisticsProvider_Tests'te).
+    /// İki izin " + " ile değil iki yer tutuculu metinle birleşir.
+    /// </summary>
+    [Fact]
+    public void Izin_kodu_gorunen_ada_ayni_ayrac_ve_onekle_cevrilir()
+    {
+        var provider = ReadSource("src", "Apya.Platform.Application", "Dashboard", "DashboardStatisticsProvider.cs");
+        provider.ShouldContain("RequiredPermission = string.Join(\" + \", def.Permissions)");
+
+        var band = Card("StatisticsBand.jsx");
+        band.ShouldContain(".split(' + ')");
+        band.ShouldContain("`Permission:${code.replace(/^" + PlatformPermissions.GroupName + "\\./, '')}`");
+        band.ShouldContain("t('Dashboard:Stat:PermissionPair'");
+    }
+
+    [Fact]
+    public void Kutucuklar_ve_baski_ham_izin_kodu_basmaz()
+    {
+        var band = Card("StatisticsBand.jsx");
+        var strip = Card("StatStripCard.jsx");
+        var print = PrintView();
+
+        // Sunucudan gelen kod doğrudan basılmaz; her kullanım permissionLabel'dan geçer.
+        band.ShouldNotContain("{stat.requiredPermission}");
+        print.ShouldNotContain("{stat.requiredPermission}");
+        band.ShouldContain("{permissionLabel(stat.requiredPermission)}");
+        print.ShouldContain("{permissionLabel(stat.requiredPermission)}");
+
+        // Koda gömülü izin kodu da kalmadı: özet şeridinin iki kilidi (ekran + kağıt) görünen adı
+        // izin tanımının anahtarından alır.
+        foreach (var source in new[] { strip, print })
+        {
+            source.ShouldNotContain("\"" + PlatformPermissions.GroupName + ".");
+            source.ShouldNotContain(">" + PlatformPermissions.GroupName + ".");
+            source.ShouldContain("t('Permission:Invoices'");
+            source.ShouldContain("t('Permission:Projects.ViewBudget'");
+        }
     }
 }

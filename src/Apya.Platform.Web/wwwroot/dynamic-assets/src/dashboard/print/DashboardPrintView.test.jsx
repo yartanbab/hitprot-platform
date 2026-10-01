@@ -53,6 +53,17 @@ const YANITLAR = {
     })),
 };
 
+/* İstatistiğin izni sunucudan KOD olarak gelir ("Platform.CashAccounts"); görünen ad gerçek uygulamada
+   ABP yerelleştirmesinden çözülür ("Permission:CashAccounts"). lib/i18n kaynağı ilk çözülüşte önbelleğe
+   aldığı için sahte kaynak dosya boyunca aynıdır: yalnız izin adlarını bilir, diğer her anahtar
+   bileşenin Türkçe yedeğine düşer (öbür testlerin metinleri değişmez). */
+const IZIN_ADLARI = {
+    'Permission:Tasks': 'Görevler',
+    'Permission:CashAccounts': 'Kasalar',
+    'Permission:Incomes': 'Gelirler',
+    'Permission:Expenses': 'Giderler',
+};
+
 function stubFetch(override = {}) {
     const bodies = { ...YANITLAR, ...override };
     vi.stubGlobal('fetch', vi.fn((url) => {
@@ -86,6 +97,7 @@ function ciz(props = {}) {
 
 beforeEach(() => {
     document.body.innerHTML = '';
+    window.abp = { localization: { getResource: () => (key) => IZIN_ADLARI[key] ?? key } };
     gomKunye();
     stubFetch();
 });
@@ -123,9 +135,11 @@ describe('Dashboard baskı çıktısı', () => {
         await waitFor(() => expect(screen.getByText('Zamanında teslim')).toBeInTheDocument());
         expect(screen.getByText('Kasa bakiyesi')).toBeInTheDocument();
 
-        /* Kilitli kutucuk: değer yerine tire, gerekçe olarak izin adı. */
+        /* Kilitli kutucuk: değer yerine tire, gerekçe olarak izin tanımının GÖRÜNEN adı (ham kod değil);
+           açık istatistiğin altındaki izin satırı da aynı. */
         expect(screen.getAllByText('yetki gerekli').length).toBeGreaterThan(0);
-        expect(screen.getByText('Platform.CashAccounts')).toBeInTheDocument();
+        expect(screen.getByText('Kasalar')).toBeInTheDocument();
+        expect(screen.getByText('Görevler')).toBeInTheDocument();
     });
 
     it('yetkisiz özet kutucuğu sıfır değil "— —" basar', async () => {
@@ -133,7 +147,28 @@ describe('Dashboard baskı çıktısı', () => {
 
         /* pendingApprovals null geldi → sunucu değeri hiç göndermedi, uydurulmaz. */
         await waitFor(() => expect(screen.getAllByText('— —').length).toBeGreaterThan(0));
-        expect(screen.getByText(/Platform.Invoices/)).toBeInTheDocument();
+        expect(screen.getByText('Faturalar')).toBeInTheDocument();
+    });
+
+    it('kağıda ham izin kodu basılmaz; iki izin " + " ile değil kendi metniyle birleşir', async () => {
+        stubFetch({
+            'summary': { ...YANITLAR.summary, budgetUsedRatio: null, budgetSpent: null, budgetTotal: null },
+            'statistics': [
+                ...ISTATISTIKLER,
+                { key: 'monthly-net', group: 1, label: 'Dönem net', value: null, formatted: '', deltaFormatted: '', trend: 0, requiredPermission: 'Platform.Incomes + Platform.Expenses', locked: true },
+            ],
+        });
+        const onReady = vi.fn();
+
+        const { container } = ciz({ onReady });
+
+        await waitFor(() => expect(onReady).toHaveBeenCalled());
+        await waitFor(() => expect(screen.getByText('Dönem net')).toBeInTheDocument());
+        expect(screen.getByText('Gelirler ve Giderler')).toBeInTheDocument();
+        /* Özet kutucuklarının iki kilidi: "yetki gerekli · <izin adı>". */
+        expect(screen.getByText('Faturalar')).toBeInTheDocument();
+        expect(screen.getByText('Bütçe Görüntüleme')).toBeInTheDocument();
+        expect(container.textContent).not.toMatch(/Platform\./);
     });
 
     it('bir bölüm hata verse bile kalanı basılır ve baskı BEKLEMEDE kalmaz', async () => {

@@ -200,6 +200,8 @@ public class DashboardStatisticsProvider : ITransientDependency
                 Group = def.Group,
                 Label = _l[$"Dashboard:Stat:{def.Key}"],
                 Unit = UnitSymbol(def.Unit),
+                // İzin KODU gider; UI ham kodu basmaz, görünen ada çevirir (StatisticsBand.jsx permissionLabel).
+                // " + " ayracı ve "Platform.X" ↔ "Permission:X" anahtar kuralı sözleşmedir (DashboardLockContract_Tests).
                 RequiredPermission = string.Join(" + ", def.Permissions)
             };
 
