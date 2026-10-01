@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, ModalPortal, useRetryFocus } from '../components/ui';
+import { Button, Input, ModalPortal, UnsavedChangesDialog, useRetryFocus } from '../components/ui';
 import {
   DocsPageHeader, EmptyActions, ProcessRibbon, sameSummary, useComplianceOverview,
 } from '../components/documents';
@@ -11,6 +11,8 @@ import {
 } from './api';
 import { cn, fmt } from './format';
 import { wasShown } from '../lib/api/abpErrors';
+import { useDirtyGuard } from '../lib/feedback/useDirtyGuard';
+import { t } from '../lib/i18n';
 import { ContextTree } from './components/ContextTree';
 import { BulkBar, FileList } from './components/FileList';
 import { DetailPanel } from './components/DetailPanel';
@@ -209,6 +211,16 @@ export function DocumentsRoot() {
   const [detail, setDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  /* Detay panelindeki kaydedilmemiş taslak (DOC-09): belge ya da sekme değişimi guard'dan
+     geçer; kirliyken ortak pencere sorar, sayfadan ayrılırken tarayıcı uyarır. */
+  const guard = useDirtyGuard();
+  const draftRef = useRef(null);
+  const [leaveSaveFailed, setLeaveSaveFailed] = useState(false);
+  const handleDraftChange = useCallback(({ draft, dirty }) => {
+    draftRef.current = draft;
+    if (dirty) guard.markDirty(); else guard.markClean();
+  }, [guard.markDirty, guard.markClean]);
 
   const [checkedIds, setCheckedIds] = useState(new Set());
   const [dragTarget, setDragTarget] = useState(null);
@@ -575,8 +587,24 @@ export function DocumentsRoot() {
     }
   }, []);
 
+  /** Kirliyken başka belgeye geçiş sorulur; seçili satıra yeniden tıklamak taslağı silmez. */
+  const selectFile = (file) => {
+    if (file.id === selectedId && guard.isDirty) return;
+    setLeaveSaveFailed(false);
+    guard.requestClose(() => openDetail(file));
+  };
+
+  /** Sekme değişimi detay panelini söker (taslak gider): o da aynı kapıdan geçer. */
+  const changeTab = (next) => {
+    if (next === tab) return;
+    setLeaveSaveFailed(false);
+    guard.requestClose(() => setTab(next));
+  };
+
+  /** Kaydeder; belge güncellendiyse true döner ("Kaydet ve devam et" buna göre ilerler). */
   const handleSave = async (draft) => {
     const request = detailRequestRef.current;
+    let saved = false;
     setSaving(true);
     try {
       await updateFileMeta(draft.id, {
@@ -599,14 +627,17 @@ export function DocumentsRoot() {
         })),
         tags: draft.tags || [],
       });
+      saved = true;
       flash('Belge güncellendi.');
       // Bu arada başka satır açıldıysa eski belgenin detayı onun yerine yazılmaz.
       const next = await getFile(draft.id);
       if (request === detailRequestRef.current) setDetail(next);
       await loadFiles();
+      return true;
     } catch (e) {
       if (!wasShown(e)) abpNotify('error', 'Belge güncellenemedi.');
       console.error('[Documents] handleSave', e);
+      return saved;
     } finally {
       setSaving(false);
     }
@@ -798,7 +829,7 @@ export function DocumentsRoot() {
   const handleFlowSelect = (stepKey, event) => {
     if (stepKey !== 'docs' && stepKey !== 'compliance') return;
     event.preventDefault();
-    setTab(stepKey === 'docs' ? 'files' : 'compliance');
+    changeTab(stepKey === 'docs' ? 'files' : 'compliance');
   };
 
   const pickFiles = () => fileInputRef.current?.click();
@@ -968,7 +999,7 @@ export function DocumentsRoot() {
             role="tab"
             aria-selected={tab === t.key}
             className={cn('apya-doc-tab', tab === t.key && 'is-active')}
-            onClick={() => setTab(t.key)}
+            onClick={() => changeTab(t.key)}
           >
             {t.label}
           </button>
@@ -1067,7 +1098,7 @@ export function DocumentsRoot() {
             sorting={sorting}
             onSort={(next) => { setSorting(next); setPage(0); }}
             selectedId={selectedId}
-            onSelect={openDetail}
+            onSelect={selectFile}
             checkedIds={checkedIds}
             onToggleCheck={toggleCheck}
             onToggleAll={toggleAll}
@@ -1108,10 +1139,31 @@ export function DocumentsRoot() {
               saving={saving}
               onSave={handleSave}
               onDelete={canDelete ? setDeleteTarget : () => {}}
+              onDraftChange={handleDraftChange}
             />
           </div>
         )}
       </div>
+
+      {/* Kaydedilmemiş taslakla belge / sekme değişimi. "At" taslağı bırakır: yeni belge
+          yüklenince ya da panel sökülünce taslak zaten gider. */}
+      <UnsavedChangesDialog
+        open={guard.pendingClose}
+        isSaving={saving}
+        description={t('Documents:Detail:Unsaved:Body', 'Bu belgede yaptığınız değişiklikler kaydedilmedi. Devam ederseniz kaybolur.')}
+        saveLabel={t('Common:Unsaved:SaveAndContinue', 'Kaydet ve devam et')}
+        errorText={leaveSaveFailed
+          ? t('Common:Unsaved:SaveFailed', 'Kaydedilemedi. Düzenlemeye dönebilir ya da değişiklikleri atabilirsiniz.')
+          : undefined}
+        onStay={() => guard.resolvePendingClose('stay')}
+        onDiscard={() => guard.resolvePendingClose('discard')}
+        onSave={async () => {
+          setLeaveSaveFailed(false);
+          const ok = await handleSave(draftRef.current);
+          if (ok) guard.resolvePendingClose('saved');
+          else setLeaveSaveFailed(true);
+        }}
+      />
 
       {deleteTarget && (
         <ConfirmDialog
