@@ -262,6 +262,11 @@ public class ProjectEditPage_Tests : PlatformWebTestBase
             + string.Join(" | ", errors.Select(e => WebUtility.HtmlDecode(e.InnerText))));
         WebUtility.HtmlDecode(errors[0].InnerText).ShouldContain(expected);
 
+        // ABP'nin doğrulama tag helper'ı özetin kendi class'ını bozar; kutu sınıfları sarmalayıcıda durmalı.
+        doc.DocumentNode
+            .SelectSingleNode("//div[@data-validation-summary and contains(@class,'alert-danger')]//li")
+            .ShouldNotBeNull("hata özeti uyarı kutusunun içinde basılmalı");
+
         // Razor Türkçe harfleri sayısal varlığa kodlar → çözülür.
         WebUtility.HtmlDecode(doc.DocumentNode.SelectSingleNode("//input[@name='Project.Name']")!
             .GetAttributeValue("value", "")).ShouldBe("Düzenleme Testi");

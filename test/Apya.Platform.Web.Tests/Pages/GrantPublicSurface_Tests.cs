@@ -50,6 +50,11 @@ public class GrantPublicSurface_Tests : PlatformWebTestBase
         html.ShouldContain("Türkiye'nin açık hibe çağrıları");
         // Uygulama kabuğu KULLANILMAZ; kenar çubuğu bu sayfada olmamalı.
         html.ShouldNotContain("lpx-nav-menu");
+
+        // Font Awesome bağlantısı bozuk basılıyordu ("~/…" içinde "@@" → href=" content="…): ikonlar yüklenmiyordu.
+        System.Net.WebUtility.HtmlDecode(html)
+            .ShouldContain("href=\"/libs/@fortawesome/fontawesome-free/css/all.css\"");
+        html.ShouldNotContain("href=\" content=");
     }
 
     [Fact]

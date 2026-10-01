@@ -15,7 +15,9 @@
 
     <link rel="stylesheet" href="~/dynamic-assets/src/styles/tokens.css" />
     <link rel="stylesheet" href="~/css/apya-fonts.css" />
-    <link rel="stylesheet" href="~/libs/@@fortawesome/fontawesome-free/css/all.css" />
+    @* "~/…" adresini tag helper çözer; içinde "@@" olunca öznitelik bozuk basılıyordu
+       (href=" content="~/libs/@ content="fortawesome/…") ve ikonlar hiç yüklenmiyordu. *@
+    <link rel="stylesheet" href="@Url.Content("~/libs/@fortawesome/fontawesome-free/css/all.css")" />
     <link rel="stylesheet" href="~/Pages/Hibeler/Public.css" />
 </head>
 <body>

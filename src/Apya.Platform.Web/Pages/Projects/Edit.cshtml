@@ -54,8 +54,20 @@
         </div>
     }
 
-    <div asp-validation-summary="All" class="alert alert-danger apya-proj-edit-alert"
-         role="alert" data-validation-summary></div>
+    @* ABP'nin doğrulama tag helper'ı özetin KENDİ class'ını bozar (yalnız text-danger kalır): sunucu
+       hatasında kutu sınıfları sarmalayıcıda durur; hata yokken özet eskisi gibi basılır (istemci
+       doğrulaması onu doldurur). *@
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger apya-proj-edit-alert" role="alert" data-validation-summary>
+            <div asp-validation-summary="All"></div>
+        </div>
+    }
+    else
+    {
+        <div asp-validation-summary="All" class="alert alert-danger apya-proj-edit-alert"
+             role="alert" data-validation-summary></div>
+    }
 
     @* ─── Sekmeler ─── *@
     <div class="apya-proj-edit-tabs" role="tablist">
