@@ -1,6 +1,6 @@
 import { r as y, j as t } from "./react-vendor-D7YDiBbi.js";
-import { R as N, T, P as v, C as R } from "./ui-vendor-XElZ94hp.js";
-import { B as D } from "./Dialog-BEQtx1HL.js";
+import { R as N, T, P as v, C as R } from "./ui-vendor-UYevF8mE.js";
+import { B as D } from "./Dialog-BdrRxZcw.js";
 import { t as E, R as F } from "./index-DgpuJ91w.js";
 const g = (...e) => e.filter(Boolean).join(" ");
 function O({ items: e, size: a = "md", label: n = "Diğer eylemler" }) {
