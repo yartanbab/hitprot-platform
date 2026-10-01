@@ -22,6 +22,12 @@
    • handleAbpErrorResponse: "pencere gösterildi" işareti (tek kanal).
    • handleUnAuthorizedRequest: oturumlu sayfada yönlendirme YOK.
    • showError: merkezi pencereye yönlendirilmiş hata için ABP penceresi açılmaz.
+   • Başka sekmede giriş/çıkış: ABP'nin authentication-state dinleyicisi (localStorage
+     'authentication-state-id' değişince bu sekmeyi kendiliğinden yeniden yükler ya da
+     köke yollar) oturumlu sayfada ÖNCE bizim 'storage' dinleyicimize takılır (bu dosya
+     ondan önce kaydolur) ve oturum akışına bağlanır: çıkış → oturum penceresi, aynı
+     kullanıcı yeniden girdi → pencere kapanır, başka kullanıcı → "sayfayı yenileyin"
+     penceresi. "Yeni sekmede giriş yap" bu sayede özgün sekmeyi ve formu korur.
    Otomatik yenileme/yönlendirme hiçbir yolda yok; "Sayfayı yenile" yalnız
    kullanıcı basınca (hardReload).
 
@@ -40,6 +46,9 @@
      pencere yalnız kullanıcı onu daha önce "Kapat"la kapatmadıysa açılır.
      Güvenli yöntemin (GET/HEAD: liste, odakta tazeleme) 401'i de böyle;
      "Kapat"tan sonra pencereyi yalnız değiştiren istek (kaydet/sil) yeniden açar.
+     Kullanıcının açtığı modal (ModalManager .load, HTML GET) "Kapat"tan sonra 401
+     alırsa pencere yine açılmaz; ölü tık olmasın diye engellemeyen bir hatırlatma
+     (abp.notify.warn, 30 sn'de en çok bir kez) gösterilir.
    • Oturum (ya da "başka kullanıcı") penceresi açıkken abp.message.error/warn/info
      pencere açmaz: SweetAlert tekil, çağıranın penceresi merkezi pencereyi ezerdi.
      ABP'nin kendi pencereleri de Radix/Bootstrap modalından yalıtılır
@@ -71,6 +80,10 @@
     var PLAIN_TEXT_MAX = 300;
     // Bu süre içinde ikinci kez bayat anahtar görülürse "tekrar deneyin" yetmez.
     var RETRY_WINDOW_MS = 2 * 60 * 1000;
+    // "Kapat"tan sonraki oturum hatırlatması bu aralıkta en çok bir kez gösterilir.
+    var REMINDER_INTERVAL_MS = 30 * 1000;
+    // ABP'nin sekmeler arası oturum anahtarı (authentication-state-listener.js ile aynı).
+    var AUTH_STATE_KEY = 'authentication-state-id';
     // Teknik (İngilizce) çalışma zamanı hataları kullanıcıya metin olarak gösterilmez.
     var RUNTIME_ERRORS = { TypeError: true, ReferenceError: true, SyntaxError: true, RangeError: true, EvalError: true, URIError: true };
 
@@ -256,12 +269,15 @@
         }
     }
 
-    function route(xhr) {
+    function route(xhr, wantsHtml) {
         if (xhr.apyaRouted) { return; }
         if (xhr.status === 401 && isPageAuthenticated()) {
             markCentral(xhr);
             // "Kapat"tan sonra güvenli yöntem (liste, odakta tazeleme) pencereyi yeniden açmaz.
             expired({ background: !!xhr.apyaBackground || !UNSAFE_METHODS[xhr.apyaMethod] });
+            // Pencere açılmadıysa ("Kapat" dendi) ve istek kullanıcının açtığı modalsa
+            // (ModalManager .load) hiçbir şey olmuyordu: ölü tık yerine hatırlatma.
+            if (wantsHtml && !xhr.apyaBackground && !isOpen('session')) { remindExpired(); }
         } else if (isAntiforgeryCandidate(xhr)) {
             markCentral(xhr);
             verify({ quiet: !!xhr.apyaBackground });
@@ -276,7 +292,7 @@
             jqXHR.fail(function () {
                 remember(jqXHR);
                 normalizeEnvelope(jqXHR, wantsHtml);
-                route(jqXHR);
+                route(jqXHR, wantsHtml);
             });
         });
     }
@@ -483,6 +499,26 @@
         return true;
     }
 
+    function expiredTitle() {
+        return text('Api:Session:Expired:Title', 'Oturumunuz sona erdi');
+    }
+
+    function expiredText() {
+        return text('Api:Session:Expired:Text', 'Devam etmek için yeniden giriş yapmanız gerekiyor. Bu sayfada girdiğiniz bilgiler şimdilik korunuyor; giriş sayfasına geçerseniz kaydedilmemiş değişiklikler kaybolur.');
+    }
+
+    var remindedAt = 0;
+
+    // Kullanıcı pencereyi "Kapat"la kapattı; pencere yeniden açılmaz (onu yalnız değiştiren
+    // istek açar). Engellemeyen, seyrek bir bildirim — pencereyle aynı metin — neden hiçbir
+    // şey olmadığını söyler.
+    function remindExpired() {
+        var now = Date.now();
+        if (remindedAt && now - remindedAt < REMINDER_INTERVAL_MS) { return; }
+        remindedAt = now;
+        if (window.abp && abp.notify && abp.notify.warn) { abp.notify.warn(expiredText(), expiredTitle()); }
+    }
+
     function openSessionDialog() {
         var newTab = !isStandalone();
         var onReturn = function () {
@@ -494,8 +530,8 @@
         var loginHere = text('Api:Session:LoginHere', 'Giriş sayfasına git');
         var options = {
             icon: 'warning',
-            titleText: text('Api:Session:Expired:Title', 'Oturumunuz sona erdi'),
-            text: text('Api:Session:Expired:Text', 'Devam etmek için yeniden giriş yapmanız gerekiyor. Bu sayfada girdiğiniz bilgiler şimdilik korunuyor; giriş sayfasına geçerseniz kaydedilmemiş değişiklikler kaybolur.'),
+            titleText: expiredTitle(),
+            text: expiredText(),
             showCancelButton: true,
             cancelButtonText: closeText()
         };
@@ -564,6 +600,35 @@
             if (result && result.isConfirmed) { hardReload(); }
         });
     }
+
+    /* ---------- Başka sekmede giriş / çıkış ---------- */
+    // ABP (Theme.Shared authentication-state-listener.js) her sayfa yüklenişinde localStorage'a
+    // kullanıcı kimliğini yazar (oturumsuz sayfada siler); pencere 'load' olayında eklediği
+    // 'storage' dinleyicisi diğer sekmeleri kendiliğinden yeniden yükler ya da köke yollar.
+    // "Yeni sekmede giriş yap"ta giriş sayfası anahtarı sildiği için özgün sekme yenileniyor,
+    // form kayboluyordu. Oturumlu sayfada olay ABP'ye ulaşmadan kesilir ve oturum akışına
+    // bağlanır; oturumsuz sayfada (giriş vb.) ABP'nin davranışı aynen kalır.
+    // SIRA: bu dinleyici dosya değerlendirilirken, ABP'ninki 'load'da kaydolur — bizimki hep
+    // önce çalışır. Chrome, window'a gelen olayda dinleyicileri KAYIT sırasıyla çağırır;
+    // yakalama bayrağı sırayı değiştirmez (Chrome 152'de ölçüldü), yalnız yakalamayı önce
+    // çağıran motorlar için ek güvencedir. ABP dinleyicisini 'load'dan önce kaydetmeye
+    // başlarsa (sürüm yükseltmesi) bu kesme çalışmaz: canlıda yeniden doğrulanmalı.
+    window.addEventListener('storage', function (event) {
+        if (event.key !== AUTH_STATE_KEY || event.oldValue === event.newValue || !isPageAuthenticated()) { return; }
+        event.stopImmediatePropagation();
+        if (!event.newValue) {
+            // Çıkış yapıldı ya da giriş sayfası açıldı: pencere açıksa dokunulmaz, kullanıcı
+            // "Kapat" dediyse yeniden açılmaz.
+            expired({ background: true });
+        } else if (event.newValue === pageUserId()) {
+            // Aynı kullanıcı yeniden girdi: yeni oturum dönemi. Açık pencere dönüş akışıyla
+            // kapanır; sekme gizliyse kullanıcı dönünce (openSessionDialog → onReturn).
+            dismissedByUser = false;
+            if (document.visibilityState !== 'hidden') { checkRestored(); }
+        } else if (!isOpen('user-changed')) {
+            userChanged();
+        }
+    }, true);
 
     var verifying = null;
     var retryShownAt = 0;

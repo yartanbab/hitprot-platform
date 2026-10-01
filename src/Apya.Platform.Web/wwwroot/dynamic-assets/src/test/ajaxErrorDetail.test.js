@@ -201,13 +201,26 @@ const flush = async () => {
 const shownErrors = () => abpOriginals.showError.mock.calls.map((c) => c[0]);
 const sessionDialogs = () => dialogs.filter((d) => d.opts.titleText === SESSION_TITLE);
 
+// Dosya her yüklenişte window'a durumlu bir 'storage' dinleyicisi ekler; üretimde tek kez
+// yüklenir. Testte önceki yüklemenin dinleyicisi sökülür: kalsaydı olayı o keser, eski
+// kapanış durumuyla (kendi "pencere açık mı" bilgisi) yanıt verirdi.
+let storageListeners = [];
+
+function removeStorageListeners() {
+    storageListeners.splice(0).forEach((args) => window.removeEventListener(...args));
+}
+
 async function load(options) {
+    removeStorageListeners();
     installAbp(options);
     installJquery();
     installSwal();
     probeReturns({ isAuthenticated: true, id: 'u1' });
     vi.resetModules();
+    const added = vi.spyOn(window, 'addEventListener');
     await import('../../../js/ajax-error-detail.js');
+    storageListeners = added.mock.calls.filter((args) => args[0] === 'storage');
+    added.mockRestore();
 }
 
 beforeEach(async () => {
@@ -215,6 +228,10 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
+    removeStorageListeners();
+    // Açık kalan pencere kapatılır: didDestroy dönüş dinleyicilerini (focus/visibilitychange)
+    // söker; kalsalardı sonraki testin "sekmeye dönüş" olayına eski yükleme de yanıt verirdi.
+    dialogs.filter((d) => !d.closed).forEach((d) => d.close({ isDismissed: true }));
     document.querySelectorAll('.swal2-container').forEach((n) => n.remove());
     delete window.matchMedia;
     vi.unstubAllGlobals();
@@ -525,6 +542,156 @@ describe('401: oturum düştü', () => {
     });
 });
 
+describe('başka sekmede giriş/çıkış: ABP dinleyicisi bu sekmeyi yenilemez ya da köke yollamaz', () => {
+    // Gömülü authentication-state-listener.js (ABP 10): her sayfa yüklenişinde localStorage'a
+    // kullanıcı kimliğini yazar (oturumsuz sayfada siler) ve 'load'da — yani bu dosyadan
+    // SONRA — yakalamasız bir 'storage' dinleyicisi ekler: eski değer varsa ya da yenisi
+    // yoksa sekmeyi yeniden yükler, yoksa köke gider. Burada o dinleyici sahtedir.
+    const KEY = 'authentication-state-id';
+    let abpListener;
+
+    const storage = (oldValue, newValue, key = KEY) =>
+        window.dispatchEvent(new StorageEvent('storage', { key, oldValue, newValue }));
+    const setVisibility = (state) =>
+        Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => state });
+
+    beforeEach(() => {
+        abpListener = vi.fn();
+        window.addEventListener('storage', abpListener);
+    });
+
+    afterEach(() => {
+        window.removeEventListener('storage', abpListener);
+        delete document.visibilityState;
+    });
+
+    it('"Yeni sekmede giriş yap": giriş sayfası anahtarı silince sekme yenilenmez, pencere yerinde kalır', () => {
+        vi.spyOn(window, 'open').mockImplementation(() => null);
+        abpAjaxFails(request({ status: 401 }));
+        sessionDialogs()[0].opts.preConfirm();
+
+        storage('u1', null);
+
+        expect(abpListener).not.toHaveBeenCalled();
+        expect(dialogs).toHaveLength(1);
+        expect(sessionDialogs()[0].closed).toBe(false);
+    });
+
+    it('yeni sekmede aynı kullanıcı girince köke gidilmez; pencere kullanıcı sekmeye dönünce kapanır', async () => {
+        abpAjaxFails(request({ status: 401 }));
+        setVisibility('hidden');   // kullanıcı giriş yaptığı sekmede
+        storage('u1', null);
+
+        storage(null, 'u1');
+        await flush();
+
+        expect(abpListener).not.toHaveBeenCalled();
+        // Gizli sekmede kapatılmaz: "Oturumunuz yenilendi" bildirimi kimse görmeden sönerdi.
+        expect(sessionDialogs()[0].closed).toBe(false);
+        expect(abp.notify.success).not.toHaveBeenCalled();
+
+        setVisibility('visible');
+        document.dispatchEvent(new Event('visibilitychange'));
+        await flush();
+
+        expect(dialogs).toHaveLength(1);
+        expect(sessionDialogs()[0].closed).toBe(true);
+        expect(abp.notify.success.mock.calls).toEqual([['Oturumunuz yenilendi. İşleminizi tekrar deneyebilirsiniz.']]);
+    });
+
+    it('sekme görünürken (yan yana pencere) aynı kullanıcı girerse pencere hemen kapanır', async () => {
+        abpAjaxFails(request({ status: 401 }));
+
+        storage(null, 'u1');
+        await flush();
+
+        expect(abpListener).not.toHaveBeenCalled();
+        expect(sessionDialogs()[0].closed).toBe(true);
+        expect(abp.notify.success).toHaveBeenCalledTimes(1);
+    });
+
+    it('başka sekmede çıkış yapılınca sekme yenilenmez: oturum penceresi açılır (bir kez)', () => {
+        storage('u1', null);
+        storage('u1', null);
+
+        expect(abpListener).not.toHaveBeenCalled();
+        expect(sessionDialogs()).toHaveLength(1);
+        expect(dialogs).toHaveLength(1);
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('"Kapat"tan sonra başka sekmede giriş sayfası açılırsa pencere yeniden açılmaz', async () => {
+        abpAjaxFails(request({ status: 401 }));
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+
+        storage('u1', null);
+
+        expect(abpListener).not.toHaveBeenCalled();
+        expect(dialogs).toHaveLength(1);
+    });
+
+    it('"Kapat"tan sonra aynı kullanıcı başka sekmede girerse yeni oturum dönemi başlar: sonraki düşüşte GET de pencereyi açar', async () => {
+        abpAjaxFails(request({ status: 401 }));
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+        abpAjaxFails(request({ status: 401, method: 'GET' }), { abpHandleError: false });
+        expect(sessionDialogs()).toHaveLength(1);   // "Kapat" geçerli
+
+        storage(null, 'u1');
+        await flush();
+
+        expect(abpListener).not.toHaveBeenCalled();
+        expect(dialogs).toHaveLength(1);
+        expect(abp.notify.success).not.toHaveBeenCalled();   // kapanan pencere yok: bildirim de yok
+
+        abpAjaxFails(request({ status: 401, method: 'GET' }), { abpHandleError: false });
+        expect(sessionDialogs()).toHaveLength(2);
+    });
+
+    it('başka kullanıcı girdiyse sekme yenilenmez: "sayfayı yenileyin" penceresi (bir kez), oturum penceresinin yerine', () => {
+        abpAjaxFails(request({ status: 401 }));
+
+        storage(null, 'baska');
+        storage('baska', 'ucuncu');
+
+        expect(abpListener).not.toHaveBeenCalled();
+        expect(dialogs).toHaveLength(2);
+        expect(sessionDialogs()[0].closed).toBe(true);
+        expect(dialogs[1].opts.text).toContain('başka bir kullanıcıyla giriş yapılmış');
+        expect(dialogs[1].opts.confirmButtonText).toBe('Sayfayı yenile');
+        expect(dialogs[1].closed).toBe(false);
+    });
+
+    it('dinleyici dosya değerlendirilirken kaydolur (pencere "load" olayını beklemez)', () => {
+        // ABP'ninkinden ÖNCE çalışmasının güvencesi KAYIT sırasıdır: Chrome, window'a gelen
+        // olayda dinleyicileri kayıt sırasıyla çağırır, yakalama bayrağı sırayı değiştirmez
+        // (canlıda ölçüldü). jsdom yakalamayı önce çağırdığı için sıra burada sınanamaz;
+        // ABP kendi dinleyicisini 'load'da ekler, bu dosya ondan önce kaydolmuş olmalı.
+        expect(storageListeners).toHaveLength(1);
+        expect(typeof storageListeners[0][1]).toBe('function');
+    });
+
+    it('başka anahtar ve değeri değişmeyen olay kesilmez', () => {
+        storage('a', 'b', 'apya-rq-cache');
+        storage('u1', 'u1');
+
+        expect(abpListener).toHaveBeenCalledTimes(2);
+        expect(dialogs).toHaveLength(0);
+    });
+
+    it('oturumsuz sayfada (giriş sayfası vb.) ABP\'nin davranışı aynen: olay kesilmez, pencere yok', async () => {
+        await load({ authenticated: false });
+
+        storage(null, 'u1');
+        storage('u1', null);
+
+        expect(abpListener).toHaveBeenCalledTimes(2);
+        expect(dialogs).toHaveLength(0);
+        expect(fetch).not.toHaveBeenCalled();
+    });
+});
+
 describe('oturum penceresi açıkken ABP mesajı onu ezmez (SweetAlert tekil)', () => {
     it('jQuery 401 → çağıranın abp.message.error\'u: oturum penceresi açık kalır, çözülmüş Deferred döner', () => {
         abpAjaxFails(request({ status: 401 }));
@@ -701,6 +868,45 @@ describe('ModalManager .load() hatası (dataType html)', () => {
         modalManagerOpenFails(req.xhr);
 
         expect(abpOriginals.showError).not.toHaveBeenCalled();
+        expect(sessionDialogs()).toHaveLength(1);
+    });
+
+    it('"Kapat"tan sonra modal açılışı: pencere yeniden açılmaz, ölü tık yerine hatırlatma (30 sn\'de en çok bir)', async () => {
+        const now = vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
+        const openModal = () => {
+            const req = request({ status: 401, method: 'GET', dataType: 'html' });
+            req.fail();
+            modalManagerOpenFails(req.xhr);
+        };
+        openModal();
+        expect(abp.notify.warn).not.toHaveBeenCalled();   // ilk 401 pencereyi açtı: bildirim gereksiz
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+
+        openModal();
+        openModal();
+
+        expect(sessionDialogs()).toHaveLength(1);
+        expect(abpOriginals.showError).not.toHaveBeenCalled();
+        // Pencereyle aynı başlık ve metin (yeni anahtar yok).
+        expect(abp.notify.warn.mock.calls).toEqual([[sessionDialogs()[0].opts.text, SESSION_TITLE]]);
+        expect(abp.notify.warn.mock.calls[0][0]).toContain('yeniden giriş yapmanız gerekiyor');
+
+        now.mockReturnValue(1_000_000 + 30 * 1000);
+        openModal();
+        expect(abp.notify.warn).toHaveBeenCalledTimes(2);
+        expect(sessionDialogs()).toHaveLength(1);
+    });
+
+    it('"Kapat"tan sonra liste/odak tazelemesi (JSON GET) ve arka plan isteği hatırlatma göstermez', async () => {
+        abpAjaxFails(request({ status: 401 }));
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+
+        abpAjaxFails(request({ status: 401, method: 'GET' }), { abpHandleError: false });
+        request({ status: 401, method: 'GET', dataType: 'html', background: true }).fail();
+
+        expect(abp.notify.warn).not.toHaveBeenCalled();
         expect(sessionDialogs()).toHaveLength(1);
     });
 
