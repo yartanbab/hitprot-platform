@@ -578,6 +578,7 @@ public class PlatformWebModule : AbpModule
                     // sonra kaydolsun: oturum akışı olayı kesmişse izin verilmez) ve tema demetinden sonra
                     // yüklendiği için ABP'nin $.fn.needConfirmationOnUnsavedClose eklentisini ezer (RSP-05).
                     bundle.AddFiles("/js/apya-dirty-guard.js");
+                    bundle.AddFiles("/js/apya-modal-a11y.js"); // Bootstrap modalı: başlıkla adlandırma + kapanınca odak açan düğmeye (RSP-05)
                     bundle.AddFiles("/js/apya-hint.js"); // bilgi ipucu (ⓘ) — body'ye delege tooltip init
                     // Veri-değişti köprüsü — Yeni Görev modalı ve görev konsolları yayınlar; modal AJAX ile yüklendiği için global.
                     bundle.AddFiles("/js/apya-data-changed.js");
