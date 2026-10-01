@@ -87,7 +87,13 @@ else
                 </div>
             </div>
             <div class="list-group list-group-flush">
-                @if (Model.TransactionsLocked)
+                @if (Model.HostScope)
+                {
+                    @* Host hesabıyla kiracının projesi: işlemler bu bağlamda boş küme gelir (sorgu
+                       atılmadı) — "Henüz işlem yok" DEĞİL, kiracının hesabından bakılacağı söylenir. *@
+                    <partial name="_EmptyState" model="Model.HostScopeState" />
+                }
+                else if (Model.TransactionsLocked)
                 {
                     @* Kaynakların hiçbiri okunamadı: "Henüz işlem yok" DEĞİL; yasak sayfaya bağlantı yok.
                        Açıklama, birini açınca listenin geleceği izinleri görünen adlarıyla söyler. *@

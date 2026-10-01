@@ -29,7 +29,13 @@
     };
 }
 
-@if (Model.AccountsLocked)
+@if (Model.HostScope)
+{
+    @* Host hesabıyla kiracının projesi: listelenecek hesaplar kiracının değil host'un olurdu (sorgu
+       atılmadı) — "henüz hesap yok" DEĞİL. *@
+    <partial name="_EmptyState" model="Model.HostScopeState" />
+}
+else if (Model.AccountsLocked)
 {
     @* Liste ya da bakiye okunamadı: "henüz hesap yok" DEĞİL; /CashAccounts (403) bağlantısı yok.
        Açıklama gereken izinleri görünen adlarıyla söyler (ham kod değil; argümanlı metin → IStringLocalizer). *@

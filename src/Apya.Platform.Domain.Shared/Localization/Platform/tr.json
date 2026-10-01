@@ -418,6 +418,7 @@
         "Finance:Locked:Budget": "Bütçe özetini görme yetkiniz yok.",
         "Finance:Ledger:EmptyVisible": "Görebildiğiniz kayıtlarda süzgeçle eşleşen yok.",
         "Finance:Locked:DonorPackages": "Rapor paketlerine erişiminiz yok (rol izni ya da paket kapsamı).",
+        "Finance:Locked:HostScope": "Kiracı kayıtları host hesabından görünmez; kiracının hesabından (Hesabına Gir) bakın.",
         "Finance:Donor:Unverified:Documents:Title": "Belge denetimi yapılamadı",
         "Finance:Donor:Unverified:Documents:Detail": "Harcama belgelerine erişiminiz yok (rol izni ya da paket kapsamı); belgesiz harcama olup olmadığı bilinmiyor. Bu başlık uygun sayılmaz.",
         "Finance:Donor:Unverified:Dates:Title": "Tarih denetimi yapılamadı",

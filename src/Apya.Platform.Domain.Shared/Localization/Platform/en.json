@@ -528,6 +528,7 @@
     "Finance:Locked:Budget": "You don't have permission to see the budget summary.",
     "Finance:Ledger:EmptyVisible": "No records you can see match the filters.",
     "Finance:Locked:DonorPackages": "You have no access to report packages (role permission or package).",
+    "Finance:Locked:HostScope": "Tenant records are not visible from the host account; view them from the tenant's account (Impersonate).",
     "Finance:Donor:Unverified:Documents:Title": "Document check could not be performed",
     "Finance:Donor:Unverified:Documents:Detail": "You have no access to expense documents (role permission or package); whether any expense lacks a document is unknown. This item is not counted as compliant.",
     "Finance:Donor:Unverified:Dates:Title": "Date check could not be performed",

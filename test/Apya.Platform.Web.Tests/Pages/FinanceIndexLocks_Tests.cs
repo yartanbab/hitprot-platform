@@ -307,6 +307,124 @@ public class FinanceIndexLocks_Tests
         ledger.ShouldNotContain("LedgerRows.Count >= 100");
     }
 
+    // ─────────────────────────── Host kapsamı: işlem / hesap / Gelir-Gider / Faturalar / Belgeler (FIN-07) ───────────────────────────
+
+    /// <summary>
+    /// Bütün finans izinlerine (ve belge iznine) sahip oturum + listede tek (kurumsal) proje. Host vakasında
+    /// kilit sebebi izin değil kapsamdır: gelir/gider/fatura/kasa/belge servisleri kiracı süzgecini kapatmaz,
+    /// kiracının projesinde boş küme döner.
+    /// </summary>
+    /// <param name="sessionTenantId">Oturumun kiracısı; null = host hesabı ("Hesabına Gir" kullanılmadan).</param>
+    /// <param name="projectTenantId">Projenin kiracısı; null = host'un kendi projesi.</param>
+    private IndexModel ProjectPage(string tab, Guid? sessionTenantId, Guid? projectTenantId)
+    {
+        _currentTenantId = sessionTenantId;
+        var project = new ProjectDto { Id = Guid.NewGuid(), TenantId = projectTenantId, Name = "Proje", Currency = "TRY" };
+        _projects.GetListAsync(Arg.Any<PagedAndSortedResultRequestDto>())
+            .Returns(new PagedResultDto<ProjectDto>(1, new List<ProjectDto> { project }));
+        _budget.GetOverviewAsync(project.Id)
+            .Returns(new ProjectBudgetOverviewDto { ProjectId = project.Id, Currency = "TRY" });
+        _budget.GetLinesAsync(project.Id).Returns(new List<ProjectBudgetLineDto>());
+        _fx.GetPolicyAsync(project.Id).Returns(new ProjectFxPolicyDto { ProjectId = project.Id });
+
+        // Belgeler sekmesi finans kapısında yok (FinanceContext.PageAnyOfPermissions); sekme için ayrıca verilir.
+        var page = BuildPage(FinanceContext.PageAnyOfPermissions.Append(PlatformPermissions.Documents.Default).ToArray());
+        page.ProjectId = project.Id;
+        page.Tab = tab;
+        return page;
+    }
+
+    /// <summary>
+    /// Asıl canlı vaka (L3 E1): host, kiracının projesini seçince Genel "Henüz işlem yok." ile host'un kendi
+    /// hesaplarını, Gelir-Gider 0 satırı, Kasa host'un toplamını basıyordu; Belgeler'de boş tahta "Açık yok…"
+    /// derdi ve uygunluk servisi projeyi bulamayıp sayfayı hataya düşürürdü. Host kapsamında kiracı süzgecine
+    /// takılan kaynaklar HİÇ sorgulanmaz ve sayfa bayrağı kurar; paneller durumu <c>HostScopeState</c>'ten
+    /// basar (çizim <see cref="FinanceHostScopePage_Tests"/>'te; Faturalar listesi istemcide kurulur, betiği
+    /// yüklenmez). Kiracı süzgecini kapatan bütçe servisi okunmaya devam eder. İzin kilidi DEĞİL: …Locked
+    /// bayrakları kapalı kalır ("görme yetkiniz yok" yanlış sebep olurdu — host'un izni var).
+    /// </summary>
+    [Theory]
+    [InlineData(FinanceContext.TabOverview)]
+    [InlineData(FinanceContext.TabLedger)]
+    [InlineData(FinanceContext.TabCash)]
+    [InlineData(FinanceContext.TabInvoices)]
+    [InlineData(FinanceContext.TabDocuments)]
+    public async Task Host_baglaminda_kiraci_projesinde_kiraci_kayitlari_sorgulanmaz(string tab)
+    {
+        // Host'un kendi hesabı: kiracının projesi altında listelenmemeli, toplanmamalı.
+        GivenAccounts((Account("TRY"), 100m));
+        var page = ProjectPage(tab, sessionTenantId: null, projectTenantId: Guid.NewGuid());
+
+        (await page.OnGetAsync()).ShouldBeOfType<PageResult>();
+
+        page.ActiveTab.ShouldBe(tab);
+        page.HostScope.ShouldBeTrue();
+        page.HostScopeState.Kind.ShouldBe("host-scope");
+        page.HostScopeState.Title.ShouldBe("Finance:Locked:HostScope");
+
+        await _incomes.DidNotReceive().GetListAsync(Arg.Any<GetIncomeEntriesInput>());
+        await _expenses.DidNotReceive().GetListAsync(Arg.Any<GetExpensesInput>());
+        await _invoices.DidNotReceive().GetListAsync(Arg.Any<PagedAndSortedResultRequestDto>());
+        await _cashAccounts.DidNotReceive().GetListAsync(Arg.Any<GetCashAccountsInput>());
+        await _cashMovements.DidNotReceive().GetBalanceAsync(Arg.Any<Guid>());
+        await _rates.DidNotReceive().GetListAsync(Arg.Any<GetExchangeRatesInput>());
+        await _matching.DidNotReceive().GetBoardAsync(Arg.Any<Guid>());
+        await _compliance.DidNotReceive().GetOverviewAsync(Arg.Any<Guid>(), Arg.Any<string?>());
+        await _packages.DidNotReceive().GetListAsync(Arg.Any<Guid>());
+
+        page.DocumentBoard.ShouldBeNull();
+        page.Compliance.ShouldBeNull();
+        page.DeliveryPackages.ShouldBeEmpty();
+        page.Transactions.ShouldBeEmpty();
+        page.Accounts.ShouldBeEmpty();
+        page.TotalBalanceTry.ShouldBe(0m);
+        page.LedgerRows.ShouldBeEmpty();
+        page.TransactionsLocked.ShouldBeFalse();
+        page.AccountsLocked.ShouldBeFalse();
+        page.IncomesLocked.ShouldBeFalse();
+        page.ExpensesLocked.ShouldBeFalse();
+
+        if (tab == FinanceContext.TabOverview)
+        {
+            page.Budget.ShouldNotBeNull("bütçe servisi kiracı süzgecini kapatır; Genel'in bütçe bloğu host kapsamında da basılır");
+        }
+    }
+
+    /// <summary>
+    /// Karşı vakalar: bayrak YALNIZ "host oturumu + kiracının projesi" bileşiminde kurulur. Host kendi
+    /// (kiracısız) projesinde, kiracı kullanıcısı kendi projesinde kayıtları her zamanki gibi okur.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Host_kendi_projesinde_ve_kiraci_kendi_projesinde_kaynaklar_okunur(bool hostSession)
+    {
+        Guid? tenantId = hostSession ? null : Guid.NewGuid();
+        var page = ProjectPage(FinanceContext.TabOverview, sessionTenantId: tenantId, projectTenantId: tenantId);
+
+        await page.OnGetAsync();
+
+        page.HostScope.ShouldBeFalse();
+        await _incomes.Received().GetListAsync(Arg.Any<GetIncomeEntriesInput>());
+        await _expenses.Received().GetListAsync(Arg.Any<GetExpensesInput>());
+        await _cashAccounts.Received().GetListAsync(Arg.Any<GetCashAccountsInput>());
+    }
+
+    /// <summary>
+    /// Faturalar sekmesinin listesi istemcide kurulur: Pages/Invoices/index.js yüklenir yüklenmez isteği atar
+    /// ve host'un faturalarını projeye süzüp "Eşleşen fatura bulunamadı" der. Host kapsamında betik HİÇ
+    /// yüklenmez. Sayfa betikleri demetlendiği için render testi dosya adını göremez; koşul kaynaktan kilitlenir
+    /// (panelin basılmadığı FinanceHostScopePage_Tests'te).
+    /// </summary>
+    [Fact]
+    public void Host_kapsaminda_fatura_betigi_yuklenmez()
+    {
+        var index = ReadSource("src", "Apya.Platform.Web", "Pages", "Finance", "Index.cshtml");
+
+        index.ShouldContain("@if (Model.ActiveTab == FinanceContext.TabInvoices && !Model.HostScope)");
+        index.ShouldNotContain("@if (Model.ActiveTab == FinanceContext.TabInvoices)");
+    }
+
     // ─────────────────────────── Donör uygunluk denetimi (FIN-07) ───────────────────────────
 
     private static readonly string[] DonorGrants =
@@ -448,7 +566,7 @@ public class FinanceIndexLocks_Tests
     /// Host hesabıyla ("Hesabına Gir" kullanmadan) kiracının hibe projesi: proje seçici ve bütçe/kur
     /// servisleri kiracı süzgecini kapatır, belge tahtası, gelir/gider ve paketler kapatmaz → boş küme
     /// "temiz" görünür. Belge ve tarih başlıkları denetlenemedi (olumlu özet basılamaz), paketler
-    /// kilitli ve hiç okunmaz.
+    /// kilitli ve hiç okunmaz; tarih denetimini besleyen gelir/gider de sorgulanmaz (boş küme gelirdi).
     /// </summary>
     [Fact]
     public async Task Host_baglaminda_kiraci_projesinde_belge_ve_tarih_denetlenemedi()
@@ -463,6 +581,8 @@ public class FinanceIndexLocks_Tests
         page.DonorPackagesLocked.ShouldBeTrue();
         await _matching.DidNotReceive().GetBoardAsync(Arg.Any<Guid>());
         await _packages.DidNotReceive().GetListAsync(Arg.Any<Guid>());
+        await _incomes.DidNotReceive().GetListAsync(Arg.Any<GetIncomeEntriesInput>());
+        await _expenses.DidNotReceive().GetListAsync(Arg.Any<GetExpensesInput>());
     }
 
     /// <summary>Host kendi projesine bakıyorsa (kiracısız) denetim her zamanki gibi koşar.</summary>

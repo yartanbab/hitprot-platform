@@ -202,6 +202,28 @@ public class IndexModel : AbpPageModel
     /// <summary>Gelir-Gider: gider kaynağı denendi ve okunamadı.</summary>
     public bool ExpensesLocked { get; private set; }
 
+    /// <summary>
+    /// Host hesabıyla ("Hesabına Gir" kullanılmadan) bir KİRACININ projesi seçili. Proje seçici ile
+    /// bütçe/kur servisleri kiracı süzgecini kapatır; gelir, gider, fatura, kasa ve belge servisleri
+    /// kapatmaz — kiracının kayıtları bu bağlamda boş küme gelir (hesap listesi host'un kendi hesapları
+    /// olurdu, uygunluk servisi projeyi bulamayıp sayfayı hataya düşürürdü). Boş küme "kayıt yok" diye
+    /// ÇİZİLEMEZ (FIN-07): işlem ve hesap panelleri ile Gelir-Gider, Faturalar, Kasa ve Belgeler
+    /// sekmeleri sorgu atmadan <see cref="HostScopeState"/> basar; donör denetimi aynı bayrakla
+    /// denetlenemedi satırı üretir.
+    /// </summary>
+    public bool HostScope { get; private set; }
+
+    /// <summary>
+    /// Host kapsamında panelin yerine basılan durum — tek kaynak: metin ve kültürden bağımsız
+    /// <c>data-apya-state="host-scope"</c> kancası (test ve canlı doğrulama anahtarı).
+    /// </summary>
+    public EmptyStateModel HostScopeState => new()
+    {
+        Variant = EmptyStateVariant.Locked,
+        Kind = "host-scope",
+        Title = L["Finance:Locked:HostScope"].Value
+    };
+
     public IndexModel(
         IExpenseAppService expenseAppService,
         IIncomeEntryAppService incomeAppService,
@@ -314,6 +336,13 @@ public class IndexModel : AbpPageModel
     /// </summary>
     private async Task LoadLedgerAsync()
     {
+        // Host kapsamı: kiracının gelir/gider kayıtları bu bağlamda boş küme gelir — sorgu atılmaz
+        // (Gelir-Gider sekmesi HostScopeState basar; donör tarih denetimi denetlenemedi satırı üretir).
+        if (HostScope)
+        {
+            return;
+        }
+
         var accountNames = new Dictionary<Guid, string>();
         await TryAddAsync(async () =>
         {
@@ -478,6 +507,7 @@ public class IndexModel : AbpPageModel
         }
 
         Template = FinanceContext.Resolve(SelectedProject?.CategorySystemKey);
+        HostScope = CurrentTenant.Id == null && SelectedProject?.TenantId != null;
     }
 
     /// <summary>
@@ -522,6 +552,13 @@ public class IndexModel : AbpPageModel
 
     private async Task LoadTransactionsAsync()
     {
+        // Host kapsamı: kiracının işlemleri bu bağlamda boş küme gelir — sorgu atılmaz, panel
+        // "Henüz işlem yok" yerine HostScopeState basar.
+        if (HostScope)
+        {
+            return;
+        }
+
         var projects = await SafeLookupAsync(async () =>
             (await _invoiceAppService.GetProjectLookupAsync()).Items.ToDictionary(x => x.Id, x => x.Name));
         var customers = await SafeLookupAsync(async () =>
@@ -630,6 +667,13 @@ public class IndexModel : AbpPageModel
 
     private async Task LoadAccountsAsync()
     {
+        // Host kapsamı: okunacak liste kiracının değil host'un kendi hesapları olurdu — sorgu atılmaz,
+        // hesap paneli ve Kasa sekmesi HostScopeState basar ("henüz hesap yok" / "₺0" değil).
+        if (HostScope)
+        {
+            return;
+        }
+
         var accounts = new List<AccountSummary>();
 
         // Liste (CashAccounts) ve bakiye (CashMovements) FARKLI izin; bakiye izni ilk hesapta
@@ -751,6 +795,15 @@ public class IndexModel : AbpPageModel
     /// </summary>
     private async Task LoadDocumentsAsync()
     {
+        // Host kapsamı: belge servisleri kiracı süzgecini kapatmaz — tahta boş küme gelir ("Açık yok: her
+        // harcamanın belgesi…" olumlu cümlesi basılırdı), uygunluk servisi projeyi bulamayıp
+        // EntityNotFound atar (TryAddAsync yutmaz, sayfa hataya düşerdi). Hiçbiri çağrılmaz; sekme
+        // HostScopeState basar.
+        if (HostScope)
+        {
+            return;
+        }
+
         var projectId = SelectedProject!.Id;
 
         await TryAddAsync(async () => DocumentBoard = await _matchingAppService.GetBoardAsync(projectId));
@@ -833,7 +886,8 @@ public class IndexModel : AbpPageModel
         // Host bağlamında ("Hesabına Gir" kullanılmadan) kiracının projesi: proje seçici ile bütçe/kur
         // servisleri kiracı süzgecini kapatır (HostScope), belge tahtası, gelir/gider ve teslim paketleri
         // kapatmaz → boş küme "temiz" sayılırdı. Belge ve tarih başlıkları denetlenemedi, paketler kilitli.
-        var hostScope = CurrentTenant.Id == null && SelectedProject.TenantId.HasValue;
+        // Bayrak sayfanın tek kaynağından (işlem/hesap/Gelir-Gider panelleriyle aynı).
+        var hostScope = HostScope;
 
         // 1) Belgesiz harcama — donör denetiminin ilk sorduğu şey. Tahta okunamazsa (Belgeler
         //    izni yok ya da paket kapsamı dışında — Basic) belgesiz harcama olup olmadığı bilinmez.
