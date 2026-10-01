@@ -276,6 +276,7 @@
         "Permission:Notifications": "Bildirimler",
         "Permission:Calendars": "Takvim Entegrasyonu",
         "Permission:Calendars.Connect": "Hesap Bağlama",
+        "Calendar:Ical:UrlHint": "Adres http:// ya da https:// ile başlamalı.",
         "Permission:TenantSettings": "Tenant Ayarları",
         "Permission:TenantSettings.ManageAi": "AI Ayarlarını Yönetme",
         "Permission:Feedbacks": "Geri Bildirimler",
