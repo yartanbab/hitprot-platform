@@ -666,18 +666,46 @@ describe('başka sekmede giriş/çıkış: ABP dinleyicisi bu sekmeyi yenilemez 
         expect(sessionDialogs()).toHaveLength(2);
     });
 
-    it('başka kullanıcı girdiyse sekme yenilenmez: "sayfayı yenileyin" penceresi (bir kez), oturum penceresinin yerine', () => {
+    it('GİZLİLİK: oturum penceresi açıkken BAŞKA kullanıcı girerse olay ABP\'ye bırakılır (sekme köke gider), eski kullanıcının ekranı kalmaz', () => {
         abpAjaxFails(request({ status: 401 }));
+        storage('u1', null);            // giriş sayfası açıldı: kesilir
+        expect(abpListener).not.toHaveBeenCalled();
 
-        storage(null, 'baska');
-        storage('baska', 'ucuncu');
+        storage(null, 'baska');         // başka kullanıcı girdi: ABP köke yollar
+
+        expect(abpListener).toHaveBeenCalledTimes(1);
+        expect(dialogs).toHaveLength(1);   // "sayfayı yenileyin" penceresi açılmaz
+    });
+
+    it('GİZLİLİK: pencere açık ve sekme gizliyken aynı kullanıcı girip SONRA çıkış yaparsa bu gerçek çıkıştır: ABP\'ye bırakılır', async () => {
+        abpAjaxFails(request({ status: 401 }));
+        setVisibility('hidden');
+        storage('u1', null);            // giriş sayfası açıldı: kesilir
+        storage(null, 'u1');            // yeniden giriş: kesilir, pencere kullanıcı dönünce kapanacak
+        await flush();
+        expect(abpListener).not.toHaveBeenCalled();
+        expect(sessionDialogs()[0].closed).toBe(false);
+
+        storage('u1', null);            // bilerek çıkış
+
+        expect(abpListener).toHaveBeenCalledTimes(1);
+    });
+
+    it('yeniden giriş işareti yeni oturum penceresine taşınmaz: sonraki düşüşte giriş sayfasının açılması yine kesilir', async () => {
+        abpAjaxFails(request({ status: 401 }));
+        setVisibility('hidden');
+        storage('u1', null);
+        storage(null, 'u1');            // gizli sekmede yeniden giriş → işaret kuruldu
+        setVisibility('visible');
+        document.dispatchEvent(new Event('visibilitychange'));
+        await flush();
+        expect(sessionDialogs()[0].closed).toBe(true);
+
+        abpAjaxFails(request({ status: 401 }));   // oturum yine düştü, yeni pencere
+        storage('u1', null);                      // "Yeni sekmede giriş yap": giriş sayfası anahtarı siler
 
         expect(abpListener).not.toHaveBeenCalled();
-        expect(dialogs).toHaveLength(2);
-        expect(sessionDialogs()[0].closed).toBe(true);
-        expect(dialogs[1].opts.text).toContain('başka bir kullanıcıyla giriş yapılmış');
-        expect(dialogs[1].opts.confirmButtonText).toBe('Sayfayı yenile');
-        expect(dialogs[1].closed).toBe(false);
+        expect(sessionDialogs()[1].closed).toBe(false);
     });
 
     it('dinleyici dosya değerlendirilirken kaydolur (pencere "load" olayını beklemez)', () => {

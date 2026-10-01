@@ -26,10 +26,10 @@
      'authentication-state-id' değişince bu sekmeyi kendiliğinden yeniden yükler ya da
      köke yollar) oturum akışı SÜRERKEN (oturum penceresi açık ya da "Kapat"la kapatılmış)
      ÖNCE bizim 'storage' dinleyicimize takılır (bu dosya ondan önce kaydolur): giriş
-     sayfası açıldı → pencere yerinde kalır, aynı kullanıcı yeniden girdi → pencere kapanır,
-     başka kullanıcı → "sayfayı yenileyin" penceresi. "Yeni sekmede giriş yap" bu sayede
-     özgün sekmeyi ve formu korur. Akış yokken (başka sekmede bilerek çıkış) ABP'nin
-     davranışı aynen kalır: sekme giriş sayfasına düşer, veri ekranda kalmaz.
+     sayfası açıldı → pencere yerinde kalır, aynı kullanıcı yeniden girdi → pencere kapanır.
+     "Yeni sekmede giriş yap" bu sayede özgün sekmeyi ve formu korur. Bilerek çıkış (akış
+     yokken ya da yeniden girişten sonra) ve BAŞKA kullanıcının girişi ABP'ye bırakılır:
+     sekme yenilenir, önceki kullanıcının verisi ekranda kalmaz.
    Oturum kaybı yollarında otomatik yenileme/yönlendirme yok; "Sayfayı yenile" yalnız
    kullanıcı basınca (hardReload).
 
@@ -551,6 +551,7 @@
     }
 
     function openSessionDialog() {
+        restoredElsewhere = false;
         var newTab = !isStandalone();
         var onReturn = function () {
             if (document.visibilityState !== 'hidden') { checkRestored(); }
@@ -609,6 +610,7 @@
                 return;
             }
             dismissedByUser = false;
+            restoredElsewhere = false;
             Swal.close();
             if (window.abp && abp.notify) {
                 abp.notify.success(text('Api:Session:Restored', 'Oturumunuz yenilendi. İşleminizi tekrar deneyebilirsiniz.'));
@@ -649,22 +651,29 @@
     // yokken başka sekmede BİLEREK çıkış yapılırsa (ya da başka kullanıcı girerse) ABP'nin
     // davranışı aynen kalır: sekme yenilenir, giriş sayfasına düşer — çıkıştan sonra veri
     // pencerenin arkasında ekranda kalmaz (paylaşılan bilgisayar).
+    // Kesilen YALNIZ iki olaydır: giriş sayfasının açılması (oturum zaten düşmüş; anahtar silinir)
+    // ve AYNI kullanıcının yeniden girişi. Yeniden girişten SONRA gelen çıkış gerçek çıkıştır;
+    // BAŞKA kullanıcının girişinde de eski kullanıcının ekranı yeni kullanıcıya kalmamalıdır —
+    // ikisi de ABP'ye bırakılır (sekme yenilenir / köke gider).
+    var restoredElsewhere = false;
     window.addEventListener('storage', function (event) {
         if (event.key !== AUTH_STATE_KEY || event.oldValue === event.newValue || !isPageAuthenticated()) { return; }
         if (!isOpen('session') && !isOpen('user-changed') && !dismissedByUser) { return; }
+        var sameUser = !!event.newValue && event.newValue === pageUserId();
+        if ((!event.newValue && restoredElsewhere) || (event.newValue && !sameUser)) {
+            restoredElsewhere = false;
+            return;
+        }
         event.stopImmediatePropagation();
         if (!event.newValue) {
-            // Çıkış yapıldı ya da giriş sayfası açıldı: pencere açıksa dokunulmaz, kullanıcı
-            // "Kapat" dediyse yeniden açılmaz.
+            // Giriş sayfası açıldı: pencere açıksa dokunulmaz, kullanıcı "Kapat" dediyse yeniden açılmaz.
             expired({ background: true });
-        } else if (event.newValue === pageUserId()) {
-            // Aynı kullanıcı yeniden girdi: yeni oturum dönemi. Açık pencere dönüş akışıyla
-            // kapanır; sekme gizliyse kullanıcı dönünce (openSessionDialog → onReturn).
-            dismissedByUser = false;
-            if (document.visibilityState !== 'hidden') { checkRestored(); }
-        } else if (!isOpen('user-changed')) {
-            userChanged();
+            return;
         }
+        // Aynı kullanıcı yeniden girdi: yeni oturum dönemi. Açık pencere dönüş akışıyla kapanır;
+        // sekme gizliyse kullanıcı dönünce (openSessionDialog → onReturn).
+        dismissedByUser = false;
+        if (document.visibilityState !== 'hidden') { checkRestored(); } else { restoredElsewhere = true; }
     }, true);
 
     var verifying = null;
