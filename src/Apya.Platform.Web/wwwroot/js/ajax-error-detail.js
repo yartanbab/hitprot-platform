@@ -31,7 +31,8 @@
      yokken ya da yeniden girişten sonra) ve BAŞKA kullanıcının girişi ABP'ye bırakılır:
      sekme yenilenir, önceki kullanıcının verisi ekranda kalmaz.
    Oturum kaybı yollarında otomatik yenileme/yönlendirme yok; "Sayfayı yenile" yalnız
-   kullanıcı basınca (hardReload).
+   kullanıcı basınca (hardReload). "Giriş sayfasına git" ve "Sayfayı yenile" kirli-form
+   korumasına (apya-dirty-guard.js) izin verir: tarayıcı ikinci kez sormaz.
 
    KANAL KURALI (Faz 4 kararı 2)
    • İşlem (kaydet/sil/gönder) hatası → ABP penceresi, tek kez. Çağıran yalnız
@@ -526,8 +527,16 @@
             }
         } catch (e) { /* yoksay */ }
         return Promise.all(work).catch(function () { /* yoksay */ }).then(function () {
+            // İzin kısa ömürlü: temizlikten SONRA, yenilemenin hemen öncesinde.
+            allowLeave();
             location.reload();
         });
+    }
+
+    // Kullanıcı ayrılmayı bu pencerede bilerek seçti (metin kaybı zaten söylüyor): kirli-form
+    // koruması tarayıcı uyarısıyla ikinci kez sormaz. Koruma bu dosyadan SONRA yüklenir.
+    function allowLeave() {
+        if (window.apya.dirtyGuard) { window.apya.dirtyGuard.allowUnload(); }
     }
 
     /* ---------- Oturum ---------- */
@@ -630,6 +639,7 @@
         }).then(function (result) {
             if (!result) { return; }
             if (newTab ? result.isDenied : result.isConfirmed) {
+                allowLeave();
                 location.assign(loginUrl());
             } else if (result.dismiss === 'cancel' || result.dismiss === 'esc') {
                 dismissedByUser = true;

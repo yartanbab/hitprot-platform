@@ -431,6 +431,22 @@ describe('gövdesiz 400 + güvenli olmayan yöntem: bayat anahtar mı, oturum ka
         expect(reload).toHaveBeenCalledTimes(1);
     });
 
+    it('"Sayfayı yenile": kirli-form korumasına yenilemeden hemen ÖNCE izin verilir (tarayıcı ikinci kez sormaz)', async () => {
+        const order = [];
+        const reload = vi.fn(() => order.push('reload'));
+        vi.stubGlobal('location', { ...window.location, hostname: 'localhost', reload, assign: vi.fn() });
+        window.apya.dirtyGuard = { allowUnload: vi.fn(() => order.push('allow')) };
+        probeReturns({ isAuthenticated: true, id: 'baska' });
+        abpAjaxFails(request({ status: 400, method: 'DELETE' }));
+        await flush();
+
+        dialogs[0].close({ isConfirmed: true });
+        await flush();
+
+        expect(order).toEqual(['allow', 'reload']);
+        delete window.apya.dirtyGuard;
+    });
+
     it('yoklama anonim: oturum penceresi', async () => {
         probeReturns({ isAuthenticated: false });
 
@@ -534,6 +550,35 @@ describe('401: oturum düştü', () => {
         await flush();
 
         expect(assign).toHaveBeenCalledWith('/Account/Login?ReturnUrl=%2FAccount%2FManage');
+    });
+
+    // Pencere metni kaybı zaten söylüyor: kirli-form koruması (apya-dirty-guard.js, bu dosyadan
+    // SONRA yüklenir) tarayıcı uyarısıyla ikinci kez sormasın.
+    it('"Giriş sayfasına git": kirli-form korumasına yönlendirmeden ÖNCE izin verilir', async () => {
+        const order = [];
+        const assign = vi.fn(() => order.push('assign'));
+        vi.stubGlobal('location', { ...window.location, pathname: '/Projects/Edit/1', search: '', hash: '', assign });
+        window.apya.dirtyGuard = { allowUnload: vi.fn(() => order.push('allow')) };
+        abpAjaxFails(request({ status: 401 }));
+
+        sessionDialogs()[0].close({ isDenied: true });
+        await flush();
+
+        expect(order).toEqual(['allow', 'assign']);
+        delete window.apya.dirtyGuard;
+    });
+
+    it('"Kapat" ve "Yeni sekmede giriş yap" izin vermez: sayfada kalınıyor', async () => {
+        vi.spyOn(window, 'open').mockImplementation(() => null);
+        window.apya.dirtyGuard = { allowUnload: vi.fn() };
+        abpAjaxFails(request({ status: 401 }));
+
+        sessionDialogs()[0].opts.preConfirm();
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+
+        expect(window.apya.dirtyGuard.allowUnload).not.toHaveBeenCalled();
+        delete window.apya.dirtyGuard;
     });
 
     it('kurulu PWA: yeni sekme düğmesi yok, tek yol giriş sayfası', () => {
@@ -1301,6 +1346,29 @@ describe('pencere yalıtımı (Radix/Bootstrap modalı üstünde)', () => {
         const { container, button, opts } = dialogs[0];
 
         expect(opts.keydownListenerCapture).toBe(true);
+        expect(container.hasAttribute('data-apya-overlay')).toBe(true);
+        expect(container.style.pointerEvents).toBe('auto');
+        button.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+        button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        expect(outside).not.toHaveBeenCalled();
+
+        document.removeEventListener('pointerdown', outside);
+        document.removeEventListener('focusin', outside);
+    });
+
+    // RSP-05.2 gerileme pini: modal dışında açılan onayın düğmelerine klavyeyle ulaşılamıyor,
+    // ikinci Esc kapatmıyordu. Onay da config.default'u birleştirdiği için yalıtılır: odak
+    // Bootstrap odak kapanına sızmaz, Esc / Tab pencere düzeyinde SweetAlert'te kalır.
+    it('abp.message.confirm de yalıtılır (kirli-form onayı Bootstrap modalı üstünde klavyeyle kullanılır)', () => {
+        const outside = vi.fn();
+        document.addEventListener('pointerdown', outside);
+        document.addEventListener('focusin', outside);
+
+        abp.message.confirm('Kaydedilmemiş değişiklikler var.');
+        const { container, button, opts } = dialogs[0];
+
+        expect(opts.keydownListenerCapture).toBe(true);
+        expect(opts.showCancelButton).toBe(true);
         expect(container.hasAttribute('data-apya-overlay')).toBe(true);
         expect(container.style.pointerEvents).toBe('auto');
         button.dispatchEvent(new Event('pointerdown', { bubbles: true }));
