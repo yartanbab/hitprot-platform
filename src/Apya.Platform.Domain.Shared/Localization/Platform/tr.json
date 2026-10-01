@@ -3126,6 +3126,7 @@
         "DisplayName:PageUrl": "Sayfa adresi",
         "DisplayName:PaidAmount": "Ödenen tutar",
         "DisplayName:ParentDocumentId": "Üst doküman",
+        "DisplayName:ParentId": "Üst kategori",
         "DisplayName:ParentTaskId": "Üst görev",
         "DisplayName:Password": "Parola",
         "DisplayName:Payload": "İçerik",

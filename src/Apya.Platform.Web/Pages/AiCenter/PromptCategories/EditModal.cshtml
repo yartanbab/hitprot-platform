@@ -12,6 +12,10 @@
         <abp-modal-header title="Kategori Düzenle"></abp-modal-header>
         <abp-modal-body>
             <abp-input asp-for="Id" />
+            @* Üst kategori bu pencerede düzenlenmez ama GERİ gönderilmeli: alan formdan düşerse
+               güncelleme SetParent(null) çağırır ve alt kategori köke taşınır (dinamik form onu
+               kendiliğinden basıyordu). *@
+            <input type="hidden" asp-for="Category.ParentId" />
             <abp-input asp-for="Category.Name" label="Ad" />
             <abp-input asp-for="Category.Code" label="Kod (benzersiz)" />
             <abp-input asp-for="Category.Description" text-area rows="3" label="Açıklama" />

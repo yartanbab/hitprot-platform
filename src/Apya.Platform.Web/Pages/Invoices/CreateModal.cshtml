@@ -1,5 +1,6 @@
 @page
 @model Apya.Platform.Web.Pages.Invoices.CreateModalModel
+@using Apya.Platform.Invoices
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
 @inject IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
@@ -26,13 +27,19 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Yön</label>
+                    @* Seçim modelden AÇIKÇA kurulur: radyo değerleri sayısal ("0"/"1"), etiket
+                       yardımcısı ise modelin enum ADIYLA ("Sales") karşılaştırdığı için hiçbirini
+                       seçili basmıyordu. Dinamik formun fazladan bastığı kopya alan varsayılanı
+                       taşıyordu; düz formda yön seçilmeden "Kaydet" doğrulamada sessizce takılıyordu. *@
                     <div class="d-flex gap-3 pt-1">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="0" id="DirSales" />
+                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="0" id="DirSales"
+                                   checked="@(Model.InvoiceInfo.Direction == InvoiceDirection.Sales)" />
                             <label class="form-check-label" for="DirSales">Satış Faturası</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="1" id="DirPurchase" />
+                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="1" id="DirPurchase"
+                                   checked="@(Model.InvoiceInfo.Direction == InvoiceDirection.Purchase)" />
                             <label class="form-check-label" for="DirPurchase">Alış Faturası</label>
                         </div>
                     </div>
