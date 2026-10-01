@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
@@ -6,6 +8,7 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Timing;
 using Apya.Platform.Ai.Permissions;
+using Apya.Platform.Ai.Providers;
 
 namespace Apya.Platform.Ai.Tenants;
 
@@ -14,12 +17,20 @@ public class TenantAiSettingsAppService : ApplicationService, ITenantAiSettingsA
 {
     private readonly IRepository<TenantAiSettings, Guid> _repository;
     private readonly IClock _clock;
+    private readonly IAiProviderResolver _providerResolver;
 
-    public TenantAiSettingsAppService(IRepository<TenantAiSettings, Guid> repository, IClock clock)
+    public TenantAiSettingsAppService(
+        IRepository<TenantAiSettings, Guid> repository,
+        IClock clock,
+        IAiProviderResolver providerResolver)
     {
         _repository = repository;
         _clock = clock;
+        _providerResolver = providerResolver;
     }
+
+    public Task<List<string>> GetProviderNamesAsync() =>
+        Task.FromResult(_providerResolver.GetProviderNames().ToList());
 
     // TenantAiSettings IMultiTenant: host bağlamında (CurrentTenant.Id == null) çok kiracılı
     // süzgeç sorguya "TenantId == null" ekliyordu. Kiracının satırı hiç bulunmuyor, her
@@ -53,6 +64,16 @@ public class TenantAiSettingsAppService : ApplicationService, ITenantAiSettingsA
     public async Task<TenantAiSettingsDto> UpdateAsync(Guid? tenantId, UpdateTenantAiSettingsDto input)
     {
         EnsureHost();
+
+        // Serbest metin kabul ediliyordu: yazım hatası ("opnai") kaydediliyor, hata ancak AI çağrısında
+        // ("kayıtlı değil") çıkıyordu. Önce doğrula, sonra değiştir: varlığa dokunmadan reddedilir.
+        // Kayıtlı adın kanonik yazımı saklanır ("OpenAI" → "openai").
+        var requested = input.PreferredProvider?.Trim();
+        var provider = _providerResolver.GetProviderNames()
+                           .FirstOrDefault(n => string.Equals(n, requested, StringComparison.OrdinalIgnoreCase))
+                       ?? throw new BusinessException(PlatformDomainErrorCodes.AiProviderUnknown)
+                           .WithData("Provider", input.PreferredProvider);
+
         using (CurrentTenant.Change(tenantId))
         {
             var entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
@@ -61,7 +82,7 @@ public class TenantAiSettingsAppService : ApplicationService, ITenantAiSettingsA
             var isNew = entity == null;
             entity ??= new TenantAiSettings(GuidGenerator.Create(), tenantId, BuildPeriodStart(_clock.Now));
 
-            entity.SetProvider(input.PreferredProvider, input.PreferredModel);
+            entity.SetProvider(provider, input.PreferredModel);
             entity.SetQuota(input.MonthlyTokenQuota);
             if (input.IsEnabled) entity.Enable();
             else entity.Disable();

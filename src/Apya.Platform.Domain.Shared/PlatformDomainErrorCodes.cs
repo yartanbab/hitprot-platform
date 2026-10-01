@@ -267,6 +267,11 @@ public static class PlatformDomainErrorCodes
     public const string AiProviderUnavailable = "Platform:Ai:ProviderUnavailable";
     public const string AiResponseInvalid = "Platform:Ai:ResponseInvalid";
     public const string AiQuotaExceeded = "Platform:Ai:QuotaExceeded";
+    /// <summary>
+    /// Kiracı AI ayarında kayıtlı olmayan sağlayıcı adı gönderildi; geçerli adlar kayıtlı
+    /// <c>INamedAiProvider.Name</c> değerleridir.
+    /// </summary>
+    public const string AiProviderUnknown = "Platform:Ai:ProviderUnknown";
 
     // --- AI Değerlendirme Merkezi (AI Evaluation Center) ---
     public const string PromptCodeAlreadyExists = "Platform:Ai:PromptCodeAlreadyExists";
