@@ -4,7 +4,7 @@ import { c as p, S as U, f as se, a as A, b as ft, d as gt, I as yt, B as G, T a
 import { Q as E, a as kt } from "./QueryProvider-D2Hvqdr9.js";
 import { H as Ge, a as Dt, L as vt } from "./signalr-vendor-CjTpd8t3.js";
 import { D as Nt } from "./useDeviceMode-Bkxjujsr.js";
-import { u as We, r as St, T as wt } from "./registerServiceWorker-DPq4UUem.js";
+import { u as We, r as St, T as wt } from "./registerServiceWorker-DQ1_B5K-.js";
 import { r as Tt } from "./grid-vendor-CuxMlyPo.js";
 import { u as R, a as oe, b as Ue } from "./query-vendor-Db2mwxYI.js";
 import { a as ce } from "./httpClient-BNoyY5yK.js";

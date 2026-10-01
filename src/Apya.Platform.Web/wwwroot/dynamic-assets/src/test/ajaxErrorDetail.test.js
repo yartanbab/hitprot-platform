@@ -156,6 +156,35 @@ function installSwal() {
     return current;
 }
 
+/**
+ * ABP 10 AbpToastService ile aynı iskelet (abp.notify.* her çağrıda yeni örnek kurar):
+ * kap bulunur ya da oluşturulur, konum satır içi stille verilir, balon kaba eklenir.
+ */
+function installToastService() {
+    function AbpToastService() {
+        this.container = document.getElementById('toast-container');
+        if (!this.container) {
+            this.container = document.createElement('div');
+            this.container.id = 'toast-container';
+            this.container.className = 'abp-toast-container';
+            document.body.appendChild(this.container);
+        }
+        this.updateContainerPosition();
+    }
+    AbpToastService.prototype.updateContainerPosition = function () {
+        Object.assign(this.container.style, { top: 'auto', right: '30px', bottom: '30px', left: 'auto' });
+    };
+    AbpToastService.prototype.error = function (message) {
+        const toast = document.createElement('div');
+        toast.className = 'abp-toast abp-toast-error';
+        toast.innerHTML = '<button class="abp-toast-close-button"></button><p class="abp-toast-message"></p>';
+        toast.querySelector('p').textContent = message;
+        this.container.appendChild(toast);
+        return toast;
+    };
+    window.AbpToastService = AbpToastService;
+}
+
 function probeReturns(user) {
     window.fetch = vi.fn(() => Promise.resolve({
         ok: true,
@@ -215,6 +244,7 @@ async function load(options) {
     installAbp(options);
     installJquery();
     installSwal();
+    if (options && options.toastService === false) { delete window.AbpToastService; } else { installToastService(); }
     probeReturns({ isAuthenticated: true, id: 'u1' });
     vi.resetModules();
     const added = vi.spyOn(window, 'addEventListener');
@@ -233,6 +263,7 @@ afterEach(() => {
     // söker; kalsalardı sonraki testin "sekmeye dönüş" olayına eski yükleme de yanıt verirdi.
     dialogs.filter((d) => !d.closed).forEach((d) => d.close({ isDismissed: true }));
     document.querySelectorAll('.swal2-container').forEach((n) => n.remove());
+    document.querySelectorAll('.abp-toast-container').forEach((n) => n.remove());
     delete window.matchMedia;
     vi.unstubAllGlobals();
 });
@@ -1102,5 +1133,52 @@ describe('pencere yalıtımı (Radix/Bootstrap modalı üstünde)', () => {
 
         document.removeEventListener('pointerdown', outside);
         document.removeEventListener('focusin', outside);
+    });
+
+    // Balon açık pencerenin (Radix) üstünde tıklanabilir ama "dışı" sayılıyordu: balona ya da
+    // "×"ine basmak görev detayını kapatıyor, kirli formda "Kaydet" tıklamasını yutuyordu.
+    it('ABP bildirim balonu da yalıtılır: tıklama/odak belgeye sızmaz, click sızar, konum ve pointer-events korunur', () => {
+        const isolated = ['pointerdown', 'mousedown', 'touchstart', 'focusin'];
+        const outside = vi.fn();
+        const clicked = vi.fn();
+        isolated.forEach((name) => document.addEventListener(name, outside));
+        document.addEventListener('click', clicked);
+
+        const toast = new AbpToastService().error('Kaydedilemedi.');
+        const container = document.getElementById('toast-container');
+        const close = toast.querySelector('.abp-toast-close-button');
+
+        expect(container.getAttribute('data-apya-overlay')).toBe('toast');
+        // Kabın pointer-events'ine dokunulmaz: balonlar arası boşluk tıklamayı alttakine geçirir.
+        expect(container.style.pointerEvents).toBe('');
+        expect(container.style.bottom).toBe('30px');
+
+        isolated.forEach((name) => close.dispatchEvent(new Event(name, { bubbles: true })));
+        expect(outside).not.toHaveBeenCalled();
+
+        // click durdurulmaz: "×" ve sayfanın click dinleyicileri çalışmaya devam eder.
+        close.dispatchEvent(new Event('click', { bubbles: true }));
+        expect(clicked).toHaveBeenCalledTimes(1);
+
+        isolated.forEach((name) => document.removeEventListener(name, outside));
+        document.removeEventListener('click', clicked);
+    });
+
+    it('her bildirim yeni servis örneği kurar: kap yalnız bir kez yalıtılır', () => {
+        new AbpToastService().error('1');
+        const container = document.getElementById('toast-container');
+        const added = vi.spyOn(container, 'addEventListener');
+
+        new AbpToastService().error('2');
+
+        expect(added).not.toHaveBeenCalled();
+        expect(container.querySelectorAll('.abp-toast')).toHaveLength(2);
+    });
+
+    it('AbpToastService yoksa dosya hatasız yüklenir, pencere yalıtımı çalışır', async () => {
+        await load({ toastService: false });
+
+        abp.message.error('WIP sınırı aşıldı.');
+        expect(dialogs[0].container.hasAttribute('data-apya-overlay')).toBe(true);
     });
 });

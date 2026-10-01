@@ -133,8 +133,8 @@
     "file": "react-vendor-D7YDiBbi.js",
     "name": "react-vendor"
   },
-  "_registerServiceWorker-DPq4UUem.js": {
-    "file": "registerServiceWorker-DPq4UUem.js",
+  "_registerServiceWorker-DQ1_B5K-.js": {
+    "file": "registerServiceWorker-DQ1_B5K-.js",
     "name": "registerServiceWorker",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
@@ -200,7 +200,7 @@
       "_QueryProvider-D2Hvqdr9.js",
       "_signalr-vendor-CjTpd8t3.js",
       "_useDeviceMode-Bkxjujsr.js",
-      "_registerServiceWorker-DPq4UUem.js",
+      "_registerServiceWorker-DQ1_B5K-.js",
       "_grid-vendor-CuxMlyPo.js",
       "_query-vendor-Db2mwxYI.js",
       "_httpClient-BNoyY5yK.js",
@@ -300,7 +300,7 @@
       "_index-DgpuJ91w.js",
       "_Dialog-BEQtx1HL.js",
       "_QueryProvider-D2Hvqdr9.js",
-      "_registerServiceWorker-DPq4UUem.js",
+      "_registerServiceWorker-DQ1_B5K-.js",
       "_Combobox-VWBB0dEF.js",
       "_query-vendor-Db2mwxYI.js",
       "_httpClient-BNoyY5yK.js",

@@ -177,6 +177,27 @@ a, button, .btn, .nav-link, .list-group-item {
 }
 
 /* ----------------------------------------------------------------------------
+   4b) BİLDİRİM — PENCERE AÇIKKEN ÜST-ORTA (2026-10-01)
+   Bildirimler (abp.notify balonu ve React Toast bölgesi) sağ-altta çıkar; açık
+   pencerenin eylem düğmeleri de oradadır. Bildirim "Vazgeç / Kaydet"i, "İptal /
+   Gönder"i 4-5 sn örtüyor, o sırada düğmeye basılamıyordu. Bir pencere ya da
+   panel açıkken bildirim ekranın üst ortasına alınır; pencere yokken yeri aynı.
+   Pencere = Radix Dialog/Sheet (Popover DEĞİL: o da role=dialog taşır ama popper
+   sarmalayıcısının içindedir) ya da Bootstrap/ABP modalı (.apya-drawer dahil).
+   ABP kabı konumunu satır içi stille verir → !important şart.
+   Eşi (bildirime basınca pencere kapanmasın): ajax-error-detail.js isolateLayer
+   ve dynamic-assets/src/lib/feedback/Toast.jsx.
+   ---------------------------------------------------------------------------- */
+:root:has([role="dialog"][data-state="open"]:not([data-radix-popper-content-wrapper] *), .modal.show) .abp-toast-container,
+:root:has([role="dialog"][data-state="open"]:not([data-radix-popper-content-wrapper] *), .modal.show) [data-apya-overlay="toast"] {
+    top: calc(var(--apya-space-4) + env(safe-area-inset-top, 0px)) !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%);
+}
+
+/* ----------------------------------------------------------------------------
    5) SELECT2 DARK UYUMU
    ---------------------------------------------------------------------------- */
 [data-theme="dark"] .select2-container--default .select2-selection--single,

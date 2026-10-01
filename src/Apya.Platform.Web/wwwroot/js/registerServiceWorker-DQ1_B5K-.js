@@ -1,19 +1,23 @@
-import { r as l, b as p, j as s } from "./react-vendor-D7YDiBbi.js";
-import { c as x } from "./Dialog-BEQtx1HL.js";
-const g = l.createContext(null), m = {
+import { r as l, b as g, j as s } from "./react-vendor-D7YDiBbi.js";
+import { c as f } from "./Dialog-BEQtx1HL.js";
+const p = l.createContext(null), m = {
   info: { ring: "border-default", icon: "text-text-secondary", accent: "bg-brand-500" },
   success: { ring: "border-positive-100", icon: "text-text-positive", accent: "bg-positive-500" },
   warning: { ring: "border-warning-100", icon: "text-text-warning", accent: "bg-warning-500" },
   error: { ring: "border-negative-100", icon: "text-text-negative", accent: "bg-negative-500" }
 }, v = 4e3, w = 1e4;
-let b = 0;
-function E({ children: e }) {
-  const [i, t] = l.useState([]), a = l.useRef(/* @__PURE__ */ new Map()), c = l.useCallback((r) => {
-    const n = a.current.get(r);
-    n && (clearTimeout(n), a.current.delete(r)), t((u) => u.filter((d) => d.id !== r));
+let h = 0;
+const b = ["pointerdown", "mousedown", "touchstart", "focusin"], y = (e) => e.stopPropagation();
+function T(e) {
+  e && b.forEach((n) => e.addEventListener(n, y, { passive: !0 }));
+}
+function C({ children: e }) {
+  const [n, t] = l.useState([]), a = l.useRef(/* @__PURE__ */ new Map()), c = l.useCallback((r) => {
+    const i = a.current.get(r);
+    i && (clearTimeout(i), a.current.delete(r)), t((u) => u.filter((d) => d.id !== r));
   }, []), o = l.useCallback((r) => {
-    const n = ++b, u = {
-      id: n,
+    const i = ++h, u = {
+      id: i,
       type: r.type ?? "info",
       message: r.message ?? "",
       description: r.description,
@@ -22,51 +26,53 @@ function E({ children: e }) {
       duration: r.duration ?? (r.action ? w : v)
     };
     if (t((d) => [...d, u]), u.duration > 0) {
-      const d = setTimeout(() => c(n), u.duration);
-      a.current.set(n, d);
+      const d = setTimeout(() => c(i), u.duration);
+      a.current.set(i, d);
     }
-    return n;
+    return i;
   }, [c]);
   l.useEffect(() => () => {
     a.current.forEach(clearTimeout), a.current.clear();
   }, []);
-  const f = p.useMemo(() => ({
+  const x = g.useMemo(() => ({
     show: o,
     dismiss: c,
-    info: (r, n = {}) => o({ ...n, type: "info", message: r }),
-    success: (r, n = {}) => o({ ...n, type: "success", message: r }),
-    warning: (r, n = {}) => o({ ...n, type: "warning", message: r }),
-    error: (r, n = {}) => o({ ...n, type: "error", message: r })
+    info: (r, i = {}) => o({ ...i, type: "info", message: r }),
+    success: (r, i = {}) => o({ ...i, type: "success", message: r }),
+    warning: (r, i = {}) => o({ ...i, type: "warning", message: r }),
+    error: (r, i = {}) => o({ ...i, type: "error", message: r })
   }), [o, c]);
-  return /* @__PURE__ */ s.jsxs(g.Provider, { value: f, children: [
+  return /* @__PURE__ */ s.jsxs(p.Provider, { value: x, children: [
     e,
-    /* @__PURE__ */ s.jsx(h, { items: i.slice(-3), onDismiss: c })
+    /* @__PURE__ */ s.jsx(j, { items: n.slice(-3), onDismiss: c })
   ] });
 }
-function h({ items: e, onDismiss: i }) {
+function j({ items: e, onDismiss: n }) {
   return e.length === 0 ? null : /* @__PURE__ */ s.jsx(
     "div",
     {
+      ref: T,
+      "data-apya-overlay": "toast",
       role: "region",
       "aria-label": "Bildirimler",
-      className: x(
+      className: f(
         "fixed bottom-4 right-4 z-toast",
         "flex flex-col-reverse gap-2",
         "pointer-events-none",
         /* viewport tıklamaları geçirir; tek tek toast'lar pointer-auto */
         "max-w-[calc(100vw-2rem)]"
       ),
-      children: e.map((t) => /* @__PURE__ */ s.jsx(j, { item: t, onDismiss: i }, t.id))
+      children: e.map((t) => /* @__PURE__ */ s.jsx(E, { item: t, onDismiss: n }, t.id))
     }
   );
 }
-function j({ item: e, onDismiss: i }) {
+function E({ item: e, onDismiss: n }) {
   const t = m[e.type] ?? m.info, a = e.type === "error" ? "assertive" : "polite", c = () => {
-    var o, f;
+    var o, x;
     try {
-      (f = (o = e.action) == null ? void 0 : o.onClick) == null || f.call(o);
+      (x = (o = e.action) == null ? void 0 : o.onClick) == null || x.call(o);
     } finally {
-      i(e.id);
+      n(e.id);
     }
   };
   return /* @__PURE__ */ s.jsxs(
@@ -74,7 +80,7 @@ function j({ item: e, onDismiss: i }) {
     {
       role: e.type === "error" ? "alert" : "status",
       "aria-live": a,
-      className: x(
+      className: f(
         "pointer-events-auto",
         "flex items-stretch gap-0",
         "min-w-[280px] max-w-[420px]",
@@ -83,7 +89,7 @@ function j({ item: e, onDismiss: i }) {
         t.ring
       ),
       children: [
-        /* @__PURE__ */ s.jsx("span", { className: x("w-1 flex-none rounded-l-md", t.accent), "aria-hidden": "true" }),
+        /* @__PURE__ */ s.jsx("span", { className: f("w-1 flex-none rounded-l-md", t.accent), "aria-hidden": "true" }),
         /* @__PURE__ */ s.jsxs("div", { className: "flex-1 min-w-0 px-3 py-2.5 flex items-start gap-2", children: [
           /* @__PURE__ */ s.jsxs("div", { className: "flex-1 min-w-0 flex flex-col gap-0.5", children: [
             /* @__PURE__ */ s.jsx("p", { className: "text-sm font-medium text-text-primary truncate", children: e.message }),
@@ -94,7 +100,7 @@ function j({ item: e, onDismiss: i }) {
             {
               type: "button",
               onClick: c,
-              className: x(
+              className: f(
                 "flex-none text-sm font-medium text-text-link",
                 "hover:underline underline-offset-2",
                 "focus-visible:outline-none focus-visible:shadow-focus rounded-sm"
@@ -106,9 +112,9 @@ function j({ item: e, onDismiss: i }) {
             "button",
             {
               type: "button",
-              onClick: () => i(e.id),
+              onClick: () => n(e.id),
               "aria-label": "Bildirimi kapat",
-              className: x(
+              className: f(
                 "flex-none text-text-tertiary hover:text-text-primary",
                 "focus-visible:outline-none focus-visible:shadow-focus rounded-sm",
                 "h-5 w-5 inline-flex items-center justify-center"
@@ -121,13 +127,13 @@ function j({ item: e, onDismiss: i }) {
     }
   );
 }
-function N() {
-  const e = l.useContext(g);
+function L() {
+  const e = l.useContext(p);
   if (!e)
     throw new Error("useToast must be used within <ToastProvider>.");
   return e;
 }
-function k({ onUpdate: e, onReady: i } = {}) {
+function S({ onUpdate: e, onReady: n } = {}) {
   typeof window > "u" || !("serviceWorker" in navigator) || (window.addEventListener("beforeinstallprompt", (t) => {
     t.preventDefault(), window.__apyaInstallPrompt = t;
   }), window.addEventListener("load", async () => {
@@ -136,16 +142,16 @@ function k({ onUpdate: e, onReady: i } = {}) {
       t.waiting && (e == null || e(t)), t.addEventListener("updatefound", () => {
         const a = t.installing;
         a && a.addEventListener("statechange", () => {
-          a.state === "installed" && navigator.serviceWorker.controller ? e == null || e(t) : a.state === "activated" && (i == null || i(t));
+          a.state === "installed" && navigator.serviceWorker.controller ? e == null || e(t) : a.state === "activated" && (n == null || n(t));
         });
-      }), i == null || i(t);
+      }), n == null || n(t);
     } catch (t) {
       console.warn("[SW] register failed:", t == null ? void 0 : t.message);
     }
   }));
 }
 export {
-  E as T,
-  k as r,
-  N as u
+  C as T,
+  S as r,
+  L as u
 };

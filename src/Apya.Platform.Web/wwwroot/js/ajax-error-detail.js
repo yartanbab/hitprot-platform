@@ -390,15 +390,21 @@
     function stopPropagation(e) { e.stopPropagation(); }
 
     // Radix (görev detayı V3) ve Bootstrap modalları odağı/tıklamayı belge seviyesinde
-    // yakalıyor; body pointer-events:none kalıyor. Penceremiz bunlardan yalıtılır.
-    function isolate(popup) {
-        var container = popup && popup.parentNode;
-        if (!container || !container.setAttribute) { return; }
-        container.setAttribute('data-apya-overlay', '');
-        container.style.pointerEvents = 'auto';
+    // yakalıyor; body pointer-events:none kalıyor. Üst katmanlarımız (pencere, bildirim balonu)
+    // bunlardan yalıtılır: kap işaretlenir ve bu olaylar kabın dışına çıkmaz.
+    function isolateLayer(container, kind) {
+        if (!container || !container.setAttribute || container.hasAttribute('data-apya-overlay')) { return; }
+        container.setAttribute('data-apya-overlay', kind || '');
         ['pointerdown', 'mousedown', 'touchstart', 'focusin'].forEach(function (name) {
             container.addEventListener(name, stopPropagation, { passive: true });
         });
+    }
+
+    function isolate(popup) {
+        var container = popup && popup.parentNode;
+        if (!container || !container.setAttribute) { return; }
+        isolateLayer(container);
+        container.style.pointerEvents = 'auto';
     }
 
     // Radix FocusScope odak penceremize geçerken 'focusout'ta odağı geri çekiyor;
@@ -419,6 +425,22 @@
     if (sweetAlertDefaults) {
         sweetAlertDefaults.willOpen = isolate;
         sweetAlertDefaults.keydownListenerCapture = true;
+    }
+
+    // ABP bildirim balonu (abp.notify) da yalıtılır. Balon açık pencerenin üstünde tıklanabilir
+    // ama pencerenin "dışı" sayılıyordu: balona ya da "×"ine basmak görev detayını kapatıyor,
+    // kaydedilmemiş değişiklik varken "Kaydet" tıklamasını yutuyordu. Kap ilk bildirimde oluşur;
+    // her bildirim yeni bir servis örneği kurup konumu güncellediği için yalıtım oraya bağlanır.
+    // click durdurulmaz ("×" çalışır); kabın pointer-events'ine dokunulmaz (balonlar arası boşluk
+    // tıklamayı alttakine geçirmeye devam eder).
+    var ToastService = window.AbpToastService;
+    if (ToastService && ToastService.prototype && ToastService.prototype.updateContainerPosition) {
+        var originalUpdateContainerPosition = ToastService.prototype.updateContainerPosition;
+        ToastService.prototype.updateContainerPosition = function () {
+            var result = originalUpdateContainerPosition.apply(this, arguments);
+            isolateLayer(this.container, 'toast');
+            return result;
+        };
     }
 
     // SweetAlert tekil: oturum (ya da "başka kullanıcı") penceresi açıkken çağıranın
