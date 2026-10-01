@@ -442,6 +442,9 @@ $(function () {
     // Yükleniyor: spinner değil, tablo hizasında iskelet satırlar. İlk yüklemede
     // ve her filtre değişiminde tabloyu iskeletle değiştirir.
     dataTable.on('preXhr', function () {
+        // Hata kartı dururken (Tekrar dene) takas yok: kart meşgul düğmesiyle kalır. Tablo gizlenseydi
+        // klavyeyle basılan odaklı düğme de gizlenir, odak sayfa başına (body) düşerdi.
+        if (apya.loadState.tableFailed(dataTable)) { return; }
         $('#state-loading').removeClass('d-none');
         $('#TasksTable_wrapper').addClass('d-none');
     });

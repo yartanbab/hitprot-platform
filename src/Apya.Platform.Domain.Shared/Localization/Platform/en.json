@@ -2539,6 +2539,7 @@
     "Project:NameEmpty": "The project name cannot be empty.",
     "Project:CodeEmpty": "The project code cannot be empty.",
     "Project:List:LoadFailed": "Projects could not be loaded.",
+    "Project:List:MoreLoadFailed": "The remaining projects could not be loaded.",
     "Platform:Error:MaxProjectsReached": "Your package allows at most {limit} projects; you currently have {current}.",
     "Platform:Error:MaxUsersReached": "Your package allows at most {limit} users; you currently have {current}.",
     "Platform:Error:TaxNumberAlreadyExists": "A customer with this tax number already exists.",

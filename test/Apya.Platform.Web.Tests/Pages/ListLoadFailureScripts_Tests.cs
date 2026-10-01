@@ -95,6 +95,24 @@ public class ListLoadFailureScripts_Tests
             .ShouldContain("settings.nTable.getAttribute('data-load-failed') || text('Common:ListLoadFailed', 'Liste yüklenemedi.')");
     }
 
+    /// <summary>
+    /// /Tasks her istekte tabloyu iskeletle değiştirir. Hata kartının "Tekrar dene"si klavyeyle basılınca
+    /// tabloyla birlikte odaklı düğme de gizleniyor, odak sayfa başına (body) düşüyordu. Kart dururken
+    /// takas yapılmaz: kart meşgul düğmesiyle kalır (apya-load-state.js), odak çizimde yeni karta ya da
+    /// tabloya taşınır. Başarılı yanıttan sonraki isteklerde iskelet takası aynen sürer.
+    /// </summary>
+    [Fact]
+    public void Gorevler_hata_karti_dururken_iskelet_takasi_yapmaz()
+    {
+        var preXhr = Between(Web("Pages", "Tasks", "index.js"),
+            "dataTable.on('preXhr', function () {", "dataTable.on('xhr', function () {");
+
+        ShouldAppearInOrder(preXhr,
+            "if (apya.loadState.tableFailed(dataTable)) { return; }",
+            "$('#state-loading').removeClass('d-none');",
+            "$('#TasksTable_wrapper').addClass('d-none');");
+    }
+
     // ─────────────────────────── ADM-16: AiCenter elle yazılmış ajax ───────────────────────────
 
     /// <summary>
@@ -192,7 +210,8 @@ public class ListLoadFailureScripts_Tests
     /// Yükleme isteği ABP penceresini açmaz (karar 2); liste hiç gelmediyse ızgaranın dışında kart.
     /// Devam sayfası (otomatik devam ya da "Daha fazla yükle") düşerse eldeki liste korunur ve kart
     /// "Daha fazla yükle"nin altına basılır — eskiden hiçbir yerde söylenmiyordu, eksik küme (KPI/çip
-    /// sayaçları) tam sanılıyordu. Kart her yeni istekte kalkar; Tekrar dene aynı sayfayı ister.
+    /// sayaçları) tam sanılıyordu. Başlığı ayrıdır ("Kalan projeler yüklenemedi."): üstte projeler
+    /// dururken "Projeler yüklenemedi." yanıltırdı. Kart her yeni istekte kalkar; Tekrar dene aynı sayfayı ister.
     /// jQuery zincirinde kalır: Promise.resolve'a sarılsaydı "throw e" yakalanmamış ret (telemetri) olurdu.
     /// </summary>
     [Fact]
@@ -213,7 +232,7 @@ public class ListLoadFailureScripts_Tests
             "apya.loadState.errorHtml(l('Project:List:LoadFailed'), 'js-projects-retry', e)",
             "} else {",
             "state.truncated = true;",
-            "$('#ProjectsMoreError').html(apya.loadState.errorHtml(l('Project:List:LoadFailed'), 'js-projects-more-retry', e))",
+            "$('#ProjectsMoreError').html(apya.loadState.errorHtml(l('Project:List:MoreLoadFailed'), 'js-projects-more-retry', e))",
             ".prop('hidden', false);",
             "render();",
             "throw e;");
@@ -395,6 +414,7 @@ public class ListLoadFailureScripts_Tests
 
     [Theory]
     [InlineData("Project:List:LoadFailed")]
+    [InlineData("Project:List:MoreLoadFailed")]
     [InlineData("Notification:List:LoadFailed")]
     public void Kart_basliklari_iki_dilde_de_var(string key)
     {

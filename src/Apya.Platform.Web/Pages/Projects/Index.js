@@ -926,7 +926,7 @@ $(function () {
                 $('#ProjectsLoadError').html(apya.loadState.errorHtml(l('Project:List:LoadFailed'), 'js-projects-retry', e));
             } else {
                 state.truncated = true;
-                $('#ProjectsMoreError').html(apya.loadState.errorHtml(l('Project:List:LoadFailed'), 'js-projects-more-retry', e))
+                $('#ProjectsMoreError').html(apya.loadState.errorHtml(l('Project:List:MoreLoadFailed'), 'js-projects-more-retry', e))
                     .prop('hidden', false);
             }
             render();

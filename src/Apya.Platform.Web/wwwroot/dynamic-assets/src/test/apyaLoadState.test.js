@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
 // wwwroot/js/apya-load-state.js bir IIFE: Razor/jQuery sayfalarının satır içi
 // yükleme ve hata kutusunu (apya.loadState) kurar. Çekirdek jQuery GEREKMEZ; DataTables
@@ -382,6 +385,71 @@ describe('tablo kartının Tekrar dene odağı', () => {
         draw({ data: [{}], recordsTotal: 1, recordsFiltered: 1 });
 
         expect(document.activeElement).toBe(search);
+    });
+});
+
+/* Dar ekran: yatay kaydırmalı tabloda (scrollX; Kurlar, Kiracılar) boş hücre TABLO genişliğindedir,
+   içinde ortalanan kart görünür kaydırma alanının dışında kalıyordu. Çözüm apya-shell.css'te: kart
+   yapışkan + en çok görünür alan genişliğinde. jsdom yerleşim ölçmez (canlıda ölçülür); burada
+   kuralların varlığı ve failTable'ın bastığı DOM'la eşleştiği kilitlenir — kart hücrenin DOĞRUDAN
+   çocuğu olmaktan çıkarsa kurallar sessizce boşa düşer. */
+describe('tablo kartı yatay kaydırmalı tabloda görünür alanda kalır (apya-shell.css)', () => {
+    const css = readFileSync(
+        path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../css/apya-shell.css'), 'utf8');
+    const SCROLLER = '.dt-scroll-body:has(> table > tbody > tr > td.dt-empty > .apya-console-state)'
+        + ':not(.apya-console-views .dt-scroll-body)';
+    const CELL = 'table.dataTable td.dt-empty:has(> .apya-console-state)';
+    const CARD = 'table.dataTable td.dt-empty > .apya-console-state';
+    let fake;
+
+    beforeEach(() => {
+        fake = installFakeJquery();
+    });
+
+    afterEach(() => {
+        delete window.jQuery;
+        document.body.innerHTML = '';
+    });
+
+    // DataTables scrollX DOM'u: kaydırma gövdesi > tablo > tbody > tek td.dt-empty.
+    function failScrollTable(hostClass) {
+        document.body.innerHTML = '<div class="' + hostClass + '"><div class="dt-container" id="w"><div class="dt-scroll">'
+            + '<div class="dt-scroll-body"><table id="t" class="dataTable"><tbody>'
+            + '<tr><td class="dt-empty" colspan="3">Tabloda veri yok</td></tr>'
+            + '</tbody></table></div></div></div></div>';
+        const table = document.getElementById('t');
+        const settings = { nTable: table, nTBody: table.querySelector('tbody'), nTableWrapper: document.getElementById('w') };
+        const scroller = document.querySelector('.dt-scroll-body');
+        const before = scroller.matches(SCROLLER);
+
+        loadState.failTable(settings, (json) => {
+            settings.json = json;
+            fake.handlers.filter((h) => h.el === table).forEach((h) => h.fn());
+        });
+
+        return { settings, scroller, before };
+    }
+
+    it('kurallar: gövde kap olur (100cqi = görünür genişlik), hücrenin yatay dolgusu kalkar, kart yapışkan ve en çok o genişlikte', () => {
+        expect(css).toContain(SCROLLER + ' { container-type: inline-size; }');
+        expect(css).toContain(CELL + ' { padding-inline: 0; }');
+        expect(css).toContain(CARD + ' { position: sticky; left: 0; max-width: 100cqi; }');
+    });
+
+    it('seçiciler failTable\'ın bastığı kartla eşleşir; kart yokken gövde kap olmaz (satır menüleri etkilenmez)', () => {
+        const { settings, scroller, before } = failScrollTable('card-body');
+
+        expect(before).toBe(false);
+        expect(scroller.matches(SCROLLER)).toBe(true);
+        expect(settings.nTBody.querySelector('td.dt-empty').matches(CELL)).toBe(true);
+        expect(settings.nTBody.querySelector('.apya-console-state').matches(CARD)).toBe(true);
+    });
+
+    it('konsol görünümünde gövde kap OLMAZ: adsız @container kuralları (kart düzeni) konsol kabına bakmayı sürdürür', () => {
+        const { settings, scroller } = failScrollTable('apya-console-views');
+
+        expect(settings.nTBody.querySelector('.apya-console-state')).not.toBeNull();
+        expect(scroller.matches(SCROLLER)).toBe(false);
     });
 });
 

@@ -2912,6 +2912,7 @@
         "Project:NameEmpty": "Proje adı boş bırakılamaz.",
         "Project:CodeEmpty": "Proje kodu boş bırakılamaz.",
         "Project:List:LoadFailed": "Projeler yüklenemedi.",
+        "Project:List:MoreLoadFailed": "Kalan projeler yüklenemedi.",
         "DisplayName:CreateProjectDto.Name": "Proje adı",
         "DisplayName:FullName": "Ad Soyad",
         "DisplayName:CompanyName": "Kurum / Firma",
