@@ -140,8 +140,9 @@ $(function () {
         var seq = saveSeq[key] = (saveSeq[key] || 0) + 1;
         saveTimers[key] = null;
         setSaveChip(l('Grants:Wizard:Saving'), false);
-        // Yeniden denemede ABP hata penceresini tekrar tekrar açma; durum rozette.
-        saveFns[key](isRetry ? { abpHandleError: false } : undefined).then(function (dto) {
+        // Yeniden deneme zamanlayıcıyla gider (arka plan): ABP hata penceresi tekrar tekrar açılmaz,
+        // "Kapat"lanan oturum penceresi 10 sn'de bir geri gelmez; durum rozette.
+        saveFns[key](isRetry ? { abpHandleError: false, apyaBackground: true } : undefined).then(function (dto) {
             if (saveSeq[key] === seq && !saveTimers[key]) { delete dirty[key]; }
             model = dto;
             paint();
