@@ -215,7 +215,8 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
                 <Skeleton className="h-24 w-full" />
             </div>
         )
-        : isError
+        // Yenileme hatası ≠ ilk yükleme hatası: veri ekrandayken tazeleme düşerse form kalır (yazılan görünür).
+        : isError && !task
             ? (
                 <div className="grid place-items-center gap-3 py-[var(--apya-space-12)] text-center">
                     <i className="fa fa-triangle-exclamation text-2xl text-text-tertiary" aria-hidden="true" />
