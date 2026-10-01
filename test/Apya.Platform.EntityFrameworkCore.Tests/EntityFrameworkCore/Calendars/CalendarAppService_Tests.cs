@@ -364,11 +364,56 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
         results.Count.ShouldBe(2);
         results[0].Succeeded.ShouldBeTrue();
         results[1].Succeeded.ShouldBeFalse();
-        results[1].Error.ShouldNotBeNullOrWhiteSpace();
+        // Kodsuz ('message:' ile atılan) ret kendi cümlesiyle aynen geçer.
+        results[1].Error.ShouldBe("Fatura vadesi takvimden değiştirilemez.");
 
         // …ama BAŞARILI satır uygulanmış kalmalı.
         var updated = await _taskRepository.GetAsync(task.Id);
         updated.DueDate!.Value.Date.ShouldBe(today.AddDays(2));
+    }
+
+    /// <summary>
+    /// CAL-15 · Kodla atılan ret satıra <c>ex.Message</c> ile yazılıyordu: .NET'in İngilizce varsayılanı
+    /// ("Exception of type 'Volo.Abp.BusinessException' was thrown."). Satır artık kodun tr.json metnini taşır.
+    /// <para>Test host'u her izni verdiği için TaskUpdateDenied üretilemiyor; aynı dalın diğer kodu destek
+    /// oturumuyla (impersonation) üretilir — <c>TaskAppService_Tenant_Tests</c> emsali.</para>
+    /// </summary>
+    [Fact]
+    public async Task BulkRescheduleAsync_kodlu_reddi_yerellestirilmis_metinle_doner()
+    {
+        var today = _clock.Now.Date;
+        var task = new TaskItem(Guid.NewGuid(), "QA-UX gizli toplu erteleme",
+            dueDate: today, isPrivate: true, tenantId: _currentTenant.Id, now: today.AddDays(-2));
+        await _taskRepository.InsertAsync(task, autoSave: true);
+
+        var impersonated = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]
+        {
+            new System.Security.Claims.Claim(Volo.Abp.Security.Claims.AbpClaimTypes.UserId, Guid.NewGuid().ToString()),
+            new System.Security.Claims.Claim(Volo.Abp.Security.Claims.AbpClaimTypes.UserName, "qa-ux-destek"),
+            new System.Security.Claims.Claim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId, Guid.NewGuid().ToString())
+        }));
+
+        System.Collections.Generic.List<BulkRescheduleResultDto> results;
+        string expected;
+        using (Volo.Abp.Localization.CultureHelper.Use("tr"))
+        using (GetRequiredService<Volo.Abp.Security.Claims.ICurrentPrincipalAccessor>().Change(impersonated))
+        {
+            results = await _calendar.BulkRescheduleAsync(new System.Collections.Generic.List<RescheduleCalendarItemInput>
+            {
+                new() { Source = CalendarSourceType.Task, SourceId = task.Id, NewDate = today.AddDays(2) }
+            });
+            expected = GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource>>()
+                [PlatformDomainErrorCodes.TaskViewImpersonationDenied].Value;
+        }
+
+        var row = results.ShouldHaveSingleItem();
+        row.Succeeded.ShouldBeFalse();
+        row.Error.ShouldBe(expected);
+        row.Error.ShouldStartWith("Bu gizli görevi");
+        row.Error.ShouldNotContain("Exception of type");
+
+        // Reddedilen görev yerinde kalır.
+        (await _taskRepository.GetAsync(task.Id)).DueDate!.Value.Date.ShouldBe(today);
     }
 
     [Fact]

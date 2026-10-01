@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Apya.Platform.DynamicAssets.Webhooks;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
+using Volo.Abp.AspNetCore.ExceptionHandling;
 using Volo.Abp.Domain.Repositories;
 
 namespace Apya.Platform.Calendars;
@@ -28,6 +29,7 @@ public class IcalSubscriptionAppService : ApplicationService, IIcalSubscriptionA
     private readonly IRepository<IcalSubscription, Guid> _repository;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IcalReader _reader;
+    private readonly IExceptionToErrorInfoConverter _errorInfoConverter;
 
     /// <summary>İndirilebilecek en büyük dosya — şişkin takvim belleği doldurmasın.</summary>
     private const int MaxBytes = 5 * 1024 * 1024;
@@ -35,14 +37,18 @@ public class IcalSubscriptionAppService : ApplicationService, IIcalSubscriptionA
     /// <summary>Doğrulama/okuma penceresi: geçmiş bir yıl, gelecek bir yıl.</summary>
     private const int WindowDays = 365;
 
+    private const string ProbeFailedText = "Bağlantı okunamadı — adresi kontrol edin.";
+
     public IcalSubscriptionAppService(
         IRepository<IcalSubscription, Guid> repository,
         IHttpClientFactory httpClientFactory,
-        IcalReader reader)
+        IcalReader reader,
+        IExceptionToErrorInfoConverter errorInfoConverter)
     {
         _repository        = repository;
         _httpClientFactory = httpClientFactory;
         _reader            = reader;
+        _errorInfoConverter = errorInfoConverter;
     }
 
     public async Task<List<IcalSubscriptionDto>> GetListAsync()
@@ -55,7 +61,7 @@ public class IcalSubscriptionAppService : ApplicationService, IIcalSubscriptionA
     {
         try
         {
-            WebhookUrlGuard.ValidateOrThrow(url);
+            EnsureUrlAllowed(url);
             var (content, count, name) = await FetchAndCountAsync(url);
             return new IcalProbeResultDto
             {
@@ -66,18 +72,19 @@ public class IcalSubscriptionAppService : ApplicationService, IIcalSubscriptionA
         }
         catch (BusinessException ex)
         {
-            return new IcalProbeResultDto { IsValid = false, Error = ex.Message };
+            // Kodla atılan istisnanın ex.Message'ı .NET'in İngilizce varsayılanıdır (CAL-15).
+            return new IcalProbeResultDto { IsValid = false, Error = _errorInfoConverter.UserText(ex, ProbeFailedText) };
         }
         catch (Exception ex)
         {
             Logger.LogWarning(ex, "iCal doğrulaması başarısız. Url={Url}", url);
-            return new IcalProbeResultDto { IsValid = false, Error = "Bağlantı okunamadı — adresi kontrol edin." };
+            return new IcalProbeResultDto { IsValid = false, Error = ProbeFailedText };
         }
     }
 
     public async Task<IcalSubscriptionDto> AddAsync(AddIcalSubscriptionInput input)
     {
-        WebhookUrlGuard.ValidateOrThrow(input.Url);
+        EnsureUrlAllowed(input.Url);
 
         // Kaydetmeden ÖNCE doğrula: kullanıcı listede ölü bir satır bulmasın.
         var (_, count, suggested) = await FetchAndCountAsync(input.Url);
@@ -100,7 +107,7 @@ public class IcalSubscriptionAppService : ApplicationService, IIcalSubscriptionA
     public async Task<IcalSubscriptionDto> UpdateAsync(Guid id, AddIcalSubscriptionInput input)
     {
         var entity = await GetOwnedAsync(id);
-        WebhookUrlGuard.ValidateOrThrow(input.Url);
+        EnsureUrlAllowed(input.Url);
 
         entity.Update(input.Url, input.DisplayName, input.Color, input.RefreshMinutes);
         await _repository.UpdateAsync(entity, autoSave: true);
@@ -132,6 +139,22 @@ public class IcalSubscriptionAppService : ApplicationService, IIcalSubscriptionA
 
         await _repository.UpdateAsync(entity, autoSave: true);
         return ToDto(entity);
+    }
+
+    /// <summary>
+    /// SSRF denetimi webhook'larla AYNI (<see cref="WebhookUrlGuard.ValidateOrThrow"/>); yalnız kullanıcıya
+    /// dönen kod takvimin kodudur — "Geçersiz webhook adresi" metni takvim ekranında yanlış terimdi.
+    /// </summary>
+    private static void EnsureUrlAllowed(string? url)
+    {
+        try
+        {
+            WebhookUrlGuard.ValidateOrThrow(url);
+        }
+        catch (BusinessException ex) when (ex.Code == PlatformDomainErrorCodes.WebhookTargetUrlNotAllowed)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.CalendarIcalUrlNotAllowed);
+        }
     }
 
     private async Task<IcalSubscription> GetOwnedAsync(Guid id)

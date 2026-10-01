@@ -1934,6 +1934,7 @@
     "Platform:DynamicAssets:FormRequiredAnswerMissing": "Please fill in all required fields.",
     "Platform:DynamicAssets:FormBlocksOutOfDate": "The form was changed elsewhere while you were editing: this save would have removed {Count} field(s) that are not on your screen. Nothing was saved. Open the form in a new tab to review its current state.",
     "Platform:DynamicAssets:WebhookTargetUrlNotAllowed": "Invalid webhook URL. Only http/https public (internet) addresses are allowed; local/private network addresses are rejected.",
+    "Platform:Calendar:IcalUrlNotAllowed": "Enter a valid calendar address. It must start with http:// or https:// and be reachable from the internet; local network addresses are not accepted.",
     "Permission:Ai.Generation": "AI Generation",
     "Permission:Ai.Generation.Request": "Request AI Generation",
     "Permission:Ai.Drafts": "AI Drafts",
