@@ -466,7 +466,7 @@ $(function () {
             model = dto;
             paint();
             $('#WizardLoadState').empty();
-            $('.apya-wiz-layout').removeClass('d-none');
+            $('.apya-wiz-head, .apya-wiz-head + .card, .apya-wiz-layout').removeClass('d-none');
             // Başarısız yüklemede de bağlanılıyordu: PresenceChanged boş modelle boyanıyordu.
             if (!live) {
                 live = true;
@@ -475,8 +475,9 @@ $(function () {
             }
         }, function (err) {
             if (!isLatest() || !initial || model) { return; }
-            // Veri yokken veri yazan denetimler (Önceki/Sonraki, Devret, mesaj) erişilemez kalsın.
-            $('.apya-wiz-layout').addClass('d-none');
+            // Veri yokken veri yazan denetimler (Önceki/Sonraki, Devret, mesaj) erişilemez kalsın; boş künye
+            // kartı ve hemen ardındaki adım şeridi (boş "Tamamlanma" çubuğu) da kartın üstünde durmasın.
+            $('.apya-wiz-head, .apya-wiz-head + .card, .apya-wiz-layout').addClass('d-none');
             $('#WizardLoadState').html(apya.loadState.errorHtml(l('Grants:Wizard:LoadFailed'), 'js-wizard-retry', err));
         });
     }

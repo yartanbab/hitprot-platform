@@ -273,9 +273,11 @@ public class GrantLoadFailureScripts_Tests
 
     /// <summary>
     /// GRT-07 "başlıksız boş etiket yığını": ilk yükleme düşünce Detay'da başlık kartı + ana düzen,
-    /// Sihirbaz'da ana düzen gizlenir — veri yazan denetimler (yer imi, Devret, Önceki/Sonraki, mesaj)
-    /// modelsiz basılamaz. Yer imi düzen DIŞINDA (sayfa başlığında) olduğu için işaretlemede gizli
-    /// başlar, paintBookmark açar. Tekrar dene başarısında düzen geri açılır.
+    /// Sihirbaz'da künye kartı + adım şeridi + ana düzen gizlenir — veri yazan denetimler (yer imi,
+    /// Devret, Önceki/Sonraki, mesaj) modelsiz basılamaz, hata kartının üstünde boş künye kartı
+    /// ("otomatik kaydedilir" rozetiyle) ve boş "Tamamlanma" çubuğu kalmaz. Yer imi düzen DIŞINDA
+    /// (sayfa başlığında) olduğu için işaretlemede gizli başlar, paintBookmark açar. Tekrar dene
+    /// başarısında hepsi geri açılır.
     /// </summary>
     [Fact]
     public void Detay_ve_sihirbaz_ilk_yukleme_hatasinda_ana_duzen_gizli()
@@ -293,10 +295,10 @@ public class GrantLoadFailureScripts_Tests
         var wizard = Body(Grants("Wizard.js"), "function load(background)");
         ShouldAppearInOrder(wizard,
             "$('#WizardLoadState').empty();",
-            "$('.apya-wiz-layout').removeClass('d-none');",
+            "$('.apya-wiz-head, .apya-wiz-head + .card, .apya-wiz-layout').removeClass('d-none');",
             "}, function (err) {",
             "if (!isLatest() || !initial || model) { return; }",
-            "$('.apya-wiz-layout').addClass('d-none');",
+            "$('.apya-wiz-head, .apya-wiz-head + .card, .apya-wiz-layout').addClass('d-none');",
             "apya.loadState.errorHtml(l('Grants:Wizard:LoadFailed'), 'js-wizard-retry', err)");
 
         // Devret / Önceki / Sonraki / mesaj gönder gerçekten gizlenen kabın içinde.
@@ -307,6 +309,48 @@ public class GrantLoadFailureScripts_Tests
             "id=\"HandOverBtn\"",
             "id=\"NextBtn\"",
             "id=\"SendMessageBtn\"");
+
+        // ".apya-wiz-head + .card" adım şeridini (boş "Tamamlanma" çubuğu) tutar: künye kartının HEMEN
+        // ardındaki üst düzey öğe o kart olmalı — araya başka öğe girerse seçici yanlış kartı gizler.
+        var headAt = wizardMarkup.IndexOf("<div class=\"card mb-0 apya-wiz-head\">", StringComparison.Ordinal);
+        var stepsAt = wizardMarkup.IndexOf("id=\"Steps\"", StringComparison.Ordinal);
+        headAt.ShouldBeGreaterThanOrEqualTo(0, "künye kartı bulunamadı");
+        stepsAt.ShouldBeGreaterThan(headAt, "adım şeridi künye kartından sonra olmalı");
+        var afterHead = Regex.Matches(wizardMarkup.Substring(headAt, stepsAt - headAt), "^    <(?!/).*$", RegexOptions.Multiline);
+        afterHead.Count.ShouldBe(1, "künye kartı ile adım şeridi arasına üst düzey öğe girmemeli");
+        afterHead[0].Value.ShouldBe("    <div class=\"card mb-0\">");
+        ShouldAppearInOrder(wizardMarkup, "id=\"Steps\"", "id=\"CompletionBar\"", "<div id=\"WizardLoadState\"></div>");
+    }
+
+    /// <summary>
+    /// Parametreler: ilk yükleme düşünce editör (sekme şeridi + paneller) gizlenir — boş editör "Şart ekle"
+    /// ile etkileşimli kalıyordu; Tekrar dene başarısında geri açılır. Alt çubuk (kilitli Kaydet/Yayınla)
+    /// yerinde kalır ama "Tamamlanma" veri gelmeden sayı basmaz ("%0" yerine "—"); yüzdeyi paintStatus yazar.
+    /// </summary>
+    [Fact]
+    public void Parametreler_ilk_yukleme_hatasinda_editor_gizli_tamamlanma_sayi_basmaz()
+    {
+        var script = Grants("Parameters.js");
+        ShouldAppearInOrder(Body(script, "function load()"),
+            "fill(dto);",
+            "$('#ParamLoadState').empty();",
+            "$('.apya-param-tabs, .apya-param-panels').removeClass('d-none');",
+            "}, function (err) {",
+            "$('.apya-param-tabs, .apya-param-panels').addClass('d-none');",
+            "apya.loadState.errorHtml(l('Grants:Parameters:LoadFailed'), 'js-params-retry', err)");
+
+        // Gizlenen iki kap editörün tamamı; alt çubuk onların dışında.
+        var markup = Grants("Parameters.cshtml");
+        ShouldAppearInOrder(markup,
+            "<div id=\"ParamLoadState\"></div>",
+            "<div class=\"apya-grant-tabs apya-param-tabs\"",
+            "<div class=\"apya-param-panels\">",
+            "id=\"SectionIdentity\"",
+            "<div class=\"apya-param-bar\">",
+            "id=\"ParamCompletionText\">—</span>");
+        markup.ShouldNotContain("id=\"ParamCompletionText\">%");
+        Body(script, "function paintStatus(s)")
+            .ShouldContain("$('#ParamCompletionText').text('%' + (s.completionPercent || 0));");
     }
 
     /// <summary>
@@ -390,6 +434,25 @@ public class GrantLoadFailureScripts_Tests
         // Ön değerlendirme: beş KPI + sayaç "—".
         Body(Grants("Leads.js"), "function load()")
             .ShouldContain("$('#KpiWeek, #KpiQualified, #KpiMeetings, #KpiConverted, #KpiPipeline, #LeadCount').text('—');");
+    }
+
+    /// <summary>
+    /// Fikir Havuzu'nun "son davet" özeti yan yüklemedir (karar 2): düşünce ABP penceresi açıyor, liste
+    /// kartıyla birlikte ikinci kanal oluyordu. Sessizdir ve özet gizlenir — işaretlemede gizli başlar;
+    /// gönderim sonrası yenileme düşerse eski davetin özeti yenisinin yerine okunmaz.
+    /// </summary>
+    [Fact]
+    public void Fikir_daveti_ozeti_yan_yukleme_pencere_acmaz()
+    {
+        var script = Grants("IdeaInvite.js");
+
+        ShouldAppearInOrder(Body(script, "function loadLatest()"),
+            "Promise.resolve(service.getLatest({ abpHandleError: false }))",
+            ".then(paintLatest, function () { paintLatest(null); });");
+        Count(script, "service.getLatest(").ShouldBe(1, "özet tek yerden, sessiz istekle okunmalı");
+        Body(script, "function paintLatest(s)").ShouldContain("$('#InviteLatest').toggleClass('d-none', !s);");
+
+        Grants("Ideas.cshtml").ShouldContain("<p id=\"InviteLatest\" class=\"apya-invite-latest d-none\">");
     }
 
     /// <summary>Çağrılar: kart 3 kolonlu ızgarada tek hücreye sıkışmaz; liste ve boş kutu gizlenir.</summary>

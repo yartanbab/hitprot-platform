@@ -940,7 +940,10 @@ $(function () {
         }).then(function (dto) {
             fill(dto);
             $('#ParamLoadState').empty();
+            $('.apya-param-tabs, .apya-param-panels').removeClass('d-none');
         }, function (err) {
+            // Veri yokken boş editör etkileşimli kalmasın (sekmeler, "Şart ekle"); Kaydet/Yayınla zaten kilitli.
+            $('.apya-param-tabs, .apya-param-panels').addClass('d-none');
             $('#ParamLoadState').html(apya.loadState.errorHtml(l('Grants:Parameters:LoadFailed'), 'js-params-retry', err));
         });
     }
