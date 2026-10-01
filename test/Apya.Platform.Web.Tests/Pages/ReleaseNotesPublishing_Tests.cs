@@ -158,4 +158,94 @@ public class ReleaseNotesPublishing_Tests : PlatformWebTestBase
             .SelectSingleNode("//a[@href='/Admin/ReleaseNotes']")
             .ShouldNotBeNull("host'a yayın onayı bağlantısı basılmadı");
     }
+
+    private static HtmlNodeCollection WithClass(HtmlDocument doc, string cssClass) =>
+        doc.DocumentNode.SelectNodes(
+            $"//input[contains(concat(' ', normalize-space(@class), ' '), ' {cssClass} ')]");
+
+    /// <summary>
+    /// "Hepsini onayla" / "Bu sürümün tümünü onayla" mantığı sayfa betiğindedir
+    /// (<c>Pages/Admin/ReleaseNotes/Index.js</c>; davranışı <c>adminReleaseNotes.test.js</c>
+    /// kilitler). Betik işaretlemedeki kancalara bağlanır: biri düşerse toplu kutular
+    /// sessizce tepkisiz kalır. Toplu kutuların <c>name</c>'i OLMAMALI — olursa POST'a
+    /// girer ve model bağlamaya sızar.
+    /// </summary>
+    [Fact]
+    public async Task Toplu_onay_betiginin_kancalari_basilir()
+    {
+        var html = await GetResponseAsStringAsync("/Admin/ReleaseNotes");
+        var doc = Parse(html);
+
+        // Yol DÜZ metinle aranmaz: ABP demetleme betiğin adresine sürüm/minify eki ekliyor.
+        System.Text.RegularExpressions.Regex.IsMatch(html, @"ReleaseNotes[./]Index[^""]*\.js")
+            .ShouldBeTrue("Toplu onay betiği sayfaya bağlanmamış — 'Hepsini onayla' çalışmaz.");
+
+        // Eski satır içi betik toplu kutuyu kaldırınca önceki onayları da siliyordu.
+        html.ShouldNotContain("approves.forEach");
+
+        var all = doc.DocumentNode.SelectNodes("//input[@id='rnSelectAll']");
+        all.ShouldNotBeNull("'Hepsini onayla' kutusu basılmadı");
+        all.Count.ShouldBe(1);
+        all[0].GetAttributeValue("type", "").ShouldBe("checkbox");
+        all[0].Attributes["name"].ShouldBeNull("'Hepsini onayla' kutusu POST'a girmemeli");
+
+        var versionBoxes = WithClass(doc, "rn-select-version");
+        versionBoxes.ShouldNotBeNull("sürüm kutuları basılmadı");
+        versionBoxes.Select(b => b.GetAttributeValue("data-version", "")).ToList()
+            .ShouldBe(ReleaseNoteCatalog.All.Select(r => r.Version).ToArray());
+        versionBoxes.ShouldAllBe(b => b.Attributes["name"] == null, "sürüm kutusu POST'a girmemeli");
+
+        var approves = WithClass(doc, "rn-approve");
+        approves.ShouldNotBeNull("madde kutuları basılmadı");
+        approves.Select(b => b.GetAttributeValue("data-version", "")).ToList()
+            .ShouldBe(ReleaseNoteCatalog.All.SelectMany(r => r.Items.Select(_ => r.Version)).ToArray());
+    }
+
+    /// <summary>
+    /// Betiğin "maddenin kendi kararı" kaynağı HTML'deki <c>checked</c> özniteliğidir
+    /// (tarayıcının form geri yüklemesinden etkilenmeyen tek değer). Sunucu kararı bu
+    /// öznitelikle basmazsa "hepsini onayla → geri al" yanlış duruma döner ve Kaydet'te
+    /// istenmeyen onay / onay kaldırma yazılır.
+    /// </summary>
+    [Fact]
+    public async Task Onayli_madde_kutusu_checked_ozniteligiyle_basilir()
+    {
+        // Tohum sonrası: katalogdaki her madde onaylı → her kutu checked.
+        var once = WithClass(Parse(await GetResponseAsStringAsync("/Admin/ReleaseNotes")), "rn-approve");
+        once.ShouldNotBeNull("madde kutuları basılmadı");
+        once.ShouldAllBe(b => b.Attributes["checked"] != null, "onaylı madde checked özniteliği taşımıyor");
+
+        var release = ReleaseNoteCatalog.Latest;
+        var hedef = release.Items[0];
+
+        await GetRequiredService<IReleaseNotePublicationAppService>().SaveAsync(new SaveReleaseNotePublicationsInput
+        {
+            Items =
+            {
+                new ReleaseNotePublicationInput
+                {
+                    Version = release.Version,
+                    ItemKey = hedef.Key,
+                    IsApproved = false,
+                    ShowInModal = true,
+                    ShowInHistory = true,
+                    Packages = { PackageCode.Basic, PackageCode.Standard, PackageCode.Premium, PackageCode.Enterprise },
+                    Audience = ReleaseNoteAudience.Everyone
+                }
+            }
+        });
+
+        var sonra = WithClass(Parse(await GetResponseAsStringAsync("/Admin/ReleaseNotes")), "rn-approve");
+        var isaretsiz = sonra.Where(b => b.Attributes["checked"] == null).ToList();
+
+        isaretsiz.Count.ShouldBe(1, "yalnız onayı kaldırılan madde checked'sız basılmalı");
+        sonra.Count.ShouldBe(once.Count);
+
+        // Kutu, aynı hücredeki gizli Version / ItemKey alanlarıyla eşleşir.
+        var hucre = isaretsiz[0].ParentNode;
+        hucre.SelectSingleNode(".//input[@type='hidden' and contains(@name,'.ItemKey')]")
+            .GetAttributeValue("value", "").ShouldBe(hedef.Key);
+        hucre.SelectSingleNode(".//input[@type='hidden' and contains(@name,'.Version')]")
+            .GetAttributeValue("value", "").ShouldBe(release.Version);
+    }
 }

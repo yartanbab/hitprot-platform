@@ -6,6 +6,10 @@
     var index = 0;
 }
 
+@section scripts {
+    <abp-script src="/Pages/Admin/ReleaseNotes/Index.js" />
+}
+
 <div class="apya-page apya-rnadmin" data-page-description="Sürüm notu yayın onayı">
     <form method="post">
         <div class="container-fluid py-3" style="max-width: 1180px;">
@@ -159,24 +163,3 @@
     [data-theme="dark"] .apya-rnadmin-pending-row > td { background: rgba(217, 181, 103, .08); }
     @@media (max-width: 900px) { .apya-rnadmin-item-desc { display: none; } }
 </style>
-
-<script>
-    (function () {
-        var all = document.getElementById('rnSelectAll');
-        var approves = Array.prototype.slice.call(document.querySelectorAll('.rn-approve'));
-
-        if (all) {
-            all.addEventListener('change', function () {
-                approves.forEach(function (cb) { cb.checked = all.checked; });
-            });
-        }
-
-        document.querySelectorAll('.rn-select-version').forEach(function (box) {
-            box.addEventListener('change', function () {
-                var version = box.getAttribute('data-version');
-                approves.filter(function (cb) { return cb.getAttribute('data-version') === version; })
-                        .forEach(function (cb) { cb.checked = box.checked; });
-            });
-        });
-    })();
-</script>
