@@ -24,11 +24,13 @@
    • showError: merkezi pencereye yönlendirilmiş hata için ABP penceresi açılmaz.
    • Başka sekmede giriş/çıkış: ABP'nin authentication-state dinleyicisi (localStorage
      'authentication-state-id' değişince bu sekmeyi kendiliğinden yeniden yükler ya da
-     köke yollar) oturumlu sayfada ÖNCE bizim 'storage' dinleyicimize takılır (bu dosya
-     ondan önce kaydolur) ve oturum akışına bağlanır: çıkış → oturum penceresi, aynı
-     kullanıcı yeniden girdi → pencere kapanır, başka kullanıcı → "sayfayı yenileyin"
-     penceresi. "Yeni sekmede giriş yap" bu sayede özgün sekmeyi ve formu korur.
-   Otomatik yenileme/yönlendirme hiçbir yolda yok; "Sayfayı yenile" yalnız
+     köke yollar) oturum akışı SÜRERKEN (oturum penceresi açık ya da "Kapat"la kapatılmış)
+     ÖNCE bizim 'storage' dinleyicimize takılır (bu dosya ondan önce kaydolur): giriş
+     sayfası açıldı → pencere yerinde kalır, aynı kullanıcı yeniden girdi → pencere kapanır,
+     başka kullanıcı → "sayfayı yenileyin" penceresi. "Yeni sekmede giriş yap" bu sayede
+     özgün sekmeyi ve formu korur. Akış yokken (başka sekmede bilerek çıkış) ABP'nin
+     davranışı aynen kalır: sekme giriş sayfasına düşer, veri ekranda kalmaz.
+   Oturum kaybı yollarında otomatik yenileme/yönlendirme yok; "Sayfayı yenile" yalnız
    kullanıcı basınca (hardReload).
 
    KANAL KURALI (Faz 4 kararı 2)
@@ -326,6 +328,14 @@
             if (error && error.apyaCentral) {
                 // Merkezi pencere gösteriyor. Bekleyen söz: ABP'nin ".done → köke git" zinciri çalışmaz.
                 return $ && $.Deferred ? $.Deferred().promise() : null;
+            }
+            // ABP zarfta details varken mesajı pencere BAŞLIĞINA koyar; başlık HTML olarak
+            // basılır (metin kaçışlanır, başlık kaçışlanmaz). Sunucunun cümlesi düz metindir.
+            if (error && error.details && typeof error.message === 'string' && abp.utils && abp.utils.htmlEscape) {
+                var escaped = {};
+                for (var key in error) { escaped[key] = error[key]; }
+                escaped.message = abp.utils.htmlEscape(error.message);
+                return originalShowError.call(this, escaped);
             }
             return originalShowError.apply(this, arguments);
         };
@@ -634,8 +644,14 @@
     // yakalama bayrağı sırayı değiştirmez (Chrome 152'de ölçüldü), yalnız yakalamayı önce
     // çağıran motorlar için ek güvencedir. ABP dinleyicisini 'load'dan önce kaydetmeye
     // başlarsa (sürüm yükseltmesi) bu kesme çalışmaz: canlıda yeniden doğrulanmalı.
+    // GİZLİLİK: olay yalnız bu sekme oturumun düştüğünü ZATEN biliyorsa kesilir (oturum ya da
+    // "başka kullanıcı" penceresi açık, ya da kullanıcı pencereyi "Kapat"la kapattı). Akış
+    // yokken başka sekmede BİLEREK çıkış yapılırsa (ya da başka kullanıcı girerse) ABP'nin
+    // davranışı aynen kalır: sekme yenilenir, giriş sayfasına düşer — çıkıştan sonra veri
+    // pencerenin arkasında ekranda kalmaz (paylaşılan bilgisayar).
     window.addEventListener('storage', function (event) {
         if (event.key !== AUTH_STATE_KEY || event.oldValue === event.newValue || !isPageAuthenticated()) { return; }
+        if (!isOpen('session') && !isOpen('user-changed') && !dismissedByUser) { return; }
         event.stopImmediatePropagation();
         if (!event.newValue) {
             // Çıkış yapıldı ya da giriş sayfası açıldı: pencere açıksa dokunulmaz, kullanıcı

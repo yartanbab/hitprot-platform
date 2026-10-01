@@ -610,14 +610,31 @@ describe('başka sekmede giriş/çıkış: ABP dinleyicisi bu sekmeyi yenilemez 
         expect(abp.notify.success).toHaveBeenCalledTimes(1);
     });
 
-    it('başka sekmede çıkış yapılınca sekme yenilenmez: oturum penceresi açılır (bir kez)', () => {
+    it('GİZLİLİK: oturum akışı yokken başka sekmede bilerek çıkış → ABP\'nin davranışı aynen (sekme giriş sayfasına düşer), pencere açılmaz', () => {
+        // Çıkıştan sonra veri oturum penceresinin arkasında ekranda kalmasın (paylaşılan bilgisayar).
+        storage('u1', null);
+
+        expect(abpListener).toHaveBeenCalledTimes(1);
+        expect(dialogs).toHaveLength(0);
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('GİZLİLİK: oturum akışı yokken başka kullanıcı girerse olay ABP\'ye bırakılır (sekme yenilenir)', () => {
+        storage('u1', 'baska');
+
+        expect(abpListener).toHaveBeenCalledTimes(1);
+        expect(dialogs).toHaveLength(0);
+    });
+
+    it('oturum penceresi açıkken yinelenen çıkış olayı kesilir, ikinci pencere açılmaz', () => {
+        abpAjaxFails(request({ status: 401 }));
+
         storage('u1', null);
         storage('u1', null);
 
         expect(abpListener).not.toHaveBeenCalled();
         expect(sessionDialogs()).toHaveLength(1);
         expect(dialogs).toHaveLength(1);
-        expect(fetch).not.toHaveBeenCalled();
     });
 
     it('"Kapat"tan sonra başka sekmede giriş sayfası açılırsa pencere yeniden açılmaz', async () => {
@@ -810,6 +827,19 @@ describe('handleAbpErrorResponse: tek kanal işareti', () => {
         expect(rejected).toBe(error);
         expect(error.apyaShown).toBe(true);
         expect(abpOriginals.showError).toHaveBeenCalledWith(error);
+    });
+
+    it('zarfta details varken mesaj pencere BAŞLIĞINA gider (ABP başlığı HTML basar): kaçışlanır, çağıranın nesnesi değişmez', () => {
+        const error = { message: 'QA <img src=x onerror=alert(1)> reddedildi', details: 'Ayrıntı <b>metni</b>' };
+        const rejected = abpAjaxFails(request({ status: 403, headers: { _AbpErrorFormat: 'true' }, json: { error } }));
+
+        expect(shownErrors()).toEqual([expect.objectContaining({
+            message: 'QA &lt;img src=x onerror=alert(1)&gt; reddedildi',
+            details: 'Ayrıntı <b>metni</b>',   // ABP metni kendisi kaçışlar
+        })]);
+        // Çağıran (sayfa içi metin, notifyError) düz metni görmeye devam eder.
+        expect(rejected).toBe(error);
+        expect(error.message).toBe('QA <img src=x onerror=alert(1)> reddedildi');
     });
 
     it('abpHandleError:false: işaret yok, pencere yok', () => {
