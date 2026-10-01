@@ -109,28 +109,64 @@ describe('DocumentsTabV3 — editör', () => {
         expect(window.apya.platform.tasks.task.updateDocument).not.toHaveBeenCalled();
     });
 
-    it('kaydedilmemis degisiklikle kapatmak ONAY ister; hayir denince kapanmaz', async () => {
+    /* Faz 5 — window.confirm yerine ortak pencere (components/ui/UnsavedChangesDialog). */
+    const editAndClose = async () => {
         const input = await openFirst();
         await waitFor(() => expect(input).toHaveValue('Toplantı notu'));
         fireEvent.change(input, { target: { value: 'Değişti' } });
-
-        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
         fireEvent.click(screen.getByRole('button', { name: 'Belge listesine dön' }));
+        return screen.findByRole('alertdialog', { name: 'Kaydedilmemiş değişiklikleriniz var' });
+    };
 
-        expect(confirmSpy).toHaveBeenCalled();
-        expect(screen.getByLabelText('Belge başlığı')).toBeInTheDocument();
-        confirmSpy.mockRestore();
+    it('kaydedilmemis degisiklikle kapatmak ortak pencereyi acar (window.confirm DEGIL); devam et denince editor acik kalir', async () => {
+        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+        await editAndClose();
+        expect(confirmSpy).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Düzenlemeye devam et' }));
+
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+        expect(screen.getByLabelText('Belge başlığı')).toHaveValue('Değişti');
     });
 
-    it('degisiklik yokken kapatmak ONAY SORMAZ', async () => {
+    it('Degisiklikleri at listeye doner, kaydetmez', async () => {
+        await editAndClose();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Değişiklikleri at' }));
+
+        expect(await screen.findByText('Belgeler')).toBeInTheDocument();
+        expect(screen.queryByLabelText('Belge başlığı')).toBeNull();
+        expect(window.apya.platform.tasks.task.updateDocument).not.toHaveBeenCalled();
+    });
+
+    it('Kaydet ve cik kaydeder ve listeye doner', async () => {
+        await editAndClose();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Kaydet ve çık' }));
+
+        await waitFor(() => expect(window.apya.platform.tasks.task.updateDocument)
+            .toHaveBeenCalledWith('d-1', { title: 'Değişti', content: '<p>Gövde metni</p>' }));
+        expect(await screen.findByText('Belgeler')).toBeInTheDocument();
+    });
+
+    it('Kaydet ve cik duserse pencere kapanir, editor ve yazilan acik kalir', async () => {
+        window.apya.platform.tasks.task.updateDocument = vi.fn(() => Promise.reject(new Error('sunucu hatasi')));
+        await editAndClose();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Kaydet ve çık' }));
+
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+        expect(screen.getByLabelText('Belge başlığı')).toHaveValue('Değişti');
+        expect(screen.queryByText('Belgeler')).toBeNull();
+    });
+
+    it('degisiklik yokken kapatmak pencere ACMAZ', async () => {
         const input = await openFirst();
         await waitFor(() => expect(input).toHaveValue('Toplantı notu'));
 
-        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
         fireEvent.click(screen.getByRole('button', { name: 'Belge listesine dön' }));
 
-        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(screen.queryByRole('alertdialog')).toBeNull();
         expect(await screen.findByText('Belgeler')).toBeInTheDocument();
-        confirmSpy.mockRestore();
     });
 });

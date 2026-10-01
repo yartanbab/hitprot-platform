@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Dialog, DialogContent, Skeleton, Button, EmptyState, RetryButton } from '../../components/ui';
+import { Dialog, DialogContent, Skeleton, Button, EmptyState, RetryButton, UnsavedChangesDialog } from '../../components/ui';
 import { TaskDetailHeaderV3 } from './components/TaskDetailHeaderV3';
 import { TaskMetadataGridV3 } from './components/TaskMetadataGridV3';
 import { TaskFeatureNavbarV3 } from './components/TaskFeatureNavbarV3';
@@ -67,6 +67,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     const [activeTabCode, setActiveTabCode] = useState('general');
     const [isSaving, setIsSaving] = useState(false);
     const [justSaved, setJustSaved] = useState(false);
+    /* "Kaydet ve çık" düştü: pencere açık kalır, kullanıcı atabilir ya da düzenlemeye döner (TSK-04). */
+    const [closeSaveFailed, setCloseSaveFailed] = useState(false);
     const [transfer, setTransfer] = useState(null);   // { mode } | null
     const [openSubtaskId, setOpenSubtaskId] = useState(null);
     const [isFavorite, setIsFavorite] = useState(false);
@@ -75,7 +77,10 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         try { return localStorage.getItem(FULLSCREEN_KEY) === 'true'; } catch { return false; }
     });
 
-    useTaskUrlSync(currentTaskId);
+    /* Sayfa sunumunda ?task= EKLENMEZ: pushState fazladan bir geçmiş adımı açıyor, onClose
+       (history.back) o adıma inip kullanıcıyı sayfada bırakıyordu — "Vazgeç", "Değişiklikleri
+       at" ve "Kaydet ve çık" ilk basışta çıkarmıyordu (canlıda ölçüldü). */
+    useTaskUrlSync(presentation === 'page' ? null : currentTaskId);
 
     /* Sunucudan gelen favori/takip durumunu bir kez yerel state'e al — düğmeler
        optimistik çalışıyor, her refetch'te kullanıcının tıklaması geri alınmasın. */
@@ -109,7 +114,19 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     }, [queryClient]);
 
     const closeNow = useCallback(() => { clearTaskUrl(); onClose?.(); }, [onClose]);
-    const requestClose = useCallback(() => guard.requestClose(closeNow), [guard, closeNow]);
+    /* Kirliyken guard "kaydedilmemiş değişiklik" penceresini açar (aşağıda `overlays`). */
+    const requestClose = useCallback(() => {
+        if (isSaving) return;
+        setCloseSaveFailed(false);
+        guard.requestClose(closeNow);
+    }, [guard, closeNow, isSaving]);
+
+    /* Başka göreve geçiş (Çoğalt, alt görev "Tam detayda aç") de aynı kapıdan: kirli form
+       uyarısız sıfırlanmasın. */
+    const switchTask = (id) => {
+        setCloseSaveFailed(false);
+        guard.requestClose(() => (switchToTask ?? setCurrentTaskId)(id));
+    };
 
     const toggleFullscreen = useCallback(() => {
         setFullscreen((prev) => {
@@ -183,12 +200,36 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         }
     }, [currentTaskId, form, queryClient]);
 
+    /* ─── "Kaydedilmemiş değişiklik" penceresi ─── */
+    const handleStay = () => {
+        setCloseSaveFailed(false);
+        guard.resolvePendingClose('stay');
+    };
+    const handleDiscard = () => {
+        setCloseSaveFailed(false);
+        form.reset();
+        guard.resolvePendingClose('discard');
+    };
+    const handleSaveAndClose = async () => {
+        setCloseSaveFailed(false);
+        if (!form.validate()) {
+            /* Kullanıcı alanı düzeltsin: pencere kapanır, form yerinde kalır. */
+            notify.err('Zorunlu alanları kontrol edin.');
+            guard.resolvePendingClose('stay');
+            return;
+        }
+        /* Kayıt düşerse hata ABP penceresinde (notifyError); bu pencere altta AÇIK kalır. */
+        const ok = await doSave();
+        if (ok) guard.resolvePendingClose('saved');
+        else setCloseSaveFailed(true);
+    };
+
     /* ─── Klavye: Ctrl/⌘+S kaydeder, Esc katman katman kapatır ─── */
     useEffect(() => {
         const onKey = (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
                 e.preventDefault();
-                if (form.isDirty && !isSaving) doSave();
+                if (form.isDirty && !isSaving && !guard.pendingClose) doSave();
                 return;
             }
             if (e.key !== 'Escape') return;
@@ -199,7 +240,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [doSave, form.isDirty, isSaving, transfer]);
+    }, [doSave, form.isDirty, isSaving, transfer, guard.pendingClose]);
 
     /* ─── ⋯ menüsü eylemleri ───
        Her yazma taskDetailStore.markChanged()'i İLK await'ten ÖNCE çağırır: istek
@@ -259,7 +300,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             await queryClient.invalidateQueries({ queryKey: ['task-detail'] });
             notify.ok('Görev çoğaltıldı.');
             const newId = result?.createdTaskIds?.[0];
-            if (newId) setCurrentTaskId(newId);
+            if (newId) switchTask(newId);
         } catch (err) {
             notifyError(err, 'Görev çoğaltılamadı.');
         }
@@ -572,11 +613,22 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                     subtaskId={openSubtaskId}
                     parentCode={task?.code}
                     onClose={() => setOpenSubtaskId(null)}
-                    onOpenFull={(id) => { setOpenSubtaskId(null); (switchToTask ?? setCurrentTaskId)(id); }}
+                    onOpenFull={(id) => { setOpenSubtaskId(null); switchTask(id); }}
                     onDeleted={() => queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] })}
                     currentUserName={window?.abp?.currentUser?.name || window?.abp?.currentUser?.userName || 'Ben'}
                 />
             )}
+            {/* İki sunumda da (modal: görev penceresinin üstünde iç içe katman; sayfa: tek başına). */}
+            <UnsavedChangesDialog
+                open={guard.pendingClose}
+                isSaving={isSaving}
+                errorText={closeSaveFailed
+                    ? t('Common:Unsaved:SaveFailed', 'Kaydedilemedi. Düzenlemeye dönebilir ya da değişiklikleri atabilirsiniz.')
+                    : undefined}
+                onStay={handleStay}
+                onDiscard={handleDiscard}
+                onSave={handleSaveAndClose}
+            />
         </>
     );
 
@@ -609,10 +661,12 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                        içlerindeki HER tıklama "dışarı tıklama" sayılıp ana modalı kapatıyordu
                        (alt görev panelinde "Tamam"a basmak görev detayını kapatıyordu).
                        Üstte açık bir katman varsa dışarı tıklama yok sayılır. "＋" menüsü
-                       Radix Popover olduğu için bu korumaya girmez — kendi katmanında. */
+                       Radix Popover olduğu için bu korumaya girmez — kendi katmanında.
+                       "Kaydedilmemiş değişiklik" penceresi de üst katman: odağın ona geçmesi
+                       burada "dışarı etkileşim" üretir, kapatma isteği sayılmaz. */
                     onInteractOutside={(e) => {
                         e.preventDefault();
-                        if (transfer || openSubtaskId) return;
+                        if (transfer || openSubtaskId || guard.pendingClose) return;
                         if (e.target?.closest?.('[data-apya-overlay]')) return;
                         requestClose();
                     }}

@@ -42,7 +42,9 @@ export function TaskDetailFooterV3({
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="h-9 px-4 rounded-[10px] border border-default bg-surface-base text-text-secondary text-[13px] font-semibold hover:bg-surface-hover hover:text-text-primary cursor-pointer"
+                    /* Kayıt sürerken kapatma isteği kökte yok sayılır; düğme bunu göstersin. */
+                    disabled={isSaving}
+                    className="h-9 px-4 rounded-[10px] border border-default bg-surface-base text-text-secondary text-[13px] font-semibold hover:bg-surface-hover hover:text-text-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Vazgeç
                 </button>
