@@ -167,11 +167,84 @@ describe('TaskDetailRoot', () => {
         await userEvent.type(screen.getByLabelText('Başlık'), ' ek');
         await userEvent.click(screen.getByRole('button', { name: 'Kapat' }));
 
-        expect(await screen.findByText('Kaydedilmemiş değişiklikleriniz var.')).toBeInTheDocument();
+        expect(await screen.findByRole('alertdialog', { name: 'Kaydedilmemiş değişiklikleriniz var' })).toBeInTheDocument();
+        expect(onClose).not.toHaveBeenCalled();
         await userEvent.click(screen.getByRole('button', { name: 'Kaydet ve çık' }));
 
         await waitFor(() => expect(window.apya.platform.tasks.task.update).toHaveBeenCalled());
         await waitFor(() => expect(onClose).toHaveBeenCalled());
+    });
+
+    /* Faz 5 — pencere ortak bileşen (components/ui/UnsavedChangesDialog). */
+    const openDirtyDialog = async (onClose) => {
+        wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={onClose} />);
+        await screen.findByText('Otel Konaklama Anlaşması');
+        await userEvent.type(screen.getByLabelText('Başlık'), ' ek');
+        await userEvent.click(screen.getByRole('button', { name: 'Kapat' }));
+        return screen.findByRole('alertdialog');
+    };
+
+    it('pencere acikken Esc pencereyi kapatir; modal ve yazilan deger yerinde', async () => {
+        const onClose = vi.fn();
+        await openDirtyDialog(onClose);
+
+        await userEvent.keyboard('{Escape}');
+
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+        expect(onClose).not.toHaveBeenCalled();
+        expect(screen.getByLabelText('Başlık')).toHaveValue('Otel Konaklama Anlaşması ek');
+    });
+
+    it('Degisiklikleri at: kaydetmeden kapatir', async () => {
+        const onClose = vi.fn();
+        await openDirtyDialog(onClose);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Değişiklikleri at' }));
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(window.apya.platform.tasks.task.update).not.toHaveBeenCalled();
+    });
+
+    it('Kaydet ve cik sunucu hatasinda pencere ACIK kalir; Degisiklikleri at ile cikilir', async () => {
+        window.apya.platform.tasks.task.update = vi.fn(() => Promise.reject(new Error('sunucu hatasi')));
+        const onClose = vi.fn();
+        await openDirtyDialog(onClose);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Kaydet ve çık' }));
+
+        await waitFor(() => expect(window.apya.platform.tasks.task.update).toHaveBeenCalled());
+        expect(await screen.findByText(/Kaydedilemedi\. Düzenlemeye dönebilir/)).toBeInTheDocument();
+        expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+        expect(onClose).not.toHaveBeenCalled();
+
+        await userEvent.click(screen.getByRole('button', { name: 'Değişiklikleri at' }));
+        expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('Kaydet ve cik dogrulama hatasinda pencere kapanir, hata alanin altinda, kayit gitmez', async () => {
+        const onClose = vi.fn();
+        wrap(<TaskDetailRoot taskId={TASK.id} presentation="modal" onClose={onClose} />);
+        await screen.findByText('Otel Konaklama Anlaşması');
+        await userEvent.clear(screen.getByLabelText('Başlık'));
+        await userEvent.click(screen.getByRole('button', { name: 'Kapat' }));
+        await screen.findByRole('alertdialog');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Kaydet ve çık' }));
+
+        await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+        expect(screen.getByText('Başlık zorunlu.')).toBeInTheDocument();
+        expect(window.apya.platform.tasks.task.update).not.toHaveBeenCalled();
+        expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('sayfa sunumunda URLe ?task EKLENMEZ (Vazgec tek adimda sayfadan cikarir)', async () => {
+        window.history.replaceState(null, '', `/Tasks/Detail/${TASK.id}`);
+        const pushSpy = vi.spyOn(window.history, 'pushState');
+        wrap(<TaskDetailRoot taskId={TASK.id} presentation="page" onClose={() => {}} />);
+        await screen.findByText('Otel Konaklama Anlaşması');
+
+        expect(pushSpy).not.toHaveBeenCalled();
+        expect(window.location.search).toBe('');
     });
 
     it('silme onayinda SIL yazilmadan buton aktif olmaz', async () => {

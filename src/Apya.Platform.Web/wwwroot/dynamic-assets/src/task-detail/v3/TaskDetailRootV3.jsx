@@ -16,7 +16,7 @@ import { isUnbuilt } from './featureCatalogV3';
 import { useTabOrder } from './hooks/useTabOrder';
 import { useTaskDetail } from '../hooks/useTaskDetail';
 import { getTaskPermissions } from '../taskPermissions';
-import { useDirtyGuard } from '../hooks/useDirtyGuard';
+import { useDirtyGuard } from '../../lib/feedback/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
 import { useTaskForm } from '../hooks/useTaskForm';
 import { useTaskChecklist } from '../hooks/useTaskChecklist';
