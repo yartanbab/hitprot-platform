@@ -309,7 +309,16 @@ public static class ReleaseNoteCatalog
                 "Tablet ve küçük ekranlı dizüstü genişliğindeki pencerelerde sol menü sayfa içeriğinin bir " +
                 "kısmını örtüyordu. Bu genişlikte menü artık ince bir simge şeridi olarak duruyor ve " +
                 "üzerine gelince açılıyor. Dokunmatik tabletlerde menü açık kalıyor ve içerik onun yanına " +
-                "kayıyor.")
+                "kayıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bildirimler açık pencerenin düğmelerini örtmüyor ve pencereyi kapatmıyor",
+                "Bir pencere ya da panel açıkken çıkan bildirim (örneğin 'Kaydedilemedi') pencerenin sağ " +
+                "altındaki Kaydet ve Gönder düğmelerinin üstüne geliyordu: o sırada düğmeye basılamıyor, " +
+                "bildirime ya da çarpısına basınca pencere kapanıyordu. Görev detayı bu yüzden beklenmedik " +
+                "biçimde kapanıyor, Masraf Yakala'da forma yazdıklarınız siliniyordu. Bildirimler artık " +
+                "pencere açıkken ekranın üst ortasında çıkıyor; bildirime ya da çarpısına basmak pencereyi " +
+                "kapatmıyor, yazdıklarınız yerinde kalıyor.")
         ),
 
         new ReleaseNote(
