@@ -11,7 +11,7 @@ var Gt = (e, t, s, i) => ({
     return r(e, t, i);
   }
 });
-import { r as F, j as Jt } from "./react-vendor-D57GAUXd.js";
+import { r as F, j as Jt } from "./react-vendor-D7YDiBbi.js";
 const _e = F.createContext(void 0), ke = (e) => {
   const t = F.useContext(_e);
   if (!t) throw new Error("No QueryClient set, use QueryClientProvider to set one");

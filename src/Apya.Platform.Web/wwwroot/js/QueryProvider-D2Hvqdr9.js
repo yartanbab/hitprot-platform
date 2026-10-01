@@ -1,9 +1,10 @@
-import { r as o, j as n } from "./react-vendor-D57GAUXd.js";
-import { c as d, Q as u, d as c, P as l } from "./query-vendor-Bf69L2iP.js";
-import { A as p } from "./httpClient-DePjXdo1.js";
-import { a as h } from "./dataChanged-DR0MWWqM.js";
-const m = "apya-rq-cache", i = 60 * 60 * 1e3;
-function f() {
+import { r as o, j as i } from "./react-vendor-D7YDiBbi.js";
+import { c as d, Q as u, d as c, P as l } from "./query-vendor-Db2mwxYI.js";
+import { A as p } from "./httpClient-BNoyY5yK.js";
+import { Q as f, P as m } from "./index-DgpuJ91w.js";
+import { a as h } from "./dataChanged-CDwwWMH8.js";
+const n = 60 * 60 * 1e3;
+function b() {
   try {
     const e = window.sessionStorage, t = "__apya_probe__";
     return e.setItem(t, "1"), e.removeItem(t), e;
@@ -13,17 +14,17 @@ function f() {
 }
 function y() {
   var s;
-  const e = f();
+  const e = b();
   if (!e) return null;
   const t = typeof window < "u" ? (s = window.abp) == null ? void 0 : s.currentUser : null;
   return t != null && t.id ? {
     persister: d({
       storage: e,
-      key: m,
+      key: f,
       /* Her mutasyonda değil, saniyede bir yaz — ana iş parçacığını meşgul etme. */
-      throttleTime: 1e3
+      throttleTime: m
     }),
-    maxAge: i,
+    maxAge: n,
     buster: `${t.tenantId ?? "host"}:${t.id}`,
     dehydrateOptions: {
       /* Hatalı ya da yüklenmekte olan sorgu saklanmaz: bir sonraki açılışta
@@ -38,7 +39,7 @@ function y() {
     }
   } : null;
 }
-function b() {
+function g() {
   return new u({
     defaultOptions: {
       queries: {
@@ -47,10 +48,13 @@ function b() {
            geri yüklenen sorgular gcTime dolduğu anda çöpe gider ve
            kalıcılaştırma sessizce etkisiz kalırdı. İkisi tek yerden
            (PERSIST_MAX_AGE_MS) besleniyor ki ayrışmasınlar. */
-        gcTime: i,
+        gcTime: n,
         refetchOnWindowFocus: !0,
         refetchOnReconnect: !0,
-        retry: (e, t) => t instanceof p && t.status >= 400 && t.status < 500 ? !1 : e < 2
+        /* Yalnız httpClient hatası (ApiError) yeniden denenir: ABP proxy reddi (zarf
+           nesnesi ya da jqXHR) ApiError değildir ve her denemede ABP hata penceresini
+           yeniden açar. Ağ hatası artık ApiError(0) → yeniden denenir. */
+        retry: (e, t) => !(t instanceof p) || t.status >= 400 && t.status < 500 ? !1 : e < 2
       },
       mutations: {
         /* Mutation default'ta retry YAPMAZ — duplicate finansal işlem riski. */
@@ -59,7 +63,7 @@ function b() {
     }
   });
 }
-const x = {
+const T = {
   dashboard: {
     /* Desen: ['dashboard', <bölüm>, { range, projectId }] — filtre değişince
        yeni key, eski veri cache'te kalır (sekme geçişi anında). */
@@ -76,9 +80,9 @@ const x = {
     aiSuggestions: (e) => e ? ["dashboard", "ai-suggestions", e] : ["dashboard", "ai-suggestions"]
   }
 };
-function Q({ children: e }) {
-  const [t] = o.useState(() => b()), [s] = o.useState(() => y());
-  return s ? /* @__PURE__ */ n.jsx(
+function P({ children: e }) {
+  const [t] = o.useState(() => g()), [s] = o.useState(() => y());
+  return s ? /* @__PURE__ */ i.jsx(
     l,
     {
       client: t,
@@ -88,9 +92,9 @@ function Q({ children: e }) {
       },
       children: e
     }
-  ) : /* @__PURE__ */ n.jsx(c, { client: t, children: e });
+  ) : /* @__PURE__ */ i.jsx(c, { client: t, children: e });
 }
 export {
-  x as Q,
-  Q as a
+  T as Q,
+  P as a
 };

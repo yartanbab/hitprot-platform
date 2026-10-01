@@ -1,9 +1,8 @@
-import { r, j as e, b as ie } from "./react-vendor-D57GAUXd.js";
-/* empty css               */
-import { B as C, e as D, I as U } from "./Dialog-Bky2XNdc.js";
-import { S as $ } from "./SkeletonShape-BzeBQ1R3.js";
-import { E as I } from "./EmptyState-D5m5kdmR.js";
-import { E as Z, D as le, P as re } from "./ProcessRibbon-BtZ1ri4F.js";
+import { r, j as e } from "./react-vendor-D7YDiBbi.js";
+import { E as I, m as ie } from "./index-DgpuJ91w.js";
+import { B as C, e as D, I as U } from "./Dialog-BEQtx1HL.js";
+import { S as $ } from "./SkeletonShape-Cev7M69F.js";
+import { E as Z, D as le, P as re } from "./ProcessRibbon-CHjVpooY.js";
 import { g as ce, l as oe, a as de } from "./api-DE9auhlW.js";
 const v = (a, n) => {
   var l, i, p;
@@ -923,4 +922,4 @@ function qe() {
   ] });
 }
 const _ = document.getElementById("report-builder-island");
-_ && ie(_).render(/* @__PURE__ */ e.jsx(qe, {}));
+_ && ie(_, "documents-report", /* @__PURE__ */ e.jsx(qe, {}));

@@ -1,28 +1,27 @@
-import { r as t, j as e, b as H } from "./react-vendor-D57GAUXd.js";
-/* empty css               */
-import { e as x, B as T } from "./Dialog-Bky2XNdc.js";
-import { S as A } from "./SkeletonShape-BzeBQ1R3.js";
-import { E as L } from "./EmptyState-D5m5kdmR.js";
+import { r as t, j as e } from "./react-vendor-D7YDiBbi.js";
+import { E as A, m as H } from "./index-DgpuJ91w.js";
+import { e as x, B as T } from "./Dialog-BEQtx1HL.js";
+import { S as I } from "./SkeletonShape-Cev7M69F.js";
 const z = (s, n) => {
-  var d, p, i;
-  return (i = (p = (d = window == null ? void 0 : window.abp) == null ? void 0 : d.notify) == null ? void 0 : p[s]) == null ? void 0 : i.call(p, n);
+  var o, p, i;
+  return (i = (p = (o = window == null ? void 0 : window.abp) == null ? void 0 : o.notify) == null ? void 0 : p[s]) == null ? void 0 : i.call(p, n);
 }, q = () => {
   var s;
   return ((s = window == null ? void 0 : window.abp) == null ? void 0 : s.appPath) ?? "/";
 };
 function m(s) {
-  return new Promise((n, d) => {
-    window.abp.ajax(s).done(n).fail(d);
+  return new Promise((n, o) => {
+    window.abp.ajax(s).done(n).fail(o);
   });
 }
-const o = (s, n = {}) => {
-  const d = new URLSearchParams();
+const d = (s, n = {}) => {
+  const o = new URLSearchParams();
   Object.entries(n).forEach(([i, y]) => {
-    y != null && y !== "" && d.append(i, y);
+    y != null && y !== "" && o.append(i, y);
   });
-  const p = d.toString();
+  const p = o.toString();
   return `${q()}Documents/Admin?handler=${s}${p ? "&" + p : ""}`;
-}, E = (s, n) => m({ url: s, type: "POST", contentType: "application/json", data: JSON.stringify(n) }), J = () => m({ url: o("Types"), type: "GET" }), K = () => m({ url: o("Rules"), type: "GET" }), Z = (s) => E(o("CreateRule"), s), X = (s, n) => E(o("UpdateRule", { id: s }), n), Q = (s) => m({ url: o("DeleteRule", { id: s }), type: "POST" }), ee = (s, n) => m({ url: o("SetRuleEnabled", { id: s, isEnabled: n }), type: "POST" }), ae = (s) => m({ url: o("DryRun", { ruleId: s }), type: "POST" }), se = (s) => m({ url: o("RunRule", { ruleId: s }), type: "POST" }), O = (s) => m({ url: o("FieldPermissions", { documentTypeId: s }), type: "GET" }), ie = (s) => E(o("SetFieldPermission"), s), P = () => m({ url: o("Integrations"), type: "GET" }), ne = (s, n) => E(o("SaveIntegration", { id: s }), n), te = () => m({ url: o("Templates"), type: "GET" }), le = () => m({ url: o("Consolidated"), type: "GET" }), re = {
+}, E = (s, n) => m({ url: s, type: "POST", contentType: "application/json", data: JSON.stringify(n) }), J = () => m({ url: d("Types"), type: "GET" }), K = () => m({ url: d("Rules"), type: "GET" }), Z = (s) => E(d("CreateRule"), s), X = (s, n) => E(d("UpdateRule", { id: s }), n), Q = (s) => m({ url: d("DeleteRule", { id: s }), type: "POST" }), ee = (s, n) => m({ url: d("SetRuleEnabled", { id: s, isEnabled: n }), type: "POST" }), ae = (s) => m({ url: d("DryRun", { ruleId: s }), type: "POST" }), se = (s) => m({ url: d("RunRule", { ruleId: s }), type: "POST" }), O = (s) => m({ url: d("FieldPermissions", { documentTypeId: s }), type: "GET" }), ie = (s) => E(d("SetFieldPermission"), s), P = () => m({ url: d("Integrations"), type: "GET" }), ne = (s, n) => E(d("SaveIntegration", { id: s }), n), te = () => m({ url: d("Templates"), type: "GET" }), le = () => m({ url: d("Consolidated"), type: "GET" }), re = {
   1: "Belge adı",
   2: "Belge tipi",
   3: "Tutar",
@@ -40,7 +39,7 @@ const o = (s, n = {}) => {
   5: "küçüktür",
   6: "boş",
   7: "dolu"
-}, oe = {
+}, de = {
   1: "Klasöre taşı",
   2: "Belge tipini ata",
   3: "Etiket ekle",
@@ -48,7 +47,7 @@ const o = (s, n = {}) => {
   5: "İş adımı ata",
   6: "Dönem ata"
 };
-function de({ rule: s, onChanged: n, onEdit: d, onDelete: p }) {
+function oe({ rule: s, onChanged: n, onEdit: o, onDelete: p }) {
   const [i, y] = t.useState(null), [h, j] = t.useState(!1), k = async () => {
     j(!0);
     try {
@@ -90,7 +89,7 @@ function de({ rule: s, onChanged: n, onEdit: d, onDelete: p }) {
           " belge"
         ] }),
         /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", disabled: h, onClick: b, children: s.isEnabled ? "Kapat" : "Aç" }),
-        /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", disabled: h, onClick: () => d(s), children: "Düzenle" }),
+        /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", disabled: h, onClick: () => o(s), children: "Düzenle" }),
         /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", disabled: h, onClick: () => p(s), children: "Sil" })
       ] })
     ] }),
@@ -107,7 +106,7 @@ function de({ rule: s, onChanged: n, onEdit: d, onDelete: p }) {
       /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-rule-block is-then", children: [
         /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "O zaman" }),
         s.actions.map((l) => /* @__PURE__ */ e.jsxs("span", { style: { fontSize: 12 }, children: [
-          oe[l.actionType] || "—",
+          de[l.actionType] || "—",
           l.payloadLabel ? ` → ${l.payloadLabel}` : l.payload ? ` → ${l.payload}` : ""
         ] }, l.id))
       ] })
@@ -170,7 +169,7 @@ const w = (...s) => s.filter(Boolean).join(" "), pe = [
   4: "Sürücü eşitleme"
 };
 function he() {
-  const [s, n] = t.useState("schema"), [d, p] = t.useState([]), [i, y] = t.useState(null), [h, j] = t.useState([]), [k, R] = t.useState([]), [b, l] = t.useState([]), [f, I] = t.useState(null), [g, $] = t.useState(null), [F, B] = t.useState(!0), [C, u] = t.useState(!1), D = t.useCallback(async () => {
+  const [s, n] = t.useState("schema"), [o, p] = t.useState([]), [i, y] = t.useState(null), [h, j] = t.useState([]), [k, R] = t.useState([]), [b, l] = t.useState([]), [f, L] = t.useState(null), [g, $] = t.useState(null), [F, B] = t.useState(!0), [C, u] = t.useState(!1), D = t.useCallback(async () => {
     const a = await J();
     p(a ?? []), !i && (a != null && a.length) && y(a[0].id);
   }, [i]);
@@ -188,13 +187,13 @@ function he() {
   }, [D]), t.useEffect(() => {
     (async () => {
       try {
-        s === "rules" && h.length === 0 && j(await K() ?? []), s === "templates" && k.length === 0 && R(await te() ?? []), s === "integrations" && b.length === 0 && l(await P() ?? []), s === "consolidated" && !g && $(await le()), s === "permissions" && i && I(await O(i));
+        s === "rules" && h.length === 0 && j(await K() ?? []), s === "templates" && k.length === 0 && R(await te() ?? []), s === "integrations" && b.length === 0 && l(await P() ?? []), s === "consolidated" && !g && $(await le()), s === "permissions" && i && L(await O(i));
       } catch (a) {
         z("error", "Modül verisi yüklenemedi."), console.error("[DocumentsAdmin] module load", a);
       }
     })();
   }, [s, i]);
-  const N = t.useCallback(async () => j(await K() ?? []), []), v = d.find((a) => a.id === i), _ = async () => {
+  const N = t.useCallback(async () => j(await K() ?? []), []), v = o.find((a) => a.id === i), _ = async () => {
     const a = window.prompt("Kural adı:");
     if (a) {
       u(!0);
@@ -254,7 +253,7 @@ function he() {
     const S = c >= 4 ? 1 : c + 1;
     u(!0);
     try {
-      await ie({ documentTypeId: i, fieldId: a, roleName: r, level: S }), I(await O(i));
+      await ie({ documentTypeId: i, fieldId: a, roleName: r, level: S }), L(await O(i));
     } catch {
       z("error", "İzin güncellenemedi.");
     } finally {
@@ -287,10 +286,10 @@ function he() {
       },
       a.key
     )) }),
-    F ? /* @__PURE__ */ e.jsx(A, { rows: 6 }) : s === "schema" ? /* @__PURE__ */ e.jsxs("div", { className: "apya-docs-shell is-wide", children: [
+    F ? /* @__PURE__ */ e.jsx(I, { rows: 6 }) : s === "schema" ? /* @__PURE__ */ e.jsxs("div", { className: "apya-docs-shell is-wide", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-docs-tree", style: { maxHeight: "none" }, children: [
         /* @__PURE__ */ e.jsx("div", { className: "apya-md-overline", style: { padding: "4px 8px 6px" }, children: "Belge tipleri" }),
-        d.map((a) => /* @__PURE__ */ e.jsxs(
+        o.map((a) => /* @__PURE__ */ e.jsxs(
           "button",
           {
             type: "button",
@@ -337,7 +336,7 @@ function he() {
           /* @__PURE__ */ e.jsx("span", { style: { fontSize: 11.5 }, children: ye[a.fillSource] }),
           /* @__PURE__ */ e.jsx("span", { style: { fontSize: 11.5 }, children: ue[a.visibility] })
         ] }, a.id))
-      ] }) : /* @__PURE__ */ e.jsx(L, { icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-list" }), title: "Bir belge tipi seçin" }) })
+      ] }) : /* @__PURE__ */ e.jsx(A, { icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-list" }), title: "Bir belge tipi seçin" }) })
     ] }) : s === "rules" ? /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-column gap-3", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-center gap-2", children: [
         /* @__PURE__ */ e.jsx(
@@ -354,14 +353,14 @@ function he() {
         /* @__PURE__ */ e.jsx("span", { style: { fontSize: 11.5, color: "var(--apya-text-tertiary)" }, children: "Yeni kural KAPALI doğar — önce kuru çalıştırıp etkisini görün." })
       ] }),
       h.length === 0 ? /* @__PURE__ */ e.jsx(
-        L,
+        A,
         {
           icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-wand-magic-sparkles" }),
           title: "Henüz kural yok",
           description: "Koşul → eylem tanımlayarak belgeleri otomatik sınıflandırın."
         }
       ) : h.map((a) => /* @__PURE__ */ e.jsx(
-        de,
+        oe,
         {
           rule: a,
           onChanged: N,
@@ -390,7 +389,7 @@ function he() {
           ] })
         ] })
       ] }, a.id)),
-      k.length === 0 && /* @__PURE__ */ e.jsx(L, { icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-layer-group" }), title: "Şablon yok" })
+      k.length === 0 && /* @__PURE__ */ e.jsx(A, { icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-layer-group" }), title: "Şablon yok" })
     ] }) : s === "integrations" ? /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-column gap-3", children: [
       /* @__PURE__ */ e.jsx("div", { className: "d-flex align-items-center gap-2", children: /* @__PURE__ */ e.jsx(
         T,
@@ -463,7 +462,7 @@ function he() {
         ))
       ] }),
       /* @__PURE__ */ e.jsx("div", { style: { fontSize: 11.5, color: "var(--apya-text-tertiary)" }, children: "Matris ETKİN seviyeyi gösterir (kural + devralma + varsayılan). Bir kullanıcı birden çok role sahipse en az kısıtlayıcı olan geçerlidir." })
-    ] }) : /* @__PURE__ */ e.jsx(A, { rows: 5 }) : g ? /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-column gap-3", children: [
+    ] }) : /* @__PURE__ */ e.jsx(I, { rows: 5 }) : g ? /* @__PURE__ */ e.jsxs("div", { className: "d-flex flex-column gap-3", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpis", children: [
         /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
           /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Kiracı" }),
@@ -502,8 +501,8 @@ function he() {
           a.tenantId ?? "host"
         ))
       ] })
-    ] }) : /* @__PURE__ */ e.jsx(A, { rows: 5 })
+    ] }) : /* @__PURE__ */ e.jsx(I, { rows: 5 })
   ] });
 }
 const M = document.getElementById("documents-admin-island");
-M && H(M).render(/* @__PURE__ */ e.jsx(he, {}));
+M && H(M, "documents-admin", /* @__PURE__ */ e.jsx(he, {}));

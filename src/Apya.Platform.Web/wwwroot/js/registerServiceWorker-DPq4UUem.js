@@ -1,18 +1,18 @@
-import { r as l, d as p, j as s } from "./react-vendor-D57GAUXd.js";
-import { c as x } from "./Dialog-Bky2XNdc.js";
+import { r as l, b as p, j as s } from "./react-vendor-D7YDiBbi.js";
+import { c as x } from "./Dialog-BEQtx1HL.js";
 const g = l.createContext(null), m = {
   info: { ring: "border-default", icon: "text-text-secondary", accent: "bg-brand-500" },
   success: { ring: "border-positive-100", icon: "text-text-positive", accent: "bg-positive-500" },
   warning: { ring: "border-warning-100", icon: "text-text-warning", accent: "bg-warning-500" },
   error: { ring: "border-negative-100", icon: "text-text-negative", accent: "bg-negative-500" }
 }, v = 4e3, w = 1e4;
-let h = 0;
+let b = 0;
 function E({ children: e }) {
   const [i, t] = l.useState([]), a = l.useRef(/* @__PURE__ */ new Map()), c = l.useCallback((r) => {
     const n = a.current.get(r);
     n && (clearTimeout(n), a.current.delete(r)), t((u) => u.filter((d) => d.id !== r));
   }, []), o = l.useCallback((r) => {
-    const n = ++h, u = {
+    const n = ++b, u = {
       id: n,
       type: r.type ?? "info",
       message: r.message ?? "",
@@ -40,10 +40,10 @@ function E({ children: e }) {
   }), [o, c]);
   return /* @__PURE__ */ s.jsxs(g.Provider, { value: f, children: [
     e,
-    /* @__PURE__ */ s.jsx(b, { items: i.slice(-3), onDismiss: c })
+    /* @__PURE__ */ s.jsx(h, { items: i.slice(-3), onDismiss: c })
   ] });
 }
-function b({ items: e, onDismiss: i }) {
+function h({ items: e, onDismiss: i }) {
   return e.length === 0 ? null : /* @__PURE__ */ s.jsx(
     "div",
     {

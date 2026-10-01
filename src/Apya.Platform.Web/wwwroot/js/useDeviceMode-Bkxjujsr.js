@@ -1,4 +1,4 @@
-import { r as t, j as m } from "./react-vendor-D57GAUXd.js";
+import { r as t, j as m } from "./react-vendor-D7YDiBbi.js";
 const n = {
   triage: "(min-width: 768px)",
   analysis: "(min-width: 1280px)",

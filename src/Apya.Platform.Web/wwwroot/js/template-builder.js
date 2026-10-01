@@ -1,7 +1,7 @@
-import { b as j, j as e, r as c } from "./react-vendor-D57GAUXd.js";
-/* empty css               */
+import { j as e, r as c } from "./react-vendor-D7YDiBbi.js";
+import { m as j } from "./index-DgpuJ91w.js";
 const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" }) }), k = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M5 15l7-7 7 7" }) }), N = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 9l-7 7-7-7" }) }), S = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2.5", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 4v16m8-8H4" }) }), C = () => {
-  const [l, u] = c.useState(""), [s, o] = c.useState([]), [i, d] = c.useState(!1), m = [
+  const [o, u] = c.useState(""), [s, l] = c.useState([]), [i, d] = c.useState(!1), m = [
     { type: "TextInput", label: "Metin Kutusu", defaultContent: "Kısa Yanıt" },
     { type: "NumberInput", label: "Sayısal Girdi", defaultContent: "Sayısal Değer" },
     { type: "Select", label: "Açılır Liste", defaultContent: "Lütfen Birini Seçin" },
@@ -14,17 +14,17 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
       content: a,
       settings: t === "Select" ? { options: ["Seçenek 1", "Seçenek 2"], required: !1 } : { required: !1 }
     };
-    o([...s, r]);
+    l([...s, r]);
   }, h = (t) => {
-    o(s.filter((a) => a.id !== t).map((a, r) => ({ ...a, order: r + 1 })));
+    l(s.filter((a) => a.id !== t).map((a, r) => ({ ...a, order: r + 1 })));
   }, x = (t, a) => {
     if (a === "up" && t === 0 || a === "down" && t === s.length - 1) return;
     const r = [...s], n = a === "up" ? t - 1 : t + 1;
-    [r[t], r[n]] = [r[n], r[t]], o(r.map((v, y) => ({ ...v, order: y + 1 })));
+    [r[t], r[n]] = [r[n], r[t]], l(r.map((v, y) => ({ ...v, order: y + 1 })));
   }, f = (t, a) => {
-    o(s.map((r) => r.id === t ? { ...r, content: a } : r));
+    l(s.map((r) => r.id === t ? { ...r, content: a } : r));
   }, g = () => {
-    if (!l.trim()) {
+    if (!o.trim()) {
       window.abp.message.warn("Lütfen formunuza şık bir başlık verin!", "Başlık Eksik");
       return;
     }
@@ -33,8 +33,8 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
       return;
     }
     d(!0);
-    const t = l.trim().toLowerCase().replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-") + "-" + Math.random().toString(36).substr(2, 6), a = {
-      title: l,
+    const t = o.trim().toLowerCase().replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-") + "-" + Math.random().toString(36).substr(2, 6), a = {
+      title: o,
       slug: t,
       blocks: s.map((r) => {
         let n = 0;
@@ -51,7 +51,7 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
       url: "/api/app/template",
       data: JSON.stringify(a)
     }).then(function(r) {
-      window.abp.notify.success("Şablon başarıyla veritabanına kaydedildi!", "Tebrikler"), u(""), o([]), d(!1);
+      window.abp.notify.success("Şablon başarıyla veritabanına kaydedildi!", "Tebrikler"), u(""), l([]), d(!1);
     }).catch(function(r) {
       let n = r && r.message ? r.message : "Şablon kaydedilirken bir hata oluştu.";
       window.abp.message.error(n, "Hata"), d(!1);
@@ -112,7 +112,7 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
           {
             type: "text",
             className: "w-full text-5xl font-black bg-transparent border-none p-0 focus:ring-0 text-text-primary placeholder-text-tertiary mb-14 border-b-[3px] border-subtle hover:border-default focus:border-focus pb-5 transition-all focus:outline-none",
-            value: l,
+            value: o,
             onChange: (t) => u(t.target.value),
             placeholder: "Müşteri Formu Başlığı..."
           }
@@ -152,4 +152,4 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
     ] })
   ] });
 }, p = document.getElementById("dynamic-assets-app-root");
-p && j(p).render(/* @__PURE__ */ e.jsx(C, {}));
+p && j(p, "template-builder", /* @__PURE__ */ e.jsx(C, {}));
