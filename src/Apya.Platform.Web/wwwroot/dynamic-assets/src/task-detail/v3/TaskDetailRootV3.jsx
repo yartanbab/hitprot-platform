@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, Skeleton, Button, EmptyState, RetryButton, UnsavedChangesDialog } from '../../components/ui';
 import { TaskDetailHeaderV3 } from './components/TaskDetailHeaderV3';
@@ -170,12 +170,26 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     const clDone = clItems.filter((c) => c.isDone).length;
     const progressPercent = clItems.length ? Math.round((clDone / clItems.length) * 100) : 0;
 
+    /* ─── Doğrulama ─── Hata ilgili alanın altında gösterilir (başlık, başlangıç, son tarih);
+       odak hatalı ilk alana verilir — yalnız bildirim çıkınca neyin yanlış olduğu anlaşılmıyordu. */
+    const bodyRef = useRef(null);
+    const [invalidTick, setInvalidTick] = useState(0);
+    const validateForSave = () => {
+        if (form.validate()) return true;
+        notify.err(t('Tasks:Detail:Validation:Summary', 'Kaydedilemedi: işaretli alanları düzeltin.'));
+        setInvalidTick((n) => n + 1);
+        return false;
+    };
+    useEffect(() => {
+        if (!invalidTick) return;
+        const el = bodyRef.current?.querySelector('[aria-invalid="true"]');
+        el?.focus();
+        el?.scrollIntoView?.({ block: 'nearest' });
+    }, [invalidTick]);
+
     /* ─── Kaydet ─── */
     const doSave = useCallback(async () => {
-        if (!form.validate()) {
-            notify.err('Zorunlu alanları kontrol edin.');
-            return false;
-        }
+        if (!validateForSave()) return false;
         setIsSaving(true);
         try {
             const sent = form.values;
@@ -212,9 +226,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     };
     const handleSaveAndClose = async () => {
         setCloseSaveFailed(false);
-        if (!form.validate()) {
-            /* Kullanıcı alanı düzeltsin: pencere kapanır, form yerinde kalır. */
-            notify.err('Zorunlu alanları kontrol edin.');
+        if (!validateForSave()) {
+            /* Kullanıcı alanı düzeltsin: pencere kapanır, odak hatalı alana gider. */
             guard.resolvePendingClose('stay');
             return;
         }
@@ -495,7 +508,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             <RetryButton onRetry={refetch} />
         </div>
     ) : (
-        <div className="flex flex-col flex-1 min-h-0 bg-surface-base">
+        <div ref={bodyRef} className="flex flex-col flex-1 min-h-0 bg-surface-base">
             <TaskDetailHeaderV3
                 task={task}
                 presentation={presentation}
@@ -505,6 +518,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 onFieldChange={form.setField}
                 statusValue={form.values.status}
                 titleValue={task?.title}
+                titleError={form.errors.title}
                 isPrivateValue={form.values.isPrivate}
                 isFavorite={isFavorite}
                 onToggleFavorite={handleToggleFavorite}
@@ -534,6 +548,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                     projectValue={form.values.projectId}
                     dueDateValue={form.values.dueDate}
                     startDateValue={form.values.startDate}
+                    startDateError={form.errors.startDate}
+                    dueDateError={form.errors.dueDate}
                     tagsValue={form.values.tagNames}
                     progressPercent={progressPercent}
                     progressNote={`${clDone}/${clItems.length} madde`}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import {
     STATUS_META, SELECTABLE_STATUSES, statusOf,
@@ -76,7 +76,12 @@ export function TaskMetadataGridV3({
     /* Düzenleme yetkisi yoksa ızgara salt okunur: tüm alanlar forma, oradan UpdateAsync'e
        gider; yetkisiz kullanıcı değiştirip Kaydet'te 403 alıyordu. */
     readOnly = false,
+    /* Doğrulama hataları (useTaskForm.errors): ilgili hücrenin altında gösterilir. */
+    startDateError,
+    dueDateError,
 }) {
+    const dueErrorId = useId();
+    const startErrorId = useId();
     const [assigneeQuery, setAssigneeQuery] = useState('');
     const [projectQuery, setProjectQuery] = useState('');
     const [tagDraft, setTagDraft] = useState('');
@@ -195,10 +200,16 @@ export function TaskMetadataGridV3({
                             type="date"
                             value={(dueDateValue ?? task.dueDate ?? '').slice(0, 10)}
                             onChange={(e) => onFieldChange('dueDate', e.target.value)}
+                            aria-label="Son tarih"
+                            aria-invalid={Boolean(dueDateError) || undefined}
+                            aria-describedby={dueDateError ? dueErrorId : undefined}
                             className="bg-transparent border-0 p-0 text-text-primary text-[13px] font-semibold cursor-pointer focus:outline-none"
                         />
                     </label>
-                    {due.hint && <span className={`-mt-0.5 text-[10.5px] font-semibold ${due.tone}`}>{due.hint}</span>}
+                    {/* Hata varken aciliyet ipucunun yerini alır (ikisi aynı satırı paylaşır). */}
+                    {dueDateError
+                        ? <span id={dueErrorId} role="alert" className="-mt-0.5 text-[10.5px] font-semibold text-negative">{dueDateError}</span>
+                        : due.hint && <span className={`-mt-0.5 text-[10.5px] font-semibold ${due.tone}`}>{due.hint}</span>}
                 </Cell>
 
                 {/* 3 — Başlangıç */}
@@ -209,9 +220,15 @@ export function TaskMetadataGridV3({
                             type="date"
                             value={(startDateValue ?? task.startDate ?? '').slice(0, 10)}
                             onChange={(e) => onFieldChange('startDate', e.target.value)}
+                            aria-label="Başlangıç"
+                            aria-invalid={Boolean(startDateError) || undefined}
+                            aria-describedby={startDateError ? startErrorId : undefined}
                             className="bg-transparent border-0 p-0 text-text-primary text-[13px] font-semibold cursor-pointer focus:outline-none"
                         />
                     </label>
+                    {startDateError && (
+                        <span id={startErrorId} role="alert" className="-mt-0.5 text-[10.5px] font-semibold text-negative">{startDateError}</span>
+                    )}
                 </Cell>
 
                 {/* 4 — İlerleme (kontrol listesi tamamlanma oranı) */}
