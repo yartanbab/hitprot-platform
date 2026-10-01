@@ -931,6 +931,31 @@ describe('apya.ajaxErrors.message / notify', () => {
         expect(apya.ajaxErrors.message(req.xhr, 'x')).toBe(NETWORK_TEXT);
     });
 
+    it('yükleme kartı bağlamı ({ load: true }): ağ ve geçici kesinti metni "girdiğiniz bilgiler korunuyor" demez', () => {
+        const offline = request({ status: 0, method: 'GET' });
+        offline.fail();
+        const unavailable = request({ status: 503, method: 'GET' });
+        unavailable.fail();
+
+        expect(apya.ajaxErrors.message(offline.xhr, 'x', { load: true }))
+            .toBe('Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.');
+        expect(apya.ajaxErrors.message(unavailable.xhr, 'x', { load: true }))
+            .toBe('Sunucu geçici olarak kullanılamıyor. Birkaç dakika sonra tekrar deneyin.');
+        // fetch (httpClient ApiError): ağ hatası status 0 + code 'Network'; zarfsız 503'te code yok.
+        expect(apya.ajaxErrors.message({ status: 0, code: 'Network', message: NETWORK_TEXT }, 'x', { load: true }))
+            .toBe('Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.');
+        expect(apya.ajaxErrors.message({ status: 503, message: 'eski metin' }, 'x', { load: true }))
+            .toBe('Sunucu geçici olarak kullanılamıyor. Birkaç dakika sonra tekrar deneyin.');
+    });
+
+    it('yükleme bağlamı diğer hatalara dokunmaz; seçenek yokken işlem metni aynen', () => {
+        // sunucunun kendi cümlesi (zarf / kodlu hata) korunur
+        expect(apya.ajaxErrors.message({ status: 503, code: 'Platform:X', message: 'Bakım var.' }, 'x', { load: true })).toBe('Bakım var.');
+        expect(apya.ajaxErrors.message({ status: 400, message: 'Tarih geçersiz.' }, 'x', { load: true })).toBe('Tarih geçersiz.');
+        // işlem (kaydet) bağlamı: güvence cümlesi yerinde
+        expect(apya.ajaxErrors.message({ status: 0, code: 'Network', message: NETWORK_TEXT }, 'x')).toBe(NETWORK_TEXT);
+    });
+
     it('Error: kendi mesajı; teknik çalışma zamanı hatası: yedek', () => {
         expect(apya.ajaxErrors.message(new Error('Proje servisi yüklenmedi.'), 'x')).toBe('Proje servisi yüklenmedi.');
         expect(apya.ajaxErrors.message(new TypeError("Cannot read properties of undefined (reading 'id')"), 'Kaydedilemedi.')).toBe('Kaydedilemedi.');

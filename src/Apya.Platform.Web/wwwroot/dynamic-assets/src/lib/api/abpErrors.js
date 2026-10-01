@@ -22,10 +22,13 @@ export function wasShown(err) {
     return Boolean(bridge()?.wasShown?.(err));
 }
 
-/** Kullanıcıya gösterilecek tek metin; null = merkezi pencere gösteriyor, bir şey basma. */
-export function errorMessage(err, fallback) {
+/**
+ * Kullanıcıya gösterilecek tek metin; null = merkezi pencere gösteriyor, bir şey basma.
+ * options.load: yükleme kartı bağlamı (ağ/geçici kesinti metninde "girdiğiniz bilgiler korunuyor" yok).
+ */
+export function errorMessage(err, fallback, options) {
     const b = bridge();
-    if (b?.message) return b.message(err, fallback);
+    if (b?.message) return b.message(err, fallback, options);
     return err?.message || fallback || null;
 }
 

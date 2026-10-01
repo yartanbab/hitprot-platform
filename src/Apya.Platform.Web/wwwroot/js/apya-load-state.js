@@ -66,7 +66,8 @@
     // cümlesi. null = merkezi oturum penceresi gösteriyor, ikinci metin basılmaz.
     function detailOf(error, fallback) {
         var errors = window.apya.ajaxErrors;
-        return errors && typeof errors.message === 'function' ? errors.message(error, fallback) : fallback;
+        // { load: true }: ağ/geçici kesinti metni yükleme bağlamına göre ("girdiğiniz bilgiler korunuyor" yok).
+        return errors && typeof errors.message === 'function' ? errors.message(error, fallback, { load: true }) : fallback;
     }
 
     function errorHtml(title, retryClass, error) {

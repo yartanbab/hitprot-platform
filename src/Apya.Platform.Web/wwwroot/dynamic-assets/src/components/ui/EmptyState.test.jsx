@@ -82,7 +82,8 @@ describe('EmptyState · error', () => {
         render(<EmptyState variant="error" title="T" error={{ detail: 'Sunucuya ulaşılamadı.' }} />);
 
         expect(screen.getByText('Sunucuya ulaşılamadı.')).toBeInTheDocument();
-        expect(message).toHaveBeenCalledWith({ detail: 'Sunucuya ulaşılamadı.' }, 'Veri alınırken bir hata oluştu.');
+        // { load: true }: yükleme kartı bağlamı (ağ metninde "girdiğiniz bilgiler korunuyor" yok).
+        expect(message).toHaveBeenCalledWith({ detail: 'Sunucuya ulaşılamadı.' }, 'Veri alınırken bir hata oluştu.', { load: true });
     });
 
     it('kanal null dönerse (merkezi oturum penceresi açık) açıklama basılmaz, başlık ve düğme kalır', () => {

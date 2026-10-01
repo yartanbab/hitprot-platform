@@ -76,7 +76,8 @@ describe('errorHtml: hata nesnesi verilince açıklama G1 kanalından (karar 2)'
 
         const body = parse(loadState.errorHtml('Liste yüklenemedi.', 'js-x-retry', err));
 
-        expect(message).toHaveBeenCalledWith(err, 'Veri alınırken bir hata oluştu.');
+        // { load: true }: kartta girilmiş bilgi yok — ağ metni "girdiğiniz bilgiler korunuyor" demez.
+        expect(message).toHaveBeenCalledWith(err, 'Veri alınırken bir hata oluştu.', { load: true });
         expect(body.querySelector('p').textContent).toBe('Sunucuya ulaşılamadı.');
     });
 

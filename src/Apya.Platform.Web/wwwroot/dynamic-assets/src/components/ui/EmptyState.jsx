@@ -163,7 +163,7 @@ function EmptyState({
     const shownIcon = icon ?? (v.icon ? <i className={`fa ${v.icon}`} /> : null);
     const shownDescription = description !== undefined || !isError
         ? description
-        : error !== undefined ? errorMessage(error, fetchErrorText()) : fetchErrorText();
+        : error !== undefined ? errorMessage(error, fetchErrorText(), { load: true }) : fetchErrorText();
     // Başlık kimliği yalnız düğme ona bağlanırken basılır: diğer kullanımların çıktısı aynı kalır.
     const describedBy = !action && onRetry && title ? titleId : undefined;
     const shownAction = action ?? (onRetry ? (

@@ -201,20 +201,41 @@
     }
 
     /**
+     * Yükleme (liste/ekran) kartı için ağ ve geçici kesinti metni: orada girilmiş bilgi yok,
+     * "bu sayfada girdiğiniz bilgiler korunuyor" cümlesi yersiz. Diğer durumlarda null.
+     */
+    function loadDetails(status) {
+        if (status === 0) {
+            return text('Api:Error:Network:Load', 'Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.');
+        }
+        if (status === 502 || status === 503 || status === 504) {
+            return text('Api:Error:ServerUnavailable:Load', 'Sunucu geçici olarak kullanılamıyor. Birkaç dakika sonra tekrar deneyin.');
+        }
+        return null;
+    }
+
+    /**
      * Çağıranın göstereceği tek metin. null: merkezi oturum/anahtar penceresi bu
      * hatayı zaten gösteriyor (ya da gösterecek) — çağıran bir şey basmasın.
+     * options.load: yükleme kartı bağlamı (apya.loadState.errorHtml, React EmptyState).
      */
-    function message(err, fallback) {
+    function message(err, fallback, options) {
         var alt = fallback || null;
+        var load = !!(options && options.load);
         if (!err) { return alt; }
         if (err.apyaCentral) { return null; }
         if (isXhr(err)) {
             if (isCentral(err)) { return null; }
             var envelope = envelopeOf(err);
             if (envelope) { return firstMessage(envelope) || alt; }
-            return describe(err).details || alt;
+            return (load && loadDetails(err.status)) || describe(err).details || alt;
         }
         if (err instanceof Error && RUNTIME_ERRORS[err.name]) { return alt; }
+        // fetch (httpClient ApiError): ağ hatası status 0 + code 'Network'; zarfsız 502-504'te code yok.
+        if (load && typeof err.status === 'number' && (err.status === 0 || !err.code)) {
+            var loadText = loadDetails(err.status);
+            if (loadText) { return loadText; }
+        }
         return firstMessage(err) || alt;
     }
 
