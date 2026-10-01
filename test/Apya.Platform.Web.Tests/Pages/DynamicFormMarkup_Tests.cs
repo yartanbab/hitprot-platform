@@ -40,6 +40,27 @@ public class DynamicFormMarkup_Tests
             Environment.NewLine + string.Join(Environment.NewLine, offenders));
     }
 
+    /// <summary>
+    /// ABP ModalManager pencere açılınca ilk <c>&lt;input&gt;</c>'a odaklanıp <c>setSelectionRange</c>
+    /// çağırır; sayı alanında bu çağrı InvalidStateError fırlatır (her açılışta yakalanmamış hata +
+    /// istemci hata telemetrisi). Dinamik form başa metin alanları basıyordu; düz formda Yeni Form
+    /// Bağlama'nın ilk input'u sayı alanı "Sıra" (öncekiler <c>&lt;select&gt;</c>). Odak açıkça ilk
+    /// alana verilir.
+    /// </summary>
+    [Fact]
+    public void Ilk_inputu_sayi_olan_pencere_odagi_ilk_alana_verir()
+    {
+        var bindings = Path.Combine(WebRoot(), "Pages", "AiCenter", "Bindings");
+        var markup = File.ReadAllText(Path.Combine(bindings, "CreateModal.cshtml"));
+
+        var firstInput = Regex.Match(markup, "<(abp-input|input)\\b[^>]*asp-for=\"([^\"]+)\"");
+        firstInput.Groups[2].Value.ShouldBe("Binding.Order", "senaryo değişti: ilk input artık sayı alanı değilse bu pin gereksiz");
+        markup.ShouldContain("<abp-select asp-for=\"Binding.DocumentId\"");
+
+        File.ReadAllText(Path.Combine(bindings, "Index.js"))
+            .ShouldContain("focusElement: '#Binding_DocumentId'");
+    }
+
     private static IEnumerable<string> RazorPages()
         => Directory.EnumerateFiles(Path.Combine(WebRoot(), "Pages"), "*.cshtml", SearchOption.AllDirectories);
 
