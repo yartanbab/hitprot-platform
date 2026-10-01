@@ -52,7 +52,8 @@
      alırsa pencere yine açılmaz; ölü tık olmasın diye engellemeyen bir hatırlatma
      (abp.notify.warn, 30 sn'de en çok bir kez) gösterilir.
    • Oturum (ya da "başka kullanıcı") penceresi açıkken abp.message.error/warn/info
-     pencere açmaz: SweetAlert tekil, çağıranın penceresi merkezi pencereyi ezerdi.
+     pencere açmaz; confirm false, prompt null (iptal) döner: SweetAlert tekil,
+     çağıranın penceresi merkezi pencereyi ezerdi.
      ABP'nin kendi pencereleri de Radix/Bootstrap modalından yalıtılır
      (sweetAlert.config.default: willOpen + keydownListenerCapture).
 
@@ -68,6 +69,7 @@
    apya.session.verify([{ quiet }])      → Promise<'expired' | 'user-changed' |
                                             'retry' | 'persist' | 'refreshed' | 'network'>
    apya.session.loginUrl()               → /Account/Login?ReturnUrl=…(&ReturnUrlHash=…)
+   apya.session.isDialogOpen()           → oturum ya da "başka kullanıcı" penceresi açık mı
    React karşılığı: dynamic-assets/src/lib/api/abpErrors.js (+ httpClient 401/400).
 
    Global demette ApplicationConfigurationScript'ten ÖNCE yüklenir: abp.currentUser
@@ -253,7 +255,10 @@
     }
 
     window.apya.ajaxErrors = { describe: describe, message: message, wasShown: wasShown, notify: notify };
-    window.apya.session = { expired: expired, verify: verify, loginUrl: loginUrl };
+    window.apya.session = {
+        expired: expired, verify: verify, loginUrl: loginUrl,
+        isDialogOpen: function () { return isOpen('session') || isOpen('user-changed'); }
+    };
 
     /* ---------- Son başarısız istek: handleErrorStatusCode yalnız durum kodu alır ---------- */
     var lastFailure = null;
@@ -452,6 +457,20 @@
             var original = abp.message[type];
             abp.message[type] = function () {
                 if (isOpen('session') || isOpen('user-changed')) { return $.Deferred().resolve(); }
+                return original.apply(this, arguments);
+            };
+        });
+        // Onay ve soru da aynı: açılmaz, "vazgeçildi" sayılır (confirm false, prompt null).
+        // Geri çağrı da çağrılır: onu Promise'e saran çağıran askıda kalmaz.
+        ['confirm', 'prompt'].forEach(function (type) {
+            var original = abp.message[type];
+            abp.message[type] = function (message, second, third) {
+                if (isOpen('session') || isOpen('user-changed')) {
+                    var callback = typeof second === 'function' ? second : third;
+                    var value = type === 'confirm' ? false : null;
+                    if (typeof callback === 'function') { callback(value); }
+                    return $.Deferred().resolve(value);
+                }
                 return original.apply(this, arguments);
             };
         });

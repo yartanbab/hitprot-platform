@@ -569,6 +569,10 @@ public class PlatformWebModule : AbpModule
                     // sarmalıyor, bu dosya showError'u override ediyor. Sıra bilinçli —
                     // en son sarmalayan, kota kodlarını ilk gören olur.
                     bundle.AddFiles("/js/apya-quota-upsell.js");
+                    // Ortak onay penceresi + [data-confirm] delegesi. ajax-error-detail.js'ten SONRA:
+                    // apya.session ve SweetAlert yalıtımını çağrı anında okur. Belge yakalamasında
+                    // tıklama dinleyen sonraki dosyalardan ÖNCE kaydolmalı (onaylanmamış tıklama onlara gitmesin).
+                    bundle.AddFiles("/js/apya-confirm.js");
                     bundle.AddFiles("/js/apya-hint.js"); // bilgi ipucu (ⓘ) — body'ye delege tooltip init
                     // Veri-değişti köprüsü — Yeni Görev modalı ve görev konsolları yayınlar; modal AJAX ile yüklendiği için global.
                     bundle.AddFiles("/js/apya-data-changed.js");

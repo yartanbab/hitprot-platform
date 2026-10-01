@@ -250,6 +250,19 @@ a, button, .btn, .nav-link, .list-group-item {
     background-color: var(--apya-accent-500) !important;
 }
 
+/* Yıkıcı onay (apya.confirm danger): üstteki kural tüm onay düğmelerini vurgu
+   rengine çekiyor; tehlike düğmesi koyu temada da negatif tonda kalır. Açık temada
+   .btn-danger köprüden (apya-theme-bridge.css) aynı tonu alır. */
+[data-theme="dark"] .swal2-confirm.btn-danger {
+    background-color: var(--apya-negative-600) !important;
+}
+
+/* Yazarak onayın doğrulama satırı (SweetAlert varsayılanı açık gri zemin). */
+[data-theme="dark"] .swal2-validation-message {
+    background: var(--apya-surface-sunken) !important;
+    color: var(--apya-text-secondary) !important;
+}
+
 /* ----------------------------------------------------------------------------
    7) DATEPICKER DARK UYUMU
    ---------------------------------------------------------------------------- */
