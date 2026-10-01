@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api, projectTasks } from './api';
-import { usePanelShown, useAsyncData } from './usePanel';
+import { usePanelShown, useAsyncData, usePanelRefresh } from './usePanel';
 import { groupByTask, partitionByProject } from './grouping';
 import { PanelLoading, PanelError, PanelEmpty, TaskGroupHeader, ProjectGroupHeader } from './PanelChrome';
 import { RichTextEditorV3 } from '../task-detail/v3/components/RichTextEditorV3';
@@ -35,6 +35,7 @@ export function DocumentsPanel({ projectId, kind, mountEl }) {
 
     const [openId, setOpenId] = useState(null);
     const [creating, setCreating] = useState(false);
+    usePanelRefresh(kind, mountEl, panel);
 
     if (!shown || panel.status === 'idle' || panel.status === 'loading') { return <PanelLoading />; }
     if (panel.status === 'error') { return <PanelError onRetry={panel.reload} />; }

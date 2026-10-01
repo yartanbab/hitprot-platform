@@ -28,17 +28,31 @@ function toFormValues(task) {
     };
 }
 
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+/** Kullanıcının dokunmadığı alanlar (values[k] === from[k]) yeni sunucu değerini alır;
+    dokunduğu alanlar kullanıcının değerinde kalır. */
+function rebase(values, from, to) {
+    const next = {};
+    for (const k of Object.keys(to)) next[k] = same(values[k], from[k]) ? to[k] : values[k];
+    return next;
+}
+
 /**
  * Görev "Genel" sekmesi form state'i. İlk render'da `task` her zaman `undefined`'dır
  * (TanStack Query hiç senkron çözülmez) — bu yüzden values, task yüklenince (veya
  * farklı bir taskId'ye geçilince) render sırasında gerçek verilerle senkronlanır
- * (bkz. `lastTaskId` kontrolü). Aynı task için sonraki render'larda values kullanıcı
- * girdisini korur, task referansı değişse bile (ör. save sonrası refetch) — id aynı
- * kaldığı sürece kullanıcının o anki düzenlemesi ezilmez.
+ * (bkz. `lastTaskId` kontrolü).
+ *
+ * Aynı görev için sunucudan YENİ veri gelirse (arşivle, taşı, odak tazelemesi, kayıt
+ * sonrası yeniden çekme) form bu veriye yeniden temellenir (rebase): kullanıcının
+ * dokunmadığı alanlar sunucu değerini alır, düzenlediği alanlar korunur. Böylece
+ * Kaydet eski değeri geri yazmaz, isDirty yalnız gerçek düzenlemeyi gösterir.
  */
 export function useTaskForm(task) {
     const [lastTaskId, setLastTaskId] = useState(task?.id);
     const initial = useMemo(() => toFormValues(task), [task]);
+    const [base, setBase] = useState(initial);
     const [values, setValues] = useState(initial);
     const [errors, setErrors] = useState({});
 
@@ -46,11 +60,16 @@ export function useTaskForm(task) {
        senkron çözülmez, bu yüzden ilk render'da her zaman task=undefined olur. Görev
        verisi gelince (veya farklı bir taskId'ye geçilince) formu render SIRASINDA
        gerçek değerlerle senkronla — React'in resmi "prop değişince state ayarla"
-       deseni. useEffect ile yapılırsa kullanıcı bir an için boş/eski değerleri görür. */
-    if (task?.id !== lastTaskId) {
+       deseni. useEffect ile yapılırsa kullanıcı bir an için boş/eski değerleri görür.
+       Referans eşitliği üretimde kısa keser (useMemo([task]) ve TanStack'in yapısal
+       paylaşımı aynı içerikte aynı referansı verir); içerik karşılaştırması yalnız
+       referans değişince çalışır — satır içi görev nesnesiyle sonsuz döngü olmaz. */
+    if (task?.id !== lastTaskId || (initial !== base && !same(initial, base))) {
+        const sameTask = task?.id !== undefined && task.id === lastTaskId;
         setLastTaskId(task?.id);
-        setValues(initial);
-        setErrors({});
+        setBase(initial);
+        setValues(sameTask ? rebase(values, base, initial) : initial);
+        if (!sameTask) setErrors({});
     }
 
     const setField = useCallback((name, value) => {
@@ -104,5 +123,15 @@ export function useTaskForm(task) {
         setErrors({});
     }, [initial]);
 
-    return { values, setField, isDirty, errors, validate, toUpdateDto, reset };
+    /* Kayıttan sonra sunucunun normalize ettiği değerleri (etiket yazımı/sırası)
+       forma işler: gönderilen değerde kalan alanlar sunucu değerini alır, kayıt
+       sürerken kullanıcının değiştirdiği alanlar korunur. `sent` kayıt anındaki
+       values, `savedTask` sunucudan dönen TaskDto. */
+    const commitSaved = useCallback((sent, savedTask) => {
+        if (!savedTask) return;
+        const server = toFormValues(savedTask);
+        setValues((v) => rebase(v, sent, server));
+    }, []);
+
+    return { values, setField, isDirty, errors, validate, toUpdateDto, reset, commitSaved };
 }

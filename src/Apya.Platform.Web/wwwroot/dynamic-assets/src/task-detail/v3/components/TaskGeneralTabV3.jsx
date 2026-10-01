@@ -80,6 +80,7 @@ export function TaskGeneralTabV3({
         queryFn: () => Promise.resolve(window?.apya?.platform?.tasks?.task?.getComments(taskId)),
         enabled: Boolean(taskId),
         staleTime: 10_000,
+        meta: { persist: false },
     });
 
     const invalidateComments = async () => {

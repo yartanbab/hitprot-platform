@@ -219,9 +219,10 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         var file = await _fileRepository.GetAsync(id);
         file.EnsureNotLocked();
 
+        DocumentType? type = null;
         if (input.DocumentTypeId.HasValue)
         {
-            await EnsureTypeVisibleAsync(input.DocumentTypeId.Value);
+            type = await GetVisibleTypeAsync(input.DocumentTypeId.Value);
         }
 
         if (input.ProjectId.HasValue)
@@ -253,7 +254,6 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         // Saklama süresi tipten gelir; belge tarihi yoksa yükleme tarihine göre hesaplanır.
         if (input.DocumentTypeId.HasValue)
         {
-            var type = await _typeRepository.FindAsync(input.DocumentTypeId.Value);
             file.ApplyRetention(type?.RetentionMonths, input.DocumentDate ?? file.CreationTime);
         }
         else
@@ -401,6 +401,58 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         {
             await _fileTagRepository.InsertManyAsync(toInsert);
         }
+    }
+
+    /// <summary>
+    /// Yükleme kuyruğunun toplu künyesi (DOC-01). Kuyruk eskiden tek belgenin tam değiştirme
+    /// ucunu (UpdateMetaAsync) üç alanlı nesneyle çağırıyordu; DTO varsayılanları "sil" diye
+    /// uygulanıp proje bağı, tutar, tarihler, durum, etiketler ve görünen ad siliniyordu.
+    /// Burada yalnız DOLU gelen alan yazılır. Kilitli belge atlanır (öneri motoru emsali,
+    /// DocumentSuggestionAppService); dönüş, künyesi uygulanan belge sayısıdır.
+    /// </summary>
+    [Authorize(PlatformPermissions.Documents.ManageMeta)]
+    public virtual async Task<int> ApplyBulkMetaAsync(BulkApplyDocumentFileMetaDto input)
+    {
+        var period = string.IsNullOrWhiteSpace(input.PeriodCode) ? null : input.PeriodCode.Trim();
+        if (input.DocumentFileIds.Count == 0 || (input.DocumentTypeId == null && period == null))
+        {
+            return 0;
+        }
+
+        var type = input.DocumentTypeId.HasValue
+            ? await GetVisibleTypeAsync(input.DocumentTypeId.Value)
+            : null;
+
+        var files = await _fileRepository.GetListAsync(f => input.DocumentFileIds.Contains(f.Id));
+        var changed = files.Where(f => !f.IsLocked).ToList();
+
+        foreach (var file in changed)
+        {
+            if (type != null)
+            {
+                file.SetClassification(type.Id, file.ProjectId, file.WorkStepId);
+                file.ApplyRetention(type.RetentionMonths, file.DocumentDate ?? file.CreationTime);
+            }
+
+            if (period != null)
+            {
+                file.SetDates(file.DocumentDate, period, file.ExpiryDate);
+            }
+        }
+
+        if (changed.Count > 0)
+        {
+            await _fileRepository.UpdateManyAsync(changed);
+        }
+
+        var detail = "toplu künye: " + string.Join(", ",
+            new[] { type != null ? "tür" : null, period != null ? "dönem" : null }.Where(x => x != null));
+        foreach (var file in changed)
+        {
+            await LogAsync(file, DocumentAccessAction.MetaChanged, detail);
+        }
+
+        return changed.Count;
     }
 
     [Authorize(PlatformPermissions.Documents.Delete)]
@@ -1072,23 +1124,27 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
     }
 
     /// <summary>
-    /// Seçilen belge tipi bu kiracıya görünür mü? Sistem tipleri host'ta (TenantId = null)
-    /// durduğu için kiracı filtresi kapatılıp sahiplik elle doğrulanır.
+    /// Seçilen belge tipini, bu kiracıya görünürse döner. Sistem tipleri host'ta
+    /// (TenantId = null) durduğu için kiracı filtresi kapatılıp sahiplik elle doğrulanır.
+    /// Saklama süresi de BURADAN okunmalı — kiracı süzgeçli FindAsync host sistem tiplerini
+    /// göremez ve saklama bitişini sessizce siliyordu (DOC-01).
     /// </summary>
-    private async Task EnsureTypeVisibleAsync(Guid documentTypeId)
+    private async Task<DocumentType> GetVisibleTypeAsync(Guid documentTypeId)
     {
         var tenantId = CurrentTenant.Id;
 
         using (_mtFilter.Disable())
         {
             var queryable = await _typeRepository.GetQueryableAsync();
-            var visible = await AsyncExecuter.AnyAsync(
+            var type = await AsyncExecuter.FirstOrDefaultAsync(
                 queryable.Where(t => t.Id == documentTypeId && (t.TenantId == null || t.TenantId == tenantId)));
 
-            if (!visible)
+            if (type == null)
             {
                 throw new EntityNotFoundException(typeof(DocumentType), documentTypeId);
             }
+
+            return type;
         }
     }
 }

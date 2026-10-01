@@ -1,3 +1,5 @@
+import { onDataChanged } from '../lib/api/dataChanged';
+
 /**
  * ABP proxy köprüsü — useTaskFeatures.js ile aynı desen: jQuery Deferred'ler
  * native Promise'e sarılır. Uçlar TaskAppService'in proje kapsamı metodları
@@ -47,6 +49,11 @@ export const api = {
  * kendi 1000 kaydı sınırı burada da geçerli).
  */
 const tasksCache = new Map();
+
+/* Görev değişince paylaşılan liste düşer; sonraki projectTasks tazeden çeker.
+   Modül yüklenirken kurulduğu için panel tazelemesinden (usePanelRefresh,
+   setTimeout 0) ÖNCE çalışır. */
+onDataChanged(() => { tasksCache.clear(); }, 'task');
 
 export function projectTasks(projectId, { force = false } = {}) {
     const key = projectId ?? '__all__';

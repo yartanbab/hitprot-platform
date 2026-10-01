@@ -241,5 +241,11 @@
         } else {
             console.warn('[apya] taskCreate modülü yüklenmedi — Yeni Görev çipleri devre dışı.');
         }
+
+        // ModalManager sonucu aynı form olayından taşır (bkz. Projects/Index.js createModal.onResult);
+        // modal hangi yüzeyden açılmış olursa olsun (takvim, kabuk '+ Yeni', ⌘K, kanban ＋) tek yayın.
+        $form.on('abp-ajax-success', function () {
+            if (window.apya && apya.dataChanged) { apya.dataChanged.emit({ entity: 'task', action: 'create' }); }
+        });
     })();
 </script>

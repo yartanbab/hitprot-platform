@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { QK } from '../lib/api/queryClient';
 import { useSignalRInvalidation } from '../lib/realtime/useSignalRInvalidation';
 import { useConflictListener } from '../lib/realtime/useConflictListener';
+import { useInvalidateTaskDerivedOnChange } from '../lib/api/dataChanged';
 
 /**
  * Dashboard SignalR → cache invalidation köprüsü.
@@ -43,6 +44,9 @@ export function DashboardRealtimeBridge() {
     ]), []);
 
     useSignalRInvalidation(invalidations);
+    /* SignalR sunucu itmesi; bu kanca aynı sekmedeki yazmalar için (kabuk '+ Yeni',
+       ⌘K) — düzen (layout) hariç. */
+    useInvalidateTaskDerivedOnChange();
     useConflictListener(conflicts);
     return null;
 }

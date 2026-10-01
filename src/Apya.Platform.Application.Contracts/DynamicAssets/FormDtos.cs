@@ -59,6 +59,13 @@ public class CreateUpdateFormDto
 public class UpdateFormBlocksDto
 {
     public List<CreateBlockDto> Blocks { get; set; } = new();
+
+    /// <summary>
+    /// Ids of existing blocks the editor intentionally removed. If the save would remove a block that
+    /// is not listed here, nothing is changed and the call fails: the editor's copy of the form is out
+    /// of date (failed load, stale tab).
+    /// </summary>
+    public List<Guid> RemovedBlockIds { get; set; } = new();
 }
 
 /// <summary>

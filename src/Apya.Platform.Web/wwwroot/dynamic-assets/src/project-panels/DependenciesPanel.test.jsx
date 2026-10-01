@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 
 vi.mock('./api', () => ({
     api: { projectDependencies: vi.fn() },
@@ -62,5 +62,27 @@ describe('DependenciesPanel (proje kapsamı)', () => {
         render(<DependenciesPanel projectId="p1" kind="dependencies" mountEl={mountEl()} />);
 
         expect(await screen.findByText('Bu projede görevler arası bağ yok')).toBeInTheDocument();
+    });
+
+    /* STA-15 uçtan uca: öncül başka yüzeyde (kanban/liste) tamamlanınca açık panel
+       tazelenmiyor, bloke uyarısı sayfa yenilenene dek kalıyordu. */
+    it('gorev degisti olayinda gorunur panel iskeletsiz tazelenir, bloke uyarisi kalkar', async () => {
+        const { container } = render(<DependenciesPanel projectId="p1" kind="dependencies" mountEl={mountEl()} />);
+        expect(await screen.findByText(/bağlantı bloke ediyor/)).toBeInTheDocument();
+
+        let resolveTasks;
+        projectTasks.mockReturnValue(new Promise((r) => { resolveTasks = r; }));
+        document.dispatchEvent(new CustomEvent('apya:data-changed', { detail: { entity: 'task' } }));
+        await act(() => new Promise((r) => setTimeout(r, 5)));
+
+        // Tazeleme sürerken veri ekranda kalır, iskelet çizilmez.
+        expect(projectTasks).toHaveBeenCalledTimes(2);
+        expect(container.querySelector('.animate-pulse')).toBeNull();
+        expect(screen.getByText('Test ortamı kurulumu')).toBeInTheDocument();
+
+        await act(async () => { resolveTasks([{ ...TASKS[0], status: 4 }, TASKS[1]]); });
+
+        expect(screen.queryByText(/bağlantı bloke ediyor/)).not.toBeInTheDocument();
+        expect(screen.getByText('Tamamlandı')).toBeInTheDocument();
     });
 });

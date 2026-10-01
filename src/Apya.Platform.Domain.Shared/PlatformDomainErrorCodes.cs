@@ -253,6 +253,7 @@ public static class PlatformDomainErrorCodes
     public const string FormAnswersTooLarge = "Platform:DynamicAssets:FormAnswersTooLarge";
     public const string FormAnswersInvalid = "Platform:DynamicAssets:FormAnswersInvalid";
     public const string FormRequiredAnswerMissing = "Platform:DynamicAssets:FormRequiredAnswerMissing";
+    public const string FormBlocksOutOfDate = "Platform:DynamicAssets:FormBlocksOutOfDate";
     public const string WebhookTargetUrlNotAllowed = "Platform:DynamicAssets:WebhookTargetUrlNotAllowed";
 
     // --- AI Modülü ---

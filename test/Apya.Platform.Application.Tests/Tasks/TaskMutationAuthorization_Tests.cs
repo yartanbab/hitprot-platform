@@ -25,6 +25,7 @@ public class TaskMutationAuthorization_Tests
     [InlineData(nameof(TaskAppService.RestoreFromCancelAsync), PlatformPermissions.Tasks.ChangeStatus)]
     [InlineData(nameof(TaskAppService.SetPriorityAsync), PlatformPermissions.Tasks.Edit)]
     [InlineData(nameof(TaskAppService.DeferAsync), PlatformPermissions.Tasks.Edit)]
+    [InlineData(nameof(TaskAppService.UpdateScheduleAsync), PlatformPermissions.Tasks.Edit)]
     [InlineData(nameof(TaskAppService.SetAssigneeAsync), PlatformPermissions.Tasks.Assign)]
     [InlineData(nameof(TaskAppService.AddChecklistItemAsync), PlatformPermissions.Tasks.Edit)]
     [InlineData(nameof(TaskAppService.AddProjectChecklistItemAsync), PlatformPermissions.Tasks.Edit)]

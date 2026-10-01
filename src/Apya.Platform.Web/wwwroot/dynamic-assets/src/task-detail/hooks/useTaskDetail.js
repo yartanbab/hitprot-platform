@@ -19,7 +19,13 @@ export function useTaskDetail(taskId) {
         queryKey: ['task-detail', taskId],
         queryFn: () => fetchTask(taskId),
         enabled: Boolean(taskId),
-        staleTime: 30_000,
+        /* Detay düzenlenebilir canlı kayıt: kanban, liste ve proje konsolu aynı
+           görevi React Query dışından değiştiriyor. Her açılışta (modal yeni
+           QueryClient kurar), göreve dönüşte ve sekme odağında yeniden çekilir;
+           oturum önbelleğine yazılmaz. Gelen yeni değer useTaskForm'da kullanıcının
+           dokunmadığı alanlara işlenir (rebase). */
+        staleTime: 0,
+        meta: { persist: false },
         /* retry:1 önceden ~1s backoff'la hata state'ini geciktiriyordu (izin/tenant
            hatalarında retry hiçbir şeyi düzeltmez, yalnız kullanıcıyı bekletir). */
         retry: false,

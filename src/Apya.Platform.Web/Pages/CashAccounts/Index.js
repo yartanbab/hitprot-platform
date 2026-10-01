@@ -9,6 +9,21 @@ $(function () {
     var selectedAccountId = null;
     var selectedAccountName = null;
 
+    // Geç dönen eski yanıt (önceki kartın hareketleri, önceki özet) yenisini ezmesin.
+    var nextMovements = apya.latest();
+    var nextSummary = apya.latest();
+    // Hareket yazıldıysa transfer penceresindeki bakiyeler bayat: açılışta yeniden bağlanır.
+    var transferDirty = false;
+
+    var SKELETON_ROWS = new Array(5).join('<tr aria-hidden="true"><td colspan="5"><span class="apya-skeleton d-block" style="height:10px"></span></td></tr>');
+
+    // Kimlik adresten (?account=) gelebilir: seçiciye birleştirilmez, karşılaştırılır.
+    function cardById(id) {
+        return $('#AccountSummary .apya-account-card').filter(function () {
+            return String($(this).data('account-id')) === String(id);
+        });
+    }
+
     // Kullanıcı metni HTML'e metin olarak girer. Gider başlığı kasa hareketi açıklamasına
     // yazıldığı için ("Gider: " + başlık) gider girme yetkisi olan herkes kasayı açan
     // finans yöneticisinin oturumunda betik çalıştırabiliyordu.
@@ -54,29 +69,77 @@ $(function () {
             );
             $tbody.append($tr);
         });
-
-        $tbody.off('click', 'button[data-action]').on('click', 'button[data-action]', function () {
-            var id = $(this).data('id');
-            var action = $(this).data('action');
-            if (action === 'edit') {
-                editMovementModal.open({ id: id });
-            } else if (action === 'delete') {
-                abp.message.confirm('Hareket silinecek?').then(function (confirmed) {
-                    if (!confirmed) return;
-                    movementSvc.delete(id).then(function () {
-                        abp.notify.success('Hareket silindi.');
-                        loadMovements();
-                    });
-                });
-            }
-        });
     }
 
-    function loadMovements() {
+    // withSkeleton: yalnız hesap değişince ve "Tekrar dene"de. Yazmadan sonraki tazelemede
+    // mevcut satırlar yanıt gelene kadar kalır — tablo çökmez, kaydırma konumu korunur.
+    function loadMovements(withSkeleton) {
         if (!selectedAccountId) return;
-        movementSvc.getList({ cashAccountId: selectedAccountId, maxResultCount: 200, sorting: 'movementDate desc' })
-            .then(function (result) { renderMovements(result.items || []); });
+        var isLatest = nextMovements();
+        var $table = $('#CashMovementsTable').attr('aria-busy', 'true');
+        if (withSkeleton) {
+            $table.find('tbody').html(SKELETON_ROWS);
+        }
+        Promise.resolve(movementSvc.getList({ cashAccountId: selectedAccountId, maxResultCount: 200, sorting: 'movementDate desc' }))
+            .then(function (result) {
+                if (!isLatest()) return;
+                $table.removeAttr('aria-busy');
+                renderMovements(result.items || []);
+            }, function () {
+                if (!isLatest()) return;
+                $table.removeAttr('aria-busy');
+                $table.find('tbody').html(
+                    '<tr><td colspan="5" class="text-center py-4">' +
+                    '<span class="text-danger" role="alert">Hareketler yüklenemedi.</span> ' +
+                    '<button type="button" class="btn btn-sm btn-link p-0 ms-1 align-baseline" data-action="retry">Tekrar dene</button>' +
+                    '</td></tr>');
+            });
     }
+
+    // Konsolide toplam + tüm kartlar sunucudaki parçadan (tek doğruluk kaynağı). $.get ABP'nin
+    // hata kutusunu açmaz: kayıt başarılıyken yalnız tazeleme düşerse kullanıcı kaydın
+    // başarısız olduğunu sanmasın.
+    function refreshSummary() {
+        var isLatest = nextSummary();
+        Promise.resolve($.get(abp.appPath + 'CashAccounts?handler=AccountSummary'))
+            .then(function (html) {
+                if (!isLatest()) return;
+                $('#AccountSummary').html(html);
+                if (selectedAccountId) {
+                    cardById(selectedAccountId).addClass('selected');
+                }
+            }, function () {
+                if (!isLatest()) return;
+                abp.notify.warn('Bakiyeler güncellenemedi. Güncel değerler için sayfayı yenileyin.');
+            });
+    }
+
+    // Hareket ekleme/düzenleme/silme ve transfer sonrası: sayfa yenilenmez, seçim ve bildirim kalır.
+    function afterWrite(message) {
+        if (message) {
+            abp.notify.success(message);
+        }
+        loadMovements();
+        refreshSummary();
+        transferDirty = true;
+    }
+
+    $('#CashMovementsTable').on('click', 'button[data-action]', function () {
+        var id = $(this).data('id');
+        var action = $(this).data('action');
+        if (action === 'retry') {
+            loadMovements(true);
+        } else if (action === 'edit') {
+            editMovementModal.open({ id: id });
+        } else if (action === 'delete') {
+            abp.message.confirm('Hareket silinecek?').then(function (confirmed) {
+                if (!confirmed) return;
+                movementSvc.delete(id).then(function () {
+                    afterWrite('Hareket silindi.');
+                });
+            });
+        }
+    });
 
     function selectAccount($card) {
         $('#AccountCards .apya-account-card').removeClass('selected');
@@ -89,10 +152,16 @@ $(function () {
         $('#MovementsTableWrap').removeClass('d-none');
         $('#NewCashMovementButton').prop('disabled', false);
 
-        loadMovements();
+        // Seçim adreste kalır: hesap modallarındaki yenileme ve F5 seçimi düşürmez.
+        var url = new URL(window.location.href);
+        url.searchParams.set('account', selectedAccountId);
+        history.replaceState(history.state, '', url);
+
+        loadMovements(true);
     }
 
-    $('#AccountCards').on('click', '.apya-account-card', function () {
+    // Kartlar parçayla yeniden basıldığı için tıklama parçanın DIŞINDAKİ sarmalayıcıya bağlı.
+    $('#AccountSummary').on('click', '.apya-account-card', function () {
         selectAccount($(this));
     });
 
@@ -109,12 +178,10 @@ $(function () {
         createMovementModal.open({ cashAccountId: selectedAccountId });
     });
     createMovementModal.onResult(function () {
-        abp.notify.success('Hareket kaydedildi.');
-        window.location.reload();
+        afterWrite('Hareket kaydedildi.');
     });
     editMovementModal.onResult(function () {
-        abp.notify.success('Hareket güncellendi.');
-        window.location.reload();
+        afterWrite('Hareket güncellendi.');
     });
 
     // Kart üstündeki Düzenle/Sil için basit sağ-tık yerine: kart uzun listede
@@ -126,14 +193,29 @@ $(function () {
     var transferModalEl = document.getElementById('TransferModal');
     var transferModal = transferModalEl ? new bootstrap.Modal(transferModalEl) : null;
 
-    apya.transfer.mount('ApyaTransferWidget', {
-        onSuccess: function () {
-            if (transferModal) { transferModal.hide(); }
-            window.location.reload();
-        }
-    });
+    var transferPlaceholder = $('#ApyaTransferWidget').html();
+
+    function mountTransfer() {
+        transferDirty = false;
+        $('#ApyaTransferWidget').html(transferPlaceholder);
+        apya.transfer.mount('ApyaTransferWidget', {
+            onSuccess: function () {
+                if (transferModal) { transferModal.hide(); }
+                afterWrite(); // "Transfer tamamlandı." bildirimini widget kendisi basıyor
+            }
+        });
+    }
+
+    mountTransfer();
 
     $('#OpenTransferButton').click(function () {
+        if (transferDirty) { mountTransfer(); }
         if (transferModal) { transferModal.show(); }
     });
+
+    var initialId = new URLSearchParams(window.location.search).get('account');
+    if (initialId) {
+        var $initial = cardById(initialId);
+        if ($initial.length) { selectAccount($initial); }
+    }
 });

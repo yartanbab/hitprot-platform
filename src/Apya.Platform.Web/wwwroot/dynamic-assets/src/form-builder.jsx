@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
+import { ModalPortal } from './components/ui/ModalPortal';
 import { publicFormPath } from './lib/publicFormLink';
 import { OPEN_GRANT_CALLS, withChoiceParam, CHOICE_SOURCES, sourceLabel } from './lib/formChoices';
 import { VISIBLE_WHEN, OPS, OP_LABELS, flagLabel } from './lib/formConditions';
@@ -59,10 +60,12 @@ const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 /**
  * Kayıt gövdesi. Sunucudan gelen alanın kimliği (GUID) geri gönderilir: yanıtlar alan
  * kimliğiyle saklandığı için sunucu o alanı yerinde günceller. Yerel geçici kimlik (uid)
- * gönderilmez, sunucu yeni alana kendi kimliğini verir.
+ * id olarak gönderilmez, sunucu yeni alana kendi kimliğini verir. Geçici kimlik clientId olarak
+ * gider: aynı kayıttaki koşul ve zincir ayarları ona bağlıysa sunucu onları yeni kimliğe çevirir.
  */
 export const payloadBlocks = (blocks) => blocks.map((b, idx) => ({
   id: GUID_RE.test(b.id) ? b.id : null,
+  clientId: GUID_RE.test(b.id) ? null : b.id,
   type: b.type, order: idx + 1, content: b.content || LABELS[b.type] || 'Soru', settings: JSON.stringify(b.settings || {}),
 }));
 
@@ -94,6 +97,47 @@ export const serverIdMap = (sent, saved) => {
     .map((b, idx) => [b.id, byOrder.get(idx + 1)])
     .filter(([local, server]) => server && local !== server));
 };
+
+/**
+ * Yerel → sunucu kimlik eşlemesini alanlara uygular: alanın kendi kimliği ve ona bağlı ayarlar (zincirin
+ * üst alanı, koşulun alanı) sunucu kimliğine taşınır. Değişmeyen alan AYNI nesne olarak döner.
+ */
+export const withServerIds = (blocks, map) => blocks.map((b) => {
+  const dependsOn = b.settings?.dependsOn;
+  const condition = b.settings?.[VISIBLE_WHEN];
+  let settings = b.settings;
+  if (dependsOn && map[dependsOn]) settings = { ...settings, dependsOn: map[dependsOn] };
+  if (condition?.blockId && map[condition.blockId]) {
+    settings = { ...settings, [VISIBLE_WHEN]: { ...condition, blockId: map[condition.blockId] } };
+  }
+  return map[b.id] || settings !== b.settings ? { ...b, id: map[b.id] || b.id, settings } : b;
+});
+
+/**
+ * Görünürlük koşulu bozuk alanlar: koşuldaki alan formda yok, aşağıda duruyor ya da cevap taşımayan bir
+ * düzen bloğu. Ölçüt, kartın "Kaldırılmış alan" uyarısıyla aynıdır.
+ */
+export const brokenConditionBlocks = (blocks) => blocks.filter((b, i) => {
+  const rule = b.settings?.[VISIBLE_WHEN];
+  return !!rule?.blockId && !conditionCandidatesFor(blocks, i).some((c) => c.id === rule.blockId);
+});
+
+/**
+ * Son kayıtta sunucuda olup artık ekranda olmayan alanlar. Kimlikler kayıtla birlikte sunucuya bildirilir
+ * (bildirilmeyen silme reddedilir); cevaplanabilir olanların sayısı, yanıt almış formda onay için
+ * kullanılır. Tip SON KAYITLI tipten okunur: yanıtlar o tiple verildi.
+ */
+export const blockRemovals = (saved, blocks) => {
+  const kept = new Set(blocks.map((b) => b.id));
+  const gone = saved.filter((b) => !kept.has(b.id));
+  return { ids: gone.map((b) => b.id), answerable: gone.filter((b) => !LAYOUT_ONLY.has(b.type)).length };
+};
+
+/** Sunucu yanıtındaki alanların kimlik ve tipi: bir sonraki kayıtta silinenleri bulmak için. */
+const blockRefs = (serverBlocks) => (serverBlocks || []).map((b) => ({ id: b.id, type: b.type }));
+
+/** Kaydedilmemiş değişiklik tespiti için formun anlık görüntüsü. */
+const snapshotOf = (title, description, categoryId, blocks) => JSON.stringify([title, description, categoryId, blocks]);
 
 function defaultBlock(type) {
   const base = { id: uid(), type, content: LABELS[type] || 'Soru', settings: { required: false } };
@@ -521,7 +565,7 @@ export function QuestionCard({ block, index, selected, onSelect, onPatch, onPatc
 /* ============================================================
  * Main builder — single centered column
  * ============================================================ */
-function FormBuilder() {
+export function FormBuilder() {
   const initialId = useMemo(() => new URLSearchParams(window.location.search).get('id'), []);
   const [formId, setFormId] = useState(initialId);
   const [slug, setSlug] = useState('');
@@ -535,6 +579,15 @@ function FormBuilder() {
   const [selectedId, setSelectedId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!initialId);
+  // DOC-04 · Yüklenemeyen form boş editörle AÇILMAZ: "boş form" sanılıp kaydedilirse soruları silerdi.
+  const [loadError, setLoadError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  // Sunucunun son bildirdiği durum: silinecek kimlikler, yanıt sayısı, yayın durumu ve ayarları buradan hesaplanır.
+  const savedBlocks = useRef([]);
+  const [responseCount, setResponseCount] = useState(0);
+  const [status, setStatus] = useState(0);
+  const [publishSettingsJson, setPublishSettingsJson] = useState(null);
+  const [savedSnapshot, setSavedSnapshot] = useState(() => snapshotOf('', '', null, []));
   const dragIndex = useRef(null);
 
   useEffect(() => {
@@ -550,20 +603,27 @@ function FormBuilder() {
     (async () => {
       try {
         const dto = await api.get(`/api/app/form/${initialId}`);
+        const loaded = (dto.blocks || []).slice().sort((a, b) => a.order - b.order).map((b) => ({
+          id: b.id || uid(), type: b.type, content: b.content, settings: safeParse(b.settings),
+        }));
         setTitle(dto.title || '');
         setSlug(dto.slug || '');
         setDescription(dto.description || '');
         setCategoryId(dto.categoryId || null);
-        setBlocks((dto.blocks || []).slice().sort((a, b) => a.order - b.order).map((b) => ({
-          id: b.id || uid(), type: b.type, content: b.content, settings: safeParse(b.settings),
-        })));
+        setBlocks(loaded);
+        savedBlocks.current = blockRefs(dto.blocks);
+        setResponseCount(dto.responseCount ?? 0);
+        setStatus(dto.status ?? 0);
+        setPublishSettingsJson(dto.publishSettingsJson ?? null);
+        setSavedSnapshot(snapshotOf(dto.title || '', dto.description || '', dto.categoryId || null, loaded));
+        setLoadError(null);
       } catch (e) {
-        notify('error', e?.message || 'Form yüklenemedi.');
+        setLoadError(errorText(e, 'Bağlantınızı kontrol edip tekrar deneyin.'));
       } finally {
         setLoading(false);
       }
     })();
-  }, [initialId]);
+  }, [initialId, reloadKey]);
 
   const addBlock = (type = BT.ShortText) => {
     const b = defaultBlock(type);
@@ -610,55 +670,134 @@ function FormBuilder() {
     return next;
   });
 
-  const applyServerIds = (sent, saved) => {
-    const map = serverIdMap(sent, saved);
+  // Üst alan ve koşul bağı blok kimliğiyle tutulur: yeni eklenen üst alan kaydedilince o bağ da sunucu kimliğine taşınır.
+  const applyServerIds = (map) => {
     if (!Object.keys(map).length) return;
-    // Üst alan bağı blok kimliğiyle tutulur: yeni eklenen üst alan kaydedilince o bağ da sunucu kimliğine taşınır.
-    setBlocks((prev) => prev.map((b) => {
-      const dependsOn = b.settings?.dependsOn;
-      const condition = b.settings?.[VISIBLE_WHEN];
-      let settings = b.settings;
-      if (dependsOn && map[dependsOn]) settings = { ...settings, dependsOn: map[dependsOn] };
-      if (condition?.blockId && map[condition.blockId]) {
-        settings = { ...settings, [VISIBLE_WHEN]: { ...condition, blockId: map[condition.blockId] } };
-      }
-      return map[b.id] || settings !== b.settings ? { ...b, id: map[b.id] || b.id, settings } : b;
-    }));
+    setBlocks((prev) => withServerIds(prev, map));
     setSelectedId((id) => map[id] || id);
   };
 
+  /** Kaydeder; başarıda true. Vazgeçilir ya da kayıt düşerse false (Yayınla penceresi o zaman açılmaz). */
   const save = async () => {
-    if (!title.trim()) return notify('warn', 'Lütfen forma bir başlık verin.');
-    setSaving(true);
-    try {
-      if (!formId) {
-        const dto = await api.post('/api/app/form', { title: title.trim(), description: description.trim() || null, categoryId, themeJson: null, blocks: payloadBlocks(blocks) });
-        applyServerIds(blocks, dto.blocks);
+    if (!title.trim()) {
+      notify('warn', 'Lütfen forma bir başlık verin.');
+      return false;
+    }
+    const meta = { title: title.trim(), description: description.trim() || null, categoryId, themeJson: null, blocks: [] };
+    const sent = blocks;
+
+    if (!formId) {
+      setSaving(true);
+      try {
+        const dto = await api.post('/api/app/form', { ...meta, blocks: payloadBlocks(sent) });
+        const map = serverIdMap(sent, dto.blocks);
+        savedBlocks.current = blockRefs(dto.blocks);
+        applyServerIds(map);
         setFormId(dto.id);
         setSlug(dto.slug || '');
+        setStatus(dto.status ?? 0);
+        setResponseCount(dto.responseCount ?? 0);
+        setPublishSettingsJson(dto.publishSettingsJson ?? null);
+        setSavedSnapshot(snapshotOf(title, description, categoryId, withServerIds(sent, map)));
         const url = new URL(window.location.href);
         url.searchParams.set('id', dto.id);
         window.history.replaceState({}, '', url);
         notify('success', 'Form oluşturuldu.');
-      } else {
-        await api.put(`/api/app/form/${formId}`, { title: title.trim(), description: description.trim() || null, categoryId, themeJson: null, blocks: [] });
-        const dto = await api.put(`/api/app/form/${formId}/blocks`, { blocks: payloadBlocks(blocks) });
-        applyServerIds(blocks, dto?.blocks);
-        notify('success', 'Form kaydedildi.');
+        return true;
+      } catch (e) {
+        notify('error', errorText(e, 'Kaydetme başarısız.'));
+        return false;
+      } finally {
+        setSaving(false);
       }
+    }
+
+    // Yayındaki formda kayıt anında canlıya çıkar: bozuk koşul doldurucuya uyarısız ulaşmasın.
+    const broken = status === 1 /* FormStatus.Published */ ? brokenConditionBlocks(sent) : [];
+    if (broken.length) {
+      setSelectedId(broken[0].id);
+      const ok = await confirmAction(`"${broken[0].content || 'Adsız alan'}" alanının görünürlük koşulu formda olmayan (ya da aşağıdaki) bir alana bağlı. Form yayında: kaydettiğiniz anda doldurucular bu hâli görür. Yine de kaydedilsin mi?`);
+      if (!ok) return false;
+    }
+    const removal = blockRemovals(savedBlocks.current, sent);
+    if (removal.answerable > 0 && responseCount > 0) {
+      const ok = await confirmAction(`${removal.answerable} soru silinecek. Bu sorulara verilmiş yanıtlar yanıt ekranında ve dışa aktarımda sorusuz kalır. Devam edilsin mi?`);
+      if (!ok) return false;
+    }
+
+    setSaving(true);
+    try {
+      // Önce alanlar: sunucu bildirilmemiş silmeyi reddederse başlık, açıklama ve kategori de ezilmez.
+      const dto = await api.put(`/api/app/form/${formId}/blocks`, { blocks: payloadBlocks(sent), removedBlockIds: removal.ids });
+      const map = serverIdMap(sent, dto?.blocks);
+      savedBlocks.current = blockRefs(dto?.blocks);
+      applyServerIds(map);
+      const saved = await api.put(`/api/app/form/${formId}`, meta);
+      setResponseCount(saved?.responseCount ?? dto?.responseCount ?? 0);
+      setSavedSnapshot(snapshotOf(title, description, categoryId, withServerIds(sent, map)));
+      notify('success', 'Form kaydedildi.');
+      return true;
     } catch (e) {
-      notify('error', e?.message || 'Kaydetme başarısız.');
+      notify('error', errorText(e, 'Kaydetme başarısız.'));
+      return false;
     } finally {
       setSaving(false);
     }
   };
 
+  /* STA-07 · Kaydedilmemiş değişiklik: sayfadan çıkışta tarayıcı uyarır, Yayınla önce kaydeder. */
+  const dirty = !loading && !loadError && snapshotOf(title, description, categoryId, blocks) !== savedSnapshot;
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty]);
+
+  const openPublish = async () => {
+    const broken = brokenConditionBlocks(blocks);
+    if (broken.length) {
+      setSelectedId(broken[0].id);
+      notify('warn', `"${broken[0].content || 'Adsız alan'}" alanının görünürlük koşulu formda olmayan (ya da aşağıdaki) bir alana bağlı. Yayınlamadan önce koşulu düzeltin veya kaldırın.`);
+      return;
+    }
+    if (dirty && !(await save())) return;
+    setShowPublish(true);
+  };
+
+  const onPublished = (dto) => {
+    setSlug(dto.slug || slug);
+    setPublishSettingsJson(dto.publishSettingsJson ?? null);
+    setStatus(dto.status ?? status);
+    setResponseCount(dto.responseCount ?? responseCount);
+  };
+
   if (loading) return <div className="flex h-[60vh] items-center justify-center text-text-tertiary">Form yükleniyor…</div>;
+
+  if (loadError) {
+    return (
+      <div className="flex h-[60vh] flex-col items-center justify-center gap-3 px-4 text-center">
+        <a href="/DynamicAssets" className="text-sm font-semibold text-text-secondary hover:text-text-primary">← Formlar</a>
+        <h2 className="text-lg font-bold text-text-primary">Form yüklenemedi</h2>
+        <p className="text-sm text-text-secondary">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => { setLoadError(null); setLoading(true); setReloadKey((k) => k + 1); }}
+          className="rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-accent-600"
+        >Tekrar dene</button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-120px)] bg-surface-sunken pb-24">
-      {/* top bar */}
-      <div className="sticky top-0 z-20 border-b border-default bg-surface-raised">
+      {/* top bar — kabuğun yapışkan üst çubuğunun (--apya-header-h) ALTINA yapışır; top-0 iken onun
+          altında kalıyor, Kaydet/Yayınla kaydırınca görünmüyordu. z-index bilerek düşük: üst çubuğun
+          açılır menüleri bu çubuğun üstünde kalmalı. */}
+      <div className="sticky top-[var(--apya-header-h,0px)] z-20 border-b border-default bg-surface-raised">
         <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div className="flex items-center gap-3">
             <a href="/DynamicAssets" className="text-sm font-semibold text-text-secondary hover:text-text-primary">← Formlar</a>
@@ -669,7 +808,7 @@ function FormBuilder() {
               {saving ? 'Kaydediliyor…' : (formId ? 'Kaydet' : 'Oluştur')}
             </button>
             {formId && <a href={`/DynamicAssets/Responses?formId=${formId}`} className="rounded-xl border border-default bg-surface-raised px-4 py-2 text-sm font-bold text-text-primary shadow-sm hover:bg-surface-sunken">Yanıtlar</a>}
-            {formId && <button onClick={() => setShowPublish(true)} className="rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-accent-600">Yayınla</button>}
+            {formId && <button onClick={openPublish} disabled={saving} className="rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-accent-600 disabled:opacity-50">Yayınla</button>}
           </div>
         </div>
       </div>
@@ -726,7 +865,16 @@ function FormBuilder() {
         )}
       </div>
 
-      {showPublish && <PublishModal formId={formId} slug={slug} onClose={() => setShowPublish(false)} />}
+      {showPublish && (
+        <PublishModal
+          formId={formId}
+          slug={slug}
+          settingsJson={publishSettingsJson}
+          published={status === 1 /* FormStatus.Published */}
+          onPublished={onPublished}
+          onClose={() => setShowPublish(false)}
+        />
+      )}
     </div>
   );
 }
@@ -734,43 +882,84 @@ function FormBuilder() {
 /* ============================================================
  * Publish modal
  * ============================================================ */
-function PublishModal({ formId, slug, onClose }) {
+/* STA-07/DOC-03 · Pencere formun MEVCUT yayın ayarlarıyla açılır: yeniden yayın KVKK'yı, bot korumasını ve
+   yayın aralığını sessizce kapatmaz; paylaşılmış bağlantı da habersiz değişmez. */
+export function PublishModal({ formId, slug, settingsJson, published, onPublished, onClose }) {
+  const [initial] = useState(() => safeParse(settingsJson) || {});
   const [slugVal, setSlugVal] = useState(slug || '');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [kvkk, setKvkk] = useState(false);
-  const [captcha, setCaptcha] = useState(false);
+  const [startDate, setStartDate] = useState(String(initial.startDate || '').slice(0, 10));
+  const [endDate, setEndDate] = useState(String(initial.endDate || '').slice(0, 10));
+  const [kvkk, setKvkk] = useState(!!initial.kvkk);
+  const [captcha, setCaptcha] = useState(!!initial.captcha);
   const [publishing, setPublishing] = useState(false);
   const [publishedSlug, setPublishedSlug] = useState(null);
+  // Onay kutusu açıkken Escape onu kapatır; pencereyi de kapatmasın.
+  const confirmOpenRef = useRef(false);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && !confirmOpenRef.current && !publishing) onClose?.();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose, publishing]);
 
   const doPublish = async () => {
+    const nextSlug = slugVal?.trim() || null;
+    if (published && nextSlug && nextSlug !== slug) {
+      confirmOpenRef.current = true;
+      const ok = await confirmAction('Bağlantı adresi değişecek. Daha önce paylaşılan bağlantı artık açılmaz. Devam edilsin mi?');
+      confirmOpenRef.current = false;
+      if (!ok) return;
+    }
     setPublishing(true);
     try {
       const dto = await api.post(`/api/app/form/${formId}/publish`, {
-        slug: slugVal?.trim() || null,
+        slug: nextSlug,
         publishSettingsJson: JSON.stringify({ startDate: startDate || null, endDate: endDate || null, kvkk, captcha }),
       });
+      onPublished?.(dto);
       setPublishedSlug(dto.slug || slugVal);
       notify('success', 'Form yayınlandı.');
     } catch (e) {
-      notify('error', e?.message || 'Yayınlama başarısız.');
+      notify('error', errorText(e, 'Yayınlama başarısız.'));
     } finally {
       setPublishing(false);
     }
   };
 
+  const currentUrl = published && slug ? `${window.location.origin}${publicFormPath(slug)}` : null;
   const publicUrl = publishedSlug ? `${window.location.origin}${publicFormPath(publishedSlug)}` : null;
-  const copyLink = () => { if (publicUrl) navigator.clipboard?.writeText(publicUrl); notify('success', 'Bağlantı kopyalandı.'); };
+  const copyLink = (url) => { if (url) navigator.clipboard?.writeText(url); notify('success', 'Bağlantı kopyalandı.'); };
 
+  /* Portal + z-modal: ada sarmalayıcısının transform'u fixed katmanı sarmalayıcıya hizalıyordu
+     (karartma kenar/üst çubuğu örtmüyor, başlık ve ✕ üst çubuğun altında kalıyordu; bkz. ModalPortal).
+     Gövde görünür alanla sınırlı ve kaydırılabilir: yayındaki formun bağlantı satırı pencereyi uzatıyor. */
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-2xl bg-surface-raised p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+    <ModalPortal>
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-surface-overlay p-4" onClick={onClose}>
+      <div
+        className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-surface-raised p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="publish-modal-title"
+      >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-text-primary">Formu Yayınla</h2>
-          <button onClick={onClose} className="rounded p-1 text-text-tertiary hover:bg-surface-sunken">✕</button>
+          <h2 id="publish-modal-title" className="text-lg font-bold text-text-primary">Formu Yayınla</h2>
+          <button onClick={onClose} aria-label="Kapat" className="rounded p-1 text-text-tertiary hover:bg-surface-sunken">✕</button>
         </div>
         {!publicUrl ? (
           <div className="flex flex-col gap-4">
+            {currentUrl && (
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase text-text-tertiary">Yayın bağlantısı</label>
+                <div className="flex items-center gap-2">
+                  <input readOnly className={inputCls} value={currentUrl} onClick={(e) => e.target.select()} aria-label="Yayın bağlantısı" />
+                  <button onClick={() => copyLink(currentUrl)} className="shrink-0 rounded-xl border border-default px-3 py-2 text-sm font-medium hover:bg-surface-sunken">Kopyala</button>
+                </div>
+              </div>
+            )}
             <div>
               <label className="mb-1 block text-[11px] font-semibold uppercase text-text-tertiary">Bağlantı adresi (slug)</label>
               <input className={inputCls} value={slugVal} onChange={(e) => setSlugVal(e.target.value)} placeholder="musteri-memnuniyet" />
@@ -786,7 +975,7 @@ function PublishModal({ formId, slug, onClose }) {
               <span>Bu ayarlar sunucu tarafında uygulanır</span>
             </div>
             <button onClick={doPublish} disabled={publishing} className="mt-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white hover:bg-accent-600 disabled:opacity-50">
-              {publishing ? 'Yayınlanıyor…' : 'Yayınla'}
+              {publishing ? (published ? 'Kaydediliyor…' : 'Yayınlanıyor…') : (published ? 'Ayarları güncelle' : 'Yayınla')}
             </button>
           </div>
         ) : (
@@ -796,7 +985,7 @@ function PublishModal({ formId, slug, onClose }) {
               <label className="mb-1 block text-[11px] font-semibold uppercase text-text-tertiary">Yayın bağlantısı</label>
               <div className="flex items-center gap-2">
                 <input readOnly className={inputCls} value={publicUrl} onClick={(e) => e.target.select()} />
-                <button onClick={copyLink} className="shrink-0 rounded-xl border border-default px-3 py-2 text-sm font-medium hover:bg-surface-sunken">Kopyala</button>
+                <button onClick={() => copyLink(publicUrl)} className="shrink-0 rounded-xl border border-default px-3 py-2 text-sm font-medium hover:bg-surface-sunken">Kopyala</button>
               </div>
             </div>
             <a href={publicUrl} target="_blank" rel="noreferrer" className="rounded-xl bg-accent px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-accent-600">Formu yeni sekmede aç</a>
@@ -804,6 +993,7 @@ function PublishModal({ formId, slug, onClose }) {
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -816,6 +1006,18 @@ function notify(kind, msg) {
   if (abp?.notify && (kind === 'success' || kind === 'info')) abp.notify[kind === 'success' ? 'success' : 'info'](msg);
   else if (abp?.message) abp.message[kind === 'error' ? 'error' : kind === 'warn' ? 'warn' : 'info'](msg);
   else console.log(`[${kind}] ${msg}`);
+}
+/** Sunucu hatasının metni; ağ hatası (fetch TypeError) ya da beklenmeyen hata İngilizce görünmesin diye sabit metne düşer. */
+function errorText(e, fallback) {
+  return e?.status ? (e.message || fallback) : fallback;
+}
+/** Onay penceresi; true = devam. */
+function confirmAction(message) {
+  const abp = window.abp;
+  if (abp?.message?.confirm) {
+    return new Promise((resolve) => abp.message.confirm(message, 'Onay', (r) => resolve(!!r)));
+  }
+  return Promise.resolve(window.confirm(message));
 }
 
 const root = document.getElementById('dynamic-assets-app-root');

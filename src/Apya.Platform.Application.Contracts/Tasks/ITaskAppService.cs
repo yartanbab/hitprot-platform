@@ -83,6 +83,10 @@ namespace Apya.Platform.Tasks
         /// </summary>
         Task<TaskDto> DeferAsync(Guid id, int days);
 
+        /// <summary>Yalnız başlangıç/bitiş tarihini yazar (Zaman çizelgesi). Bitiş başlangıçtan
+        /// önceyse DeferAsync kuralıyla başlangıç bitişe çekilir.</summary>
+        Task UpdateScheduleAsync(Guid id, UpdateTaskScheduleDto input);
+
         // Feature Registry (Faz 3)
         Task<List<string>> GetFeatureAssignmentsAsync(Guid taskId);
         Task AddFeatureAsync(Guid taskId, string featureCode);

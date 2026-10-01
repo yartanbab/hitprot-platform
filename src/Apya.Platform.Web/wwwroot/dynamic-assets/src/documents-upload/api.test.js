@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { fmtSize, humanMessage, statusMessage, validate } from './api';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fmtSize, humanMessage, setBulkMeta, statusMessage, validate } from './api';
 
 const dosya = (name, size = 10) => ({ name, size });
 
@@ -90,5 +90,33 @@ describe('fmtSize', () => {
     it('KB ve B eşikleri değişmedi', () => {
         expect(fmtSize(2048)).toBe('2 KB');
         expect(fmtSize(512)).toBe('512 B');
+    });
+});
+
+// DOC-01: toplu künye tek istekle dar handler'a gider (eski SetMeta tam değiştirme
+// ucuna gidip belgenin diğer künyesini siliyordu).
+describe('setBulkMeta', () => {
+    afterEach(() => { delete window.abp; });
+
+    it('ApplyBulkMeta handlerına JSON gövdeyle POST eder', async () => {
+        const ajax = vi.fn(() => {
+            const chain = {
+                done: (cb) => { cb(2); return chain; },
+                fail: () => chain,
+            };
+            return chain;
+        });
+        window.abp = { appPath: '/app/', ajax };
+
+        const dto = { documentFileIds: ['f1', 'f2'], documentTypeId: null, periodCode: '2026-Q4' };
+        await expect(setBulkMeta(dto)).resolves.toBe(2);
+
+        expect(ajax).toHaveBeenCalledTimes(1);
+        expect(ajax).toHaveBeenCalledWith({
+            url: '/app/Documents/Upload?handler=ApplyBulkMeta',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(dto),
+        });
     });
 });

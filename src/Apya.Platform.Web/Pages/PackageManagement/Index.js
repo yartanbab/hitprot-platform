@@ -7,6 +7,8 @@ $(function () {
     var permModal = new bootstrap.Modal(permModalEl);
     var current = null;
     var currentPermCode = null;
+    var nextCards = apya.latest();
+    var nextSub = apya.latest();
 
     function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
 
@@ -47,7 +49,22 @@ $(function () {
         });
     }
 
-    function load() { svc.getList().then(render); }
+    // Kayıt sonrası load() çağrıları da buradan geçer: geç düşen eski bir hata taze kartları silmesin.
+    function load() {
+        var isLatest = nextCards();
+        Promise.resolve(svc.getList()).then(function (packages) {
+            if (!isLatest()) { return; }
+            render(packages);
+        }, function () {
+            if (!isLatest()) { return; }
+            $cards.html('<div class="col-12">' + apya.loadState.errorHtml('Paketler yüklenemedi.', 'js-pkg-retry') + '</div>');
+        });
+    }
+
+    $(document).on('click', '.js-pkg-retry', function () {
+        $(this).prop('disabled', true);
+        load();
+    });
 
     // ─────────────────────────── Limitler (türetilmeyen feature'lar) ───────────────────────────
 
@@ -263,7 +280,13 @@ $(function () {
 
     // --- Paket süresi ayarları (host geneli) ---
     function loadSubscriptionSettings() {
-        svc.getSubscriptionSettings().then(function (s) {
+        // Form yalnız SON başarılı yüklemenin değerlerini gösterirken açık; uç tam güncellemedir,
+        // boş/yarım form mevcut ayarları ezer (ADM-11). Kilit istek BAŞINDA: kayıt sonrası yeniden
+        // yükleme sürerken girilen değer geç gelen yanıtla ezilemez.
+        $('#SubSettingsForm').prop('disabled', true);
+        var isLatest = nextSub();
+        Promise.resolve(svc.getSubscriptionSettings()).then(function (s) {
+            if (!isLatest()) { return; }
             $('#SubAutoDowngrade').prop('checked', !!s.autoDowngradeEnabled);
             $('#SubGraceDays').val(s.graceDays);
             $('#SubWarningDays').val(s.warningDays || '');
@@ -276,8 +299,19 @@ $(function () {
             setPrice('#PriceStandard', s.standardPlanPrice);
             setPrice('#PriceCorporate', s.corporatePlanPrice);
             setPrice('#PriceJoint', s.jointPlanPrice);
+
+            $('#SubLoadState').empty();
+            $('#SubSettingsForm').prop('disabled', false);
+        }, function () {
+            if (!isLatest()) { return; }
+            $('#SubLoadState').html(apya.loadState.errorHtml('Paket süresi ve bedel ayarları yüklenemedi.', 'js-sub-retry'));
         });
     }
+
+    $(document).on('click', '.js-sub-retry', function () {
+        $(this).prop('disabled', true);
+        loadSubscriptionSettings();
+    });
 
     function setPrice(selector, value) {
         $(selector).val(value > 0 ? value : '');

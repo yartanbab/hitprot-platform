@@ -61,6 +61,19 @@ export function prefillChoice(choices, search, param = GRANT_PREFILL_PARAM) {
     return hit ? { value: hit.value, label: hit.label } : null;
 }
 
+/**
+ * Alanın seçim cevabı güncel listede yoksa düşürülür (STA-09): ekranda "Seçiniz…" görünürken eski
+ * listeden kalan değer gönderilmesin. Değişiklik yoksa AYNI nesne döner.
+ */
+export function withoutStaleChoice(answers, blockId, choices) {
+    const answer = answers?.[blockId];
+    if (!answer || typeof answer !== 'object') return answers;
+    if ((choices || []).some((c) => c.value === answer.value)) return answers;
+    const next = { ...answers };
+    delete next[blockId];
+    return next;
+}
+
 /** Seçeneğe özel form bağlantısı; adreste zaten sorgu (`?tenant=`) varsa korunur. */
 export function withChoiceParam(path, value, param = GRANT_PREFILL_PARAM) {
     return `${path}${path.includes('?') ? '&' : '?'}${param}=${encodeURIComponent(value)}`;

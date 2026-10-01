@@ -259,19 +259,20 @@ function BudgetLinkEditor({ options, isLoading, lineId, planned, onField }) {
  *    detayın ORTAK form state'ine yazılır, footer'daki Kaydet ile kalıcı olur.
  *    (Ayrı bir kaydet düğmesi kullanıcının o an açık diğer düzenlemelerini
  *    yarım kaydederdi.)
- *  - Salt okunur: yetki/proje yoksa yalnız mevcut bağın özeti basılır; bağ da
- *    yoksa kart hiç görünmez.
+ *  - Salt okunur: yetki/proje yoksa ya da görevi düzenleyemiyorsa (`readOnly`:
+ *    Kaydet UpdateAsync'e gider → Edit + sahiplik) yalnız mevcut bağın özeti
+ *    basılır; bağ da yoksa kart hiç görünmez.
  *
  * TASARIMDAN BİLİNÇLİ SAPMA: prototip DÖRT hücre gösteriyor
  * (bütçe · taahhüt · gerçekleşen · kalan); burada ÜÇ var. "Taahhüt" onay
  * bekleyen sipariş/talep demek ve arkasında bir varlık yok — eklenseydi
  * ekranda hep 0 gösteren bir hücre olurdu.
  */
-function BudgetLinkCard({ task, form, spentByCurrency }) {
+function BudgetLinkCard({ task, form, spentByCurrency, readOnly }) {
     const projectId = (form ? form.values.projectId : task?.projectId) ?? null;
     const { options, lines, canViewBudget, isLoading } = useProjectBudgetLines(projectId);
 
-    const editable = Boolean(form) && canViewBudget && Boolean(projectId);
+    const editable = Boolean(form) && !readOnly && canViewBudget && Boolean(projectId);
     const lineId = (form ? form.values.budgetLineId : task?.budgetLineId) ?? null;
     const planned = (form ? form.values.plannedAmount : task?.plannedAmount) ?? null;
 
@@ -379,7 +380,7 @@ function Cell({ label, value, tone }) {
  * Üstte "Bütçe bağı" kartı (yalnız görevin bütçe kalemi ve planı varsa),
  * ardından para birimi başına üç KPI ve kayıt listesi.
  */
-export function FinanceTab({ task, taskId, form }) {
+export function FinanceTab({ task, taskId, form, readOnly = false }) {
     const expenses = task?.expenses || [];
     const incomes = task?.incomes || [];
     const invoices = task?.invoices || [];
@@ -390,7 +391,7 @@ export function FinanceTab({ task, taskId, form }) {
     const spentTry = expenses
         .filter((l) => (l.currency || 'TRY') === 'TRY')
         .reduce((a, l) => a + (l.amount || 0), 0);
-    const budgetCard = <BudgetLinkCard task={task} form={form} spentByCurrency={spentTry} />;
+    const budgetCard = <BudgetLinkCard task={task} form={form} spentByCurrency={spentTry} readOnly={readOnly} />;
     const actions = <FinanceActions taskId={taskId ?? task?.id} />;
 
     if (expenses.length === 0 && incomes.length === 0 && invoices.length === 0) {

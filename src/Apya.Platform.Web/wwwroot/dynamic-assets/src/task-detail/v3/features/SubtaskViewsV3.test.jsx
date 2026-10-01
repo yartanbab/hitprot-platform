@@ -25,6 +25,8 @@ const task = {
 };
 
 beforeEach(() => {
+    // Varsayılan: ekip yöneticisi — her alt görevin durumunu değiştirebilir.
+    window.abp = { currentUser: { id: 'u-1' }, auth: { isGranted: () => true } };
     window.apya = { platform: { tasks: { task: { updateStatus: vi.fn(() => Promise.resolve()) } } } };
 });
 
@@ -98,6 +100,43 @@ describe('SubtaskBoardTabV3', () => {
         fireEvent.change(screen.getByLabelText('Beta durumunu değiştir'), { target: { value: '2' } });
         await waitFor(() => expect(window.apya.platform.tasks.task.updateStatus)
             .toHaveBeenCalledWith('s-1', 2));
+    });
+
+    /* Yetki (ROL-04, Faz 1 devamı): updateStatus ALT GÖREVİN sahibine bakar; kart,
+       o alt görevin kendi kaydına göre sürüklenemez ve seçim kutusu kilitlenir. */
+    describe('yetki', () => {
+        const owned = {
+            ...task,
+            subTasks: [
+                { ...task.subTasks[0], creatorId: 'u-2', assigneeId: 'u-3' },   // Beta: başkasının
+                { ...task.subTasks[2], creatorId: 'u-1' },                       // Gama: benim
+            ],
+        };
+
+        beforeEach(() => {
+            window.abp = { currentUser: { id: 'u-1' }, auth: { isGranted: (p) => p !== 'Platform.Projects.ManageTeam' } };
+        });
+
+        it('sahibi olmadigi kart suruklenemez, secim kutusu kilitli, birakma istek atmaz', async () => {
+            renderWithClient(<SubtaskBoardTabV3 taskId="t-1" task={owned} />);
+            const select = screen.getByLabelText('Beta durumunu değiştir');
+            expect(select).toBeDisabled();
+            expect(select.closest('article').getAttribute('draggable')).toBe('false');
+
+            fireEvent.drop(screen.getByLabelText('Tamamlandı sütunu'), {
+                dataTransfer: { getData: () => 's-1' },
+            });
+            await waitFor(() => expect(window.apya.platform.tasks.task.updateStatus).not.toHaveBeenCalled());
+        });
+
+        it('kendi olusturdugu alt gorevin durumunu degistirir', async () => {
+            renderWithClient(<SubtaskBoardTabV3 taskId="t-1" task={owned} />);
+            const select = screen.getByLabelText('Gama durumunu değiştir');
+            expect(select).toBeEnabled();
+            fireEvent.change(select, { target: { value: '4' } });
+            await waitFor(() => expect(window.apya.platform.tasks.task.updateStatus)
+                .toHaveBeenCalledWith('s-3', 4));
+        });
     });
 });
 

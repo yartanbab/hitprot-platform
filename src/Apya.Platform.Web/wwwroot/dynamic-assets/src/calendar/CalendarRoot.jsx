@@ -6,7 +6,7 @@ import { AgendaView } from './AgendaView';
 import { DayPanel } from './DayPanel';
 import { MonthGrid } from './MonthGrid';
 import { SourceRail } from './SourceRail';
-import { Toolbar, NewTaskFab } from './Toolbar';
+import { Toolbar, NewTaskFab, openNewTask } from './Toolbar';
 import { WeekGrid } from './WeekGrid';
 import { ItemDrawer } from './ItemDrawer';
 import { SyncDrawer } from './SyncDrawer';
@@ -25,6 +25,7 @@ import { useCalendarKeyboard } from './hooks/useCalendarKeyboard';
 import { useTeamLoad } from './hooks/useTeamLoad';
 import { useOfflineQueue } from './hooks/useOfflineQueue';
 import { layoutOf, useContainerWidth } from './hooks/useContainerWidth';
+import { useInvalidateTaskDerivedOnChange } from '../lib/api/dataChanged';
 import {
     MONTH_CELLS, RISK, addDays, dayLoad, fmt, groupByDay, isoDay, monthGridStart, stripTime, weekDays,
 } from './lib/model';
@@ -125,6 +126,8 @@ export function CalendarRoot() {
     const external = useExternalEvents(range);
     const preferences = useCalendarPreferences();
     const teamLoad = useTeamLoad({ from: range.from, to: range.to, enabled: teamOpen });
+    /* Aynı sekmedeki görev yazmaları (Yeni görev modalı, toplantıdan görev) feed ve ekip yükünü tazeler. */
+    useInvalidateTaskDerivedOnChange();
 
     /* Çevrimdışı kuyruk: bağlantı yokken taşımalar burada birikir, gelince gönderilir. */
     const offline = useOfflineQueue({
@@ -377,7 +380,7 @@ export function CalendarRoot() {
                                 title="Bu aralıkta planlanmış bir şey yok"
                                 description="Son tarihi olan görevler, fatura vadeleri, hibe son tarihleri ve tarihli finans kayıtları burada birlikte görünür."
                                 action={canCreateTask
-                                    ? <Button size="sm" variant="outline" onClick={() => { window.location.href = '/Tasks'; }}>Görev oluştur</Button>
+                                    ? <Button size="sm" variant="outline" onClick={openNewTask}>Görev oluştur</Button>
                                     : null}
                             />
                         </div>

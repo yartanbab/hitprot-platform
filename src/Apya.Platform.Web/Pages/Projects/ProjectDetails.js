@@ -418,13 +418,22 @@ $(function () {
 
     var runSequential = console_.runSequential;
 
+    // Özet başarısız görevi KODUYLA söyler; liste 403'te kurulmamış ya da satır
+    // bu sayfada değilse kısa kimlik yazılır.
+    function taskLabel(id) {
+        var d = dataTable && dataTable.row('tr[data-id="' + id + '"]').data();
+        return d && d.code ? d.code : String(id).substring(0, 8);
+    }
+
+    // Kalem başına ABP penceresi yerine tek özet (abpHandleError:false); hata
+    // olsa da seçim temizlenir ve liste yenilenir.
     $('[data-bulk-status]').click(function () {
         var status = parseInt($(this).data('bulk-status'), 10);
         var ids = bulk.ids();
         if (!ids.length) { return; }
-        runSequential(ids, function (id) { return taskService.updateStatus(id, status); })
-            .then(function () {
-                abp.notify.success(ids.length + ' görevin durumu güncellendi.');
+        runSequential(ids, function (id) { return taskService.updateStatus(id, status, { abpHandleError: false }); })
+            .then(function (result) {
+                console_.notifyBulkResult(ids, result, 'görevin durumu güncellendi.', taskLabel);
                 clearSelection();
                 reloadAll(false);
             });
@@ -442,9 +451,9 @@ $(function () {
             cancelButtonText: 'Vazgeç'
         }).then(function (result) {
             if (!result.isConfirmed) { return; }
-            runSequential(ids, function (id) { return taskService.delete(id); })
-                .then(function () {
-                    abp.notify.success(ids.length + ' görev silindi.');
+            runSequential(ids, function (id) { return taskService.delete(id, { abpHandleError: false }); })
+                .then(function (result) {
+                    console_.notifyBulkResult(ids, result, 'görev silindi.', taskLabel);
                     clearSelection();
                     reloadAll();
                 });
@@ -483,6 +492,7 @@ $(function () {
         onChanged: function () {
             hierarchy.reset();
             if (dataTable) { dataTable.ajax.reload(null, false); }
+            apya.dataChanged.emit({ entity: 'task' });
         }
     });
 
@@ -496,6 +506,7 @@ $(function () {
         onSaved: function () {
             hierarchy.reset();
             if (dataTable) { dataTable.ajax.reload(null, false); }
+            apya.dataChanged.emit({ entity: 'task' });
         }
     });
 
@@ -636,10 +647,13 @@ $(function () {
     });
 
     // Liste 403'te hiç kurulmadığı için tüm yenilemeler tek yerden korunur.
+    // Çağıranların hepsi bir görev yazmasından sonra gelir → React adalarına
+    // (proje panelleri) ve sayfalar arası damgaya duyurulur.
     function reloadAll(resetPaging) {
         hierarchy.reset();
         if (dataTable) { dataTable.ajax.reload(null, resetPaging !== false); }
         kb.load();
+        apya.dataChanged.emit({ entity: 'task' });
     }
 
     reviewModal.onResult(function () {

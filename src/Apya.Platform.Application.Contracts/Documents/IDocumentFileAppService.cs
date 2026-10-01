@@ -25,6 +25,10 @@ public interface IDocumentFileAppService : IApplicationService
 
     Task BulkTagAsync(BulkTagDocumentFilesDto input);
 
+    /// <summary>Toplu künye: yalnız verilen tür/dönem yazılır; kilitli belge atlanır;
+    /// uygulanan belge sayısını döner.</summary>
+    Task<int> ApplyBulkMetaAsync(BulkApplyDocumentFileMetaDto input);
+
     Task DeleteAsync(Guid id);
 
     /// <summary>Çöp kutusundan geri alma — belge ekleri ve etiketleriyle birlikte döner.</summary>

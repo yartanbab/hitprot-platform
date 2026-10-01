@@ -1,7 +1,7 @@
 import { b as ee, j as e, r as d } from "./react-vendor-D57GAUXd.js";
 import { a as v } from "./httpClient-DePjXdo1.js";
 import { H as te } from "./Hint-CNW95h3H.js";
-import { c as T } from "./formChoices-DAx-kYeM.js";
+import { d as T } from "./formChoices-CDoZfRj7.js";
 /* empty css               */
 const se = (s) => {
   var a, c;

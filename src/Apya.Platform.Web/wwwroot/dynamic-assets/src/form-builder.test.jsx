@@ -1,7 +1,10 @@
 import React, { useRef } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QuestionCard, payloadBlocks, serverIdMap, parentCandidatesFor, conditionCandidatesFor } from './form-builder';
+import {
+    QuestionCard, payloadBlocks, serverIdMap, parentCandidatesFor, conditionCandidatesFor,
+    withServerIds, brokenConditionBlocks, blockRemovals,
+} from './form-builder';
 
 /* Canlı liste paneli önizleme için sunucudan çağrıları ister. */
 vi.mock('./lib/api/httpClient', () => ({
@@ -112,6 +115,69 @@ describe('alan kimlikleri kayitta korunur', () => {
 
     it('sunucu blok dondurmezse esleme bos kalir', () => {
         expect(serverIdMap([{ id: 'k3j9x0aa' }], undefined)).toEqual({});
+    });
+
+    /** DOC-02 · Geçici kimlik clientId olarak gider: aynı kayıtta ona bağlanan koşulu sunucu eşler. */
+    it('yeni alanin gecici kimligi clientId olarak gider, sunucudakinde gitmez', () => {
+        const body = payloadBlocks([
+            { id: SERVER_ID, type: 0, content: 'Adınız', settings: {} },
+            { id: 'w06hu9nb', type: 2, content: 'Katılacak mısınız?', settings: {} },
+        ]);
+        expect(body.map((b) => b.clientId)).toEqual([null, 'w06hu9nb']);
+        expect(body.map((b) => b.id)).toEqual([SERVER_ID, null]);
+    });
+
+    it('esleme kimligi, zincir ve kosul bagini tasir; degismeyen alan ayni nesnedir', () => {
+        const G1 = 'aaaaaaaa-0000-4000-8000-000000000001';
+        const G2 = 'aaaaaaaa-0000-4000-8000-000000000002';
+        const untouched = { id: SERVER_ID, type: 0, content: 'Adınız', settings: {} };
+        const blocks = [
+            untouched,
+            { id: 'a', type: 18, content: 'Projeniz', settings: { source: 'tenant-projects' } },
+            { id: 'b', type: 18, content: 'Göreviniz', settings: { source: 'tenant-project-tasks', dependsOn: 'a' } },
+            { id: 'c', type: 0, content: 'Not', settings: { visibleWhen: { blockId: 'b', op: 'answered' } } },
+        ];
+        const out = withServerIds(blocks, { a: G1, b: G2 });
+        expect(out[0]).toBe(untouched);
+        expect(out.map((b) => b.id)).toEqual([SERVER_ID, G1, G2, 'c']);
+        expect(out[2].settings.dependsOn).toBe(G1);
+        expect(out[3].settings.visibleWhen).toEqual({ blockId: G2, op: 'answered' });
+    });
+});
+
+/**
+ * DOC-02 · Koşulu formda olmayan, aşağıdaki ya da cevap taşımayan alana bağlı alan yayına çıkmaz.
+ */
+describe('bozuk gorunurluk kosulu', () => {
+    it('formda olmayan, asagidaki ve duzen blogune bagli kosulu bulur; gecerli kosulu bulmaz', () => {
+        const blocks = [
+            { id: 'h', type: 16, content: 'Bölüm', settings: {} },
+            { id: 'p', type: 0, content: 'Firma adı', settings: {} },
+            { id: 'ok', type: 0, content: 'Geçerli', settings: { visibleWhen: { blockId: 'p', op: 'answered' } } },
+            { id: 'gone', type: 0, content: 'Kaldırılmış', settings: { visibleWhen: { blockId: 'w06hu9nb', op: 'answered' } } },
+            { id: 'below', type: 0, content: 'Aşağıya bağlı', settings: { visibleWhen: { blockId: 'last', op: 'answered' } } },
+            { id: 'layout', type: 0, content: 'Başlığa bağlı', settings: { visibleWhen: { blockId: 'h', op: 'answered' } } },
+            { id: 'last', type: 0, content: 'Son', settings: {} },
+        ];
+        expect(brokenConditionBlocks(blocks).map((b) => b.id)).toEqual(['gone', 'below', 'layout']);
+    });
+});
+
+/**
+ * DOC-04 · Silinen alanlar sunucuya kimlikle bildirilir; onay yalnız CEVAPLANABİLİR soru için sayılır.
+ */
+describe('silinen alanlar', () => {
+    const A = 'aaaaaaaa-0000-4000-8000-00000000000a';
+    const H = 'aaaaaaaa-0000-4000-8000-00000000000b';
+    const B = 'aaaaaaaa-0000-4000-8000-00000000000c';
+    const saved = [{ id: A, type: 0 }, { id: H, type: 16 }, { id: B, type: 9 }];
+
+    it('ekranda olmayan kayitli alanlar bildirilir, duzen blogu onay saymaz', () => {
+        expect(blockRemovals(saved, [{ id: B }])).toEqual({ ids: [A, H], answerable: 1 });
+    });
+
+    it('hicbir sey silinmediyse liste bos', () => {
+        expect(blockRemovals(saved, [{ id: A }, { id: H }, { id: B }, { id: 'yeni' }])).toEqual({ ids: [], answerable: 0 });
     });
 });
 

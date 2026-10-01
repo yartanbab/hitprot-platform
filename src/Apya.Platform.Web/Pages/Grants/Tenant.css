@@ -118,6 +118,10 @@
 /* 7b · İskelet yüksekliği gerçek kart yüksekliğine (afiş + gövde) eşit. */
 #FeedGrid { --apya-skel-card: 300px; }
 
+/* Yükleme hatası kutusu ızgarada tek hücreye sıkışmaz; boş durum kutusu editörde boşluk açmaz. */
+#FeedGrid > .apya-console-state { grid-column: 1 / -1; }
+#ProfileLoadState:empty { display: none; }
+
 /* 12a · Uygun olmayan kart gizlenmez, soluk durur: afiş grileşir, zemin geri çekilir.
    Metne opaklık uygulanmaz — okunurluk (AA) korunur. */
 .apya-feed-card.is-unfit { background: var(--apya-surface-raised); }
