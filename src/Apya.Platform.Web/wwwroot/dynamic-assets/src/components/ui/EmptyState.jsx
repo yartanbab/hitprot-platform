@@ -1,4 +1,4 @@
-import React, { useId } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { t } from '../../lib/i18n';
 import { errorMessage } from '../../lib/api/abpErrors';
 
@@ -38,9 +38,13 @@ import { errorMessage } from '../../lib/api/abpErrors';
  * KANONİK "TEKRAR DENE" (Faz 4 karar 10 — React ve Razor ortak): outline + accent.
  *   Razor: <button type="button" class="btn btn-sm btn-outline-primary …">
  *            <i class="fa fa-rotate-right me-1" aria-hidden="true"></i>Tekrar dene</button>
- *   React: RetryButton — accent çerçeve ve metin, üzerine gelince accent dolgu + ters metin,
- *          basılıyken accent-600 (apya-theme-bridge.css .btn-outline-primary ile aynı);
- *          fa-rotate-right (aria-hidden); metin HER YERDE Common:Retry ("Yeniden dene" yok).
+ *   React: RetryButton — AYNI Bootstrap sınıfları. Uygulama sayfalarında Bootstrap ve
+ *          apya-theme-bridge.css zaten yüklü: görünüm iki temada da Razor'la yapısal olarak
+ *          özdeş (renk, köşe, yazı). Tailwind'le taklit EDİLMEZ: Bootstrap'ın
+ *          `.border { … !important }` yardımcısı Tailwind `border border-accent`'i eziyor,
+ *          çerçeve griye dönüyordu. Bootstrap'ın yüklenmediği tek yüzey herkese açık form
+ *          (/f/{slug}, Layout=null): karşılık kuralları o sayfanın satır içi stilinde
+ *          (Pages/F/Index.cshtml). Metin HER YERDE Common:Retry ("Yeniden dene" yok).
  *
  * YÜKLEME DURUMU SÖZLEŞMESİ (React adaları)
  *   1) Boş durum yalnız BAŞARILI ve boş sonuçta; oluşturma CTA'sı hata anında görünmez.
@@ -58,7 +62,9 @@ import { errorMessage } from '../../lib/api/abpErrors';
  *      kart iskelete DÖNMEZ; çağıran `retrying` verir → düğme aria-disabled + aria-busy +
  *      dönen ikon, tıklama yutulur. `disabled` DEĞİL: Chromium odaklı düğme disabled olunca
  *      odağı body'ye atar (ölçüldü). Düğme aria-describedby ile kartın başlığına bağlı:
- *      aynı ekrandaki birden çok "Tekrar dene" kendi başlığıyla okunur.
+ *      aynı ekrandaki birden çok "Tekrar dene" kendi başlığıyla okunur. Yeniden deneme
+ *      BAŞARILI olunca kart içerikle yer değiştirir ve düğme sökülür: odak <body>'ye
+ *      düşmesin diye çağıran useRetryFocus (aşağıda) ile içerik kabına taşır.
  *
  * Standalone kullanılabilir; WidgetShell tarafından da inline gösterilir.
  */
@@ -76,15 +82,11 @@ const classes = (...list) => list.filter(Boolean).join(' ');
 
 const fetchErrorText = () => t('Common:FetchError', 'Veri alınırken bir hata oluştu.');
 
-/* Button size="sm" ölçüsü + Razor .btn-outline-primary renkleri. Sabit dize: Button'a dayanmaz. */
-const RETRY_BUTTON_CLASS = classes(
-    'inline-flex items-center justify-center gap-2 h-8 px-3 rounded-md text-sm font-medium',
-    'select-none whitespace-nowrap bg-transparent text-accent border border-accent',
-    'transition-colors duration-fast hover:bg-accent hover:text-text-inverse',
-    'active:bg-accent-600 active:border-accent-600 active:text-text-inverse',
-    'focus-visible:outline-none focus-visible:shadow-focus',
-    'aria-disabled:opacity-50 aria-disabled:pointer-events-none',
-);
+/* Razor'daki kanonik düğmeyle (apya-load-state.js errorHtml) AYNI sınıflar; kilit: EmptyState.test
+   "Razor errorHtml ile aynı". Sabit dize: Button'a dayanmaz. aria-disabled:* yalnız meşgul
+   durumun soluklaşması — Bootstrap'ta karşılığı yok, sınıf adı da Bootstrap'la çakışmaz. */
+const RETRY_BUTTON_CLASS = 'btn btn-sm btn-outline-primary aria-disabled:opacity-50 aria-disabled:pointer-events-none';
+const RETRY_ICON_CLASS = 'fa fa-rotate-right me-1';
 
 /**
  * RetryButton — kanonik "Tekrar dene" (kart dışı yerler için: şerit, satır içi uyarı).
@@ -101,10 +103,46 @@ function RetryButton({ onRetry, retrying = false, ...rest }) {
             aria-busy={retrying || undefined}
             onClick={() => { if (!retrying) onRetry(); }}
         >
-            <i className={retrying ? 'fa fa-rotate-right fa-spin' : 'fa fa-rotate-right'} aria-hidden="true" />
+            <i className={retrying ? `${RETRY_ICON_CLASS} fa-spin` : RETRY_ICON_CLASS} aria-hidden="true" />
             <span>{t('Common:Retry', 'Tekrar dene')}</span>
         </button>
     );
+}
+
+/**
+ * useRetryFocus — başarılı "Tekrar dene"den sonra odak kaybolmasın (sözleşme madde 7).
+ * Kart içerikle yer değiştirince düğme sökülür ve odak <body>'ye düşer: klavye ve ekran
+ * okuyucu kullanıcısı sayfanın başına döner. Düğme ODAKLIYKEN basıldıysa ve içerik
+ * çizildiğinde odak gerçekten düşmüşse içerik kabına taşınır (jQuery karşılığı:
+ * apya-load-state.js failTable → tablo). Kullanıcı arada başka yere geçtiyse odak çalınmaz;
+ * yeniden deneme yine düşerse kart da odak da yerinde kalır.
+ *
+ *   const listFocus = useRetryFocus(!loading && !loadError);   // içerik çizildi mi
+ *   <div ref={listFocus.contentRef} tabIndex={-1}>
+ *     {loadError ? <EmptyState variant="error" onRetry={listFocus.retry(load)} … /> : …içerik…}
+ *   </div>
+ */
+function useRetryFocus(contentShown) {
+    const contentRef = useRef(null);
+    const armed = useRef(false);
+
+    useEffect(() => {
+        if (!contentShown || !armed.current) return;
+        armed.current = false;
+        const active = document.activeElement;
+        // preventScroll: içerik kartın yerinde, kullanıcı zaten orada — uzun liste sayfayı zıplatmasın.
+        if (!active || active === document.body) contentRef.current?.focus({ preventScroll: true });
+    }, [contentShown]);
+
+    /* onRetry sarmalayıcısı: çağrı düğmenin tıklamasından gelir; o an odak sayfadaysa (fareyle
+       tıklamada düğmeyi odaklamayan tarayıcı) taşınacak bir odak da yoktur. */
+    const retry = (onRetry) => () => {
+        const active = document.activeElement;
+        armed.current = Boolean(active) && active !== document.body;
+        onRetry();
+    };
+
+    return { contentRef, retry };
 }
 
 function EmptyState({
@@ -172,4 +210,4 @@ function EmptyState({
     );
 }
 
-export { EmptyState, RetryButton };
+export { EmptyState, RetryButton, useRetryFocus };

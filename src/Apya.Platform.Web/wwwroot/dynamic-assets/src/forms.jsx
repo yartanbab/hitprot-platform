@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { mountIsland } from './lib/mountIsland';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
-import { EmptyState } from './components/ui/EmptyState';
+import { EmptyState, useRetryFocus } from './components/ui/EmptyState';
 import { publicFormPath } from './lib/publicFormLink';
 import { CHOICE_SOURCES, CHOICE_SCOPES, sourceLabel } from './lib/formChoices';
 import './index.css';
@@ -60,6 +60,9 @@ function FormsList() {
   useEffect(() => { loadCategories(); }, []);
   useEffect(() => { load(categoryFilter); }, [categoryFilter]);
 
+  // Başarılı "Tekrar dene"de kart listeyle yer değiştirir: odak sayfaya düşmesin, listeye geçsin.
+  const listFocus = useRetryFocus(!loading && !loadError);
+
   const catById = (id) => categories.find((c) => c.id === id);
 
   const remove = async (form) => {
@@ -112,11 +115,12 @@ function FormsList() {
       {/* Hata anında eldeki formlar başka kategoriye ait olabilir: gösterilmez;
           "Henüz formun yok" + oluşturma çağrısı da yalnız başarılı-boş sonuçta.
           Hata varken yükleniyor = yeniden deneniyor: kart kalır (odak düğmede). */}
+      <div ref={listFocus.contentRef} tabIndex={-1}>
       {loading && !loadError ? (
         <div className="py-16 text-center text-text-tertiary">Formlar yükleniyor…</div>
       ) : loadError ? (
         <div className="rounded-2xl border-2 border-dashed border-default py-12">
-          <EmptyState variant="error" title="Formlar yüklenemedi" error={loadError} onRetry={() => load(categoryFilter)} retrying={loading} />
+          <EmptyState variant="error" title="Formlar yüklenemedi" error={loadError} onRetry={listFocus.retry(() => load(categoryFilter))} retrying={loading} />
         </div>
       ) : forms.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-default py-20 text-center">
@@ -164,6 +168,7 @@ function FormsList() {
           })}
         </div>
       )}
+      </div>
 
       {showSourceModal && <ChoiceSourceCatalogModal onClose={() => setShowSourceModal(false)} />}
 
@@ -200,6 +205,9 @@ function ChoiceSourceCatalogModal({ onClose }) {
 
   useEffect(() => { load(); }, []);
 
+  // Başarılı "Tekrar dene"de odak pencerenin arkasındaki sayfaya düşmesin, kataloğa geçsin.
+  const listFocus = useRetryFocus(!loading && !loadError);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-overlay p-4" onClick={onClose}>
       <div className="w-full max-w-lg rounded-2xl border border-default bg-surface-elevated p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
@@ -209,8 +217,9 @@ function ChoiceSourceCatalogModal({ onClose }) {
         </div>
         <p className="mb-4 text-sm text-text-secondary">Açılır liste alanını bu listelerden birine bağlayabilirsiniz; seçenekler form her açıldığında güncel veriden gelir.</p>
 
+        <div ref={listFocus.contentRef} tabIndex={-1}>
         {loadError ? (
-          <EmptyState compact variant="error" title="Veri kaynakları yüklenemedi" error={loadError} onRetry={load} retrying={loading} />
+          <EmptyState compact variant="error" title="Veri kaynakları yüklenemedi" error={loadError} onRetry={listFocus.retry(load)} retrying={loading} />
         ) : sources == null ? (
           <p className="py-8 text-center text-sm text-text-tertiary">Yükleniyor…</p>
         ) : sources.length === 0 ? (
@@ -236,6 +245,7 @@ function ChoiceSourceCatalogModal({ onClose }) {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

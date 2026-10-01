@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, render, screen, fireEvent, within } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import { IslandErrorBoundary, IslandErrorFallback } from './IslandErrorBoundary';
 import { mountIsland } from '../../lib/mountIsland';
 import { PERSIST_THROTTLE_MS, QUERY_CACHE_STORAGE_KEY } from '../../lib/api/queryCacheStorage';
@@ -74,13 +77,42 @@ describe('IslandErrorBoundary · kart', () => {
         expect(ring.querySelector('i')).toBeNull();
 
         const retry = within(card).getByRole('button', { name: 'Tekrar dene' });
-        // Kanonik "Tekrar dene" (karar 10) kartın başlığıyla betimlenir.
-        expect(retry).toHaveClass('border-accent', 'text-accent');
+        // Kanonik "Tekrar dene" (karar 10: Razor'la aynı sınıflar) kartın başlığıyla betimlenir.
+        expect(retry).toHaveClass('btn', 'btn-sm', 'btn-outline-primary');
         expect(retry).toHaveAccessibleDescription('Bu bölüm gösterilemedi');
         const reload = within(card).getByRole('button', { name: 'Sayfayı yenile' });
         expect(reload).toHaveAttribute('type', 'button');
-        expect(reload).toHaveClass('border-strong', 'text-text-primary');
+        // Yanındaki ikincil düğme aynı ölçüde: Razor'ın ikincil eylem sınıfları (Tailwind `border` yok).
+        expect(reload.className).toBe('btn btn-sm btn-outline-secondary');
         expect(within(card).queryByRole('button', { name: 'Kapat' })).toBeNull();
+    });
+
+    it('herkese açık form (/f/{slug}) Bootstrap yüklemez: kartın düğme sınıflarının karşılığı sayfanın satır içi stilinde', () => {
+        const page = readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)),
+            '../../../../../Pages/F/Index.cshtml'), 'utf8');
+        // Layout=null; ne global demet ne Bootstrap bağlanıyor → sınıflar yalnız bu sayfanın stilinden karşılık bulur.
+        expect(page).toMatch(/Layout\s*=\s*null/);
+        expect(page).not.toMatch(/<abp-style-bundle/);
+        const sheets = [...page.matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+)"/g)].map((m) => m[1]);
+        expect(sheets).toContain('~/js/style.css');
+        expect(sheets.filter((href) => /bootstrap|\/libs\//i.test(href))).toEqual([]);
+        const style = page.slice(page.indexOf('<style>'), page.indexOf('</style>'));
+        expect(style).not.toBe('');
+
+        render(<IslandErrorFallback name="public-form" retry={() => {}} reload={() => {}} />);
+        const classes = new Set(screen.getAllByRole('button').flatMap((button) => [...button.classList]));
+        expect([...classes].sort()).toEqual([
+            'aria-disabled:opacity-50', 'aria-disabled:pointer-events-none',
+            'btn', 'btn-outline-primary', 'btn-outline-secondary', 'btn-sm',
+        ]);
+
+        // Görünümü taşıyan her Bootstrap sınıfının sayfada kuralı var (btn-sm ölçüsü .btn kuralında).
+        for (const selector of ['.btn', '.btn-outline-primary', '.btn-outline-secondary']) {
+            expect(style).toMatch(new RegExp(`(^|[\\s,}])\\${selector}\\s*\\{`));
+        }
+        expect(style).toMatch(/\.btn-outline-primary\s*\{[^}]*border-color:\s*var\(--apya-accent-500\)[^}]*color:\s*var\(--apya-accent-500\)/);
+        // Font Awesome da yok: "Tekrar dene"nin boş ikonu kenar boşluğuyla (me-1) yazıyı kaydırmasın.
+        expect(style).toMatch(/i\.fa\s*\{\s*display:\s*none;?\s*\}/);
     });
 
     it('useEffect içinde senkron istisna (finally\'siz thenable — CUS-01 kopyası) da karta düşer', () => {

@@ -1,10 +1,10 @@
-import React from 'react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import React, { useState } from 'react';
+import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { EmptyState, RetryButton } from './EmptyState';
+import { EmptyState, RetryButton, useRetryFocus } from './EmptyState';
 
 /**
  * EmptyState sözleşmesi — G3 (hata sınırı) ve G6 (locked) buna bağlı.
@@ -14,9 +14,12 @@ import { EmptyState, RetryButton } from './EmptyState';
  *    (errorMessage) ya da Common:FetchError; kanal null (merkezi oturum penceresi)
  *    dönerse açıklama basılmaz; onRetry argümansız çağrılır; açık action onu ezer.
  * 3) locked: fa-lock, role=status, varsayılan açıklama/eylem yok.
- * 4) Kanonik "Tekrar dene" (karar 10): outline + accent, fa-rotate-right, Common:Retry;
- *    başlığa aria-describedby ile bağlı; retrying → kart kalır, düğme meşgul, odak düğmede.
+ * 4) Kanonik "Tekrar dene" (karar 10): Razor'la AYNI Bootstrap sınıfları (btn btn-sm
+ *    btn-outline-primary + fa fa-rotate-right me-1), Common:Retry; başlığa aria-describedby
+ *    ile bağlı; retrying → kart kalır, düğme meşgul, odak düğmede.
  * 5) Bağımlılıksız (karar 11): içe aktarma grafiğinde ui-vendor parçasının paketi yok.
+ * 6) useRetryFocus: başarılı "Tekrar dene"de odak <body>'ye düşmez, içerik kabına geçer
+ *    (yalnız düğme odaklıyken basıldıysa; başka yerdeki odak çalınmaz).
  */
 
 afterEach(() => {
@@ -103,20 +106,16 @@ describe('EmptyState · error', () => {
         expect(screen.queryByText('x')).toBeNull();
     });
 
-    it('onRetry → kanonik "Tekrar dene" (outline + accent, Razor btn-outline-primary); tıklamada ARGÜMANSIZ çağrılır', () => {
+    it('onRetry → kanonik "Tekrar dene" (Razor\'la aynı btn btn-sm btn-outline-primary); tıklamada ARGÜMANSIZ çağrılır', () => {
         const onRetry = vi.fn();
         render(<EmptyState variant="error" title="T" onRetry={onRetry} />);
 
         const button = screen.getByRole('button', { name: 'Tekrar dene' });
         expect(button).toHaveAttribute('type', 'button');
-        expect(button).toHaveClass(
-            'h-8', 'px-3', 'text-sm', 'rounded-md', 'bg-transparent', 'border', 'border-accent', 'text-accent',
-            'hover:bg-accent', 'hover:text-text-inverse', 'active:bg-accent-600',
-        );
-        // Nötr outline (Button variant="outline") değil: kanonik düğme accent renkli.
-        expect(button).not.toHaveClass('text-text-primary');
-        expect(button).not.toHaveClass('border-strong');
-        expect(button.querySelector('i.fa.fa-rotate-right')).toHaveAttribute('aria-hidden', 'true');
+        expect(button).toHaveClass('btn', 'btn-sm', 'btn-outline-primary');
+        // Nötr outline (btn-outline-secondary) değil: kanonik düğme accent renkli.
+        expect(button).not.toHaveClass('btn-outline-secondary');
+        expect(button.querySelector('i.fa.fa-rotate-right.me-1')).toHaveAttribute('aria-hidden', 'true');
         expect(button).not.toHaveAttribute('aria-busy');
         expect(button).not.toHaveAttribute('aria-disabled');
         expect(button.parentElement).toHaveClass('mt-1');
@@ -223,10 +222,158 @@ describe('RetryButton (kart dışı şerit/satır içi uyarılar)', () => {
         );
 
         const button = screen.getByRole('button', { name: 'Tekrar dene' });
-        expect(button).toHaveClass('border-accent', 'text-accent', 'hover:bg-accent');
+        expect(button).toHaveClass('btn', 'btn-sm', 'btn-outline-primary');
         expect(button).toHaveAccessibleDescription('Klasörler yenilenemedi.');
         fireEvent.click(button);
         expect(onRetry).toHaveBeenCalledWith();
+    });
+});
+
+/* Karar 10: React ve Razor "Tekrar dene"si AYNI görünür. Görünüm Tailwind'le taklit edilirken
+   Bootstrap'ın `.border { … !important }` yardımcısı `border border-accent`'i eziyor, çerçeve griye
+   dönüyordu (canlıda ölçüldü). Düğme artık Razor'ın sınıflarını taşır; karşılaştırılan taraf
+   Razor/jQuery sayfalarının gerçek üreticisidir (wwwroot/js/apya-load-state.js errorHtml). */
+describe('RetryButton · Razor errorHtml ile aynı (karar 10)', () => {
+    let razor;
+
+    beforeAll(async () => {
+        await import('../../../../js/apya-load-state.js');
+        razor = new DOMParser()
+            .parseFromString(window.apya.loadState.errorHtml('Liste yüklenemedi.', 'js-x-retry'), 'text/html')
+            .querySelector('button');
+    });
+
+    const visual = (button) => [...button.classList].filter((c) => c !== 'js-x-retry' && !c.startsWith('aria-disabled:'));
+
+    it('düğme ve ikon sınıfları, metin birebir aynı', () => {
+        render(<RetryButton onRetry={() => {}} />);
+        const react = screen.getByRole('button', { name: 'Tekrar dene' });
+
+        expect(visual(razor)).toEqual(['btn', 'btn-sm', 'btn-outline-primary']);
+        expect(visual(react)).toEqual(visual(razor));
+        expect(react.querySelector('i').className).toBe(razor.querySelector('i').className);
+        expect(react.querySelector('i')).toHaveAttribute('aria-hidden', 'true');
+        expect(react.textContent).toBe(razor.textContent);
+        expect(react.getAttribute('type')).toBe(razor.getAttribute('type'));
+    });
+
+    it('görünüm sınıfı olarak yalnız Bootstrap: Bootstrap\'ın !important yardımcılarıyla adaş Tailwind sınıfı yok', () => {
+        render(<RetryButton onRetry={() => {}} retrying />);
+        const react = screen.getByRole('button', { name: 'Tekrar dene' });
+
+        // Tek fazlalık meşgul durumun soluklaşması; varyant önekli olduğu için Bootstrap'la çakışmaz.
+        expect([...react.classList].filter((c) => !visual(razor).includes(c)))
+            .toEqual(['aria-disabled:opacity-50', 'aria-disabled:pointer-events-none']);
+        expect(react).not.toHaveClass('border');
+        // Meşgulken de aynı ikon; yalnız dönme eklenir (failTable ile aynı).
+        expect(react.querySelector('i')).toHaveClass('fa', 'fa-rotate-right', 'me-1', 'fa-spin');
+    });
+});
+
+/* Sözleşme madde 7: başarılı yeniden denemede kart içerikle yer değiştirir, düğme sökülür. */
+describe('useRetryFocus · başarılı "Tekrar dene"de odak içerik kabına', () => {
+    /* Çağıranların deseni: hata varken yükleniyor = yeniden deneniyor (kart kalır). */
+    function Liste({ outcomes }) {
+        const [state, setState] = useState({ loading: false, error: new Error('500') });
+        const focus = useRetryFocus(!state.loading && !state.error);
+        const load = () => {
+            setState((s) => ({ ...s, loading: true }));
+            outcomes.shift().then(
+                () => setState({ loading: false, error: null }),
+                (error) => setState({ loading: false, error }),
+            );
+        };
+        return (
+            <>
+                <input aria-label="Ara" />
+                <div data-testid="icerik" ref={focus.contentRef} tabIndex={-1}>
+                    {state.error
+                        ? <EmptyState variant="error" title="Liste yüklenemedi" onRetry={focus.retry(load)} retrying={state.loading} />
+                        : state.loading ? <p>Yükleniyor…</p> : <p>satırlar</p>}
+                </div>
+            </>
+        );
+    }
+
+    function deferred() {
+        let resolve;
+        let reject;
+        const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+        return { promise, resolve, reject };
+    }
+
+    it('düğme odaklıyken basıldı, yükleme başarılı → odak içerik kabında (body\'de değil)', async () => {
+        const first = deferred();
+        render(<Liste outcomes={[first.promise]} />);
+        const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+        retry.focus();
+        fireEvent.click(retry);
+        expect(document.activeElement).toBe(retry);
+
+        await act(async () => { first.resolve(); });
+
+        expect(screen.getByText('satırlar')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Tekrar dene' })).toBeNull();
+        expect(document.activeElement).toBe(screen.getByTestId('icerik'));
+        expect(screen.getByTestId('icerik')).toHaveAttribute('tabindex', '-1');
+    });
+
+    it('odak sayfayı kaydırmadan taşınır (preventScroll)', async () => {
+        const first = deferred();
+        render(<Liste outcomes={[first.promise]} />);
+        const focus = vi.spyOn(screen.getByTestId('icerik'), 'focus');
+        const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+        retry.focus();
+        fireEvent.click(retry);
+
+        await act(async () => { first.resolve(); });
+
+        expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    });
+
+    it('yeniden deneme yine düşerse kart ve odak yerinde kalır; sonraki başarıda içerik kabına geçer', async () => {
+        const first = deferred();
+        const second = deferred();
+        render(<Liste outcomes={[first.promise, second.promise]} />);
+        const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+        retry.focus();
+        fireEvent.click(retry);
+
+        await act(async () => { first.reject(new Error('503')); });
+
+        expect(screen.getByRole('button', { name: 'Tekrar dene' })).toBe(retry);
+        expect(document.activeElement).toBe(retry);
+
+        fireEvent.click(retry);
+        await act(async () => { second.resolve(); });
+
+        expect(document.activeElement).toBe(screen.getByTestId('icerik'));
+    });
+
+    it('kullanıcı arada başka yere geçtiyse odak çalınmaz', async () => {
+        const first = deferred();
+        render(<Liste outcomes={[first.promise]} />);
+        const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+        retry.focus();
+        fireEvent.click(retry);
+        screen.getByLabelText('Ara').focus();
+
+        await act(async () => { first.resolve(); });
+
+        expect(screen.getByText('satırlar')).toBeInTheDocument();
+        expect(document.activeElement).toBe(screen.getByLabelText('Ara'));
+    });
+
+    it('düğme odaklı değilken (fareyle, odak sayfada) basıldıysa odak taşınmaz', async () => {
+        const first = deferred();
+        render(<Liste outcomes={[first.promise]} />);
+        expect(document.activeElement).toBe(document.body);
+        fireEvent.click(screen.getByRole('button', { name: 'Tekrar dene' }));
+
+        await act(async () => { first.resolve(); });
+
+        expect(screen.getByText('satırlar')).toBeInTheDocument();
+        expect(document.activeElement).toBe(document.body);
     });
 });
 

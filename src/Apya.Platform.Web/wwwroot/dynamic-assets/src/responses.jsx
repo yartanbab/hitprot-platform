@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { mountIsland } from './lib/mountIsland';
 import { api } from './lib/api/httpClient';
 import { Hint } from './components/ui/Hint';
-import { EmptyState } from './components/ui/EmptyState';
+import { EmptyState, useRetryFocus } from './components/ui/EmptyState';
 import { choiceLabel } from './lib/formChoices';
 import './index.css';
 
@@ -184,6 +184,11 @@ function ResponsesApp({ formId }) {
   const excelHref = `/DynamicAssets/Responses?handler=Excel&formId=${formId}${statusFilter !== '' ? `&status=${statusFilter}` : ''}`;
   const canExport = abpAuth('Platform.DynamicAssets.Export');
 
+  // Başarılı "Tekrar dene"de kart içerikle yer değiştirir: odak sayfaya düşmesin, içeriğe geçsin
+  // (sayfa kartı → sayfa içeriği, liste kartı → liste alanı).
+  const pageFocus = useRetryFocus(!loading && !loadError);
+  const listFocus = useRetryFocus(!rowsLoading && !rowsError);
+
   if (loading && !loadError) return <div className="py-16 text-center text-text-tertiary">Yanıtlar yükleniyor…</div>;
 
   // Sahte "Toplam Yanıt 0" kartları çizilmez (form-builder'daki reloadKey deseni). Hata
@@ -194,7 +199,7 @@ function ResponsesApp({ formId }) {
         variant="error"
         title="Yanıtlar yüklenemedi"
         error={loadError}
-        onRetry={() => { setLoading(true); setReloadKey((k) => k + 1); }}
+        onRetry={pageFocus.retry(() => { setLoading(true); setReloadKey((k) => k + 1); })}
         retrying={loading}
       />
     );
@@ -203,7 +208,7 @@ function ResponsesApp({ formId }) {
   const tags = (j) => parse(j)?.tags || (Array.isArray(parse(j)) ? parse(j) : []);
 
   return (
-    <div className="text-text-primary">
+    <div ref={pageFocus.contentRef} tabIndex={-1} className="text-text-primary">
       {/* stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Toplam Yanıt" value={stats?.responseCount ?? 0} accent="text-accent" />
@@ -234,9 +239,10 @@ function ResponsesApp({ formId }) {
 
       {/* liste okunamadıysa ya da yükleniyorsa ne tablo ne analiz: ikisi de o satırlardan
           çizilir. Hata varken yükleniyor = yeniden deneniyor: kart kalır (odak düğmede). */}
+      <div ref={listFocus.contentRef} tabIndex={-1}>
       {rowsError ? (
         <div className="mt-3 rounded-2xl border border-default bg-surface-raised">
-          <EmptyState variant="error" title="Yanıtlar yüklenemedi" error={rowsError} onRetry={() => loadList(statusFilter)} retrying={rowsLoading} />
+          <EmptyState variant="error" title="Yanıtlar yüklenemedi" error={rowsError} onRetry={listFocus.retry(() => loadList(statusFilter))} retrying={rowsLoading} />
         </div>
       ) : rowsLoading ? (
         <div className="mt-3 rounded-2xl border border-default bg-surface-raised py-16 text-center text-text-tertiary">Yanıtlar yükleniyor…</div>
@@ -317,6 +323,7 @@ function ResponsesApp({ formId }) {
         )}
       </div>
       )}
+      </div>
 
       {/* detail drawer */}
       {(selected || detailLoading) && (

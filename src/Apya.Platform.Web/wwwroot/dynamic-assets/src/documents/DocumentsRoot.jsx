@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Input, ModalPortal } from '../components/ui';
+import { Button, Input, ModalPortal, useRetryFocus } from '../components/ui';
 import {
   DocsPageHeader, EmptyActions, ProcessRibbon, sameSummary, useComplianceOverview,
 } from '../components/documents';
@@ -847,6 +847,16 @@ export function DocumentsRoot() {
   const listLoading = loadingFiles || (isSuggested && loadingSuggestions);
   const listError = suggestionsFailed ? suggestionsError : filesError;
 
+  /* Liste kartının "Tekrar dene"si KPI'ları da yeniden ister: aynı uçtan okunurlar ve yalnız
+     açılışta/mutasyonda yüklendikleri için liste düzelse de sayfa yenilenene dek "—" kalıyorlardı.
+     Başarıda kart listeyle yer değiştirir: odak sayfaya düşmesin, listeye geçsin. */
+  const listFocus = useRetryFocus(!listLoading && !listError);
+  const retryList = listFocus.retry(() => {
+    loadKpis();
+    if (suggestionsFailed) loadSuggestions();
+    else loadFiles();
+  });
+
   return (
     <div
       className="apya-fade-in px-4 py-4 sm:px-7 sm:py-7 mx-auto"
@@ -1045,10 +1055,12 @@ export function DocumentsRoot() {
             </div>
           </div>
 
+          {/* Başarılı "Tekrar dene"de odağın taşındığı içerik kabı (useRetryFocus). */}
+          <div ref={listFocus.contentRef} tabIndex={-1}>
           <FileList
             loading={listLoading}
             loadError={listError}
-            onRetry={suggestionsFailed ? loadSuggestions : loadFiles}
+            onRetry={retryList}
             files={files}
             totalCount={totalCount}
             view={view}
@@ -1071,6 +1083,7 @@ export function DocumentsRoot() {
             isTrash={isTrash}
             onRestore={handleRestore}
           />
+          </div>
 
           {canBulk && (
             <BulkBar

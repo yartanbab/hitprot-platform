@@ -8,6 +8,8 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react';
  * hata kartı + Tekrar dene gelmeli, engelleyici abp.message penceresi açılmamalı.
  * Veri kaynakları penceresinde de "Tanımlı veri kaynağı yok." hata anında yanlış.
  * Yeniden deneme sürerken iki kart da yerinde kalır (düğme meşgul), "yükleniyor"a dönmez.
+ * Yeniden deneme BAŞARILI olunca kart içerikle yer değiştirir: düğme odaklıyken basıldıysa
+ * odak <body>'ye düşmez, içerik kabına (liste / katalog) geçer.
  * Modül yüklenince #forms-list-root'a kendini bağlıyor; kök import'tan ÖNCE kurulur
  * ve dosyada tek test vardır (forms.race.test.jsx deseni).
  */
@@ -61,8 +63,10 @@ describe('Formlarım · yükleme hatası', () => {
 
     formRetry = deferred();
     const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+    retry.focus();
     fireEvent.click(retry);
     await waitFor(() => expect(retry).toHaveAttribute('aria-busy', 'true'));
+    expect(document.activeElement).toBe(retry);
     expect(screen.getByText('Formlar yüklenemedi')).toBeInTheDocument();
     expect(screen.queryByText('Formlar yükleniyor…')).not.toBeInTheDocument();
     expect(screen.getByText('—')).toBeInTheDocument();
@@ -75,6 +79,10 @@ describe('Formlarım · yükleme hatası', () => {
     expect(screen.getByText('1 form')).toBeInTheDocument();
     expect(screen.queryByText('Formlar yüklenemedi')).not.toBeInTheDocument();
     expect(formCalls).toHaveLength(2);
+    // Kart listeyle yer değiştirdi, düğme söküldü: odak sayfaya düşmez, liste kabına geçer.
+    const list = screen.getByText('Form X').closest('[tabindex="-1"]');
+    expect(list).not.toBeNull();
+    expect(document.activeElement).toBe(list);
 
     fireEvent.click(screen.getByText('⚡ Veri kaynakları'));
 
@@ -92,5 +100,19 @@ describe('Formlarım · yükleme hatası', () => {
     await act(async () => { sourceRetry.reject(apiError('Sunucu geçici olarak kullanılamıyor.', 503)); });
     await waitFor(() => expect(sourceButton).not.toHaveAttribute('aria-busy'));
     expect(screen.getByText('Veri kaynakları yüklenemedi')).toBeInTheDocument();
+
+    // Pencerede de aynı: başarılı yeniden denemede odak arkadaki sayfaya düşmez, kataloğa geçer.
+    sourceRetry = deferred();
+    sourceButton.focus();
+    fireEvent.click(sourceButton);
+    await waitFor(() => expect(sourceCalls).toHaveLength(3));
+    await act(async () => { sourceRetry.resolve([{ key: 'tenant-projects', scope: 1, recordCount: 2, usedInFormCount: 0 }]); });
+
+    expect(await screen.findByText('Firmanın projeleri')).toBeInTheDocument();
+    expect(screen.queryByText('Veri kaynakları yüklenemedi')).not.toBeInTheDocument();
+    const catalog = screen.getByText('Firmanın projeleri').closest('[tabindex="-1"]');
+    expect(catalog).not.toBeNull();
+    expect(catalog).not.toBe(list);
+    expect(document.activeElement).toBe(catalog);
   });
 });

@@ -482,6 +482,40 @@ describe('DocumentsRoot · yükleme hatası (DOC-13)', () => {
     expect(screen.getByText('Klasör 1')).toBeInTheDocument();
   });
 
+  it('listenin Tekrar dene\'si KPI\'ları da yeniden ister ("—" kalmaz); başarıda odak liste kabına geçer', async () => {
+    window.history.replaceState({}, '', '/Documents');
+    holdFiles = true;
+    // Açılışta dosya ucu düşük: liste de, aynı uçtan okunan KPI'lar da okunamaz.
+    kpiImpl = () => Promise.reject(new Error('500'));
+    render(<DocumentsRoot />);
+    await waitFor(() => expect(listCalls.length).toBe(1));
+    listCalls[0].reject({ message: 'Sunucuda beklenmeyen bir hata oluştu.' });
+
+    expect(await screen.findByText('Belge listesi yüklenemedi')).toBeInTheDocument();
+    await waitFor(() => expect(kpiAjax).toHaveLength(2));
+    expect(kpiValue('Bu ay yüklenen')).toHaveTextContent('—');
+    expect(kpiValue('Süresi dolan')).toHaveTextContent('—');
+
+    // Uç düzeldi. KPI'lar yalnız açılışta ve mutasyonda yüklendiği için sayfa yenilenene dek "—" kalıyordu.
+    holdFiles = false;
+    kpiImpl = (input) => Promise.resolve({ items: [], totalCount: input.expiringWithinDays ? 3 : 7 });
+    const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+    retry.focus();
+    fireEvent.click(retry);
+
+    expect(await screen.findByText('Belge tümü')).toBeInTheDocument();
+    await waitFor(() => expect(kpiValue('Bu ay yüklenen')).toHaveTextContent('7'));
+    expect(kpiValue('Süresi dolan')).toHaveTextContent('3');
+    expect(kpiAjax).toEqual([QUIET, QUIET, QUIET, QUIET]);
+    expect(listCalls).toHaveLength(2);
+
+    // Kart listeyle yer değiştirdi, düğme söküldü: odak sayfaya düşmez, liste kabına geçer.
+    const list = screen.getByText('Belge tümü').closest('[tabindex="-1"]');
+    expect(list).not.toBeNull();
+    expect(list.closest('.apya-docs-main')).not.toBeNull();
+    expect(document.activeElement).toBe(list);
+  });
+
   it('uyarının JS yedeği tr.json ile aynı, en.json\'da karşılığı var (metin sessizce kaymasın)', () => {
     const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)),
       '../../../../../Apya.Platform.Domain.Shared/Localization/Platform');

@@ -26,18 +26,15 @@ import { EmptyState, RetryButton } from './EmptyState';
  * (karar 11). Button / cn / 'components/ui' barrel'i (ui-vendor) ve queryPersister
  * (query-vendor) içe aktarılmaz: sınır TÜM adalara girer, herkese açık form dahil hafif adalar
  * bu parçaları yüklemesin. Kilit: islandMount.wiring.test.js.
- * Herkese açık formda (/f/{slug}, Layout=null) abp ve Font Awesome yok: metinler t()'nin Türkçe
- * yedeğine düşer, kartın ikonu satır içi SVG; "Tekrar dene"nin boş FA ikonunu sayfanın satır içi
- * stili gizler (Pages/F/Index.cshtml).
+ * Herkese açık formda (/f/{slug}, Layout=null) abp, Font Awesome ve Bootstrap yok: metinler t()'nin
+ * Türkçe yedeğine düşer, kartın ikonu satır içi SVG; düğmelerin Bootstrap sınıflarının karşılığını
+ * ve "Tekrar dene"nin boş FA ikonunun gizlenmesini sayfanın satır içi stili verir
+ * (Pages/F/Index.cshtml).
  */
 
-/* Button variant="outline" size="sm" ile aynı nötr ikincil düğme; Button'a dayanmaz (ui-vendor). */
-const SECONDARY_BUTTON_CLASS = [
-    'inline-flex items-center justify-center gap-2 h-8 px-3 rounded-md text-sm font-medium',
-    'select-none whitespace-nowrap bg-transparent text-text-primary border border-strong',
-    'transition-colors duration-fast hover:bg-surface-raised',
-    'focus-visible:outline-none focus-visible:shadow-focus',
-].join(' ');
+/* Nötr ikincil düğme: kanonik "Tekrar dene"nin (btn btn-sm btn-outline-primary) yanında aynı ölçüde
+   dursun diye Razor'ın ikincil eylem sınıfları (_EmptyState SecondaryActions). Button'a dayanmaz (ui-vendor). */
+const SECONDARY_BUTTON_CLASS = 'btn btn-sm btn-outline-secondary';
 
 /* Uyarı ikonu Font Awesome'sız: herkese açık formda FA yüklü değil (ikon şekli serbest — karar 5, PD3). */
 const WARNING_ICON = (

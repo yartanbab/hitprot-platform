@@ -1,5 +1,5 @@
-import React from 'react';
-import { Skeleton, EmptyState } from '../../components/ui';
+import React, { useId } from 'react';
+import { Skeleton, EmptyState, RetryButton } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { t, currentLocale } from '../../lib/i18n';
 
@@ -15,6 +15,11 @@ import { t, currentLocale } from '../../lib/i18n';
  *   - `bleed` verilirse gövde yatay padding'i iptal eder → grafik kartın
  *     alt kenarına taşar
  *   - `accent` üstte 3px durum şeridi çizer (zemin renklendirilmez)
+ *
+ * Hata durumu: "Tekrar dene" kanonik RetryButton'dır (Faz 4 karar 10), kartın başlığıyla
+ * betimlenir (aynı anda birkaç kart düşebilir) ve yeniden deneme sürerken (isFetching)
+ * meşguldür. Altbilgi hatada çizilmez: eldeki (bayat) veriden türer; gövde "veri alınamadı"
+ * derken "+1 proje →" gibi bir özet onunla çelişirdi.
  */
 
 const DRAG_HANDLE_CLASS = 'apya-card-drag-handle';
@@ -46,6 +51,9 @@ function CardShell({
     children,
 }) {
     const showStale = !isLoading && !isError && isStale && isFetching;
+    // Başlık kimliği yalnız "Tekrar dene" ona bağlanırken basılır (EmptyState ile aynı kural).
+    const titleId = useId();
+    const retryTitleId = isError && onRetry ? titleId : undefined;
 
     return (
         <section
@@ -86,7 +94,7 @@ function CardShell({
                     )}
                     <div className="flex flex-col gap-0.5 min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
-                            <h2 className="text-[13.5px] font-semibold tracking-[-0.01em] truncate text-text-primary">
+                            <h2 id={retryTitleId} className="text-[13.5px] font-semibold tracking-[-0.01em] truncate text-text-primary">
                                 {title}
                             </h2>
                             {badge}
@@ -124,14 +132,20 @@ function CardShell({
                 )}
             >
                 {isError && (
-                    <ErrorState message={errorMessage} onRetry={onRetry} dataUpdatedAt={dataUpdatedAt} />
+                    <ErrorState
+                        message={errorMessage}
+                        onRetry={onRetry}
+                        retrying={isFetching}
+                        describedBy={retryTitleId}
+                        dataUpdatedAt={dataUpdatedAt}
+                    />
                 )}
                 {!isError && isLoading && (skeleton ?? <DefaultSkeleton />)}
                 {!isError && !isLoading && isEmpty && (emptyState ?? <FallbackEmpty />)}
                 {!isError && !isLoading && !isEmpty && children}
             </div>
 
-            {footer && (
+            {footer && !isError && (
                 <footer className="flex-none px-[18px] pb-[14px] pt-1">{footer}</footer>
             )}
         </section>
@@ -159,7 +173,7 @@ function FallbackEmpty() {
     );
 }
 
-function ErrorState({ message, onRetry, dataUpdatedAt }) {
+function ErrorState({ message, onRetry, retrying, describedBy, dataUpdatedAt }) {
     const lastSeen = formatRelative(dataUpdatedAt);
     return (
         <div className="flex flex-col items-center justify-center text-center gap-2 py-4">
@@ -172,13 +186,7 @@ function ErrorState({ message, onRetry, dataUpdatedAt }) {
                 </p>
             )}
             {onRetry && (
-                <button
-                    type="button"
-                    onClick={onRetry}
-                    className="text-[12.5px] text-text-link underline-offset-2 hover:underline focus-visible:outline-none focus-visible:shadow-focus rounded-sm"
-                >
-                    {t('Common:Retry', 'Tekrar dene')}
-                </button>
+                <RetryButton onRetry={onRetry} retrying={retrying} aria-describedby={describedBy} />
             )}
         </div>
     );

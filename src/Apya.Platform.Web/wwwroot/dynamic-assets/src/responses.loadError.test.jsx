@@ -9,7 +9,9 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react';
  *    başlık "Yanıtlar (—)", satırlar temizlenir (CSV pasif), süzgeç değişimi listeyi getirir;
  *  - sayfa düşerse sahte "Toplam Yanıt 0" kartları yerine tek hata kartı;
  *  - liste yüklenirken (süzgeç, Tekrar dene) sayaç "—", CSV pasif, liste/analiz yerine
- *    "yükleniyor"; hata kartı yeniden denemede yerinde kalır (düğme meşgul).
+ *    "yükleniyor"; hata kartı yeniden denemede yerinde kalır (düğme meşgul);
+ *  - yeniden deneme BAŞARILI olunca kart içerikle yer değiştirir: düğme odaklıyken basıldıysa
+ *    odak <body>'ye düşmez (sayfa kartı → sayfa içeriği, liste kartı → liste alanı).
  * Engelleyici abp.message penceresi açılmaz. Modül yüklenince #responses-root'a kendini
  * bağlar: her test taze modül ve taze DOM ile başlar.
  */
@@ -125,8 +127,10 @@ describe('Yanıtlar · yükleme hatası', () => {
 
     // Yeniden deneme sürerken sayfa kartı "yükleniyor"a dönmez: düğme meşgul.
     const retry = screen.getByRole('button', { name: 'Tekrar dene' });
+    retry.focus();
     fireEvent.click(retry);
     await waitFor(() => expect(retry).toHaveAttribute('aria-busy', 'true'));
+    expect(document.activeElement).toBe(retry);
     expect(screen.getByText('Yanıtlar yüklenemedi')).toBeInTheDocument();
     expect(screen.queryByText('Yanıtlar yükleniyor…')).not.toBeInTheDocument();
 
@@ -136,6 +140,10 @@ describe('Yanıtlar · yükleme hatası', () => {
     expect(screen.getByText('5')).toBeInTheDocument();
     expect(screen.getByText('Henüz yanıt yok.')).toBeInTheDocument();
     expect(statsCalls).toBe(2);
+    // Sayfa kartı içerikle yer değiştirdi: odak sayfaya düşmez, sayfa içeriğinin kabına geçer.
+    const page = screen.getByText('Toplam Yanıt').closest('[tabindex="-1"]');
+    expect(page).not.toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(page));
   });
 
   it('liste kartının Tekrar dene\'si ve süzgeç: istek sürerken sayaç "—", CSV pasif; önceki satırlar görünmez', async () => {
@@ -166,6 +174,12 @@ describe('Yanıtlar · yükleme hatası', () => {
     expect(await screen.findByText('Firma A')).toBeInTheDocument();
     expect(screen.getByText('Yanıtlar (1)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '⬇ CSV' })).toBeEnabled();
+    // Kart listeyle yer değiştirdi, düğme söküldü: odak sayfaya düşmez, liste alanına geçer
+    // (sayfa içeriğinin kabına değil — o, sayfa kartının yeniden denemesi içindir).
+    const list = screen.getByText('Firma A').closest('[tabindex="-1"]');
+    expect(list).not.toBeNull();
+    expect(list).not.toBe(screen.getByText('Toplam Yanıt').closest('[tabindex="-1"]'));
+    expect(document.activeElement).toBe(list);
 
     // Süzgeç değişti, istek sürüyor: önceki süzgecin satırları ve sayısı yeni seçimin altında
     // görünmez, CSV onları aktaramaz; Analiz de onlardan çizilmez.

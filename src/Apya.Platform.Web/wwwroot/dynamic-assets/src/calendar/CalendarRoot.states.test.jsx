@@ -206,7 +206,7 @@ describe('CalendarRoot · yükleme ve boş durumları (CAL-09)', () => {
     // Şeritteki düğme de kanonik "Tekrar dene" ("Yeniden dene" yok), şeridin metniyle betimlenir.
     expect(screen.queryByText('Yeniden dene')).not.toBeInTheDocument();
     const retry = screen.getByRole('button', { name: 'Tekrar dene' });
-    expect(retry).toHaveClass('border-accent', 'text-accent');
+    expect(retry).toHaveClass('btn', 'btn-sm', 'btn-outline-primary');
     expect(retry).toHaveAccessibleDescription('Takvim yenilenemedi; son yüklenen veriler gösteriliyor.');
 
     state.feed = () => Promise.resolve(feedWith([{ ...ITEM, title: 'Rapor teslimi (güncel)' }]));
