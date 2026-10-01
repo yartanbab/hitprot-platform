@@ -460,7 +460,12 @@
         var svc = (apya.platform.projects && apya.platform.projects.project)
             || apya.platform.application.projects.project;
 
-        var DRAFT_KEY = 'apya.projects.draft';
+        // Taslak kiracı + kullanıcıya bağlı: sabit anahtarla aynı tarayıcıdaki sonraki
+        // kullanıcı (başka kiracıdan bile) öncekinin proje adını ve bütçesini görüyordu.
+        // Eski ortak anahtardaki taslak kime ait olduğu bilinmediği için silinir.
+        var DRAFT_KEY = 'apya.projects.draft:' + ((abp.currentUser && abp.currentUser.tenantId) || 'host') +
+            ':' + ((abp.currentUser && abp.currentUser.id) || 'anon');
+        try { window.localStorage.removeItem('apya.projects.draft'); } catch (e) { /* yoksay */ }
 
         // Kategoriye göre hangi detay alanı görünür — tasarım 4a §1.
         // Anahtar kategori tanımının Id'si; hangi metaya sahip olduğunu DAVRANIŞ

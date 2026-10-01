@@ -236,9 +236,17 @@ public class CalendarFeedProvider : ITransientDependency
         var projectNames  = await GetProjectNamesAsync(tasks.Where(t => t.ProjectId.HasValue).Select(t => t.ProjectId!.Value));
         var assigneeNames = await GetUserNamesAsync(tasks.Where(t => t.AssigneeId.HasValue).Select(t => t.AssigneeId!.Value));
 
+        // Görev uçlarıyla aynı kural (TaskAppService.EnsureCanMutateTaskAsync): uca özgü
+        // izin + oluşturan/atanan ya da ekip yöneticisi. Eskiden sabit true'ydu; salt-okur
+        // stajyere de her görevde Tamamla/Ertele çıkıyordu.
+        var canEdit       = await _permissionChecker.IsGrantedAsync(PlatformPermissions.Tasks.Edit);
+        var canStatus     = await _permissionChecker.IsGrantedAsync(PlatformPermissions.Tasks.ChangeStatus);
+        var canManageTeam = await _permissionChecker.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+
         return tasks.Select(t =>
         {
             var isDone = t.Status == TaskStatusEnum.Done;
+            var owns   = canManageTeam || t.IsOwnedBy(_currentUser.Id);
             var day    = t.DueDate!.Value.Date;
             return new CalendarItemDto
             {
@@ -255,7 +263,8 @@ public class CalendarFeedProvider : ITransientDependency
                 // Yük yalnız AÇIK görevlerden toplanır: tamamlanmış işin kalan kapasiteye etkisi yok.
                 LoadHours     = isDone ? null : t.EstimatedHours,
                 Href          = "/Tasks",
-                CanReschedule = true
+                CanReschedule = canEdit && owns,
+                CanComplete   = canStatus && owns
             };
         }).ToList();
     }

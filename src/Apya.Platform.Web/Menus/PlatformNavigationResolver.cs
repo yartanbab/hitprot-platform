@@ -807,7 +807,10 @@ public class PlatformNavigationResolver : IScopedDependency
             }
             // AI Ayarları: Yönetim'den AI Merkezi'ne taşındı — aynı feature kapısına bağlı
             // olduğu için AI öğeleriyle aynı kategoride olması daha tutarlı.
-            if (await _permission.IsGrantedAsync(PlatformPermissions.TenantSettings.ManageAi))
+            // Sayfanın servisi AiPermissions.TenantSettings.Default da istiyor; yalnız ManageAi'ye
+            // bakınca (host CEO) menüde görünüp tıklanınca 500 veriyordu.
+            if (await _permission.IsGrantedAsync(PlatformPermissions.TenantSettings.ManageAi)
+                && await _permission.IsGrantedAsync(AiPermissions.TenantSettings.Default))
             {
                 aiCenter.AddItem(new ApplicationMenuItem(
                     "Apya.AiCenter.Settings", l["Menu:AiSettings"],

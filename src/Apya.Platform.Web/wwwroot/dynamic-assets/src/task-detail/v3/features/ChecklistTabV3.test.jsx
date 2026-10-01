@@ -60,3 +60,18 @@ describe('ChecklistTabV3', () => {
         expect(await screen.findByText(/ilk maddeyi ekleyin/i)).toBeInTheDocument();
     });
 });
+
+/* Yetki (ROL-04): kontrol listesi uclari duzenleme izni + sahiplik ister. Yetkisiz
+   kullanici icin ekleme/silme hic cizilmez, isaret kutusu kilitli. */
+describe('ChecklistTabV3 / salt okunur', () => {
+    it('readOnly iken ekleme kutusu ve sil dugmeleri yok, isaret kutusu kilitli', async () => {
+        renderWithClient(<ChecklistTabV3 taskId="t-1" readOnly />);
+        expect(await screen.findByText('Fatura kesilsin')).toBeInTheDocument();
+        expect(screen.queryByLabelText('Yeni kontrol listesi maddesi')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/maddesini sil/)).not.toBeInTheDocument();
+        const toggle = screen.getByLabelText('Tamamlandı işaretle');
+        expect(toggle).toBeDisabled();
+        fireEvent.click(toggle);
+        expect(window.apya.platform.tasks.task.toggleChecklistItem).not.toHaveBeenCalled();
+    });
+});

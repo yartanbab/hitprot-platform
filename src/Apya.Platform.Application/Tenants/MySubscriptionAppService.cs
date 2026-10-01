@@ -43,6 +43,7 @@ public class MySubscriptionAppService : PlatformAppService, IMySubscriptionAppSe
     private readonly IAsyncQueryableExecuter _asyncExecuter;
     private readonly ISettingProvider _settingProvider;
     private readonly IClock _clock;
+    private readonly PackageCeilingStore _ceilingStore;
 
     public MySubscriptionAppService(
         IRepository<TenantProfile, Guid> tenantProfileRepository,
@@ -53,7 +54,8 @@ public class MySubscriptionAppService : PlatformAppService, IMySubscriptionAppSe
         IRepository<Project, Guid> projectRepository,
         IAsyncQueryableExecuter asyncExecuter,
         ISettingProvider settingProvider,
-        IClock clock)
+        IClock clock,
+        PackageCeilingStore ceilingStore)
     {
         _tenantProfileRepository = tenantProfileRepository;
         _packageRepository = packageRepository;
@@ -64,6 +66,7 @@ public class MySubscriptionAppService : PlatformAppService, IMySubscriptionAppSe
         _asyncExecuter = asyncExecuter;
         _settingProvider = settingProvider;
         _clock = clock;
+        _ceilingStore = ceilingStore;
     }
 
     public async Task<MySubscriptionDto> GetAsync()
@@ -79,14 +82,21 @@ public class MySubscriptionAppService : PlatformAppService, IMySubscriptionAppSe
         var maxUsers = await _featureChecker.GetAsync<int>(PlatformFeatures.MaxUsers);
         var maxProjects = await _featureChecker.GetAsync<int>(PlatformFeatures.MaxProjects);
 
+        // Modülü açan iki kapı var: feature değeri VE paket izin tavanı. Yalnız feature
+        // okunduğunda tavanın kapattığı modül "paketinizde" görünüyor ama açılmıyordu (ROL-07).
+        var ceiling = await _ceilingStore.GetCeilingOrNullAsync(tenantId);
         var capabilities = new List<PackageCapabilityDto>();
         foreach (var meta in PackageFeatureCatalog.Managed.Where(m => !m.IsNumeric))
         {
+            var withinCeiling = ceiling == null
+                || !PackageFeatureGates.Map.ContainsKey(meta.Name)
+                || ceiling.Any(permission => PackageFeatureGates.IsGatedBy(meta.Name, permission));
+
             capabilities.Add(new PackageCapabilityDto
             {
                 Name = meta.Name,
                 DisplayName = meta.DisplayName,
-                Enabled = await _featureChecker.IsEnabledAsync(meta.Name)
+                Enabled = withinCeiling && await _featureChecker.IsEnabledAsync(meta.Name)
             });
         }
 

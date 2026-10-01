@@ -1,3 +1,4 @@
+using Apya.Platform.Permissions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,9 @@ using Volo.Abp.SettingManagement;
 
 namespace Apya.Platform.Calendars;
 
-[Authorize]
+// Sayfa (Pages/Calendars) Calendars.Default istiyordu ama API çıplak [Authorize] ile
+// açıktı; paket tavanı takvimi kapatmış kiracı bile akışı okuyabiliyordu.
+[Authorize(PlatformPermissions.Calendars.Default)]
 public class CalendarAppService : ApplicationService, ICalendarAppService
 {
     private readonly IRepository<ExternalCalendarAccount, Guid> _accountRepository;
@@ -422,6 +425,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     /// token'lı hesap üretmenin serbest kapısı olurdu: bağlantı kurulmuş görünür,
     /// her okuma sessizce hataya düşerdi.
     /// </summary>
+    [Authorize(PlatformPermissions.Calendars.Connect)]
     public async Task ConnectAccountAsync(ConnectCalendarInput input)
     {
         if (IsProviderConfigured(input.Provider))
@@ -466,6 +470,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         await _accountRepository.DeleteAsync(account);
     }
 
+    [Authorize(PlatformPermissions.Calendars.Connect)]
     public async Task<string> GetAuthUrlAsync(CalendarProviderType provider)
     {
         if (!IsProviderConfigured(provider))
@@ -501,6 +506,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
 
     /// <summary>OAuth callback'ten gelen code'u token'a çevirip hesabı bağlar. State token'ı
     /// (SEC-012) auth başlangıcında saklanan kullanıcı-bağlı, tek kullanımlık değerle doğrulanır.</summary>
+    [Authorize(PlatformPermissions.Calendars.Connect)]
     public async Task ExchangeCodeAndConnectAsync(CalendarProviderType provider, string code, string redirectUri, string stateToken)
     {
         // SEC-012: account-linking CSRF savunması — state auth başlangıcındaki token'la eşleşmeli.

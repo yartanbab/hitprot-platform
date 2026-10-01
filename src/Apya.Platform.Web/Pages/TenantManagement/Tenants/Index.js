@@ -221,6 +221,12 @@ $(function () {
     // SubscriptionPeriod: değer = AY SAYISI (0 = süresiz).
     var PERIODS = { 0: 'Süresiz', 1: '1 Ay', 3: '3 Ay', 6: '6 Ay', 12: '1 Yıl' };
 
+    // Kiracı adı diyalog HTML'ine METİN olarak girer: Swal.fire({html}) içinde kaçışsız
+    // ad yorumlanıyor, <img onerror> gibi bir ad host yöneticisinin oturumunda çalışıyordu.
+    function esc(s) {
+        return $('<div>').text(s == null ? '' : String(s)).html();
+    }
+
     function buildSelect(id, options, selectedValue) {
         var html = '<select id="' + id + '" class="form-select">';
         Object.keys(options).forEach(function (value) {
@@ -236,7 +242,7 @@ $(function () {
         Swal.fire({
             title: 'Paket Değiştir',
             html: '<div class="text-start">'
-                + '<div class="mb-2 text-muted small">' + record.tenantName + '</div>'
+                + '<div class="mb-2 text-muted small">' + esc(record.tenantName) + '</div>'
                 + '<label class="form-label small">Paket</label>'
                 + buildSelect('pkgSelect', PACKAGES, record.packageCode || 1)
                 + '<label class="form-label small mt-3">Süre</label>'
@@ -273,7 +279,7 @@ $(function () {
         Swal.fire({
             title: 'Süreyi Uzat',
             html: '<div class="text-start">'
-                + '<div class="mb-2 text-muted small">' + record.tenantName
+                + '<div class="mb-2 text-muted small">' + esc(record.tenantName)
                 + ' · ' + (PACKAGES[record.packageCode] || '-') + '</div>'
                 + '<label class="form-label small">Eklenecek süre</label>'
                 + buildSelect('renewSelect', periods, 1)

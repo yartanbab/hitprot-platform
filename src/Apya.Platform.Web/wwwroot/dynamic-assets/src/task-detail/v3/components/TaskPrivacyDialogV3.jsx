@@ -9,7 +9,7 @@ const OPTIONS = [
 
 /** Görev görünürlüğü — gerçek `isPrivate` alanına bağlı. Değişiklik forma yansır, "Kaydet" ile
  *  kalıcılaşır. Not: kişi-bazlı yetkilendirme (ACL) ayrı bir backend işi (Faz 2). */
-export function TaskPrivacyDialogV3({ isPrivate = false, onChange = () => {} }) {
+export function TaskPrivacyDialogV3({ isPrivate = false, onChange = () => {}, disabled = false }) {
     const priv = Boolean(isPrivate);
     /* Kap DÜĞÜM olarak state'te tutulur, ref'te DEĞİL: `container` prop'u ana
        bileşenin render'ında hesaplanıyor ve ref ilk render'da henüz boş oluyor.
@@ -23,11 +23,14 @@ export function TaskPrivacyDialogV3({ isPrivate = false, onChange = () => {} }) 
                 <button
                     ref={setTriggerEl}
                     type="button"
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-[var(--apya-radius-full)] bg-surface-base border border-subtle text-[13px] font-medium text-text-secondary cursor-pointer hover:bg-surface-hover hover:border-default transition-all shadow-sm"
+                    disabled={disabled}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-[var(--apya-radius-full)] bg-surface-base border border-subtle text-[13px] font-medium text-text-secondary transition-all shadow-sm ${
+                        disabled ? 'cursor-default' : 'cursor-pointer hover:bg-surface-hover hover:border-default'
+                    }`}
                 >
                     <i className={`fa-solid ${priv ? 'fa-lock' : 'fa-globe'} text-[11px] text-text-tertiary`} />
                     <span>{priv ? 'Özel görev' : 'Herkese açık'}</span>
-                    <i className="fa-solid fa-chevron-down text-[10px] ml-0.5 text-text-tertiary" />
+                    {!disabled && <i className="fa-solid fa-chevron-down text-[10px] ml-0.5 text-text-tertiary" />}
                 </button>
             </Popover.Trigger>
 

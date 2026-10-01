@@ -128,6 +128,29 @@ public class MySubscription_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     [Fact]
+    public async Task Module_Closed_By_The_Permission_Ceiling_Should_Read_As_Locked()
+    {
+        // ROL-07: feature açık ama paket izin tavanı modülün izinlerini kapatıyorsa kullanıcı
+        // modülü açamaz. Paketim yalnız feature'a baktığı için onu "paketinizde" gösteriyordu.
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var tenantId = await CreateTenantAsync(PackageCode.Basic);
+            // Feature değerleri Standard'a göre (Hibe/Doküman açık); profil, dolayısıyla
+            // tavan hâlâ Basic.
+            await _packageManager.ApplyPackageAsync(tenantId, PackageCode.Standard);
+
+            using (_currentTenant.Change(tenantId))
+            {
+                var dto = await _mySubscriptionAppService.GetAsync();
+
+                dto.Capabilities.Single(c => c.Name == PlatformFeatures.Grants).Enabled.ShouldBeFalse();
+                dto.Capabilities.Single(c => c.Name == PlatformFeatures.Documents).Enabled.ShouldBeFalse();
+                dto.Capabilities.Single(c => c.Name == PlatformFeatures.Finance).Enabled.ShouldBeTrue();
+            }
+        });
+    }
+
+    [Fact]
     public async Task Upgrade_Options_Should_Only_Promise_What_The_Tenant_Lacks()
     {
         await WithUnitOfWorkAsync(async () =>

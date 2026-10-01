@@ -166,3 +166,49 @@ describe('TaskDetailHeaderV3 / ⋯ menusu', () => {
         expect(spies.onExportPdf).toHaveBeenCalledTimes(1);
     });
 });
+
+/**
+ * Yetki (ROL-04 / TSK-06): menu ve alanlar sunucunun reddedecegi eylemi sunmamali.
+ * Eskiden stajyer Cogalt/Tasi/Sil'e basip 403 aliyordu.
+ */
+describe('TaskDetailHeaderV3 / yetki', () => {
+    const openMenuLabels = () => {
+        fireEvent.click(screen.getByRole('button', { name: /diğer seçenekler/i }));
+        return ['Çoğalt', 'Başka projeye kopyala', 'Taşı (başka proje)', 'Arşivle', 'Sil']
+            .filter((label) => screen.queryByText(label));
+    };
+
+    it('duzenleme yetkisi yoksa transfer maddeleri gizli, okuma maddeleri durur', () => {
+        renderHeader({ canEdit: false });
+        expect(openMenuLabels()).toEqual(['Arşivle', 'Sil']);
+        expect(screen.getByText('Bağlantıyı kopyala')).toBeInTheDocument();
+        expect(screen.getByText('PDF olarak dışa aktar')).toBeInTheDocument();
+        expect(screen.getByText('Takip et')).toBeInTheDocument();
+    });
+
+    it('durum ve silme yetkisi yoksa Arsivle ve Sil gizli', () => {
+        renderHeader({ canChangeStatus: false, canDelete: false });
+        expect(openMenuLabels()).toEqual(['Çoğalt', 'Başka projeye kopyala', 'Taşı (başka proje)']);
+    });
+
+    it('duzenleme yetkisi yoksa baslik duzenlenemez ve Salt okunur rozeti gorunur', () => {
+        const spies = renderHeader({ canEdit: false });
+        const title = screen.getByText(TASK.title);
+        expect(title.getAttribute('contenteditable')).toBe('false');
+        fireEvent.blur(title);
+        expect(spies.onFieldChange).not.toHaveBeenCalled();
+        expect(screen.getByText('Salt okunur')).toBeInTheDocument();
+    });
+
+    it('duzenleme yetkisi yoksa durum ve gizlilik tetikleyicileri kilitli', () => {
+        renderHeader({ canEdit: false });
+        expect(screen.getByText('Herkese açık').closest('button')).toBeDisabled();
+        const statusButton = screen.getAllByRole('button').find((b) => b.querySelector('.animate-pulse'));
+        expect(statusButton).toBeDisabled();
+    });
+
+    it('varsayilan (yetkili) durumda Salt okunur rozeti yok', () => {
+        renderHeader();
+        expect(screen.queryByText('Salt okunur')).not.toBeInTheDocument();
+    });
+});

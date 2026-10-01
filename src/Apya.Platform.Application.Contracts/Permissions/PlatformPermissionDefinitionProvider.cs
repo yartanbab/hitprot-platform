@@ -167,19 +167,27 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         tenantSettingsPermission.AddChild(PlatformPermissions.TenantSettings.ManageAi, L("Permission:TenantSettings.ManageAi"));
 
         // Geri bildirim YÖNETİMİ (gönderme izin gerektirmez, bkz. PlatformPermissions.Feedbacks).
-        // Feature'a bağlanmadı: geri bildirim her pakette açık olmalı.
-        var feedbacksPermission = systemGroup.AddPermission(PlatformPermissions.Feedbacks.Default, L("Permission:Feedbacks"));
-        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Respond, L("Permission:Feedbacks.Respond"));
-        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Assign, L("Permission:Feedbacks.Assign"));
-        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Delete, L("Permission:Feedbacks.Delete"));
-        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Export, L("Permission:Feedbacks.Export"));
-        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.ManageSettings, L("Permission:Feedbacks.ManageSettings"));
+        // Host-only: havuz tüm kiracılarındır, ayarlar GLOBAL yazılır (telemetri saklama
+        // süresi tüm kiracıların denetim kayıtlarını siler). Eskiden kiracı rolüne verilebiliyordu:
+        // kiracı CEO'su platform geneli ayarı değiştirebiliyor, havuz sayfası kiracıda 500 veriyordu.
+        // Tüketicilerin hepsi host ekranı; kiracı özelliği kırılmaz. Kiracı rollerindeki eski
+        // grant satırları ABP'nin yan kontrolü yüzünden etkisiz kalır.
+        var feedbacksPermission = systemGroup.AddPermission(
+            PlatformPermissions.Feedbacks.Default, L("Permission:Feedbacks"), MultiTenancySides.Host);
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Respond, L("Permission:Feedbacks.Respond"), MultiTenancySides.Host);
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Assign, L("Permission:Feedbacks.Assign"), MultiTenancySides.Host);
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Delete, L("Permission:Feedbacks.Delete"), MultiTenancySides.Host);
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.Export, L("Permission:Feedbacks.Export"), MultiTenancySides.Host);
+        feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.ManageSettings, L("Permission:Feedbacks.ManageSettings"), MultiTenancySides.Host);
 
         // Giriş ekranı yapılandırması — host seviyesinde tek izin, alt izni yok.
         systemGroup.AddPermission(PlatformPermissions.LoginScreen.Default, L("Permission:LoginScreen"));
 
-        var systemHealthPermission = systemGroup.AddPermission(PlatformPermissions.SystemHealth.Default, L("Permission:SystemHealth"));
-        systemHealthPermission.AddChild(PlatformPermissions.SystemHealth.Resolve, L("Permission:SystemHealth.Resolve"));
+        // Host-only: servisler zaten host bağlamı şart koşuyordu (EnsureHostContext); izin
+        // kiracıya verilebildiği için menüde görünüp tıklanınca 500 veriyordu.
+        var systemHealthPermission = systemGroup.AddPermission(
+            PlatformPermissions.SystemHealth.Default, L("Permission:SystemHealth"), MultiTenancySides.Host);
+        systemHealthPermission.AddChild(PlatformPermissions.SystemHealth.Resolve, L("Permission:SystemHealth.Resolve"), MultiTenancySides.Host);
 
         // Sinyalden göreve köprüsü — geri bildirim/hata kaydını host projesinde göreve dönüştürme.
         var issueTasksPermission = systemGroup.AddPermission(PlatformPermissions.IssueTasks.Default, L("Permission:IssueTasks"));

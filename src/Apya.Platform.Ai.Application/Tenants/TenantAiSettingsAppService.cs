@@ -21,53 +21,69 @@ public class TenantAiSettingsAppService : ApplicationService, ITenantAiSettingsA
         _clock = clock;
     }
 
+    // TenantAiSettings IMultiTenant: host bağlamında (CurrentTenant.Id == null) çok kiracılı
+    // süzgeç sorguya "TenantId == null" ekliyordu. Kiracının satırı hiç bulunmuyor, her
+    // açılışta yeniden eklenmeye çalışılıp benzersiz indeksle 500 veriyor; kayıt ve kota
+    // sıfırlama da satırı bulamıyordu. Üç metot da hedef kiracının bağlamında çalışır.
     public async Task<TenantAiSettingsDto> GetAsync(Guid? tenantId)
     {
         EnsureCallerAuthorized(tenantId);
-        var entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
-        if (entity == null)
+        using (CurrentTenant.Change(tenantId))
         {
-            try
+            var entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
+            if (entity == null)
             {
-                entity = new TenantAiSettings(GuidGenerator.Create(), tenantId, BuildPeriodStart(_clock.Now));
-                await _repository.InsertAsync(entity, autoSave: true);
+                try
+                {
+                    entity = new TenantAiSettings(GuidGenerator.Create(), tenantId, BuildPeriodStart(_clock.Now));
+                    await _repository.InsertAsync(entity, autoSave: true);
+                }
+                catch (Exception)
+                {
+                    // Eşzamanlı insert yarışı: başka bir istek zaten oluşturmuş olabilir.
+                    entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
+                    if (entity == null) throw;
+                }
             }
-            catch (Exception)
-            {
-                // Eşzamanlı insert yarışı: başka bir istek zaten oluşturmuş olabilir.
-                entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
-                if (entity == null) throw;
-            }
+            return ObjectMapper.Map<TenantAiSettings, TenantAiSettingsDto>(entity);
         }
-        return ObjectMapper.Map<TenantAiSettings, TenantAiSettingsDto>(entity);
     }
 
     [Authorize(AiPermissions.TenantSettings.Manage)]
     public async Task<TenantAiSettingsDto> UpdateAsync(Guid? tenantId, UpdateTenantAiSettingsDto input)
     {
         EnsureHost();
-        var entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId)
-            ?? new TenantAiSettings(GuidGenerator.Create(), tenantId, BuildPeriodStart(_clock.Now));
+        using (CurrentTenant.Change(tenantId))
+        {
+            var entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
+            // Yeni varlığın Id'si GuidGenerator'dan dolu gelir; "Id == default" hiç tutmuyor,
+            // yeni satır UpdateAsync'e düşüp 0 satır/eşzamanlılık hatası veriyordu.
+            var isNew = entity == null;
+            entity ??= new TenantAiSettings(GuidGenerator.Create(), tenantId, BuildPeriodStart(_clock.Now));
 
-        entity.SetProvider(input.PreferredProvider, input.PreferredModel);
-        entity.SetQuota(input.MonthlyTokenQuota);
-        if (input.IsEnabled) entity.Enable();
-        else entity.Disable();
+            entity.SetProvider(input.PreferredProvider, input.PreferredModel);
+            entity.SetQuota(input.MonthlyTokenQuota);
+            if (input.IsEnabled) entity.Enable();
+            else entity.Disable();
 
-        if (entity.Id == default) await _repository.InsertAsync(entity, autoSave: true);
-        else await _repository.UpdateAsync(entity, autoSave: true);
+            if (isNew) await _repository.InsertAsync(entity, autoSave: true);
+            else await _repository.UpdateAsync(entity, autoSave: true);
 
-        return ObjectMapper.Map<TenantAiSettings, TenantAiSettingsDto>(entity);
+            return ObjectMapper.Map<TenantAiSettings, TenantAiSettingsDto>(entity);
+        }
     }
 
     [Authorize(AiPermissions.TenantSettings.Manage)]
     public async Task ResetQuotaAsync(Guid? tenantId)
     {
         EnsureHost();
-        var entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId)
-            ?? throw new UserFriendlyException("Bu tenant için AI ayarı bulunamadı.");
-        entity.RecordUsage(-entity.TokensUsedThisMonth, _clock.Now);
-        await _repository.UpdateAsync(entity, autoSave: true);
+        using (CurrentTenant.Change(tenantId))
+        {
+            var entity = await _repository.FirstOrDefaultAsync(x => x.TenantId == tenantId)
+                ?? throw new UserFriendlyException("Bu tenant için AI ayarı bulunamadı.");
+            entity.RecordUsage(-entity.TokensUsedThisMonth, _clock.Now);
+            await _repository.UpdateAsync(entity, autoSave: true);
+        }
     }
 
     private static DateTime BuildPeriodStart(DateTime now) =>

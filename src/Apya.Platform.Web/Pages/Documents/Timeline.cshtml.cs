@@ -9,7 +9,10 @@ using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 namespace Apya.Platform.Web.Pages.Documents;
 
 /// <summary>Zaman cizelgesi & butce — is adimi Gantt'i, kapsama ve risk kutugu.</summary>
-[Authorize(PlatformPermissions.Projects.Default)]
+/// <remarks>Dokumanlar alaninin parcasi: kardes sayfalar ve tum baglantilar Documents.Default
+/// ister. Projects.Default ile korundugunda paketi Dokumanlar'i kapatan kiraci sayfayi
+/// acabiliyor, surec seridindeki her adimda "Erisim reddedildi"ye dusuyordu (DOC-24).</remarks>
+[Authorize(PlatformPermissions.Documents.Default)]
 public class TimelineModel : AbpPageModel
 {
     private readonly IProjectTimelineAppService _timelineAppService;

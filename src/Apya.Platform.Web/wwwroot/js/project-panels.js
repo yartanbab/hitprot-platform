@@ -1,6 +1,6 @@
 import { r as j, j as e, b as ee } from "./react-vendor-D57GAUXd.js";
 /* empty css               */
-import { S as W, R as te } from "./RichTextEditorV3-D3Amhpsv.js";
+import { S as W, R as te } from "./RichTextEditorV3-mZ6z1BBZ.js";
 function k() {
   var s, n, r;
   const t = (r = (n = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : n.tasks) == null ? void 0 : r.task;
