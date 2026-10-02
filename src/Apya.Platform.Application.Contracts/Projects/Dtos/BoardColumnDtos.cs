@@ -11,7 +11,7 @@ public class BoardColumnDto : EntityDto<Guid>
     public string Name { get; set; } = string.Empty;
     public string ColorClass { get; set; } = "secondary";
     public int Order { get; set; }
-    public int? StatusValue { get; set; } // sistem kolonu → TaskStatus int; özel kolon → null
+    public int? StatusValue { get; set; } // sistem kolonu → kimliği; özel kolon → sayıldığı temel durum (hep dolu)
     public bool IsSystem { get; set; }
 
     /// <summary>WIP limiti; null = limit yok. Aşım engellenmez, board'da rozetle uyarılır.</summary>
@@ -30,8 +30,8 @@ public class CreateBoardColumnDto
     [StringLength(32)]
     public string ColorClass { get; set; } = "secondary";
 
-    /// <summary>Faz 4a: özel kolonun temsil ettiği görev durumu (TaskStatus 1-4).
-    /// null = durum değişmesin (varsayılan davranış).</summary>
+    /// <summary>Özel kolonun sayıldığı temel görev durumu (TaskStatus 1-4).
+    /// null = Sürüyor (özel kolon her zaman bir temel duruma bağlıdır).</summary>
     [Range(1, 4)]
     public int? StatusValue { get; set; }
 }
@@ -44,7 +44,7 @@ public class CreateBoardColumnDto
 /// </summary>
 public class SetStatusMappingDto
 {
-    /// <summary>TaskStatus 1-4; null = durum değişmesin.</summary>
+    /// <summary>TaskStatus 1-4; null = Sürüyor sayılır.</summary>
     [Range(1, 4)]
     public int? StatusValue { get; set; }
 

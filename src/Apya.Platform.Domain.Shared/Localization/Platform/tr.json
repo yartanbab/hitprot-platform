@@ -2940,6 +2940,7 @@
         "Apya:BoardColumn:SystemStatusImmutable": "Sistem kolonunun temsil ettiği durum değiştirilemez.",
         "Apya:BoardColumn:InvalidStatusValue": "Kolona atanan durum değeri geçersiz: {Value}. Geçerli aralık 1-4 arasıdır.",
         "Apya:BoardColumn:InvalidWipLimit": "Eşzamanlı iş sınırı negatif olamaz: {Value}.",
+        "Apya:BoardColumn:CrossProjectMove": "Görev yalnız kendi projesinin kolonlarına taşınabilir.",
         "Project:NameEmpty": "Proje adı boş bırakılamaz.",
         "Project:CodeEmpty": "Proje kodu boş bırakılamaz.",
         "Project:List:LoadFailed": "Projeler yüklenemedi.",

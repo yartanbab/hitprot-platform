@@ -1,7 +1,7 @@
 import React, { useId, useRef, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { TaskPrivacyDialogV3 } from './TaskPrivacyDialogV3';
-import { STATUS_META, SELECTABLE_STATUSES, statusOf } from '../taskMetaV3';
+import { statusOf, statusChoices, activeStatusChoice } from '../taskMetaV3';
 import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
 import { t } from '../../../lib/i18n';
 
@@ -55,6 +55,9 @@ export function TaskDetailHeaderV3({
     onToggleFullscreen,
     onFieldChange = () => {},
     statusValue,
+    /* Projenin kanban kolonları (useBoardColumns): özel kolon da bir durum seçeneğidir. */
+    boardColumns,
+    boardColumnValue,
     titleValue,
     /* Doğrulama hatası (useTaskForm.errors.title): başlığın altında gösterilir. */
     titleError,
@@ -90,7 +93,16 @@ export function TaskDetailHeaderV3({
     /* Popover'ların portal edildiği kap; `collisionBoundary` için de gerekli. */
     const portalContainer = dialogPortalContainer(rootEl);
 
-    const status = statusOf(statusValue ?? task.status);
+    const currentStatus = statusValue ?? task.status;
+    const choices = statusChoices(boardColumns);
+    const activeChoice = activeStatusChoice(choices, currentStatus,
+        boardColumnValue === undefined ? task.boardColumnId : boardColumnValue);
+    /* Renk/ikon temel durumdan, ad seçili kolondan (sistem kolonu da yeniden adlandırılabilir). */
+    const status = { ...statusOf(currentStatus), ...(activeChoice ? { label: activeChoice.label } : {}) };
+    const pickStatus = (c) => {
+        onFieldChange('status', c.status);
+        onFieldChange('boardColumnId', c.boardColumnId);
+    };
     const code = task.code || 'GRV-—';
 
     const copyCode = () => {
@@ -158,20 +170,19 @@ export function TaskDetailHeaderV3({
                                 <div className="px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary">
                                     Durumu değiştir
                                 </div>
-                                {SELECTABLE_STATUSES.map((id) => {
-                                    const meta = STATUS_META[id];
-                                    const active = (statusValue ?? task.status) === id;
+                                {choices.map((c) => {
+                                    const active = activeChoice?.key === c.key;
                                     return (
-                                        <PopoverItem key={id}>
+                                        <PopoverItem key={c.key}>
                                             <button
                                                 type="button"
-                                                onClick={() => onFieldChange('status', id)}
+                                                onClick={() => pickStatus(c)}
                                                 className={`flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${
                                                     active ? 'bg-primary-subtle text-primary' : 'text-text-primary hover:bg-surface-hover'
                                                 }`}
                                             >
-                                                <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
-                                                <span className="flex-1">{meta.label}</span>
+                                                <span className={`h-2 w-2 rounded-full ${c.dot}`} />
+                                                <span className="flex-1">{c.label}</span>
                                                 {active && <i className="fa-solid fa-check text-[10px]" />}
                                             </button>
                                         </PopoverItem>

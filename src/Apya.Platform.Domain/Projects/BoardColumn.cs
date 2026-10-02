@@ -22,6 +22,12 @@ public class BoardColumn : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Sistem kolonu için TaskStatus tamsayı değeri; kullanıcı kolonunda null.</summary>
     public int? StatusValue { get; private set; }
 
+    /// <summary>
+    /// Kolonun raporlarda sayıldığı temel görev durumu. Özel kolon her zaman bir temel
+    /// duruma bağlıdır; eşlemesi olmayan (eski) özel kolon <c>InProgress</c> sayılır.
+    /// </summary>
+    public int GetEffectiveStatusValue() => StatusValue ?? (int)Apya.Platform.Tasks.TaskStatus.InProgress;
+
     /// <summary>Varsayılan kolon (silinemez/yeniden adlandırılamaz değil ama korunur).</summary>
     public bool IsSystem { get; private set; }
 
@@ -61,9 +67,9 @@ public class BoardColumn : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public void SetOrder(int order) => Order = order;
 
     /// <summary>
-    /// Faz 4a: özel kolonun temsil ettiği görev durumu. null = durum değişmesin
-    /// (bugünkü davranış). Değer verilirse kart bu kolona taşındığında Status da
-    /// ona çekilir — pano ile liste/rapor ayrışmaz.
+    /// Faz 4a: özel kolonun temsil ettiği görev durumu. Kart bu kolona taşındığında
+    /// Status da ona çekilir — pano ile liste/rapor ayrışmaz. null yalnız eski
+    /// kayıtlarda kalır ve <see cref="GetEffectiveStatusValue"/> üzerinden Sürüyor sayılır.
     /// <para>
     /// Sistem kolonunda DEĞİŞTİRİLEMEZ: <see cref="StatusValue"/> onun kimliği,
     /// kartlar oraya Status üzerinden yerleşir.

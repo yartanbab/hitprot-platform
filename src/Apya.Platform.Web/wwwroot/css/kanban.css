@@ -742,6 +742,35 @@
 .kanban-lane-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kanban-lane-count { flex: none; color: var(--apya-text-tertiary); }
 
+/* Bölümlü genel pano ("Projeye göre"): her proje kendi kolon satırıyla alt
+   alta. Board dikey akar; yatay kaydırma her bölümün satırında. */
+.kanban-board.is-sectioned {
+    flex-direction: column;
+    gap: 18px;
+    overflow-x: visible;
+}
+/* flex:none — satır overflow-x:auto olduğu için min-height'ı 0'a iner; dikey
+   board'da bölümler büzülüp kartları kırpmasın. */
+.kanban-section { flex: none; min-width: 0; }
+.kanban-section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0 2px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--apya-text-primary);
+}
+.kanban-section-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kanban-section-count { flex: none; font-size: 11.5px; font-weight: 600; color: var(--apya-text-tertiary); }
+.kanban-section-row {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
 /* ── 3b paneli: tek yerden sırala + ad + renk + WIP ──
    body'ye basılır (ata transform'lar position:fixed'i hapsedebiliyor). */
 .kanban-panel-backdrop {

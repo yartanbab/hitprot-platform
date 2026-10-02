@@ -34,23 +34,6 @@
     // Swal html'ine kullanıcı girdisi (kolon/görev adı) basılıyor — kaçış şart.
     function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
-    // Ad sorma — window.prompt yerine repo deseni (SweetAlert). prompt tarayıcıyı
-    // kilitliyor, mobilde kırpılıyor ve tema dışı görünüyordu.
-    function askName(title, current, done) {
-        Swal.fire({
-            title: title,
-            input: 'text',
-            inputValue: current || '',
-            showCancelButton: true,
-            confirmButtonText: 'Kaydet',
-            cancelButtonText: 'Vazgeç',
-            preConfirm: function (v) {
-                if (!v || !v.trim()) { Swal.showValidationMessage('Bir ad girin.'); }
-                return v;
-            }
-        }).then(function (r) { if (r.isConfirmed) { done(r.value.trim()); } });
-    }
-
     // Özel kolon colorClass (Bootstrap renk adı, kullanıcı seçimi) -> apya-chip tone.
     var COLOR_TONE = { primary: 'brand', success: 'positive', danger: 'negative', warning: 'warning', info: 'brand', secondary: 'neutral', dark: 'neutral' };
     function colorTone(colorClass) { return COLOR_TONE[colorClass] || 'brand'; }
@@ -164,6 +147,15 @@
 
         var sortables = [];
         var customIds = {};       // { columnId: true } özel kolonlar
+        // Genel panoda "Projeye göre" gruplama: her proje KENDİ kolonlarıyla ayrı
+        // bir bölüm olarak çizilir (kolonlar projeye ait, projeler arası farklı).
+        // Bu kipte projenin sistem kolonları da DB id'siyle kap alır; kart
+        // yerleşimi için { projectId: { status: columnId } } tutulur.
+        var sectionedMode = false;
+        var sectionSysCols = {};
+        function wantsSections() {
+            return enableLanes && grouping === 'project' && !projectId && customColumnsAllowed;
+        }
         var configInited = false;
 
         // ── Görünüm tercihi (Shell.KanbanView — kanban v2, ekran 2a) ────────
@@ -659,7 +651,9 @@
         // ⋯ menüsü. Sistem kolonunda SİL kilitli görünür (StatusValue'ya bağlı, API de
         // reddeder) — kullanıcıya yeniden adlandırma alternatifi kalır.
         function columnMenuHtml(c) {
-            if (!canEditColumns || !c.id) { return ''; }
+            // Bölümlü genel panoda kolon yönetimi yok: düzenleme uçları aktif
+            // projeye bağlı (saveColumn/sil projectId ister) — proje panosunda yapılır.
+            if (!canEditColumns || !c.id || sectionedMode) { return ''; }
             var del = c.isSystem
                 ? '<div class="apya-console-menu-item is-locked js-col-delete-locked" aria-disabled="true" ' +
                       'title="Sistem kolonu görev durumuna bağlıdır; silinemez, yeniden adlandırılabilir">' +
@@ -717,10 +711,11 @@
             // aç/kapa sağda. Sayaç eylem grubunun DIŞINDA: ray (daraltılmış)
             // hâlde eylemler gizlenirken sayaç görünür kalmalı. WIP artık rozet
             // değil, başlığın altında ince çizgi + "n / limit" etiketi.
+            var nameEditable = canEditColumns && c.id && !sectionedMode;
             col.innerHTML =
                 '<div class="kanban-header">' +
-                    '<span class="kanban-title js-col-name' + (canEditColumns && c.id ? ' is-editable' : '') +
-                        '" title="' + (canEditColumns && c.id ? 'Adı düzenlemek için tıkla' : '') + '">' +
+                    '<span class="kanban-title js-col-name' + (nameEditable ? ' is-editable' : '') +
+                        '" title="' + (nameEditable ? 'Adı düzenlemek için tıkla' : '') + '">' +
                         '<i class="fa fa-circle me-2"></i></span>' +
                     '<span class="kanban-count">0</span>' +
                     '<span class="kanban-col-late js-col-late d-none"></span>' +
@@ -737,7 +732,10 @@
                 '<div class="kanban-cards"></div>';
             // Ad textContent ile: XSS-güvenli (kolon adı kullanıcı girdisi).
             col.querySelector('.js-col-name').appendChild(document.createTextNode(' ' + c.name));
-            col.querySelector('.kanban-cards').id = isSys ? SYS[c.statusValue] : ('kanban-col-' + c.id);
+            // Bölümlü panoda aynı durum kolonu her projede bir kez var: kap SYS id'si
+            // değil kolonun DB id'siyle doğar (id çakışmasın).
+            col.querySelector('.kanban-cards').id = (isSys && !(sectionedMode && c.id))
+                ? SYS[c.statusValue] : ('kanban-col-' + c.id);
             bindCollapse(col, token);
             return col;
         }
@@ -900,6 +898,20 @@
             var menu = bar && bar.querySelector('.js-kb-move-menu');
             if (!menu) { return; }
             menu.innerHTML = '';
+            // Bölümlü panoda seçim birden çok projeye yayılabilir; kolonlar projeye
+            // ait olduğundan toplu taşıma yalnız temel durumlara yapılır (durum
+            // ucu, kolonun durumundan çıkan kartı kolondan düşürür).
+            if (sectionedMode) {
+                var board = document.querySelector(boardSel);
+                defaultColumns(board).forEach(function (c) {
+                    var b = el('button', 'apya-console-menu-item js-kb-move');
+                    b.type = 'button';
+                    b.setAttribute('data-status-id', c.statusValue);
+                    b.textContent = c.name;
+                    menu.appendChild(b);
+                });
+                return;
+            }
             // İptal kolonu hedef listesinde YOK: iptal sebep soruyor, çubuktaki
             // "İptal et" o yolu kullanıyor.
             document.querySelectorAll(boardSel + ' .kanban-column:not(.js-add-col):not(.kanban-note-col):not(.kanban-cancel-col)').forEach(function (col) {
@@ -1023,7 +1035,9 @@
             if (caps.move) {
                 var moveBtn = menuRow('Taşı', 'has-sub');
                 var moveSub = el('div', 'kanban-popmenu-sub d-none');
-                document.querySelectorAll(boardSel + ' .kanban-column:not(.js-add-col):not(.kanban-note-col):not(.kanban-cancel-col)').forEach(function (col) {
+                // Bölümlü panoda hedefler kartın KENDİ projesinin kolonları.
+                var moveScope = (btn.closest && btn.closest('.kanban-section')) || document.querySelector(boardSel);
+                (moveScope ? moveScope.querySelectorAll('.kanban-column:not(.js-add-col):not(.kanban-note-col):not(.kanban-cancel-col)') : []).forEach(function (col) {
                     var name = col.querySelector('.js-col-name');
                     var t = el('button', 'kanban-popmenu-subitem');
                     t.type = 'button';
@@ -1356,6 +1370,34 @@
 
         // Hedef durum kolonunun ADI board'dan okunur — JS'te ikinci bir durum
         // sözlüğü tutulmaz (adlandırma tek kaynaktan gelsin).
+        // Yeni özel kolon: ad + SAYILDIĞI temel durum birlikte sorulur (SweetAlert —
+        // window.prompt tarayıcıyı kilitliyor, mobilde kırpılıyor, tema dışı). Özel kolon
+        // her zaman bir temel duruma bağlı (raporlar/ilerleme onu sayar); sormadan
+        // varsayılana (Sürüyor) bağlamak "Test" gibi bir kolonu sessizce yanlış sayardı.
+        function askNewColumn(done) {
+            var opts = [1, 2, 3, 4].map(function (v) {
+                return '<option value="' + v + '"' + (v === 2 ? ' selected' : '') + '>' + esc(statusColumnName(v)) + '</option>';
+            }).join('');
+            Swal.fire({
+                title: 'Yeni kolon',
+                html:
+                    '<input type="text" class="swal2-input js-new-col-name" maxlength="64" placeholder="Kolon adı" aria-label="Kolon adı" />' +
+                    '<label class="d-block mt-3 mb-1 small text-muted">Bu kolondaki görevler hangi durumda sayılsın?</label>' +
+                    '<select class="swal2-select js-new-col-status" aria-label="Sayıldığı durum">' + opts + '</select>',
+                showCancelButton: true,
+                confirmButtonText: 'Kaydet',
+                cancelButtonText: 'Vazgeç',
+                focusConfirm: false,
+                didOpen: function (popup) { popup.querySelector('.js-new-col-name').focus(); },
+                preConfirm: function () {
+                    var popup = Swal.getPopup();
+                    var name = popup.querySelector('.js-new-col-name').value.trim();
+                    if (!name) { Swal.showValidationMessage('Bir ad girin.'); return false; }
+                    return { name: name, statusValue: parseInt(popup.querySelector('.js-new-col-status').value, 10) };
+                }
+            }).then(function (r) { if (r.isConfirmed) { done(r.value); } });
+        }
+
         function statusColumnName(statusValue) {
             var col = document.querySelector(boardSel + ' .kanban-column[data-status-id="' + statusValue + '"]');
             var n = col && col.querySelector('.js-col-name');
@@ -1543,8 +1585,8 @@
                 if (e.target === panelRoot) { closeColumnPanel(); }   // dışarı tıkla = vazgeç
             });
             panelRoot.querySelector('.js-p-add').addEventListener('click', function () {
-                askName('Yeni kolon', '', function (name) {
-                    colSvc.create({ projectId: projectId, name: name, colorClass: 'primary' })
+                askNewColumn(function (v) {
+                    colSvc.create({ projectId: projectId, name: v.name, colorClass: 'primary', statusValue: v.statusValue })
                         .then(function () {
                             abp.notify.success('Kolon eklendi.');
                             load();
@@ -1593,11 +1635,12 @@
             var row = el('div', 'kanban-panel-row');
             row.setAttribute('data-id', d.id);
 
-            // Durum eşlemesi seçenekleri: etiketler board'daki sistem kolonlarından
-            // okunur, JS'te ikinci bir durum sözlüğü tutulmuyor.
-            var mapOptions = ['', 1, 2, 3, 4].map(function (v) {
-                var label = v === '' ? 'Durum değişmesin' : statusColumnName(v);
-                return '<option value="' + v + '">' + esc(label) + '</option>';
+            // Temel durum seçenekleri: etiketler board'daki sistem kolonlarından
+            // okunur, JS'te ikinci bir durum sözlüğü tutulmuyor. Özel kolon HER
+            // ZAMAN bir temel duruma bağlıdır (raporlar/ilerleme onu sayar) —
+            // "durum değişmesin" seçeneği yok; sunucu eşlemesiz eski kolonu Sürüyor döner.
+            var mapOptions = [1, 2, 3, 4].map(function (v) {
+                return '<option value="' + v + '">' + esc(statusColumnName(v)) + '</option>';
             }).join('');
 
             row.innerHTML =
@@ -1610,7 +1653,7 @@
                     '<div class="kanban-panel-meta js-p-meta"></div>' +
                     (d.isSystem ? '' :
                         '<div class="kanban-panel-map">' +
-                            '<span class="kanban-panel-map-label">Durum eşlemesi</span>' +
+                            '<span class="kanban-panel-map-label">Sayıldığı durum</span>' +
                             '<select class="js-p-status" aria-label="Bu kolon hangi durumu temsil ediyor">' + mapOptions + '</select>' +
                             '<label class="kanban-panel-map-apply js-p-apply-wrap d-none">' +
                                 '<input type="checkbox" class="js-p-apply" /> mevcut kartları da güncelle' +
@@ -1638,13 +1681,11 @@
             var statusSel = row.querySelector('.js-p-status');
             var applyWrap = row.querySelector('.js-p-apply-wrap');
             var applyBox = row.querySelector('.js-p-apply');
-            if (statusSel) { statusSel.value = d.statusValue == null ? '' : String(d.statusValue); }
+            if (statusSel) { statusSel.value = String(d.statusValue == null ? 2 : d.statusValue); }
 
             function syncMeta() {
                 var kind = d.isSystem ? 'Sistem' : 'Özel kolon';
-                var what = d.statusValue != null
-                    ? 'durum: ' + statusColumnName(d.statusValue)
-                    : 'durumu değiştirmez';
+                var what = 'durum: ' + statusColumnName(d.statusValue == null ? 2 : d.statusValue);
                 row.querySelector('.js-p-meta').textContent = kind + ' · ' + what + ' · ' + d.cards + ' kart';
             }
             syncMeta();
@@ -1678,10 +1719,10 @@
             if (statusSel) {
                 statusSel.addEventListener('change', function () {
                     var raw = statusSel.value;
-                    d.statusValue = raw === '' ? null : parseInt(raw, 10);
-                    // "Mevcut kartları da güncelle" yalnız gerçekten kart varken ve
-                    // bir duruma eşlenirken sorulur — boş kolonda anlamsız.
-                    var offer = d.statusValue != null && d.cards > 0;
+                    d.statusValue = parseInt(raw, 10);
+                    // "Mevcut kartları da güncelle" yalnız gerçekten kart varken
+                    // sorulur — boş kolonda anlamsız.
+                    var offer = d.cards > 0;
                     applyWrap.classList.toggle('d-none', !offer);
                     if (!offer) { applyBox.checked = false; }
                     d.applyToExisting = offer && applyBox.checked;
@@ -1732,7 +1773,10 @@
             var board = document.querySelector(boardSel);
             if (!board) { return; }
             board.innerHTML = '';
+            board.classList.remove('is-sectioned');
             customIds = {};
+            sectionedMode = false;
+            sectionSysCols = {};
             // Yoğunluk board attribute'unda taşınır — kolon genişliği ve kart
             // aralığı CSS'te buradan okunur (kanban.css [data-kb-density]).
             board.setAttribute('data-kb-density', view.density);
@@ -1742,27 +1786,7 @@
                 board.appendChild(buildColumn(c));
             });
 
-            // İptal kolonu (Faz 4b): BoardColumn kaydı YOK, yalnız Status 0'ın
-            // panodaki karşılığı. En sağda, varsayılan daraltılmış; kapalıyken de
-            // kartlar render edilir (sayaç doğru kalsın, CSS listeyi gizler).
-            var cancelShut = isCollapsed('s0', true);   // varsayılan: kapalı
-            var cancelCol = el('div', 'kanban-column kanban-cancel-col' + (cancelShut ? ' is-collapsed' : ''));
-            cancelCol.setAttribute('data-status-id', '0');
-            cancelCol.setAttribute('data-cancel-col', 'true');
-            cancelCol.setAttribute('data-column-color', 'danger');
-            cancelCol.innerHTML =
-                '<div class="kanban-header">' +
-                    '<span class="kanban-title js-col-name"><i class="fa fa-ban me-2"></i>İptal edildi</span>' +
-                    '<span class="kanban-count">0</span>' +
-                    '<span class="kanban-col-actions apya-touch-actions">' +
-                        '<button type="button" class="kanban-col-collapse js-col-collapse" ' +
-                            'title="' + (cancelShut ? 'Genişlet' : 'Daralt') + '" aria-expanded="' + (!cancelShut) + '" ' +
-                            'aria-label="İptal kolonunu aç/kapat"><i class="fa fa-angle-' + (cancelShut ? 'right' : 'left') + '"></i></button>' +
-                    '</span>' +
-                '</div>' +
-                '<div class="kanban-cards" id="kanban-cancelled"></div>';
-            bindCollapse(cancelCol, 's0');
-            board.appendChild(cancelCol);
+            board.appendChild(buildCancelColumn('kanban-cancelled'));
 
             // "Kolon ekle" hayalet kolonu (handoff: kesik çizgili, dar) — yalnız
             // yetkiliye ve yalnız proje seçiliyken (özel kolon projeye aittir).
@@ -1784,6 +1808,87 @@
             syncToolbar();
         }
 
+        // Bölümlü genel pano: görevlerin projeleri başına bir bölüm, her bölümde o
+        // projenin KENDİ kolonları (sistem + özel, DB sırası) + İptal. Projesiz
+        // görevler sonda, varsayılan dört durum kolonuyla.
+        function renderSections(tasks, colsByProject) {
+            var board = document.querySelector(boardSel);
+            if (!board) { return; }
+            board.innerHTML = '';
+            board.classList.add('is-sectioned');
+            board.setAttribute('data-kb-density', view.density);
+            customIds = {};
+            sectionedMode = true;
+            sectionSysCols = {};
+
+            var groups = {};
+            tasks.forEach(function (t) {
+                var key = t.projectId || '';
+                (groups[key] = groups[key] || { name: t.projectName || LANE_FALLBACK.project, count: 0 }).count += 1;
+            });
+            Object.keys(groups).sort(function (a, b) {
+                if (!a) { return 1; }
+                if (!b) { return -1; }
+                return groups[a].name.localeCompare(groups[b].name, 'tr');
+            }).forEach(function (pid) {
+                var sec = el('section', 'kanban-section');
+                sec.setAttribute('data-project-id', pid);
+                var head = el('div', 'kanban-section-head');
+                var n = el('span', 'kanban-section-name');
+                n.textContent = groups[pid].name;
+                var c = el('span', 'kanban-section-count');
+                c.textContent = groups[pid].count;
+                head.appendChild(n);
+                head.appendChild(c);
+                var row = el('div', 'kanban-section-row');
+
+                var cols = (pid && colsByProject[pid]) || defaultColumns(board);
+                cols.slice().sort(function (a, b) { return a.order - b.order; }).forEach(function (col) {
+                    if (pid && col.id) {
+                        if (col.isSystem) { (sectionSysCols[pid] = sectionSysCols[pid] || {})[col.statusValue] = col.id; }
+                        else { customIds[col.id] = true; }
+                    }
+                    row.appendChild(buildColumn(col));
+                });
+                row.appendChild(buildCancelColumn(cancelCardsId(pid)));
+
+                sec.appendChild(head);
+                sec.appendChild(row);
+                board.appendChild(sec);
+            });
+
+            syncToolbar();
+        }
+
+        function cancelCardsId(pid) {
+            return sectionedMode ? ('kanban-cancelled-' + (pid || 'none')) : 'kanban-cancelled';
+        }
+
+        // İptal kolonu (Faz 4b): BoardColumn kaydı YOK, yalnız Status 0'ın
+        // panodaki karşılığı. En sağda, varsayılan daraltılmış; kapalıyken de
+        // kartlar render edilir (sayaç doğru kalsın, CSS listeyi gizler).
+        function buildCancelColumn(cardsId) {
+            var cancelShut = isCollapsed('s0', true);   // varsayılan: kapalı
+            var cancelCol = el('div', 'kanban-column kanban-cancel-col' + (cancelShut ? ' is-collapsed' : ''));
+            cancelCol.setAttribute('data-status-id', '0');
+            cancelCol.setAttribute('data-cancel-col', 'true');
+            cancelCol.setAttribute('data-column-color', 'danger');
+            cancelCol.innerHTML =
+                '<div class="kanban-header">' +
+                    '<span class="kanban-title js-col-name"><i class="fa fa-ban me-2"></i>İptal edildi</span>' +
+                    '<span class="kanban-count">0</span>' +
+                    '<span class="kanban-col-actions apya-touch-actions">' +
+                        '<button type="button" class="kanban-col-collapse js-col-collapse" ' +
+                            'title="' + (cancelShut ? 'Genişlet' : 'Daralt') + '" aria-expanded="' + (!cancelShut) + '" ' +
+                            'aria-label="İptal kolonunu aç/kapat"><i class="fa fa-angle-' + (cancelShut ? 'right' : 'left') + '"></i></button>' +
+                    '</span>' +
+                '</div>' +
+                '<div class="kanban-cards"></div>';
+            cancelCol.querySelector('.kanban-cards').id = cardsId;
+            bindCollapse(cancelCol, 's0');
+            return cancelCol;
+        }
+
         // ── Yükle ──
         // Proje seçiliyse kolonlar DB'den (sistem + özel), değilse partial'daki
         // varsayılan adlardan kurulur. Her iki yolda da board baştan çizilir —
@@ -1794,7 +1899,23 @@
             var board = document.querySelector(boardSel);
             if (!board) { return; }
             var isLatest = nextLoad();
-            if (effectiveCols()) {
+            if (wantsSections()) {
+                // Kolonlar görevlerin projelerine göre gelir: önce görevler, sonra
+                // her projenin kolonları (paralel), en son bölümler + kartlar.
+                fetchTasks(isLatest, function (tasks) {
+                    var pids = [];
+                    tasks.forEach(function (t) {
+                        if (t.projectId && pids.indexOf(t.projectId) < 0) { pids.push(t.projectId); }
+                    });
+                    return Promise.all(pids.map(function (pid) {
+                        return Promise.resolve(colSvc.getListByProject(pid, { abpHandleError: false }));
+                    })).then(function (lists) {
+                        var byProject = {};
+                        pids.forEach(function (pid, i) { byProject[pid] = lists[i] || []; });
+                        renderSections(tasks, byProject);
+                    });
+                });
+            } else if (effectiveCols()) {
                 Promise.resolve(colSvc.getListByProject(projectId, { abpHandleError: false })).then(function (cols) {
                     if (!isLatest()) { return; }
                     renderColumns(cols);
@@ -1861,7 +1982,9 @@
             load();
         }
 
-        function fetchTasks(isLatest) {
+        // prepare(tasks) → Promise: kartlar basılmadan önce kolonları kurar
+        // (bölümlü pano kolonları görevlerin projelerinden çıkarır).
+        function fetchTasks(isLatest, prepare) {
             var filter = $.extend({ maxResultCount: 1000 }, getFilter());
             if (projectId) { filter.projectId = projectId; }
             showCardSkeletons();
@@ -1870,9 +1993,12 @@
             // Ret dalı şart: native Promise.all'ın reddi yakalanmazsa telemetriye UnhandledRejection düşer.
             Promise.all(calls).then(function (res) {
                 if (!isLatest()) { return; }
-                render(res[0].items, res[1]);
-                showCap(res[0]);
-            }, function (err) {
+                return Promise.resolve(prepare ? prepare(res[0].items) : null).then(function () {
+                    if (!isLatest()) { return; }
+                    render(res[0].items, res[1]);
+                    showCap(res[0]);
+                });
+            }).then(null, function (err) {
                 if (!isLatest()) { return; }
                 showLoadError(err);
             });
@@ -1888,16 +2014,27 @@
             var buckets = {};
             tasks.forEach(function (task) {
                 var container = null;
-                if (task.boardColumnId && customIds[task.boardColumnId]) {
+                // İptal edilen kart özel kolon bağı korunsa da (geri alınınca döner)
+                // İptal kolonunda durur.
+                if (task.status === 0) {
+                    container = document.getElementById(cancelCardsId(task.projectId));
+                } else if (task.boardColumnId && customIds[task.boardColumnId]) {
                     container = document.getElementById('kanban-col-' + task.boardColumnId);
                 }
-                if (!container) { container = document.getElementById(SYS[task.status]); }
+                if (!container && sectionedMode) {
+                    var sysCol = (sectionSysCols[task.projectId] || {})[task.status];
+                    if (sysCol) { container = document.getElementById('kanban-col-' + sysCol); }
+                }
+                if (!container && !(sectionedMode && task.projectId)) {
+                    container = document.getElementById(SYS[task.status]);
+                }
                 if (!container) { return; }
                 (buckets[container.id] = buckets[container.id] || []).push(task);
             });
             Object.keys(buckets).forEach(function (id) {
                 var container = document.getElementById(id);
-                if (!grouping) {
+                // Bölümlü panoda proje zaten bölüm başlığı — kolon içi kulvar yok.
+                if (!grouping || sectionedMode) {
                     buckets[id].forEach(function (t) { container.appendChild(buildCard(t, activeLog)); });
                     return;
                 }
@@ -1994,8 +2131,11 @@
             sortables.forEach(function (s) { s.destroy(); });
             sortables = [];
             document.querySelectorAll(boardSel + ' .kanban-cards').forEach(function (colCards) {
+                // Bölümlü panoda kart yalnız KENDİ projesinin kolonları arasında
+                // taşınır (kolonlar projeye ait).
+                var sec = colCards.closest('.kanban-section');
                 sortables.push(new Sortable(colCards, {
-                    group: 'apya-kanban-cards',
+                    group: sec ? ('apya-kanban-cards-' + sec.getAttribute('data-project-id')) : 'apya-kanban-cards',
                     animation: 150,
                     ghostClass: 'sortable-ghost',
                     // Boş kolon metni de kabın çocuğu — sürüklenebilir sanılmasın.
@@ -2341,8 +2481,8 @@
         if (customColumnsAllowed && canEditColumns) {
             $doc.on('click', boardSel + ' .js-add-col', function () {
                 if (!projectId) { return; }
-                askName('Yeni kolon', '', function (name) {
-                    colSvc.create({ projectId: projectId, name: name, colorClass: 'primary' })
+                askNewColumn(function (v) {
+                    colSvc.create({ projectId: projectId, name: v.name, colorClass: 'primary', statusValue: v.statusValue })
                         .then(function () { abp.notify.success('Kolon eklendi.'); load(); });
                 });
             });

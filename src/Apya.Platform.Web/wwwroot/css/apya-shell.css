@@ -3699,6 +3699,10 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
 .apya-console-views .kanban-board { flex: 1 1 auto; min-height: 0; padding-bottom: 0; }
 .apya-console-views .kanban-column { min-height: 0; }
 .apya-console-views .kanban-cards { min-height: 0; overflow-y: auto; }
+/* Bölümlü pano ("Projeye göre"): projeler alt alta — kaydırma kolonda değil
+   board'da; kolonlar içerikleri kadar uzar. */
+.apya-console-views .kanban-board.is-sectioned { overflow-y: auto; }
+.apya-console-views .kanban-board.is-sectioned .kanban-cards { overflow-y: visible; }
 
 /* --- Kırılımlar (tam responsive geçişi 10. adımda) ---
    Eşik neden 1460px: tek satır düzeninin gerçek minimumu ≈ Geri 80 + kimlik 170

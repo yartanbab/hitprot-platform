@@ -1,7 +1,7 @@
 import { r as j, j as e } from "./react-vendor-D7YDiBbi.js";
 import { m as se } from "./index-DgpuJ91w.js";
 import { o as ee } from "./dataChanged-CDwwWMH8.js";
-import { S as Z, R as re } from "./RichTextEditorV3-BMU9U7iD.js";
+import { S as Z, R as re } from "./RichTextEditorV3-CNzWfphS.js";
 function k() {
   var s, r, a;
   const t = (a = (r = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : r.tasks) == null ? void 0 : a.task;

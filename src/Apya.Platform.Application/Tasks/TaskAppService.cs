@@ -829,8 +829,9 @@ namespace Apya.Platform.Tasks
             }
         }
 
-        // Modal "Durum/Kolon" dropdown'ından gelen kolon seçimini uzlaştırır:
-        // sistem kolonu → Status değişir + kolon bağı temizlenir; özel kolon → kolona bağlanır.
+        // Modal / görev detayı "Durum" seçiminden gelen kolonu uzlaştırır (kanban taşımasıyla
+        // aynı kural): Status kolonun temel durumuna çekilir; sistem kolonunda bağ temizlenir,
+        // özel kolonda korunur.
         private async Task ApplyColumnSelectionAsync(TaskItem task, Guid? boardColumnId)
         {
             if (!boardColumnId.HasValue) { task.MoveToColumn(null); return; }
@@ -838,15 +839,8 @@ namespace Apya.Platform.Tasks
             var col = await _boardColumnRepository.FindAsync(boardColumnId.Value);
             if (col == null || col.ProjectId != task.ProjectId) { task.MoveToColumn(null); return; } // güvenlik: proje uyuşmazsa yok say
 
-            if (col.StatusValue.HasValue)
-            {
-                task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.StatusValue.Value, Clock.Now);
-                task.MoveToColumn(null);
-            }
-            else
-            {
-                task.MoveToColumn(col.Id);
-            }
+            task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.GetEffectiveStatusValue(), Clock.Now);
+            task.MoveToColumn(col.IsSystem ? (Guid?)null : col.Id);
         }
 
         // --- 2. CREATE (Ekleme) - REV-001: Rich Domain Model ---
@@ -1967,6 +1961,17 @@ namespace Apya.Platform.Tasks
             // REV-001: Rich Domain Model kullan
             task.ChangeStatus(status, Clock.Now);
 
+            // Özel kolondaki kart, kolonun temel durumundan farklı bir duruma alındıysa
+            // kolondan düşer; yoksa panoda eski kolonda kalır ama durumu başka görünürdü.
+            if (task.BoardColumnId.HasValue)
+            {
+                var col = await _boardColumnRepository.FindAsync(task.BoardColumnId.Value);
+                if (col == null || col.GetEffectiveStatusValue() != (int)status)
+                {
+                    task.MoveToColumn(null);
+                }
+            }
+
             await Repository.UpdateAsync(task);
 
             // BİLDİRİM: Durum değişikliğini yayınla
@@ -2177,4 +2182,4 @@ namespace Apya.Platform.Tasks
         }
     }
 }
-
+

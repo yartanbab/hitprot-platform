@@ -3,7 +3,7 @@ import { t } from '../../lib/i18n';
 
 const EMPTY_VALUES = {
     title: '', description: '', startDate: '', dueDate: '',
-    status: 1, priority: 2, assigneeId: null, tagNames: [], isPrivate: false, projectId: null,
+    status: 1, boardColumnId: null, priority: 2, assigneeId: null, tagNames: [], isPrivate: false, projectId: null,
     estimatedHours: null, taskType: '', sprint: '',
     budgetLineId: null, plannedAmount: null,
 };
@@ -16,6 +16,8 @@ function toFormValues(task) {
         startDate: task.startDate ? task.startDate.slice(0, 10) : '',
         dueDate: task.dueDate ? task.dueDate.slice(0, 10) : '',
         status: task.status ?? 1,
+        /* Özel kanban kolonu bağı: Durum menüsünde özel kolon bir durum gibi seçilir. */
+        boardColumnId: task.boardColumnId ?? null,
         priority: task.priority ?? 2,
         assigneeId: task.assigneeId ?? null,
         tagNames: (task.tags ?? []).map((t) => t.name),
@@ -110,7 +112,7 @@ export function useTaskForm(task) {
         status: values.status,
         priority: values.priority,
         assigneeId: values.assigneeId,
-        boardColumnId: task?.boardColumnId ?? null,
+        boardColumnId: values.boardColumnId ?? null,
         projectId: values.projectId ?? null,
         parentTaskId: task?.parentTaskId ?? null,
         isPrivate: Boolean(values.isPrivate),

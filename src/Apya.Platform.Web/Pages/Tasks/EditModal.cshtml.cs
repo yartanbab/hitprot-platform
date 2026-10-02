@@ -95,13 +95,13 @@ namespace Apya.Platform.Web.Pages.Tasks
                 StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, selected == "s:" + sv));
             }
 
-            // Projenin özel kolonları (StatusValue=null) sıraya göre eklenir
+            // Projenin özel kolonları sıraya göre eklenir (durum eşlemeli olanlar dahil)
             if (projectId.HasValue)
             {
                 try
                 {
                     var cols = await _boardColumnAppService.GetListByProjectAsync(projectId.Value);
-                    foreach (var c in cols.Where(c => !c.StatusValue.HasValue).OrderBy(c => c.Order))
+                    foreach (var c in cols.Where(c => !c.IsSystem).OrderBy(c => c.Order))
                     {
                         var val = "c:" + c.Id;
                         StatusOrColumnList.Add(new SelectListItem(c.Name, val, val == selected));
@@ -120,7 +120,7 @@ namespace Apya.Platform.Web.Pages.Tasks
             if (StatusOrColumn.StartsWith("c:") && Guid.TryParse(StatusOrColumn.Substring(2), out var colId))
             {
                 Task.BoardColumnId = colId;
-                Task.Status = currentStatus; // özel kolon Status'u değiştirmez
+                Task.Status = currentStatus; // sunucu Status'u kolonun temel durumuna çeker
             }
             else if (StatusOrColumn.StartsWith("s:") && int.TryParse(StatusOrColumn.Substring(2), out var sv))
             {

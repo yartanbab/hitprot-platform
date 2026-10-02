@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 
 // wwwroot/js/apya-kanban.js bir IIFE; jQuery + Sortable + abp + moment'i global
 // bekler. Burada YALNIZ kullanılan yüzeyleri sağlanır (apyaTaskRender.test.js ile
@@ -550,7 +550,8 @@ describe('3b kolon paneli', () => {
         ]);
 
         expect(rows()[1].querySelector('.js-p-meta').textContent).toBe('Sistem · durum: Sürüyor · 2 kart');
-        expect(rows()[4].querySelector('.js-p-meta').textContent).toBe('Özel kolon · durumu değiştirmez · 0 kart');
+        // Eşlemesiz (eski) özel kolon Sürüyor sayılır — "durumu değiştirmez" hâli yok.
+        expect(rows()[4].querySelector('.js-p-meta').textContent).toBe('Özel kolon · durum: Sürüyor · 0 kart');
     });
 
     it('açılışta değişiklik yok, kaydet kapalı', async () => {
@@ -737,19 +738,16 @@ describe('kulvarlar', () => {
         expect(document.querySelector('.kanban-lane-head')).toBeNull();
     });
 
-    it('projeye göre gruplar, kolon içinde alfabetik sıralar', async () => {
+    it('atanana göre gruplarken kulvar sayacı kulvardaki kartı sayar', async () => {
         mountBoard(sysCols, tasks);
         const kb = apya.kanban.create({ projectId: null, showProjectName: true, enableLanes: true });
         kb.load();
         await flush();
-        kb.setGrouping('project');
+        kb.setGrouping('assignee');
         await flush();
 
-        expect(laneNames(1)).toEqual(['Altyapı', 'Finans']);
-        expect(laneNames(2)).toEqual(['Finans']);
-        // Sayaç kulvardaki kart sayısını gösterir.
         const counts = Array.from(col(1).querySelectorAll('.kanban-lane-count')).map((n) => n.textContent);
-        expect(counts).toEqual(['1', '2']);
+        expect(counts).toEqual(['2', '1']);
     });
 
     it('projeye göre gruplanınca kart üstündeki proje adı kalkar', async () => {
@@ -895,6 +893,136 @@ describe('eşlemeli özel kolon', () => {
     });
 });
 
+// Genel panoda "Projeye göre": her proje KENDİ kolonlarıyla ayrı bölüm. Kolonlar
+// projeye ait (özel kolon sayısı/adı projeden projeye değişir) — tek kolon
+// satırında birleştirilemez.
+describe('projeye göre bölümlü pano', () => {
+    const colsA = [
+        { id: 'a1', statusValue: 1, name: 'Yapılacak', colorClass: 'secondary', order: 0, isSystem: true },
+        { id: 'a2', statusValue: 2, name: 'Sürüyor', colorClass: 'warning', order: 1, isSystem: true },
+        { id: 'aT', statusValue: 3, name: 'Test', colorClass: 'primary', order: 2, isSystem: false },
+        { id: 'a3', statusValue: 3, name: 'Testte', colorClass: 'info', order: 3, isSystem: true },
+        { id: 'a4', statusValue: 4, name: 'Tamamlandı', colorClass: 'success', order: 4, isSystem: true }
+    ];
+    const colsB = [
+        { id: 'b1', statusValue: 1, name: 'Yapılacak', colorClass: 'secondary', order: 0, isSystem: true },
+        { id: 'b2', statusValue: 2, name: 'Sürüyor', colorClass: 'warning', order: 1, isSystem: true },
+        { id: 'b3', statusValue: 3, name: 'Testte', colorClass: 'info', order: 2, isSystem: true },
+        { id: 'b4', statusValue: 4, name: 'Tamamlandı', colorClass: 'success', order: 3, isSystem: true }
+    ];
+    const tasks = [
+        { id: 't1', code: 'GRV-1', title: 'A', status: 2, priority: 2, projectId: 'pB', projectName: 'Finans' },
+        { id: 't2', code: 'GRV-2', title: 'B', status: 3, priority: 2, projectId: 'pA', projectName: 'Altyapı', boardColumnId: 'aT', boardColumnName: 'Test' },
+        { id: 't3', code: 'GRV-3', title: 'C', status: 1, priority: 2, projectId: 'pA', projectName: 'Altyapı' },
+        { id: 't4', code: 'GRV-4', title: 'D', status: 0, priority: 2, projectId: 'pA', projectName: 'Altyapı', boardColumnId: 'aT' },
+        { id: 't5', code: 'GRV-5', title: 'E', status: 1, priority: 2 }
+    ];
+    const sections = () => [...document.querySelectorAll('.kanban-section')];
+    const colNames = (sec) => [...sec.querySelectorAll('.kanban-column:not(.kanban-cancel-col) .js-col-name')]
+        .map((n) => n.textContent.trim());
+    const cardIn = (columnId) => [...document.querySelectorAll('#kanban-col-' + columnId + ' .kanban-card')]
+        .map((c) => c.getAttribute('data-id'));
+
+    async function mountSectioned() {
+        localStorage.setItem('apya-kanban-group', 'project');
+        mountBoard([], tasks);
+        const asked = [];
+        window.apya.platform.projects.boardColumn.getListByProject = (pid) => {
+            asked.push(pid);
+            return Promise.resolve(pid === 'pA' ? colsA : colsB);
+        };
+        const kb = apya.kanban.create({ projectId: null, showProjectName: true, enableLanes: true });
+        kb.load();
+        await flush();
+        return asked;
+    }
+
+    afterEach(() => { localStorage.removeItem('apya-kanban-group'); });
+
+    it('görevlerin projeleri başına bir bölüm; ad sırası, Projesiz sonda', async () => {
+        const asked = await mountSectioned();
+
+        expect(asked.sort()).toEqual(['pA', 'pB']);
+        expect(sections().map((s) => s.querySelector('.kanban-section-name').textContent))
+            .toEqual(['Altyapı', 'Finans', 'Projesiz']);
+        expect(sections().map((s) => s.querySelector('.kanban-section-count').textContent))
+            .toEqual(['3', '1', '1']);
+    });
+
+    it('her bölüm KENDİ projesinin kolonlarını çizer', async () => {
+        await mountSectioned();
+        const [a, b, none] = sections();
+
+        expect(colNames(a)).toEqual(['Yapılacak', 'Sürüyor', 'Test', 'Testte', 'Tamamlandı']);
+        expect(colNames(b)).toEqual(['Yapılacak', 'Sürüyor', 'Testte', 'Tamamlandı']);
+        // Projesiz görevler için varsayılan dört durum (DB kolonu yok).
+        expect(colNames(none)).toEqual(['Yapılacak', 'Sürüyor', 'Testte', 'Tamamlandı']);
+        expect(none.querySelector('.kanban-column[data-status-id="1"]').hasAttribute('data-column-id')).toBe(false);
+    });
+
+    it('kartlar kendi projesinin kolonuna oturur; iptal edilen İptal kolonunda', async () => {
+        await mountSectioned();
+
+        expect(cardIn('b2')).toEqual(['t1']);
+        expect(cardIn('aT')).toEqual(['t2']);       // özel kolon bağı
+        expect(cardIn('a1')).toEqual(['t3']);       // sistem kolonu, durumdan
+        expect(cardIn('a3')).toEqual([]);           // Test'teki kart Testte'ye kaymaz
+        expect([...document.querySelectorAll('#kanban-cancelled-pA .kanban-card')].map((c) => c.getAttribute('data-id')))
+            .toEqual(['t4']);
+        expect([...sections()[2].querySelectorAll('.kanban-card')].map((c) => c.getAttribute('data-id')))
+            .toEqual(['t5']);
+        // Proje zaten bölüm başlığı — kolon içi kulvar başlığı yok.
+        expect(document.querySelector('.kanban-lane-head')).toBeNull();
+    });
+
+    it('kart yalnız kendi projesinin kolonları arasında sürüklenir', async () => {
+        await mountSectioned();
+        const groupOf = (id) => Sortable.calls.find((c) => c.el.id === id).opts.group;
+
+        expect(groupOf('kanban-col-a1')).toBe(groupOf('kanban-col-aT'));
+        expect(groupOf('kanban-col-a1')).not.toBe(groupOf('kanban-col-b1'));
+    });
+
+    it('kolon yönetimi bölümlü panoda yok (proje panosunda yapılır)', async () => {
+        granted['Platform.Projects.Edit'] = true;
+        await mountSectioned();
+
+        expect(document.querySelector('.kanban-col-menu')).toBeNull();
+        expect(document.querySelector('.js-col-name.is-editable')).toBeNull();
+        expect(document.querySelector('.js-add-col')).toBeNull();
+    });
+
+    it('toplu Taşı temel durumları listeler (seçim projelere yayılabilir)', async () => {
+        await mountSectioned();
+        const items = [...document.querySelectorAll('.js-kb-move-menu .js-kb-move')];
+
+        expect(items.map((b) => b.getAttribute('data-status-id'))).toEqual(['1', '2', '3', '4']);
+        expect(items.some((b) => b.hasAttribute('data-column-id'))).toBe(false);
+    });
+
+    it('proje panosunda da iptal edilen kart özel kolonda değil İptal kolonunda durur', async () => {
+        mountBoard(sysCols.concat([customCol]), [
+            { id: 't9', code: 'GRV-9', title: 'X', status: 0, priority: 2, boardColumnId: 'x9' }
+        ]);
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        expect(document.querySelectorAll('#kanban-col-x9 .kanban-card').length).toBe(0);
+        expect(document.querySelectorAll('#kanban-cancelled .kanban-card').length).toBe(1);
+    });
+
+    it('gruplama kalkınca tek kolon satırına döner', async () => {
+        await mountSectioned();
+        localStorage.setItem('apya-kanban-group', '');
+        const kb = apya.kanban.create({ projectId: null, showProjectName: true, enableLanes: true });
+        kb.load();
+        await flush();
+
+        expect(document.querySelector('.kanban-section')).toBeNull();
+        expect(document.querySelector('.kanban-board').classList.contains('is-sectioned')).toBe(false);
+    });
+});
+
 describe('panelde durum eşlemesi', () => {
     const rows = () => document.querySelectorAll('.kanban-panel-row');
     const saveBtn = () => document.querySelector('.js-p-save');
@@ -920,7 +1048,9 @@ describe('panelde durum eşlemesi', () => {
     it('meta satırı eşlemeyi yansıtır', async () => {
         await openPanel(sysCols.concat([customCol]), []);
         const row = rows()[4];
-        expect(row.querySelector('.js-p-meta').textContent).toContain('durumu değiştirmez');
+        expect(row.querySelector('.js-p-meta').textContent).toContain('durum: Sürüyor');
+        // Seçicide "durum değişmesin" seçeneği yok: özel kolon hep bir temel duruma bağlı.
+        expect([...row.querySelectorAll('.js-p-status option')].map((o) => o.value)).toEqual(['1', '2', '3', '4']);
 
         const sel = row.querySelector('.js-p-status');
         sel.value = '3';
