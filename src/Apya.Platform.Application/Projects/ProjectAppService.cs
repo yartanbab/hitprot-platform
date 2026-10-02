@@ -125,7 +125,11 @@ public class ProjectAppService :
             overrideTenantId: overrideTenantId
         );
 
-        await Repository.InsertAsync(project);
+        // autoSave: "Yeni Proje" sayfası CreateAsync'i ve hemen ardından AddAttachmentAsync'i
+        // AYNI dış UoW içinde çağırıyor. Flush olmadan AddAttachmentAsync'teki GetAsync
+        // projeyi DB'de bulamıyor → EntityNotFound (404, "kayıt bulunamadı"). İşlem yine
+        // sayfanın transaction'ı içinde; ek düşerse proje de geri alınır.
+        await Repository.InsertAsync(project, autoSave: true);
 
         if (input.AddTemplateTasks)
         {

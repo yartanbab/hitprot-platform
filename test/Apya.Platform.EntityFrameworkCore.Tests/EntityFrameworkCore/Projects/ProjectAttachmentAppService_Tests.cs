@@ -53,6 +53,24 @@ public class ProjectAttachmentAppService_Tests : PlatformEntityFrameworkCoreTest
         attachment.Title.ShouldBe("İmzalı nüsha");
     }
 
+    /// <summary>
+    /// Yukarıdaki test her çağrıyı kendi UoW'unda koşturur, proje araya commit olur.
+    /// Razor sayfası ise ikisini TEK dış UoW içinde çağırır — hata yalnız burada çıkıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Ayni_UoW_icinde_olusturulan_projeye_dosya_eklenebilir()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var project = await _projectAppService.CreateAsync(NewProjectInput("ATT-UOW"));
+
+            var attachment = await _projectAppService.AddAttachmentAsync(
+                project.Id, "basvuru.docx", "stored-uow.docx", "application/msword", 1024);
+
+            attachment.ProjectId.ShouldBe(project.Id);
+        });
+    }
+
     [Fact]
     public async Task Ekler_listelenir_ve_silinince_saklanan_ad_doner()
     {

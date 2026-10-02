@@ -357,7 +357,13 @@ public static class ReleaseNoteCatalog
                 "Hibe başvurusunda aşama değişmeden 'aşama değişikliği' bildirimi gelmiyor",
                 "Danışmanınız hibe başvurunuzda yalnız onaylanan tutarı güncellediğinde de 'başvurunuzun " +
                 "aşaması değişti' bildirimi ve e-postası geliyordu. Bildirim artık yalnız aşama gerçekten " +
-                "değiştiğinde gönderiliyor.")
+                "değiştiğinde gönderiliyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Dosya ekleyerek yeni proje oluşturulabiliyor",
+                "Yeni Proje penceresinde dosya ekleyip kaydettiğinizde 'kayıt bulunamadı' hatası çıkıyor ve " +
+                "proje oluşturulmuyordu. Dosyalı proje artık tek adımda oluşuyor; dosya eklenemezse proje de " +
+                "kaydedilmiyor, yarım kayıt kalmıyor.")
         ),
 
         new ReleaseNote(
