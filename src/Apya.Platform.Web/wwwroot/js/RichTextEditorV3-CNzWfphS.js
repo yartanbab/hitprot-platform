@@ -1,6 +1,6 @@
 import { r as d, j as i } from "./react-vendor-D7YDiBbi.js";
-import { R, T as v, P as N, C as M } from "./ui-vendor-UYevF8mE.js";
-const T = {
+import { R as v, T as R, P as N, C } from "./ui-vendor-UYevF8mE.js";
+const f = {
   0: { label: "İptal", icon: "fa-ban", bg: "bg-neutral-subtle", fg: "text-text-secondary", dot: "bg-neutral-400" },
   1: { label: "Yapılacak", icon: "fa-clock", bg: "bg-neutral-subtle", fg: "text-text-secondary", dot: "bg-neutral-400" },
   2: { label: "Sürüyor", icon: "fa-spinner", bg: "bg-warning-subtle", fg: "text-warning", dot: "bg-warning" },
@@ -11,26 +11,53 @@ const T = {
   2: { label: "Orta", icon: "fa-minus", bg: "bg-warning-subtle", fg: "text-warning" },
   3: { label: "Yüksek", icon: "fa-arrow-up", bg: "bg-negative-subtle", fg: "text-negative" },
   4: { label: "Kritik", icon: "fa-flag", bg: "bg-negative-subtle", fg: "text-negative" }
-}, Y = [1, 2, 3, 4], V = [1, 2, 3, 4], Q = (t) => T[t] ?? T[1], q = (t) => h[t] ?? h[2];
-function J(t) {
-  if (!t) return "—";
-  const e = String(t).trim().split(/\s+/).filter(Boolean);
-  return e.length ? (e.length > 1 ? e[0][0] + e[e.length - 1][0] : e[0].slice(0, 2)).toUpperCase() : "—";
+}, I = [1, 2, 3, 4], q = [1, 2, 3, 4], M = (e) => f[e] ?? f[1], H = {
+  primary: "bg-primary",
+  info: "bg-primary",
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-negative",
+  secondary: "bg-neutral-400",
+  dark: "bg-neutral-400"
+};
+function J(e) {
+  return e != null && e.length ? e.slice().sort((t, a) => t.order - a.order).map((t) => ({
+    key: t.id,
+    status: t.statusValue ?? 2,
+    boardColumnId: t.isSystem ? null : t.id,
+    label: t.name,
+    dot: t.isSystem ? M(t.statusValue).dot : H[t.colorClass] ?? "bg-primary"
+  })) : I.map((t) => ({
+    key: `s${t}`,
+    status: t,
+    boardColumnId: null,
+    label: f[t].label,
+    dot: f[t].dot
+  }));
 }
-function X(t) {
-  return t ? "var(--apya-brand-500)" : "var(--apya-neutral-500)";
+function X(e, t, a) {
+  return t === 0 ? null : a && e.find((n) => n.boardColumnId === a) || e.find((n) => !n.boardColumnId && n.status === t) || null;
 }
-function Z(t, e = /* @__PURE__ */ new Date()) {
-  if (!t) return { tone: "text-text-tertiary", hint: "" };
-  const n = new Date(t);
-  if (Number.isNaN(n.getTime())) return { tone: "text-text-tertiary", hint: "" };
-  const a = Math.ceil((n.setHours(0, 0, 0, 0) - new Date(e).setHours(0, 0, 0, 0)) / 864e5);
-  return a < 0 ? { tone: "text-negative", hint: `${Math.abs(a)} gün gecikti` } : a === 0 ? { tone: "text-warning", hint: "Bugün" } : a <= 3 ? { tone: "text-warning", hint: `${a} gün kaldı` } : { tone: "text-text-tertiary", hint: `${a} gün kaldı` };
+const Z = (e) => h[e] ?? h[2];
+function tt(e) {
+  if (!e) return "—";
+  const t = String(e).trim().split(/\s+/).filter(Boolean);
+  return t.length ? (t.length > 1 ? t[0][0] + t[t.length - 1][0] : t[0].slice(0, 2)).toUpperCase() : "—";
 }
-function H(t) {
-  return (t == null ? void 0 : t.closest('[role="dialog"]')) ?? void 0;
+function et(e) {
+  return e ? "var(--apya-brand-500)" : "var(--apya-neutral-500)";
 }
-const I = /* @__PURE__ */ new Set([
+function rt(e, t = /* @__PURE__ */ new Date()) {
+  if (!e) return { tone: "text-text-tertiary", hint: "" };
+  const a = new Date(e);
+  if (Number.isNaN(a.getTime())) return { tone: "text-text-tertiary", hint: "" };
+  const n = Math.ceil((a.setHours(0, 0, 0, 0) - new Date(t).setHours(0, 0, 0, 0)) / 864e5);
+  return n < 0 ? { tone: "text-negative", hint: `${Math.abs(n)} gün gecikti` } : n === 0 ? { tone: "text-warning", hint: "Bugün" } : n <= 3 ? { tone: "text-warning", hint: `${n} gün kaldı` } : { tone: "text-text-tertiary", hint: `${n} gün kaldı` };
+}
+function B(e) {
+  return (e == null ? void 0 : e.closest('[role="dialog"]')) ?? void 0;
+}
+const P = /* @__PURE__ */ new Set([
   "SCRIPT",
   "STYLE",
   "IFRAME",
@@ -58,7 +85,7 @@ const I = /* @__PURE__ */ new Set([
   "TRACK",
   "CANVAS",
   "PORTAL"
-]), B = /* @__PURE__ */ new Set([
+]), D = /* @__PURE__ */ new Set([
   "P",
   "BR",
   "DIV",
@@ -100,7 +127,7 @@ const I = /* @__PURE__ */ new Set([
   "CAPTION",
   "A",
   "IMG"
-]), E = {
+]), y = {
   "*": ["class", "title", "style"],
   A: ["href", "target", "rel"],
   IMG: ["src", "alt", "width", "height"],
@@ -108,71 +135,71 @@ const I = /* @__PURE__ */ new Set([
   TH: ["colspan", "rowspan"],
   FONT: ["color"],
   OL: ["start"]
-}, C = /* @__PURE__ */ new Set([
+}, j = /* @__PURE__ */ new Set([
   "color",
   "background-color",
   "text-align",
   "font-weight",
   "font-style",
   "text-decoration"
-]), P = /^(https?:|mailto:|tel:|#|\/(?!\/))/i, D = /^(https?:|data:image\/(png|jpe?g|gif|webp);base64,|\/(?!\/))/i;
-function j(t) {
-  return String(t).split(";").map((e) => e.trim()).filter(Boolean).filter((e) => {
-    const n = e.indexOf(":");
-    if (n < 0) return !1;
-    const a = e.slice(0, n).trim().toLowerCase(), s = e.slice(n + 1).toLowerCase();
-    return C.has(a) && !/url\(|expression|javascript:|@import/.test(s);
+]), U = /^(https?:|mailto:|tel:|#|\/(?!\/))/i, _ = /^(https?:|data:image\/(png|jpe?g|gif|webp);base64,|\/(?!\/))/i;
+function K(e) {
+  return String(e).split(";").map((t) => t.trim()).filter(Boolean).filter((t) => {
+    const a = t.indexOf(":");
+    if (a < 0) return !1;
+    const n = t.slice(0, a).trim().toLowerCase(), s = t.slice(a + 1).toLowerCase();
+    return j.has(n) && !/url\(|expression|javascript:|@import/.test(s);
   }).join("; ");
 }
-function U(t) {
-  const e = /* @__PURE__ */ new Set([...E["*"], ...E[t.tagName] || []]);
-  for (const n of [...t.attributes]) {
-    const a = n.name.toLowerCase(), s = n.value.trim();
-    if (!e.has(a) || a.startsWith("on")) {
-      t.removeAttribute(n.name);
+function F(e) {
+  const t = /* @__PURE__ */ new Set([...y["*"], ...y[e.tagName] || []]);
+  for (const a of [...e.attributes]) {
+    const n = a.name.toLowerCase(), s = a.value.trim();
+    if (!t.has(n) || n.startsWith("on")) {
+      e.removeAttribute(a.name);
       continue;
     }
-    if (a === "href" && !P.test(s)) {
-      t.removeAttribute(n.name);
+    if (n === "href" && !U.test(s)) {
+      e.removeAttribute(a.name);
       continue;
     }
-    if (a === "src" && !D.test(s)) {
-      t.removeAttribute(n.name);
+    if (n === "src" && !_.test(s)) {
+      e.removeAttribute(a.name);
       continue;
     }
-    if (a === "style") {
-      const l = j(s);
-      l ? t.setAttribute("style", l) : t.removeAttribute("style");
+    if (n === "style") {
+      const l = K(s);
+      l ? e.setAttribute("style", l) : e.removeAttribute("style");
     }
   }
-  t.tagName === "A" && t.getAttribute("target") && (t.setAttribute("target", "_blank"), t.setAttribute("rel", "noopener noreferrer"));
+  e.tagName === "A" && e.getAttribute("target") && (e.setAttribute("target", "_blank"), e.setAttribute("rel", "noopener noreferrer"));
 }
-function A(t) {
-  for (const e of [...t.childNodes]) {
-    if (e.nodeType === 8) {
-      e.remove();
+function E(e) {
+  for (const t of [...e.childNodes]) {
+    if (t.nodeType === 8) {
+      t.remove();
       continue;
     }
-    if (e.nodeType !== 1)
+    if (t.nodeType !== 1)
       continue;
-    const n = e.tagName.toUpperCase();
-    if (I.has(n)) {
-      e.remove();
-      continue;
-    }
-    if (A(e), !B.has(n)) {
-      e.replaceWith(...e.childNodes);
+    const a = t.tagName.toUpperCase();
+    if (P.has(a)) {
+      t.remove();
       continue;
     }
-    U(e);
+    if (E(t), !D.has(a)) {
+      t.replaceWith(...t.childNodes);
+      continue;
+    }
+    F(t);
   }
 }
-function _(t) {
-  if (!t) return "";
-  const e = new DOMParser().parseFromString(`<body>${t}</body>`, "text/html");
-  return A(e.body), e.body.innerHTML;
+function $(e) {
+  if (!e) return "";
+  const t = new DOMParser().parseFromString(`<body>${e}</body>`, "text/html");
+  return E(t.body), t.body.innerHTML;
 }
-const K = [
+const G = [
   { icon: "fa-bold", title: "Kalın (Ctrl+B)", cmd: "bold" },
   { icon: "fa-italic", title: "İtalik (Ctrl+I)", cmd: "italic" },
   { icon: "fa-underline", title: "Altı çizili", cmd: "underline" },
@@ -187,51 +214,51 @@ const K = [
   { icon: "fa-table-cells", title: "Tablo ekle", cmd: "table" },
   { icon: "fa-at", title: "Kişi bahset", cmd: "mention" },
   { icon: "fa-eraser", title: "Biçimi temizle", cmd: "removeFormat", gap: !0 }
-], F = '<table class="apya-rte-table"><tr><th>Kolon 1</th><th>Kolon 2</th></tr><tr><td>Değer</td><td>Değer</td></tr></table><p><br></p>', $ = '<div class="apya-rte-imgph">görsel yer tutucu</div><p><br></p>';
-function G(t) {
-  return t ? /<[a-z][\s\S]*>/i.test(t) ? _(t) : `<p>${t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p>` : "";
+], V = '<table class="apya-rte-table"><tr><th>Kolon 1</th><th>Kolon 2</th></tr><tr><td>Değer</td><td>Değer</td></tr></table><p><br></p>', z = '<div class="apya-rte-imgph">görsel yer tutucu</div><p><br></p>';
+function W(e) {
+  return e ? /<[a-z][\s\S]*>/i.test(e) ? $(e) : `<p>${e.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p>` : "";
 }
-function tt({ value: t, onChange: e, mentionName: n = "ekip arkadaşı", placeholder: a, readOnly: s = !1 }) {
-  const l = d.useRef(null), k = d.useRef(G(t)), [L, f] = d.useState(!1), [g, p] = d.useState("https://"), b = d.useRef(null), u = (r, o) => {
-    var c, x;
+function at({ value: e, onChange: t, mentionName: a = "ekip arkadaşı", placeholder: n, readOnly: s = !1 }) {
+  const l = d.useRef(null), A = d.useRef(W(e)), [k, g] = d.useState(!1), [p, b] = d.useState("https://"), m = d.useRef(null), u = (r, o) => {
+    var c, T;
     (c = l.current) == null || c.focus();
     try {
       document.execCommand(r, !1, o);
     } catch {
     }
-    e == null || e(((x = l.current) == null ? void 0 : x.innerHTML) ?? "");
+    t == null || t(((T = l.current) == null ? void 0 : T.innerHTML) ?? "");
   }, S = () => {
     const r = window.getSelection();
-    b.current = r && r.rangeCount ? r.getRangeAt(0).cloneRange() : null;
-  }, y = () => {
-    const r = b.current;
+    m.current = r && r.rangeCount ? r.getRangeAt(0).cloneRange() : null;
+  }, L = () => {
+    const r = m.current;
     if (!r) return;
     const o = window.getSelection();
     o.removeAllRanges(), o.addRange(r);
-  }, m = () => {
+  }, x = () => {
     var o;
-    const r = g.trim();
-    f(!1), !(!r || r === "https://") && ((o = l.current) == null || o.focus(), y(), u("createLink", r), p("https://"));
+    const r = p.trim();
+    g(!1), !(!r || r === "https://") && ((o = l.current) == null || o.focus(), L(), u("createLink", r), b("https://"));
   }, w = (r) => {
     switch (r.cmd) {
       case "link":
         S();
         return;
       case "image":
-        u("insertHTML", $);
+        u("insertHTML", z);
         return;
       case "table":
-        u("insertHTML", F);
+        u("insertHTML", V);
         return;
       case "mention":
-        u("insertHTML", `<span class="apya-rte-mention">@${n}</span>&nbsp;`);
+        u("insertHTML", `<span class="apya-rte-mention">@${a}</span>&nbsp;`);
         return;
       default:
         u(r.cmd, r.arg);
     }
   }, O = "flex shrink-0 items-center justify-center h-7 w-7 rounded-[7px] border-0 bg-transparent text-text-secondary cursor-pointer hover:bg-surface-base hover:text-primary hover:shadow-xs";
   return /* @__PURE__ */ i.jsxs("div", { className: "rounded-[14px] border border-default bg-surface-base overflow-hidden shadow-xs", children: [
-    !s && /* @__PURE__ */ i.jsx("div", { className: "flex items-center gap-0.5 px-2 py-1.5 border-b border-subtle bg-neutral-subtle overflow-x-auto custom-scrollbar", children: K.map((r) => {
+    !s && /* @__PURE__ */ i.jsx("div", { className: "flex items-center gap-0.5 px-2 py-1.5 border-b border-subtle bg-neutral-subtle overflow-x-auto custom-scrollbar", children: G.map((r) => {
       const o = /* @__PURE__ */ i.jsx(
         "button",
         {
@@ -245,10 +272,10 @@ function tt({ value: t, onChange: e, mentionName: n = "ekip arkadaşı", placeho
         },
         r.cmd + r.icon
       );
-      return r.cmd !== "link" ? o : /* @__PURE__ */ i.jsxs(R, { modal: !0, open: L, onOpenChange: f, children: [
-        /* @__PURE__ */ i.jsx(v, { asChild: !0, children: o }),
-        /* @__PURE__ */ i.jsx(N, { container: H(l.current), children: /* @__PURE__ */ i.jsxs(
-          M,
+      return r.cmd !== "link" ? o : /* @__PURE__ */ i.jsxs(v, { modal: !0, open: k, onOpenChange: g, children: [
+        /* @__PURE__ */ i.jsx(R, { asChild: !0, children: o }),
+        /* @__PURE__ */ i.jsx(N, { container: B(l.current), children: /* @__PURE__ */ i.jsxs(
+          C,
           {
             sideOffset: 6,
             align: "start",
@@ -261,10 +288,10 @@ function tt({ value: t, onChange: e, mentionName: n = "ekip arkadaşı", placeho
                   {
                     autoFocus: !0,
                     type: "url",
-                    value: g,
-                    onChange: (c) => p(c.target.value),
+                    value: p,
+                    onChange: (c) => b(c.target.value),
                     onKeyDown: (c) => {
-                      c.key === "Enter" && m();
+                      c.key === "Enter" && x();
                     },
                     className: "flex-1 min-w-0 h-[34px] px-3 rounded-[9px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none"
                   }
@@ -273,7 +300,7 @@ function tt({ value: t, onChange: e, mentionName: n = "ekip arkadaşı", placeho
                   "button",
                   {
                     type: "button",
-                    onClick: m,
+                    onClick: x,
                     className: "h-[34px] px-3.5 rounded-[9px] bg-primary text-white text-[12px] font-bold cursor-pointer hover:bg-primary-hover",
                     children: "Ekle"
                   }
@@ -294,24 +321,26 @@ function tt({ value: t, onChange: e, mentionName: n = "ekip arkadaşı", placeho
         "aria-multiline": "true",
         "aria-readonly": s || void 0,
         "aria-label": "Görev açıklaması",
-        "data-ph": s ? "Açıklama eklenmemiş." : a ?? "Bu görevin detayları nelerdir? (@kişi, #etiket)…",
-        onInput: (r) => e == null ? void 0 : e(r.currentTarget.innerHTML),
+        "data-ph": s ? "Açıklama eklenmemiş." : n ?? "Bu görevin detayları nelerdir? (@kişi, #etiket)…",
+        onInput: (r) => t == null ? void 0 : t(r.currentTarget.innerHTML),
         className: "apya-rte-surface min-h-[150px] p-4 text-[13.5px] leading-[1.7] text-text-primary bg-surface-base focus:outline-none",
-        dangerouslySetInnerHTML: { __html: k.current }
+        dangerouslySetInnerHTML: { __html: A.current }
       }
     )
   ] });
 }
 export {
   h as P,
-  tt as R,
-  T as S,
-  X as a,
-  Y as b,
-  H as c,
-  Z as d,
-  V as e,
-  J as i,
-  q as p,
-  Q as s
+  at as R,
+  f as S,
+  et as a,
+  I as b,
+  B as c,
+  rt as d,
+  J as e,
+  X as f,
+  q as g,
+  tt as i,
+  Z as p,
+  M as s
 };

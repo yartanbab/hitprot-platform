@@ -2567,6 +2567,7 @@
     "Apya:BoardColumn:SystemStatusImmutable": "The status represented by a system column cannot be changed.",
     "Apya:BoardColumn:InvalidStatusValue": "The status value assigned to the column is invalid: {Value}. The valid range is 1-4.",
     "Apya:BoardColumn:InvalidWipLimit": "The work-in-progress limit cannot be negative: {Value}.",
+    "Apya:BoardColumn:CrossProjectMove": "A task can only be moved to columns of its own project.",
     "Project:NameEmpty": "The project name cannot be empty.",
     "Project:CodeEmpty": "The project code cannot be empty.",
     "Project:List:LoadFailed": "Projects could not be loaded.",

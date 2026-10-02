@@ -30,6 +30,42 @@ export const SELECTABLE_STATUSES = [1, 2, 3, 4];
 export const SELECTABLE_PRIORITIES = [1, 2, 3, 4];
 
 export const statusOf = (id) => STATUS_META[id] ?? STATUS_META[1];
+
+/* Kanban kolon rengi (BoardColumn.ColorClass, Bootstrap adı) → nokta sınıfı. */
+const COLUMN_DOT = {
+    primary: 'bg-primary', info: 'bg-primary', success: 'bg-success', warning: 'bg-warning',
+    danger: 'bg-negative', secondary: 'bg-neutral-400', dark: 'bg-neutral-400',
+};
+
+/**
+ * "Durumu değiştir" seçenekleri. Proje kolonları varsa onlar (sistem + özel, pano
+ * sırası): özel kolon bir DURUM gibi seçilir ve görevi o kolona bağlar, Status
+ * kolonun temel durumuna çekilir. Kolon yoksa (projesiz görev) dört temel durum.
+ * Seçenek: { key, status, boardColumnId (sistemde null), label, dot }.
+ */
+export function statusChoices(columns) {
+    if (!columns?.length) {
+        return SELECTABLE_STATUSES.map((id) => ({
+            key: `s${id}`, status: id, boardColumnId: null, label: STATUS_META[id].label, dot: STATUS_META[id].dot,
+        }));
+    }
+    return columns.slice().sort((a, b) => a.order - b.order).map((c) => ({
+        key: c.id,
+        status: c.statusValue ?? 2,
+        boardColumnId: c.isSystem ? null : c.id,
+        label: c.name,
+        dot: c.isSystem ? statusOf(c.statusValue).dot : (COLUMN_DOT[c.colorClass] ?? 'bg-primary'),
+    }));
+}
+
+/** Görevin şu anki seçeneği: özel kolon bağı öncelikli, yoksa durumun sistem
+ *  seçeneği. İptal edilmiş görev hiçbir seçenek değildir (rozet "İptal" kalır). */
+export function activeStatusChoice(choices, status, boardColumnId) {
+    if (status === 0) return null;
+    return (boardColumnId && choices.find((c) => c.boardColumnId === boardColumnId))
+        || choices.find((c) => !c.boardColumnId && c.status === status)
+        || null;
+}
 export const priorityOf = (id) => PRIORITY_META[id] ?? PRIORITY_META[2];
 
 /** Baş harf rozeti — ui-avatars.com'a dış istek atmamak için (prototipteki desen). */

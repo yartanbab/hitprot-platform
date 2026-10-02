@@ -22,6 +22,7 @@ import { useTaskForm } from '../hooks/useTaskForm';
 import { useTaskChecklist } from '../hooks/useTaskChecklist';
 import { useAssigneeOptions } from '../hooks/useAssigneeOptions';
 import { useProjectOptions } from '../hooks/useProjectOptions';
+import { useBoardColumns } from '../hooks/useBoardColumns';
 import { useTaskFeatures } from '../hooks/useTaskFeatures';
 import { taskDetailStore } from '../taskDetailStore';
 import { isTaskDerivedQuery } from '../../lib/api/dataChanged';
@@ -61,6 +62,11 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     const form = useTaskForm(task);
     const assignees = useAssigneeOptions();
     const projects = useProjectOptions();
+    /* Durum menüsü KAYITLI projenin kolonlarını gösterir: proje formda değiştirildiyse
+       eski projenin kolonları geçersiz (sunucu o kayıtta kolon bağını zaten düşürür),
+       seçenekler dört temel duruma döner. */
+    const boardColumns = useBoardColumns(
+        task?.projectId && form.values.projectId === task.projectId ? task.projectId : null);
     const features = useTaskFeatures(currentTaskId);
     const checklist = useTaskChecklist(currentTaskId);
 
@@ -327,6 +333,10 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             /* Rebase kullanıcının kaydetmediği durum seçimini korur; Kaydet arşivi geri
                almasın diye eylemin yazdığı alan forma işlenir (diğer düzenlemeler kalır). */
             form.setField('status', 4);
+            /* Kolon bağı da sunucudakine eşitlenir: kullanıcının seçtiği özel kolon
+               formda kalırsa Kaydet görevi o kolonun durumuna geri çekerdi. */
+            form.setField('boardColumnId',
+                queryClient.getQueryData(['task-detail', currentTaskId])?.boardColumnId ?? null);
             notify.info('Görev arşivlendi (Tamamlandı).');
         } catch (err) {
             notifyError(err, 'Görev arşivlenemedi.');
@@ -517,6 +527,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 onToggleFullscreen={toggleFullscreen}
                 onFieldChange={form.setField}
                 statusValue={form.values.status}
+                boardColumns={boardColumns}
+                boardColumnValue={form.values.boardColumnId}
                 titleValue={task?.title}
                 titleError={form.errors.title}
                 isPrivateValue={form.values.isPrivate}
@@ -543,6 +555,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                     projectOptions={projects.options}
                     onFieldChange={form.setField}
                     statusValue={form.values.status}
+                    boardColumns={boardColumns}
+                    boardColumnValue={form.values.boardColumnId}
                     priorityValue={form.values.priority}
                     assigneeValue={form.values.assigneeId}
                     projectValue={form.values.projectId}

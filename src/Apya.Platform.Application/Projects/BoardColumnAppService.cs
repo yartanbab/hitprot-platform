@@ -42,9 +42,12 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         var existing = await _columnRepository.GetListAsync(c => c.ProjectId == input.ProjectId);
         var nextOrder = existing.Count == 0 ? 0 : existing.Max(c => c.Order) + 1;
 
+        // Özel kolon her zaman bir temel duruma bağlıdır (raporlar/ilerleme onu sayar);
+        // seçilmediyse Sürüyor.
         var col = new BoardColumn(
             GuidGenerator.Create(), input.ProjectId, input.Name, nextOrder,
-            input.ColorClass, statusValue: input.StatusValue, isSystem: false, CurrentTenant.Id);
+            input.ColorClass, statusValue: input.StatusValue ?? (int)Apya.Platform.Tasks.TaskStatus.InProgress,
+            isSystem: false, CurrentTenant.Id);
 
         await _columnRepository.InsertAsync(col, autoSave: true);
         return ToDto(col);
@@ -108,20 +111,19 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
             throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskUpdateDenied);
         }
 
-        // Durum eşlemesi olan HER kolon Status'u değiştirir; ayrım kolon bağında:
+        // Kolonlar projeye ait: başka projenin kolonuna bağlanan kart o projenin
+        // panosunda hayalet olurdu (genel panoda kartlar projelere yayılıyor).
+        if (col.ProjectId != task.ProjectId)
+        {
+            throw new BusinessException("Apya:BoardColumn:CrossProjectMove");
+        }
+
+        // HER kolon Status'u kendi temel durumuna çeker; ayrım kolon bağında:
         // sistem kolonunda bağ TEMİZLENİR (kart durum kolonunda yaşar), özel
-        // kolonda KORUNUR (kart kolonda durur, durumu da hizalanır — Faz 4a).
-        if (col.StatusValue.HasValue)
-        {
-            // Clock.Now ŞART: Done'a taşınınca CompletedDate dolsun (yoksa null kalır).
-            task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.StatusValue.Value, Clock.Now);
-            task.MoveToColumn(col.IsSystem ? (Guid?)null : columnId);
-        }
-        else
-        {
-            // Eşlemesiz özel kolon → görevi kolona bağla (Status değişmez).
-            task.MoveToColumn(columnId);
-        }
+        // kolonda KORUNUR (kart kolonda durur, durumu da hizalanır).
+        // Clock.Now ŞART: Done'a taşınınca CompletedDate dolsun (yoksa null kalır).
+        task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.GetEffectiveStatusValue(), Clock.Now);
+        task.MoveToColumn(col.IsSystem ? (Guid?)null : columnId);
 
         await _taskRepository.UpdateAsync(task, autoSave: true);
     }
@@ -140,12 +142,12 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
 
         // Eşleme varsayılan olarak yalnız BUNDAN SONRA taşınan kartlara uygulanır;
         // kullanıcı isterse kolonda hâlihazırda duranları da hizalar.
-        if (input.ApplyToExistingTasks && input.StatusValue.HasValue)
+        if (input.ApplyToExistingTasks)
         {
             var tasks = await _taskRepository.GetListAsync(t => t.BoardColumnId == id);
             foreach (var t in tasks)
             {
-                t.ChangeStatus((Apya.Platform.Tasks.TaskStatus)input.StatusValue.Value, Clock.Now);
+                t.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.GetEffectiveStatusValue(), Clock.Now);
                 await _taskRepository.UpdateAsync(t);
             }
         }
@@ -184,7 +186,9 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         Name = c.Name,
         ColorClass = c.ColorClass,
         Order = c.Order,
-        StatusValue = c.StatusValue,
+        // Özel kolonda eşlemesiz eski kayıt da temel durumuyla (Sürüyor) döner —
+        // istemciler "durumu değiştirmez" diye bir hâl bilmez.
+        StatusValue = c.IsSystem ? c.StatusValue : c.GetEffectiveStatusValue(),
         IsSystem = c.IsSystem,
         WipLimit = c.WipLimit
     };

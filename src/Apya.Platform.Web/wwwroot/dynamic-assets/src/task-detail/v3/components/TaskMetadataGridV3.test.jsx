@@ -91,3 +91,53 @@ describe('TaskMetadataGridV3 / dogrulama hatasi', () => {
         expect(screen.getByText(/gün gecikti/)).toBeInTheDocument();
     });
 });
+
+/* Durum = projenin kanban kolonları: panoda eklenen özel kolon ("Test") Durum
+   menüsünde de seçenektir; seçilince görev o kolona bağlanır, Status kolonun
+   temel durumuna çekilir. */
+describe('TaskMetadataGridV3 / durum = proje kolonları', () => {
+    const COLUMNS = [
+        { id: 'c1', statusValue: 1, name: 'Yapılacak', colorClass: 'secondary', order: 0, isSystem: true },
+        { id: 'c2', statusValue: 2, name: 'Sürüyor', colorClass: 'warning', order: 1, isSystem: true },
+        { id: 'c3', statusValue: 3, name: 'Testte', colorClass: 'info', order: 2, isSystem: true },
+        { id: 'c4', statusValue: 4, name: 'Tamamlandı', colorClass: 'success', order: 3, isSystem: true },
+        { id: 'x9', statusValue: 3, name: 'Test', colorClass: 'primary', order: 4, isSystem: false },
+    ];
+    const statusMenu = () => screen.getByText('Durumu değiştir').parentElement;
+
+    it('menü projenin kolonlarını pano sırasıyla listeler', () => {
+        renderGrid({ boardColumns: COLUMNS, statusValue: 1, boardColumnValue: null });
+        fireEvent.click(screen.getByRole('button', { name: /yapılacak/i }));
+        const labels = within(statusMenu()).getAllByRole('button').map((b) => b.textContent.trim());
+        expect(labels).toEqual(['Yapılacak', 'Sürüyor', 'Testte', 'Tamamlandı', 'Test']);
+    });
+
+    it('özel kolon seçilince kolon bağı ve temel durumu birlikte gider', () => {
+        const { onFieldChange } = renderGrid({ boardColumns: COLUMNS, statusValue: 1, boardColumnValue: null });
+        fireEvent.click(screen.getByRole('button', { name: /yapılacak/i }));
+        fireEvent.click(within(statusMenu()).getByText('Test'));
+        expect(onFieldChange).toHaveBeenCalledWith('status', 3);
+        expect(onFieldChange).toHaveBeenCalledWith('boardColumnId', 'x9');
+    });
+
+    it('sistem durumu seçilince kolon bağı temizlenir', () => {
+        const { onFieldChange } = renderGrid({ boardColumns: COLUMNS, statusValue: 3, boardColumnValue: 'x9' });
+        fireEvent.click(screen.getByRole('button', { name: /^test$/i }));
+        fireEvent.click(within(statusMenu()).getByText('Sürüyor'));
+        expect(onFieldChange).toHaveBeenCalledWith('status', 2);
+        expect(onFieldChange).toHaveBeenCalledWith('boardColumnId', null);
+    });
+
+    it('rozet görevin özel kolonunu gösterir (aynı temel durumdaki sistem kolonunu değil)', () => {
+        renderGrid({ boardColumns: COLUMNS, statusValue: 3, boardColumnValue: 'x9' });
+        expect(screen.getByRole('button', { name: /^test$/i })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /testte/i })).not.toBeInTheDocument();
+    });
+
+    it('kolon yoksa (projesiz görev) dört temel durum', () => {
+        renderGrid({ statusValue: 2 });
+        fireEvent.click(screen.getByRole('button', { name: /sürüyor/i }));
+        const labels = within(statusMenu()).getAllByRole('button').map((b) => b.textContent.trim());
+        expect(labels).toEqual(['Yapılacak', 'Sürüyor', 'Testte', 'Tamamlandı']);
+    });
+});

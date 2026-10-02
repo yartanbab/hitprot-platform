@@ -150,7 +150,8 @@ public class CreateModalModel : PlatformPageModel
             Task.ProjectId = ProjectId;
         }
 
-        // Birleşik Durum/Kolon seçimini uzlaştır: özel kolon → BoardColumnId (Status=Todo),
+        // Birleşik Durum/Kolon seçimini uzlaştır: özel kolon → BoardColumnId (Status sunucuda
+        // kolonun temel durumuna çekilir),
         // sistem durumu → Status. Boşsa varsayılan Todo kalır.
         if (!string.IsNullOrEmpty(StatusOrColumn))
         {
@@ -196,13 +197,13 @@ public class CreateModalModel : PlatformPageModel
             StatusOrColumnList.Add(new SelectListItem(label, "s:" + sv, "s:" + sv == selected));
         }
 
-        // Projenin özel kolonları (StatusValue=null)
+        // Projenin özel kolonları (durum eşlemeli olanlar dahil)
         if (projectId.HasValue)
         {
             try
             {
                 var cols = await _boardColumnAppService.GetListByProjectAsync(projectId.Value);
-                foreach (var c in cols.Where(c => !c.StatusValue.HasValue).OrderBy(c => c.Order))
+                foreach (var c in cols.Where(c => !c.IsSystem).OrderBy(c => c.Order))
                 {
                     StatusOrColumnList.Add(new SelectListItem(c.Name, "c:" + c.Id, "c:" + c.Id == selected));
                 }
