@@ -1,6 +1,7 @@
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from '../../lib/utils';
+import { OpenerContext, useOpenerRef, restoreOpenerFocus } from './openerFocus';
 
 /**
  * Sheet — adaptive: mobile'da bottom-sheet, tablet/desktop'ta side drawer.
@@ -10,20 +11,27 @@ import { cn } from '../../lib/utils';
  *   prop verilmezse responsive: mobile=bottom, ≥tablet=right
  *
  * Drag-to-dismiss yok (vaul dep'inden kaçındık). Backdrop tap + escape ile kapanır.
+ *
+ * Başlık: `title` / `description` sr-only basılır; görünür olanlar için <SheetTitle> /
+ * <SheetDescription>. Kapanışta odak paneli açan öğeye döner (openerFocus.js).
  */
 
 function Sheet({ open, onOpenChange, children }) {
+    const openerRef = useOpenerRef(open);
     return (
         <Dialog.Root open={open} onOpenChange={onOpenChange}>
-            {children}
+            <OpenerContext.Provider value={openerRef}>
+                {children}
+            </OpenerContext.Provider>
         </Dialog.Root>
     );
 }
 
 const SheetContent = React.forwardRef(function SheetContent(
-    { side, className, children, title, description, ...props },
+    { side, className, children, title, description, onCloseAutoFocus, ...props },
     ref,
 ) {
+    const openerRef = React.useContext(OpenerContext);
     const sideClass = side === 'bottom'
         ? 'inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom'
         : side === 'right'
@@ -45,7 +53,6 @@ const SheetContent = React.forwardRef(function SheetContent(
             )} />
             <Dialog.Content
                 ref={ref}
-                aria-describedby={description ? undefined : undefined}
                 className={cn(
                     'fixed z-modal',
                     'bg-surface-base text-text-primary',
@@ -56,11 +63,18 @@ const SheetContent = React.forwardRef(function SheetContent(
                     className,
                 )}
                 {...props}
+                onCloseAutoFocus={(e) => {
+                    onCloseAutoFocus?.(e);
+                    restoreOpenerFocus(e, openerRef);
+                }}
             >
-                {/* Drag handle visual hint (mobile only) */}
-                <div className="tablet:hidden flex justify-center pt-2 pb-1">
-                    <div className="h-1 w-10 rounded-full bg-neutral-300" aria-hidden="true" />
-                </div>
+                {/* Drag handle visual hint (mobile only). Sağ panelde basılmaz: telefonda
+                    da kenardan açılır, alt panel tutamağı orada yanlış ipucu. */}
+                {side !== 'right' && (
+                    <div className="tablet:hidden flex justify-center pt-2 pb-1">
+                        <div className="h-1 w-10 rounded-full bg-neutral-300" aria-hidden="true" />
+                    </div>
+                )}
                 {title && (
                     <Dialog.Title className="sr-only">{title}</Dialog.Title>
                 )}
@@ -75,9 +89,14 @@ const SheetContent = React.forwardRef(function SheetContent(
 
 const SheetTrigger = Dialog.Trigger;
 const SheetClose   = Dialog.Close;
+/* Görünür başlık / açıklama: panele aria-labelledby / aria-describedby ile bağlanır. */
+const SheetTitle       = Dialog.Title;
+const SheetDescription = Dialog.Description;
 
 Sheet.Trigger = SheetTrigger;
 Sheet.Close   = SheetClose;
 Sheet.Content = SheetContent;
+Sheet.Title       = SheetTitle;
+Sheet.Description = SheetDescription;
 
-export { Sheet, SheetTrigger, SheetClose, SheetContent };
+export { Sheet, SheetTrigger, SheetClose, SheetContent, SheetTitle, SheetDescription };

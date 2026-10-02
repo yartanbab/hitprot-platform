@@ -69,6 +69,51 @@ describe('useTaskForm', () => {
         expect(result.current.errors.dueDate).toBeTruthy();
     });
 
+    /* Faz 5 (CON-01): V3 hatayı alanın altında gösterir; mesaj alan etiketiyle ("Son tarih") eşleşir. */
+    it('hata metinleri alan etiketleriyle eslesir', () => {
+        const { result } = renderHook(() => useTaskForm(TASK));
+        act(() => result.current.setField('title', ''));
+        act(() => result.current.setField('dueDate', '2026-01-01'));
+        act(() => { result.current.validate(); });
+        expect(result.current.errors).toEqual({
+            title: 'Başlık zorunlu.',
+            dueDate: 'Son tarih başlangıç tarihinden önce olamaz.',
+        });
+
+        act(() => result.current.setField('startDate', ''));
+        act(() => { result.current.validate(); });
+        expect(result.current.errors.startDate).toBe('Başlangıç tarihi zorunlu.');
+    });
+
+    it('setField duzenlenen alanin hatasini temizler, diger hatalar kalir', () => {
+        const { result } = renderHook(() => useTaskForm(TASK));
+        act(() => result.current.setField('title', ''));
+        act(() => result.current.setField('dueDate', '2026-01-01'));
+        act(() => { result.current.validate(); });
+        expect(Object.keys(result.current.errors).sort()).toEqual(['dueDate', 'title']);
+
+        act(() => result.current.setField('title', 'Yeni'));
+
+        expect(result.current.errors.title).toBeUndefined();
+        expect(result.current.errors.dueDate).toBeTruthy();
+
+        // Hatası olmayan alanı düzenlemek hata nesnesine dokunmaz.
+        const before = result.current.errors;
+        act(() => result.current.setField('priority', 1));
+        expect(result.current.errors).toBe(before);
+    });
+
+    it('startDate degisince dueDate hatasi da temizlenir', () => {
+        const { result } = renderHook(() => useTaskForm(TASK));
+        act(() => result.current.setField('dueDate', '2026-01-01'));
+        act(() => { result.current.validate(); });
+        expect(result.current.errors.dueDate).toBeTruthy();
+
+        act(() => result.current.setField('startDate', '2025-12-01'));
+
+        expect(result.current.errors).toEqual({});
+    });
+
     it('geçerli değerlerde validate true döner ve errors boşalır', () => {
         const { result } = renderHook(() => useTaskForm(TASK));
         act(() => result.current.setField('title', 'Yeni Başlık'));

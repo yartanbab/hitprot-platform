@@ -11,6 +11,15 @@
  *    tarayıcının gönderimi "odaklanılamayan geçersiz denetim" diyerek sessizce
  *    engellemesine yol açar. Zorunluluk, tag helper'ın bastığı `data-val-required`
  *    işaretinden okunur.
+ *
+ * 🔒 KİŞİSEL VERİ HİÇBİR DEPOYA YAZILMAZ (sessionStorage / localStorage / çerez yok).
+ *    Yarıda kalan form iki yolla korunur (2026-09-28 UX denetimi, ACC-08):
+ *    (1) ADIM HAFIZASI — yalnız adım NUMARASI history.state'te durur; geri/ileri
+ *        dönüşte ya da yenilemede alanları tarayıcı geri yükler, sihirbaz kaldığı
+ *        adımda açılır. Kayıtlı adımdan önceki bir adım eksikse orada durulur.
+ *    (2) AYRILMA UYARISI — formda yazı varken yenileme / kapatma / başka sayfaya
+ *        geçişte tarayıcı kendi "ayrılmak istiyor musunuz?" penceresini gösterir.
+ *        Dinleyici yalnız veri varken bağlıdır (boş form bfcache'i boşuna kapatmasın).
  */
 (function () {
     'use strict';
@@ -30,6 +39,9 @@
 
     var current = 1;
     var total = panels.length;
+
+    // history.state içindeki anahtar: yalnız adım numarası (kişisel veri değil).
+    var STEP_KEY = 'apyaWizardStep';
 
     // --- Yardımcılar -------------------------------------------------------
 
@@ -59,15 +71,15 @@
     }
 
     /**
-     * Paneldeki zorunlu alanları denetler. Radyo grupları ad bazında tek kez
-     * değerlendirilir; aksi halde seçilmeyen her seçenek ayrı hata üretirdi.
+     * Paneldeki eksik / geçersiz zorunlu alanları döndürür — YAN ETKİSİZ (mesaj
+     * yazmaz, odak taşımaz): adım geri yüklenirken de çağrılır. Radyo grupları ad
+     * bazında tek kez değerlendirilir; aksi halde seçilmeyen her seçenek ayrı hata
+     * üretirdi.
      */
-    function validatePanel(panel) {
-        clearErrors(panel);
-
+    function invalidFields(panel) {
         var fields = panel.querySelectorAll('[data-val-required]');
         var seenRadioGroups = {};
-        var firstInvalid = null;
+        var found = [];
 
         Array.prototype.forEach.call(fields, function (field) {
             var name = field.getAttribute('name');
@@ -91,10 +103,25 @@
             }
 
             if (invalid) {
-                showError(name, message);
-                if (!firstInvalid) { firstInvalid = field; }
+                found.push({ field: field, name: name, message: message });
             }
         });
+
+        return found;
+    }
+
+    function isPanelComplete(panel) {
+        return invalidFields(panel).length === 0;
+    }
+
+    /** Paneli denetler; hataları alan altına yazar ve ilk hatalı alana odaklanır. */
+    function validatePanel(panel) {
+        clearErrors(panel);
+
+        var invalid = invalidFields(panel);
+        invalid.forEach(function (item) { showError(item.name, item.message); });
+
+        var firstInvalid = invalid.length ? invalid[0].field : null;
 
         if (firstInvalid && typeof firstInvalid.focus === 'function') {
             // preventScroll: alan gizli bir atanın içindeyse odak, sayfayı beklenmedik
@@ -187,9 +214,48 @@
         }
     }
 
+    /**
+     * Adım numarasını geçmiş kaydına yazar (URL değişmez, yeni kayıt açılmaz).
+     * Sayfanın başka bir parçası state'e bir şey koyduysa korunur.
+     */
+    function rememberStep() {
+        try {
+            var state = {};
+            var existing = history.state;
+            if (existing && typeof existing === 'object') {
+                Object.keys(existing).forEach(function (key) { state[key] = existing[key]; });
+            }
+            state[STEP_KEY] = current;
+            history.replaceState(state, '');
+        } catch (e) { /* geçmiş API'si kapalıysa sihirbaz hafızasız çalışır */ }
+    }
+
     function goTo(step) {
         current = Math.min(Math.max(step, 1), total);
         render();
+        rememberStep();
+    }
+
+    /**
+     * Kayıtlı adıma döner — ama yalnız aradaki adımlar DOLUYSA. Tarayıcı alanları
+     * geri yüklemediyse (ör. sert yenileme) ilk eksik adımda durulur: kullanıcı boş
+     * bir formun özet adımına düşmez. Hiçbir zaman geriye götürmez.
+     */
+    function restoreStep() {
+        var saved = 0;
+        try { saved = Number(history.state && history.state[STEP_KEY]) || 0; } catch (e) { saved = 0; }
+        if (saved <= current) { return; }
+
+        var target = current;
+        var limit = Math.min(saved, total);
+        while (target < limit && isPanelComplete(panelAt(target))) {
+            target++;
+        }
+
+        if (target !== current) {
+            current = target;
+            render();
+        }
     }
 
     nextBtn.addEventListener('click', function () {
@@ -209,19 +275,78 @@
      */
     function jumpToServerError() {
         var invalid = form.querySelector('.field-validation-error, .input-validation-error');
-        if (!invalid) { return; }
+        if (!invalid) { return false; }
 
         var panel = invalid.closest('[data-wizard-panel]');
         if (panel) {
             current = Number(panel.getAttribute('data-wizard-panel'));
         }
+        return true;
     }
+
+    // --- Ayrılma uyarısı ---------------------------------------------------
+
+    /**
+     * Kullanıcının YAZDIĞI bir şey var mı? Yalnız "Input." alanlarına bakılır: bal
+     * küpü ("Website") ve KVKK kutusu bu adı taşımaz. Paket radyosu tek başına veri
+     * sayılmaz — bir tıkla geri gelir, uyarıyı hak etmez.
+     */
+    function hasTypedContent() {
+        var fields = form.querySelectorAll('input[name^="Input."], select[name^="Input."], textarea[name^="Input."]');
+        return Array.prototype.some.call(fields, function (field) {
+            if (field.type === 'radio' || field.type === 'checkbox' || field.type === 'hidden') { return false; }
+            return (field.value || '').trim() !== '';
+        });
+    }
+
+    var leaving = false;
+    var guardBound = false;
+
+    function onBeforeUnload(e) {
+        if (leaving) { return; }
+        // Özel metin YOK: tarayıcılar kendi cümlesini gösterir.
+        e.preventDefault();
+        e.returnValue = '';
+    }
+
+    function syncLeaveGuard() {
+        var needed = hasTypedContent();
+        if (needed === guardBound) { return; }
+        guardBound = needed;
+        if (needed) {
+            window.addEventListener('beforeunload', onBeforeUnload);
+        } else {
+            window.removeEventListener('beforeunload', onBeforeUnload);
+        }
+    }
+
+    form.addEventListener('input', syncLeaveGuard);
+    form.addEventListener('change', syncLeaveGuard);
+
+    // Formun KENDİ gönderimi uyarıya takılmasın. Doğrulama gönderimi iptal ederse
+    // (sayfada kalınır) koruma 1 sn sonra geri açılır.
+    form.addEventListener('submit', function () {
+        leaving = true;
+        setTimeout(function () { leaving = false; }, 1000);
+    });
 
     // JS çalıştığına göre adım arayüzünü göster.
     if (stepList) { stepList.hidden = false; }
     backBtn.hidden = false;
     nextBtn.hidden = false;
 
-    jumpToServerError();
+    var hadServerError = jumpToServerError();
     render();
+
+    // Sunucu bir alanı reddettiyse hatalı alanın adımı kazanır; kayıtlı adım yok sayılır.
+    // İki kez değerlendirilir: Chrome alanları ayrıştırma sırasında, Firefox / Safari
+    // load'dan sonra geri yükler (pageshow). bfcache'ten dönüşte adım zaten yerindedir.
+    if (!hadServerError) {
+        restoreStep();
+        window.addEventListener('pageshow', restoreStep);
+    }
+
+    // Sunucudan dolu dönen ya da tarayıcının geri yüklediği form da korunur.
+    syncLeaveGuard();
+    window.addEventListener('pageshow', syncLeaveGuard);
 })();

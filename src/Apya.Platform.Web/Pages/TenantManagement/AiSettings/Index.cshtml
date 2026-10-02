@@ -1,5 +1,6 @@
 @page "/TenantManagement/AiSettings"
 @model Apya.Platform.Web.Pages.TenantManagement.AiSettings.IndexModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     ViewBag.Title = "AI Ayarları";
     var usagePct = Model.Current?.MonthlyTokenQuota > 0
@@ -13,9 +14,14 @@
         <abp-card-title>Tenant AI Ayarları</abp-card-title>
     </abp-card-header>
     <abp-card-body>
+        @if (TempData["Saved"] != null)
+        {
+            <div class="alert alert-success" role="status">@L["Settings:Saved"]</div>
+        }
+
         <form method="get" class="mb-4">
-            <label class="form-label">Tenant:</label>
-            <select name="TenantId" class="form-select" onchange="this.form.submit()">
+            <label class="form-label" for="AiTenantSelect">Tenant:</label>
+            <select id="AiTenantSelect" name="TenantId" class="form-select" onchange="this.form.submit()">
                 @foreach (var t in Model.TenantOptions)
                 {
                     if (t.Id == Model.TenantId)
@@ -50,12 +56,25 @@
 
             <div class="mb-3">
                 <label asp-for="Input.PreferredProvider" class="form-label">AI Sağlayıcı</label>
-                <input asp-for="Input.PreferredProvider" class="form-control" />
+                @* Serbest metin değil: seçenekler servisin kabul ettiği kayıtlı sağlayıcılar (ADM-14).
+                   Değer listede yoksa boş yer tutucu basılır; [Required] açık seçim ister. *@
+                <select asp-for="Input.PreferredProvider" asp-items="Model.ProviderOptions" class="form-select">
+                    @if (Model.ProviderNeedsChoice)
+                    {
+                        <option value="">@L["AiSettings:Provider:Choose"]</option>
+                    }
+                </select>
+                <span asp-validation-for="Input.PreferredProvider" class="text-danger small"></span>
+                @if (Model.UnknownStoredProvider != null)
+                {
+                    <div class="form-text text-danger">@L["AiSettings:Provider:StoredUnknown", Model.UnknownStoredProvider]</div>
+                }
             </div>
 
             <div class="mb-3">
                 <label asp-for="Input.PreferredModel" class="form-label">Model</label>
                 <input asp-for="Input.PreferredModel" class="form-control" placeholder="gpt-4o-mini" />
+                <span asp-validation-for="Input.PreferredModel" class="text-danger small"></span>
             </div>
 
             <div class="mb-3">
@@ -64,6 +83,7 @@
                     <apya-hint text="Bu kiracının bir dönemde harcayabileceği toplam token. Dönem her ayın 1'inde başlar. Kotayı Sıfırla düğmesi yalnız sayacı sıfırlar, buradaki limiti değiştirmez." />
                 </label>
                 <input asp-for="Input.MonthlyTokenQuota" type="number" min="0" class="form-control" />
+                <span asp-validation-for="Input.MonthlyTokenQuota" class="text-danger small"></span>
             </div>
 
             <div class="form-check mb-3">
@@ -72,7 +92,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary">Kaydet</button>
-            <button type="submit" asp-page-handler="Reset" class="btn btn-warning ms-2"
+            <button type="submit" asp-page-handler="Reset" formnovalidate class="btn btn-warning ms-2"
                     onclick="return confirm('Bu tenant için aylık kullanımı sıfırlamak istediğinize emin misiniz?')">
                 Kotayı Sıfırla
             </button>

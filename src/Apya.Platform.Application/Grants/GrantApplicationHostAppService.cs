@@ -19,7 +19,7 @@ namespace Apya.Platform.Grants;
 /// salt-okunur izler). Yalnız host bağlamında çalışır.
 /// </summary>
 [Authorize(PlatformPermissions.Grants.Edit)]
-public class GrantApplicationHostAppService : ApplicationService, IGrantApplicationHostAppService
+public class GrantApplicationHostAppService : PlatformAppService, IGrantApplicationHostAppService
 {
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantDisbursementTranche, Guid> _trancheRepo;
@@ -87,23 +87,39 @@ public class GrantApplicationHostAppService : ApplicationService, IGrantApplicat
 
         var tenantId = await FindApplicationTenantIdAsync(input.ApplicationId);
         Guid callId;
+        bool stageChanged;
         using (_currentTenant.Change(tenantId))
         {
             var app = await _appRepo.GetAsync(input.ApplicationId);
             var previousAmount = app.ApprovedAmount;
+            var previousStage = app.Stage;
             app.AdvanceStage(input.Stage, input.ApprovedAmount);
             await _appRepo.UpdateAsync(app, autoSave: true);
             callId = app.GrantCallId;
+            stageChanged = previousStage != app.Stage;
 
             if (input.ApprovedAmount.HasValue && input.ApprovedAmount != previousAmount)
             {
                 await _activity.RecordAsync(tenantId, app.Id, GrantActivityKind.ApprovedAmountChanged,
                     $"{GrantActivityRecorder.Money(previousAmount)} → {GrantActivityRecorder.Money(input.ApprovedAmount)}");
             }
+
+            // Panodan sürüklemeyle aynı iz: gerçek aşama değişimi süreç akışına düşer.
+            if (stageChanged)
+            {
+                await _activity.RecordAsync(tenantId, app.Id, GrantActivityKind.StageMoved, L["Grants:Stage:" + app.Stage]);
+            }
         }
 
         // 6d · Aşamayı hangi ekrandan ilerlettiğimiz firmayı ilgilendirmiyor;
-        // pano ve 2d ile aynı bildirim buradan da çıkar.
+        // pano ve 2d ile aynı bildirim buradan da çıkar. Pencere satırın mevcut aşamasıyla açılır;
+        // yalnız tutar girilince aşama aynı kalır — bildirim/e-posta yalnız aşama gerçekten
+        // değiştiyse gider (GRH-V01).
+        if (!stageChanged)
+        {
+            return;
+        }
+
         await _notifyDispatcher.DispatchToTenantAsync(
             GrantNotificationTrigger.ApplicationStageChanged,
             tenantId,

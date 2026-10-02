@@ -345,6 +345,43 @@ public class RegistrationRequestPages_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// Hesap düzeninin kahraman sütunundaki yasal bağlantılar YENİ SEKMEDE açılmalı.
+    /// Düzendeki her sayfada bir form var; aynı sekmede açılan "Aydınlatma Metni"
+    /// kayıt talebi sihirbazında yarıda kalan bilgileri siliyordu (ACC-08).
+    /// </summary>
+    [Theory]
+    [InlineData("/Account/RegistrationRequest")]
+    [InlineData("/Account/Login")]
+    public async Task Hesap_duzenindeki_yasal_baglantilar_yeni_sekmede_acilir(string url)
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync(url));
+
+        // Bağlantılar adresleriyle seçilir (sayfadaki TÜM yasal bağlantılar: düzen +
+        // varsa formun kendi KVKK bağlantısı) — hiçbiri aynı sekmede açılmamalı.
+        var links = doc.DocumentNode.SelectNodes(
+            "//a[contains(@href,'aydinlatma-metni') or contains(@href,'gizlilik-politikasi')]");
+
+        links.ShouldNotBeNull("Hesap düzeninde yasal bağlantılar basılmadı.");
+
+        var notice = 0;
+        var privacy = 0;
+
+        foreach (var link in links)
+        {
+            var href = link.GetAttributeValue("href", "");
+            if (href.Contains("aydinlatma-metni")) { notice++; }
+            if (href.Contains("gizlilik-politikasi")) { privacy++; }
+
+            link.GetAttributeValue("target", "").ShouldBe("_blank", $"'{href}' aynı sekmede açılıyor");
+            link.GetAttributeValue("rel", "").ShouldContain("noopener", customMessage: $"'{href}' rel=noopener taşımıyor");
+        }
+
+        notice.ShouldBeGreaterThan(0, "Aydınlatma Metni bağlantısı basılmadı.");
+        privacy.ShouldBeGreaterThan(0, "Gizlilik Politikası bağlantısı basılmadı.");
+    }
+
+    /// <summary>
     /// Aynı e-postayla ikinci gönderim formda ALAN HATASI olarak dönmeli.
     /// <para>
     /// Ölçülen şey domain kuralı değil (o <c>DuplicateEmailAccount_Tests</c>'te);

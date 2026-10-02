@@ -256,10 +256,22 @@ public static class PlatformDomainErrorCodes
     public const string FormBlocksOutOfDate = "Platform:DynamicAssets:FormBlocksOutOfDate";
     public const string WebhookTargetUrlNotAllowed = "Platform:DynamicAssets:WebhookTargetUrlNotAllowed";
 
+    // --- Takvim (Calendars) Modülü ---
+    /// <summary>
+    /// iCal abonelik adresi http/https değil ya da yerel/özel ağa çıkıyor. SSRF denetimi
+    /// <c>WebhookUrlGuard</c> ile ortak; kullanıcıya dönen metin takvimin kendi metni.
+    /// </summary>
+    public const string CalendarIcalUrlNotAllowed = "Platform:Calendar:IcalUrlNotAllowed";
+
     // --- AI Modülü ---
     public const string AiProviderUnavailable = "Platform:Ai:ProviderUnavailable";
     public const string AiResponseInvalid = "Platform:Ai:ResponseInvalid";
     public const string AiQuotaExceeded = "Platform:Ai:QuotaExceeded";
+    /// <summary>
+    /// Kiracı AI ayarında kayıtlı olmayan sağlayıcı adı gönderildi; geçerli adlar kayıtlı
+    /// <c>INamedAiProvider.Name</c> değerleridir.
+    /// </summary>
+    public const string AiProviderUnknown = "Platform:Ai:ProviderUnknown";
 
     // --- AI Değerlendirme Merkezi (AI Evaluation Center) ---
     public const string PromptCodeAlreadyExists = "Platform:Ai:PromptCodeAlreadyExists";

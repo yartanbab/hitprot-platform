@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useId, useRef, useState } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { TaskPrivacyDialogV3 } from './TaskPrivacyDialogV3';
 import { STATUS_META, SELECTABLE_STATUSES, statusOf } from '../taskMetaV3';
 import { dialogPortalContainer } from '../../../lib/dom/dialogPortalContainer';
+import { t } from '../../../lib/i18n';
 
 /* Popover.Root'lara `modal` ŞART: içerik body'ye portal edildiği için non-modal
    popover, Dialog'un focus trap'inin DIŞINDA kalıyor. Açılışta odağı alır almaz trap
@@ -55,6 +56,8 @@ export function TaskDetailHeaderV3({
     onFieldChange = () => {},
     statusValue,
     titleValue,
+    /* Doğrulama hatası (useTaskForm.errors.title): başlığın altında gösterilir. */
+    titleError,
     isPrivateValue,
     isFavorite,
     onToggleFavorite,
@@ -82,6 +85,7 @@ export function TaskDetailHeaderV3({
     const [rootEl, setRootEl] = useState(null);
     const [menuOpen, setMenuOpen] = useState(false);
     const titleRef = useRef(null);
+    const titleErrorId = useId();
 
     /* Popover'ların portal edildiği kap; `collisionBoundary` için de gerekli. */
     const portalContainer = dialogPortalContainer(rootEl);
@@ -302,18 +306,30 @@ export function TaskDetailHeaderV3({
                 kadar dar kalıyordu ve dar ekranda iki-üç satıra kırılıyordu. Kendi
                 satırına alınınca modalın tamamı kadar genişler. */}
             <div className="flex items-center gap-2 min-w-0 mt-[9px]">
-                {/* contentEditable + onInput yerine onBlur: her tuş vuruşunda form
-                    state'i güncellenirse React yeniden render eder ve caret metnin
-                    başına atlar. Değer yalnız odak çıkışında forma yazılır; bu yüzden
-                    initial content'i React değil DOM tutar (suppressContentEditableWarning). */}
+                {/* Değer HER TUŞTA forma yazılır (onInput): yalnız odak çıkışında yazılsaydı
+                    başlık odaktayken Esc'e basınca form "temiz" görünür, modal uyarısız
+                    kapanır, yazılan kaybolurdu. İmleç oynamaz, çünkü çocuk metin
+                    `titleValue` = task.title'dır (forma bağlı DEĞİL): React her tuşta metni
+                    yeniden yazmaz, içeriği DOM tutar (suppressContentEditableWarning).
+                    titleValue forma bağlanırsa imleç her tuşta başa atlar. */}
                 <div
                     ref={titleRef}
+                    role="textbox"
+                    aria-label={t('Tasks:Detail:TitleLabel', 'Görev başlığı')}
+                    aria-readonly={!canEdit || undefined}
+                    aria-invalid={Boolean(titleError) || undefined}
+                    aria-describedby={titleError ? titleErrorId : undefined}
                     contentEditable={canEdit}
                     suppressContentEditableWarning
                     spellCheck={false}
+                    onInput={canEdit ? (e) => onFieldChange('title', e.currentTarget.textContent.trim()) : undefined}
                     onBlur={canEdit ? (e) => onFieldChange('title', e.currentTarget.textContent.trim()) : undefined}
-                    className={`flex-1 min-w-0 text-[24px] lt-560:text-[20px] font-extrabold tracking-[-.025em] leading-[1.2] text-text-primary px-2 -ml-2 py-[3px] rounded-[9px] border border-transparent ${
-                        canEdit ? 'cursor-text hover:bg-neutral-subtle hover:border-subtle focus:bg-neutral-subtle focus:border-focus focus:shadow-focus focus:outline-none' : ''
+                    className={`flex-1 min-w-0 text-[24px] lt-560:text-[20px] font-extrabold tracking-[-.025em] leading-[1.2] text-text-primary px-2 -ml-2 py-[3px] rounded-[9px] border ${
+                        titleError ? 'border-negative' : 'border-transparent'
+                    } ${
+                        canEdit
+                            ? `cursor-text hover:bg-neutral-subtle focus:bg-neutral-subtle focus:shadow-focus focus:outline-none ${titleError ? '' : 'hover:border-subtle focus:border-focus'}`
+                            : ''
                     }`}
                 >
                     {titleValue ?? task.title ?? 'Başlıksız görev'}
@@ -330,6 +346,9 @@ export function TaskDetailHeaderV3({
                     <i className={`fa-${isFavorite ? 'solid' : 'regular'} fa-star text-[15px]`} />
                 </button>
             </div>
+            {titleError && (
+                <p id={titleErrorId} role="alert" className="mt-1 mb-0 text-[12px] font-semibold text-negative">{titleError}</p>
+            )}
         </header>
     );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Badge, Button, buttonVariants, EmptyState, Hint, Input, SkeletonList } from '../../components/ui';
 import { abpAppPath } from '../api';
 import { cn, fmt, fileVisual, FILL_SOURCE_META, STATUS_META } from '../format';
@@ -56,14 +56,51 @@ function valueOf(field) {
   return field.valueText ?? '';
 }
 
+/** Sunucu kaydının düzenlenebilir kopyası (alanlar ayrı nesne: taslak kaydı değiştirmesin). */
+function toDraft(detail) {
+  return { ...detail, fields: (detail.fields || []).map((f) => ({ ...f })) };
+}
+
+/**
+ * Taslağın "kirli" sayılması için karşılaştırılan iz — yalnız panelde DÜZENLENEBİLEN alanlar.
+ * Tarihler ilk 10 karakterle: sunucu ISO (2026-05-01T00:00:00), girdi YYYY-AA-GG verir;
+ * boş metin ile null aynıdır (girdiler boşaltılınca null yazar).
+ */
+function draftSignature(d) {
+  const day = (value) => (value ?? '').slice(0, 10);
+  return JSON.stringify([
+    d.documentTypeId || null,
+    d.amount ?? null,
+    day(d.documentDate),
+    d.periodCode || null,
+    (d.fields || []).map((f) => [f.fieldId, f.valueText || null, f.valueNumber ?? null, day(f.valueDate)]),
+  ]);
+}
+
 export function DetailPanel({
   detail, loading, canEdit, onSave, onDelete, saving, documentTypes,
+  /* Taslak ve kirli durumu üst bileşene bildirilir ({ draft, dirty }): belge / sekme
+     değişiminde ve sayfadan ayrılırken kaydedilmemiş değişiklik sorulsun (DOC-09). */
+  onDraftChange,
 }) {
   const [draft, setDraft] = useState(null);
 
+  /* Kimlik değil NESNE değişince sıfırlanır: kayıt sonrası yeniden çekilen kayıt da taslağa
+     işlenir (kirli bayrağı iner; belge tipi değiştiyse yeni tipin alanları gelir). */
   useEffect(() => {
-    setDraft(detail ? { ...detail, fields: (detail.fields || []).map((f) => ({ ...f })) } : null);
-  }, [detail?.id]);
+    setDraft(detail ? toDraft(detail) : null);
+  }, [detail]);
+
+  const dirty = Boolean(detail && draft) && draft.id === detail.id
+    && draftSignature(draft) !== draftSignature(detail);
+
+  const onDraftChangeRef = useRef(onDraftChange);
+  onDraftChangeRef.current = onDraftChange;
+  useEffect(() => {
+    onDraftChangeRef.current?.({ draft, dirty });
+  }, [draft, dirty]);
+  /* Panel sökülünce (sekme değişimi) taslak da gider: üst bileşen temiz bilsin. */
+  useEffect(() => () => onDraftChangeRef.current?.({ draft: null, dirty: false }), []);
 
   if (loading) {
     return <div className="apya-md-detail"><SkeletonList rows={6} /></div>;

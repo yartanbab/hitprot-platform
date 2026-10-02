@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
+import { t } from '../../lib/i18n';
 
 const EMPTY_VALUES = {
     title: '', description: '', startDate: '', dueDate: '',
@@ -74,6 +75,15 @@ export function useTaskForm(task) {
 
     const setField = useCallback((name, value) => {
         setValues((v) => ({ ...v, [name]: value }));
+        /* Düzeltilen alanın altında eski hata kalmasın. Son tarih hatası başlangıca
+           bağlıdır: başlangıç değişince o da kalkar (Kaydet yeniden doğrular). */
+        setErrors((e) => {
+            if (!e[name] && !(name === 'startDate' && e.dueDate)) return e;
+            const next = { ...e };
+            delete next[name];
+            if (name === 'startDate') delete next.dueDate;
+            return next;
+        });
     }, []);
 
     const isDirty = useMemo(
@@ -83,10 +93,10 @@ export function useTaskForm(task) {
 
     const validate = useCallback(() => {
         const next = {};
-        if (!values.title.trim()) next.title = 'Başlık zorunlu.';
-        if (!values.startDate) next.startDate = 'Başlangıç tarihi zorunlu.';
+        if (!values.title.trim()) next.title = t('Tasks:Detail:Validation:TitleRequired', 'Başlık zorunlu.');
+        if (!values.startDate) next.startDate = t('Tasks:Detail:Validation:StartDateRequired', 'Başlangıç tarihi zorunlu.');
         if (values.dueDate && values.startDate && values.dueDate < values.startDate) {
-            next.dueDate = 'Bitiş tarihi başlangıçtan önce olamaz.';
+            next.dueDate = t('Tasks:Detail:Validation:DueBeforeStart', 'Son tarih başlangıç tarihinden önce olamaz.');
         }
         setErrors(next);
         return Object.keys(next).length === 0;

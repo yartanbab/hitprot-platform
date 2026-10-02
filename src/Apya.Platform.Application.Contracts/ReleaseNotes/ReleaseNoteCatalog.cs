@@ -31,7 +31,7 @@ public static class ReleaseNoteCatalog
             title: "Görev yetkileri her ekranda aynı; kaydetmek başka bilgileri silmiyor; ekranlar " +
                    "değişiklikleri hemen gösteriyor; fatura, gider ve cari ekranları yeniden çalışıyor; " +
                    "tutarlar yazdığınız gibi kaydediliyor; hata ve yetki durumları açıkça anlatılıyor; " +
-                   "bildirim zamanları doğru görünüyor",
+                   "bildirim zamanları doğru görünüyor; kaydetmeden çıkarken soruluyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Görevleri yalnız sorumluları değiştirebiliyor",
@@ -318,7 +318,46 @@ public static class ReleaseNoteCatalog
                 "bildirime ya da çarpısına basınca pencere kapanıyordu. Görev detayı bu yüzden beklenmedik " +
                 "biçimde kapanıyor, Masraf Yakala'da forma yazdıklarınız siliniyordu. Bildirimler artık " +
                 "pencere açıkken ekranın üst ortasında çıkıyor; bildirime ya da çarpısına basmak pencereyi " +
-                "kapatmıyor, yazdıklarınız yerinde kalıyor.")
+                "kapatmıyor, yazdıklarınız yerinde kalıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev detayında ve Dokümanlar'da kaydetmeden çıkarken soruluyor",
+                "Görev detayında değişiklik yaptıktan sonra Vazgeç'e, çarpıya ya da Esc'e bastığınızda hiçbir " +
+                "şey olmuyor, pencere açık kalıyordu. Artık 'Kaydedilmemiş değişiklikleriniz var' penceresi " +
+                "çıkıyor: düzenlemeye devam edebilir, değişiklikleri atabilir ya da kaydedip çıkabilirsiniz. " +
+                "Kayıt hata verirse pencerede kilitli kalmıyorsunuz; değişiklikleri atıp çıkabiliyorsunuz. " +
+                "Zorunlu bir alan eksikse hata ilgili alanın altında yazıyor. Dokümanlar'da bir belgenin " +
+                "bilgilerini değiştirip kaydetmeden başka belgeye ya da sekmeye geçtiğinizde de aynı pencere " +
+                "çıkıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Pencereler bir şey yazmadığınızda 'kaydedilmemiş değişiklik' diye sormuyor",
+                "Yeni Gider, Yeni Gelir ve Yeni Kur gibi tutar alanı olan pencereler, hiçbir şey yazmadan " +
+                "Esc'e ya da Vazgeç'e bastığınızda da 'Kaydedilmemiş değişiklikler var' diye soruyordu. Artık " +
+                "yalnız gerçekten bir şey değiştirdiyseniz soruluyor; soru penceresinde Enter 'Düzenlemeye " +
+                "devam et'i seçtiği için yazdıklarınız yanlışlıkla silinmiyor. Pencerede yazı varken sayfayı " +
+                "yenilemeye ya da geri gitmeye çalıştığınızda tarayıcı uyarıyor. Pencere kapandığında klavye " +
+                "odağı pencereyi açtığınız düğmeye dönüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Takvim aboneliğinde geçersiz adres anlaşılır biçimde bildiriliyor",
+                "Takvim eşitleme panelinde iCal adresi yerine geçersiz bir metin yazıldığında 'Bağlantıyı " +
+                "dene' İngilizce teknik bir hata gösteriyordu. Artık adresin http:// ya da https:// ile " +
+                "başlaması gerektiği alanın altında yazıyor, geçersiz adreste 'Takvimi ekle' kapalı kalıyor ve " +
+                "hata Türkçe gösteriliyor. Toplu ertelemede taşınamayan görevin nedeni de açıkça yazıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Proje kategorisini düzenlemek durumunu ve sırasını değiştirmiyor",
+                "Ayarlar'da pasif bir proje kategorisinin adını ya da rengini değiştirdiğinizde kategori " +
+                "kendiliğinden etkinleşiyor ve listenin sonuna taşınıyordu. Artık yalnız değiştirdiğiniz bilgi " +
+                "kaydediliyor. Proje ekibinde bir üyenin rolünü değiştirme isteği reddedilirse seçim eski " +
+                "role dönüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Hibe başvurusunda aşama değişmeden 'aşama değişikliği' bildirimi gelmiyor",
+                "Danışmanınız hibe başvurunuzda yalnız onaylanan tutarı güncellediğinde de 'başvurunuzun " +
+                "aşaması değişti' bildirimi ve e-postası geliyordu. Bildirim artık yalnız aşama gerçekten " +
+                "değiştiğinde gönderiliyor.")
         ),
 
         new ReleaseNote(

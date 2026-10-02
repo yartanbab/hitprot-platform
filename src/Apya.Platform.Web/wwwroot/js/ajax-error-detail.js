@@ -31,7 +31,8 @@
      yokken ya da yeniden girişten sonra) ve BAŞKA kullanıcının girişi ABP'ye bırakılır:
      sekme yenilenir, önceki kullanıcının verisi ekranda kalmaz.
    Oturum kaybı yollarında otomatik yenileme/yönlendirme yok; "Sayfayı yenile" yalnız
-   kullanıcı basınca (hardReload).
+   kullanıcı basınca (hardReload). "Giriş sayfasına git" ve "Sayfayı yenile" kirli-form
+   korumasına (apya-dirty-guard.js) izin verir: tarayıcı ikinci kez sormaz.
 
    KANAL KURALI (Faz 4 kararı 2)
    • İşlem (kaydet/sil/gönder) hatası → ABP penceresi, tek kez. Çağıran yalnız
@@ -52,7 +53,8 @@
      alırsa pencere yine açılmaz; ölü tık olmasın diye engellemeyen bir hatırlatma
      (abp.notify.warn, 30 sn'de en çok bir kez) gösterilir.
    • Oturum (ya da "başka kullanıcı") penceresi açıkken abp.message.error/warn/info
-     pencere açmaz: SweetAlert tekil, çağıranın penceresi merkezi pencereyi ezerdi.
+     pencere açmaz; confirm false, prompt null (iptal) döner: SweetAlert tekil,
+     çağıranın penceresi merkezi pencereyi ezerdi.
      ABP'nin kendi pencereleri de Radix/Bootstrap modalından yalıtılır
      (sweetAlert.config.default: willOpen + keydownListenerCapture).
 
@@ -68,6 +70,7 @@
    apya.session.verify([{ quiet }])      → Promise<'expired' | 'user-changed' |
                                             'retry' | 'persist' | 'refreshed' | 'network'>
    apya.session.loginUrl()               → /Account/Login?ReturnUrl=…(&ReturnUrlHash=…)
+   apya.session.isDialogOpen()           → oturum ya da "başka kullanıcı" penceresi açık mı
    React karşılığı: dynamic-assets/src/lib/api/abpErrors.js (+ httpClient 401/400).
 
    Global demette ApplicationConfigurationScript'ten ÖNCE yüklenir: abp.currentUser
@@ -253,7 +256,10 @@
     }
 
     window.apya.ajaxErrors = { describe: describe, message: message, wasShown: wasShown, notify: notify };
-    window.apya.session = { expired: expired, verify: verify, loginUrl: loginUrl };
+    window.apya.session = {
+        expired: expired, verify: verify, loginUrl: loginUrl,
+        isDialogOpen: function () { return isOpen('session') || isOpen('user-changed'); }
+    };
 
     /* ---------- Son başarısız istek: handleErrorStatusCode yalnız durum kodu alır ---------- */
     var lastFailure = null;
@@ -455,6 +461,20 @@
                 return original.apply(this, arguments);
             };
         });
+        // Onay ve soru da aynı: açılmaz, "vazgeçildi" sayılır (confirm false, prompt null).
+        // Geri çağrı da çağrılır: onu Promise'e saran çağıran askıda kalmaz.
+        ['confirm', 'prompt'].forEach(function (type) {
+            var original = abp.message[type];
+            abp.message[type] = function (message, second, third) {
+                if (isOpen('session') || isOpen('user-changed')) {
+                    var callback = typeof second === 'function' ? second : third;
+                    var value = type === 'confirm' ? false : null;
+                    if (typeof callback === 'function') { callback(value); }
+                    return $.Deferred().resolve(value);
+                }
+                return original.apply(this, arguments);
+            };
+        });
     }
 
     function showDialog(kind, options, onDestroy) {
@@ -507,8 +527,16 @@
             }
         } catch (e) { /* yoksay */ }
         return Promise.all(work).catch(function () { /* yoksay */ }).then(function () {
+            // İzin kısa ömürlü: temizlikten SONRA, yenilemenin hemen öncesinde.
+            allowLeave();
             location.reload();
         });
+    }
+
+    // Kullanıcı ayrılmayı bu pencerede bilerek seçti (metin kaybı zaten söylüyor): kirli-form
+    // koruması tarayıcı uyarısıyla ikinci kez sormaz. Koruma bu dosyadan SONRA yüklenir.
+    function allowLeave() {
+        if (window.apya.dirtyGuard) { window.apya.dirtyGuard.allowUnload(); }
     }
 
     /* ---------- Oturum ---------- */
@@ -611,6 +639,7 @@
         }).then(function (result) {
             if (!result) { return; }
             if (newTab ? result.isDenied : result.isConfirmed) {
+                allowLeave();
                 location.assign(loginUrl());
             } else if (result.dismiss === 'cancel' || result.dismiss === 'esc') {
                 dismissedByUser = true;

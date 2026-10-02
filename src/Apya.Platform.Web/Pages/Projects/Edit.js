@@ -78,26 +78,8 @@ $(function () {
         });
     }
 
-    // ------------------------------------------------- GENEL ONAY DİYALOĞU
-    // data-confirm taşıyan submit düğmeleri önce sorar. abp.message.confirm
-    // yoksa (çok eski tarayıcı/JS hatası) form doğrudan gönderilir.
-    $page.on('click', 'button[data-confirm]', function (e) {
-        var $btn = $(this);
-        if ($btn.data('confirmed')) { return; }
-
-        e.preventDefault();
-        var message = String($btn.data('confirm'));
-
-        if (!window.abp || !abp.message || !abp.message.confirm) {
-            $btn.data('confirmed', true).closest('form').trigger('submit');
-            return;
-        }
-
-        abp.message.confirm(message).then(function (confirmed) {
-            if (!confirmed) { return; }
-            $btn.data('confirmed', true).closest('form').trigger('submit');
-        });
-    });
+    // data-confirm taşıyan submit düğmelerini (kapağı kaldır, dosyayı sil) genel delege sorar:
+    // wwwroot/js/apya-confirm.js.
 
     // ---------------------------------------------------- KAPAK ÖNİZLEMESİ
     // Yüklemeden ÖNCE seçilen görseli göster; yanlış dosya seçimi sunucuya

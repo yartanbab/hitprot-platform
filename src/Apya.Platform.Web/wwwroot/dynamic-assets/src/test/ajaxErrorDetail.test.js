@@ -57,15 +57,61 @@ function installAbp({ authenticated = true, userId = 'u1' } = {}) {
         return $dfd;
     });
 
+    // abp-sweetalert2.js confirm / prompt ile aynı: ikinci argüman başlık (prompt'ta seçenek
+    // nesnesi de olabilir) ya da geri çağrı; dönüş, sonuçla çözülen $.Deferred.
+    abpOriginals.confirm = vi.fn((message, titleOrCallback, callback) => {
+        const config = abp.libs.sweetAlert.config;
+        const userOpts = { text: message };
+        if (typeof titleOrCallback === 'function') { callback = titleOrCallback; } else if (titleOrCallback) { userOpts.title = titleOrCallback; }
+        const $dfd = $.Deferred();
+        Swal.fire(Object.assign({}, config.default, config.confirm, userOpts)).then((result) => {
+            if (callback) { callback(result.value); }
+            $dfd.resolve(result.value);
+        });
+        return $dfd;
+    });
+    abpOriginals.prompt = vi.fn((message, titleOrOptionsOrCallback, callback) => {
+        const config = abp.libs.sweetAlert.config;
+        let userOpts = { html: message };
+        if (typeof titleOrOptionsOrCallback === 'function') {
+            callback = titleOrOptionsOrCallback;
+        } else if (typeof titleOrOptionsOrCallback === 'string') {
+            userOpts.title = titleOrOptionsOrCallback;
+        } else if (titleOrOptionsOrCallback) {
+            userOpts = Object.assign(userOpts, titleOrOptionsOrCallback);
+        }
+        const $dfd = $.Deferred();
+        Swal.fire(Object.assign({}, config.default, config.prompt, userOpts)).then((result) => {
+            const value = result && result.isConfirmed ? result.value : null;
+            if (callback) { callback(value); }
+            $dfd.resolve(value);
+        });
+        return $dfd;
+    });
+
     window.abp = {
         appPath: '/',
         currentUser: { isAuthenticated: authenticated, id: authenticated ? userId : null },
         localization: { getResource: () => (key) => key },
         // abp.js ile aynı
         utils: { htmlEscape: (html) => html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') },
-        libs: { sweetAlert: { config: { default: { confirmButtonText: 'Tamam' }, error: { icon: 'error' }, warn: { icon: 'warning' }, info: { icon: 'info' } } } },
+        libs: {
+            sweetAlert: {
+                config: {
+                    default: { confirmButtonText: 'Tamam' },
+                    error: { icon: 'error' },
+                    warn: { icon: 'warning' },
+                    info: { icon: 'info' },
+                    confirm: { icon: 'warning', title: 'Emin misiniz?', confirmButtonText: 'Evet', showCancelButton: true, reverseButtons: true },
+                    prompt: { icon: 'question', input: 'text', showCancelButton: true, reverseButtons: true }
+                }
+            }
+        },
         notify: { error: vi.fn(), success: vi.fn(), warn: vi.fn() },
-        message: { error: showMessage('error'), warn: showMessage('warn'), info: showMessage('info') },
+        message: {
+            error: showMessage('error'), warn: showMessage('warn'), info: showMessage('info'),
+            confirm: abpOriginals.confirm, prompt: abpOriginals.prompt
+        },
         ajax: {
             defaultError: { message: 'Bir hata oluştu!', details: 'Hata detayı sunucu tarafından gönderilmedi.' },
             defaultError401: { message: 'Giriş yapılmamış!', details: 'Bu işlem için giriş yapmalısınız.' },
@@ -110,8 +156,8 @@ function installJquery() {
             const $dfd = {
                 resolved: false,
                 promise: pending,
-                resolve() { $dfd.resolved = true; callbacks.splice(0).forEach((cb) => cb()); return $dfd; },
-                done(cb) { if ($dfd.resolved) { cb(); } else { callbacks.push(cb); } return $dfd; }
+                resolve(value) { $dfd.resolved = true; $dfd.value = value; callbacks.splice(0).forEach((cb) => cb(value)); return $dfd; },
+                done(cb) { if ($dfd.resolved) { cb($dfd.value); } else { callbacks.push(cb); } return $dfd; }
             };
             return $dfd;
         }
@@ -385,6 +431,22 @@ describe('gövdesiz 400 + güvenli olmayan yöntem: bayat anahtar mı, oturum ka
         expect(reload).toHaveBeenCalledTimes(1);
     });
 
+    it('"Sayfayı yenile": kirli-form korumasına yenilemeden hemen ÖNCE izin verilir (tarayıcı ikinci kez sormaz)', async () => {
+        const order = [];
+        const reload = vi.fn(() => order.push('reload'));
+        vi.stubGlobal('location', { ...window.location, hostname: 'localhost', reload, assign: vi.fn() });
+        window.apya.dirtyGuard = { allowUnload: vi.fn(() => order.push('allow')) };
+        probeReturns({ isAuthenticated: true, id: 'baska' });
+        abpAjaxFails(request({ status: 400, method: 'DELETE' }));
+        await flush();
+
+        dialogs[0].close({ isConfirmed: true });
+        await flush();
+
+        expect(order).toEqual(['allow', 'reload']);
+        delete window.apya.dirtyGuard;
+    });
+
     it('yoklama anonim: oturum penceresi', async () => {
         probeReturns({ isAuthenticated: false });
 
@@ -488,6 +550,35 @@ describe('401: oturum düştü', () => {
         await flush();
 
         expect(assign).toHaveBeenCalledWith('/Account/Login?ReturnUrl=%2FAccount%2FManage');
+    });
+
+    // Pencere metni kaybı zaten söylüyor: kirli-form koruması (apya-dirty-guard.js, bu dosyadan
+    // SONRA yüklenir) tarayıcı uyarısıyla ikinci kez sormasın.
+    it('"Giriş sayfasına git": kirli-form korumasına yönlendirmeden ÖNCE izin verilir', async () => {
+        const order = [];
+        const assign = vi.fn(() => order.push('assign'));
+        vi.stubGlobal('location', { ...window.location, pathname: '/Projects/Edit/1', search: '', hash: '', assign });
+        window.apya.dirtyGuard = { allowUnload: vi.fn(() => order.push('allow')) };
+        abpAjaxFails(request({ status: 401 }));
+
+        sessionDialogs()[0].close({ isDenied: true });
+        await flush();
+
+        expect(order).toEqual(['allow', 'assign']);
+        delete window.apya.dirtyGuard;
+    });
+
+    it('"Kapat" ve "Yeni sekmede giriş yap" izin vermez: sayfada kalınıyor', async () => {
+        vi.spyOn(window, 'open').mockImplementation(() => null);
+        window.apya.dirtyGuard = { allowUnload: vi.fn() };
+        abpAjaxFails(request({ status: 401 }));
+
+        sessionDialogs()[0].opts.preConfirm();
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+
+        expect(window.apya.dirtyGuard.allowUnload).not.toHaveBeenCalled();
+        delete window.apya.dirtyGuard;
     });
 
     it('kurulu PWA: yeni sekme düğmesi yok, tek yol giriş sayfası', () => {
@@ -818,6 +909,136 @@ describe('oturum penceresi açıkken ABP mesajı onu ezmez (SweetAlert tekil)', 
     });
 });
 
+describe('oturum penceresi açıkken onay / soru da onu ezmez: "vazgeçildi" sayılır (CON-02)', () => {
+    it('abp.message.confirm(mesaj, başlık, geriÇağrı): pencere açılmaz, geri çağrı ve Deferred false', () => {
+        abpAjaxFails(request({ status: 401 }));
+        const callback = vi.fn();
+        const done = vi.fn();
+
+        abp.message.confirm('Görev silinsin mi?', 'Emin misiniz?', callback).done(done);
+
+        expect(dialogs).toHaveLength(1);
+        expect(sessionDialogs()[0].closed).toBe(false);
+        expect(abpOriginals.confirm).not.toHaveBeenCalled();
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith(false);
+        expect(done).toHaveBeenCalledWith(false);
+    });
+
+    it('abp.message.confirm(mesaj, geriÇağrı) imzası (ABP ModalManager\'ın kendi onayı) da aynı', () => {
+        abpAjaxFails(request({ status: 401 }));
+        const callback = vi.fn();
+        const done = vi.fn();
+
+        abp.message.confirm('Kaydedilmemiş değişiklikler var.', callback, false).done(done);
+
+        expect(dialogs).toHaveLength(1);
+        expect(callback).toHaveBeenCalledWith(false);
+        expect(done).toHaveBeenCalledWith(false);
+    });
+
+    it('geri çağrısız çağrı: yalnız Deferred false ile çözülür', () => {
+        abpAjaxFails(request({ status: 401 }));
+        const done = vi.fn();
+
+        abp.message.confirm('Kaynak silinsin mi?').done(done);
+
+        expect(dialogs).toHaveLength(1);
+        expect(done).toHaveBeenCalledWith(false);
+    });
+
+    it('abp.message.prompt: geri çağrı ve Deferred null (iptal) — seçenek nesneli ve düz imzada', () => {
+        abpAjaxFails(request({ status: 401 }));
+        const withOptions = vi.fn();
+        const plain = vi.fn();
+        const done = vi.fn();
+
+        abp.message.prompt('Ret gerekçesi', { inputPlaceholder: 'Gerekçe' }, withOptions).done(done);
+        abp.message.prompt('Ret gerekçesi', plain);
+
+        expect(dialogs).toHaveLength(1);
+        expect(sessionDialogs()[0].closed).toBe(false);
+        expect(abpOriginals.prompt).not.toHaveBeenCalled();
+        expect(withOptions).toHaveBeenCalledWith(null);
+        expect(plain).toHaveBeenCalledWith(null);
+        expect(done).toHaveBeenCalledWith(null);
+    });
+
+    it('"başka kullanıcı" penceresi açıkken de açılmaz', async () => {
+        probeReturns({ isAuthenticated: true, id: 'baska' });
+        abpAjaxFails(request({ status: 400, method: 'DELETE' }));
+        await flush();
+        const callback = vi.fn();
+
+        abp.message.confirm('Silinsin mi?', callback);
+
+        expect(dialogs).toHaveLength(1);
+        expect(dialogs[0].opts.text).toContain('başka bir kullanıcıyla giriş yapılmış');
+        expect(callback).toHaveBeenCalledWith(false);
+    });
+
+    it('pencere kapalıyken confirm / prompt özgün fonksiyona gider (argümanlar aynen)', async () => {
+        const callback = vi.fn();
+        const options = { inputPlaceholder: 'Gerekçe' };
+
+        abp.message.confirm('Kaynak silinsin mi?', 'Emin misiniz?', callback);
+        expect(abpOriginals.confirm).toHaveBeenCalledWith('Kaynak silinsin mi?', 'Emin misiniz?', callback);
+        expect(dialogs).toHaveLength(1);
+        expect(dialogs[0].opts).toMatchObject({ icon: 'warning', text: 'Kaynak silinsin mi?', showCancelButton: true });
+
+        dialogs[0].close({ isConfirmed: true, value: true });
+        await flush();
+        expect(callback).toHaveBeenCalledWith(true);
+
+        abp.message.prompt('Ret gerekçesi', options, callback);
+        expect(abpOriginals.prompt).toHaveBeenCalledWith('Ret gerekçesi', options, callback);
+        expect(dialogs[1].opts).toMatchObject({ input: 'text', inputPlaceholder: 'Gerekçe' });
+    });
+
+    it('oturum penceresi "Kapat"la kapatıldıktan sonra onay yine açılır', async () => {
+        abpAjaxFails(request({ status: 401 }));
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+
+        abp.message.confirm('Silinsin mi?');
+
+        expect(abpOriginals.confirm).toHaveBeenCalledTimes(1);
+        expect(dialogs[dialogs.length - 1].opts.text).toBe('Silinsin mi?');
+    });
+});
+
+describe('apya.session.isDialogOpen: ortak onay (apya.confirm) merkezi pencereyi ezmesin', () => {
+    it('pencere yokken false', () => {
+        expect(apya.session.isDialogOpen()).toBe(false);
+    });
+
+    it('oturum penceresi açıkken true; kapanınca false', async () => {
+        abpAjaxFails(request({ status: 401 }));
+        expect(apya.session.isDialogOpen()).toBe(true);
+
+        sessionDialogs()[0].close({ isDismissed: true, dismiss: 'cancel' });
+        await flush();
+        expect(apya.session.isDialogOpen()).toBe(false);
+    });
+
+    it('"başka kullanıcı" penceresinde true', async () => {
+        probeReturns({ isAuthenticated: true, id: 'baska' });
+        abpAjaxFails(request({ status: 400, method: 'DELETE' }));
+        await flush();
+
+        expect(apya.session.isDialogOpen()).toBe(true);
+    });
+
+    it('güvenlik anahtarı ("tekrar deneyin") penceresinde false: o pencere ezilebilir', async () => {
+        abpAjaxFails(request({ status: 400, method: 'POST' }));
+        await flush();
+
+        expect(dialogs).toHaveLength(1);
+        expect(dialogs[0].opts.text).toBe(RETRY_TEXT);
+        expect(apya.session.isDialogOpen()).toBe(false);
+    });
+});
+
 describe('httpClient (React adaları) aynı oturum penceresine gider', () => {
     const fails401 = () => {
         window.fetch = vi.fn(() => Promise.resolve({ ok: false, status: 401, text: () => Promise.resolve('') }));
@@ -1125,6 +1346,29 @@ describe('pencere yalıtımı (Radix/Bootstrap modalı üstünde)', () => {
         const { container, button, opts } = dialogs[0];
 
         expect(opts.keydownListenerCapture).toBe(true);
+        expect(container.hasAttribute('data-apya-overlay')).toBe(true);
+        expect(container.style.pointerEvents).toBe('auto');
+        button.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+        button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        expect(outside).not.toHaveBeenCalled();
+
+        document.removeEventListener('pointerdown', outside);
+        document.removeEventListener('focusin', outside);
+    });
+
+    // RSP-05.2 gerileme pini: modal dışında açılan onayın düğmelerine klavyeyle ulaşılamıyor,
+    // ikinci Esc kapatmıyordu. Onay da config.default'u birleştirdiği için yalıtılır: odak
+    // Bootstrap odak kapanına sızmaz, Esc / Tab pencere düzeyinde SweetAlert'te kalır.
+    it('abp.message.confirm de yalıtılır (kirli-form onayı Bootstrap modalı üstünde klavyeyle kullanılır)', () => {
+        const outside = vi.fn();
+        document.addEventListener('pointerdown', outside);
+        document.addEventListener('focusin', outside);
+
+        abp.message.confirm('Kaydedilmemiş değişiklikler var.');
+        const { container, button, opts } = dialogs[0];
+
+        expect(opts.keydownListenerCapture).toBe(true);
+        expect(opts.showCancelButton).toBe(true);
         expect(container.hasAttribute('data-apya-overlay')).toBe(true);
         expect(container.style.pointerEvents).toBe('auto');
         button.dispatchEvent(new Event('pointerdown', { bubbles: true }));

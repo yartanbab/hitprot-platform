@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,4 +13,10 @@ public interface IAiProviderResolver
     INamedAiProvider Resolve(string providerName);
 
     Task<INamedAiProvider> ResolveForTenantAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Kayıtlı sağlayıcı adları, kayıt sırasıyla — <see cref="Resolve"/>'un kabul ettiği kümenin aynısı.
+    /// Kiracı AI ayar ekranının seçenekleri ve kayıt doğrulaması bunu kullanır.
+    /// </summary>
+    IReadOnlyList<string> GetProviderNames();
 }
