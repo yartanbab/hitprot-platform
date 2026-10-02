@@ -15,7 +15,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  */
 const requestCloseSpy = vi.fn((onClose) => onClose());
 
-vi.mock('./hooks/useDirtyGuard', () => ({
+vi.mock('../lib/feedback/useDirtyGuard', () => ({
     useDirtyGuard: () => ({
         isDirty: false,
         markDirty: vi.fn(),

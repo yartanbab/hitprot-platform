@@ -56,18 +56,5 @@ $(function () {
         revisionModal.open({ projectId: projectId, deductionId: $(this).data('revise-budget') });
     });
 
-    // Silme onayı — form POST'u ABP'nin onay kutusuna bağlar. Onaylanmadan
-    // gönderim yapılmaz; native confirm() yerine tema diyaloğu kullanılır.
-    $(document).on('click', 'button[data-confirm]', function (e) {
-        var $btn = $(this);
-        if ($btn.data('confirmed')) { return; }
-
-        e.preventDefault();
-        abp.message.confirm($btn.data('confirm')).then(function (confirmed) {
-            if (confirmed) {
-                $btn.data('confirmed', true);
-                $btn.closest('form').trigger('submit');
-            }
-        });
-    });
+    // Silme onayı: data-confirm taşıyan düğmeleri genel delege (wwwroot/js/apya-confirm.js) sorar.
 });

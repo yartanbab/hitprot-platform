@@ -3,6 +3,7 @@ import { useTaskDocuments, useTaskDocument } from '../../hooks/useTaskDocuments'
 import { RichTextEditorV3 } from '../components/RichTextEditorV3';
 import { TabEmptyState, fmtDateTime } from '../tabPrimitives';
 import { notifyError } from '../../../lib/api/abpErrors';
+import { UnsavedChangesDialog } from '../../../components/ui';
 
 /**
  * Belge sekmesi (V3) — göreve bağlı zengin metin belgeleri.
@@ -26,6 +27,7 @@ export function DocumentsTabV3({ taskId }) {
     const [draftTitle, setDraftTitle] = useState('');
     const [draftContent, setDraftContent] = useState('');
     const [dirty, setDirty] = useState(false);
+    const [confirmClose, setConfirmClose] = useState(false);
 
     const { data: openDoc, isFetching } = useTaskDocument(openId);
 
@@ -47,18 +49,21 @@ export function DocumentsTabV3({ taskId }) {
         }
     };
 
+    /** Kaydeder; başarılıysa true döner ("Kaydet ve çık" kapatıp kapatmayacağına buna göre karar verir). */
     const onSave = async () => {
         const title = draftTitle.trim();
         if (!title) {
             window?.abp?.notify?.error?.('Belge başlığı boş olamaz.');
-            return;
+            return false;
         }
         try {
             await updateDocument({ id: openId, title, content: draftContent });
             setDirty(false);
             window?.abp?.notify?.success?.('Belge kaydedildi.');
+            return true;
         } catch (err) {
             notifyError(err, 'Belge kaydedilemedi.');
+            return false;
         }
     };
 
@@ -72,8 +77,8 @@ export function DocumentsTabV3({ taskId }) {
     };
 
     const closeEditor = () => {
-        // Kaydedilmemiş değişiklik varken kaza ile kapanmasın.
-        if (dirty && !window.confirm('Kaydedilmemiş değişiklikleriniz var. Yine de kapatılsın mı?')) return;
+        // Kaydedilmemiş değişiklik varken kaza ile kapanmasın: ortak pencere sorar.
+        if (dirty) { setConfirmClose(true); return; }
         setOpenId(null);
     };
 
@@ -121,6 +126,19 @@ export function DocumentsTabV3({ taskId }) {
                         onChange={(html) => { setDraftContent(html); setDirty(true); }}
                     />
                 )}
+
+                {/* Kayıt düşerse pencere kapanır, editör açık kalır (hata bildirimi gösterildi). */}
+                <UnsavedChangesDialog
+                    open={confirmClose}
+                    isSaving={isSaving}
+                    onStay={() => setConfirmClose(false)}
+                    onDiscard={() => { setConfirmClose(false); setDirty(false); setOpenId(null); }}
+                    onSave={async () => {
+                        const ok = await onSave();
+                        setConfirmClose(false);
+                        if (ok) setOpenId(null);
+                    }}
+                />
             </div>
         );
     }

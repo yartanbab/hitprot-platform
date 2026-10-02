@@ -1,19 +1,19 @@
 {
-  "_Combobox-VWBB0dEF.js": {
-    "file": "Combobox-VWBB0dEF.js",
+  "_Combobox-BTNS1Ncj.js": {
+    "file": "Combobox-BTNS1Ncj.js",
     "name": "Combobox",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_Dialog-BEQtx1HL.js",
+      "_Dialog-BdrRxZcw.js",
       "_index-DgpuJ91w.js"
     ]
   },
-  "_Dialog-BEQtx1HL.js": {
-    "file": "Dialog-BEQtx1HL.js",
+  "_Dialog-BdrRxZcw.js": {
+    "file": "Dialog-BdrRxZcw.js",
     "name": "Dialog",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_ui-vendor-XElZ94hp.js",
+      "_ui-vendor-UYevF8mE.js",
       "_index-DgpuJ91w.js"
     ]
   },
@@ -31,13 +31,13 @@
       "_react-vendor-D7YDiBbi.js"
     ]
   },
-  "_ProcessRibbon-CHjVpooY.js": {
-    "file": "ProcessRibbon-CHjVpooY.js",
+  "_ProcessRibbon-D9pM1s89.js": {
+    "file": "ProcessRibbon-D9pM1s89.js",
     "name": "ProcessRibbon",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_ui-vendor-XElZ94hp.js",
-      "_Dialog-BEQtx1HL.js",
+      "_ui-vendor-UYevF8mE.js",
+      "_Dialog-BdrRxZcw.js",
       "_index-DgpuJ91w.js"
     ]
   },
@@ -52,20 +52,20 @@
       "_dataChanged-CDwwWMH8.js"
     ]
   },
-  "_RichTextEditorV3-no6ovBqq.js": {
-    "file": "RichTextEditorV3-no6ovBqq.js",
+  "_RichTextEditorV3-BMU9U7iD.js": {
+    "file": "RichTextEditorV3-BMU9U7iD.js",
     "name": "RichTextEditorV3",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_ui-vendor-XElZ94hp.js"
+      "_ui-vendor-UYevF8mE.js"
     ]
   },
-  "_SkeletonShape-Cev7M69F.js": {
-    "file": "SkeletonShape-Cev7M69F.js",
+  "_SkeletonShape-Ds5M097Q.js": {
+    "file": "SkeletonShape-Ds5M097Q.js",
     "name": "SkeletonShape",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_Dialog-BEQtx1HL.js"
+      "_Dialog-BdrRxZcw.js"
     ]
   },
   "_api-DE9auhlW.js": {
@@ -92,12 +92,12 @@
     "file": "formConditions-DsejDGE1.js",
     "name": "formConditions"
   },
-  "_grid-vendor-CuxMlyPo.js": {
-    "file": "grid-vendor-CuxMlyPo.js",
+  "_grid-vendor-Fh34umPY.js": {
+    "file": "grid-vendor-Fh34umPY.js",
     "name": "grid-vendor",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_ui-vendor-XElZ94hp.js"
+      "_ui-vendor-UYevF8mE.js"
     ]
   },
   "_httpClient-BNoyY5yK.js": {
@@ -133,20 +133,20 @@
     "file": "react-vendor-D7YDiBbi.js",
     "name": "react-vendor"
   },
-  "_registerServiceWorker-DPq4UUem.js": {
-    "file": "registerServiceWorker-DPq4UUem.js",
+  "_registerServiceWorker-BqopwOEk.js": {
+    "file": "registerServiceWorker-BqopwOEk.js",
     "name": "registerServiceWorker",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_Dialog-BEQtx1HL.js"
+      "_Dialog-BdrRxZcw.js"
     ]
   },
   "_signalr-vendor-CjTpd8t3.js": {
     "file": "signalr-vendor-CjTpd8t3.js",
     "name": "signalr-vendor"
   },
-  "_ui-vendor-XElZ94hp.js": {
-    "file": "ui-vendor-XElZ94hp.js",
+  "_ui-vendor-UYevF8mE.js": {
+    "file": "ui-vendor-UYevF8mE.js",
     "name": "ui-vendor",
     "imports": [
       "_react-vendor-D7YDiBbi.js"
@@ -159,6 +159,16 @@
       "_react-vendor-D7YDiBbi.js"
     ]
   },
+  "_useDirtyGuard-BU_DDlEJ.js": {
+    "file": "useDirtyGuard-BU_DDlEJ.js",
+    "name": "useDirtyGuard",
+    "imports": [
+      "_react-vendor-D7YDiBbi.js",
+      "_ui-vendor-UYevF8mE.js",
+      "_Dialog-BdrRxZcw.js",
+      "_index-DgpuJ91w.js"
+    ]
+  },
   "src/calendar.jsx": {
     "file": "calendar.js",
     "name": "calendar",
@@ -167,7 +177,7 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
+      "_Dialog-BdrRxZcw.js",
       "_useDeviceMode-Bkxjujsr.js",
       "_QueryProvider-D2Hvqdr9.js",
       "_httpClient-BNoyY5yK.js",
@@ -196,12 +206,12 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
+      "_Dialog-BdrRxZcw.js",
       "_QueryProvider-D2Hvqdr9.js",
       "_signalr-vendor-CjTpd8t3.js",
       "_useDeviceMode-Bkxjujsr.js",
-      "_registerServiceWorker-DPq4UUem.js",
-      "_grid-vendor-CuxMlyPo.js",
+      "_registerServiceWorker-BqopwOEk.js",
+      "_grid-vendor-Fh34umPY.js",
       "_query-vendor-Db2mwxYI.js",
       "_httpClient-BNoyY5yK.js",
       "_dataChanged-CDwwWMH8.js"
@@ -215,9 +225,9 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
-      "_SkeletonShape-Cev7M69F.js",
-      "_ProcessRibbon-CHjVpooY.js",
+      "_Dialog-BdrRxZcw.js",
+      "_SkeletonShape-Ds5M097Q.js",
+      "_ProcessRibbon-D9pM1s89.js",
       "_api-DE9auhlW.js",
       "_ModalPortal-CVz5ohco.js"
     ]
@@ -230,8 +240,8 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
-      "_SkeletonShape-Cev7M69F.js"
+      "_Dialog-BdrRxZcw.js",
+      "_SkeletonShape-Ds5M097Q.js"
     ]
   },
   "src/documents-project.jsx": {
@@ -242,9 +252,9 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
-      "_SkeletonShape-Cev7M69F.js",
-      "_ProcessRibbon-CHjVpooY.js"
+      "_Dialog-BdrRxZcw.js",
+      "_SkeletonShape-Ds5M097Q.js",
+      "_ProcessRibbon-D9pM1s89.js"
     ]
   },
   "src/documents-report.jsx": {
@@ -255,9 +265,9 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
-      "_SkeletonShape-Cev7M69F.js",
-      "_ProcessRibbon-CHjVpooY.js",
+      "_Dialog-BdrRxZcw.js",
+      "_SkeletonShape-Ds5M097Q.js",
+      "_ProcessRibbon-D9pM1s89.js",
       "_api-DE9auhlW.js"
     ]
   },
@@ -269,9 +279,9 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
-      "_SkeletonShape-Cev7M69F.js",
-      "_ProcessRibbon-CHjVpooY.js"
+      "_Dialog-BdrRxZcw.js",
+      "_SkeletonShape-Ds5M097Q.js",
+      "_ProcessRibbon-D9pM1s89.js"
     ]
   },
   "src/documents.jsx": {
@@ -282,10 +292,11 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
+      "_Dialog-BdrRxZcw.js",
+      "_useDirtyGuard-BU_DDlEJ.js",
       "_ModalPortal-CVz5ohco.js",
-      "_ProcessRibbon-CHjVpooY.js",
-      "_SkeletonShape-Cev7M69F.js",
+      "_ProcessRibbon-D9pM1s89.js",
+      "_SkeletonShape-Ds5M097Q.js",
       "_draggableActivation-Ybw9Upbh.js",
       "_Hint-BhMztyJX.js"
     ]
@@ -298,10 +309,10 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
+      "_Dialog-BdrRxZcw.js",
       "_QueryProvider-D2Hvqdr9.js",
-      "_registerServiceWorker-DPq4UUem.js",
-      "_Combobox-VWBB0dEF.js",
+      "_registerServiceWorker-BqopwOEk.js",
+      "_Combobox-BTNS1Ncj.js",
       "_query-vendor-Db2mwxYI.js",
       "_httpClient-BNoyY5yK.js",
       "_permanentRejection-SvaBclz0.js"
@@ -346,7 +357,7 @@
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
       "_dataChanged-CDwwWMH8.js",
-      "_RichTextEditorV3-no6ovBqq.js"
+      "_RichTextEditorV3-BMU9U7iD.js"
     ]
   },
   "src/public-form.jsx": {
@@ -384,13 +395,14 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BEQtx1HL.js",
+      "_Dialog-BdrRxZcw.js",
       "_QueryProvider-D2Hvqdr9.js",
       "_query-vendor-Db2mwxYI.js",
-      "_Combobox-VWBB0dEF.js",
-      "_RichTextEditorV3-no6ovBqq.js",
+      "_Combobox-BTNS1Ncj.js",
+      "_useDirtyGuard-BU_DDlEJ.js",
+      "_RichTextEditorV3-BMU9U7iD.js",
       "_httpClient-BNoyY5yK.js",
-      "_ui-vendor-XElZ94hp.js",
+      "_ui-vendor-UYevF8mE.js",
       "_draggableActivation-Ybw9Upbh.js",
       "_dataChanged-CDwwWMH8.js"
     ]

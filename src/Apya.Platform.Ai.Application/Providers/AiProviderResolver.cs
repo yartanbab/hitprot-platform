@@ -41,6 +41,8 @@ public class AiProviderResolver : IAiProviderResolver, ITransientDependency
         return provider;
     }
 
+    public IReadOnlyList<string> GetProviderNames() => _providers.Select(p => p.Name).ToList();
+
     public async Task<INamedAiProvider> ResolveForTenantAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _settingsRepository.FirstOrDefaultAsync(

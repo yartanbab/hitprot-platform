@@ -147,7 +147,7 @@ else
                                           asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
                                         <input type="hidden" name="TrancheId" value="@t.Id" />
                                         <button type="submit" class="btn btn-sm btn-link p-1 text-danger text-decoration-none"
-                                                title="Sil" data-confirm="Dilim ve kesintileri silinsin mi?">
+                                                title="Sil" data-confirm="Dilim ve kesintileri silinsin mi?" data-confirm-danger>
                                             <i class="fa fa-trash" aria-hidden="true"></i>
                                         </button>
                                     </form>
@@ -199,7 +199,7 @@ else
                                                       asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
                                                     <input type="hidden" name="DeductionId" value="@d.Id" />
                                                     <button type="submit" class="btn btn-sm btn-link p-1 text-danger text-decoration-none"
-                                                            title="Kesintiyi sil" data-confirm="Kesinti silinsin mi?">
+                                                            title="Kesintiyi sil" data-confirm="Kesinti silinsin mi?" data-confirm-danger>
                                                         <i class="fa fa-trash" aria-hidden="true"></i>
                                                     </button>
                                                 </form>

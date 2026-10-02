@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button, EmptyState, Sheet, SheetContent, Skeleton } from '../components/ui';
 import { cn } from '../lib/utils';
+import { t } from '../lib/i18n';
 import { INTERNAL_SOURCE_ORDER, SOURCES, fmt } from './lib/model';
 import { useSyncSettings, useUpdateSyncRules } from './hooks/useSyncSettings';
 import { useConnectAccount, useDisconnectAccount, useForceSync } from './hooks/useCalendarAccounts';
@@ -231,6 +232,13 @@ function IcalSection({ open }) {
 
     const feedUrl = feed.data?.path ? `${window.location.origin}${feed.data.path}` : '';
 
+    /* Adres denetimi burada yalnız ÖN ELEME: http(s) ile başlamayan adres kaydedilemez.
+       Asıl hüküm sunucuda (yerel/özel ağ adresi bu denetimi geçer, sunucu reddeder) —
+       bu yüzden "Bağlantıyı dene" etkin kalır ve tam gerekçeyi sunucunun cümlesi verir. */
+    const cleanUrl = url.trim();
+    const urlOk = /^https?:\/\//i.test(cleanUrl);
+    const showUrlHint = cleanUrl !== '' && !urlOk && !probe.data;
+
     const copyLink = async () => {
         try {
             await navigator.clipboard.writeText(feedUrl);
@@ -286,8 +294,15 @@ function IcalSection({ open }) {
                         onChange={(e) => { setUrl(e.target.value); probe.reset(); }}
                         placeholder="https://…/basic.ics"
                         aria-label="Takvim bağlantısı"
+                        aria-describedby={showUrlHint ? 'ical-url-hint' : undefined}
                         className="rounded-md border border-default bg-surface-base px-2 py-1.5 text-[12px] text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
                     />
+
+                    {showUrlHint && (
+                        <p id="ical-url-hint" className="text-[11px] text-text-tertiary">
+                            {t('Calendar:Ical:UrlHint', 'Adres http:// ya da https:// ile başlamalı.')}
+                        </p>
+                    )}
 
                     {probe.data?.isValid && (
                         <p className="text-[11px] text-positive-700">
@@ -324,16 +339,16 @@ function IcalSection({ open }) {
 
                     <div className="flex items-center gap-2">
                         <Button
-                            size="sm" variant="outline" disabled={!url || probe.isPending}
-                            onClick={() => probe.mutate(url)}
+                            size="sm" variant="outline" disabled={!cleanUrl || probe.isPending}
+                            onClick={() => probe.mutate(cleanUrl)}
                         >
                             {probe.isPending ? 'Deneniyor…' : 'Bağlantıyı dene'}
                         </Button>
                         <Button
                             size="sm" variant="primary"
-                            disabled={!url || add.isPending}
+                            disabled={!urlOk || add.isPending}
                             onClick={() => add.mutate(
-                                { url, displayName: name, color: 'accent', refreshMinutes: refresh },
+                                { url: cleanUrl, displayName: name, color: 'accent', refreshMinutes: refresh },
                                 { onSuccess: () => { setUrl(''); setName(''); probe.reset(); } },
                             )}
                         >

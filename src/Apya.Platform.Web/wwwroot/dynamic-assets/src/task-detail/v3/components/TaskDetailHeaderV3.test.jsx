@@ -77,6 +77,37 @@ describe('TaskDetailHeaderV3 / temel', () => {
         fireEvent.blur(title);
         expect(spies.onFieldChange).toHaveBeenCalledWith('title', 'Yeni baslik');
     });
+
+    /* CON-01: yalnız odak çıkışında yazılsaydı başlık odaktayken Esc formu "temiz" görür,
+       modal uyarısız kapanır, yazılan kaybolurdu. */
+    it('baslik yazildikca (input) kirpilmis metin forma islenir', () => {
+        const spies = renderHeader();
+        const title = screen.getByRole('textbox', { name: 'Görev başlığı' });
+        title.textContent = '  Yeni baslik ';
+        fireEvent.input(title);
+        expect(spies.onFieldChange).toHaveBeenCalledTimes(1);
+        expect(spies.onFieldChange).toHaveBeenCalledWith('title', 'Yeni baslik');
+    });
+
+    it('titleError: hata basligin altinda role=alert ile gorunur; baslik aria-invalid + aria-describedby', () => {
+        renderHeader({ titleError: 'Başlık zorunlu.' });
+        const title = screen.getByRole('textbox', { name: 'Görev başlığı' });
+        expect(screen.getByRole('alert')).toHaveTextContent('Başlık zorunlu.');
+        expect(title).toHaveAttribute('aria-invalid', 'true');
+        expect(title).toHaveAccessibleDescription('Başlık zorunlu.');
+        expect(title.className).toContain('border-negative');
+        expect(title.className).not.toContain('border-transparent');
+    });
+
+    it('titleError yokken aria-invalid ve hata satiri basilmaz', () => {
+        renderHeader();
+        const title = screen.getByRole('textbox', { name: 'Görev başlığı' });
+        expect(title).not.toHaveAttribute('aria-invalid');
+        expect(title).not.toHaveAttribute('aria-describedby');
+        expect(title).not.toHaveAttribute('aria-readonly');
+        expect(screen.queryByRole('alert')).toBeNull();
+        expect(title.className).toContain('border-transparent');
+    });
 });
 
 /**
@@ -195,7 +226,9 @@ describe('TaskDetailHeaderV3 / yetki', () => {
         const spies = renderHeader({ canEdit: false });
         const title = screen.getByText(TASK.title);
         expect(title.getAttribute('contenteditable')).toBe('false');
+        expect(title).toHaveAttribute('aria-readonly', 'true');
         fireEvent.blur(title);
+        fireEvent.input(title);
         expect(spies.onFieldChange).not.toHaveBeenCalled();
         expect(screen.getByText('Salt okunur')).toBeInTheDocument();
     });

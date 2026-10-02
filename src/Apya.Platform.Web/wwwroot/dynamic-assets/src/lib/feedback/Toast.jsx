@@ -5,7 +5,9 @@ import { cn } from '../utils';
  * Toast — kuyruk-tabanlı bildirim primitif'i.
  *
  * UX kontrat (strategy doc § Microinteractions):
- *   - Sağ-alt yerleşim, max 3 görünür eş zamanlı toast (fazlası FIFO sıraya)
+ *   - Sağ-alt yerleşim, max 3 görünür eş zamanlı toast (fazlası FIFO sıraya).
+ *     Bir pencere/panel açıkken üst-orta: sağ-altta pencerenin eylem düğmelerini
+ *     örtüyordu (kural tek yerde: wwwroot/css/apya-shell.css §4b)
  *   - Default 4s, action varsa 10s (kullanıcının okuyup karar verme süresi)
  *   - 4 tip: info (default) / success / warning / error
  *   - Action: opsiyonel "Geri al" / "Yenile" button — handler tetikleyince toast kapanır
@@ -33,6 +35,21 @@ const ACTION_DURATION  = 10_000;
 const MAX_VISIBLE      = 3;
 
 let idSeq = 0;
+
+/* Bildirim, açık bir pencerenin (Radix Dialog/Sheet) üstünde durur ama onun ağacının
+   DIŞINDADIR: bildirime ya da "×"ine basmak pencere için "dışarı etkileşim" sayılıyor,
+   paneli kapatıp yazılanları siliyordu (Masraf Yakala: başarısız kayıt → bildirim "Gönder"in
+   üstünde → tıklama paneli kapatıyor). Bölge, diğer üst katmanlar gibi kendini yalıtır
+   (aynı kural ve olay listesi: wwwroot/js/ajax-error-detail.js isolateLayer): bu olaylar
+   bölgenin dışına çıkmaz, belgeyi dinleyen pencere onları görmez. click durdurulmaz —
+   "Bildirimi kapat" ve eylem düğmesi çalışır. */
+const ISOLATED_EVENTS = ['pointerdown', 'mousedown', 'touchstart', 'focusin'];
+const stopPropagation = (event) => event.stopPropagation();
+
+function isolateLayer(node) {
+    if (!node) return;
+    ISOLATED_EVENTS.forEach((name) => node.addEventListener(name, stopPropagation, { passive: true }));
+}
 
 function ToastProvider({ children }) {
     const [items, setItems] = useState([]);
@@ -94,6 +111,8 @@ function ToastViewport({ items, onDismiss }) {
     if (items.length === 0) return null;
     return (
         <div
+            ref={isolateLayer}
+            data-apya-overlay="toast"
             role="region"
             aria-label="Bildirimler"
             className={cn(

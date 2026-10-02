@@ -914,6 +914,9 @@ $(function () {
                                 teamChanged = true;
                                 abp.notify.success('Rol güncellendi.');
                                 loadMembers();
+                            }, function () {
+                                // Sunucu reddederse seçim kayıtlı role döner.
+                                $sel.val(String(m.role));
                             });
                     });
                     $row.append($sel);

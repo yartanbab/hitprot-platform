@@ -55,3 +55,39 @@ describe('TaskMetadataGridV3 / salt okunur', () => {
         expect(screen.getByLabelText('Yeni etiket ekle')).toBeInTheDocument();
     });
 });
+
+/* CON-01: dogrulama dusunce yalniz bildirim cikiyordu; hata artik ilgili hucrenin altinda. */
+describe('TaskMetadataGridV3 / dogrulama hatasi', () => {
+    const DATES = { startDateValue: '2026-06-25', dueDateValue: '2020-01-01' };   // son tarih gecmiste → "gecikti" ipucu
+
+    it('tarih girdilerinin erisilebilir adi var; hata yokken aria-invalid ve uyari yok', () => {
+        renderGrid(DATES);
+        expect(screen.getByLabelText('Başlangıç')).toHaveValue('2026-06-25');
+        expect(screen.getByLabelText('Son tarih')).toHaveValue('2020-01-01');
+        expect(screen.getByLabelText('Başlangıç')).not.toHaveAttribute('aria-invalid');
+        expect(screen.getByLabelText('Son tarih')).not.toHaveAttribute('aria-invalid');
+        expect(screen.queryByRole('alert')).toBeNull();
+        expect(screen.getByText(/gün gecikti/)).toBeInTheDocument();
+    });
+
+    it('dueDateError: Son tarih girdisi aria-invalid, hata hucrede gorunur, aciliyet ipucu gizlenir', () => {
+        renderGrid({ ...DATES, dueDateError: 'Son tarih başlangıç tarihinden önce olamaz.' });
+        const input = screen.getByLabelText('Son tarih');
+        expect(input).toHaveAttribute('aria-invalid', 'true');
+        expect(input).toHaveAccessibleDescription('Son tarih başlangıç tarihinden önce olamaz.');
+        const alert = screen.getByRole('alert');
+        expect(input.closest('label').parentElement).toContainElement(alert);
+        expect(screen.queryByText(/gün gecikti/)).toBeNull();
+        expect(screen.getByLabelText('Başlangıç')).not.toHaveAttribute('aria-invalid');
+    });
+
+    it('startDateError: Baslangic girdisi aria-invalid, hata hucrede gorunur', () => {
+        renderGrid({ ...DATES, startDateValue: '', startDateError: 'Başlangıç tarihi zorunlu.' });
+        const input = screen.getByLabelText('Başlangıç');
+        expect(input).toHaveAttribute('aria-invalid', 'true');
+        expect(input).toHaveAccessibleDescription('Başlangıç tarihi zorunlu.');
+        expect(input.closest('label').parentElement).toContainElement(screen.getByRole('alert'));
+        expect(screen.getByLabelText('Son tarih')).not.toHaveAttribute('aria-invalid');
+        expect(screen.getByText(/gün gecikti/)).toBeInTheDocument();
+    });
+});

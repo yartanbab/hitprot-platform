@@ -14,6 +14,7 @@ using Apya.Platform.Settings;
 using Apya.Platform.Tasks;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
+using Volo.Abp.AspNetCore.ExceptionHandling;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.SettingManagement;
 
@@ -37,6 +38,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     private readonly IRepository<IcalSubscription, Guid> _icalRepository;
     private readonly IcalSubscriptionFetcher _icalFetcher;
     private readonly Volo.Abp.SettingManagement.ISettingManager _settingManager;
+    private readonly IExceptionToErrorInfoConverter _errorInfoConverter;
 
     public CalendarAppService(
         IRepository<ExternalCalendarAccount, Guid> accountRepository,
@@ -51,7 +53,8 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         IRepository<CalendarSyncLogEntry, Guid> syncLogRepository,
         IRepository<IcalSubscription, Guid> icalRepository,
         IcalSubscriptionFetcher icalFetcher,
-        Volo.Abp.SettingManagement.ISettingManager settingManager)
+        Volo.Abp.SettingManagement.ISettingManager settingManager,
+        IExceptionToErrorInfoConverter errorInfoConverter)
     {
         _feedProvider       = feedProvider;
         _taskAppService     = taskAppService;
@@ -66,6 +69,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         _httpClientFactory = httpClientFactory;
         _tokenProtector    = tokenProtector;
         _distributedCache  = distributedCache;
+        _errorInfoConverter = errorInfoConverter;
     }
 
     // SEC-012: OAuth 'state' CSRF token'ı için kullanıcı-bağlı sunucu-taraflı anahtar.
@@ -274,7 +278,10 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
                 {
                     SourceId  = item.SourceId,
                     Succeeded = false,
-                    Error     = ex is BusinessException ? ex.Message : "Taşınamadı."
+                    // Kodla atılan ret (ör. görev yetkisi) satırda tr.json metniyle görünür (CAL-15).
+                    Error     = ex is BusinessException business
+                        ? _errorInfoConverter.UserText(business, "Taşınamadı.")
+                        : "Taşınamadı."
                 });
             }
         }

@@ -10,15 +10,16 @@ import { TaskFeatureNavbar } from './components/TaskFeatureNavbar';
 import { FeaturePicker } from './components/FeaturePicker';
 import { TaskBreadcrumb } from './components/TaskBreadcrumb';
 import { useTaskDetail, isGranted } from './hooks/useTaskDetail';
-import { useDirtyGuard } from './hooks/useDirtyGuard';
+import { useDirtyGuard } from '../lib/feedback/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from './hooks/useTaskUrlSync';
 import { useTaskForm } from './hooks/useTaskForm';
 import { useAssigneeOptions } from './hooks/useAssigneeOptions';
 import { useTaskFeatures } from './hooks/useTaskFeatures';
 import { getVisibleTabs, getPickerEntries } from './TaskFeatureRegistry';
 import { taskDetailStore } from './taskDetailStore';
-import { Skeleton, Button } from '../components/ui';
+import { Skeleton, Button, UnsavedChangesDialog } from '../components/ui';
 import { notifyError } from '../lib/api/abpErrors';
+import { t } from '../lib/i18n';
 
 const FULLSCREEN_KEY = 'apya.taskDetail.fullscreen';
 
@@ -70,13 +71,17 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
         () => window.localStorage?.getItem(FULLSCREEN_KEY) === '1',
     );
     const [isSaving, setIsSaving] = useState(false);
+    /* "Kaydet ve çık" düştü: pencere açık kalır, kullanıcı atabilir ya da düzenlemeye döner. */
+    const [closeSaveFailed, setCloseSaveFailed] = useState(false);
 
     const closeNow = useCallback(() => {
         clearTaskUrl();
         onClose?.();
     }, [onClose]);
 
-    useTaskUrlSync(taskId, closeNow);
+    /* Sayfa sunumunda ?task= EKLENMEZ: pushState fazladan bir geçmiş adımı açıyor,
+       onClose (history.back) o adıma inip kullanıcıyı sayfada bırakıyordu. */
+    useTaskUrlSync(presentation === 'page' ? null : taskId, closeNow);
 
     /* Formun dirty durumu tek gerçek kaynak; guard'ı buna senkron tutuyoruz.
        guard.markDirty/markClean useCallback([])'la sabit, effect deps'e girmesi zararsız. */
@@ -84,7 +89,11 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
         if (form.isDirty) guard.markDirty(); else guard.markClean();
     }); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const requestClose = useCallback(() => guard.requestClose(closeNow), [guard, closeNow]);
+    const requestClose = useCallback(() => {
+        if (isSaving) return;
+        setCloseSaveFailed(false);
+        guard.requestClose(closeNow);
+    }, [guard, closeNow, isSaving]);
 
     const toggleFullscreen = useCallback(() => {
         setFullscreen((v) => {
@@ -141,10 +150,17 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
     const handleSaveClick = useCallback(() => { doSave(); }, [doSave]);
 
     const handleUnsavedSaveAndClose = useCallback(async () => {
-        const doClose = guard.resolvePendingClose('save');
+        setCloseSaveFailed(false);
+        if (!form.validate()) {
+            /* Hatalar Genel sekmesindeki alanların altında görünür. */
+            guard.resolvePendingClose('stay');
+            setActiveCode('general');
+            return;
+        }
         const ok = await doSave();
-        if (ok) doClose?.();
-    }, [guard, doSave]);
+        if (ok) guard.resolvePendingClose('saved');
+        else setCloseSaveFailed(true);
+    }, [guard, form, doSave]);
 
     /* guard.requestClose'un generic "kapatma" parametresini burada kapatma DIŞINDA
        bir aksiyon (context-switch) için reuse ediyoruz — dirty'yken aynı "Kaydedilmemiş
@@ -317,14 +333,16 @@ export function TaskDetailRoot({ taskId, presentation = 'modal', onClose }) {
             )}
         >
             {body}
-            {guard.pendingClose && (
-                <UnsavedChangesDialog
-                    isSaving={isSaving}
-                    onStay={() => guard.resolvePendingClose('stay')}
-                    onDiscard={() => guard.resolvePendingClose('discard')}
-                    onSaveAndClose={handleUnsavedSaveAndClose}
-                />
-            )}
+            <UnsavedChangesDialog
+                open={guard.pendingClose}
+                isSaving={isSaving}
+                errorText={closeSaveFailed
+                    ? t('Common:Unsaved:SaveFailed', 'Kaydedilemedi. Düzenlemeye dönebilir ya da değişiklikleri atabilirsiniz.')
+                    : undefined}
+                onStay={() => { setCloseSaveFailed(false); guard.resolvePendingClose('stay'); }}
+                onDiscard={() => { setCloseSaveFailed(false); form.reset(); guard.resolvePendingClose('discard'); }}
+                onSave={handleUnsavedSaveAndClose}
+            />
             {deleteOpen && (
                 <DeleteTaskDialog
                     taskTitle={task?.title ?? ''}
@@ -373,9 +391,8 @@ function DeleteTaskDialog({ taskTitle, busy, onCancel, onConfirm }) {
 }
 
 /**
- * AlertShell — iki onay diyaloğunun ORTAK kabuğu (backdrop + kart + aksiyon satırı).
- * Ayrı bir component çünkü aksi halde aynı overlay markup'ı üç yere kopyalanırdı
- * (documents.jsx'te zaten bir kopyası var — o island'ın yerel ConfirmDialog'u).
+ * AlertShell — silme onayının kabuğu (backdrop + kart + aksiyon satırı).
+ * "Kaydedilmemiş değişiklik" penceresi ortak bileşende: components/ui/UnsavedChangesDialog.
  *
  * Radix Dialog KULLANILMIYOR: bu diyaloglar zaten açık bir Radix Dialog'un
  * İÇİNDE render ediliyor; ikinci bir portal + focus trap iç içe girip ESC
@@ -392,24 +409,5 @@ function AlertShell({ label, title, description, children, actions }) {
                 <div className="mt-[var(--apya-space-5)] flex justify-end gap-2">{actions}</div>
             </div>
         </div>
-    );
-}
-
-function UnsavedChangesDialog({ isSaving, onStay, onDiscard, onSaveAndClose }) {
-    return (
-        <AlertShell
-            label="Kaydedilmemiş değişiklikler"
-            title="Kaydedilmemiş değişiklikleriniz var."
-            description="Çıkarsanız yaptığınız değişiklikler kaybolur."
-            actions={(
-                <>
-                    <Button variant="secondary" onClick={onStay} disabled={isSaving}>Düzenlemeye devam et</Button>
-                    <Button variant="destructive" onClick={onDiscard} disabled={isSaving}>Değişiklikleri iptal et</Button>
-                    <Button variant="primary" onClick={onSaveAndClose} isLoading={isSaving} loadingText="Kaydediliyor…">
-                        Kaydet ve çık
-                    </Button>
-                </>
-            )}
-        />
     );
 }

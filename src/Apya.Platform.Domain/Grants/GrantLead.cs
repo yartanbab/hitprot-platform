@@ -171,12 +171,18 @@ public class GrantLead : FullAuditedAggregateRoot<Guid>
         }
     }
 
-    public void MarkConverted(Guid tenantId)
+    /// <summary>Dönüştürülmüş talep yeniden dönüştürülemez; yan etkilerden (kiracı açma) ÖNCE sorulur.</summary>
+    public void EnsureNotConverted()
     {
         if (ConvertedTenantId.HasValue)
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantLeadAlreadyConverted);
         }
+    }
+
+    public void MarkConverted(Guid tenantId)
+    {
+        EnsureNotConverted();
 
         ConvertedTenantId = tenantId;
         Status = GrantLeadStatus.MusteriOldu;

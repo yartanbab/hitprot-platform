@@ -74,8 +74,10 @@
 
         <p class="apya-auth__legal">
             © @DateTime.Now.Year @BrandingProvider.AppName · Pargetto<br />
-            <a class="apya-auth__link" href="~/aydinlatma-metni">Aydınlatma Metni</a> ·
-            <a class="apya-auth__link" href="~/gizlilik-politikasi">Gizlilik Politikası</a>
+            @* Yeni sekme: bu düzendeki her sayfada bir form var; aynı sekmede açılırsa
+               yarıda kalan form (kayıt talebi sihirbazı) kaybolur. *@
+            <a class="apya-auth__link" href="~/aydinlatma-metni" target="_blank" rel="noopener">Aydınlatma Metni</a> ·
+            <a class="apya-auth__link" href="~/gizlilik-politikasi" target="_blank" rel="noopener">Gizlilik Politikası</a>
         </p>
     </section>
 

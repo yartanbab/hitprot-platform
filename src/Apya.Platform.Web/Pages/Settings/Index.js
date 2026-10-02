@@ -189,17 +189,20 @@
         var name = ($name.value || '').trim();
         if (!name) { $name.focus(); return; }
 
+        // Formda sıra ve etkinlik alanı yok. Düzenlemede ikisi de SATIRDAN gelir (aç/kapa
+        // anahtarıyla aynı kaynak): sabit değer göndermek pasif kategoriyi etkinleştirip
+        // listenin sonuna taşıyordu. Yeni kategori listenin sonuna, etkin eklenir.
+        var id = $id.value;
+        var row = id ? root.querySelector('li[data-id="' + id + '"]') : null;
+
         var input = {
             name: name,
             icon: ($icon.value || '').trim(),
             tone: $tone.value,
-            // Sıra: yeni kategoriler listenin sonuna. Sıralamayı elle düzenlemek
-            // bu turun kapsamında değil, alan ileride kullanılabilsin diye duruyor.
-            order: nextOrder(),
-            isActive: true
+            order: row ? (parseInt(row.getAttribute('data-order'), 10) || 0) : nextOrder(),
+            isActive: row ? row.getAttribute('data-active') === 'true' : true
         };
 
-        var id = $id.value;
         (id ? svc.update(id, input) : svc.create(input)).then(reload);
     });
 
