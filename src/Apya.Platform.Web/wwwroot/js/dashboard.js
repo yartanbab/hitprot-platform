@@ -13,7 +13,7 @@ const _e = x.createContext({
   connection: null,
   state: Ge.Disconnected
 });
-function Ct({ hubUrl: t = "/signalr-hubs/notifications", children: s, enabled: a = !0 }) {
+function Ct({ hubUrl: t = "/notification-hub", children: s, enabled: a = !0 }) {
   const [r, i] = x.useState(Ge.Disconnected), o = x.useRef(null);
   x.useEffect(() => {
     if (!a || typeof window > "u") return;

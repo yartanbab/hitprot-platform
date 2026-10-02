@@ -541,6 +541,8 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/apya-load-state.js"); // satır içi yükleme/hata durumu + Tekrar dene (Razor sayfaları)
                     bundle.AddFiles("/js/apya-money-input.js"); // tutar giriş maskesi (data-money-input, gizli ham alan)
                     bundle.AddFiles("/js/apya-finance-modal.js"); // gelir/gider modalı: proje tarih aralığı kontrolü
+                    // notification-bell.js ve ai-hub-client.js global `signalR` nesnesini bekliyor.
+                    bundle.AddFiles("/libs/signalr/signalr.min.js");
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
                     bundle.AddFiles("/js/sidebar-toggle.js");
@@ -746,7 +748,7 @@ public class PlatformWebModule : AbpModule
                 "img-src 'self' data: blob:; " +
                 "font-src 'self' data:; " +
                 "connect-src 'self' wss: blob:; " +
-                "worker-src blob:; " +
+                "worker-src 'self' blob:; " +
                 "frame-ancestors 'self'; " +
                 "object-src 'none'; " +
                 "base-uri 'self'; " +

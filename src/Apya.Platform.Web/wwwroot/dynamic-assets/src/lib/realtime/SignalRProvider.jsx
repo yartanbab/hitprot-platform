@@ -3,8 +3,8 @@ import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/s
 
 /**
  * SignalRProvider — tek persistent connection per dashboard mount.
- * Hub URL prop'u ile değiştirilebilir; default `/signalr-hubs/notifications`
- * (ABP'nin standardı + APYA-82 task hub'ı).
+ * Hub URL prop'u ile değiştirilebilir; default `/notification-hub`
+ * (NotificationHub — PlatformWebModule'deki MapHub yolu).
  *
  * Auth: cookie session (withCredentials). Token plumbing yok.
  *
@@ -19,7 +19,7 @@ const SignalRContext = createContext({
     state: HubConnectionState.Disconnected,
 });
 
-export function SignalRProvider({ hubUrl = '/signalr-hubs/notifications', children, enabled = true }) {
+export function SignalRProvider({ hubUrl = '/notification-hub', children, enabled = true }) {
     const [state, setState] = useState(HubConnectionState.Disconnected);
     const connectionRef = useRef(null);
 
