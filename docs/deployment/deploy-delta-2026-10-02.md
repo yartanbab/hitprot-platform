@@ -19,7 +19,7 @@ birlikte geçerlidir:
    üç migration, iki P0 güvenlik düzeltmesi, finans doğruluğu, hibe modülü. **Oradaki "Deploy ÖNCESİ
    yapılacaklar" listesinin tamamı hâlâ geçerli** (kasa kur ölçümü, fatura yetkisi, tarihi geçmiş
    açık çağrı sayımı, korunacak dosyalar).
-2. **Bu belge** — onun üstüne gelenler: #477–#487 ve UX denetimi Faz 5'in ilk dalgası.
+2. **Bu belge** — onun üstüne gelenler: #477–#489 ve UX denetimi Faz 5'in ilk dalgası.
 
 > 🔴 **`c967be48` paketi ARTIK ESKİ — onu değil, bu paketi yükleyin.** `1db6556d` paketi zaten
 > eskiydi (yüklenirse şifre hotfix'ini ezer).
@@ -76,7 +76,11 @@ satırından doğrulayın.
 - Host: AI Ayarları'nda sağlayıcı listeden seçiliyor · sürüm notu "Hepsini onayla" geri alınınca
   önceki onaylar korunuyor · kayıt talebi formu adım hafızası.
 
-### Diğer (#477–#482)
+### Diğer (#477–#482, #489)
+
+**Dosyalı proje oluşturma (#489):** Yeni Proje penceresinde dosya ekleyerek kaydetmek "kayıt
+bulunamadı" (404) ile düşüyordu — hata canlıda (`f7919944`) da var. Proje kaydı artık dosya eklenmeden
+önce yazılıyor; işlem yine tek transaction, dosya düşerse proje de geri alınır.
 
 Bildirim zamanı doğru görünüyor ("3 saat önce" hatası) · günlük e‑posta özeti penceresi · fikir
 paylaşımı danışman ekibine bildiriliyor · canlı eşleşme önizlemesi yazarken hata penceresi açmıyor ·
@@ -108,7 +112,7 @@ WHERE LOWER(PreferredProvider) NOT IN ('openai', 'claude', 'gemini', 'deepseek')
 ### 9. Sürüm notu yayın onayı
 
 `/Admin/ReleaseNotes` ekranında onay bekleyen sürümler: **2026.09.15**, **2026.09.17**,
-**2026.09.21** ve **2026.09.27** (39 madde). Kataloğa yazmak yayınlamak değildir; onaylanmayan
+**2026.09.21** ve **2026.09.27** (40 madde). Kataloğa yazmak yayınlamak değildir; onaylanmayan
 madde kiracı kullanıcısına gitmez. "Hepsini onayla" kutusu artık kısmi durumu gösterir ve geri
 alınınca önceki onayları korur.
 
