@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
@@ -41,6 +42,10 @@ public class GrantStageTemplateDataSeedContributor : IDataSeedContributor, ITran
 
         if (await _templateRepository.FindAsync(DefaultTemplateId) != null)
         {
+            // 🔴 DOM-01: Varsayılan şablon zaten varsa kurulum atlanır ama eşleme
+            // geri dolumu HER TURDA koşar — alan sonradan eklendi, mevcut adımlarda
+            // null duruyor ve eşlenmemiş adıma taşımak Stage'i yazmaz.
+            await BackfillStagesAsync();
             return;
         }
 
@@ -64,10 +69,39 @@ public class GrantStageTemplateDataSeedContributor : IDataSeedContributor, ITran
                 {
                     Owner = step.Owner,
                     CompletionCondition = step.CompletionCondition,
-                    ReminderDays = step.ReminderDays
+                    ReminderDays = step.ReminderDays,
+                    // Dört adımın adı sabit aşamalarla birebir; eşleme ada göre oturur.
+                    Stage = GrantStageMapping.Suggest(step.Name, order, DefaultSteps.Length)
                 },
                 autoSave: true);
             order++;
+        }
+    }
+
+    /// <summary>
+    /// 🔴 DOM-01: Eşlemesi olmayan adımlara varsayılan aşamayı yazar (önce ada, sonra
+    /// konuma göre). Yalnız <c>null</c> olanlara dokunur — host'un elle seçtiği eşleme
+    /// EZİLMEZ, bu yüzden her DbMigrator turunda güvenle koşar.
+    /// </summary>
+    private async Task BackfillStagesAsync()
+    {
+        var unmapped = await _stepRepository.GetListAsync(s => s.Stage == null);
+        if (unmapped.Count == 0)
+        {
+            return;
+        }
+
+        // Konuma göre eşleme şablondaki TOPLAM adım sayısını ister; adımlar şablon
+        // bazında gruplanmadan oranlama yanlış çıkardı.
+        foreach (var group in unmapped.GroupBy(s => s.StageTemplateId))
+        {
+            var all = await _stepRepository.GetListAsync(s => s.StageTemplateId == group.Key);
+            var count = all.Count;
+            foreach (var step in group)
+            {
+                step.Stage = GrantStageMapping.Suggest(step.Name, step.Order, count);
+                await _stepRepository.UpdateAsync(step, autoSave: true);
+            }
         }
     }
 

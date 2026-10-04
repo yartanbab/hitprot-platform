@@ -44,6 +44,13 @@ public class GrantStageTemplateStepDto
 
     [Range(0, 365, ErrorMessage = "Hatırlatma 0 ile 365 gün arasında olmalıdır.")]
     public int? ReminderDays { get; set; }
+
+    /// <summary>
+    /// 🔴 DOM-01: Bu adımın karşılık geldiği sabit aşama. Pano adımlarda kalır; huni,
+    /// "bugün", Hibe Yolculuğum ve Başvurularım dört değerli aşamayı okuduğu için adım
+    /// taşıma bu eşlemeden türetip yazar. null = eşlenmedi, taşıma aşamaya dokunmaz.
+    /// </summary>
+    public GrantApplicationStage? Stage { get; set; }
 }
 
 public class GrantStageTemplateCallDto

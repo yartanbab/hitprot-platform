@@ -138,4 +138,73 @@ public class GrantDecisionEntry_Tests : PlatformWebTestBase
             decisions.OrderByDescending(n => n.CreationTime).First().Body.ShouldContain("Kısmi onay");
         }
     }
+
+    private async Task<GrantApplicationStage> StageOfAsync(Guid applicationId)
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        var mtFilter = GetRequiredService<Volo.Abp.Data.IDataFilter<IMultiTenant>>();
+        using (mtFilter.Disable())
+        {
+            return (await GetRequiredService<IRepository<GrantApplication, Guid>>()
+                .GetAsync(applicationId)).Stage;
+        }
+    }
+
+    /// <summary>
+    /// 🔴 DOM-01: Karar kaydı aşamayı ilerletmiyordu — kurum onayı girilse bile huninin
+    /// onay sayacı 0 kalıyor, firma "Başvurularım"da satırın kapandığını görmüyordu.
+    /// </summary>
+    [Theory]
+    [InlineData(GrantDecisionOutcome.Onaylandi)]
+    [InlineData(GrantDecisionOutcome.KismiOnay)]
+    public async Task Onay_Karari_Asamayi_Onaya_Ilerletir(GrantDecisionOutcome outcome)
+    {
+        var (_, _, applicationId) = await ArrangeAsync();
+        (await StageOfAsync(applicationId)).ShouldBe(GrantApplicationStage.Basvuru);
+
+        await SaveAsync(applicationId, outcome);
+
+        (await StageOfAsync(applicationId)).ShouldBe(GrantApplicationStage.Onay);
+    }
+
+    /// <summary>
+    /// RET aşamaya DOKUNMAZ: enum'da "reddedildi" değeri yok ve uydurmak enum'u okuyan
+    /// her yeri (huni, pano, rozetler, JS sözlüğü) sessizce bozardı. Ret kararın
+    /// kendisinde duruyor, ekranlar oradan okuyor.
+    /// </summary>
+    [Fact]
+    public async Task Ret_Karari_Asamayi_Degistirmez()
+    {
+        var (_, _, applicationId) = await ArrangeAsync();
+
+        await SaveAsync(applicationId, GrantDecisionOutcome.Reddedildi);
+
+        (await StageOfAsync(applicationId)).ShouldBe(GrantApplicationStage.Basvuru);
+    }
+
+    /// <summary>
+    /// Yalnız İLERİ taşır: dilimi ödenmiş (Ödeme aşamasındaki) başvuru, karar numarası
+    /// düzeltildi diye Onay'a geri çekilmemeli.
+    /// </summary>
+    [Fact]
+    public async Task Karar_Duzeltmesi_Ileri_Asamayi_Geri_Cekmez()
+    {
+        var (_, _, applicationId) = await ArrangeAsync();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var mtFilter = GetRequiredService<Volo.Abp.Data.IDataFilter<IMultiTenant>>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (mtFilter.Disable())
+        {
+            var repo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+            var app = await repo.GetAsync(applicationId);
+            app.AdvanceStage(GrantApplicationStage.Odeme);
+            await repo.UpdateAsync(app, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        await SaveAsync(applicationId, GrantDecisionOutcome.Onaylandi, reference: "TYD-2026-1184");
+
+        (await StageOfAsync(applicationId)).ShouldBe(GrantApplicationStage.Odeme);
+    }
 }

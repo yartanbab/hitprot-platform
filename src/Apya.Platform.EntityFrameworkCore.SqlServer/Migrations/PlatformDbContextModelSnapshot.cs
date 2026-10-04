@@ -8462,6 +8462,9 @@ namespace Apya.Platform.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
+                    b.Property<int?>("Stage")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("StageTemplateId")
                         .HasColumnType("uniqueidentifier");
 

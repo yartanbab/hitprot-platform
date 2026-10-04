@@ -199,6 +199,9 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
                 current.RequiredDocumentsNote = step.RequiredDocumentsNote;
                 current.CompletionCondition = step.CompletionCondition;
                 current.ReminderDays = step.ReminderDays;
+                // 🔴 DOM-01: Eşleme boş geldiyse uydurma — ada/konuma göre varsayılan ver.
+                // Boş bırakılsaydı o adıma taşımak sabit aşamayı yazmaz ve eksen yine kayardı.
+                current.Stage = step.Stage ?? GrantStageMapping.Suggest(step.Name, order, incoming.Count);
                 await _stepRepo.UpdateAsync(current, autoSave: true);
                 continue;
             }
@@ -210,7 +213,8 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
                 Owner = step.Owner,
                 RequiredDocumentsNote = step.RequiredDocumentsNote,
                 CompletionCondition = step.CompletionCondition,
-                ReminderDays = step.ReminderDays
+                ReminderDays = step.ReminderDays,
+                Stage = step.Stage ?? GrantStageMapping.Suggest(step.Name, order, incoming.Count)
             }, autoSave: true);
         }
     }
@@ -297,7 +301,8 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
                     Owner = s.Owner,
                     RequiredDocumentsNote = s.RequiredDocumentsNote,
                     CompletionCondition = s.CompletionCondition,
-                    ReminderDays = s.ReminderDays
+                    ReminderDays = s.ReminderDays,
+                    Stage = s.Stage
                 })
                 .ToList(),
             GrantCount = grants.Count,

@@ -3,6 +3,9 @@ $(function () {
     var l = abp.localization.getResource('Platform');
 
     var partyKeys = ['Firma', 'Danisman', 'Ortak', 'Kurum'];
+    // 🔴 Aşama adları SUNUCUDAN (_StatusMap → apyaGrantStatus.stage.keys). Elle dizi
+    // yazılsaydı enum değişince ekranda ham anahtar görünürdü; sözleşme testi bunu kilitliyor.
+    var stageKeys = (window.apyaGrantStatus && apyaGrantStatus.stage && apyaGrantStatus.stage.keys) || [];
 
     var templates = [];
     var activeId = null;
@@ -46,7 +49,16 @@ $(function () {
                 esc(l('Grants:Party:' + k)) + '</option>';
         }).join('');
 
-        // Kart: üstte ad + sahibi + sil, altta etiketli üç alan. Evrak ve koşul
+        // 🔴 DOM-01: Aşama eşlemesi. Pano bu adımlarda kalır ama huni, "bugün",
+        // Hibe Yolculuğum ve Başvurularım dört değerli sabit aşamayı okur; adım taşıma
+        // Stage'i buradan türetir. Boş seçenek YOK: eşlenmemiş adım o ekranları yine
+        // yerinde bırakırdı, sunucu da boş gelirse ada/konuma göre varsayılan atar.
+        var stage = stageKeys.map(function (k, i) {
+            return '<option value="' + i + '"' + (s.stage === i ? ' selected' : '') + '>' +
+                esc(l('Grants:Stage:' + k)) + '</option>';
+        }).join('');
+
+        // Kart: üstte ad + sahibi + sil, altta etiketli dört alan. Evrak ve koşul
         // textarea — uzun metin kırpılmaz, sarar.
         return $(
             '<div class="apya-tpl-row apya-tpl-step">' +
@@ -66,6 +78,10 @@ $(function () {
             '        <i class="fa fa-xmark"></i></button>' +
             '    </div>' +
             '    <div class="apya-tpl-fields">' +
+            '      <label class="apya-tpl-field">' +
+            '        <span class="apya-tpl-label">' + esc(l('Grants:StageTemplates:Col:StageMap')) + '</span>' +
+            '        <select class="form-select apya-tpl-stage">' + stage + '</select>' +
+            '      </label>' +
             '      <label class="apya-tpl-field">' +
             '        <span class="apya-tpl-label">' + esc(l('Grants:StageTemplates:Col:Documents')) + '</span>' +
             '        <textarea rows="1" class="form-control apya-tpl-docs" maxlength="128" ' +
@@ -122,7 +138,9 @@ $(function () {
             $board.append(
                 '<div class="apya-tpl-column"><span class="apya-tpl-column-num">' + (i + 1) + '</span>' +
                 '<span class="apya-tpl-column-name">' + esc(s.name) + '</span>' +
-                '<span class="apya-tpl-column-owner">' + esc(l('Grants:Party:' + partyKeys[s.owner])) + '</span></div>');
+                '<span class="apya-tpl-column-owner">' + esc(l('Grants:Party:' + partyKeys[s.owner])) +
+                (stageKeys[s.stage] ? ' · ' + esc(l('Grants:Stage:' + stageKeys[s.stage])) : '') +
+                '</span></div>');
         });
 
         var $calls = $('#TplCalls').empty();
@@ -159,6 +177,7 @@ $(function () {
                 name: $r.find('.apya-tpl-step-name').val(),
                 note: $r.find('.apya-tpl-note').val(),
                 owner: Number($r.find('.apya-tpl-owner').val()),
+                stage: num($r.find('.apya-tpl-stage').val()),
                 requiredDocumentsNote: $r.find('.apya-tpl-docs').val(),
                 completionCondition: $r.find('.apya-tpl-completion').val(),
                 reminderDays: num($r.find('.apya-tpl-days').val())
@@ -177,7 +196,7 @@ $(function () {
 
     // ---------- Aşama ekle / sil / sırala ----------
     $('#TplAddStep, #TplAddFirstStep').on('click', function () {
-        var $row = stepRow({ owner: 2 });
+        var $row = stepRow({ owner: 2, stage: 1 });
         $('#TplSteps').append($row);
         $('#TplStepsEmpty').addClass('d-none');
         refreshStepMeta();

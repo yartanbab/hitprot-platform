@@ -263,4 +263,64 @@ public class GrantStageTemplate_Tests : PlatformWebTestBase
 
         sonrasi.CompletionPercent.ShouldBeGreaterThan(oncesi.CompletionPercent);
     }
+
+    /// <summary>
+    /// 🔴 DOM-01: Varsayılan şablonun dört adımı sabit aşamaların adlarını taşıyor;
+    /// tohumlama (ve geri dolum) eşlemeyi bire bir kurmalı. Eşleme boş kalsa o adıma
+    /// taşımak sabit aşamayı yazmaz ve üç eksen yine ayrışırdı.
+    /// </summary>
+    [Fact]
+    public async Task Varsayilan_Sablonun_Adimlari_Asamalara_Eslenmis()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        var def = (await service.GetListAsync()).Single(t => t.IsDefault);
+
+        def.Steps.Select(s => s.Stage).ShouldBe(new GrantApplicationStage?[]
+        {
+            GrantApplicationStage.Basvuru,
+            GrantApplicationStage.Degerlendirme,
+            GrantApplicationStage.Onay,
+            GrantApplicationStage.Odeme
+        });
+    }
+
+    /// <summary>Host'un seçtiği eşleme kaydedilir ve geri okunur.</summary>
+    [Fact]
+    public async Task Asama_Eslemesi_Kaydedilir_Ve_Geri_Okunur()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        var input = NewTemplate("Eşleme " + Guid.NewGuid().ToString("N")[..6], "Dosya", "Kurum yanıtı", "Sözleşme");
+        input.Steps[0].Stage = GrantApplicationStage.Basvuru;
+        input.Steps[1].Stage = GrantApplicationStage.Degerlendirme;
+        input.Steps[2].Stage = GrantApplicationStage.Odeme;
+
+        var created = await service.CreateAsync(input);
+        created.Steps.Select(s => s.Stage).ShouldBe(new GrantApplicationStage?[]
+        {
+            GrantApplicationStage.Basvuru, GrantApplicationStage.Degerlendirme, GrantApplicationStage.Odeme
+        });
+
+        var reread = (await service.GetListAsync()).Single(t => t.Id == created.Id);
+        reread.Steps[2].Stage.ShouldBe(GrantApplicationStage.Odeme);
+    }
+
+    /// <summary>
+    /// Eşleme boş gelirse (eski istemci ya da elle çağrı) sunucu ada/konuma göre
+    /// varsayılan atar — adım eşlemesiz KALMAZ, yoksa özet eksen yine sessizce donardı.
+    /// </summary>
+    [Fact]
+    public async Task Eslemesi_Bos_Gelen_Adima_Sunucu_Varsayilan_Atar()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        // Adlar sabit aşamalarla eşleşmiyor: konum kuralı devreye girmeli.
+        var created = await service.CreateAsync(
+            NewTemplate("Boş eşleme " + Guid.NewGuid().ToString("N")[..6], "İlk temas", "Saha ziyareti", "Kapanış", "Arşiv"));
+
+        created.Steps.ShouldAllBe(s => s.Stage != null);
+        created.Steps[0].Stage.ShouldBe(GrantApplicationStage.Basvuru);
+        created.Steps[3].Stage.ShouldBe(GrantApplicationStage.Odeme);
+    }
 }

@@ -30,6 +30,20 @@ public class GrantStageTemplateStep : FullAuditedAggregateRoot<Guid>, IMultiTena
 
     public GrantPartyRole Owner { get; set; }
 
+    /// <summary>
+    /// 🔴 DOM-01: Bu adımın karşılık geldiği SABİT AŞAMA — başvurunun özeti.
+    ///
+    /// <para>Pano programa özel adımlarda kalır, ama huni, "bugün", Hibe Yolculuğum ve
+    /// Başvurularım dört değerli <see cref="GrantApplicationStage"/> okur. Üç eksen
+    /// senkronsuzdu: <c>MoveToStep</c> Stage'i yazmıyordu, karar kaydı da ilerletmiyordu;
+    /// şablonlu başvuru panoda son adıma gelse bile firma "tamamlandı" göremiyordu.
+    /// Adım taşıma artık Stage'i BU eşlemeden türetip yazıyor.</para>
+    ///
+    /// <para><c>null</c> = eşlenmedi; o adıma taşımak Stage'e DOKUNMAZ (eski davranış).
+    /// Mevcut adımlar tohumlamada <see cref="GrantStageMapping"/> kuralıyla doldurulur.</para>
+    /// </summary>
+    public GrantApplicationStage? Stage { get; set; }
+
     public string? RequiredDocumentsNote { get; set; }
 
     public string? CompletionCondition { get; set; }

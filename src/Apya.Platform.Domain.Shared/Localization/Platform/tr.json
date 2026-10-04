@@ -746,6 +746,7 @@
         "Grants:StageTemplates:DragHint": "Sırayı sürükleyerek değiştirin",
         "Grants:StageTemplates:Col:Stage": "Aşama",
         "Grants:StageTemplates:Col:Owner": "Sahibi",
+        "Grants:StageTemplates:Col:StageMap": "Özette hangi aşama",
         "Grants:StageTemplates:Col:Documents": "Zorunlu evrak",
         "Grants:StageTemplates:Col:Completion": "Tamamlanma koşulu",
         "Grants:StageTemplates:Col:Reminder": "Hatırlatma",

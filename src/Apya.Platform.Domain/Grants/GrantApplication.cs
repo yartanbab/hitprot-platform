@@ -119,8 +119,25 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>
     /// 2c · Başvuruyu şablondaki bir adıma taşır (pano sürükle-bırak).
     /// Onaylanan tutar aşamadan bağımsızdır; <see cref="AdvanceStage"/> ile girilir.
+    ///
+    /// <para>🔴 DOM-01: <paramref name="mappedStage"/> verilirse <see cref="Stage"/> de
+    /// yazılır. Üç eksen senkronsuzdu — adım taşıma Stage'e dokunmuyordu ve huni,
+    /// "bugün", Hibe Yolculuğum, Başvurularım yalnız Stage okuduğu için başvuru panoda
+    /// son adıma gelse bile firma tarafında hiç kapanmıyordu. Eşleme adımın kendi
+    /// <see cref="GrantStageTemplateStep.Stage"/> alanından gelir; <c>null</c> ise
+    /// (adım eşlenmemiş) Stage korunur.</para>
+    ///
+    /// <para>Geriye taşımada Stage de geriye gider: adım TEK doğruluk kaynağıdır,
+    /// host kartı bilerek geri çektiyse özet de onu izlemeli.</para>
     /// </summary>
-    public void MoveToStep(Guid stepId) => CurrentStepId = stepId;
+    public void MoveToStep(Guid stepId, GrantApplicationStage? mappedStage = null)
+    {
+        CurrentStepId = stepId;
+        if (mappedStage.HasValue)
+        {
+            Stage = mappedStage.Value;
+        }
+    }
 
     /// <summary>Aşamayı ilerletir (host). <paramref name="approvedAmount"/> verilmezse mevcut değer korunur.</summary>
     public void AdvanceStage(GrantApplicationStage stage, decimal? approvedAmount = null)
