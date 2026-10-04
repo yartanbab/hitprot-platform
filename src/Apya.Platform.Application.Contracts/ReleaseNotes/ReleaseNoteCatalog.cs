@@ -26,6 +26,23 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.10.04",
+            date: "4 Ekim 2026",
+            title: "Başvurunuzun ilerlemesi artık her ekranda aynı görünüyor",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Başvurunuzun ilerlemesi her ekranda aynı görünüyor",
+                "Danışmanınız başvurunuzu panoda bir sonraki aşamaya taşıdığında ya da kurum kararını " +
+                "girdiğinde, bu ilerleme artık Hibe Yolculuğum ve Başvurularım ekranlarına da yansıyor. " +
+                "Daha önce başvuru panoda son aşamaya gelse bile bu iki ekran olduğu yerde kalıyordu: " +
+                "yolculuk adımları tamamlanmış görünmüyor, başvuru listesindeki satır kapanmıyordu. " +
+                "Onaylanan başvurular da artık doğru aşamada görünüyor; kurum kararı girildiği anda " +
+                "başvurunuz 'onay' aşamasına geçiyor. " +
+                "Daha önce girilmiş başvurularınızın aşaması, danışmanınız başvuruyu bir sonraki adıma " +
+                "taşıdığında kendiliğinden düzelir.")
+        ),
+
+        new ReleaseNote(
             version: "2026.09.27",
             date: "27 Eylül 2026",
             title: "Görev yetkileri her ekranda aynı; kaydetmek başka bilgileri silmiyor; ekranlar " +

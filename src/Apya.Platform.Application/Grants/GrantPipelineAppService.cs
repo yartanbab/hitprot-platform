@@ -105,8 +105,12 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
             {
                 throw new BusinessException(PlatformDomainErrorCodes.GrantPipelineStepNotInTemplate);
             }
-            application.MoveToStep(input.StepId.Value);
-            movedTo = (await _stepRepo.FirstOrDefaultAsync(x => x.Id == input.StepId.Value))?.Name;
+            // 🔴 DOM-01: Adım taşıma sabit aşamayı da yazar — adımın kendi eşlemesinden.
+            // Eskiden yalnız CurrentStepId değişiyordu; huni, "bugün", Hibe Yolculuğum ve
+            // Başvurularım Stage okuduğu için pano ilerlerken o ekranlar yerinde sayıyordu.
+            var step = await _stepRepo.FirstOrDefaultAsync(x => x.Id == input.StepId.Value);
+            application.MoveToStep(input.StepId.Value, step?.Stage);
+            movedTo = step?.Name;
         }
         else if (input.Stage.HasValue)
         {

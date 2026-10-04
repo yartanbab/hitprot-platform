@@ -139,6 +139,41 @@ public class GrantPipelinePage_Tests : PlatformWebTestBase
         moved.Columns[0].Cards.ShouldNotContain(c => c.ApplicationId == applicationId);
     }
 
+    /// <summary>
+    /// 🔴 DOM-01: Panoda adıma taşımak sabit aşamayı da yazmalı. Eskiden yalnız
+    /// CurrentStepId değişiyordu; huni, "bugün", Hibe Yolculuğum ve Başvurularım
+    /// dört değerli aşamayı okuduğu için pano ilerlerken o ekranlar yerinde sayıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Adima_Tasimak_Sabit_Asamayi_Da_Yazar()
+    {
+        var (callId, applicationId, _) = await SetupAsync(withTemplate: true);
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+        var stepRepo = GetRequiredService<IRepository<GrantStageTemplateStep, Guid>>();
+
+        var board = await _pipeline.GetBoardAsync(callId, null);
+        var target = board.Columns[2];
+
+        GrantApplicationStage? beklenen;
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            beklenen = (await stepRepo.GetAsync(target.StepId!.Value)).Stage;
+        }
+        beklenen.ShouldNotBeNull("tohumlanan adımın aşama eşlemesi olmalı (geri dolum)");
+
+        await _pipeline.MoveAsync(new MoveGrantApplicationInput
+        {
+            ApplicationId = applicationId,
+            StepId = target.StepId
+        });
+
+        using var readUow = uowManager.Begin(requiresNew: true);
+        var application = await appRepo.GetAsync(applicationId);
+        application.CurrentStepId.ShouldBe(target.StepId);
+        application.Stage.ShouldBe(beklenen!.Value, "özet eksen adımın eşlemesini izlemeli");
+    }
+
     [Fact]
     public async Task Baska_Sablonun_Adimina_Tasinamaz()
     {

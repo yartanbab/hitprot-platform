@@ -173,7 +173,9 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
             throw new BusinessException(PlatformDomainErrorCodes.GrantPipelineNoNextStep);
         }
 
-        application.MoveToStep(next.Id);
+        // 🔴 DOM-01: "İlerlet" de sabit aşamayı adımın eşlemesinden yazar (panodaki
+        // sürükleme ile aynı davranış; ikisi ayrışsaydı eksen yine kayardı).
+        application.MoveToStep(next.Id, next.Stage);
         await _appRepo.UpdateAsync(application, autoSave: true);
         await LogAsync(application, GrantActivityKind.StageMoved, next.Name);
         await NotifyStageAsync(application, next.Name);

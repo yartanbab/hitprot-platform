@@ -99,12 +99,36 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
             await _decisionRepo.UpdateAsync(decision, autoSave: true);
         }
 
+        await AdvanceStageForDecisionAsync(application, decision.Outcome);
+
         if (notify)
         {
             await NotifyDecisionAsync(application, decision);
         }
 
         return await BuildAsync(application);
+    }
+
+    /// <summary>
+    /// 🔴 DOM-01: Karar kaydı aşamayı ilerletmiyordu. Kurum onayı girilse bile huninin
+    /// onay sayacı 0 kalıyor, firma "Başvurularım"da satırın kapandığını görmüyordu.
+    ///
+    /// <para>Yalnız İLERİ taşır: aşaması zaten Onay ya da Ödeme olan başvuru
+    /// (ör. dilimi ödenmiş) karar numarası düzeltildi diye geri çekilmez.</para>
+    ///
+    /// <para>RET aşamayı DEĞİŞTİRMEZ: <see cref="GrantApplicationStage"/>'de "reddedildi"
+    /// değeri yok ve uydurmak enum'u okuyan 16 yeri (huni, pano, rozetler, JS sözlüğü)
+    /// sessizce bozardı. Ret zaten kararın kendisinde duruyor ve ekranlar oradan okuyor.</para>
+    /// </summary>
+    private async Task AdvanceStageForDecisionAsync(GrantApplication application, GrantDecisionOutcome outcome)
+    {
+        if (outcome == GrantDecisionOutcome.Reddedildi || application.Stage >= GrantApplicationStage.Onay)
+        {
+            return;
+        }
+
+        application.AdvanceStage(GrantApplicationStage.Onay);
+        await _appRepo.UpdateAsync(application, autoSave: true);
     }
 
     /// <summary>
