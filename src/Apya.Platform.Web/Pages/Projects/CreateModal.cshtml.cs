@@ -72,9 +72,13 @@ public class CreateModalModel : PlatformPageModel
         {
             StartDate = Clock.Now,
             EndDate = Clock.Now.AddMonths(1),
-            // Varsayılan seçim: "Hibe Projesi" görünürse o, değilse listenin ilki.
-            // Gizlenmiş bir kategoriyi seçili göstermek kartlarla eşleşmezdi.
-            CategoryId = (CategoryCards.FirstOrDefault(c => c.SystemKey == ProjectCategory.GrantProject)
+            // 🔴 PRJ-10: Varsayılan "Diğer". Önceki varsayılan "Hibe Projesi"ydi ve formu
+            // açan herkes aksini seçmedikçe projesini hibe projesi olarak kaydediyordu:
+            // kategori Finans Merkezi'nin sekme setini ve hibe alanlarını belirlediği için
+            // sıradan proje sessizce yanlış şablonla doğuyordu. Hibe projesi dönüşümde
+            // (GrantApplicationConversionAppService, CNV-11) zaten doğru kategoriyle açılır.
+            // Gizlenmiş bir kategoriyi seçili göstermek kartlarla eşleşmezdi — görünmüyorsa ilki.
+            CategoryId = (CategoryCards.FirstOrDefault(c => c.SystemKey == ProjectCategory.Other)
                           ?? CategoryCards.FirstOrDefault())?.Value
         };
 
