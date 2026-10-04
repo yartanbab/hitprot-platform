@@ -139,6 +139,13 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
         }
     }
 
+    /// <summary>
+    /// 🔴 LIF-02 onarımı: Adım kimliğini temizler. Programın şablonu yoksa pano başvuruyu
+    /// dört sabit aşamaya göre dizer; yetim kimlik ise kartı sessizce İLK sütuna düşürüyordu.
+    /// <see cref="Stage"/>'e dokunulmaz — özet eksen onarımda korunur.
+    /// </summary>
+    public void ClearStep() => CurrentStepId = null;
+
     /// <summary>Aşamayı ilerletir (host). <paramref name="approvedAmount"/> verilmezse mevcut değer korunur.</summary>
     public void AdvanceStage(GrantApplicationStage stage, decimal? approvedAmount = null)
     {

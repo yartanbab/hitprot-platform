@@ -28,7 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.10.04",
             date: "4 Ekim 2026",
-            title: "Başvurunuzun ilerlemesi artık her ekranda aynı görünüyor",
+            title: "Başvurunuzun ilerlemesi artık her ekranda aynı görünüyor; yeni proje formu " +
+                   "varsayılan olarak hibe projesi açmıyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Başvurunuzun ilerlemesi her ekranda aynı görünüyor",
@@ -39,7 +40,18 @@ public static class ReleaseNoteCatalog
                 "Onaylanan başvurular da artık doğru aşamada görünüyor; kurum kararı girildiği anda " +
                 "başvurunuz 'onay' aşamasına geçiyor. " +
                 "Daha önce girilmiş başvurularınızın aşaması, danışmanınız başvuruyu bir sonraki adıma " +
-                "taşıdığında kendiliğinden düzelir.")
+                "taşıdığında kendiliğinden düzelir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yeni proje formu artık varsayılan olarak hibe projesi açmıyor",
+                "Yeni proje oluşturma formu açıldığında proje türü olarak 'Hibe Projesi' seçili geliyordu; " +
+                "türü değiştirmeyi atlayan herkes sıradan projesini hibe projesi olarak kaydediyordu. " +
+                "Form artık 'Diğer' ile açılıyor, hibe projesini istediğinizde kendiniz seçiyorsunuz. " +
+                "Proje türü, projenin finans ekranında hangi sekmelerin (donör, kur köprüsü) çıktığını ve " +
+                "hangi hibe alanlarının sorulduğunu belirlediği için bu seçim önemliydi. " +
+                "Onaylanan hibe başvurunuz projeye dönüştürüldüğünde proje zaten doğru türle açılıyor; " +
+                "o akış bu değişiklikten etkilenmiyor. " +
+                "Daha önce yanlış türle açtığınız projelerin türünü proje ayarlarından düzeltebilirsiniz.")
         ),
 
         new ReleaseNote(
