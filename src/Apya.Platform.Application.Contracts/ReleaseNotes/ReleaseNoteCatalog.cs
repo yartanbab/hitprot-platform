@@ -28,8 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.10.06",
             date: "6 Ekim 2026",
-            title: "Projenizin bitişi yaklaşınca artık haber alıyorsunuz; yeni proje formunda bütçe " +
-                   "alanı yalnız bütçe yetkisi olanlara görünüyor",
+            title: "Projenizin bitişi yaklaşınca artık haber alıyorsunuz; harcamadan belgesine tek " +
+                   "tıkla gidiliyor; yeni proje formunda bütçe alanı yalnız bütçe yetkisi olanlara görünüyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Yeni proje açarken bütçeyi yalnız bütçe yetkisi olan kullanıcı girebiliyor",
@@ -52,7 +52,17 @@ public static class ReleaseNoteCatalog
                 "Her eşik için bir kez gelir, tekrar etmez; projenin bitiş tarihini ertelerseniz " +
                 "hatırlatmalar yeni tarihe göre yeniden başlar. " +
                 "Bu bildirimleri almak istemiyorsanız bildirim ayarlarınızdan 'Projeler' " +
-                "kategorisini kapatabilirsiniz.")
+                "kategorisini kapatabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje harcamasından belgesine tek tıkla gidiliyor",
+                "Projenin Finans sekmesindeki harcama tablosunda, belgesi bağlı satırlarda yeşil " +
+                "bir onay işareti duruyordu ama işarete basılamıyordu: belgenin var olduğunu " +
+                "görüyor, belgeyi görmek için Dokümanlar'a gidip aramanız gerekiyordu. " +
+                "Artık işarete bastığınızda belge iner. " +
+                "Bir harcamaya birden çok belge bağlıysa (örneğin fatura ve banka dekontu) işaretin " +
+                "yanında sayı yazar; hepsi satırın sağındaki üç nokta menüsünde adıyla listelenir. " +
+                "Dokümanlar bölümünü görme yetkiniz yoksa işaret eskisi gibi yalnız bilgi verir.")
         ),
 
         new ReleaseNote(

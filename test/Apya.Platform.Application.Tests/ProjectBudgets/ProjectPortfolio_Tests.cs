@@ -56,7 +56,8 @@ public class ProjectPortfolio_Tests
         // beklentiyle karşılaşsın.
         _sut = new ProjectBudgetAppService(
             _lineRepo, _trancheRepo, _deductionRepo, _revisionRepo, _projectRepo,
-            _categoryRepo, _expenseRepo, _incomeRepo, _taskRepo, _matchRepo, manager,
+            _categoryRepo, _expenseRepo, _incomeRepo, _taskRepo, _matchRepo,
+            Substitute.For<IRepository<Apya.Platform.Documents.DocumentFile, Guid>>(), manager,
             Substitute.For<IFinanceNotificationPublisher>());
 
         var services = new ServiceCollection();
