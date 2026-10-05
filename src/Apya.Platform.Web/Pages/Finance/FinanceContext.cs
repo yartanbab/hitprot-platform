@@ -100,7 +100,8 @@ public static class FinanceContext
     /// Documents BİLEREK yok — stajyer/çalışan belge iznine sahip ama finans görmez; tek başına belge
     /// izni finans çatısını anlamlı kılmaz (aynı içerik /Documents altında). Liste, belge dışındaki
     /// her sekme iznini kapsar (FinanceContext_Tests kilitler): kapı, bir sekmeyi görebilen
-    /// kullanıcıyı dışarıda bırakmaz. Menü kapısı (Incomes|Expenses|Invoices) bunun alt kümesidir.
+    /// kullanıcıyı dışarıda bırakmaz. Menü kapısı da BU listeyi okur (FUX-06): sayfayı açabilen
+    /// kullanıcı menüde de görür, açamayan görmez.
     /// </summary>
     public static readonly string[] PageAnyOfPermissions =
     {

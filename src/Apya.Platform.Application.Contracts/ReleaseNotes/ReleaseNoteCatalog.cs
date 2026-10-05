@@ -62,7 +62,16 @@ public static class ReleaseNoteCatalog
                 "Artık işarete bastığınızda belge iner. " +
                 "Bir harcamaya birden çok belge bağlıysa (örneğin fatura ve banka dekontu) işaretin " +
                 "yanında sayı yazar; hepsi satırın sağındaki üç nokta menüsünde adıyla listelenir. " +
-                "Dokümanlar bölümünü görme yetkiniz yoksa işaret eskisi gibi yalnız bilgi verir.")
+                "Dokümanlar bölümünü görme yetkiniz yoksa işaret eskisi gibi yalnız bilgi verir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Finans Merkezi, onu açabilen herkesin menüsünde görünüyor",
+                "Yalnız 'Bütçe Görüntüleme' yetkisi olan kullanıcılar (örneğin proje yöneticileri) " +
+                "Finans Merkezi'ni açabiliyor ve bütçe sekmelerini görebiliyordu, ama sol menüde " +
+                "sayfanın kendisi çıkmıyordu; sayfaya ancak bir projenin içindeki bağlantıdan " +
+                "ulaşabiliyorlardı. Aynı durum yalnız kasa yetkisi olan kullanıcılar için de geçerliydi. " +
+                "Artık Finans Merkezi'ni açma yetkisi olan herkes onu 'Finans & Bütçe' menüsünde görüyor. " +
+                "Hangi sekmeleri göreceğiniz değişmedi; yetkiniz olmayan sekmeler yine görünmez.")
         ),
 
         new ReleaseNote(
