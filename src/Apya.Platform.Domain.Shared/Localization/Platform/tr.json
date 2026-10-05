@@ -2361,6 +2361,7 @@
         "Common:Unsaved:LeaveConfirm": "Devam ederseniz kaydetmediğiniz değişiklikler kaybolur. Yine de devam edilsin mi?",
         "Common:Unsaved:Badge": "Kaydedilmemiş değişiklik var",
         "Documents:Tree:RefreshFailed": "Klasörler yenilenemedi.",
+        "Documents:Report:UnknownContributor": "Ayrılmış kullanıcı",
         "Documents:Detail:Unsaved:Body": "Bu belgede yaptığınız değişiklikler kaydedilmedi. Devam ederseniz kaybolur.",
         "Documents:NewFolder:Title": "Yeni klasör",
         "Documents:NewFolder:Name": "Klasör adı",

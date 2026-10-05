@@ -67,6 +67,32 @@ public class CapacityDto
     /// <summary>8 saat = 1 adam-gün kabulüyle.</summary>
     public decimal EstimatedPersonDays { get; set; }
     public decimal LoggedPersonDays { get; set; }
+
+    /// <summary>
+    /// Kişi bazında katkı — raporun "Ekip katkısı" bölümünün kaynağı. Toplam zaten
+    /// <see cref="LoggedHours"/>'ta; bu liste onun kırılımıdır, ikinci bir hesap değil.
+    /// Hiç zaman kaydı yoksa boştur.
+    /// </summary>
+    public List<ContributorDto> Contributors { get; set; } = new();
+}
+
+/// <summary>
+/// Bir kişinin projeye kaydettiği zaman. 🔴 "Katkı" = KAYDEDİLEN ZAMAN; atanan görev
+/// sayısı değil. Atama eksenini de buraya karıştırmak, zaman kaydı tutmayan ama çok
+/// görev kapatan kişiyi "katkısız" göstererek raporu yanıltırdı.
+/// </summary>
+public class ContributorDto
+{
+    public Guid UserId { get; set; }
+    public string UserName { get; set; } = string.Empty;
+    public decimal LoggedHours { get; set; }
+    public decimal LoggedPersonDays { get; set; }
+
+    /// <summary>Projenin toplam kaydedilen saatindeki payı (%).</summary>
+    public int SharePercent { get; set; }
+
+    /// <summary>Zaman kaydı tuttuğu FARKLI görev sayısı.</summary>
+    public int TaskCount { get; set; }
 }
 
 public class ProjectRiskDto : FullAuditedEntityDto<Guid>
