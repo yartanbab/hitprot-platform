@@ -315,6 +315,9 @@ namespace Apya.Platform.Web.Pages.Tasks
         {
             if (file == null || file.Length == 0) return NoContent();
 
+            // Erişim kontrolü yazmadan ÖNCE: reddedilen istek diskte yetim dosya bırakmasın.
+            await _taskAppService.EnsureAttachmentUploadAllowedAsync(taskId);
+
             var storedFileName = await _fileStorage.StoreAsync(file);
             await _taskAppService.AddAttachmentAsync(taskId, file.FileName, storedFileName, file.Length);
             return NoContent();

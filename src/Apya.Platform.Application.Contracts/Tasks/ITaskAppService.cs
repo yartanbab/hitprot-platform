@@ -56,6 +56,9 @@ namespace Apya.Platform.Tasks
         /// <summary>Görevi bir veya birden çok projeye taşır/kopyalar (görev detayı transfer diyaloğu).</summary>
         Task<Dtos.TransferTaskResultDto> TransferAsync(Guid id, Dtos.TransferTaskDto input);
 
+        /// <summary>Yükleme öncesi erişim doğrulaması — diske boşuna yazmamak için.</summary>
+        Task EnsureAttachmentUploadAllowedAsync(Guid taskId);
+
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
         Task DeleteAttachmentAsync(Guid attachmentId);
