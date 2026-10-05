@@ -18,6 +18,7 @@ public class NotificationDomainEventHandler :
     ILocalEventHandler<TaskDueSoonEto>,
     ILocalEventHandler<TaskOverdueEto>,
     ILocalEventHandler<DocumentExpiringEto>,
+    ILocalEventHandler<Apya.Platform.Projects.ProjectEndingSoonEto>,
     ITransientDependency
 {
     private readonly NotificationManager _notificationManager;
@@ -186,6 +187,41 @@ public class NotificationDomainEventHandler :
     /// </summary>
     private static IEnumerable<Guid> Recipients(params Guid[] candidates)
         => candidates.Where(id => id != Guid.Empty).Distinct();
+
+    /// <summary>
+    /// 🔴 NTF-05: Proje bitişi yaklaşıyor. Tekillik anahtarı PROJE + BİTİŞ TARİHİ + EŞİK:
+    /// worker saatte bir koştuğu hâlde her eşik (30 / 14 / 3 gün) bir kez bildirilir;
+    /// bitiş tarihi ertelenirse eşikler yeni tarih için yeniden çalışır.
+    /// </summary>
+    public async Task HandleEventAsync(Apya.Platform.Projects.ProjectEndingSoonEto eventData)
+    {
+        var onceKey =
+            $"{(int)NotificationType.ProjectEndingSoon}:Project:{eventData.ProjectId}:{eventData.EndDate:yyyyMMdd}:{eventData.Threshold}";
+
+        var title = eventData.DaysRemaining == 0
+            ? _l["Notification:ProjectEndingSoon:TitleToday"]
+            : _l["Notification:ProjectEndingSoon:Title", eventData.DaysRemaining];
+
+        // Açık görev yoksa "0 açık görev" demek yerine ayrı cümle: hazır olan proje için
+        // sayı bir uyarı gibi okunmamalı.
+        var body = eventData.OpenTaskCount > 0
+            ? _l["Notification:ProjectEndingSoon:Body", eventData.ProjectName, eventData.EndDate.ToString("dd.MM.yyyy"), eventData.OpenTaskCount]
+            : _l["Notification:ProjectEndingSoon:BodyNoOpenTasks", eventData.ProjectName, eventData.EndDate.ToString("dd.MM.yyyy")];
+
+        // Son eşikte önem yükselir: kapanışa üç gün kala bu artık bir hatırlatma değil, uyarı.
+        var severity = eventData.Threshold <= 3 ? NotificationSeverity.High : (NotificationSeverity?)null;
+
+        foreach (var userId in Recipients(eventData.RecipientIds.ToArray()))
+        {
+            await _notificationManager.PublishOnceAsync(
+                userId, onceKey, title, body,
+                NotificationType.ProjectEndingSoon,
+                entityType: "Project",
+                entityId: eventData.ProjectId,
+                severity: severity
+            );
+        }
+    }
 
     // --- Belge Son Tarih Uyarısı ---
     public async Task HandleEventAsync(DocumentExpiringEto eventData)

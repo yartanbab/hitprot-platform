@@ -85,6 +85,7 @@ public class PlatformDomainModule : AbpModule
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
         context.AddBackgroundWorkerAsync<TaskDeadlineWorker>();
+        context.AddBackgroundWorkerAsync<Apya.Platform.Projects.ProjectEndDateReminderWorker>();
         context.AddBackgroundWorkerAsync<DocumentExpiryWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.Telemetry.TelemetryRetentionWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.Notifications.NotificationDigestWorker>();

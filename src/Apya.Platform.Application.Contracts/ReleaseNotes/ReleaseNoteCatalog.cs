@@ -28,7 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.10.06",
             date: "6 Ekim 2026",
-            title: "Yeni proje formunda bütçe alanı yalnız bütçe yetkisi olanlara görünüyor",
+            title: "Projenizin bitişi yaklaşınca artık haber alıyorsunuz; yeni proje formunda bütçe " +
+                   "alanı yalnız bütçe yetkisi olanlara görünüyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Yeni proje açarken bütçeyi yalnız bütçe yetkisi olan kullanıcı girebiliyor",
@@ -38,7 +39,20 @@ public static class ReleaseNoteCatalog
                 "ne değiştirebiliyordu. " +
                 "Artık iki ekran aynı kurala bağlı. Bütçe yetkiniz yoksa yeni proje formunda bütçe " +
                 "alanı çıkmaz ve proje bütçesiz açılır; bütçeyi sonradan yetkili bir kullanıcı girer. " +
-                "Bütçe yetkiniz varsa sizin için hiçbir şey değişmedi.")
+                "Bütçe yetkiniz varsa sizin için hiçbir şey değişmedi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Projenizin bitişi yaklaşınca bildirim geliyor",
+                "Projenin bitiş tarihi ekranlarda yazıyordu ama program onu takip etmiyordu: " +
+                "kapanışa bir hafta kalmış proje için kimseye haber gitmiyordu. " +
+                "Artık bitişe 30 gün, 14 gün ve 3 gün kala bildirim geliyor. " +
+                "Bildirimde projenin bitiş tarihi ve hâlâ açık duran görev sayısı yazıyor; " +
+                "üstüne bastığınızda proje açılıyor. " +
+                "Bildirim proje liderlerine ve projeyi açan kişiye gidiyor. " +
+                "Her eşik için bir kez gelir, tekrar etmez; projenin bitiş tarihini ertelerseniz " +
+                "hatırlatmalar yeni tarihe göre yeniden başlar. " +
+                "Bu bildirimleri almak istemiyorsanız bildirim ayarlarınızdan 'Projeler' " +
+                "kategorisini kapatabilirsiniz.")
         ),
 
         new ReleaseNote(

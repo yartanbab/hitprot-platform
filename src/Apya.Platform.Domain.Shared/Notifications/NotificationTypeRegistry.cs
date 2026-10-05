@@ -60,6 +60,12 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Tasks, NotificationSeverity.Critical,
                 "fa fa-calendar-xmark", "/Tasks/Detail/{0}", GroupSimilar: false),
 
+            // NTF-05: Kayıt defterindeki önem "Normal"; 3 gün eşiğinde yayın sırasında
+            // "High"a yükseltilir (bkz. NotificationDomainEventHandler).
+            [NotificationType.ProjectEndingSoon] = new(
+                NotificationCategory.Projects, NotificationSeverity.Normal,
+                "fa fa-flag-checkered", "/Projects/ProjectDetails/{0}", GroupSimilar: false),
+
             [NotificationType.TaskStatusChanged] = new(
                 NotificationCategory.Tasks, NotificationSeverity.Normal,
                 "fa fa-arrow-right-arrow-left", "/Tasks/Detail/{0}", GroupSimilar: true),
