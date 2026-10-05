@@ -43,7 +43,8 @@ public class CollectionModalModel : AbpPageModel
 
     public virtual async Task<IActionResult> OnGetAsync()
     {
-        Tranche = (await _budgetAppService.GetTranchesAsync(ProjectId)).First(x => x.Id == Id);
+        var tranches = await _budgetAppService.GetTranchesAsync(ProjectId);
+        Tranche = tranches.First(x => x.Id == Id);
 
         Collection = new RegisterCollectionDto
         {
@@ -52,7 +53,15 @@ public class CollectionModalModel : AbpPageModel
             IncomeEntryId = Tranche.IncomeEntryId
         };
 
-        await LoadIncomeEntriesAsync();
+        // FIN-06: aynı gelir iki dilime bağlanamaz. Başka bir dilimin tahsilatına bağlı
+        // gelirler listeden düşer; bu dilimin KENDİ bağı kalır (yoksa pencere açılınca
+        // seçili gelir kaybolurdu).
+        var linkedElsewhere = tranches
+            .Where(x => x.Id != Id && x.IncomeEntryId.HasValue)
+            .Select(x => x.IncomeEntryId!.Value)
+            .ToHashSet();
+
+        await LoadIncomeEntriesAsync(linkedElsewhere);
         return Page();
     }
 
@@ -67,7 +76,7 @@ public class CollectionModalModel : AbpPageModel
     /// Bu projenin gelir kayıtları. Gelirleri görme yetkisi yoksa liste boş kalır
     /// ve alan opsiyonel olduğu için akış bozulmaz.
     /// </summary>
-    private async Task LoadIncomeEntriesAsync()
+    private async Task LoadIncomeEntriesAsync(HashSet<Guid> linkedElsewhere)
     {
         try
         {
@@ -75,6 +84,7 @@ public class CollectionModalModel : AbpPageModel
                 new GetIncomeEntriesInput { MaxResultCount = 200, ProjectId = ProjectId, Sorting = "IncomeDate desc" });
 
             IncomeEntries = page.Items
+                .Where(x => !linkedElsewhere.Contains(x.Id))
                 .Select(x => new SelectListItem(
                     $"{x.IncomeDate:dd.MM.yyyy} · {x.Title} · {x.Amount:N2}",
                     x.Id.ToString()))
