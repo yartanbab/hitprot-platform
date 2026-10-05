@@ -45,6 +45,18 @@ public class ProjectBudgetLine : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// </summary>
     public decimal? TransferLimitPercent { get; private set; }
 
+    /// <summary>
+    /// 🔴 FIN-04 · Bu kalem bir hibe başvurusundan dönüştürüldüyse kaynağı olan başvuru
+    /// bütçe satırı (<c>GrantApplicationBudgetLine.Id</c>). Projede elle açılan kalemde boştur.
+    ///
+    /// <para>Dönüşüm kalemi KOPYALAR; bu alan olmadan kopya kaynağını unutuyordu ve
+    /// başvurudaki tutar değişince hangi proje kaleminin bayatladığı bilinemiyordu.</para>
+    ///
+    /// <para>Bilerek FK DEĞİL: başvuru satırı silinse de proje bütçesi durmalı, bağ o
+    /// zaman denetim izi olarak kalır (aynı karar: <c>GrantApplication.ProjectId</c>).</para>
+    /// </summary>
+    public Guid? SourceGrantLineId { get; private set; }
+
     /// <summary>EF Core için.</summary>
     protected ProjectBudgetLine()
     {
@@ -70,6 +82,9 @@ public class ProjectBudgetLine : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Order = order;
         SetTransferLimit(transferLimitPercent);
     }
+
+    /// <summary>Kalemin doğduğu başvuru bütçe satırını kaydeder (dönüşüm ve geri dolum).</summary>
+    public void LinkToGrantLine(Guid grantLineId) => SourceGrantLineId = grantLineId;
 
     public void SetCode(string? code)
     {

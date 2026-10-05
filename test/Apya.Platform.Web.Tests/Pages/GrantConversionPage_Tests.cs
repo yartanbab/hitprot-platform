@@ -517,4 +517,115 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
             projects.ShouldContain(p => p.Id == first.ProjectId);
         }
     }
+
+    /* ─── S3 · CNV-01 / FIN-04: kopya artık kaynağını biliyor ─────────── */
+
+    /// <summary>
+    /// Dönüşüm bütçe kalemini ve tahsilat dilimini projeye KOPYALAR. Kopya eskiden
+    /// kaynağını unutuyordu; artık doğduğu başvuru satırının ve hibe diliminin kimliğini
+    /// taşıyor. Eşleme kimlikle yapılır: ad, kod, sıra ya da tutar sonradan değişebilir.
+    /// </summary>
+    [Fact]
+    public async Task Donusum_Kalemi_Ve_Dilimi_Kaynagina_Baglar()
+    {
+        var (id, tenantId) = await SetupAsync();
+
+        var result = await _conversion.ConvertAsync(Input(id));
+
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        using (currentTenant.Change(tenantId))
+        {
+            var grantLine = (await GetRequiredService<IRepository<GrantApplicationBudgetLine, Guid>>()
+                .GetListAsync(l => l.GrantApplicationId == id)).Single();
+            var grantTranche = (await GetRequiredService<IRepository<GrantDisbursementTranche, Guid>>()
+                .GetListAsync(t => t.GrantApplicationId == id)).Single();
+
+            var projectLine = (await GetRequiredService<IRepository<ProjectBudgetLine, Guid>>()
+                .GetListAsync(b => b.ProjectId == result.ProjectId)).Single();
+            var projectTranche = (await GetRequiredService<IRepository<FundingTranche, Guid>>()
+                .GetListAsync(t => t.ProjectId == result.ProjectId)).Single();
+
+            projectLine.SourceGrantLineId.ShouldBe(grantLine.Id);
+            projectTranche.SourceGrantTrancheId.ShouldBe(grantTranche.Id);
+        }
+    }
+
+    /// <summary>
+    /// 🔴 CNV-01 · Hibe tarafında "Ödendi" işaretlenen dilim proje gelir planında "Bekliyor"
+    /// kalıyor ve iki ekran çelişiyordu — sessizce. Ekran artık çelişkiyi söylüyor.
+    /// Hiçbir kayıt DEĞİŞTİRİLMEZ: proje dilimi hâlâ tahsil edilmemiştir.
+    /// </summary>
+    [Fact]
+    public async Task Hibe_Dilimi_Odendi_Proje_Bekliyorsa_Uyusmazlik_Gosterilir()
+    {
+        var (id, tenantId) = await SetupAsync();
+        var result = await _conversion.ConvertAsync(Input(id));
+        var implementation = GetRequiredService<IGrantImplementationAppService>();
+
+        var before = await implementation.GetAsync(id);
+        before.OutOfSyncTrancheCount.ShouldBe(0, "iki taraf da 'bekliyor': çelişki yok");
+        before.Chain.Single(c => c.TrancheId.HasValue).ProjectTrancheStatus
+            .ShouldBe(FundingTrancheStatus.Pending, "proje dilimi bağ üzerinden bulunmalı");
+
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (currentTenant.Change(tenantId))
+        {
+            var trancheRepo = GetRequiredService<IRepository<GrantDisbursementTranche, Guid>>();
+            var tranche = (await trancheRepo.GetListAsync(t => t.GrantApplicationId == id)).Single();
+            tranche.MarkPaid();
+            await trancheRepo.UpdateAsync(tranche, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var after = await implementation.GetAsync(id);
+        after.OutOfSyncTrancheCount.ShouldBe(1);
+        var item = after.Chain.Single(c => c.TrancheId.HasValue);
+        item.TrancheOutOfSync.ShouldBeTrue();
+        item.ProjectTrancheStatus.ShouldBe(FundingTrancheStatus.Pending);
+
+        using var readUow = uowManager.Begin(requiresNew: true);
+        using (currentTenant.Change(tenantId))
+        {
+            (await GetRequiredService<IRepository<FundingTranche, Guid>>()
+                    .GetListAsync(t => t.ProjectId == result.ProjectId)).Single().Status
+                .ShouldBe(FundingTrancheStatus.Pending, "ekran çelişkiyi gösterir, kaydı düzeltmez");
+        }
+    }
+
+    /// <summary>
+    /// 🔴 FIN-04 · Başvurudaki tutar dönüşümden sonra değişirse proje kalemi bayatlar.
+    /// Eskiden hangi kalemin bayatladığı bilinemezdi (kopyada kaynak kimliği yoktu).
+    /// </summary>
+    [Fact]
+    public async Task Basvurudaki_Tutar_Degisirse_Proje_Kalemi_Bayat_Gorunur()
+    {
+        var (id, tenantId) = await SetupAsync();
+        await _conversion.ConvertAsync(Input(id));
+        var implementation = GetRequiredService<IGrantImplementationAppService>();
+
+        var before = (await implementation.GetAsync(id)).Budget.Single();
+        before.AppliedAmount.ShouldBe(600_000m);
+        before.IsStale.ShouldBeFalse();
+
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (currentTenant.Change(tenantId))
+        {
+            var budgetRepo = GetRequiredService<IRepository<GrantApplicationBudgetLine, Guid>>();
+            var line = (await budgetRepo.GetListAsync(l => l.GrantApplicationId == id)).Single();
+            line.SetAmount(650_000m);
+            await budgetRepo.UpdateAsync(line, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var after = (await implementation.GetAsync(id)).Budget.Single();
+        after.AppliedAmount.ShouldBe(650_000m, "başvurunun BUGÜNKÜ tutarı");
+        after.IsStale.ShouldBeTrue();
+        after.ApprovedAmount.ShouldBe(600_000m, "proje bütçesi kendiliğinden değişmez");
+    }
 }

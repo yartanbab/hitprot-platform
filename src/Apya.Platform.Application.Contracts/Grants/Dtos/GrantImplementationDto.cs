@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Apya.Platform.ProjectBudgets;
 
 namespace Apya.Platform.Grants.Dtos;
 
@@ -38,6 +39,13 @@ public class GrantImplementationDto
     public int UnassignedExpenseCount { get; set; }
     public decimal UnassignedSpentAmount { get; set; }
 
+    /// <summary>
+    /// 🔴 CNV-01 · Hibe tarafındaki durumu, ondan doğan proje fon dilimiyle ÇELİŞEN dilim
+    /// sayısı. Dönüşüm dilimi kopyalar ve iki kayıt ayrı yaşar; ekran çelişkiyi artık
+    /// gizlemiyor. Bağı olmayan (eski) dilimler sayılmaz — bilinmeyen çelişki sayılmaz.
+    /// </summary>
+    public int OutOfSyncTrancheCount { get; set; }
+
     /// <summary>Bütçe gerçekleşmesi projeden okundu mu; proje yoksa false.</summary>
     public bool HasProject { get; set; }
     public Guid? ProjectId { get; set; }
@@ -56,6 +64,15 @@ public class GrantChainItemDto
     public Guid? TrancheId { get; set; }
     public decimal? TrancheAmount { get; set; }
     public GrantDisbursementTrancheStatus? TrancheStatus { get; set; }
+
+    /// <summary>
+    /// CNV-01 · Bu hibe diliminden doğan proje fon diliminin tahsilat durumu. Proje yoksa
+    /// ya da dilim projeye taşınmadıysa (bağ yok) null.
+    /// </summary>
+    public FundingTrancheStatus? ProjectTrancheStatus { get; set; }
+
+    /// <summary>Hibe tarafı ile proje gelir planı bu dilimde çelişiyor.</summary>
+    public bool TrancheOutOfSync { get; set; }
 
     /// <summary>Rapor onaylanmadığı için ödeme kapalı mı.</summary>
     public bool PaymentBlocked { get; set; }
@@ -82,6 +99,18 @@ public class GrantBudgetRealisationDto
 
     /// <summary>Kullanım eşiği aştı — kalemler arası aktarım revizyon onayı ister.</summary>
     public bool IsNearLimit { get; set; }
+
+    /// <summary>
+    /// 🔴 FIN-04 · Kalem bir başvuru bütçe satırından doğduysa o satırın BUGÜNKÜ tutarı.
+    /// Projede elle açılan kalemde (ya da bağı kurulamamış eski kalemde) null.
+    /// </summary>
+    public decimal? AppliedAmount { get; set; }
+
+    /// <summary>
+    /// Başvurudaki tutar dönüşümden sonra değişmiş: projenin sözleşme tutarı artık onu
+    /// yansıtmıyor. Onaylanan tutarın revizyonla değişmesi bayatlık DEĞİLDİR.
+    /// </summary>
+    public bool IsStale { get; set; }
 }
 
 /// <summary>

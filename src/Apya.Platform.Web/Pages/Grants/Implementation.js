@@ -37,6 +37,14 @@ $(function () {
               '<span class="apya-im-amount">' + money(c.trancheAmount) + ' ₺</span>' +
               '<span class="apya-chip apya-chip-' + apyaGrantStatus.tranche.tones[c.trancheStatus] + '">' +
               esc(l('Grants:Tranche:' + trancheKeys[c.trancheStatus])) + '</span>' +
+              // CNV-01: dönüşüm dilimi projeye KOPYALAR; iki kayıt ayrı yaşar. Hibe tarafı
+              // ile proje gelir planı çelişiyorsa bunu söyle — eskiden iki ekran sessizce
+              // farklı şey gösteriyordu.
+              (c.trancheOutOfSync
+                  ? '<span class="apya-chip apya-chip-warning" data-tranche-sync="off" title="' +
+                    esc(l('Grants:Impl:TrancheOutOfSync:Hint')) + '">' +
+                    esc(l('Grants:Impl:TrancheOutOfSync')) + '</span>'
+                  : '') +
               (c.paymentBlocked
                   ? '<span class="apya-im-section-note">' + esc(l('Grants:Impl:PaymentBlocked')) + '</span>'
                   : '') +
@@ -144,7 +152,13 @@ $(function () {
     // ---------- Bütçe ----------
     function budgetRow(b) {
         return '<div class="apya-im-budget-row' + (b.isNearLimit ? ' is-near' : '') + '">' +
-            '<span>' + esc(b.name) + '</span>' +
+            '<span>' + esc(b.name) +
+            // FIN-04: kalem başvurudan doğdu ve başvurudaki tutar sonradan değişti.
+            (b.isStale
+                ? ' <span class="apya-im-section-note" data-budget-stale="1">· ' +
+                  esc(l('Grants:Impl:BudgetStale', money(b.appliedAmount))) + '</span>'
+                : '') +
+            '</span>' +
             '<span class="apya-numeric" data-label="' + esc(l('Grants:Impl:Col:Approved')) + '">' +
             money(b.approvedAmount) + '</span>' +
             '<span class="apya-numeric" data-label="' + esc(l('Grants:Impl:Col:Spent')) + '">' +

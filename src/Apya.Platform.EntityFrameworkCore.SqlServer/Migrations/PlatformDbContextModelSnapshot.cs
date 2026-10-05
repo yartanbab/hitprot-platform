@@ -9230,6 +9230,9 @@ namespace Apya.Platform.Migrations
                     b.Property<int>("SequenceNo")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("SourceGrantTrancheId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -9244,6 +9247,8 @@ namespace Apya.Platform.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("IncomeEntryId");
+
+                    b.HasIndex("SourceGrantTrancheId");
 
                     b.HasIndex("ProjectId", "SequenceNo");
 
@@ -9319,6 +9324,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("SourceGrantLineId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TenantId");
@@ -9327,6 +9335,8 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("decimal(5,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SourceGrantLineId");
 
                     b.HasIndex("ProjectId", "Code");
 

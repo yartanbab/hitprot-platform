@@ -48,6 +48,8 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
     private readonly IRepository<Grant, Guid> _grantRepo;
     private readonly IRepository<ProjectBudgetLine, Guid> _projectBudgetRepo;
     private readonly IRepository<Expense, Guid> _expenseRepo;
+    private readonly IRepository<FundingTranche, Guid> _fundingRepo;
+    private readonly IRepository<GrantApplicationBudgetLine, Guid> _grantBudgetRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly GrantTrancheManager _trancheManager;
@@ -62,6 +64,8 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         IRepository<Grant, Guid> grantRepo,
         IRepository<ProjectBudgetLine, Guid> projectBudgetRepo,
         IRepository<Expense, Guid> expenseRepo,
+        IRepository<FundingTranche, Guid> fundingRepo,
+        IRepository<GrantApplicationBudgetLine, Guid> grantBudgetRepo,
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> mtFilter,
         GrantTrancheManager trancheManager,
@@ -75,6 +79,8 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         _grantRepo = grantRepo;
         _projectBudgetRepo = projectBudgetRepo;
         _expenseRepo = expenseRepo;
+        _fundingRepo = fundingRepo;
+        _grantBudgetRepo = grantBudgetRepo;
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
         _trancheManager = trancheManager;
@@ -367,10 +373,55 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
             });
         }
 
+        await MarkTrancheSyncAsync(application, dto, tranches);
         await BuildBudgetAsync(application, dto);
         dto.Obligations = BuildObligations(reports, tranches, today);
 
         return dto;
+    }
+
+    /// <summary>
+    /// 🔴 CNV-01 · Her hibe dilimini, ondan doğan proje fon dilimiyle karşılaştırır.
+    ///
+    /// <para>Dönüşüm dilimi kopyalar; hibe tarafında "Ödendi" işaretlenen dilim proje
+    /// gelir planında "Bekliyor" kalır ve iki ekran çelişirdi. Burada çelişki yalnız
+    /// GÖSTERİLİR; hiçbir kayıt değiştirilmez (bkz. <see cref="GrantLedgerSync"/>).</para>
+    ///
+    /// <para>Eşleme <c>SourceGrantTrancheId</c> üzerinden: sıra numarasına ya da tutara
+    /// bakılmaz, çünkü ikisi de proje tarafında sonradan değiştirilebilir.</para>
+    /// </summary>
+    private async Task MarkTrancheSyncAsync(
+        GrantApplication application, GrantImplementationDto dto, List<GrantDisbursementTranche> tranches)
+    {
+        if (!application.ProjectId.HasValue || tranches.Count == 0) { return; }
+
+        var trancheIds = tranches.Select(t => t.Id).ToList();
+
+        Dictionary<Guid, FundingTrancheStatus> projectStatusBySource;
+        using (_currentTenant.Change(application.TenantId))
+        {
+            projectStatusBySource = (await _fundingRepo.GetListAsync(
+                    f => f.ProjectId == application.ProjectId.Value
+                         && f.SourceGrantTrancheId != null
+                         && trancheIds.Contains(f.SourceGrantTrancheId.Value)))
+                // Aynı hibe dilimine iki proje dilimi bağlanamaz (dönüşüm bire bir yazar);
+                // yine de veri bozuksa ilk kaydı al, ekranı düşürme.
+                .GroupBy(f => f.SourceGrantTrancheId!.Value)
+                .ToDictionary(g => g.Key, g => g.First().Status);
+        }
+
+        foreach (var item in dto.Chain.Where(c => c.TrancheId.HasValue && c.TrancheStatus.HasValue))
+        {
+            if (!projectStatusBySource.TryGetValue(item.TrancheId!.Value, out var projectStatus))
+            {
+                continue;
+            }
+
+            item.ProjectTrancheStatus = projectStatus;
+            item.TrancheOutOfSync = GrantLedgerSync.IsTrancheOutOfSync(item.TrancheStatus!.Value, projectStatus);
+        }
+
+        dto.OutOfSyncTrancheCount = dto.Chain.Count(c => c.TrancheOutOfSync);
     }
 
     /// <summary>
@@ -400,6 +451,13 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
                 .GroupBy(e => e.BudgetLineId!.Value)
                 .ToDictionary(g => g.Key, g => g.Sum(e => e.Amount));
 
+            // FIN-04: kalemin doğduğu başvuru satırının BUGÜNKÜ tutarı. Yalnız bağı olan
+            // kalem varsa okunur.
+            var appliedBySource = lines.Any(l => l.SourceGrantLineId.HasValue)
+                ? (await _grantBudgetRepo.GetListAsync(g => g.GrantApplicationId == application.Id))
+                    .ToDictionary(g => g.Id, g => g.Amount)
+                : new Dictionary<Guid, decimal>();
+
             foreach (var line in lines)
             {
                 var spent = spentByLine.GetValueOrDefault(line.Id);
@@ -414,7 +472,14 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
                     SpentAmount = spent,
                     RemainingAmount = line.ApprovedAmount - spent,
                     UsagePercent = usage,
-                    IsNearLimit = usage >= NearLimitPercent
+                    IsNearLimit = usage >= NearLimitPercent,
+                    AppliedAmount = line.SourceGrantLineId.HasValue
+                                    && appliedBySource.TryGetValue(line.SourceGrantLineId.Value, out var applied)
+                        ? applied
+                        : null,
+                    IsStale = line.SourceGrantLineId.HasValue
+                              && appliedBySource.TryGetValue(line.SourceGrantLineId.Value, out var current)
+                              && GrantLedgerSync.IsBudgetLineStale(current, line.PlannedAmount)
                 });
             }
         }
