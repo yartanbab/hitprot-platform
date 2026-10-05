@@ -55,14 +55,25 @@ public class DocumentsModel : PlatformPageModel
         }
 
         var storedFileName = await _fileStorage.StoreAsync(file);
-        await _documents.RegisterVersionAsync(new RegisterGrantDocumentVersionInput
+
+        try
         {
-            DocumentId = documentId,
-            StoredFileName = storedFileName,
-            OriginalFileName = Path.GetFileName(file.FileName),
-            SizeBytes = file.Length,
-            Note = note
-        });
+            await _documents.RegisterVersionAsync(new RegisterGrantDocumentVersionInput
+            {
+                DocumentId = documentId,
+                StoredFileName = storedFileName,
+                OriginalFileName = Path.GetFileName(file.FileName),
+                SizeBytes = file.Length,
+                Note = note
+            });
+        }
+        catch
+        {
+            // Dosya yazıldı ama sürüm kaydı açılamadı (olmayan evrak, gönderilmiş başvuru…):
+            // temizlenmezse yükleme klasöründe hiçbir kayda bağlı olmadan kalır.
+            _fileStorage.TryDelete(storedFileName);
+            throw;
+        }
 
         return new JsonResult(new { ok = true });
     }
