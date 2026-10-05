@@ -12,8 +12,6 @@ using Volo.Abp.Features;
 using Apya.Platform.Features;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
-using Apya.Platform.Grants;
-using Apya.Platform.Grants.Dtos;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 using Apya.Platform.Permissions;
@@ -38,7 +36,6 @@ public class ProjectAppService :
     IProjectAppService
 {
     private readonly ProjectManager _projectManager;
-    private readonly IRepository<Grant, Guid> _grantRepository;
     private readonly IRepository<ProjectAttachment, Guid> _projectAttachmentRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly TaskManager _taskManager;
@@ -52,7 +49,6 @@ public class ProjectAppService :
     public ProjectAppService(
         IRepository<Project, Guid> repository,
         ProjectManager projectManager,
-        IRepository<Grant, Guid> grantRepository,
         IRepository<ProjectAttachment, Guid> projectAttachmentRepository,
         IRepository<TaskItem, Guid> taskRepository,
         TaskManager taskManager,
@@ -65,7 +61,6 @@ public class ProjectAppService :
         : base(repository)
     {
         _projectManager = projectManager;
-        _grantRepository = grantRepository;
         _projectAttachmentRepository = projectAttachmentRepository;
         _taskRepository = taskRepository;
         _taskManager = taskManager;
@@ -374,14 +369,6 @@ public class ProjectAppService :
             ApplyCategory(dto, await _categoryStore.GetMapAsync());
             return dto;
         }
-    }
-
-    // --- GRANTS ---
-    public async Task<List<GrantDto>> GetAllGrantsAsync()
-    {
-        var q = await _grantRepository.GetQueryableAsync();
-        var grants = await AsyncExecuter.ToListAsync(q.OrderBy(g => g.Name).Take(1000));
-        return ObjectMapper.Map<List<Grant>, List<GrantDto>>(grants);
     }
 
     // --- ATTACHMENTS ---
