@@ -26,6 +26,22 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.10.06",
+            date: "6 Ekim 2026",
+            title: "Yeni proje formunda bütçe alanı yalnız bütçe yetkisi olanlara görünüyor",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Yeni proje açarken bütçeyi yalnız bütçe yetkisi olan kullanıcı girebiliyor",
+                "Proje düzenleme ekranında bütçe alanı zaten yalnız bütçe yetkisi olan kullanıcıya " +
+                "gösteriliyordu. Yeni proje formunda ise herkese açıktı: bütçe yetkisi olmayan bir " +
+                "kullanıcı projeyi açarken bütçe yazabiliyor, sonra yazdığı rakamı ne görebiliyor " +
+                "ne değiştirebiliyordu. " +
+                "Artık iki ekran aynı kurala bağlı. Bütçe yetkiniz yoksa yeni proje formunda bütçe " +
+                "alanı çıkmaz ve proje bütçesiz açılır; bütçeyi sonradan yetkili bir kullanıcı girer. " +
+                "Bütçe yetkiniz varsa sizin için hiçbir şey değişmedi.")
+        ),
+
+        new ReleaseNote(
             version: "2026.10.05",
             date: "5 Ekim 2026",
             title: "Hibeden doğan projede hibe evrakına tek tıkla gidin; rapor artık bütçeyi, " +

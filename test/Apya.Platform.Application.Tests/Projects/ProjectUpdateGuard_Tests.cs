@@ -91,6 +91,38 @@ public class ProjectUpdateGuard_Tests
         effective.Currency.ShouldBe("USD");
     }
 
+    /* ─── PRJ-06 · oluşturma ──────────────────────────────────────────── */
+
+    /// <summary>
+    /// Düzenlemede uygulanan bütçe yetkisi oluşturmada uygulanmıyordu: bütçeyi göremeyen
+    /// kullanıcı yeni projeye bütçe yazabiliyordu.
+    /// </summary>
+    [Fact]
+    public void Olusturmada_butce_yetkisi_olmayanin_butcesi_sifir_dogar()
+    {
+        var input = OmittingClient();
+        input.TotalBudget = 500_000m;
+        input.HourlyRate = 120m;
+
+        var (totalBudget, hourlyRate) = ProjectUpdateGuard.ResolveForCreate(input, canEditBudget: false);
+
+        totalBudget.ShouldBe(0m);
+        hourlyRate.ShouldBe(0m);
+    }
+
+    [Fact]
+    public void Olusturmada_butce_yetkisi_olanin_degeri_yazilir()
+    {
+        var input = OmittingClient();
+        input.TotalBudget = 500_000m;
+        input.HourlyRate = 120m;
+
+        var (totalBudget, hourlyRate) = ProjectUpdateGuard.ResolveForCreate(input, canEditBudget: true);
+
+        totalBudget.ShouldBe(500_000m);
+        hourlyRate.ShouldBe(120m);
+    }
+
     /// <summary>Bütçe yetkisi bağ korumasını etkilemez: iki eksen birbirinden bağımsız.</summary>
     [Fact]
     public void Butce_yetkisi_olmasa_da_baglar_korunur()

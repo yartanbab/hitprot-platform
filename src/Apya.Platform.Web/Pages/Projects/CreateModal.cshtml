@@ -337,6 +337,11 @@
                             <input type="date" class="form-control apya-pform-mono" asp-for="Project.EndDate"
                                    asp-format="{0:yyyy-MM-dd}" id="PfEnd" />
                         </div>
+                        @* PRJ-06 · Bütçe alanı yalnız bütçe yetkisi olana (düzenleme ekranıyla aynı kural).
+                           Gizli PfBudget alanı yerinde duruyor ve 0 gidiyor; betikteki $budgetView
+                           çağrıları boş kümede etkisiz. *@
+                        @if (Model.CanViewBudget)
+                        {
                         <div class="apya-pform-field">
                             <label class="apya-pform-label" for="PfBudgetDisplay">
                                 Bütçe <span class="apya-pform-label-note">(₺)</span>
@@ -347,6 +352,7 @@
                                        placeholder="0" autocomplete="off" aria-label="Bütçe tutarı" />
                             </div>
                         </div>
+                        }
                     </div>
 
                     <div class="apya-pform-durbar">

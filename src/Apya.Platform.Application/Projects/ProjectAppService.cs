@@ -102,13 +102,18 @@ public class ProjectAppService :
                 .WithData("Code", input.Code);
         }
 
+        // PRJ-06: bütçe yetkisi oluşturmada da uygulanır (bkz. ProjectUpdateGuard).
+        var budget = ProjectUpdateGuard.ResolveForCreate(
+            input,
+            canEditBudget: await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget));
+
         var project = await _projectManager.CreateAsync(
             input.GrantId,
             input.Name,
             input.Code,
             input.Description ?? "",
-            input.TotalBudget,
-            input.HourlyRate,
+            budget.TotalBudget,
+            budget.HourlyRate,
             input.Currency,
             input.Purpose,
             input.TargetAudience,
