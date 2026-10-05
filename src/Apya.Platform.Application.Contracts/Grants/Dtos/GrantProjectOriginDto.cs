@@ -20,3 +20,15 @@ public class GrantProjectOriginDto
     /// <summary>Başvurunun evrak sayısı; 0 ise evrak bağlantısı basılmaz.</summary>
     public int DocumentCount { get; set; }
 }
+
+/// <summary>
+/// Projenin doğduğu hibe başvurusundan gelen bir kilometre taşı. Proje tarafında
+/// karşılığı olan ayrı bir varlık YOK ve bilerek açılmadı: kilometre taşı başvuruda
+/// yaşar, rapor onu oradan okur — kopyalansaydı iki liste ayrışırdı.
+/// </summary>
+public class GrantProjectMilestoneDto
+{
+    public string Title { get; set; } = null!;
+    public DateTime? DueDate { get; set; }
+    public bool IsCompleted { get; set; }
+}
