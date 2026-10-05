@@ -689,11 +689,12 @@ public class ProjectAppService :
         var time = ProjectMetricsCalculator.CalculateTimeMetrics(dto, projectTasks, now);
         var risk = ProjectMetricsCalculator.CalculateAiRisk(dto, projectTasks, now);
 
-        var totalTasks = projectTasks.Count;
-        var completedTasks = projectTasks.Count(t => t.Status == Apya.Platform.Tasks.TaskStatus.Done);
-        dto.ProgressPercent = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
-        dto.TaskCount = totalTasks;
-        dto.CompletedTaskCount = completedTasks;
+        // Tamamlanma kuralı ProjectTaskProgress'te: rapor da aynı yerden okuyor, iki ekran
+        // aynı proje için farklı yüzde gösteremez.
+        var progress = ProjectTaskProgress.Summarize(projectTasks, now);
+        dto.ProgressPercent = progress.CompletionPercent;
+        dto.TaskCount = progress.Total;
+        dto.CompletedTaskCount = progress.Done;
 
         // Gecikme/son tarih metrikleri — Projeler listesindeki risk kenarı, gecikme
         // rozeti ve "sonraki <tarih>" metni tek yerden beslensin diye burada türetilir.
@@ -731,7 +732,7 @@ public class ProjectAppService :
             ? (int)Math.Floor((dto.EndDate.Value.Date - now.Date).TotalDays)
             : null;
 
-        dto.DisplayStatus = (totalTasks == 0 || time.notStarted)
+        dto.DisplayStatus = (progress.Total == 0 || time.notStarted)
             ? "Planlama"
             : risk.color == "danger" ? "Risk" : "Aktif";
     }

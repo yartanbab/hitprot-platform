@@ -65,6 +65,17 @@ public class DeliveryReportModel
     /// </summary>
     public List<MilestoneRow> Milestones { get; set; } = new();
 
+    /* ─── RPT-02 · Bütünleşik ilerleme raporu ──────────────────────────── */
+
+    /// <summary>
+    /// Bütçe özeti. Bütçe görme yetkisi olmayan kullanıcıda null kalır ve bölüm
+    /// "bütçe verisi yok" basar — yetkisiz kullanıcının ürettiği rapora bütçe SIZMAZ.
+    /// </summary>
+    public BudgetSummaryBlock? BudgetSummary { get; set; }
+
+    /// <summary>Görev ilerlemesi. Proje listesiyle AYNI kuraldan okunur.</summary>
+    public TaskProgressBlock? TaskProgress { get; set; }
+
     public class ProjectSummaryBlock
     {
         public int CompliancePercent { get; set; }
@@ -133,6 +144,42 @@ public class DeliveryReportModel
         public int Score { get; set; }
         public string? Mitigation { get; set; }
         public bool IsClosed { get; set; }
+    }
+
+    public class BudgetSummaryBlock
+    {
+        public decimal ApprovedBudget { get; set; }
+        public decimal SpentAmount { get; set; }
+        public decimal RemainingBudget { get; set; }
+        public int UsagePercent { get; set; }
+        public bool IsOverBudget { get; set; }
+
+        /// <summary>Hiçbir kaleme yazılmamış gider; kalem satırlarına GİRMEZ, ayrıca söylenir.</summary>
+        public decimal UnassignedSpentAmount { get; set; }
+
+        public string Currency { get; set; } = "TRY";
+        public List<BudgetLineRow> Lines { get; set; } = new();
+    }
+
+    public class BudgetLineRow
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public decimal ApprovedAmount { get; set; }
+        public decimal SpentAmount { get; set; }
+        public decimal RemainingAmount { get; set; }
+    }
+
+    public class TaskProgressBlock
+    {
+        public int Total { get; set; }
+        public int Done { get; set; }
+        public int InProgress { get; set; }
+        public int InReview { get; set; }
+        public int Todo { get; set; }
+        public int Cancelled { get; set; }
+        public int Overdue { get; set; }
+        public int CompletionPercent { get; set; }
     }
 
     public class MilestoneRow

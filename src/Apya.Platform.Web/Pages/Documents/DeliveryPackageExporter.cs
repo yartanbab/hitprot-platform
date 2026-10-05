@@ -78,6 +78,12 @@ internal static class DeliveryPackageExporter
                             case ReportSectionKey.Milestones:
                                 col.Item().Element(c => MilestoneSection(c, model));
                                 break;
+                            case ReportSectionKey.BudgetSummary:
+                                col.Item().Element(c => BudgetSummarySection(c, model));
+                                break;
+                            case ReportSectionKey.TaskProgress:
+                                col.Item().Element(c => TaskProgressSection(c, model));
+                                break;
                             // CoverPage başlıkta işlenir.
                         }
                     }
@@ -489,6 +495,132 @@ internal static class DeliveryPackageExporter
                 }
             });
         });
+    }
+
+    private static void BudgetSummarySection(IContainer container, DeliveryReportModel model)
+    {
+        container.Column(col =>
+        {
+            SectionTitle(col, "Bütçe özeti");
+
+            var budget = model.BudgetSummary;
+
+            if (budget == null)
+            {
+                col.Item().Text("Bütçe verisi yok.").FontSize(8.5f).FontColor(Grey);
+                return;
+            }
+
+            col.Item().Row(row =>
+            {
+                Cell(row, "Onaylanan", $"{budget.ApprovedBudget:N2} {budget.Currency}");
+                Cell(row, "Harcanan", $"{budget.SpentAmount:N2} {budget.Currency}");
+                Cell(row, "Kalan", $"{budget.RemainingBudget:N2} {budget.Currency}");
+                Cell(row, "Kullanım", $"%{budget.UsagePercent}");
+            });
+
+            if (budget.IsOverBudget)
+            {
+                col.Item().PaddingTop(4).Text("Uyarı: harcama onaylanan bütçeyi aştı.")
+                    .FontSize(8.5f).FontColor(Colors.Red.Medium);
+            }
+
+            if (budget.Lines.Count > 0)
+            {
+                col.Item().PaddingTop(6).Table(table =>
+                {
+                    table.ColumnsDefinition(c =>
+                    {
+                        c.ConstantColumn(40);
+                        c.RelativeColumn();
+                        c.ConstantColumn(80);
+                        c.ConstantColumn(80);
+                        c.ConstantColumn(80);
+                    });
+
+                    table.Header(h =>
+                    {
+                        foreach (var t in new[] { "Kod", "Kalem", "Onaylanan", "Harcanan", "Kalan" })
+                            h.Cell().Element(HeaderCell).Text(t).Bold().FontSize(8);
+                    });
+
+                    foreach (var line in budget.Lines)
+                    {
+                        table.Cell().Element(DataCell).Text(line.Code).FontSize(8);
+                        table.Cell().Element(DataCell).Text(line.Name);
+                        table.Cell().Element(DataCell).AlignRight().Text($"{line.ApprovedAmount:N2}").FontSize(8);
+                        table.Cell().Element(DataCell).AlignRight().Text($"{line.SpentAmount:N2}").FontSize(8);
+                        table.Cell().Element(DataCell).AlignRight()
+                            .Text($"{line.RemainingAmount:N2}").FontSize(8)
+                            .FontColor(line.RemainingAmount < 0 ? Colors.Red.Medium : Colors.Black);
+                    }
+                });
+            }
+
+            // Kaleme yazılmamış gider satırlara girmez; toplamla satırların farkı buradan okunur.
+            if (budget.UnassignedSpentAmount > 0)
+            {
+                col.Item().PaddingTop(4)
+                    .Text($"Bir kaleme bağlanmamış gider: {budget.UnassignedSpentAmount:N2} {budget.Currency}")
+                    .FontSize(8.5f).FontColor(Colors.Orange.Darken2);
+            }
+        });
+
+        static void Cell(RowDescriptor row, string label, string value)
+        {
+            row.RelativeItem().Background("#F9FAFB").Padding(7).Column(c =>
+            {
+                c.Item().Text(label.ToUpperInvariant()).FontSize(7).Bold().FontColor(Grey);
+                c.Item().PaddingTop(2).Text(value).FontSize(11);
+            });
+        }
+    }
+
+    private static void TaskProgressSection(IContainer container, DeliveryReportModel model)
+    {
+        container.Column(col =>
+        {
+            SectionTitle(col, "Görev ilerlemesi");
+
+            var tasks = model.TaskProgress;
+
+            if (tasks == null || tasks.Total == 0)
+            {
+                col.Item().Text("Projede görev yok.").FontSize(8.5f).FontColor(Grey);
+                return;
+            }
+
+            col.Item().Row(row =>
+            {
+                Cell(row, "Tamamlanma", $"%{tasks.CompletionPercent}");
+                Cell(row, "Tamamlanan", $"{tasks.Done} / {tasks.Total}");
+                Cell(row, "Devam eden", (tasks.InProgress + tasks.InReview).ToString());
+                Cell(row, "Yapılacak", tasks.Todo.ToString());
+            });
+
+            if (tasks.Overdue > 0)
+            {
+                col.Item().PaddingTop(4)
+                    .Text($"Geciken görev: {tasks.Overdue}")
+                    .FontSize(8.5f).FontColor(Colors.Red.Medium);
+            }
+
+            if (tasks.Cancelled > 0)
+            {
+                col.Item().PaddingTop(2)
+                    .Text($"İptal edilen görev: {tasks.Cancelled} (tamamlanma oranının paydasında)")
+                    .FontSize(8).FontColor(Grey);
+            }
+        });
+
+        static void Cell(RowDescriptor row, string label, string value)
+        {
+            row.RelativeItem().Background("#F9FAFB").Padding(7).Column(c =>
+            {
+                c.Item().Text(label.ToUpperInvariant()).FontSize(7).Bold().FontColor(Grey);
+                c.Item().PaddingTop(2).Text(value).FontSize(11);
+            });
+        }
     }
 
     private static void MilestoneSection(IContainer container, DeliveryReportModel model)

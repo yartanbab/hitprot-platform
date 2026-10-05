@@ -48,6 +48,18 @@ public class ReportSectionAvailability_Tests
     /// yetmez: modelde taşıyıcı ve exporter'da çizim de olmalı — o ikisini
     /// <c>DeliveryReportSections_Tests</c> kilitliyor.
     /// </summary>
+    /// <summary>
+    /// RPT-02 · Bütünleşik ilerleme raporunun iki bölümü. Verileri zaten vardı
+    /// (bütçe özeti servisi, görev listesi); rapora bağlanmamışlardı.
+    /// </summary>
+    [Theory]
+    [InlineData(ReportSectionKey.BudgetSummary)]
+    [InlineData(ReportSectionKey.TaskProgress)]
+    public void Butunlesik_rapor_bolumleri_uygun_olmali(ReportSectionKey key)
+    {
+        ReportSectionAvailability.IsAvailable(key).ShouldBeTrue();
+    }
+
     [Fact]
     public void Kilometre_tasi_hibe_koprusuyle_beslendigi_icin_acik()
     {
@@ -56,14 +68,14 @@ public class ReportSectionAvailability_Tests
 
     /// <summary>
     /// Enum'a yeni bir bölüm eklenirse uygunluğu bilinçli olarak kararlaştırılsın
-    /// diye tam sayım: bugün 12 anahtarın 12'si açık.
+    /// diye tam sayım: bugün 14 anahtarın 14'ü açık.
     /// </summary>
     [Fact]
     public void Uygun_bolum_sayisi_beklenen_olmali()
     {
         var all = Enum.GetValues<ReportSectionKey>();
 
-        all.Length.ShouldBe(12);
-        all.Count(ReportSectionAvailability.IsAvailable).ShouldBe(12);
+        all.Length.ShouldBe(14);
+        all.Count(ReportSectionAvailability.IsAvailable).ShouldBe(14);
     }
 }

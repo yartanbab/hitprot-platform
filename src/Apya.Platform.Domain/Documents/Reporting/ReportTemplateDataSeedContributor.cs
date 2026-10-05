@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Documents;
 
@@ -16,18 +17,30 @@ namespace Apya.Platform.Documents;
 /// AÇIK geldiğiyle ayrışır. Verisi henüz üretilemeyen bölümler (Faz E: zaman
 /// çizelgesi, harcama eşleşmesi, ekip, riskler, kilometre taşları) her şablonda
 /// KAPALI doğar — boş sayfa basmaktansa hiç basmamak doğru.
+///
+/// <para>🔴 RPT-02 · Yeni bir bölüm TÜRÜ eklendiğinde iki ayrı küme vardır ve ikisi de
+/// burada tamamlanır: sistem şablonları (aşağıdaki tanımlar) ve kiracıların KENDİ
+/// oluşturduğu şablonlar. İkincisi eskiden hiç ele alınmıyordu: özel şablonun bölüm
+/// satırları oluşturulduğu günün enum'undan yazılır, sonradan eklenen bölüm o şablonda
+/// hiç görünmezdi ve açılamazdı.</para>
 /// </summary>
 public class ReportTemplateDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
     private readonly IRepository<ReportTemplate, Guid> _templateRepository;
     private readonly IRepository<ReportSection, Guid> _sectionRepository;
+    private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly ICurrentTenant _currentTenant;
 
     public ReportTemplateDataSeedContributor(
         IRepository<ReportTemplate, Guid> templateRepository,
-        IRepository<ReportSection, Guid> sectionRepository)
+        IRepository<ReportSection, Guid> sectionRepository,
+        IDataFilter<IMultiTenant> mtFilter,
+        ICurrentTenant currentTenant)
     {
         _templateRepository = templateRepository;
         _sectionRepository = sectionRepository;
+        _mtFilter = mtFilter;
+        _currentTenant = currentTenant;
     }
 
     public async Task SeedAsync(DataSeedContext context)
@@ -88,6 +101,65 @@ public class ReportTemplateDataSeedContributor : IDataSeedContributor, ITransien
         {
             await _sectionRepository.InsertManyAsync(newSections, autoSave: true);
         }
+
+        await BackfillCustomTemplatesAsync();
+    }
+
+    /// <summary>
+    /// Kiracıların (ve host'un) KENDİ oluşturduğu şablonlara, sonradan eklenen bölüm
+    /// türlerinin satırını tamamlar.
+    ///
+    /// <para>Satır KAPALI ve SONA eklenir: kullanıcının kurduğu rapor kendiliğinden
+    /// değişmemeli — yeni bölüm yalnız açılabilir hâle gelir. Yeni oluşturulan özel
+    /// şablonda ise bölüm, diğer uygun bölümler gibi açık doğar
+    /// (<c>ReportTemplateAppService.CreateAsync</c>).</para>
+    ///
+    /// <para>Okuma filtre kapalı (şablonlar kiracılara dağınık), yazma her şablonun
+    /// kendi kiracı bağlamında.</para>
+    /// </summary>
+    private async Task BackfillCustomTemplatesAsync()
+    {
+        List<ReportTemplate> templates;
+        List<ReportSection> sections;
+
+        using (_mtFilter.Disable())
+        {
+            templates = await _templateRepository.GetListAsync(t => !t.IsSystem);
+            if (templates.Count == 0)
+            {
+                return;
+            }
+
+            var templateIds = templates.Select(t => t.Id).ToList();
+            sections = await _sectionRepository.GetListAsync(s => templateIds.Contains(s.TemplateId));
+        }
+
+        var allKeys = Enum.GetValues<ReportSectionKey>();
+
+        foreach (var group in templates.GroupBy(t => t.TenantId))
+        {
+            using (_currentTenant.Change(group.Key))
+            {
+                foreach (var template in group)
+                {
+                    var own = sections.Where(s => s.TemplateId == template.Id).ToList();
+                    var present = own.Select(s => s.SectionKey).ToHashSet();
+                    var order = own.Count == 0 ? 0 : own.Max(s => s.Order);
+
+                    var missing = allKeys
+                        .Where(key => !present.Contains(key))
+                        .Select(key => new ReportSection(
+                            DeterministicSectionId(template.Id, key), template.TenantId,
+                            templateId: template.Id, sectionKey: key, order: ++order, isEnabled: false))
+                        .ToList();
+
+                    if (missing.Count > 0)
+                    {
+                        await _sectionRepository.InsertManyAsync(missing, autoSave: true);
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -125,6 +197,15 @@ public class ReportTemplateDataSeedContributor : IDataSeedContributor, ITransien
         ReportSectionKey.Risks,
         ReportSectionKey.AnnexIndex,
         ReportSectionKey.AuditTrail,
+
+        // 🔴 RPT-02 · Sonradan eklenen bölümler SONA yazılır, okuma sırasına göre araya
+        // değil. Mevcut kurulumlarda satırların sıra numarası 1..12 olarak yazılmış
+        // durumda; araya eklenen bölüm var olan bir satırla AYNI sıra numarasını alır ve
+        // çıktıdaki sıra belirsizleşirdi. Kullanıcı sırayı rapor derleyicide değiştirebilir.
+        // Hiçbir sistem şablonu bunları açık GETİRMEZ (tanımlarda yoklar): mevcut
+        // kurulumların rapor çıktısı bir sonraki DbMigrator turunda kendiliğinden değişmemeli.
+        ReportSectionKey.BudgetSummary,
+        ReportSectionKey.TaskProgress,
     };
 
     private static List<TemplateDefinition> BuildDefinitions()

@@ -40,6 +40,10 @@ public static class ReportSectionAvailability
 
         // --- Hibe köprüsüyle gelen veri ---
         ReportSectionKey.Milestones,
+
+        // --- RPT-02 · bütünleşik ilerleme raporu ---
+        ReportSectionKey.BudgetSummary,
+        ReportSectionKey.TaskProgress,
     };
 
     public static bool IsAvailable(ReportSectionKey key) => Available.Contains(key);

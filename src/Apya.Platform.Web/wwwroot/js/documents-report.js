@@ -35,7 +35,9 @@ const b = (a, n = {}) => {
   9: "Riskler",
   10: "Denetim izi",
   11: "Kilometre taşları",
-  12: "Kapak sayfası"
+  12: "Kapak sayfası",
+  13: "Bütçe özeti",
+  14: "Görev ilerlemesi"
 }, ve = {
   1: "Kurum",
   2: "Banka / finans",
@@ -43,18 +45,18 @@ const b = (a, n = {}) => {
   4: "Denetçi · YMM",
   5: "İç kullanım"
 }, Se = (a) => S({ url: b("Schedules", { projectId: a }), type: "GET" }), Ne = (a) => A(b("CreateSchedule"), a), we = (a, n) => S({ url: b("SetScheduleEnabled", { id: a, isEnabled: n }), type: "POST" }), ze = (a) => S({ url: b("DeleteSchedule", { id: a }), type: "POST" }), Ce = (a, n) => A(b("AddSubscriber", { scheduleId: a }), n), Pe = (a) => S({ url: b("RemoveSubscriber", { subscriberId: a }), type: "POST" }), Te = 1, De = 7, Ee = 160, Ae = (a, n) => String(a ?? "").toLowerCase() === String(n ?? "").toLowerCase();
-function Re(a, n) {
+function Be(a, n) {
   return (a ?? []).find((l) => l.status === Te && Ae(l.reportTemplateId, n)) ?? null;
 }
-function Be(a, n = /* @__PURE__ */ new Date()) {
+function Re(a, n = /* @__PURE__ */ new Date()) {
   const i = ` · ${new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(n)}`;
   return `${a.slice(0, Ee - i.length)}${i}`;
 }
 async function Le({ projectId: a, template: n }) {
-  const l = Re(await ce(a), n.id);
+  const l = Be(await ce(a), n.id);
   return l ? { pkg: l, created: !1 } : { pkg: await oe({
     projectId: a,
-    name: Be(n.name),
+    name: Re(n.name),
     reportTemplateId: n.id,
     formats: De
   }), created: !0 };
@@ -491,7 +493,7 @@ function Fe({ projectId: a, onPickProject: n }) {
         g(!1);
       }
     }
-  }, R = async (c) => {
+  }, B = async (c) => {
     g(!0);
     try {
       await je(c), h(await O(p.id) ?? []);
@@ -584,7 +586,7 @@ function Fe({ projectId: a, onPickProject: n }) {
                   type: "button",
                   className: "apya-doc-linkbtn",
                   disabled: s,
-                  onClick: () => R(c.id),
+                  onClick: () => B(c.id),
                   children: "İptal"
                 }
               ) })
@@ -668,7 +670,7 @@ function Ue({ section: a, onToggle: n, onMove: l, isFirst: i, isLast: p, busy: y
   ] });
 }
 function qe() {
-  const a = new URLSearchParams(window.location.search), [n, l] = r.useState([]), [i, p] = r.useState([]), [y, f] = r.useState(null), [h, o] = r.useState((a.get("projectId") || "").toLowerCase()), [x, d] = r.useState("sections"), [u, s] = r.useState(!0), [g, w] = r.useState(!1), [P, E] = r.useState(null), R = r.useRef(null), c = de("Platform.Documents.GenerateReports"), z = r.useCallback(async () => {
+  const a = new URLSearchParams(window.location.search), [n, l] = r.useState([]), [i, p] = r.useState([]), [y, f] = r.useState(null), [h, o] = r.useState((a.get("projectId") || "").toLowerCase()), [x, d] = r.useState("sections"), [u, s] = r.useState(!0), [g, w] = r.useState(!1), [P, E] = r.useState(null), B = r.useRef(null), c = de("Platform.Documents.GenerateReports"), z = r.useCallback(async () => {
     s(!0);
     try {
       const [t, m] = await Promise.all([me(), xe()]);
@@ -688,7 +690,7 @@ function qe() {
   const j = r.useMemo(
     () => n.find((t) => t.id === y) ?? null,
     [n, y]
-  ), B = r.useMemo(
+  ), R = r.useMemo(
     () => j ? [...j.sections].sort((t, m) => t.order - m.order) : [],
     [j]
   ), M = async (t) => {
@@ -706,8 +708,8 @@ function qe() {
         w(!1);
       }
     }
-  }, Q = (t, m) => M(B.map((k) => k.id === t ? { ...k, isEnabled: m } : k)), X = (t, m) => {
-    const k = [...B], N = k.findIndex((ne) => ne.id === t), L = N + m;
+  }, Q = (t, m) => M(R.map((k) => k.id === t ? { ...k, isEnabled: m } : k)), X = (t, m) => {
+    const k = [...R], N = k.findIndex((ne) => ne.id === t), L = N + m;
     N < 0 || L < 0 || L >= k.length || ([k[N], k[L]] = [k[L], k[N]], M(k));
   }, ee = async () => {
     const t = window.prompt("Şablon adı:");
@@ -762,7 +764,7 @@ function qe() {
     t && window.location.assign(W(t.id));
   }, K = () => {
     var m;
-    const t = R.current;
+    const t = B.current;
     if (t) {
       t.focus();
       try {
@@ -780,7 +782,7 @@ function qe() {
         aside: /* @__PURE__ */ e.jsxs(
           "select",
           {
-            ref: R,
+            ref: B,
             className: "apya-doc-select",
             value: h,
             onChange: (t) => o(t.target.value),
@@ -896,13 +898,13 @@ function qe() {
           /* @__PURE__ */ e.jsx("strong", { children: "Kopyala" }),
           "'yı kullanın."
         ] }),
-        B.map((t, m) => /* @__PURE__ */ e.jsx(
+        R.map((t, m) => /* @__PURE__ */ e.jsx(
           Ue,
           {
             section: t,
             busy: g,
             isFirst: m === 0,
-            isLast: m === B.length - 1,
+            isLast: m === R.length - 1,
             onToggle: Q,
             onMove: X
           },
