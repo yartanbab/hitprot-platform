@@ -106,7 +106,23 @@ public static class ReleaseNoteCatalog
                 "Mevcut şablonlarınızda bu iki bölüm kapalı gelir — raporunuz kendiliğinden " +
                 "değişmez; rapor derleyicide şablonunuzun bölümlerinden açabilirsiniz. " +
                 "Yeni oluşturduğunuz şablonlarda açık gelir. " +
-                "Bütçe görme yetkisi olmayan bir kullanıcının ürettiği raporda bütçe özeti boş kalır.")
+                "Bütçe görme yetkisi olmayan bir kullanıcının ürettiği raporda bütçe özeti boş kalır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Fon dilimi tahsilatına bağlı gelir kaydı artık yanlışlıkla kopmuyor",
+                "Bir fon diliminin tahsilatını kaydederken onu bir gelir kaydına bağlayabiliyorsunuz. " +
+                "Bu bağda üç sorun vardı. " +
+                "Aynı gelir kaydı iki ayrı dilime bağlanabiliyordu; o zaman aynı para iki dilimin " +
+                "tahsilatı gibi görünüyordu. Artık bağlanamıyor: başka bir dilime bağlı gelir, " +
+                "tahsilat penceresindeki listede hiç çıkmıyor. " +
+                "Bağlı gelir kaydı silindiğinde dilim 'tahsil edildi' görünmeye devam ediyor ama " +
+                "arkasındaki gelir kaydı artık bulunmuyordu. Artık böyle bir geliri silmeye " +
+                "çalıştığınızda program hangi dilime bağlı olduğunu söylüyor; önce tahsilattaki " +
+                "gelir seçimini kaldırıp sonra silebilirsiniz. " +
+                "Bağlı gelir kaydı başka bir projeye de taşınamıyor; başlığını, tutarını ve tarihini " +
+                "düzeltmek serbest. " +
+                "Daha önce silinmiş bir gelire bağlı kalmış dilimlerde bağ temizlenir; tahsil edilen " +
+                "tutar olduğu gibi kalır.")
         ),
 
         new ReleaseNote(

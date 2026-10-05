@@ -312,6 +312,12 @@ public static class PlatformDomainErrorCodes
     public const string TrancheAmountInvalid = "Platform:ProjectBudget:TrancheAmountInvalid";
     public const string TrancheCollectionInvalid = "Platform:ProjectBudget:TrancheCollectionInvalid";
 
+    // FIN-06 · Tahsilatın gelir kaydı bağı
+    public const string TrancheIncomeEntryNotFound = "Platform:ProjectBudget:TrancheIncomeEntryNotFound";
+    public const string TrancheIncomeEntryProjectMismatch = "Platform:ProjectBudget:TrancheIncomeEntryProjectMismatch";
+    public const string TrancheIncomeEntryAlreadyLinked = "Platform:ProjectBudget:TrancheIncomeEntryAlreadyLinked";
+    public const string IncomeEntryLinkedToTranche = "Platform:ProjectBudget:IncomeEntryLinkedToTranche";
+
     public const string DeductionAmountInvalid = "Platform:ProjectBudget:DeductionAmountInvalid";
     public const string DeductionReasonRequired = "Platform:ProjectBudget:DeductionReasonRequired";
     public const string DeductionExceedsTranche = "Platform:ProjectBudget:DeductionExceedsTranche";

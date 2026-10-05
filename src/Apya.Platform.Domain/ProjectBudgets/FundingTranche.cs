@@ -88,6 +88,13 @@ public class FundingTranche : FullAuditedAggregateRoot<Guid>, IMultiTenant
         SetNote(note);
     }
 
+    /// <summary>
+    /// FIN-06 · Gelir kaydı bağını kaldırır; tahsil edilen TUTARA dokunmaz. Yalnız veri
+    /// onarımı kullanır: gösterdiği gelir kaydı artık var olmayan bağı temizlemek için.
+    /// Bağsız tahsilat modelde zaten geçerli bir durumdur (gelir kaydı seçimi isteğe bağlı).
+    /// </summary>
+    public void UnlinkIncomeEntry() => IncomeEntryId = null;
+
     /// <summary>Dilimin doğduğu hibe tahsilat dilimini kaydeder (dönüşüm ve geri dolum).</summary>
     public void LinkToGrantTranche(Guid grantTrancheId) => SourceGrantTrancheId = grantTrancheId;
 

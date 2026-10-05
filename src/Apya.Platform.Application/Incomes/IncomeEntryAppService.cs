@@ -166,8 +166,13 @@ public class IncomeEntryAppService :
 
     public override async Task<IncomeEntryDto> UpdateAsync(Guid id, CreateUpdateIncomeEntryDto input)
     {
-        await _budgetManager.EnsureBudgetLineIsValidAsync(
-            await ResolveEffectiveProjectIdAsync(input), input.BudgetLineId);
+        var effectiveProjectId = await ResolveEffectiveProjectIdAsync(input);
+
+        await _budgetManager.EnsureBudgetLineIsValidAsync(effectiveProjectId, input.BudgetLineId);
+
+        // FIN-06: bir dilimin tahsilatına bağlı gelir başka projeye taşınamaz — bağ
+        // "aynı projenin geliri" kuralıyla kurulmuştu, taşıma onu sessizce bozardı.
+        await _budgetManager.EnsureIncomeEntryCanMoveToProjectAsync(id, effectiveProjectId);
 
         var dto = await base.UpdateAsync(id, input);
 
@@ -206,6 +211,10 @@ public class IncomeEntryAppService :
 
     public override async Task DeleteAsync(Guid id)
     {
+        // FIN-06: kasa hareketine dokunmadan ÖNCE doğrula. Silme reddedilecekse hiçbir
+        // şey silinmemiş olmalı (ABP denetimi istisnada da SaveChanges çağırır).
+        await _budgetManager.EnsureIncomeEntryCanBeDeletedAsync(id);
+
         var linked = await _cashMovementRepository.GetListAsync(
             x => x.ReferenceId == id && x.Source == CashMovementSource.Income);
         foreach (var m in linked)

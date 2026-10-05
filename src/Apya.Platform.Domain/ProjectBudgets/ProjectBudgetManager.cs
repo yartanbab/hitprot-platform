@@ -149,6 +149,78 @@ public class ProjectBudgetManager : DomainService
     }
 
     /// <summary>
+    /// 🔴 FIN-06 · Tahsilatın bağlanacağı gelir kaydını doğrular.
+    ///
+    /// <para>Tahsilat, gönderilen gelir kaydı kimliğini HİÇ doğrulamadan yazıyordu. Üç şey
+    /// mümkündü: var olmayan bir kimlik, başka projenin (hatta başka kiracının) geliri, ve
+    /// aynı gelirin iki dilime birden bağlanması — o zaman aynı para iki dilimin tahsilatı
+    /// sayılır.</para>
+    ///
+    /// <para>Tahsilat sıfırlanıyorsa doğrulanacak bir şey yoktur: dilim bağı zaten temizler
+    /// (<see cref="FundingTranche.RegisterCollection"/>).</para>
+    /// </summary>
+    public async Task EnsureIncomeEntryIsLinkableAsync(
+        FundingTranche tranche, Guid? incomeEntryId, decimal receivedAmount)
+    {
+        if (incomeEntryId == null || receivedAmount <= 0)
+        {
+            return;
+        }
+
+        var income = await _incomeRepository.FindAsync(incomeEntryId.Value);
+
+        // Başka kiracının kaydı "yok" sayılır: var olduğunu söylemek bile sızıntıdır.
+        if (income == null || income.TenantId != tranche.TenantId)
+            throw new BusinessException(PlatformDomainErrorCodes.TrancheIncomeEntryNotFound)
+                .WithData("IncomeEntryId", incomeEntryId);
+
+        if (income.ProjectId != tranche.ProjectId)
+            throw new BusinessException(PlatformDomainErrorCodes.TrancheIncomeEntryProjectMismatch)
+                .WithData("IncomeEntryId", incomeEntryId)
+                .WithData("ProjectId", tranche.ProjectId);
+
+        // Kendi bağını yeniden kaydeden dilim kendisiyle çakışmaz.
+        var other = await _trancheRepository.FirstOrDefaultAsync(
+            t => t.IncomeEntryId == incomeEntryId && t.Id != tranche.Id);
+
+        if (other != null)
+            throw new BusinessException(PlatformDomainErrorCodes.TrancheIncomeEntryAlreadyLinked)
+                .WithData("SequenceNo", other.SequenceNo);
+    }
+
+    /// <summary>
+    /// 🔴 FIN-06 · Bir fon diliminin tahsilatına bağlı gelir kaydı silinemez ve başka
+    /// projeye taşınamaz.
+    ///
+    /// <para>Aynı sınıftaki <see cref="DeleteLineAsync"/> ile AYNI ilke: bağlı kaydı sessizce
+    /// koparmak yerine REDDET. Gelir silinince dilim "tahsil edildi" + var olmayan bir
+    /// kimlikle kalıyordu; bağı sessizce temizlemek de tahsilatı gelir kayıtlarından
+    /// görünmez yapardı. Kullanıcı önce tahsilattaki bağı kaldırır, sonra siler.</para>
+    /// </summary>
+    public async Task EnsureIncomeEntryCanBeDeletedAsync(Guid incomeEntryId)
+    {
+        var tranche = await _trancheRepository.FirstOrDefaultAsync(t => t.IncomeEntryId == incomeEntryId);
+
+        if (tranche != null)
+            throw new BusinessException(PlatformDomainErrorCodes.IncomeEntryLinkedToTranche)
+                .WithData("SequenceNo", tranche.SequenceNo);
+    }
+
+    /// <summary>
+    /// FIN-06 · Bağlı gelir yalnız dilimin projesinde kalabilir. Proje DEĞİŞMİYORSA
+    /// güncelleme serbesttir (başlık, tutar, tarih düzeltilebilir); "projesiz" yapmak da
+    /// bir taşımadır ve reddedilir.
+    /// </summary>
+    public async Task EnsureIncomeEntryCanMoveToProjectAsync(Guid incomeEntryId, Guid? newProjectId)
+    {
+        var tranche = await _trancheRepository.FirstOrDefaultAsync(t => t.IncomeEntryId == incomeEntryId);
+
+        if (tranche != null && tranche.ProjectId != newProjectId)
+            throw new BusinessException(PlatformDomainErrorCodes.IncomeEntryLinkedToTranche)
+                .WithData("SequenceNo", tranche.SequenceNo);
+    }
+
+    /// <summary>
     /// Görevin bütçe bağını doğrular. İki kural:
     ///   1) Kalem, görevin projesine ait olmalı.
     ///   2) Aynı kalemdeki görev planlarının TOPLAMI kalemin onaylanan tutarını

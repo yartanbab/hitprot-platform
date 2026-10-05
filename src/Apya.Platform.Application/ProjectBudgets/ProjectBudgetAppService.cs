@@ -535,6 +535,11 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         using var scope = HostScope();
 
         var tranche = await _trancheRepository.GetAsync(trancheId, includeDetails: true);
+
+        // FIN-06: önce doğrula, sonra değiştir — ABP denetimi istisnada da SaveChanges
+        // çağırdığı için sıra tersine dönerse yarım tahsilat yazılabilirdi.
+        await _budgetManager.EnsureIncomeEntryIsLinkableAsync(tranche, input.IncomeEntryId, input.ReceivedAmount);
+
         tranche.RegisterCollection(input.ReceivedAmount, input.ReceivedDate, input.IncomeEntryId);
 
         await _trancheRepository.UpdateAsync(tranche, autoSave: true);
