@@ -26,6 +26,23 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.10.05",
+            date: "5 Ekim 2026",
+            title: "Hibeden doğan projede hibe evrakına tek tıkla gidin",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibeden doğan projede hibe başvurusuna ve evrakına tek tıkla gidin",
+                "Onaylanan hibe başvurunuz projeye dönüştüğünde evraklarınız başvurunun üzerinde kalır — " +
+                "projeye kopyalanmazlar, böylece tek bir doğru kopya olur. " +
+                "Ama o evraka gitmek için şimdiye kadar hibe ekranlarına dönüp başvuruyu yeniden " +
+                "bulmanız gerekiyordu. " +
+                "Artık proje ekranının üst şeridinde projenin doğduğu hibe programı yazıyor: " +
+                "üstüne bastığınızda başvurunun uygulama ve tahsilat ekranı, yanındaki " +
+                "'Hibe evrakı' bağlantısında da evrak listesi açılıyor. " +
+                "Hibeden doğmamış projelerde bu şerit hiç görünmüyor.")
+        ),
+
+        new ReleaseNote(
             version: "2026.10.04",
             date: "4 Ekim 2026",
             title: "Başvurunuzun ilerlemesi artık her ekranda aynı görünüyor; hibe menüsü üç başlığa " +

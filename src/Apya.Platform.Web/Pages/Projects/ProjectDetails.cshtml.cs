@@ -60,6 +60,12 @@ public class ProjectDetailsModel : PlatformPageModel
     public List<ProjectMemberDto> Members { get; set; } = new();
 
     /// <summary>
+    /// DOC-02 · Proje hibeden doğduysa kaynağı başvuru. Hibe yetkisi (ya da modülü)
+    /// olmayan kullanıcıda null kalır ve şeritte hiçbir şey basılmaz.
+    /// </summary>
+    public Apya.Platform.Grants.Dtos.GrantProjectOriginDto? GrantOrigin { get; set; }
+
+    /// <summary>
     /// Kullanıcının BU PROJE için açık sekmeleri ("project:{id}" scope'u) —
     /// HAM JSON, sayfaya olduğu gibi basılır ve ProjectDetails.js ayrıştırır.
     /// Sekmeler sayfayla gelir (ayrı istek yok) — gerekçe Tasks/Index.cshtml.cs.
@@ -71,17 +77,20 @@ public class ProjectDetailsModel : PlatformPageModel
     private readonly Apya.Platform.ProjectBudgets.IProjectBudgetAppService _projectBudgetAppService;
     private readonly IProjectMemberAppService _projectMemberAppService;
     private readonly ISettingProvider _settingProvider;
+    private readonly Apya.Platform.Grants.IGrantProjectOriginAppService _grantProjectOrigin;
 
     public ProjectDetailsModel(
         IProjectAppService projectAppService,
         IProjectMemberAppService projectMemberAppService,
         Apya.Platform.ProjectBudgets.IProjectBudgetAppService projectBudgetAppService,
-        ISettingProvider settingProvider)
+        ISettingProvider settingProvider,
+        Apya.Platform.Grants.IGrantProjectOriginAppService grantProjectOrigin)
     {
         _projectAppService = projectAppService;
         _projectMemberAppService = projectMemberAppService;
         _projectBudgetAppService = projectBudgetAppService;
         _settingProvider = settingProvider;
+        _grantProjectOrigin = grantProjectOrigin;
     }
 
     public async Task OnGetAsync()
@@ -123,6 +132,10 @@ public class ProjectDetailsModel : PlatformPageModel
         BudgetPercent = Budget?.BudgetUsagePercent ?? 0;
 
         Members = await _projectMemberAppService.GetListByProjectAsync(Id);
+
+        // Bütçe ile aynı desen: yetkisi olmayan kullanıcıda sessizce atlanır.
+        try { GrantOrigin = await _grantProjectOrigin.GetByProjectAsync(Id); }
+        catch (Volo.Abp.Authorization.AbpAuthorizationException) { GrantOrigin = null; }
 
         BoardTabsJson = ShellBoardTabsSetting.ExtractScopeJson(
             await _settingProvider.GetOrNullAsync(PlatformSettings.Shell.BoardTabs),

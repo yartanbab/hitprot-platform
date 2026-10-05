@@ -152,6 +152,27 @@
                 <i class="fa @(Model.IsInternalProject ? "fa-house" : "fa-building") me-1" aria-hidden="true"></i>
                 @(Model.IsInternalProject ? "Dahili Proje" : $"Müşteri: {Model.TenantName}")
             </span>
+            @* 🔴 DOC-02 · Proje hibeden doğduysa kaynağına ve evrakına buradan gidilir.
+               Bağ yeni bir alandan değil, başvurunun ZATEN taşıdığı ProjectId'den okunur.
+               Evrak sayısı 0 ise ikinci rozet basılmaz: boş listeye götüren bağlantı
+               kullanıcıya iş çıkarır, bilgi vermez. *@
+            @if (Model.GrantOrigin != null)
+            {
+                <a class="apya-chip apya-chip-brand text-decoration-none" data-grant-origin="application"
+                   href="/Grants/Implementation?id=@Model.GrantOrigin.ApplicationId"
+                   title="@L["Grants:Origin:OpenApplication"]">
+                    <i class="fa fa-seedling me-1" aria-hidden="true"></i>
+                    @L["Grants:Origin:Chip"]: @Model.GrantOrigin.GrantName@(string.IsNullOrWhiteSpace(Model.GrantOrigin.CallPeriod) ? "" : $" · {Model.GrantOrigin.CallPeriod}")
+                </a>
+                @if (Model.GrantOrigin.DocumentCount > 0)
+                {
+                    <a class="apya-chip apya-chip-neutral text-decoration-none" data-grant-origin="documents"
+                       href="/Grants/Documents?id=@Model.GrantOrigin.ApplicationId">
+                        <i class="fa fa-folder-open me-1" aria-hidden="true"></i>
+                        @L["Grants:Origin:Documents"] (@Model.GrantOrigin.DocumentCount)
+                    </a>
+                }
+            }
             @* Açıklama 60px şeride iki satır sığmadığı için ⓘ ipucuna taşındı. *@
             @if (!string.IsNullOrWhiteSpace(Model.Project?.Description))
             {
