@@ -77,7 +77,21 @@ public static class ReleaseNoteCatalog
                 "Kilometre taşları projeye kopyalanmıyor, hibe başvurusundan okunuyor — başvuruda " +
                 "yapılan değişiklik bir sonraki raporda kendiliğinden görünüyor. " +
                 "Hibeden doğmamış projelerde bölüm 'tanımlı kilometre taşı yok' satırıyla basılıyor. " +
-                "Bölümü kullanmak için rapor derleyicide şablonunuzun bölümlerinden açmanız yeterli.")
+                "Bölümü kullanmak için rapor derleyicide şablonunuzun bölümlerinden açmanız yeterli."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe tahsilatı ile proje gelir planı uyuşmadığında ekran bunu söylüyor",
+                "Onaylanan hibe başvurunuz projeye dönüştüğünde tahsilat dilimleri projenin gelir " +
+                "planına kopyalanır ve iki kayıt ayrı tutulur. " +
+                "Hibe tarafında bir dilim 'Ödendi' işaretlendiğinde projedeki karşılığı 'Bekliyor' " +
+                "kalabiliyordu: iki ekran farklı şey gösteriyor ama hiçbiri bunu söylemiyordu. " +
+                "Artık Uygulama & Tahsilat ekranında böyle bir dilimin yanında " +
+                "'Proje gelir planıyla uyuşmuyor' uyarısı çıkıyor. " +
+                "Aynı ekranda, başvurudaki tutarı projeye dönüştükten sonra değişen bütçe kaleminin " +
+                "yanında başvurudaki güncel tutar da yazıyor. " +
+                "Ekran yalnız farkı gösterir; hiçbir kaydı kendiliğinden değiştirmez. " +
+                "Uyarılar bu sürümden sonra dönüştürülen projelerde ve eşleşmesi kesin olan eski " +
+                "projelerde görünür.")
         ),
 
         new ReleaseNote(
