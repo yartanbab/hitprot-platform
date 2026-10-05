@@ -22,6 +22,13 @@ public class GrantRequestTabCountsDto
 
     /// <summary>Yürüyen başvuru: panonun varsayılan görünümündeki (açık çağrılar) başvurular.</summary>
     public int RunningCount { get; set; }
+
+    /// <summary>
+    /// 🔴 OPS-03: Fikir havuzundaki yanıtlanmamış fikir sayısı. Fikir Havuzu ayrı menü
+    /// öğesiyken sayaca gerek yoktu; Talepler'in sekmesine indiği için sekme başlığı
+    /// kardeşiyle aynı biçimde sayı taşıyor.
+    /// </summary>
+    public int IdeasCount { get; set; }
 }
 
 public class GrantRequestInboxDto : GrantRequestTabCountsDto

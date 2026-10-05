@@ -1,0 +1,28 @@
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model string
+@*
+    🔴 OPS-03 · Başvurular'ın görünüm anahtarı: pano (/Grants/Pipeline) ve liste
+    (/Grants/Applications). Model: "board" | "list".
+
+    Bu iki ekran daha önce Talepler'in "Yürüyen başvuru" sekmesinin altındaydı. Onaylı 5+3
+    mimarisinde başvuru ayrı bir nesne ve en yüksek kullanımlı yüzey olduğu için üst seviyeye
+    çıktı — ekranların KENDİSİ yeniden yazılmadı, yalnız başlığı taşıyan şerit değişti.
+
+    Sekme değil GÖRÜNÜM anahtarı: ikisi aynı kaydı farklı biçimde gösteriyor, ayrı bir
+    aşama/nesne değil. Bu yüzden sayaç taşımıyor — bekleyen başvuru sayısı kenar
+    çubuğundaki menü rozetinde (Apya.Grants.Applications).
+*@
+<div class="apya-req-views" role="group" aria-label="@L["Grants:Requests:Views"]">
+    <a class="apya-req-view @(Model == "board" ? "is-active" : null)" href="/Grants/Pipeline"
+       title="@L["Grants:Requests:View:Board"]" aria-label="@L["Grants:Requests:View:Board"]"
+       aria-current="@(Model == "board" ? "page" : null)">
+        <i class="fa fa-table-columns" aria-hidden="true"></i>
+    </a>
+    <a class="apya-req-view @(Model == "list" ? "is-active" : null)" href="/Grants/Applications"
+       title="@L["Grants:Requests:View:List"]" aria-label="@L["Grants:Requests:View:List"]"
+       aria-current="@(Model == "list" ? "page" : null)">
+        <i class="fa fa-list" aria-hidden="true"></i>
+    </a>
+</div>

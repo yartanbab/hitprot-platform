@@ -114,7 +114,8 @@ public class GrantRequestAppService : PlatformAppService, IGrantRequestAppServic
         return new GrantRequestTabCountsDto
         {
             PendingCount = rows.Count(r => r.Response != GrantResponseState.Closed),
-            RunningCount = await CountRunningAsync()
+            RunningCount = await CountRunningAsync(),
+            IdeasCount = await CountPendingIdeasAsync()
         };
     }
 
@@ -210,6 +211,22 @@ public class GrantRequestAppService : PlatformAppService, IGrantRequestAppServic
         => string.IsNullOrWhiteSpace(row.Period) ? row.GrantName : $"{row.GrantName} · {row.Period}";
 
     /// <summary>Panonun varsayılan görünümüyle aynı küme: açık çağrılardaki başvurular.</summary>
+    /// <summary>
+    /// 🔴 OPS-03: Fikir havuzundaki yanıtlanmamış fikirler. Fikir Havuzu, Talepler'in
+    /// sekmesine indiği için sekme başlığı kardeşiyle aynı biçimde sayı taşıyor.
+    /// Havuz fikri = çağrısı OLMAYAN ilgi kaydı (GrantIdeaPoolAppService ile aynı ölçüt).
+    /// </summary>
+    private async Task<int> CountPendingIdeasAsync()
+    {
+        using (_mtFilter.Disable())
+        {
+            return (int)await _interestRepo.CountAsync(i =>
+                i.TenantId != null
+                && i.GrantCallId == null
+                && (i.Status == GrantInterestStatus.Yeni || i.Status == GrantInterestStatus.Inceleniyor));
+        }
+    }
+
     private async Task<int> CountRunningAsync()
     {
         var openCallIds = (await _callRepo.GetListAsync(c => c.Status == GrantCallStatus.Acik && c.TenantId == null))
