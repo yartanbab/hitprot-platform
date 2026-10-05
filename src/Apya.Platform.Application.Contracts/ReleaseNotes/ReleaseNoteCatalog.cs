@@ -122,7 +122,17 @@ public static class ReleaseNoteCatalog
                 "Bağlı gelir kaydı başka bir projeye de taşınamıyor; başlığını, tutarını ve tarihini " +
                 "düzeltmek serbest. " +
                 "Daha önce silinmiş bir gelire bağlı kalmış dilimlerde bağ temizlenir; tahsil edilen " +
-                "tutar olduğu gibi kalır.")
+                "tutar olduğu gibi kalır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Aşama bildirimi aşamanın adını düzgün yazıyor",
+                "Hibe başvurunuz bir sonraki aşamaya geçtiğinde size bildirim geliyor. " +
+                "Danışmanınız aşamayı başvuru listesinden ya da panodan değiştirdiğinde bildirimde " +
+                "aşamanın adı teknik hâliyle, Türkçe karaktersiz yazıyordu: 'Odeme aşamasına geçti', " +
+                "'Degerlendirme aşamasına geçti' gibi. " +
+                "Artık bildirimde ve başvurunun süreç akışında aşamanın adı ekranlarda gördüğünüz " +
+                "gibi yazıyor: Ödeme, Değerlendirme. " +
+                "Daha önce gelmiş bildirimlerin metni değişmez; düzeltme bundan sonraki bildirimler için.")
         ),
 
         new ReleaseNote(

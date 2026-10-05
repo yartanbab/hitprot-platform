@@ -127,7 +127,9 @@ public class ProjectTimelineContributors_Tests : PlatformEntityFrameworkCoreTest
 
         dto.Capacity.Contributors.Count.ShouldBe(1);
         dto.Capacity.Contributors[0].LoggedHours.ShouldBe(3m);
-        dto.Capacity.Contributors[0].UserName.ShouldNotBeNullOrWhiteSpace();
+        // 🔴 "Boş değil" yetmez: servis yerelleştirme kaynağı olmadan koşarken bu alan
+        // ham anahtarı ("Documents:Report:UnknownContributor") taşıyordu ve o da boş değildi.
+        dto.Capacity.Contributors[0].UserName.ShouldBe("Ayrılmış kullanıcı");
         dto.Capacity.Contributors.Sum(c => c.LoggedHours).ShouldBe(dto.Capacity.LoggedHours);
     }
 }

@@ -126,7 +126,9 @@ public class GrantApplicationHostAppService : PlatformAppService, IGrantApplicat
             new Dictionary<string, string?>
             {
                 ["{çağrı_adı}"] = await GetGrantNameAsync(callId),
-                ["{aşama}"] = input.Stage.ToString()
+                // LIF-07: ham enum adı ("Degerlendirme") değil, yerelleştirilmiş karşılığı. Bildirim
+                // kalıcı kayıttır; firma Türkçe karaktersiz teknik adı görüyordu. Emsal: karar bildirimi.
+                ["{aşama}"] = L["Grants:Stage:" + input.Stage].Value
             },
             nameof(GrantApplication), input.ApplicationId);
     }
