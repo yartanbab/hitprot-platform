@@ -5,6 +5,8 @@ using Apya.Platform.ProjectBudgets;
 using Apya.Platform.ProjectBudgets.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Permissions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Apya.Platform.Web.Pages.Finance;
 
@@ -12,6 +14,7 @@ namespace Apya.Platform.Web.Pages.Finance;
 /// Bütçe kalemi ekleme/düzenleme. Tek modal iki iş yapar: <see cref="Id"/> boşsa
 /// ekler, doluysa günceller — alanlar birebir aynı, iki kopya markup istemiyoruz.
 /// </summary>
+[Authorize(PlatformPermissions.Projects.ViewBudget)]
 public class BudgetLineModalModel : AbpPageModel
 {
     private readonly IProjectBudgetAppService _budgetAppService;
