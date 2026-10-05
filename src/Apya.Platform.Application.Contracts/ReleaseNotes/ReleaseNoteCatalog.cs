@@ -53,7 +53,19 @@ public static class ReleaseNoteCatalog
                 "belgesiz gider tutarını, risk kütüğü skorları ve önlemleri, ekip katkısı da " +
                 "kişi başına kaydedilen saati ve payı gösteriyor. " +
                 "Bölümün verisi yoksa bölüm 'veri yok' satırıyla basılıyor; " +
-                "böylece raporun eksik mi, verinin mi eksik olduğu belli oluyor.")
+                "böylece raporun eksik mi, verinin mi eksik olduğu belli oluyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Proje bütçesini yalnız bütçe yetkisi olan kullanıcı değiştirebiliyor",
+                "Proje düzenleme ekranında bütçe alanı zaten yalnız bütçe yetkisi olan kullanıcıya " +
+                "gösteriliyordu. Ama ekranı kullanmadan, doğrudan programın arayüzü (API) üzerinden " +
+                "gelen bir güncelleme bütçeyi yine de değiştirebiliyordu. " +
+                "Artık kural ekranda değil programın kendisinde: bütçe yetkisi olmayan bir kullanıcı " +
+                "projeyi hangi yoldan güncellerse güncellesin bütçe, saatlik ücret ve para birimi " +
+                "olduğu gibi kalıyor. " +
+                "Aynı düzeltme projenin hibe ve cari bağlantısını da koruyor: bir güncelleme bu " +
+                "alanları göndermediğinde bağlantı artık kopmuyor. " +
+                "Proje düzenleme ekranını kullananlar için görünen bir değişiklik yok.")
         ),
 
         new ReleaseNote(

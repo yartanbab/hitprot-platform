@@ -244,16 +244,24 @@ public class ProjectAppService :
         // düzenleyebilmeli. Düz Repository.GetAsync ile kaydetme 404 veriyordu.
         var project = await GetAccessibleProjectAsync(id);
 
+        // 🔴 PRJ-02: Bağlar ve bütçe artık SUNUCUDA korunuyor (bkz. ProjectUpdateGuard).
+        // Koruma eskiden yalnız Projects/Edit sayfasındaydı; bu uç otomatik API'de de
+        // yayında olduğu için sayfayı atlayan her çağrı bağı koparabiliyor, bütçe yetkisi
+        // olmayan kullanıcı bütçeyi yazabiliyordu.
+        var guarded = ProjectUpdateGuard.Resolve(
+            project, input,
+            canEditBudget: await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget));
+
         project.Update(
             input.Name,
             input.Code,
             input.Description ?? "",
-            input.GrantId,
-            input.CustomerId,
+            guarded.GrantId,
+            guarded.CustomerId,
             await ResolveCategoryIdAsync(input.CategoryId, project.TenantId, project.CategoryId),
-            input.TotalBudget,
-            input.HourlyRate,
-            input.Currency,
+            guarded.TotalBudget,
+            guarded.HourlyRate,
+            guarded.Currency,
             input.Purpose,
             input.TargetAudience,
             input.Activities,
