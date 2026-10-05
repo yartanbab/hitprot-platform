@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Documents;
+using Apya.Platform.Grants;
 using Apya.Platform.Projects;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Timing;
@@ -35,6 +36,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
     private readonly IDocumentFileAppService _documentFileAppService;
     private readonly IDocumentActivityAppService _activityAppService;
     private readonly IProjectTimelineAppService _timelineAppService;
+    private readonly IGrantProjectOriginAppService _grantOriginAppService;
     private readonly ICurrentUser _currentUser;
     private readonly IClock _clock;
 
@@ -46,6 +48,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
         IDocumentFileAppService documentFileAppService,
         IDocumentActivityAppService activityAppService,
         IProjectTimelineAppService timelineAppService,
+        IGrantProjectOriginAppService grantOriginAppService,
         ICurrentUser currentUser,
         IClock clock)
     {
@@ -56,6 +59,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
         _documentFileAppService = documentFileAppService;
         _activityAppService = activityAppService;
         _timelineAppService = timelineAppService;
+        _grantOriginAppService = grantOriginAppService;
         _currentUser = currentUser;
         _clock = clock;
     }
@@ -213,8 +217,48 @@ public class DeliveryReportModelBuilder : ITransientDependency
             .ToList();
 
         await FillTimelineSectionsAsync(model, projectId, sections);
+        await FillMilestonesAsync(model, projectId, sections);
 
         return model;
+    }
+
+    /// <summary>
+    /// Kilometre taşları projenin doğduğu hibe başvurusundan gelir.
+    ///
+    /// <para>🔴 Hibe yetkisi olmayan kullanıcıda bölüm BOŞ kalır, rapor DÜŞMEZ.
+    /// Zamanlanmış üretim raporu zamanlamayı kuran kullanıcı adına koşturur
+    /// (<c>ScheduledReportWorker</c>); o kullanıcının hibe yetkisi yoksa istisnayı
+    /// yukarı taşımak, tek bölüm yüzünden tüm raporu üretilemez yapardı.</para>
+    /// </summary>
+    private async Task FillMilestonesAsync(
+        DeliveryReportModel model, Guid projectId, List<ReportSectionKey> sections)
+    {
+        if (!sections.Contains(ReportSectionKey.Milestones))
+        {
+            return;
+        }
+
+        List<Apya.Platform.Grants.Dtos.GrantProjectMilestoneDto> milestones;
+        try
+        {
+            milestones = await _grantOriginAppService.GetMilestonesByProjectAsync(projectId);
+        }
+        catch (Volo.Abp.Authorization.AbpAuthorizationException)
+        {
+            return;
+        }
+
+        var today = _clock.Now.Date;
+
+        model.Milestones = milestones
+            .Select(m => new DeliveryReportModel.MilestoneRow
+            {
+                Title = m.Title,
+                DueDate = m.DueDate,
+                IsCompleted = m.IsCompleted,
+                IsOverdue = !m.IsCompleted && m.DueDate.HasValue && m.DueDate.Value.Date < today,
+            })
+            .ToList();
     }
 
     /// <summary>

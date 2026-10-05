@@ -75,9 +75,10 @@ internal static class DeliveryPackageExporter
                             case ReportSectionKey.TeamContribution:
                                 col.Item().Element(c => ContributorSection(c, model));
                                 break;
-                            // CoverPage başlıkta işlenir. Kilometre taşı bölümü BİLEREK
-                            // çizilmiyor: karşılığı olan proje varlığı yok ve
-                            // ReportSectionAvailability onu kapalı tutuyor.
+                            case ReportSectionKey.Milestones:
+                                col.Item().Element(c => MilestoneSection(c, model));
+                                break;
+                            // CoverPage başlıkta işlenir.
                         }
                     }
                 });
@@ -485,6 +486,50 @@ internal static class DeliveryPackageExporter
                         .Text(row.Score.ToString())
                         .FontColor(row.IsClosed ? Grey : row.Score >= 15 ? Colors.Red.Medium : Colors.Black);
                     table.Cell().Element(DataCell).Text(row.Mitigation ?? "—").FontSize(8);
+                }
+            });
+        });
+    }
+
+    private static void MilestoneSection(IContainer container, DeliveryReportModel model)
+    {
+        container.Column(col =>
+        {
+            SectionTitle(col, "Kilometre taşları");
+
+            if (model.Milestones.Count == 0)
+            {
+                // Hibeden doğmamış projede kilometre taşı yoktur; uydurma satır basılmaz.
+                col.Item().Text("Bu proje için tanımlı kilometre taşı yok.").FontSize(8.5f).FontColor(Grey);
+                return;
+            }
+
+            col.Item().Table(table =>
+            {
+                table.ColumnsDefinition(c =>
+                {
+                    c.RelativeColumn();
+                    c.ConstantColumn(70);
+                    c.ConstantColumn(80);
+                });
+
+                table.Header(h =>
+                {
+                    foreach (var t in new[] { "Kilometre taşı", "Tarih", "Durum" })
+                        h.Cell().Element(HeaderCell).Text(t).Bold().FontSize(8);
+                });
+
+                foreach (var row in model.Milestones)
+                {
+                    table.Cell().Element(DataCell).Text(row.Title);
+                    table.Cell().Element(DataCell)
+                        .Text(row.DueDate?.ToString("dd.MM.yyyy") ?? "—").FontSize(8);
+                    table.Cell().Element(DataCell)
+                        .Text(row.IsCompleted ? "Tamamlandı" : row.IsOverdue ? "Gecikti" : "Bekliyor")
+                        .FontSize(8)
+                        .FontColor(row.IsCompleted
+                            ? Colors.Green.Darken2
+                            : row.IsOverdue ? Colors.Red.Medium : Grey);
                 }
             });
         });

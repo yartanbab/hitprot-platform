@@ -39,6 +39,45 @@ public class DeliveryReportSections_Tests
         ReportSectionKey.TeamContribution,
     };
 
+    /// <summary>
+    /// 🔴 Uygunluk listesi ile exporter'ın AYRIŞMASINI yakalayan sözleşme: uygun işaretli
+    /// her bölüm (kapak hariç — o başlıkta işlenir) çıktıyı büyütmeli. Enum'a yeni bölüm
+    /// eklenip uygun işaretlenir ama çizimi unutulursa bu test kırmızı verir; önceki dört
+    /// bölümün hatası tam olarak buydu ve hiçbir test görmüyordu.
+    /// </summary>
+    [Fact]
+    public void Uygun_isaretli_hicbir_bolum_cizimsiz_kalmiyor()
+    {
+        var baseline = DeliveryPackageExporter.ToPdf(BuildFullModel(Array.Empty<ReportSectionKey>()));
+
+        foreach (var key in Enum.GetValues<ReportSectionKey>())
+        {
+            if (key == ReportSectionKey.CoverPage || !ReportSectionAvailability.IsAvailable(key))
+            {
+                continue;
+            }
+
+            var withSection = DeliveryPackageExporter.ToPdf(BuildFullModel(new[] { key }));
+
+            withSection.Length.ShouldBeGreaterThan(baseline.Length,
+                $"{key} uygun işaretli ama çıktıya hiçbir şey eklemiyor");
+        }
+    }
+
+    /// <summary>Her bölümün verisi dolu model — hangi bölüm açılırsa açılsın çizecek bir şey var.</summary>
+    private static DeliveryReportModel BuildFullModel(IEnumerable<ReportSectionKey> sections)
+    {
+        var model = BuildModel(sections);
+
+        model.WorkSteps.Add(new DeliveryReportModel.WorkStepProgressRow { Order = 1, Name = "Tasarım", ProgressPercent = 100, DocumentCount = 3 });
+        model.Compliance.Add(new DeliveryReportModel.ComplianceRow { PackageName = "KOSGEB", Title = "Fatura", Scope = "Proje", Status = ComplianceItemStatus.Missing, IsBlocking = true });
+        model.MissingDocuments.Add("Fatura (Proje)");
+        model.Annexes.Add(new DeliveryReportModel.AnnexRow { AnnexNumber = "EK-1", DocumentName = "fatura.pdf", FileSize = 1024 });
+        model.AuditTrail.Add(new DeliveryReportModel.AuditRow { At = new DateTime(2026, 10, 1), Actor = "test", Action = "Yüklendi" });
+
+        return model;
+    }
+
     /// <summary>Dört bölümün verisi dolu, ortak bölümler her iki modelde aynı.</summary>
     private static DeliveryReportModel BuildModel(IEnumerable<ReportSectionKey> sections)
     {
@@ -82,6 +121,13 @@ public class DeliveryReportSections_Tests
                 new() { Title = "Kur artışı", Likelihood = 3, Impact = 3, Score = 9, IsClosed = true },
             },
 
+            Milestones = new List<DeliveryReportModel.MilestoneRow>
+            {
+                new() { Title = "Prototip teslimi", DueDate = new DateTime(2026, 4, 1), IsCompleted = true },
+                new() { Title = "Saha kurulumu", DueDate = new DateTime(2026, 8, 1), IsOverdue = true },
+                new() { Title = "Kapanış raporu" },
+            },
+
             Contributors = new List<DeliveryReportModel.ContributorRow>
             {
                 new() { UserName = "Ayşe Yılmaz", LoggedHours = 48m, LoggedPersonDays = 6m, SharePercent = 75, TaskCount = 7 },
@@ -119,6 +165,7 @@ public class DeliveryReportSections_Tests
         model.Timeline.Clear();
         model.Risks.Clear();
         model.Contributors.Clear();
+        model.Milestones.Clear();
         model.BudgetCoverage = null;
 
         var pdf = DeliveryPackageExporter.ToPdf(model);
@@ -127,15 +174,16 @@ public class DeliveryReportSections_Tests
     }
 
     /// <summary>
-    /// Tohumlanan şablonların açtığı bölümlerin HEPSİ çizilebilmeli. Uygunluk listesi
-    /// ile exporter ayrışırsa kullanıcı sessizce eksik rapor alır — tek istisna
-    /// Kilometre taşı: karşılığı olan proje varlığı yok ve uygunluk onu KAPALI tutuyor.
+    /// Uygun işaretli bölümlerin HEPSİ çizilebilmeli. Uygunluk listesi ile exporter
+    /// ayrışırsa kullanıcı sessizce eksik rapor alır. Kilometre taşı da artık bu
+    /// kümede: verisi hibe başvurusundan geliyor.
     /// </summary>
     [Theory]
     [InlineData(ReportSectionKey.Timeline)]
     [InlineData(ReportSectionKey.ExpenseDocumentMatch)]
     [InlineData(ReportSectionKey.Risks)]
     [InlineData(ReportSectionKey.TeamContribution)]
+    [InlineData(ReportSectionKey.Milestones)]
     public void Uygun_isaretli_her_bolum_tek_basina_da_ciziliyor(ReportSectionKey key)
     {
         ReportSectionAvailability.IsAvailable(key).ShouldBeTrue();

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Apya.Platform.Grants.Dtos;
 using Volo.Abp.Application.Services;
@@ -17,4 +18,10 @@ public interface IGrantProjectOriginAppService : IApplicationService
 {
     /// <summary>Projenin kaynağı başvuru yoksa <c>null</c> döner (hibeden doğmamış proje).</summary>
     Task<GrantProjectOriginDto?> GetByProjectAsync(Guid projectId);
+
+    /// <summary>
+    /// Projenin doğduğu başvurunun kilometre taşları — raporun "Kilometre taşları"
+    /// bölümünün kaynağı. Proje hibeden doğmamışsa BOŞ liste döner (hata değil).
+    /// </summary>
+    Task<List<GrantProjectMilestoneDto>> GetMilestonesByProjectAsync(Guid projectId);
 }

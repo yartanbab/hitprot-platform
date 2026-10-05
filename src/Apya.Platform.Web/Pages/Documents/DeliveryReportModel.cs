@@ -58,6 +58,13 @@ public class DeliveryReportModel
     /// <summary>Kişi bazında kaydedilen zaman.</summary>
     public List<ContributorRow> Contributors { get; set; } = new();
 
+    /// <summary>
+    /// Kilometre taşları — projenin doğduğu HİBE BAŞVURUSUNDAN okunur. Proje hibeden
+    /// doğmamışsa (ya da raporu üreten kullanıcının hibe yetkisi yoksa) boş kalır ve
+    /// bölüm "tanımlı kilometre taşı yok" basar.
+    /// </summary>
+    public List<MilestoneRow> Milestones { get; set; } = new();
+
     public class ProjectSummaryBlock
     {
         public int CompliancePercent { get; set; }
@@ -126,6 +133,16 @@ public class DeliveryReportModel
         public int Score { get; set; }
         public string? Mitigation { get; set; }
         public bool IsClosed { get; set; }
+    }
+
+    public class MilestoneRow
+    {
+        public string Title { get; set; } = string.Empty;
+        public DateTime? DueDate { get; set; }
+        public bool IsCompleted { get; set; }
+
+        /// <summary>Tamamlanmamış ve tarihi rapor anından önce — çıktıda vurgulanır.</summary>
+        public bool IsOverdue { get; set; }
     }
 
     public class ContributorRow

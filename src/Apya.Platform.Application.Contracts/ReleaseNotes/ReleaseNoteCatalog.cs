@@ -65,7 +65,19 @@ public static class ReleaseNoteCatalog
                 "olduğu gibi kalıyor. " +
                 "Aynı düzeltme projenin hibe ve cari bağlantısını da koruyor: bir güncelleme bu " +
                 "alanları göndermediğinde bağlantı artık kopmuyor. " +
-                "Proje düzenleme ekranını kullananlar için görünen bir değişiklik yok.")
+                "Proje düzenleme ekranını kullananlar için görünen bir değişiklik yok."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Rapora kilometre taşları bölümü eklenebiliyor",
+                "Rapor derleyicide 'Kilometre taşları' bölümü şimdiye kadar 'veri henüz yok' diye " +
+                "kilitliydi. Artık açılabiliyor. " +
+                "Projeniz onaylanan bir hibe başvurusundan doğduysa, başvurudaki kilometre taşları " +
+                "raporda tarih sırasıyla listeleniyor; her birinin yanında durumu yazıyor: " +
+                "tamamlandı, bekliyor ya da gecikti. " +
+                "Kilometre taşları projeye kopyalanmıyor, hibe başvurusundan okunuyor — başvuruda " +
+                "yapılan değişiklik bir sonraki raporda kendiliğinden görünüyor. " +
+                "Hibeden doğmamış projelerde bölüm 'tanımlı kilometre taşı yok' satırıyla basılıyor. " +
+                "Bölümü kullanmak için rapor derleyicide şablonunuzun bölümlerinden açmanız yeterli.")
         ),
 
         new ReleaseNote(

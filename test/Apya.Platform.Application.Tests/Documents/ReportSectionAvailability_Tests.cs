@@ -42,18 +42,21 @@ public class ReportSectionAvailability_Tests
     }
 
     /// <summary>
-    /// Kilometre taşının karşılığı bir varlık YOK. Biri bunu açarsa rapora
-    /// uydurma ya da boş bir bölüm girer — kasıtlı olarak kapalı.
+    /// Kilometre taşı uzun süre kapalıydı: proje tarafında karşılığı olan bir varlık yok.
+    /// Artık açık, çünkü hibeden doğan projenin kilometre taşları başvuruda duruyor ve
+    /// rapor onları proje→başvuru köprüsünden okuyor. 🔴 Bu bayrağı açmak TEK BAŞINA
+    /// yetmez: modelde taşıyıcı ve exporter'da çizim de olmalı — o ikisini
+    /// <c>DeliveryReportSections_Tests</c> kilitliyor.
     /// </summary>
     [Fact]
-    public void Kilometre_tasi_veri_olmadigi_icin_kapali_kalmali()
+    public void Kilometre_tasi_hibe_koprusuyle_beslendigi_icin_acik()
     {
-        ReportSectionAvailability.IsAvailable(ReportSectionKey.Milestones).ShouldBeFalse();
+        ReportSectionAvailability.IsAvailable(ReportSectionKey.Milestones).ShouldBeTrue();
     }
 
     /// <summary>
     /// Enum'a yeni bir bölüm eklenirse uygunluğu bilinçli olarak kararlaştırılsın
-    /// diye tam sayım: bugün 12 anahtarın 11'i açık.
+    /// diye tam sayım: bugün 12 anahtarın 12'si açık.
     /// </summary>
     [Fact]
     public void Uygun_bolum_sayisi_beklenen_olmali()
@@ -61,6 +64,6 @@ public class ReportSectionAvailability_Tests
         var all = Enum.GetValues<ReportSectionKey>();
 
         all.Length.ShouldBe(12);
-        all.Count(ReportSectionAvailability.IsAvailable).ShouldBe(11);
+        all.Count(ReportSectionAvailability.IsAvailable).ShouldBe(12);
     }
 }
