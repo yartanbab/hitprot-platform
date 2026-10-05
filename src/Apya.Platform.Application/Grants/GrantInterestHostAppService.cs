@@ -132,7 +132,7 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
             var application = await _appRepo.FirstOrDefaultAsync(a => a.GrantCallId == callId);
             if (application == null)
             {
-                application = new GrantApplication(GuidGenerator.Create(), tenantId, callId);
+                application = new GrantApplication(GuidGenerator.Create(), tenantId, callId, Clock.Now);
                 await _appRepo.InsertAsync(application, autoSave: true);
 
                 // Host bu çağrıyı bu firmaya göndermişse (B3), başvuruldu olarak işaretle.
