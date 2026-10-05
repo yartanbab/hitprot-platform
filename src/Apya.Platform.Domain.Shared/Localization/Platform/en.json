@@ -47,6 +47,12 @@
     "Menu:Grants:Calls": "Calls",
     "Menu:Grants:Requests": "Requests",
     "Menu:Grants:Ideas": "Idea Pool",
+    "Menu:Grants:Opportunities": "Opportunities",
+
+    "Grants:MyGrants:Sections": "Grant views",
+
+    "Grants:Requests:Tab:Ideas": "Idea pool",
+
     "Menu:Grants:Reports": "Reports",
     "Menu:Settings:Grants": "Grants",
     "Menu:Grants:Applications": "Applications",
@@ -2424,7 +2430,7 @@
     "Grants:Calls:Modal:Updated": "Call updated.",
     "Grants:Calls:Modal:Created": "Call created.",
     "Grants:Requests:Title": "Requests",
-    "Grants:Requests:Description": "Interest and pre-assessment requests from firms and applications in progress — open the next job from here",
+    "Grants:Requests:Description": "Interest and pre-assessment requests from firms plus ideas in the pool — open the next item here",
     "Grants:Requests:Sections": "Request views",
     "Grants:Requests:Tab:Pending": "Awaiting response",
     "Grants:Requests:Tab:Running": "Applications in progress",

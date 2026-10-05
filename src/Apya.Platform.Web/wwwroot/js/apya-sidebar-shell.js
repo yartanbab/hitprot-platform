@@ -370,10 +370,9 @@ $(function () {
         // hiçbir yere basılmadı (addBadge çapayı bulamazsa sessizce çıkar —
         // yukarıdaki Apya.Work.Tasks notunun birebir aynısı).
         addBadge('Apya.Grants.Requests', b.pendingGrantInterests, 'apya-shell-badge--warning');
-        // b.pendingGrantApplications'ın çapası şu an YOK: yürüyen başvurular
-        // Talepler'in bir sekmesinde yaşıyor ve tek çapaya iki rozet basmak iki
-        // sayıyı etiketsiz yan yana dizerdi. Başvurular kendi menü öğesine
-        // çıkınca (IA revizyonu) buraya geri bağlanır.
+        // ✅ OPS-03: Başvurular kendi menü öğesine çıktı, rozet geri bağlandı. Tek çapaya
+        // iki rozet basma sorunu da kalmadı — her sayı kendi öğesinde.
+        addBadge('Apya.Grants.Applications', b.pendingGrantApplications, 'apya-shell-badge--warning');
         addBadge('Apya.Platform.Webhooks', b.webhookErrors, 'apya-shell-badge--negative');
     }
 
