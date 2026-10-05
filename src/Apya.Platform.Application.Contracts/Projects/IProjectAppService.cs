@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Apya.Platform.Projects.Dtos;
-using Apya.Platform.Grants.Dtos;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 
@@ -15,8 +14,6 @@ namespace Apya.Platform.Projects
             PagedAndSortedResultRequestDto,
             CreateProjectDto>
     {
-        Task<List<GrantDto>> GetAllGrantsAsync();
-
         /// <summary>
         /// ProjectDetails ekranı için tüm view-ready veriyi tek çağrıda döner:
         /// proje, görevler, AI risk, zaman/bütçe metrikleri.

@@ -14,7 +14,18 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
     public Guid? TenantId { get; private set; }
 
-    public Guid? GrantId { get; private set; } // Boş olabilir
+    /// <summary>
+    /// Projenin bağlı olduğu hibe PROGRAMI. Boş olabilir.
+    ///
+    /// <para>🔴 PRJ-01 · Bu bağ YALNIZ hibe başvurusu projeye dönüştürülürken kurulur
+    /// (<c>GrantApplicationConversionAppService</c>); arayüzden seçilmez ve düzeltilmez.
+    /// Bir seçici bilerek YOK: projenin doğduğu BAŞVURU zaten
+    /// <c>GrantApplication.ProjectId</c>'de duruyor ve proje konsolu onu oradan okuyor.
+    /// Elle seçilebilen bir program, o bağla çelişebilecek ikinci bir doğruluk kaynağı
+    /// olurdu. Güncelleme ucu da bu alanı <c>null</c> geldiğinde korur
+    /// (<c>ProjectUpdateGuard</c>).</para>
+    /// </summary>
+    public Guid? GrantId { get; private set; }
 
     /// <summary>APYA-132: Project'in bağlı olduğu Cari (Müşteri). Eski projelerde boş olabilir.</summary>
     public Guid? CustomerId { get; private set; }
