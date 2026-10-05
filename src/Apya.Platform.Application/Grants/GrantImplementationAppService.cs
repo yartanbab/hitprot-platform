@@ -211,9 +211,22 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
                ?? throw new EntityNotFoundException(typeof(GrantApplication), id);
     }
 
+    /// <summary>
+    /// 🔴 SEC-06 · Kiracı süzgecini YALNIZ danışman (host) bağlamında kapatır.
+    ///
+    /// <para>Aşağıdaki üç kimlikle-bulma yardımcısı süzgeci KOŞULSUZ kapatıyordu: çıplak
+    /// kimlikle tüm kiracılarda arıyorlardı. Bugün üçü de yalnız <see cref="EnsureConsultant"/>
+    /// sonrasında çağrılıyor, yani fiilen güvenliydi — ama firma tarafına açılan ilk çağrı
+    /// (ör. firmanın rapor ayrıntısını görmesi) başka kiracının kaydını kimliğinden
+    /// döndürürdü. Güvenlik çağıranın disiplinine değil, yardımcının kendisine bağlanır.</para>
+    ///
+    /// <para>Firma bağlamında süzgeç AÇIK kalır: başka kiracının kaydı "bulunamadı" olur.</para>
+    /// </summary>
+    private IDisposable? ConsultantScope() => IsConsultant ? _mtFilter.Disable() : null;
+
     private async Task<GrantReport> GetReportAsync(Guid id)
     {
-        using (_mtFilter.Disable())
+        using (ConsultantScope())
         {
             return await _reportRepo.FirstOrDefaultAsync(r => r.Id == id)
                    ?? throw new EntityNotFoundException(typeof(GrantReport), id);
@@ -222,7 +235,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
 
     private async Task<GrantReportSection> GetSectionAsync(Guid id)
     {
-        using (_mtFilter.Disable())
+        using (ConsultantScope())
         {
             return await _sectionRepo.FirstOrDefaultAsync(s => s.Id == id)
                    ?? throw new EntityNotFoundException(typeof(GrantReportSection), id);
@@ -231,7 +244,7 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
 
     private async Task<GrantDisbursementTranche> GetTrancheAsync(Guid id)
     {
-        using (_mtFilter.Disable())
+        using (ConsultantScope())
         {
             return await _trancheRepo.FirstOrDefaultAsync(t => t.Id == id)
                    ?? throw new EntityNotFoundException(typeof(GrantDisbursementTranche), id);
