@@ -14,8 +14,11 @@ namespace Apya.Platform.Documents;
 /// ProjectRisk); ekip katkısı da TaskTimeLog.UserId üzerinden kişi bazında
 /// çıkarılabiliyor — dördü birden açıldı.
 ///
-/// Kilometre taşı KAPALI kalıyor: karşılığı olan bir varlık yok. Uydurma veri
-/// üretmektense bölümü kapalı tutmak doğru.
+/// Kilometre taşı uzun süre KAPALIYDI: proje tarafında karşılığı olan bir varlık yok.
+/// Hâlâ yok ve bilerek açılmadı — ama hibeden doğan projenin kilometre taşları
+/// BAŞVURUDA duruyor (<c>GrantMilestone</c>) ve proje→başvuru köprüsü kurulduğu için
+/// rapor onları oradan okuyabiliyor. Hibeden doğmamış projede bölüm "tanımlı kilometre
+/// taşı yok" satırı basar; uydurma veri üretmez.
 /// </summary>
 public static class ReportSectionAvailability
 {
@@ -34,6 +37,9 @@ public static class ReportSectionAvailability
         ReportSectionKey.ExpenseDocumentMatch,
         ReportSectionKey.Risks,
         ReportSectionKey.TeamContribution,
+
+        // --- Hibe köprüsüyle gelen veri ---
+        ReportSectionKey.Milestones,
     };
 
     public static bool IsAvailable(ReportSectionKey key) => Available.Contains(key);

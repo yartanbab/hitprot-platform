@@ -174,24 +174,26 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
         // çağrılabildiği için beyan edilen tutar başvurunun gerçek kaydıyla hiç
         // karşılaştırılmıyordu. Kalem türü başvuru başına tekildir (sihirbaz aynı türe
         // ikinci satır açmaz), bu yüzden Kind güvenilir bir anahtardır.
-        Dictionary<GrantCostItemKind, decimal> serverAmounts;
+        // FIN-04: satırın KENDİSİ tutulur (yalnız tutarı değil) — proje kalemi doğduğu
+        // başvuru satırının kimliğini taşıyacak.
+        Dictionary<GrantCostItemKind, GrantApplicationBudgetLine> serverLines;
         using (_mtFilter.Disable())
         {
-            serverAmounts = (await _budgetRepo.GetListAsync(l => l.GrantApplicationId == application.Id))
-                .ToDictionary(l => l.Kind, l => l.Amount);
+            serverLines = (await _budgetRepo.GetListAsync(l => l.GrantApplicationId == application.Id))
+                .ToDictionary(l => l.Kind);
         }
 
-        var lines = new List<(ConvertGrantBudgetLineInput Input, decimal Amount)>();
+        var lines = new List<(ConvertGrantBudgetLineInput Input, decimal Amount, Guid SourceLineId)>();
         foreach (var line in input.BudgetLines)
         {
-            if (!serverAmounts.TryGetValue(line.Kind, out var amount) || amount <= 0)
+            if (!serverLines.TryGetValue(line.Kind, out var source) || source.Amount <= 0)
             {
                 // Sessizce atlamak, bütçesi eksik bir projeyi "başarıyla kuruldu" diye
                 // döndürürdü; tutarsızlığı burada durdurmak daha az zarar verir.
                 throw new BusinessException(PlatformDomainErrorCodes.GrantConversionBudgetLineUnknown)
                     .WithData("Kind", line.Kind);
             }
-            lines.Add((line, amount));
+            lines.Add((line, source.Amount, source.Id));
         }
 
         var result = new GrantConversionResultDto();
@@ -223,10 +225,10 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
             result.ProjectCode = project.Code;
 
             var order = 0;
-            foreach (var (line, amount) in lines)
+            foreach (var (line, amount, sourceLineId) in lines)
             {
                 order++;
-                await _projectBudgetRepo.InsertAsync(new ProjectBudgetLine(
+                var budgetLine = new ProjectBudgetLine(
                     GuidGenerator.Create(), application.TenantId, project.Id,
                     // 🔴 CNV-10: Kod eskiden gider kategorisinin ENUM ADIydı ("Personnel").
                     // İki sorun: Türkçe arayüzde İngilizce teknik ad görünüyordu ve —
@@ -240,7 +242,9 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                     name: line.Name,
                     plannedAmount: amount,
                     approvedAmount: amount,
-                    order: order - 1), autoSave: true);
+                    order: order - 1);
+                budgetLine.LinkToGrantLine(sourceLineId);
+                await _projectBudgetRepo.InsertAsync(budgetLine, autoSave: true);
                 result.BudgetLineCount++;
             }
 
@@ -281,10 +285,13 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                 var tranches = await _grantTrancheRepo.GetListAsync(t => t.GrantApplicationId == application.Id);
                 foreach (var tranche in tranches.OrderBy(t => t.SequenceNo))
                 {
-                    await _fundingRepo.InsertAsync(new FundingTranche(
+                    var funding = new FundingTranche(
                         GuidGenerator.Create(), application.TenantId, project.Id,
                         tranche.SequenceNo, tranche.Amount, tranche.DueDate,
-                        title: L["Grants:Conversion:TrancheTitle", tranche.SequenceNo]), autoSave: true);
+                        title: L["Grants:Conversion:TrancheTitle", tranche.SequenceNo]);
+                    // CNV-01: kopya, kaynağı olan hibe dilimini artık biliyor.
+                    funding.LinkToGrantTranche(tranche.Id);
+                    await _fundingRepo.InsertAsync(funding, autoSave: true);
                     result.TrancheCount++;
                 }
             }
