@@ -3,38 +3,27 @@
 @inject IHtmlLocalizer<PlatformResource> L
 @model string
 @*
-    22b · Talepler'in iki sekmesi. Sekmeler adres taşır: Yanıt bekleyen /Grants/Requests,
-    Yürüyen başvuru pano (/Grants/Pipeline) ve liste (/Grants/Applications) — kanıtlanmış iki ekran
-    yeniden yazılmadan aynı başlığı paylaşır. Model: "pending" | "board" | "list".
+    22b / 🔴 OPS-03 · Talepler'in iki sekmesi: Yanıt bekleyen (/Grants/Requests) ve
+    Fikir Havuzu (/Grants/Ideas). Model: "pending" | "ideas".
+
+    Önceki hâlinde ikinci sekme "Yürüyen başvuru" (pano + liste) idi. Onaylı 5+3 bilgi
+    mimarisinde başvuru AYRI BİR NESNE ve en çok kullanılan yüzey olduğu için kendi menü
+    öğesine çıktı; sekmeleri _ApplicationTabs'ta. Fikir Havuzu ise ayrı menü öğesi olmaktan
+    çıkıp buraya indi: havuz fikri de bir TALEP (aynı tablo, çağrısı olmayan ilgi kaydı),
+    yalnız çağrıya bağlı değil.
 
     Kap (.apya-req-bar) sayfanın elindedir: Yanıt bekleyen süzgeçlerini aynı satıra koyar.
     Sayaçları sayfa doldurur (Requests.js ya da RequestTabs.js); boşken iskelet görünür.
 *@
-@{
-    var running = Model != "pending";
-}
 <nav class="apya-grant-tabs apya-req-tabs" aria-label="@L["Grants:Requests:Sections"]">
-    <a class="apya-grant-tab @(running ? null : "is-active")" href="/Grants/Requests" aria-current="@(running ? null : "page")">
+    <a class="apya-grant-tab @(Model == "pending" ? "is-active" : null)" href="/Grants/Requests"
+       aria-current="@(Model == "pending" ? "page" : null)">
         @L["Grants:Requests:Tab:Pending"]
         <span class="apya-chip apya-chip-accent apya-numeric apya-skel-num" data-request-count="pending"></span>
     </a>
-    <a class="apya-grant-tab @(running ? "is-active" : null)" href="/Grants/Pipeline" aria-current="@(running ? "page" : null)">
-        @L["Grants:Requests:Tab:Running"]
-        <span class="apya-chip apya-chip-neutral apya-numeric apya-skel-num" data-request-count="running"></span>
+    <a class="apya-grant-tab @(Model == "ideas" ? "is-active" : null)" href="/Grants/Ideas"
+       aria-current="@(Model == "ideas" ? "page" : null)">
+        @L["Grants:Requests:Tab:Ideas"]
+        <span class="apya-chip apya-chip-neutral apya-numeric apya-skel-num" data-request-count="ideas"></span>
     </a>
 </nav>
-@if (running)
-{
-    <div class="apya-req-views" role="group" aria-label="@L["Grants:Requests:Views"]">
-        <a class="apya-req-view @(Model == "board" ? "is-active" : null)" href="/Grants/Pipeline"
-           title="@L["Grants:Requests:View:Board"]" aria-label="@L["Grants:Requests:View:Board"]"
-           aria-current="@(Model == "board" ? "page" : null)">
-            <i class="fa fa-table-columns" aria-hidden="true"></i>
-        </a>
-        <a class="apya-req-view @(Model == "list" ? "is-active" : null)" href="/Grants/Applications"
-           title="@L["Grants:Requests:View:List"]" aria-label="@L["Grants:Requests:View:List"]"
-           aria-current="@(Model == "list" ? "page" : null)">
-            <i class="fa fa-list" aria-hidden="true"></i>
-        </a>
-    </div>
-}
