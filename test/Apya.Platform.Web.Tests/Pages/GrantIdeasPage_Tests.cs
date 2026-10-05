@@ -35,8 +35,10 @@ public class GrantIdeasPage_Tests : PlatformWebTestBase
         html.ShouldNotContain("Bu çağrı kapsamında");
         Regex.IsMatch(html, @"IdeaForm[^""]*\.js").ShouldBeTrue("ortak form betiği yüklenmeli");
         Regex.IsMatch(html, @"Ideas[^""]*\.js").ShouldBeTrue("sayfa demeti Ideas.js içermeli");
-        // 22 · Sekme yok: bağlanan fikir talep olur, Talepler'de yaşar.
-        html.ShouldNotContain("apya-grant-tabs");
+        // 22 / 🔴 OPS-03 · Fikir Havuzu artık Talepler'in SEKMESİ: havuz fikri de bir talep
+        // (aynı tablo, çağrısı olmayan ilgi kaydı). Eskiden ayrı menü öğesiydi ve sekme taşımazdı.
+        html.ShouldContain("apya-req-tabs");
+        html.ShouldContain("href=\"/Grants/Requests\"");
     }
 
     /// <summary>19b · "Fikir daveti gönder": Kime · Bağlam · Mesaj · Bildirim + hatırlatma, önizleme ve son davet satırı.</summary>

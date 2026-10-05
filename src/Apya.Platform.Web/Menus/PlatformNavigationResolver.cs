@@ -644,10 +644,13 @@ public class PlatformNavigationResolver : IScopedDependency
         // Hibe Yönetimi — kendi izin grubu (Groups.Grants) ve kendi feature'ı (Features.Grants)
         // olduğu için İş Yönetimi'nden ayrı kategori.
         //
-        // Tur 22 · host menüsü = farklı NESNE başına bir öğe: Bugün · Çağrılar · Talepler · Fikir Havuzu · Raporlar.
+        // Tur 22 / 🔴 OPS-03 · host menüsü = farklı NESNE başına bir öğe:
+        // Bugün · Çağrılar · Talepler · Başvurular · Raporlar (onaylı 5+3 mimarisi).
         // Kaynaklar Çağrılar'ın sekmesi (çağrıların geldiği yer), ayrı menü değil.
         // Aynı nesnenin aşamaları sekmeye indi: İlgi Talepleri + Ön Değerlendirme → Talepler ›
-        // Yanıt bekleyen; Başvuru Pipeline + Başvurular → Talepler › Yürüyen başvuru. Günlük işte
+        // Yanıt bekleyen. 🔴 OPS-03: Fikir Havuzu da Talepler'in sekmesine indi (havuz fikri de
+        // talep, yalnız çağrısız); BAŞVURU ise tersine üst seviyeye çıktı — ayrı nesne ve en
+        // yüksek kullanımlı yüzey. Pano/liste onun görünüm anahtarı (_ApplicationTabs). Günlük işte
         // açılmayan aşama/bildirim şablonları Ayarlar › Hibe'de (PlatformAdminLinks).
         // 🔴 Talepler ve Raporlar YENİ adla doğar: eski adı taşısalardı menüsünü özelleştirmiş
         // kullanıcıda kayıtlı düzen onları eski yerinde tutardı.
@@ -655,21 +658,31 @@ public class PlatformNavigationResolver : IScopedDependency
         // 11a/11b · "Bugün" her iki rolde de grubun ilk girişi.
         if (await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Today", l["Menu:Grants:Today"], icon: "fa fa-sun", url: "/Grants/Today"));
+        // 🔴 OPS-03: Firmaya "Fırsatlar" diye görünür — danışman için çağrı bir iş nesnesi,
+        // firma için bir fırsat. Menü KİMLİĞİ aynı ("Apya.Grants.Calls"): öğe yer değiştirmiyor,
+        // yalnız etiketi role göre okunuyor, bu yüzden kayıtlı düzen bozulmaz.
         if (await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Calls", l["Menu:Grants:Calls"], icon: "fa fa-bullhorn", url: "/Grants"));
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Calls",
+                _currentTenant.Id == null ? l["Menu:Grants:Calls"] : l["Menu:Grants:Opportunities"],
+                icon: "fa fa-bullhorn", url: "/Grants"));
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Requests", l["Menu:Grants:Requests"], icon: "fa fa-table-columns", url: "/Grants/Requests"));
-        // 19a/22 · Fikir Havuzu: çağrısız fikirler talep değil, ayrı nesne → ayrı menü (sekmesiz tek liste).
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Requests", l["Menu:Grants:Requests"], icon: "fa fa-inbox", url: "/Grants/Requests"));
+        // 🔴 OPS-03 · Başvurular üst seviyeye çıktı (Fikir Havuzu onun yerine Talepler'in sekmesi oldu).
+        // 🔴 Kimlik YENİ ("Apya.Grants.Applications"): eski adı taşısaydı menüsünü özelleştirmiş
+        // kullanıcıda kayıtlı düzen onu eski yerinde tutardı — taşıma etkisiz kalırdı
+        // (bkz. reference-shell-menu-layout-beats-code-move). Bedeli: o kullanıcıda öğe listenin
+        // SONUNA düşer, tek sürüklemeyle yerine alınır.
+        // Varsayılan görünüm PANO: danışmanın günlük işi sütunlar arasında kart taşımak.
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Ideas", l["Menu:Grants:Ideas"], icon: "fa fa-lightbulb", url: "/Grants/Ideas"));
+            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Applications", l["Menu:Grants:Applications"], icon: "fa fa-folder-open", url: "/Grants/Pipeline"));
         // 18c · Dönüşüm hunisi Raporlar'ın ilk ekranı. Kiracı verisini de saydığı için yalnız host.
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Edit))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.Reports", l["Menu:Grants:Reports"], icon: "fa fa-chart-column", url: "/Grants/Funnel"));
         if (_currentTenant.Id != null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
             grants.AddItem(new ApplicationMenuItem("Apya.Grants.MyApplications", l["Menu:Grants:MyApplications"], icon: "fa fa-list-check", url: "/Grants/MyApplications"));
-        // 18d · Hibe Yolculuğum: Başvurularım'ın yanında, yalnız kiracıda (host'un firması yok).
-        if (_currentTenant.Id != null && await _permission.IsGrantedAsync(PlatformPermissions.Grants.Default))
-            grants.AddItem(new ApplicationMenuItem("Apya.Grants.Journey", l["Menu:Grants:Journey"], icon: "fa fa-route", url: "/Grants/Journey"));
+        // 18d / 🔴 OPS-03 · Hibe Yolculuğum MENÜDEN KALKTI: Başvurularım'ın sekmesi oldu
+        // (_MyGrantTabs) — aynı nesnenin iki anlatımı, ayrı menü öğesi değil. Onaylı firma
+        // menüsü üç öğe: Bugün · Fırsatlar · Başvurularım.
         if (grants.Items.Count > 0) roots.Add(grants);
 
         // Finans & Bütçe — TEK ÇATI (kullanıcı kararı 2026-09-03). Finansa dair

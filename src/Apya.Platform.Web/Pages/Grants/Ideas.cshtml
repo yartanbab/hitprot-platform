@@ -13,12 +13,15 @@
 }
 
 @section scripts {
+    <abp-script src="/Pages/Grants/RequestTabs.js" />
     <abp-script src="/Pages/Grants/IdeaForm.js" />
     <abp-script src="/Pages/Grants/Ideas.js" />
     <abp-script src="/Pages/Grants/IdeaInvite.js" />
 }
 
-@* 19a/22 · Fikir Havuzu. Sekme yok: çağrıyla ilişkilendirilen fikir talep olur ve Talepler'de yaşar.
+@* 19a/22 · Fikir Havuzu. 🔴 OPS-03: ayrı menü öğesi olmaktan çıkıp Talepler'in SEKMESİ oldu —
+   havuz fikri de bir talep (aynı tablo, çağrısı olmayan ilgi kaydı), yalnız çağrıya bağlı değil.
+   Çağrıyla ilişkilendirilen fikir zaten talep olur ve Yanıt bekleyen sekmesinde yaşar.
    Çağrı eşleşmesi sütunu ve "Eşleşme bekleyen" şeridi tur 20: açık çağrılar her açılışta taranır. Satırları Ideas.js boyar. *@
 <div data-page-description="@L["Grants:Ideas:Description"]" class="apya-page apya-grant-scope">
     <div class="apya-page-head">
@@ -31,6 +34,8 @@
             </button>
         </div>
     </div>
+
+    <partial name="_RequestTabs" model='"ideas"' />
 
     <div class="apya-req-bar">
         <p id="IdeaCount" class="apya-idea-count apya-skel-num mb-0"></p>

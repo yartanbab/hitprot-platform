@@ -1,0 +1,22 @@
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model string
+@*
+    🔴 OPS-03 · Firma tarafının iki sekmesi: Başvurularım (/Grants/MyApplications) ve
+    Hibe Yolculuğum (/Grants/Journey). Model: "applications" | "journey".
+
+    Onaylı 5+3 mimarisinde firma menüsü üç öğe: Bugün · Fırsatlar · Başvurularım. Yolculuk
+    AYNI NESNENİN anlatımı (başvurunun nerede olduğu) — ayrı menü öğesi değil, bu yüzden
+    Başvurularım'ın sekmesine indi. Ekranların kendisi değişmedi.
+*@
+<nav class="apya-grant-tabs" aria-label="@L["Grants:MyGrants:Sections"]">
+    <a class="apya-grant-tab @(Model == "applications" ? "is-active" : null)" href="/Grants/MyApplications"
+       aria-current="@(Model == "applications" ? "page" : null)">
+        @L["Menu:Grants:MyApplications"]
+    </a>
+    <a class="apya-grant-tab @(Model == "journey" ? "is-active" : null)" href="/Grants/Journey"
+       aria-current="@(Model == "journey" ? "page" : null)">
+        @L["Menu:Grants:Journey"]
+    </a>
+</nav>

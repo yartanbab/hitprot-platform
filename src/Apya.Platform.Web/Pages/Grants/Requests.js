@@ -120,7 +120,8 @@ $(function () {
 
     function paint(dto) {
         $('[data-request-count="pending"]').text(dto.pendingCount);
-        $('[data-request-count="running"]').text(dto.runningCount);
+        // 🔴 OPS-03: ikinci sekme artık Fikir Havuzu ("running" sekmesi Başvurular menüsüne çıktı).
+        $('[data-request-count="ideas"]').text(dto.ideasCount);
         fillOptions(dto);
         paintDue(dto);
 

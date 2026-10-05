@@ -71,8 +71,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.10.04",
             date: "4 Ekim 2026",
-            title: "Başvurunuzun ilerlemesi artık her ekranda aynı görünüyor; yeni proje formu " +
-                   "varsayılan olarak hibe projesi açmıyor",
+            title: "Başvurunuzun ilerlemesi artık her ekranda aynı görünüyor; hibe menüsü üç başlığa " +
+                   "indi; yeni proje formu varsayılan olarak hibe projesi açmıyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Başvurunuzun ilerlemesi her ekranda aynı görünüyor",
@@ -94,7 +94,18 @@ public static class ReleaseNoteCatalog
                 "hangi hibe alanlarının sorulduğunu belirlediği için bu seçim önemliydi. " +
                 "Onaylanan hibe başvurunuz projeye dönüştürüldüğünde proje zaten doğru türle açılıyor; " +
                 "o akış bu değişiklikten etkilenmiyor. " +
-                "Daha önce yanlış türle açtığınız projelerin türünü proje ayarlarından düzeltebilirsiniz.")
+                "Daha önce yanlış türle açtığınız projelerin türünü proje ayarlarından düzeltebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe menüsü üç başlığa indi",
+                "Hibe menüsünde dört başlık vardı: Bugün, Çağrılar, Başvurularım ve Hibe Yolculuğum. " +
+                "Artık üç başlık var: Bugün, Fırsatlar ve Başvurularım. " +
+                "'Çağrılar' başlığının adı 'Fırsatlar' oldu — size açık olan hibeleri gördüğünüz yer. " +
+                "Hibe Yolculuğum kaybolmadı: Başvurularım ekranının içinde bir sekme olarak duruyor, " +
+                "çünkü ikisi aynı şeyin iki görünümü: biri başvurularınızın listesi, " +
+                "diğeri her birinin hangi aşamada olduğu. " +
+                "Menü sırasını daha önce kendiniz düzenlediyseniz düzeniniz korunuyor: " +
+                "Hibe Yolculuğum satırı listeden kalkar, yerine yeni bir satır eklenmez.")
         ),
 
         new ReleaseNote(
