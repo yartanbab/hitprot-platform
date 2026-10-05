@@ -37,6 +37,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
     private readonly IDocumentActivityAppService _activityAppService;
     private readonly IProjectTimelineAppService _timelineAppService;
     private readonly IGrantProjectOriginAppService _grantOriginAppService;
+    private readonly Apya.Platform.ProjectBudgets.IProjectBudgetAppService _budgetAppService;
     private readonly ICurrentUser _currentUser;
     private readonly IClock _clock;
 
@@ -49,6 +50,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
         IDocumentActivityAppService activityAppService,
         IProjectTimelineAppService timelineAppService,
         IGrantProjectOriginAppService grantOriginAppService,
+        Apya.Platform.ProjectBudgets.IProjectBudgetAppService budgetAppService,
         ICurrentUser currentUser,
         IClock clock)
     {
@@ -60,6 +62,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
         _activityAppService = activityAppService;
         _timelineAppService = timelineAppService;
         _grantOriginAppService = grantOriginAppService;
+        _budgetAppService = budgetAppService;
         _currentUser = currentUser;
         _clock = clock;
     }
@@ -218,8 +221,87 @@ public class DeliveryReportModelBuilder : ITransientDependency
 
         await FillTimelineSectionsAsync(model, projectId, sections);
         await FillMilestonesAsync(model, projectId, sections);
+        await FillBudgetSummaryAsync(model, projectId, sections);
+        await FillTaskProgressAsync(model, projectId, sections);
 
         return model;
+    }
+
+    /// <summary>
+    /// 🔴 RPT-02 · Bütçe özeti. Proje konsolu ve Finans çatısıyla AYNI servisten okunur
+    /// (<c>IProjectBudgetAppService.GetOverviewAsync</c>) — rapor üçüncü bir "harcanan"
+    /// rakamı üretmez.
+    ///
+    /// <para>Bütçe görme yetkisi olmayan kullanıcıda bölüm boş kalır: yetkisiz kullanıcının
+    /// ürettiği rapora bütçe sızmamalı, ve tek bölüm yüzünden rapor da düşmemeli.</para>
+    /// </summary>
+    private async Task FillBudgetSummaryAsync(
+        DeliveryReportModel model, Guid projectId, List<ReportSectionKey> sections)
+    {
+        if (!sections.Contains(ReportSectionKey.BudgetSummary))
+        {
+            return;
+        }
+
+        Apya.Platform.ProjectBudgets.Dtos.ProjectBudgetOverviewDto overview;
+        try
+        {
+            overview = await _budgetAppService.GetOverviewAsync(projectId);
+        }
+        catch (Volo.Abp.Authorization.AbpAuthorizationException)
+        {
+            return;
+        }
+
+        model.BudgetSummary = new DeliveryReportModel.BudgetSummaryBlock
+        {
+            ApprovedBudget = overview.ApprovedBudget,
+            SpentAmount = overview.SpentAmount,
+            RemainingBudget = overview.RemainingBudget,
+            UsagePercent = overview.BudgetUsagePercent,
+            IsOverBudget = overview.IsOverBudget,
+            UnassignedSpentAmount = overview.UnassignedSpentAmount,
+            Currency = overview.Currency,
+            Lines = overview.Lines
+                .OrderBy(l => l.Order)
+                .Select(l => new DeliveryReportModel.BudgetLineRow
+                {
+                    Code = l.Code,
+                    Name = l.Name,
+                    ApprovedAmount = l.ApprovedAmount,
+                    SpentAmount = l.SpentAmount,
+                    RemainingAmount = l.RemainingAmount,
+                })
+                .ToList(),
+        };
+    }
+
+    /// <summary>
+    /// 🔴 RPT-02 · Görev ilerlemesi. Kural <see cref="ProjectTaskProgress"/>'te — proje
+    /// listesindeki tamamlanma yüzdesi ve gecikme sayısıyla AYNI.
+    /// </summary>
+    private async Task FillTaskProgressAsync(
+        DeliveryReportModel model, Guid projectId, List<ReportSectionKey> sections)
+    {
+        if (!sections.Contains(ReportSectionKey.TaskProgress))
+        {
+            return;
+        }
+
+        var detail = await _projectAppService.GetDetailAsync(projectId);
+        var summary = ProjectTaskProgress.Summarize(detail.Tasks, _clock.Now);
+
+        model.TaskProgress = new DeliveryReportModel.TaskProgressBlock
+        {
+            Total = summary.Total,
+            Done = summary.Done,
+            InProgress = summary.InProgress,
+            InReview = summary.InReview,
+            Todo = summary.Todo,
+            Cancelled = summary.Cancelled,
+            Overdue = summary.Overdue,
+            CompletionPercent = summary.CompletionPercent,
+        };
     }
 
     /// <summary>

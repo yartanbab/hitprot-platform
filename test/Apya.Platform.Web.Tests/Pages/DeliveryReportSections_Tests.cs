@@ -128,6 +128,26 @@ public class DeliveryReportSections_Tests
                 new() { Title = "Kapanış raporu" },
             },
 
+            BudgetSummary = new DeliveryReportModel.BudgetSummaryBlock
+            {
+                ApprovedBudget = 500_000m,
+                SpentAmount = 180_000m,
+                RemainingBudget = 320_000m,
+                UsagePercent = 36,
+                UnassignedSpentAmount = 12_000m,
+                Lines =
+                {
+                    new() { Code = "01", Name = "Personel", ApprovedAmount = 300_000m, SpentAmount = 120_000m, RemainingAmount = 180_000m },
+                    new() { Code = "02", Name = "Makine", ApprovedAmount = 200_000m, SpentAmount = 210_000m, RemainingAmount = -10_000m },
+                },
+            },
+
+            TaskProgress = new DeliveryReportModel.TaskProgressBlock
+            {
+                Total = 12, Done = 6, InProgress = 2, InReview = 1, Todo = 2, Cancelled = 1,
+                Overdue = 2, CompletionPercent = 50,
+            },
+
             Contributors = new List<DeliveryReportModel.ContributorRow>
             {
                 new() { UserName = "Ayşe Yılmaz", LoggedHours = 48m, LoggedPersonDays = 6m, SharePercent = 75, TaskCount = 7 },
@@ -160,6 +180,9 @@ public class DeliveryReportSections_Tests
     {
         var sections = new List<ReportSectionKey> { ReportSectionKey.ProjectSummary };
         sections.AddRange(FourSections);
+        sections.Add(ReportSectionKey.Milestones);
+        sections.Add(ReportSectionKey.BudgetSummary);
+        sections.Add(ReportSectionKey.TaskProgress);
 
         var model = BuildModel(sections);
         model.Timeline.Clear();
@@ -167,6 +190,8 @@ public class DeliveryReportSections_Tests
         model.Contributors.Clear();
         model.Milestones.Clear();
         model.BudgetCoverage = null;
+        model.BudgetSummary = null;
+        model.TaskProgress = null;
 
         var pdf = DeliveryPackageExporter.ToPdf(model);
 
@@ -184,6 +209,8 @@ public class DeliveryReportSections_Tests
     [InlineData(ReportSectionKey.Risks)]
     [InlineData(ReportSectionKey.TeamContribution)]
     [InlineData(ReportSectionKey.Milestones)]
+    [InlineData(ReportSectionKey.BudgetSummary)]
+    [InlineData(ReportSectionKey.TaskProgress)]
     public void Uygun_isaretli_her_bolum_tek_basina_da_ciziliyor(ReportSectionKey key)
     {
         ReportSectionAvailability.IsAvailable(key).ShouldBeTrue();

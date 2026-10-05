@@ -53,6 +53,9 @@ export const fmtDate = (iso) =>
   iso ? new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso)) : '—';
 
 /** Bolum anahtari -> Turkce ad. Sunucu enum'u sayi doner. */
+// 🔴 Bu sözlük C# ReportSectionKey enum'unun ELLE tutulan karşılığıdır. Enum'a bölüm
+// eklenip burası unutulursa ekran bölümü "Bölüm 13" diye gösterir (derleme yeşil kalır).
+// Sözleşmeyi ReportSectionLabelContract_Tests kilitliyor.
 export const SECTION_LABEL = {
   1: 'Proje özeti',
   2: 'İş adımı ilerlemesi',
@@ -66,6 +69,8 @@ export const SECTION_LABEL = {
   10: 'Denetim izi',
   11: 'Kilometre taşları',
   12: 'Kapak sayfası',
+  13: 'Bütçe özeti',
+  14: 'Görev ilerlemesi',
 };
 
 export const RECIPIENT_LABEL = {

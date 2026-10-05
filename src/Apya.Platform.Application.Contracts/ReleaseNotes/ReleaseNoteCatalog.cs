@@ -28,8 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.10.05",
             date: "5 Ekim 2026",
-            title: "Hibeden doğan projede hibe evrakına tek tıkla gidin; raporun zaman çizelgesi, " +
-                   "gider eşleşmesi, risk ve ekip bölümleri artık gerçekten basılıyor",
+            title: "Hibeden doğan projede hibe evrakına tek tıkla gidin; rapor artık bütçeyi, " +
+                   "görevleri, zaman çizelgesini, riskleri ve ekibi tek dosyada veriyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Hibeden doğan projede hibe başvurusuna ve evrakına tek tıkla gidin",
@@ -48,7 +48,7 @@ public static class ReleaseNoteCatalog
                 "gider–belge eşleşmesi, risk kütüğü ve ekip katkısı bölümleri seçilebiliyordu " +
                 "ama çıktıya hiç girmiyordu: hazır şablonların bir kısmı (örneğin KOSGEB ara raporu) " +
                 "bu bölümleri açık getirdiği için kuruma eksik rapor gidiyordu. " +
-                "Artık dördü de hem ekrandaki önizlemede hem PDF'te basılıyor. " +
+                "Artık dördü de hem önizleme PDF'inde hem üretilen raporda basılıyor. " +
                 "Zaman çizelgesi iş adımlarının tarihlerini ve ilerlemesini, gider–belge eşleşmesi " +
                 "belgesiz gider tutarını, risk kütüğü skorları ve önlemleri, ekip katkısı da " +
                 "kişi başına kaydedilen saati ve payı gösteriyor. " +
@@ -91,7 +91,22 @@ public static class ReleaseNoteCatalog
                 "yanında başvurudaki güncel tutar da yazıyor. " +
                 "Ekran yalnız farkı gösterir; hiçbir kaydı kendiliğinden değiştirmez. " +
                 "Uyarılar bu sürümden sonra dönüştürülen projelerde ve eşleşmesi kesin olan eski " +
-                "projelerde görünür.")
+                "projelerde görünür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Rapora bütçe özeti ve görev ilerlemesi bölümleri eklenebiliyor",
+                "Kuruma ya da müşterinize tek dosyalık bir dönem raporu vermek için şimdiye kadar " +
+                "iki ayrı çıktıyı elle birleştirmeniz gerekiyordu: teslim raporu belgeleri ve " +
+                "uygunluğu anlatıyor, bütçe ve görevler ise başka ekranlarda duruyordu. " +
+                "Rapor derleyiciye iki yeni bölüm eklendi. " +
+                "'Bütçe özeti' onaylanan, harcanan ve kalan tutarı kalem kalem gösteriyor; " +
+                "rakamlar proje ekranındaki ve Finans'taki bütçe özetiyle aynı kaynaktan geliyor. " +
+                "'Görev ilerlemesi' tamamlanma oranını, devam eden ve yapılacak görev sayısını ve " +
+                "geciken görevleri gösteriyor; oran proje listesinde gördüğünüz oranla aynı. " +
+                "Mevcut şablonlarınızda bu iki bölüm kapalı gelir — raporunuz kendiliğinden " +
+                "değişmez; rapor derleyicide şablonunuzun bölümlerinden açabilirsiniz. " +
+                "Yeni oluşturduğunuz şablonlarda açık gelir. " +
+                "Bütçe görme yetkisi olmayan bir kullanıcının ürettiği raporda bütçe özeti boş kalır.")
         ),
 
         new ReleaseNote(

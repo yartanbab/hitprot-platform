@@ -27,7 +27,17 @@ public enum ReportSectionKey
     Risks = 9,
     AuditTrail = 10,
     Milestones = 11,
-    CoverPage = 12
+    CoverPage = 12,
+
+    /// <summary>
+    /// RPT-02 · Bütçe özeti: onaylanan / harcanan / kalan ve kalem kırılımı. Proje
+    /// konsolu ve Finans çatısıyla AYNI servisten okunur — rapor üçüncü bir "harcanan"
+    /// rakamı üretmez.
+    /// </summary>
+    BudgetSummary = 13,
+
+    /// <summary>RPT-02 · Görev ilerlemesi: durum dağılımı, tamamlanma oranı, geciken sayısı.</summary>
+    TaskProgress = 14
 }
 
 /// <summary>Teslim paketinin yaşam döngüsü. Üretim yalnız Preflight temizse yapılabilir.</summary>
