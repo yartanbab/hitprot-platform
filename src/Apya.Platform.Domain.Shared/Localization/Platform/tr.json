@@ -1787,6 +1787,8 @@
         "DataTable:Invoice:Empty": "Henüz fatura yok. Yeni bir fatura oluşturmak için sağ üstteki butonu kullanın.",
         "DataTable:Invoice:Loading": "Faturalar yükleniyor...",
         "Platform:Task:TitleRequired": "Görev başlığı boş bırakılamaz.",
+        "Platform:Task:ParentNotFound": "Alt görevin bağlanacağı üst görev bulunamadı. Görev silinmiş olabilir; sayfayı yenileyip yeniden deneyin.",
+        "Platform:Task:ParentProjectMismatch": "Alt görev, üst görevinden farklı bir projeye eklenemez.",
         "Platform:Task:ViewPrivateDenied": "Bu gizli görevi görüntüleme yetkiniz yok. Görevi yalnızca oluşturanlar ve atananlar görebilir.",
         "Platform:Task:ViewImpersonationDenied": "Bu gizli görevi destek yetkisiyle (Impersonation) görüntüleyemezsiniz.",
         "Platform:Task:UpdateDenied": "Bu görevi güncellemek için yetkiniz yok. Sadece görevi oluşturan veya atanan kişi güncelleyebilir.",

@@ -1884,6 +1884,10 @@
     "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io.",
     "Platform:RateLimitExceeded": "Too many requests in a short time. Please try again in a minute.",
     "Platform:Task:TitleRequired": "Task title cannot be empty.",
+
+    "Platform:Task:ParentNotFound": "The parent task for this subtask could not be found. It may have been deleted; refresh the page and try again.",
+
+    "Platform:Task:ParentProjectMismatch": "A subtask cannot be added to a different project than its parent task.",
     "Platform:Task:ViewPrivateDenied": "You do not have permission to view this private task. Only the creator and assignee can view it.",
     "Platform:Task:ViewImpersonationDenied": "You cannot view this private task while using impersonation.",
     "Platform:Task:UpdateDenied": "You do not have permission to update this task. Only the creator or assignee can update it.",
