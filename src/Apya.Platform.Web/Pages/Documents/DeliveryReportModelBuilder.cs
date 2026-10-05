@@ -34,6 +34,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
     private readonly IReportTemplateAppService _templateAppService;
     private readonly IDocumentFileAppService _documentFileAppService;
     private readonly IDocumentActivityAppService _activityAppService;
+    private readonly IProjectTimelineAppService _timelineAppService;
     private readonly ICurrentUser _currentUser;
     private readonly IClock _clock;
 
@@ -44,6 +45,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
         IReportTemplateAppService templateAppService,
         IDocumentFileAppService documentFileAppService,
         IDocumentActivityAppService activityAppService,
+        IProjectTimelineAppService timelineAppService,
         ICurrentUser currentUser,
         IClock clock)
     {
@@ -53,6 +55,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
         _templateAppService = templateAppService;
         _documentFileAppService = documentFileAppService;
         _activityAppService = activityAppService;
+        _timelineAppService = timelineAppService;
         _currentUser = currentUser;
         _clock = clock;
     }
@@ -209,7 +212,99 @@ public class DeliveryReportModelBuilder : ITransientDependency
             .Select(c => c.IsBlocking ? $"{c.Title} ({c.Scope}) — teslimi bloke ediyor" : $"{c.Title} ({c.Scope})")
             .ToList();
 
+        await FillTimelineSectionsAsync(model, projectId, sections);
+
         return model;
+    }
+
+    /// <summary>
+    /// 🔴 S4 · Zaman çizelgesi, bütçe–belge kapsaması, risk kütüğü ve ekip katkısı.
+    ///
+    /// <para>Dördü de <see cref="ReportSectionAvailability"/>'de "verisi var" diye
+    /// işaretliydi ama modelde taşıyıcısı yoktu: kullanıcı bölümü açıyor, çıktıda
+    /// hiçbir şey görmüyordu. Dördünün verisi TEK serviste
+    /// (<see cref="IProjectTimelineAppService"/>) hazır duruyor.</para>
+    ///
+    /// <para>Bölümlerin hiçbiri açık değilse sorgu HİÇ açılmaz — teslim paketi
+    /// üretimi en sık bu dördü kapalıyken koşuyor.</para>
+    /// </summary>
+    private async Task FillTimelineSectionsAsync(
+        DeliveryReportModel model, Guid projectId, List<ReportSectionKey> sections)
+    {
+        var wantsTimeline = sections.Contains(ReportSectionKey.Timeline);
+        var wantsBudget = sections.Contains(ReportSectionKey.ExpenseDocumentMatch);
+        var wantsRisks = sections.Contains(ReportSectionKey.Risks);
+        var wantsTeam = sections.Contains(ReportSectionKey.TeamContribution);
+
+        if (!wantsTimeline && !wantsBudget && !wantsRisks && !wantsTeam)
+        {
+            return;
+        }
+
+        var timeline = await _timelineAppService.GetAsync(projectId);
+
+        if (wantsTimeline)
+        {
+            model.Timeline = timeline.Steps
+                .OrderBy(s => s.Order)
+                .Select(s => new DeliveryReportModel.TimelineRow
+                {
+                    Order = s.Order,
+                    Name = s.Name,
+                    StartDate = s.StartDate,
+                    EndDate = s.EndDate,
+                    ProgressPercent = s.ProgressPercent,
+                })
+                .ToList();
+        }
+
+        if (wantsBudget)
+        {
+            model.BudgetCoverage = new DeliveryReportModel.BudgetCoverageBlock
+            {
+                TotalBudget = timeline.Budget.TotalBudget,
+                TotalExpense = timeline.Budget.TotalExpense,
+                DocumentedExpense = timeline.Budget.DocumentedExpense,
+                UndocumentedExpense = timeline.Budget.UndocumentedExpense,
+                UndocumentedCount = timeline.Budget.UndocumentedCount,
+                BudgetUsedPercent = timeline.Budget.BudgetUsedPercent,
+                DocumentedPercent = timeline.Budget.DocumentedPercent,
+                Currency = timeline.Currency,
+            };
+        }
+
+        if (wantsRisks)
+        {
+            // Kapanmış risk de listelenir: kuruma giden raporda "bu risk görüldü ve
+            // kapatıldı" bilgisi, riskin hiç olmamasından farklı bir şey anlatır.
+            model.Risks = timeline.Risks
+                .OrderByDescending(r => r.Score)
+                .Select(r => new DeliveryReportModel.RiskRow
+                {
+                    Title = r.Title,
+                    WorkStepName = r.WorkStepName,
+                    Likelihood = r.Likelihood,
+                    Impact = r.Impact,
+                    Score = r.Score,
+                    Mitigation = r.Mitigation,
+                    IsClosed = r.IsClosed,
+                })
+                .ToList();
+        }
+
+        if (wantsTeam)
+        {
+            model.Contributors = timeline.Capacity.Contributors
+                .Select(c => new DeliveryReportModel.ContributorRow
+                {
+                    UserName = c.UserName,
+                    LoggedHours = c.LoggedHours,
+                    LoggedPersonDays = c.LoggedPersonDays,
+                    SharePercent = c.SharePercent,
+                    TaskCount = c.TaskCount,
+                })
+                .ToList();
+        }
     }
 
     private async Task FillAuditTrailAsync(

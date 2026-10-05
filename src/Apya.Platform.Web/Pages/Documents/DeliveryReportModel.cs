@@ -41,6 +41,23 @@ public class DeliveryReportModel
     public List<AnnexRow> Annexes { get; set; } = new();
     public List<AuditRow> AuditTrail { get; set; } = new();
 
+    /* ─── S4 · Şablonda açılabilen ama ÇİZİLMEYEN dört bölümün verisi ──────
+       ReportSectionAvailability bu dördünü "veri üretiliyor" diye işaretliyordu
+       (Faz E) ama modelde taşıyıcısı yoktu: kullanıcı bölümü açıyor, PDF'te hiçbir
+       şey çıkmıyordu. Sessiz boşluk — kuruma eksik rapor gider. */
+
+    /// <summary>Zaman çizelgesi: iş adımlarının tarihleri ve ilerlemesi.</summary>
+    public List<TimelineRow> Timeline { get; set; } = new();
+
+    /// <summary>Bütçe–belge kapsaması. Veri yoksa null kalır ve bölüm "veri yok" basar.</summary>
+    public BudgetCoverageBlock? BudgetCoverage { get; set; }
+
+    /// <summary>Risk kütüğü — kapanmış riskler de listelenir, kapandığı belirtilerek.</summary>
+    public List<RiskRow> Risks { get; set; } = new();
+
+    /// <summary>Kişi bazında kaydedilen zaman.</summary>
+    public List<ContributorRow> Contributors { get; set; } = new();
+
     public class ProjectSummaryBlock
     {
         public int CompliancePercent { get; set; }
@@ -77,6 +94,47 @@ public class DeliveryReportModel
         public DateTime? DocumentDate { get; set; }
         public decimal? Amount { get; set; }
         public long FileSize { get; set; }
+    }
+
+    public class TimelineRow
+    {
+        public int Order { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int ProgressPercent { get; set; }
+    }
+
+    public class BudgetCoverageBlock
+    {
+        public decimal TotalBudget { get; set; }
+        public decimal TotalExpense { get; set; }
+        public decimal DocumentedExpense { get; set; }
+        public decimal UndocumentedExpense { get; set; }
+        public int UndocumentedCount { get; set; }
+        public int BudgetUsedPercent { get; set; }
+        public int DocumentedPercent { get; set; }
+        public string Currency { get; set; } = "TRY";
+    }
+
+    public class RiskRow
+    {
+        public string Title { get; set; } = string.Empty;
+        public string? WorkStepName { get; set; }
+        public int Likelihood { get; set; }
+        public int Impact { get; set; }
+        public int Score { get; set; }
+        public string? Mitigation { get; set; }
+        public bool IsClosed { get; set; }
+    }
+
+    public class ContributorRow
+    {
+        public string UserName { get; set; } = string.Empty;
+        public decimal LoggedHours { get; set; }
+        public decimal LoggedPersonDays { get; set; }
+        public int SharePercent { get; set; }
+        public int TaskCount { get; set; }
     }
 
     public class AuditRow

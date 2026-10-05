@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Identity;
 using Apya.Platform.Expenses;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
@@ -33,6 +34,7 @@ public class ProjectTimelineAppService : ApplicationService, IProjectTimelineApp
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
+    private readonly IIdentityUserRepository _userRepository;
 
     public ProjectTimelineAppService(
         IRepository<Project, Guid> projectRepository,
@@ -42,7 +44,8 @@ public class ProjectTimelineAppService : ApplicationService, IProjectTimelineApp
         IRepository<DocumentExpenseMatch, Guid> matchRepository,
         IRepository<Expense, Guid> expenseRepository,
         IRepository<TaskItem, Guid> taskRepository,
-        IRepository<TaskTimeLog, Guid> timeLogRepository)
+        IRepository<TaskTimeLog, Guid> timeLogRepository,
+        IIdentityUserRepository userRepository)
     {
         _projectRepository = projectRepository;
         _workStepRepository = workStepRepository;
@@ -52,6 +55,7 @@ public class ProjectTimelineAppService : ApplicationService, IProjectTimelineApp
         _expenseRepository = expenseRepository;
         _taskRepository = taskRepository;
         _timeLogRepository = timeLogRepository;
+        _userRepository = userRepository;
     }
 
     public virtual async Task<ProjectTimelineDto> GetAsync(Guid projectId)
@@ -143,16 +147,18 @@ public class ProjectTimelineAppService : ApplicationService, IProjectTimelineApp
         var taskIds = tasks.Select(t => t.Id).ToList();
         var logQueryable = await _timeLogRepository.GetQueryableAsync();
 
-        // TaskTimeLog saniye tutuyor; saate burada çevrilir.
-        var seconds = taskIds.Count == 0
-            ? 0L
+        // TaskTimeLog saniye tutuyor; saate burada çevrilir. Kişi kırılımı AYNI
+        // kayıtlardan çıkar — ikinci bir sorgu açmaz, ikinci bir "toplam" üretmez.
+        var logs = taskIds.Count == 0
+            ? new List<(Guid UserId, Guid TaskId, long Seconds)>()
             : (await AsyncExecuter.ToListAsync(
                     logQueryable.AsNoTracking()
                         .Where(l => taskIds.Contains(l.TaskId) && l.SecondsSpent != null)
-                        .Select(l => l.SecondsSpent!.Value)))
-                .Sum();
+                        .Select(l => new { l.UserId, l.TaskId, Seconds = l.SecondsSpent!.Value })))
+                .Select(l => (l.UserId, l.TaskId, l.Seconds))
+                .ToList();
 
-        var logged = Math.Round(seconds / 3600m, 2);
+        var logged = Math.Round(logs.Sum(l => l.Seconds) / 3600m, 2);
 
         return new CapacityDto
         {
@@ -160,7 +166,51 @@ public class ProjectTimelineAppService : ApplicationService, IProjectTimelineApp
             LoggedHours = logged,
             EstimatedPersonDays = Math.Round(estimated / HoursPerPersonDay, 1),
             LoggedPersonDays = Math.Round(logged / HoursPerPersonDay, 1),
+            Contributors = await BuildContributorsAsync(logs, logged),
         };
+    }
+
+    /// <summary>
+    /// Kişi bazında katkı. Ad çözülemezse (kullanıcı silinmiş) satır DÜŞMEZ: saat
+    /// projede harcanmıştır, raporda toplamla kırılımın toplamı tutmalı.
+    /// </summary>
+    private async Task<List<ContributorDto>> BuildContributorsAsync(
+        List<(Guid UserId, Guid TaskId, long Seconds)> logs, decimal totalHours)
+    {
+        if (logs.Count == 0)
+        {
+            return new List<ContributorDto>();
+        }
+
+        var userIds = logs.Select(l => l.UserId).Distinct().ToList();
+        var names = (await _userRepository.GetListByIdsAsync(userIds))
+            .ToDictionary(u => u.Id, DisplayName);
+
+        return logs
+            .GroupBy(l => l.UserId)
+            .Select(g =>
+            {
+                var hours = Math.Round(g.Sum(l => l.Seconds) / 3600m, 2);
+                return new ContributorDto
+                {
+                    UserId = g.Key,
+                    UserName = names.GetValueOrDefault(g.Key) ?? L["Documents:Report:UnknownContributor"],
+                    LoggedHours = hours,
+                    LoggedPersonDays = Math.Round(hours / HoursPerPersonDay, 1),
+                    SharePercent = totalHours <= 0
+                        ? 0
+                        : (int)Math.Round(hours * 100m / totalHours, MidpointRounding.AwayFromZero),
+                    TaskCount = g.Select(l => l.TaskId).Distinct().Count(),
+                };
+            })
+            .OrderByDescending(c => c.LoggedHours)
+            .ToList();
+    }
+
+    private static string DisplayName(IdentityUser user)
+    {
+        var full = $"{user.Name} {user.Surname}".Trim();
+        return full.IsNullOrWhiteSpace() ? user.UserName : full;
     }
 
     private async Task<List<ProjectRiskDto>> BuildRisksAsync(Guid projectId, List<ProjectWorkStep> steps)

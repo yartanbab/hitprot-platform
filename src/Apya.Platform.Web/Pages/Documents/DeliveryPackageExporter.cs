@@ -60,8 +60,24 @@ internal static class DeliveryPackageExporter
                             case ReportSectionKey.AuditTrail:
                                 col.Item().Element(c => AuditSection(c, model));
                                 break;
-                            // CoverPage başlıkta işlenir; kalan bölümlerin verisi
-                            // henüz üretilemiyor (Faz E) ve şablonda zaten kapalı.
+                            // 🔴 S4 · Bu dördü ReportSectionAvailability'de "verisi var"
+                            // diye işaretliydi ama burada hiç çizilmiyordu: kullanıcı
+                            // bölümü açıyor, çıktıda hiçbir şey görmüyordu.
+                            case ReportSectionKey.Timeline:
+                                col.Item().Element(c => TimelineSection(c, model));
+                                break;
+                            case ReportSectionKey.ExpenseDocumentMatch:
+                                col.Item().Element(c => BudgetCoverageSection(c, model));
+                                break;
+                            case ReportSectionKey.Risks:
+                                col.Item().Element(c => RiskSection(c, model));
+                                break;
+                            case ReportSectionKey.TeamContribution:
+                                col.Item().Element(c => ContributorSection(c, model));
+                                break;
+                            // CoverPage başlıkta işlenir. Kilometre taşı bölümü BİLEREK
+                            // çizilmiyor: karşılığı olan proje varlığı yok ve
+                            // ReportSectionAvailability onu kapalı tutuyor.
                         }
                     }
                 });
@@ -336,6 +352,180 @@ internal static class DeliveryPackageExporter
                     table.Cell().Element(DataCell).Text(row.Actor).FontSize(7.5f);
                     table.Cell().Element(DataCell).Text(row.Action).FontSize(7.5f);
                     table.Cell().Element(DataCell).Text(row.Target ?? "—").FontSize(7.5f);
+                }
+            });
+        });
+    }
+
+    private static void TimelineSection(IContainer container, DeliveryReportModel model)
+    {
+        container.Column(col =>
+        {
+            SectionTitle(col, "Zaman çizelgesi");
+
+            if (model.Timeline.Count == 0)
+            {
+                col.Item().Text("Tarihli iş adımı yok.").FontSize(8.5f).FontColor(Grey);
+                return;
+            }
+
+            col.Item().Table(table =>
+            {
+                table.ColumnsDefinition(c =>
+                {
+                    c.ConstantColumn(28);
+                    c.RelativeColumn();
+                    c.ConstantColumn(62);
+                    c.ConstantColumn(62);
+                    c.ConstantColumn(50);
+                });
+
+                table.Header(h =>
+                {
+                    foreach (var t in new[] { "#", "İş adımı", "Başlangıç", "Bitiş", "İlerleme" })
+                        h.Cell().Element(HeaderCell).Text(t).Bold().FontSize(8);
+                });
+
+                foreach (var row in model.Timeline)
+                {
+                    table.Cell().Element(DataCell).Text(row.Order.ToString());
+                    table.Cell().Element(DataCell).Text(row.Name);
+                    table.Cell().Element(DataCell).Text(DateText(row.StartDate)).FontSize(8);
+                    table.Cell().Element(DataCell).Text(DateText(row.EndDate)).FontSize(8);
+                    table.Cell().Element(DataCell).AlignRight().Text($"%{row.ProgressPercent}");
+                }
+            });
+        });
+
+        static string DateText(DateTime? value) => value?.ToString("dd.MM.yyyy") ?? "—";
+    }
+
+    private static void BudgetCoverageSection(IContainer container, DeliveryReportModel model)
+    {
+        container.Column(col =>
+        {
+            SectionTitle(col, "Gider–belge eşleşmesi");
+
+            var budget = model.BudgetCoverage;
+
+            if (budget == null)
+            {
+                col.Item().Text("Bütçe verisi yok.").FontSize(8.5f).FontColor(Grey);
+                return;
+            }
+
+            col.Item().Row(row =>
+            {
+                Cell(row, "Bütçe", $"{budget.TotalBudget:N2} {budget.Currency}");
+                Cell(row, "Harcanan", $"{budget.TotalExpense:N2} {budget.Currency}");
+                Cell(row, "Belgelenen", $"%{budget.DocumentedPercent}");
+                Cell(row, "Bütçe kullanımı", $"%{budget.BudgetUsedPercent}");
+            });
+
+            // Belgesiz gider kuruma giden raporun en kritik satırı: denetçi önce buna bakar.
+            if (budget.UndocumentedCount > 0)
+            {
+                col.Item().PaddingTop(4)
+                    .Text($"Belgesiz gider: {budget.UndocumentedCount} kayıt · "
+                          + $"{budget.UndocumentedExpense:N2} {budget.Currency}")
+                    .FontSize(8.5f).FontColor(Colors.Orange.Darken2);
+            }
+            else
+            {
+                col.Item().PaddingTop(4).Text("Her giderin belgesi var.")
+                    .FontSize(8.5f).FontColor(Colors.Green.Darken2);
+            }
+        });
+
+        static void Cell(RowDescriptor row, string label, string value)
+        {
+            row.RelativeItem().Background("#F9FAFB").Padding(7).Column(c =>
+            {
+                c.Item().Text(label.ToUpperInvariant()).FontSize(7).Bold().FontColor(Grey);
+                c.Item().PaddingTop(2).Text(value).FontSize(11);
+            });
+        }
+    }
+
+    private static void RiskSection(IContainer container, DeliveryReportModel model)
+    {
+        container.Column(col =>
+        {
+            SectionTitle(col, "Risk kütüğü");
+
+            if (model.Risks.Count == 0)
+            {
+                col.Item().Text("Kayıtlı risk yok.").FontSize(8.5f).FontColor(Grey);
+                return;
+            }
+
+            col.Item().Table(table =>
+            {
+                table.ColumnsDefinition(c =>
+                {
+                    c.RelativeColumn(2);
+                    c.ConstantColumn(70);
+                    c.ConstantColumn(40);
+                    c.RelativeColumn(2);
+                });
+
+                table.Header(h =>
+                {
+                    foreach (var t in new[] { "Risk", "İş adımı", "Skor", "Önlem" })
+                        h.Cell().Element(HeaderCell).Text(t).Bold().FontSize(8);
+                });
+
+                foreach (var row in model.Risks)
+                {
+                    table.Cell().Element(DataCell)
+                        .Text(row.IsClosed ? $"{row.Title} (kapandı)" : row.Title)
+                        .FontColor(row.IsClosed ? Grey : Colors.Black);
+                    table.Cell().Element(DataCell).Text(row.WorkStepName ?? "Proje").FontSize(8);
+                    table.Cell().Element(DataCell).AlignRight()
+                        .Text(row.Score.ToString())
+                        .FontColor(row.IsClosed ? Grey : row.Score >= 15 ? Colors.Red.Medium : Colors.Black);
+                    table.Cell().Element(DataCell).Text(row.Mitigation ?? "—").FontSize(8);
+                }
+            });
+        });
+    }
+
+    private static void ContributorSection(IContainer container, DeliveryReportModel model)
+    {
+        container.Column(col =>
+        {
+            SectionTitle(col, "Ekip katkısı");
+
+            if (model.Contributors.Count == 0)
+            {
+                col.Item().Text("Zaman kaydı yok.").FontSize(8.5f).FontColor(Grey);
+                return;
+            }
+
+            col.Item().Table(table =>
+            {
+                table.ColumnsDefinition(c =>
+                {
+                    c.RelativeColumn();
+                    c.ConstantColumn(55);
+                    c.ConstantColumn(60);
+                    c.ConstantColumn(45);
+                    c.ConstantColumn(45);
+                });
+
+                table.Header(h =>
+                {
+                    foreach (var t in new[] { "Kişi", "Saat", "Adam-gün", "Pay", "Görev" })
+                        h.Cell().Element(HeaderCell).Text(t).Bold().FontSize(8);
+                });
+
+                foreach (var row in model.Contributors)
+                {
+                    table.Cell().Element(DataCell).Text(row.UserName);
+                    table.Cell().Element(DataCell).AlignRight().Text($"{row.LoggedHours:N2}");
+                    table.Cell().Element(DataCell).AlignRight().Text($"{row.LoggedPersonDays:N1}");
+                    table.Cell().Element(DataCell).AlignRight().Text($"%{row.SharePercent}");
+                    table.Cell().Element(DataCell).AlignRight().Text(row.TaskCount.ToString());
                 }
             });
         });

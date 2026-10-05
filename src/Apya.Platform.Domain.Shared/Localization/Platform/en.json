@@ -1975,6 +1975,7 @@
     "Common:Unsaved:LeaveConfirm": "If you continue, your unsaved changes will be lost. Continue anyway?",
     "Common:Unsaved:Badge": "Unsaved changes",
     "Documents:Tree:RefreshFailed": "Folders could not be refreshed.",
+    "Documents:Report:UnknownContributor": "Former user",
     "Documents:Detail:Unsaved:Body": "Your changes to this document have not been saved. If you continue, they will be lost.",
     "Documents:NewFolder:Title": "New folder",
     "Documents:NewFolder:Name": "Folder name",

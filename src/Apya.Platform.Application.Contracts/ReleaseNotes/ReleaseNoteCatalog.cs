@@ -28,7 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.10.05",
             date: "5 Ekim 2026",
-            title: "Hibeden doğan projede hibe evrakına tek tıkla gidin",
+            title: "Hibeden doğan projede hibe evrakına tek tıkla gidin; raporun zaman çizelgesi, " +
+                   "gider eşleşmesi, risk ve ekip bölümleri artık gerçekten basılıyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Hibeden doğan projede hibe başvurusuna ve evrakına tek tıkla gidin",
@@ -39,7 +40,20 @@ public static class ReleaseNoteCatalog
                 "Artık proje ekranının üst şeridinde projenin doğduğu hibe programı yazıyor: " +
                 "üstüne bastığınızda başvurunun uygulama ve tahsilat ekranı, yanındaki " +
                 "'Hibe evrakı' bağlantısında da evrak listesi açılıyor. " +
-                "Hibeden doğmamış projelerde bu şerit hiç görünmüyor.")
+                "Hibeden doğmamış projelerde bu şerit hiç görünmüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Raporun dört bölümü artık gerçekten basılıyor",
+                "Rapor derleyicide şablonun bölümlerini seçiyorsunuz. Zaman çizelgesi, " +
+                "gider–belge eşleşmesi, risk kütüğü ve ekip katkısı bölümleri seçilebiliyordu " +
+                "ama çıktıya hiç girmiyordu: hazır şablonların bir kısmı (örneğin KOSGEB ara raporu) " +
+                "bu bölümleri açık getirdiği için kuruma eksik rapor gidiyordu. " +
+                "Artık dördü de hem ekrandaki önizlemede hem PDF'te basılıyor. " +
+                "Zaman çizelgesi iş adımlarının tarihlerini ve ilerlemesini, gider–belge eşleşmesi " +
+                "belgesiz gider tutarını, risk kütüğü skorları ve önlemleri, ekip katkısı da " +
+                "kişi başına kaydedilen saati ve payı gösteriyor. " +
+                "Bölümün verisi yoksa bölüm 'veri yok' satırıyla basılıyor; " +
+                "böylece raporun eksik mi, verinin mi eksik olduğu belli oluyor.")
         ),
 
         new ReleaseNote(
