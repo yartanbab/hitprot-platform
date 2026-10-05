@@ -40,6 +40,18 @@ public class FundingTranche : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public string? Note { get; private set; }
 
+    /// <summary>
+    /// 🔴 CNV-01 · Bu dilim bir hibe başvurusundan dönüştürüldüyse kaynağı olan hibe
+    /// tahsilat dilimi (<c>GrantDisbursementTranche.Id</c>). Projede elle açılan dilimde boştur.
+    ///
+    /// <para>Dönüşüm dilimi KOPYALAR ve iki kayıt ayrı yaşamaya devam eder: hibe tarafı
+    /// "Ödendi" işaretlenir, proje tarafı "Bekliyor" kalır. Bu alan iki kaydı EŞLER;
+    /// hangisinin doğruluk kaynağı olacağına karar VERMEZ — o karar ayrı.</para>
+    ///
+    /// <para>Bilerek FK DEĞİL (bkz. <c>ProjectBudgetLine.SourceGrantLineId</c>).</para>
+    /// </summary>
+    public Guid? SourceGrantTrancheId { get; private set; }
+
     public ICollection<TrancheDeduction> Deductions { get; private set; } = new List<TrancheDeduction>();
 
     /// <summary>Kesintilerin toplamı.</summary>
@@ -75,6 +87,9 @@ public class FundingTranche : FullAuditedAggregateRoot<Guid>, IMultiTenant
         SetTitle(title);
         SetNote(note);
     }
+
+    /// <summary>Dilimin doğduğu hibe tahsilat dilimini kaydeder (dönüşüm ve geri dolum).</summary>
+    public void LinkToGrantTranche(Guid grantTrancheId) => SourceGrantTrancheId = grantTrancheId;
 
     public void SetPlan(decimal plannedAmount, DateTime? plannedDate)
     {

@@ -561,6 +561,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 // ile silinmiş bir kalemin kodu yeniden kullanılabilmeli. Kural
                 // ProjectBudgetManager.EnsureCodeIsFreeAsync'te (silinmişleri saymaz).
                 b.HasIndex(x => new { x.ProjectId, x.Code });
+                // FIN-04: kaynak başvuru satırına FK KURULMADI (satır silinse de proje
+                // bütçesi durmalı); indeks "bu başvuru satırından doğan kalem hangisi" sorgusu için.
+                b.HasIndex(x => x.SourceGrantLineId);
             });
 
             builder.Entity<FundingTranche>(b =>
@@ -574,6 +577,8 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => new { x.ProjectId, x.SequenceNo });
                 b.HasIndex(x => x.IncomeEntryId);
+                // CNV-01: kaynak hibe dilimine FK KURULMADI; indeks iki defteri eşlemek için.
+                b.HasIndex(x => x.SourceGrantTrancheId);
                 b.HasMany(x => x.Deductions).WithOne().HasForeignKey(x => x.TrancheId).IsRequired();
             });
 
