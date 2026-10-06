@@ -188,6 +188,12 @@ public static class NotificationTypeRegistry
 
             // 19a · HOST'a gider. Derin link Fikir Havuzu'nda fikrin detayını açar (?open=);
             // her fikir ayrı kayıt, gruplanacak bir şey yok.
+            // LIF-11: Karar bildirimi gibi itiraz ekranına götürür. Zorunlu DEĞİL: karar
+            // bildirimi bir hakkın süresini taşır, bu yalnız sonucu haber verir.
+            [NotificationType.GrantAppealResolved] = new(
+                NotificationCategory.Grants, NotificationSeverity.High,
+                "fa fa-scale-balanced", "/Grants/Appeal?id={0}", GroupSimilar: false),
+
             [NotificationType.GrantIdeaShared] = new(
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-lightbulb", "/Grants/Ideas?open={0}", GroupSimilar: false),

@@ -224,10 +224,42 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
         var decision = await FindDecisionAsync(application.Id)
                        ?? throw new BusinessException(PlatformDomainErrorCodes.GrantDecisionNotFound);
 
+        var previous = decision.AppealAccepted;
+
         decision.ResolveAppeal(accepted);
         await _decisionRepo.UpdateAsync(decision, autoSave: true);
 
+        // 🔴 LIF-11: İtirazın sonucu firmaya hiç bildirilmiyordu. Aynı sonucun yeniden
+        // kaydedilmesi (yanlışlıkla ikinci tıklama) yeniden bildirilmez; sonuç değişirse bildirilir.
+        if (previous != accepted)
+        {
+            await NotifyAppealResolvedAsync(application, accepted);
+        }
+
         return await BuildAsync(application);
+    }
+
+    private async Task NotifyAppealResolvedAsync(GrantApplication application, bool accepted)
+    {
+        string? grantName;
+        using (_mtFilter.Disable())
+        {
+            var call = await _callRepo.FirstOrDefaultAsync(
+                c => c.Id == application.GrantCallId && c.TenantId == null);
+            grantName = call == null
+                ? null
+                : (await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId && g.TenantId == null))?.Name;
+        }
+
+        await _notifyDispatcher.DispatchToTenantAsync(
+            GrantNotificationTrigger.AppealResolved,
+            application.TenantId,
+            new Dictionary<string, string?>
+            {
+                ["{çağrı_adı}"] = grantName,
+                ["{sonuç}"] = L[accepted ? "Grants:Notify:AppealResult:Accepted" : "Grants:Notify:AppealResult:Rejected"].Value
+            },
+            nameof(GrantApplication), application.Id);
     }
 
     // ------------------------------------------------------------------ yardımcılar

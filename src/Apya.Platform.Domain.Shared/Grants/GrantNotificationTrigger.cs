@@ -97,5 +97,12 @@ public enum GrantNotificationTrigger
     /// (<see cref="InterestReceived"/>) duyuruluyordu ama havuz fikri sessizdi, danışman ancak
     /// Fikir Havuzu'nu elle açarsa görüyordu.
     /// </summary>
-    IdeaShared = 18
+    IdeaShared = 18,
+
+    /// <summary>
+    /// 🔴 LIF-11 · Kurum itiraza yanıt verdi, danışman sonucu kaydetti. Firmaya gider: karar
+    /// (<see cref="DecisionIssued"/>) bildiriliyordu ama itirazın SONUCU bildirilmiyordu — firma
+    /// itirazını gönderdikten sonra ne olduğunu ancak ekranı açıp bakarsa öğreniyordu.
+    /// </summary>
+    AppealResolved = 19
 }

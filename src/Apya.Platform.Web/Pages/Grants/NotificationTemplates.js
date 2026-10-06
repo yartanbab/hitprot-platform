@@ -10,7 +10,8 @@ $(function () {
                        'ApplicationStageChanged', 'DecisionIssued', 'ReportDeadlineNear', 'CallPublished',
                        'InterestAnswered', 'InterestReceived', 'CallClosed', 'MeetingProposed', 'MeetingAnswered',
                        'IdeaLinked', 'IdeaInvited', 'ApplicationSubmitted',
-                       'ConvertedToProject', 'ConversionPending', 'SubmissionDeadlineNear', 'IdeaShared'];
+                       'ConvertedToProject', 'ConversionPending', 'SubmissionDeadlineNear', 'IdeaShared',
+                       'AppealResolved'];
 
     var model = null;
     var selectedId = null;

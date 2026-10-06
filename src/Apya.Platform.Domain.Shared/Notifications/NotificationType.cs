@@ -70,5 +70,8 @@ public enum NotificationType
 
     // 🔴 DOC-05 / NTF-07: Belgeye girilen geçerlilik tarihi hiçbir iş tarafından okunmuyordu;
     // DocumentExpiring (8) yalnız KLASÖR düzeyindeki eski tarihi izler.
-    DocumentFileExpiry          = 42  // Belgenin geçerliliğine 30 / 7 gün kaldı ya da doldu
+    DocumentFileExpiry          = 42, // Belgenin geçerliliğine 30 / 7 gün kaldı ya da doldu
+
+    // 🔴 LIF-11: Karar bildiriliyordu, itirazın sonucu bildirilmiyordu.
+    GrantAppealResolved         = 43  // İtiraz sonuçlandı (firmaya gider)
 }
