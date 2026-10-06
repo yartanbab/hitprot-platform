@@ -114,7 +114,17 @@ public static class ReleaseNoteCatalog
                 "Ekran bunu söylemiyordu: rakamı değiştirip kaydediyor, hiçbir yerde bir şeyin değişmediğini " +
                 "görüyordunuz. " +
                 "Artık kalemi olan projede 'Bütçesi' alanının altında, geçerli olan kalem toplamı ve onu " +
-                "değiştireceğiniz yere giden bağlantı yazıyor. Kalemi olmayan projede hiçbir şey değişmedi.")
+                "değiştireceğiniz yere giden bağlantı yazıyor. Kalemi olmayan projede hiçbir şey değişmedi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Finans Merkezi'nde gelir ve gider eklerken proje artık seçili geliyor",
+                "Finans Merkezi'nde bir proje seçip 'Gelir-Gider' sekmesinden 'Gelir ekle' ya da 'Gider ekle'ye " +
+                "bastığınızda program sizi bütün gelirlerin ya da giderlerin sayfasına götürüyordu. Seçtiğiniz " +
+                "proje kayboluyor, kayıt penceresinde projeyi yeniden seçmeniz gerekiyordu; seçmeyi unutursanız " +
+                "kayıt projesiz ya da yanlış projeye giriliyordu. " +
+                "Artık bu düğmeler kayıt penceresini bulunduğunuz ekranda açıyor ve proje önceden seçili geliyor. " +
+                "Kaydettiğinizde aynı projenin Gelir-Gider sekmesinde kalırsınız. " +
+                "Proje seçili değilken ('Tüm hesaplar') düğmeler eskisi gibi çalışır.")
         ),
 
         new ReleaseNote(

@@ -23,6 +23,11 @@ public class CreateModalModel : AbpPageModel
     [BindProperty(SupportsGet = true)]
     public Guid? TaskId { get; set; }
 
+    /// <summary>Finans Merkezi'nden açılınca proje ÖNDEN seçili gelir (FUX-01; gider
+    /// penceresindeki eşinin aynısı). TaskId doluysa yok sayılır — görev projeyi zaten belirler.</summary>
+    [BindProperty(SupportsGet = true)]
+    public Guid? ProjectId { get; set; }
+
     [BindProperty]
     public CreateUpdateIncomeEntryDto Income { get; set; } = new();
 
@@ -62,6 +67,11 @@ public class CreateModalModel : AbpPageModel
             // TaskId POST'ta kaybolurdu.
             Income.ProjectId = await FinanceLookupShared.ResolveTaskProjectAsync(_taskAppService, TaskId.Value);
         }
+        else if (ProjectId.HasValue)
+        {
+            Income.ProjectId = ProjectId;
+        }
+
         return Page();
     }
 

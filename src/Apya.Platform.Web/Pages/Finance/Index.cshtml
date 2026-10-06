@@ -22,6 +22,10 @@
     {
         <abp-script src="/Pages/Finance/Budget.js" />
     }
+    @if (Model.ActiveTab == FinanceContext.TabLedger && !Model.HostScope)
+    {
+        <abp-script src="/Pages/Finance/Ledger.js" />
+    }
     @if (Model.ActiveTab == FinanceContext.TabInvoices && !Model.HostScope)
     {
         @* Faturaların ikinci bir arayüzü yok: /Invoices'ın script'i aynen kullanılır. Host kapsamında

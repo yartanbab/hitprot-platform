@@ -91,18 +91,39 @@
         <a href="@Model.LedgerUrl(null, null, null)" class="apya-console-filter-clear text-decoration-none">Filtreleri temizle</a>
     }
 
-    <span class="ms-auto d-flex gap-2">
+    @* FUX-01: Proje seçiliyken kayıt penceresi BURADA, proje önden seçili açılır (Ledger.js).
+       Çıplak /Incomes ve /Expenses bağlantıları seçili projeyi düşürüyordu. Proje seçili
+       değilken — ya da kullanıcının oluşturma izni yokken — eski bağlantı kalır. *@
+    <span class="ms-auto d-flex gap-2" @(Model.ProjectId.HasValue ? $"data-fin-ledger-project={Model.ProjectId.Value}" : null)>
         @if (!Model.IncomesLocked)
         {
-            <a href="/Incomes" class="btn btn-sm btn-outline-secondary">
-                <i class="fa fa-arrow-down-long me-1" aria-hidden="true"></i>Gelir ekle
-            </a>
+            @if (Model.ProjectId.HasValue && Model.CanCreateIncome)
+            {
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="fin-ledger-add-income">
+                    <i class="fa fa-arrow-down-long me-1" aria-hidden="true"></i>Gelir ekle
+                </button>
+            }
+            else
+            {
+                <a href="/Incomes" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-arrow-down-long me-1" aria-hidden="true"></i>Gelir ekle
+                </a>
+            }
         }
         @if (!Model.ExpensesLocked)
         {
-            <a href="/Expenses" class="btn btn-sm btn-outline-secondary">
-                <i class="fa fa-arrow-up-long me-1" aria-hidden="true"></i>Gider ekle
-            </a>
+            @if (Model.ProjectId.HasValue && Model.CanCreateExpense)
+            {
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="fin-ledger-add-expense">
+                    <i class="fa fa-arrow-up-long me-1" aria-hidden="true"></i>Gider ekle
+                </button>
+            }
+            else
+            {
+                <a href="/Expenses" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-arrow-up-long me-1" aria-hidden="true"></i>Gider ekle
+                </a>
+            }
         }
     </span>
 </div>

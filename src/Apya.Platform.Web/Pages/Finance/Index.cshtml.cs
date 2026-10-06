@@ -108,6 +108,16 @@ public class IndexModel : AbpPageModel
     /// <summary>Gelir-Gider tablosundaki donör kolonu; proje donörsüzse null (kolon basılmaz).</summary>
     public string? LedgerDonorCurrency { get; private set; }
 
+    /// <summary>
+    /// FUX-01 · Gelir-Gider sekmesinde kayıt penceresi doğrudan açılabilir mi. Pencere oluşturma
+    /// iznini ister; yalnız okuma izni olan kullanıcıya düğme değil eski bağlantı basılır
+    /// (yasak pencereye açılan düğme olmasın).
+    /// </summary>
+    public bool CanCreateIncome { get; private set; }
+
+    /// <inheritdoc cref="CanCreateIncome"/>
+    public bool CanCreateExpense { get; private set; }
+
     /// <summary>Gelir-Gider süzgeci: "gelir" | "gider" | boş.</summary>
     [BindProperty(SupportsGet = true)]
     public string? Kind { get; set; }
@@ -265,6 +275,8 @@ public class IndexModel : AbpPageModel
         await LoadTabsAsync();
 
         CanEditBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit);
+        CanCreateIncome = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Incomes.Create);
+        CanCreateExpense = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Create);
 
         // Sekme başına yükleme: pasif sekmenin sorgusu hiç koşmaz.
         if (ActiveTab == FinanceContext.TabOverview)
