@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Threading.Tasks;
 using Apya.Platform.Ai.Evaluations;
@@ -7,6 +8,7 @@ using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
 namespace Apya.Platform.Web.Pages.AiCenter.Evaluations;
 
+[Authorize]
 public class DetailModalModel : AbpPageModel
 {
     private readonly IAiEvaluationAppService _evaluationAppService;

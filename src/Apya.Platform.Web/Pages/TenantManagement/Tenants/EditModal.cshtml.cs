@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Web.Pages.TenantManagement.Tenants;
 
+[Authorize]
 public class EditModalModel : AbpPageModel
 {
     private readonly ITenantProfileAppService _tenantProfileAppService;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +14,7 @@ namespace Apya.Platform.Web.Pages.Account;
 /// 302. Yasaklı tam sayfa gezinmeleri zaten doğrudan /AccessDenied'a gider
 /// (<see cref="Middleware.AccessDeniedResultHandler"/>).</para>
 /// </summary>
+[AllowAnonymous]
 public class ApyaAccessDeniedModel : Volo.Abp.Account.Web.Pages.Account.AccessDeniedModel
 {
     public override Task<IActionResult> OnGetAsync()

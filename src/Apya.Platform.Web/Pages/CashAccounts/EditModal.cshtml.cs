@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Apya.Platform.CashAccounts;
 
 namespace Apya.Platform.Web.Pages.CashAccounts;
 
+[Authorize]
 public class EditModalModel : AbpPageModel
 {
     private readonly ICashAccountAppService _cashAccountAppService;

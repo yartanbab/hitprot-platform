@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ using Apya.Platform.Web.Pages;
 
 namespace Apya.Platform.Web.Pages.Invoices;
 
+[Authorize]
 public class CreateModalModel : AbpPageModel
 {
     private readonly IInvoiceAppService _invoiceAppService;

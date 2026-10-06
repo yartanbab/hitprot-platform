@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using Apya.Platform.Tasks;
 
 namespace Apya.Platform.Web.Pages.Expenses;
 
+[Authorize]
 public class CreateModalModel : AbpPageModel
 {
     private readonly IExpenseAppService _expenseAppService;

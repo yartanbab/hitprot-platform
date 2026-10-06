@@ -22,6 +22,7 @@ namespace Apya.Platform.Web.Pages.AccessDenied;
 /// + "Girişe dön" aynen). ReturnUrl ekrana basılmaz ve oturumlu dalda hiçbir yere yönlendirme hedefi
 /// değildir.</para>
 /// </summary>
+[AllowAnonymous]
 public class IndexModel : PlatformPageModel
 {
     private readonly AccessDenialExplainer _explainer;

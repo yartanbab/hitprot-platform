@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -18,6 +19,7 @@ namespace Apya.Platform.Web.Pages.Reports;
 /// üretirdi. Aynı gerekçe /Board yönlendirmesinde de yazılı.
 /// </para>
 /// </summary>
+[Authorize]
 public class IndexModel : PageModel
 {
     public IActionResult OnGet() => RedirectToPagePermanent("/Dashboard/Index");

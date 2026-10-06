@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ namespace Apya.Platform.Web.Pages.Account;
 /// Şifre burada kırpılmaz; onun kırpması
 /// <see cref="Apya.Platform.Identity.ApyaIdentityUserManager"/> içinde yapılır.
 /// </summary>
+[AllowAnonymous]
 public class ApyaRegisterModel : Volo.Abp.Account.Web.Pages.Account.RegisterModel
 {
     public ApyaRegisterModel(

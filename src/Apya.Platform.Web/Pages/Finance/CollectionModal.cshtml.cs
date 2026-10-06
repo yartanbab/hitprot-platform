@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.Authorization;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Permissions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Apya.Platform.Web.Pages.Finance;
 
@@ -16,6 +18,7 @@ namespace Apya.Platform.Web.Pages.Finance;
 /// Dilim tahsilatı. Tutar KÜMÜLATİFTİR — "bugüne kadar gelen toplam", fark değil.
 /// Gelir kaydı seçilebilir: para iki kez kaydedilmesin, dilim mevcut gelire bağlansın.
 /// </summary>
+[Authorize(PlatformPermissions.Projects.ViewBudget)]
 public class CollectionModalModel : AbpPageModel
 {
     private readonly IProjectBudgetAppService _budgetAppService;

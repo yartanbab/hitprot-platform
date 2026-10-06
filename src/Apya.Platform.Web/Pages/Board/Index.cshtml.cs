@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -12,6 +13,7 @@ namespace Apya.Platform.Web.Pages.Board
     /// buraya bir [Authorize] koymak yalnız yönlendirmeden önce ikinci bir
     /// 403 üretirdi.
     /// </summary>
+    [Authorize]
     public class IndexModel : PageModel
     {
         public IActionResult OnGet()

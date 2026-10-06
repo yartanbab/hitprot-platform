@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
 namespace Apya.Platform.Web.Pages.AiCenter.Workflows;
 
+[Authorize]
 public class EditModalModel : AbpPageModel
 {
     private readonly IAiWorkflowAppService _workflowAppService;

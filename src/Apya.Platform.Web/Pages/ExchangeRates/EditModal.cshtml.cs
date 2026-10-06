@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Apya.Platform.ExchangeRates;
 
 namespace Apya.Platform.Web.Pages.ExchangeRates;
 
+[Authorize]
 public class EditModalModel : AbpPageModel
 {
     private readonly IExchangeRateAppService _exchangeRateAppService;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -14,6 +15,7 @@ namespace Apya.Platform.Web.Pages.TenantManagement.Tenants;
 /// Host'un, müşteri kullanıcısının şifresini ESKİ ŞİFREYİ BİLMEDEN belirlediği modal.
 /// Müşteri şifresini unuttuğunda ve posta kanalı çalışmadığında tek kurtarma yolu.
 /// </summary>
+[Authorize]
 public class SetPasswordModalModel : AbpPageModel
 {
     private readonly ITenantProfileAppService _tenantProfileAppService;
