@@ -585,7 +585,7 @@ public class IndexModel : AbpPageModel
                     CategoryLabel = CategoryLabels.ForIncome(x.Category),
                     ProjectName = NameOf(projects, x.ProjectId),
                     CustomerName = NameOf(customers, x.CustomerId),
-                    Url = "/Incomes"
+                    Url = TransactionUrl("/Incomes", FinanceContext.TabLedger, "gelir")
                 });
             }
         }));
@@ -607,7 +607,7 @@ public class IndexModel : AbpPageModel
                     CategoryLabel = CategoryLabels.ForExpense(x.Category),
                     ProjectName = NameOf(projects, x.ProjectId),
                     CustomerName = NameOf(customers, x.CustomerId),
-                    Url = "/Expenses"
+                    Url = TransactionUrl("/Expenses", FinanceContext.TabLedger, "gider")
                 });
             }
         }));
@@ -630,7 +630,7 @@ public class IndexModel : AbpPageModel
                     CategoryLabel = isSales ? "Satış geliri" : "Alış gideri",
                     ProjectName = x.ProjectName,
                     CustomerName = x.CustomerName,
-                    Url = "/Invoices"
+                    Url = TransactionUrl("/Invoices", FinanceContext.TabInvoices)
                 });
             }
         }));
@@ -761,6 +761,26 @@ public class IndexModel : AbpPageModel
     /// <summary>Sekme bağlantısı — seçili proje korunarak sekme değiştirir.</summary>
     public string TabUrl(string tabCode)
         => ProjectId.HasValue ? $"/Finance?projectId={ProjectId.Value}&tab={tabCode}" : $"/Finance?tab={tabCode}";
+
+    /// <summary>
+    /// FUX-05 · "Son İşlemler" satırının gideceği yer. Proje seçiliyken satır modülün
+    /// PROJESİZ liste sayfasına gidiyordu: kullanıcı bir projenin son gelirine basıyor,
+    /// bütün gelirlerin listesine düşüyor ve aynı kaydı yeniden arıyordu.
+    ///
+    /// <para>Proje seçiliyse satır bu sayfanın kendi proje bağlamlı sekmesine gider. Sekme bu
+    /// kullanıcıya ya da bu şablona kapalıysa (ör. hibe şablonunda Faturalar yok) modül
+    /// sayfasına düşülür — yasak ya da var olmayan sekmeye bağlantı basılmaz. Proje seçili
+    /// değilken korunacak bağlam yoktur; davranış eskisi gibidir.</para>
+    /// </summary>
+    private string TransactionUrl(string moduleUrl, string tabCode, string? ledgerKind = null)
+    {
+        if (!ProjectId.HasValue || Tabs.All(t => t.Code != tabCode))
+        {
+            return moduleUrl;
+        }
+
+        return tabCode == FinanceContext.TabLedger ? LedgerUrl(ledgerKind, null, null) : TabUrl(tabCode);
+    }
 
     /// <summary>
     /// Gelir-Gider süzgeç bağlantısı. Çağıran, süzgecin TAMAMINI verir (kısmi

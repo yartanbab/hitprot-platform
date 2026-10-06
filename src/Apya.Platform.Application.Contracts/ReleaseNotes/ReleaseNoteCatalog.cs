@@ -82,7 +82,18 @@ public static class ReleaseNoteCatalog
                 "Artık dosyanın içeriği yüklenirken kaydediliyor ve aynı içerik ikinci kez geldiğinde " +
                 "uyarı görünüyor; dosyanın adı farklı olsa da. " +
                 "Uyarı bundan sonra yüklenen dosyalar için çalışır; daha önce yüklenmiş dosyalar " +
-                "kendi aralarında karşılaştırılmaz.")
+                "kendi aralarında karşılaştırılmaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Finans Merkezi'nde 'Son İşlemler' artık projeden çıkarmıyor",
+                "Finans Merkezi'nde bir proje seçiliyken 'Son İşlemler' listesindeki bir gelire ya da gidere " +
+                "bastığınızda, program sizi bütün gelirlerin ya da bütün giderlerin listesine götürüyordu: " +
+                "proje seçiminiz kayboluyor, aradığınız kaydı öbür projelerin kayıtları arasında yeniden " +
+                "bulmanız gerekiyordu. " +
+                "Artık satıra bastığınızda aynı projenin 'Gelir-Gider' sekmesi açılıyor; gelire bastıysanız " +
+                "gelirler, gidere bastıysanız giderler süzülmüş geliyor. Fatura satırı da, projenin Faturalar " +
+                "sekmesi varsa oraya gidiyor. " +
+                "Proje seçili değilken ('Tüm hesaplar') davranış değişmedi.")
         ),
 
         new ReleaseNote(
