@@ -273,7 +273,14 @@ public class PlatformWebModule : AbpModule
                             // "kim, ne zaman, kaçtan kaça" sorusu alan düzeyinde cevaplanabilsin.
                             typeof(Apya.Platform.Grants.GrantApplication).IsAssignableFrom(type) ||
                             typeof(Apya.Platform.Grants.GrantDisbursementTranche).IsAssignableFrom(type) ||
-                            typeof(Apya.Platform.Grants.GrantDecision).IsAssignableFrom(type)
+                            typeof(Apya.Platform.Grants.GrantDecision).IsAssignableFrom(type) ||
+                            // SEC-04: proje bütçe ekseni. Fatura, gider ve hibe tutarı geçmişteydi;
+                            // projenin kendi bütçesi değildi — kalem tutarı, dilim tahsilatı/kesintisi
+                            // ve toplam bütçe için "eski değer neydi" sorusu cevapsız kalıyordu.
+                            typeof(Apya.Platform.Projects.Project).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.ProjectBudgets.ProjectBudgetLine).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.ProjectBudgets.FundingTranche).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.ProjectBudgets.TrancheDeduction).IsAssignableFrom(type)
                 )
             );
 
