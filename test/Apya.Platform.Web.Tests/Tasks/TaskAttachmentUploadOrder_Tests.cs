@@ -25,14 +25,40 @@ namespace Apya.Platform.Tasks;
 /// <para>Test barındırıcısı her izne "evet" dediği için gizli görev reddi burada
 /// üretilemez; aynı kapının diğer yüzü — var olmayan görev — kullanılır. İki durumda da
 /// istek aynı noktada düşer.</para>
+///
+/// <para>Yükleme klasörü bütün test sınıflarının ORTAK malı. "Klasörde kaç dosya var" diye
+/// saymak, aynı anda koşan başka bir sınıfın yazdığı dosyayı da sayar ve rastgele kırılır;
+/// bu yüzden test kendi dosyasını İÇERİĞİNDEN tanır ve klasöre yazan sınıflar aynı
+/// koleksiyonda sırayla koşar.</para>
 /// </summary>
+[Collection("Yükleme klasörünü kullanan testler")]
 public class TaskAttachmentUploadOrder_Tests : PlatformWebTestBase
 {
-    private static readonly byte[] Payload = Encoding.UTF8.GetBytes("DOC-11 deneme içeriği");
+    // İçerik koşuya özgü: klasördeki dosyanın BU testin dosyası olduğu içerikten anlaşılır.
+    private readonly byte[] _payload = Encoding.UTF8.GetBytes("DOC-11 deneme içeriği " + Guid.NewGuid());
 
     private string RootFolder => GetRequiredService<IUploadedFileRootFolderProvider>().GetRootFolder();
 
-    private int FileCount() => Directory.GetFiles(RootFolder).Length;
+    /// <summary>Bu testin içeriğini taşıyan dosya klasörde duruyor mu?</summary>
+    private bool PayloadOnDisk()
+    {
+        foreach (var path in Directory.GetFiles(RootFolder))
+        {
+            try
+            {
+                if (new FileInfo(path).Length == _payload.Length && File.ReadAllBytes(path).SequenceEqual(_payload))
+                {
+                    return true;
+                }
+            }
+            catch (IOException)
+            {
+                // Dosya bu arada silindi ya da kilitli: bizim dosyamız değil.
+            }
+        }
+
+        return false;
+    }
 
     private async Task<string> AntiforgeryTokenAsync()
     {
@@ -48,7 +74,7 @@ public class TaskAttachmentUploadOrder_Tests : PlatformWebTestBase
         var token = await AntiforgeryTokenAsync();
 
         using var content = new MultipartFormDataContent();
-        var file = new ByteArrayContent(Payload);
+        var file = new ByteArrayContent(_payload);
         file.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
         content.Add(file, "file", fileName);
         content.Add(new StringContent(token), "__RequestVerificationToken");
@@ -85,23 +111,19 @@ public class TaskAttachmentUploadOrder_Tests : PlatformWebTestBase
     [Fact]
     public async Task Gorev_Penceresi_Erisilemeyen_Goreve_Yuklemede_Diske_Dosya_Birakmaz()
     {
-        var before = FileCount();
-
         var response = await PostFileAsync($"/Tasks/EditModal?handler=UploadFile&taskId={Guid.NewGuid()}", "not.txt");
 
         response.IsSuccessStatusCode.ShouldBeFalse();
-        FileCount().ShouldBe(before, "reddedilen yükleme diske dosya bırakmamalı");
+        PayloadOnDisk().ShouldBeFalse("reddedilen yükleme diske dosya bırakmamalı");
     }
 
     [Fact]
     public async Task Api_Ucu_Erisilemeyen_Goreve_Yuklemede_Diske_Dosya_Birakmaz()
     {
-        var before = FileCount();
-
         var response = await PostFileAsync($"/api/tasks/attachments/upload/{Guid.NewGuid()}", "not.txt");
 
         response.IsSuccessStatusCode.ShouldBeFalse();
-        FileCount().ShouldBe(before, "reddedilen yükleme diske dosya bırakmamalı");
+        PayloadOnDisk().ShouldBeFalse("reddedilen yükleme diske dosya bırakmamalı");
     }
 
     /// <summary>Kontrolün öne alınması geçerli yüklemeyi bozmadı: dosya yazılır, kayıt açılır.</summary>
