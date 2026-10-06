@@ -14,6 +14,8 @@ public static class PlatformDomainErrorCodes
     public const string TaskUpdateDenied = "Platform:Task:UpdateDenied";
     public const string TaskDeleteDenied = "Platform:Task:DeleteDenied";
     public const string TaskEstimateNegative = "Platform:Task:EstimateNegative";
+    public const string TaskParentNotFound = "Platform:Task:ParentNotFound";
+    public const string TaskParentProjectMismatch = "Platform:Task:ParentProjectMismatch";
     public const string TaskTransferNoTarget = "Platform:Task:TransferNoTarget";
     public const string TaskTransferSameProject = "Platform:Task:TransferSameProject";
 
@@ -96,6 +98,8 @@ public static class PlatformDomainErrorCodes
     public const string GrantPublishRequiredFieldsMissing = "Platform:Grant:PublishRequiredFieldsMissing";
     public const string GrantStageTemplateInUse = "Platform:Grant:StageTemplateInUse";
     public const string GrantStageTemplateStepInUse = "Platform:Grant:StageTemplateStepInUse";
+    public const string GrantCallInUse = "Platform:Grant:CallInUse";
+    public const string GrantProgramInUse = "Platform:Grant:ProgramInUse";
     public const string GrantDraftIdentityRequired = "Platform:Grant:DraftIdentityRequired";
     public const string GrantParameterNoSourceValue = "Platform:Grant:ParameterNoSourceValue";
 

@@ -2,12 +2,10 @@ using System;
 using System.Threading.Tasks;
 using Apya.Platform.Documents;
 using Apya.Platform.Permissions;
-using Apya.Platform.Storage;
 using Apya.Platform.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
 namespace Apya.Platform.Web.Pages.Documents;
@@ -28,20 +26,17 @@ public class UploadModel : AbpPageModel
     private readonly IDocumentFileAppService _documentFileAppService;
     private readonly IDocumentTypeAppService _documentTypeAppService;
     private readonly IUploadedFileStorage _fileStorage;
-    private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
     public UploadModel(
         IDocumentAppService documentAppService,
         IDocumentFileAppService documentFileAppService,
         IDocumentTypeAppService documentTypeAppService,
-        IUploadedFileStorage fileStorage,
-        IUploadedFileRootFolderProvider rootFolderProvider)
+        IUploadedFileStorage fileStorage)
     {
         _documentAppService = documentAppService;
         _documentFileAppService = documentFileAppService;
         _documentTypeAppService = documentTypeAppService;
         _fileStorage = fileStorage;
-        _rootFolderProvider = rootFolderProvider;
     }
 
     public void OnGet()
@@ -72,31 +67,11 @@ public class UploadModel : AbpPageModel
             // Dosya diske YAZILDI ama kayıt açılamadı (yetki, olmayan klasör,
             // zaman aşımı…). Temizlemezsek App_Data/uploads'ta DB satırı olmayan
             // öksüz dosya birikir — kimse fark etmez, kimse silmez.
-            TryDeleteStoredFile(storedFileName);
+            _fileStorage.TryDelete(storedFileName);
             throw;
         }
 
         return new JsonResult(attachment);
-    }
-
-    /// <summary>
-    /// Öksüz kalan yüklemeyi diskten siler. Silme başarısız olursa YUTULUR:
-    /// asıl hata çağırana gitmeli, temizlik hatası onu maskelememeli.
-    /// </summary>
-    private void TryDeleteStoredFile(string storedFileName)
-    {
-        try
-        {
-            var path = _rootFolderProvider.ResolveSafePath(storedFileName);
-            if (path != null && System.IO.File.Exists(path))
-            {
-                System.IO.File.Delete(path);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning(ex, "Öksüz yükleme silinemedi: {StoredFileName}", storedFileName);
-        }
     }
 
     public async Task<IActionResult> OnGetDocumentTypesAsync()

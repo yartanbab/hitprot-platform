@@ -273,7 +273,14 @@ public class PlatformWebModule : AbpModule
                             // "kim, ne zaman, kaçtan kaça" sorusu alan düzeyinde cevaplanabilsin.
                             typeof(Apya.Platform.Grants.GrantApplication).IsAssignableFrom(type) ||
                             typeof(Apya.Platform.Grants.GrantDisbursementTranche).IsAssignableFrom(type) ||
-                            typeof(Apya.Platform.Grants.GrantDecision).IsAssignableFrom(type)
+                            typeof(Apya.Platform.Grants.GrantDecision).IsAssignableFrom(type) ||
+                            // SEC-04: proje bütçe ekseni. Fatura, gider ve hibe tutarı geçmişteydi;
+                            // projenin kendi bütçesi değildi — kalem tutarı, dilim tahsilatı/kesintisi
+                            // ve toplam bütçe için "eski değer neydi" sorusu cevapsız kalıyordu.
+                            typeof(Apya.Platform.Projects.Project).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.ProjectBudgets.ProjectBudgetLine).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.ProjectBudgets.FundingTranche).IsAssignableFrom(type) ||
+                            typeof(Apya.Platform.ProjectBudgets.TrancheDeduction).IsAssignableFrom(type)
                 )
             );
 
@@ -753,6 +760,21 @@ public class PlatformWebModule : AbpModule
                 "report-uri /csp-violations";
             await next();
         });
+
+        // 🔴 /uploads HİÇBİR koşulda statik servis edilmez. Yüklemeler App_Data/uploads'ta
+        // durur ve yalnız sahiplik kontrolü yapan uçlardan okunur; ama wwwroot altına düşen
+        // her dosya statik varlıktır ve kimlik sorulmadan indirilir. 2026-08-08'de bir
+        // commit'le wwwroot/uploads'a on belge girdi ve sonraki her dağıtımda açıkta kaldı.
+        // Dosyanın oraya bir daha düşmeyeceğine güvenilmez (yanlış işlenen dosya, sunucuda
+        // eski sürümden kalan, yanlış bağlanan birim): adresin kendisi kapatılır.
+        // Statik varlık eşlemesinden ÖNCE durmalı — sonra konursa istek buraya hiç gelmez.
+        app.UseWhen(
+            ctx => ctx.Request.Path.StartsWithSegments("/uploads"),
+            branch => branch.Run(ctx =>
+            {
+                ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                return Task.CompletedTask;
+            }));
 
         app.MapAbpStaticAssets();
         app.UseRouting();

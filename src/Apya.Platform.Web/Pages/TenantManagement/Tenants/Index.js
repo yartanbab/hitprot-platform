@@ -1,6 +1,6 @@
 $(function () {
 
-    var l = abp.localization.getResource('ApyaPlatform');
+    var l = abp.localization.getResource('Platform');
 
     var createModal = new abp.ModalManager(abp.appPath + 'TenantManagement/Tenants/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'TenantManagement/Tenants/EditModal');

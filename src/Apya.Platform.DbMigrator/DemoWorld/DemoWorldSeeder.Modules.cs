@@ -73,7 +73,7 @@ public partial class DemoWorldSeeder
             var project = grantProjects[i];
             var call = openCalls[i % openCalls.Count];
 
-            var application = new GrantApplication(_guid.Create(), tenantId, call.Id);
+            var application = new GrantApplication(_guid.Create(), tenantId, call.Id, _clock.Now);
 
             // Aşama dağılımı: başvuru → değerlendirme → onay → ödeme
             var stage = (GrantApplicationStage)(_grantAppNo++ % 4);

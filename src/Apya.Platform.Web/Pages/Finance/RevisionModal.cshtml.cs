@@ -6,6 +6,8 @@ using Apya.Platform.ProjectBudgets;
 using Apya.Platform.ProjectBudgets.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Permissions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Apya.Platform.Web.Pages.Finance;
 
@@ -23,6 +25,7 @@ namespace Apya.Platform.Web.Pages.Finance;
 ///     kullanıcı hedef tutarı yazar.
 /// Aynı modal, çünkü ikisi de tek bir <c>ApplyRevisionAsync</c> çağrısına iner.
 /// </summary>
+[Authorize(PlatformPermissions.Projects.ViewBudget)]
 public class RevisionModalModel : AbpPageModel
 {
     private readonly IProjectBudgetAppService _budgetAppService;

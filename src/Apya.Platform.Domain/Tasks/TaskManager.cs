@@ -25,6 +25,42 @@ public class TaskManager : DomainService
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
     private readonly IRepository<IssueTaskLink, Guid> _issueTaskLinkRepository;
 
+    /// <summary>
+    /// 🔴 PRJ-07 · Alt görevin bağlanacağı üst görevi doğrular.
+    ///
+    /// <para>Görev oluşturma, gönderilen üst görev kimliğini HİÇ doğrulamadan yazıyordu.
+    /// Var olmayan (ya da başka kiracıya ait) bir kimlikle açılan alt görev hiçbir listede
+    /// görünmez: kök listeler onu "alt görev" diye dışarıda bırakır, üst görevi ise yoktur —
+    /// kayıt erişilmez bir yetim olarak kalırdı.</para>
+    ///
+    /// <para>Proje kuralı bilerek DAR: yalnız AÇIK çelişki reddedilir (alt görev için başka
+    /// bir proje gönderilmişse). Proje gönderilmemişse dokunulmaz — eski düzenleme penceresi
+    /// alt görevi projesiz açıyor ve o davranışı burada sessizce değiştirmek ayrı bir karar.</para>
+    ///
+    /// <para>🔴 DERİNLİK ZORLANMIYOR. Sistem "tek seviye alt görev" varsayıyor ama arayüz
+    /// bugün alt görevin altına görev eklemeye izin veriyor (Alt Görevler sekmesi her görevde
+    /// açık). Yasaklamak var olan bir yeteneği kaldırır — ürün kararı.</para>
+    /// </summary>
+    public async Task EnsureParentTaskIsValidAsync(Guid? parentTaskId, Guid? projectId)
+    {
+        if (parentTaskId == null)
+        {
+            return;
+        }
+
+        // Kiracı süzgeci açık: başka kiracının görevi "bulunamadı" olur.
+        var parent = await _taskRepository.FindAsync(parentTaskId.Value);
+
+        if (parent == null)
+            throw new BusinessException(PlatformDomainErrorCodes.TaskParentNotFound)
+                .WithData("ParentTaskId", parentTaskId);
+
+        if (projectId.HasValue && parent.ProjectId != projectId)
+            throw new BusinessException(PlatformDomainErrorCodes.TaskParentProjectMismatch)
+                .WithData("ParentTaskId", parentTaskId)
+                .WithData("ProjectId", projectId);
+    }
+
     public TaskManager(
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<TaskChecklistItem, Guid> checklistRepository,

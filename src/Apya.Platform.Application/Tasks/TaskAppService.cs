@@ -846,6 +846,9 @@ namespace Apya.Platform.Tasks
         // --- 2. CREATE (Ekleme) - REV-001: Rich Domain Model ---
         public override async Task<TaskDto> CreateAsync(CreateUpdateTaskDto input)
         {
+            // PRJ-07: önce doğrula — üst görev var mı, projeyle çelişiyor mu.
+            await _taskManager.EnsureParentTaskIsValidAsync(input.ParentTaskId, input.ProjectId);
+
             var newTask = new TaskItem(
                 GuidGenerator.Create(),
                 input.Title,
@@ -1237,6 +1240,17 @@ namespace Apya.Platform.Tasks
         }
 
         // --- 7. DOSYA METODLARI ---
+
+        /// <summary>
+        /// DOC-11 · Dosya diske yazılmadan ÖNCE çağrılır. AddAttachmentAsync aynı kapıyı
+        /// kendi içinde de uygular, ama o noktada dosya çoktan yazılmıştır: reddedilen istek
+        /// hata alsa bile dosya yükleme klasöründe hiçbir kayda bağlı olmadan kalıyordu.
+        /// </summary>
+        public async Task EnsureAttachmentUploadAllowedAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+        }
+
         public async Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize)
         {
             await EnsureTaskAccessAllowedAsync(taskId);

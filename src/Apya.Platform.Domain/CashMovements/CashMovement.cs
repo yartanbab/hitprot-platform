@@ -8,7 +8,8 @@ namespace Apya.Platform.CashMovements;
 /// <summary>
 /// Kasa hareketi (APYA-134). Bir <c>CashAccount</c>'a giriş/çıkış kaydı.
 /// Güncel bakiye = CashAccount.OpeningBalance + Σ(In) − Σ(Out).
-/// APYA-136 Invoice ödemelerini otomatik hareket olarak buraya yazacak.
+/// Fatura ödemesi, gider, gelir ve kasalar arası transfer kendi hareketini otomatik yazar;
+/// elle girilen hareket <see cref="CashMovementSource.Manual"/> ile doğar.
 /// </summary>
 public class CashMovement : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
@@ -21,7 +22,19 @@ public class CashMovement : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public string? Description { get; set; }
     public CashMovementSource Source { get; set; } = CashMovementSource.Manual;
 
-    /// <summary>Kaynak kayıt (Invoice/Expense) id'si — manuel hareketlerde null.</summary>
+    /// <summary>
+    /// Hareketi doğuran kaydın kimliği. NEYİ gösterdiği <see cref="Source"/>'a bağlıdır — tek
+    /// bir tabloya yabancı anahtar DEĞİLDİR, <see cref="Source"/> okunmadan birleştirilemez:
+    /// <list type="bullet">
+    /// <item><see cref="CashMovementSource.Invoice"/> → faturanın değil ÖDEMENİN kimliği
+    /// (<c>Payment.Id</c>); bir faturanın birden çok ödemesi, dolayısıyla birden çok hareketi olabilir.</item>
+    /// <item><see cref="CashMovementSource.Expense"/> → gider kaydı (<c>Expense.Id</c>).</item>
+    /// <item><see cref="CashMovementSource.Income"/> → gelir kaydı (<c>IncomeEntry.Id</c>).</item>
+    /// <item><see cref="CashMovementSource.Transfer"/> → transferin iki bacağının paylaştığı
+    /// üretilmiş kimlik; karşılığı olan bir tablo YOK, yalnız iki hareketi eşlemeye yarar.</item>
+    /// <item><see cref="CashMovementSource.Manual"/> → null.</item>
+    /// </list>
+    /// </summary>
     public Guid? ReferenceId { get; set; }
 
     protected CashMovement() { }

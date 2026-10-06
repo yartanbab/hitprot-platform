@@ -6,6 +6,8 @@ using Apya.Platform.ProjectBudgets.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Permissions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Apya.Platform.Web.Pages.Finance;
 
@@ -13,6 +15,7 @@ namespace Apya.Platform.Web.Pages.Finance;
 /// Kur politikası ayarı. Donör para birimi boşaltılırsa sunucu politikayı ve
 /// sabit kuru da temizler (<c>Project.SetFxBridge</c>) — yarım yapılandırma kalmaz.
 /// </summary>
+[Authorize(PlatformPermissions.Projects.ViewBudget)]
 public class FxPolicyModalModel : AbpPageModel
 {
     private readonly IProjectFxAppService _fxAppService;

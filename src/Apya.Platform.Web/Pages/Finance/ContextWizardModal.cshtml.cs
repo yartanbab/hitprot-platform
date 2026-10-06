@@ -7,6 +7,8 @@ using Apya.Platform.ProjectBudgets.Dtos;
 using Apya.Platform.Projects;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Permissions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Apya.Platform.Web.Pages.Finance;
 
@@ -27,6 +29,7 @@ namespace Apya.Platform.Web.Pages.Finance;
 /// kopyalanan tek alan sessizce silinirdi; kategori düzenlemesi kendi ekranında
 /// (proje düzenleme) zaten doğru yapılıyor, sihirbaz oraya yönlendirir.
 /// </summary>
+[Authorize(PlatformPermissions.Projects.ViewBudget)]
 public class ContextWizardModalModel : AbpPageModel
 {
     private readonly IProjectAppService _projectAppService;

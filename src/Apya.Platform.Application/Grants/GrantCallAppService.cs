@@ -1,9 +1,12 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Volo.Abp;
 using Volo.Abp.Authorization;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
 
@@ -14,15 +17,21 @@ public class GrantCallAppService :
     IGrantCallAppService
 {
     private readonly IRepository<Grant, Guid> _grantRepository;
+    private readonly IRepository<GrantApplication, Guid> _applicationRepository;
+    private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly GrantCallClosingManager _closingManager;
 
     public GrantCallAppService(
         IRepository<GrantCall, Guid> repository,
         IRepository<Grant, Guid> grantRepository,
+        IRepository<GrantApplication, Guid> applicationRepository,
+        IDataFilter<IMultiTenant> mtFilter,
         GrantCallClosingManager closingManager)
         : base(repository)
     {
         _grantRepository = grantRepository;
+        _applicationRepository = applicationRepository;
+        _mtFilter = mtFilter;
         _closingManager = closingManager;
         GetPolicyName = PlatformPermissions.Grants.Default;
         GetListPolicyName = PlatformPermissions.Grants.Default;
@@ -88,6 +97,32 @@ public class GrantCallAppService :
         }
 
         return dto;
+    }
+
+    /// <summary>
+    /// Üzerinde başvuru olan çağrı silinemez. Silinince başvurular yetim kalıyordu: firma kendi
+    /// başvurusunun ayrıntısını, evrakını ve uygulama ekranını açamıyor ("kayıt bulunamadı"),
+    /// danışmanın listesinde satır adsız görünüyordu. Sessizce bağı koparmak yerine reddet
+    /// (emsal: <see cref="GrantStageTemplateAppService.DeleteAsync"/>); başvuru almış çağrı
+    /// silinmez, KAPATILIR.
+    /// </summary>
+    protected override async Task DeleteByIdAsync(Guid id)
+    {
+        int applicationCount;
+        // Çağrı host kataloğunda, başvurular kiracılarda durur: süzgeç açıkken host hiçbirini
+        // göremez ve sayım hep 0 çıkar. Buraya yalnız host bağlamında gelinir (CheckDeletePolicyAsync).
+        using (_mtFilter.Disable())
+        {
+            applicationCount = (int)await _applicationRepository.CountAsync(a => a.GrantCallId == id);
+        }
+
+        if (applicationCount > 0)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantCallInUse)
+                .WithData("ApplicationCount", applicationCount);
+        }
+
+        await base.DeleteByIdAsync(id);
     }
 
     // AutoMapper yerine domain kurucusu/guard'ı kullan (private setter'lar + SetSchedule kuralı).
