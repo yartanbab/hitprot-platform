@@ -60,6 +60,12 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Tasks, NotificationSeverity.Critical,
                 "fa fa-calendar-xmark", "/Tasks/Detail/{0}", GroupSimilar: false),
 
+            // NTF-05: Kayıt defterindeki önem "Normal"; 3 gün eşiğinde yayın sırasında
+            // "High"a yükseltilir (bkz. NotificationDomainEventHandler).
+            [NotificationType.ProjectEndingSoon] = new(
+                NotificationCategory.Projects, NotificationSeverity.Normal,
+                "fa fa-flag-checkered", "/Projects/ProjectDetails/{0}", GroupSimilar: false),
+
             [NotificationType.TaskStatusChanged] = new(
                 NotificationCategory.Tasks, NotificationSeverity.Normal,
                 "fa fa-arrow-right-arrow-left", "/Tasks/Detail/{0}", GroupSimilar: true),
@@ -74,6 +80,12 @@ public static class NotificationTypeRegistry
 
             // Aşağıdaki hedef sayfalar henüz tekil kayda odaklanmayı desteklemiyor;
             // şablonda {0} yok, ilgili listeye götürüyoruz.
+            // DOC-05 / NTF-07: Bağlantı belgenin durduğu klasörü açar. Önem "Normal"; 7 gün
+            // eşiğinde ve dolduğunda yayın sırasında "High"a yükseltilir.
+            [NotificationType.DocumentFileExpiry] = new(
+                NotificationCategory.Documents, NotificationSeverity.Normal,
+                "fa fa-file-circle-exclamation", "/Documents?folder={0}", GroupSimilar: false),
+
             [NotificationType.DocumentExpiring] = new(
                 NotificationCategory.Documents, NotificationSeverity.High,
                 "fa fa-file-circle-exclamation", "/Documents", GroupSimilar: false),
@@ -176,6 +188,12 @@ public static class NotificationTypeRegistry
 
             // 19a · HOST'a gider. Derin link Fikir Havuzu'nda fikrin detayını açar (?open=);
             // her fikir ayrı kayıt, gruplanacak bir şey yok.
+            // LIF-11: Karar bildirimi gibi itiraz ekranına götürür. Zorunlu DEĞİL: karar
+            // bildirimi bir hakkın süresini taşır, bu yalnız sonucu haber verir.
+            [NotificationType.GrantAppealResolved] = new(
+                NotificationCategory.Grants, NotificationSeverity.High,
+                "fa fa-scale-balanced", "/Grants/Appeal?id={0}", GroupSimilar: false),
+
             [NotificationType.GrantIdeaShared] = new(
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-lightbulb", "/Grants/Ideas?open={0}", GroupSimilar: false),

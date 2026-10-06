@@ -49,8 +49,10 @@ public class DocumentFile : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     /// <summary>
     /// Belgenin geçerlilik bitişi (sözleşme bitişi vb.).
-    /// Not: <see cref="Document.ExpiryDate"/> klasör seviyesinde ayrı yaşıyor ve
-    /// DocumentExpiryWorker hâlâ onu izliyor; ikisinin birleştirilmesi Faz B işi.
+    /// Kullanıcının belge ayrıntısında girdiği tarih BUDUR; hatırlatmasını
+    /// DocumentFileExpiryWorker yapar (30 gün, 7 gün, dolduğu gün).
+    /// Not: <see cref="Document.ExpiryDate"/> klasör seviyesinde ayrı yaşıyor ve onu
+    /// DocumentExpiryWorker izliyor; iki alanın birleştirilmesi hâlâ açık.
     /// </summary>
     public DateTime? ExpiryDate { get; private set; }
 

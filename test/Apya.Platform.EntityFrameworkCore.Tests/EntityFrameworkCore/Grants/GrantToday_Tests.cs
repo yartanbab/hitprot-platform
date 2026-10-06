@@ -222,4 +222,37 @@ public class GrantToday_Tests : PlatformEntityFrameworkCoreTestBase
             dto.Applications.Single().AppealDaysLeft.ShouldBe(9);
         }
     }
+
+    /// <summary>
+    /// 🔴 LIF-11 · İtiraz gönderilince pencere kapanır ve başvuru o andan itibaren "kapanmış"
+    /// sayılıyordu — oysa dosya kurumda, yanıt bekleniyor. Yanıt gelince (kabul ya da ret) kapanır.
+    /// </summary>
+    [Fact]
+    public async Task Itirazi_kurumda_bekleyen_basvuru_kapanmis_sayilmaz()
+    {
+        var (_, call) = await CreateHostCallAsync("İtiraz Programı", daysToDeadline: 30);
+        var tenantId = await CreateTenantAsync("İtiraz Eden Firma");
+        var application = await CreateApplicationAsync(tenantId, call, firmDocs: 1);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            var decision = new GrantDecision(
+                Guid.NewGuid(), tenantId, application.Id, GrantDecisionOutcome.Reddedildi,
+                _clock.Now.Date.AddDays(-2), "REF-2", _clock.Now.Date.AddDays(9));
+            decision.SubmitAppeal(_clock.Now);
+            await _decisionRepository.InsertAsync(decision, autoSave: true);
+
+            var pending = (await _today.GetAsync()).Applications.Single();
+            pending.AppealPending.ShouldBeTrue();
+            pending.IsClosed.ShouldBeFalse("itiraz kurumda bekliyor; başvuru açık kalmalı");
+            pending.AppealDaysLeft.ShouldBeNull("itiraz gönderildi; geri sayım gösterilmez");
+
+            decision.ResolveAppeal(accepted: false);
+            await _decisionRepository.UpdateAsync(decision, autoSave: true);
+
+            var resolved = (await _today.GetAsync()).Applications.Single();
+            resolved.AppealPending.ShouldBeFalse();
+            resolved.IsClosed.ShouldBeTrue();
+        }
+    }
 }

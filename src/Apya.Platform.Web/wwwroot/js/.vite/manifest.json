@@ -68,8 +68,8 @@
       "_Dialog-BdrRxZcw.js"
     ]
   },
-  "_api-DE9auhlW.js": {
-    "file": "api-DE9auhlW.js",
+  "_api-DzWAfcOg.js": {
+    "file": "api-DzWAfcOg.js",
     "name": "api"
   },
   "_dataChanged-CDwwWMH8.js": {
@@ -228,7 +228,7 @@
       "_Dialog-BdrRxZcw.js",
       "_SkeletonShape-Ds5M097Q.js",
       "_ProcessRibbon-D9pM1s89.js",
-      "_api-DE9auhlW.js",
+      "_api-DzWAfcOg.js",
       "_ModalPortal-CVz5ohco.js"
     ]
   },
@@ -268,7 +268,7 @@
       "_Dialog-BdrRxZcw.js",
       "_SkeletonShape-Ds5M097Q.js",
       "_ProcessRibbon-D9pM1s89.js",
-      "_api-DE9auhlW.js"
+      "_api-DzWAfcOg.js"
     ]
   },
   "src/documents-upload.jsx": {

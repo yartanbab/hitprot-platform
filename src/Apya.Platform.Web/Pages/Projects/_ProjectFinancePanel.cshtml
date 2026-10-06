@@ -380,7 +380,17 @@
                                 </td>
                                 <td><span class="apya-chip apya-chip-neutral">@CatLabel(r.Category)</span></td>
                                 <td class="text-center">
-                                    @if (r.HasDocument)
+                                    @if (r.Documents.Count > 0)
+                                    {
+                                        @* DOC-12: ikon artık belgeyi açar. Birden çok belge varsa ilki
+                                           açılır, tamamı satır menüsünde adıyla listelenir. *@
+                                        var first = r.Documents[0];
+                                        <a href="@first.DownloadUrl" class="text-success text-decoration-none"
+                                           data-expense-doc="@first.AttachmentId" title="@first.Name" aria-label="@first.Name">
+                                            <i class="fa fa-circle-check" aria-hidden="true"></i>@if (r.Documents.Count > 1){<span class="small ms-1">@r.Documents.Count</span>}
+                                        </a>
+                                    }
+                                    else if (r.HasDocument)
                                     {
                                         <i class="fa fa-circle-check text-success" title="Belge bağlı" aria-hidden="true"></i>
                                     }
@@ -405,6 +415,13 @@
                                                 <span class="apya-console-menu-icon"><i class="fa fa-arrows-turn-to-dots" aria-hidden="true"></i></span>
                                                 İlişkiyi değiştir…
                                             </button>
+                                            @foreach (var doc in r.Documents)
+                                            {
+                                                <a class="apya-console-menu-item text-decoration-none" href="@doc.DownloadUrl" data-expense-doc="@doc.AttachmentId">
+                                                    <span class="apya-console-menu-icon"><i class="fa fa-file-arrow-down" aria-hidden="true"></i></span>
+                                                    @doc.Name
+                                                </a>
+                                            }
                                             @if (r.TaskId != null)
                                             {
                                                 <button type="button" class="apya-console-menu-item fin-open-task" data-task-id="@r.TaskId">

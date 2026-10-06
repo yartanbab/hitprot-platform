@@ -6,6 +6,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Apya.Platform.Application.Projects;
 using Apya.Platform.Permissions;
+using Apya.Platform.ProjectBudgets;
+using Apya.Platform.ProjectBudgets.Dtos;
 using Apya.Platform.Projects;
 using Apya.Platform.Web.Pages.Projects;
 using HtmlAgilityPack;
@@ -272,5 +274,41 @@ public class ProjectEditPage_Tests : PlatformWebTestBase
             .GetAttributeValue("value", "")).ShouldBe("Düzenleme Testi");
         doc.DocumentNode.SelectSingleNode("//input[@name='Project.Code']")!
             .GetAttributeValue("value", "").ShouldBe(code);
+    }
+
+    // ── PRJ-12 · Bütçe alanı, kalem tanımlanınca sessizce devre dışı kalıyordu ──
+
+    /// <summary>
+    /// Kalem tanımlı projede finans ekranları bütçeyi KALEMLERDEN toplar; düzenleme ekranındaki
+    /// rakam artık hiçbir yerde kullanılmaz. Ekran bunu söylemiyordu: kullanıcı rakamı
+    /// değiştiriyor, kaydediyor ve hiçbir şeyin değişmediğini fark etmiyordu.
+    /// </summary>
+    [Fact]
+    public async Task Kalemli_projede_butce_alani_rakamin_kalemlerden_geldigini_soyler()
+    {
+        var projectId = await CreateProjectAsync("EDIT-B" + Guid.NewGuid().ToString("N")[..5]);
+        var budget = GetRequiredService<IProjectBudgetAppService>();
+        await budget.CreateLineAsync(projectId, new CreateUpdateBudgetLineDto { Name = "Personel", PlannedAmount = 180_000m });
+        await budget.CreateLineAsync(projectId, new CreateUpdateBudgetLineDto { Name = "Seyahat", PlannedAmount = 70_000m });
+
+        var doc = new HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync($"/Projects/Edit/{projectId}"));
+
+        var hint = doc.DocumentNode.SelectSingleNode("//*[@data-budget-from-lines]");
+        hint.ShouldNotBeNull("kalemli projede bütçe alanının altında açıklama yok");
+        HtmlEntity.DeEntitize(hint!.InnerText).ShouldContain("250.000,00");
+        // Düzeltilecek yer de gösterilir.
+        hint.SelectSingleNode(".//a")!.GetAttributeValue("href", "")
+            .ShouldContain($"/Finance?projectId={projectId}");
+    }
+
+    [Fact]
+    public async Task Kalemsiz_projede_aciklama_basilmaz()
+    {
+        var projectId = await CreateProjectAsync("EDIT-N" + Guid.NewGuid().ToString("N")[..5]);
+
+        var html = await GetResponseAsStringAsync($"/Projects/Edit/{projectId}");
+
+        html.ShouldNotContain("data-budget-from-lines");
     }
 }

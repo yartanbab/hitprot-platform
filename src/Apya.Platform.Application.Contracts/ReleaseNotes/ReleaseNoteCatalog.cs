@@ -28,7 +28,8 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.10.06",
             date: "6 Ekim 2026",
-            title: "Yeni proje formunda bütçe alanı yalnız bütçe yetkisi olanlara görünüyor",
+            title: "Projenizin bitişi yaklaşınca artık haber alıyorsunuz; harcamadan belgesine tek " +
+                   "tıkla gidiliyor; yeni proje formunda bütçe alanı yalnız bütçe yetkisi olanlara görünüyor",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Yeni proje açarken bütçeyi yalnız bütçe yetkisi olan kullanıcı girebiliyor",
@@ -38,7 +39,128 @@ public static class ReleaseNoteCatalog
                 "ne değiştirebiliyordu. " +
                 "Artık iki ekran aynı kurala bağlı. Bütçe yetkiniz yoksa yeni proje formunda bütçe " +
                 "alanı çıkmaz ve proje bütçesiz açılır; bütçeyi sonradan yetkili bir kullanıcı girer. " +
-                "Bütçe yetkiniz varsa sizin için hiçbir şey değişmedi.")
+                "Bütçe yetkiniz varsa sizin için hiçbir şey değişmedi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Projenizin bitişi yaklaşınca bildirim geliyor",
+                "Projenin bitiş tarihi ekranlarda yazıyordu ama program onu takip etmiyordu: " +
+                "kapanışa bir hafta kalmış proje için kimseye haber gitmiyordu. " +
+                "Artık bitişe 30 gün, 14 gün ve 3 gün kala bildirim geliyor. " +
+                "Bildirimde projenin bitiş tarihi ve hâlâ açık duran görev sayısı yazıyor; " +
+                "üstüne bastığınızda proje açılıyor. " +
+                "Bildirim proje liderlerine ve projeyi açan kişiye gidiyor. " +
+                "Her eşik için bir kez gelir, tekrar etmez; projenin bitiş tarihini ertelerseniz " +
+                "hatırlatmalar yeni tarihe göre yeniden başlar. " +
+                "Bu bildirimleri almak istemiyorsanız bildirim ayarlarınızdan 'Projeler' " +
+                "kategorisini kapatabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje harcamasından belgesine tek tıkla gidiliyor",
+                "Projenin Finans sekmesindeki harcama tablosunda, belgesi bağlı satırlarda yeşil " +
+                "bir onay işareti duruyordu ama işarete basılamıyordu: belgenin var olduğunu " +
+                "görüyor, belgeyi görmek için Dokümanlar'a gidip aramanız gerekiyordu. " +
+                "Artık işarete bastığınızda belge iner. " +
+                "Bir harcamaya birden çok belge bağlıysa (örneğin fatura ve banka dekontu) işaretin " +
+                "yanında sayı yazar; hepsi satırın sağındaki üç nokta menüsünde adıyla listelenir. " +
+                "Dokümanlar bölümünü görme yetkiniz yoksa işaret eskisi gibi yalnız bilgi verir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Finans Merkezi, onu açabilen herkesin menüsünde görünüyor",
+                "Yalnız 'Bütçe Görüntüleme' yetkisi olan kullanıcılar (örneğin proje yöneticileri) " +
+                "Finans Merkezi'ni açabiliyor ve bütçe sekmelerini görebiliyordu, ama sol menüde " +
+                "sayfanın kendisi çıkmıyordu; sayfaya ancak bir projenin içindeki bağlantıdan " +
+                "ulaşabiliyorlardı. Aynı durum yalnız kasa yetkisi olan kullanıcılar için de geçerliydi. " +
+                "Artık Finans Merkezi'ni açma yetkisi olan herkes onu 'Finans & Bütçe' menüsünde görüyor. " +
+                "Hangi sekmeleri göreceğiniz değişmedi; yetkiniz olmayan sekmeler yine görünmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Aynı dosya iki kez yüklenince eşleştirme ekranı artık uyarıyor",
+                "'Harcama ↔ belge eşleştirme' ekranında, bir dosyanın birebir aynısı başka bir belgede " +
+                "de varsa 'Aynı dosya başka bir belgede de var' uyarısı çıkması gerekiyordu; çıkmıyordu. " +
+                "Aynı fatura farklı bir adla ikinci kez yüklendiğinde program bunu fark etmiyor, iki " +
+                "belge de ayrı ayrı harcamalara bağlanabiliyordu. " +
+                "Artık dosyanın içeriği yüklenirken kaydediliyor ve aynı içerik ikinci kez geldiğinde " +
+                "uyarı görünüyor; dosyanın adı farklı olsa da. " +
+                "Uyarı bundan sonra yüklenen dosyalar için çalışır; daha önce yüklenmiş dosyalar " +
+                "kendi aralarında karşılaştırılmaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Finans Merkezi'nde 'Son İşlemler' artık projeden çıkarmıyor",
+                "Finans Merkezi'nde bir proje seçiliyken 'Son İşlemler' listesindeki bir gelire ya da gidere " +
+                "bastığınızda, program sizi bütün gelirlerin ya da bütün giderlerin listesine götürüyordu: " +
+                "proje seçiminiz kayboluyor, aradığınız kaydı öbür projelerin kayıtları arasında yeniden " +
+                "bulmanız gerekiyordu. " +
+                "Artık satıra bastığınızda aynı projenin 'Gelir-Gider' sekmesi açılıyor; gelire bastıysanız " +
+                "gelirler, gidere bastıysanız giderler süzülmüş geliyor. Fatura satırı da, projenin Faturalar " +
+                "sekmesi varsa oraya gidiyor. " +
+                "Proje seçili değilken ('Tüm hesaplar') davranış değişmedi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Belgenize girdiğiniz geçerlilik tarihi yaklaşınca haber alıyorsunuz",
+                "Dokümanlar'da bir belgenin ayrıntısına geçerlilik tarihi girebiliyordunuz ve ekran 'kaç gün " +
+                "kaldı' diye gösteriyordu; ama program o tarihi takip etmiyordu. Sözleşmenizin bitişini " +
+                "belgeye yazsanız bile gün geldiğinde kimseye haber gitmiyordu. " +
+                "Artık geçerliliğin dolmasına 30 gün ve 7 gün kala, bir de dolduğu gün bildirim geliyor. " +
+                "Bildirimde belgenin adı ve tarihi yazıyor; üstüne bastığınızda belgenin bulunduğu klasör açılıyor. " +
+                "Bildirim belgeyi yükleyen kişiye, belge bir projeye bağlıysa o projenin liderlerine de gidiyor. " +
+                "Her aşama için bir kez gelir; tarihi uzatırsanız hatırlatmalar yeni tarihe göre yeniden başlar. " +
+                "Süresi bir haftadan daha önce dolmuş belgeler için geriye dönük bildirim gelmez. " +
+                "Bu bildirimleri almak istemiyorsanız bildirim ayarlarınızdan 'Belgeler' kategorisini kapatabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje düzenleme ekranı, bütçenin kalemlerden hesaplandığını artık söylüyor",
+                "Bir projeye bütçe kalemi tanımladığınız andan itibaren Finans Merkezi ve projedeki bütçe çubuğu " +
+                "bütçeyi kalemlerin toplamından hesaplar; proje düzenleme ekranındaki 'Bütçesi' rakamı kullanılmaz. " +
+                "Ekran bunu söylemiyordu: rakamı değiştirip kaydediyor, hiçbir yerde bir şeyin değişmediğini " +
+                "görüyordunuz. " +
+                "Artık kalemi olan projede 'Bütçesi' alanının altında, geçerli olan kalem toplamı ve onu " +
+                "değiştireceğiniz yere giden bağlantı yazıyor. Kalemi olmayan projede hiçbir şey değişmedi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Finans Merkezi'nde gelir ve gider eklerken proje artık seçili geliyor",
+                "Finans Merkezi'nde bir proje seçip 'Gelir-Gider' sekmesinden 'Gelir ekle' ya da 'Gider ekle'ye " +
+                "bastığınızda program sizi bütün gelirlerin ya da giderlerin sayfasına götürüyordu. Seçtiğiniz " +
+                "proje kayboluyor, kayıt penceresinde projeyi yeniden seçmeniz gerekiyordu; seçmeyi unutursanız " +
+                "kayıt projesiz ya da yanlış projeye giriliyordu. " +
+                "Artık bu düğmeler kayıt penceresini bulunduğunuz ekranda açıyor ve proje önceden seçili geliyor. " +
+                "Kaydettiğinizde aynı projenin Gelir-Gider sekmesinde kalırsınız. " +
+                "Proje seçili değilken ('Tüm hesaplar') düğmeler eskisi gibi çalışır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe itirazınız sonuçlanınca haber alıyorsunuz",
+                "Bir hibe başvurunuz reddedildiğinde karar size bildiriliyordu; ama itiraz ettikten sonra " +
+                "itirazın sonucu bildirilmiyordu. Ne olduğunu öğrenmek için itiraz ekranını açıp bakmanız gerekiyordu. " +
+                "Artık danışmanınız itirazın sonucunu kaydettiğinde — kabul ya da ret — bildirim geliyor; " +
+                "üstüne bastığınızda itiraz ekranı açılıyor. " +
+                "Ayrıca 'Başvurularım' listesinde, itirazını gönderdiğiniz başvuru artık 'kapanmış' görünmüyor: " +
+                "kurum yanıt verene kadar açık başvurularınız arasında kalıyor ve satırında " +
+                "'İtiraz kurumda · yanıt bekleniyor' yazıyor. " +
+                "'Bugün' ve 'Hibe Yolculuğum' ekranları da aynı şekilde düzeldi; Hibe Yolculuğum bu " +
+                "başvurular için yanlışlıkla 'itiraz süresi doldu' diyordu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Risk kütüğüne kayıt artık tek pencereden",
+                "Bir projenin zaman çizelgesi sayfasında 'Risk ekle'ye bastığınızda tarayıcı art arda dört küçük " +
+                "kutu açıyordu: başlık, olasılık, etki, önlem. Birinde vazgeçerseniz öncekiler de gidiyor, " +
+                "olasılık ve etkiye sayı yerine başka bir şey yazarsanız program bunu sessizce 3 sayıyordu. " +
+                "Artık dört alan tek pencerede duruyor. Olasılık ve etkiyi 1-5 arasından seçiyorsunuz, " +
+                "risk puanını kaydetmeden önce görüyorsunuz; kayıt başarısız olursa yazdıklarınız yerinde kalıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Paylaşım bağlantısı tek pencerede kuruluyor; bağlantı ekranda kalıyor",
+                "Teslimler sayfasında bir paket için 'Paylaşım bağlantısı oluştur' dediğinizde tarayıcı art arda " +
+                "üç kutu açıyordu: kaç gün geçerli olacağı, indirmeye izin verilip verilmeyeceği ve filigran metni. " +
+                "İlk kutudan sonra vazgeçemiyordunuz: 'İptal'e basmak 'yalnız görüntüleme' ya da 'filigransız' " +
+                "sayılıyor, bağlantı yine de oluşuyordu. Oluşan bağlantı da bir tarayıcı kutusunda gösteriliyordu; " +
+                "kutu kapanınca bağlantıyı bir daha göremiyordunuz. Artık üç seçenek tek pencerede duruyor ve " +
+                "'Vazgeç' gerçekten vazgeçiyor. Bağlantı aynı pencerede 'Kopyala' düğmesiyle birlikte gösteriliyor " +
+                "ve siz 'Kapat' diyene kadar ekranda kalıyor. İndirme izni, siz işaretlemedikçe kapalı gelir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Genel Bakış'taki 'AI Merkezi' bağlantısı artık açılıyor",
+                "Genel Bakış'taki 'AI önerileri' kartında duran 'AI Merkezi →' bağlantısı var olmayan bir adrese " +
+                "gidiyordu; bastığınızda 'sayfa bulunamadı' çıkıyordu. Bağlantı artık AI Merkezi'nin kendisini açıyor. " +
+                "AI Merkezi'ni açma yetkiniz yoksa ya da paketinizde AI özelliği yoksa bağlantı kartta gösterilmiyor.")
         ),
 
         new ReleaseNote(

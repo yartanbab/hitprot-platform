@@ -143,6 +143,7 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
                 DocumentsApproved = docs.Count(d => d.Status == GrantDocumentStatus.Onaylandi),
                 DocumentsTotal = docs.Count,
                 AppealDaysLeft = row.AppealDaysLeft,
+                AppealPending = row.AppealPending,
                 ProjectId = row.ProjectId,
                 ProjectName = row.ProjectId.HasValue ? projects.GetValueOrDefault(row.ProjectId.Value) : null,
                 ApprovedAmount = row.IsApprovedAmount ? row.Amount : null,
@@ -240,7 +241,9 @@ public class GrantJourneyAppService : ApplicationService, IGrantJourneyAppServic
         => item.Kind is GrantJourneyItemKind.InterestPending
                 or GrantJourneyItemKind.ApplicationOpen
                 or GrantJourneyItemKind.ApplicationWithInstitution
-           || (item.Kind == GrantJourneyItemKind.ApplicationRejected && item.AppealDaysLeft.HasValue);
+           // LIF-11: itiraz süresi açıkken de, itiraz kurumda beklerken de iş bitmemiştir.
+           || (item.Kind == GrantJourneyItemKind.ApplicationRejected
+               && (item.AppealDaysLeft.HasValue || item.AppealPending));
 
     private static string DisplayName(IdentityUser user)
     {

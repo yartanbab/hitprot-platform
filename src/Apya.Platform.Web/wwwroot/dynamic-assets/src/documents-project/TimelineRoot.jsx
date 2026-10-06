@@ -4,6 +4,7 @@ import { DocsPageHeader, EmptyActions, ProcessRibbon } from '../components/docum
 import {
   abpAppPath, abpNotify, createRisk, deleteRisk, fmtDate, fmtMoney, fmtNum, getTimeline, setRiskClosed,
 } from './api';
+import { RiskDialog } from './RiskDialog';
 
 /**
  * Zaman çizelgesi & bütçe.
@@ -78,16 +79,15 @@ export function TimelineRoot() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleAddRisk = async () => {
-    const title = window.prompt('Risk başlığı:');
-    if (!title) return;
-    const likelihood = Number(window.prompt('Olasılık (1-5):', '3')) || 3;
-    const impact = Number(window.prompt('Etki (1-5):', '3')) || 3;
-    const mitigation = window.prompt('Önlem (boş bırakılabilir):') || null;
+  // PRJ-09: Risk dört ardışık tarayıcı istem kutusuyla giriliyordu; artık tek pencere
+  // (RiskDialog). Kayıt başarısız olursa pencere AÇIK kalır — yazılan kaybolmaz.
+  const [riskDialogOpen, setRiskDialogOpen] = useState(false);
 
+  const handleCreateRisk = async (risk) => {
     setBusy(true);
     try {
-      await createRisk({ projectId, title, likelihood, impact, mitigation });
+      await createRisk({ projectId, ...risk });
+      setRiskDialogOpen(false);
       await load();
     } catch (e) {
       abpNotify('error', 'Risk eklenemedi.');
@@ -202,9 +202,13 @@ export function TimelineRoot() {
       <div className="apya-doc-check-card">
         <div className="apya-doc-check-head">
           <span style={{ fontSize: 13.5, fontWeight: 600 }}>Risk kütüğü</span>
-          <Button variant="outline" size="sm" disabled={busy} onClick={handleAddRisk}>
+          <Button variant="outline" size="sm" disabled={busy} onClick={() => setRiskDialogOpen(true)}>
             <i className="fa fa-plus" /> Risk ekle
           </Button>
+          <RiskDialog
+            open={riskDialogOpen} busy={busy}
+            onClose={() => setRiskDialogOpen(false)} onSubmit={handleCreateRisk}
+          />
         </div>
 
         {data.risks.length === 0 ? (

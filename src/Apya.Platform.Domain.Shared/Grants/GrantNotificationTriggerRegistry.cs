@@ -33,7 +33,8 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.ConvertedToProject]        = NotificationType.GrantConvertedToProject,
             [GrantNotificationTrigger.ConversionPending]         = NotificationType.GrantConversionPending,
             [GrantNotificationTrigger.SubmissionDeadlineNear]   = NotificationType.GrantSubmissionDeadlineNear,
-            [GrantNotificationTrigger.IdeaShared]                = NotificationType.GrantIdeaShared
+            [GrantNotificationTrigger.IdeaShared]                = NotificationType.GrantIdeaShared,
+            [GrantNotificationTrigger.AppealResolved]            = NotificationType.GrantAppealResolved
         };
 
     /// <summary>
@@ -117,7 +118,11 @@ public static class GrantNotificationTriggerRegistry
 
             // Çağrı YOK (havuz fikri): {çağrı_adı} verilmez, fikir kısaltılıp tırnakla anılır.
             [GrantNotificationTrigger.IdeaShared] =
-                ["{firma_adı}", "{fikir}"]
+                ["{firma_adı}", "{fikir}"],
+
+            // {sonuç} hazır bir ifadedir ("kabul edildi" / "reddedildi"): gövde cümlenin içinde kullanır.
+            [GrantNotificationTrigger.AppealResolved] =
+                ["{çağrı_adı}", "{sonuç}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

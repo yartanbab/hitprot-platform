@@ -99,6 +99,19 @@ public class PlatformNavigationResolver : IScopedDependency
         return _cached ??= await ResolveCoreAsync();
     }
 
+    private async Task<bool> IsGrantedAnyAsync(IEnumerable<string> permissions)
+    {
+        foreach (var permission in permissions)
+        {
+            if (await _permission.IsGrantedAsync(permission))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Havuzdaki bir düğüm: öğenin kendisi + koddaki yeri.</summary>
     private sealed class PoolEntry
     {
@@ -698,9 +711,13 @@ public class PlatformNavigationResolver : IScopedDependency
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", l["Menu:CashAccounts"], icon: "fa fa-cash-register", url: "/CashAccounts", order: 1));
         // Para Hareketleri hub'ı (Faz 2): Gelir + Gider + Fatura tek listede toplandı.
         // Ayrı Giderler/Gelirler/Faturalar menü öğeleri kaldırıldı (sayfalar hub'dan erişilebilir).
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Incomes.Default)
-            || await _permission.IsGrantedAsync(PlatformPermissions.Expenses.Default)
-            || await _permission.IsGrantedAsync(PlatformPermissions.Invoices.Default))
+        //
+        // 🔴 FUX-06: Kapı, sayfanın KENDİ kapısıdır (FinanceContext.PageAnyOfPermissions).
+        // Eskiden gelir | gider | fatura izniydi — sayfa kapısının alt kümesi: yalnız bütçe
+        // görme (ya da yalnız kasa) izni olan kullanıcı /Finance'ı açabiliyor, sekmelerini
+        // görebiliyor ama menüde sayfayı bulamıyordu. İzinler burada elle YAZILMAZ; iki kapı
+        // tek listeden okunur ki bir daha ayrışmasın.
+        if (await IsGrantedAnyAsync(Apya.Platform.Web.Pages.Finance.FinanceContext.PageAnyOfPermissions))
             // Menü ID'si SABİT: kayıtlı menü düzenleri ve kısayol iğneleri
             // (PlatformSettings ShellPins / ShellMenuLayout) bu adı saklıyor —
             // değişirse kullanıcının düzeni sessizce çözülemez hale gelir.

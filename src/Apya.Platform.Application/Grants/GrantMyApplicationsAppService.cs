@@ -206,12 +206,17 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
                 {
                     row.AppealDaysLeft = (int)(decision.AppealDeadline.Value.Date - today).TotalDays;
                 }
+
+                // 🔴 LIF-11: İtiraz gönderilince pencere kapanır (ikinci kez gönderilemez) ve satır
+                // o andan itibaren "kapanmış" sayılıyordu — oysa dosya kurumda, yanıt bekleniyor.
+                row.AppealPending = decision.IsAppealPending;
             }
 
-            // Reddedilen başvuru itiraz penceresi kapandıktan sonra kapanmış sayılır.
+            // Reddedilen başvuru itiraz penceresi kapandıktan sonra kapanmış sayılır —
+            // itirazı kurumda bekleyen hariç.
             row.IsClosed = application.ProjectId.HasValue
                            || application.Stage == GrantApplicationStage.Odeme
-                           || (row.IsRejected && row.AppealDaysLeft == null);
+                           || (row.IsRejected && row.AppealDaysLeft == null && !row.AppealPending);
 
             dto.Items.Add(row);
         }

@@ -134,4 +134,100 @@ public class FinancePanels_Tests : PlatformWebTestBase
         d.Groups[0].ProjectId.ShouldBe(s.P1);
         d.GrandTotals.Single(t => t.Currency == "TRY").Total.ShouldBe(1500m);
     }
+
+    // ── DOC-12 · Harcamadan belgeye ──────────────────────────────────────────
+
+    private sealed record SeededDocuments(Guid Invoice, Guid Receipt);
+
+    /// <summary>
+    /// Harcamaya iki açılabilir belge (fatura + dekont) ve yüklenmiş dosyası OLMAYAN bir
+    /// belge bağlar. Alanın kendi tanımı bu: bir harcama birden çok belgeyle desteklenebilir.
+    /// </summary>
+    private async Task<SeededDocuments> SeedDocumentsAsync(Guid projectId, Guid expenseId)
+    {
+        var invoiceAttachment = Guid.NewGuid();
+        var receiptAttachment = Guid.NewGuid();
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var folderId = Guid.NewGuid();
+            await GetRequiredService<IRepository<Document, Guid>>()
+                .InsertAsync(new Document(folderId, null, "Harcama belgeleri", ""), autoSave: true);
+
+            var files = GetRequiredService<IRepository<DocumentFile, Guid>>();
+            var matches = GetRequiredService<IRepository<DocumentExpenseMatch, Guid>>();
+
+            async Task LinkAsync(string name, Guid? attachmentId)
+            {
+                var file = new DocumentFile(Guid.NewGuid(), null, folderId, name, projectId: projectId);
+                if (attachmentId != null)
+                {
+                    file.RegisterVersion(attachmentId.Value, 1);
+                }
+
+                await files.InsertAsync(file, autoSave: true);
+                await matches.InsertAsync(new DocumentExpenseMatch(
+                    Guid.NewGuid(), null, file.Id, expenseId, 100, MatchSource.Manual), autoSave: true);
+            }
+
+            await LinkAsync("Fatura.pdf", invoiceAttachment);
+            await LinkAsync("Dekont.pdf", receiptAttachment);
+            await LinkAsync("Dosyasiz.pdf", null);
+
+            await uow.CompleteAsync();
+        }
+
+        return new SeededDocuments(invoiceAttachment, receiptAttachment);
+    }
+
+    [Fact]
+    public async Task Proje_paneli_belgeli_satir_acilabilir_belgeleri_tasir()
+    {
+        var s = await SeedAsync("FIN-D");
+        var d = await SeedDocumentsAsync(s.P1, s.DocExpense);
+
+        var panel = await _budgetAppService.GetExpensePanelAsync(s.P1);
+
+        var belgeli = panel.Rows.Single(r => r.Id == s.DocExpense);
+        belgeli.HasDocument.ShouldBeTrue();
+        // Yüklenmiş dosyası olmayan belge ve dosya kaydı hiç bulunmayan eski bağ listeye girmez.
+        belgeli.Documents.Select(x => x.AttachmentId)
+            .ShouldBe(new[] { d.Invoice, d.Receipt }, ignoreOrder: true);
+        belgeli.Documents.Single(x => x.AttachmentId == d.Invoice).Name.ShouldBe("Fatura.pdf");
+        belgeli.Documents.Single(x => x.AttachmentId == d.Invoice).DownloadUrl
+            .ShouldBe("/Documents?handler=DownloadAttachment&attachmentId=" + d.Invoice);
+
+        panel.Rows.Single(r => r.Id != s.DocExpense).Documents.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Dosya kaydı bulunmayan bağ: "belge var" doğru kalır, açılacak bir şey olmadığı için
+    /// bağlantı üretilmez. (Tohumdaki eşleşme bilerek var olmayan bir dosyayı gösterir.)
+    /// </summary>
+    [Fact]
+    public async Task Proje_paneli_dosyasi_olmayan_bag_icin_baglanti_uretmez()
+    {
+        var s = await SeedAsync("FIN-E");
+
+        var panel = await _budgetAppService.GetExpensePanelAsync(s.P1);
+
+        var belgeli = panel.Rows.Single(r => r.Id == s.DocExpense);
+        belgeli.HasDocument.ShouldBeTrue();
+        belgeli.Documents.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Proje_konsolu_harcama_satirinda_belge_baglantisi_basar()
+    {
+        var s = await SeedAsync("FIN-F");
+        var d = await SeedDocumentsAsync(s.P1, s.DocExpense);
+
+        var html = await GetResponseAsStringAsync($"/Projects/ProjectDetails/{s.P1}");
+
+        // İkon bağlantısı + satır menüsündeki iki belge.
+        html.ShouldContain($"data-expense-doc=\"{d.Invoice}\"");
+        html.ShouldContain($"data-expense-doc=\"{d.Receipt}\"");
+        html.ShouldContain($"/Documents?handler=DownloadAttachment&amp;attachmentId={d.Invoice}");
+    }
 }

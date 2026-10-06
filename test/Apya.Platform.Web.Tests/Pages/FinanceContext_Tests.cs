@@ -189,12 +189,14 @@ public class FinanceContext_Tests
     }
 
     /// <summary>
-    /// Menü kapısı ⊆ sayfa kapısı: menüde "Finans Merkezi"ni gören kullanıcı /Finance'ta 403'e düşmez
-    /// (ROL-06'nın "yasak sayfaya çağrı" sınıfı). Menü koşulu kapıdan ayrı, elle yazılmış izinler
-    /// olduğu için kaynaktan okunur: koşula kapıda olmayan bir izin eklenirse burası kırmızı verir.
+    /// Menü kapısı = sayfa kapısı (FUX-06). Eskiden menü koşulu elle yazılmış üç izindi ve kapının
+    /// ALT KÜMESİ olması kilitleniyordu; bu, "yasak sayfaya çağrı"yı önlüyor ama tersini önlemiyordu:
+    /// sayfayı açabilen kullanıcı menüde göremeyebiliyordu. Artık koşul kapının listesini okur ve
+    /// kendi izin yazmaz. Davranışın kendisi FinanceMenuGate_Tests'te ölçülür; burası koşula yeniden
+    /// elle izin eklenmesini yakalar.
     /// </summary>
     [Fact]
-    public void Menu_kapisi_sayfa_kapisinin_alt_kumesidir()
+    public void Menu_kapisi_sayfa_kapisinin_listesini_okur()
     {
         var resolver = ReadSource("src", "Apya.Platform.Web", "Menus", "PlatformNavigationResolver.cs");
 
@@ -203,15 +205,12 @@ public class FinanceContext_Tests
         var condition = resolver.LastIndexOf("if (", item, StringComparison.Ordinal);
         condition.ShouldBeGreaterThan(0, "Apya.Finance.Hub menü öğesinin koşulu bulunamadı");
 
-        // Koşuldaki "PlatformPermissions.Incomes.Default" gibi başvurular sabitin DEĞERİNE çevrilir.
-        var menuPermissions = Regex.Matches(resolver[condition..item], @"PlatformPermissions\.(\w+)\.(\w+)")
-            .Select(m => (string)typeof(PlatformPermissions).GetNestedType(m.Groups[1].Value)!
-                .GetField(m.Groups[2].Value)!.GetValue(null)!)
-            .ToList();
+        var conditionSource = resolver[condition..item];
 
-        menuPermissions.ShouldNotBeEmpty("menü koşulunda izin okunamadı");
-        menuPermissions.Except(FinanceContext.PageAnyOfPermissions)
-            .ShouldBeEmpty("menü öğesi sayfa kapısında olmayan bir izinle görünüyor → /Finance 403");
+        conditionSource.ShouldContain("FinanceContext.PageAnyOfPermissions", Case.Sensitive,
+            "menü koşulu sayfa kapısının listesini okumuyor");
+        Regex.Matches(conditionSource, @"PlatformPermissions\.(\w+)\.(\w+)").Count
+            .ShouldBe(0, "menü koşuluna elle izin yazılmış — sayfa kapısından ayrışır");
     }
 
     private static string[] Codes(FinanceContextTemplate template)

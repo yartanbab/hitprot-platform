@@ -482,4 +482,21 @@ public class ProjectExpenseRowDto
     public string? TaskTitle { get; set; }
 
     public bool HasDocument { get; set; }
+
+    /// <summary>
+    /// Harcamaya bağlı, AÇILABİLİR belgeler (DOC-12). Çağıranın belge izni yoksa ya da
+    /// belgenin yüklenmiş dosyası yoksa BOŞ kalır; <see cref="HasDocument"/> yine doğrudur —
+    /// "belge var mı" ile "bu kullanıcı açabilir mi" ayrı sorular.
+    /// </summary>
+    public List<ProjectExpenseDocumentDto> Documents { get; set; } = new();
+}
+
+public class ProjectExpenseDocumentDto
+{
+    /// <summary>Belgenin güncel sürümünün ek kimliği — indirme ucu bununla çalışır.</summary>
+    public Guid AttachmentId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string DownloadUrl { get; set; } = string.Empty;
 }

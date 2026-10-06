@@ -62,5 +62,16 @@ public enum NotificationType
     // 🔴 NTF-04: Evrakı tamam ama gönderilmemiş başvuru hiç uyarılmıyordu.
     GrantSubmissionDeadlineNear = 39, // Son tarih yaklaşıyor, başvuru hâlâ gönderilmedi
 
-    GrantIdeaShared             = 40  // Firma havuza proje fikri bıraktı (HOST'a gider)
+    GrantIdeaShared             = 40, // Firma havuza proje fikri bıraktı (HOST'a gider)
+
+    // 🔴 NTF-05: Proje bitiş tarihi ekranlarda gösteriliyordu ama hiçbir iş tarafından
+    // okunmuyordu; kapanışa yaklaşan proje için kimse uyarılmıyordu.
+    ProjectEndingSoon           = 41, // Projenin bitişine 30 / 14 / 3 gün kaldı
+
+    // 🔴 DOC-05 / NTF-07: Belgeye girilen geçerlilik tarihi hiçbir iş tarafından okunmuyordu;
+    // DocumentExpiring (8) yalnız KLASÖR düzeyindeki eski tarihi izler.
+    DocumentFileExpiry          = 42, // Belgenin geçerliliğine 30 / 7 gün kaldı ya da doldu
+
+    // 🔴 LIF-11: Karar bildiriliyordu, itirazın sonucu bildirilmiyordu.
+    GrantAppealResolved         = 43  // İtiraz sonuçlandı (firmaya gider)
 }

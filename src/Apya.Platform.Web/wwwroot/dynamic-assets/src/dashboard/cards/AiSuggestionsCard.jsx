@@ -14,6 +14,18 @@ import { t } from '../../lib/i18n';
  * Öneri üreten bir uç eklendiğinde: çekirdek modül AI modülüne referans VEREMEZ,
  * bu yüzden UI ayrı bir uçtan okumalı (bkz IDashboardAppService notu).
  */
+
+/* Bağlantı '/Ai/Dashboard'a gidiyordu; öyle bir sayfa yok → 404. AI Merkezi buradadır. */
+const AI_CENTER_URL = '/AiCenter/Dashboard';
+
+/* Sayfanın kapısıyla aynı koşul (menü de buna bakar): AiAssist özelliği + Ai.Dashboard.View izni.
+   Açamayacak kullanıcıya bağlantı çizilmez. */
+function canOpenAiCenter() {
+    const abp = window.abp;
+    return abp?.features?.isEnabled?.('Platform.AiAssist') === true
+        && abp?.auth?.isGranted?.('Ai.Dashboard.View') === true;
+}
+
 function AiSuggestionsCard({ editMode }) {
     return (
         <CardShell
@@ -26,11 +38,11 @@ function AiSuggestionsCard({ editMode }) {
                     compact
                     title={t('Dashboard:Ai:EmptyTitle', 'AI şu an sessiz')}
                     description={t('Dashboard:Ai:EmptyDescription', 'Anlamlı bir öneri çıktığında burada görünecek.')}
-                    action={
-                        <a href="/Ai/Dashboard" className="text-[12.5px] font-medium text-text-link hover:underline">
+                    action={canOpenAiCenter() ? (
+                        <a href={AI_CENTER_URL} className="text-[12.5px] font-medium text-text-link hover:underline">
                             {t('Dashboard:Ai:OpenCenter', 'AI Merkezi →')}
                         </a>
-                    }
+                    ) : undefined}
                 />
             }
         />

@@ -161,9 +161,11 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
             int? appealDays = rejected && appealOpen && decision!.AppealDeadline.HasValue
                 ? DaysTo(decision.AppealDeadline, today)
                 : null;
+            // 🔴 LIF-11: itirazı kurumda bekleyen başvuru kapanmış değildir (pencere "kapalı" olsa da).
+            var appealPending = decision?.IsAppealPending == true;
             var closed = application.ProjectId.HasValue
                          || application.Stage == GrantApplicationStage.Odeme
-                         || (rejected && !appealOpen);
+                         || (rejected && !appealOpen && !appealPending);
 
             dto.Applications.Add(new GrantTodayApplicationDto
             {
@@ -176,6 +178,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
                 NextActionValue = nextValue,
                 DaysRemaining = days,
                 AppealDaysLeft = appealDays,
+                AppealPending = appealPending,
                 ProjectId = application.ProjectId,
                 IsClosed = closed
             });

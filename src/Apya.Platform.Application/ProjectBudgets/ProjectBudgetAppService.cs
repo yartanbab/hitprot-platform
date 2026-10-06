@@ -38,6 +38,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> _matchRepository;
+    private readonly IRepository<Apya.Platform.Documents.DocumentFile, Guid> _documentFileRepository;
     private readonly ProjectBudgetManager _budgetManager;
     private readonly IFinanceNotificationPublisher _financeNotifications;
 
@@ -52,6 +53,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         IRepository<IncomeEntry, Guid> incomeRepository,
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> matchRepository,
+        IRepository<Apya.Platform.Documents.DocumentFile, Guid> documentFileRepository,
         ProjectBudgetManager budgetManager,
         IFinanceNotificationPublisher financeNotifications)
     {
@@ -65,6 +67,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         _incomeRepository = incomeRepository;
         _taskRepository = taskRepository;
         _matchRepository = matchRepository;
+        _documentFileRepository = documentFileRepository;
         _budgetManager = budgetManager;
         _financeNotifications = financeNotifications;
     }
@@ -155,6 +158,35 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
                 TaskTitle = t != null ? t.Title : null,
                 HasDocument = matchQ.Any(m => m.ExpenseId == e.Id)
             });
+
+        // DOC-12 · Satır belgenin VARLIĞINI biliyordu ama kimliğini taşımıyordu; ekrandaki
+        // ikon bu yüzden tıklanamıyordu. Bağlantı belge merkezinin indirme ucuna gider ve o
+        // uç belge iznini ister — izni olmayana bağlantı da verilmez (yasak sayfaya çıkan
+        // bağlantı basılmaz).
+        if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default))
+        {
+            var fileQ = await _documentFileRepository.GetQueryableAsync();
+            var documents = await AsyncExecuter.ToListAsync(
+                from m in matchQ
+                join e in expQ on m.ExpenseId equals e.Id
+                join f in fileQ on m.DocumentFileId equals f.Id
+                where e.ProjectId == projectId && f.LatestAttachmentId != null
+                orderby m.CreationTime, m.Id
+                select new { m.ExpenseId, AttachmentId = f.LatestAttachmentId!.Value, f.DisplayName });
+
+            var byExpense = documents.ToLookup(d => d.ExpenseId);
+            foreach (var row in rows)
+            {
+                row.Documents = byExpense[row.Id]
+                    .Select(d => new ProjectExpenseDocumentDto
+                    {
+                        AttachmentId = d.AttachmentId,
+                        Name = d.DisplayName,
+                        DownloadUrl = "/Documents?handler=DownloadAttachment&attachmentId=" + d.AttachmentId
+                    })
+                    .ToList();
+            }
+        }
 
         var taskLinked = rows.Where(r => r.TaskId != null).ToList();
         var undocumented = rows.Where(r => !r.HasDocument).ToList();

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Grants;
@@ -206,5 +207,82 @@ public class GrantDecisionEntry_Tests : PlatformWebTestBase
         await SaveAsync(applicationId, GrantDecisionOutcome.Onaylandi, reference: "TYD-2026-1184");
 
         (await StageOfAsync(applicationId)).ShouldBe(GrantApplicationStage.Odeme);
+    }
+
+    // ── LIF-11 · İtirazın sonucu firmaya bildirilir ──────────────────────────
+
+    /// <summary>Red kararı girilmiş ve itirazı GÖNDERİLMİŞ başvuru.</summary>
+    private async Task<(Guid TenantId, Guid UserId, Guid ApplicationId)> ArrangeSubmittedAppealAsync()
+    {
+        var arranged = await ArrangeAsync();
+        await SaveAsync(arranged.ApplicationId, GrantDecisionOutcome.Reddedildi);
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (GetRequiredService<Volo.Abp.Data.IDataFilter<IMultiTenant>>().Disable())
+        {
+            var decisions = GetRequiredService<IRepository<GrantDecision, Guid>>();
+            var decision = (await decisions.GetListAsync(d => d.GrantApplicationId == arranged.ApplicationId)).Single();
+            decision.SubmitAppeal(DateTime.Now);
+            await decisions.UpdateAsync(decision, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        return arranged;
+    }
+
+    private async Task<List<Notification>> AppealResultsAsync(Guid tenantId, Guid userId)
+    {
+        using (_currentTenant.Change(tenantId))
+        {
+            return (await GetRequiredService<IRepository<Notification, Guid>>()
+                    .GetListAsync(n => n.UserId == userId && n.Type == NotificationType.GrantAppealResolved))
+                .OrderBy(n => n.CreationTime).ToList();
+        }
+    }
+
+    /// <summary>
+    /// Karar bildiriliyordu, itirazın SONUCU bildirilmiyordu: firma itirazını gönderdikten sonra
+    /// ne olduğunu ancak ekranı açıp bakarsa öğreniyordu.
+    /// </summary>
+    [Theory]
+    [InlineData(true, "kabul edildi")]
+    [InlineData(false, "reddedildi")]
+    public async Task Itiraz_Sonuclaninca_Firma_Bilgilendirilir(bool accepted, string expectedPhrase)
+    {
+        var (tenantId, userId, applicationId) = await ArrangeSubmittedAppealAsync();
+
+        await _appeal.ResolveAppealAsync(applicationId, accepted);
+
+        var row = (await AppealResultsAsync(tenantId, userId)).ShouldHaveSingleItem();
+        row.Body.ShouldContain(expectedPhrase, Case.Sensitive);
+        row.Body.ShouldNotContain("{", Case.Sensitive, "doldurulmamış değişken kalmamalı");
+        row.Body.ShouldNotContain("Grants:Notify", Case.Sensitive, "ham anahtar değil, çevrilmiş metin");
+        // Bildirim itiraz ekranına götürür.
+        row.EntityId.ShouldBe(applicationId);
+    }
+
+    [Fact]
+    public async Task Ayni_Itiraz_Sonucu_Yeniden_Kaydedilirse_Yeniden_Bildirilmez()
+    {
+        var (tenantId, userId, applicationId) = await ArrangeSubmittedAppealAsync();
+
+        await _appeal.ResolveAppealAsync(applicationId, accepted: true);
+        await _appeal.ResolveAppealAsync(applicationId, accepted: true);
+
+        (await AppealResultsAsync(tenantId, userId)).Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Itiraz_Sonucu_Degisirse_Firma_Yeniden_Bilgilendirilir()
+    {
+        var (tenantId, userId, applicationId) = await ArrangeSubmittedAppealAsync();
+
+        await _appeal.ResolveAppealAsync(applicationId, accepted: true);
+        await _appeal.ResolveAppealAsync(applicationId, accepted: false);
+
+        var rows = await AppealResultsAsync(tenantId, userId);
+        rows.Count.ShouldBe(2);
+        rows.Last().Body.ShouldContain("reddedildi", Case.Sensitive);
     }
 }
