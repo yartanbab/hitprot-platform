@@ -95,8 +95,16 @@ public class GrantInterest : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Host'un gerekçesi. Red kararında ZORUNLU; kiracıya birebir gösterilir.</summary>
     public string? HostFeedback { get; private set; }
 
+    /// <summary>
+    /// SON geçişi yapan kullanıcı. 🔴 LIF-09 · Talep içindeki her geçiş (incelemeye alma, kabul,
+    /// ret) bu alanı ve <see cref="ReviewedAt"/>'i YENİDEN yazar: "incelemeye kim, ne zaman aldı"
+    /// bilgisi karar anında ezilir, geriye yalnız kararı veren kalır. Bugün ara adımı okuyan bir
+    /// ekran yok. Süre ya da iş yükü analizi istenirse (ör. "talep incelemede kaç gün bekledi")
+    /// bu iki alandan TÜRETİLEMEZ — geçiş başına ayrı kayıt gerekir.
+    /// </summary>
     public Guid? ReviewedByUserId { get; private set; }
 
+    /// <summary>Son geçişin zamanı; <see cref="ReviewedByUserId"/> ile aynı kısıt.</summary>
     public DateTime? ReviewedAt { get; private set; }
 
     /// <summary>Süreç başlatıldıysa açılan başvuru. Kiracı sihirbaza buradan geçer.</summary>
