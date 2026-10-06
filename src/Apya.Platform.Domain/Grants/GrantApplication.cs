@@ -106,12 +106,17 @@ public class GrantApplication : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     protected GrantApplication() { }
 
-    public GrantApplication(Guid id, Guid? tenantId, Guid grantCallId) : base(id)
+    /// <param name="now">
+    /// DOM-03 · Başvuru tarihi. Üretim kodu IClock.Now geçirir; varlığın geri kalanı zamanı
+    /// zaten çağırandan alıyordu, yalnız kurucu sunucunun yerel saatini doğrudan okuyordu.
+    /// Verilmezse eski davranış korunur (testler ve tohumlayıcılar için).
+    /// </param>
+    public GrantApplication(Guid id, Guid? tenantId, Guid grantCallId, DateTime? now = null) : base(id)
     {
         TenantId = tenantId;
         GrantCallId = grantCallId;
         Stage = GrantApplicationStage.Basvuru;
-        AppliedDate = DateTime.Now;
+        AppliedDate = now ?? DateTime.Now;
         CurrentStep = 1;
         PendingParty = GrantPartyRole.Firma;
     }
