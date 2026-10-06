@@ -79,7 +79,7 @@ public class EnumMirrorArrays_Tests : PlatformWebTestBase
                 typeof(PlatformResource).Assembly,      // Domain.Shared
                 typeof(PlatformPermissions).Assembly,   // Application.Contracts
                 typeof(Grant).Assembly,                 // Domain
-                typeof(Program).Assembly                // Web
+                typeof(Apya.Platform.Web.Pages.PlatformPageModel).Assembly // Web
             }
             .Distinct()
             .SelectMany(a => a.GetTypes())
