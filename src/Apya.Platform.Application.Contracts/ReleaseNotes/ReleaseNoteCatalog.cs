@@ -131,7 +131,10 @@ public static class ReleaseNoteCatalog
                 "Bir hibe başvurunuz reddedildiğinde karar size bildiriliyordu; ama itiraz ettikten sonra " +
                 "itirazın sonucu bildirilmiyordu. Ne olduğunu öğrenmek için itiraz ekranını açıp bakmanız gerekiyordu. " +
                 "Artık danışmanınız itirazın sonucunu kaydettiğinde — kabul ya da ret — bildirim geliyor; " +
-                "üstüne bastığınızda itiraz ekranı açılıyor.")
+                "üstüne bastığınızda itiraz ekranı açılıyor. " +
+                "Ayrıca 'Başvurularım' listesinde, itirazını gönderdiğiniz başvuru artık 'kapanmış' görünmüyor: " +
+                "kurum yanıt verene kadar açık başvurularınız arasında kalıyor ve satırında " +
+                "'İtiraz kurumda · yanıt bekleniyor' yazıyor.")
         ),
 
         new ReleaseNote(

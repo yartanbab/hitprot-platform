@@ -37,7 +37,10 @@ $(function () {
     function row(r) {
         // 11c · Aşama adı yerine cümle: "Kurum dosyanızı inceliyor. Sizden bir şey beklenmiyor."
         // Şablon adı varsa ikinci satırda kalır (danışmanla aynı dili konuşabilsin).
-        var stageSentence = r.appealDaysLeft != null
+        // LIF-11: itiraz gönderildi, kurum yanıtlamadı — "reddedildi" ya da "kapandı" değil.
+        var stageSentence = r.appealPending
+            ? l('Grants:Today:App:AppealPending')
+            : r.appealDaysLeft != null
             ? l('Grants:Today:App:Rejected', r.appealDaysLeft)
             : l('Grants:Today:App:' + actionKeys[r.nextAction], r.nextActionValue);
         var stageName = r.stageName || l('Grants:Stage:' + stageKeys[r.stage]);
@@ -81,7 +84,9 @@ $(function () {
                 ? '<span class="apya-my-avatar">' + esc(initials(r.assignedUserName)) + '</span>' : '') +
             '<span class="apya-my-next-text">' +
             esc(r.isRejected
-                ? (r.appealDaysLeft != null
+                ? (r.appealPending
+                    ? l('Grants:Mine:Action:AppealPending')
+                    : r.appealDaysLeft != null
                     ? l('Grants:Mine:Action:Rejected', r.appealDaysLeft)
                     : l('Grants:Mine:Action:RejectedClosed'))
                 : l('Grants:Mine:Action:' + actionKeys[r.nextAction], r.nextActionValue)) + '</span></span>' +

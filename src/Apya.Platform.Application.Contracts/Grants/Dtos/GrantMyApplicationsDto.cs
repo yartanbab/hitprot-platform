@@ -67,6 +67,12 @@ public class GrantMyApplicationRowDto
 
     /// <summary>İtiraz penceresine kalan gün; pencere kapalıysa null.</summary>
     public int? AppealDaysLeft { get; set; }
+
+    /// <summary>
+    /// LIF-11 · İtiraz gönderildi, kurum henüz yanıtlamadı. Bu sırada satır KAPANMIŞ sayılmaz:
+    /// pencere "kapalı" (ikinci kez gönderilemez) ama dosya kurumda bekliyor.
+    /// </summary>
+    public bool AppealPending { get; set; }
 }
 
 /// <summary>

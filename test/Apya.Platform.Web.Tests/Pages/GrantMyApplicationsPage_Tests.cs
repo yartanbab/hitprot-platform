@@ -178,4 +178,71 @@ public class GrantMyApplicationsPage_Tests : PlatformWebTestBase
                 dto.Items.Where(i => !i.IsClosed && i.DaysRemaining >= 0).Min(i => i.DaysRemaining!.Value));
         }
     }
+
+    // ── LIF-11 · İtirazı kurumda bekleyen başvuru "kapanmış" sayılmaz ─────────
+
+    /// <summary>Red kararı ekler; istenirse itirazı gönderilmiş, istenirse sonuçlanmış olarak.</summary>
+    private async Task AddRejectionAsync(Guid tenantId, Guid applicationId, bool appealSubmitted, bool? appealAccepted = null)
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+
+        var decision = new GrantDecision(
+            Guid.NewGuid(), tenantId, applicationId, GrantDecisionOutcome.Reddedildi,
+            DateTime.Today, referenceNo: null, appealDeadline: DateTime.Today.AddDays(10));
+
+        if (appealSubmitted) { decision.SubmitAppeal(DateTime.Now); }
+        if (appealAccepted.HasValue) { decision.ResolveAppeal(appealAccepted.Value); }
+
+        await GetRequiredService<IRepository<GrantDecision, Guid>>().InsertAsync(decision, autoSave: true);
+        await uow.CompleteAsync();
+    }
+
+    /// <summary>
+    /// İtiraz gönderilince pencere "kapanır" (bir daha gönderilemez) ve satır o andan itibaren
+    /// KAPANMIŞ görünüyordu — oysa dosya kurumda, yanıt bekleniyor. Firma listesinde başvurunun
+    /// en hareketli anı "Kapanan"lar sekmesine düşüyordu.
+    /// </summary>
+    [Fact]
+    public async Task Itirazi_Kurumda_Bekleyen_Basvuru_Kapanmis_Sayilmaz()
+    {
+        var (tenantId, applicationId) = await SetupAsync(submitted: true);
+        await AddRejectionAsync(tenantId, applicationId, appealSubmitted: true);
+
+        var row = (await ReadAsAsync(tenantId)).Items.Single(i => i.Id == applicationId);
+
+        row.IsRejected.ShouldBeTrue();
+        row.AppealPending.ShouldBeTrue();
+        row.IsClosed.ShouldBeFalse("itiraz kurumda bekliyor; satır açık kalmalı");
+        row.AppealDaysLeft.ShouldBeNull("itiraz gönderildi; geri sayım gösterilmez");
+    }
+
+    /// <summary>İtiraz henüz gönderilmediyse eski davranış: geri sayım var, bekleyen itiraz yok.</summary>
+    [Fact]
+    public async Task Itiraz_Gonderilmeden_Once_Geri_Sayim_Gosterilir()
+    {
+        var (tenantId, applicationId) = await SetupAsync(submitted: true);
+        await AddRejectionAsync(tenantId, applicationId, appealSubmitted: false);
+
+        var row = (await ReadAsAsync(tenantId)).Items.Single(i => i.Id == applicationId);
+
+        row.AppealPending.ShouldBeFalse();
+        row.AppealDaysLeft.ShouldBe(10);
+        row.IsClosed.ShouldBeFalse();
+    }
+
+    /// <summary>Sonuçlanan itiraz artık beklemiyor: satır kapanır (sonucun ne yapacağı ayrı bir konu, LIF-10).</summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Sonuclanan_Itiraz_Beklemede_Sayilmaz(bool accepted)
+    {
+        var (tenantId, applicationId) = await SetupAsync(submitted: true);
+        await AddRejectionAsync(tenantId, applicationId, appealSubmitted: true, appealAccepted: accepted);
+
+        var row = (await ReadAsAsync(tenantId)).Items.Single(i => i.Id == applicationId);
+
+        row.AppealPending.ShouldBeFalse();
+        row.IsClosed.ShouldBeTrue();
+    }
 }
