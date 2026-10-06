@@ -1894,6 +1894,8 @@
         "Platform:Payment:ExchangeRateMissing": "Tahsilat tarihi için kur bulunamadı. Lütfen ilgili kuru tanımlayın.",
         "Platform:Payment:AmountInvalid": "Ödeme tutarı sıfırdan büyük olmalıdır.",
         "Platform:FxRevaluation:RateMissing": "Değerleme tarihi için kur bulunamadı. Lütfen ilgili kuru tanımlayın.",
+        "Projects:Edit:BudgetFromLines": "Bu projede bütçe kalemleri tanımlı. Finans ekranları ve bütçe çubuğu buradaki rakamı değil, kalemlerin toplamını gösterir: {0}.",
+        "Projects:Edit:BudgetFromLines:Open": "Bütçe kalemlerini aç",
         "Platform:Project:NameRequired": "Proje adı boş bırakılamaz.",
         "Platform:Project:BudgetInvalid": "Geçersiz bütçe. Bütçe negatif olamaz.",
         "Platform:Project:ScheduleInvalid": "Geçersiz tarih aralığı. Bitiş tarihi başlangıç tarihinden önce olamaz.",

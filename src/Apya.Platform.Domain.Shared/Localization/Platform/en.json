@@ -578,6 +578,8 @@
     "Notification:ProjectEndingSoon:TitleToday": "The project ends today",
     "Notification:ProjectEndingSoon:Body": "\"{0}\" ends on {1}. The project has {2} open task(s).",
     "Notification:ProjectEndingSoon:BodyNoOpenTasks": "\"{0}\" ends on {1}. No open tasks remain.",
+    "Projects:Edit:BudgetFromLines": "This project has budget lines. Finance screens and the budget bar show the total of the lines, not this figure: {0}.",
+    "Projects:Edit:BudgetFromLines:Open": "Open budget lines",
     "Notification:TaskOverdue:Title": "Overdue Task",
     "Notification:TaskOverdue:Body": "\"{0}\" was due {1} day(s) ago and is still open.",
     "Notification:DocumentExpiring:Title": "Document Expiring",

@@ -126,6 +126,18 @@
                         @* Tutar maskesi (diğer para alanlarıyla aynı): maskesiz alanda "1500.75"
                            tr-TR bağlamada 150075'e dönüşüyor ve sessizce kaydediliyordu. *@
                         <abp-input asp-for="Project.TotalBudget" label="Bütçesi (₺)" data-money-input="true" />
+                        @if (Model.BudgetFromLines.HasValue)
+                        {
+                            @* PRJ-12: Kalem tanımlandığı andan itibaren finans ekranları bütçeyi
+                               kalemlerden toplar; bu alan sessizce devre dışı kalıyordu. Alan
+                               kilitlenmez (değer saklanmaya devam eder), ama neyin geçerli olduğu
+                               ve nereden değiştirileceği söylenir. *@
+                            <div class="form-text" data-budget-from-lines>
+                                @L["Projects:Edit:BudgetFromLines",
+                                    Model.BudgetFromLines.Value.ToString("N2", new System.Globalization.CultureInfo("tr-TR")) + " " + Model.BudgetCurrency]
+                                <a href="/Finance?projectId=@Model.Id&tab=kalemler">@L["Projects:Edit:BudgetFromLines:Open"]</a>
+                            </div>
+                        }
                     </div>
                 }
                 <div class="is-wide">

@@ -105,7 +105,16 @@ public static class ReleaseNoteCatalog
                 "Bildirim belgeyi yükleyen kişiye, belge bir projeye bağlıysa o projenin liderlerine de gidiyor. " +
                 "Her aşama için bir kez gelir; tarihi uzatırsanız hatırlatmalar yeni tarihe göre yeniden başlar. " +
                 "Süresi bir haftadan daha önce dolmuş belgeler için geriye dönük bildirim gelmez. " +
-                "Bu bildirimleri almak istemiyorsanız bildirim ayarlarınızdan 'Belgeler' kategorisini kapatabilirsiniz.")
+                "Bu bildirimleri almak istemiyorsanız bildirim ayarlarınızdan 'Belgeler' kategorisini kapatabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje düzenleme ekranı, bütçenin kalemlerden hesaplandığını artık söylüyor",
+                "Bir projeye bütçe kalemi tanımladığınız andan itibaren Finans Merkezi ve projedeki bütçe çubuğu " +
+                "bütçeyi kalemlerin toplamından hesaplar; proje düzenleme ekranındaki 'Bütçesi' rakamı kullanılmaz. " +
+                "Ekran bunu söylemiyordu: rakamı değiştirip kaydediyor, hiçbir yerde bir şeyin değişmediğini " +
+                "görüyordunuz. " +
+                "Artık kalemi olan projede 'Bütçesi' alanının altında, geçerli olan kalem toplamı ve onu " +
+                "değiştireceğiniz yere giden bağlantı yazıyor. Kalemi olmayan projede hiçbir şey değişmedi.")
         ),
 
         new ReleaseNote(

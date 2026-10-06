@@ -61,21 +61,33 @@ public class EditModel : PlatformPageModel
     public List<SelectListItem> Categories { get; set; } = new();
 
     public bool CanViewBudget { get; set; }
+
+    /// <summary>
+    /// PRJ-12 · Projede bütçe kalemi varsa finans ekranlarının gösterdiği toplam (kalemlerin
+    /// onaylanan tutarı); kalem yoksa null. Doluyken formdaki "Bütçesi" rakamı hiçbir finans
+    /// ekranında kullanılmaz — ekran bunu söylemeli.
+    /// </summary>
+    public decimal? BudgetFromLines { get; private set; }
+
+    public string BudgetCurrency { get; private set; } = "TRY";
     public bool CanDelete { get; set; }
 
     private readonly IProjectAppService _projectAppService;
     private readonly IProjectCategoryAppService _projectCategoryAppService;
+    private readonly Apya.Platform.ProjectBudgets.IProjectBudgetAppService _projectBudgetAppService;
     private readonly IUploadedFileStorage _fileStorage;
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
     public EditModel(
         IProjectAppService projectAppService,
         IProjectCategoryAppService projectCategoryAppService,
+        Apya.Platform.ProjectBudgets.IProjectBudgetAppService projectBudgetAppService,
         IUploadedFileStorage fileStorage,
         IUploadedFileRootFolderProvider rootFolderProvider)
     {
         _projectAppService = projectAppService;
         _projectCategoryAppService = projectCategoryAppService;
+        _projectBudgetAppService = projectBudgetAppService;
         _fileStorage = fileStorage;
         _rootFolderProvider = rootFolderProvider;
     }
@@ -252,6 +264,15 @@ public class EditModel : PlatformPageModel
 
         CanViewBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
         CanDelete = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Delete);
+
+        if (CanViewBudget)
+        {
+            // Finans ekranlarıyla AYNI servisten: "kalemlerden gelen toplam" burada ayrıca
+            // hesaplanmaz, yoksa iki ekran yine ayrışırdı.
+            var overview = await _projectBudgetAppService.GetOverviewAsync(Id);
+            BudgetFromLines = overview.HasBudgetLines ? overview.ApprovedBudget : null;
+            BudgetCurrency = overview.Currency;
+        }
 
         // Cari listesi GÖMÜLDÜ (2026-09-06): ekran cari sormuyor, dolayısıyla listeyi
         // çekmek de gereksiz bir Customers.Default çağrısıydı. Kaydın CustomerId değeri
