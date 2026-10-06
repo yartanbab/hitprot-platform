@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Apya.Platform.Customers;
 
 namespace Apya.Platform.Web.Pages.Customers;
 
+[Authorize]
 public class EditModalModel : AbpPageModel
 {
     private readonly ICustomerAppService _customerAppService;

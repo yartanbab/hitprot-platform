@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using Apya.Platform.Ai.Prompts;
 using Apya.Platform.Ai.Prompts.Dtos;
@@ -6,6 +7,7 @@ using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
 namespace Apya.Platform.Web.Pages.AiCenter.PromptCategories;
 
+[Authorize]
 public class CreateModalModel : AbpPageModel
 {
     private readonly IPromptCategoryAppService _promptCategoryAppService;

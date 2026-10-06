@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
@@ -5,6 +6,7 @@ using Apya.Platform.FxRevaluations;
 
 namespace Apya.Platform.Web.Pages.FxRevaluations;
 
+[Authorize]
 public class RunModalModel : AbpPageModel
 {
     private readonly IFxRevaluationAppService _fxRevaluationAppService;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,6 +25,7 @@ namespace Apya.Platform.Web.Pages.Account;
 /// "Kullanıcı adı ya da şifre geçersiz!" alırdı. Burada girilen kullanıcı adı/e-posta
 /// hangi kiracıya aitse o bağlama geçilip giriş normal akışına devredilir.
 /// </summary>
+[AllowAnonymous]
 public class ApyaLoginModel : Volo.Abp.Account.Web.Pages.Account.LoginModel
 {
     /// <summary>

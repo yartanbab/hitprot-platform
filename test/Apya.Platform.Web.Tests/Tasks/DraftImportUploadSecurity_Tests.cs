@@ -10,13 +10,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Apya.Platform.Storage;
 using HtmlAgilityPack;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shouldly;
-using Volo.Abp.Authorization;
 using Volo.Abp.Security.Claims;
 using Xunit;
 
@@ -49,44 +46,7 @@ public class DraftImportUploadSecurity_Tests : PlatformWebTestBase
     {
         base.ConfigureServices(services);
 
-        services.Replace(ServiceDescriptor.Singleton<IAbpAuthorizationService>(
-            sp => new SignedInOnlyAuthorizationService(sp, sp.GetRequiredService<ICurrentPrincipalAccessor>())));
-        services.Replace(ServiceDescriptor.Singleton<IAuthorizationService>(
-            sp => sp.GetRequiredService<IAbpAuthorizationService>()));
-        // Uygulama servislerindeki [Authorize] ayrı bir kapıdan geçer; test barındırıcısı onu da
-        // "hep evet"e çevirmiştir. Gerçeğini geri koy: servis oturumsuz çağrıyı REDDETSİN ki
-        // "servis reddetti ama dosya çoktan yazıldı" durumu ölçülebilsin.
-        services.Replace(ServiceDescriptor.Transient<IMethodInvocationAuthorizationService, MethodInvocationAuthorizationService>());
-    }
-
-    private sealed class SignedInOnlyAuthorizationService : IAbpAuthorizationService
-    {
-        private readonly ICurrentPrincipalAccessor _principalAccessor;
-
-        public SignedInOnlyAuthorizationService(IServiceProvider serviceProvider, ICurrentPrincipalAccessor principalAccessor)
-        {
-            ServiceProvider = serviceProvider;
-            _principalAccessor = principalAccessor;
-        }
-
-        public IServiceProvider ServiceProvider { get; }
-
-        public ClaimsPrincipal CurrentPrincipal => _principalAccessor.Principal;
-
-        // Karar, isteğin taşıdığı kullanıcıya (HttpContext.User) göre DEĞİL, testin "kim çağırıyor"
-        // dediği kimliğe göre verilir: test sunucusunda kimlik doğrulama ara katmanı çalışmaz,
-        // HttpContext.User hep kimliksizdir; kimi taklit ettiğimizi erişimci taşır.
-        private AuthorizationResult Decide() =>
-            _principalAccessor.Principal?.Identity?.IsAuthenticated == true
-                ? AuthorizationResult.Success()
-                : AuthorizationResult.Failed();
-
-        public Task<AuthorizationResult> AuthorizeAsync(
-            ClaimsPrincipal user, object? resource, IEnumerable<IAuthorizationRequirement> requirements)
-            => Task.FromResult(Decide());
-
-        public Task<AuthorizationResult> AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName)
-            => Task.FromResult(Decide());
+        SignedInOnlyAuthorization.Replace(services);
     }
 
     // İçerik koşuya özgü: diskteki dosyanın BU testin dosyası olduğu içerikten anlaşılır.

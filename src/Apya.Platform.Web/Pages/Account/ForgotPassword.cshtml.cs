@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using Apya.Platform.Accounts;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ namespace Apya.Platform.Web.Pages.Account;
 ///    kiracı seçici kapalı olduğu için istek host bağlamında koşar ve kiracı kullanıcısı
 ///    "bulunamadı" alırdı — bkz. <see cref="ApyaLoginModel"/>.
 /// </summary>
+[AllowAnonymous]
 public class ApyaForgotPasswordModel : Volo.Abp.Account.Web.Pages.Account.ForgotPasswordModel
 {
     private readonly LoginTenantFinder _loginTenantFinder;

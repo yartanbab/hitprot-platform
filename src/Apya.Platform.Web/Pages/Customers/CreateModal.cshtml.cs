@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
@@ -5,6 +6,7 @@ using Apya.Platform.Customers;
 
 namespace Apya.Platform.Web.Pages.Customers;
 
+[Authorize]
 public class CreateModalModel : AbpPageModel
 {
     private readonly ICustomerAppService _customerAppService;

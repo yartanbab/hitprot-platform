@@ -16,6 +16,7 @@ using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
 namespace Apya.Platform.Web.Pages.Tasks
 {
+    [Authorize]
     public class EditModalModel : AbpPageModel
     {
         [HiddenInput]

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,7 @@ namespace Apya.Platform.Web.Pages.Account;
 /// bağlantı iste" yolu görünür. Geçerli jetonda stok akış aynen (parola doğrulaması, AbpIdentityResultException
 /// uyarısı). Emsal: <see cref="ApyaForgotPasswordModel"/> (görünüm @model ile bağlar).</para>
 /// </summary>
+[AllowAnonymous]
 public class ApyaResetPasswordModel : Volo.Abp.Account.Web.Pages.Account.ResetPasswordModel
 {
     public override async Task<IActionResult> OnGetAsync()

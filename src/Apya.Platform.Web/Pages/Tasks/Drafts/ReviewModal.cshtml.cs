@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using Apya.Platform.Tasks.Drafts;
 
 namespace Apya.Platform.Web.Pages.Tasks.Drafts;
 
+[Authorize]
 public class ReviewModalModel : AbpPageModel
 {
     [HiddenInput]
