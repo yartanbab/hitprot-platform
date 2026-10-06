@@ -20,4 +20,12 @@ public interface IUploadedFileStorage
     /// uygulanmaz — içeriği biz üretiyoruz, doğrulanacak bir şey yok.
     /// </summary>
     Task<string> StoreGeneratedAsync(byte[] content, string extension);
+
+    /// <summary>
+    /// Kaydı açılamayan yüklemeyi diskten siler: dosya yazıldı ama onu gösterecek satır
+    /// oluşmadıysa (yetki, olmayan kayıt, kilitli başvuru…) kimse fark etmez, kimse silmez.
+    /// Silme başarısız olursa YUTULUR (loglanır): asıl hata çağırana gitmeli, temizlik
+    /// hatası onu maskelememeli.
+    /// </summary>
+    void TryDelete(string storedFileName);
 }

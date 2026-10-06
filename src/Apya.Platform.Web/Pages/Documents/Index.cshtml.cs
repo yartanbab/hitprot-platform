@@ -258,8 +258,18 @@ public class IndexModel : AbpPageModel
         if (file == null || file.Length == 0) return BadRequest("Geçersiz veya boş dosya.");
 
         var storedFileName = await _fileStorage.StoreAsync(file);
-        var attachment = await _documentAppService.AddAttachmentAsync(documentId, file.FileName, storedFileName, file.ContentType, file.Length);
-        return new JsonResult(attachment);
+
+        try
+        {
+            var attachment = await _documentAppService.AddAttachmentAsync(documentId, file.FileName, storedFileName, file.ContentType, file.Length);
+            return new JsonResult(attachment);
+        }
+        catch
+        {
+            // Dosya yazıldı ama kayıt açılamadı: yükleme kuyruğundaki (Upload) kuralın aynısı.
+            _fileStorage.TryDelete(storedFileName);
+            throw;
+        }
     }
 
     public async Task<IActionResult> OnGetAttachmentsAsync(Guid documentId, bool includeHistory = false)
