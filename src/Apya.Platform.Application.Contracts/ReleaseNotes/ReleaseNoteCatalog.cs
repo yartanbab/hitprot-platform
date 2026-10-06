@@ -124,7 +124,17 @@ public static class ReleaseNoteCatalog
                 "kayıt projesiz ya da yanlış projeye giriliyordu. " +
                 "Artık bu düğmeler kayıt penceresini bulunduğunuz ekranda açıyor ve proje önceden seçili geliyor. " +
                 "Kaydettiğinizde aynı projenin Gelir-Gider sekmesinde kalırsınız. " +
-                "Proje seçili değilken ('Tüm hesaplar') düğmeler eskisi gibi çalışır.")
+                "Proje seçili değilken ('Tüm hesaplar') düğmeler eskisi gibi çalışır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe itirazınız sonuçlanınca haber alıyorsunuz",
+                "Bir hibe başvurunuz reddedildiğinde karar size bildiriliyordu; ama itiraz ettikten sonra " +
+                "itirazın sonucu bildirilmiyordu. Ne olduğunu öğrenmek için itiraz ekranını açıp bakmanız gerekiyordu. " +
+                "Artık danışmanınız itirazın sonucunu kaydettiğinde — kabul ya da ret — bildirim geliyor; " +
+                "üstüne bastığınızda itiraz ekranı açılıyor. " +
+                "Ayrıca 'Başvurularım' listesinde, itirazını gönderdiğiniz başvuru artık 'kapanmış' görünmüyor: " +
+                "kurum yanıt verene kadar açık başvurularınız arasında kalıyor ve satırında " +
+                "'İtiraz kurumda · yanıt bekleniyor' yazıyor.")
         ),
 
         new ReleaseNote(
