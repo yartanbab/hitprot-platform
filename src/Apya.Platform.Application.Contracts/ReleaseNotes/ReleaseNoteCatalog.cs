@@ -154,7 +154,13 @@ public static class ReleaseNoteCatalog
                 "sayılıyor, bağlantı yine de oluşuyordu. Oluşan bağlantı da bir tarayıcı kutusunda gösteriliyordu; " +
                 "kutu kapanınca bağlantıyı bir daha göremiyordunuz. Artık üç seçenek tek pencerede duruyor ve " +
                 "'Vazgeç' gerçekten vazgeçiyor. Bağlantı aynı pencerede 'Kopyala' düğmesiyle birlikte gösteriliyor " +
-                "ve siz 'Kapat' diyene kadar ekranda kalıyor. İndirme izni, siz işaretlemedikçe kapalı gelir.")
+                "ve siz 'Kapat' diyene kadar ekranda kalıyor. İndirme izni, siz işaretlemedikçe kapalı gelir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Genel Bakış'taki 'AI Merkezi' bağlantısı artık açılıyor",
+                "Genel Bakış'taki 'AI önerileri' kartında duran 'AI Merkezi →' bağlantısı var olmayan bir adrese " +
+                "gidiyordu; bastığınızda 'sayfa bulunamadı' çıkıyordu. Bağlantı artık AI Merkezi'nin kendisini açıyor. " +
+                "AI Merkezi'ni açma yetkiniz yoksa ya da paketinizde AI özelliği yoksa bağlantı kartta gösterilmiyor.")
         ),
 
         new ReleaseNote(
