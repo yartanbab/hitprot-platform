@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -23,7 +24,13 @@ namespace Apya.Platform.Pages;
 /// açıyor; kayıt açılamazsa (olmayan klasör/evrak, gönderilmiş başvuru) dosya yükleme
 /// klasöründe hiçbir kayda bağlı olmadan kalıyordu. Yükleme kuyruğu
 /// (<c>Documents/Upload</c>) bunu zaten temizliyordu; bu iki yol temizlemiyordu.</para>
+///
+/// <para>Yükleme klasörü bütün test sınıflarının ORTAK malı. "Klasörde kaç dosya var" diye
+/// saymak, aynı anda koşan başka bir sınıfın yazdığı dosyayı da sayar ve rastgele kırılır;
+/// bu yüzden test kendi dosyasını İÇERİĞİNDEN tanır ve klasöre yazan sınıflar aynı
+/// koleksiyonda sırayla koşar.</para>
 /// </summary>
+[Collection("Yükleme klasörünü kullanan testler")]
 public class UploadOrphanCleanup_Tests : PlatformWebTestBase
 {
     // İçerik koşuya özgü: test kendi yazdığı dosyayı başka koşuların artıklarından ayırabilsin.
@@ -31,7 +38,27 @@ public class UploadOrphanCleanup_Tests : PlatformWebTestBase
 
     private string RootFolder => GetRequiredService<IUploadedFileRootFolderProvider>().GetRootFolder();
 
-    private int FileCount() => Directory.GetFiles(RootFolder).Length;
+    /// <summary>Bu testin içeriğini taşıyan dosyalar (başka sınıfların dosyaları sayılmaz).</summary>
+    private List<string> PayloadFiles()
+    {
+        var found = new List<string>();
+        foreach (var path in Directory.GetFiles(RootFolder))
+        {
+            try
+            {
+                if (new FileInfo(path).Length == _payload.Length && File.ReadAllBytes(path).SequenceEqual(_payload))
+                {
+                    found.Add(path);
+                }
+            }
+            catch (IOException)
+            {
+                // Dosya bu arada silindi ya da kilitli: bizim dosyamız değil.
+            }
+        }
+
+        return found;
+    }
 
     private async Task<string> AntiforgeryTokenAsync()
     {
@@ -62,12 +89,10 @@ public class UploadOrphanCleanup_Tests : PlatformWebTestBase
     [Fact]
     public async Task Belge_Merkezi_Olmayan_Klasore_Yuklemede_Diske_Dosya_Birakmaz()
     {
-        var before = FileCount();
-
         var response = await PostFileAsync("/Documents?handler=UploadFile", Guid.NewGuid(), "not.txt");
 
         response.IsSuccessStatusCode.ShouldBeFalse();
-        FileCount().ShouldBe(before, "kaydı açılamayan yükleme diskte dosya bırakmamalı");
+        PayloadFiles().ShouldBeEmpty("kaydı açılamayan yükleme diskte dosya bırakmamalı");
     }
 
     /// <summary>
@@ -77,23 +102,19 @@ public class UploadOrphanCleanup_Tests : PlatformWebTestBase
     [Fact]
     public async Task Yukleme_Kuyrugu_Olmayan_Klasore_Yuklemede_Diske_Dosya_Birakmaz()
     {
-        var before = FileCount();
-
         var response = await PostFileAsync("/Documents/Upload?handler=Upload", Guid.NewGuid(), "not.txt");
 
         response.IsSuccessStatusCode.ShouldBeFalse();
-        FileCount().ShouldBe(before, "kaydı açılamayan yükleme diskte dosya bırakmamalı");
+        PayloadFiles().ShouldBeEmpty("kaydı açılamayan yükleme diskte dosya bırakmamalı");
     }
 
     [Fact]
     public async Task Hibe_Evraki_Olmayan_Evraka_Yuklemede_Diske_Dosya_Birakmaz()
     {
-        var before = FileCount();
-
         var response = await PostFileAsync("/Grants/Documents?handler=Upload", Guid.NewGuid(), "not.txt");
 
         response.IsSuccessStatusCode.ShouldBeFalse();
-        FileCount().ShouldBe(before, "kaydı açılamayan yükleme diskte dosya bırakmamalı");
+        PayloadFiles().ShouldBeEmpty("kaydı açılamayan yükleme diskte dosya bırakmamalı");
     }
 
     /// <summary>Temizlik yalnız HATA yolunda çalışır: geçerli yükleme yazılır ve yerinde kalır.</summary>
@@ -109,18 +130,13 @@ public class UploadOrphanCleanup_Tests : PlatformWebTestBase
             await uow.CompleteAsync();
         }
 
-        var before = FileCount();
-
         var response = await PostFileAsync("/Documents?handler=UploadFile", folderId, "gecerli.txt");
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var written = Directory.GetFiles(RootFolder)
-            .Where(f => File.ReadAllBytes(f).SequenceEqual(_payload))
-            .ToList();
+        var written = PayloadFiles();
         try
         {
-            FileCount().ShouldBe(before + 1);
-            written.Count.ShouldBe(1);
+            written.Count.ShouldBe(1, "geçerli yükleme tam bir dosya yazar ve temizlik ona dokunmaz");
         }
         finally
         {

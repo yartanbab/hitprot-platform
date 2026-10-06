@@ -27,6 +27,9 @@ namespace Apya.Platform.Pages;
 /// Test host'u AddAlwaysAllowAuthorization kullanır; gerçek host'ta erişimi
 /// <c>[Authorize(PlatformPermissions.Grants.Edit)]</c> (host-only izin) kapatır.
 /// </summary>
+// Bu sınıf yükleme klasöründeki dosyaları SAYIYOR; klasöre yazan başka bir sınıfla aynı anda
+// koşarsa onun dosyasını da sayar. Aynı koleksiyondaki sınıflar sırayla koşar.
+[Collection("Yükleme klasörünü kullanan testler")]
 public class GrantParametersPage_Tests : PlatformWebTestBase
 {
     private async Task<Guid> FirstGrantIdAsync()
