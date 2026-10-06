@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +12,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
+using Apya.Platform.Storage;
 
 namespace Apya.Platform.Documents;
 
@@ -28,6 +31,7 @@ public class DocumentAppService :
     private readonly IRepository<DocumentAccessLog, Guid> _accessLogRepository;
     private readonly IRepository<IdentityUser, Guid> _identityRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
+    private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
 
     public DocumentAppService(
         IRepository<Document, Guid> repository,
@@ -35,7 +39,8 @@ public class DocumentAppService :
         IRepository<DocumentFile, Guid> documentFileRepository,
         IRepository<DocumentAccessLog, Guid> accessLogRepository,
         IRepository<IdentityUser, Guid> identityRepository,
-        IRepository<Project, Guid> projectRepository)
+        IRepository<Project, Guid> projectRepository,
+        IUploadedFileRootFolderProvider rootFolderProvider)
         : base(repository)
     {
         _attachmentRepository = attachmentRepository;
@@ -43,6 +48,7 @@ public class DocumentAppService :
         _accessLogRepository = accessLogRepository;
         _identityRepository = identityRepository;
         _projectRepository = projectRepository;
+        _rootFolderProvider = rootFolderProvider;
         CreatePolicyName = PlatformPermissions.Documents.Create;
         UpdatePolicyName = PlatformPermissions.Documents.Edit;
         DeletePolicyName = PlatformPermissions.Documents.Delete;
@@ -106,6 +112,7 @@ public class DocumentAppService :
             StoredFileName = storedFileName,
             ContentType = contentType,
             FileSize = fileSize,
+            ContentHash = await ComputeContentHashAsync(storedFileName),
             VersionGroupId = existingLatest?.VersionGroupId ?? newId,
             VersionNumber = (existingLatest?.VersionNumber ?? 0) + 1,
             IsLatest = true
@@ -242,6 +249,31 @@ public class DocumentAppService :
     }
 
     [Authorize(PlatformPermissions.Documents.Default)]
+    /// <summary>
+    /// DOC-04 · Dosyanın SHA-256 özeti. Alan ve indeksi baştan vardı, eşleştirme tezgâhı her
+    /// açılışta okuyordu, ama hiçbir yükleme yolu doldurmuyordu: "birebir aynı dosya iki kez
+    /// yüklendi" uyarısı bu yüzden hiç çıkmıyordu.
+    ///
+    /// <para>Özet çağırandan ALINMAZ, diske yazılmış dosyadan hesaplanır: bu uç dışarıdan da
+    /// çağrılabildiği için çağıranın beyanı çift kayıt tespitini yanıltabilirdi.</para>
+    ///
+    /// <para>Dosya yerinde yoksa null döner — özet bir tespit yardımcısıdır, yokluğu kaydı
+    /// engellemez.</para>
+    /// </summary>
+    private async Task<string?> ComputeContentHashAsync(string storedFileName)
+    {
+        var path = _rootFolderProvider.ResolveSafePath(storedFileName);
+        if (path == null || !File.Exists(path))
+        {
+            return null;
+        }
+
+        await using var stream = new FileStream(
+            path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 81920, useAsync: true);
+
+        return Convert.ToHexString(await SHA256.HashDataAsync(stream)).ToLowerInvariant();
+    }
+
     public virtual async Task<DocumentAttachmentDownloadDto> PrepareDownloadAsync(Guid attachmentId)
     {
         var attachment = await _attachmentRepository.GetAsync(attachmentId);

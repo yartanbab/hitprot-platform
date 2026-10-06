@@ -71,7 +71,18 @@ public static class ReleaseNoteCatalog
                 "sayfanın kendisi çıkmıyordu; sayfaya ancak bir projenin içindeki bağlantıdan " +
                 "ulaşabiliyorlardı. Aynı durum yalnız kasa yetkisi olan kullanıcılar için de geçerliydi. " +
                 "Artık Finans Merkezi'ni açma yetkisi olan herkes onu 'Finans & Bütçe' menüsünde görüyor. " +
-                "Hangi sekmeleri göreceğiniz değişmedi; yetkiniz olmayan sekmeler yine görünmez.")
+                "Hangi sekmeleri göreceğiniz değişmedi; yetkiniz olmayan sekmeler yine görünmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Aynı dosya iki kez yüklenince eşleştirme ekranı artık uyarıyor",
+                "'Harcama ↔ belge eşleştirme' ekranında, bir dosyanın birebir aynısı başka bir belgede " +
+                "de varsa 'Aynı dosya başka bir belgede de var' uyarısı çıkması gerekiyordu; çıkmıyordu. " +
+                "Aynı fatura farklı bir adla ikinci kez yüklendiğinde program bunu fark etmiyor, iki " +
+                "belge de ayrı ayrı harcamalara bağlanabiliyordu. " +
+                "Artık dosyanın içeriği yüklenirken kaydediliyor ve aynı içerik ikinci kez geldiğinde " +
+                "uyarı görünüyor; dosyanın adı farklı olsa da. " +
+                "Uyarı bundan sonra yüklenen dosyalar için çalışır; daha önce yüklenmiş dosyalar " +
+                "kendi aralarında karşılaştırılmaz.")
         ),
 
         new ReleaseNote(
