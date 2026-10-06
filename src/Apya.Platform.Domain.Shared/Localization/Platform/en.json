@@ -1897,6 +1897,8 @@
     "Platform:Grant:CostLimitPercentInvalid": "Cost item limit must be between 0 and 100.",
     "Platform:Grant:PublishRequiredFieldsMissing": "Cannot publish, required fields are empty: {Fields}",
     "Platform:Grant:StageTemplateInUse": "This template is used by {GrantCount} programme(s); change their template before deleting it.",
+    "Platform:Grant:CallInUse": "This call has {ApplicationCount} application(s); deleting it would leave firms unable to open them. Close the call instead.",
+    "Platform:Grant:ProgramInUse": "Calls of this programme have {ApplicationCount} application(s); deleting it would leave firms unable to open them. Close its calls instead.",
     "Platform:Grant:DraftIdentityRequired": "Cannot save the draft: programme name and issuer are required.",
     "Platform:Grant:ParameterNoSourceValue": "There is no value read from the official text for this requirement; it cannot be compared with the source.",
     "Platform:Documents:FileNameRequired": "Document name cannot be empty.",

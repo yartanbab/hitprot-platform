@@ -1,10 +1,13 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Volo.Abp;
 using Volo.Abp.Authorization;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
 
@@ -21,15 +24,21 @@ public class GrantAppService :
 {
     private readonly IRepository<GrantCall, Guid> _callRepository;
     private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepository;
+    private readonly IRepository<GrantApplication, Guid> _applicationRepository;
+    private readonly IDataFilter<IMultiTenant> _mtFilter;
 
     public GrantAppService(
         IRepository<Grant, Guid> repository,
         IRepository<GrantCall, Guid> callRepository,
-        IRepository<GrantCriteriaTag, Guid> criteriaRepository)
+        IRepository<GrantCriteriaTag, Guid> criteriaRepository,
+        IRepository<GrantApplication, Guid> applicationRepository,
+        IDataFilter<IMultiTenant> mtFilter)
         : base(repository)
     {
         _callRepository = callRepository;
         _criteriaRepository = criteriaRepository;
+        _applicationRepository = applicationRepository;
+        _mtFilter = mtFilter;
         GetPolicyName    = PlatformPermissions.Grants.Default;
         GetListPolicyName = PlatformPermissions.Grants.Default;
         CreatePolicyName = PlatformPermissions.Grants.Create;
@@ -65,6 +74,34 @@ public class GrantAppService :
         var dto = await base.UpdateAsync(id, input);
         await SyncCriteriaAsync(id, input);
         return await GetAsync(id);
+    }
+
+    /// <summary>
+    /// Program çağrılarıyla birlikte silinir — onay metni "programını ve bütün çağrılarını" diyor,
+    /// oysa yalnız program siliniyor, çağrılar programsız kalıyordu. Çağrılarından birine başvuru
+    /// yapılmışsa hiçbir şey silinmez (bkz. <see cref="GrantCallAppService"/>: yetim başvuruyu
+    /// firma açamaz).
+    /// </summary>
+    protected override async Task DeleteByIdAsync(Guid id)
+    {
+        var calls = await _callRepository.GetListAsync(c => c.GrantId == id);
+        var callIds = calls.Select(c => c.Id).ToList();
+
+        int applicationCount;
+        // Başvurular kiracılarda durur; buraya yalnız host bağlamında gelinir (CheckDeletePolicyAsync).
+        using (_mtFilter.Disable())
+        {
+            applicationCount = (int)await _applicationRepository.CountAsync(a => callIds.Contains(a.GrantCallId));
+        }
+
+        if (applicationCount > 0)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantProgramInUse)
+                .WithData("ApplicationCount", applicationCount);
+        }
+
+        await _callRepository.DeleteManyAsync(calls);
+        await base.DeleteByIdAsync(id);
     }
 
     // Katalog yazma izinleri host-only tanımlıdır (PlatformPermissionDefinitionProvider).
