@@ -1240,6 +1240,17 @@ namespace Apya.Platform.Tasks
         }
 
         // --- 7. DOSYA METODLARI ---
+
+        /// <summary>
+        /// DOC-11 · Dosya diske yazılmadan ÖNCE çağrılır. AddAttachmentAsync aynı kapıyı
+        /// kendi içinde de uygular, ama o noktada dosya çoktan yazılmıştır: reddedilen istek
+        /// hata alsa bile dosya yükleme klasöründe hiçbir kayda bağlı olmadan kalıyordu.
+        /// </summary>
+        public async Task EnsureAttachmentUploadAllowedAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+        }
+
         public async Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize)
         {
             await EnsureTaskAccessAllowedAsync(taskId);
