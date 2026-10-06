@@ -5,10 +5,13 @@ using Apya.Platform.ProjectBudgets;
 using Apya.Platform.ProjectBudgets.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Permissions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Apya.Platform.Web.Pages.Finance;
 
 /// <summary>Dilime kesinti ekler. Kararı (revizyon / finanse edilmeyen) ayrı adımda verilir.</summary>
+[Authorize(PlatformPermissions.Projects.ViewBudget)]
 public class DeductionModalModel : AbpPageModel
 {
     private readonly IProjectBudgetAppService _budgetAppService;
