@@ -36,6 +36,13 @@ public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
         _localEventBus = localEventBus;
     }
 
+    /// <summary>
+    /// 🔴 Uzaktan ÇAĞRILAMAZ. Girdi, saklanan dosyanın sunucudaki YOLUNU ve adını çağırandan alır;
+    /// içe aktarma sayfası dosyayı kendisi yazdıktan sonra verir. Otomatik API ucu olarak açıkken
+    /// yetkili bir kullanıcı sunucudaki herhangi bir yolu "işlenecek dosya" diye, herhangi bir
+    /// saklanan adı da "proje eki" diye verebiliyordu. Yalnız süreç içinden (sayfa modeli) çağrılır.
+    /// </summary>
+    [RemoteService(IsEnabled = false)]
     public async Task<Guid> UploadPdfForExtractionAsync(UploadPdfInput input)
     {
         if (input.FileBytes == null || input.FileBytes.Length == 0)
