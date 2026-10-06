@@ -93,7 +93,19 @@ public static class ReleaseNoteCatalog
                 "Artık satıra bastığınızda aynı projenin 'Gelir-Gider' sekmesi açılıyor; gelire bastıysanız " +
                 "gelirler, gidere bastıysanız giderler süzülmüş geliyor. Fatura satırı da, projenin Faturalar " +
                 "sekmesi varsa oraya gidiyor. " +
-                "Proje seçili değilken ('Tüm hesaplar') davranış değişmedi.")
+                "Proje seçili değilken ('Tüm hesaplar') davranış değişmedi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Belgenize girdiğiniz geçerlilik tarihi yaklaşınca haber alıyorsunuz",
+                "Dokümanlar'da bir belgenin ayrıntısına geçerlilik tarihi girebiliyordunuz ve ekran 'kaç gün " +
+                "kaldı' diye gösteriyordu; ama program o tarihi takip etmiyordu. Sözleşmenizin bitişini " +
+                "belgeye yazsanız bile gün geldiğinde kimseye haber gitmiyordu. " +
+                "Artık geçerliliğin dolmasına 30 gün ve 7 gün kala, bir de dolduğu gün bildirim geliyor. " +
+                "Bildirimde belgenin adı ve tarihi yazıyor; üstüne bastığınızda belgenin bulunduğu klasör açılıyor. " +
+                "Bildirim belgeyi yükleyen kişiye, belge bir projeye bağlıysa o projenin liderlerine de gidiyor. " +
+                "Her aşama için bir kez gelir; tarihi uzatırsanız hatırlatmalar yeni tarihe göre yeniden başlar. " +
+                "Süresi bir haftadan daha önce dolmuş belgeler için geriye dönük bildirim gelmez. " +
+                "Bu bildirimleri almak istemiyorsanız bildirim ayarlarınızdan 'Belgeler' kategorisini kapatabilirsiniz.")
         ),
 
         new ReleaseNote(

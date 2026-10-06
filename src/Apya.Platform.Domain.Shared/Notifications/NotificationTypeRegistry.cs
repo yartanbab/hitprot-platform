@@ -80,6 +80,12 @@ public static class NotificationTypeRegistry
 
             // Aşağıdaki hedef sayfalar henüz tekil kayda odaklanmayı desteklemiyor;
             // şablonda {0} yok, ilgili listeye götürüyoruz.
+            // DOC-05 / NTF-07: Bağlantı belgenin durduğu klasörü açar. Önem "Normal"; 7 gün
+            // eşiğinde ve dolduğunda yayın sırasında "High"a yükseltilir.
+            [NotificationType.DocumentFileExpiry] = new(
+                NotificationCategory.Documents, NotificationSeverity.Normal,
+                "fa fa-file-circle-exclamation", "/Documents?folder={0}", GroupSimilar: false),
+
             [NotificationType.DocumentExpiring] = new(
                 NotificationCategory.Documents, NotificationSeverity.High,
                 "fa fa-file-circle-exclamation", "/Documents", GroupSimilar: false),

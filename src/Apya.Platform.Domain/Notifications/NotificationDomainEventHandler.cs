@@ -19,6 +19,7 @@ public class NotificationDomainEventHandler :
     ILocalEventHandler<TaskOverdueEto>,
     ILocalEventHandler<DocumentExpiringEto>,
     ILocalEventHandler<Apya.Platform.Projects.ProjectEndingSoonEto>,
+    ILocalEventHandler<Apya.Platform.Documents.DocumentFileExpiryEto>,
     ITransientDependency
 {
     private readonly NotificationManager _notificationManager;
@@ -218,6 +219,40 @@ public class NotificationDomainEventHandler :
                 NotificationType.ProjectEndingSoon,
                 entityType: "Project",
                 entityId: eventData.ProjectId,
+                severity: severity
+            );
+        }
+    }
+
+    /// <summary>
+    /// 🔴 DOC-05 / NTF-07: Belgenin geçerliliği yaklaşıyor ya da doldu. Tekillik anahtarı
+    /// BELGE + TARİH + EŞİK: worker saatte bir koştuğu hâlde her eşik (30 gün / 7 gün / doldu)
+    /// bir kez bildirilir; tarih uzatılırsa eşikler yeni tarih için yeniden çalışır.
+    /// </summary>
+    public async Task HandleEventAsync(Apya.Platform.Documents.DocumentFileExpiryEto eventData)
+    {
+        var onceKey =
+            $"{(int)NotificationType.DocumentFileExpiry}:DocumentFile:{eventData.DocumentFileId}:{eventData.ExpiryDate:yyyyMMdd}:{eventData.Threshold}";
+
+        var title = eventData.DaysRemaining < 0
+            ? _l["Notification:DocumentFileExpiry:TitleExpired"]
+            : eventData.DaysRemaining == 0
+                ? _l["Notification:DocumentFileExpiry:TitleToday"]
+                : _l["Notification:DocumentFileExpiry:Title", eventData.DaysRemaining];
+
+        var body = _l["Notification:DocumentFileExpiry:Body",
+            eventData.DisplayName, eventData.ExpiryDate.ToString("dd.MM.yyyy")];
+
+        // 30 gün bir hatırlatma; 7 gün ve "doldu" artık bir uyarı.
+        var severity = eventData.Threshold <= 7 ? NotificationSeverity.High : (NotificationSeverity?)null;
+
+        foreach (var userId in Recipients(eventData.RecipientIds.ToArray()))
+        {
+            await _notificationManager.PublishOnceAsync(
+                userId, onceKey, title, body,
+                NotificationType.DocumentFileExpiry,
+                entityType: "Document",
+                entityId: eventData.DocumentId,
                 severity: severity
             );
         }
