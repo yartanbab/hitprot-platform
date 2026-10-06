@@ -33,6 +33,17 @@ public static class ProjectUpdateGuard
         decimal HourlyRate,
         string Currency);
 
+    /// <summary>
+    /// 🔴 PRJ-06 · OLUŞTURMADA bütçe. Düzenlemede bütçe yetkisi (Projects.ViewBudget)
+    /// uygulanıyordu, oluşturmada uygulanmıyordu: bütçeyi göremeyen kullanıcı yeni projeye
+    /// bütçe yazabiliyor, sonra yazdığını ne görebiliyor ne değiştirebiliyordu.
+    ///
+    /// <para>Yetki yoksa bütçe ve saatlik ücret 0 doğar; bütçeyi sonradan yetkili biri girer.
+    /// Para birimi bir TUTAR değildir ve projenin zorunlu alanıdır — gelen değer korunur.</para>
+    /// </summary>
+    public static (decimal TotalBudget, decimal HourlyRate) ResolveForCreate(CreateProjectDto input, bool canEditBudget)
+        => canEditBudget ? (input.TotalBudget, input.HourlyRate) : (0m, 0m);
+
     public static Effective Resolve(Project current, CreateProjectDto input, bool canEditBudget)
     {
         return new Effective(

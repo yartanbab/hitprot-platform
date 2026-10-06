@@ -38,6 +38,19 @@ public class ProjectCreateModal_Tests : PlatformWebTestBase
                 "form 'Diğer' ile açılmalı; 'Hibe Projesi' varsayılanı sıradan projeyi yanlış etiketliyordu");
     }
 
+    /// <summary>
+    /// PRJ-06 · Bütçe yetkisi OLAN kullanıcı bütçe alanını görmeye devam eder (bu barındırıcı
+    /// her izne evet der). Yetkisiz yol <c>ProjectCreateBudgetPermission_Tests</c>'te.
+    /// </summary>
+    [Fact]
+    public async Task Butce_yetkisi_olana_butce_alani_gosterilir()
+    {
+        var doc = Parse(await GetResponseAsStringAsync("/Projects/CreateModal"));
+
+        doc.DocumentNode.SelectSingleNode("//input[@id='PfBudgetDisplay']")
+            .ShouldNotBeNull("yetkili kullanıcı bütçeyi oluştururken girebilmeli");
+    }
+
     /// <summary>Üç sistem kategorisinin kartı da formda olmalı — varsayılan değişimi kart setini daraltmaz.</summary>
     [Fact]
     public async Task Kategori_Kartlari_Formda()

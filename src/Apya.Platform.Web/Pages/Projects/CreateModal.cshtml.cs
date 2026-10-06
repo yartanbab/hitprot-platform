@@ -39,6 +39,13 @@ public class CreateModalModel : PlatformPageModel
     public List<SelectListItem> Currencies { get; set; } = new();
 
     /// <summary>
+    /// PRJ-06 · Bütçe alanı yalnız bütçe yetkisi olana gösterilir (düzenleme ekranıyla aynı
+    /// kural). Sunucu yetkisiz kullanıcının gönderdiği bütçeyi zaten yazmıyor; alanı
+    /// göstermek, yazdığı rakamın sessizce atılması demek olurdu.
+    /// </summary>
+    public bool CanViewBudget { get; private set; }
+
+    /// <summary>
     /// Kategori artık açılır liste değil, seçim kartı — formun geri kalanının
     /// hangi alanları göstereceğini bu belirlediği için en görünür alan o.
     /// Liste tanım tablosundan gelir; kullanıcının eklediği kategoriler de buradadır.
@@ -67,6 +74,8 @@ public class CreateModalModel : PlatformPageModel
     public async Task OnGetAsync()
     {
         await LoadCategoryCardsAsync();
+
+        CanViewBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
 
         Project = new CreateProjectDto
         {
