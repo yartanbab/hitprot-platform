@@ -28,7 +28,11 @@ public class ReportSectionDto : EntityDto<Guid>
     public int Order { get; set; }
     public bool IsEnabled { get; set; }
 
-    /// <summary>Bu bölümün verisi bu fazda üretilebiliyor mu (Faz E bölümleri false).</summary>
+    /// <summary>
+    /// Bu bölümün verisi üretilebiliyor mu (ReportSectionAvailability). Bugün her bölüm için
+    /// true; verisi hazır olmadan eklenen yeni bir bölüm türünde false gelir ve şablon
+    /// düzenleyicisi o satırı açtırmaz.
+    /// </summary>
     public bool IsAvailable { get; set; }
 }
 
