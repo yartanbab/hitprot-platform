@@ -26,7 +26,7 @@ namespace Apya.Platform.Grants;
 /// gördüğü projenin hibesini göremezdi.</para>
 /// </summary>
 [Authorize(PlatformPermissions.Grants.Default)]
-public class GrantProjectOriginAppService : ApplicationService, IGrantProjectOriginAppService
+public class GrantProjectOriginAppService : PlatformAppService, IGrantProjectOriginAppService
 {
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantApplicationDocument, Guid> _docRepo;

@@ -293,6 +293,10 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
 
         kayit.ShouldNotBeNull("gönderim süreç izine yazılmalı");
         kayit!.Context.ShouldNotBeNullOrWhiteSpace("iz, evrak durumunu taşımalı");
+        // 🔴 "Boş değil" ham anahtarı da kabul ediyordu: servis yerelleştirme kaynağı
+        // olmadan koştuğu için iz "Grants:Notify:Trigger:ApplicationSubmitted:…" yazıyordu.
+        kayit.Context!.ShouldNotContain("Grants:", Case.Sensitive);
+        kayit.Context.ShouldContain("zorunlu evrak", Case.Sensitive);
     }
 
     /// <summary>
@@ -341,6 +345,9 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
 
         kayit.ShouldNotBeNull("devretme süreç izine yazılmalı");
         kayit!.Context.ShouldNotBeNullOrWhiteSpace("iz, sıranın kime geçtiğini taşımalı");
+        // 🔴 Aynı tuzak: iz "Grants:Party:Danisman" yazıyordu. Tarafın ADI olmalı.
+        kayit.Context!.ShouldNotContain("Grants:", Case.Sensitive);
+        new[] { "Danışman", "Firma" }.ShouldContain(kayit.Context);
     }
 
     [Fact]

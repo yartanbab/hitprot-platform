@@ -33,7 +33,7 @@ namespace Apya.Platform.Grants;
 /// filtresi kapatılır ve 🔴 TenantId koşulu ELLE konur.</para>
 /// </summary>
 [Authorize(PlatformPermissions.Grants.Default)]
-public class GrantApplicationWizardAppService : ApplicationService, IGrantApplicationWizardAppService
+public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplicationWizardAppService
 {
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantApplicationBudgetLine, Guid> _budgetRepo;

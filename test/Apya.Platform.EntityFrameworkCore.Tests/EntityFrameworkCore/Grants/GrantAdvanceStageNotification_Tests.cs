@@ -129,6 +129,53 @@ public class GrantAdvanceStageNotification_Tests : PlatformEntityFrameworkCoreTe
     }
 
     /// <summary>
+    /// 🔴 LIF-07 · Bildirimdeki aşama adı YERELLEŞTİRİLMİŞ karşılığıdır, ham enum adı değil.
+    /// Firma "Odeme" / "Degerlendirme" diye Türkçe karaktersiz teknik adı görüyordu; bildirim
+    /// kalıcı kayıt olduğu için yanlış metin sonradan da düzelmiyordu.
+    ///
+    /// <para>Ödeme aşaması seçildi çünkü adı enum adından FARKLI ("Ödeme" ≠ "Odeme"); "Onay"
+    /// ikisinde de aynı yazıldığı için hatayı gizlerdi.</para>
+    /// </summary>
+    [Fact]
+    public async Task Host_ekranindan_ilerletince_bildirim_asamayi_yerellestirilmis_adiyla_yazar()
+    {
+        var (tenantId, applicationId, _) = await ArrangeAsync();
+
+        await _host.AdvanceStageAsync(new AdvanceApplicationStageInput
+        {
+            ApplicationId = applicationId, Stage = GrantApplicationStage.Odeme
+        });
+
+        var notification = (await StageNotificationsAsync(tenantId, applicationId)).ShouldHaveSingleItem();
+        notification.Body.ShouldContain("Ödeme", Case.Sensitive);
+        notification.Body.ShouldNotContain("Odeme", Case.Sensitive);
+    }
+
+    /// <summary>
+    /// 🔴 LIF-07 · Panodan sabit aşamaya taşımak aynı metni HEM bildirime HEM süreç akışına
+    /// yazıyor; ikisi de ham enum adını taşıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Panodan_tasiyinca_bildirim_ve_surec_akisi_asamayi_yerellestirilmis_adiyla_yazar()
+    {
+        var (tenantId, applicationId, _) = await ArrangeAsync();
+
+        await GetRequiredService<IGrantPipelineAppService>().MoveAsync(new MoveGrantApplicationInput
+        {
+            ApplicationId = applicationId, Stage = GrantApplicationStage.Odeme
+        });
+
+        var notification = (await StageNotificationsAsync(tenantId, applicationId)).ShouldHaveSingleItem();
+        notification.Body.ShouldContain("Ödeme", Case.Sensitive);
+        notification.Body.ShouldNotContain("Odeme", Case.Sensitive);
+
+        var moved = (await ActivitiesAsync(tenantId, applicationId, GrantActivityKind.StageMoved)).ShouldHaveSingleItem();
+        moved.Context.ShouldNotBeNull();
+        moved.Context!.ShouldContain("Ödeme", Case.Sensitive);
+        moved.Context.ShouldNotContain("Odeme", Case.Sensitive);
+    }
+
+    /// <summary>
     /// Tür <c>GroupSimilar</c>: okunmamış aynı bildirim varken yenisi satır açmaz, sayacı artırır —
     /// satır sayısı tek başına yetmez, <c>OccurrenceCount</c> da sabit kalmalı.
     /// </summary>

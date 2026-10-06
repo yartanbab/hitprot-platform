@@ -99,6 +99,43 @@ public class GrantProjectOrigin_Tests : PlatformEntityFrameworkCoreTestBase
         }
     }
 
+    /// <summary>
+    /// Katalogdaki program sonradan silinmişse şerit yine basılır (bağ denetim izidir) ve
+    /// program adı yerine genel bir etiket konur.
+    ///
+    /// <para>🔴 Etiketin METNİ ölçülüyor: servis yerelleştirme kaynağı olmadan koşarken bu
+    /// alan ham anahtarı ("Grants:Origin:UnknownProgram") taşıyordu — "boş değil" diye
+    /// ölçen bir test onu yakalayamazdı.</para>
+    /// </summary>
+    [Fact]
+    public async Task Programi_silinmis_projede_genel_etiket_yazar_ham_anahtar_degil()
+    {
+        var call = await CreateHostCallAsync("Silinecek Program", "2026/4");
+        var tenantId = await CreateTenantAsync("Etiket Firması");
+
+        Guid projectId;
+        using (_currentTenant.Change(tenantId))
+        {
+            var project = new Project(Guid.NewGuid(), tenantId, null, "Programı Kalkan", "PRJ-O4", "açıklama");
+            await _projectRepository.InsertAsync(project, autoSave: true);
+            projectId = project.Id;
+
+            var application = new GrantApplication(Guid.NewGuid(), tenantId, call.Id);
+            application.LinkToProject(project.Id);
+            await _appRepository.InsertAsync(application, autoSave: true);
+        }
+
+        await _grantRepository.DeleteAsync(call.GrantId, autoSave: true);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            var dto = await _origin.GetByProjectAsync(projectId);
+
+            dto.ShouldNotBeNull("program silinse de bağ durur");
+            dto!.GrantName.ShouldBe("Hibe programı");
+        }
+    }
+
     /// <summary>Hibeden doğmamış projede şerit hiç basılmamalı.</summary>
     [Fact]
     public async Task Hibesiz_proje_null_doner()
