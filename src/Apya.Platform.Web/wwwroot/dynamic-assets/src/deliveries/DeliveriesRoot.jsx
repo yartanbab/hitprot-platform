@@ -7,6 +7,7 @@ import {
   getTemplates, removeItem, revokeShareLink, searchDocuments,
 } from './api';
 import { PreflightDialog } from './PreflightDialog';
+import { ShareLinkDialog } from './ShareLinkDialog';
 import { wasShown } from '../lib/api/abpErrors';
 
 /**
@@ -76,6 +77,8 @@ export function DeliveriesRoot() {
   const [picker, setPicker] = useState('');
   const [pickerResults, setPickerResults] = useState([]);
   const [shareLinks, setShareLinks] = useState([]);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [createdLink, setCreatedLink] = useState(null);
   const [toast, setToast] = useState(null);
 
   const canGenerate = abpAuth('Platform.Documents.GenerateReports');
@@ -279,25 +282,32 @@ export function DeliveriesRoot() {
     }
   };
 
-  const handleShare = async () => {
-    const days = Number(window.prompt('Kaç gün geçerli olsun?', '14'));
-    if (!days || days < 1) return;
+  /* Paylaşım bağlantısı tek pencerede kurulur (ShareLinkDialog). Üç ardışık tarayıcı
+     kutusuydu ve bağlantı dördüncü bir kutuda gösteriliyordu. */
+  const handleShare = () => {
+    setCreatedLink(null);
+    setShareOpen(true);
+  };
 
-    const allowDownload = window.confirm('İndirmeye izin verilsin mi? (İptal = yalnız görüntüleme)');
-    const watermark = window.prompt('Filigran metni (boş bırakılabilir):') || null;
-
+  const submitShare = async (options) => {
+    const packageId = detail.id;
     setBusy(true);
     try {
-      const link = await createShareLink({
-        targetType: 1, targetId: detail.id, lifetimeDays: days, allowDownload, watermark,
-      });
-      setShareLinks(await getShareLinks(detail.id));
-      // Token yalnız bu yanıtta döner — kullanıcıya hemen gösterilmeli.
-      window.prompt('Bağlantı (yalnız şimdi gösterilir, kopyalayın):', window.location.origin + link.url);
+      const link = await createShareLink({ targetType: 1, targetId: packageId, ...options });
+      // Token yalnız bu yanıtta döner — ÖNCE gösterilir. Liste yenilemesi aynı try'daydı:
+      // yenileme düşerse oluşmuş bağlantı hiç gösterilmeden kayboluyordu.
+      setCreatedLink(window.location.origin + link.url);
     } catch (e) {
       if (!wasShown(e)) abpNotify('error', 'Bağlantı oluşturulamadı.');
+      return;
     } finally {
       setBusy(false);
+    }
+
+    try {
+      setShareLinks(await getShareLinks(packageId));
+    } catch (e) {
+      console.error('[Deliveries] share links', e);
     }
   };
 
@@ -578,6 +588,13 @@ export function DeliveriesRoot() {
           onClose={() => setShowPreflight(false)}
         />
       )}
+      <ShareLinkDialog
+        open={shareOpen}
+        busy={busy}
+        link={createdLink}
+        onSubmit={submitShare}
+        onClose={() => setShareOpen(false)}
+      />
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </>,
   );
