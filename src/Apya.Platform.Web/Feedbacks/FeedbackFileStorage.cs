@@ -10,11 +10,17 @@ using Volo.Abp.DependencyInjection;
 namespace Apya.Platform.Web.Feedbacks;
 
 /// <summary>
-/// Geri bildirim ekleri için depolama. IUploadedFileStorage'dan BİLİNÇLİ olarak ayrı:
-/// o wwwroot/uploads'a yazar ve static file middleware dosyaları oturumsuz herkese
-/// servis eder. Ekran görüntüleri KVKK'lı ekran içeriği taşıyabildiği için burada
-/// wwwroot DIŞINA (App_Data) yazılır — erişim yalnızca yetki kontrolü yapan
-/// handler'lar üzerinden mümkündür.
+/// Geri bildirim ekleri için depolama. IUploadedFileStorage'dan BİLİNÇLİ olarak ayrı.
+///
+/// <para>Ayrılığın gerekçesi KURAL farkıdır, konum farkı değil: iki depo da wwwroot DIŞINA
+/// yazar (genel yüklemeler App_Data/uploads, bunlar App_Data/feedback-uploads) ve hiçbiri
+/// statik dosya olarak servis edilmez. Burada tür listesi dardır (ekran görüntüsü + teşhise
+/// yarayan belge; ofis ve arşiv biçimleri yok) ve boyut sınırı 10 MB'tır.</para>
+///
+/// <para>Ayrı klasörün ikinci faydası: genel dosya ucu (/file/get) yalnız App_Data/uploads'a
+/// bakar, dolayısıyla geri bildirim eki oradan HİÇ istenemez. Ekran görüntüleri KVKK'lı ekran
+/// içeriği taşıyabildiği için bu eklere erişim yalnızca yetki kontrolü yapan geri bildirim
+/// handler'ları üzerinden mümkündür.</para>
 /// </summary>
 public class FeedbackFileStorage : ITransientDependency
 {

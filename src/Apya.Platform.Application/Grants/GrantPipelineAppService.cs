@@ -32,7 +32,7 @@ namespace Apya.Platform.Grants;
 /// ELLE konur; başvurular kiracıya aittir ve bilinçli olarak filtresiz okunur.</para>
 /// </summary>
 [Authorize(PlatformPermissions.Grants.Edit)]
-public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppService
+public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppService
 {
     /// <summary>Kalan gün bu eşiğin altındaysa kart riskli sayılır (tasarım 2c: 20 gün).</summary>
     public const int RiskyDayThreshold = 20;
@@ -115,7 +115,9 @@ public class GrantPipelineAppService : ApplicationService, IGrantPipelineAppServ
         else if (input.Stage.HasValue)
         {
             application.AdvanceStage(input.Stage.Value);
-            movedTo = input.Stage.Value.ToString();
+            // LIF-07: ham enum adı değil, yerelleştirilmiş karşılığı — bu metin hem süreç
+            // akışına hem firmaya giden bildirime yazılıyor.
+            movedTo = L["Grants:Stage:" + input.Stage.Value].Value;
         }
 
         await _appRepo.UpdateAsync(application, autoSave: true);

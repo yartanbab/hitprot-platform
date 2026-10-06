@@ -41,6 +41,9 @@ namespace Apya.Platform.Web.Controllers // Or Apya.Platform.HttpApi.Controllers 
             if (!allowedExtensions.Contains(ext))
                 return BadRequest(new { error = "Bu dosya uzantısına izin verilmiyor." });
 
+            // Erişim kontrolü yazmadan ÖNCE: reddedilen istek diskte yetim dosya bırakmasın.
+            await _taskAppService.EnsureAttachmentUploadAllowedAsync(taskId);
+
             var uploadsPath = _rootFolderProvider.GetRootFolder();
 
             var storedFileName = $"{Guid.NewGuid()}{ext}";

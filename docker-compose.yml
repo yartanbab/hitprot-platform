@@ -48,11 +48,17 @@ services:
       migrator:
         condition: service_completed_successfully
     volumes:
-      # Yüklenen dokümanlar (LocalDiskUploadedFileStorage → wwwroot/uploads)
-      - uploads:/app/wwwroot/uploads
-      # Data Protection anahtar halkası — restart'ta antiforgery/auth cookie'leri bozulmasın.
-      # (Tek instance içindir; çok-instance'a geçince kod tarafında Redis/DB'ye taşınmalı.)
-      - dp_keys:/root/.aspnet/DataProtection-Keys
+      # Uygulamanın KALICI verisi tek klasörde: /app/App_Data (içerik kökü /app).
+      #   uploads/              → yüklenen dokümanlar (UploadedFileRootFolderProvider)
+      #   feedback-uploads/     → geri bildirim ekleri (FeedbackFileStorage)
+      #   DataProtection-Keys/  → anahtar halkası (PlatformWebModule); kaybolursa her yeniden
+      #                           oluşturmada tüm oturumlar düşer, antiforgery 400 verir.
+      # Eskiden burada iki birim vardı ve İKİSİ DE uygulamanın yazmadığı yola bağlıydı
+      # (wwwroot/uploads ve /root/.aspnet/DataProtection-Keys): yüklemeler de anahtarlar da
+      # konteyner yeniden oluşturulunca kayboluyordu. wwwroot altı ayrıca oturumsuz servis edilir —
+      # yükleme klasörü oraya ASLA bağlanmaz.
+      # (Tek instance içindir; çok-instance'a geçince anahtar halkası Redis/DB'ye taşınmalı.)
+      - app_data:/app/App_Data
       # OpenIddict imzalama/şifreleme sertifikası (production'da zorunlu, salt-okunur)
       - ./secrets/openiddict.pfx:/app/openiddict.pfx:ro
     healthcheck:
@@ -91,8 +97,7 @@ services:
 
 volumes:
   pg_data:
-  uploads:
-  dp_keys:
+  app_data:
   caddy_data:
   caddy_config:
   # redis_data:

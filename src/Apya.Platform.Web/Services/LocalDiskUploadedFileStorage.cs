@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Apya.Platform;
 using Apya.Platform.Storage;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Volo.Abp;
 using Volo.Abp.DependencyInjection;
 
@@ -23,10 +24,14 @@ public class LocalDiskUploadedFileStorage : IUploadedFileStorage, ITransientDepe
     private const long MaxFileSize = 25 * 1024 * 1024; // 25 MB
 
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
+    private readonly ILogger<LocalDiskUploadedFileStorage> _logger;
 
-    public LocalDiskUploadedFileStorage(IUploadedFileRootFolderProvider rootFolderProvider)
+    public LocalDiskUploadedFileStorage(
+        IUploadedFileRootFolderProvider rootFolderProvider,
+        ILogger<LocalDiskUploadedFileStorage> logger)
     {
         _rootFolderProvider = rootFolderProvider;
+        _logger = logger;
     }
 
     public async Task<string> StoreAsync(IFormFile file)
@@ -66,5 +71,21 @@ public class LocalDiskUploadedFileStorage : IUploadedFileStorage, ITransientDepe
         await File.WriteAllBytesAsync(filePath, content);
 
         return storedFileName;
+    }
+
+    public void TryDelete(string storedFileName)
+    {
+        try
+        {
+            var path = _rootFolderProvider.ResolveSafePath(storedFileName);
+            if (path != null && File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Öksüz yükleme silinemedi: {StoredFileName}", storedFileName);
+        }
     }
 }

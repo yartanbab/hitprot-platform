@@ -22,7 +22,7 @@ namespace Apya.Platform.Documents;
 /// Adam-gün, görev tahmin/kayıt saatlerinden 8 saat = 1 gün kabulüyle çıkar.
 /// </summary>
 [Authorize(PlatformPermissions.Projects.Default)]
-public class ProjectTimelineAppService : ApplicationService, IProjectTimelineAppService
+public class ProjectTimelineAppService : PlatformAppService, IProjectTimelineAppService
 {
     private const decimal HoursPerPersonDay = 8m;
 

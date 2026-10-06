@@ -2,6 +2,7 @@
 @using Apya.Platform.Localization
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<PlatformResource> L
+@using Apya.Platform.Grants
 @model Apya.Platform.Web.Pages.Grants.ImplementationModel
 @{
     ViewBag.Title = L["Grants:Impl:Title"].Value;
@@ -130,5 +131,39 @@
                 </div>
             </div>
         </aside>
+    </div>
+
+    @* Bölüm durumu tek pencerede. İki ardışık istem kutusuydu (durum, sonra not): not kutusunda
+       vazgeçmek kaydı durdurmuyor, kutu boş açıldığı için bölümün mevcut notu da siliniyordu.
+       Not sınırı sunucudakiyle aynı (SetGrantReportSectionStatusInput.Note). *@
+    <div class="modal fade" id="SectionStatusModal" tabindex="-1" aria-labelledby="SectionStatusModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="SectionStatusModalTitle">@L["Grants:Impl:SectionModal:Title"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Grants:Impl:SectionModal:Cancel"]"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="fw-semibold mb-3" id="SectionStatusName"></div>
+                    <div class="mb-3">
+                        <label class="form-label" for="SectionStatus">@L["Grants:Impl:SectionStatusPrompt"]</label>
+                        <select class="form-select" id="SectionStatus">
+                            @foreach (var status in Enum.GetValues<GrantReportStatus>())
+                            {
+                                <option value="@((int)status)">@L["Grants:Impl:Status:" + status]</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="SectionNote">@L["Grants:Impl:SectionNotePrompt"]</label>
+                        <input type="text" class="form-control" id="SectionNote" maxlength="256" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Impl:SectionModal:Cancel"]</button>
+                    <button type="button" class="btn btn-primary" id="SectionStatusSaveBtn">@L["Grants:Impl:SectionModal:Save"]</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

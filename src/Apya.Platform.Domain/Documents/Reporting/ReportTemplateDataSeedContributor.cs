@@ -14,9 +14,14 @@ namespace Apya.Platform.Documents;
 /// (TenantId = null), sabit GUID'lerle, idempotent.
 ///
 /// Bölüm listesi her şablonda AYNIDIR; şablonlar birbirinden hangi bölümlerin
-/// AÇIK geldiğiyle ayrışır. Verisi henüz üretilemeyen bölümler (Faz E: zaman
-/// çizelgesi, harcama eşleşmesi, ekip, riskler, kilometre taşları) her şablonda
-/// KAPALI doğar — boş sayfa basmaktansa hiç basmamak doğru.
+/// AÇIK geldiğiyle ayrışır. Bir bölüm, verisi üretilebiliyorsa
+/// (<see cref="ReportSectionAvailability"/>) VE şablonun tanımı onu istiyorsa açık doğar.
+///
+/// <para>Bugün BÜTÜN bölümlerin verisi üretilebiliyor; yeni kurulumda kapalı doğan bölüm
+/// "veri yok" demek değildir, o alıcı setinin onu seçmediği anlamına gelir. Eski
+/// kurulumlarda durum farklı olabilir: zaman çizelgesi, harcama eşleşmesi, ekip, riskler
+/// ve kilometre taşları verisi yokken KAPALI yazıldı ve tohumlayıcı var olan satıra
+/// dokunmadığı için öyle duruyor — o bölümleri şablon düzenleyicisinden kullanıcı açar.</para>
 ///
 /// <para>🔴 RPT-02 · Yeni bir bölüm TÜRÜ eklendiğinde iki ayrı küme vardır ve ikisi de
 /// burada tamamlanır: sistem şablonları (aşağıdaki tanımlar) ve kiracıların KENDİ
