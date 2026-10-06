@@ -120,24 +120,43 @@ $(function () {
         });
     });
 
+    // Bölüm durumu iki ardışık istem kutusuyla giriliyordu (önce durum, sonra not). Not
+    // kutusunda vazgeçmek kaydı DURDURMUYORDU: durum yine yazılıyor, kutu boş açıldığı için
+    // bölümün mevcut notu da siliniyordu. Artık tek pencere: mevcut durum ve not dolu gelir,
+    // vazgeçmek hiçbir şeyi değiştirmez, kaydetmek ikisini birden yazar.
+    var sectionModal = new bootstrap.Modal(document.getElementById('SectionStatusModal'));
+    var sectionId = null;
+
+    function findSection(id) {
+        var found = null;
+        (model.chain || []).forEach(function (c) {
+            (c.sections || []).forEach(function (s) { if (s.id === id) { found = s; } });
+        });
+        return found;
+    }
+
     $('#Chain').on('click', '.apya-im-section', function () {
         if (!model.canManage) { return; }
-        var sectionId = $(this).data('id');
-        var options = {};
-        reportKeys.forEach(function (k, i) { options[i] = l('Grants:Impl:Status:' + k); });
+        sectionId = $(this).data('id');
+        var current = findSection(sectionId) || {};
 
-        abp.message.prompt(l('Grants:Impl:SectionStatusPrompt'), {
-            input: 'select', inputOptions: options
-        }).then(function (status) {
-            if (status === null) { return; }
-            abp.message.prompt(l('Grants:Impl:SectionNotePrompt')).then(function (note) {
-                service.setSectionStatus({
-                    sectionId: sectionId,
-                    status: Number(status),
-                    note: note || null
-                }).then(function (dto) { model = dto; paint(); });
-            });
-        });
+        $('#SectionStatusName').text(current.name || '');
+        $('#SectionStatus').val(String(current.status || 0));
+        $('#SectionNote').val(current.note || '');
+        sectionModal.show();
+    });
+
+    $('#SectionStatusSaveBtn').on('click', function () {
+        var $btn = $(this).prop('disabled', true);
+
+        service.setSectionStatus({
+            sectionId: sectionId,
+            status: Number($('#SectionStatus').val()),
+            note: String($('#SectionNote').val() || '').trim() || null
+        }).then(function (dto) {
+            model = dto; paint();
+            sectionModal.hide();
+        }).always(function () { $btn.prop('disabled', false); });
     });
 
     $('#Chain').on('click', '.apya-im-pay', function () {

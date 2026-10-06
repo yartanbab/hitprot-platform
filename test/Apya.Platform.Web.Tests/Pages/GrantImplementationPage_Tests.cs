@@ -322,4 +322,67 @@ public class GrantImplementationPage_Tests : PlatformWebTestBase
                 }));
         }
     }
+
+    // ── Bölüm durumu tek pencerede ───────────────────────────────────────────
+
+    /// <summary>
+    /// Bölüm durumu iki ARDIŞIK istem kutusuyla giriliyordu: önce durum, sonra not. Not kutusunda
+    /// vazgeçmek kaydı durdurmuyordu — durum yine yazılıyor, kutu boş açıldığı için bölümün mevcut
+    /// notu da siliniyordu. Artık ikisi tek pencerede; not sınırı sunucudakiyle aynı.
+    /// </summary>
+    [Fact]
+    public async Task Bolum_Durumu_Penceresi_Durumu_Ve_Notu_Birlikte_Sorar()
+    {
+        var (_, id, _) = await SetupAsync();
+
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync($"/Grants/Implementation?id={id}"));
+
+        var modal = doc.DocumentNode.SelectSingleNode("//div[@id='SectionStatusModal']");
+        modal.ShouldNotBeNull("bölüm durumu penceresi sayfada yok");
+
+        // Seçenekler enum'un kendisinden: yeni bir durum eklenirse pencere onu da sunar.
+        modal!.SelectNodes(".//select[@id='SectionStatus']/option")!
+            .Select(o => o.GetAttributeValue("value", ""))
+            .ShouldBe(Enum.GetValues<GrantReportStatus>().Select(s => ((int)s).ToString()));
+
+        var note = modal.SelectSingleNode(".//input[@id='SectionNote']");
+        note.ShouldNotBeNull("not alanı pencerede olmalı");
+        note!.GetAttributeValue("maxlength", "").ShouldBe("256");
+
+        modal.SelectSingleNode(".//button[@id='SectionStatusSaveBtn']").ShouldNotBeNull();
+    }
+
+    /// <summary>
+    /// Betik tarafı: bölüm durumu için istem zinciri kalktı. Kalan üç istem kutusu tek alanlıdır
+    /// (rapor ekle, rapor durumu, bölüm ekle) — zincir değil.
+    /// </summary>
+    [Fact]
+    public void Bolum_Durumu_Icin_Ardisik_Istem_Kutusu_Kalmadi()
+    {
+        var script = System.IO.File.ReadAllText(
+            System.IO.Path.Combine(WebProjectRoot(), "Pages", "Grants", "Implementation.js"));
+
+        System.Text.RegularExpressions.Regex.Matches(script, @"abp\.message\.prompt\(").Count
+            .ShouldBe(3, "bölüm durumu girişi istem kutusuna geri dönmüş");
+        script.ShouldNotContain("Grants:Impl:SectionNotePrompt", Case.Sensitive);
+        script.ShouldContain("#SectionStatusSaveBtn", Case.Sensitive);
+    }
+
+    private static string WebProjectRoot()
+    {
+        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            var candidate = System.IO.Path.Combine(dir.FullName, "src", "Apya.Platform.Web");
+            if (System.IO.Directory.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new System.IO.DirectoryNotFoundException("Apya.Platform.Web proje kökü bulunamadı.");
+    }
 }
