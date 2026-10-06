@@ -19,7 +19,12 @@ namespace Apya.Platform.Pages;
 /// <para>Özet alanı ve indeksi baştan vardı; eşleştirme tezgâhı her açılışta okuyup "birebir
 /// aynı içerik" uyarısını ona göre veriyordu. Ama hiçbir yükleme yolu alanı doldurmuyordu:
 /// aynı fatura iki kez yüklense uyarı hiç çıkmıyordu.</para>
+///
+/// <para>Bu sınıf yükleme klasörüne dosya YAZAR. Klasör bütün test sınıflarının ortak malı;
+/// dosya sayan bir testle aynı anda koşarsa onu rastgele kırar. Klasörü kullanan sınıflar bu
+/// yüzden aynı koleksiyonda, sırayla koşar.</para>
 /// </summary>
+[Collection("Yükleme klasörünü kullanan testler")]
 public class DocumentContentHash_Tests : PlatformWebTestBase
 {
     private readonly IDocumentAppService _documents;
