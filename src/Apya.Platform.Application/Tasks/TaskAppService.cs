@@ -846,6 +846,9 @@ namespace Apya.Platform.Tasks
         // --- 2. CREATE (Ekleme) - REV-001: Rich Domain Model ---
         public override async Task<TaskDto> CreateAsync(CreateUpdateTaskDto input)
         {
+            // PRJ-07: önce doğrula — üst görev var mı, projeyle çelişiyor mu.
+            await _taskManager.EnsureParentTaskIsValidAsync(input.ParentTaskId, input.ProjectId);
+
             var newTask = new TaskItem(
                 GuidGenerator.Create(),
                 input.Title,
