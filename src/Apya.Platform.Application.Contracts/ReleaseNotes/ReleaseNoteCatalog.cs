@@ -134,7 +134,15 @@ public static class ReleaseNoteCatalog
                 "üstüne bastığınızda itiraz ekranı açılıyor. " +
                 "Ayrıca 'Başvurularım' listesinde, itirazını gönderdiğiniz başvuru artık 'kapanmış' görünmüyor: " +
                 "kurum yanıt verene kadar açık başvurularınız arasında kalıyor ve satırında " +
-                "'İtiraz kurumda · yanıt bekleniyor' yazıyor.")
+                "'İtiraz kurumda · yanıt bekleniyor' yazıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Risk kütüğüne kayıt artık tek pencereden",
+                "Bir projenin zaman çizelgesi sayfasında 'Risk ekle'ye bastığınızda tarayıcı art arda dört küçük " +
+                "kutu açıyordu: başlık, olasılık, etki, önlem. Birinde vazgeçerseniz öncekiler de gidiyor, " +
+                "olasılık ve etkiye sayı yerine başka bir şey yazarsanız program bunu sessizce 3 sayıyordu. " +
+                "Artık dört alan tek pencerede duruyor. Olasılık ve etkiyi 1-5 arasından seçiyorsunuz, " +
+                "risk puanını kaydetmeden önce görüyorsunuz; kayıt başarısız olursa yazdıklarınız yerinde kalıyor.")
         ),
 
         new ReleaseNote(
