@@ -52,32 +52,39 @@ $(function () {
     }
 
     // ---------- Görüş yazma (danışman) ----------
-    $('#Items').on('click', '.apya-ap-edit', function () {
-        var id = $(this).closest('.apya-ap-item').data('id');
-        var current = (model.items || []).filter(function (i) { return i.id === id; })[0];
+    // LIF-12: Görüş iki ardışık istem kutusuyla giriliyordu (önce karar, sonra gerekçe).
+    // İkincisinde vazgeçilince ilk seçim de kayboluyor, gerekçe tek satırlık kutuya
+    // yazılıyordu. Artık tek pencere: karar ve çok satırlı gerekçe birlikte kaydedilir;
+    // vazgeçmek hiçbir şeyi kaydetmez, kaydetmek ikisini birden yazar.
+    var opinionModal = new bootstrap.Modal(document.getElementById('OpinionModal'));
+    var opinionItemId = null;
 
-        abp.message.prompt(l('Grants:Appeal:OpinionPrompt'), {
-            input: 'select',
-            inputOptions: {
-                1: l('Grants:Appeal:Stance:Itiraz'),
-                2: l('Grants:Appeal:Stance:Kabul')
-            }
-        }).then(function (stance) {
-            if (stance === null) { return; }
-            abp.message.prompt(l('Grants:Appeal:OpinionDetailPrompt'), {
-                inputValue: (current && current.opinionDetail) || ''
-            }).then(function (detail) {
-                if (detail === null) { return; }
-                service.saveOpinion({
-                    itemId: id,
-                    stance: Number(stance),
-                    summary: Number(stance) === 1
-                        ? l('Grants:Appeal:Summary:Appeal')
-                        : l('Grants:Appeal:Summary:Accept'),
-                    detail: detail || null
-                }).then(function (dto) { model = dto; paint(); });
-            });
-        });
+    $('#Items').on('click', '.apya-ap-edit', function () {
+        opinionItemId = $(this).closest('.apya-ap-item').data('id');
+        var current = (model.items || []).filter(function (i) { return i.id === opinionItemId; })[0] || {};
+
+        $('#OpinionItemTitle').text(current.title || '');
+        // Görüş yazılmamış maddede (0) varsayılan "itiraz": pencere çoğunlukla bunun için açılır.
+        $('#OpinionStance').val(current.stance === 2 ? '2' : '1');
+        $('#OpinionDetail').val(current.opinionDetail || '');
+        opinionModal.show();
+    });
+
+    $('#OpinionSaveBtn').on('click', function () {
+        var $btn = $(this).prop('disabled', true);
+        var stance = Number($('#OpinionStance').val());
+
+        service.saveOpinion({
+            itemId: opinionItemId,
+            stance: stance,
+            summary: stance === 1
+                ? l('Grants:Appeal:Summary:Appeal')
+                : l('Grants:Appeal:Summary:Accept'),
+            detail: String($('#OpinionDetail').val() || '').trim() || null
+        }).then(function (dto) {
+            model = dto; paint();
+            opinionModal.hide();
+        }).always(function () { $btn.prop('disabled', false); });
     });
 
     $('#AddItemBtn').on('click', function () {

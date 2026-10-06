@@ -113,4 +113,36 @@
             </div>
         </aside>
     </div>
+
+    @* LIF-12 · Danışman görüşü tek pencerede. İki ardışık istem kutusuydu (karar, sonra
+       gerekçe): ikincisinde vazgeçilince ilk seçim de kayboluyor, gerekçe tek satıra
+       yazılıyordu. Sınır sunucudakiyle aynı (SaveGrantAppealOpinionInput.Detail). *@
+    <div class="modal fade" id="OpinionModal" tabindex="-1" aria-labelledby="OpinionModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="OpinionModalTitle">@L["Grants:Appeal:OpinionModal:Title"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Grants:Appeal:OpinionModal:Cancel"]"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="fw-semibold mb-3" id="OpinionItemTitle"></div>
+                    <div class="mb-3">
+                        <label class="form-label" for="OpinionStance">@L["Grants:Appeal:OpinionPrompt"]</label>
+                        <select class="form-select" id="OpinionStance">
+                            <option value="1">@L["Grants:Appeal:Stance:Itiraz"]</option>
+                            <option value="2">@L["Grants:Appeal:Stance:Kabul"]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="OpinionDetail">@L["Grants:Appeal:OpinionDetailPrompt"]</label>
+                        <textarea class="form-control" id="OpinionDetail" rows="6" maxlength="2000"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Appeal:OpinionModal:Cancel"]</button>
+                    <button type="button" class="btn btn-primary" id="OpinionSaveBtn">@L["Grants:Appeal:OpinionModal:Save"]</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

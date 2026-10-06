@@ -255,4 +255,67 @@ public class GrantAppealPage_Tests : PlatformWebTestBase
                 }));
         }
     }
+
+    // ── LIF-12 · Danışman görüşü tek pencerede ───────────────────────────────
+
+    /// <summary>
+    /// Görüş iki ARDIŞIK istem kutusuyla giriliyordu: önce karar (itiraz / kabul), sonra gerekçe.
+    /// İkincisinde vazgeçilince ilk seçim de kayboluyordu ve gerekçe tek satırlık bir kutuya
+    /// yazılıyordu (sunucu 2000 karaktere izin verdiği hâlde). Artık ikisi tek pencerede.
+    /// </summary>
+    [Fact]
+    public async Task Gorus_Penceresi_Karari_Ve_Gerekceyi_Birlikte_Sorar()
+    {
+        var (_, id) = await SetupAsync();
+
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync($"/Grants/Appeal?id={id}"));
+
+        var modal = doc.DocumentNode.SelectSingleNode("//div[@id='OpinionModal']");
+        modal.ShouldNotBeNull("görüş penceresi sayfada yok");
+
+        // Karar: yalnız iki gerçek seçenek (1 = itiraz, 2 = kabul); "görüş yok" seçilemez.
+        modal!.SelectNodes(".//select[@id='OpinionStance']/option")!
+            .Select(o => o.GetAttributeValue("value", ""))
+            .ShouldBe(new[] { "1", "2" });
+
+        // Gerekçe çok satırlı ve sunucudaki sınırla aynı uzunlukta.
+        var detail = modal.SelectSingleNode(".//textarea[@id='OpinionDetail']");
+        detail.ShouldNotBeNull("gerekçe çok satırlı alan olmalı");
+        detail!.GetAttributeValue("maxlength", "").ShouldBe("2000");
+
+        modal.SelectSingleNode(".//button[@id='OpinionSaveBtn']").ShouldNotBeNull();
+    }
+
+    /// <summary>
+    /// Betik tarafı: ardışık istem zinciri kalktı. Maddenin kendisi hâlâ tek bir istem kutusuyla
+    /// ekleniyor (tek alan — zincir değil); görüş için istem kutusu kalmadı.
+    /// </summary>
+    [Fact]
+    public void Gorus_Icin_Ardisik_Istem_Kutusu_Kalmadi()
+    {
+        var script = System.IO.File.ReadAllText(System.IO.Path.Combine(WebProjectRoot(), "Pages", "Grants", "Appeal.js"));
+
+        System.Text.RegularExpressions.Regex.Matches(script, @"abp\.message\.prompt\(").Count
+            .ShouldBe(1, "görüş girişi istem kutusuna geri dönmüş");
+        script.ShouldNotContain("Grants:Appeal:OpinionDetailPrompt", Case.Sensitive);
+        script.ShouldContain("#OpinionSaveBtn", Case.Sensitive);
+    }
+
+    private static string WebProjectRoot()
+    {
+        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            var candidate = System.IO.Path.Combine(dir.FullName, "src", "Apya.Platform.Web");
+            if (System.IO.Directory.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new System.IO.DirectoryNotFoundException("Apya.Platform.Web proje kökü bulunamadı.");
+    }
 }
