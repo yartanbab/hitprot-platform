@@ -144,7 +144,17 @@ public static class ReleaseNoteCatalog
                 "kutu açıyordu: başlık, olasılık, etki, önlem. Birinde vazgeçerseniz öncekiler de gidiyor, " +
                 "olasılık ve etkiye sayı yerine başka bir şey yazarsanız program bunu sessizce 3 sayıyordu. " +
                 "Artık dört alan tek pencerede duruyor. Olasılık ve etkiyi 1-5 arasından seçiyorsunuz, " +
-                "risk puanını kaydetmeden önce görüyorsunuz; kayıt başarısız olursa yazdıklarınız yerinde kalıyor.")
+                "risk puanını kaydetmeden önce görüyorsunuz; kayıt başarısız olursa yazdıklarınız yerinde kalıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Paylaşım bağlantısı tek pencerede kuruluyor; bağlantı ekranda kalıyor",
+                "Teslimler sayfasında bir paket için 'Paylaşım bağlantısı oluştur' dediğinizde tarayıcı art arda " +
+                "üç kutu açıyordu: kaç gün geçerli olacağı, indirmeye izin verilip verilmeyeceği ve filigran metni. " +
+                "İlk kutudan sonra vazgeçemiyordunuz: 'İptal'e basmak 'yalnız görüntüleme' ya da 'filigransız' " +
+                "sayılıyor, bağlantı yine de oluşuyordu. Oluşan bağlantı da bir tarayıcı kutusunda gösteriliyordu; " +
+                "kutu kapanınca bağlantıyı bir daha göremiyordunuz. Artık üç seçenek tek pencerede duruyor ve " +
+                "'Vazgeç' gerçekten vazgeçiyor. Bağlantı aynı pencerede 'Kopyala' düğmesiyle birlikte gösteriliyor " +
+                "ve siz 'Kapat' diyene kadar ekranda kalıyor. İndirme izni, siz işaretlemedikçe kapalı gelir.")
         ),
 
         new ReleaseNote(
