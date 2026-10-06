@@ -72,4 +72,27 @@ public class GrantCallsPage_Tests : PlatformWebTestBase
         html.ShouldContain("href=\"/Grants?tab=draft\"");
         Regex.IsMatch(html, @"class=""apya-grant-tab is-active""\s+href=""/Grants/Sources""").ShouldBeTrue("Kaynaklar sekmesi etkin basılmalı");
     }
+
+    /// <summary>
+    /// Başvuru almış çağrıyı ya da programı silme reddi kullanıcıya ham hata koduyla değil, ne
+    /// yapacağını söyleyen metinle ulaşır. İstemciye giden metin bu dönüştürücüden çıkar
+    /// (silme düğmesinin abp.ajax çağrısı onu gösterir).
+    /// </summary>
+    [Theory]
+    [InlineData(PlatformDomainErrorCodes.GrantCallInUse)]
+    [InlineData(PlatformDomainErrorCodes.GrantProgramInUse)]
+    public void Silme_Reddi_Kullaniciya_Turkce_Metinle_Ulasir(string code)
+    {
+        using (Volo.Abp.Localization.CultureHelper.Use("tr"))
+        {
+            var converter = GetRequiredService<Volo.Abp.AspNetCore.ExceptionHandling.IExceptionToErrorInfoConverter>();
+            var info = converter.Convert(
+                new Volo.Abp.BusinessException(code).WithData("ApplicationCount", 3), _ => { });
+
+            info.Message.ShouldNotBeNull();
+            info.Message.ShouldNotContain("Platform:Grant", Case.Sensitive);
+            info.Message.ShouldContain("3 başvuru");
+            info.Message.ShouldContain("kapatın");
+        }
+    }
 }
