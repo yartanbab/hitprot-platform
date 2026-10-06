@@ -761,6 +761,21 @@ public class PlatformWebModule : AbpModule
             await next();
         });
 
+        // 🔴 /uploads HİÇBİR koşulda statik servis edilmez. Yüklemeler App_Data/uploads'ta
+        // durur ve yalnız sahiplik kontrolü yapan uçlardan okunur; ama wwwroot altına düşen
+        // her dosya statik varlıktır ve kimlik sorulmadan indirilir. 2026-08-08'de bir
+        // commit'le wwwroot/uploads'a on belge girdi ve sonraki her dağıtımda açıkta kaldı.
+        // Dosyanın oraya bir daha düşmeyeceğine güvenilmez (yanlış işlenen dosya, sunucuda
+        // eski sürümden kalan, yanlış bağlanan birim): adresin kendisi kapatılır.
+        // Statik varlık eşlemesinden ÖNCE durmalı — sonra konursa istek buraya hiç gelmez.
+        app.UseWhen(
+            ctx => ctx.Request.Path.StartsWithSegments("/uploads"),
+            branch => branch.Run(ctx =>
+            {
+                ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                return Task.CompletedTask;
+            }));
+
         app.MapAbpStaticAssets();
         app.UseRouting();
         app.UseAuthentication();
