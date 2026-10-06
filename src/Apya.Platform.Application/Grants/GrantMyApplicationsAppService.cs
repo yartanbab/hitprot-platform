@@ -209,9 +209,7 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
 
                 // 🔴 LIF-11: İtiraz gönderilince pencere kapanır (ikinci kez gönderilemez) ve satır
                 // o andan itibaren "kapanmış" sayılıyordu — oysa dosya kurumda, yanıt bekleniyor.
-                row.AppealPending = row.IsRejected
-                                    && decision.AppealSubmittedAt != null
-                                    && decision.AppealAccepted == null;
+                row.AppealPending = decision.IsAppealPending;
             }
 
             // Reddedilen başvuru itiraz penceresi kapandıktan sonra kapanmış sayılır —

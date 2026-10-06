@@ -106,6 +106,9 @@ public class GrantTodayApplicationDto
 
     public int? AppealDaysLeft { get; set; }
 
+    /// <summary>LIF-11 · İtiraz gönderildi, kurum henüz yanıtlamadı; başvuru kapanmış sayılmaz.</summary>
+    public bool AppealPending { get; set; }
+
     public Guid? ProjectId { get; set; }
 
     public bool IsClosed { get; set; }

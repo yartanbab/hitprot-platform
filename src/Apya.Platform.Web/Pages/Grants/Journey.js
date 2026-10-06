@@ -69,7 +69,10 @@ $(function () {
             case 4:
                 return l('Grants:Journey:Body:WithInstitution', date(i.at));
             case 5:
-                return i.appealDaysLeft != null
+                // LIF-11: itirazı gönderilmiş başvuruya "itiraz süresi doldu" deniyordu.
+                return i.appealPending
+                    ? l('Grants:Journey:Body:AppealPending')
+                    : i.appealDaysLeft != null
                     ? l('Grants:Journey:Body:AppealOpen', i.appealDaysLeft)
                     : l('Grants:Journey:Body:AppealClosed');
             case 6:
@@ -114,6 +117,7 @@ $(function () {
             case 4: html.push(link('/Grants/Wizard?id=' + i.applicationId, 'Grants:Journey:Action:View', false)); break;
             case 5:
                 if (i.appealDaysLeft != null) { html.push(link('/Grants/Appeal?id=' + i.applicationId, 'Grants:Journey:Action:Appeal', true)); }
+                else if (i.appealPending) { html.push(link('/Grants/Appeal?id=' + i.applicationId, 'Grants:Journey:Action:AppealView', false)); }
                 break;
             case 6:
             case 7: html.push(link('/Grants/Implementation?id=' + i.applicationId, 'Grants:Journey:Action:Implementation', false)); break;

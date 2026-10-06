@@ -66,6 +66,9 @@ public class GrantJourneyItemDto
     public int DocumentsTotal { get; set; }
     public int? AppealDaysLeft { get; set; }
 
+    /// <summary>LIF-11 · İtiraz gönderildi, kurum henüz yanıtlamadı; kayıt "süren" işler arasında kalır.</summary>
+    public bool AppealPending { get; set; }
+
     // --- Proje / destek ---
     public Guid? ProjectId { get; set; }
     public string? ProjectName { get; set; }

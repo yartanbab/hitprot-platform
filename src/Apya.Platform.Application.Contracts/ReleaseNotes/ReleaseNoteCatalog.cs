@@ -134,7 +134,9 @@ public static class ReleaseNoteCatalog
                 "üstüne bastığınızda itiraz ekranı açılıyor. " +
                 "Ayrıca 'Başvurularım' listesinde, itirazını gönderdiğiniz başvuru artık 'kapanmış' görünmüyor: " +
                 "kurum yanıt verene kadar açık başvurularınız arasında kalıyor ve satırında " +
-                "'İtiraz kurumda · yanıt bekleniyor' yazıyor."),
+                "'İtiraz kurumda · yanıt bekleniyor' yazıyor. " +
+                "'Bugün' ve 'Hibe Yolculuğum' ekranları da aynı şekilde düzeldi; Hibe Yolculuğum bu " +
+                "başvurular için yanlışlıkla 'itiraz süresi doldu' diyordu."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Risk kütüğüne kayıt artık tek pencereden",

@@ -180,6 +180,8 @@ $(function () {
 
     // 11c · Aşama adı yerine cümle: "Kurum dosyanızı inceliyor" gibi.
     function appSentence(a) {
+        // LIF-11: itiraz gönderildi, kurum yanıtlamadı — "reddedildi" ya da sıradaki adım değil.
+        if (a.appealPending) { return l('Grants:Today:App:AppealPending'); }
         if (a.appealDaysLeft != null) { return l('Grants:Today:App:Rejected', a.appealDaysLeft); }
         return l('Grants:Today:App:' + NEXT[a.nextAction], a.nextActionValue);
     }

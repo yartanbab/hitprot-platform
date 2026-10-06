@@ -153,4 +153,42 @@ public class GrantJourney_Tests : PlatformEntityFrameworkCoreTestBase
     {
         await Should.ThrowAsync<AbpAuthorizationException>(() => _journey.GetAsync());
     }
+
+    /// <summary>
+    /// 🔴 LIF-11 · İtirazı gönderilmiş başvuruya yolculuk "itiraz süresi doldu" diyor ve onu
+    /// bitmiş işler arasına alıyordu. Dosya kurumda beklerken kayıt SÜREN işler arasında kalır.
+    /// </summary>
+    [Fact]
+    public async Task Itirazi_kurumda_bekleyen_basvuru_suren_isler_arasinda_kalir()
+    {
+        var call = await CreateHostCallAsync("İtiraz Yolculuğu", daysToDeadline: 30);
+        var tenantId = await CreateTenantAsync("Yolcu");
+        var decisions = GetRequiredService<IRepository<GrantDecision, Guid>>();
+
+        using (_currentTenant.Change(tenantId))
+        {
+            var application = new GrantApplication(Guid.NewGuid(), tenantId, call.Id);
+            application.Submit(_clock.Now);
+            await _appRepository.InsertAsync(application, autoSave: true);
+
+            var decision = new GrantDecision(
+                Guid.NewGuid(), tenantId, application.Id, GrantDecisionOutcome.Reddedildi,
+                _clock.Now.Date.AddDays(-2), "REF-3", _clock.Now.Date.AddDays(9));
+            decision.SubmitAppeal(_clock.Now);
+            await decisions.InsertAsync(decision, autoSave: true);
+
+            var pending = await _journey.GetAsync();
+            var item = pending.Items.Single(i => i.ApplicationId == application.Id);
+            item.Kind.ShouldBe(GrantJourneyItemKind.ApplicationRejected);
+            item.AppealPending.ShouldBeTrue();
+            pending.ActiveCount.ShouldBe(1, "itiraz kurumda bekliyor; iş bitmedi");
+
+            decision.ResolveAppeal(accepted: false);
+            await decisions.UpdateAsync(decision, autoSave: true);
+
+            var resolved = await _journey.GetAsync();
+            resolved.Items.Single(i => i.ApplicationId == application.Id).AppealPending.ShouldBeFalse();
+            resolved.ActiveCount.ShouldBe(0);
+        }
+    }
 }

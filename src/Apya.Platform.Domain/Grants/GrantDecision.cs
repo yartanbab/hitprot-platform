@@ -70,6 +70,17 @@ public class GrantDecision : FullAuditedAggregateRoot<Guid>, IMultiTenant
         && AppealSubmittedAt == null
         && (AppealDeadline == null || AppealDeadline.Value.Date >= today.Date);
 
+    /// <summary>
+    /// LIF-11 · İtiraz gönderildi, kurum henüz yanıtlamadı. Bu sırada pencere "kapalı"dır
+    /// (<see cref="IsAppealWindowOpen"/> false döner: ikinci kez gönderilemez) ama başvuru
+    /// KAPANMIŞ değildir — dosya kurumda bekliyor. Firma ekranlarının üçü de (Başvurularım,
+    /// Bugün, Hibe Yolculuğum) "kapandı mı" sorusunu buraya sorar.
+    /// </summary>
+    public bool IsAppealPending =>
+        Outcome == GrantDecisionOutcome.Reddedildi
+        && AppealSubmittedAt != null
+        && AppealAccepted == null;
+
     public void SubmitAppeal(DateTime now)
     {
         if (Outcome != GrantDecisionOutcome.Reddedildi)
