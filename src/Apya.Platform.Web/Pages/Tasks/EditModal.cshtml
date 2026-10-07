@@ -744,7 +744,7 @@
                 if (result.success) {
                     abp.notify.success('Dosya yüklendi!');
                     $('.no-file-text').remove();
-                    $('#FileList').prepend('<li class="list-group-item apya-comment d-flex justify-content-between align-items-center"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><a href="/file/get/' + result.storedFileName + '" target="_blank" class="text-decoration-none fw-bold fs-6">' + file.name + '</a><small class="text-muted ms-3">Şimdi yüklendi</small></div><span class="apya-chip apya-chip-positive">Yeni</span></li>');
+                    $('#FileList').prepend('<li class="list-group-item apya-comment d-flex justify-content-between align-items-center"><div><i class="fa fa-file-alt text-info fs-4 me-3"></i><a href="/file/get/' + encodeURIComponent(result.storedFileName) + '" target="_blank" class="text-decoration-none fw-bold fs-6">' + $('<div>').text(file.name).html() + '</a><small class="text-muted ms-3">Şimdi yüklendi</small></div><span class="apya-chip apya-chip-positive">Yeni</span></li>');
                     fileInput.value = '';
                 } else {
                     abp.notify.error('Dosya yüklenirken hata oluştu: ' + result.error);

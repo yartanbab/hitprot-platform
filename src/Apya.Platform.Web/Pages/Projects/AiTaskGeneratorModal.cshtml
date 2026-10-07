@@ -167,6 +167,13 @@
     var aiParsedResult = null;
     var currentStep = 1;
 
+    // Öneri başlıkları ve bölüm adları yüklenen BELGEDEN türer: HTML'e kaçışla eklenir.
+    function escapeHtml(value) {
+        var holder = document.createElement('div');
+        holder.textContent = value === null || value === undefined ? '' : String(value);
+        return holder.innerHTML;
+    }
+
     function aiWizardNext() {
         if (currentStep === 1) {
             var fileInput = document.getElementById('aiDocumentFile');
@@ -265,13 +272,13 @@
                         </div>
                         <div class="flex-grow-1">
                             <div class="d-flex justify-content-between align-items-start">
-                                <h6 class="fw-bold mb-1" style="font-size:0.9rem;">${s.title}</h6>
+                                <h6 class="fw-bold mb-1" style="font-size:0.9rem;">${escapeHtml(s.title)}</h6>
                                 <span class="apya-chip apya-chip-${priorityColors[s.suggestedPriority]}" style="font-size:0.7rem;">
                                     ${priorityLabels[s.suggestedPriority]}
                                 </span>
                             </div>
                             <div class="d-flex gap-3 mt-1">
-                                <small class="text-muted"><i class="fa fa-layer-group me-1"></i>${s.sourceSection}</small>
+                                <small class="text-muted"><i class="fa fa-layer-group me-1"></i>${escapeHtml(s.sourceSection)}</small>
                                 ${dateStr ? '<small class="text-muted"><i class="fa fa-calendar me-1"></i>' + dateStr + '</small>' : ''}
                             </div>
                         </div>
@@ -329,7 +336,7 @@
                 var list = document.getElementById('aiCreatedList');
                 list.innerHTML = '';
                 selectedTasks.forEach(function (t) {
-                    list.innerHTML += '<div class="d-flex align-items-center py-1"><i class="fa fa-check-circle text-success me-2"></i><span>' + t.title + '</span></div>';
+                    list.innerHTML += '<div class="d-flex align-items-center py-1"><i class="fa fa-check-circle text-success me-2"></i><span>' + escapeHtml(t.title) + '</span></div>';
                 });
 
                 document.getElementById('aiCloseBtn').textContent = 'Kapat & Görüntüle';
