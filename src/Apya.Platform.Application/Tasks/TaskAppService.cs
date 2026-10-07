@@ -848,6 +848,7 @@ namespace Apya.Platform.Tasks
         {
             // PRJ-07: önce doğrula — üst görev var mı, projeyle çelişiyor mu.
             await _taskManager.EnsureParentTaskIsValidAsync(input.ParentTaskId, input.ProjectId);
+            await _taskManager.EnsureAssigneeIsValidAsync(input.AssigneeId);
 
             var newTask = new TaskItem(
                 GuidGenerator.Create(),
@@ -947,6 +948,13 @@ namespace Apya.Platform.Tasks
 
             // Özel Yetki Kuralı (gizlilik + oluşturan/atanan ya da ekip yöneticisi)
             await EnsureCanMutateTaskAsync(task);
+
+            // Yalnız DEĞİŞEN atama doğrulanır: eski kayıtta kalmış bir atama başka alanların
+            // düzenlenmesini engellemesin.
+            if (input.AssigneeId != task.AssigneeId)
+            {
+                await _taskManager.EnsureAssigneeIsValidAsync(input.AssigneeId);
+            }
 
             // Rich Domain: tüm alanları tek metotta güncelle
             var previousAssigneeId = task.Update(
@@ -2012,6 +2020,11 @@ namespace Apya.Platform.Tasks
             var task = await Repository.GetAsync(id);
             await EnsureCanMutateTaskAsync(task);
             var previousAssigneeId = task.AssigneeId;
+
+            if (assigneeId != previousAssigneeId)
+            {
+                await _taskManager.EnsureAssigneeIsValidAsync(assigneeId);
+            }
 
             task.AssignTo(assigneeId);
             await Repository.UpdateAsync(task);
