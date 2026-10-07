@@ -160,7 +160,26 @@ public static class ReleaseNoteCatalog
                 "Genel Bakış'taki 'AI Merkezi' bağlantısı artık açılıyor",
                 "Genel Bakış'taki 'AI önerileri' kartında duran 'AI Merkezi →' bağlantısı var olmayan bir adrese " +
                 "gidiyordu; bastığınızda 'sayfa bulunamadı' çıkıyordu. Bağlantı artık AI Merkezi'nin kendisini açıyor. " +
-                "AI Merkezi'ni açma yetkiniz yoksa ya da paketinizde AI özelliği yoksa bağlantı kartta gösterilmiyor.")
+                "AI Merkezi'ni açma yetkiniz yoksa ya da paketinizde AI özelliği yoksa bağlantı kartta gösterilmiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev penceresinde giderin evrakı artık görülüyor ve bağlanabiliyor",
+                "Görev penceresinin Finans sekmesinde her gider satırında bir \"Evrak\" düğmesi olması gerekiyordu: " +
+                "gidere bağlı belgeleri gösterir, Belgeler'e yüklediğiniz bir evrakı o gidere bağlamanızı sağlar. " +
+                "Bu düğme bir hata yüzünden hiçbir kullanıcıda çıkmıyordu. " +
+                "Artık Belgeler'i görme yetkiniz varsa gider satırında \"Evrak\" düğmesini görürsünüz; bağlı evrak " +
+                "varsa sayısı düğmenin üzerinde yazar. Evrak bağlamak ve bağı kaldırmak için belge bilgilerini " +
+                "düzenleme yetkisi gerekir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kaydı olan cari artık silinemiyor; pasife alınıyor",
+                "Bir cariyi sildiğinizde faturaları, cari hareketleri, giderleri, gelirleri ve projeleri yerinde " +
+                "kalıyor ama carisiz görünüyordu. Mizandaki alacak ve borç tutarı da duruyor, o tutarın kime ait " +
+                "olduğu ise hiçbir ekrandan okunamıyordu. " +
+                "Artık bağlı kaydı olan bir cariyi silmek istediğinizde işlem durur ve nedeni söylenir. Böyle bir " +
+                "cariyle çalışmayı bıraktıysanız düzenleme penceresinde \"Aktif\" işaretini kaldırın: cari listede " +
+                "\"Pasif\" olarak kalır, geçmiş kayıtları ve bakiyesi olduğu gibi durur. " +
+                "Hiç kaydı olmayan (örneğin yanlışlıkla açılmış) bir cari eskisi gibi silinir.")
         ),
 
         new ReleaseNote(
