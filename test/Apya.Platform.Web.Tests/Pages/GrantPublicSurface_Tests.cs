@@ -58,6 +58,19 @@ public class GrantPublicSurface_Tests : PlatformWebTestBase
     }
 
     [Fact]
+    public async Task Alt_Bilgideki_Gizlilik_Baglantisi_Gizlilik_Politikasini_Acar()
+    {
+        // Bağlantı "/Legal/Gizlilik"e gidiyordu: o sayfanın ADI; adresi "/gizlilik-politikasi" → 404.
+        var html = await GetResponseAsStringAsync("/Hibeler");
+        var footer = html.Substring(html.IndexOf("apya-pub-footer", StringComparison.Ordinal));
+        var href = System.Text.RegularExpressions.Regex.Match(footer, "<a href=\"(?<href>[^\"]+)\"").Groups["href"].Value;
+
+        href.ShouldNotBeNullOrEmpty();
+        System.Net.WebUtility.HtmlDecode(await GetResponseAsStringAsync(href))
+            .ShouldContain("<h1>Gizlilik Politikası</h1>");
+    }
+
+    [Fact]
     public async Task Arama_Yalniz_Yayindaki_Cagrilari_Doner()
     {
         var repo = GetRequiredService<IRepository<GrantCall, Guid>>();
