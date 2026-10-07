@@ -7,6 +7,7 @@ using Apya.Platform.DynamicAssets.Dtos;
 using Apya.Platform.Tasks;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Users;
 using TaskStatus = Apya.Platform.Tasks.TaskStatus;
 
 namespace Apya.Platform.DynamicAssets.ChoiceSources;
@@ -17,6 +18,8 @@ namespace Apya.Platform.DynamicAssets.ChoiceSources;
 ///
 /// <para>Kapsam kiracıdır (süzgeç açık); üstelik proje kimliği de kiracının kendi projesi olmak zorundadır,
 /// başka firmanın proje kimliği yazılsa bile sorgu boş döner.</para>
+///
+/// <para>🔴 Oturumsuz ziyaretçiye liste dönmez (bkz. <see cref="TenantProjectsChoiceSource"/>).</para>
 /// </summary>
 [ExposeServices(typeof(IFormChoiceSource))]
 public class TenantProjectTasksChoiceSource : IFormChoiceSource, ITransientDependency
@@ -24,10 +27,12 @@ public class TenantProjectTasksChoiceSource : IFormChoiceSource, ITransientDepen
     private static readonly CultureInfo Turkish = CultureInfo.GetCultureInfo("tr-TR");
 
     private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly ICurrentUser _currentUser;
 
-    public TenantProjectTasksChoiceSource(IRepository<TaskItem, Guid> taskRepository)
+    public TenantProjectTasksChoiceSource(IRepository<TaskItem, Guid> taskRepository, ICurrentUser currentUser)
     {
         _taskRepository = taskRepository;
+        _currentUser = currentUser;
     }
 
     public string Key => FormChoiceSources.TenantProjectTasks;
@@ -38,7 +43,7 @@ public class TenantProjectTasksChoiceSource : IFormChoiceSource, ITransientDepen
 
     public async Task<List<FormChoiceDto>> GetAsync(string? parentValue)
     {
-        if (!Guid.TryParse(parentValue, out var projectId))
+        if (!_currentUser.IsAuthenticated || !Guid.TryParse(parentValue, out var projectId))
         {
             return new List<FormChoiceDto>();
         }
