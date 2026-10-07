@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Authorization;
 using Volo.Abp.Application.Services;
@@ -12,6 +13,7 @@ using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Grants;
 
+[Authorize(PlatformPermissions.Grants.Default)]
 public class GrantCallAppService :
     CrudAppService<GrantCall, GrantCallDto, Guid, GetGrantCallListDto, CreateUpdateGrantCallDto>,
     IGrantCallAppService
