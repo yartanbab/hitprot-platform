@@ -25,8 +25,13 @@ function handlerUrl(name, params = {}) {
     return `${appPath}Documents/Matching?${query.toString()}`;
 }
 
-/** Belgeleri görme yetkisi — yoksa hiçbir çağrı yapılmaz (sayfa 403 döner). */
-export const canSeeDocuments = () => isGranted('Platform.Documents.Default');
+/**
+ * Belgeleri görme yetkisi — yoksa hiçbir çağrı yapılmaz (sayfa 403 döner).
+ * İznin ADI 'Platform.Documents'tir; 'Default' C# sabitinin adı, değerin parçası değil.
+ * Burada 'Platform.Documents.Default' soruluyordu: öyle bir izin yok, koşul herkes için
+ * yanlış çıkıyor ve evrak düğmesi hiç kimseye basılmıyordu.
+ */
+export const canSeeDocuments = () => isGranted('Platform.Documents');
 
 /** Bağ kurma/kaldırma yetkisi — eşleştirme uçları ManageMeta istiyor. */
 export const canLinkDocuments = () => isGranted('Platform.Documents.ManageMeta');

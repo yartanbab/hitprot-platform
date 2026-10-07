@@ -1658,7 +1658,7 @@ function dt(t, a = {}) {
     n != null && n !== "" && r.append(o, n);
   }), `${s}Documents/Matching?${r.toString()}`;
 }
-const Oa = () => oe("Platform.Documents.Default"), gr = () => oe("Platform.Documents.ManageMeta");
+const Oa = () => oe("Platform.Documents"), gr = () => oe("Platform.Documents.ManageMeta");
 function vr(t) {
   const a = !!t && Oa(), s = W({
     queryKey: ["task-detail", "expense-matches", t],

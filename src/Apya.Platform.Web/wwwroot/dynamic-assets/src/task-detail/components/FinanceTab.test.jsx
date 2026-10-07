@@ -364,7 +364,11 @@ describe('FinanceTab · gider satirinda evrak', () => {
     function setup({ canSeeDocuments = true, matches = [] } = {}) {
         window.abp = {
             appPath: '/',
-            auth: { isGranted: (p) => (p === 'Platform.Documents.Default' ? canSeeDocuments : true) },
+            // Yalnız GERÇEK izin adları verilir: yanlış ad sorulursa (eskiden 'Platform.Documents.Default')
+            // koşul üretimdeki gibi yanlış çıkar ve aşağıdaki testler kırmızıya döner.
+            auth: {
+                isGranted: (p) => (p === 'Platform.Documents' ? canSeeDocuments : p === 'Platform.Documents.ManageMeta'),
+            },
             notify: { error: vi.fn() },
             ajax: vi.fn((options) => deferred(options.url.includes('handler=Matches') ? matches : [])),
         };
