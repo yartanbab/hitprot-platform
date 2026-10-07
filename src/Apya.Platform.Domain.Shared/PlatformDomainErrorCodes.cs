@@ -32,6 +32,7 @@ public static class PlatformDomainErrorCodes
     // --- Cari (Customer) Modülü ---
     public const string CustomerNameRequired = "Platform:Customer:NameRequired";
     public const string CustomerFieldTooLong = "Platform:Customer:FieldTooLong";
+    public const string CustomerInUse = "Platform:Customer:InUse";
 
     // --- Cari Hareket (CustomerLedger) Modülü — APYA-142 ---
     public const string CustomerLedgerCustomerRequired = "Platform:CustomerLedger:CustomerRequired";
@@ -46,6 +47,7 @@ public static class PlatformDomainErrorCodes
     public const string CashAccountNameRequired = "Platform:CashAccount:NameRequired";
     public const string CashAccountFieldTooLong = "Platform:CashAccount:FieldTooLong";
     public const string CashAccountCurrencyInvalid = "Platform:CashAccount:CurrencyInvalid";
+    public const string CashAccountInUse = "Platform:CashAccount:InUse";
 
     // --- Kur (ExchangeRate) Modülü — APYA-137 ---
     public const string ExchangeRateCurrencyInvalid = "Platform:ExchangeRate:CurrencyInvalid";
