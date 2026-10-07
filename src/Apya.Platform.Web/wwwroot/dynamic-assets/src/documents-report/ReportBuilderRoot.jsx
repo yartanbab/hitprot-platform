@@ -26,7 +26,7 @@ const TABS = [
   { key: 'distribution', label: 'Dağıtım' },
 ];
 
-function SectionRow({ section, onToggle, onMove, isFirst, isLast, busy }) {
+function SectionRow({ section, onToggle, onMove, isFirst, isLast, busy, readOnly }) {
   const label = SECTION_LABEL[section.sectionKey] ?? `Bölüm ${section.sectionKey}`;
 
   return (
@@ -34,7 +34,7 @@ function SectionRow({ section, onToggle, onMove, isFirst, isLast, busy }) {
       <input
         type="checkbox"
         checked={section.isEnabled}
-        disabled={busy || !section.isAvailable}
+        disabled={busy || readOnly || !section.isAvailable}
         onChange={(e) => onToggle(section.id, e.target.checked)}
         aria-label={`${label} bölümünü aç/kapa`}
       />
@@ -56,9 +56,9 @@ function SectionRow({ section, onToggle, onMove, isFirst, isLast, busy }) {
       </span>
 
       <span className="d-flex gap-1">
-        <button type="button" className="apya-doc-linkbtn" disabled={busy || isFirst}
+        <button type="button" className="apya-doc-linkbtn" disabled={busy || readOnly || isFirst}
           onClick={() => onMove(section.id, -1)} aria-label="Yukarı taşı">↑</button>
-        <button type="button" className="apya-doc-linkbtn" disabled={busy || isLast}
+        <button type="button" className="apya-doc-linkbtn" disabled={busy || readOnly || isLast}
           onClick={() => onMove(section.id, +1)} aria-label="Aşağı taşı">↓</button>
       </span>
     </div>
@@ -106,6 +106,12 @@ export function ReportBuilderRoot() {
     [templates, selectedId],
   );
 
+  // Bölümler yalnız şablonun SAHİBİ bağlamında değişir: ortak (host) şablonu bütün kiracılar
+  // paylaşır, kiracı onu kopyalayıp kopyasını düzenler. Sunucu da aynı kuralı uygular.
+  const canEditSections = selected
+    ? (selected.tenantId ?? null) === (window.abp?.currentTenant?.id ?? null)
+    : false;
+
   const orderedSections = useMemo(
     () => (selected ? [...selected.sections].sort((a, b) => a.order - b.order) : []),
     [selected],
@@ -113,7 +119,7 @@ export function ReportBuilderRoot() {
 
   /** Bölüm değişikliklerini tek çağrıda gönderir — sunucu sırayı normalize eder. */
   const persistSections = async (sections) => {
-    if (!selected) return;
+    if (!selected || !canEditSections) return;
     setBusy(true);
     try {
       const updated = await updateSections({
@@ -363,10 +369,15 @@ export function ReportBuilderRoot() {
                   </span>
                 </div>
 
-                {selected.isSystem && (
+                {!canEditSections ? (
+                  <div style={{ fontSize: 11.5, color: 'var(--apya-text-tertiary)', marginBottom: 6 }}>
+                    Sistem şablonu tüm kiracılarda paylaşılır; bölümleri ve künyesi buradan değiştirilemez.
+                    Kendinize uyarlamak için <strong>Kopyala</strong>'yı kullanın.
+                  </div>
+                ) : selected.isSystem && (
                   <div style={{ fontSize: 11.5, color: 'var(--apya-text-tertiary)', marginBottom: 6 }}>
                     Sistem şablonu tüm kiracılarda paylaşılır; künyesi düzenlenemez.
-                    Kendinize uyarlamak için <strong>Kopyala</strong>'yı kullanın.
+                    Burada yaptığınız bölüm değişikliği bütün kiracıların raporuna yansır.
                   </div>
                 )}
 
@@ -375,6 +386,7 @@ export function ReportBuilderRoot() {
                     key={s.id}
                     section={s}
                     busy={busy}
+                    readOnly={!canEditSections}
                     isFirst={i === 0}
                     isLast={i === orderedSections.length - 1}
                     onToggle={handleToggle}
