@@ -179,7 +179,18 @@ public static class ReleaseNoteCatalog
                 "Artık bağlı kaydı olan bir cariyi silmek istediğinizde işlem durur ve nedeni söylenir. Böyle bir " +
                 "cariyle çalışmayı bıraktıysanız düzenleme penceresinde \"Aktif\" işaretini kaldırın: cari listede " +
                 "\"Pasif\" olarak kalır, geçmiş kayıtları ve bakiyesi olduğu gibi durur. " +
-                "Hiç kaydı olmayan (örneğin yanlışlıkla açılmış) bir cari eskisi gibi silinir.")
+                "Hiç kaydı olmayan (örneğin yanlışlıkla açılmış) bir cari eskisi gibi silinir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Sistem rapor şablonlarının bölümleri artık kendi kopyanızda değiştiriliyor",
+                "Rapor Derleyici'deki sistem şablonları (\"KOSGEB\", \"Banka / finans\" gibi) bütün firmalarca ortak " +
+                "kullanılır. Bu şablonlarda bir bölümü kapatmak ya da sırasını değiştirmek, aynı şablonu kullanan " +
+                "öbür firmaların raporunu da etkiliyordu. " +
+                "Artık sistem şablonlarının bölümleri değiştirilemez; bölüm kutuları ve sıralama düğmeleri kapalı " +
+                "görünür. Bir sistem şablonunu kendinize uyarlamak için \"Kopyala\"ya basın: kopya yalnız sizin " +
+                "firmanıza aittir, bölümlerini dilediğiniz gibi açıp kapatabilir ve sıralayabilirsiniz. " +
+                "Ayrıca bölüm açıp kapattığınızda ekran artık yaptığınız değişikliği hemen gösteriyor; daha önce " +
+                "değişiklik sayfa yenilenene kadar geri alınmış gibi görünüyordu.")
         ),
 
         new ReleaseNote(
