@@ -1,3 +1,4 @@
+using Volo.Abp;
 using Apya.Platform.Permissions;
 using System;
 using System.Linq;
@@ -92,6 +93,7 @@ public class IcalFeedAppService : ApplicationService, IIcalFeedAppService
     /// (var/yok bilgisini sızdıran farklı yanıtlar üretilmez).
     /// </summary>
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public async Task<string?> RenderAsync(string token)
     {
         if (string.IsNullOrWhiteSpace(token)) return null;

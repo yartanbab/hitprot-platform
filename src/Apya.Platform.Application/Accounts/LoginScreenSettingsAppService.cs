@@ -1,3 +1,4 @@
+using Volo.Abp;
 using System.Threading.Tasks;
 using Apya.Platform.Accounts.Dtos;
 using Apya.Platform.Permissions;
@@ -27,6 +28,7 @@ public class LoginScreenSettingsAppService : ApplicationService, ILoginScreenSet
     }
 
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public async Task<LoginScreenSettingsDto> GetAsync()
     {
         // KRİTİK: bu ayarlar .WithProviders(Global) ile kısıtlı olduğundan

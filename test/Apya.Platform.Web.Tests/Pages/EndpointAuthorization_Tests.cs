@@ -110,6 +110,22 @@ public class EndpointAuthorization_Tests : PlatformWebTestBase
         Guid.TryParse(body.Trim('"'), out _).ShouldBeFalse("yanıt bir iş kimliği: metot çalışmış");
     }
 
+    /// <summary>
+    /// Sayfaların sunucu içinden kullandığı oturumsuz metotlar API ucu olarak da açıktı; tarayıcı
+    /// onları hiç çağırmıyordu. Ne API adresinden ne genel rotadan çağrılabilirler. (Paylaşım
+    /// uçları geçersiz anahtarda zaten "bulunamadı" döndüğü için durum koduyla ayırt edilemez;
+    /// onları yukarıdaki uç tablosu listesi ölçer. Burada her zaman 200 dönen uç ölçülür.)
+    /// </summary>
+    [Theory]
+    [InlineData("/api/app/login-screen-settings")]
+    [InlineData("/LoginScreenSettings/Get")]
+    public async Task Sunucu_Ici_Oturumsuz_Metotlar_Uc_Degildir(string url)
+    {
+        var response = await Client.GetAsync(url);
+
+        response.IsSuccessStatusCode.ShouldBeFalse($"{url} hâlâ bir uç");
+    }
+
     // ── Her eylem ucu karar taşır ─────────────────────────────────────────────
 
     [Fact]
@@ -149,27 +165,21 @@ public class EndpointAuthorization_Tests : PlatformWebTestBase
         open.ShouldBe(KnownAnonymousActions.OrderBy(n => n, StringComparer.Ordinal).ToList(), ignoreOrder: false);
     }
 
+    // Yalnız TARAYICININ doğrudan çağırdığı uçlar. Bağlantıyla paylaşım (görev, teslim paketi),
+    // takvim beslemesinin üretimi ve giriş ekranı ayarı oturumsuz ÇALIŞIR ama uç DEĞİLDİR: onları
+    // sayfalar sunucu içinden çağırır (metotlar "uzaktan kapalı"). API ucu olarak açıkken misafir
+    // yükleme kaydı saklanan dosya ADINI, yorum/indirme ise iz kaydına yazılacak IP ve tarayıcı
+    // bilgisini çağırandan alıyordu.
     private static readonly string[] KnownAnonymousActions =
     {
-        // Giriş ekranı ve çerez bildirimi (oturum açmadan önce)
-        "LoginScreenSettingsAppService.GetAsync",
+        // Çerez bildirimi (oturum açmadan önce)
         "ConsentController.AckCookieNoticeAsync",
         // Herkese açık form: görüntüleme ve gönderme
         "PublicDocumentAppService.GetBySlugAsync",
         "PublicDocumentAppService.GetBlockChoicesAsync",
         "ResponseAppService.SubmitAsync",
-        // Bağlantıyla paylaşım — anahtar bağlantının kendisinde
-        "ExternalShareAppService.ResolveAsync",
-        "ExternalShareAppService.PrepareDownloadAsync",
-        "TaskShareAppService.ResolveAsync",
-        "TaskShareAppService.AddGuestCommentAsync",
-        "TaskShareAppService.EnsureGuestUploadAllowedAsync",
-        "TaskShareAppService.RegisterGuestUploadAsync",
-        "TaskShareAppService.PrepareGuestDownloadAsync",
-        "TaskShareAppService.ResolveGuestFormAsync",
         // Takvim beslemesi — anahtar adresin kendisinde
-        "IcalController.GetAsync",
-        "IcalFeedAppService.RenderAsync"
+        "IcalController.GetAsync"
     };
 
     // ── SignalR merkezleri ────────────────────────────────────────────────────

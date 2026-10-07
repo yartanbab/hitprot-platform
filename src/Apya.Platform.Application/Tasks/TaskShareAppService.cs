@@ -173,6 +173,7 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
     /// aranır — token'ın kendisi yetki taşır.
     /// </summary>
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public virtual async Task<GuestTaskViewDto> ResolveAsync(string token, GuestRequestContextDto context)
     {
         using (_mtFilter.Disable())
@@ -191,6 +192,7 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
     }
 
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public virtual async Task<Guid> AddGuestCommentAsync(
         string token, Guid taskId, string text, GuestRequestContextDto context)
     {
@@ -230,6 +232,7 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
     }
 
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public virtual async Task EnsureGuestUploadAllowedAsync(string token, Guid taskId)
     {
         using (_mtFilter.Disable())
@@ -241,6 +244,7 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
     }
 
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public virtual async Task RegisterGuestUploadAsync(
         string token, Guid taskId, string fileName, string storedFileName, long fileSize,
         GuestRequestContextDto context)
@@ -277,6 +281,7 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
     /// tüm ekleri indirtirdi.
     /// </summary>
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public virtual async Task<GuestDownloadDto> PrepareGuestDownloadAsync(
         string token, Guid attachmentId, GuestRequestContextDto context)
     {
@@ -608,6 +613,7 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
     }
 
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public virtual async Task<GuestFormContextDto> ResolveGuestFormAsync(
         string token, Guid taskId, string documentSlug)
     {
