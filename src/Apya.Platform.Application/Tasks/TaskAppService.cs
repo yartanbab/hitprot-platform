@@ -1,3 +1,4 @@
+using Volo.Abp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -1251,6 +1252,8 @@ namespace Apya.Platform.Tasks
             await EnsureTaskAccessAllowedAsync(taskId);
         }
 
+        // Saklanan dosya adını çağırandan alır: yalnız süreç içinden (dosyayı yazan sayfa) çağrılır.
+        [RemoteService(IsEnabled = false)]
         public async Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize)
         {
             await EnsureTaskAccessAllowedAsync(taskId);

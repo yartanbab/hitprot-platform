@@ -90,6 +90,8 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         return await BuildAsync(application);
     }
 
+    // Saklanan dosya adını çağırandan alır: yalnız süreç içinden (dosyayı yazan sayfa) çağrılır.
+    [RemoteService(IsEnabled = false)]
     public async Task<GrantDocumentConsoleDto> RegisterVersionAsync(RegisterGrantDocumentVersionInput input)
     {
         var document = await GetDocumentAsync(input.DocumentId);
@@ -291,6 +293,8 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         };
     }
 
+    // Saklanan dosya adını çağırandan alır: yalnız süreç içinden (dosyayı yazan sayfa) çağrılır.
+    [RemoteService(IsEnabled = false)]
     public async Task<GrantDocumentConsoleDto> RegisterPackageAsync(RegisterGrantDocumentPackageInput input)
     {
         var application = await GetApplicationAsync(input.ApplicationId);

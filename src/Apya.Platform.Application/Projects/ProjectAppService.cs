@@ -378,6 +378,8 @@ public class ProjectAppService :
 
     // --- ATTACHMENTS ---
     [Authorize(PlatformPermissions.Projects.Edit)]
+    // Saklanan dosya adını çağırandan alır: yalnız süreç içinden (dosyayı yazan sayfa) çağrılır.
+    [RemoteService(IsEnabled = false)]
     public async Task<ProjectAttachmentDto> AddAttachmentAsync(
         Guid projectId, string fileName, string storedFileName, string contentType, long fileSize, string? title = null)
     {
@@ -451,6 +453,8 @@ public class ProjectAppService :
 
     // --- COVER IMAGE ---
     [Authorize(PlatformPermissions.Projects.Edit)]
+    // Saklanan dosya adını çağırandan alır: yalnız süreç içinden (dosyayı yazan sayfa) çağrılır.
+    [RemoteService(IsEnabled = false)]
     public async Task<string?> SetCoverImageAsync(Guid projectId, string storedFileName)
     {
         var project = await GetAccessibleProjectAsync(projectId);
