@@ -1,3 +1,4 @@
+using Volo.Abp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -316,6 +317,69 @@ public class DocumentAppService :
             VersionNumber = attachment.VersionNumber,
             IsLatest = attachment.IsLatest
         };
+    }
+
+    /// <summary>
+    /// İçi dolu klasör silinmez. Alt klasörler, belgeler ve ekler klasörle birlikte SİLİNMEZ: alt
+    /// klasörler ağaçta kökten erişilemez olur; ekler ne indirilebilir ne silinebilir (ikisi de önce
+    /// ekin klasörünü arar). Sessizce koparmak yerine reddet
+    /// (emsal: <c>GrantCallAppService.DeleteByIdAsync</c>).
+    /// </summary>
+    protected override async Task DeleteByIdAsync(Guid id)
+    {
+        var hasContent = await Repository.AnyAsync(d => d.ParentDocumentId == id)
+                         || await _attachmentRepository.AnyAsync(a => a.DocumentId == id);
+
+        if (!hasContent)
+        {
+            // Çöp kutusundaki belge de içeriktir: geri getirilebilir ve klasörü gidince klasörsüz gelir.
+            using (DataFilter.Disable<ISoftDelete>())
+            {
+                hasContent = await _documentFileRepository.AnyAsync(f => f.DocumentId == id);
+            }
+        }
+
+        if (hasContent)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.DocumentFolderNotEmpty);
+        }
+
+        await base.DeleteByIdAsync(id);
+    }
+
+    protected override async Task<Document> MapToEntityAsync(CreateUpdateDocumentDto createInput)
+    {
+        await EnsureParentIsValidAsync(null, createInput.ParentDocumentId);
+        return await base.MapToEntityAsync(createInput);
+    }
+
+    protected override async Task MapToEntityAsync(CreateUpdateDocumentDto updateInput, Document entity)
+    {
+        await EnsureParentIsValidAsync(entity.Id, updateInput.ParentDocumentId);
+        await base.MapToEntityAsync(updateInput, entity);
+    }
+
+    /// <summary>
+    /// Üst klasör var olan bir klasör olmalı ve klasör kendi içine (kendisine ya da bir alt klasörüne)
+    /// taşınamaz: döngüye giren klasör, içindekilerle birlikte ağaçta kökten erişilemez olur. Zincir
+    /// köke kadar yürünür; zincirde klasörün kendisi varsa ya da bir halka bulunamazsa reddedilir.
+    /// </summary>
+    private async Task EnsureParentIsValidAsync(Guid? id, Guid? parentId)
+    {
+        var visited = new HashSet<Guid>();
+
+        for (var current = parentId; current.HasValue;)
+        {
+            if (current == id || !visited.Add(current.Value))
+            {
+                throw new BusinessException(PlatformDomainErrorCodes.DocumentFolderParentInvalid);
+            }
+
+            var parent = await Repository.FindAsync(current.Value)
+                         ?? throw new BusinessException(PlatformDomainErrorCodes.DocumentFolderParentInvalid);
+
+            current = parent.ParentDocumentId;
+        }
     }
 
     protected override async Task<List<DocumentDto>> MapToGetListOutputDtosAsync(List<Document> entities)
