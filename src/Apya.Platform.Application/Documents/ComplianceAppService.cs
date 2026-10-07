@@ -323,6 +323,7 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
         package.EnsureEditable();
 
         await EnsureSourceValidAsync(input);
+        await EnsureDocumentTypeVisibleAsync(input.DocumentTypeId);
 
         var requirement = new ComplianceRequirement(
             GuidGenerator.Create(), CurrentTenant.Id, packageId,
@@ -344,6 +345,7 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
         package.EnsureEditable();
 
         await EnsureSourceValidAsync(input);
+        await EnsureDocumentTypeVisibleAsync(input.DocumentTypeId);
 
         requirement.Update(
             input.Title, input.Scope, input.DocumentTypeId, input.IsBlocking, input.Order,
@@ -376,6 +378,10 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
     /// <summary>Paketin kalemleri (katalog düzenleme ekranı).</summary>
     public virtual async Task<List<ComplianceRequirementDto>> GetRequirementListAsync(Guid packageId)
     {
+        // Kalemler süzgeç kapalı okunur ve "sahiplik paket seviyesinde denetlenir" varsayar; bu uç
+        // denetimi yapmıyordu ve kimliğini bilen başka kiracıya paketin kalemlerini veriyordu.
+        await EnsurePackageVisibleAsync(packageId);
+
         var requirements = (await GetRequirementsAsync(new List<Guid> { packageId }))
             .OrderBy(r => r.Order).ThenBy(r => r.Title)
             .ToList();
@@ -627,12 +633,33 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
             return new Dictionary<Guid, string>();
         }
 
+        var tenantId = CurrentTenant.Id;
+
+        // Sistem türleri host'ta olduğu için süzgeç kapalı okunur; "sistem ya da benim" koşulu
+        // olmadan kimliği verilen HER kiracının tür adı dönüyordu.
         using (_mtFilter.Disable())
         {
             var queryable = await _typeRepository.GetQueryableAsync();
             return (await AsyncExecuter.ToListAsync(
-                    queryable.AsNoTracking().Where(t => typeIds.Contains(t.Id)).Select(t => new { t.Id, t.Name })))
+                    queryable.AsNoTracking()
+                        .Where(t => typeIds.Contains(t.Id) && (t.TenantId == null || t.TenantId == tenantId))
+                        .Select(t => new { t.Id, t.Name })))
                 .ToDictionary(k => k.Id, v => v.Name);
+        }
+    }
+
+    /// <summary>Kalem yalnız sistem türüne ya da kiracının kendi türüne bağlanır.</summary>
+    private async Task EnsureDocumentTypeVisibleAsync(Guid? documentTypeId)
+    {
+        if (documentTypeId is null)
+        {
+            return;
+        }
+
+        var names = await GetTypeNamesAsync(new List<Guid> { documentTypeId.Value });
+        if (names.Count == 0)
+        {
+            throw new EntityNotFoundException(typeof(DocumentType), documentTypeId.Value);
         }
     }
 
