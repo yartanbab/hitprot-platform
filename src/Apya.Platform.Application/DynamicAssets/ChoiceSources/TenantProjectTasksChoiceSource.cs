@@ -4,9 +4,13 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.DynamicAssets.Dtos;
+using Apya.Platform.Permissions;
 using Apya.Platform.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Security.Claims;
+using Volo.Abp.Users;
 using TaskStatus = Apya.Platform.Tasks.TaskStatus;
 
 namespace Apya.Platform.DynamicAssets.ChoiceSources;
@@ -17,6 +21,12 @@ namespace Apya.Platform.DynamicAssets.ChoiceSources;
 ///
 /// <para>Kapsam kiracıdır (süzgeç açık); üstelik proje kimliği de kiracının kendi projesi olmak zorundadır,
 /// başka firmanın proje kimliği yazılsa bile sorgu boş döner.</para>
+///
+/// <para>🔴 Oturumsuz ziyaretçiye liste dönmez (bkz. <see cref="TenantProjectsChoiceSource"/>).</para>
+///
+/// <para>🔴 Liste görev BAŞLIĞI verir → görev listesiyle aynı gizlilik süzgeci (APYA-22,
+/// <see cref="TaskPrivacyQueryFilter"/>). Süzgeç yokken formu dolduran herkes, göremediği gizli
+/// görevlerin başlıklarını açılır listede okuyordu.</para>
 /// </summary>
 [ExposeServices(typeof(IFormChoiceSource))]
 public class TenantProjectTasksChoiceSource : IFormChoiceSource, ITransientDependency
@@ -24,10 +34,17 @@ public class TenantProjectTasksChoiceSource : IFormChoiceSource, ITransientDepen
     private static readonly CultureInfo Turkish = CultureInfo.GetCultureInfo("tr-TR");
 
     private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly ICurrentUser _currentUser;
+    private readonly IAuthorizationService _authorizationService;
 
-    public TenantProjectTasksChoiceSource(IRepository<TaskItem, Guid> taskRepository)
+    public TenantProjectTasksChoiceSource(
+        IRepository<TaskItem, Guid> taskRepository,
+        ICurrentUser currentUser,
+        IAuthorizationService authorizationService)
     {
         _taskRepository = taskRepository;
+        _currentUser = currentUser;
+        _authorizationService = authorizationService;
     }
 
     public string Key => FormChoiceSources.TenantProjectTasks;
@@ -38,12 +55,25 @@ public class TenantProjectTasksChoiceSource : IFormChoiceSource, ITransientDepen
 
     public async Task<List<FormChoiceDto>> GetAsync(string? parentValue)
     {
-        if (!Guid.TryParse(parentValue, out var projectId))
+        if (!_currentUser.IsAuthenticated || !Guid.TryParse(parentValue, out var projectId))
         {
             return new List<FormChoiceDto>();
         }
 
-        return (await _taskRepository.GetListAsync(t => t.ProjectId == projectId && t.Status != TaskStatus.Cancelled))
+        var tasks = await _taskRepository.GetListAsync(t => t.ProjectId == projectId && t.Status != TaskStatus.Cancelled);
+
+        // Gizli görev yoksa yetki sorgusu da atılmaz (olağan durum).
+        if (tasks.Any(t => t.IsPrivate))
+        {
+            bool isImpersonated = _currentUser.FindClaim(AbpClaimTypes.ImpersonatorUserId) != null;
+            bool canManageTeam = await _authorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+
+            tasks = TaskPrivacyQueryFilter
+                .Apply(tasks.AsQueryable(), isImpersonated, canManageTeam, _currentUser.Id)
+                .ToList();
+        }
+
+        return tasks
             .Select(t => new FormChoiceDto { Value = t.Id.ToString(), Label = t.Title })
             .OrderBy(c => c.Label, StringComparer.Create(Turkish, ignoreCase: true))
             .ToList();
