@@ -619,8 +619,12 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
     {
         using (_mtFilter.Disable())
         {
-            var calls = await _callRepo.GetListAsync(
-                c => c.TenantId == null && c.Status == GrantCallStatus.Acik);
+            // Son başvuru tarihi geçen çağrı, otomatik kapanış çalışana kadar "Açık" durumda
+            // kalır; katalog onu göstermez (ilgi ve başvuru kapıları da aynı kurala bakıyor).
+            var calls = (await _callRepo.GetListAsync(
+                    c => c.TenantId == null && c.Status == GrantCallStatus.Acik))
+                .Where(c => c.IsOpenOn(Clock.Now))
+                .ToList();
 
             var ids = calls.Select(c => c.GrantId).Distinct().ToList();
             var grants = (await _grantRepo.GetListAsync(g => g.TenantId == null && ids.Contains(g.Id)))
@@ -637,6 +641,11 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
             var call = await _callRepo.FirstOrDefaultAsync(
                            c => c.Id == callId && c.TenantId == null && c.Status == GrantCallStatus.Acik)
                        ?? throw new BusinessException(PlatformDomainErrorCodes.GrantLeadCallNotOpen);
+
+            if (call.IsPastDeadline(Clock.Now))
+            {
+                throw new BusinessException(PlatformDomainErrorCodes.GrantLeadCallNotOpen);
+            }
 
             var grant = await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId && g.TenantId == null)
                         ?? throw new BusinessException(PlatformDomainErrorCodes.GrantLeadCallNotOpen);

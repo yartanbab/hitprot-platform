@@ -100,6 +100,35 @@ public class TenantOpenCallCatalog_Tests : PlatformEntityFrameworkCoreTestBase
         }
     }
 
+    /// <summary>
+    /// Son başvuru tarihi geçen çağrı, otomatik kapanış çalışana kadar "Açık" durumda kalır.
+    /// Katalog yalnız duruma baktığı için o aralıkta çağrıyı listeliyor, ayrıntısını açıyordu;
+    /// ilgi ve başvuru kapıları ise reddediyor — firma tıklayınca hata alıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Son_tarihi_gecmis_cagri_durumu_acik_olsa_da_listelenmez_ve_ayrintisi_acilmaz()
+    {
+        var gecmis = await CreateOpenCallAsync("Süresi dolan program", minMatchScore: 0);
+        gecmis.SetSchedule(null, DateTime.Now.Date.AddDays(-1));
+        await _callRepository.UpdateAsync(gecmis, autoSave: true);
+
+        var sonGun = await CreateOpenCallAsync("Son gün programı", minMatchScore: 0);
+        sonGun.SetSchedule(null, DateTime.Now.Date);
+        await _callRepository.UpdateAsync(sonGun, autoSave: true);
+
+        using (_currentTenant.Change(TenantId))
+        {
+            var tumu = await _recommendationAppService.GetOpenCallsAsync();
+
+            tumu.ShouldNotContain(x => x.GrantCallId == gecmis.Id);
+            tumu.ShouldContain(x => x.GrantCallId == sonGun.Id, "son gün dahildir");
+
+            await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
+                () => _recommendationAppService.GetCallDetailAsync(gecmis.Id));
+            (await _recommendationAppService.GetCallDetailAsync(sonGun.Id)).ShouldNotBeNull();
+        }
+    }
+
     [Fact]
     public async Task Onerilenler_listenin_basinda_doner()
     {

@@ -133,7 +133,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         {
             var call = await _callRepo.FirstOrDefaultAsync(
                 c => c.Id == grantCallId && c.Status == GrantCallStatus.Acik && c.TenantId == null);
-            if (call == null)
+            // Son tarihi geçmiş çağrı da kapalı sayılır (otomatik kapanış çalışana kadar durumu "Açık" kalır).
+            if (call == null || call.IsPastDeadline(Clock.Now))
             {
                 // Taslak/kapalı çağrı ya da başka kiracının satırı — kiracıya YOK sayılır.
                 throw new EntityNotFoundException(typeof(GrantCall), grantCallId);
@@ -258,6 +259,10 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
             var call = await _callRepo.FirstOrDefaultAsync(
                            c => c.Id == input.GrantCallId && c.Status == GrantCallStatus.Acik && c.TenantId == null)
                        ?? throw new EntityNotFoundException(typeof(GrantCall), input.GrantCallId);
+            if (call.IsPastDeadline(Clock.Now))
+            {
+                throw new EntityNotFoundException(typeof(GrantCall), input.GrantCallId);
+            }
             var grant = await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId && g.TenantId == null)
                         ?? throw new EntityNotFoundException(typeof(Grant), call.GrantId);
             var costItems = await _costItemRepo.GetListAsync(c => c.GrantId == grant.Id && c.TenantId == null);
@@ -295,8 +300,10 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     private async Task<List<GrantSimilarCallDto>> BuildSimilarAsync(
         GrantCall call, Grant grant, FirmSignals signals, DateTime today)
     {
-        var others = await _callRepo.GetListAsync(
-            c => c.Status == GrantCallStatus.Acik && c.TenantId == null && c.Id != call.Id);
+        var others = (await _callRepo.GetListAsync(
+                c => c.Status == GrantCallStatus.Acik && c.TenantId == null && c.Id != call.Id))
+            .Where(c => c.IsOpenOn(Clock.Now))
+            .ToList();
         if (others.Count == 0)
         {
             return new List<GrantSimilarCallDto>();
@@ -394,8 +401,11 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         var result = new List<GrantRecommendationDto>();
         using (_mtFilter.Disable())
         {
-            var openCalls = await _callRepo.GetListAsync(
-                c => c.Status == GrantCallStatus.Acik && c.TenantId == null);
+            // Son başvuru tarihi geçen çağrı önerilmez (otomatik kapanış çalışana kadar "Açık" kalır).
+            var openCalls = (await _callRepo.GetListAsync(
+                    c => c.Status == GrantCallStatus.Acik && c.TenantId == null))
+                .Where(c => c.IsOpenOn(Clock.Now))
+                .ToList();
             if (openCalls.Count == 0)
             {
                 return result;
