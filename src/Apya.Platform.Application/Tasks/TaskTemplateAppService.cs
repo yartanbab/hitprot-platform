@@ -72,6 +72,11 @@ public class TaskTemplateAppService : ApplicationService, ITaskTemplateAppServic
     [Authorize(PlatformPermissions.Tasks.Create)]
     public async Task<TaskTemplateListDto> CreateFromTaskAsync(CreateTaskTemplateFromTaskDto input)
     {
+        // Görevi görme hakkı (kiracı + APYA-22 gizlilik) TaskAppService.GetAsync'te doğrulanır.
+        // Şablon kiracının ORTAK kaydıdır: bu kapı yokken kimliği bilinen gizli bir görevin
+        // başlığı ve açıklaması şablona kopyalanıp şablonu görebilen herkese açılıyordu.
+        await _taskAppService.GetAsync(input.TaskId);
+
         var template = await _templateManager.CreateFromTaskAsync(input.TaskId, input.Name, input.Description);
 
         return new TaskTemplateListDto

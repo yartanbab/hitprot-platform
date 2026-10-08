@@ -59,7 +59,9 @@ public class TaskTemplateManager : DomainService
             task.TaskType);
 
         // Alt görevler — yalnız başlık + sıra. Silinmişler repository filtresiyle zaten dışarıda.
-        var subTasks = await _taskRepository.GetListAsync(t => t.ParentTaskId == taskId);
+        // GİZLİ alt görev şablona girmez: şablon kiracının ortak kaydıdır, gizli görevin başlığı
+        // üst görevden şablon çıkaran biri eliyle herkese açılmamalı.
+        var subTasks = await _taskRepository.GetListAsync(t => t.ParentTaskId == taskId && !t.IsPrivate);
         var order = 0;
         foreach (var sub in subTasks.OrderBy(t => t.Number))
         {

@@ -95,7 +95,10 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     {
         EnsureReschedulable(input.Source);
 
-        var task = await _taskRepository.GetAsync(input.SourceId);
+        // Görev, görme hakkını (kiracı + APYA-22 gizlilik) doğrulayan kapıdan okunur. Depodan
+        // okunurken "aynı güne bırakma" sessizce başarılı dönüyor, gizli bir görevin bitiş
+        // tarihi deneme-yanılmayla öğrenilebiliyordu.
+        var task = await _taskAppService.GetAsync(input.SourceId);
         var basis = (task.DueDate ?? Clock.Now).Date;
         var days = (int)(input.NewDate.Date - basis).TotalDays;
 
