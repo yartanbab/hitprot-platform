@@ -103,6 +103,15 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         var col = await _columnRepository.GetAsync(columnId);
         var task = await _taskRepository.GetAsync(taskId);
 
+        // Bürünme oturumu gizli göreve hiçbir koşulda dokunamaz (APYA-22). Aşağıdaki sahiplik
+        // kuralı bürünülen kullanıcının kendisi için "evet" der; görev listesindeki kapı
+        // (TaskAppService.EnsureTaskPrivacyAllowedAsync) burada da aranır.
+        if (task.IsPrivate
+            && CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null)
+        {
+            throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
+        }
+
         // Görevi değiştiren diğer uçlarla aynı sahiplik kuralı (TaskAppService.EnsureCanMutateTaskAsync):
         // oluşturan ya da atanan; değilse ekip yöneticisi. Kanbanın özel kolon yolu bunu atlıyordu.
         if (!task.IsOwnedBy(CurrentUser.Id)
