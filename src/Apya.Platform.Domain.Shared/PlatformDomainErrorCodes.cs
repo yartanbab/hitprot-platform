@@ -326,6 +326,7 @@ public static class PlatformDomainErrorCodes
     public const string TrancheIncomeEntryProjectMismatch = "Platform:ProjectBudget:TrancheIncomeEntryProjectMismatch";
     public const string TrancheIncomeEntryAlreadyLinked = "Platform:ProjectBudget:TrancheIncomeEntryAlreadyLinked";
     public const string IncomeEntryLinkedToTranche = "Platform:ProjectBudget:IncomeEntryLinkedToTranche";
+    public const string TaskTransferIncomeLinkedToTranche = "Platform:Task:TransferIncomeLinkedToTranche";
 
     public const string DeductionAmountInvalid = "Platform:ProjectBudget:DeductionAmountInvalid";
     public const string DeductionReasonRequired = "Platform:ProjectBudget:DeductionReasonRequired";

@@ -273,6 +273,144 @@ public class TrancheIncomeLink_Tests : PlatformEntityFrameworkCoreTestBase
         updated.Title.ShouldBe("Düzeltilmiş başlık");
     }
 
+    /* ─── Taşımanın öteki iki yolu ─────────────────────────────────────
+     * Tam güncelleme (yukarıdaki test) taşımayı reddediyordu; aynı taşıma iki yoldan daha
+     * yapılabiliyordu ve ikisi de korumayı sormuyordu. */
+
+    private async Task<Apya.Platform.Tasks.TaskItem> NewTaskAsync(Guid projectId)
+    {
+        var task = new Apya.Platform.Tasks.TaskItem(
+            Guid.NewGuid(), "Hibe raporu " + Guid.NewGuid().ToString("N")[..6], projectId,
+            tenantId: _currentTenant.Id, now: new DateTime(2026, 9, 1));
+        await GetRequiredService<IRepository<Apya.Platform.Tasks.TaskItem, Guid>>().InsertAsync(task, autoSave: true);
+        return task;
+    }
+
+    private async Task<IncomeEntry> ReadIncomeAsync(Guid id)
+    {
+        using var uow = _uowManager.Begin(requiresNew: true);
+        var income = await _incomeRepository.GetAsync(id);
+        await uow.CompleteAsync();
+        return income;
+    }
+
+    /// <summary>"İlişkiyi değiştir…" ucu: bağlı gelir başka projeye de, "bağımsız"a da geçemez.</summary>
+    [Fact]
+    public async Task Tahsilata_bagli_gelirin_iliskisi_baska_projeye_ya_da_bagimsiza_degistirilemez()
+    {
+        var projectId = await NewProjectAsync();
+        var otherProjectId = await NewProjectAsync();
+        var trancheId = await NewTrancheAsync(projectId);
+        var incomeId = await NewIncomeAsync(projectId);
+        await _budgetAppService.RegisterCollectionAsync(trancheId, Collect(incomeId));
+
+        var toOther = await Should.ThrowAsync<BusinessException>(
+            () => _incomeAppService.SetScopeAsync(incomeId, new SetIncomeScopeDto { ProjectId = otherProjectId }));
+        toOther.Code.ShouldBe(PlatformDomainErrorCodes.IncomeEntryLinkedToTranche);
+
+        var toNone = await Should.ThrowAsync<BusinessException>(
+            () => _incomeAppService.SetScopeAsync(incomeId, new SetIncomeScopeDto()));
+        toNone.Code.ShouldBe(PlatformDomainErrorCodes.IncomeEntryLinkedToTranche);
+
+        var otherTask = await NewTaskAsync(otherProjectId);
+        var toOtherTask = await Should.ThrowAsync<BusinessException>(
+            () => _incomeAppService.SetScopeAsync(incomeId, new SetIncomeScopeDto { TaskId = otherTask.Id }));
+        toOtherTask.Code.ShouldBe(PlatformDomainErrorCodes.IncomeEntryLinkedToTranche);
+
+        // 🔴 Doğrulama DEĞİŞİKLİKTEN önce: reddedilen çağrılar hiçbir alanı yazmamış olmalı.
+        var stored = await ReadIncomeAsync(incomeId);
+        stored.ProjectId.ShouldBe(projectId);
+        stored.TaskId.ShouldBeNull();
+        (await ReadTrancheAsync(trancheId)).IncomeEntryId.ShouldBe(incomeId);
+    }
+
+    /// <summary>Karşı yön: aynı projenin içinde ilişki değişebilir (bir göreve bağlamak taşıma değildir).</summary>
+    [Fact]
+    public async Task Tahsilata_bagli_gelir_ayni_projenin_gorevine_baglanabilir()
+    {
+        var projectId = await NewProjectAsync();
+        var trancheId = await NewTrancheAsync(projectId);
+        var incomeId = await NewIncomeAsync(projectId);
+        await _budgetAppService.RegisterCollectionAsync(trancheId, Collect(incomeId));
+        var task = await NewTaskAsync(projectId);
+
+        var updated = await _incomeAppService.SetScopeAsync(incomeId, new SetIncomeScopeDto { TaskId = task.Id });
+
+        updated.TaskId.ShouldBe(task.Id);
+        updated.ProjectId.ShouldBe(projectId);
+    }
+
+    /// <summary>
+    /// Görev taşıma, görevin gelirlerini de yeni projeye geçirir. Dilime bağlı gelir varsa taşıma
+    /// REDDEDİLİR — aksi halde dilim sessizce başka projenin gelirine bağlı kalırdı.
+    /// </summary>
+    [Fact]
+    public async Task Tahsilata_bagli_geliri_olan_gorev_baska_projeye_tasinamaz()
+    {
+        var taskAppService = GetRequiredService<Apya.Platform.Tasks.ITaskAppService>();
+        var projectId = await NewProjectAsync();
+        var otherProjectId = await NewProjectAsync();
+        var trancheId = await NewTrancheAsync(projectId);
+        var task = await NewTaskAsync(projectId);
+        var incomeId = await NewIncomeAsync(projectId);
+        await _incomeAppService.SetScopeAsync(incomeId, new SetIncomeScopeDto { TaskId = task.Id });
+        await _budgetAppService.RegisterCollectionAsync(trancheId, Collect(incomeId));
+
+        var ex = await Should.ThrowAsync<BusinessException>(
+            () => taskAppService.TransferAsync(task.Id, new Apya.Platform.Tasks.Dtos.TransferTaskDto
+            {
+                Mode = Apya.Platform.Tasks.TaskTransferMode.Move,
+                TargetProjectIds = { otherProjectId }
+            }));
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.TaskTransferIncomeLinkedToTranche);
+
+        // Hiçbir şey taşınmadı: görev, gelir ve bağ yerinde.
+        using (var uow = _uowManager.Begin(requiresNew: true))
+        {
+            (await GetRequiredService<IRepository<Apya.Platform.Tasks.TaskItem, Guid>>().GetAsync(task.Id))
+                .ProjectId.ShouldBe(projectId);
+            await uow.CompleteAsync();
+        }
+        (await ReadIncomeAsync(incomeId)).ProjectId.ShouldBe(projectId);
+        (await ReadTrancheAsync(trancheId)).IncomeEntryId.ShouldBe(incomeId);
+    }
+
+    /// <summary>Karşı yön: bağlı geliri OLMAYAN görev taşınır ve geliri onunla gider (eski davranış).</summary>
+    [Fact]
+    public async Task Bagli_geliri_olmayan_gorev_tasinir_ve_geliri_onunla_gider()
+    {
+        var taskAppService = GetRequiredService<Apya.Platform.Tasks.ITaskAppService>();
+        var projectId = await NewProjectAsync();
+        var otherProjectId = await NewProjectAsync();
+        var task = await NewTaskAsync(projectId);
+        var incomeId = await NewIncomeAsync(projectId);
+        await _incomeAppService.SetScopeAsync(incomeId, new SetIncomeScopeDto { TaskId = task.Id });
+
+        await taskAppService.TransferAsync(task.Id, new Apya.Platform.Tasks.Dtos.TransferTaskDto
+        {
+            Mode = Apya.Platform.Tasks.TaskTransferMode.Move,
+            TargetProjectIds = { otherProjectId }
+        });
+
+        (await ReadIncomeAsync(incomeId)).ProjectId.ShouldBe(otherProjectId);
+    }
+
+    /// <summary>
+    /// Hata kodu Türkçe metne çözülmeli: karşılığı olmayan kod kullanıcıya ham anahtar olarak görünür.
+    /// </summary>
+    [Fact]
+    public void Gorev_tasima_reddinin_Turkce_metni_var()
+    {
+        var localizer = GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource>>();
+
+        using (Volo.Abp.Localization.CultureHelper.Use("tr"))
+        {
+            var text = localizer[PlatformDomainErrorCodes.TaskTransferIncomeLinkedToTranche];
+            text.ResourceNotFound.ShouldBeFalse();
+            text.Value.ShouldContain("fon diliminin tahsilatına bağlı");
+        }
+    }
+
     /* ─── Eski sarkık bağların onarımı ────────────────────────────────── */
 
     /// <summary>

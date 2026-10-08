@@ -1935,6 +1935,7 @@
         "Platform:ProjectBudget:TrancheIncomeEntryProjectMismatch": "Seçilen gelir kaydı bu projeye ait değil. Tahsilat yalnız aynı projenin gelir kaydına bağlanabilir.",
         "Platform:ProjectBudget:TrancheIncomeEntryAlreadyLinked": "Bu gelir kaydı zaten {SequenceNo}. dilimin tahsilatına bağlı. Aynı gelir iki dilime bağlanamaz.",
         "Platform:ProjectBudget:IncomeEntryLinkedToTranche": "Bu gelir kaydı {SequenceNo}. fon diliminin tahsilatına bağlı. Silmeden ya da projesini değiştirmeden önce Finans › Fonlama ekranında o dilimin tahsilatından gelir kaydı bağını kaldırın.",
+        "Platform:Task:TransferIncomeLinkedToTranche": "Bu göreve bağlı bir gelir kaydı {SequenceNo}. fon diliminin tahsilatına bağlı; görev başka projeye taşınamaz. Önce Finans › Fonlama ekranında o dilimin tahsilatından gelir kaydı bağını kaldırın ya da görevi kopyalayın.",
         "Platform:ProjectBudget:DeductionAmountInvalid": "Geçersiz tutar. Kesinti tutarı sıfırdan büyük olmalıdır.",
         "Platform:ProjectBudget:DeductionReasonRequired": "Kesinti için gerekçe girilmelidir.",
         "Platform:ProjectBudget:DeductionExceedsTranche": "Kesintilerin toplamı dilimin planlanan tutarını aşamaz.",
