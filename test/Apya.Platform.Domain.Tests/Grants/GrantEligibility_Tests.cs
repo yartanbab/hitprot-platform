@@ -138,6 +138,65 @@ public class GrantEligibility_Tests
         _m.Evaluate(new FirmSignals(), grant, Today).Rules.ShouldBeEmpty();
     }
 
+    /// <summary>
+    /// STK profilinde ölçek, TRL, Ar-Ge personeli, ciro ve konsorsiyum alanı YOKTUR (form
+    /// göstermez, sunucu null'lar). Bu şartlar "veri eksik" sayılsaydı dernek hiçbir zaman
+    /// dolduramayacağı alanlar yüzünden kalıcı olarak "Koşullu" kalırdı; STK'da hiç üretilmezler.
+    /// </summary>
+    [Theory]
+    [InlineData(OrganizationType.Dernek)]
+    [InlineData(OrganizationType.Kulup)]
+    [InlineData(OrganizationType.Vakif)]
+    [InlineData(OrganizationType.Federasyon)]
+    public void Stkda_Sirkete_Ozgu_Sartlar_Uretilmez(OrganizationType type)
+    {
+        var grant = Program();
+        grant.EligibleCompanySizes = (int)CompanySize.Kucuk;
+        grant.MinTrl = 4;
+        grant.MinRdStaffCount = 2;
+        grant.MinRevenue = 5_000_000m;
+        grant.RequiresConsortium = true;
+
+        var result = _m.Evaluate(new FirmSignals { Type = type }, grant, Today);
+
+        result.Rules.ShouldBeEmpty();
+        result.Bucket.ShouldBe(GrantEligibilityBucket.Uygun);
+    }
+
+    /// <summary>Aynı program şirkette beş şartı da üretir; verisi yoksa "Koşullu" kalır.</summary>
+    [Fact]
+    public void Sirkette_Ayni_Sartlar_Uretilmeye_Devam_Eder()
+    {
+        var grant = Program();
+        grant.EligibleCompanySizes = (int)CompanySize.Kucuk;
+        grant.MinTrl = 4;
+        grant.MinRdStaffCount = 2;
+        grant.MinRevenue = 5_000_000m;
+        grant.RequiresConsortium = true;
+
+        var result = _m.Evaluate(new FirmSignals(), grant, Today);
+
+        result.Rules.Count.ShouldBe(5);
+        result.Bucket.ShouldBe(GrantEligibilityBucket.Kosullu);
+    }
+
+    /// <summary>Kuruluş yaşı ve personel sayısı STK'da da ölçülür: eler de, eksikse sorar da.</summary>
+    [Fact]
+    public void Stkda_Yas_Ve_Personel_Sarti_Olculmeye_Devam_Eder()
+    {
+        var grant = Program();
+        grant.MaxCompanyAgeYears = 5;
+        grant.MinStaffCount = 10;
+
+        var result = _m.Evaluate(
+            new FirmSignals { Type = OrganizationType.Dernek, FoundedOn = new DateTime(2019, 1, 24) },
+            grant, Today);
+
+        Outcome(result, GrantEligibilityRule.CompanyAge).ShouldBe(GrantRuleOutcome.Failed);
+        Outcome(result, GrantEligibilityRule.StaffCount).ShouldBe(GrantRuleOutcome.Unknown);
+        result.Rules.Count.ShouldBe(2);
+    }
+
     [Fact]
     public void Tek_Sart_Elerse_Firma_Uygun_Olmaz_Digerleri_Gecmis_Olsa_Bile()
     {

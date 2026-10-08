@@ -49,6 +49,7 @@ public class FirmSignalsBuilder : DomainService
             var profile = await _profileRepo.FirstOrDefaultAsync();
             if (profile != null)
             {
+                signals.Type = profile.Type;
                 signals.Size = profile.Size;
                 signals.FoundedOn = profile.FoundedOn;
                 signals.StaffCount = profile.EffectiveStaffCount;

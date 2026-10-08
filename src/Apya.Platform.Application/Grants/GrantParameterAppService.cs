@@ -547,6 +547,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         }
         return new FirmSignals
         {
+            Type = profile.Type,
             Size = profile.Size,
             FoundedOn = profile.FoundedOn,
             StaffCount = profile.EffectiveStaffCount,

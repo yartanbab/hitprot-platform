@@ -321,6 +321,7 @@ public class GrantMatchWeightAppService : ApplicationService, IGrantMatchWeightA
             }
             result[tenantId] = new FirmSignals
             {
+                Type = profile.Type,
                 Size = profile.Size,
                 FoundedOn = profile.FoundedOn,
                 StaffCount = profile.StaffCount,
