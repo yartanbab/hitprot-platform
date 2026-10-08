@@ -115,6 +115,10 @@ Kullanıcının isteğine göre JSON formatında bir form şeması dönmelisin.
         }
     }
 
+    // Form yanıtlarını OKUYAN uç: yanıt ekranıyla (ResponseManagementAppService) aynı izni ister.
+    // Yalnız sınıf izniyle (Projects.UseAiFeatures) çağrılabiliyor, yanıtları görme izni olmayan
+    // kullanıcı kiracıdaki herhangi bir formun yanıtlarının özetini alabiliyordu.
+    [Authorize(PlatformPermissions.DynamicAssets.ViewResponses)]
     public async Task<AgentResponseDto> AnalyzeResponsesAsync(Guid documentId)
     {
         // 1. Fetch domain data based on User's request
@@ -165,7 +169,8 @@ Yanıtın doğrudan Türkçe ve 3 maddelik bir liste olmalıdır.";
         var localKernel = _kernel.Clone();
 
         // 3. Register our Task Automation skills
-        localKernel.ImportPluginFromObject(new TasksPlugin(_taskRepository, _clock), "TasksPlugin");
+        localKernel.ImportPluginFromObject(
+            new TasksPlugin(_taskRepository, _clock, CurrentUser, AuthorizationService), "TasksPlugin");
 
         var chatCompletionService = localKernel.GetRequiredService<IChatCompletionService>();
 
