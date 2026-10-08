@@ -233,23 +233,27 @@ public class IncomeEntryAppService :
         var income = await Repository.GetAsync(id);
         var oldProjectId = income.ProjectId;
 
+        Guid? newTaskId = null;
+        Guid? newProjectId = null; // ikisi de boş = bağımsız
         if (input.TaskId.HasValue)
         {
             var task = await _taskRepository.GetAsync(input.TaskId.Value);
-            income.TaskId = task.Id;
-            income.ProjectId = task.ProjectId; // türetilir
+            newTaskId = task.Id;
+            newProjectId = task.ProjectId; // türetilir
         }
         else if (input.ProjectId.HasValue)
         {
             await _projectRepository.GetAsync(input.ProjectId.Value);
-            income.TaskId = null;
-            income.ProjectId = input.ProjectId;
+            newProjectId = input.ProjectId;
         }
-        else
-        {
-            income.TaskId = null;
-            income.ProjectId = null; // bağımsız
-        }
+
+        // FIN-06: bir dilimin tahsilatına bağlı gelir başka projeye taşınamaz. Tam güncelleme
+        // (UpdateAsync) bunu soruyordu; bu granüler uç sormuyor, aynı taşımayı denetimsiz
+        // yapıyordu. Doğrulama DEĞİŞİKLİKTEN önce: reddedilen çağrı hiçbir alanı yazmamalı.
+        await _budgetManager.EnsureIncomeEntryCanMoveToProjectAsync(id, newProjectId);
+
+        income.TaskId = newTaskId;
+        income.ProjectId = newProjectId;
 
         if (income.ProjectId != oldProjectId)
         {

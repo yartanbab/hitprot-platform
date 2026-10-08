@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
 using Apya.Platform.IssueTasks;
+using Apya.Platform.ProjectBudgets;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
@@ -26,6 +27,7 @@ public class TaskManager : DomainService
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
     private readonly IRepository<IssueTaskLink, Guid> _issueTaskLinkRepository;
     private readonly IRepository<IdentityUser, Guid> _userRepository;
+    private readonly IRepository<FundingTranche, Guid> _trancheRepository;
 
     /// <summary>
     /// 🔴 PRJ-07 · Alt görevin bağlanacağı üst görevi doğrular.
@@ -73,8 +75,10 @@ public class TaskManager : DomainService
         IRepository<Expense, Guid> expenseRepository,
         IRepository<IncomeEntry, Guid> incomeRepository,
         IRepository<IssueTaskLink, Guid> issueTaskLinkRepository,
-        IRepository<IdentityUser, Guid> userRepository)
+        IRepository<IdentityUser, Guid> userRepository,
+        IRepository<FundingTranche, Guid> trancheRepository)
     {
+        _trancheRepository = trancheRepository;
         _taskRepository = taskRepository;
         _checklistRepository = checklistRepository;
         _commentRepository = commentRepository;
@@ -175,6 +179,8 @@ public class TaskManager : DomainService
 
         if (mode == TaskTransferMode.Move)
         {
+            await EnsureTrancheLinkedIncomesCanLeaveAsync(source.Id, targets[0]);
+
             source.MoveToProject(targets[0]);
             await _taskRepository.UpdateAsync(source);
             await SyncFinanceProjectAsync(source.Id, targets[0]);
@@ -201,6 +207,8 @@ public class TaskManager : DomainService
     /// </summary>
     private async Task SyncFinanceProjectAsync(Guid taskId, Guid newProjectId)
     {
+        // Dilime bağlı gelir buraya gelmez: TransferAsync taşımadan ÖNCE reddeder
+        // (EnsureTrancheLinkedIncomesCanLeaveAsync).
         var expenses = await _expenseRepository.GetListAsync(x => x.TaskId == taskId);
         foreach (var e in expenses)
         {
@@ -216,6 +224,31 @@ public class TaskManager : DomainService
             i.BudgetLineId = null;
             await _incomeRepository.UpdateAsync(i);
         }
+    }
+
+    /// <summary>
+    /// FIN-06 · Görevin bir fon diliminin tahsilatına bağlı geliri varsa görev başka projeye
+    /// TAŞINAMAZ. Taşıma görevin gelirlerini de yeni projeye geçirir; bağ ise "aynı projenin
+    /// geliri" kuralıyla kurulmuştur — sessizce taşımak, dilimi başka projenin gelirine bağlı
+    /// bırakırdı. Aynı ilke: bağlı kaydı koparma, REDDET (kullanıcı önce bağı kaldırır).
+    /// Kopyalama etkilenmez: kaynak görev ve gelirleri yerinde kalır.
+    /// </summary>
+    private async Task EnsureTrancheLinkedIncomesCanLeaveAsync(Guid taskId, Guid newProjectId)
+    {
+        var incomeIds = (await _incomeRepository.GetListAsync(x => x.TaskId == taskId))
+            .Select(i => i.Id)
+            .ToList();
+        if (incomeIds.Count == 0)
+        {
+            return;
+        }
+
+        var tranche = await _trancheRepository.FirstOrDefaultAsync(t =>
+            t.IncomeEntryId != null && incomeIds.Contains(t.IncomeEntryId.Value) && t.ProjectId != newProjectId);
+
+        if (tranche != null)
+            throw new BusinessException(PlatformDomainErrorCodes.TaskTransferIncomeLinkedToTranche)
+                .WithData("SequenceNo", tranche.SequenceNo);
     }
 
     /// <summary>Kaynağın seçilen içerikleriyle birlikte tek bir hedef projede kopyasını üretir.</summary>
