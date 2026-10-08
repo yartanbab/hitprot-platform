@@ -80,5 +80,13 @@ public class CreateUpdateGrantStageTemplateDto
 
     public bool IsDefault { get; set; }
 
+    /// <summary>
+    /// Çağıran adım kimliklerini biliyor ve gönderiyor: kimliği OLMAYAN adım yeni adımdır.
+    /// Düzenleyici hep <c>true</c> gönderir. Bu işaret olmadan, var olan bütün adımlar silinip
+    /// yerine yenileri eklendiğinde gelen listede hiç kimlik kalmaz ve istek, kimlik göndermeyi
+    /// bilmeyen eski bir çağırandan ayırt edilemezdi (o durumda konuma göre eşleştirilir).
+    /// </summary>
+    public bool StepsCarryIds { get; set; }
+
     public List<GrantStageTemplateStepDto> Steps { get; set; } = new();
 }

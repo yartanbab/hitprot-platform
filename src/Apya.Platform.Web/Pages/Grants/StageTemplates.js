@@ -195,6 +195,8 @@ $(function () {
             name: $('#TplName').val(),
             description: $('#TplDescription').val(),
             isDefault: $('#TplIsDefault').is(':checked'),
+            // Kimliği olmayan satır YENİ adımdır; bütün adımlar yenilense bile sunucu konuma düşmez.
+            stepsCarryIds: true,
             steps: collectSteps()
         };
     }

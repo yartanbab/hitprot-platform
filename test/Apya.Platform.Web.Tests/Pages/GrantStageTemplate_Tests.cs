@@ -168,6 +168,7 @@ public class GrantStageTemplate_Tests : PlatformWebTestBase
         => new()
         {
             Name = template.Name,
+            StepsCarryIds = true,
             Steps = stepNamesInOrder.Select((n, i) =>
             {
                 var existing = template.Steps.SingleOrDefault(s => s.Name == n);
@@ -304,6 +305,41 @@ public class GrantStageTemplate_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// Köşe durumu: var olan BÜTÜN adımlar silinip yerine yenileri eklenirse gelen listede hiç
+    /// kimlik olmaz. Düzenleyicinin işareti olmadan bu istek konuma göre eşleniyor, eski adım
+    /// i'deki başvurular sessizce yeni adım i'de kalıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Butun_Adimlar_Yenilenince_Eskiler_Silinir_Yenilerin_Kimligi_Yenidir()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Tam Yenileme " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Hazırlık"));
+        var oldIds = created.Steps.Select(s => s.Id).ToList();
+
+        var updated = await service.UpdateAsync(created.Id, AsInput(created, "Ön eleme", "Sözleşme"));
+
+        updated.Steps.Select(s => s.Name).ShouldBe(new[] { "Ön eleme", "Sözleşme" });
+        updated.Steps.ShouldAllBe(s => !oldIds.Contains(s.Id));
+    }
+
+    [Fact]
+    public async Task Butun_Adimlar_Yenilenirken_Eski_Adimda_Basvuru_Varsa_Reddedilir()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Tam Yenileme Koruma " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Hazırlık"));
+        await PutApplicationOnStepAsync(created.Steps.Single(s => s.Name == "İlgi").Id!.Value);
+
+        var ex = await Should.ThrowAsync<Volo.Abp.BusinessException>(
+            async () => await service.UpdateAsync(created.Id, AsInput(created, "Ön eleme", "Sözleşme")));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantStageTemplateStepInUse);
+    }
+
+    /// <summary>
     /// Sunucu kimliği ancak düzenleyici GÖNDERİRSE kullanabilir; göndermezse sessizce konuma göre
     /// eşleştirmeye düşer ve hata geri gelir. Bu yüzden betiğin iki ucu kaynaktan kilitlenir.
     /// </summary>
@@ -315,6 +351,7 @@ public class GrantStageTemplate_Tests : PlatformWebTestBase
 
         script.ShouldContain(".attr('data-step-id', s.id || '')");
         script.ShouldContain("id: $r.attr('data-step-id') || null");
+        script.ShouldContain("stepsCarryIds: true");
     }
 
     [Fact]
