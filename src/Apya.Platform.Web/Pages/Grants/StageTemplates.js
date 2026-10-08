@@ -103,6 +103,10 @@ $(function () {
             '    <div class="apya-tpl-error">' + esc(l('Grants:StageTemplates:StepNameRequired')) + '</div>' +
             '  </div>' +
             '</div>')
+            // Adımın kimliği satırla birlikte yaşar ve kayıtta geri gider: sunucu adımı ona göre
+            // eşler. Kimlik gitmezse eşleşme konuma düşer; ortadaki satırı silmek ya da
+            // sürükleyip sıralamak başvuruları sessizce başka adıma kaydırır (LIF-02).
+            .attr('data-step-id', s.id || '')
             // Değerler .val() ile veriliyor: HTML'e gömülse kullanıcı metnindeki
             // tırnak/işaretler markup'ı bozardı.
             .find('.apya-tpl-step-name').val(s.name || '').end()
@@ -173,6 +177,7 @@ $(function () {
         return $('#TplSteps .apya-tpl-step').map(function (i) {
             var $r = $(this);
             return {
+                id: $r.attr('data-step-id') || null,
                 order: i,
                 name: $r.find('.apya-tpl-step-name').val(),
                 note: $r.find('.apya-tpl-note').val(),

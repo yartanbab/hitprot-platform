@@ -161,9 +161,18 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
     /// başvuru başa sarıyordu — host yalnız bir adımın adını düzeltse bile. Uyarı yok,
     /// akış kaydı yok, geri dönüş yok (denetim bulgusu LIF-02).</para>
     ///
-    /// <para>Eşleştirme SIRAYA göre yapılır: istemci adım kimliği göndermiyor
-    /// (<c>collectSteps</c> DOM'dan <c>order: i</c> üretir), dolayısıyla konum tek
-    /// kararlı anahtardır. Aynı konumdaki adım yerinde güncellenir ve Id'sini KORUR.</para>
+    /// <para>Eşleştirme adım KİMLİĞİNE göre yapılır: düzenleyici var olan her adımı kimliğiyle
+    /// geri gönderir. Kimliği gelen adım yerinde güncellenir (Id'si ve üzerindeki başvurular
+    /// onunla kalır), kimliği gelmeyen YENİ adımdır, gelen listede olmayan ise silinir.</para>
+    ///
+    /// <para>🔴 Eskiden eşleştirme KONUMA göreydi (istemci kimlik göndermiyordu). Bu, adım
+    /// SAYISI ve SIRASI değişmediği sürece doğruydu; ortadaki adım silinince ya da adımlar
+    /// sürüklenip yeniden sıralanınca aynı konumdaki ESKİ kimlik yeni ada geçiyor, o adımdaki
+    /// başvurular kimse taşımadan başka adıma kaymış oluyordu. Silme koruması da silineni
+    /// değil listenin sonundaki adımı sayıyordu.</para>
+    ///
+    /// <para>Hiçbir adım kimlik taşımıyorsa (eski betiği açık kalmış sekme, kimliksiz API
+    /// çağrısı) konuma göre eşleştirmeye düşülür: o çağıran için davranış eskisinden kötü olmaz.</para>
     /// </summary>
     private async Task SyncStepsAsync(Guid templateId, List<GrantStageTemplateStepDto> steps)
     {
@@ -176,9 +185,33 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
             .OrderBy(s => s.Order)
             .ToList();
 
-        // Fazla kalan adımlar gerçekten siliniyor — üzerinde başvuru varsa önce reddet.
+        // Gelen her adımın karşılığı: var olan adım ya da null (= yeni adım).
+        var target = new GrantStageTemplateStep?[incoming.Count];
+        if (incoming.Any(s => s.Id.HasValue))
+        {
+            var byId = existing.ToDictionary(s => s.Id);
+            var claimed = new HashSet<Guid>();
+            for (var i = 0; i < incoming.Count; i++)
+            {
+                // Bu şablona ait olmayan (ya da iki kez gönderilen) kimlik yeni adım sayılır.
+                if (incoming[i].Id is { } id && byId.TryGetValue(id, out var match) && claimed.Add(id))
+                {
+                    target[i] = match;
+                }
+            }
+        }
+        else
+        {
+            for (var i = 0; i < incoming.Count && i < existing.Count; i++)
+            {
+                target[i] = existing[i];
+            }
+        }
+
+        // Karşılığı kalmayan adımlar gerçekten siliniyor — üzerinde başvuru varsa önce reddet.
         // Şablon SİLME zaten aynı gerekçeyle korunuyordu; adım silme korunmuyordu.
-        var removed = existing.Skip(incoming.Count).ToList();
+        var kept = target.Where(t => t != null).Select(t => t!.Id).ToHashSet();
+        var removed = existing.Where(s => !kept.Contains(s.Id)).ToList();
         if (removed.Count > 0)
         {
             await EnsureStepsUnusedAsync(removed);
@@ -189,9 +222,8 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
         {
             var step = incoming[order];
 
-            if (order < existing.Count)
+            if (target[order] is { } current)
             {
-                var current = existing[order];
                 current.Order = order;
                 current.SetName(step.Name);
                 current.Note = step.Note;
@@ -295,6 +327,7 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
                     : new List<GrantStageTemplateStep>())
                 .Select(s => new GrantStageTemplateStepDto
                 {
+                    Id = s.Id,
                     Order = s.Order,
                     Name = s.Name,
                     Note = s.Note,

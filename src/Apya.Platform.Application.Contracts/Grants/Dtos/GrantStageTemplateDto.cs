@@ -25,6 +25,14 @@ public class GrantStageTemplateDto : EntityDto<Guid>
 
 public class GrantStageTemplateStepDto
 {
+    /// <summary>
+    /// Adımın kimliği. Düzenleyici var olan adımı BU kimlikle geri gönderir; sunucu adımı ona
+    /// göre eşler. Kimlik olmadan eşleşme ancak KONUMA göre yapılabilir ve ortadaki bir adımı
+    /// silmek ya da adımları yeniden sıralamak, başvuruları sessizce başka adıma kaydırır
+    /// (LIF-02'nin kalan yarısı). null = yeni adım.
+    /// </summary>
+    public Guid? Id { get; set; }
+
     public int Order { get; set; }
 
     [Required(ErrorMessage = "Aşama adı zorunludur.")]
