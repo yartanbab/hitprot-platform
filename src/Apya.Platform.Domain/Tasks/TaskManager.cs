@@ -8,6 +8,7 @@ using Apya.Platform.IssueTasks;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
+using Volo.Abp.Identity;
 
 namespace Apya.Platform.Tasks;
 
@@ -24,6 +25,7 @@ public class TaskManager : DomainService
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
     private readonly IRepository<IssueTaskLink, Guid> _issueTaskLinkRepository;
+    private readonly IRepository<IdentityUser, Guid> _userRepository;
 
     /// <summary>
     /// 🔴 PRJ-07 · Alt görevin bağlanacağı üst görevi doğrular.
@@ -70,7 +72,8 @@ public class TaskManager : DomainService
         IRepository<TaskTagAssignment, Guid> tagAssignmentRepository,
         IRepository<Expense, Guid> expenseRepository,
         IRepository<IncomeEntry, Guid> incomeRepository,
-        IRepository<IssueTaskLink, Guid> issueTaskLinkRepository)
+        IRepository<IssueTaskLink, Guid> issueTaskLinkRepository,
+        IRepository<IdentityUser, Guid> userRepository)
     {
         _taskRepository = taskRepository;
         _checklistRepository = checklistRepository;
@@ -81,6 +84,28 @@ public class TaskManager : DomainService
         _expenseRepository = expenseRepository;
         _incomeRepository = incomeRepository;
         _issueTaskLinkRepository = issueTaskLinkRepository;
+        _userRepository = userRepository;
+    }
+
+    /// <summary>
+    /// Atanan kişi çağıranın KENDİ bağlamındaki bir kullanıcı olmalı. Kimlik istekten gelir ve hiç
+    /// doğrulanmıyordu: kimliği bilinen başka bir kiracının (ya da host'un) kullanıcısı atanabiliyor,
+    /// görev kaydedilince o kullanıcının bağlı dış takvimine etkinlik yazılıyordu. Ekran yalnız kendi
+    /// kullanıcılarını sunar; kural onu sunucuda kilitler.
+    /// </summary>
+    public async Task EnsureAssigneeIsValidAsync(Guid? assigneeId)
+    {
+        if (assigneeId == null)
+        {
+            return;
+        }
+
+        // Kiracı süzgeci açık: başka kiracının kullanıcısı "bulunamadı" olur.
+        if (!await _userRepository.AnyAsync(u => u.Id == assigneeId.Value))
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.TaskAssigneeNotFound)
+                .WithData("AssigneeId", assigneeId);
+        }
     }
 
     /// <summary>

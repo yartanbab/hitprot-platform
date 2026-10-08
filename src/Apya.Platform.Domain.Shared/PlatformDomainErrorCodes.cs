@@ -16,6 +16,7 @@ public static class PlatformDomainErrorCodes
     public const string TaskEstimateNegative = "Platform:Task:EstimateNegative";
     public const string TaskParentNotFound = "Platform:Task:ParentNotFound";
     public const string TaskParentProjectMismatch = "Platform:Task:ParentProjectMismatch";
+    public const string TaskAssigneeNotFound = "Platform:Task:AssigneeNotFound";
     public const string TaskTransferNoTarget = "Platform:Task:TransferNoTarget";
     public const string TaskTransferSameProject = "Platform:Task:TransferSameProject";
 

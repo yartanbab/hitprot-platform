@@ -101,6 +101,7 @@ public class TaskTemplateManager : DomainService
         DateTime? dueDate = null)
     {
         var template = await _templateRepository.GetAsync(templateId);
+        await _taskManager.EnsureAssigneeIsValidAsync(assigneeId);
 
         var task = new TaskItem(
             GuidGenerator.Create(),
