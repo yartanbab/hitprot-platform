@@ -308,6 +308,52 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// Firma başvuruyu KENDİ bağlamında gönderir; çağrı ve program ise host kataloğundadır.
+    /// Bildirim metni çağrıyı kiracı süzgeci açıkken okuyordu: satır görünmüyor, host'a giden
+    /// "başvuru gönderildi" bildiriminde çağrı adı BOŞ çıkıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Firma_Baglaminda_Gonderimde_Host_Bildirimi_Cagri_Adini_Tasir()
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var currentTenant = GetRequiredService<Volo.Abp.MultiTenancy.ICurrentTenant>();
+
+        Guid applicationId;
+        Guid tenantId;
+        string grantName;
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var tenant = await GetRequiredService<Volo.Abp.TenantManagement.ITenantManager>()
+                .CreateAsync("Gonderen-" + Guid.NewGuid().ToString("N")[..6]);
+            await GetRequiredService<Volo.Abp.TenantManagement.ITenantRepository>().InsertAsync(tenant, autoSave: true);
+            tenantId = tenant.Id;
+
+            var callRepo = GetRequiredService<IRepository<GrantCall, Guid>>();
+            var call = (await callRepo.GetListAsync(c => c.Status == GrantCallStatus.Acik && c.TenantId == null)).First();
+            call.SetSchedule(call.OpenDate, DateTime.Now.Date.AddDays(30));
+            await callRepo.UpdateAsync(call, autoSave: true);
+            grantName = (await GetRequiredService<IRepository<Grant, Guid>>().GetAsync(call.GrantId)).Name;
+
+            var application = new GrantApplication(Guid.NewGuid(), tenantId, call.Id);
+            await GetRequiredService<IRepository<GrantApplication, Guid>>().InsertAsync(application, autoSave: true);
+            applicationId = application.Id;
+            await uow.CompleteAsync();
+        }
+
+        using (currentTenant.Change(tenantId))
+        {
+            await _wizard.SubmitAsync(applicationId);
+        }
+
+        using var read = uowManager.Begin(requiresNew: true);
+        var notifications = await GetRequiredService<IRepository<Apya.Platform.Notifications.Notification, Guid>>()
+            .GetListAsync(n => n.EntityId == applicationId);
+
+        notifications.ShouldNotBeEmpty("host kullanıcısına gönderim bildirimi düşmeli");
+        notifications.ShouldAllBe(n => (n.Title + " " + n.Body).Contains(grantName));
+    }
+
+    /// <summary>
     /// 🔴 LIF-05: Kapanmış çağrıya gönderim kapısı. Kapanış zinciri firmaya
     /// "çağrı kapandı, başvurunuz gönderilmeden kaldı" bildirimini ZATEN gönderiyor;
     /// sonrasında gönderime izin vermek o bildirimi yalanlardı.
