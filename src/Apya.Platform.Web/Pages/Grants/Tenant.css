@@ -30,21 +30,6 @@
     color: var(--apya-text-secondary);
 }
 
-/* Profil kartı tek başına kaldı (takvim şeridi 13a'da yok); tam satır kaplamasın. */
-/* 19a · Profil kartının yanında "Aklınızda bir proje mi var?" kartı; dar ekranda alt alta. */
-.apya-feed-top {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 420px));
-    gap: var(--apya-space-3);
-    margin-bottom: var(--apya-space-4);
-}
-
-.apya-feed-idea-text {
-    color: var(--apya-text-secondary);
-    font-size: var(--apya-fs-sm);
-    line-height: 1.55;
-}
-
 /* --- 13 · Sekme şeridi + sıralama/görünüm --- */
 .apya-feed-bar {
     display: flex;
@@ -71,7 +56,10 @@
 .apya-feed-bar-right {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--apya-space-3);
+    /* Düğmeler sığmayıp alt satıra inince de sağda kalır. */
+    margin-left: auto;
 }
 
 .apya-feed-sort {

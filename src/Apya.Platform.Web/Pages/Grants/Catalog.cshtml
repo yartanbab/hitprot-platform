@@ -21,13 +21,21 @@
 @* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
 <div data-page-description="@L["Grants:Catalog:Description"]" class="apya-page apya-grant-scope">
 
-    <div class="apya-tenant-tabs">
-        <a class="apya-tenant-tab" href="/Grants">
-            @L["Grants:Feed:Tab:Eligible"]<span class="apya-chip apya-chip-neutral" id="TabCountEligible">—</span>
-        </a>
-        <button type="button" class="apya-tenant-tab is-active">
-            @L["Grants:Feed:Tab:All"]<span class="apya-chip apya-chip-accent" id="TabCountAll">—</span>
-        </button>
+    <div class="apya-feed-bar">
+        <div class="apya-tenant-tabs mb-0">
+            <a class="apya-tenant-tab" href="/Grants">
+                @L["Grants:Feed:Tab:Eligible"]<span class="apya-chip apya-chip-neutral" id="TabCountEligible">—</span>
+            </a>
+            <button type="button" class="apya-tenant-tab is-active">
+                @L["Grants:Feed:Tab:All"]<span class="apya-chip apya-chip-accent" id="TabCountAll">—</span>
+            </button>
+        </div>
+        @* Tablo görünümünün dönüşü: kart akışının "Tüm açık hibeler" sekmesi (#all'ı Tenant.js okur). *@
+        <div class="apya-feed-bar-right">
+            <a href="/Grants#all" class="btn btn-sm btn-outline-secondary" title="@L["Grants:Feed:CardView"]">
+                <i class="fa fa-grip me-1" aria-hidden="true"></i>@L["Grants:Feed:CardView"]
+            </a>
+        </div>
     </div>
 
     <div class="apya-bucket-grid">
