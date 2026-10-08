@@ -2,7 +2,7 @@
 <div id="notification-bell-container" class="dropdown">
     <a class="nav-link dropdown-toggle" href="#" role="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
         <i class="fa fa-bell"></i>
-        <span id="notification-unread-badge" class="badge rounded-pill position-absolute top-0 start-100 translate-middle @(Model > 0 ? "" : "d-none")">
+        <span id="notification-unread-badge" class="badge rounded-pill @(Model > 0 ? "" : "d-none")">
             @(Model > 99 ? "99+" : Model)
         </span>
     </a>
@@ -81,9 +81,14 @@
     .apya-notif-empty { padding: 2rem 1rem; text-align: center;
         font-size: 0.8125rem; color: var(--apya-text-secondary); }
 
-    /* Rozet: token'lı; kenarlık header zemininden ayırıyor. */
+    /* Rozet: zilin sağ üst köşesine biner, sayı okunur boyda. Kenarlık header zemininden ayırıyor.
+       Konum burada: Bootstrap'in start-100/translate-middle sınıfları rozeti bağlantının sağ
+       kenarına ortalıyor, zilden kopuk duruyordu. */
     #notification-unread-badge {
-        padding: 0.25em 0.4em; font-size: 0.6rem; margin-top: 5px; margin-right: 5px;
+        /* Sağdan çapalı: "99+" gibi geniş değer zilin üstüne doğru büyür, yandaki avatara taşmaz. */
+        position: absolute; top: -2px; right: -4px;
+        min-width: 16px; height: 16px; padding: 0 4px;
+        font-size: 10px; font-weight: 700; line-height: 14px;
         background-color: var(--apya-negative-500);
         border: 1px solid var(--apya-surface-header);
     }

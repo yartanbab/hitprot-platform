@@ -2315,18 +2315,6 @@ html.js .lpx-user-profile .user-full-name {
     display: none;
 }
 
-/* Bildirim rozetini sayı yerine nokta olarak göster (JS sayaç mantığına dokunmaz,
-   yalnız görünümü küçük bir noktaya indirger). */
-#notification-unread-badge {
-    width: 8px;
-    height: 8px;
-    min-width: 0;
-    padding: 0;
-    font-size: 0;
-    line-height: 0;
-    overflow: hidden;
-}
-
 /* ============================================================================
    P2 · ORTAK BİLEŞEN: TABLO (Bootstrap + DataTables restyle)
    DOM/JS'e dokunmaz (server-side sıralama/sayfalama/DataTables aynı kalır) —
