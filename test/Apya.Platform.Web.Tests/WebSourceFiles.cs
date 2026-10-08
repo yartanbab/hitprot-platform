@@ -80,6 +80,18 @@ internal static class WebSourceFiles
         }
     }
 
+    /// <summary>
+    /// React kaynağı (testler hariç). Derlenmiş demet değil: orada adlar ve adresler küçültülmüş
+    /// koda gömülüdür.
+    /// </summary>
+    public static IEnumerable<string> ReactSources()
+    {
+        var src = Path.Combine(RepoRoot(), "src", "Apya.Platform.Web", "wwwroot", "dynamic-assets", "src");
+        return Directory.EnumerateFiles(src, "*.js*", SearchOption.AllDirectories)
+            .Where(f => f.EndsWith(".jsx", StringComparison.Ordinal) || f.EndsWith(".js", StringComparison.Ordinal))
+            .Where(f => !f.Contains(".test.", StringComparison.Ordinal));
+    }
+
     private static HashSet<string> BuiltBundleNames(string jsFolder)
     {
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

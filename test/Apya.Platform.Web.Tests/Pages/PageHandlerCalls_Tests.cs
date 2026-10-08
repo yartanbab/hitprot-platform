@@ -63,7 +63,7 @@ public class PageHandlerCalls_Tests : PlatformWebTestBase
 
         var files = WebSourceFiles.HandWrittenScripts()
             .Concat(WebSourceFiles.Under(".cshtml", "src/Apya.Platform.Web/Pages", "src/Apya.Platform.Web/Components"))
-            .Concat(ReactSources())
+            .Concat(WebSourceFiles.ReactSources())
             .ToList();
 
         var missing = new SortedSet<string>(StringComparer.Ordinal);
@@ -112,14 +112,5 @@ public class PageHandlerCalls_Tests : PlatformWebTestBase
         calls.ShouldBeGreaterThan(150, "beklenenden az işleyici çağrısı bulundu");
         missing.ShouldBeEmpty(
             "Şu çağrıların karşılığında sayfa işleyicisi yok (istek 400/404 döner):\n" + string.Join("\n", missing));
-    }
-
-    /// <summary>React kaynağı (testler hariç). Derlenmiş demet değil: orada adlar küçültülmüş koda gömülüdür.</summary>
-    private static IEnumerable<string> ReactSources()
-    {
-        var src = Path.Combine(WebSourceFiles.RepoRoot(), "src", "Apya.Platform.Web", "wwwroot", "dynamic-assets", "src");
-        return Directory.EnumerateFiles(src, "*.js*", SearchOption.AllDirectories)
-            .Where(f => f.EndsWith(".jsx", StringComparison.Ordinal) || f.EndsWith(".js", StringComparison.Ordinal))
-            .Where(f => !f.Contains(".test.", StringComparison.Ordinal));
     }
 }

@@ -139,7 +139,7 @@ public class InternalLinks_Tests : PlatformWebTestBase
             .Concat(WebSourceFiles.Under(".cs",
                 "src/Apya.Platform.Web/Pages", "src/Apya.Platform.Web/Components", "src/Apya.Platform.Web/Menus",
                 "src/Apya.Platform.Application", "src/Apya.Platform.Domain"))
-            .Concat(ReactSources())
+            .Concat(WebSourceFiles.ReactSources())
             .ToList();
 
         var dead = new SortedSet<string>(StringComparer.Ordinal);
@@ -199,14 +199,5 @@ public class InternalLinks_Tests : PlatformWebTestBase
                 yield return (number, line);
             }
         }
-    }
-
-    /// <summary>React kaynağı (testler hariç). Derlenmiş demet değil: orada adresler küçültülmüş koda gömülüdür.</summary>
-    private static IEnumerable<string> ReactSources()
-    {
-        var src = Path.Combine(WebSourceFiles.RepoRoot(), "src", "Apya.Platform.Web", "wwwroot", "dynamic-assets", "src");
-        return Directory.EnumerateFiles(src, "*.js*", SearchOption.AllDirectories)
-            .Where(f => f.EndsWith(".jsx", StringComparison.Ordinal) || f.EndsWith(".js", StringComparison.Ordinal))
-            .Where(f => !f.Contains(".test.", StringComparison.Ordinal));
     }
 }
