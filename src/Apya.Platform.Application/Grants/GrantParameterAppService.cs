@@ -83,6 +83,8 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         return await MapAsync(grant);
     }
 
+    // Saklanan dosya adını çağırandan alır: yalnız süreç içinden (dosyayı yazan sayfa) çağrılır.
+    [RemoteService(IsEnabled = false)]
     public async Task<string?> SetPosterAsync(Guid id, string storedFileName)
     {
         EnsureHostContext();

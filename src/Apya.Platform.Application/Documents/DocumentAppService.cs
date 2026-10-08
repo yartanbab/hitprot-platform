@@ -1,3 +1,4 @@
+using Volo.Abp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -55,6 +56,8 @@ public class DocumentAppService :
     }
 
     [Authorize(PlatformPermissions.Documents.Edit)]
+    // Saklanan dosya adını çağırandan alır: yalnız süreç içinden (dosyayı yazan sayfa) çağrılır.
+    [RemoteService(IsEnabled = false)]
     public virtual async Task<DocumentAttachmentDto> AddAttachmentAsync(Guid documentId, string fileName, string storedFileName, string contentType, long fileSize)
     {
         // Belge var mı + tenant sınırı repository filtreleriyle doğrulanır (yoksa EntityNotFoundException).

@@ -210,6 +210,8 @@ public class DeliveryPackageAppService : ApplicationService, IDeliveryPackageApp
     }
 
     [Authorize(PlatformPermissions.Documents.GenerateReports)]
+    // Saklanan dosya adını çağırandan alır: yalnız süreç içinden (dosyayı yazan sayfa) çağrılır.
+    [RemoteService(IsEnabled = false)]
     public virtual async Task<ReportRunDto> MarkGeneratedAsync(
         Guid packageId, string storedFileName, long outputSize, int sectionCount)
     {

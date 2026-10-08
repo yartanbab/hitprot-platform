@@ -682,6 +682,12 @@ public class PlatformWebModule : AbpModule
             options.ConventionalControllers.Create(typeof(PlatformApplicationContractsModule).Assembly);
             options.ConventionalControllers.Create(typeof(Apya.Platform.Ai.PlatformAiApplicationModule).Assembly);
         });
+
+        // "Uzaktan kapalı" işaretli metot genel {controller}/{action} rotasından da çağrılamasın.
+        Configure<MvcOptions>(options =>
+        {
+            options.Conventions.Add(new Apya.Platform.Web.Services.RemoveDisabledRemoteActionsConvention());
+        });
     }
 
     private void ConfigureSwaggerServices(IServiceCollection services)

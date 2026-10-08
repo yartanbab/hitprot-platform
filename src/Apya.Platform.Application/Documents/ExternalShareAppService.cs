@@ -1,3 +1,4 @@
+using Volo.Abp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -120,6 +121,7 @@ public class ExternalShareAppService : ApplicationService, IExternalShareAppServ
     /// kapatılarak aranır — token'ın kendisi yetki taşır.
     /// </summary>
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public virtual async Task<SharedPackageViewDto> ResolveAsync(string token, string? ipHash, string? userAgent)
     {
         using (_mtFilter.Disable())
@@ -146,6 +148,7 @@ public class ExternalShareAppService : ApplicationService, IExternalShareAppServ
     /// token, kimliğini bilen herkese tüm belgeleri indirtirdi.
     /// </summary>
     [AllowAnonymous]
+    [RemoteService(IsEnabled = false)]
     public virtual async Task<GeneratedFileDownloadDto> PrepareDownloadAsync(
         string token, Guid documentFileId, string? ipHash, string? userAgent)
     {
