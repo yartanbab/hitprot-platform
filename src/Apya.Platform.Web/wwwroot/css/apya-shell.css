@@ -4387,8 +4387,13 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
 #lpx-sidebar .apya-shell-sub--open > a .apya-shell-subtoggle { transform: none; }
 
 /* --- Proje alt listesi --- */
-#lpx-sidebar .apya-shell-subnav { display: none !important; }
-#lpx-sidebar .apya-shell-sub--open > .apya-shell-subnav { display: block !important; }
+/* İkinci seçiciler: Projeler satırı menü düzeninde EN ÜST düzeye taşınınca li bir
+   .outer-menu-item olur ve "li.outer-menu-item > ul.lpx-inner-menu { display: block !important }"
+   kuralı daha özgül olduğu için listeyi hep açık tutuyordu — ok kapatamıyordu. */
+#lpx-sidebar .apya-shell-subnav,
+#lpx-sidebar li.outer-menu-item > ul.lpx-inner-menu.apya-shell-subnav { display: none !important; }
+#lpx-sidebar .apya-shell-sub--open > .apya-shell-subnav,
+#lpx-sidebar li.outer-menu-item.apya-shell-sub--open > ul.lpx-inner-menu.apya-shell-subnav { display: block !important; }
 #lpx-sidebar .apya-shell-dot {
     flex: 0 0 7px;
     width: 7px;
