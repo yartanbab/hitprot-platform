@@ -291,7 +291,8 @@ public class ProjectScopeAppService : ApplicationService, IProjectScopeAppServic
     private async Task<(List<ScopeRowDto> Rows, int TaskCount, int SubTaskCount)> BuildTaskBranchAsync(
         Guid projectId, string parentId)
     {
-        var taskQueryable = await _taskRepository.GetQueryableAsync();
+        // Kapsam ağacı görev BAŞLIĞI basar → görev listesiyle aynı gizlilik süzgeci.
+        var taskQueryable = await VisibleTasksAsync();
         var tasks = await AsyncExecuter.ToListAsync(
             taskQueryable.AsNoTracking()
                 .Where(t => t.ProjectId == projectId)
@@ -366,6 +367,20 @@ public class ProjectScopeAppService : ApplicationService, IProjectScopeAppServic
         }
 
         return (rows, roots.Count, tasks.Count - roots.Count);
+    }
+
+    /// <summary>
+    /// Görev gizlilik süzgeci (APYA-22) — kural tek kaynakta (<see cref="TaskPrivacyQueryFilter"/>),
+    /// bayraklar burada hesaplanır. Görev listesiyle aynı sonuç: gizli görevi yalnız oluşturan,
+    /// atanan ve ekip yöneticisi görür; bürünme oturumu hiç görmez.
+    /// </summary>
+    private async Task<IQueryable<TaskItem>> VisibleTasksAsync()
+    {
+        bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+        bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+
+        return TaskPrivacyQueryFilter.Apply(
+            await _taskRepository.GetQueryableAsync(), isImpersonated, canManageTeam, CurrentUser.Id);
     }
 
     /// <summary>
