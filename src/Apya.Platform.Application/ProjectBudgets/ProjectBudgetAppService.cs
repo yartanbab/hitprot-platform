@@ -214,6 +214,20 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
     }
 
     /// <summary>
+    /// Zaten belleğe alınmış görev listesinden çağıranın göremeyeceği gizli görevleri ayıklar.
+    /// Gizli görev yoksa yetki sorgusu da atılmaz (olağan durum).
+    /// </summary>
+    private async Task<List<TaskItem>> OnlyVisibleAsync(List<TaskItem> tasks)
+    {
+        if (!tasks.Any(t => t.IsPrivate))
+        {
+            return tasks;
+        }
+
+        return (await ApplyTaskPrivacyFilterAsync(tasks.AsQueryable())).ToList();
+    }
+
+    /// <summary>
     /// Gider/gelirin görev kırılımı. Görev adları TEK sorguda çekilir; görev
     /// etiketi hiç yoksa sorgu açılmaz.
     /// </summary>
@@ -227,8 +241,10 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
             .ToList();
 
         var taskIds = taskKeys.Where(x => x.HasValue).Select(x => x!.Value).ToList();
+        // Gizli görevin ADI dönmez (tutarı satırda kalır; ekran adı olmayan görevi kısa
+        // kimlikle basar — silinmiş görevle aynı görünüm).
         var tasks = taskIds.Count > 0
-            ? await _taskRepository.GetListAsync(t => taskIds.Contains(t.Id))
+            ? await OnlyVisibleAsync(await _taskRepository.GetListAsync(t => taskIds.Contains(t.Id)))
             : new List<TaskItem>();
 
         return taskKeys
@@ -363,7 +379,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
 
         var project = await _projectRepository.GetAsync(projectId);
         var lines = await _lineRepository.GetListAsync(x => x.ProjectId == projectId);
-        var tasks = await _taskRepository.GetListAsync(x => x.ProjectId == projectId);
+        // Gizli görev satır ÜRETMEZ (aşağıda "bulunamayan görev" gibi atlanır); harcaması
+        // kalem toplamında kalır.
+        var tasks = await OnlyVisibleAsync(await _taskRepository.GetListAsync(x => x.ProjectId == projectId));
         var expenses = await _expenseRepository.GetListAsync(x => x.ProjectId == projectId);
 
         var taskTitles = tasks.ToDictionary(t => t.Id, t => t);
@@ -458,7 +476,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         // Yetki yoksa liste boş döner ve seçici hiç basılmaz.
         if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Default))
         {
-            var tasks = await _taskRepository.GetListAsync(x => x.ProjectId == projectId);
+            var tasks = await OnlyVisibleAsync(await _taskRepository.GetListAsync(x => x.ProjectId == projectId));
             dto.Tasks = tasks
                 .OrderBy(t => t.Title)
                 .Select(t => new ProjectTaskLookupDto { Id = t.Id, Title = t.Title })

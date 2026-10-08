@@ -151,7 +151,7 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
         var today = Clock.Now.Date;
         var period = DashboardPeriod.Resolve(input.Range, Clock.Now);
 
-        var query = (await _taskRepo.GetQueryableAsync())
+        var query = (await VisibleTasksAsync())
             .Where(t => t.DueDate != null
                         && t.Status != TaskStatusEnum.Done
                         && t.Status != TaskStatusEnum.Cancelled
@@ -312,13 +312,28 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
 
     public async Task<List<BlockedTaskDto>> GetBlockedTasksAsync() => await ListBlockedAsync();
 
+    /// <summary>
+    /// Başlığı EKRANA giden görev listelerinin kaynağı (teslimler, tıkanan işler): görev
+    /// listesiyle aynı gizlilik süzgeci (APYA-22). Kural tek kaynakta
+    /// (<see cref="TaskPrivacyQueryFilter"/>), bayraklar burada hesaplanır. Süzgeç yokken gizli
+    /// görevin başlığı Genel Bakış'ı açan herkese gidiyordu.
+    /// </summary>
+    private async Task<IQueryable<TaskItem>> VisibleTasksAsync()
+    {
+        bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+        bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+
+        return TaskPrivacyQueryFilter.Apply(
+            await _taskRepo.GetQueryableAsync(), isImpersonated, canManageTeam, CurrentUser.Id);
+    }
+
     private async Task<List<BlockedTaskDto>> ListBlockedAsync()
     {
         var now = Clock.Now;
         var staleBefore = now.AddDays(-_options.StaleAfterDays);
 
         var stale = await AsyncExecuter.ToListAsync(
-            (await _taskRepo.GetQueryableAsync())
+            (await VisibleTasksAsync())
                 .Where(t => t.Status != TaskStatusEnum.Done
                             && t.Status != TaskStatusEnum.Cancelled
                             && (t.LastModificationTime ?? t.CreationTime) < staleBefore));

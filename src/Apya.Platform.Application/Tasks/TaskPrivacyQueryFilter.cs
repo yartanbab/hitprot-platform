@@ -25,9 +25,15 @@ public static class TaskPrivacyQueryFilter
         bool canManageTeam,
         Guid? currentUserId)
     {
+        // Kimliksiz çağrıda (currentUserId == null) sahiplik HİÇ eşleşmemeli: "null == null"
+        // oluşturanı ve atananı olmayan gizli görevi kimliksiz çağırana açardı
+        // (TaskItem.IsOwnedBy'daki aynı koruma).
+        bool hasUser = currentUserId.HasValue;
+
         return query.Where(t =>
             !t.IsPrivate ||
-            (!isImpersonated && (canManageTeam || t.CreatorId == currentUserId || t.AssigneeId == currentUserId))
+            (!isImpersonated && (canManageTeam
+                || (hasUser && (t.CreatorId == currentUserId || t.AssigneeId == currentUserId))))
         );
     }
 }

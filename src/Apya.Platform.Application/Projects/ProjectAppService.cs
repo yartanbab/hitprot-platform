@@ -547,6 +547,18 @@ public class ProjectAppService :
             dto.AiRiskColor = risk.color;
             dto.AiRiskMessage = risk.message;
 
+            // APYA-22: metrikler projenin TÜM görevlerinden hesaplanır (oranlar bakan kişiye göre
+            // değişmesin); DÖNEN liste ise görev listesiyle aynı gizlilik süzgecinden geçer. Süzgeç
+            // yokken gizli görevin başlığı, açıklaması ve tutarı Projects.Default'u olan herkese
+            // gidiyordu (proje detayı sayfası ve /api/app/project/{id}/detail).
+            bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+            bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+            var visibleTaskIds = TaskPrivacyQueryFilter
+                .Apply(taskItems.AsQueryable(), isImpersonated, canManageTeam, CurrentUser.Id)
+                .Select(t => t.Id)
+                .ToHashSet();
+            dto.Tasks = dto.Tasks.Where(t => visibleTaskIds.Contains(t.Id)).ToList();
+
             return dto;
         }
     }
