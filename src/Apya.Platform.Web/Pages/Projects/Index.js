@@ -349,7 +349,7 @@ $(function () {
         var cat = category(p);
         var chips = [];
         if (p.displayStatus) { chips.push(chip(STATUS_TONE[p.displayStatus] || 'neutral', p.displayStatus)); }
-        if (cat.label) { chips.push('<span class="apya-chip ' + cat.chip + '">' + cat.label + '</span>'); }
+        if (cat.label) { chips.push('<span class="apya-chip ' + cat.chip + '">' + esc(cat.label) + '</span>'); }
 
         var overduePill = p.overdueTaskCount > 0
             ? '<span class="apya-chip apya-chip-negative apya-proj-overdue-pill"><i class="fa fa-clock-rotate-left"></i>' + p.overdueTaskCount + '</span>'
@@ -390,7 +390,7 @@ $(function () {
         var chips = [];
         if (riskOf(p) === 'high') { chips.push(chip('negative', 'Risk')); }
         if (p.displayStatus && p.displayStatus !== 'Risk') { chips.push(chip(STATUS_TONE[p.displayStatus] || 'neutral', p.displayStatus)); }
-        if (cat.label) { chips.push('<span class="apya-chip ' + cat.chip + '">' + cat.label + '</span>'); }
+        if (cat.label) { chips.push('<span class="apya-chip ' + cat.chip + '">' + esc(cat.label) + '</span>'); }
         chips.push(daysChipHtml(p));
 
         var box = p.overdueTaskCount > 0
