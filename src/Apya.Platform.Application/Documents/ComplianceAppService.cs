@@ -554,6 +554,9 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
     /// <summary>
     /// Göreve bağlı kalemlerin görev adları. Görev silinmişse ad dönmez; kalem
     /// "kaynağı kaldırılmış" olarak listelenmeye devam eder.
+    ///
+    /// <para>Çağıranın GÖREMEDİĞİ gizli görevin adı da dönmez (APYA-22): süzgeç yokken kalem
+    /// eklerken yazılan herhangi bir görev kimliği başlığıyla geri yankılanıyordu.</para>
     /// </summary>
     private async Task<Dictionary<Guid, string>> GetTaskNamesAsync(List<Guid> taskIds)
     {
@@ -562,12 +565,26 @@ public class ComplianceAppService : ApplicationService, IComplianceAppService
             return new Dictionary<Guid, string>();
         }
 
-        var queryable = await _taskRepository.GetQueryableAsync();
+        var queryable = await VisibleTasksAsync();
         return (await AsyncExecuter.ToListAsync(
                 queryable.AsNoTracking()
                     .Where(t => taskIds.Contains(t.Id))
                     .Select(t => new { t.Id, t.Number, t.Title })))
             .ToDictionary(k => k.Id, v => $"#{v.Number} · {v.Title}");
+    }
+
+    /// <summary>
+    /// Görev gizlilik süzgeci (APYA-22) — kural tek kaynakta (<see cref="Apya.Platform.Tasks.TaskPrivacyQueryFilter"/>),
+    /// bayraklar burada hesaplanır. Görev listesiyle aynı sonuç: gizli görevi yalnız oluşturan,
+    /// atanan ve ekip yöneticisi görür; bürünme oturumu hiç görmez.
+    /// </summary>
+    private async Task<IQueryable<Apya.Platform.Tasks.TaskItem>> VisibleTasksAsync()
+    {
+        bool isImpersonated = CurrentUser.FindClaim(Volo.Abp.Security.Claims.AbpClaimTypes.ImpersonatorUserId) != null;
+        bool canManageTeam = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam);
+
+        return Apya.Platform.Tasks.TaskPrivacyQueryFilter.Apply(
+            await _taskRepository.GetQueryableAsync(), isImpersonated, canManageTeam, CurrentUser.Id);
     }
 
     private static ComplianceSummaryDto ToDto(ComplianceSummary summary) => new()
