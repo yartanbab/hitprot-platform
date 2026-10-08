@@ -258,8 +258,15 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         await _activityRecorder.RecordAsync(
             application.TenantId, application.Id, GrantActivityKind.Submitted, documentState);
 
-        var call = await _callRepo.FirstOrDefaultAsync(c => c.Id == application.GrantCallId);
-        var grant = call == null ? null : await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId);
+        // Çağrı ve program HOST kataloğundadır; firma kendi bağlamında gönderir. Süzgeç açıkken
+        // satırlar görünmüyor, bildirimdeki çağrı adı boş çıkıyordu (EnsureCallOpenAsync ile aynı okuma).
+        GrantCall? call;
+        Grant? grant;
+        using (_mtFilter.Disable())
+        {
+            call = await _callRepo.FirstOrDefaultAsync(c => c.Id == application.GrantCallId);
+            grant = call == null ? null : await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId);
+        }
 
         await _notifyDispatcher.DispatchToTenantAsync(
             GrantNotificationTrigger.ApplicationSubmitted,
