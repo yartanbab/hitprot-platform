@@ -155,7 +155,7 @@ public class GrantFirmProfileEditorScript_Tests
         ShouldAppearInOrder(gain,
             "if (!profile) { return; }",
             "profile.missingFieldCount === 0",
-            "l('Grants:Feed:Profile:Full')",
+            "'Grants:Feed:Profile:Full')",
             ": feedLoaded ? l('Grants:Feed:Profile:Gain', conditional) : ''");
         Count(gain, "l('Grants:Feed:Profile:Gain'").ShouldBe(1);
 
