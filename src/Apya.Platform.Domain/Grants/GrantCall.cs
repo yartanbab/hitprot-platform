@@ -40,6 +40,24 @@ public class GrantCall : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Period = Check.NotNullOrWhiteSpace(period, nameof(period), maxLength: 32).Trim();
     }
 
+    /// <summary>
+    /// Son başvuru tarihi <paramref name="today"/> gününden önce mi. Son gün DAHİLDİR (o gün
+    /// hâlâ geçmemiştir); tarihi olmayan çağrının süresi dolmaz.
+    /// </summary>
+    public bool IsPastDeadline(DateTime today)
+        => Deadline != null && Deadline.Value.Date < today.Date;
+
+    /// <summary>
+    /// Çağrı <paramref name="today"/> günü ilgiye ve başvuruya açık mı: yayında VE son başvuru
+    /// tarihi geçmemiş.
+    ///
+    /// <para>Durum tek başına yetmez: tarihi geçen çağrıyı otomatik kapanış
+    /// (<c>GrantDeadlineReminderWorker</c>, aynı sınır) kapatır, ama işçi çalışana kadar çağrı
+    /// "Açık" görünür. Kapılar o aralıkta da bu kurala bakar.</para>
+    /// </summary>
+    public bool IsOpenOn(DateTime today)
+        => Status == GrantCallStatus.Acik && !IsPastDeadline(today);
+
     public void SetSchedule(DateTime? openDate, DateTime? deadline)
     {
         if (openDate.HasValue && deadline.HasValue && deadline.Value < openDate.Value)

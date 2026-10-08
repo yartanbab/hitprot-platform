@@ -359,6 +359,52 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         }
     }
 
+    /// <summary>
+    /// LIF-04'ün tarih yarısı: son başvuru tarihi geçen çağrı, otomatik kapanış çalışana kadar
+    /// "Açık" durumda kalır. Kapı yalnız duruma baktığı için o aralıkta ilgi kabul ediyordu.
+    /// </summary>
+    [Fact]
+    public async Task Son_tarihi_gecmis_cagriya_durumu_acik_olsa_da_ilgi_bildirilemez()
+    {
+        var call = await CreateHostCallAsync("Süresi Dolan Program " + Guid.NewGuid().ToString("N")[..6]);
+        call.SetSchedule(null, DateTime.Now.Date.AddDays(-1));
+        await _callRepository.UpdateAsync(call, autoSave: true);
+        call.Status.ShouldBe(GrantCallStatus.Acik);
+
+        var tenantId = await CreateTenantAsync("Geç Kalan Firma " + Guid.NewGuid().ToString("N")[..6]);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            (await Should.ThrowAsync<BusinessException>(
+                    () => _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+                    {
+                        GrantCallId = call.Id, Note = "Proje fikri", ProblemStatement = "Sorun"
+                    })))
+                .Code.ShouldBe(PlatformDomainErrorCodes.GrantInterestCallNotOpen);
+        }
+    }
+
+    /// <summary>Karşı yön: son gün dahildir.</summary>
+    [Fact]
+    public async Task Son_gununde_cagriya_ilgi_bildirilebilir()
+    {
+        var call = await CreateHostCallAsync("Son Gün Programı " + Guid.NewGuid().ToString("N")[..6]);
+        call.SetSchedule(null, DateTime.Now.Date);
+        await _callRepository.UpdateAsync(call, autoSave: true);
+
+        var tenantId = await CreateTenantAsync("Son Gün Firması " + Guid.NewGuid().ToString("N")[..6]);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            var interest = await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+            {
+                GrantCallId = call.Id, Note = "Proje fikri", ProblemStatement = "Sorun"
+            });
+
+            interest.ShouldNotBeNull();
+        }
+    }
+
     [Fact]
     public async Task Uygun_bulunmayan_talepten_sonra_yeniden_ilgi_bildirilebilir()
     {

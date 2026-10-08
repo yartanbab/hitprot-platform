@@ -94,7 +94,10 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
         // ama uç noktanın kendisinde kapı YOKTU: çağrı Id'si bilinen bir taslak ya da kapanmış
         // çağrıya API'den talep bırakılabiliyordu. Kapı ekranın zaten yaptığı süzmeyi sunucuya
         // taşır; görünür davranış değişmez.
-        if (call.Status != GrantCallStatus.Acik)
+        //
+        // Kapı TARİHE de bakar: son başvuru tarihi geçen çağrı, otomatik kapanış işçisi
+        // çalışana kadar "Açık" durumda kalır ve o aralıkta ilgi kabul ediyordu.
+        if (!call.IsOpenOn(Clock.Now))
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantInterestCallNotOpen);
         }

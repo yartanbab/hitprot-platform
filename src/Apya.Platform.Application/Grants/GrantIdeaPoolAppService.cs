@@ -319,7 +319,7 @@ public class GrantIdeaPoolAppService : PlatformAppService, IGrantIdeaPoolAppServ
 
     /// <summary>Firmaya görünen çağrı: yayında ve son tarihi geçmemiş.</summary>
     private bool IsOpen(GrantCall call)
-        => call.Status == GrantCallStatus.Acik && (call.Deadline == null || call.Deadline.Value.Date >= Clock.Now.Date);
+        => call.IsOpenOn(Clock.Now);
 
     /// <summary>Host kataloğu (host bağlamında okunur).</summary>
     private async Task<List<GrantCall>> LoadOpenCallsAsync()
