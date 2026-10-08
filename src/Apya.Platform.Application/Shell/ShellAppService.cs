@@ -46,6 +46,7 @@ public class ShellAppService : PlatformAppService, IShellAppService
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IRepository<WebhookDeliveryLog, Guid> _webhookLogRepository;
+    private readonly IRepository<WebhookSubscription, Guid> _webhookSubscriptionRepository;
     private readonly IRepository<GrantApplication, Guid> _grantApplicationRepository;
     private readonly IRepository<GrantInterest, Guid> _grantInterestRepository;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
@@ -56,6 +57,7 @@ public class ShellAppService : PlatformAppService, IShellAppService
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<Project, Guid> projectRepository,
         IRepository<WebhookDeliveryLog, Guid> webhookLogRepository,
+        IRepository<WebhookSubscription, Guid> webhookSubscriptionRepository,
         IRepository<GrantApplication, Guid> grantApplicationRepository,
         IRepository<GrantInterest, Guid> grantInterestRepository,
         IDataFilter<IMultiTenant> mtFilter)
@@ -65,6 +67,7 @@ public class ShellAppService : PlatformAppService, IShellAppService
         _taskRepository = taskRepository;
         _projectRepository = projectRepository;
         _webhookLogRepository = webhookLogRepository;
+        _webhookSubscriptionRepository = webhookSubscriptionRepository;
         _grantApplicationRepository = grantApplicationRepository;
         _grantInterestRepository = grantInterestRepository;
         _mtFilter = mtFilter;
@@ -396,7 +399,18 @@ public class ShellAppService : PlatformAppService, IShellAppService
         {
             var since = Clock.Now.AddDays(-1); // CORR-004: DateTime.Now yerine IClock
             var logQuery = await _webhookLogRepository.GetQueryableAsync();
-            badges.WebhookErrors = logQuery.Count(x => !x.IsSuccess && x.CreationTime >= since);
+            var failed = logQuery.Where(x => !x.IsSuccess && x.CreationTime >= since);
+
+            // Teslim kaydı kiracı sütunu TAŞIMAZ (aboneliğe bağlıdır): kiracıda kendi abonelikleriyle
+            // daraltılır, yoksa rozet platformdaki BÜTÜN kiracıların hatasını sayar. Abonelik sorgusu
+            // kiracı süzgecinden geçer. Host platform genelini görmeye devam eder.
+            if (CurrentTenant.Id != null)
+            {
+                var ownSubscriptions = (await _webhookSubscriptionRepository.GetQueryableAsync()).Select(s => s.Id);
+                failed = failed.Where(x => ownSubscriptions.Contains(x.SubscriptionId));
+            }
+
+            badges.WebhookErrors = failed.Count();
         }
 
         return badges;

@@ -473,10 +473,15 @@ public class DocumentAdminAppService : ApplicationService, IDocumentAdminAppServ
             labels[folder.Id.ToString()] = folder.Title;
         }
 
+        var tenantId = CurrentTenant.Id;
+
+        // Sistem türleri host'ta olduğu için süzgeç kapalı okunur; "sistem ya da benim" koşulu
+        // olmadan eylem yüküne yazılan HER kimliğin (başka kiracının türü dahil) adı dönüyordu.
         using (_mtFilter.Disable())
         {
             var typeQueryable = await _typeRepository.GetQueryableAsync();
-            foreach (var type in await AsyncExecuter.ToListAsync(typeQueryable.Where(t => guids.Contains(t.Id))))
+            foreach (var type in await AsyncExecuter.ToListAsync(typeQueryable
+                         .Where(t => guids.Contains(t.Id) && (t.TenantId == null || t.TenantId == tenantId))))
             {
                 labels[type.Id.ToString()] = type.Name;
             }
