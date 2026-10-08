@@ -2,11 +2,16 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.CustomerLedger;
+using Apya.Platform.Expenses;
+using Apya.Platform.Incomes;
+using Apya.Platform.Invoices;
 using Apya.Platform.Permissions;
+using Apya.Platform.Projects;
 
 namespace Apya.Platform.Customers;
 
@@ -21,18 +26,51 @@ public class CustomerAppService :
     ICustomerAppService
 {
     private readonly IRepository<CustomerLedgerEntry, Guid> _ledgerRepository;
+    private readonly IRepository<Invoice, Guid> _invoiceRepository;
+    private readonly IRepository<Expense, Guid> _expenseRepository;
+    private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
+    private readonly IRepository<Project, Guid> _projectRepository;
 
     public CustomerAppService(
         IRepository<Customer, Guid> repository,
-        IRepository<CustomerLedgerEntry, Guid> ledgerRepository)
+        IRepository<CustomerLedgerEntry, Guid> ledgerRepository,
+        IRepository<Invoice, Guid> invoiceRepository,
+        IRepository<Expense, Guid> expenseRepository,
+        IRepository<IncomeEntry, Guid> incomeRepository,
+        IRepository<Project, Guid> projectRepository)
         : base(repository)
     {
         _ledgerRepository = ledgerRepository;
+        _invoiceRepository = invoiceRepository;
+        _expenseRepository = expenseRepository;
+        _incomeRepository = incomeRepository;
+        _projectRepository = projectRepository;
         GetPolicyName = PlatformPermissions.Customers.Default;
         GetListPolicyName = PlatformPermissions.Customers.Default;
         CreatePolicyName = PlatformPermissions.Customers.Create;
         UpdatePolicyName = PlatformPermissions.Customers.Edit;
         DeletePolicyName = PlatformPermissions.Customers.Delete;
+    }
+
+    /// <summary>
+    /// Kaydı olan cari silinmez. Fatura, cari hareket, gider, gelir ve proje cariyi kimliğiyle
+    /// gösterir ve cariyle birlikte SİLİNMEZ: cari gidince bu kayıtlar carisiz görünür, cari
+    /// hareketleri mizanda kalır ama tutarın kime ait olduğu hiçbir ekrandan okunamaz. Sessizce
+    /// koparmak yerine reddet (emsal: <c>GrantCallAppService.DeleteByIdAsync</c>); kaydı olan cari
+    /// PASİFE alınır.
+    /// </summary>
+    protected override async Task DeleteByIdAsync(Guid id)
+    {
+        if (await _ledgerRepository.AnyAsync(l => l.CustomerId == id)
+            || await _invoiceRepository.AnyAsync(i => i.CustomerId == id)
+            || await _expenseRepository.AnyAsync(e => e.CustomerId == id)
+            || await _incomeRepository.AnyAsync(i => i.CustomerId == id)
+            || await _projectRepository.AnyAsync(p => p.CustomerId == id))
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.CustomerInUse);
+        }
+
+        await base.DeleteByIdAsync(id);
     }
 
     protected override async Task<IQueryable<Customer>> CreateFilteredQueryAsync(GetCustomersInput input)
