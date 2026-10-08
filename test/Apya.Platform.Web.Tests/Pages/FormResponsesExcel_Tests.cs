@@ -69,4 +69,55 @@ public class FormResponsesExcel_Tests
 
         sheet.Cell(2, 4).GetString().ShouldBe("TÜBİTAK · 1501 (2026/1)");
     }
+
+    /// <summary>
+    /// Yanıtı oturumsuz ziyaretçi yazar; dosyayı yönetici Excel'de açar. "=", "+", "-", "@" ile başlayan
+    /// yanıt FORMÜL olarak çalışmamalı. Koruma kütüphanenin davranışına dayanıyor (metin, formül diye
+    /// yorumlanmaz); hücre bir gün formül atamasıyla ya da tür tahminiyle yazılırsa bu test kırılır.
+    /// </summary>
+    [Theory]
+    [InlineData("=HYPERLINK(\"http://kotu.example\",\"tıkla\")")]
+    [InlineData("=1+1")]
+    [InlineData("+SUM(A1:A9)")]
+    [InlineData("-2+3")]
+    [InlineData("@SUM(1,2)")]
+    public void Formul_gibi_gorunen_yanit_metin_olarak_yazilir(string answer)
+    {
+        // Firma adı da kiracının yazdığı metindir.
+        var response = Response("=Firma()");
+        response.Answers = System.Text.Json.JsonSerializer.Serialize(
+            new Dictionary<string, string> { [QuestionId.ToString()] = answer });
+
+        var sheet = Sheet(ReportExporter.FormResponsesToExcel(Form(), new List<ResponseListItemDto> { response }));
+
+        foreach (var cell in new[] { sheet.Cell(2, 2), sheet.Cell(2, 5) })
+        {
+            cell.HasFormula.ShouldBeFalse();
+            cell.DataType.ShouldBe(XLDataType.Text);
+        }
+        sheet.Cell(2, 5).GetString().ShouldBe(answer);
+    }
+
+    /// <summary>Aynı kural geri bildirim dışa aktarımında: konu ve sayfa adresi kullanıcının yazdığı metindir.</summary>
+    [Fact]
+    public void Geri_bildirim_konusu_formul_olarak_yazilmaz()
+    {
+        var item = new Apya.Platform.Feedbacks.Dtos.FeedbackDto
+        {
+            CreationTime = new DateTime(2026, 9, 14, 10, 0, 0),
+            TenantName = "=Firma()",
+            Subject = "=HYPERLINK(\"http://kotu.example\",\"tıkla\")",
+            PageUrl = "=1+1",
+            AdminTags = "+etiket",
+        };
+
+        var sheet = Sheet(ReportExporter.FeedbackListToExcel(new List<Apya.Platform.Feedbacks.Dtos.FeedbackDto> { item }));
+
+        foreach (var column in new[] { 2, 4, 8, 10 })
+        {
+            sheet.Cell(2, column).HasFormula.ShouldBeFalse();
+            sheet.Cell(2, column).DataType.ShouldBe(XLDataType.Text);
+        }
+        sheet.Cell(2, 4).GetString().ShouldBe(item.Subject);
+    }
 }
