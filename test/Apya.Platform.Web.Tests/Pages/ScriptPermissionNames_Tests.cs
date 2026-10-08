@@ -43,7 +43,7 @@ public class ScriptPermissionNames_Tests : PlatformWebTestBase
 
         var files = WebSourceFiles.HandWrittenScripts()
             .Concat(WebSourceFiles.Under(".cshtml", "src/Apya.Platform.Web/Pages", "src/Apya.Platform.Web/Components"))
-            .Concat(ReactSources())
+            .Concat(WebSourceFiles.ReactSources())
             .ToList();
 
         var unknown = new SortedSet<string>(StringComparer.Ordinal);
@@ -78,14 +78,5 @@ public class ScriptPermissionNames_Tests : PlatformWebTestBase
             "Şu adlarla tanımlı bir izin, özellik ya da ayar yok (koşul hep yanlış çıkar). " +
             "C# sabitinin adını değil DEĞERİNİ yazın; ad değilse NotNames'e ekleyin:\n" +
             string.Join("\n", unknown));
-    }
-
-    /// <summary>React kaynağı (testler hariç). Derlenmiş demet değil: orada adlar küçültülmüş koda gömülüdür.</summary>
-    private static IEnumerable<string> ReactSources()
-    {
-        var src = Path.Combine(WebSourceFiles.RepoRoot(), "src", "Apya.Platform.Web", "wwwroot", "dynamic-assets", "src");
-        return Directory.EnumerateFiles(src, "*.js*", SearchOption.AllDirectories)
-            .Where(f => f.EndsWith(".jsx", StringComparison.Ordinal) || f.EndsWith(".js", StringComparison.Ordinal))
-            .Where(f => !f.Contains(".test.", StringComparison.Ordinal));
     }
 }
