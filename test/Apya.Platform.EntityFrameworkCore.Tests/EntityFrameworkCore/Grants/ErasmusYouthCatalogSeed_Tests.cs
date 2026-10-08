@@ -142,6 +142,16 @@ public class ErasmusYouthCatalogSeed_Tests : PlatformEntityFrameworkCoreTestBase
     [Fact]
     public async Task Kiraci_yalniz_acik_donemleri_gorur()
     {
+        // Tohumdaki son başvuru tarihi sabittir (1 Ekim 2026) ve takvimle birlikte geçer; katalog
+        // tarihi geçmiş çağrıyı göstermez. Test DURUM süzgecini ölçüyor: açık dönemin tarihi
+        // ileri alınır ki sonuç koşulduğu güne bağlı olmasın.
+        foreach (var call in await _callRepository.GetListAsync(
+                     c => c.GrantId == Ka152Id && c.Status == GrantCallStatus.Acik))
+        {
+            call.SetSchedule(call.OpenDate, DateTime.Now.Date.AddDays(30));
+            await _callRepository.UpdateAsync(call, autoSave: true);
+        }
+
         using (_currentTenant.Change(TenantId))
         {
             var feed = await _recommendationAppService.GetOpenCallsAsync();

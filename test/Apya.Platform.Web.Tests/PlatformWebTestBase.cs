@@ -4,11 +4,15 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Apya.Platform.Grants;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Shouldly;
 using Volo.Abp.AspNetCore;
 using Volo.Abp.AspNetCore.TestBase;
+using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Security.Claims;
+using Volo.Abp.Threading;
+using Volo.Abp.Uow;
 
 namespace Apya.Platform;
 
@@ -20,6 +24,32 @@ public abstract class PlatformWebTestBase : AbpWebApplicationFactoryIntegratedTe
     protected PlatformWebTestBase()
     {
         Client.Timeout = TimeSpan.FromMinutes(10);
+        AsyncHelper.RunSync(KeepSeededOpenCallsOpenAsync);
+    }
+
+    /// <summary>
+    /// Katalog tohumu çağrıları "Açık" ve SABİT son başvuru tarihiyle kurar (1 Ekim 2026). Canlıda
+    /// tarihi geçen çağrıyı otomatik kapanış kapatır; test barındırıcısında o işçi koşmaz ve
+    /// takvim o günü geçtiğinde tohumdaki "açık" çağrıların hepsi süresi dolmuş kalır. Katalog ve
+    /// kapılar tarihe de baktığı için "açık çağrı" isteyen testler koşulduğu güne bağlanırdı.
+    /// Tohumdan gelen açık çağrıların tarihi burada ileri alınır; süresi dolmuş çağrıyı ölçen
+    /// testler kendi çağrısını kurar.
+    /// </summary>
+    private async Task KeepSeededOpenCallsOpenAsync()
+    {
+        using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        var repo = GetRequiredService<IRepository<GrantCall, Guid>>();
+
+        foreach (var call in await repo.GetListAsync(c => c.Status == GrantCallStatus.Acik && c.Deadline != null))
+        {
+            if (call.IsPastDeadline(DateTime.Now))
+            {
+                call.SetSchedule(call.OpenDate, DateTime.Now.Date.AddDays(30));
+                await repo.UpdateAsync(call, autoSave: true);
+            }
+        }
+
+        await uow.CompleteAsync();
     }
 
     protected virtual async Task<T?> GetResponseAsObjectAsync<T>(string url, HttpStatusCode expectedStatusCode = HttpStatusCode.OK)
