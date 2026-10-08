@@ -196,6 +196,8 @@ public static class PlatformDomainErrorCodes
     public const string FileSizeExceeded = "Platform:File:SizeExceeded";
 
     // --- Doküman (Documents) Modülü — belge/meta şema ---
+    public const string DocumentFolderNotEmpty = "Platform:Documents:FolderNotEmpty";
+    public const string DocumentFolderParentInvalid = "Platform:Documents:FolderParentInvalid";
     public const string DocumentFileNameRequired = "Platform:Documents:FileNameRequired";
     public const string DocumentFileLocked = "Platform:Documents:FileLocked";
     public const string DocumentFileAmountInvalid = "Platform:Documents:FileAmountInvalid";

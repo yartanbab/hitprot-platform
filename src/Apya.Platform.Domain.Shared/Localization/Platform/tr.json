@@ -1816,6 +1816,8 @@
         "Platform:Task:TransferSameProject": "Görev zaten bu projede; taşıma için farklı bir proje seçin.",
         "Platform:Project:NotFound": "İstenen proje bulunamadı.",
         "Platform:Project:CodeAlreadyExists": "Bu proje kodu zaten kullanılıyor.",
+        "Platform:Documents:FolderNotEmpty": "Bu klasörün içinde belge ya da alt klasör var (çöp kutusundakiler dahil); klasör silinirse içindekiler klasör ağacında görünmez olur ve ekleri indirilemez. Önce içindekileri taşıyın ya da silin.",
+        "Platform:Documents:FolderParentInvalid": "Klasör kendi içine ya da var olmayan bir klasöre taşınamaz.",
         "Platform:Documents:FileNameRequired": "Belge adı boş bırakılamaz.",
         "Platform:Documents:FileLocked": "\"{DisplayName}\" kilitli. Teslim edilmiş belgeler değiştirilemez.",
         "Platform:Documents:FileAmountInvalid": "Belge tutarı negatif olamaz: {Amount}",
