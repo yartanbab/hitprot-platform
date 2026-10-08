@@ -5,6 +5,7 @@ using Apya.Platform.Permissions;
 using Apya.Platform.Settings;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Authorization;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.Settings;
 
@@ -47,6 +48,12 @@ public class LoginScreenSettingsAppService : ApplicationService, ILoginScreenSet
     [Authorize(PlatformPermissions.LoginScreen.Default)]
     public async Task UpdateAsync(LoginScreenSettingsDto input)
     {
+        // Ayar GLOBAL yazılır: kiracı bağlamından gelen istek bütün kiracıların giriş ekranını değiştirirdi.
+        if (CurrentTenant.Id != null)
+        {
+            throw new AbpAuthorizationException("Bu işlem yalnızca host bağlamında yapılabilir.");
+        }
+
         await _settingManager.SetGlobalAsync(
             PlatformSettings.Account.ShowTenantSwitch, input.ShowTenantSwitch.ToString().ToLowerInvariant());
 

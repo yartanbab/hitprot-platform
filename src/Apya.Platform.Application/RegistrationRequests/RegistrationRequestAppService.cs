@@ -10,6 +10,7 @@ using Apya.Platform.Tenants;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Authorization;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Timing;
 
@@ -108,6 +109,8 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
 
     public async Task<PagedResultDto<RegistrationRequestDto>> GetListAsync(RegistrationRequestListFilterDto input)
     {
+        EnsureHostContext();
+
         var query = await _repository.GetQueryableAsync();
 
         if (input.Status.HasValue)
@@ -141,6 +144,8 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
 
     public async Task<RegistrationRequestDto> GetAsync(Guid id)
     {
+        EnsureHostContext();
+
         var request = await _repository.GetAsync(id);
         return ObjectMapper.Map<RegistrationRequest, RegistrationRequestDto>(request);
     }
@@ -148,6 +153,8 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
     [Authorize(PlatformPermissions.RegistrationRequests.Manage)]
     public async Task<RegistrationRequestDto> UpdateAsync(Guid id, UpdateRegistrationRequestDto input)
     {
+        EnsureHostContext();
+
         var request = await _repository.GetAsync(id);
 
         request.SetStatus(input.Status);
@@ -169,6 +176,8 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
     [Authorize(PlatformPermissions.RegistrationRequests.Manage)]
     public async Task<RegistrationInviteDto> IssueInviteAsync(Guid id)
     {
+        EnsureHostContext();
+
         var request = await _repository.GetAsync(id);
 
         // Onaylanmamış bir talebe davet üretmek, protokolü henüz kabul etmediğimiz bir
@@ -201,6 +210,8 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
     [Authorize(PlatformPermissions.RegistrationRequests.Manage)]
     public async Task<bool> SendInviteMailAsync(Guid id, string protocolUrl)
     {
+        EnsureHostContext();
+
         var request = await _repository.GetAsync(id);
 
         return await _inviteMailer.TrySendAsync(request, protocolUrl);
@@ -208,6 +219,8 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
 
     public async Task<RegistrationRequestSummaryDto> GetSummaryAsync()
     {
+        EnsureHostContext();
+
         var query = await _repository.GetQueryableAsync();
 
         var counts = await AsyncExecuter.ToListAsync(
@@ -227,6 +240,18 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
             AwaitingProtocolCount = CountOf(RegistrationRequestStatus.AwaitingProtocol),
             AccountCreatedCount = CountOf(RegistrationRequestStatus.AccountCreated)
         };
+    }
+
+    /// <summary>
+    /// Talepler HOST kaydıdır ve kiracı sütunu taşımaz: kiracı bağlamından gelen okuma/yazma bütün
+    /// başvuranların kişisel verisine ulaşırdı. İzin host taraflıdır; bu ikinci kilittir.
+    /// </summary>
+    private void EnsureHostContext()
+    {
+        if (CurrentTenant.Id != null)
+        {
+            throw new AbpAuthorizationException("Bu işlem yalnızca host bağlamında yapılabilir.");
+        }
     }
 
     /// <summary>Boş/boşluk metni null'a indirger — DB'de "" ile null karışmasın.</summary>

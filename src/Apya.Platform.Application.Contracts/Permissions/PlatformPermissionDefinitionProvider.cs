@@ -181,7 +181,10 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         feedbacksPermission.AddChild(PlatformPermissions.Feedbacks.ManageSettings, L("Permission:Feedbacks.ManageSettings"), MultiTenancySides.Host);
 
         // Giriş ekranı yapılandırması — host seviyesinde tek izin, alt izni yok.
-        systemGroup.AddPermission(PlatformPermissions.LoginScreen.Default, L("Permission:LoginScreen"));
+        // 🔴 Host-only: ayar GLOBAL yazılır (bütün kiracıların giriş ekranı). İzin kiracıya
+        // verilebildiği için yeni açılan kiracının yönetici rolüne kendiliğinden iniyordu.
+        systemGroup.AddPermission(
+            PlatformPermissions.LoginScreen.Default, L("Permission:LoginScreen"), MultiTenancySides.Host);
 
         // Host-only: servisler zaten host bağlamı şart koşuyordu (EnsureHostContext); izin
         // kiracıya verilebildiği için menüde görünüp tıklanınca 500 veriyordu.
@@ -198,8 +201,12 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
 
         // Kayıt talepleri — giriş ekranından gelen talepler HOST kaydıdır; kiracıya
         // ait değildir, bu yüzden feature kapısı yoktur.
-        var registrationRequestsPermission = systemGroup.AddPermission(PlatformPermissions.RegistrationRequests.Default, L("Permission:RegistrationRequests"));
-        registrationRequestsPermission.AddChild(PlatformPermissions.RegistrationRequests.Manage, L("Permission:RegistrationRequests.Manage"));
+        // 🔴 Host-only: kayıt kiracı sütunu taşımaz; izni olan kiracı bütün başvuranların adını,
+        // vergi numarasını, e-postasını ve telefonunu görürdü.
+        var registrationRequestsPermission = systemGroup.AddPermission(
+            PlatformPermissions.RegistrationRequests.Default, L("Permission:RegistrationRequests"), MultiTenancySides.Host);
+        registrationRequestsPermission.AddChild(
+            PlatformPermissions.RegistrationRequests.Manage, L("Permission:RegistrationRequests.Manage"), MultiTenancySides.Host);
 
         // Faturalama — PARGETTO'nun kiracıya kestiği fatura. Kiracının kendi faturalarıyla
         // (Invoices izni) ilgisi yoktur, bu yüzden host-only.
