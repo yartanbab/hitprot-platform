@@ -359,6 +359,12 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
                 return task;
             }
 
+            // Kökün ALTINDAKİ gizli düğüm (ve onun altı) kapsam dışıdır — bkz. LoadScopeAsync.
+            if (current.IsPrivate)
+            {
+                break;
+            }
+
             if (!current.ParentTaskId.HasValue)
             {
                 break;
@@ -382,6 +388,13 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
     /// <para>🔐 Kiracı eşleşmesi HER seviyede aranır. Anonim yolda çok-kiracılı filtre
     /// kapalı olduğu için sorgular kendiliğinden kiracıya daralmaz; bozuk bir
     /// <c>ParentTaskId</c> bağı başka kiracının görevini ağaca sokabilirdi.</para>
+    ///
+    /// <para>🔐 GİZLİ alt görev ağaca girmez (altındakiler de: seviye seviye inildiği için
+    /// gizli düğümün çocuklarına hiç ulaşılmaz). Ekip içinde yalnız oluşturanın, atananın ve
+    /// ekip yöneticisinin gördüğü görev, sırf üstü paylaşıldı diye firma dışına — ve üst görevi
+    /// paylaşabilen ama o görevi göremeyen ekip üyesine — açılmamalı. Kök muaftır: bağlantıyı
+    /// doğrudan gizli görev üzerinde üretmek bilinçli bir karardır ve üretenin görevi
+    /// görebildiği <see cref="CreateAsync"/>'te doğrulanır.</para>
     /// </summary>
     private async Task<List<TaskItem>> LoadScopeAsync(Guid rootTaskId, Guid? tenantId)
     {
@@ -402,7 +415,8 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
             var children = await AsyncExecuter.ToListAsync(
                 queryable.Where(t => t.ParentTaskId != null
                                      && frontier.Contains(t.ParentTaskId.Value)
-                                     && t.TenantId == tenantId));
+                                     && t.TenantId == tenantId
+                                     && !t.IsPrivate));
 
             var known = scope.Select(t => t.Id).ToHashSet();
             children = children.Where(c => !known.Contains(c.Id)).ToList();
