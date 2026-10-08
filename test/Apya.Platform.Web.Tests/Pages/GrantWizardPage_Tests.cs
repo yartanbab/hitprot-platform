@@ -37,6 +37,14 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
         var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
 
         var call = (await callRepo.GetListAsync(c => c.Status == GrantCallStatus.Acik)).First();
+
+        // "Açık çağrı" tarihiyle birlikte açık olmalı: tohumlanan çağrıların son başvuru tarihi
+        // takvimle birlikte geçer ve gönderim kapısı tarihe de bakar (LIF-05).
+        if (call.IsPastDeadline(DateTime.Now))
+        {
+            call.SetSchedule(call.OpenDate, DateTime.Now.Date.AddDays(30));
+            await callRepo.UpdateAsync(call, autoSave: true);
+        }
         var grant = await grantRepo.GetAsync(call.GrantId);
         grant.SupportRatePercent = 60;
         grant.MaxAmount = 10_000_000m;
@@ -323,6 +331,45 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
 
         var ex = await Should.ThrowAsync<BusinessException>(async () => await _wizard.SubmitAsync(id));
         ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantApplicationCallClosed);
+    }
+
+    private async Task SetCallDeadlineAsync(Guid applicationId, DateTime deadline)
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+
+        var application = await GetRequiredService<IRepository<GrantApplication, Guid>>().GetAsync(applicationId);
+        var callRepo = GetRequiredService<IRepository<GrantCall, Guid>>();
+        var call = await callRepo.GetAsync(application.GrantCallId);
+        call.SetSchedule(null, deadline);
+        call.Status.ShouldBe(GrantCallStatus.Acik, "bu testler durumu AÇIK kalmış çağrıyı ölçer");
+        await callRepo.UpdateAsync(call, autoSave: true);
+        await uow.CompleteAsync();
+    }
+
+    /// <summary>
+    /// LIF-05'in tarih yarısı: son başvuru tarihi geçen çağrı, otomatik kapanış çalışana kadar
+    /// "Açık" durumda kalır ve o aralıkta gönderim kabul ediyordu. İşçi çalıştığında firmaya
+    /// giden "başvurunuz gönderilmeden kaldı" bildirimi o gönderimi yalanlardı.
+    /// </summary>
+    [Fact]
+    public async Task Son_Tarihi_Gecmis_Cagriya_Durumu_Acik_Olsa_Da_Basvuru_Gonderilemez()
+    {
+        var (id, _) = await CreateApplicationAsync();
+        await SetCallDeadlineAsync(id, DateTime.Now.Date.AddDays(-1));
+
+        var ex = await Should.ThrowAsync<BusinessException>(async () => await _wizard.SubmitAsync(id));
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantApplicationCallClosed);
+    }
+
+    /// <summary>Karşı yön: son gün dahildir.</summary>
+    [Fact]
+    public async Task Son_Gununde_Basvuru_Gonderilebilir()
+    {
+        var (id, _) = await CreateApplicationAsync();
+        await SetCallDeadlineAsync(id, DateTime.Now.Date);
+
+        await Should.NotThrowAsync(async () => await _wizard.SubmitAsync(id));
     }
 
     /// <summary>

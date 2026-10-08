@@ -242,7 +242,10 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             call = await _callRepo.FirstOrDefaultAsync(c => c.Id == application.GrantCallId);
         }
 
-        if (call is { Status: GrantCallStatus.Kapandi })
+        // Son başvuru tarihi geçmiş çağrı da kapalı sayılır: otomatik kapanış işçisi çalışana
+        // kadar durum "Açık" kalır ve o aralıkta gönderim kabul ediliyordu. İşçi çalıştığında
+        // firmaya giden "başvurunuz gönderilmeden kaldı" bildirimi o gönderimi yalanlardı.
+        if (call != null && (call.Status == GrantCallStatus.Kapandi || call.IsPastDeadline(Clock.Now)))
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantApplicationCallClosed);
         }

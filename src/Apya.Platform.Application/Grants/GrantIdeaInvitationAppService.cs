@@ -156,7 +156,7 @@ public class GrantIdeaInvitationAppService : PlatformAppService, IGrantIdeaInvit
         => _manager.ResolveAudienceAsync(input.Audience, input.TenantId, input.Sizes, input.OnlyWithoutPoolIdea);
 
     private bool IsOpen(GrantCall call)
-        => call.Status == GrantCallStatus.Acik && (call.Deadline == null || call.Deadline.Value.Date >= Clock.Now.Date);
+        => call.IsOpenOn(Clock.Now);
 
     private void EnsureHostContext()
     {

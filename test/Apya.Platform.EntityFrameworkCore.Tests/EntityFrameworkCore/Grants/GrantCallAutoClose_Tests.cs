@@ -98,7 +98,9 @@ public class GrantCallAutoClose_Tests : PlatformEntityFrameworkCoreTestBase
     [Fact]
     public async Task Tarihi_Gecen_Cagri_Kapanir_Ve_Bekleyen_Talep_Kacirildi_Olur()
     {
-        var call = await CreateCallAsync(DateTime.Now.Date.AddDays(-1), GrantCallStatus.Acik);
+        // Gerçek sıra: talep çağrı hâlâ açıkken bırakılır, son tarih SONRA geçer. Tarihi geçmiş
+        // çağrıya ilgi artık bırakılamıyor (LIF-04); kurulum da bu yüzden bu sırayla.
+        var call = await CreateCallAsync(DateTime.Now.Date.AddDays(7), GrantCallStatus.Acik);
         var tenantId = await CreateTenantAsync();
 
         Guid interestId;
@@ -109,6 +111,10 @@ public class GrantCallAutoClose_Tests : PlatformEntityFrameworkCoreTestBase
                 GrantCallId = call.Id, Note = "Proje fikri", ProblemStatement = "Sorun"
             })).Id;
         }
+
+        call = await _callRepository.GetAsync(call.Id);
+        call.SetSchedule(null, DateTime.Now.Date.AddDays(-1));
+        await _callRepository.UpdateAsync(call, autoSave: true);
 
         await RunWorkerAsync();
 

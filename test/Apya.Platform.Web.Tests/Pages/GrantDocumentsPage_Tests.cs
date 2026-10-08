@@ -36,6 +36,14 @@ public class GrantDocumentsPage_Tests : PlatformWebTestBase
         var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
 
         var call = (await callRepo.GetListAsync(c => c.Status == GrantCallStatus.Acik)).First();
+
+        // "Açık çağrı" tarihiyle birlikte açık olmalı: tohumlanan çağrıların son başvuru tarihi
+        // takvimle birlikte geçer ve gönderim kapısı tarihe de bakar (LIF-05).
+        if (call.IsPastDeadline(DateTime.Now))
+        {
+            call.SetSchedule(call.OpenDate, DateTime.Now.Date.AddDays(30));
+            await callRepo.UpdateAsync(call, autoSave: true);
+        }
         var existing = await reqRepo.GetListAsync(r => r.GrantId == call.GrantId);
 
         if (existing.All(r => r.Name != "Proje öneri formu"))
