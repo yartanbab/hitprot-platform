@@ -157,6 +157,166 @@ public class GrantStageTemplate_Tests : PlatformWebTestBase
         ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantStageTemplateStepInUse);
     }
 
+    /* ─── LIF-02'nin kalan yarısı: adımlar KONUMA değil KİMLİĞE göre eşlenir ───
+     * Düzenleyici var olan adımı kimliğiyle geri gönderir. Konuma göre eşleştirme adım sayısı
+     * ve sırası değişmediği sürece doğruydu; ortadaki adım silinince ya da adımlar sürüklenip
+     * sıralanınca aynı konumdaki ESKİ kimlik yeni ada geçiyor, o adımdaki başvurular kimse
+     * taşımadan başka adıma kaymış oluyordu. */
+
+    /// <summary>Düzenleyicinin gönderdiği biçim: sunucudan gelen adımlar, kimlikleriyle.</summary>
+    private static CreateUpdateGrantStageTemplateDto AsInput(GrantStageTemplateDto template, params string[] stepNamesInOrder)
+        => new()
+        {
+            Name = template.Name,
+            Steps = stepNamesInOrder.Select((n, i) =>
+            {
+                var existing = template.Steps.SingleOrDefault(s => s.Name == n);
+                return new GrantStageTemplateStepDto
+                {
+                    Id = existing?.Id,
+                    Order = i,
+                    Name = n,
+                    Owner = GrantPartyRole.Ortak
+                };
+            }).ToList()
+        };
+
+    private async Task<Guid> PutApplicationOnStepAsync(Guid stepId)
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+
+        var call = (await GetRequiredService<IRepository<GrantCall, Guid>>().GetListAsync()).First();
+        var application = new GrantApplication(Guid.NewGuid(), Guid.NewGuid(), call.Id);
+        application.MoveToStep(stepId);
+        await GetRequiredService<IRepository<GrantApplication, Guid>>().InsertAsync(application, autoSave: true);
+        await uow.CompleteAsync();
+
+        return application.Id;
+    }
+
+    [Fact]
+    public async Task Sablon_Adimlari_Kimlikleriyle_Doner()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Kimlikli " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Hazırlık"));
+
+        created.Steps.ShouldAllBe(s => s.Id.HasValue && s.Id != Guid.Empty);
+        created.Steps.Select(s => s.Id).Distinct().Count().ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task Ortadaki_Adim_Silinince_Sonraki_Adimin_Kimligi_Kaymaz()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Orta Silme " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Hazırlık", "Sunum"));
+        var sunumId = created.Steps.Single(s => s.Name == "Sunum").Id;
+        var hazirlikId = created.Steps.Single(s => s.Name == "Hazırlık").Id;
+
+        var updated = await service.UpdateAsync(created.Id, AsInput(created, "İlgi", "Sunum"));
+
+        updated.Steps.Select(s => s.Name).ShouldBe(new[] { "İlgi", "Sunum" });
+        updated.Steps.Single(s => s.Name == "Sunum").Id.ShouldBe(sunumId,
+            "'Sunum' kendi kimliğini korumalı; silinen 'Hazırlık'ın kimliğini devralırsa oradaki başvurular Sunum'a kaymış olur");
+        updated.Steps.ShouldNotContain(s => s.Id == hazirlikId);
+    }
+
+    [Fact]
+    public async Task Yeniden_Siralamak_Adim_Kimligini_Adiyla_Birlikte_Tasir()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Sıralama " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Hazırlık", "Sunum"));
+        var idByName = created.Steps.ToDictionary(s => s.Name, s => s.Id);
+
+        var updated = await service.UpdateAsync(created.Id, AsInput(created, "Sunum", "İlgi", "Hazırlık"));
+
+        updated.Steps.Select(s => s.Name).ShouldBe(new[] { "Sunum", "İlgi", "Hazırlık" });
+        updated.Steps.Select(s => s.Order).ShouldBe(new[] { 0, 1, 2 });
+        foreach (var step in updated.Steps)
+        {
+            step.Id.ShouldBe(idByName[step.Name],
+                $"'{step.Name}' kimliğini korumalı: sıra değişir, kimlik adıyla kalır; aksi halde o adımdaki başvurular başka adımın altında görünür");
+        }
+    }
+
+    [Fact]
+    public async Task Ortadaki_Adimda_Basvuru_Varsa_O_Adim_Silinemez()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Orta Koruma " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Hazırlık", "Sunum"));
+        await PutApplicationOnStepAsync(created.Steps.Single(s => s.Name == "Hazırlık").Id!.Value);
+
+        // Koruma SİLİNEN adıma bakmalı. Konuma göre eşleşirken listenin sonundaki adımı
+        // (boş olan "Sunum") sayıp geçiyor, başvuru sessizce "Sunum"a kaymış oluyordu.
+        var ex = await Should.ThrowAsync<Volo.Abp.BusinessException>(
+            async () => await service.UpdateAsync(created.Id, AsInput(created, "İlgi", "Sunum")));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantStageTemplateStepInUse);
+    }
+
+    /// <summary>Karşı yön: üzerinde başvuru olan adım yeniden sıralanabilir; başvuru onunla gider.</summary>
+    [Fact]
+    public async Task Uzerinde_Basvuru_Olan_Adim_Yeniden_Siralaninca_Basvuru_Ayni_Adimda_Kalir()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Sıralı Başvuru " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Hazırlık", "Sunum"));
+        var applicationId = await PutApplicationOnStepAsync(created.Steps.Single(s => s.Name == "Hazırlık").Id!.Value);
+
+        // "Hazırlık" ortadan başa alınıyor: konuma göre eşleşmede kimliği "İlgi" adını alırdı.
+        var updated = await service.UpdateAsync(created.Id, AsInput(created, "Hazırlık", "İlgi", "Sunum"));
+
+        using var uow = uowManager.Begin(requiresNew: true);
+        // Başvuru kiracıya aittir; host bağlamında okumak için kiracı süzgeci kapatılır.
+        using var allTenants = GetRequiredService<Volo.Abp.Data.IDataFilter>().Disable<Volo.Abp.MultiTenancy.IMultiTenant>();
+        var application = await GetRequiredService<IRepository<GrantApplication, Guid>>().GetAsync(applicationId);
+        updated.Steps.Single(s => s.Id == application.CurrentStepId).Name.ShouldBe("Hazırlık");
+    }
+
+    /// <summary>Yeni adım (kimliksiz) var olanların arasına eklenebilir; var olanlar yerinde kalır.</summary>
+    [Fact]
+    public async Task Araya_Eklenen_Yeni_Adim_Var_Olanlarin_Kimligini_Degistirmez()
+    {
+        var service = GetRequiredService<IGrantStageTemplateAppService>();
+
+        var created = await service.CreateAsync(
+            NewTemplate("Araya Ekleme " + Guid.NewGuid().ToString("N")[..6], "İlgi", "Sunum"));
+        var idByName = created.Steps.ToDictionary(s => s.Name, s => s.Id);
+
+        var updated = await service.UpdateAsync(created.Id, AsInput(created, "İlgi", "Hazırlık", "Sunum"));
+
+        updated.Steps.Select(s => s.Name).ShouldBe(new[] { "İlgi", "Hazırlık", "Sunum" });
+        updated.Steps.Single(s => s.Name == "İlgi").Id.ShouldBe(idByName["İlgi"]);
+        updated.Steps.Single(s => s.Name == "Sunum").Id.ShouldBe(idByName["Sunum"]);
+        var added = updated.Steps.Single(s => s.Name == "Hazırlık").Id;
+        added.ShouldNotBeNull();
+        idByName.Values.ShouldNotContain(added);
+    }
+
+    /// <summary>
+    /// Sunucu kimliği ancak düzenleyici GÖNDERİRSE kullanabilir; göndermezse sessizce konuma göre
+    /// eşleştirmeye düşer ve hata geri gelir. Bu yüzden betiğin iki ucu kaynaktan kilitlenir.
+    /// </summary>
+    [Fact]
+    public void Duzenleyici_Betigi_Adim_Kimligini_Tasir_Ve_Geri_Gonderir()
+    {
+        var script = System.IO.File.ReadAllText(System.IO.Path.Combine(
+            WebSourceFiles.RepoRoot(), "src", "Apya.Platform.Web", "Pages", "Grants", "StageTemplates.js"));
+
+        script.ShouldContain(".attr('data-step-id', s.id || '')");
+        script.ShouldContain("id: $r.attr('data-step-id') || null");
+    }
+
     [Fact]
     public async Task Varsayilan_Isaretlemek_Digerini_Dusurur()
     {
