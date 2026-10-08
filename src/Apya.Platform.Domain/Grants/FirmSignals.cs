@@ -11,6 +11,14 @@ namespace Apya.Platform.Grants;
 /// </summary>
 public sealed class FirmSignals
 {
+    /// <summary>
+    /// Kurum türü. STK'da (şirket dışı her tür) şirkete özgü şartlar — ölçek, TRL, Ar-Ge
+    /// personeli, ciro, konsorsiyum — UYGULANMAZ: profil formunda bu alanlar yoktur, sunucu da
+    /// null'lar; "veri eksik" sayılsaydı kurum hiçbir zaman dolduramayacağı bir alan yüzünden
+    /// kalıcı olarak "Koşullu" kalırdı. Varsayılan Sirket: türü bilinmeyen girdi eski davranışı korur.
+    /// </summary>
+    public OrganizationType Type { get; set; }
+
     public CompanySize? Size { get; set; }
     public IReadOnlyList<FirmSignalTag> Tags { get; set; } = new List<FirmSignalTag>();
 

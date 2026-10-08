@@ -113,8 +113,7 @@ $(function () {
     // Sayı akıştan gelir: akış henüz gelmediyse ya da düştüyse cümle boş kalır, akış gelince boyanır.
     function paintGain() {
         if (!profile) { return; }
-        // Yalnız profili doldurunca ölçülebilecek çağrılar sayılır; STK'da ölçülmeyen şart sayıya girmez.
-        var conditional = feed.filter(function (r) { return r.bucket === 1 && fillableUnknown(r).length > 0; }).length;
+        var conditional = feed.filter(function (r) { return r.bucket === 1; }).length;
         $('#ProfileGain').text(profile.missingFieldCount === 0
             ? l(profile.type ? 'Grants:Feed:Profile:FullNgo' : 'Grants:Feed:Profile:Full')
             : feedLoaded ? l('Grants:Feed:Profile:Gain', conditional) : '');
@@ -128,8 +127,6 @@ $(function () {
             .toggleClass('d-none', p.missingFieldCount === 0)
             .text(l('Grants:Feed:Profile:Missing', p.missingFieldCount));
         paintGain();
-        // Kart cümleleri kurum türüne bakar; akış profilden önce geldiyse kartlar yeniden boyanır.
-        if (feedLoaded) { paintFeed(); }
 
         $('#ProfileSuggestedNote').toggleClass('d-none', !p.isSuggested);
 
@@ -216,17 +213,6 @@ $(function () {
     // ---------- Kart akışı ----------
     function ruleText(rule) { return l('Grants:Rule:' + ruleKeys[rule]); }
 
-    // STK profilinde karşılığı OLMAYAN şartlar (ölçek, TRL, Ar-Ge personeli, ciro, konsorsiyum):
-    // form bu alanları göstermez, sunucu da null'lar (FirmProfileAppService.Apply). Kullanıcı
-    // dolduramaz; "profilinizde yok" demek yanlış yere yönlendirir.
-    var ngoUnmeasured = [0, 2, 4, 5, 6];
-    function fillableUnknown(r) {
-        var isNgo = !!(profile && profile.type);
-        return (r.unknownRules || []).filter(function (rule) {
-            return !(isNgo && ngoUnmeasured.indexOf(rule) >= 0);
-        });
-    }
-
     // GrantInterestStatus enum değerleri sunucudakiyle birebir.
     var interestKeys = apyaGrantStatus.interest.keys;
     var interestTone = apyaGrantStatus.interest.tones;
@@ -259,19 +245,20 @@ $(function () {
         }
         var passed = (r.passedRules || []).slice(0, 3).map(ruleText);
         if (passed.length === 0) {
-            // Üç ayrı durum: programda şart yok · şart var ama kurum türünde ölçülmüyor · profil eksik.
-            if (!(r.unknownRules || []).length) { return l('Grants:Feed:Card:WhyNoRules'); }
-            return l(fillableUnknown(r).length ? 'Grants:Feed:Card:WhyNone' : 'Grants:Feed:Card:WhyUnmeasured');
+            // Ölçülecek şart hiç yoksa (program koymamış ya da kurum türüne uygulanmıyor) profil suçlanmaz.
+            return l((r.unknownRules || []).length ? 'Grants:Feed:Card:WhyNone' : 'Grants:Feed:Card:WhyNoRules');
         }
         return l(r.bucket === 0 ? 'Grants:Feed:Card:WhyAll' : 'Grants:Feed:Card:WhySome', passed.join(', '));
     }
 
     function gapSentence(r) {
-        var unknown = r.unknownRules || [];
-        if (!unknown.length || (r.bucket !== 0 && r.bucket !== 1)) { return ''; }
-        var fillable = fillableUnknown(r);
-        if (!fillable.length) { return l('Grants:Feed:Card:GapOrgType', ruleText(unknown[0])); }
-        return l(r.bucket === 1 ? 'Grants:RuleMissing' : 'Grants:Feed:Card:GapOptional', ruleText(fillable[0]));
+        if (r.bucket === 1 && r.unknownRules && r.unknownRules.length) {
+            return l('Grants:RuleMissing', ruleText(r.unknownRules[0]));
+        }
+        if (r.bucket === 0 && r.unknownRules && r.unknownRules.length) {
+            return l('Grants:Feed:Card:GapOptional', ruleText(r.unknownRules[0]));
+        }
+        return '';
     }
 
     function difficultyWord(d) {

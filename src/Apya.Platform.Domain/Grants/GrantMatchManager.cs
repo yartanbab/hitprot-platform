@@ -97,15 +97,19 @@ public class GrantMatchManager : DomainService
             // --- 4b ile gelen iki yeni boyut ---
             // İkisi de yalnız program şart koyuyorsa ve firma veriyi girdiyse devreye girer;
             // bu yüzden mevcut kataloğun skorlarını değiştirmezler.
-            var trlRequired = grant.MinTrl.HasValue || grant.MaxTrl.HasValue;
+            // STK'da ikisi de uygulanmaz (bkz. FirmSignals.Type): veri hiç girilemediği için
+            // "eksik veri cezası" da kesilmez.
+            var companyOnly = !firm.Type.IsNgo();
+            var trlRequired = companyOnly && (grant.MinTrl.HasValue || grant.MaxTrl.HasValue);
             Add(GrantMatchDimension.TechnicalMaturity,
                 grantRequires: trlRequired,
                 firmHasData: trlRequired && firm.Trl.HasValue,
                 value: () => InRange(firm.Trl!.Value, grant.MinTrl, grant.MaxTrl) == GrantRuleOutcome.Passed ? 1.0 : 0.0);
 
+            var rdRequired = companyOnly && grant.MinRdStaffCount.HasValue;
             Add(GrantMatchDimension.RdStaff,
-                grantRequires: grant.MinRdStaffCount.HasValue,
-                firmHasData: grant.MinRdStaffCount.HasValue && firm.RdStaffCount.HasValue,
+                grantRequires: rdRequired,
+                firmHasData: rdRequired && firm.RdStaffCount.HasValue,
                 value: () => firm.RdStaffCount!.Value >= grant.MinRdStaffCount!.Value ? 1.0 : 0.0);
 
             var totalWeight = dims.Sum(d => d.Weight);
@@ -156,6 +160,9 @@ public class GrantMatchManager : DomainService
     /// <see cref="Score"/>'dan BAĞIMSIZDIR: skor benzerlik ölçer, bu metot sert elemeyi ölçer.
     /// Program bir şart tanımlamamışsa o kural sonuca hiç girmez; firmada karşılığı yoksa
     /// <see cref="GrantRuleOutcome.Unknown"/> döner ve firmayı ELEMEZ.
+    /// STK'da şirkete özgü şartlar (ölçek, TRL, Ar-Ge personeli, ciro, konsorsiyum) hiç
+    /// üretilmez — bkz. <see cref="FirmSignals.Type"/>. Kuruluş yaşı ve personel sayısı
+    /// STK'da da ölçülür (personel, ekip bandının alt sınırından).
     /// </summary>
     /// <param name="today">
     /// Şirket yaşı hesabının referans günü. ARCH-049 gereği IClock burada okunmaz —
@@ -164,8 +171,9 @@ public class GrantMatchManager : DomainService
     public GrantEligibilityResult Evaluate(FirmSignals firm, Grant grant, DateTime today)
     {
         var rules = new List<GrantRuleResult>();
+        var companyOnly = !firm.Type.IsNgo();
 
-        if (grant.EligibleCompanySizes != 0)
+        if (companyOnly && grant.EligibleCompanySizes != 0)
         {
             rules.Add(new GrantRuleResult(GrantEligibilityRule.CompanySize,
                 firm.Size == null
@@ -183,7 +191,7 @@ public class GrantMatchManager : DomainService
                     : InRange(CompanyAgeInYears(firm.FoundedOn.Value, today), grant.MinCompanyAgeYears, grant.MaxCompanyAgeYears)));
         }
 
-        if (grant.MinTrl.HasValue || grant.MaxTrl.HasValue)
+        if (companyOnly && (grant.MinTrl.HasValue || grant.MaxTrl.HasValue))
         {
             rules.Add(new GrantRuleResult(GrantEligibilityRule.Trl,
                 firm.Trl == null
@@ -199,7 +207,7 @@ public class GrantMatchManager : DomainService
                     : InRange(firm.StaffCount.Value, grant.MinStaffCount, null)));
         }
 
-        if (grant.MinRdStaffCount.HasValue)
+        if (companyOnly && grant.MinRdStaffCount.HasValue)
         {
             rules.Add(new GrantRuleResult(GrantEligibilityRule.RdStaffCount,
                 firm.RdStaffCount == null
@@ -207,7 +215,7 @@ public class GrantMatchManager : DomainService
                     : InRange(firm.RdStaffCount.Value, grant.MinRdStaffCount, null)));
         }
 
-        if (grant.MinRevenue.HasValue || grant.MaxRevenue.HasValue)
+        if (companyOnly && (grant.MinRevenue.HasValue || grant.MaxRevenue.HasValue))
         {
             rules.Add(new GrantRuleResult(GrantEligibilityRule.Revenue,
                 firm.AnnualRevenue == null
@@ -218,7 +226,7 @@ public class GrantMatchManager : DomainService
                         : GrantRuleOutcome.Passed));
         }
 
-        if (grant.RequiresConsortium)
+        if (companyOnly && grant.RequiresConsortium)
         {
             rules.Add(new GrantRuleResult(GrantEligibilityRule.Consortium,
                 firm.HasConsortiumPartner == null
