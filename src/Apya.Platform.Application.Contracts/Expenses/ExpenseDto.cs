@@ -13,6 +13,12 @@ public class ExpenseDto : FullAuditedEntityDto<Guid>
     public ExpenseCategory Category { get; set; }
     public Guid CashAccountId { get; set; }
     public string? CashAccountName { get; set; }
+
+    /// <summary>
+    /// DOC-12 · Gidere eşleştirilmiş belgeler. Yalnız LİSTE ucunda ve yalnız belge izni olan
+    /// çağırana dolar; diğer uçlarda boştur.
+    /// </summary>
+    public System.Collections.Generic.List<Apya.Platform.ProjectBudgets.Dtos.ProjectExpenseDocumentDto> Documents { get; set; } = new();
     public Guid? ProjectId { get; set; }
     public Guid? TaskId { get; set; }
     public Guid? BudgetLineId { get; set; }
