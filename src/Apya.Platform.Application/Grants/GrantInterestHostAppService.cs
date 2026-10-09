@@ -130,18 +130,29 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
             // kendi başvurusunu göremezdi. Aynı çağrıya ikinci başvuru açılmaz
             // (tenant+çağrı benzersiz): eski kayıt varsa talep ona bağlanır.
             var application = await _appRepo.FirstOrDefaultAsync(a => a.GrantCallId == callId);
+            var rec = await _recRepo.FirstOrDefaultAsync(r => r.GrantCallId == callId);
             if (application == null)
             {
                 application = new GrantApplication(GuidGenerator.Create(), tenantId, callId, Clock.Now);
                 await _appRepo.InsertAsync(application, autoSave: true);
 
                 // Host bu çağrıyı bu firmaya göndermişse (B3), başvuruldu olarak işaretle.
-                var rec = await _recRepo.FirstOrDefaultAsync(r => r.GrantCallId == callId);
                 if (rec != null)
                 {
                     rec.MarkApplied();
                     await _recRepo.UpdateAsync(rec, autoSave: true);
                 }
+            }
+
+            // DOM-05: Sorumlu danışman üç ayrı kayıtta yaşıyor (öneri, talep, başvuru) ve
+            // başvuru açılırken hiçbiri taşınmıyordu — pano kartı "atanmamış" doğuyor, host
+            // aynı kişiyi üçüncü kez seçiyordu. Talepteki atama daha yenidir, önce o okunur.
+            // Başvuruda zaten bir sorumlu varsa DOKUNULMAZ.
+            var advisorId = interest.AssignedUserId ?? rec?.AssignedUserId;
+            if (application.AssignedUserId == null && advisorId.HasValue)
+            {
+                application.AssignTo(advisorId);
+                await _appRepo.UpdateAsync(application, autoSave: true);
             }
 
             interest.MarkApplicationStarted(application.Id, CurrentUser.Id, Clock.Now);
