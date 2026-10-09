@@ -358,6 +358,12 @@ public static class PlatformSettings
         /// sıfırdan %95'e sıçrayan bir kalem üç ayrı uyarı üretmez. Boş = uyarı üretilmez.
         /// </summary>
         public const string BudgetUsageThresholds = Prefix + ".Notifications.BudgetUsageThresholds";
+
+        /// <summary>
+        /// Son günlük bildirim özetinin gönderildiği an (UTC, ISO 8601). Kullanıcı ayarı DEĞİL:
+        /// özet işçisinin kalıcı durumu — uygulama yeniden başlayınca pencere kaymasın diye.
+        /// </summary>
+        public const string LastDigestAt = Prefix + ".Notifications.LastDigestAt";
     }
 
     /// <summary>
