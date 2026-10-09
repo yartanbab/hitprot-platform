@@ -115,6 +115,77 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         }
     }
 
+    private async Task<GrantApplication> ApplicationOfAsync(Guid tenantId, Guid callId)
+    {
+        using (_currentTenant.Change(tenantId))
+        {
+            return (await _applicationRepository.GetListAsync()).Single(a => a.GrantCallId == callId);
+        }
+    }
+
+    /// <summary>
+    /// DOM-05: Talebe atanan danışman, başvuru açılınca başvurunun sorumlusu olur. Eskiden
+    /// başvuru hep atanmamış doğuyor, host aynı kişiyi panoda yeniden seçiyordu.
+    /// </summary>
+    [Fact]
+    public async Task Talebin_danismani_acilan_basvuruya_tasinir()
+    {
+        var call = await CreateHostCallAsync("Devir Programı " + Guid.NewGuid().ToString("N")[..6]);
+        var tenantId = await CreateTenantAsync("Devir Firması " + Guid.NewGuid().ToString("N")[..6]);
+        var advisorId = await CreateHostUserAsync("Talep Danışmanı");
+        var interestId = await ExpressAsync(tenantId, call.Id, needsPartner: null);
+        await _hostAppService.AssignAsync(new AssignGrantInterestInput { InterestId = interestId, UserId = advisorId });
+
+        await _hostAppService.StartApplicationAsync(interestId);
+
+        (await ApplicationOfAsync(tenantId, call.Id)).AssignedUserId.ShouldBe(advisorId);
+    }
+
+    /// <summary>Talepte atama yoksa çağrıyı firmaya gönderirken seçilen danışman devralır.</summary>
+    [Fact]
+    public async Task Talepte_danisman_yoksa_onerideki_danisman_basvuruya_tasinir()
+    {
+        var call = await CreateHostCallAsync("Öneri Devri " + Guid.NewGuid().ToString("N")[..6]);
+        var tenantId = await CreateTenantAsync("Öneri Firması " + Guid.NewGuid().ToString("N")[..6]);
+        var advisorId = await CreateHostUserAsync("Öneri Danışmanı");
+        await GetRequiredService<IRepository<GrantRecommendation, Guid>>().InsertAsync(
+            new GrantRecommendation(Guid.NewGuid(), tenantId, call.Id, GrantRecommendationSource.Host, null)
+            {
+                AssignedUserId = advisorId
+            }, autoSave: true);
+        var interestId = await ExpressAsync(tenantId, call.Id, needsPartner: null);
+
+        await _hostAppService.StartApplicationAsync(interestId);
+
+        (await ApplicationOfAsync(tenantId, call.Id)).AssignedUserId.ShouldBe(advisorId);
+    }
+
+    /// <summary>Karşı yön: başvuruda zaten sorumlu varsa talepteki atama onu ezmez.</summary>
+    [Fact]
+    public async Task Basvuruda_sorumlu_varsa_talebin_danismani_onu_ezmez()
+    {
+        var call = await CreateHostCallAsync("Ezmeme Programı " + Guid.NewGuid().ToString("N")[..6]);
+        var tenantId = await CreateTenantAsync("Ezmeme Firması " + Guid.NewGuid().ToString("N")[..6]);
+        var current = await CreateHostUserAsync("Mevcut Sorumlu");
+        var other = await CreateHostUserAsync("Talep Danışmanı");
+
+        // Talep önce bırakılır: başvurusu olan çağrıya ilgi bildirilemez.
+        var interestId = await ExpressAsync(tenantId, call.Id, needsPartner: null);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            var existing = new GrantApplication(Guid.NewGuid(), tenantId, call.Id, DateTime.Now);
+            existing.AssignTo(current);
+            await _applicationRepository.InsertAsync(existing, autoSave: true);
+        }
+
+        await _hostAppService.AssignAsync(new AssignGrantInterestInput { InterestId = interestId, UserId = other });
+
+        await _hostAppService.StartApplicationAsync(interestId);
+
+        (await ApplicationOfAsync(tenantId, call.Id)).AssignedUserId.ShouldBe(current);
+    }
+
     [Fact]
     public async Task Talep_birakilinca_host_bildirim_alir()
     {
