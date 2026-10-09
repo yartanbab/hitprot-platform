@@ -338,7 +338,6 @@ $(function () {
         $('#FeedEmpty').toggleClass('d-none', items.length > 0 || activeTab === 'bookmarked');
         $('#BookmarkEmpty').toggleClass('d-none', items.length > 0 || activeTab !== 'bookmarked');
         $('#BookmarkHint').toggleClass('d-none', activeTab !== 'bookmarked' || items.length === 0);
-        $('#FeedTableLink').toggleClass('d-none', activeTab !== 'all');
         $('#FeedSortLabel').text(l('Grants:Feed:SortByFit'));
 
         // 12a · Kova sayıları tek satır.
