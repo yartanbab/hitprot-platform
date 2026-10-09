@@ -355,6 +355,9 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
             var next = (await _callRepo.GetListAsync(
                     c => c.GrantId == grant.Id && c.TenantId == null
                          && c.Id != call.Id && c.Status == GrantCallStatus.Acik))
+                // Tarihi geçmiş çağrı durumu "Açık" kalsa da önerilmez; tarihe göre sıralandığı
+                // için önerilen tam da o olurdu.
+                .Where(c => c.IsOpenOn(Clock.Now))
                 .OrderBy(c => c.Deadline ?? DateTime.MaxValue)
                 .FirstOrDefault();
             if (next != null)

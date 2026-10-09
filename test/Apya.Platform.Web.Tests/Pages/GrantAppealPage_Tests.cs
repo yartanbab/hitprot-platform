@@ -70,6 +70,44 @@ public class GrantAppealPage_Tests : PlatformWebTestBase
         });
     }
 
+    /// <summary>
+    /// "Bir daha denemek için" önerisi aynı programın açık çağrısıdır. Tarihi geçmiş çağrı durumu
+    /// "Açık" kalsa da önerilmemeli — öneri tarihe göre sıralandığı için tam da o seçiliyordu.
+    /// </summary>
+    [Fact]
+    public async Task Sonraki_Cagri_Onerisi_Son_Tarihi_Gecmis_Cagriyi_Atlar()
+    {
+        var (tenantId, id) = await SetupAsync();
+
+        Guid expiredId, liveId;
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var callRepo = GetRequiredService<IRepository<GrantCall, Guid>>();
+            GrantApplication application;
+            using (GetRequiredService<Volo.Abp.MultiTenancy.ICurrentTenant>().Change(tenantId))
+            {
+                application = await GetRequiredService<IRepository<GrantApplication, Guid>>().GetAsync(id);
+            }
+            var grantId = (await callRepo.GetAsync(application.GrantCallId)).GrantId;
+
+            var expired = new GrantCall(Guid.NewGuid(), grantId, "2026/8", GrantCallStatus.Acik);
+            expired.SetSchedule(null, DateTime.Now.Date.AddDays(-2));
+            var live = new GrantCall(Guid.NewGuid(), grantId, "2027/1", GrantCallStatus.Acik);
+            live.SetSchedule(null, DateTime.Now.Date.AddDays(1));
+            await callRepo.InsertAsync(expired, autoSave: true);
+            await callRepo.InsertAsync(live, autoSave: true);
+            expiredId = expired.Id;
+            liveId = live.Id;
+            await uow.CompleteAsync();
+        }
+
+        var dto = await _appeal.GetAsync(id);
+
+        dto.NextCallId.ShouldNotBe(expiredId);
+        dto.NextCallId.ShouldBe(liveId);
+    }
+
     [Fact]
     public async Task Sayfa_Render_Oluyor()
     {
