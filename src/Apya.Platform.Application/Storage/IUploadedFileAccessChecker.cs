@@ -4,13 +4,17 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Grants;
+using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Linq;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.Security.Claims;
+using Volo.Abp.Users;
 
 namespace Apya.Platform.Storage;
 
@@ -43,6 +47,8 @@ public class UploadedFileAccessChecker : IUploadedFileAccessChecker, ITransientD
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter _dataFilter;
     private readonly IAsyncQueryableExecuter _asyncExecuter;
+    private readonly ICurrentUser _currentUser;
+    private readonly IAuthorizationService _authorizationService;
 
     public UploadedFileAccessChecker(
         IRepository<Grant, Guid> grantRepository,
@@ -52,7 +58,9 @@ public class UploadedFileAccessChecker : IUploadedFileAccessChecker, ITransientD
         IRepository<TaskItem, Guid> taskRepository,
         ICurrentTenant currentTenant,
         IDataFilter dataFilter,
-        IAsyncQueryableExecuter asyncExecuter)
+        IAsyncQueryableExecuter asyncExecuter,
+        ICurrentUser currentUser,
+        IAuthorizationService authorizationService)
     {
         _grantRepository = grantRepository;
         _projectRepository = projectRepository;
@@ -62,6 +70,8 @@ public class UploadedFileAccessChecker : IUploadedFileAccessChecker, ITransientD
         _currentTenant = currentTenant;
         _dataFilter = dataFilter;
         _asyncExecuter = asyncExecuter;
+        _currentUser = currentUser;
+        _authorizationService = authorizationService;
     }
 
     public async Task<bool> CanReadAsync(string fileName)
@@ -121,7 +131,15 @@ public class UploadedFileAccessChecker : IUploadedFileAccessChecker, ITransientD
             // 4) Görev eki — AppTaskAttachments'ta TenantId KOLONU YOK; kiracı yalnız
             //    göreve join ile çözülür. Şemayı değiştirmek çift migration isterdi.
             var taskAttachments = await _taskAttachmentRepository.GetQueryableAsync();
-            var tasks = await _taskRepository.GetQueryableAsync();
+            //
+            //    Gizli görev kuralı (APYA-22) burada da geçerli: görevin kendisini göremeyen
+            //    kullanıcı, adını bir yerden öğrendiği ekini bu uçtan indirebiliyordu. Aynı
+            //    dosyayı görünür bir görev de referanslıyorsa (görev kopyalama) dosya açıktır.
+            var tasks = TaskPrivacyQueryFilter.Apply(
+                await _taskRepository.GetQueryableAsync(),
+                isImpersonated: _currentUser.FindClaim(AbpClaimTypes.ImpersonatorUserId) != null,
+                canManageTeam: await _authorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageTeam),
+                currentUserId: _currentUser.Id);
             var taskOwners = await OwnersAsync(
                 from attachment in taskAttachments
                 join task in tasks on attachment.TaskId equals task.Id

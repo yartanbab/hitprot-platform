@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Apya.Platform.Grants;
 using Apya.Platform.Projects;
@@ -7,6 +9,7 @@ using Apya.Platform.Tasks;
 using Shouldly;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.Security.Claims;
 using Xunit;
 
 namespace Apya.Platform.EntityFrameworkCore.Storage;
@@ -158,6 +161,86 @@ public class UploadedFileAccessChecker_Tests : PlatformEntityFrameworkCoreTestBa
             "Görev eki kolon yerine join ile çözülmeli; aksi hâlde tüm görev ekleri kapanır");
 
         (await CanReadAsync(TenantB, storedFileName)).ShouldBeFalse();
+    }
+
+    private async Task<string> AttachToNewTaskAsync(bool isPrivate, string? storedFileName = null)
+    {
+        storedFileName ??= Guid.NewGuid() + ".pdf";
+        var taskId = Guid.NewGuid();
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            using (_currentTenant.Change(TenantA))
+            {
+                await _taskRepository.InsertAsync(
+                    new TaskItem(taskId, "Ekli görev", tenantId: TenantA, isPrivate: isPrivate,
+                        now: new DateTime(2026, 10, 9)),
+                    autoSave: true);
+
+                await _taskAttachmentRepository.InsertAsync(new TaskAttachment
+                {
+                    TaskId = taskId,
+                    FileName = "Ek.pdf",
+                    StoredFileName = storedFileName,
+                    ContentType = "application/pdf"
+                }, autoSave: true);
+            }
+        });
+
+        return storedFileName;
+    }
+
+    /// <summary>Gizli görevi hiçbir koşulda göremeyen çağıran: bürünme oturumu.</summary>
+    private IDisposable AsOutsider() => GetRequiredService<ICurrentPrincipalAccessor>().Change(
+        new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+        {
+            new(AbpClaimTypes.UserId, Guid.NewGuid().ToString()),
+            new(AbpClaimTypes.UserName, "gizliyi-goremeyen"),
+            new(AbpClaimTypes.ImpersonatorUserId, Guid.NewGuid().ToString())
+        }, "Test")));
+
+    /// <summary>
+    /// SEC-05'in kiracı İÇİ yarısı: görevi göremeyen kullanıcı, adını bir yerden öğrendiği ekini
+    /// dosya ucundan indirebiliyordu — karar yalnız kiracı karşılaştırmasıydı.
+    /// </summary>
+    [Fact]
+    public async Task Gizli_Gorevin_Eki_Gorevi_Goremeyene_Kapali()
+    {
+        var fileName = await AttachToNewTaskAsync(isPrivate: true);
+
+        using (AsOutsider())
+        {
+            (await CanReadAsync(TenantA, fileName)).ShouldBeFalse(
+                "gizli görevin eki, görevi göremeyen kullanıcıya dosya ucundan açılıyor");
+        }
+    }
+
+    /// <summary>Karşı yön: gizli olmayan görevin eki aynı çağırana açık kalır.</summary>
+    [Fact]
+    public async Task Acik_Gorevin_Eki_Ayni_Cagirana_Acik()
+    {
+        var fileName = await AttachToNewTaskAsync(isPrivate: false);
+
+        using (AsOutsider())
+        {
+            (await CanReadAsync(TenantA, fileName)).ShouldBeTrue();
+        }
+    }
+
+    /// <summary>
+    /// Görev kopyalama aynı fiziksel dosyayı yeniden kullanır: dosyayı görünür bir görev de
+    /// referanslıyorsa kapatılmaz.
+    /// </summary>
+    [Fact]
+    public async Task Ayni_Dosyayi_Gorunur_Bir_Gorev_De_Tasiyorsa_Acik_Kalir()
+    {
+        var fileName = await AttachToNewTaskAsync(isPrivate: true);
+        await AttachToNewTaskAsync(isPrivate: false, storedFileName: fileName);
+
+        using (AsOutsider())
+        {
+            (await CanReadAsync(TenantA, fileName)).ShouldBeTrue();
+        }
     }
 
     [Fact]
