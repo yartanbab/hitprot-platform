@@ -156,6 +156,42 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
         preview.Tranches.Single().SharePercent.ShouldBe(40);
     }
 
+    /// <summary>
+    /// CNV-04: Firma projesine başvuruda ad verdiyse dönüşüm ekranı onu önermeli. Eskiden
+    /// öneri hep "firma · program"dı; aynı programa ikinci başvuruda iki proje aynı adı alıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Onizleme_Proje_Adi_Olarak_Basvurudaki_Basligi_Onerir()
+    {
+        var (id, tenantId) = await SetupAsync();
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        using (GetRequiredService<ICurrentTenant>().Change(tenantId))
+        {
+            var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+            var application = await appRepo.GetAsync(id);
+            application.SetProjectSummary("  Akıllı Üretim Hattı  ", "Özet", 12);
+            await appRepo.UpdateAsync(application, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var preview = await _conversion.GetPreviewAsync(id);
+
+        preview.SuggestedProjectName.ShouldBe("Akıllı Üretim Hattı");
+    }
+
+    /// <summary>Karşı yön: başlık yazılmamışsa "firma · program" önerisi kalır, boş ad önerilmez.</summary>
+    [Fact]
+    public async Task Onizleme_Baslik_Yoksa_Firma_Ve_Program_Adini_Onerir()
+    {
+        var (id, _) = await SetupAsync();
+
+        var preview = await _conversion.GetPreviewAsync(id);
+
+        preview.SuggestedProjectName.ShouldBe($"{preview.FirmName} · {preview.GrantName}");
+    }
+
     [Fact]
     public async Task Onaylanan_Tutar_Yoksa_Donusturulemez()
     {

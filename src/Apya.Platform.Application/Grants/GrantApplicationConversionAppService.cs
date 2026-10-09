@@ -435,6 +435,14 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                 dto.FirmName = "—";
             }
 
+            // CNV-04: Firma projesine başvuruda ZATEN ad verdi; dönüşüm ekranı onu yok sayıp
+            // "firma · program" öneriyordu ve aynı programa ikinci başvuruda iki proje aynı
+            // adla doğuyordu. Başlık boşsa eski öneri kalır.
+            if (!application.ProjectTitle.IsNullOrWhiteSpace())
+            {
+                dto.SuggestedProjectName = application.ProjectTitle!.Trim();
+            }
+
             var costItems = await _costItemRepo.GetListAsync(c => c.GrantId == grant.Id && c.TenantId == null);
             var budgetLines = await _budgetRepo.GetListAsync(l => l.GrantApplicationId == application.Id);
             var eligible = costItems.Select(c => c.Kind).ToHashSet();
