@@ -9,6 +9,7 @@ using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.Timing;
 
 namespace Apya.Platform.DynamicAssets.ChoiceSources;
 
@@ -23,12 +24,15 @@ public class OpenGrantCallsChoiceSource : IFormChoiceSource, ITransientDependenc
     private readonly IRepository<GrantCall, Guid> _callRepository;
     private readonly IRepository<Grant, Guid> _grantRepository;
     private readonly IDataFilter<IMultiTenant> _multiTenantFilter;
+    private readonly IClock _clock;
 
     public OpenGrantCallsChoiceSource(
         IRepository<GrantCall, Guid> callRepository,
         IRepository<Grant, Guid> grantRepository,
-        IDataFilter<IMultiTenant> multiTenantFilter)
+        IDataFilter<IMultiTenant> multiTenantFilter,
+        IClock clock)
     {
+        _clock = clock;
         _callRepository = callRepository;
         _grantRepository = grantRepository;
         _multiTenantFilter = multiTenantFilter;
@@ -49,7 +53,11 @@ public class OpenGrantCallsChoiceSource : IFormChoiceSource, ITransientDependenc
         // kiracılara genişler, bu yüzden TenantId == null elle konur.
         using (_multiTenantFilter.Disable())
         {
-            calls = await _callRepository.GetListAsync(c => c.TenantId == null && c.Status == GrantCallStatus.Acik);
+            // Son başvuru tarihi geçen çağrı, otomatik kapanış çalışana kadar "Açık" durumda kalır;
+            // katalog ve ilgi kapısı onu kapalı sayıyor, form da seçtirmemeli (GrantCall.IsOpenOn).
+            calls = (await _callRepository.GetListAsync(c => c.TenantId == null && c.Status == GrantCallStatus.Acik))
+                .Where(c => c.IsOpenOn(_clock.Now))
+                .ToList();
             var grantIds = calls.Select(c => c.GrantId).Distinct().ToList();
             grants = (await _grantRepository.GetListAsync(g => g.TenantId == null && grantIds.Contains(g.Id)))
                 .ToDictionary(g => g.Id);

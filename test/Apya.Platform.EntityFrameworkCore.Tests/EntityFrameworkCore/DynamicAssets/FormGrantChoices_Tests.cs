@@ -92,6 +92,27 @@ public class FormGrantChoices_Tests : PlatformEntityFrameworkCoreTestBase
         (await _formAppService.GetChoicesAsync("bilinmeyen")).ShouldBeEmpty();
     }
 
+    /// <summary>
+    /// Son başvuru tarihi geçen çağrı, otomatik kapanış çalışana kadar "Açık" durumda kalır.
+    /// Katalog ve ilgi kapısı onu kapalı sayarken form hâlâ seçtiriyordu. Son gün dahildir.
+    /// </summary>
+    [Fact]
+    public async Task Son_tarihi_gecmis_cagri_durumu_acik_olsa_da_listelenmez()
+    {
+        var callRepo = GetRequiredService<IRepository<GrantCall, Guid>>();
+        var expired = await CreateHostCallAsync("Süresi Geçen Program", GrantCallStatus.Acik);
+        expired.SetSchedule(null, DateTime.Now.Date.AddDays(-1));
+        await callRepo.UpdateAsync(expired, autoSave: true);
+        var lastDay = await CreateHostCallAsync("Son Gün Programı", GrantCallStatus.Acik);
+        lastDay.SetSchedule(null, DateTime.Now.Date);
+        await callRepo.UpdateAsync(lastDay, autoSave: true);
+
+        var choices = await _formAppService.GetChoicesAsync(FormChoiceSources.OpenGrantCalls);
+
+        choices.ShouldNotContain(c => c.Value == expired.Id.ToString());
+        choices.ShouldContain(c => c.Value == lastDay.Id.ToString());
+    }
+
     [Fact]
     public async Task Kiracinin_cevabi_guncel_adla_yazilir_kapanmis_cagri_reddedilir()
     {
