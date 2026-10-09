@@ -86,7 +86,9 @@ public class NotificationDigestWorker : AsyncPeriodicBackgroundWorkerBase
                     if (user == null || user.Email.IsNullOrWhiteSpace())
                         continue;
 
-                    await emailSender.SendAsync(user.Email, "Bildirim özeti", BuildBody(group.ToList()));
+                    // NTF-10: Kuyruğa alınır (anlık bildirim e-postaları gibi). Doğrudan gönderimde
+                    // geçici bir SMTP hatası o günün özetini tamamen düşürüyordu; kuyruk yeniden dener.
+                    await emailSender.QueueAsync(user.Email, "Bildirim özeti", BuildBody(group.ToList()));
                 }
             }
             catch (Exception ex)
