@@ -32,6 +32,8 @@ public class ExpenseAppService :
     private readonly FxLedgerStamper _fxStamper;
     private readonly BudgetRiskEvaluator _budgetRiskEvaluator;
     private readonly CashMovementAmountResolver _cashAmountResolver;
+    private readonly IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> _matchRepository;
+    private readonly IRepository<Apya.Platform.Documents.DocumentFile, Guid> _documentFileRepository;
 
     public ExpenseAppService(
         IRepository<Expense, Guid> repository,
@@ -42,9 +44,13 @@ public class ExpenseAppService :
         ProjectBudgetManager budgetManager,
         FxLedgerStamper fxStamper,
         BudgetRiskEvaluator budgetRiskEvaluator,
-        CashMovementAmountResolver cashAmountResolver)
+        CashMovementAmountResolver cashAmountResolver,
+        IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> matchRepository,
+        IRepository<Apya.Platform.Documents.DocumentFile, Guid> documentFileRepository)
         : base(repository)
     {
+        _matchRepository = matchRepository;
+        _documentFileRepository = documentFileRepository;
         _cashMovementRepository = cashMovementRepository;
         _cashAccountRepository = cashAccountRepository;
         _taskRepository = taskRepository;
@@ -422,6 +428,37 @@ public class ExpenseAppService :
             foreach (var dto in result.Items)
                 if (nameMap.TryGetValue(dto.CashAccountId, out var name))
                     dto.CashAccountName = name;
+        }
+
+        // DOC-12 · Finans Merkezi'nin Gelir-Gider tablosunda gider satırından belgeye
+        // gidilemiyordu. Belge yalnız DÖNEN satırlar için okunur (görünürlük listeden miras
+        // kalır) ve yalnız belge izni olana verilir — bağlantı belge merkezinin indirme ucuna
+        // gider, o uç aynı izni ister (proje konsolundaki kalıp: ProjectBudgetAppService).
+        var expenseIds = result.Items.Select(x => x.Id).ToList();
+        if (expenseIds.Count > 0
+            && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default))
+        {
+            var matchQ = await _matchRepository.GetQueryableAsync();
+            var fileQ = await _documentFileRepository.GetQueryableAsync();
+            var documents = await AsyncExecuter.ToListAsync(
+                from m in matchQ
+                join f in fileQ on m.DocumentFileId equals f.Id
+                where expenseIds.Contains(m.ExpenseId) && f.LatestAttachmentId != null
+                orderby m.CreationTime, m.Id
+                select new { m.ExpenseId, AttachmentId = f.LatestAttachmentId!.Value, f.DisplayName });
+
+            var byExpense = documents.ToLookup(d => d.ExpenseId);
+            foreach (var dto in result.Items)
+            {
+                dto.Documents = byExpense[dto.Id]
+                    .Select(d => new Apya.Platform.ProjectBudgets.Dtos.ProjectExpenseDocumentDto
+                    {
+                        AttachmentId = d.AttachmentId,
+                        Name = d.DisplayName,
+                        DownloadUrl = "/Documents?handler=DownloadAttachment&attachmentId=" + d.AttachmentId
+                    })
+                    .ToList();
+            }
         }
 
         return result;

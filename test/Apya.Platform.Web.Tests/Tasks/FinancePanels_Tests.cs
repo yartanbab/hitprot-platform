@@ -230,4 +230,38 @@ public class FinancePanels_Tests : PlatformWebTestBase
         html.ShouldContain($"data-expense-doc=\"{d.Receipt}\"");
         html.ShouldContain($"/Documents?handler=DownloadAttachment&amp;attachmentId={d.Invoice}");
     }
+
+    /// <summary>
+    /// DOC-12'nin kalanı: gider listesi dönen satırların belgelerini taşır. Finans Merkezi'nin
+    /// Gelir-Gider tablosu bu listeyi basıyor ve satırdan belgeye gidilemiyordu.
+    /// </summary>
+    [Fact]
+    public async Task Gider_listesi_satirin_belgelerini_tasir()
+    {
+        var s = await SeedAsync("FIN-G");
+        var d = await SeedDocumentsAsync(s.P1, s.DocExpense);
+
+        var list = await _expenseAppService.GetListAsync(new GetExpensesInput { ProjectId = s.P1, MaxResultCount = 100 });
+
+        var belgeli = list.Items.Single(r => r.Id == s.DocExpense);
+        belgeli.Documents.Select(x => x.AttachmentId)
+            .ShouldBe(new[] { d.Invoice, d.Receipt }, ignoreOrder: true);
+        belgeli.Documents.Single(x => x.AttachmentId == d.Invoice).DownloadUrl
+            .ShouldBe("/Documents?handler=DownloadAttachment&attachmentId=" + d.Invoice);
+
+        list.Items.Where(r => r.Id != s.DocExpense).ShouldAllBe(r => r.Documents.Count == 0);
+    }
+
+    [Fact]
+    public async Task Finans_merkezi_gelir_gider_satirinda_belge_baglantisi_basar()
+    {
+        var s = await SeedAsync("FIN-H");
+        var d = await SeedDocumentsAsync(s.P1, s.DocExpense);
+
+        var html = await GetResponseAsStringAsync($"/Finance?projectId={s.P1}&tab=gelir-gider");
+
+        html.ShouldContain($"data-expense-doc=\"{d.Invoice}\"");
+        html.ShouldContain($"data-expense-doc=\"{d.Receipt}\"");
+        html.ShouldContain($"/Documents?handler=DownloadAttachment&amp;attachmentId={d.Invoice}");
+    }
 }

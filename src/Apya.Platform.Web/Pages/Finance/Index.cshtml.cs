@@ -460,7 +460,8 @@ public class IndexModel : AbpPageModel
                         BookAmount = x.BookAmount,
                         DonorAmount = x.DonorAmount,
                         RateLocked = x.RateLocked,
-                        Url = "/Expenses"
+                        Url = "/Expenses",
+                        Documents = x.Documents
                     });
                 }
             });
@@ -1086,6 +1087,9 @@ public class IndexModel : AbpPageModel
         public bool RateLocked { get; set; }
 
         public string Url { get; set; } = "#";
+
+        /// <summary>DOC-12 · Gidere eşleştirilmiş belgeler (gelirde hep boş: gelir eşleşmesi yok).</summary>
+        public List<Apya.Platform.ProjectBudgets.Dtos.ProjectExpenseDocumentDto> Documents { get; set; } = new();
     }
 
     public class AccountSummary

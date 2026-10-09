@@ -4,11 +4,9 @@
     Gelir ve gider TEK tabloda; fatura buraya girmez (kendi sekmesi var,
     iki yerde göstermek aynı parayı iki kez saydırır).
 
-    TASARIMDAN EKSİK OLAN İKİ KOLON — bilerek:
-      · İşlem PB / Kur / ₺ defter / EUR donör → kur politikası ve donör
-        karşılığı henüz yok (5. adım). Bugün tüm kayıtlar TRY.
-      · Belge → doküman entegrasyonu 7. adımda.
-    Uydurma kolon basmak yerine, geldiklerinde eklenecekler.
+    Belge (DOC-12): gidere eşleştirilmiş belge varsa başlığın yanında ataş basılır ve
+    belgeyi açar. Ayrı kolon yok — gelirin belge eşleşmesi olmadığı için kolon yarı boş
+    kalırdı. Belge izni olmayana bağlantı hiç gelmez (ExpenseAppService.GetListAsync).
 *@
 @using Apya.Platform.Localization
 @using Apya.Platform.Web.Pages.Finance
@@ -165,6 +163,13 @@ else
                                     @(r.IsInflow ? "Gelir" : "Gider")
                                 </span>
                                 <a href="@r.Url" class="fw-semibold text-decoration-none">@r.Title</a>
+                                @foreach (var doc in r.Documents)
+                                {
+                                    <a href="@doc.DownloadUrl" class="text-muted text-decoration-none"
+                                       data-expense-doc="@doc.AttachmentId" title="@doc.Name" aria-label="@doc.Name">
+                                        <i class="fa fa-paperclip" aria-hidden="true"></i>
+                                    </a>
+                                }
                             </div>
                             <div class="small text-muted">@r.CategoryLabel</div>
                         </td>
