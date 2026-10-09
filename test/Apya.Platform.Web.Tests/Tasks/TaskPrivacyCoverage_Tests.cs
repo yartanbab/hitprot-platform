@@ -61,8 +61,6 @@ public class TaskPrivacyCoverage_Tests
             "Görevden yalnız proje kimliğini türetir; başlık/içerik dönmez.",
         ["src/Apya.Platform.Application/IssueTasks/IssueTaskAppService.cs"] =
             "Yalnız host bağlamında çalışır (EnsureHostContext).",
-        ["src/Apya.Platform.Application/Storage/IUploadedFileAccessChecker.cs"] =
-            "Görevden yalnız kiracı kimliğini okur; dosya adı tahmin edilemez ve yalnız korunan uçlardan öğrenilir.",
         ["src/Apya.Platform.Application/Dashboard/DashboardStatisticsProvider.cs"] =
             "Yalnız sayı/toplam üretir; görev başlığı dönmez.",
         ["src/Apya.Platform.Application/Documents/ProjectTimelineAppService.cs"] =
