@@ -186,6 +186,91 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
         (await ApplicationOfAsync(tenantId, call.Id)).AssignedUserId.ShouldBe(current);
     }
 
+    /// <summary>
+    /// CNV-12: Firma proje fikrini, sorunu, hedef kitleyi ve faaliyetleri ilgi formunda yazdı;
+    /// başvuru boş özetle açılıyor, sihirbaz aynı şeyi yeniden istiyordu.
+    /// </summary>
+    [Fact]
+    public async Task Ilgi_formundaki_proje_cevaplari_basvuru_ozetine_on_doldurulur()
+    {
+        var call = await CreateHostCallAsync("Ön Doldurma Programı " + Guid.NewGuid().ToString("N")[..6]);
+        var tenantId = await CreateTenantAsync("Ön Doldurma Firması " + Guid.NewGuid().ToString("N")[..6]);
+
+        Guid interestId;
+        using (_currentTenant.Change(tenantId))
+        {
+            interestId = (await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+            {
+                GrantCallId = call.Id,
+                Note = "  Öngörülü bakım modülü  ",
+                ProblemStatement = "Plansız duruşlar üretimi aksatıyor",
+                TargetAudience = "Orta ölçekli üreticiler",
+                PlannedActivities = "Sensör kurulumu ve pilot",
+                SupportNeeds = "Bütçe kalemlerinde yönlendirme"
+            })).Id;
+        }
+
+        await _hostAppService.StartApplicationAsync(interestId);
+
+        var summary = (await ApplicationOfAsync(tenantId, call.Id)).ProjectSummary;
+        summary.ShouldNotBeNull();
+        summary!.ShouldStartWith("Öngörülü bakım modülü");
+        summary.ShouldContain("Plansız duruşlar üretimi aksatıyor");
+        summary.ShouldContain("Orta ölçekli üreticiler");
+        summary.ShouldContain("Sensör kurulumu ve pilot");
+        // Danışmana yönelik cevaplar proje özetine girmez.
+        summary.ShouldNotContain("Bütçe kalemlerinde yönlendirme");
+        // Etiket yerelleştirilmiş basılır, ham anahtar değil.
+        summary.ShouldNotContain("DisplayName:");
+    }
+
+    /// <summary>Karşı yön: özet zaten yazılmışsa (eski başvuruya bağlanan talep) ezilmez.</summary>
+    [Fact]
+    public async Task Basvuruda_ozet_varsa_ilgi_cevaplari_onu_ezmez()
+    {
+        var call = await CreateHostCallAsync("Özet Koruma Programı " + Guid.NewGuid().ToString("N")[..6]);
+        var tenantId = await CreateTenantAsync("Özet Koruma Firması " + Guid.NewGuid().ToString("N")[..6]);
+        var interestId = await ExpressAsync(tenantId, call.Id, needsPartner: null);
+
+        using (_currentTenant.Change(tenantId))
+        {
+            var existing = new GrantApplication(Guid.NewGuid(), tenantId, call.Id, DateTime.Now);
+            existing.SetProjectSummary("Mevcut başlık", "Firmanın kendi yazdığı özet", 12);
+            await _applicationRepository.InsertAsync(existing, autoSave: true);
+        }
+
+        await _hostAppService.StartApplicationAsync(interestId);
+
+        var application = await ApplicationOfAsync(tenantId, call.Id);
+        application.ProjectSummary.ShouldBe("Firmanın kendi yazdığı özet");
+        application.ProjectTitle.ShouldBe("Mevcut başlık");
+        application.ProjectDurationMonths.ShouldBe(12);
+    }
+
+    /// <summary>Çok uzun cevaplar kolon sınırına kırpılır; başvuru açılışı bu yüzden düşmez.</summary>
+    [Fact]
+    public async Task On_doldurulan_ozet_kolon_sinirini_asmaz()
+    {
+        var call = await CreateHostCallAsync("Uzun Cevap Programı " + Guid.NewGuid().ToString("N")[..6]);
+        var tenantId = await CreateTenantAsync("Uzun Cevap Firması " + Guid.NewGuid().ToString("N")[..6]);
+
+        Guid interestId;
+        using (_currentTenant.Change(tenantId))
+        {
+            interestId = (await _interestAppService.ExpressAsync(new ExpressGrantInterestInput
+            {
+                GrantCallId = call.Id,
+                Note = new string('a', 900),
+                ProblemStatement = new string('b', 900),
+                TargetAudience = new string('c', 900)
+            })).Id;
+        }
+
+        await _hostAppService.StartApplicationAsync(interestId);
+
+        (await ApplicationOfAsync(tenantId, call.Id)).ProjectSummary!.Length.ShouldBeLessThanOrEqualTo(2000);
+    }
+
     [Fact]
     public async Task Talep_birakilinca_host_bildirim_alir()
     {

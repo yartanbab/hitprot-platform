@@ -102,6 +102,43 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         return await BuildConsoleAsync(onlyPending: true);
     }
 
+    /// <summary>Kolonun ve sihirbazın kabul ettiği sınır (SaveWizardSummaryInput.ProjectSummary).</summary>
+    private const int ProjectSummaryMaxLength = 2000;
+
+    /// <summary>
+    /// İlgi formunun PROJEYİ anlatan dört cevabından özet kurar: fikir (etiketsiz, ilk paragraf),
+    /// sorun, hedef kitle, faaliyetler. Geri kalan cevaplar (destek beklentisi, ekip, deneyim,
+    /// paydaşlar) danışmana yöneliktir, özete girmez. Hiçbiri yazılmamışsa null.
+    /// </summary>
+    private string? BuildSummaryFromInterest(GrantInterest interest)
+    {
+        var parts = new List<string>();
+
+        if (!interest.Note.IsNullOrWhiteSpace())
+        {
+            parts.Add(interest.Note!.Trim());
+        }
+
+        void Add(string labelKey, string? answer)
+        {
+            if (!answer.IsNullOrWhiteSpace())
+            {
+                parts.Add($"{L[labelKey].Value}: {answer!.Trim()}");
+            }
+        }
+
+        Add("DisplayName:ProblemStatement", interest.ProblemStatement);
+        Add("DisplayName:TargetAudience", interest.TargetAudience);
+        Add("DisplayName:PlannedActivities", interest.PlannedActivities);
+
+        if (parts.Count == 0)
+        {
+            return null;
+        }
+
+        return string.Join("\n\n", parts).Truncate(ProjectSummaryMaxLength);
+    }
+
     public async Task<GrantInterestConsoleDto> StartApplicationAsync(Guid interestId)
     {
         EnsureHostContext();
@@ -153,6 +190,19 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
             {
                 application.AssignTo(advisorId);
                 await _appRepo.UpdateAsync(application, autoSave: true);
+            }
+
+            // CNV-12: Firma proje fikrini, sorunu, hedef kitleyi ve faaliyetleri ilgi formunda
+            // ZATEN yazdı; sihirbaz proje özetini sıfırdan istiyordu. Özet o cevaplarla ön-doldurulur
+            // (firma sihirbazda düzenler). Özet doluysa — eski başvuruya bağlanan talep — DOKUNULMAZ.
+            if (application.ProjectSummary.IsNullOrWhiteSpace())
+            {
+                var summary = BuildSummaryFromInterest(interest);
+                if (summary != null)
+                {
+                    application.SetProjectSummary(application.ProjectTitle, summary, application.ProjectDurationMonths);
+                    await _appRepo.UpdateAsync(application, autoSave: true);
+                }
             }
 
             interest.MarkApplicationStarted(application.Id, CurrentUser.Id, Clock.Now);
