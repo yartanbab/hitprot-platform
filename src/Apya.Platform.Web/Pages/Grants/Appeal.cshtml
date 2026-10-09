@@ -145,4 +145,32 @@
             </div>
         </div>
     </div>
+
+    @* LIF-12 · İtiraz maddesi: başlık + kurumun ifadesi tek pencerede. Sınırlar sunucudakiyle
+       aynı (AddGrantAppealItemInput). *@
+    <div class="modal fade" id="ItemModal" tabindex="-1" aria-labelledby="ItemModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ItemModalTitle">@L["Grants:Appeal:AddItem"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Grants:Appeal:OpinionModal:Cancel"]"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="ItemTitle">@L["Grants:Appeal:AddItemPrompt"]</label>
+                        <input type="text" class="form-control" id="ItemTitle" maxlength="256" />
+                        <div class="invalid-feedback">@L["Grants:Appeal:ItemModal:TitleRequired"]</div>
+                    </div>
+                    <div>
+                        <label class="form-label" for="ItemInstitutionText">@L["Grants:Appeal:ItemModal:InstitutionText"]</label>
+                        <textarea class="form-control" id="ItemInstitutionText" rows="5" maxlength="2000"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Appeal:OpinionModal:Cancel"]</button>
+                    <button type="button" class="btn btn-primary" id="ItemSaveBtn">@L["Grants:Appeal:ItemModal:Save"]</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

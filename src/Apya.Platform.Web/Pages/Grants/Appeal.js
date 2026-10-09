@@ -87,13 +87,32 @@ $(function () {
         }).always(function () { $btn.prop('disabled', false); });
     });
 
+    // LIF-12: Madde tek satırlık istem kutusuyla ekleniyordu ve yalnız başlık gidiyordu;
+    // kurumun ifadesi (sunucu kabul ettiği hâlde) hiç girilemiyordu.
+    var itemModal = new bootstrap.Modal(document.getElementById('ItemModal'));
+
     $('#AddItemBtn').on('click', function () {
-        abp.message.prompt(l('Grants:Appeal:AddItemPrompt')).then(function (title) {
-            if (!title) { return; }
-            service.addItem({ applicationId: appId, title: title }).then(function (dto) {
-                model = dto; paint();
-            });
-        });
+        $('#ItemTitle').val('').removeClass('is-invalid');
+        $('#ItemInstitutionText').val('');
+        itemModal.show();
+    });
+
+    $('#ItemSaveBtn').on('click', function () {
+        var title = String($('#ItemTitle').val() || '').trim();
+        if (!title) {
+            $('#ItemTitle').addClass('is-invalid').trigger('focus');
+            return;
+        }
+
+        var $btn = $(this).prop('disabled', true);
+        service.addItem({
+            applicationId: appId,
+            title: title,
+            institutionText: String($('#ItemInstitutionText').val() || '').trim() || null
+        }).then(function (dto) {
+            model = dto; paint();
+            itemModal.hide();
+        }).always(function () { $btn.prop('disabled', false); });
     });
 
     // ---------- İtirazı gönder ----------
