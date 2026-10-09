@@ -288,8 +288,7 @@ public class GrantAppealPage_Tests : PlatformWebTestBase
     }
 
     /// <summary>
-    /// Betik tarafı: ardışık istem zinciri kalktı. Maddenin kendisi hâlâ tek bir istem kutusuyla
-    /// ekleniyor (tek alan — zincir değil); görüş için istem kutusu kalmadı.
+    /// Betik tarafı: istem kutusu hiç kalmadı — görüş de madde de kendi penceresinden giriliyor.
     /// </summary>
     [Fact]
     public void Gorus_Icin_Ardisik_Istem_Kutusu_Kalmadi()
@@ -297,9 +296,37 @@ public class GrantAppealPage_Tests : PlatformWebTestBase
         var script = System.IO.File.ReadAllText(System.IO.Path.Combine(WebProjectRoot(), "Pages", "Grants", "Appeal.js"));
 
         System.Text.RegularExpressions.Regex.Matches(script, @"abp\.message\.prompt\(").Count
-            .ShouldBe(1, "görüş girişi istem kutusuna geri dönmüş");
+            .ShouldBe(0, "görüş ya da madde girişi istem kutusuna geri dönmüş");
         script.ShouldNotContain("Grants:Appeal:OpinionDetailPrompt", Case.Sensitive);
         script.ShouldContain("#OpinionSaveBtn", Case.Sensitive);
+        script.ShouldContain("#ItemSaveBtn", Case.Sensitive);
+        // Kurumun ifadesi sunucuya gidiyor; eskiden yalnız başlık gönderiliyordu.
+        script.ShouldContain("institutionText: String($('#ItemInstitutionText').val()", Case.Sensitive);
+    }
+
+    /// <summary>
+    /// LIF-12'nin kalanı: madde tek satırlık istem kutusuyla ekleniyor, kurumun ifadesi hiç
+    /// girilemiyordu. Pencere iki alanı da sunucudaki sınırlarla taşır.
+    /// </summary>
+    [Fact]
+    public async Task Madde_Penceresi_Basligi_Ve_Kurum_Ifadesini_Birlikte_Sorar()
+    {
+        var (_, id) = await SetupAsync();
+
+        var doc = new HtmlAgilityPack.HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync($"/Grants/Appeal?id={id}"));
+
+        var modal = doc.DocumentNode.SelectSingleNode("//div[@id='ItemModal']");
+        modal.ShouldNotBeNull("madde penceresi sayfada yok");
+
+        modal!.SelectSingleNode(".//input[@id='ItemTitle']")!
+            .GetAttributeValue("maxlength", "").ShouldBe("256");
+        modal.SelectSingleNode(".//textarea[@id='ItemInstitutionText']")!
+            .GetAttributeValue("maxlength", "").ShouldBe("2000");
+        modal.SelectSingleNode(".//button[@id='ItemSaveBtn']").ShouldNotBeNull();
+
+        // Yerelleştirme anahtarı ham basılmamalı.
+        modal.InnerText.ShouldNotContain("Grants:Appeal:");
     }
 
     private static string WebProjectRoot()
