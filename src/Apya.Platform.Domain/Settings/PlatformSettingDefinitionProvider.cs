@@ -173,6 +173,12 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 description: L("Setting:Shell.KanbanView.Description"))
         );
 
+        // --- Bildirim özeti ---
+        // İşçinin kalıcı durumu; ekranda gösterilen bir ayar değil, bu yüzden adı/açıklaması yok.
+        context.Add(
+            new SettingDefinition(PlatformSettings.Notifications.LastDigestAt)
+                .WithProviders(GlobalSettingValueProvider.ProviderName));
+
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
         context.Add(
