@@ -53,7 +53,8 @@ public class NotificationDigest_Tests : PlatformWebTestBase
     private Task<int?> RunAsync(DateTime utcNow)
         => InUowAsync(() => GetRequiredService<NotificationDigestSender>().RunAsync(utcNow));
 
-    private Task<bool> AddNotificationAsync(Guid userId, string title, DateTime occurredAtUtc)
+    private Task<bool> AddNotificationAsync(
+        Guid userId, string title, DateTime occurredAtUtc, bool email = true, bool? digest = null)
         => InUowAsync(async () =>
         {
             var notification = new Notification(
@@ -67,12 +68,52 @@ public class NotificationDigest_Tests : PlatformWebTestBase
             if (!await preferences.AnyAsync(p => p.UserId == userId && p.Category == notification.Category))
             {
                 await preferences.InsertAsync(
-                    new NotificationPreference(Guid.NewGuid(), null, userId, notification.Category, inApp: true, email: true),
+                    new NotificationPreference(Guid.NewGuid(), null, userId, notification.Category, inApp: true, email, digest),
                     autoSave: true);
             }
 
             return true;
         });
+
+    private async Task<(Guid UserId, string Email)> NewUserAsync()
+    {
+        var email = $"ozet-{Guid.NewGuid():N}@ornek.test";
+        var userId = await InUowAsync(async () =>
+        {
+            var user = new IdentityUser(Guid.NewGuid(), "ozet" + Guid.NewGuid().ToString("N")[..8], email);
+            await GetRequiredService<IIdentityUserRepository>().InsertAsync(user, autoSave: true);
+            return user.Id;
+        });
+        return (userId, email);
+    }
+
+    private Task ResetStampAsync() => InUowAsync(async () =>
+    {
+        await GetRequiredService<ISettingManager>()
+            .SetGlobalAsync(PlatformSettings.Notifications.LastDigestAt, null);
+        return true;
+    });
+
+    /// <summary>
+    /// NTF-09: Özete kimin gireceğine ÖZET bayrağı karar verir. Yalnız anlık (kritik) e-postayı
+    /// açan kullanıcı özet almaz; yalnız özeti açan alır.
+    /// </summary>
+    [Fact]
+    public async Task Ozet_Yalniz_Ozet_Bayragi_Acik_Olana_Gider()
+    {
+        var onlyInstant = await NewUserAsync();
+        var onlyDigest = await NewUserAsync();
+        await ResetStampAsync();
+
+        var t0 = new DateTime(2031, 3, 5, 6, 0, 0, DateTimeKind.Utc);
+        await AddNotificationAsync(onlyInstant.UserId, "anlik-secenin-bildirimi", t0.AddHours(-2), email: true, digest: false);
+        await AddNotificationAsync(onlyDigest.UserId, "ozet-secenin-bildirimi", t0.AddHours(-2), email: false, digest: true);
+
+        (await RunAsync(t0)).ShouldNotBeNull();
+
+        DigestsTo(onlyInstant.Email).ShouldBeEmpty();
+        DigestsTo(onlyDigest.Email).Length.ShouldBe(1);
+    }
 
     [Fact]
     public async Task Ozet_Son_Gonderimden_Bu_Yanayi_Kapsar_Ve_Vakti_Gelmeden_Yinelenmez()

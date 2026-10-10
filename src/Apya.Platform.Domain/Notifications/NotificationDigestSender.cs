@@ -90,7 +90,7 @@ public class NotificationDigestSender : ITransientDependency
         // Tüm tenant'ları tek turda tara; gönderim doğru tenant bağlamında yapılır.
         using (_dataFilter.Disable())
         {
-            emailPreferences = await _preferenceRepository.GetListAsync(p => p.Email);
+            emailPreferences = await _preferenceRepository.GetListAsync(p => p.Digest);
             if (emailPreferences.Count == 0)
             {
                 return 0;

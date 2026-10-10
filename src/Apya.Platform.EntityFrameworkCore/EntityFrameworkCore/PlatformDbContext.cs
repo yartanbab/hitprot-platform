@@ -672,6 +672,28 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Kur köprüsü: donör PB'si boşsa proje tek defterlidir.
                 b.Property(x => x.DonorCurrency).HasMaxLength(3);
                 b.Property(x => x.FixedDonorRate).HasColumnType("decimal(18,6)");
+                // FIN-07: Açık hassasiyet yoktu — SQL Server varsayılanı (18,2), PostgreSQL ise
+                // sınırsız numeric kullanıyordu; aynı tutar iki veritabanında farklı saklanabiliyordu.
+                b.Property(x => x.TotalBudget).HasColumnType("decimal(18,2)");
+                b.Property(x => x.HourlyRate).HasColumnType("decimal(18,2)");
+
+                // CNV-07: Proje kodu KİRACI BAZINDA tekildir. Kod "oku + artır" ile üretiliyor;
+                // eşzamanlı iki oluşturma aynı kodu alabiliyordu ve bunu durduran bir şey yoktu.
+                // Silinmiş projenin kodu yeniden kullanılabilsin diye indeks yalnız canlı satırlarda.
+                b.HasIndex(x => new { x.TenantId, x.Code })
+                    .IsUnique()
+                    .HasDatabaseName("IX_AppProjects_TenantId_Code")
+                    .HasFilter(isSqlServer
+                        ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0"
+                        : "\"TenantId\" IS NOT NULL AND \"IsDeleted\" = false");
+                // Host (TenantId NULL) projeleri: PostgreSQL'de NULL'lar birbirinden farklı
+                // sayıldığı için yukarıdaki indeks orada tekilliği korumaz (bkz. Invoice).
+                b.HasIndex(x => x.Code)
+                    .IsUnique()
+                    .HasDatabaseName("IX_AppProjects_Code_Host")
+                    .HasFilter(isSqlServer
+                        ? "[TenantId] IS NULL AND [IsDeleted] = 0"
+                        : "\"TenantId\" IS NULL AND \"IsDeleted\" = false");
             });
 
             /* --- PROJE KATEGORİSİ TANIMLARI --- */
@@ -1105,6 +1127,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Message).IsRequired().HasMaxLength(GrantIdeaInvitationConsts.MaxMessageLength);
                 // Hatırlatma işi yalnız hatırlatmalı davetleri tarar; "son davet" şeridi en yeniyi okur.
                 b.HasIndex(x => new { x.RemindAfterDays, x.SentAt });
+                // DOM-04: Davetler çağrıya göre aranıyor. Yabancı anahtar bilerek YOK: çağrı host
+                // kataloğundadır, davet silinen çağrıdan sonra da kayıt olarak kalır.
+                b.HasIndex(x => x.GrantCallId);
             });
 
             builder.Entity<GrantIdeaInvitationRecipient>(b =>
@@ -1505,18 +1530,24 @@ namespace Apya.Platform.EntityFrameworkCore
                     .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.HasIndex(x => x.CustomerId); // APYA-142c
                 b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.InvoiceId).IsRequired();
+                // FIN-07 (bkz. Project): hassasiyet iki sağlayıcıda aynı olsun.
+                b.Property(x => x.TotalAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.TaxRate).HasColumnType("decimal(18,2)");
             });
 
             builder.Entity<InvoiceItem>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "InvoiceItems", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
+                b.Property(x => x.Quantity).HasColumnType("decimal(18,2)");
+                b.Property(x => x.UnitPrice).HasColumnType("decimal(18,2)");
             });
 
             builder.Entity<Payment>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "Payments", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
                 b.HasIndex(x => x.InvoiceId);
                 b.HasIndex(x => x.CashAccountId); // APYA-136
                 // ARCH-009: Payment idempotency — aynı (TenantId, InvoiceId, ReferenceNumber)
