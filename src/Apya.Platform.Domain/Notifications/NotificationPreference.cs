@@ -23,11 +23,14 @@ public class NotificationPreference : FullAuditedEntity<Guid>, IMultiTenant
     /// <summary>Kapalıysa bu kategoride bildirim hiç üretilmez.</summary>
     public bool InApp { get; set; }
 
-    /// <summary>
-    /// Açıksa bu kategoriden e-posta gönderilir: kritik olanlar anında,
-    /// geri kalanı günlük özette.
-    /// </summary>
+    /// <summary>Açıksa bu kategorinin KRİTİK bildirimleri anında e-postayla gönderilir.</summary>
     public bool Email { get; set; }
+
+    /// <summary>
+    /// Açıksa bu kategorinin kritik olmayan bildirimleri günlük özet e-postasına girer.
+    /// NTF-09: eskiden ikisi tek bayraktı; kritik uyarıyı isteyen özeti de almak zorundaydı.
+    /// </summary>
+    public bool Digest { get; set; }
 
     protected NotificationPreference() { }
 
@@ -37,7 +40,8 @@ public class NotificationPreference : FullAuditedEntity<Guid>, IMultiTenant
         Guid userId,
         NotificationCategory category,
         bool inApp,
-        bool email)
+        bool email,
+        bool? digest = null)
         : base(id)
     {
         TenantId = tenantId;
@@ -45,25 +49,28 @@ public class NotificationPreference : FullAuditedEntity<Guid>, IMultiTenant
         Category = category;
         InApp    = inApp;
         Email    = email;
+        // Belirtilmezse e-postayı izler: bayrak ayrılmadan önceki davranış.
+        Digest   = digest ?? email;
     }
 
-    public void Set(bool inApp, bool email)
+    public void Set(bool inApp, bool email, bool digest)
     {
         InApp = inApp;
         Email = email;
+        Digest = digest;
     }
 }
 
 /// <summary>
 /// Tercih kaydı olmayan kullanıcı için geçerli davranış.
 /// <para>
-/// E-posta varsayılan olarak KAPALI: açık gelseydi mevcut her kullanıcı, hiç
-/// istemeden günlük özet almaya başlardı. Kritik bildirimlerin anlık e-postası
-/// da bu bayrağa bağlı — kullanıcı hangi kategoriden e-posta istediğini kendi seçer.
+/// İki e-posta kanalı da varsayılan olarak KAPALI: açık gelseydi mevcut her kullanıcı, hiç
+/// istemeden e-posta almaya başlardı. Kullanıcı hangi kategoriden ne istediğini kendi seçer.
 /// </para>
 /// </summary>
 public static class NotificationPreferenceDefaults
 {
     public const bool InApp = true;
     public const bool Email = false;
+    public const bool Digest = false;
 }

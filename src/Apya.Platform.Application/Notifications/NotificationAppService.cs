@@ -205,7 +205,8 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
                 {
                     Category = category,
                     InApp    = pref?.InApp ?? NotificationPreferenceDefaults.InApp,
-                    Email    = pref?.Email ?? NotificationPreferenceDefaults.Email
+                    Email    = pref?.Email ?? NotificationPreferenceDefaults.Email,
+                    Digest   = pref?.Digest ?? NotificationPreferenceDefaults.Digest
                 };
             })
             .ToList();
@@ -221,11 +222,11 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
         {
             await _preferenceRepository.InsertAsync(new NotificationPreference(
                 GuidGenerator.Create(), CurrentTenant.Id, userId,
-                input.Category, input.InApp, input.Email));
+                input.Category, input.InApp, input.Email, input.Digest));
             return;
         }
 
-        existing.Set(input.InApp, input.Email);
+        existing.Set(input.InApp, input.Email, input.Digest ?? input.Email);
         await _preferenceRepository.UpdateAsync(existing);
     }
 

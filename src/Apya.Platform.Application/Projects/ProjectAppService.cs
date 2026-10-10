@@ -92,9 +92,9 @@ public class ProjectAppService :
 
         var overrideTenantId = CurrentTenant.Id == null ? input.TenantId : null;
 
-        // Proje kodu hedef kiracıda benzersiz olmalı. DB'de unique index YOK
-        // (PlatformDbContext'te Projects yalnız CustomerId ve TenantId+CategoryId indeksli),
-        // bu yüzden kontrol burada yapılır — formdaki canlı uyarı tek başına yeterli değil.
+        // Proje kodu hedef kiracıda benzersiz olmalı. Veritabanında tekil indeks de var (CNV-07);
+        // buradaki ön denetim kullanıcıya okunur bir hata vermek için — indeks yalnız yarışı kapatır,
+        // formdaki canlı uyarı tek başına yeterli değil.
         var targetTenantId = overrideTenantId ?? CurrentTenant.Id;
         if (await IsCodeTakenAsync(input.Code, targetTenantId))
         {
