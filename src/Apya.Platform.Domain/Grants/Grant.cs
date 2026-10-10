@@ -16,7 +16,18 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public string Description { get; set; } = null!;
 
-    public decimal? MaxAmount { get; set; } // Tutar alanı
+    private decimal? _maxAmount;
+
+    /// <summary>
+    /// Azami destek tutarı. 0 = "üst limit yok" (katalog sözleşmesi). Kolon NOT NULL olduğu için
+    /// <c>null</c> atanırsa 0'a çevrilir: tür nullable kaldığından null yazan her yol (ör. boş
+    /// gelen form alanı) kayıt anında veritabanı hatasıyla düşüyordu (DOM-02).
+    /// </summary>
+    public decimal? MaxAmount
+    {
+        get => _maxAmount;
+        set => _maxAmount = value ?? 0m;
+    }
 
     /// <summary>Asgari destek tutarı. null = alt limit yok (MaxAmount'un aksine kolon nullable).</summary>
     public decimal? MinAmount { get; set; }
