@@ -587,6 +587,14 @@ namespace Apya.Platform.Tasks
                 ShiftDates   = input.Include.ShiftDates,
             };
 
+            // Hedef proje çağırandan gelen bir kimliktir ve hiç doğrulanmıyordu: görev, bu
+            // kullanıcının göremediği (başka kiracının ya da var olmayan) bir projeye
+            // taşınabiliyor ya da oraya kopyalanabiliyordu.
+            foreach (var targetProjectId in (input.TargetProjectIds ?? new List<Guid>()).Distinct())
+            {
+                await EnsureProjectAccessAllowedAsync(targetProjectId);
+            }
+
             var createdIds = await _taskManager.TransferAsync(
                 task, input.TargetProjectIds, input.Mode, options, Clock.Now);
 
@@ -890,6 +898,7 @@ namespace Apya.Platform.Tasks
             // --- BAĞIMLILIKLARIN KAYDEDILMESI (APYA-30) ---
             if (input.PredecessorIds != null && input.PredecessorIds.Any())
             {
+                await EnsurePredecessorsVisibleAsync(input.PredecessorIds);
                 foreach (var predId in input.PredecessorIds)
                 {
                     await _dependencyRepository.InsertAsync(new TaskDependency(GuidGenerator.Create(), newTask.Id, predId));
@@ -993,6 +1002,17 @@ namespace Apya.Platform.Tasks
             await Repository.UpdateAsync(task);
 
             // --- BAĞIMLILIKLARIN GÜNCELLENMESI (APYA-30) ---
+            if (input.PredecessorIds != null && input.PredecessorIds.Any())
+            {
+                // Yalnız YENİ eklenenler doğrulanır: form var olan bağları olduğu gibi geri
+                // gönderir ve aralarında bu kullanıcının göremediği gizli bir görev olabilir —
+                // onu doğrulamaya sokmak, dokunmadığı bir bağ yüzünden kaydı düşürürdü.
+                var existing = (await _dependencyRepository.GetListAsync(x => x.TaskId == id))
+                    .Select(x => x.PredecessorTaskId)
+                    .ToHashSet();
+                await EnsurePredecessorsVisibleAsync(input.PredecessorIds.Where(x => !existing.Contains(x)));
+            }
+
             await _dependencyRepository.DeleteDirectAsync(x => x.TaskId == id);
             if (input.PredecessorIds != null && input.PredecessorIds.Any())
             {
@@ -1775,6 +1795,30 @@ namespace Apya.Platform.Tasks
         private async Task EnsureProjectAccessAllowedAsync(Guid projectId)
         {
             await _projectLookupRepository.GetAsync(projectId);
+        }
+
+        /// <summary>
+        /// Önkoşul görev çağırandan gelen bir kimliktir. Doğrulanmadığında başka kiracının ya da
+        /// kullanıcının göremediği gizli bir görevin kimliği bağımlılık satırına yazılabiliyordu;
+        /// satır okuma tarafında süzülse de o görev silinince bu görevin bağı da siliniyordu.
+        /// Görünmeyen kimlik "bulunamadı" sayılır.
+        /// </summary>
+        private async Task EnsurePredecessorsVisibleAsync(IEnumerable<Guid> predecessorIds)
+        {
+            var ids = predecessorIds.Distinct().ToList();
+            if (ids.Count == 0)
+            {
+                return;
+            }
+
+            var visible = await ApplyPrivacyFilterAsync(await Repository.GetQueryableAsync());
+            var found = await AsyncExecuter.ToListAsync(visible.Where(t => ids.Contains(t.Id)).Select(t => t.Id));
+
+            var missing = ids.Except(found).FirstOrDefault();
+            if (missing != default)
+            {
+                throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(TaskItem), missing);
+            }
         }
 
         [Authorize(PlatformPermissions.Tasks.Edit)]
