@@ -1,10 +1,14 @@
 using System;
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Tasks
 {
-    public class TaskComment : FullAuditedEntity<Guid>
+    public class TaskComment : FullAuditedEntity<Guid>, IMultiTenant
     {
+        /// <summary>Görevin kiracısı; görevden kopyalanır (bkz. kurucu).</summary>
+        public Guid? TenantId { get; set; }
+
         public Guid TaskId { get; set; } // Hangi göreve ait?
         public string Text { get; set; } = null!; // Yorum içeriği
 
@@ -20,9 +24,14 @@ namespace Apya.Platform.Tasks
         // Constructor
         public TaskComment() { }
 
-        public TaskComment(Guid taskId, string text, Guid? parentCommentId = null)
+        /// <param name="tenantId">
+        /// GÖREVİN kiracısı. Geçerli bağlamdan alınmaz: misafir paylaşım bağlantısı ve host
+        /// işlemleri kiracı bağlamı olmadan çalışır, yorum yine görevin kiracısına aittir.
+        /// </param>
+        public TaskComment(Guid taskId, Guid? tenantId, string text, Guid? parentCommentId = null)
         {
             TaskId = taskId;
+            TenantId = tenantId;
             ParentCommentId = parentCommentId;
             SetText(text);
         }

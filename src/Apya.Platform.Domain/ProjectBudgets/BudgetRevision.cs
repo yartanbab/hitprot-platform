@@ -78,7 +78,7 @@ public class BudgetRevision : FullAuditedAggregateRoot<Guid>, IMultiTenant
             throw new BusinessException(PlatformDomainErrorCodes.BudgetRevisionAmountInvalid)
                 .WithData("NewAmount", newAmount);
 
-        Lines.Add(new BudgetRevisionLine(id, Id, budgetLineId, previousAmount, newAmount));
+        Lines.Add(new BudgetRevisionLine(id, Id, TenantId, budgetLineId, previousAmount, newAmount));
     }
 
     internal void SealTotal(decimal totalApprovedAmount) => TotalApprovedAmount = totalApprovedAmount;
@@ -91,8 +91,11 @@ public class BudgetRevision : FullAuditedAggregateRoot<Guid>, IMultiTenant
 /// Revizyonun tek bir kalemdeki etkisi. Yalnız kendi revizyonu üzerinden okunur,
 /// bu yüzden düz <see cref="Entity{TKey}"/>.
 /// </summary>
-public class BudgetRevisionLine : Entity<Guid>
+public class BudgetRevisionLine : Entity<Guid>, IMultiTenant
 {
+    /// <summary>Revizyonun kiracısı; satır yalnız revizyonu üzerinden doğar ve onunkini taşır.</summary>
+    public Guid? TenantId { get; private set; }
+
     public Guid BudgetRevisionId { get; private set; }
 
     public Guid BudgetLineId { get; private set; }
@@ -108,10 +111,12 @@ public class BudgetRevisionLine : Entity<Guid>
     {
     }
 
-    internal BudgetRevisionLine(Guid id, Guid budgetRevisionId, Guid budgetLineId, decimal previousAmount, decimal newAmount)
+    internal BudgetRevisionLine(
+        Guid id, Guid budgetRevisionId, Guid? tenantId, Guid budgetLineId, decimal previousAmount, decimal newAmount)
         : base(id)
     {
         BudgetRevisionId = budgetRevisionId;
+        TenantId = tenantId;
         BudgetLineId = budgetLineId;
         PreviousAmount = previousAmount;
         NewAmount = newAmount;

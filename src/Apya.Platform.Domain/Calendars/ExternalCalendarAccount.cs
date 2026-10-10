@@ -1,13 +1,17 @@
 using System;
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Calendars;
 
 /// <summary>
 /// Kullanıcının Google, Outlook gibi dış takvim hesaplarını ve OAuth token’larını tutar.
 /// </summary>
-public class ExternalCalendarAccount : FullAuditedAggregateRoot<Guid>
+public class ExternalCalendarAccount : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
+    /// <summary>Hesabın sahibi kullanıcının kiracısı (OAuth token'ı kiracı sınırının içinde kalsın).</summary>
+    public Guid? TenantId { get; set; }
+
     public Guid UserId { get; set; }
     public CalendarProviderType Provider { get; set; }
     public string ExternalEmail { get; set; } = string.Empty;

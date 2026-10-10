@@ -301,7 +301,7 @@ public class TaskManager : DomainService
             var comments = await _commentRepository.GetListAsync(x => x.TaskId == source.Id && x.ParentCommentId == null);
             foreach (var c in comments)
             {
-                await _commentRepository.InsertAsync(new TaskComment(clone.Id, c.Text));
+                await _commentRepository.InsertAsync(new TaskComment(clone.Id, clone.TenantId, c.Text));
             }
         }
 
@@ -314,6 +314,7 @@ public class TaskManager : DomainService
                 await _attachmentRepository.InsertAsync(new TaskAttachment
                 {
                     TaskId = clone.Id,
+                    TenantId = clone.TenantId,
                     FileName = f.FileName,
                     StoredFileName = f.StoredFileName,
                     ContentType = f.ContentType,

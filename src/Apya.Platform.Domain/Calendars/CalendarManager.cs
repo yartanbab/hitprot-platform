@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 using Apya.Platform.Tasks;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
+using System.Linq.Expressions;
+using Volo.Abp.Data;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Calendars;
 
@@ -35,11 +38,26 @@ public class CalendarManager : DomainService
         _tokenProtector    = tokenProtector;
     }
 
+    /// <summary>
+    /// Hesaplar bu sınıfta hep KESİN anahtarla okunur (sahibi kullanıcı ya da eşleme kimliği).
+    /// Eşitleme görev olaylarından tetiklenir ve olay her zaman hesabın kiracı bağlamında
+    /// çalışmaz (arka plan işi, host işlemi); hesap kiracı sütunu aldıktan sonra süzgeç açık
+    /// kalsaydı o yollarda eşitleme sessizce dururdu. Kiracı sınırını anahtar zaten sağlıyor.
+    /// </summary>
+    private async Task<List<ExternalCalendarAccount>> ReadAccountsAsync(
+        Expression<Func<ExternalCalendarAccount, bool>> predicate)
+    {
+        using (LazyServiceProvider.LazyGetRequiredService<IDataFilter>().Disable<IMultiTenant>())
+        {
+            return await _accountRepository.GetListAsync(predicate);
+        }
+    }
+
     public async Task SyncTaskToExternalCalendarsAsync(TaskItem task)
     {
         if (task.AssigneeId == null) return;
 
-        var accounts = await _accountRepository.GetListAsync(x => x.UserId == task.AssigneeId && x.IsSyncEnabled);
+        var accounts = await ReadAccountsAsync(x => x.UserId == task.AssigneeId && x.IsSyncEnabled);
         foreach (var account in accounts)
         {
             // Faz 5: hesap başına kurallar. Kural dışı kalan görev sessizce atlanır —
@@ -141,7 +159,7 @@ public class CalendarManager : DomainService
         if (mappings.Count == 0) return;
 
         var accountIds = mappings.Select(m => m.ExternalCalendarAccountId).Distinct().ToList();
-        var accounts   = await _accountRepository.GetListAsync(a => accountIds.Contains(a.Id));
+        var accounts   = await ReadAccountsAsync(a => accountIds.Contains(a.Id));
         var accountMap = accounts.ToDictionary(a => a.Id);
 
         foreach (var mapping in mappings)
@@ -174,7 +192,7 @@ public class CalendarManager : DomainService
     /// </summary>
     public async Task<List<ExternalEventFetchResult>> GetExternalEventsAsync(Guid userId, DateTime start, DateTime end)
     {
-        var accounts = await _accountRepository.GetListAsync(x => x.UserId == userId && x.IsSyncEnabled);
+        var accounts = await ReadAccountsAsync(x => x.UserId == userId && x.IsSyncEnabled);
         var results = new List<ExternalEventFetchResult>();
 
         foreach (var account in accounts)

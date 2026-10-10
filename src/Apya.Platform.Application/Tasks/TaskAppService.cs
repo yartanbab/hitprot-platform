@@ -1114,10 +1114,11 @@ namespace Apya.Platform.Tasks
 
             await EnsureTaskAccessAllowedAsync(taskId);
 
-            var comment = await _commentRepository.InsertAsync(new TaskComment(taskId, text.Trim()), autoSave: true);
+            var task = await Repository.GetAsync(taskId);
+            var comment = await _commentRepository.InsertAsync(
+                new TaskComment(taskId, task.TenantId, text.Trim()), autoSave: true);
 
             // BİLDİRİM: Yorum yapıldı event'ini yayınla
-            var task = await Repository.GetAsync(taskId);
             await _localEventBus.PublishAsync(new TaskCommentAddedEto
             {
                 TaskId        = taskId,
@@ -1145,10 +1146,10 @@ namespace Apya.Platform.Tasks
             await EnsureTaskAccessAllowedAsync(parent.TaskId);
 
             var rootId = parent.ParentCommentId ?? parent.Id; // tek seviye: yanıtın yanıtı köke gider
-            var reply = await _commentRepository.InsertAsync(
-                new TaskComment(parent.TaskId, text.Trim(), rootId), autoSave: true);
-
             var task = await Repository.GetAsync(parent.TaskId);
+            var reply = await _commentRepository.InsertAsync(
+                new TaskComment(parent.TaskId, task.TenantId, text.Trim(), rootId), autoSave: true);
+
             await _localEventBus.PublishAsync(new TaskCommentAddedEto
             {
                 TaskId        = parent.TaskId,
@@ -1269,6 +1270,7 @@ namespace Apya.Platform.Tasks
             await _attachmentRepository.InsertAsync(new TaskAttachment
             {
                 TaskId = taskId,
+                TenantId = (await Repository.GetAsync(taskId)).TenantId,
                 FileName = fileName,
                 StoredFileName = storedFileName,
                 FileSize = fileSize,

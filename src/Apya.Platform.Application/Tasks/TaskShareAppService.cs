@@ -208,7 +208,7 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
             var task = await EnsureTaskInScopeAsync(link, taskId);
 
             var comment = await _commentRepository.InsertAsync(
-                new TaskComment(taskId, text.Trim()) { ShareLinkId = link.Id }, autoSave: true);
+                new TaskComment(taskId, task.TenantId, text.Trim()) { ShareLinkId = link.Id }, autoSave: true);
 
             link.RegisterAccess();
             await _linkRepository.UpdateAsync(link);
@@ -253,11 +253,13 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
         {
             var link = await ResolveLinkAsync(token);
             link.EnsureUploadAllowed();
-            await EnsureTaskInScopeAsync(link, taskId);
+            var task = await EnsureTaskInScopeAsync(link, taskId);
 
             await _attachmentRepository.InsertAsync(new TaskAttachment
             {
                 TaskId = taskId,
+                // Misafir kiracı bağlamı olmadan çalışır: kiracı görevden kopyalanır.
+                TenantId = task.TenantId,
                 FileName = fileName,
                 StoredFileName = storedFileName,
                 FileSize = fileSize,
