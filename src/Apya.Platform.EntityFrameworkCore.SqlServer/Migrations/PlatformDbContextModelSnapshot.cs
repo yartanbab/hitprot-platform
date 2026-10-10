@@ -7244,6 +7244,8 @@ namespace Apya.Platform.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GrantCallId");
+
                     b.HasIndex("RemindAfterDays", "SentAt");
 
                     b.ToTable("AppGrantIdeaInvitations", (string)null);
@@ -9021,6 +9023,9 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("DeletionTime");
 
+                    b.Property<bool>("Digest")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("Email")
                         .HasColumnType("bit");
 
@@ -9616,11 +9621,21 @@ namespace Apya.Platform.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AppProjects_Code_Host")
+                        .HasFilter("[TenantId] IS NULL AND [IsDeleted] = 0");
+
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("GrantId");
 
                     b.HasIndex("TenantId", "CategoryId");
+
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AppProjects_TenantId_Code")
+                        .HasFilter("[TenantId] IS NOT NULL AND [IsDeleted] = 0");
 
                     b.ToTable("AppProjects", (string)null);
                 });

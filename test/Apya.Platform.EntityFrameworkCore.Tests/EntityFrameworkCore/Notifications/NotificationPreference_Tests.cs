@@ -59,6 +59,54 @@ public class NotificationPreference_Tests : PlatformEntityFrameworkCoreTestBase
             .InApp.ShouldBeTrue();
     }
 
+    /// <summary>
+    /// NTF-09: Anlık (kritik) e-posta ile günlük özet ayrı bayraklardır — kritik uyarıyı isteyen
+    /// özeti de almak zorunda değildir.
+    /// </summary>
+    [Fact]
+    public async Task Anlik_Eposta_Ve_Gunluk_Ozet_Ayri_Ayri_Secilir()
+    {
+        await _appService.UpdatePreferenceAsync(new UpdateNotificationPreferenceInput
+        {
+            Category = NotificationCategory.Finance, InApp = true, Email = true, Digest = false
+        });
+
+        var finance = (await _appService.GetPreferencesAsync())
+            .Single(p => p.Category == NotificationCategory.Finance);
+        finance.Email.ShouldBeTrue();
+        finance.Digest.ShouldBeFalse();
+
+        await _appService.UpdatePreferenceAsync(new UpdateNotificationPreferenceInput
+        {
+            Category = NotificationCategory.Finance, InApp = true, Email = false, Digest = true
+        });
+
+        finance = (await _appService.GetPreferencesAsync())
+            .Single(p => p.Category == NotificationCategory.Finance);
+        finance.Email.ShouldBeFalse();
+        finance.Digest.ShouldBeTrue();
+    }
+
+    /// <summary>Alanı göndermeyen eski istemci: özet e-posta tercihini izler (eski davranış).</summary>
+    [Fact]
+    public async Task Ozet_Alani_Gonderilmezse_Eposta_Tercihini_Izler()
+    {
+        await _appService.UpdatePreferenceAsync(new UpdateNotificationPreferenceInput
+        {
+            Category = NotificationCategory.Documents, InApp = true, Email = true
+        });
+
+        (await _appService.GetPreferencesAsync())
+            .Single(p => p.Category == NotificationCategory.Documents)
+            .Digest.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Varsayilan_Olarak_Gunluk_Ozet_Kapalidir()
+    {
+        (await _appService.GetPreferencesAsync()).ShouldAllBe(p => !p.Digest);
+    }
+
     [Fact]
     public async Task Update_Twice_Should_Not_Create_A_Second_Row()
     {

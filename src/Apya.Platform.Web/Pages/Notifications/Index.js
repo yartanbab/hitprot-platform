@@ -290,7 +290,7 @@ $(function () {
             var $row = $('<tr></tr>').attr('data-category', p.category);
             $row.append($('<td></td>').text(l('Notification:Category:' + key)));
 
-            ['inApp', 'email'].forEach(function (channel) {
+            ['inApp', 'email', 'digest'].forEach(function (channel) {
                 var id = 'pref-' + channel + '-' + p.category;
                 var $cell = $('<td class="text-center"></td>');
                 $cell.append($('<input type="checkbox" class="form-check-input notif-pref-toggle">')
@@ -389,8 +389,9 @@ $(function () {
         var category = parseInt($row.attr('data-category'), 10);
         var inApp = $row.find('[data-channel="inApp"]').prop('checked');
         var email = $row.find('[data-channel="email"]').prop('checked');
+        var digest = $row.find('[data-channel="digest"]').prop('checked');
 
-        notificationService.updatePreference({ category: category, inApp: inApp, email: email })
+        notificationService.updatePreference({ category: category, inApp: inApp, email: email, digest: digest })
             .then(function () { abp.notify.success('Tercih kaydedildi.'); })
             .catch(function () {
                 // Sunucu reddettiyse kutuyu geri al — ekran gerçeği yansıtsın.
