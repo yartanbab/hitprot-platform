@@ -276,7 +276,7 @@ public partial class DemoWorldSeeder
                 // --- yorum ---
                 if (Chance(30))
                 {
-                    comments.Add(new TaskComment(root.Id, Pick(DemoWorldData.TaskComments)));
+                    comments.Add(new TaskComment(root.Id, root.TenantId, Pick(DemoWorldData.TaskComments)));
                 }
 
                 // --- izleyen / favori ---

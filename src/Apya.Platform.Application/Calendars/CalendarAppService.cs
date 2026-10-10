@@ -465,6 +465,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
         {
             var account = new ExternalCalendarAccount(GuidGenerator.Create(), CurrentUser.Id!.Value, input.Provider, input.ExternalEmail)
             {
+                TenantId        = CurrentTenant.Id,
                 AccessToken     = _tokenProtector.Protect(input.AccessToken),
                 RefreshToken    = _tokenProtector.Protect(input.RefreshToken),
                 TokenExpiryTime = input.TokenExpiryTime

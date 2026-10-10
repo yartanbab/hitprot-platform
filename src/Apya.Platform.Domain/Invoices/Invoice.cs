@@ -70,7 +70,7 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
             throw new BusinessException(PlatformDomainErrorCodes.InvoiceNotEditable)
                 .WithData("Status", Status);
 
-        Items.Add(new InvoiceItem(itemId, Id, description, quantity, unitPrice));
+        Items.Add(new InvoiceItem(itemId, Id, TenantId, description, quantity, unitPrice));
         RecalculateTotal();
     }
 
@@ -115,8 +115,11 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
         => TotalAmount = Items.Sum(x => x.TotalPrice) * (1 + TaxRate / 100);
 }
 
-public class InvoiceItem : Entity<Guid>
+public class InvoiceItem : Entity<Guid>, IMultiTenant
 {
+    /// <summary>Faturanın kiracısı; kalem yalnız faturası üzerinden doğar ve onunkini taşır.</summary>
+    public Guid? TenantId { get; private set; }
+
     public Guid InvoiceId { get; private set; }
     public string Description { get; private set; } = null!;
     public decimal Quantity { get; private set; }
@@ -127,10 +130,11 @@ public class InvoiceItem : Entity<Guid>
     /// <summary>EF Core için.</summary>
     protected InvoiceItem() { }
 
-    public InvoiceItem(Guid id, Guid invoiceId, string description, decimal quantity, decimal unitPrice)
+    public InvoiceItem(Guid id, Guid invoiceId, Guid? tenantId, string description, decimal quantity, decimal unitPrice)
         : base(id)
     {
         InvoiceId = invoiceId;
+        TenantId = tenantId;
         Description = description;
         Quantity = quantity;
         UnitPrice = unitPrice;

@@ -58,7 +58,7 @@ public class TaskAppService_Tenant_Tests : PlatformEntityFrameworkCoreTestBase
         var taskId = await CreateTaskInTenantAsync(tenantId);
         using (_currentTenant.Change(tenantId))
         {
-            var comment = new TaskComment(taskId, "Diğer tenant yorumu");
+            var comment = new TaskComment(taskId, tenantId, "Diğer tenant yorumu");
             await _commentRepository.InsertAsync(comment, autoSave: true);
             return (taskId, comment.Id);
         }

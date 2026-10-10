@@ -1,10 +1,17 @@
 using System;
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace Apya.Platform.Tasks
 {
-    public class TaskAttachment : CreationAuditedEntity<Guid>
+    public class TaskAttachment : CreationAuditedEntity<Guid>, IMultiTenant
     {
+        /// <summary>
+        /// GÖREVİN kiracısı. Her oluşturma noktası görevden kopyalar (geçerli bağlamdan değil:
+        /// misafir yüklemesi kiracı bağlamı olmadan çalışır). Sözleşme testi bunu kilitler.
+        /// </summary>
+        public Guid? TenantId { get; set; }
+
         public Guid TaskId { get; set; }
 
         public string FileName { get; set; } = null!;      // Kullanıcının gördüğü isim (örn: Rapor.pdf)
