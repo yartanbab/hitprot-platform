@@ -67,8 +67,6 @@ public class TaskPrivacyCoverage_Tests
             "Yalnız kapasite toplamı üretir; görev başlığı dönmez.",
         ["src/Apya.Platform.Application/Projects/ProjectMemberAppService.cs"] =
             "Yalnız kişi başına açık görev SAYISI ve atanan kimlikleri; görev başlığı dönmez.",
-        ["src/Apya.Platform.Application/Reports/ReportAppService.cs"] =
-            "Yalnız proje başına görev sayıları; görev başlığı dönmez.",
     };
 
     private static List<string> TaskRepositoryUsers() =>
