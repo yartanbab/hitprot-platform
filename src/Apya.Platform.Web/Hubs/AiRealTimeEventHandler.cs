@@ -30,7 +30,7 @@ public class AiRealTimeEventHandler : ILocalEventHandler<DraftBatchStatusChanged
             "AI realtime: DraftBatch {BatchId} → {Status} ({Approved}/{Total})",
             eventData.BatchId, eventData.NewStatus, eventData.ApprovedItems, eventData.TotalItems);
 
-        var targetGroup = $"DraftBatch_{eventData.BatchId}";
+        var targetGroup = AiHub.DraftBatchGroup(eventData.TenantId, eventData.BatchId);
 
         await _aiHubContext.Clients.Group(targetGroup).SendAsync(
             "ReceiveDraftBatchUpdate",

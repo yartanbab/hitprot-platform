@@ -12,13 +12,26 @@ public class AiHub : AbpHub
     /// </summary>
     public async Task SubscribeToBatchAsync(string batchId)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"DraftBatch_{batchId}");
+        if (System.Guid.TryParse(batchId, out var id))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, DraftBatchGroup(CurrentTenant.Id, id));
+        }
     }
 
     public async Task UnsubscribeFromBatchAsync(string batchId)
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"DraftBatch_{batchId}");
+        if (System.Guid.TryParse(batchId, out var id))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, DraftBatchGroup(CurrentTenant.Id, id));
+        }
     }
+
+    /// <summary>
+    /// Kanal adı kiracıyı da taşır. Yalnız toplu iş kimliğiyle kurulduğunda, kimliği bilen başka bir
+    /// kiracının kullanıcısı o işin durumunu ve hata iletisini dinleyebiliyordu.
+    /// </summary>
+    public static string DraftBatchGroup(System.Guid? tenantId, System.Guid batchId)
+        => $"DraftBatch_{(tenantId?.ToString() ?? "host")}_{batchId}";
 
     /// <summary>
     /// Client joins its tenant's evaluations group to receive live status updates.
