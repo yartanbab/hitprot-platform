@@ -134,6 +134,28 @@ public class Smoke_Tests : PlatformWebTestBase
             "istediği kiracının admin oturumunu açabilir");
     }
 
+    /// <summary>
+    /// Hedef kiracıda bürünülecek yönetici yoksa host ham anahtarı (ve 500 sayfasını) görüyordu:
+    /// uç düz Exception fırlatıyordu. Artık yerelleştirilen bir iş kuralı hatası.
+    /// </summary>
+    [Fact]
+    public void ImpersonateTenant_AdminUserNotFound_Is_A_Localized_Business_Error()
+    {
+        using (Volo.Abp.Localization.CultureHelper.Use("tr"))
+        {
+            var info = GetRequiredService<Volo.Abp.AspNetCore.ExceptionHandling.IExceptionToErrorInfoConverter>().Convert(
+                new Volo.Abp.BusinessException(ImpersonationController.AdminUserNotFoundCode), _ => { });
+
+            info.Message.ShouldNotBeNull();
+            info.Message.ShouldNotContain("Platform:Error", Case.Sensitive);
+            info.Message.ShouldContain("yönetici kullanıcı yok");
+        }
+
+        var source = System.IO.File.ReadAllText(System.IO.Path.Combine(
+            WebSourceFiles.RepoRoot(), "src", "Apya.Platform.Web", "Controllers", "ImpersonationController.cs"));
+        source.ShouldNotContain("throw new Exception(");
+    }
+
     [Fact]
     public void BackToImpersonator_StaysPermissionFree()
     {
