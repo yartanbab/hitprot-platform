@@ -781,7 +781,7 @@ public class IndexModel : AbpPageModel
     /// bütün gelirlerin listesine düşüyor ve aynı kaydı yeniden arıyordu.
     ///
     /// <para>Proje seçiliyse satır bu sayfanın kendi proje bağlamlı sekmesine gider. Sekme bu
-    /// kullanıcıya ya da bu şablona kapalıysa (ör. hibe şablonunda Faturalar yok) modül
+    /// kullanıcıya ya da bu şablona kapalıysa (ör. etkinlik şablonunda Fonlama yok) modül
     /// sayfasına düşülür — yasak ya da var olmayan sekmeye bağlantı basılmaz. Proje seçili
     /// değilken korunacak bağlam yoktur; davranış eskisi gibidir.</para>
     /// </summary>

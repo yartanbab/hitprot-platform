@@ -112,11 +112,14 @@ public static class FinanceContext
         PlatformPermissions.CashAccounts.Default
     };
 
+    // FUX-02: Faturalar HER şablonda. Eskiden yalnız kurumsal setteydi; fatura hibe ve etkinlik
+    // projesine de bağlanabildiği hâlde (Invoice.ProjectId) o projelerin faturasına giden tek yol
+    // Genel sekmesindeki "son işlemler" listesine tesadüfen düşmesiydi.
     private static readonly Dictionary<FinanceContextTemplate, FinanceTabDefinition[]> Sets = new()
     {
         [FinanceContextTemplate.Corporate] = new[] { Overview, BudgetLines, Tranches, Ledger, Invoices, Cash, Documents },
-        [FinanceContextTemplate.Grant] = new[] { Overview, BudgetLines, Tranches, Ledger, Donor, FxBridge, Cash, Documents },
-        [FinanceContextTemplate.Event] = new[] { Overview, BudgetLines, Ledger, Donations, Cash, Documents }
+        [FinanceContextTemplate.Grant] = new[] { Overview, BudgetLines, Tranches, Ledger, Invoices, Donor, FxBridge, Cash, Documents },
+        [FinanceContextTemplate.Event] = new[] { Overview, BudgetLines, Ledger, Invoices, Donations, Cash, Documents }
     };
 
     /// <summary>
