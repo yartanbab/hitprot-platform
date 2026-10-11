@@ -859,6 +859,14 @@ namespace Apya.Platform.Tasks
             await _taskManager.EnsureParentTaskIsValidAsync(input.ParentTaskId, input.ProjectId);
             await _taskManager.EnsureAssigneeIsValidAsync(input.AssigneeId);
 
+            // Proje çağırandan gelen bir kimliktir ve üst görev verilmediğinde hiç doğrulanmıyordu:
+            // görev başka kiracının (ya da var olmayan) bir projesine yazılabiliyor, host'un
+            // kiracılar üstü proje görünümünde o projenin görevi gibi sayılıyordu.
+            if (input.ProjectId.HasValue)
+            {
+                await EnsureProjectAccessAllowedAsync(input.ProjectId.Value);
+            }
+
             var newTask = new TaskItem(
                 GuidGenerator.Create(),
                 input.Title,
@@ -990,6 +998,12 @@ namespace Apya.Platform.Tasks
             // Proje değişimi (task.Update projeyi kapsamaz). Board kolonu proje-kapsamlı
             // olduğundan MoveToProject proje değişince kolonu temizler.
             var projectChanged = task.ProjectId != input.ProjectId;
+            // Yalnız DEĞİŞEN proje doğrulanır: kayıtlı (belki silinmiş) projesiyle gelen görev
+            // düzenlenebilir kalmalı; yeni hedef ise bu kullanıcının görebildiği bir proje olmalı.
+            if (projectChanged && input.ProjectId.HasValue)
+            {
+                await EnsureProjectAccessAllowedAsync(input.ProjectId.Value);
+            }
             task.MoveToProject(input.ProjectId);
 
             // Özel kolon seçimi yalnız proje DEĞİŞMEDİYSE uzlaştırılır — proje değiştiyse
@@ -2203,6 +2217,10 @@ namespace Apya.Platform.Tasks
         // --- ZAMAN TAKİBİ ---
         public async Task StartTimeTrackingAsync(Guid taskId)
         {
+            // Görev kimliği doğrulanmıyordu: kullanıcının göremediği gizli bir göreve (ya da
+            // başka kiracının görevine) süre yazılabiliyor, o süre proje maliyetine sayılıyordu.
+            await EnsureTaskAccessAllowedAsync(taskId);
+
             // Zaten açık bir log var mı? (Aynı anda sadece bir timer çalışabilir)
             var activeLog = await _timeLogRepository.FirstOrDefaultAsync(x => x.UserId == CurrentUser.Id && x.EndTime == null);
             if (activeLog != null) throw new Volo.Abp.UserFriendlyException("Zaten çalışan bir saymanınız var.");
@@ -2225,6 +2243,8 @@ namespace Apya.Platform.Tasks
 
         public async Task<List<TaskTimeLogDto>> GetTimeLogsAsync(Guid taskId)
         {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
             var logs = await _timeLogRepository.GetListAsync(x => x.TaskId == taskId);
             var userIds = logs.Select(x => x.UserId).Distinct().ToList();
             var users = await _identityRepository.GetListAsync(u => userIds.Contains(u.Id));

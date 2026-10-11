@@ -23,13 +23,16 @@ public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
     private readonly IRepository<DraftTaskItem, Guid> _draftTaskRepository;
     private readonly IRepository<ProjectAttachment, Guid> _projectAttachmentRepository;
     private readonly ILocalEventBus _localEventBus;
+    private readonly IRepository<Project, Guid> _projectRepository;
 
     public DraftTaskAppService(
         IBackgroundJobManager backgroundJobManager,
         IRepository<DraftTaskItem, Guid> draftTaskRepository,
         IRepository<ProjectAttachment, Guid> projectAttachmentRepository,
-        ILocalEventBus localEventBus)
+        ILocalEventBus localEventBus,
+        IRepository<Project, Guid> projectRepository)
     {
+        _projectRepository = projectRepository;
         _backgroundJobManager = backgroundJobManager;
         _draftTaskRepository = draftTaskRepository;
         _projectAttachmentRepository = projectAttachmentRepository;
@@ -51,6 +54,13 @@ public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
         var ext = System.IO.Path.GetExtension(input.FileName)?.ToLower();
         if (ext != ".pdf")
             throw new UserFriendlyException("Sadece PDF formatındaki dosyalar yapay zeka tarafından analiz edilebilir.");
+
+        // Proje içe aktarma formundan gelir; doğrulanmadığında hem proje eki hem de onaylanan
+        // taslaklardan doğan görevler başka kiracının projesini gösterebiliyordu.
+        if (input.ProjectId.HasValue)
+        {
+            await _projectRepository.GetAsync(input.ProjectId.Value);
+        }
 
         var batchId = GuidGenerator.Create();
 
