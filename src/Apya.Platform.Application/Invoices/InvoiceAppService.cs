@@ -106,6 +106,14 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
     [Authorize(PlatformPermissions.Invoices.Create)]
     public async Task<InvoiceDto> CreateAsync(CreateInvoiceDto input)
     {
+        // Proje ve cari çağırandan gelir ve hiç okunmuyordu: fatura başka kiracının projesini
+        // gösterebiliyor, cari tahakkuku da başka kiracının carisine yazılabiliyordu.
+        await _projectRepository.GetAsync(input.ProjectId);
+        if (input.CustomerId.HasValue)
+        {
+            await _customerRepository.GetAsync(input.CustomerId.Value);
+        }
+
         var items = input.Items
             .Select(i => new InvoiceItemDescriptor(i.Description, i.Quantity, i.UnitPrice))
             .ToList();
