@@ -855,6 +855,10 @@ namespace Apya.Platform.Tasks
         // --- 2. CREATE (Ekleme) - REV-001: Rich Domain Model ---
         public override async Task<TaskDto> CreateAsync(CreateUpdateTaskDto input)
         {
+            // Bu geçersiz kılma base.CreateAsync'i çağırmaz; CreatePolicyName (Tasks.Create) o yüzden
+            // hiç işlemiyordu ve görev yalnız görüntüleme izniyle (Tasks.Default) oluşturulabiliyordu.
+            await CheckCreatePolicyAsync();
+
             // PRJ-07: önce doğrula — üst görev var mı, projeyle çelişiyor mu.
             await _taskManager.EnsureParentTaskIsValidAsync(input.ParentTaskId, input.ProjectId);
             // Üst görev yalnız kiracıya göre doğrulanıyordu: kullanıcı göremediği gizli bir görevin
@@ -1077,6 +1081,9 @@ namespace Apya.Platform.Tasks
             await CheckDeletePolicyAsync();
 
             var task = await Repository.GetAsync(id);
+            // Sahiplik kuralı gizli görev kuralını kapsamıyordu: bürünme oturumu, göremediği gizli
+            // görevi kimliğiyle silebiliyordu.
+            await EnsureTaskPrivacyAllowedAsync(task);
 
             // Özel Yetki Kuralı: Görevi sadece oluşturan veya atanan kişi (ya da projelere yönetim yetkisi olan) silebilir.
             if (task.CreatorId != CurrentUser.Id && task.AssigneeId != CurrentUser.Id)
@@ -1354,6 +1361,8 @@ namespace Apya.Platform.Tasks
             }).ToList();
         }
 
+        // Görevi görebilmek yetmez: ek silmek ve özellik sekmesi açıp kapatmak görevi DEĞİŞTİRİR.
+        [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task DeleteAttachmentAsync(Guid attachmentId)
         {
             var attachment = await _attachmentRepository.GetAsync(attachmentId);
@@ -1371,6 +1380,7 @@ namespace Apya.Platform.Tasks
             return assignments.Select(x => x.FeatureCode).ToList();
         }
 
+        [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task AddFeatureAsync(Guid taskId, string featureCode)
         {
             await EnsureTaskAccessAllowedAsync(taskId);
@@ -1393,6 +1403,7 @@ namespace Apya.Platform.Tasks
                 autoSave: true);
         }
 
+        [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task RemoveFeatureAsync(Guid taskId, string featureCode)
         {
             await EnsureTaskAccessAllowedAsync(taskId);
