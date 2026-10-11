@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
@@ -9,6 +10,7 @@ using Shouldly;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.Security.Claims;
 using Xunit;
 
 namespace Apya.Platform.EntityFrameworkCore.Tasks;
@@ -29,9 +31,17 @@ public class TaskForeignKeyGuard_Tests : PlatformEntityFrameworkCoreTestBase
     private readonly IRepository<TaskDependency, Guid> _dependencyRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly ICurrentTenant _currentTenant;
+    private readonly ITaskTemplateAppService _templateAppService;
+    private readonly TaskTemplateManager _templateManager;
+    private readonly IRepository<TaskTimeLog, Guid> _timeLogRepository;
+    private readonly ICurrentPrincipalAccessor _principalAccessor;
 
     public TaskForeignKeyGuard_Tests()
     {
+        _templateAppService = GetRequiredService<ITaskTemplateAppService>();
+        _templateManager = GetRequiredService<TaskTemplateManager>();
+        _timeLogRepository = GetRequiredService<IRepository<TaskTimeLog, Guid>>();
+        _principalAccessor = GetRequiredService<ICurrentPrincipalAccessor>();
         _taskAppService = GetRequiredService<ITaskAppService>();
         _taskRepository = GetRequiredService<IRepository<TaskItem, Guid>>();
         _dependencyRepository = GetRequiredService<IRepository<TaskDependency, Guid>>();
@@ -127,4 +137,126 @@ public class TaskForeignKeyGuard_Tests : PlatformEntityFrameworkCoreTestBase
             (await _taskRepository.GetListAsync(t => t.ProjectId == foreignProject)).ShouldBeEmpty();
         }
     }
+
+    /* ═══════════════ Görevin projesi ═══════════════ */
+
+    private async Task AssertNoTaskOnAsync(Guid projectId)
+    {
+        using (_currentTenant.Change(OtherTenant))
+        {
+            (await _taskRepository.GetListAsync(t => t.ProjectId == projectId)).ShouldBeEmpty();
+        }
+        (await _taskRepository.GetListAsync(t => t.ProjectId == projectId)).ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Üst görev verilmediğinde proje kimliği hiç doğrulanmıyordu. Görev başka kiracının projesini
+    /// gösterince host'un kiracılar üstü proje görünümünde o projenin görevi gibi sayılıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Baska_kiracinin_projesine_gorev_acilamaz()
+    {
+        var foreignProject = await OtherTenantProjectAsync();
+
+        await Should.ThrowAsync<EntityNotFoundException>(() => _taskAppService.CreateAsync(new CreateUpdateTaskDto
+        {
+            Title = "Yabancı projeye görev",
+            StartDate = new DateTime(2026, 10, 12),
+            ProjectId = foreignProject
+        }));
+
+        await AssertNoTaskOnAsync(foreignProject);
+    }
+
+    [Fact]
+    public async Task Guncellemede_gorev_baska_kiracinin_projesine_alinamaz()
+    {
+        var taskId = await OwnTaskAsync("Projesi değişecek görev");
+        var foreignProject = await OtherTenantProjectAsync();
+
+        await Should.ThrowAsync<EntityNotFoundException>(() => _taskAppService.UpdateAsync(taskId, new CreateUpdateTaskDto
+        {
+            Title = "Projesi değişecek görev",
+            StartDate = new DateTime(2026, 10, 12),
+            ProjectId = foreignProject
+        }));
+
+        (await _taskRepository.GetAsync(taskId)).ProjectId.ShouldBeNull();
+    }
+
+    /// <summary>Karşı yön: kayıtlı projesi artık okunamayan görev düzenlenebilir kalır.</summary>
+    [Fact]
+    public async Task Projesi_degismeyen_gorev_guncellenir()
+    {
+        var orphanProject = Guid.NewGuid();
+        var task = new TaskItem(
+            Guid.NewGuid(), "Projesi silinmiş görev", projectId: orphanProject,
+            startDate: new DateTime(2026, 10, 12), tenantId: _currentTenant.Id, now: DateTime.Now);
+        await _taskRepository.InsertAsync(task, autoSave: true);
+
+        var dto = await _taskAppService.UpdateAsync(task.Id, new CreateUpdateTaskDto
+        {
+            Title = "Yeni başlık",
+            StartDate = new DateTime(2026, 10, 12),
+            ProjectId = orphanProject
+        });
+
+        dto.Title.ShouldBe("Yeni başlık");
+    }
+
+    [Fact]
+    public async Task Sablon_baska_kiracinin_projesine_uygulanamaz()
+    {
+        var sourceId = await OwnTaskAsync("Şablon kaynağı");
+        var template = await _templateManager.CreateFromTaskAsync(sourceId, "Yabancı proje şablonu");
+        var foreignProject = await OtherTenantProjectAsync();
+
+        await Should.ThrowAsync<EntityNotFoundException>(() => _templateAppService.ApplyAsync(
+            new ApplyTaskTemplateDto { TemplateId = template.Id, ProjectId = foreignProject }));
+
+        await AssertNoTaskOnAsync(foreignProject);
+    }
+
+    /* ═══════════════ Süre sayacı ═══════════════ */
+
+    /// <summary>
+    /// Sayaç görev kimliğini hiç doğrulamıyordu: süre başka kiracının görevine yazılabiliyor,
+    /// host'un proje maliyetine sayılıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Baska_kiracinin_gorevinde_sure_sayaci_baslatilamaz()
+    {
+        var foreignTask = await OtherTenantTaskAsync();
+
+        await Should.ThrowAsync<EntityNotFoundException>(() => _taskAppService.StartTimeTrackingAsync(foreignTask));
+        await Should.ThrowAsync<EntityNotFoundException>(() => _taskAppService.GetTimeLogsAsync(foreignTask));
+
+        (await _timeLogRepository.GetListAsync(l => l.TaskId == foreignTask)).ShouldBeEmpty();
+    }
+
+    /// <summary>Aynı kiracıda: göremediğiniz gizli göreve süre yazılamaz, kayıtları okunamaz.</summary>
+    [Fact]
+    public async Task Gorulemeyen_gizli_gorevde_sure_sayaci_baslatilamaz()
+    {
+        var secret = new TaskItem(
+            Guid.NewGuid(), "Gizli görev", isPrivate: true, tenantId: _currentTenant.Id, now: DateTime.Now);
+        await _taskRepository.InsertAsync(secret, autoSave: true);
+
+        // Gizli göreve hiçbir koşulda erişemeyen çağıran: bürünme oturumu.
+        using (_principalAccessor.Change(new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+        {
+            new(AbpClaimTypes.UserId, Guid.NewGuid().ToString()),
+            new(AbpClaimTypes.UserName, "gizliyi-goremeyen"),
+            new(AbpClaimTypes.ImpersonatorUserId, Guid.NewGuid().ToString())
+        }, "Test"))))
+        {
+            (await Should.ThrowAsync<Volo.Abp.BusinessException>(
+                () => _taskAppService.StartTimeTrackingAsync(secret.Id)))
+                .Code.ShouldBe(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
+            await Should.ThrowAsync<Volo.Abp.BusinessException>(() => _taskAppService.GetTimeLogsAsync(secret.Id));
+        }
+
+        (await _timeLogRepository.GetListAsync(l => l.TaskId == secret.Id)).ShouldBeEmpty();
+    }
+
 }

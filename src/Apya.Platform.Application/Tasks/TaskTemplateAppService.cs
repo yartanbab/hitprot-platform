@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Permissions;
+using Apya.Platform.Projects;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -19,12 +20,15 @@ public class TaskTemplateAppService : ApplicationService, ITaskTemplateAppServic
     private readonly IRepository<TaskTemplate, Guid> _templateRepository;
     private readonly TaskTemplateManager _templateManager;
     private readonly ITaskAppService _taskAppService;
+    private readonly IRepository<Project, Guid> _projectRepository;
 
     public TaskTemplateAppService(
         IRepository<TaskTemplate, Guid> templateRepository,
         TaskTemplateManager templateManager,
-        ITaskAppService taskAppService)
+        ITaskAppService taskAppService,
+        IRepository<Project, Guid> projectRepository)
     {
+        _projectRepository = projectRepository;
         _templateRepository = templateRepository;
         _templateManager = templateManager;
         _taskAppService = taskAppService;
@@ -93,6 +97,12 @@ public class TaskTemplateAppService : ApplicationService, ITaskTemplateAppServic
     [Authorize(PlatformPermissions.Tasks.Create)]
     public async Task<TaskDto> ApplyAsync(ApplyTaskTemplateDto input)
     {
+        // Proje çağırandan gelir; süzgeçli okuma başka kiracının projesini "bulunamadı" sayar.
+        if (input.ProjectId.HasValue)
+        {
+            await _projectRepository.GetAsync(input.ProjectId.Value);
+        }
+
         var task = await _templateManager.ApplyAsync(
             input.TemplateId,
             input.ProjectId,
