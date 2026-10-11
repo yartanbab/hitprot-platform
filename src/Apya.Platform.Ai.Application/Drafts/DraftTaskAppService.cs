@@ -107,6 +107,9 @@ public class DraftTaskAppService : ApplicationService, IDraftTaskAppService
     [Authorize(AiPermissions.Drafts.Approve)]
     public async Task ApproveDraftsAsync(ApproveDraftsInput input)
     {
+        // Onaylanan taslaklar GÖREV olur; taslak onay izni görev oluşturma yetkisi değildir.
+        await AuthorizationService.CheckAsync(Apya.Platform.Permissions.PlatformPermissions.Tasks.Create);
+
         var drafts = await _draftTaskRepository.GetListAsync(x => x.ImportBatchId == input.BatchId && !x.IsApproved);
         var selectedDrafts = drafts.Where(d => input.SelectedDraftIds.Contains(d.Id)).ToList();
 

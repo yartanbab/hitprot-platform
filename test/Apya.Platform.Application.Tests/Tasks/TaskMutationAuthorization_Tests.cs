@@ -31,6 +31,9 @@ public class TaskMutationAuthorization_Tests
     [InlineData(nameof(TaskAppService.AddProjectChecklistItemAsync), PlatformPermissions.Tasks.Edit)]
     [InlineData(nameof(TaskAppService.ToggleChecklistItemAsync), PlatformPermissions.Tasks.Edit)]
     [InlineData(nameof(TaskAppService.DeleteChecklistItemAsync), PlatformPermissions.Tasks.Edit)]
+    [InlineData(nameof(TaskAppService.DeleteAttachmentAsync), PlatformPermissions.Tasks.Edit)]
+    [InlineData(nameof(TaskAppService.AddFeatureAsync), PlatformPermissions.Tasks.Edit)]
+    [InlineData(nameof(TaskAppService.RemoveFeatureAsync), PlatformPermissions.Tasks.Edit)]
     public void Gorevi_degistiren_uc_metot_duzeyi_izin_ister(string method, string policy)
     {
         var info = typeof(TaskAppService).GetMethod(method, BindingFlags.Public | BindingFlags.Instance);

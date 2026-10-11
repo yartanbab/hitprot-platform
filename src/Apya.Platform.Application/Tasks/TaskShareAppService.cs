@@ -142,6 +142,8 @@ public class TaskShareAppService : PlatformAppService, ITaskShareAppService
     public virtual async Task RevokeAsync(Guid id)
     {
         var link = await _linkRepository.GetAsync(id);
+        // Oluşturma ucuyla aynı kapı: göremediğiniz (gizli) görevin bağlantısını iptal edemezsiniz.
+        await _taskAppService.GetAsync(link.TaskId);
         link.Revoke(Clock.Now);
         await _linkRepository.UpdateAsync(link);
     }
