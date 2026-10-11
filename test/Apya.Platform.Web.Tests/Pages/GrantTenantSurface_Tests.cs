@@ -167,6 +167,16 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
         (await service.GetOpenCallsAsync()).Single(r => r.GrantCallId == id).IsBookmarked.ShouldBeFalse();
     }
 
+    /// <summary>Çağrı kimliği katalogda aranmıyordu: uydurma kimlik için de takip satırı açılıyordu.</summary>
+    [Fact]
+    public async Task Katalogda_Olmayan_Cagri_Takibe_Alinamaz()
+    {
+        var service = GetRequiredService<IGrantRecommendationAppService>();
+
+        await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
+            () => service.ToggleBookmarkAsync(Guid.NewGuid()));
+    }
+
     /// <summary>13b · Not takibin parçasıdır: takipteyken yazılır, boş not siler, takip kalkınca not da gider.</summary>
     [Fact]
     public async Task Takip_Notu_Yazilir_Bos_Not_Siler()

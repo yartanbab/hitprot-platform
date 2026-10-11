@@ -78,6 +78,9 @@ public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorApp
 
     public async Task<int> CreateTasksFromSuggestionsAsync(CreateTasksFromAiInput input)
     {
+        // Bu uç görev YAZAR; sınıf izni (yapay zekâ özellikleri) görev oluşturma yetkisi değildir.
+        await AuthorizationService.CheckAsync(PlatformPermissions.Tasks.Create);
+
         var project = await _projectRepository.GetAsync(input.ProjectId);
         var approvedTasks = input.ApprovedTasks.Where(t => t.IsSelected).ToList();
 
@@ -95,7 +98,10 @@ public class AiTaskGeneratorAppService : ApplicationService, IAiTaskGeneratorApp
                 description: suggestion.Description,
                 startDate: Clock.Now,
                 dueDate: suggestion.SuggestedDueDate,
-                priority: (TaskPriority)suggestion.SuggestedPriority,
+                // Öneri istemciden döner; tanımsız değer öncelik sütununa düz yazılıyordu.
+                priority: Enum.IsDefined(typeof(TaskPriority), suggestion.SuggestedPriority)
+                    ? (TaskPriority)suggestion.SuggestedPriority
+                    : TaskPriority.Medium,
                 tenantId: CurrentTenant.Id
             );
             await _taskRepository.InsertAsync(taskItem, autoSave: true);
