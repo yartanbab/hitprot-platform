@@ -285,6 +285,28 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
         row.ConflictRule.ShouldBe(CalendarConflictRule.ApyaWins);
     }
 
+    /// <summary>
+    /// Başkasının takvim hesabı "yok" sayılır. Eskiden düz UnauthorizedAccessException
+    /// fırlıyordu: istemciye sunucu hatası dönüyordu ve hesabın var olduğu anlaşılıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Baskasinin_takvim_hesabi_bulunamadi_sayilir()
+    {
+        var foreign = new ExternalCalendarAccount(
+            Guid.NewGuid(), Guid.NewGuid(), CalendarProviderType.Google, "baskasi@apya.co");
+        await _accountRepository.InsertAsync(foreign, autoSave: true);
+
+        await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
+            () => _calendar.UpdateSyncRulesAsync(new UpdateCalendarSyncRulesInput { AccountId = foreign.Id }));
+        await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
+            () => _calendar.ForceSyncAsync(foreign.Id));
+        await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
+            () => _calendar.DisconnectAccountAsync(foreign.Id));
+
+        // Reddedilen istek hesaba dokunmadı.
+        (await _accountRepository.FindAsync(foreign.Id)).ShouldNotBeNull();
+    }
+
     [Fact]
     public async Task GetSyncSettingsAsync_kuralsiz_hesapta_yalniz_gorev_dondurur()
     {
