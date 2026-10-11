@@ -26,13 +26,16 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IIdentityUserRepository _userRepository;
     private readonly IDataFilter _dataFilter;
+    private readonly IRepository<Project, Guid> _projectRepository;
 
     public ProjectMemberAppService(
         IRepository<ProjectMember, Guid> memberRepository,
         IRepository<TaskItem, Guid> taskRepository,
         IIdentityUserRepository userRepository,
-        IDataFilter dataFilter)
+        IDataFilter dataFilter,
+        IRepository<Project, Guid> projectRepository)
     {
+        _projectRepository = projectRepository;
         _memberRepository = memberRepository;
         _taskRepository = taskRepository;
         _userRepository = userRepository;
@@ -97,9 +100,24 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
             .ToList();
     }
 
+    /// <summary>
+    /// Proje çağırandan gelen bir kimliktir ve hiç okunmuyordu. Kiracı yalnız kendi projesini
+    /// görür; host, okuma tarafıyla aynı kapsamda kiracı projelerini de açar. Görünmeyen ya da
+    /// var olmayan proje "bulunamadı" sayılır.
+    /// </summary>
+    private async Task EnsureProjectExistsAsync(Guid projectId)
+    {
+        using (CurrentTenant.Id == null ? _dataFilter.Disable<IMultiTenant>() : null)
+        {
+            await _projectRepository.GetAsync(projectId);
+        }
+    }
+
     [Authorize(PlatformPermissions.Projects.ManageTeam)]
     public async Task<ProjectMemberDto> AddAsync(AddProjectMemberDto input)
     {
+        await EnsureProjectExistsAsync(input.ProjectId);
+
         var user = await _userRepository.FindAsync(input.UserId)
             ?? throw new UserFriendlyException("Kullanıcı bulunamadı.");
 
@@ -174,6 +192,8 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
     [Authorize(PlatformPermissions.Projects.ManageTeam)]
     public async Task<ProjectMemberBackfillResultDto> BackfillFromAssigneesAsync(Guid projectId)
     {
+        await EnsureProjectExistsAsync(projectId);
+
         var (candidates, alreadyMember, previouslyRemoved) = await ResolveBackfillAsync(projectId);
 
         foreach (var userId in candidates)
