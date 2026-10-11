@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Tasks;
@@ -17,11 +18,14 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
 {
     private readonly IRepository<BoardColumn, Guid> _columnRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly IRepository<Project, Guid> _projectRepository;
 
     public BoardColumnAppService(
         IRepository<BoardColumn, Guid> columnRepository,
-        IRepository<TaskItem, Guid> taskRepository)
+        IRepository<TaskItem, Guid> taskRepository,
+        IRepository<Project, Guid> projectRepository)
     {
+        _projectRepository = projectRepository;
         _columnRepository = columnRepository;
         _taskRepository = taskRepository;
     }
@@ -31,6 +35,9 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         var cols = await _columnRepository.GetListAsync(c => c.ProjectId == projectId);
         if (cols.Count == 0)
         {
+            // Bu OKUMA ucu ilk çağrıda dört varsayılan sütun YAZAR; proje doğrulanmadığında
+            // herhangi bir kimlik için (başka kiracının projesi, uydurma kimlik) satır doğuyordu.
+            await EnsureProjectExistsAsync(projectId);
             cols = await SeedDefaultsAsync(projectId);
         }
         return cols.OrderBy(c => c.Order).Select(ToDto).ToList();
@@ -39,6 +46,8 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
     [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<BoardColumnDto> CreateAsync(CreateBoardColumnDto input)
     {
+        await EnsureProjectExistsAsync(input.ProjectId);
+
         var existing = await _columnRepository.GetListAsync(c => c.ProjectId == input.ProjectId);
         var nextOrder = existing.Count == 0 ? 0 : existing.Max(c => c.Order) + 1;
 
@@ -162,6 +171,19 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         }
 
         return ToDto(col);
+    }
+
+    /// <summary>
+    /// Proje çağırandan gelen bir kimliktir ve hiç okunmuyordu. Kiracı yalnız kendi projesini
+    /// görür; host, okuma tarafıyla aynı kapsamda kiracı projelerini de açar. Görünmeyen ya da
+    /// var olmayan proje "bulunamadı" sayılır.
+    /// </summary>
+    private async Task EnsureProjectExistsAsync(Guid projectId)
+    {
+        using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
+        {
+            await _projectRepository.GetAsync(projectId);
+        }
     }
 
     private async Task<List<BoardColumn>> SeedDefaultsAsync(Guid projectId)
