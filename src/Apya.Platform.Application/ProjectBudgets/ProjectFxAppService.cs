@@ -16,7 +16,7 @@ using Volo.Abp.MultiTenancy;
 namespace Apya.Platform.ProjectBudgets;
 
 /// <summary>
-/// Kur köprüsü. Okuma <c>Projects.ViewBudget</c>, yazma <c>Projects.Edit</c> —
+/// Kur köprüsü. Okuma <c>Projects.ViewBudget</c>, yazma <c>Projects.ManageBudget</c> ya da <c>Projects.Edit</c> —
 /// bütçe tarafıyla aynı izinler, yeni izin açılmadı.
 /// </summary>
 [Authorize(PlatformPermissions.Projects.ViewBudget)]
@@ -54,9 +54,9 @@ public class ProjectFxAppService : ApplicationService, IProjectFxAppService
         return MapPolicy(await _projectRepository.GetAsync(projectId));
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<ProjectFxPolicyDto> UpdatePolicyAsync(Guid projectId, UpdateProjectFxPolicyDto input)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         var project = await _projectRepository.GetAsync(projectId);
@@ -141,9 +141,9 @@ public class ProjectFxAppService : ApplicationService, IProjectFxAppService
         return dto;
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<FxRecalculationResultDto> RecalculateAsync(Guid projectId)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         var project = await _projectRepository.GetAsync(projectId);

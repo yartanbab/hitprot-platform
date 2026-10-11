@@ -86,6 +86,9 @@ public static class PlatformPermissions
         public const string Edit = Default + ".Edit";
         public const string Delete = Default + ".Delete";
         public const string ViewBudget = Default + ".ViewBudget"; // Bütçe alanını görme yetkisi (Özel)
+        // FIN-15: bütçe kalemi / fon dilimi / revizyon / kur köprüsü YAZMA. Proje düzenleme izni de
+        // aynı hakkı verir (BudgetWritePermission); bu izin, projeyi düzenletmeden bütçe yazdırmak için.
+        public const string ManageBudget = Default + ".ManageBudget";
         public const string ManageTeam = Default + ".ManageTeam"; // Projeye üye ekleme/çıkarma
         public const string UseAiFeatures = Default + ".UseAiFeatures";
         public const string ManageCategories = Default + ".ManageCategories"; // Proje kategorilerini tanımlama

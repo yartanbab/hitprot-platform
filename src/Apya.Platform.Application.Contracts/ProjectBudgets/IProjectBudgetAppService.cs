@@ -9,7 +9,7 @@ namespace Apya.Platform.ProjectBudgets;
 /// <summary>
 /// Proje bütçesi: kalem kırılımı, fonlama dilimleri, kesintiler ve revizyon geçmişi.
 ///
-/// Okuma <c>Projects.ViewBudget</c>, yazma <c>Projects.Edit</c> iznine bağlıdır —
+/// Okuma <c>Projects.ViewBudget</c>, yazma <c>Projects.ManageBudget</c> ya da <c>Projects.Edit</c> iznine bağlıdır —
 /// yeni izin açılmadı.
 /// </summary>
 public interface IProjectBudgetAppService : IApplicationService

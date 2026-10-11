@@ -341,6 +341,7 @@
     "Permission:Projects.Edit": "Edit Project",
     "Permission:Projects.Delete": "Delete Project",
     "Permission:Projects.ViewBudget": "View Budget",
+    "Permission:Projects.ManageBudget": "Manage Budget (lines, tranches, revisions)",
     "Permission:Projects.ManageTeam": "Manage Team",
     "Permission:Projects.UseAiFeatures": "Use AI Features",
     "Permission:Tasks": "Tasks",
