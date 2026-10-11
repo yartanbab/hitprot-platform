@@ -712,6 +712,15 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         if (input.SourceDeductionId.HasValue)
         {
             sourceDeduction = await _deductionRepository.GetAsync(input.SourceDeductionId.Value);
+
+            // Kesinti BU projenin bir dilimine ait olmalı. Denetlenmediğinde başka projenin
+            // kesintisi bu projenin revizyonuyla "bütçeye işlendi" diye kapanıyordu.
+            var trancheId = sourceDeduction.TrancheId;
+            if (!await _trancheRepository.AnyAsync(t => t.Id == trancheId && t.ProjectId == projectId))
+            {
+                throw new Volo.Abp.Domain.Entities.EntityNotFoundException(
+                    typeof(TrancheDeduction), input.SourceDeductionId.Value);
+            }
         }
 
         var revision = await _budgetManager.ApplyRevisionAsync(
