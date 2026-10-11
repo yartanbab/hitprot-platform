@@ -160,7 +160,8 @@ public class IcalSubscriptionAppService : ApplicationService, IIcalSubscriptionA
     private async Task<IcalSubscription> GetOwnedAsync(Guid id)
     {
         var entity = await _repository.GetAsync(id);
-        if (entity.UserId != CurrentUser.Id) throw new UnauthorizedAccessException();
+        // Başkasının aboneliği "yok" sayılır (düz istisna 500 dönüyordu).
+        if (entity.UserId != CurrentUser.Id) throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(IcalSubscription), id);
         return entity;
     }
 

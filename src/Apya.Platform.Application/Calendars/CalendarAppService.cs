@@ -335,7 +335,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     public async Task UpdateSyncRulesAsync(UpdateCalendarSyncRulesInput input)
     {
         var account = await _accountRepository.GetAsync(input.AccountId);
-        if (account.UserId != CurrentUser.Id) throw new UnauthorizedAccessException();
+        if (account.UserId != CurrentUser.Id) throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(ExternalCalendarAccount), account.Id);
 
         account.IsSyncEnabled  = input.IsSyncEnabled;
         account.ConflictRule   = input.ConflictRule;
@@ -477,7 +477,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     public async Task DisconnectAccountAsync(Guid id)
     {
         var account = await _accountRepository.GetAsync(id);
-        if (account.UserId != CurrentUser.Id) throw new UnauthorizedAccessException();
+        if (account.UserId != CurrentUser.Id) throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(ExternalCalendarAccount), account.Id);
         await _accountRepository.DeleteAsync(account);
     }
 
@@ -567,7 +567,7 @@ public class CalendarAppService : ApplicationService, ICalendarAppService
     public async Task ForceSyncAsync(Guid id)
     {
         var account = await _accountRepository.GetAsync(id);
-        if (account.UserId != CurrentUser.Id) throw new UnauthorizedAccessException();
+        if (account.UserId != CurrentUser.Id) throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(ExternalCalendarAccount), account.Id);
 
         var tasks = await _taskRepository.GetListAsync(t => t.AssigneeId == account.UserId && t.DueDate != null);
         foreach (var task in tasks)
