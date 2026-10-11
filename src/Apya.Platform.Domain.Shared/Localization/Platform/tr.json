@@ -208,6 +208,7 @@
         "Permission:Projects.Edit": "Proje Düzenleme",
         "Permission:Projects.Delete": "Proje Silme",
         "Permission:Projects.ViewBudget": "Bütçe Görüntüleme",
+        "Permission:Projects.ManageBudget": "Bütçe Düzenleme (kalem, fon dilimi, revizyon)",
         "Permission:Projects.ManageTeam": "Ekip Yönetimi",
         "Permission:Projects.UseAiFeatures": "AI Özelliklerini Kullanma",
         "Permission:Projects.ManageCategories": "Proje Kategorilerini Yönetme",

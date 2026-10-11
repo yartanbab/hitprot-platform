@@ -486,9 +486,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         return dto;
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<ProjectBudgetLineDto> CreateLineAsync(Guid projectId, CreateUpdateBudgetLineDto input)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         // Proje gerçekten var mı — olmayan projeye kalem açılmasın.
@@ -506,9 +506,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         return await MapLineAsync(line);
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<ProjectBudgetLineDto> UpdateLineAsync(Guid id, CreateUpdateBudgetLineDto input)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         var line = await _lineRepository.GetAsync(id);
@@ -525,9 +525,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         return await MapLineAsync(line);
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task DeleteLineAsync(Guid id)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         var line = await _lineRepository.GetAsync(id);
@@ -544,9 +544,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         return await MapTranchesAsync(tranches.OrderBy(x => x.SequenceNo).ToList());
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<FundingTrancheDto> CreateTrancheAsync(Guid projectId, CreateUpdateTrancheDto input)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         await _projectRepository.GetAsync(projectId);
@@ -558,9 +558,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         return await MapTrancheAsync(tranche);
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<FundingTrancheDto> UpdateTrancheAsync(Guid id, CreateUpdateTrancheDto input)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         var tranche = await _trancheRepository.GetAsync(id, includeDetails: true);
@@ -572,16 +572,16 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         return await MapTrancheAsync(tranche);
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task DeleteTrancheAsync(Guid id)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
         await _trancheRepository.DeleteAsync(id);
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<FundingTrancheDto> RegisterCollectionAsync(Guid trancheId, RegisterCollectionDto input)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         var tranche = await _trancheRepository.GetAsync(trancheId, includeDetails: true);
@@ -600,9 +600,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         return await MapTrancheAsync(tranche);
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<FundingTrancheDto> SetDisputedAsync(Guid trancheId, bool disputed)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         var tranche = await _trancheRepository.GetAsync(trancheId, includeDetails: true);
@@ -622,9 +622,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
 
     // ─────────────────────────── KESİNTİLER ───────────────────────────
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<FundingTrancheDto> AddDeductionAsync(Guid trancheId, CreateDeductionDto input)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         var tranche = await _trancheRepository.GetAsync(trancheId, includeDetails: true);
@@ -638,9 +638,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         return await MapTrancheAsync(tranche);
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<FundingTrancheDto> RemoveDeductionAsync(Guid deductionId)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         var deduction = await _deductionRepository.GetAsync(deductionId);
@@ -651,13 +651,17 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         return await MapTrancheAsync(tranche);
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
-    public Task<FundingTrancheDto> MarkDeductionUnfundedAsync(Guid deductionId)
-        => ChangeDeductionResolutionAsync(deductionId, d => d.MarkUnfunded());
+    public async Task<FundingTrancheDto> MarkDeductionUnfundedAsync(Guid deductionId)
+    {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
+        return await ChangeDeductionResolutionAsync(deductionId, d => d.MarkUnfunded());
+    }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
-    public Task<FundingTrancheDto> ReopenDeductionAsync(Guid deductionId)
-        => ChangeDeductionResolutionAsync(deductionId, d => d.Reopen());
+    public async Task<FundingTrancheDto> ReopenDeductionAsync(Guid deductionId)
+    {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
+        return await ChangeDeductionResolutionAsync(deductionId, d => d.Reopen());
+    }
 
     private async Task<FundingTrancheDto> ChangeDeductionResolutionAsync(Guid deductionId, Action<TrancheDeduction> change)
     {
@@ -699,9 +703,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
             .ToList();
     }
 
-    [Authorize(PlatformPermissions.Projects.Edit)]
     public async Task<BudgetRevisionDto> ApplyRevisionAsync(Guid projectId, ApplyBudgetRevisionDto input)
     {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
         using var scope = HostScope();
 
         TrancheDeduction? sourceDeduction = null;

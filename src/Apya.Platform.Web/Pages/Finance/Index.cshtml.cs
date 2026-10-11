@@ -135,6 +135,9 @@ public class IndexModel : AbpPageModel
     /// <summary>Bütçe yazma yetkisi — ekleme/düzenleme düğmeleri buna bakar.</summary>
     public bool CanEditBudget { get; private set; }
 
+    /// <summary>Proje düzenleme ekranına bağlantı basılır mı (o sayfa Projects.Edit ister).</summary>
+    public bool CanEditProject { get; private set; }
+
     /* ─── "Belgeler" sekmesi (5a/5b/5c) ────────────────────────────────
        Belge deposu KURULMAZ: veri mevcut doküman modülünün servislerinden
        gelir, ekran yalnız finans bağlamıyla süzülmüş özeti gösterir. */
@@ -274,7 +277,9 @@ public class IndexModel : AbpPageModel
         await LoadProjectContextAsync();
         await LoadTabsAsync();
 
-        CanEditBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit);
+        // FIN-15: bütçe yazma = ManageBudget ya da Projects.Edit (tek kaynak: BudgetWritePermission).
+        CanEditBudget = await Apya.Platform.ProjectBudgets.BudgetWritePermission.IsGrantedAsync(AuthorizationService);
+        CanEditProject = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit);
         CanCreateIncome = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Incomes.Create);
         CanCreateExpense = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Create);
 
@@ -1004,7 +1009,7 @@ public class IndexModel : AbpPageModel
             EligibilityFindings.Add(Unverified(
                 "Finance:Donor:Unverified:Dates:Title",
                 "Finance:Donor:Unverified:Dates:NoProjectDates",
-                CanEditBudget ? $"/Projects/Edit/{projectId}" : null));
+                CanEditProject ? $"/Projects/Edit/{projectId}" : null));
         }
         else if (IncomesLocked || ExpensesLocked)
         {

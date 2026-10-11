@@ -21,6 +21,7 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         projectsPermission.AddChild(PlatformPermissions.Projects.Edit, L("Permission:Projects.Edit"));
         projectsPermission.AddChild(PlatformPermissions.Projects.Delete, L("Permission:Projects.Delete"));
         projectsPermission.AddChild(PlatformPermissions.Projects.ViewBudget, L("Permission:Projects.ViewBudget"));
+        projectsPermission.AddChild(PlatformPermissions.Projects.ManageBudget, L("Permission:Projects.ManageBudget"));
         projectsPermission.AddChild(PlatformPermissions.Projects.ManageTeam, L("Permission:Projects.ManageTeam"));
         projectsPermission.AddChild(PlatformPermissions.Projects.UseAiFeatures, L("Permission:Projects.UseAiFeatures"));
         projectsPermission.AddChild(PlatformPermissions.Projects.ManageCategories, L("Permission:Projects.ManageCategories"));
