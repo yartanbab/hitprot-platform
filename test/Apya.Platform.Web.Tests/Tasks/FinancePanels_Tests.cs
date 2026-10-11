@@ -252,6 +252,36 @@ public class FinancePanels_Tests : PlatformWebTestBase
         list.Items.Where(r => r.Id != s.DocExpense).ShouldAllBe(r => r.Documents.Count == 0);
     }
 
+    /// <summary>
+    /// FIN-08 · Kur girilmediği için ₺ defterine yansımamış DÖVİZLİ kayıt "0,00 ₺" basmaz:
+    /// sıfır, gerçek sıfırla karışır ve dönem toplamını sessizce eksik gösterirdi. Satır "kur yok"
+    /// der, toplamın altında kaç kaydın dışarıda kaldığı yazılır. (Tohumdaki avro gider damgasız.)
+    /// </summary>
+    [Fact]
+    public async Task Finans_merkezi_kuru_girilmemis_dovizli_kaydi_sifir_gibi_gostermez()
+    {
+        var s = await SeedAsync("FIN-K");
+
+        var html = System.Net.WebUtility.HtmlDecode(
+            await GetResponseAsStringAsync($"/Finance?projectId={s.P2}&tab=gelir-gider"));
+
+        html.ShouldContain("data-book-missing=\"1\"");
+        html.ShouldContain("kur yok");
+        html.ShouldContain("1 kaydın kuru girilmemiş; ₺ toplamına dahil değil.");
+    }
+
+    /// <summary>Karşı yön: ₺ kayıtlar için işaret de uyarı da çıkmaz.</summary>
+    [Fact]
+    public async Task Finans_merkezi_tl_kayitlarda_kur_yok_isareti_basmaz()
+    {
+        var s = await SeedAsync("FIN-L");
+
+        var html = await GetResponseAsStringAsync($"/Finance?projectId={s.P1}&tab=gelir-gider");
+
+        html.ShouldNotContain("data-book-missing=\"1\"");
+        html.ShouldNotContain("data-book-missing-note");
+    }
+
     [Fact]
     public async Task Finans_merkezi_gelir_gider_satirinda_belge_baglantisi_basar()
     {

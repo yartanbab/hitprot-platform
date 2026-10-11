@@ -24,6 +24,8 @@
     var gelir = Model.LedgerRows.Where(r => r.IsInflow).Sum(r => r.BookAmount);
     var gider = Model.LedgerRows.Where(r => !r.IsInflow).Sum(r => r.BookAmount);
     var suzgecVar = !string.IsNullOrEmpty(Model.Kind) || Model.LineId.HasValue || Model.AccountId.HasValue;
+    // FIN-08: kur girilmediği için ₺ defterine yansımamış kayıtlar toplamda SIFIR sayılır.
+    var kurYok = Model.LedgerRows.Count(r => r.IsBookMissing);
 
     // Donör kolonu yalnız projenin donör defteri varsa basılır.
     var donorCurrency = Model.LedgerDonorCurrency;
@@ -187,7 +189,17 @@ else
                         <td class="text-end apya-numeric fw-semibold @(r.IsInflow ? "text-success" : "text-danger")">
                             @(r.IsInflow ? "+" : "−")@Money(r.Amount) @(r.Currency == "TRY" ? "₺" : r.Currency)
                         </td>
-                        <td class="text-end apya-numeric text-muted">@Money(r.BookAmount) ₺</td>
+                        <td class="text-end apya-numeric text-muted" data-book-missing="@(r.IsBookMissing ? "1" : null)">
+                            @if (r.IsBookMissing)
+                            {
+                                @* Sıfır BASMIYORUZ (donör kolonundaki aynı kural): 0, "bedava" demek olurdu. *@
+                                <span title="Bu tarih için kur girilmemiş; kayıt ₺ defterine yansımadı">kur yok</span>
+                            }
+                            else
+                            {
+                                @Money(r.BookAmount)<text> ₺</text>
+                            }
+                        </td>
                         @if (donorCurrency != null)
                         {
                             <td class="text-end apya-numeric @(r.DonorAmount == null ? "text-muted" : "")">
@@ -217,6 +229,13 @@ else
                     <td colspan="4">
                         DÖNEM TOPLAMI
                         <span class="fw-normal text-muted ms-2" style="font-size:12px">@Model.LedgerRows.Count kayıt</span>
+                        @if (kurYok > 0)
+                        {
+                            <div class="fw-normal text-warning" style="font-size:12px" data-book-missing-note>
+                                <i class="fa fa-triangle-exclamation me-1" aria-hidden="true"></i>
+                                @kurYok kaydın kuru girilmemiş; ₺ toplamına dahil değil.
+                            </div>
+                        }
                     </td>
                     @* İşlem PB kolonu TOPLANMAZ: farklı para birimlerindeki tutarları
                        alt alta toplamak anlamsız olurdu. Toplam ₺ defterde alınır. *@
