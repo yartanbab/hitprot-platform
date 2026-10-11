@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Grants\SeedData\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Volo.Abp.Emailing" Version="10.0.2" />
     <PackageReference Include="Volo.Abp.Identity.Domain" Version="10.0.2" />
     <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="10.0.2" />
