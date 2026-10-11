@@ -1088,6 +1088,14 @@ public class IndexModel : AbpPageModel
 
         /* Üç defter — kayıt oluşurken damgalandı, burada yalnız gösterilir. */
         public decimal BookAmount { get; set; }
+
+        /// <summary>
+        /// FIN-08 · ₺ defter damgası YOK: kayıt anında kur bulunamayınca defter tutarı 0 yazılır ve
+        /// hiçbir bayrakla işaretlenmez. Tutarı olan DÖVİZLİ bir kaydın ₺ karşılığı 0 olamaz; ekranda
+        /// "0,00 ₺" basmak onu gerçek sıfırla karıştırırdı.
+        /// </summary>
+        public bool IsBookMissing => BookAmount == 0 && Amount != 0 && Currency != "TRY";
+
         public decimal? DonorAmount { get; set; }
         public bool RateLocked { get; set; }
 
