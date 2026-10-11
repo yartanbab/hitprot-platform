@@ -63,7 +63,9 @@ public class ImpersonationController : AbpController
             var adminUser = await _userManager.FindByNameAsync("root") ?? await _userManager.FindByNameAsync("admin");
             if (adminUser == null)
             {
-                throw new Exception("Platform:Error:AdminUserNotFound");
+                // Düz Exception ham anahtarı 500 hata sayfasına basıyordu. BusinessException
+                // yerelleştirilir: host, hangi kiracıya neden girilemediğini okur.
+                throw new Volo.Abp.BusinessException(AdminUserNotFoundCode);
             }
 
             var principal = await _signInManager.CreateUserPrincipalAsync(adminUser);
@@ -92,6 +94,9 @@ public class ImpersonationController : AbpController
 
         return Redirect("~/");
     }
+
+    /// <summary>Hedef kiracıda "root" ya da "admin" adlı kullanıcı yok; bürünülecek hesap bulunamadı.</summary>
+    public const string AdminUserNotFoundCode = "Platform:Error:AdminUserNotFound";
 
     [HttpPost("BackToImpersonator")]
     public async Task<IActionResult> BackToImpersonatorAsync()
