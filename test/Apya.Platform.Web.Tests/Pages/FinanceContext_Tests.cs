@@ -45,13 +45,14 @@ public class FinanceContext_Tests
     }
 
     [Fact]
-    public void TabsFor_Grant_SwapsInvoicesForDonorReporting()
+    public void TabsFor_Grant_AddsDonorReportingAndKeepsInvoices()
     {
         var grant = Codes(FinanceContextTemplate.Grant);
 
         grant.ShouldContain(FinanceContext.TabDonor);
-        grant.ShouldNotContain(FinanceContext.TabInvoices);
         grant.ShouldContain(FinanceContext.TabTranches);
+        // FUX-02: hibe projesinin faturası gezinmede yetim kalmasın.
+        grant.ShouldContain(FinanceContext.TabInvoices);
     }
 
     /// <summary>
@@ -74,7 +75,7 @@ public class FinanceContext_Tests
 
         evt.ShouldContain(FinanceContext.TabDonations);
         evt.ShouldNotContain(FinanceContext.TabTranches);
-        evt.ShouldNotContain(FinanceContext.TabInvoices);
+        evt.ShouldContain(FinanceContext.TabInvoices);
     }
 
     [Fact]
@@ -87,6 +88,7 @@ public class FinanceContext_Tests
             codes.First().ShouldBe(FinanceContext.TabOverview);
             codes.ShouldContain(FinanceContext.TabBudgetLines);
             codes.ShouldContain(FinanceContext.TabLedger);
+            codes.ShouldContain(FinanceContext.TabInvoices);
             codes.ShouldContain(FinanceContext.TabCash);
             codes.ShouldContain(FinanceContext.TabDocuments);
         }
@@ -98,13 +100,13 @@ public class FinanceContext_Tests
     /// </summary>
     [Theory]
     [InlineData(FinanceContext.TabTranches, true)]
-    [InlineData(FinanceContext.TabInvoices, true)]
     [InlineData(FinanceContext.TabDonor, true)]
     [InlineData(FinanceContext.TabDonations, true)]
     [InlineData(FinanceContext.TabFxBridge, true)]
     [InlineData(FinanceContext.TabOverview, false)]
     [InlineData(FinanceContext.TabBudgetLines, false)]
     [InlineData(FinanceContext.TabLedger, false)]
+    [InlineData(FinanceContext.TabInvoices, false)]
     [InlineData(FinanceContext.TabCash, false)]
     [InlineData(FinanceContext.TabDocuments, false)]
     public void IsContextual_IsDerivedFromTabSets(string code, bool expected)
