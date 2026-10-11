@@ -857,6 +857,12 @@ namespace Apya.Platform.Tasks
         {
             // PRJ-07: önce doğrula — üst görev var mı, projeyle çelişiyor mu.
             await _taskManager.EnsureParentTaskIsValidAsync(input.ParentTaskId, input.ProjectId);
+            // Üst görev yalnız kiracıya göre doğrulanıyordu: kullanıcı göremediği gizli bir görevin
+            // altına alt görev açabiliyor, yanıtta o görevin başlığını geri alıyordu.
+            if (input.ParentTaskId.HasValue)
+            {
+                await EnsureTaskAccessAllowedAsync(input.ParentTaskId.Value);
+            }
             await _taskManager.EnsureAssigneeIsValidAsync(input.AssigneeId);
 
             // Proje çağırandan gelen bir kimliktir ve üst görev verilmediğinde hiç doğrulanmıyordu:

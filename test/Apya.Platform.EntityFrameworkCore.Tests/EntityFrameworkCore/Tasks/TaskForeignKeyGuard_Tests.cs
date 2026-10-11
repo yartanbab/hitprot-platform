@@ -259,4 +259,36 @@ public class TaskForeignKeyGuard_Tests : PlatformEntityFrameworkCoreTestBase
         (await _timeLogRepository.GetListAsync(l => l.TaskId == secret.Id)).ShouldBeEmpty();
     }
 
+
+    /* ═══════════════ Üst görev ═══════════════ */
+
+    /// <summary>
+    /// Üst görev yalnız kiracıya göre doğrulanıyordu. Göremediğiniz gizli bir görevin altına alt
+    /// görev açabiliyor, yanıttaki üst görev başlığından o görevin adını öğrenebiliyordunuz.
+    /// </summary>
+    [Fact]
+    public async Task Gorulemeyen_gizli_gorevin_altina_alt_gorev_acilamaz()
+    {
+        var secret = new TaskItem(
+            Guid.NewGuid(), "Fesih hazırlığı", isPrivate: true, tenantId: _currentTenant.Id, now: DateTime.Now);
+        await _taskRepository.InsertAsync(secret, autoSave: true);
+
+        using (_principalAccessor.Change(new ClaimsPrincipal(new ClaimsIdentity(new List<Claim>
+        {
+            new(AbpClaimTypes.UserId, Guid.NewGuid().ToString()),
+            new(AbpClaimTypes.UserName, "gizliyi-goremeyen"),
+            new(AbpClaimTypes.ImpersonatorUserId, Guid.NewGuid().ToString())
+        }, "Test"))))
+        {
+            (await Should.ThrowAsync<Volo.Abp.BusinessException>(() => _taskAppService.CreateAsync(new CreateUpdateTaskDto
+            {
+                Title = "Sızıntı alt görevi",
+                StartDate = new DateTime(2026, 10, 12),
+                ParentTaskId = secret.Id
+            }))).Code.ShouldBe(PlatformDomainErrorCodes.TaskViewImpersonationDenied);
+        }
+
+        (await _taskRepository.GetListAsync(t => t.ParentTaskId == secret.Id)).ShouldBeEmpty();
+    }
+
 }
