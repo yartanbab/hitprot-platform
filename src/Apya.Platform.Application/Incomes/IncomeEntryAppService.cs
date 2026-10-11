@@ -134,8 +134,23 @@ public class IncomeEntryAppService :
             ? (await _taskRepository.GetAsync(input.TaskId.Value)).ProjectId
             : input.ProjectId;
 
+    /// <summary>
+    /// Görevsiz kayıtta proje doğrudan istekten gelir ve hiç okunmuyordu: kayıt başka kiracının
+    /// (ya da var olmayan) bir projesini gösterebiliyor, host'un kiracılar üstü bütçe özetinde o
+    /// projenin toplamına sayılıyordu. Süzgeçli okuma yabancı projeyi "bulunamadı" sayar.
+    /// Güncellemede yalnız DEĞİŞEN proje doğrulanır — projesi silinmiş kayıt düzenlenebilir kalır.
+    /// </summary>
+    private async Task EnsureProjectIsValidAsync(CreateUpdateIncomeEntryDto input, Guid? currentProjectId)
+    {
+        if (!input.TaskId.HasValue && input.ProjectId.HasValue && input.ProjectId != currentProjectId)
+        {
+            await _projectRepository.GetAsync(input.ProjectId.Value);
+        }
+    }
+
     public override async Task<IncomeEntryDto> CreateAsync(CreateUpdateIncomeEntryDto input)
     {
+        await EnsureProjectIsValidAsync(input, currentProjectId: null);
         // Giderdeki ile aynı koşullu kural; bkz. ExpenseAppService.
         await _budgetManager.EnsureBudgetLineIsValidAsync(
             await ResolveEffectiveProjectIdAsync(input), input.BudgetLineId);
@@ -166,6 +181,7 @@ public class IncomeEntryAppService :
 
     public override async Task<IncomeEntryDto> UpdateAsync(Guid id, CreateUpdateIncomeEntryDto input)
     {
+        await EnsureProjectIsValidAsync(input, (await Repository.GetAsync(id)).ProjectId);
         var effectiveProjectId = await ResolveEffectiveProjectIdAsync(input);
 
         await _budgetManager.EnsureBudgetLineIsValidAsync(effectiveProjectId, input.BudgetLineId);

@@ -46,8 +46,22 @@ public class CashMovementAppService :
     public override async Task<CashMovementDto> UpdateAsync(Guid id, CreateUpdateCashMovementDto input)
     {
         await CheckUpdatePolicyAsync();
-        await EnsureManualAsync(id);
+        var movement = await EnsureManualAsync(id);
+        // Yalnız DEĞİŞEN kasa doğrulanır; kasası silinmiş hareket düzenlenebilir kalır.
+        if (movement.CashAccountId != input.CashAccountId)
+        {
+            await _cashAccountRepository.GetAsync(input.CashAccountId);
+        }
         return await base.UpdateAsync(id, input);
+    }
+
+    // Kasa çağırandan gelen bir kimliktir ve hiç okunmuyordu: hareket başka kiracının (ya da
+    // var olmayan) bir kasasına yazılabiliyordu. Süzgeçli okuma yabancı kasayı "bulunamadı" sayar.
+    public override async Task<CashMovementDto> CreateAsync(CreateUpdateCashMovementDto input)
+    {
+        await CheckCreatePolicyAsync();
+        await _cashAccountRepository.GetAsync(input.CashAccountId);
+        return await base.CreateAsync(input);
     }
 
     public override async Task DeleteAsync(Guid id)
@@ -57,13 +71,14 @@ public class CashMovementAppService :
         await base.DeleteAsync(id);
     }
 
-    private async Task EnsureManualAsync(Guid id)
+    private async Task<CashMovement> EnsureManualAsync(Guid id)
     {
         var movement = await Repository.GetAsync(id);
         if (movement.Source != CashMovementSource.Manual)
         {
             throw new BusinessException(PlatformDomainErrorCodes.CashMovementNotManual);
         }
+        return movement;
     }
 
     protected override async Task<IQueryable<CashMovement>> CreateFilteredQueryAsync(GetCashMovementsInput input)
