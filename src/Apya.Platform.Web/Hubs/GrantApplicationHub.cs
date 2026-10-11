@@ -71,18 +71,35 @@ public class GrantApplicationHub : AbpHub
     /// <summary>Kullanıcının o an hangi alanda olduğunu bildirir (imleç göstergesi).</summary>
     public async Task SetFocus(Guid applicationId, string? fieldKey)
     {
-        if (Presence.TryGetValue(Context.ConnectionId, out var entry))
+        if (!IsSubscribedTo(applicationId, out var entry))
         {
-            Presence[Context.ConnectionId] = entry with { FieldKey = fieldKey };
+            return;
         }
+
+        Presence[Context.ConnectionId] = entry with { FieldKey = fieldKey };
         await BroadcastPresenceAsync(applicationId);
     }
 
     /// <summary>Veri değişti — karşı taraf yeniden okusun.</summary>
     public async Task NotifyChanged(Guid applicationId, string? fieldKey)
     {
+        if (!IsSubscribedTo(applicationId, out _))
+        {
+            return;
+        }
+
         await Clients.OthersInGroup(GroupOf(applicationId))
             .SendAsync("ApplicationChanged", new { applicationId, fieldKey });
+    }
+
+    /// <summary>
+    /// Bu bağlantı o başvuruya <see cref="Subscribe"/> ile (yani okuma kapısından geçerek) girmiş mi?
+    /// Denetlenmediğinde oturumu olan herkes, kimliğini bildiği herhangi bir başvurunun açık
+    /// sihirbazına "veri değişti" ve odak sinyali gönderebiliyordu — başka kiracınınkine de.
+    /// </summary>
+    private bool IsSubscribedTo(Guid applicationId, out PresenceEntry entry)
+    {
+        return Presence.TryGetValue(Context.ConnectionId, out entry!) && entry.ApplicationId == applicationId;
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
