@@ -2,7 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus;
+using Volo.Abp.Identity;
 using Apya.Platform.Ai.Evaluations;
 using Apya.Platform.Notifications;
 
@@ -22,14 +24,17 @@ public class AiWorkflowTriggerHandler
     private readonly IAiWorkflowEvaluator _evaluator;
     private readonly NotificationManager _notificationManager;
     private readonly ILogger<AiWorkflowTriggerHandler> _logger;
+    private readonly IRepository<IdentityUser, Guid> _userRepository;
 
     public AiWorkflowTriggerHandler(
         IAiWorkflowRepository workflowRepository,
         IAiEvaluationRepository evaluationRepository,
         IAiWorkflowEvaluator evaluator,
         NotificationManager notificationManager,
-        ILogger<AiWorkflowTriggerHandler> logger)
+        ILogger<AiWorkflowTriggerHandler> logger,
+        IRepository<IdentityUser, Guid> userRepository)
     {
+        _userRepository = userRepository;
         _workflowRepository = workflowRepository;
         _evaluationRepository = evaluationRepository;
         _evaluator = evaluator;
@@ -64,7 +69,11 @@ public class AiWorkflowTriggerHandler
         switch (action.ActionType)
         {
             case WorkflowActionType.Notify:
-                if (Guid.TryParse(action.ActionPayload, out var userId) && userId != Guid.Empty)
+                // Hedef kullanıcı kuralda serbest metindir ve hiç doğrulanmıyordu: kimliği bilinen
+                // başka kiracının (ya da host'un) kullanıcısına bildirim düşürülebiliyordu. Kiracı
+                // süzgeci açık (işin kiracı bağlamı): yabancı kullanıcı "yok" sayılır.
+                if (Guid.TryParse(action.ActionPayload, out var userId) && userId != Guid.Empty
+                    && await _userRepository.FindAsync(userId, includeDetails: false) != null)
                 {
                     await _notificationManager.PublishAsync(
                         userId,
