@@ -102,6 +102,15 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
             return false;
         }
 
+        // Çağrı kimliği katalogda aranmıyordu: uydurma bir kimlik için de takip satırı açılıyordu.
+        using (_mtFilter.Disable())
+        {
+            if (!await _callRepo.AnyAsync(c => c.Id == grantCallId && c.TenantId == null))
+            {
+                throw new EntityNotFoundException(typeof(GrantCall), grantCallId);
+            }
+        }
+
         await _bookmarkRepo.InsertAsync(
             new GrantBookmark(GuidGenerator.Create(), CurrentTenant.Id, grantCallId), autoSave: true);
         return true;

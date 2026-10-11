@@ -185,7 +185,8 @@ public class ScheduledReportWorker : AsyncPeriodicBackgroundWorkerBase
                 await emailSender.SendAsync(
                     subscriber.Email,
                     "Zamanlanmış raporunuz hazır",
-                    $"Merhaba {subscriber.Name},<br/><br/>" +
+                    // Abone adı serbest metindir; kodlanmadan HTML gövdesine yazılıyordu.
+                    $"Merhaba {System.Net.WebUtility.HtmlEncode(subscriber.Name)},<br/><br/>" +
                     $"{now:dd.MM.yyyy} tarihli zamanlanmış rapor üretildi. " +
                     "Uygulamadaki <b>Teslimler &amp; arşiv</b> ekranından sürüm arşivine ulaşabilirsiniz.",
                     isBodyHtml: true);
