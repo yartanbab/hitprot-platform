@@ -265,16 +265,23 @@ public class ExternalShareAppService : ApplicationService, IExternalShareAppServ
         var typeIds = files.Where(f => f.DocumentTypeId.HasValue)
             .Select(f => f.DocumentTypeId!.Value).Distinct().ToList();
 
+        // Bu görünüm kiracı süzgeci KAPALI çalışır (girişsiz sayfa). Tür yalnız kimliğiyle
+        // aranıyordu: dosyaya başka kiracının tür kimliği yazılmışsa o türün adı ve "gizli alanı
+        // var mı" bilgisi dış sayfaya çıkıyordu. Tür ya sistem türüdür ya da bağlantının kiracısının.
+        var linkTenantId = link.TenantId;
         var typeQueryable = await _typeRepository.GetQueryableAsync();
         var typeNames = (await AsyncExecuter.ToListAsync(
-                typeQueryable.AsNoTracking().Where(t => typeIds.Contains(t.Id)).Select(t => new { t.Id, t.Name })))
+                typeQueryable.AsNoTracking()
+                    .Where(t => typeIds.Contains(t.Id) && (t.TenantId == null || t.TenantId == linkTenantId))
+                    .Select(t => new { t.Id, t.Name })))
             .ToDictionary(k => k.Id, v => v.Name);
+        var visibleTypeIds = typeNames.Keys.ToList();
 
         // Gizli alan taşıyan tipler dış görünümde maskeli işaretlenir.
         var fieldQueryable = await _fieldRepository.GetQueryableAsync();
         var confidentialTypeIds = (await AsyncExecuter.ToListAsync(
                 fieldQueryable.AsNoTracking()
-                    .Where(f => typeIds.Contains(f.DocumentTypeId) && f.Visibility == DocumentFieldVisibility.Confidential)
+                    .Where(f => visibleTypeIds.Contains(f.DocumentTypeId) && f.Visibility == DocumentFieldVisibility.Confidential)
                     .Select(f => f.DocumentTypeId)))
             .ToHashSet();
 

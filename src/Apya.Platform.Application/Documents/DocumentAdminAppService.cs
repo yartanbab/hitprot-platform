@@ -235,7 +235,12 @@ public class DocumentAdminAppService : ApplicationService, IDocumentAdminAppServ
                     break;
 
                 case DocumentRuleActionType.SetDocumentType when Guid.TryParse(change.Payload, out var typeId):
-                    file.SetClassification(typeId, file.ProjectId, file.WorkStepId);
+                    // Kural yükü serbest metindir: kiracının göremediği (başka kiracının) türü
+                    // dosyaya yazmaz, eylemi atlar.
+                    if (await IsTypeVisibleAsync(typeId))
+                    {
+                        file.SetClassification(typeId, file.ProjectId, file.WorkStepId);
+                    }
                     break;
 
                 case DocumentRuleActionType.SetWorkStep when Guid.TryParse(change.Payload, out var stepId):
@@ -659,6 +664,16 @@ public class DocumentAdminAppService : ApplicationService, IDocumentAdminAppServ
         {
             throw new BusinessException(PlatformDomainErrorCodes.DocumentTypeIsSystem)
                 .WithData("Name", type.Name);
+        }
+    }
+
+    private async Task<bool> IsTypeVisibleAsync(Guid id)
+    {
+        var tenantId = CurrentTenant.Id;
+
+        using (_mtFilter.Disable())
+        {
+            return await _typeRepository.AnyAsync(t => t.Id == id && (t.TenantId == null || t.TenantId == tenantId));
         }
     }
 
