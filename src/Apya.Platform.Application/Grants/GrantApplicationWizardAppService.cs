@@ -120,8 +120,8 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             throw new BusinessException(PlatformDomainErrorCodes.GrantBudgetCostItemNotEligible);
         }
 
-        var line = await _budgetRepo.FirstOrDefaultAsync(
-            l => l.GrantApplicationId == application.Id && l.Kind == input.Kind);
+        var line = await InHostScopeAsync(() => _budgetRepo.FirstOrDefaultAsync(
+            l => l.GrantApplicationId == application.Id && l.Kind == input.Kind));
 
         if (line == null)
         {
@@ -145,12 +145,29 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
     public async Task<GrantApplicationWizardDto> SaveSummaryAsync(SaveWizardSummaryInput input)
     {
         var application = await GetEditableApplicationAsync(input.ApplicationId);
-        await EnsureNotLockedByOtherAsync(application.Id, FieldSummaryTitle);
+        // Üç alan ayrı kilitlenir ama tek istekle yazılır. Yalnız başlığın kilidine bakılıyordu:
+        // başlığı yazan kişi, o sırada başkasının kilidi altındaki özet metnini ya da süreyi eski
+        // değerle ezebiliyordu. Bir alan ancak DEĞİŞİYORSA kilidi denetlenir — dokunulmayan alan
+        // başkasında kilitli diye kendi alanınızı kaydetmeniz engellenmez.
+        if (!SameText(input.ProjectTitle, application.ProjectTitle))
+        {
+            await EnsureNotLockedByOtherAsync(application.Id, FieldSummaryTitle);
+        }
+        if (!SameText(input.ProjectSummary, application.ProjectSummary))
+        {
+            await EnsureNotLockedByOtherAsync(application.Id, FieldSummaryBody);
+        }
+        if (input.ProjectDurationMonths != application.ProjectDurationMonths)
+        {
+            await EnsureNotLockedByOtherAsync(application.Id, FieldSummaryDuration);
+        }
 
         application.SetProjectSummary(input.ProjectTitle, input.ProjectSummary, input.ProjectDurationMonths);
         await _appRepo.UpdateAsync(application, autoSave: true);
 
         await TouchLockAsync(application.Id, FieldSummaryTitle);
+        await TouchLockAsync(application.Id, FieldSummaryBody);
+        await TouchLockAsync(application.Id, FieldSummaryDuration);
         return await BuildAsync(application);
     }
 
@@ -180,8 +197,8 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             application.TenantId, application.Id, GrantActivityKind.HandedOver,
             L[$"Grants:Party:{target}"].Value);
 
-        var mine = await _lockRepo.GetListAsync(
-            l => l.GrantApplicationId == application.Id && l.OwnerUserId == ViewerUserId);
+        var mine = await InHostScopeAsync(() => _lockRepo.GetListAsync(
+            l => l.GrantApplicationId == application.Id && l.OwnerUserId == ViewerUserId));
         if (mine.Count > 0)
         {
             await _lockRepo.DeleteManyAsync(mine, autoSave: true);
@@ -208,7 +225,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         await _appRepo.UpdateAsync(application, autoSave: true);
 
         // Gönderilen başvuruda kilit tutmanın anlamı yok.
-        var locks = await _lockRepo.GetListAsync(l => l.GrantApplicationId == application.Id);
+        var locks = await InHostScopeAsync(() => _lockRepo.GetListAsync(l => l.GrantApplicationId == application.Id));
         if (locks.Count > 0)
         {
             await _lockRepo.DeleteManyAsync(locks, autoSave: true);
@@ -288,7 +305,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
     /// <summary>Zorunlu olup onaylanmamış evrak sayısı — gönderim bildiriminin gövdesine girer.</summary>
     private async Task<int> CountMissingRequiredDocumentsAsync(Guid applicationId)
     {
-        var documents = await _docRepo.GetListAsync(d => d.GrantApplicationId == applicationId);
+        var documents = await InHostScopeAsync(() => _docRepo.GetListAsync(d => d.GrantApplicationId == applicationId));
         return documents.Count(d =>
             d.Obligation == GrantDocumentObligation.Zorunlu &&
             d.Status != GrantDocumentStatus.Onaylandi);
@@ -301,8 +318,8 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         var application = await GetEditableApplicationAsync(input.ApplicationId);
         var now = Clock.Now;
 
-        var existing = await _lockRepo.FirstOrDefaultAsync(
-            l => l.GrantApplicationId == application.Id && l.FieldKey == input.FieldKey);
+        var existing = await InHostScopeAsync(() => _lockRepo.FirstOrDefaultAsync(
+            l => l.GrantApplicationId == application.Id && l.FieldKey == input.FieldKey));
 
         if (existing != null)
         {
@@ -334,10 +351,10 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task ReleaseLockAsync(GrantFieldLockInput input)
     {
-        var existing = await _lockRepo.FirstOrDefaultAsync(
+        var existing = await InHostScopeAsync(() => _lockRepo.FirstOrDefaultAsync(
             l => l.GrantApplicationId == input.ApplicationId
                  && l.FieldKey == input.FieldKey
-                 && l.OwnerUserId == ViewerUserId);
+                 && l.OwnerUserId == ViewerUserId));
         if (existing != null)
         {
             await _lockRepo.DeleteAsync(existing, autoSave: true);
@@ -351,8 +368,8 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task RequestTakeoverAsync(GrantFieldLockInput input)
     {
-        var existing = await _lockRepo.FirstOrDefaultAsync(
-            l => l.GrantApplicationId == input.ApplicationId && l.FieldKey == input.FieldKey);
+        var existing = await InHostScopeAsync(() => _lockRepo.FirstOrDefaultAsync(
+            l => l.GrantApplicationId == input.ApplicationId && l.FieldKey == input.FieldKey));
         if (existing == null || existing.OwnerUserId == ViewerUserId)
         {
             return;
@@ -364,8 +381,8 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task<GrantFieldLockResultDto> ApproveTakeoverAsync(GrantFieldLockInput input)
     {
-        var existing = await _lockRepo.FirstOrDefaultAsync(
-            l => l.GrantApplicationId == input.ApplicationId && l.FieldKey == input.FieldKey);
+        var existing = await InHostScopeAsync(() => _lockRepo.FirstOrDefaultAsync(
+            l => l.GrantApplicationId == input.ApplicationId && l.FieldKey == input.FieldKey));
 
         if (existing == null || existing.OwnerUserId != ViewerUserId
             || existing.TakeoverRequestedByUserId == null)
@@ -405,6 +422,22 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
     }
 
     // ------------------------------------------------------------------ yardımcılar
+
+    /// <summary>
+    /// Host (danışman) kiracının başvurusunda çalışır. Başvurunun kendisi süzgeç kapatılarak
+    /// okunuyordu ama alt satırları (alan kilitleri, bütçe satırları, mesajlar) kiracıya aittir ve
+    /// süzgeç açıkken host'a HİÇ görünmüyordu: danışman firmanın kilidini görmeden üstüne yazıyor,
+    /// bütçeyi boş görüyor, var olan satırı bulamayıp ikincisini eklemeye çalışıyordu. Alt
+    /// sorguların hepsi başvuru kimliğiyle sınırlıdır; kapsam yalnız host bağlamında ve yalnız o
+    /// okuma süresince açılır (bildirim dağıtıcısı gibi süzgece güvenen çağrılar dışarıda kalır).
+    /// </summary>
+    private async Task<T> InHostScopeAsync<T>(Func<Task<T>> read)
+    {
+        using (CurrentTenant.Id == null ? _mtFilter.Disable() : null)
+        {
+            return await read();
+        }
+    }
 
     private async Task<GrantApplication> GetApplicationAsync(Guid id)
     {
@@ -446,10 +479,12 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         }
     }
 
+    private static bool SameText(string? a, string? b) => (a ?? string.Empty).Trim() == (b ?? string.Empty).Trim();
+
     private async Task EnsureNotLockedByOtherAsync(Guid applicationId, string fieldKey)
     {
-        var existing = await _lockRepo.FirstOrDefaultAsync(
-            l => l.GrantApplicationId == applicationId && l.FieldKey == fieldKey);
+        var existing = await InHostScopeAsync(() => _lockRepo.FirstOrDefaultAsync(
+            l => l.GrantApplicationId == applicationId && l.FieldKey == fieldKey));
 
         if (existing != null && existing.OwnerUserId != ViewerUserId && !existing.IsStale(Clock.Now))
         {
@@ -460,10 +495,10 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     private async Task TouchLockAsync(Guid applicationId, string fieldKey)
     {
-        var existing = await _lockRepo.FirstOrDefaultAsync(
+        var existing = await InHostScopeAsync(() => _lockRepo.FirstOrDefaultAsync(
             l => l.GrantApplicationId == applicationId
                  && l.FieldKey == fieldKey
-                 && l.OwnerUserId == ViewerUserId);
+                 && l.OwnerUserId == ViewerUserId));
         if (existing != null)
         {
             existing.Touch(Clock.Now);
@@ -496,9 +531,9 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
                     ?? throw new EntityNotFoundException(typeof(Grant), call.GrantId);
         }
 
-        var lines = await _budgetRepo.GetListAsync(l => l.GrantApplicationId == application.Id);
-        var locks = await _lockRepo.GetListAsync(l => l.GrantApplicationId == application.Id);
-        var messages = await _messageRepo.GetListAsync(m => m.GrantApplicationId == application.Id);
+        var lines = await InHostScopeAsync(() => _budgetRepo.GetListAsync(l => l.GrantApplicationId == application.Id));
+        var locks = await InHostScopeAsync(() => _lockRepo.GetListAsync(l => l.GrantApplicationId == application.Id));
+        var messages = await InHostScopeAsync(() => _messageRepo.GetListAsync(m => m.GrantApplicationId == application.Id));
 
         var byKind = lines.ToDictionary(l => l.Kind);
         var calcInput = costItems.Select(c => new GrantBudgetCalculator.LineInput(
