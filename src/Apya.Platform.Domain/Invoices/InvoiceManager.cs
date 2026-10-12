@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.CustomerLedger;
-using Apya.Platform.ExchangeRates;
+using Apya.Platform.ProjectBudgets;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
@@ -30,7 +30,7 @@ public class InvoiceManager : DomainService
     private readonly IRepository<Payment, Guid> _paymentRepository;
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
     private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
-    private readonly IRepository<ExchangeRate, Guid> _exchangeRateRepository;
+    private readonly FxRateResolver _fxRateResolver;
     private readonly IRepository<CustomerLedgerEntry, Guid> _customerLedgerRepository;
 
     public InvoiceManager(
@@ -38,14 +38,14 @@ public class InvoiceManager : DomainService
         IRepository<Payment, Guid> paymentRepository,
         IRepository<CashAccount, Guid> cashAccountRepository,
         IRepository<CashMovement, Guid> cashMovementRepository,
-        IRepository<ExchangeRate, Guid> exchangeRateRepository,
+        FxRateResolver fxRateResolver,
         IRepository<CustomerLedgerEntry, Guid> customerLedgerRepository)
     {
         _invoiceRepository = invoiceRepository;
         _paymentRepository = paymentRepository;
         _cashAccountRepository = cashAccountRepository;
         _cashMovementRepository = cashMovementRepository;
-        _exchangeRateRepository = exchangeRateRepository;
+        _fxRateResolver = fxRateResolver;
         _customerLedgerRepository = customerLedgerRepository;
     }
 
@@ -193,16 +193,10 @@ public class InvoiceManager : DomainService
         decimal? rate = null;
         if (!string.Equals(invoice.Currency.Trim(), cash.Currency.Trim(), StringComparison.OrdinalIgnoreCase))
         {
-            // ARCH-012: DB-side ordering + LIMIT 1. Önceki kod tüm tarihli kur kayıtlarını
-            // bellek-içine yüklüyor sonra client-side sort yapıyordu — TCMB yıllarca veri
-            // birikince (1000+ row her currency pair için) latency + bellek darboğazı.
-            // PlatformDbContext'teki composite index (TenantId, FromCurrency, ToCurrency, RateDate)
-            // DB engine'in backward scan ile tek-row lookup yapmasını sağlar.
-            var query = await _exchangeRateRepository.GetQueryableAsync();
-            var er = await AsyncExecuter.FirstOrDefaultAsync(
-                query.Where(x => x.FromCurrency == invoice.Currency && x.ToCurrency == cash.Currency)
-                     .OrderByDescending(x => x.RateDate));
-            rate = er?.Rate;
+            // FIN-03: kur, gider/gelir kasa yoluyla AYNI kapıdan çözülür — ödeme gününe kadarki
+            // en güncel kur, yoksa ters yönde girilmiş kur. Eskiden tarihe bakılmıyor ve ters
+            // kur aranmıyordu.
+            rate = await _fxRateResolver.ResolveByDateAsync(invoice.Currency, cash.Currency, payment.PaymentDate);
         }
 
         var cashAmount = PaymentCashConverter.ToCashCurrency(amount, invoice.Currency, cash.Currency, rate);
