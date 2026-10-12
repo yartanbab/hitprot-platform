@@ -45,6 +45,7 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
 
     public async Task<FirmProfileDto> UpdateMyProfileAsync(UpdateFirmProfileDto input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var profile = await _profileRepo.FirstOrDefaultAsync();
         if (profile == null)
         {

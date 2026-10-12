@@ -94,6 +94,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
     [RemoteService(IsEnabled = false)]
     public async Task<GrantDocumentConsoleDto> RegisterVersionAsync(RegisterGrantDocumentVersionInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var document = await GetDocumentAsync(input.DocumentId);
         var application = await GetEditableApplicationAsync(document.GrantApplicationId);
 
@@ -110,6 +111,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
 
     public async Task<GrantDocumentConsoleDto> ApproveAsync(ReviewGrantDocumentInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var document = await GetDocumentAsync(input.DocumentId);
         var application = await GetEditableApplicationAsync(document.GrantApplicationId);
         EnsureCanReview();
@@ -121,6 +123,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
 
     public async Task<GrantDocumentConsoleDto> RequestRevisionAsync(RequestGrantDocumentRevisionInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var document = await GetDocumentAsync(input.DocumentId);
         var application = await GetEditableApplicationAsync(document.GrantApplicationId);
         EnsureCanReview();
@@ -150,6 +153,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
 
     public async Task<GrantDocumentConsoleDto> AddAsync(AddGrantDocumentInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetEditableApplicationAsync(input.ApplicationId);
         var existing = await ReadDocumentsAsync(application.Id);
 
@@ -167,6 +171,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
 
     public async Task<GrantDocumentReminderResultDto> SendReminderAsync(Guid applicationId)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetApplicationAsync(applicationId);
         var documents = await ReadDocumentsAsync(application.Id);
 
@@ -297,6 +302,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
     [RemoteService(IsEnabled = false)]
     public async Task<GrantDocumentConsoleDto> RegisterPackageAsync(RegisterGrantDocumentPackageInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetApplicationAsync(input.ApplicationId);
         application.SetPackage(input.StoredFileName, Clock.Now);
         await _appRepo.UpdateAsync(application, autoSave: true);

@@ -59,6 +59,8 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         grantsPermission.AddChild(PlatformPermissions.Grants.Create, L("Permission:Grants.Create"), MultiTenancySides.Host);
         grantsPermission.AddChild(PlatformPermissions.Grants.Edit,   L("Permission:Grants.Edit"),   MultiTenancySides.Host);
         grantsPermission.AddChild(PlatformPermissions.Grants.Delete, L("Permission:Grants.Delete"), MultiTenancySides.Host);
+        // Firma tarafının yazma izni (host'ta karşılığı Grants.Edit). Yalnız kiracıya görünür.
+        grantsPermission.AddChild(PlatformPermissions.Grants.ManageApplications, L("Permission:Grants.ManageApplications"), MultiTenancySides.Tenant);
 
         // ============================================================
         // FİNANS & MUHASEBE

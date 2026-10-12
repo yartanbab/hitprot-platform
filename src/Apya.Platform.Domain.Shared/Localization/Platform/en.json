@@ -356,6 +356,7 @@
     "Permission:Grants.Create": "Create Grant",
     "Permission:Grants.Edit": "Edit Grant",
     "Permission:Grants.Delete": "Delete Grant",
+    "Permission:Grants.ManageApplications": "Manage Grant Applications (interest, profile, application, documents, appeal)",
     "Permission:Incomes": "Income",
     "Permission:Incomes.Create": "Create Income",
     "Permission:Incomes.Edit": "Edit Income",

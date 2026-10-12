@@ -287,6 +287,13 @@ public class TenantPackageManager : ITransientDependency
         // Görev dış paylaşımı. ManageCategories ile aynı durum: feature kapısı yok →
         // GrantNewlyEnabledPermissionsAsync onu hiçbir zaman "yeni açılan modül" saymaz.
         PlatformPermissions.Tasks.ShareExternally,
+        // #589 ile geldi ve buraya yazılmamıştı: kurulu sistemlerde hiçbir kiracıda
+        // açılamıyordu (işlev kaybı yoktu; bütçe yazma Projects.Edit'e de düşüyor).
+        PlatformPermissions.Projects.ManageBudget,
+        // Firma tarafının hibe yazma izni. Hibe feature kapısının ARKASINDA (ön ek eşleşmesi),
+        // ama kapı yalnız feature false→true olduğunda izin verir; hibesi zaten açık olan
+        // paketlerin tavanına bu listeden girer.
+        PlatformPermissions.Grants.ManageApplications,
     };
 
     private IEnumerable<(Guid Id, string Name)> DefaultPermissionsFor(

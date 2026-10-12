@@ -108,6 +108,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task<GrantApplicationWizardDto> SaveBudgetLineAsync(SaveWizardBudgetLineInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetEditableApplicationAsync(input.ApplicationId);
         var fieldKey = BudgetFieldKey(input.Kind);
         await EnsureNotLockedByOtherAsync(application.Id, fieldKey);
@@ -144,6 +145,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task<GrantApplicationWizardDto> SaveSummaryAsync(SaveWizardSummaryInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetEditableApplicationAsync(input.ApplicationId);
         // Üç alan ayrı kilitlenir ama tek istekle yazılır. Yalnız başlığın kilidine bakılıyordu:
         // başlığı yazan kişi, o sırada başkasının kilidi altındaki özet metnini ya da süreyi eski
@@ -181,6 +183,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task<GrantApplicationWizardDto> HandOverAsync(Guid applicationId)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetEditableApplicationAsync(applicationId);
 
         // Sıra karşı tarafa geçer. Devreden kişinin kilitleri bırakılır ki karşı taraf
@@ -209,6 +212,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task<GrantApplicationWizardDto> SubmitAsync(Guid applicationId)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetEditableApplicationAsync(applicationId);
 
         // 🔴 LIF-05: Kapanmış çağrıya gönderim kapısı. Kapanış zinciri (18b) firmaya
@@ -315,6 +319,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task<GrantFieldLockResultDto> AcquireLockAsync(GrantFieldLockInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetEditableApplicationAsync(input.ApplicationId);
         var now = Clock.Now;
 
@@ -368,6 +373,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task RequestTakeoverAsync(GrantFieldLockInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var existing = await InHostScopeAsync(() => _lockRepo.FirstOrDefaultAsync(
             l => l.GrantApplicationId == input.ApplicationId && l.FieldKey == input.FieldKey));
         if (existing == null || existing.OwnerUserId == ViewerUserId)
@@ -381,6 +387,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task<GrantFieldLockResultDto> ApproveTakeoverAsync(GrantFieldLockInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var existing = await InHostScopeAsync(() => _lockRepo.FirstOrDefaultAsync(
             l => l.GrantApplicationId == input.ApplicationId && l.FieldKey == input.FieldKey));
 
@@ -403,6 +410,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     public async Task<GrantApplicationMessageDto> SendMessageAsync(SendWizardMessageInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetApplicationAsync(input.ApplicationId);
 
         var message = new GrantApplicationMessage(

@@ -79,6 +79,7 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
 
     public async Task<GrantAppealConsoleDto> SaveDecisionAsync(SaveGrantDecisionInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         EnsureConsultant();
         var application = await GetApplicationAsync(input.ApplicationId);
 
@@ -174,6 +175,7 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
 
     public async Task<GrantAppealConsoleDto> AddItemAsync(AddGrantAppealItemInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         EnsureConsultant();
         var application = await GetApplicationAsync(input.ApplicationId);
         var decision = await FindDecisionAsync(application.Id)
@@ -190,6 +192,7 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
 
     public async Task<GrantAppealConsoleDto> SaveOpinionAsync(SaveGrantAppealOpinionInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         EnsureConsultant();
         var item = await GetItemAsync(input.ItemId);
         var decision = await GetDecisionAsync(item.DecisionId);
@@ -203,6 +206,7 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
 
     public async Task<GrantAppealConsoleDto> SubmitAppealAsync(Guid applicationId)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetApplicationAsync(applicationId);
         var decision = await FindDecisionAsync(application.Id)
                        ?? throw new BusinessException(PlatformDomainErrorCodes.GrantDecisionNotFound);
@@ -228,6 +232,7 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
     /// </summary>
     public async Task<GrantAppealConsoleDto> AcceptAppealAsync(AcceptGrantAppealInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         EnsureConsultant();
         if (input.Outcome == GrantDecisionOutcome.Reddedildi)
         {
@@ -260,6 +265,7 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
 
     public async Task<GrantAppealConsoleDto> ResolveAppealAsync(Guid applicationId, bool accepted)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         EnsureConsultant();
 
         // Kabul, ayrıntı verilmeden kaydedilse de başvuruyu canlandırır (sonuç: Onaylandı).

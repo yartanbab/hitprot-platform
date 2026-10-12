@@ -72,6 +72,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
 
     public async Task<MyGrantInterestDto> ExpressAsync(ExpressGrantInterestInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         // Yalnız HOST kataloğuna ilgi bildirilebilir. Filtre kapalıyken TenantId koşulu
         // elle konmazsa kiracı, başka kiracının çağrı Id'siyle kendine talep açabilir.
         GrantCall? call;
@@ -154,6 +155,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
 
     public async Task<MyGrantInterestDto> ShareIdeaAsync(ShareGrantIdeaInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         // Fikir bir firmanındır; host havuza firma adına Fikir Havuzu ekranından girer.
         if (CurrentTenant.Id == null)
         {
@@ -233,6 +235,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
 
     public async Task<MyGrantInterestDto> WithdrawAsync(Guid id)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         // Kiracı filtresi açık: başka firmanın talebi bulunmaz, "yok" sayılır.
         var interest = await _interestRepo.FirstOrDefaultAsync(i => i.Id == id)
                        ?? throw new BusinessException(PlatformDomainErrorCodes.GrantInterestNotFound);
@@ -246,6 +249,7 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
 
     public async Task<GrantMeetingDto> ProposeMeetingAsync(ProposeGrantMeetingInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         // Kiracı filtresi açık: başka firmanın talebi bulunmaz, "yok" sayılır.
         var interest = await _interestRepo.FirstOrDefaultAsync(i => i.Id == input.InterestId)
                        ?? throw new BusinessException(PlatformDomainErrorCodes.GrantInterestNotFound);
