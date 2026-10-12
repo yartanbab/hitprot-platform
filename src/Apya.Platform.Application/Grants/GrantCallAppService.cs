@@ -140,7 +140,7 @@ public class GrantCallAppService :
     protected override Task MapToEntityAsync(CreateUpdateGrantCallDto input, GrantCall entity)
     {
         entity.SetPeriod(input.Period);
-        entity.Status = input.Status;
+        entity.ChangeStatus(input.Status);
         entity.SetSchedule(input.OpenDate, input.Deadline);
         entity.Budget = input.Budget;
         entity.Reference = input.Reference;

@@ -499,7 +499,7 @@ public class GrantInterestFlow_Tests : PlatformEntityFrameworkCoreTestBase
     public async Task Acik_olmayan_cagriya_ilgi_bildirilemez(GrantCallStatus status)
     {
         var call = await CreateHostCallAsync("Kapalı Kapı Programı " + Guid.NewGuid().ToString("N")[..6]);
-        call.Status = status;
+        call.ChangeStatus(status);
         await _callRepository.UpdateAsync(call, autoSave: true);
 
         var tenantId = await CreateTenantAsync("Kapı Firması " + Guid.NewGuid().ToString("N")[..6]);

@@ -370,7 +370,7 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
             var callRepo = GetRequiredService<IRepository<GrantCall, Guid>>();
             var application = await appRepo.GetAsync(id);
             var call = await callRepo.GetAsync(application.GrantCallId);
-            call.Status = GrantCallStatus.Kapandi;
+            call.Close();
             await callRepo.UpdateAsync(call, autoSave: true);
             await uow.CompleteAsync();
         }

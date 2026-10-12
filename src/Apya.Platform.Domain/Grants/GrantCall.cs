@@ -14,7 +14,7 @@ public class GrantCall : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public Guid? TenantId { get; set; }
     public Guid GrantId { get; private set; }
     public string Period { get; private set; } = null!;
-    public GrantCallStatus Status { get; set; }
+    public GrantCallStatus Status { get; private set; }
     public DateTime? OpenDate { get; private set; }
     public DateTime? Deadline { get; private set; }
     public decimal? Budget { get; set; }
@@ -39,6 +39,20 @@ public class GrantCall : FullAuditedAggregateRoot<Guid>, IMultiTenant
     {
         Period = Check.NotNullOrWhiteSpace(period, nameof(period), maxLength: 32).Trim();
     }
+
+    // --- Durum geçişleri (DOM-06) ---
+    // Durum yalnız bu üç kapıdan değişir. "Taslak çağrı kiracıya ve kamuya çıkmaz" kuralı
+    // tüketici sorgularda durur; buradaki amaç durumu KİMİN, NE NİYETLE değiştirdiğinin
+    // çağrı yerinde okunabilmesi ve serbest atamanın derlenmemesi.
+
+    /// <summary>Yayın: çağrı kiracılara ve kamuya açılır.</summary>
+    public void Publish() => Status = GrantCallStatus.Acik;
+
+    /// <summary>Kapanış: son başvuru tarihi geçti ya da host kapattı.</summary>
+    public void Close() => Status = GrantCallStatus.Kapandi;
+
+    /// <summary>Host çağrı düzenleme ekranından elle seçilen durum (ör. Planlandı).</summary>
+    public void ChangeStatus(GrantCallStatus status) => Status = status;
 
     /// <summary>
     /// Son başvuru tarihi <paramref name="today"/> gününden önce mi. Son gün DAHİLDİR (o gün
