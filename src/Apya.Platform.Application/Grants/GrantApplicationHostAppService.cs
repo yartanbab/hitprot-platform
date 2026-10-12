@@ -29,6 +29,7 @@ public class GrantApplicationHostAppService : PlatformAppService, IGrantApplicat
     private readonly ITenantRepository _tenantRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
+    private readonly GrantApplicationStepAligner _stepAligner;
     private readonly GrantTrancheManager _trancheManager;
     private readonly GrantActivityRecorder _activity;
 
@@ -41,6 +42,7 @@ public class GrantApplicationHostAppService : PlatformAppService, IGrantApplicat
         ITenantRepository tenantRepo,
         ICurrentTenant currentTenant,
         GrantNotificationDispatcher notifyDispatcher,
+        GrantApplicationStepAligner stepAligner,
         GrantTrancheManager trancheManager,
         GrantActivityRecorder activity)
     {
@@ -52,6 +54,7 @@ public class GrantApplicationHostAppService : PlatformAppService, IGrantApplicat
         _tenantRepo = tenantRepo;
         _currentTenant = currentTenant;
         _notifyDispatcher = notifyDispatcher;
+        _stepAligner = stepAligner;
         _trancheManager = trancheManager;
         _activity = activity;
     }
@@ -94,6 +97,7 @@ public class GrantApplicationHostAppService : PlatformAppService, IGrantApplicat
             var previousAmount = app.ApprovedAmount;
             var previousStage = app.Stage;
             app.AdvanceStage(input.Stage, input.ApprovedAmount);
+            await _stepAligner.AlignToStageAsync(app);
             await _appRepo.UpdateAsync(app, autoSave: true);
             callId = app.GrantCallId;
             stageChanged = previousStage != app.Stage;
