@@ -111,6 +111,10 @@ else
                         <tr>
                             <td>
                                 <div class="fw-semibold">@line.Name</div>
+                                @if (!string.IsNullOrWhiteSpace(line.Justification))
+                                {
+                                    <div class="small text-muted">@line.Justification</div>
+                                }
                                 <div class="small text-muted">
                                     @if (!string.IsNullOrWhiteSpace(line.Code))
                                     {

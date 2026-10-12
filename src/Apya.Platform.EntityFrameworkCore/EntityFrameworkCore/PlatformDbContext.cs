@@ -552,6 +552,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.Code).HasMaxLength(ProjectBudgetConsts.MaxCodeLength);
                 b.Property(x => x.Name).IsRequired().HasMaxLength(ProjectBudgetConsts.MaxNameLength);
+                b.Property(x => x.Justification).HasMaxLength(ProjectBudgetConsts.MaxJustificationLength);
                 b.Property(x => x.PlannedAmount).HasColumnType("decimal(18,2)");
                 b.Property(x => x.ApprovedAmount).HasColumnType("decimal(18,2)");
                 b.Property(x => x.TransferLimitPercent).HasColumnType("decimal(5,2)");

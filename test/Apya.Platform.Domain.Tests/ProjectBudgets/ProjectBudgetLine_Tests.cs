@@ -83,4 +83,20 @@ public class ProjectBudgetLine_Tests
         line.PlannedAmount.ShouldBe(100_000m);
         line.ApprovedAmount.ShouldBe(80_000m);
     }
+
+    /// <summary>CNV-04: gerekçe kırpılır; boş metin "yok" sayılır; sınırı aşan kesilir.</summary>
+    [Fact]
+    public void Gerekce_kirpilir_bos_ise_null_olur_ve_sinirda_kesilir()
+    {
+        var line = NewLine();
+
+        line.SetJustification("  İki araştırmacı  ");
+        line.Justification.ShouldBe("İki araştırmacı");
+
+        line.SetJustification("   ");
+        line.Justification.ShouldBeNull();
+
+        line.SetJustification(new string('x', ProjectBudgetConsts.MaxJustificationLength + 50));
+        line.Justification!.Length.ShouldBe(ProjectBudgetConsts.MaxJustificationLength);
+    }
 }

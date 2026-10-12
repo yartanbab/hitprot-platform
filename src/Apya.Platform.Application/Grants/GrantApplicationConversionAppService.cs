@@ -183,7 +183,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                 .ToDictionary(l => l.Kind);
         }
 
-        var lines = new List<(ConvertGrantBudgetLineInput Input, decimal Amount, Guid SourceLineId)>();
+        var lines = new List<(ConvertGrantBudgetLineInput Input, decimal Amount, Guid SourceLineId, string? Justification)>();
         foreach (var line in input.BudgetLines)
         {
             if (!serverLines.TryGetValue(line.Kind, out var source) || source.Amount <= 0)
@@ -193,7 +193,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                 throw new BusinessException(PlatformDomainErrorCodes.GrantConversionBudgetLineUnknown)
                     .WithData("Kind", line.Kind);
             }
-            lines.Add((line, source.Amount, source.Id));
+            lines.Add((line, source.Amount, source.Id, source.Justification));
         }
 
         var result = new GrantConversionResultDto();
@@ -225,7 +225,7 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
             result.ProjectCode = project.Code;
 
             var order = 0;
-            foreach (var (line, amount, sourceLineId) in lines)
+            foreach (var (line, amount, sourceLineId, justification) in lines)
             {
                 order++;
                 var budgetLine = new ProjectBudgetLine(
@@ -244,6 +244,8 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                     approvedAmount: amount,
                     order: order - 1);
                 budgetLine.LinkToGrantLine(sourceLineId);
+                // CNV-04: gerekçe başvuruda ZATEN yazılmış; projede tekrar sorulmasın.
+                budgetLine.SetJustification(justification);
                 await _projectBudgetRepo.InsertAsync(budgetLine, autoSave: true);
                 result.BudgetLineCount++;
             }

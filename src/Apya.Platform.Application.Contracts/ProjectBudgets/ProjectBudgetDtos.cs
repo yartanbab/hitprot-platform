@@ -16,6 +16,10 @@ public class ProjectBudgetLineDto : EntityDto<Guid>
     public Guid ProjectId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>Kalemin gerekçesi (hibe başvurusundan taşınır). Boş olabilir.</summary>
+    public string? Justification { get; set; }
+
     public int Order { get; set; }
 
     /// <summary>Sözleşmedeki ilk tutar — revizyon bunu değiştirmez.</summary>
