@@ -74,4 +74,54 @@ public class ProjectCreateBudgetPermission_Tests : PlatformWebTestBase
         stored.Currency.ShouldBe("EUR", "para birimi bir tutar değil, projenin zorunlu alanı — korunur");
         await uow.CompleteAsync();
     }
+
+    /// <summary>
+    /// Liste bütçeyi maskeliyordu, tekil okuma ve detay maskelemiyordu: bütçeyi göremeyen kullanıcı
+    /// aynı rakamları /api/app/project/{id} ve /detail üzerinden okuyabiliyordu (ürün kararı,
+    /// 2026-10-12). Ardından proje düzenlenince kayıtlı bütçe korunur — maskelenen sıfır geri yazılmaz.
+    /// </summary>
+    [Fact]
+    public async Task Butce_yetkisi_olmayan_tekil_okumada_ve_detayda_butceyi_goremez()
+    {
+        var projectId = Guid.NewGuid();
+        var code = "PG-" + Guid.NewGuid().ToString("N")[..6];
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            await GetRequiredService<IRepository<Project, Guid>>().InsertAsync(
+                new Project(projectId, null, null, "Gizli bütçe " + code, code, "", 750_000m, 180m, "EUR"),
+                autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var service = GetRequiredService<IProjectAppService>();
+
+        var single = await service.GetAsync(projectId);
+        single.TotalBudget.ShouldBe(0m);
+        single.HourlyRate.ShouldBe(0m);
+        single.Currency.ShouldBe("EUR");
+
+        var detail = await service.GetDetailAsync(projectId);
+        detail.TotalBudget.ShouldBe(0m);
+        detail.HourlyRate.ShouldBe(0m);
+        detail.SpentBudget.ShouldBe(0m);
+        detail.BudgetPercent.ShouldBe(0);
+
+        // Düzenleme formu maskelenmiş değerleri geri gönderir; sunucu izinsiz bütçeyi yok sayar.
+        await service.UpdateAsync(projectId, new CreateProjectDto
+        {
+            Name = "Gizli bütçe (düzenlendi)",
+            Code = code,
+            TotalBudget = single.TotalBudget,
+            HourlyRate = single.HourlyRate,
+            Currency = single.Currency,
+            StartDate = DateTime.Today,
+            EndDate = DateTime.Today.AddMonths(3),
+        });
+
+        using var check = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        var stored = await GetRequiredService<IRepository<Project, Guid>>().GetAsync(projectId);
+        stored.TotalBudget.ShouldBe(750_000m);
+        stored.HourlyRate.ShouldBe(180m);
+        await check.CompleteAsync();
+    }
 }

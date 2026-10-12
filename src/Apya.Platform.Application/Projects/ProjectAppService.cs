@@ -372,6 +372,7 @@ public class ProjectAppService :
         {
             var dto = await base.GetAsync(id);
             ApplyCategory(dto, await _categoryStore.GetMapAsync());
+            await MaskBudgetWithoutPermissionAsync(dto);
             return dto;
         }
     }
@@ -563,6 +564,11 @@ public class ProjectAppService :
                 .ToHashSet();
             dto.Tasks = dto.Tasks.Where(t => visibleTaskIds.Contains(t.Id)).ToList();
 
+            if (await MaskBudgetWithoutPermissionAsync(dto))
+            {
+                dto.BudgetPercent = 0;
+            }
+
             return dto;
         }
     }
@@ -682,6 +688,25 @@ public class ProjectAppService :
         if (ids.Count == 0) return new Dictionary<Guid, string>();
         var customers = await _customerRepository.GetListAsync(c => ids.Contains(c.Id));
         return customers.ToDictionary(c => c.Id, c => c.Name);
+    }
+
+    /// <summary>
+    /// Bütçe görme izni (Projects.ViewBudget) yoksa tutarları sıfırlar. Liste bunu yapıyordu,
+    /// tekil okuma ve detay yapmıyordu: bütçeyi göremeyen kullanıcı aynı rakamları
+    /// /api/app/project/{id} ve /detail üzerinden okuyabiliyordu. Para birimi tutar değildir,
+    /// korunur (düzenleme formu onu geri gönderir; sunucu izinsiz gelen bütçeyi zaten yok sayar).
+    /// </summary>
+    private async Task<bool> MaskBudgetWithoutPermissionAsync(ProjectDto dto)
+    {
+        if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
+        {
+            return false;
+        }
+
+        dto.TotalBudget = 0;
+        dto.HourlyRate = 0;
+        dto.SpentBudget = 0;
+        return true;
     }
 
     private static void EnrichBudget(ProjectDto dto, List<TaskItem> allTasks, List<TaskTimeLog> allLogs, bool canViewBudget)
