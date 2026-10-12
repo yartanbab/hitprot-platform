@@ -744,6 +744,13 @@ public class IndexModel : AbpPageModel
         return RedirectToActiveTab();
     }
 
+    /// <summary>FIN-14: "itiraz sürecinde" işaretini koyar ya da kaldırır.</summary>
+    public async Task<IActionResult> OnPostSetTrancheDisputedAsync(Guid trancheId, bool disputed)
+    {
+        await _projectBudgetAppService.SetDisputedAsync(trancheId, disputed);
+        return RedirectToActiveTab();
+    }
+
     public async Task<IActionResult> OnPostRemoveDeductionAsync(Guid deductionId)
     {
         await _projectBudgetAppService.RemoveDeductionAsync(deductionId);

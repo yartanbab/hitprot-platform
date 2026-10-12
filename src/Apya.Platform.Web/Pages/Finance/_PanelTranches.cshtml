@@ -107,7 +107,7 @@ else
                         <th style="width:150px">Durum</th>
                         @if (Model.CanEditBudget)
                         {
-                            <th style="width:170px"></th>
+                            <th style="width:200px"></th>
                         }
                     </tr>
                 </thead>
@@ -139,6 +139,33 @@ else
                                             data-add-deduction="@t.Id" title="Kesinti ekle">
                                         <i class="fa fa-scissors" aria-hidden="true"></i>
                                     </button>
+                                    @* FIN-14: itiraz işareti tutardan türemez, elle konur. Tahsil edilmiş
+                                       dilimde anlamı yok; yalnız işaretliyse kaldırma düğmesi çıkar. *@
+                                    @if (t.Status == FundingTrancheStatus.Disputed)
+                                    {
+                                        <form method="post" asp-page-handler="SetTrancheDisputed" class="d-inline"
+                                              asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
+                                            <input type="hidden" name="TrancheId" value="@t.Id" />
+                                            <input type="hidden" name="Disputed" value="false" />
+                                            <button type="submit" class="btn btn-sm btn-link p-1 text-decoration-none"
+                                                    title="İtiraz işaretini kaldır" aria-label="İtiraz işaretini kaldır">
+                                                <i class="fa fa-gavel text-danger" aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else if (t.Status != FundingTrancheStatus.Collected)
+                                    {
+                                        <form method="post" asp-page-handler="SetTrancheDisputed" class="d-inline"
+                                              asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
+                                            <input type="hidden" name="TrancheId" value="@t.Id" />
+                                            <input type="hidden" name="Disputed" value="true" />
+                                            <button type="submit" class="btn btn-sm btn-link p-1 text-decoration-none"
+                                                    title="İtiraz sürecinde olarak işaretle" aria-label="İtiraz sürecinde olarak işaretle"
+                                                    data-confirm="Dilim itiraz sürecinde olarak işaretlensin mi?">
+                                                <i class="fa fa-gavel" aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                    }
                                     <button type="button" class="btn btn-sm btn-link p-1 text-decoration-none"
                                             data-edit-tranche="@t.Id" title="Düzenle">
                                         <i class="fa fa-pen" aria-hidden="true"></i>
