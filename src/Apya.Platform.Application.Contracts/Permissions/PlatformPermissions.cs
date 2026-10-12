@@ -279,5 +279,13 @@ public static class PlatformPermissions
         public const string Create = Default + ".Create";
         public const string Edit   = Default + ".Edit";
         public const string Delete = Default + ".Delete";
+
+        /// <summary>
+        /// FİRMA tarafının yazma izni: ilgi bildirme/geri çekme, firma profili, başvuru sihirbazı,
+        /// evrak yükleme, itiraz gönderme. <see cref="Edit"/> host'a özeldir (katalog ve danışman
+        /// işleri) ve kiracıya atanamaz; firma kullanıcısının "görür ama değiştiremez" olabilmesi
+        /// için ayrı izin gerekir.
+        /// </summary>
+        public const string ManageApplications = Default + ".ManageApplications";
     }
 }

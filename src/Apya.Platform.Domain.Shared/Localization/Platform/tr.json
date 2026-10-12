@@ -225,6 +225,7 @@
         "Permission:Grants.Create": "Hibe Oluşturma",
         "Permission:Grants.Edit": "Hibe Düzenleme",
         "Permission:Grants.Delete": "Hibe Silme",
+        "Permission:Grants.ManageApplications": "Hibe Başvurusu Yönetme (ilgi, profil, başvuru, evrak, itiraz)",
         "Permission:Incomes": "Gelirler",
         "Permission:Incomes.Create": "Gelir Oluşturma",
         "Permission:Incomes.Edit": "Gelir Düzenleme",

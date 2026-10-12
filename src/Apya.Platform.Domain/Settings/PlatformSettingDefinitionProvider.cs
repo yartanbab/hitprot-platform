@@ -179,6 +179,11 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
             new SettingDefinition(PlatformSettings.Notifications.LastDigestAt)
                 .WithProviders(GlobalSettingValueProvider.ProviderName));
 
+        // --- Tek seferlik telafi işaretleri ---
+        context.Add(
+            new SettingDefinition(PlatformSettings.Backfills.GrantManageApplicationsGranted)
+                .WithProviders(GlobalSettingValueProvider.ProviderName));
+
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
         context.Add(

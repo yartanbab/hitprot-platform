@@ -366,6 +366,17 @@ public static class PlatformSettings
         public const string LastDigestAt = Prefix + ".Notifications.LastDigestAt";
     }
 
+    /// <summary>Tek seferlik veri telafilerinin "yapıldı" işaretleri. Kullanıcı ayarı DEĞİL.</summary>
+    public static class Backfills
+    {
+        /// <summary>
+        /// <c>Grants.ManageApplications</c> izni, hibeleri görebilen mevcut rollere verildi mi.
+        /// Telafi BİR KEZ koşar: sonradan bir rolden bilerek kaldırılan izin sonraki yayında
+        /// geri gelmemeli.
+        /// </summary>
+        public const string GrantManageApplicationsGranted = Prefix + ".Backfills.GrantManageApplicationsGranted";
+    }
+
     /// <summary>
     /// Paket süresi / abonelik davranışı — hepsi host (Global) seviyesinde.
     /// KRİTİK: .WithProviders(Global) DefaultValueSettingValueProvider'ı zincirden
