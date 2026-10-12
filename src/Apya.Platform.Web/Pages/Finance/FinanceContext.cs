@@ -56,7 +56,6 @@ public static class FinanceContext
     public const string TabLedger = "gelir-gider";
     public const string TabInvoices = "faturalar";
     public const string TabDonor = "donor";
-    public const string TabDonations = "bagis";
     public const string TabCash = "kasa";
     public const string TabFxBridge = "kur-koprusu";
     public const string TabDocuments = "belgeler";
@@ -79,9 +78,6 @@ public static class FinanceContext
 
     private static readonly FinanceTabDefinition Donor =
         new(TabDonor, "Finance:Tab:Donor", "fa-file-export", new[] { PlatformPermissions.Projects.ViewBudget });
-
-    private static readonly FinanceTabDefinition Donations =
-        new(TabDonations, "Finance:Tab:Donations", "fa-hand-holding-heart", new[] { PlatformPermissions.Incomes.Default });
 
     private static readonly FinanceTabDefinition Cash =
         new(TabCash, "Finance:Tab:Cash", "fa-cash-register", new[] { PlatformPermissions.CashAccounts.Default });
@@ -119,7 +115,7 @@ public static class FinanceContext
     {
         [FinanceContextTemplate.Corporate] = new[] { Overview, BudgetLines, Tranches, Ledger, Invoices, Cash, Documents },
         [FinanceContextTemplate.Grant] = new[] { Overview, BudgetLines, Tranches, Ledger, Invoices, Donor, FxBridge, Cash, Documents },
-        [FinanceContextTemplate.Event] = new[] { Overview, BudgetLines, Ledger, Invoices, Donations, Cash, Documents }
+        [FinanceContextTemplate.Event] = new[] { Overview, BudgetLines, Ledger, Invoices, Cash, Documents }
     };
 
     /// <summary>

@@ -69,11 +69,12 @@ public class FinanceContext_Tests
     }
 
     [Fact]
-    public void TabsFor_Event_HasDonationsAndNoTranches()
+    public void TabsFor_Event_HasNoPlaceholderAndNoTranches()
     {
         var evt = Codes(FinanceContextTemplate.Event);
 
-        evt.ShouldContain(FinanceContext.TabDonations);
+        // FUX-07: içeriği olmayan "Bağış" sekmesi kaldırıldı; şeritte yer tutucu sekme durmaz.
+        evt.ShouldNotContain("bagis");
         evt.ShouldNotContain(FinanceContext.TabTranches);
         evt.ShouldContain(FinanceContext.TabInvoices);
     }
@@ -101,7 +102,6 @@ public class FinanceContext_Tests
     [Theory]
     [InlineData(FinanceContext.TabTranches, true)]
     [InlineData(FinanceContext.TabDonor, true)]
-    [InlineData(FinanceContext.TabDonations, true)]
     [InlineData(FinanceContext.TabFxBridge, true)]
     [InlineData(FinanceContext.TabOverview, false)]
     [InlineData(FinanceContext.TabBudgetLines, false)]
