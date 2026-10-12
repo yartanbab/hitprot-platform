@@ -40,6 +40,20 @@ public class ExchangeRateAppService :
         DeletePolicyName = PlatformPermissions.ExchangeRates.Delete;
     }
 
+    /// <summary>
+    /// Güncelleme varlığın kendi kurallarından geçer ve kaynağı "elle" yapar. Düz eşleme
+    /// kuralları (kod normalleştirme, aynı para birimi, sıfır/eksi kur) atlıyor, TCMB'den gelen
+    /// kayıt elle değiştirildikten sonra da merkez bankası kuru gibi görünüyordu.
+    /// </summary>
+    protected override Task MapToEntityAsync(CreateUpdateExchangeRateDto updateInput, ExchangeRate entity)
+    {
+        entity.SetCurrencies(updateInput.FromCurrency, updateInput.ToCurrency);
+        entity.SetRate(updateInput.Rate);
+        entity.RateDate = updateInput.RateDate;
+        entity.Source = ExchangeRateSource.Manual;
+        return Task.CompletedTask;
+    }
+
     protected override async Task<IQueryable<ExchangeRate>> CreateFilteredQueryAsync(GetExchangeRatesInput input)
     {
         var query = await ReadOnlyRepository.GetQueryableAsync();

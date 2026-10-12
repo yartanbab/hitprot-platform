@@ -70,6 +70,13 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
             throw new BusinessException(PlatformDomainErrorCodes.InvoiceNotEditable)
                 .WithData("Status", Status);
 
+        // Sıfır ya da eksi kalem eksi/sıfır toplamlı fatura üretiyordu: cari tahakkuku atlanıyor,
+        // ilk ödemede fatura "ödendi" oluyordu.
+        if (quantity <= 0 || unitPrice < 0)
+            throw new BusinessException(PlatformDomainErrorCodes.InvoiceItemAmountInvalid)
+                .WithData("Quantity", quantity)
+                .WithData("UnitPrice", unitPrice);
+
         Items.Add(new InvoiceItem(itemId, Id, TenantId, description, quantity, unitPrice));
         RecalculateTotal();
     }
