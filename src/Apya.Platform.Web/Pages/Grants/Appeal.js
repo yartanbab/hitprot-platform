@@ -125,12 +125,34 @@ $(function () {
     });
 
     // ---------- İtiraz sonucu (danışman, kurumun yanıtını işler) ----------
+    // LIF-10 · Kabul, yeni sonucu ve tutarı soran pencereyi açar; ret tek onayla kaydedilir.
+    var acceptModal = new bootstrap.Modal(document.getElementById('AcceptModal'));
+
     $('#ResolveBox').on('click', '[data-accepted]', function () {
         var accepted = $(this).data('accepted') === true;
+        if (accepted) {
+            $('#AcceptOutcome').val('1');
+            $('#AcceptAmount').val('');
+            acceptModal.show();
+            return;
+        }
         abp.message.confirm(l('Grants:Appeal:Resolve:Confirm')).then(function (ok) {
             if (!ok) { return; }
-            service.resolveAppeal(appId, accepted).then(function (dto) { model = dto; paint(); });
+            service.resolveAppeal(appId, false).then(function (dto) { model = dto; paint(); });
         });
+    });
+
+    $('#AcceptSaveBtn').on('click', function () {
+        var $btn = $(this).prop('disabled', true);
+        var amountText = String($('#AcceptAmount').val() || '').trim();
+        service.acceptAppeal({
+            applicationId: appId,
+            outcome: Number($('#AcceptOutcome').val()),
+            approvedAmount: amountText === '' ? null : Number(amountText)
+        }).then(function (dto) {
+            model = dto; paint();
+            acceptModal.hide();
+        }).always(function () { $btn.prop('disabled', false); });
     });
 
     // ---------- Sağ panel ----------

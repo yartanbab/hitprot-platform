@@ -91,6 +91,22 @@ public class SaveGrantDecisionInput
     public DateTime? AppealDeadline { get; set; }
 }
 
+/// <summary>
+/// LIF-10 · Kurum itirazı KABUL etti: yeni sonuç ve (varsa) onaylanan tutar tek istekte gelir;
+/// karar, aşama ve tutar birlikte güncellenir.
+/// </summary>
+public class AcceptGrantAppealInput
+{
+    [Required(ErrorMessage = "Başvuru zorunludur.")]
+    public Guid ApplicationId { get; set; }
+
+    /// <summary>Onaylandı ya da Kısmi onay. "Reddedildi" kabul edilen itirazın sonucu olamaz.</summary>
+    public GrantDecisionOutcome Outcome { get; set; } = GrantDecisionOutcome.Onaylandi;
+
+    [Range(0, 999999999999, ErrorMessage = "Onaylanan tutar eksi olamaz.")]
+    public decimal? ApprovedAmount { get; set; }
+}
+
 public class AddGrantAppealItemInput
 {
     [Required(ErrorMessage = "Başvuru zorunludur.")]
