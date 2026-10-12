@@ -13,7 +13,13 @@ namespace Apya.Platform.AssetRelations;
 /// Manages polymorphic entity links between source and target entities.
 /// Enables loosely-coupled relationships like Task → Document, Project → Document.
 /// </summary>
+/// <remarks>
+/// 🔴 Uzaktan ÇAĞRILAMAZ. Servis hiçbir izin istemiyor ve bağlanan kayıtların varlığını da
+/// doğrulamıyordu; arayüzü ve başka kullananı da yok. Özellik kullanılana kadar otomatik API
+/// ucu kapalı — açılırken izin ve kayıt doğrulaması birlikte eklenmeli.
+/// </remarks>
 [Authorize]
+[Volo.Abp.RemoteService(IsEnabled = false)]
 public class EntityLinkAppService : PlatformAppService, IEntityLinkAppService
 {
     private readonly IRepository<EntityLink, Guid> _entityLinkRepository;

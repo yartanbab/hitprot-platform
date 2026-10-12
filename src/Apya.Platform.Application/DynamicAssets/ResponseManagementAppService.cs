@@ -102,6 +102,15 @@ public class ResponseManagementAppService : PlatformAppService, IResponseManagem
     public async Task DeleteCommentAsync(Guid id, Guid commentId)
     {
         var response = await GetWithCommentsAsync(id);
+
+        // Yorumu yalnız sahibi ya da form düzenleme yetkisi olan siler. Eskiden yanıtları
+        // görebilen herkes başkasının yorumunu silebiliyordu.
+        var comment = response.Comments.FirstOrDefault(c => c.Id == commentId);
+        if (comment != null && comment.CreatorId != CurrentUser.Id)
+        {
+            await AuthorizationService.CheckAsync(PlatformPermissions.DynamicAssets.Edit);
+        }
+
         response.RemoveComment(commentId);
         await _repository.UpdateAsync(response, autoSave: true);
     }

@@ -163,6 +163,8 @@ public class DocumentSetupAppService : ApplicationService, IDocumentSetupAppServ
         };
     }
 
+    // "Kurulum tamamlandı" kiracı ayarı yazar; kurulumu uygulayan uçla aynı izni ister.
+    [Authorize(PlatformPermissions.Documents.Create)]
     public virtual async Task CompleteAsync()
         => await _settingManager.SetForCurrentTenantAsync(
             PlatformSettings.Documents.SetupCompleted, "true");
