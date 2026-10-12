@@ -470,4 +470,106 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
         var dto = await _wizard.SetStepAsync(id, 3);
         dto.CurrentStep.ShouldBe(3);
     }
+
+    /* ═══════════════ Danışman (host) kiracının başvurusunda ═══════════════ */
+
+    private static readonly Guid FirmTenant = Guid.Parse("99990000-cccc-4000-8000-000000000081");
+
+    /// <summary>KİRACIYA ait başvuru: bir bütçe satırı ve firmadaki bir kullanıcının başlık kilidiyle.</summary>
+    private async Task<Guid> CreateTenantOwnedApplicationAsync()
+    {
+        var (seedId, _) = await CreateApplicationAsync();
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+        var callId = (await appRepo.GetAsync(seedId)).GrantCallId;
+
+        // TenantId kurucuda ATANIR.
+        var application = new GrantApplication(Guid.NewGuid(), FirmTenant, callId);
+        await appRepo.InsertAsync(application, autoSave: true);
+
+        var line = new GrantApplicationBudgetLine(
+            Guid.NewGuid(), FirmTenant, application.Id, GrantCostItemKind.Personel);
+        line.SetAmount(250_000m);
+        await GetRequiredService<IRepository<GrantApplicationBudgetLine, Guid>>().InsertAsync(line, autoSave: true);
+
+        await GetRequiredService<IRepository<GrantApplicationFieldLock, Guid>>().InsertAsync(
+            new GrantApplicationFieldLock(
+                Guid.NewGuid(), FirmTenant, application.Id, "summary:Title", Guid.NewGuid(), "Firma Kullanıcısı", DateTime.Now),
+            autoSave: true);
+
+        await uow.CompleteAsync();
+        return application.Id;
+    }
+
+    /// <summary>
+    /// Başvuru süzgeç kapatılarak okunuyordu, alt satırları değil: danışman firmanın bütçesini boş,
+    /// kilidini yok görüyordu.
+    /// </summary>
+    [Fact]
+    public async Task Danisman_Kiracinin_Basvurusunda_Butceyi_Ve_Kilidi_Gorur()
+    {
+        var id = await CreateTenantOwnedApplicationAsync();
+
+        var dto = await _wizard.GetAsync(id);
+
+        dto.BudgetLines.Single(l => l.Kind == GrantCostItemKind.Personel).Amount.ShouldBe(250_000m);
+    }
+
+    [Fact]
+    public async Task Danisman_Firmanin_Kilitledigi_Alanin_Ustune_Yazamaz()
+    {
+        var id = await CreateTenantOwnedApplicationAsync();
+
+        (await Should.ThrowAsync<BusinessException>(() => _wizard.SaveSummaryAsync(new SaveWizardSummaryInput
+        {
+            ApplicationId = id,
+            ProjectTitle = "Danışmanın yazdığı başlık"
+        }))).Code.ShouldBe(PlatformDomainErrorCodes.GrantFieldLockedByOther);
+    }
+
+    /// <summary>Var olan satırı bulamayıp ikincisini eklemeye çalışıyordu (tekil indeks hatası).</summary>
+    [Fact]
+    public async Task Danisman_Kiracinin_Var_Olan_Butce_Satirini_Gunceller()
+    {
+        var id = await CreateTenantOwnedApplicationAsync();
+
+        var dto = await _wizard.SaveBudgetLineAsync(new SaveWizardBudgetLineInput
+        {
+            ApplicationId = id,
+            Kind = GrantCostItemKind.Personel,
+            Amount = 300_000m
+        });
+
+        dto.BudgetLines.Single(l => l.Kind == GrantCostItemKind.Personel).Amount.ShouldBe(300_000m);
+    }
+
+    /* ═══════════════ Özetin üç alanı ayrı kilitlenir ═══════════════ */
+
+    [Fact]
+    public async Task Baskasinin_Kilitledigi_Ozet_Metni_Baslik_Kaydiyla_Ezilemez()
+    {
+        var (id, _) = await CreateApplicationAsync();
+        await _wizard.SaveSummaryAsync(new SaveWizardSummaryInput
+        {
+            ApplicationId = id, ProjectTitle = "İlk başlık", ProjectSummary = "İlk özet", ProjectDurationMonths = 12
+        });
+        await LockFieldAsOtherUserAsync(id, "summary:Body", DateTime.Now);
+
+        // Başlığı yazan kişi tam formu gönderir; özet metni başkasında kilitliyken değiştirilemez.
+        await Should.ThrowAsync<BusinessException>(() => _wizard.SaveSummaryAsync(new SaveWizardSummaryInput
+        {
+            ApplicationId = id, ProjectTitle = "Yeni başlık", ProjectSummary = "Ezilmiş özet", ProjectDurationMonths = 12
+        }));
+
+        // Karşı yön: kilitli alana dokunmadan kendi alanını kaydeder.
+        var dto = await _wizard.SaveSummaryAsync(new SaveWizardSummaryInput
+        {
+            ApplicationId = id, ProjectTitle = "Yeni başlık", ProjectSummary = "İlk özet", ProjectDurationMonths = 12
+        });
+        dto.ProjectTitle.ShouldBe("Yeni başlık");
+        dto.ProjectSummary.ShouldBe("İlk özet");
+    }
+
 }
