@@ -183,6 +183,9 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(
             new SettingDefinition(PlatformSettings.Backfills.GrantManageApplicationsGranted)
                 .WithProviders(GlobalSettingValueProvider.ProviderName));
+        context.Add(
+            new SettingDefinition(PlatformSettings.Backfills.TenantRoleTemplatesCreated)
+                .WithProviders(GlobalSettingValueProvider.ProviderName));
 
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
