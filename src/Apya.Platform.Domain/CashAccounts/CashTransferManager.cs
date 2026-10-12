@@ -1,8 +1,7 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.CashMovements;
-using Apya.Platform.ExchangeRates;
+using Apya.Platform.ProjectBudgets;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
@@ -18,16 +17,16 @@ public class CashTransferManager : DomainService
 {
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
     private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
-    private readonly IRepository<ExchangeRate, Guid> _exchangeRateRepository;
+    private readonly FxRateResolver _fxRateResolver;
 
     public CashTransferManager(
         IRepository<CashAccount, Guid> cashAccountRepository,
         IRepository<CashMovement, Guid> cashMovementRepository,
-        IRepository<ExchangeRate, Guid> exchangeRateRepository)
+        FxRateResolver fxRateResolver)
     {
         _cashAccountRepository = cashAccountRepository;
         _cashMovementRepository = cashMovementRepository;
-        _exchangeRateRepository = exchangeRateRepository;
+        _fxRateResolver = fxRateResolver;
     }
 
     public async Task<CashTransferResult> TransferAsync(
@@ -46,7 +45,7 @@ public class CashTransferManager : DomainService
         if (!from.IsActive || !to.IsActive)
             throw new BusinessException(PlatformDomainErrorCodes.CashMovementTransferAccountInactive);
 
-        var rate = await ResolveRateAsync(from.Currency, to.Currency);
+        var rate = await ResolveRateAsync(from.Currency, to.Currency, transferDate);
         var convertedAmount = ConvertAmount(amount, from.Currency, to.Currency, rate);
 
         var transferId = GuidGenerator.Create();
@@ -68,19 +67,15 @@ public class CashTransferManager : DomainService
     }
 
     /// <summary>
-    /// En güncel kur kaydı, DB-side ordering + LIMIT 1 (InvoiceManager.CreateCashMovementAsync
-    /// ile aynı ARCH-012 deseni — composite index TenantId/FromCurrency/ToCurrency/RateDate).
+    /// FIN-03: kur, gider/gelir kasa yoluyla AYNI kapıdan çözülür — transfer gününe kadarki
+    /// en güncel kur, yoksa ters yönde girilmiş kur. Aynı para biriminde kur yoktur (null).
     /// </summary>
-    private async Task<decimal?> ResolveRateAsync(string fromCurrency, string toCurrency)
+    private async Task<decimal?> ResolveRateAsync(string fromCurrency, string toCurrency, DateTime transferDate)
     {
         if (string.Equals(fromCurrency.Trim(), toCurrency.Trim(), StringComparison.OrdinalIgnoreCase))
             return null;
 
-        var query = await _exchangeRateRepository.GetQueryableAsync();
-        var er = await AsyncExecuter.FirstOrDefaultAsync(
-            query.Where(x => x.FromCurrency == fromCurrency && x.ToCurrency == toCurrency)
-                 .OrderByDescending(x => x.RateDate));
-        return er?.Rate;
+        return await _fxRateResolver.ResolveByDateAsync(fromCurrency, toCurrency, transferDate);
     }
 
     /// <summary>1 fromCurrency = rate toCurrency. Aynı para biriminde tutar aynen kalır.</summary>

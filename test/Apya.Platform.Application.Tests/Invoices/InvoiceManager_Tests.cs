@@ -17,6 +17,7 @@ using Apya.Platform.CashMovements;
 using Apya.Platform.CustomerLedger;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.Invoices;
+using Apya.Platform.ProjectBudgets;
 
 namespace Apya.Platform.Tests.Application.Invoices;
 
@@ -49,7 +50,9 @@ public class InvoiceManager_Tests
 
         _sut = new InvoiceManager(
             _invoiceRepo, _paymentRepo, _cashAccountRepo,
-            _cashMovementRepo, _exchangeRateRepo, _customerLedgerRepo);
+            _cashMovementRepo,
+            new FxRateResolver(_exchangeRateRepo, Substitute.For<IRepository<FundingTranche, Guid>>()),
+            _customerLedgerRepo);
 
         var services = new ServiceCollection();
         services.AddSingleton<IGuidGenerator>(SimpleGuidGenerator.Instance);

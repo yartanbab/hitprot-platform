@@ -8,8 +8,8 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
-using Apya.Platform.ExchangeRates;
 using Apya.Platform.Permissions;
+using Apya.Platform.ProjectBudgets;
 
 namespace Apya.Platform.FxRevaluations;
 
@@ -19,18 +19,18 @@ public class FxRevaluationAppService : ApplicationService, IFxRevaluationAppServ
     private readonly IRepository<FxRevaluationSnapshot, Guid> _snapshotRepository;
     private readonly IRepository<CashAccount, Guid> _cashAccountRepository;
     private readonly IRepository<CashMovement, Guid> _cashMovementRepository;
-    private readonly IRepository<ExchangeRate, Guid> _exchangeRateRepository;
+    private readonly FxRateResolver _fxRateResolver;
 
     public FxRevaluationAppService(
         IRepository<FxRevaluationSnapshot, Guid> snapshotRepository,
         IRepository<CashAccount, Guid> cashAccountRepository,
         IRepository<CashMovement, Guid> cashMovementRepository,
-        IRepository<ExchangeRate, Guid> exchangeRateRepository)
+        FxRateResolver fxRateResolver)
     {
         _snapshotRepository = snapshotRepository;
         _cashAccountRepository = cashAccountRepository;
         _cashMovementRepository = cashMovementRepository;
-        _exchangeRateRepository = exchangeRateRepository;
+        _fxRateResolver = fxRateResolver;
     }
 
     public async Task<PagedResultDto<FxRevaluationSnapshotDto>> GetListAsync(GetFxRevaluationsInput input)
@@ -62,7 +62,6 @@ public class FxRevaluationAppService : ApplicationService, IFxRevaluationAppServ
         // APYA-145 (BUG-2): Değerleme tarihine kadarki hareketler — sonraki tarihli
         // hareketler yıl-sonu bakiyesine girmemeli (kur zaten RateDate<=asOf kullanıyor).
         var movements = await _cashMovementRepository.GetListAsync(m => m.MovementDate <= asOf);
-        var rates = await _exchangeRateRepository.GetListAsync(r => r.ToCurrency == FxRevaluationCalculator.BaseCurrency);
 
         foreach (var acc in accounts.OrderBy(a => a.Name))
         {
@@ -73,11 +72,9 @@ public class FxRevaluationAppService : ApplicationService, IFxRevaluationAppServ
             decimal? rate = null;
             if (!string.Equals(acc.Currency.Trim(), FxRevaluationCalculator.BaseCurrency, StringComparison.OrdinalIgnoreCase))
             {
-                rate = rates
-                    .Where(r => r.FromCurrency == acc.Currency && r.RateDate <= asOf)
-                    .OrderByDescending(r => r.RateDate)
-                    .Select(r => (decimal?)r.Rate)
-                    .FirstOrDefault();
+                // FIN-03: kur diğer üç yolla AYNI kapıdan — tarihe kadarki en güncel kur,
+                // yoksa ters yönde girilmiş kur.
+                rate = await _fxRateResolver.ResolveByDateAsync(acc.Currency, FxRevaluationCalculator.BaseCurrency, asOf);
             }
 
             var tryValue = FxRevaluationCalculator.ToBaseCurrency(balance, acc.Currency, rate);
