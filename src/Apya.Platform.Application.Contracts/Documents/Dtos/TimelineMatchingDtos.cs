@@ -17,6 +17,13 @@ public class ProjectTimelineDto
 
     public List<TimelineStepDto> Steps { get; set; } = new();
     public BudgetCoverageDto Budget { get; set; } = new();
+
+    /// <summary>
+    /// Bütçe görme izni (Projects.ViewBudget) var mı. Yoksa <see cref="Budget"/> boş döner ve
+    /// ekran bütçe kartlarını hiç çizmez — sıfır göstermek "harcama yok" diye okunurdu.
+    /// </summary>
+    public bool BudgetVisible { get; set; }
+
     public CapacityDto Capacity { get; set; } = new();
     public List<ProjectRiskDto> Risks { get; set; } = new();
 }

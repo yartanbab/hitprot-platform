@@ -384,7 +384,8 @@ public class DeliveryReportModelBuilder : ITransientDependency
                 .ToList();
         }
 
-        if (wantsBudget)
+        // Bütçeyi göremeyen kullanıcının raporuna sıfırlarla dolu bir bütçe bölümü basılmaz.
+        if (wantsBudget && timeline.BudgetVisible)
         {
             model.BudgetCoverage = new DeliveryReportModel.BudgetCoverageBlock
             {

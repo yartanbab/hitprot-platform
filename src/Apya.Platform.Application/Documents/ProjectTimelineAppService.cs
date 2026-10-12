@@ -92,7 +92,13 @@ public class ProjectTimelineAppService : PlatformAppService, IProjectTimelineApp
             }).ToList(),
         };
 
-        dto.Budget = await BuildBudgetAsync(project, files.Select(f => f.Id).ToList());
+        // Bütçe ve gider toplamları yalnız belge görme izniyle dönüyordu. Proje listesindeki
+        // kuralla aynı: bütçe görme izni yoksa hesaplanmaz.
+        dto.BudgetVisible = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
+        if (dto.BudgetVisible)
+        {
+            dto.Budget = await BuildBudgetAsync(project, files.Select(f => f.Id).ToList());
+        }
         dto.Capacity = await BuildCapacityAsync(projectId);
         dto.Risks = await BuildRisksAsync(projectId, steps);
 

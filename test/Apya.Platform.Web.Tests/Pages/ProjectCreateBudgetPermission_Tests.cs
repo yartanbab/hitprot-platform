@@ -76,6 +76,31 @@ public class ProjectCreateBudgetPermission_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// Zaman çizelgesi bütçe ve gider toplamlarını yalnız belge görme izniyle döndürüyordu. Bütçe
+    /// görme izni yoksa tutarlar hesaplanmaz ve ekrana "kartları çizme" işareti gider.
+    /// </summary>
+    [Fact]
+    public async Task Butce_yetkisi_olmayan_zaman_cizelgesinde_butceyi_goremez()
+    {
+        var projectId = Guid.NewGuid();
+        var code = "PZ-" + Guid.NewGuid().ToString("N")[..6];
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            await GetRequiredService<IRepository<Project, Guid>>().InsertAsync(
+                new Project(projectId, null, null, "Çizelge bütçesi " + code, code, "", 640_000m, 0m, "TRY"),
+                autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var timeline = await GetRequiredService<Apya.Platform.Documents.IProjectTimelineAppService>()
+            .GetAsync(projectId);
+
+        timeline.BudgetVisible.ShouldBeFalse();
+        timeline.Budget.TotalBudget.ShouldBe(0m);
+        timeline.ProjectName.ShouldStartWith("Çizelge bütçesi", Case.Sensitive, "çizelgenin kendisi açılmalı");
+    }
+
+    /// <summary>
     /// Liste bütçeyi maskeliyordu, tekil okuma ve detay maskelemiyordu: bütçeyi göremeyen kullanıcı
     /// aynı rakamları /api/app/project/{id} ve /detail üzerinden okuyabiliyordu (ürün kararı,
     /// 2026-10-12). Ardından proje düzenlenince kayıtlı bütçe korunur — maskelenen sıfır geri yazılmaz.

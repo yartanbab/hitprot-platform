@@ -135,6 +135,9 @@ export function TimelineRoot() {
 
       {/* Bütçe kapsaması — asıl soru: harcadığımın ne kadarı belgeli? */}
       <div className="apya-doc-kpis">
+        {/* Bütçe görme izni yoksa sunucu tutarları göndermez; kartlar hiç çizilmez
+            (sıfır göstermek "harcama yok" diye okunurdu). */}
+        {data.budgetVisible && (<>
         <div className="apya-doc-kpi">
           <span className="apya-md-overline">Bütçe kullanımı</span>
           <div className="apya-numeric apya-doc-kpi-value">%{budget.budgetUsedPercent}</div>
@@ -162,6 +165,7 @@ export function TimelineRoot() {
             )}
           </div>
         </div>
+        </>)}
         <div className="apya-doc-kpi">
           <span className="apya-md-overline">Adam-gün</span>
           <div className="apya-numeric apya-doc-kpi-value">{fmtNum(data.capacity.loggedPersonDays)}</div>

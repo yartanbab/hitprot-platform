@@ -1,5 +1,5 @@
 import { r, j as e, b as ue } from "./react-vendor-D7YDiBbi.js";
-import { E as H, m as V } from "./index-DgpuJ91w.js";
+import { E as V, m as H } from "./index-DgpuJ91w.js";
 import { D as he, h as xe, B as P, e as L } from "./Dialog-BdrRxZcw.js";
 import { S as Y } from "./SkeletonShape-Ds5M097Q.js";
 import { E as q, D as Z, P as J } from "./ProcessRibbon-D9pM1s89.js";
@@ -185,7 +185,7 @@ function Ee() {
   if (!a)
     return j(
       /* @__PURE__ */ e.jsx(
-        H,
+        V,
         {
           icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-diagram-project" }),
           title: "Proje bağlamı gerekiyor",
@@ -206,42 +206,44 @@ function Ee() {
   return j(
     /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
       /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpis", children: [
-        /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
-          /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Bütçe kullanımı" }),
-          /* @__PURE__ */ e.jsxs("div", { className: "apya-numeric apya-doc-kpi-value", children: [
-            "%",
-            f.budgetUsedPercent
+        t.budgetVisible && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+          /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
+            /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Bütçe kullanımı" }),
+            /* @__PURE__ */ e.jsxs("div", { className: "apya-numeric apya-doc-kpi-value", children: [
+              "%",
+              f.budgetUsedPercent
+            ] }),
+            /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: [
+              k(f.totalExpense, t.currency),
+              " / ",
+              k(f.totalBudget, t.currency)
+            ] })
           ] }),
-          /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: [
-            k(f.totalExpense, t.currency),
-            " / ",
-            k(f.totalBudget, t.currency)
-          ] })
-        ] }),
-        /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
-          /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Belgelenen harcama" }),
-          /* @__PURE__ */ e.jsxs("div", { className: "apya-numeric apya-doc-kpi-value", children: [
-            "%",
-            f.documentedPercent
+          /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
+            /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Belgelenen harcama" }),
+            /* @__PURE__ */ e.jsxs("div", { className: "apya-numeric apya-doc-kpi-value", children: [
+              "%",
+              f.documentedPercent
+            ] }),
+            /* @__PURE__ */ e.jsx("div", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: k(f.documentedExpense, t.currency) })
           ] }),
-          /* @__PURE__ */ e.jsx("div", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: k(f.documentedExpense, t.currency) })
-        ] }),
-        /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
-          /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Belgesiz harcama" }),
-          /* @__PURE__ */ e.jsx(
-            "div",
-            {
-              className: "apya-numeric apya-doc-kpi-value",
-              style: { color: f.undocumentedExpense > 0 ? "var(--apya-negative-500)" : void 0 },
-              children: k(f.undocumentedExpense, t.currency)
-            }
-          ),
-          /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: [
-            f.undocumentedCount,
-            " kalem",
-            f.undocumentedCount > 0 && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
-              " · ",
-              /* @__PURE__ */ e.jsx("a", { href: `${window.abp.appPath}Documents/Matching?projectId=${a}`, children: "eşleştir" })
+          /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-kpi", children: [
+            /* @__PURE__ */ e.jsx("span", { className: "apya-md-overline", children: "Belgesiz harcama" }),
+            /* @__PURE__ */ e.jsx(
+              "div",
+              {
+                className: "apya-numeric apya-doc-kpi-value",
+                style: { color: f.undocumentedExpense > 0 ? "var(--apya-negative-500)" : void 0 },
+                children: k(f.undocumentedExpense, t.currency)
+              }
+            ),
+            /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 11, color: "var(--apya-text-tertiary)" }, children: [
+              f.undocumentedCount,
+              " kalem",
+              f.undocumentedCount > 0 && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+                " · ",
+                /* @__PURE__ */ e.jsx("a", { href: `${window.abp.appPath}Documents/Matching?projectId=${a}`, children: "eşleştir" })
+              ] })
             ] })
           ] })
         ] }),
@@ -534,7 +536,7 @@ function Me() {
     ] })
   ) : null : M(
     /* @__PURE__ */ e.jsx(
-      H,
+      V,
       {
         icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-link" }),
         title: "Proje bağlamı gerekiyor",
@@ -736,7 +738,7 @@ function We() {
   if (!F)
     return K(
       /* @__PURE__ */ e.jsx(
-        H,
+        V,
         {
           icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-diagram-project" }),
           title: "Henüz proje yok",
@@ -870,8 +872,8 @@ function We() {
   );
 }
 const ne = document.getElementById("project-timeline-island");
-ne && V(ne, "documents-timeline", /* @__PURE__ */ e.jsx(Ee, {}));
+ne && H(ne, "documents-timeline", /* @__PURE__ */ e.jsx(Ee, {}));
 const ie = document.getElementById("document-matching-island");
-ie && V(ie, "documents-matching", /* @__PURE__ */ e.jsx(Me, {}));
+ie && H(ie, "documents-matching", /* @__PURE__ */ e.jsx(Me, {}));
 const le = document.getElementById("project-scope-island");
-le && V(le, "documents-scope", /* @__PURE__ */ e.jsx(We, {}));
+le && H(le, "documents-scope", /* @__PURE__ */ e.jsx(We, {}));
