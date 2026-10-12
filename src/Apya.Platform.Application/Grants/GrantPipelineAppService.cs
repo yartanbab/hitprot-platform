@@ -51,6 +51,7 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
+    private readonly GrantApplicationStepAligner _stepAligner;
 
     public GrantPipelineAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -66,7 +67,8 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
         IIdentityUserRepository userRepo,
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> mtFilter,
-        GrantNotificationDispatcher notifyDispatcher)
+        GrantNotificationDispatcher notifyDispatcher,
+        GrantApplicationStepAligner stepAligner)
     {
         _appRepo = appRepo;
         _activityRepo = activityRepo;
@@ -82,6 +84,7 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
         _notifyDispatcher = notifyDispatcher;
+        _stepAligner = stepAligner;
     }
 
     public async Task<GrantPipelineBoardDto> GetBoardAsync(Guid? grantCallId, Guid? assignedUserId)
@@ -115,6 +118,7 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
         else if (input.Stage.HasValue)
         {
             application.AdvanceStage(input.Stage.Value);
+            await _stepAligner.AlignToStageAsync(application);
             // LIF-07: ham enum adı değil, yerelleştirilmiş karşılığı — bu metin hem süreç
             // akışına hem firmaya giden bildirime yazılıyor.
             movedTo = L["Grants:Stage:" + input.Stage.Value].Value;

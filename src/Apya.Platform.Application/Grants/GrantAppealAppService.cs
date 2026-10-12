@@ -40,6 +40,7 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
+    private readonly GrantApplicationStepAligner _stepAligner;
 
     public GrantAppealAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -49,7 +50,8 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
         IRepository<Grant, Guid> grantRepo,
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> mtFilter,
-        GrantNotificationDispatcher notifyDispatcher)
+        GrantNotificationDispatcher notifyDispatcher,
+        GrantApplicationStepAligner stepAligner)
     {
         _appRepo = appRepo;
         _decisionRepo = decisionRepo;
@@ -59,6 +61,7 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
         _notifyDispatcher = notifyDispatcher;
+        _stepAligner = stepAligner;
     }
 
     private bool IsConsultant => _currentTenant.Id == null;
@@ -128,6 +131,7 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
         }
 
         application.AdvanceStage(GrantApplicationStage.Onay);
+        await _stepAligner.AlignToStageAsync(application);
         await _appRepo.UpdateAsync(application, autoSave: true);
     }
 

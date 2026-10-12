@@ -174,6 +174,85 @@ public class GrantPipelinePage_Tests : PlatformWebTestBase
         application.Stage.ShouldBe(beklenen!.Value, "özet eksen adımın eşlemesini izlemeli");
     }
 
+    /// <summary>
+    /// 🔴 DOM-01 (ters yön): sabit aşama doğrudan yazıldığında şablon adımı da ona hizalanmalı.
+    /// Eskiden yalnız Stage değişiyor, şablonlu başvurunun kartı program panosunda eski
+    /// sütunda kalıyordu.
+    /// </summary>
+    [Fact]
+    public async Task Asamayi_Dogrudan_Yazmak_Sablon_Adimini_Da_Hizalar()
+    {
+        var (callId, applicationId, _) = await SetupAsync(withTemplate: true);
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+        var stepRepo = GetRequiredService<IRepository<GrantStageTemplateStep, Guid>>();
+
+        var board = await _pipeline.GetBoardAsync(callId, null);
+        var first = board.Columns.First();
+        var last = board.Columns.Last();
+
+        GrantApplicationStage? hedefAsama;
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            hedefAsama = (await stepRepo.GetAsync(last.StepId!.Value)).Stage;
+        }
+        hedefAsama.ShouldNotBeNull("tohumlanan adımın aşama eşlemesi olmalı");
+
+        await _pipeline.MoveAsync(new MoveGrantApplicationInput { ApplicationId = applicationId, StepId = first.StepId });
+        await _pipeline.MoveAsync(new MoveGrantApplicationInput { ApplicationId = applicationId, Stage = hedefAsama });
+
+        using var readUow = uowManager.Begin(requiresNew: true);
+        var application = await appRepo.GetAsync(applicationId);
+        application.Stage.ShouldBe(hedefAsama!.Value);
+        application.CurrentStepId.ShouldBe(last.StepId, "kart o aşamaya eşlenen adıma alınmalı");
+    }
+
+    [Fact]
+    public async Task Adim_Zaten_O_Asamadaysa_Asama_Yazmak_Adimi_Oynatmaz()
+    {
+        var (callId, applicationId, _) = await SetupAsync(withTemplate: true);
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+
+        var board = await _pipeline.GetBoardAsync(callId, null);
+        var target = board.Columns[1];
+        await _pipeline.MoveAsync(new MoveGrantApplicationInput { ApplicationId = applicationId, StepId = target.StepId });
+
+        GrantApplicationStage asama;
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            asama = (await appRepo.GetAsync(applicationId)).Stage;
+        }
+
+        await _pipeline.MoveAsync(new MoveGrantApplicationInput { ApplicationId = applicationId, Stage = asama });
+
+        using var readUow = uowManager.Begin(requiresNew: true);
+        (await appRepo.GetAsync(applicationId)).CurrentStepId.ShouldBe(target.StepId);
+    }
+
+    [Fact]
+    public async Task Sablonsuz_Basvuruda_Asama_Yazmak_Adim_Uydurmaz()
+    {
+        var (_, applicationId, _) = await SetupAsync(withTemplate: false);
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var appRepo = GetRequiredService<IRepository<GrantApplication, Guid>>();
+
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var app = await appRepo.GetAsync(applicationId);
+            app.ClearStep();
+            await appRepo.UpdateAsync(app, autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        await _pipeline.MoveAsync(new MoveGrantApplicationInput { ApplicationId = applicationId, Stage = GrantApplicationStage.Onay });
+
+        using var readUow = uowManager.Begin(requiresNew: true);
+        var application = await appRepo.GetAsync(applicationId);
+        application.Stage.ShouldBe(GrantApplicationStage.Onay);
+        application.CurrentStepId.ShouldBeNull();
+    }
+
     [Fact]
     public async Task Baska_Sablonun_Adimina_Tasinamaz()
     {
