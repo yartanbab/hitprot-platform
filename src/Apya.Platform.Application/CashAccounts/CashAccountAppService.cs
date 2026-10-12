@@ -54,6 +54,31 @@ public class CashAccountAppService :
         await base.DeleteByIdAsync(id);
     }
 
+    /// <summary>
+    /// Hareketi olan kasanın para birimi değişmez. Kasa hareketinde para birimi alanı YOKTUR;
+    /// tutar kasanın para biriminde sayılır. TRY kasayı USD yapmak, geçmişteki her hareketi (kurla
+    /// çevrilip yazılmış gider/gelir/fatura bacakları dahil) yeniden yorumlar: bakiye, mizan ve
+    /// kur değerleme iz bırakmadan bozulur.
+    /// </summary>
+    public override async Task<CashAccountDto> UpdateAsync(Guid id, CreateUpdateCashAccountDto input)
+    {
+        await CheckUpdatePolicyAsync();
+
+        var account = await Repository.GetAsync(id);
+        var incoming = (input.Currency ?? string.Empty).Trim();
+        if (!string.Equals(account.Currency, incoming, StringComparison.OrdinalIgnoreCase))
+        {
+            var movementCount = (int)await _movementRepository.CountAsync(m => m.CashAccountId == id);
+            if (movementCount > 0)
+            {
+                throw new BusinessException(PlatformDomainErrorCodes.CashAccountCurrencyLocked)
+                    .WithData("MovementCount", movementCount);
+            }
+        }
+
+        return await base.UpdateAsync(id, input);
+    }
+
     protected override async Task<IQueryable<CashAccount>> CreateFilteredQueryAsync(GetCashAccountsInput input)
     {
         var query = await ReadOnlyRepository.GetQueryableAsync();

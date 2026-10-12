@@ -49,6 +49,7 @@ public static class PlatformDomainErrorCodes
     public const string CashAccountFieldTooLong = "Platform:CashAccount:FieldTooLong";
     public const string CashAccountCurrencyInvalid = "Platform:CashAccount:CurrencyInvalid";
     public const string CashAccountInUse = "Platform:CashAccount:InUse";
+    public const string CashAccountCurrencyLocked = "Platform:CashAccount:CurrencyLocked";
 
     // --- Kur (ExchangeRate) Modülü — APYA-137 ---
     public const string ExchangeRateCurrencyInvalid = "Platform:ExchangeRate:CurrencyInvalid";
@@ -75,6 +76,7 @@ public static class PlatformDomainErrorCodes
     public const string InvoiceNotEditable = "Platform:Invoice:NotEditable";
     public const string InvoiceTaxRateInvalid = "Platform:Invoice:TaxRateInvalid";
     public const string InvoiceCurrencyInvalid = "Platform:Invoice:CurrencyInvalid";
+    public const string InvoiceItemAmountInvalid = "Platform:Invoice:ItemAmountInvalid";
 
     // --- Fatura Tahsilatı → Kasa (APYA-136) ---
     public const string PaymentExchangeRateMissing = "Platform:Payment:ExchangeRateMissing";
