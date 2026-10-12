@@ -45,6 +45,8 @@ public class ProjectAppService :
     private readonly IRepository<Volo.Abp.TenantManagement.Tenant, Guid> _tenantRepository;
     private readonly IFeatureChecker _featureChecker;
     private readonly ProjectCategoryStore _categoryStore;
+    private readonly IRepository<Apya.Platform.Expenses.Expense, Guid> _expenseRepository;
+    private readonly IRepository<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Guid> _budgetLineRepository;
 
     public ProjectAppService(
         IRepository<Project, Guid> repository,
@@ -57,9 +59,13 @@ public class ProjectAppService :
         ITenantStore tenantStore,
         IRepository<Volo.Abp.TenantManagement.Tenant, Guid> tenantRepository,
         IFeatureChecker featureChecker,
-        ProjectCategoryStore categoryStore)
+        ProjectCategoryStore categoryStore,
+        IRepository<Apya.Platform.Expenses.Expense, Guid> expenseRepository,
+        IRepository<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Guid> budgetLineRepository)
         : base(repository)
     {
+        _expenseRepository = expenseRepository;
+        _budgetLineRepository = budgetLineRepository;
         _projectManager = projectManager;
         _projectAttachmentRepository = projectAttachmentRepository;
         _taskRepository = taskRepository;
@@ -295,7 +301,7 @@ public class ProjectAppService :
                 // Görev listesi bütçe iznine bakılmaksızın çekilir: ilerleme%/risk/atanan sayısı
                 // görev-bazlı bilgidir, bütçe rakamı değildir (yalnız time-log'dan türeyen SpentBudget bütçeye bağlı).
                 List<TaskItem> allTaskItems = new();
-                List<TaskTimeLog> allLogs = new();
+                var budgetFigures = new Dictionary<Guid, BudgetFigures>();
                 if (items.Any())
                 {
                     var projectIds = items.Select(x => x.Id).ToList();
@@ -309,8 +315,7 @@ public class ProjectAppService :
                             .Where(x => x.ProjectId.HasValue && projectIds.Contains(x.ProjectId.Value)));
                     if (canViewBudget)
                     {
-                        var allTaskIds = allTaskItems.Select(x => x.Id).ToList();
-                        allLogs = await _timeLogRepository.GetListAsync(x => allTaskIds.Contains(x.TaskId));
+                        budgetFigures = await LoadBudgetFiguresAsync(projectIds);
                     }
                 }
                 var allTasks = ObjectMapper.Map<List<TaskItem>, List<Apya.Platform.Tasks.TaskDto>>(allTaskItems);
@@ -322,7 +327,7 @@ public class ProjectAppService :
 
                 foreach (var dto in dtos)
                 {
-                    EnrichBudget(dto, allTaskItems, allLogs, canViewBudget);
+                    EnrichBudget(dto, budgetFigures, canViewBudget);
                     EnrichProgressAndRisk(dto, allTasks.Where(t => t.ProjectId == dto.Id).ToList(), now, CurrentUser.Id);
 
                     if (CurrentTenant.Id == null)
@@ -709,13 +714,65 @@ public class ProjectAppService :
         return true;
     }
 
-    private static void EnrichBudget(ProjectDto dto, List<TaskItem> allTasks, List<TaskTimeLog> allLogs, bool canViewBudget)
+    /// <summary>Bir projenin gider toplamı ve (varsa) onaylı bütçe kalemlerinin toplamı.</summary>
+    private readonly record struct BudgetFigures(decimal Spent, decimal? ApprovedLines);
+
+    /// <summary>
+    /// FIN-12 · Proje listesi "Bütçe" diye emek maliyetini (zaman kaydı × saatlik ücret) proje
+    /// bütçesine oranlıyordu; konsol ve Finans Merkezi ise gider toplamını kalem toplamına. Aynı
+    /// proje listede ₺0, konsolda ₺1.088.363 görünebiliyordu. Liste artık konsolla AYNI kaynaktan
+    /// okur (<c>ProjectBudgetAppService.GetOverviewAsync</c> ile aynı tanım): harcanan = gider
+    /// toplamı; bütçe = kalem varsa onaylı kalem toplamı, yoksa projenin tek tutarı.
+    /// </summary>
+    private async Task<Dictionary<Guid, BudgetFigures>> LoadBudgetFiguresAsync(List<Guid> projectIds)
+    {
+        var spent = await AsyncExecuter.ToListAsync(
+            (await _expenseRepository.GetQueryableAsync())
+                .Where(e => e.ProjectId != null && projectIds.Contains(e.ProjectId.Value))
+                .GroupBy(e => e.ProjectId!.Value)
+                .Select(g => new { ProjectId = g.Key, Total = g.Sum(e => e.Amount) }));
+
+        var lines = await AsyncExecuter.ToListAsync(
+            (await _budgetLineRepository.GetQueryableAsync())
+                .Where(l => projectIds.Contains(l.ProjectId))
+                .GroupBy(l => l.ProjectId)
+                .Select(g => new { ProjectId = g.Key, Total = g.Sum(l => l.ApprovedAmount) }));
+
+        var spentMap = spent.ToDictionary(x => x.ProjectId, x => x.Total);
+        var lineMap = lines.ToDictionary(x => x.ProjectId, x => x.Total);
+
+        return projectIds.Distinct().ToDictionary(
+            id => id,
+            id => new BudgetFigures(
+                spentMap.GetValueOrDefault(id),
+                lineMap.TryGetValue(id, out var total) ? total : null));
+    }
+
+    private async Task<decimal> SumEffectiveBudgetAsync(List<ProjectDto> dtos)
+    {
+        if (dtos.Count == 0)
+        {
+            return 0;
+        }
+
+        var figures = await LoadBudgetFiguresAsync(dtos.Select(d => d.Id).ToList());
+        return dtos.Sum(d => figures.TryGetValue(d.Id, out var f) && f.ApprovedLines.HasValue
+            ? f.ApprovedLines.Value
+            : d.TotalBudget);
+    }
+
+    private static void EnrichBudget(ProjectDto dto, Dictionary<Guid, BudgetFigures> figures, bool canViewBudget)
     {
         if (canViewBudget)
         {
-            var taskIds = allTasks.Where(x => x.ProjectId == dto.Id).Select(x => x.Id).ToList();
-            var seconds = allLogs.Where(x => taskIds.Contains(x.TaskId)).Sum(x => x.SecondsSpent ?? 0);
-            dto.SpentBudget = (decimal)(seconds / 3600.0) * dto.HourlyRate;
+            if (figures.TryGetValue(dto.Id, out var f))
+            {
+                dto.SpentBudget = f.Spent;
+                if (f.ApprovedLines.HasValue)
+                {
+                    dto.TotalBudget = f.ApprovedLines.Value;
+                }
+            }
         }
         else
         {
@@ -827,7 +884,7 @@ public class ProjectAppService :
                 ActiveCount = dtos.Count(d => d.DisplayStatus != "Planlama"),
                 AtRiskCount = dtos.Count(d => d.DisplayStatus == "Risk"),
                 AverageProgressPercent = dtos.Count > 0 ? (int)Math.Round(dtos.Average(d => d.ProgressPercent)) : 0,
-                TotalBudget = canViewBudget ? dtos.Sum(d => d.TotalBudget) : 0
+                TotalBudget = canViewBudget ? await SumEffectiveBudgetAsync(dtos) : 0
             };
             return summary;
         }
