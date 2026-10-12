@@ -22,4 +22,10 @@ public interface IGrantAppealAppService : IApplicationService
 
     /// <summary>Kurumun itiraza verdiği yanıt — istatistikleri bu besler.</summary>
     Task<GrantAppealConsoleDto> ResolveAppealAsync(Guid applicationId, bool accepted);
+
+    /// <summary>
+    /// Kurum itirazı kabul etti: kararı (Onaylandı / Kısmi onay), aşamayı ve onaylanan tutarı
+    /// birlikte günceller; başvuru yeniden canlanır.
+    /// </summary>
+    Task<GrantAppealConsoleDto> AcceptAppealAsync(AcceptGrantAppealInput input);
 }

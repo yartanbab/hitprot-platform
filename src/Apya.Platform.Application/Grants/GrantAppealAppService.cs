@@ -221,9 +221,53 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
         return await BuildAsync(application);
     }
 
+    /// <summary>
+    /// 🔴 LIF-10: Kabul edilen itiraz yalnız <c>AppealAccepted</c> bayrağını yazıyordu. Karar
+    /// "Reddedildi", başvuru kapalı kalıyor; projeye dönüşüm de ret kapısına takılıyordu. Kabul
+    /// artık kararı (Onaylandı / Kısmi onay), aşamayı ve onaylanan tutarı BİRLİKTE günceller.
+    /// </summary>
+    public async Task<GrantAppealConsoleDto> AcceptAppealAsync(AcceptGrantAppealInput input)
+    {
+        EnsureConsultant();
+        if (input.Outcome == GrantDecisionOutcome.Reddedildi)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantAppealAcceptedOutcomeInvalid);
+        }
+
+        var application = await GetApplicationAsync(input.ApplicationId);
+        var decision = await FindDecisionAsync(application.Id)
+                       ?? throw new BusinessException(PlatformDomainErrorCodes.GrantDecisionNotFound);
+
+        var previous = decision.AppealAccepted;
+
+        decision.ResolveAppeal(true);
+        decision.Update(input.Outcome, decision.DecidedOn, decision.ReferenceNo, decision.AppealDeadline);
+        await _decisionRepo.UpdateAsync(decision, autoSave: true);
+
+        // Aşama yalnız İLERİ taşınır (bkz. AdvanceStageForDecisionAsync); tutar verildiyse yazılır.
+        var stage = application.Stage >= GrantApplicationStage.Onay ? application.Stage : GrantApplicationStage.Onay;
+        application.AdvanceStage(stage, input.ApprovedAmount);
+        await _stepAligner.AlignToStageAsync(application);
+        await _appRepo.UpdateAsync(application, autoSave: true);
+
+        if (previous != true)
+        {
+            await NotifyAppealResolvedAsync(application, accepted: true);
+        }
+
+        return await BuildAsync(application);
+    }
+
     public async Task<GrantAppealConsoleDto> ResolveAppealAsync(Guid applicationId, bool accepted)
     {
         EnsureConsultant();
+
+        // Kabul, ayrıntı verilmeden kaydedilse de başvuruyu canlandırır (sonuç: Onaylandı).
+        if (accepted)
+        {
+            return await AcceptAppealAsync(new AcceptGrantAppealInput { ApplicationId = applicationId });
+        }
+
         var application = await GetApplicationAsync(applicationId);
         var decision = await FindDecisionAsync(application.Id)
                        ?? throw new BusinessException(PlatformDomainErrorCodes.GrantDecisionNotFound);
@@ -231,6 +275,12 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
         var previous = decision.AppealAccepted;
 
         decision.ResolveAppeal(accepted);
+        // Daha önce kabul diye işlenmiş itiraz ret olarak düzeltiliyorsa karar da ret'e döner.
+        // Aşama geri alınmaz (yalnız ileri kuralı); gerekirse danışman aşamayı elle düzeltir.
+        if (decision.Outcome != GrantDecisionOutcome.Reddedildi)
+        {
+            decision.Update(GrantDecisionOutcome.Reddedildi, decision.DecidedOn, decision.ReferenceNo, decision.AppealDeadline);
+        }
         await _decisionRepo.UpdateAsync(decision, autoSave: true);
 
         // 🔴 LIF-11: İtirazın sonucu firmaya hiç bildirilmiyordu. Aynı sonucun yeniden

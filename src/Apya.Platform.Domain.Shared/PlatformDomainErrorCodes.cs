@@ -147,6 +147,7 @@ public static class PlatformDomainErrorCodes
     public const string GrantAppealAlreadySubmitted = "Platform:Grant:AppealAlreadySubmitted";
     public const string GrantAppealWindowClosed = "Platform:Grant:AppealWindowClosed";
     public const string GrantAppealNotSubmitted = "Platform:Grant:AppealNotSubmitted";
+    public const string GrantAppealAcceptedOutcomeInvalid = "Platform:Grant:AppealAcceptedOutcomeInvalid";
     public const string GrantAppealNoItems = "Platform:Grant:AppealNoItems";
     public const string GrantDecisionNotFound = "Platform:Grant:DecisionNotFound";
 

@@ -146,6 +146,37 @@
         </div>
     </div>
 
+    @* LIF-10 · İtiraz kabul edildi: yeni sonuç ve onaylanan tutar tek pencerede. Eskiden yalnız
+       bayrak yazılıyor, karar "Reddedildi" ve başvuru kapalı kalıyordu. *@
+    <div class="modal fade" id="AcceptModal" tabindex="-1" aria-labelledby="AcceptModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="AcceptModalTitle">@L["Grants:Appeal:AcceptModal:Title"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Grants:Appeal:OpinionModal:Cancel"]"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="apya-ap-hint">@L["Grants:Appeal:AcceptModal:Hint"]</p>
+                    <div class="mb-3">
+                        <label class="form-label" for="AcceptOutcome">@L["Grants:Appeal:AcceptModal:Outcome"]</label>
+                        <select class="form-select" id="AcceptOutcome">
+                            <option value="1">@L["Grants:Decision:Outcome:Onaylandi"]</option>
+                            <option value="2">@L["Grants:Decision:Outcome:KismiOnay"]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label" for="AcceptAmount">@L["Grants:Appeal:AcceptModal:Amount"]</label>
+                        <input type="number" class="form-control apya-numeric" id="AcceptAmount" min="0" step="0.01" inputmode="decimal" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Grants:Appeal:OpinionModal:Cancel"]</button>
+                    <button type="button" class="btn btn-primary" id="AcceptSaveBtn">@L["Grants:Appeal:AcceptModal:Save"]</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @* LIF-12 · İtiraz maddesi: başlık + kurumun ifadesi tek pencerede. Sınırlar sunucudakiyle
        aynı (AddGrantAppealItemInput). *@
     <div class="modal fade" id="ItemModal" tabindex="-1" aria-labelledby="ItemModalTitle" aria-hidden="true">

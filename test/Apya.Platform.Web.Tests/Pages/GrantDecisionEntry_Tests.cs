@@ -285,4 +285,85 @@ public class GrantDecisionEntry_Tests : PlatformWebTestBase
         rows.Count.ShouldBe(2);
         rows.Last().Body.ShouldContain("reddedildi", Case.Sensitive);
     }
+
+    /* ═══════════════ LIF-10 · Kabul edilen itiraz başvuruyu canlandırır ═══════════════ */
+
+    private async Task<(GrantDecision Decision, GrantApplication Application)> ReadAsync(Guid applicationId)
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        using (GetRequiredService<Volo.Abp.Data.IDataFilter<IMultiTenant>>().Disable())
+        {
+            var decision = (await GetRequiredService<IRepository<GrantDecision, Guid>>()
+                .GetListAsync(d => d.GrantApplicationId == applicationId)).Single();
+            var application = await GetRequiredService<IRepository<GrantApplication, Guid>>().GetAsync(applicationId);
+            return (decision, application);
+        }
+    }
+
+    /// <summary>
+    /// Kabul yalnız bayrağı yazıyordu: karar "Reddedildi", başvuru kapalı kalıyor, projeye dönüşüm
+    /// ret kapısına takılıyordu. Kabul artık kararı, aşamayı ve tutarı birlikte günceller.
+    /// </summary>
+    [Fact]
+    public async Task Kabul_Edilen_Itiraz_Karari_Asamayi_Ve_Tutari_Birlikte_Gunceller()
+    {
+        var (_, _, applicationId) = await ArrangeSubmittedAppealAsync();
+
+        await _appeal.AcceptAppealAsync(new AcceptGrantAppealInput
+        {
+            ApplicationId = applicationId,
+            Outcome = GrantDecisionOutcome.KismiOnay,
+            ApprovedAmount = 250_000m
+        });
+
+        var (decision, application) = await ReadAsync(applicationId);
+        decision.AppealAccepted.ShouldBe(true);
+        decision.Outcome.ShouldBe(GrantDecisionOutcome.KismiOnay);
+        application.Stage.ShouldBe(GrantApplicationStage.Onay);
+        application.ApprovedAmount.ShouldBe(250_000m);
+    }
+
+    /// <summary>Ayrıntı verilmeden kaydedilen kabul de başvuruyu canlandırır (sonuç: Onaylandı).</summary>
+    [Fact]
+    public async Task Ayrintisiz_Kabul_De_Karari_Onaya_Cevirir()
+    {
+        var (_, _, applicationId) = await ArrangeSubmittedAppealAsync();
+
+        await _appeal.ResolveAppealAsync(applicationId, accepted: true);
+
+        var (decision, application) = await ReadAsync(applicationId);
+        decision.Outcome.ShouldBe(GrantDecisionOutcome.Onaylandi);
+        application.Stage.ShouldBe(GrantApplicationStage.Onay);
+    }
+
+    [Fact]
+    public async Task Kabul_Edilen_Itirazin_Sonucu_Ret_Olamaz()
+    {
+        var (_, _, applicationId) = await ArrangeSubmittedAppealAsync();
+
+        (await Should.ThrowAsync<Volo.Abp.BusinessException>(() => _appeal.AcceptAppealAsync(new AcceptGrantAppealInput
+        {
+            ApplicationId = applicationId,
+            Outcome = GrantDecisionOutcome.Reddedildi
+        }))).Code.ShouldBe(PlatformDomainErrorCodes.GrantAppealAcceptedOutcomeInvalid);
+
+        (await ReadAsync(applicationId)).Decision.AppealAccepted.ShouldBeNull();
+    }
+
+    /// <summary>Karşı yön: reddedilen itiraz kararı ve aşamayı değiştirmez.</summary>
+    [Fact]
+    public async Task Reddedilen_Itiraz_Karari_Degistirmez()
+    {
+        var (_, _, applicationId) = await ArrangeSubmittedAppealAsync();
+        var stageBefore = (await ReadAsync(applicationId)).Application.Stage;
+
+        await _appeal.ResolveAppealAsync(applicationId, accepted: false);
+
+        var (decision, application) = await ReadAsync(applicationId);
+        decision.Outcome.ShouldBe(GrantDecisionOutcome.Reddedildi);
+        decision.AppealAccepted.ShouldBe(false);
+        application.Stage.ShouldBe(stageBefore);
+    }
+
 }
