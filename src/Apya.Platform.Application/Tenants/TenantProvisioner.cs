@@ -49,6 +49,7 @@ public class TenantProvisioner : ITransientDependency
     private readonly IdentityUserManager _userManager;
     private readonly IUnitOfWorkManager _unitOfWorkManager;
     private readonly ICurrentTenant _currentTenant;
+    private readonly TenantRoleTemplateSeeder _roleTemplateSeeder;
 
     public TenantProvisioner(
         ITenantRepository tenantRepository,
@@ -61,8 +62,10 @@ public class TenantProvisioner : ITransientDependency
         IDataSeeder dataSeeder,
         IdentityUserManager userManager,
         IUnitOfWorkManager unitOfWorkManager,
-        ICurrentTenant currentTenant)
+        ICurrentTenant currentTenant,
+        TenantRoleTemplateSeeder roleTemplateSeeder)
     {
+        _roleTemplateSeeder = roleTemplateSeeder;
         _tenantRepository = tenantRepository;
         _tenantManager = tenantManager;
         _tenantProfileRepository = tenantProfileRepository;
@@ -115,6 +118,9 @@ public class TenantProvisioner : ITransientDependency
 
             await ApplyAdminIdentityAsync(input);
         }
+
+        // SEC-07: kiracı tek "admin" rolüyle değil, hazır rollerle başlar.
+        await _roleTemplateSeeder.EnsureAsync(tenant.Id);
 
         var profile = await _tenantProfileManager.CreateProfileAsync(
             tenant.Id,

@@ -375,6 +375,12 @@ public static class PlatformSettings
         /// geri gelmemeli.
         /// </summary>
         public const string GrantManageApplicationsGranted = Prefix + ".Backfills.GrantManageApplicationsGranted";
+
+        /// <summary>
+        /// SEC-07 hazır rolleri kurulu kiracılara eklendi mi. Telafi BİR KEZ koşar: kiracının
+        /// bilerek sildiği şablon rolü sonraki yayında geri gelmemeli.
+        /// </summary>
+        public const string TenantRoleTemplatesCreated = Prefix + ".Backfills.TenantRoleTemplatesCreated";
     }
 
     /// <summary>
