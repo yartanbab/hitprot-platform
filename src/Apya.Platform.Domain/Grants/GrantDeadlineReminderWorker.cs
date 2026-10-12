@@ -116,7 +116,7 @@ public class GrantDeadlineReminderWorker : AsyncPeriodicBackgroundWorkerBase
         {
             try
             {
-                call.Status = GrantCallStatus.Kapandi;
+                call.Close();
                 await callRepo.UpdateAsync(call, autoSave: true);
 
                 var result = await closingManager.RunAsync(call.Id);

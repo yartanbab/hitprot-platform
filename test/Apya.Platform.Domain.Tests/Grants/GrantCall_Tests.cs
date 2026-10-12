@@ -79,4 +79,39 @@ public class GrantCall_Tests
     {
         Call(status, Today.Date.AddDays(30)).IsOpenOn(Today).ShouldBeFalse();
     }
+
+    /// <summary>
+    /// DOM-06: durum yalnız adlandırılmış geçişlerle değişir. Setter dışarı açılırsa serbest
+    /// atama geri gelir ve "kim, ne niyetle değiştirdi" çağrı yerinde okunamaz.
+    /// </summary>
+    [Fact]
+    public void Status_Disaridan_Atanamaz()
+    {
+        var setter = typeof(GrantCall).GetProperty(nameof(GrantCall.Status))!.SetMethod;
+
+        setter.ShouldNotBeNull();
+        setter.IsPublic.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Publish_Taslagi_Aciga_Alir_Close_Kapatir()
+    {
+        var call = new GrantCall(Guid.NewGuid(), Guid.NewGuid(), "2025/1", GrantCallStatus.Taslak);
+
+        call.Publish();
+        call.Status.ShouldBe(GrantCallStatus.Acik);
+
+        call.Close();
+        call.Status.ShouldBe(GrantCallStatus.Kapandi);
+    }
+
+    [Fact]
+    public void ChangeStatus_Hostun_Sectigi_Durumu_Yazar()
+    {
+        var call = new GrantCall(Guid.NewGuid(), Guid.NewGuid(), "2025/1", GrantCallStatus.Taslak);
+
+        call.ChangeStatus(GrantCallStatus.Planlandi);
+
+        call.Status.ShouldBe(GrantCallStatus.Planlandi);
+    }
 }

@@ -236,7 +236,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         var drafts = await _callRepo.GetListAsync(c => c.GrantId == id && c.Status == GrantCallStatus.Taslak);
         foreach (var call in drafts)
         {
-            call.Status = GrantCallStatus.Acik;
+            call.Publish();
             await _callRepo.UpdateAsync(call, autoSave: true);
         }
 
