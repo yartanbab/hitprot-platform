@@ -60,6 +60,12 @@ public class TenantProjectTasksChoiceSource : IFormChoiceSource, ITransientDepen
             return new List<FormChoiceDto>();
         }
 
+        // Görev başlıkları görev görme izni olmayana verilmez (ürün kararı, 2026-10-13).
+        if (!await _authorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Default))
+        {
+            return new List<FormChoiceDto>();
+        }
+
         var tasks = await _taskRepository.GetListAsync(t => t.ProjectId == projectId && t.Status != TaskStatus.Cancelled);
 
         // Gizli görev yoksa yetki sorgusu da atılmaz (olağan durum).

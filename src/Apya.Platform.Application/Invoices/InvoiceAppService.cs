@@ -158,6 +158,13 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
     public async Task<ListResultDto<ProjectLookupDto>> GetProjectLookupAsync()
     {
+        // Fatura izni proje görme izni değildir: izin yoksa liste BOŞ döner (hata değil — Finans
+        // Merkezi bu ucu ad sözlüğü için çağırır ve düşmemeli).
+        if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Default))
+        {
+            return new ListResultDto<ProjectLookupDto>(new List<ProjectLookupDto>());
+        }
+
         var q = await _projectRepository.GetQueryableAsync();
         var projects = await AsyncExecuter.ToListAsync(q.OrderBy(p => p.Name).Take(1000));
         return new ListResultDto<ProjectLookupDto>(projects.Select(p => new ProjectLookupDto
@@ -169,6 +176,11 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
     public async Task<ListResultDto<CustomerLookupDto>> GetCustomerLookupAsync()
     {
+        if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Customers.Default))
+        {
+            return new ListResultDto<CustomerLookupDto>(new List<CustomerLookupDto>());
+        }
+
         var q = await _customerRepository.GetQueryableAsync();
         var customers = await AsyncExecuter.ToListAsync(q.OrderBy(c => c.Name).Take(1000));
         return new ListResultDto<CustomerLookupDto>(customers.Select(c => new CustomerLookupDto

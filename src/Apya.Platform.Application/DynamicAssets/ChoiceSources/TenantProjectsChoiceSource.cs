@@ -4,7 +4,9 @@ using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.DynamicAssets.Dtos;
+using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
+using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Timing;
@@ -29,10 +31,13 @@ public class TenantProjectsChoiceSource : IFormChoiceSource, ITransientDependenc
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IClock _clock;
     private readonly ICurrentUser _currentUser;
+    private readonly IAuthorizationService _authorizationService;
 
     public TenantProjectsChoiceSource(
-        IRepository<Project, Guid> projectRepository, IClock clock, ICurrentUser currentUser)
+        IRepository<Project, Guid> projectRepository, IClock clock, ICurrentUser currentUser,
+        IAuthorizationService authorizationService)
     {
+        _authorizationService = authorizationService;
         _projectRepository = projectRepository;
         _clock = clock;
         _currentUser = currentUser;
@@ -45,6 +50,12 @@ public class TenantProjectsChoiceSource : IFormChoiceSource, ITransientDependenc
     public async Task<List<FormChoiceDto>> GetAsync(string? parentValue)
     {
         if (!_currentUser.IsAuthenticated)
+        {
+            return new List<FormChoiceDto>();
+        }
+
+        // Oturum yetmez: proje adları proje görme izni olmayana verilmez (ürün kararı, 2026-10-13).
+        if (!await _authorizationService.IsGrantedAsync(PlatformPermissions.Projects.Default))
         {
             return new List<FormChoiceDto>();
         }
