@@ -180,6 +180,9 @@ public class DocumentSuggestionAppService : ApplicationService, IDocumentSuggest
         return applied;
     }
 
+    // Yok sayma kiracının tamamı için kalıcıdır; öneriyi uygulayan uçla aynı izni ister.
+    // (Sınıf izni Documents.Default yalnız görüntülemedir.)
+    [Authorize(PlatformPermissions.Documents.ManageMeta)]
     public virtual async Task DismissAsync(ApplyDocumentSuggestionsDto input)
     {
         foreach (var reference in input.Suggestions)
