@@ -288,6 +288,12 @@ public class DocumentSuggestionAppService : ApplicationService, IDocumentSuggest
     /// </summary>
     private async Task<List<DocumentSuggestion>> BuildFromExpensesAsync(Guid? projectId)
     {
+        // Gider eşleşme önerisi gider başlığını ve tutarını taşır; gider görme izni yoksa üretilmez.
+        if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Default))
+        {
+            return new List<DocumentSuggestion>();
+        }
+
         var matchedFileIds = (await AsyncExecuter.ToListAsync(
                 (await _matchRepository.GetQueryableAsync()).AsNoTracking().Select(m => m.DocumentFileId)))
             .ToHashSet();

@@ -511,7 +511,9 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
                 .Where(m => m.DocumentFileId == file.Id)
                 .Select(m => new { m.ExpenseId, m.AnnexNumber, m.Score }));
 
-        if (matches.Count > 0)
+        // Bağlı gider satırı tutar ve tarih taşır; gider görme izni yoksa listelenmez.
+        if (matches.Count > 0
+            && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Default))
         {
             var expenseIds = matches.Select(m => m.ExpenseId).ToList();
             var expenseQueryable = await _expenseRepository.GetQueryableAsync();

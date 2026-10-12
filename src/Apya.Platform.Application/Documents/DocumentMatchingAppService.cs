@@ -59,6 +59,9 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
 
     public virtual async Task<MatchingBoardDto> GetBoardAsync(Guid projectId)
     {
+        // Bu uç gider satırlarını (başlık, tutar, tedarikçi) döndürür; belge görme izni gider
+        // görme yetkisi değildir.
+        await AuthorizationService.CheckAsync(PlatformPermissions.Expenses.Default);
         var matchedExpenseIds = (await GetProjectMatchesAsync(projectId)).Select(m => m.ExpenseId).ToHashSet();
         var matchedFileIds = (await GetProjectMatchesAsync(projectId)).Select(m => m.DocumentFileId).ToHashSet();
 
@@ -113,6 +116,9 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
 
     public virtual async Task<List<MatchCandidateDto>> GetCandidatesAsync(Guid expenseId)
     {
+        // Bu uç gider satırlarını (başlık, tutar, tedarikçi) döndürür; belge görme izni gider
+        // görme yetkisi değildir.
+        await AuthorizationService.CheckAsync(PlatformPermissions.Expenses.Default);
         var expense = await _expenseRepository.GetAsync(expenseId);
 
         if (!expense.ProjectId.HasValue)
@@ -224,6 +230,9 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
 
     public virtual async Task<List<DocumentMatchDto>> GetMatchesAsync(Guid projectId)
     {
+        // Bu uç gider satırlarını (başlık, tutar, tedarikçi) döndürür; belge görme izni gider
+        // görme yetkisi değildir.
+        await AuthorizationService.CheckAsync(PlatformPermissions.Expenses.Default);
         var matches = await GetProjectMatchesAsync(projectId);
 
         if (matches.Count == 0)
