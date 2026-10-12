@@ -67,6 +67,11 @@
             </span>
             <span class="apya-today-item-cta">@L["Grants:Today:Opportunity:Cta"] <i class="fa fa-chevron-right"></i></span>
         </a>
+        @* LIF-08: öneriyi kapatma. Kart bir bağlantı olduğu için düğme İÇİNE konmaz (iç içe
+           etkileşimli öğe geçersiz); kartın hemen altında durur ve kartla birlikte gizlenir. *@
+        <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none p-0 mt-1 d-none" id="OpportunityDismiss">
+            <i class="fa fa-xmark me-1" aria-hidden="true"></i>@L["Grants:Today:Opportunity:Dismiss"]
+        </button>
     }
 
     <details class="apya-today-fold d-none" id="TodayMore">

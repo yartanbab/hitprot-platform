@@ -255,4 +255,61 @@ public class GrantToday_Tests : PlatformEntityFrameworkCoreTestBase
             resolved.IsClosed.ShouldBeTrue();
         }
     }
+
+    /// <summary>
+    /// LIF-08: firma danışmanın önerisini kapatabilir. Eskiden "reddedildi" durumunu atayan kod
+    /// yoktu; öneri, firma ilgilenmese de "Bugün"de fırsat olarak durmaya devam ediyordu.
+    /// </summary>
+    [Fact]
+    public async Task Kiraci_oneriyi_kapatinca_firsat_karti_kalkar()
+    {
+        var (_, call) = await CreateHostCallAsync("Kapatılacak Öneri Programı", daysToDeadline: 20);
+        var tenantId = await CreateTenantAsync("Öneri Kapatan Firma");
+        var recRepository = GetRequiredService<IRepository<GrantRecommendation, Guid>>();
+        var recommendations = GetRequiredService<IGrantRecommendationAppService>();
+
+        using (_currentTenant.Change(tenantId))
+        {
+            await recRepository.InsertAsync(
+                new GrantRecommendation(Guid.NewGuid(), tenantId, call.Id, GrantRecommendationSource.Host, null),
+                autoSave: true);
+
+            (await _today.GetAsync()).Opportunity!.GrantCallId.ShouldBe(call.Id);
+
+            await recommendations.DismissRecommendationAsync(call.Id);
+
+            (await _today.GetAsync()).Opportunity.ShouldBeNull();
+            (await recRepository.GetListAsync(r => r.GrantCallId == call.Id))
+                .ShouldAllBe(r => r.Status == GrantRecommendationStatus.Dismissed);
+        }
+    }
+
+    [Fact]
+    public async Task Baska_firmanin_onerisi_kapatilamaz()
+    {
+        var (_, call) = await CreateHostCallAsync("Yabancı Öneri Programı", daysToDeadline: 20);
+        var owner = await CreateTenantAsync("Öneri Sahibi Firma");
+        var other = await CreateTenantAsync("Yabancı Firma");
+        var recRepository = GetRequiredService<IRepository<GrantRecommendation, Guid>>();
+        var recommendations = GetRequiredService<IGrantRecommendationAppService>();
+
+        using (_currentTenant.Change(owner))
+        {
+            await recRepository.InsertAsync(
+                new GrantRecommendation(Guid.NewGuid(), owner, call.Id, GrantRecommendationSource.Host, null),
+                autoSave: true);
+        }
+
+        using (_currentTenant.Change(other))
+        {
+            await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
+                () => recommendations.DismissRecommendationAsync(call.Id));
+        }
+
+        using (_currentTenant.Change(owner))
+        {
+            (await recRepository.GetListAsync(r => r.GrantCallId == call.Id))
+                .ShouldAllBe(r => r.Status == GrantRecommendationStatus.New);
+        }
+    }
 }

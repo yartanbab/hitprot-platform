@@ -116,6 +116,24 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         return true;
     }
 
+    public async Task DismissRecommendationAsync(Guid grantCallId)
+    {
+        // Kiracı filtresi açık: yalnız bu firmaya gönderilmiş öneriler bulunur; başka firmanın
+        // önerisi (ya da host bağlamı) "bulunamadı" olur.
+        var recommendations = await _hostRecRepo.GetListAsync(
+            r => r.GrantCallId == grantCallId && r.Source == GrantRecommendationSource.Host);
+        if (recommendations.Count == 0)
+        {
+            throw new EntityNotFoundException(typeof(GrantRecommendation), grantCallId);
+        }
+
+        foreach (var recommendation in recommendations)
+        {
+            recommendation.Dismiss();
+            await _hostRecRepo.UpdateAsync(recommendation, autoSave: true);
+        }
+    }
+
     public async Task SetBookmarkNoteAsync(SetGrantBookmarkNoteInput input)
     {
         // Kiracı filtresi açık: başka firmanın takibi bulunmaz. Takipte olmayan çağrıya
