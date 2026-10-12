@@ -698,22 +698,17 @@ public class IndexModel : AbpPageModel
         // düştüğü için kısmi liste birikmez — ikisinden biri yoksa hesaplar kilitli.
         AccountsLocked = !await TryAddAsync(async () =>
         {
-            var result = await _cashAccountAppService.GetListAsync(
-                new GetCashAccountsInput { MaxResultCount = 1000, IsActive = true });
+            var rows = await CashAccountBalanceLoader.LoadActiveAsync(_cashAccountAppService, _cashMovementAppService);
 
-            foreach (var a in result.Items)
+            accounts.AddRange(rows.Select(r => new AccountSummary
             {
-                var balance = await _cashMovementAppService.GetBalanceAsync(a.Id);
-                accounts.Add(new AccountSummary
-                {
-                    Id = a.Id,
-                    Name = a.Name,
-                    Type = a.Type,
-                    Currency = a.Currency,
-                    Iban = a.Iban,
-                    Balance = balance.CurrentBalance
-                });
-            }
+                Id = r.Account.Id,
+                Name = r.Account.Name,
+                Type = r.Account.Type,
+                Currency = r.Account.Currency,
+                Iban = r.Account.Iban,
+                Balance = r.Balance
+            }));
         });
 
         Accounts = accounts.OrderByDescending(a => a.Balance).ToList();
