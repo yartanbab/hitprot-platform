@@ -71,6 +71,7 @@ $(function () {
         // finans sekmesi yalnız yetkiliye basılır; yoksa listeye düşülür.
         currentView = v === 'board' ? 'kanban'
             : (v === 'finance' && $('#btn-view-finance').length) ? 'finance'
+            : (v === 'indicators' && $('#btn-view-indicators').length) ? 'indicators'
             : CATALOG_VIEWS.indexOf(v) > -1 ? v
             : 'list';
     }
@@ -690,6 +691,8 @@ $(function () {
     // kapatılabilir; düzen kullanıcıya PROJE BAŞINA sunucuda saklanır.
     var FIXED_TABS = ['list', 'kanban'];
     if ($('#btn-view-finance').length) { FIXED_TABS.push('finance'); }
+    // Göstergeler (PRJ-08): Finans gibi sabit ama koşullu — görme izni yoksa Razor basmaz.
+    if ($('#btn-view-indicators').length) { FIXED_TABS.push('indicators'); }
 
     var tabsApi = console_.createTabs({
         scope: 'project:' + projectId,
@@ -714,7 +717,7 @@ $(function () {
     // tam yükseklik flex zinciri `.view-panel:not(.d-none)` seçicisine dayanıyor,
     // .tab-pane'in kendi display/opacity yönetimi zinciri koparıyordu.
     function switchView(mode) {
-        currentView = (mode === 'kanban' || mode === 'finance' || CATALOG_VIEWS.indexOf(mode) > -1)
+        currentView = (mode === 'kanban' || mode === 'finance' || mode === 'indicators' || CATALOG_VIEWS.indexOf(mode) > -1)
             ? mode : 'list';
         $('.apya-console-views > .view-panel').addClass('d-none');
 
@@ -722,9 +725,12 @@ $(function () {
         // (belge/form/kontrol/bağ kayıtları durum-atanan filtresine tabi değil);
         // şerit gizlenir ki "filtre çalışmıyor" yanılgısı doğmasın.
         $('#console-filters').toggleClass('d-none',
-            currentView === 'finance' || ISLAND_VIEWS.indexOf(currentView) > -1);
+            currentView === 'finance' || currentView === 'indicators' || ISLAND_VIEWS.indexOf(currentView) > -1);
 
-        if (currentView === 'finance') {
+        if (currentView === 'indicators') {
+            // Panel sunucuda basıldı; yüklenecek bir şey yok.
+            $('#view-indicators').removeClass('d-none');
+        } else if (currentView === 'finance') {
             // Panel sunucuda basıldı; yüklenecek bir şey yok.
             $('#view-finance').removeClass('d-none');
         } else if (ISLAND_VIEWS.indexOf(currentView) > -1) {
@@ -774,6 +780,45 @@ $(function () {
     // görünen ara toplamı günceller (başlık toplamları sunucudan, bütçe
     // özetiyle tutarlı). Kapsam taşıma paylaşılan diyalogla (apya-finance-scope).
     // ================================================================
+    // ================================================================
+    // GÖSTERGELER PANELİ (PRJ-08) — tablo sunucuda basılı; pencereler kaydedince
+    // sayfa yenilenir (?view=indicators korunur).
+    // ================================================================
+    (function initIndicators() {
+        var $panel = $('#project-indicators-panel');
+        if (!$panel.length) { return; }
+
+        var indicatorModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Projects/IndicatorModal' });
+        var entriesModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Projects/IndicatorEntriesModal' });
+        indicatorModal.onResult(function () { window.location.reload(); });
+        entriesModal.onResult(function () { window.location.reload(); });
+
+        $('#btn-add-indicator').on('click', function () {
+            indicatorModal.open({ projectId: projectId });
+        });
+        $panel.on('click', '[data-indicator-edit]', function () {
+            indicatorModal.open({ projectId: projectId, id: $(this).data('indicator-edit') });
+        });
+        $panel.on('click', '[data-indicator-entries]', function () {
+            entriesModal.open({ projectId: projectId, indicatorId: $(this).data('indicator-entries') });
+        });
+        $panel.on('click', '[data-indicator-delete]', function () {
+            var id = $(this).data('indicator-delete');
+            // Gösterge, bağlı ölçümleriyle birlikte silinir → yazarak onay (apya-confirm.js tek kuralı).
+            apya.confirm({
+                message: abp.localization.getResource('Platform')(
+                    'Projects:Indicators:DeleteConfirm', $(this).data('indicator-name')),
+                danger: true,
+                typeToConfirm: true
+            }).then(function (ok) {
+                if (!ok) { return; }
+                apya.platform.projects.projectIndicator.delete(id).then(function () {
+                    window.location.reload();
+                });
+            });
+        });
+    })();
+
     (function initFinanceTable() {
         var $panel = $('#finance-expense-panel');
         if (!$panel.length) { return; }

@@ -211,6 +211,7 @@
         "Permission:Projects.ManageBudget": "Bütçe Düzenleme (kalem, fon dilimi, revizyon)",
         "Permission:Projects.ManageTeam": "Ekip Yönetimi",
         "Permission:Projects.ViewIndicators": "Göstergeleri Görme",
+        "Projects:Indicators:DeleteConfirm": "\"{0}\" göstergesi ve tüm ölçümleri silinecek.",
         "Permission:Projects.ManageIndicators": "Göstergeleri Yönetme (hedef, ölçüm girişi)",
         "Permission:Projects.UseAiFeatures": "AI Özelliklerini Kullanma",
         "Permission:Projects.ManageCategories": "Proje Kategorilerini Yönetme",

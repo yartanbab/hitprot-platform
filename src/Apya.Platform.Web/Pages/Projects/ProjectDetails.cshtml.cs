@@ -65,6 +65,10 @@ public class ProjectDetailsModel : PlatformPageModel
     /// </summary>
     public Apya.Platform.Grants.Dtos.GrantProjectOriginDto? GrantOrigin { get; set; }
 
+    /// <summary>PRJ-08 · Göstergeler sekmesi. Görme izni yoksa null kalır ve sekme basılmaz.</summary>
+    public System.Collections.Generic.List<Apya.Platform.Projects.ProjectIndicatorDto>? Indicators { get; set; }
+    public bool CanManageIndicators { get; set; }
+
     /// <summary>
     /// Kullanıcının BU PROJE için açık sekmeleri ("project:{id}" scope'u) —
     /// HAM JSON, sayfaya olduğu gibi basılır ve ProjectDetails.js ayrıştırır.
@@ -136,6 +140,18 @@ public class ProjectDetailsModel : PlatformPageModel
         // Bütçe ile aynı desen: yetkisi olmayan kullanıcıda sessizce atlanır.
         try { GrantOrigin = await _grantProjectOrigin.GetByProjectAsync(Id); }
         catch (Volo.Abp.Authorization.AbpAuthorizationException) { GrantOrigin = null; }
+
+        // Bütçe ile aynı desen: görme izni yoksa sessizce atlanır, sekme basılmaz.
+        try
+        {
+            Indicators = await LazyServiceProvider
+                .LazyGetRequiredService<Apya.Platform.Projects.IProjectIndicatorAppService>()
+                .GetListAsync(Id);
+        }
+        catch (Volo.Abp.Authorization.AbpAuthorizationException) { Indicators = null; }
+
+        CanManageIndicators = Indicators != null
+            && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ManageIndicators);
 
         BoardTabsJson = ShellBoardTabsSetting.ExtractScopeJson(
             await _settingProvider.GetOrNullAsync(PlatformSettings.Shell.BoardTabs),

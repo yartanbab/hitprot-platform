@@ -183,6 +183,9 @@ public class ProjectIndicator_Tests : PlatformEntityFrameworkCoreTestBase
         await _indicators.AddEntryAsync(id,
             new CreateProjectIndicatorEntryDto { EntryDate = new DateTime(2026, 9, 1), Value = 10m, DocumentFileId = ownFile });
         (await _indicators.GetEntriesAsync(id)).Single().DocumentName.ShouldBe("Katılım listesi.pdf");
+
+        // Kanıt seçenekleri yalnız göstergenin projesindeki belgelerdir.
+        (await _indicators.GetDocumentOptionsAsync(id)).Select(o => o.DocumentFileId).ShouldBe(new[] { ownFile });
     }
 
     [Fact]

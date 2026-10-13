@@ -55,6 +55,12 @@ public class ProjectIndicatorEntryDto : CreationAuditedEntityDto<Guid>
     public string? DocumentName { get; set; }
 }
 
+public class ProjectIndicatorDocumentOptionDto
+{
+    public Guid DocumentFileId { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
 public class CreateProjectIndicatorEntryDto
 {
     public DateTime EntryDate { get; set; }
