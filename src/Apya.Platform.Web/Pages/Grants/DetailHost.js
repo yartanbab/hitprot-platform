@@ -142,6 +142,17 @@ $(function () {
             }).join('')
             : '<div class="apya-dh-hint">' + esc(l('Grants:DetailHost:NoMilestone')) + '</div>');
 
+        $('#Targets').html((model.targets || []).length
+            ? model.targets.map(function (t) {
+                var unit = t.unit ? ' ' + t.unit : '';
+                return '<div class="apya-dh-row"><span>' + esc(t.name) + '</span>' +
+                    '<span class="apya-dh-item-time">' +
+                    esc(Number(t.baselineValue).toLocaleString('tr-TR', { maximumFractionDigits: 4 }) + unit + ' → ' +
+                        Number(t.targetValue).toLocaleString('tr-TR', { maximumFractionDigits: 4 }) + unit) +
+                    '</span></div>';
+            }).join('')
+            : '<div class="apya-dh-hint">' + esc(l('Grants:DetailHost:NoTarget')) + '</div>');
+
         $('#TotalHours').text(hours(model.totalHours) + ' sa');
         $('#SuccessFee').text(model.successFeePercent != null ? '%' + model.successFeePercent : '—');
         $('#Revenue').text(model.estimatedRevenue != null ? money(model.estimatedRevenue) + ' ₺' : '—');

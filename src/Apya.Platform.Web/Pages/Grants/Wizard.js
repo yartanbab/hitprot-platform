@@ -271,6 +271,64 @@ $(function () {
     $('#ProjectSummary').on('input', function () { saveSummary('summary:Body'); });
     $('#ProjectDuration').on('input', function () { saveSummary('summary:Duration'); });
 
+    // ---------- Adım 2 · hedefler (isteğe bağlı) ----------
+    // Serbest satırlar: alan kilidi ve otomatik kayıt yok; "Ekle" tek istekte yazar.
+    function targetValue(v, unit) {
+        return Number(v).toLocaleString('tr-TR', { maximumFractionDigits: 4 }) + (unit ? ' ' + unit : '');
+    }
+
+    function paintTargets() {
+        var rows = model.targets || [];
+        $('#TargetRows').html(rows.length
+            ? rows.map(function (t) {
+                return '<div class="d-flex align-items-center gap-2" data-target-id="' + esc(t.id) + '">' +
+                    '<span class="flex-grow-1"><span class="fw-semibold">' + esc(t.name) + '</span> ' +
+                    '<span class="text-muted">' + esc(targetValue(t.baselineValue, t.unit)) + ' → ' +
+                    esc(targetValue(t.targetValue, t.unit)) +
+                    (t.targetDate ? ' · ' + esc(new Date(t.targetDate).toLocaleDateString('tr-TR')) : '') +
+                    '</span></span>' +
+                    (model.isReadOnly ? '' :
+                        '<button type="button" class="btn btn-sm btn-outline-danger" data-target-delete="' + esc(t.id) + '"' +
+                        ' aria-label="' + esc(l('Grants:Wizard:Target:Delete', t.name)) + '"' +
+                        ' title="' + esc(l('Grants:Wizard:Target:Delete', t.name)) + '">' +
+                        '<i class="fa fa-trash" aria-hidden="true"></i></button>') +
+                    '</div>';
+            }).join('')
+            : '<div class="text-muted small">' + esc(l('Grants:Wizard:Target:Empty')) + '</div>');
+        $('#TargetForm').toggleClass('d-none', !!model.isReadOnly);
+    }
+
+    $('#TargetAdd').on('click', function () {
+        var name = ($('#TargetName').val() || '').trim();
+        var value = $('#TargetValue').val();
+        if (!name || value === '') {
+            abp.notify.warn(l('Grants:Wizard:Target:Required'));
+            return;
+        }
+        var $btn = $(this).prop('disabled', true);
+        service.addTarget({
+            applicationId: appId,
+            name: name,
+            unit: ($('#TargetUnit').val() || '').trim() || null,
+            baselineValue: Number($('#TargetBaseline').val()) || 0,
+            targetValue: Number(value),
+            targetDate: $('#TargetDate').val() || null
+        }).then(function (dto) {
+            model = dto;
+            $('#TargetName, #TargetUnit, #TargetValue, #TargetDate').val('');
+            $('#TargetBaseline').val('0');
+            paint();
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+
+    $('#TargetRows').on('click', '[data-target-delete]', function () {
+        var $btn = $(this).prop('disabled', true);
+        service.deleteTarget(appId, $btn.data('target-delete')).then(function (dto) {
+            model = dto;
+            paint();
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+
     // ---------- Adım 3 · bütçe ----------
     function budgetRow(line) {
         var key = 'budget:' + costKeys[line.kind];
@@ -500,6 +558,7 @@ $(function () {
         paintSteps();
         paintFirm();
         paintSummary();
+        paintTargets();
         paintBudget();
         paintSubmit();
         paintPresence();

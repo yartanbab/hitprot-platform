@@ -345,6 +345,13 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
                     DueDate = t.DueDate
                 }).ToList();
 
+            dto.Targets = (await LazyServiceProvider
+                    .LazyGetRequiredService<IRepository<GrantApplicationTarget, Guid>>()
+                    .GetListAsync(t => t.GrantApplicationId == application.Id))
+                .OrderBy(t => t.CreationTime)
+                .Select(GrantApplicationWizardAppService.ToTargetDto)
+                .ToList();
+
             dto.Milestones = (await _milestoneRepo.GetListAsync(m => m.GrantApplicationId == application.Id))
                 .OrderBy(m => m.DueDate ?? DateTime.MaxValue)
                 .Select(m => new GrantMilestoneDto

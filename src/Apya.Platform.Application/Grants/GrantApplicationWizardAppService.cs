@@ -173,6 +173,40 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         return await BuildAsync(application);
     }
 
+    private IRepository<GrantApplicationTarget, Guid> TargetRepo
+        => LazyServiceProvider.LazyGetRequiredService<IRepository<GrantApplicationTarget, Guid>>();
+
+    /// <summary>
+    /// Hedefler serbest satırlardır (bütçe gibi sabit kalem değil): alan kilidi kullanılmaz,
+    /// ekleme ve silme tek istekte biter. Kiracı satırı başvurunun kiracısıyla yazılır.
+    /// </summary>
+    public async Task<GrantApplicationWizardDto> AddTargetAsync(SaveWizardTargetInput input)
+    {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
+        var application = await GetEditableApplicationAsync(input.ApplicationId);
+
+        var target = new GrantApplicationTarget(
+            GuidGenerator.Create(), application.TenantId, application.Id,
+            input.Name, input.Unit, input.BaselineValue, input.TargetValue, input.TargetDate);
+        await TargetRepo.InsertAsync(target, autoSave: true);
+
+        return await BuildAsync(application);
+    }
+
+    public async Task<GrantApplicationWizardDto> DeleteTargetAsync(Guid applicationId, Guid targetId)
+    {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
+        var application = await GetEditableApplicationAsync(applicationId);
+
+        // Hedef BU başvurunun olmalı: başka başvurunun satırı kimliğiyle silinemez.
+        var target = await InHostScopeAsync(() => TargetRepo.FirstOrDefaultAsync(
+                         t => t.Id == targetId && t.GrantApplicationId == application.Id))
+                     ?? throw new EntityNotFoundException(typeof(GrantApplicationTarget), targetId);
+        await TargetRepo.DeleteAsync(target, autoSave: true);
+
+        return await BuildAsync(application);
+    }
+
     public async Task<GrantApplicationWizardDto> SetStepAsync(Guid applicationId, int step)
     {
         var application = await GetApplicationAsync(applicationId);
@@ -464,6 +498,16 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
                ?? throw new EntityNotFoundException(typeof(GrantApplication), id);
     }
 
+    internal static GrantApplicationTargetDto ToTargetDto(GrantApplicationTarget t) => new()
+    {
+        Id = t.Id,
+        Name = t.Name,
+        Unit = t.Unit,
+        BaselineValue = t.BaselineValue,
+        TargetValue = t.TargetValue,
+        TargetDate = t.TargetDate
+    };
+
     private async Task<GrantApplication> GetEditableApplicationAsync(Guid id)
     {
         var application = await GetApplicationAsync(id);
@@ -605,6 +649,11 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
                 dto.BudgetLines.Add(new GrantWizardBudgetLineDto { Kind = kind, IsEligible = false });
             }
         }
+
+        dto.Targets = (await InHostScopeAsync(() => TargetRepo.GetListAsync(t => t.GrantApplicationId == application.Id)))
+            .OrderBy(t => t.CreationTime)
+            .Select(ToTargetDto)
+            .ToList();
 
         dto.Locks = locks.Select(ToDto).ToList();
         dto.Messages = messages

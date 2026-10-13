@@ -19,6 +19,11 @@ public interface IGrantApplicationWizardAppService : IApplicationService
 
     Task<GrantApplicationWizardDto> SaveSummaryAsync(SaveWizardSummaryInput input);
 
+    /// <summary>Başvuruya ölçülebilir hedef ekler. Gönderilmiş başvuruda reddedilir.</summary>
+    Task<GrantApplicationWizardDto> AddTargetAsync(SaveWizardTargetInput input);
+
+    Task<GrantApplicationWizardDto> DeleteTargetAsync(Guid applicationId, Guid targetId);
+
     Task<GrantApplicationWizardDto> SetStepAsync(Guid applicationId, int step);
 
     /// <summary>Sırayı karşı tarafa devreder ("Danışmana devret" / "Firmaya geri ver").</summary>

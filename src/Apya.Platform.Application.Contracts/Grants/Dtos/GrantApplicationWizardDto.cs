@@ -44,6 +44,9 @@ public class GrantApplicationWizardDto
     // --- Adım 1 · Firma bilgileri (salt okunur özet) ---
     public GrantWizardFirmSummaryDto? Firm { get; set; }
 
+    /// <summary>Adım 2 · Hedefler (isteğe bağlı). Dönüşümde proje göstergesine kopyalanır.</summary>
+    public List<GrantApplicationTargetDto> Targets { get; set; } = new();
+
     // --- Adım 3 · Bütçe ---
     public List<GrantWizardBudgetLineDto> BudgetLines { get; set; } = new();
     public decimal TotalProject { get; set; }
