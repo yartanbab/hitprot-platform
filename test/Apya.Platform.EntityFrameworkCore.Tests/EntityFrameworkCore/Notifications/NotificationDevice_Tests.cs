@@ -67,6 +67,8 @@ public class NotificationDevice_Tests : PlatformEntityFrameworkCoreTestBase
         {
             var first = await _devices.SubscribeWebPushAsync(Input(endpoint));
             first.DeviceLabel.ShouldBe("Chrome · Windows");
+            // İstemci "bu cihaz" satırını bu özetle bulur; adresin kendisi dönmez.
+            first.EndpointHash.ShouldBe(NotificationDevice.HashEndpoint(endpoint));
             first.IsActive.ShouldBeTrue();
 
             var second = await _devices.SubscribeWebPushAsync(Input(endpoint, "p256dh-2", "auth-2"));

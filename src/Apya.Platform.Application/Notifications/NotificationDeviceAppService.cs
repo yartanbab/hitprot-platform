@@ -125,6 +125,7 @@ public class NotificationDeviceAppService : ApplicationService, INotificationDev
         DeviceLabel = d.DeviceLabel,
         IsActive = d.IsActive,
         LastSeenAt = d.LastSeenAt,
-        CreationTime = d.CreationTime
+        CreationTime = d.CreationTime,
+        EndpointHash = d.EndpointHash
     };
 }

@@ -362,10 +362,86 @@ $(function () {
         }
     }
 
+    // ─── Kayıtlı cihazlar (web push abonelikleri) ────────────────────────────
+    // Kullanıcı bildirim alan diğer cihazlarını görür ve kaldırır. "Bu cihaz"
+    // satırı, tarayıcının kendi abonelik adresinin özeti sunucudaki özetle
+    // eşleşince işaretlenir; adresin kendisi sunucudan dönmez.
+    var deviceService = apya.platform.notifications.notificationDevice;
+
+    function currentEndpointHash() {
+        if (!('serviceWorker' in navigator) || !window.crypto || !window.crypto.subtle) {
+            return Promise.resolve(null);
+        }
+        return navigator.serviceWorker.getRegistration('/').then(function (reg) {
+            return reg ? reg.pushManager.getSubscription() : null;
+        }).then(function (sub) {
+            if (!sub) { return null; }
+            return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(sub.endpoint)).then(function (buffer) {
+                return Array.prototype.map.call(new Uint8Array(buffer), function (b) {
+                    return ('0' + b.toString(16)).slice(-2);
+                }).join('');
+            });
+        }).catch(function () { return null; });
+    }
+
+    function renderDevices() {
+        var $block = $('#notif-devices').addClass('d-none');
+        if (!deviceService) { return; }
+
+        Promise.all([
+            Promise.resolve(deviceService.getList({ abpHandleError: false })).catch(function () { return []; }),
+            currentEndpointHash()
+        ]).then(function (results) {
+            var devices = results[0] || [];
+            var currentHash = results[1];
+            var $list = $('#notif-devices-list').empty();
+            if (!devices.length) { return; }
+
+            $('#notif-devices-title').text(l('Notifications:Devices:Title'));
+            devices.forEach(function (d) {
+                var isCurrent = !!currentHash && d.endpointHash === currentHash;
+                var $row = $('<li class="d-flex align-items-center gap-2 py-1"></li>');
+                var $text = $('<span class="flex-grow-1 text-sm"></span>')
+                    .text(d.deviceLabel || l('Notifications:Devices:Unknown'));
+                if (isCurrent) {
+                    $text.append(' ').append($('<span class="badge text-bg-secondary"></span>').text(l('Notifications:Devices:ThisDevice')));
+                }
+                if (!d.isActive) {
+                    $text.append(' ').append($('<span class="text-muted"></span>').text(l('Notifications:Devices:Inactive')));
+                }
+                if (d.lastSeenAt) {
+                    $text.append($('<span class="text-muted"></span>')
+                        .text(' · ' + new Date(d.lastSeenAt).toLocaleDateString('tr-TR')));
+                }
+                $row.append($text);
+                $row.append($('<button type="button" class="btn btn-sm btn-outline-secondary notif-device-remove"></button>')
+                    .attr({ 'data-id': d.id, 'data-current': isCurrent ? '1' : '0' })
+                    .text(l('Notifications:Devices:Remove')));
+                $list.append($row);
+            });
+            $block.removeClass('d-none');
+        });
+    }
+
+    $('#notif-pref-modal').on('click', '.notif-device-remove', function () {
+        var $btn = $(this).prop('disabled', true);
+        var done = function () { renderDevicePanel(); renderDevices(); };
+
+        // Bu cihazı kaldırmak = bu cihazda kapatmak: yoksa sayfa yenilenince abonelik
+        // sessizce yeniden kurulurdu.
+        if ($btn.attr('data-current') === '1') {
+            $.when(window.apyaDesktopNotifications.setEnabledHere(false)).then(done, done);
+            return;
+        }
+
+        Promise.resolve(deviceService.delete($btn.attr('data-id'))).then(done, done);
+    });
+
     $('#notif-device-toggle').on('change', function () {
         // Abonelik kurulması / kaldırılması bitince durum satırı doğru yazılsın.
+        var refresh = function () { renderDevicePanel(); renderDevices(); };
         $.when(window.apyaDesktopNotifications.setEnabledHere($(this).prop('checked')))
-            .then(renderDevicePanel, renderDevicePanel);
+            .then(refresh, refresh);
         renderDevicePanel();
     });
 
@@ -396,6 +472,7 @@ $(function () {
 
     $('#notif-pref-modal').on('show.bs.modal', function () {
         renderDevicePanel();
+        renderDevices();
         notificationService.getPreferences().then(renderPreferences);
     });
 

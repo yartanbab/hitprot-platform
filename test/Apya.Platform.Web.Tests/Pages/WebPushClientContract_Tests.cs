@@ -110,6 +110,30 @@ public class WebPushClientContract_Tests
                 "yapılandırma, service worker kaydından ÖNCE sorulmalı");
     }
 
+    /// <summary>Cihaz listesi: betiğin çağırdığı uçlar ve okuduğu alanlar serviste / DTO'da var.</summary>
+    [Fact]
+    public void Cihaz_listesi_var_olan_uclari_cagirir_ve_alanlari_okur()
+    {
+        var script = ReadSource("Pages", "Notifications", "Index.js");
+        var methods = typeof(INotificationDeviceAppService).GetMethods().Select(m => ProxyName(m.Name)).ToList();
+
+        script.ShouldContain("var deviceService = apya.platform.notifications.notificationDevice;", Case.Sensitive);
+        foreach (var call in new[] { "getList", "delete" })
+        {
+            methods.ShouldContain(call);
+            script.ShouldContain("deviceService." + call + "(", Case.Sensitive);
+        }
+
+        foreach (var field in new[] { "EndpointHash", "DeviceLabel", "IsActive", "LastSeenAt", "Id" })
+        {
+            typeof(NotificationDeviceDto).GetProperty(field).ShouldNotBeNull();
+            script.ShouldContain("d." + Camel(field), Case.Sensitive);
+        }
+
+        // Bu cihazı kaldırmak, bu cihazda kapatmaktır (yoksa abonelik yeniden kurulurdu).
+        script.ShouldContain("window.apyaDesktopNotifications.setEnabledHere(false)", Case.Sensitive);
+    }
+
     [Fact]
     public void Tercih_ekrani_push_kanalini_gosterir_ve_gonderir()
     {

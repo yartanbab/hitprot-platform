@@ -18,6 +18,12 @@ public class NotificationDeviceDto : EntityDto<Guid>
     public bool IsActive { get; set; }
     public DateTime? LastSeenAt { get; set; }
     public DateTime CreationTime { get; set; }
+
+    /// <summary>
+    /// Abonelik adresinin SHA-256 özeti. İstemci kendi aboneliğinin özetiyle karşılaştırıp
+    /// "bu cihaz" satırını işaretler; adresin kendisi (bildirim göndermeye yeten sır) dönmez.
+    /// </summary>
+    public string EndpointHash { get; set; } = string.Empty;
 }
 
 /// <summary>Tarayıcının <c>PushSubscription</c> nesnesinden gelen alanlar.</summary>
