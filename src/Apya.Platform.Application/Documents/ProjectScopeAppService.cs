@@ -172,6 +172,10 @@ public class ProjectScopeAppService : ApplicationService, IProjectScopeAppServic
             .OrderBy(s => s.Order)
             .ToList();
 
+        // PRJ-04: adımın durumu geçerli ilerlemeden (bağlı görev varsa onlardan) okunur.
+        var stepTaskCounts = await Apya.Platform.Projects.WorkStepProgress.CountAsync(
+            _taskRepository, AsyncExecuter, steps.Select(s => s.Id).ToList());
+
         var fileQueryable = await _fileRepository.GetQueryableAsync();
         var files = await AsyncExecuter.ToListAsync(
             fileQueryable.AsNoTracking()
@@ -205,7 +209,8 @@ public class ProjectScopeAppService : ApplicationService, IProjectScopeAppServic
                 Depth = 1,
                 Kind = ScopeRowKind.WorkStep,
                 Name = $"{step.Order} · {step.Name}",
-                Status = StepStatus(step.ProgressPercent),
+                Status = StepStatus(Apya.Platform.Projects.WorkStepProgress.Effective(
+                    step.ProgressPercent, stepTaskCounts.GetValueOrDefault(step.Id))),
                 StartDate = step.StartDate,
                 EndDate = step.EndDate,
                 DocumentCount = stepFiles.Count,

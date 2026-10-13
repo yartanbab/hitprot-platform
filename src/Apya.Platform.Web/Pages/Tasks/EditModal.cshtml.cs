@@ -56,6 +56,10 @@ namespace Apya.Platform.Web.Pages.Tasks
         /// </summary>
         public List<Apya.Platform.ProjectBudgets.Dtos.BudgetLineLookupDto> BudgetLines { get; set; } = new();
 
+        /// <summary>PRJ-04 · Görevin projesindeki iş adımları; boşsa seçim basılmaz.</summary>
+        public List<Apya.Platform.Projects.ProjectWorkStepDto> WorkSteps { get; set; } = new();
+        public Guid? CurrentWorkStepId { get; set; }
+
         // Satır tıklayınca açılan panelden silme — tablodaki eski çöp kutusu ile aynı yetki kuralı
         // (ManageTeam yetkisi VEYA görevin oluşturucusu/atananı).
         public bool CanDelete { get; set; }
@@ -201,6 +205,16 @@ namespace Apya.Platform.Web.Pages.Tasks
                     .Where(t => t.Id != Id)
                     .OrderBy(t => t.Title)
                     .ToList();
+            }
+
+            // İş adımları (PRJ-04): proje görme yetkisi yoksa sessizce boş kalır, seçim basılmaz.
+            CurrentWorkStepId = taskDto.WorkStepId;
+            if (taskDto.ProjectId.HasValue
+                && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Default))
+            {
+                WorkSteps = await LazyServiceProvider
+                    .LazyGetRequiredService<Apya.Platform.Projects.IProjectWorkStepAppService>()
+                    .GetListAsync(taskDto.ProjectId.Value);
             }
 
             // Bütçe kalemleri (6. adım): yetki yoksa sessizce boş kalır, blok basılmaz.

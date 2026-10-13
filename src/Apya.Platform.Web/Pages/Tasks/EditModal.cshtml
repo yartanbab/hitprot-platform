@@ -120,6 +120,23 @@
                             </div>
                         </div>
                     </div>
+
+                    @* PRJ-04 · İş adımı. Form alanı DEĞİL (name yok): seçim değişince granüler uca
+                       kaydedilir. Tam güncelleme DTO'suna eklenseydi, alanı taşımayan her kayıt bağı silerdi. *@
+                    @if (Model.WorkSteps.Any())
+                    {
+                        <div class="mt-2">
+                            <label class="apya-overline d-block mb-1" for="TaskWorkStep_@Model.Id">İş adımı</label>
+                            <select class="form-select" id="TaskWorkStep_@Model.Id" data-task-work-step>
+                                <option value="">— Bağlı değil —</option>
+                                @foreach (var step in Model.WorkSteps)
+                                {
+                                    <option value="@step.Id" selected="@(Model.CurrentWorkStepId == step.Id)">@step.Order · @step.Name</option>
+                                }
+                            </select>
+                            <div class="form-text">Adımın ilerlemesi, bağlı görevlerin tamamlanma oranından hesaplanır.</div>
+                        </div>
+                    }
             </div>
 
             <div class="tab-pane fade" id="subtasks_@Model.Id" role="tabpanel">
@@ -462,6 +479,14 @@
     // yalnız .modal'a apya-drawer class'ı eklenip apya-shell.css §16 ile sağdan
     // kayan panele dönüştürülüyor (<abp-modal> class attribute'u geçirmediği için JS'le).
     $('#EditTaskForm_@Model.Id').find('.modal').addClass('apya-drawer');
+
+    // PRJ-04 · İş adımı seçimi hemen kaydedilir (formla birlikte gönderilmez).
+    $('#TaskWorkStep_@Model.Id').on('change', function () {
+        var $select = $(this).prop('disabled', true);
+        apya.platform.tasks.task.setWorkStep('@Model.Id', $select.val() || null)
+            .then(function () { abp.notify.success('İş adımı güncellendi.'); })
+            .always(function () { $select.prop('disabled', false); });
+    });
 
     $('#TaskTagsSelectEdit').select2({
         tags: true,

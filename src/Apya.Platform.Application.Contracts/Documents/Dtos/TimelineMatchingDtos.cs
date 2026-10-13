@@ -36,6 +36,11 @@ public class TimelineStepDto
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public int ProgressPercent { get; set; }
+
+    /// <summary>İlerleme adıma bağlı görevlerden mi hesaplandı (PRJ-04).</summary>
+    public bool ProgressFromTasks { get; set; }
+    public int TaskCount { get; set; }
+    public int CompletedTaskCount { get; set; }
     public int DocumentCount { get; set; }
 
     /// <summary>Bu adıma bağlı belgelerin toplam tutarı.</summary>
