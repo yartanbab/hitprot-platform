@@ -114,6 +114,20 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             await _customerRepository.GetAsync(input.CustomerId.Value);
         }
 
+        // FIN-05: kalem isteğe bağlıdır; verilmişse faturanın PROJESİNE ait olmalıdır.
+        if (input.BudgetLineId.HasValue)
+        {
+            var lines = LazyServiceProvider.LazyGetRequiredService<
+                Volo.Abp.Domain.Repositories.IRepository<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Guid>>();
+            var lineId = input.BudgetLineId.Value;
+            if (!await lines.AnyAsync(l => l.Id == lineId && l.ProjectId == input.ProjectId))
+            {
+                throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.BudgetLineProjectMismatch)
+                    .WithData("BudgetLineId", lineId)
+                    .WithData("ProjectId", input.ProjectId);
+            }
+        }
+
         var items = input.Items
             .Select(i => new InvoiceItemDescriptor(i.Description, i.Quantity, i.UnitPrice))
             .ToList();
@@ -129,7 +143,8 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             input.CustomerId,
             input.TaskId,
             items,
-            input.Notes);
+            input.Notes,
+            input.BudgetLineId);
 
         return await GetAsync(invoice.Id);
     }
@@ -200,6 +215,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             CustomerId = x.CustomerId,
             Direction = x.Direction,
             TaskId = x.TaskId,
+            BudgetLineId = x.BudgetLineId,
             InvoiceNumber = x.InvoiceNumber,
             InvoiceDate = x.InvoiceDate,
             DueDate = x.DueDate,

@@ -16,6 +16,15 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public InvoiceDirection Direction { get; private set; } = InvoiceDirection.Sales;
     public Guid? TaskId { get; private set; }
 
+    /// <summary>
+    /// FIN-05 · Faturanın yazıldığı bütçe kalemi (isteğe bağlı). Fatura bütçe toplamına SAYILMAZ —
+    /// "harcanan" yalnız gider kayıtlarından hesaplanır; kalem, faturanın hangi kaleme ait olduğunu
+    /// ve karşılığındaki gider kaydının hangi kalemde aranacağını söyler.
+    /// </summary>
+    public Guid? BudgetLineId { get; private set; }
+
+    public void SetBudgetLine(Guid? budgetLineId) => BudgetLineId = budgetLineId;
+
     public string InvoiceNumber { get; private set; } = null!;
     public DateTime InvoiceDate { get; private set; }
     public DateTime DueDate { get; private set; }

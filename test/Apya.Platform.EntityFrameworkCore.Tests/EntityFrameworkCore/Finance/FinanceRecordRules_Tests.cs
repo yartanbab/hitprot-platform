@@ -132,6 +132,39 @@ public class FinanceRecordRules_Tests : PlatformEntityFrameworkCoreTestBase
         dto.Items.Count.ShouldBe(1);
     }
 
+    /* ═══════════════ Faturanın bütçe kalemi (FIN-05) ═══════════════ */
+
+    private async Task<Guid> LineAsync(Guid projectId)
+        => (await GetRequiredService<Apya.Platform.ProjectBudgets.IProjectBudgetAppService>().CreateLineAsync(
+            projectId,
+            new Apya.Platform.ProjectBudgets.Dtos.CreateUpdateBudgetLineDto { Code = "1", Name = "Makine", PlannedAmount = 500_000m })).Id;
+
+    [Fact]
+    public async Task Fatura_kendi_projesinin_kalemiyle_kesilir_kalemsiz_de_kesilir()
+    {
+        var input = await InvoiceInputAsync(1, 100);
+        input.BudgetLineId = await LineAsync(input.ProjectId);
+
+        (await _invoices.CreateAsync(input)).BudgetLineId.ShouldBe(input.BudgetLineId);
+
+        // Kalem isteğe bağlıdır: projede kalem olsa da fatura kalemsiz kesilebilir.
+        var withoutLine = await InvoiceInputAsync(1, 100);
+        await LineAsync(withoutLine.ProjectId);
+        (await _invoices.CreateAsync(withoutLine)).BudgetLineId.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Fatura_baska_projenin_kalemiyle_kesilemez()
+    {
+        var input = await InvoiceInputAsync(1, 100);
+        var other = await InvoiceInputAsync(1, 100);
+        input.BudgetLineId = await LineAsync(other.ProjectId);
+
+        (await Should.ThrowAsync<BusinessException>(() => _invoices.CreateAsync(input)))
+            .Code.ShouldBe(PlatformDomainErrorCodes.BudgetLineProjectMismatch);
+        (await _invoiceRepository.GetListAsync(i => i.ProjectId == input.ProjectId)).ShouldBeEmpty();
+    }
+
     /* ═══════════════ Kur kaynağı ═══════════════ */
 
     [Fact]
