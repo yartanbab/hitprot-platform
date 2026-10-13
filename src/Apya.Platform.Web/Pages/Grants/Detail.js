@@ -2,6 +2,9 @@ $(function () {
     var service = apya.platform.grants.grantRecommendation;
     var interestSvc = apya.platform.grants.grantInterest;
     var l = abp.localization.getResource('Platform');
+    // Salt-okur kullanıcı (yalnız görme izni) yazma denetimlerini görmez; sunucu yazmayı zaten
+    // reddeder. Firma: ManageApplications, danışman: Edit — ikisi taraf-özeldir, biri yeter.
+    var canWrite = abp.auth.isGranted('Platform.Grants.ManageApplications') || abp.auth.isGranted('Platform.Grants.Edit');
     var callId = $('.apya-page').data('call-id');
     var interestModal = new bootstrap.Modal(document.getElementById('InterestModal'));
 
@@ -104,7 +107,7 @@ $(function () {
         // Yeni talep ancak süren talep ya da açılmış başvuru yokken bırakılabilir. Kapanan
         // talep (reddedilen ya da geri çekilen) kapıyı kapatmaz: yeni kayıt açılır.
         var canExpress = !d.alreadyApplied && (st == null || closed);
-        $('#InterestBtn').toggleClass('d-none', !canExpress).prop('disabled', false);
+        $('#InterestBtn').toggleClass('d-none', !canExpress || !canWrite).prop('disabled', false);
         $('#InterestBtnText').text(l(closed ? 'Grants:Interest:ExpressAgain' : 'Grants:Interest:Express'));
 
         // Talep kaydı olmayan ESKİ başvurular (bu akıştan önce açılanlar) yalnız rozet görür;
@@ -163,8 +166,8 @@ $(function () {
         ].join(''));
 
         // Başvuruya dönmüş talepte eylem yok; boş kap flex boşluğu bırakmasın diye kapla birlikte gizlenir.
-        $('#InterestWithdrawBtn').closest('.apya-interest-actions').toggleClass('d-none', !pending);
-        $('#InterestWithdrawBtn').toggleClass('d-none', !pending);
+        $('#InterestWithdrawBtn').closest('.apya-interest-actions').toggleClass('d-none', !pending || !canWrite);
+        $('#InterestWithdrawBtn').toggleClass('d-none', !pending || !canWrite);
     }
 
     function paintBookmark(on) {

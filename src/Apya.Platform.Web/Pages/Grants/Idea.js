@@ -1,6 +1,14 @@
 $(function () {
     var interestSvc = apya.platform.grants.grantInterest;
     var l = abp.localization.getResource('Platform');
+    // Salt-okur kullanıcı (yalnız görme izni) yazma denetimlerini görmez; sunucu yazmayı zaten
+    // reddeder. Firma: ManageApplications, danışman: Edit — ikisi taraf-özeldir, biri yeter.
+    var canWrite = abp.auth.isGranted('Platform.Grants.ManageApplications') || abp.auth.isGranted('Platform.Grants.Edit');
+    // Bu sayfa yalnız yazma içindir: izin yoksa form kapatılır ve nedeni söylenir.
+    if (!canWrite) {
+        $('#IdeaForm').find('input, textarea, select, button[type=submit]').prop('disabled', true);
+        $('#IdeaForm').prepend($('<div class="alert alert-warning m-3 mb-0" role="note"></div>').text(l('Grants:ReadOnly:Notice')));
+    }
 
     apya.grantIdeaForm.reset();
 

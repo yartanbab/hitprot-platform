@@ -3,6 +3,13 @@ $(function () {
     var recoSvc = apya.platform.grants.grantRecommendation;
     var appSvc = apya.platform.grants.grantApplication;
     var l = abp.localization.getResource('Platform');
+    // Salt-okur kullanıcı (yalnız görme izni) yazma denetimlerini görmez; sunucu yazmayı zaten
+    // reddeder. Firma: ManageApplications, danışman: Edit — ikisi taraf-özeldir, biri yeter.
+    var canWrite = abp.auth.isGranted('Platform.Grants.ManageApplications') || abp.auth.isGranted('Platform.Grants.Edit');
+    if (!canWrite) {
+        $('a[href="/Grants/Idea"]').addClass('d-none');
+        $('#SaveProfileBtn').addClass('d-none');
+    }
 
 
     // Aşama ve dilim: adlar sunucudan (GrantStatusCatalog → _StatusMap), etiketler
@@ -497,7 +504,8 @@ $(function () {
             if (!isLatest()) { return; }
             paintProfile(p);
             $('#ProfileLoadState').empty();
-            $('#ProfileForm').prop('disabled', false);
+            // Yazma izni yoksa profil okunur ama alanlar kapalı kalır.
+            $('#ProfileForm').prop('disabled', !canWrite);
         }, function (err) {
             if (!isLatest()) { return; }
             profile = null;

@@ -1127,6 +1127,7 @@
         "Grants:Wizard:ProjectTitle": "Proje adı",
         "Grants:Wizard:ProjectSummary": "Proje özeti",
         "Grants:Wizard:Duration": "Süre (ay)",
+        "Grants:ReadOnly:Notice": "Bu hesabın hibe başvurularını yönetme izni yok; yalnız görüntüleyebilirsiniz.",
         "Grants:Wizard:Targets": "Hedefler (isteğe bağlı)",
         "Grants:Wizard:TargetsHint": "Projenin ulaşmak istediği ölçülebilir hedefler. Başvuru projeye dönüştürüldüğünde proje göstergesi olarak aktarılır.",
         "Grants:Wizard:Target:Name": "Hedef",
