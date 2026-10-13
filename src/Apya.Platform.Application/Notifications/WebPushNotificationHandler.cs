@@ -1,0 +1,101 @@
+﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Volo.Abp.BackgroundJobs;
+using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Repositories;
+using Volo.Abp.EventBus;
+using Volo.Abp.MultiTenancy;
+
+namespace Apya.Platform.Notifications;
+
+/// <summary>
+/// NTF-08 · Üretilen her bildirimi kullanıcının etkin cihazlarına da gönderir.
+///
+/// <para><c>NotificationManager</c>'a DOKUNULMADI: push, uygulama içi bildirimle AYNI olaydan
+/// (<see cref="NotificationCreatedEto"/>) beslenir. Böylece push yeni bir alıcı kitlesi üretmez —
+/// kategori sessize alındıysa ya da kullanıcı alıcı değilse olay hiç doğmaz.</para>
+///
+/// <para>Bastırma (uygulama gözün önündeyse gösterme) burada DEĞİL, service worker'dadır: sunucu
+/// soketin açık olduğunu bilir, sekmenin görünür olduğunu bilmez.</para>
+/// </summary>
+public class WebPushNotificationHandler : ILocalEventHandler<NotificationCreatedEto>, ITransientDependency
+{
+    private readonly IRepository<NotificationDevice, Guid> _deviceRepository;
+    private readonly IRepository<NotificationPreference, Guid> _preferenceRepository;
+    private readonly IBackgroundJobManager _backgroundJobManager;
+    private readonly ICurrentTenant _currentTenant;
+    private readonly WebPushOptions _options;
+    private readonly ILogger<WebPushNotificationHandler> _logger;
+
+    public WebPushNotificationHandler(
+        IRepository<NotificationDevice, Guid> deviceRepository,
+        IRepository<NotificationPreference, Guid> preferenceRepository,
+        IBackgroundJobManager backgroundJobManager,
+        ICurrentTenant currentTenant,
+        IOptions<WebPushOptions> options,
+        ILogger<WebPushNotificationHandler> logger)
+    {
+        _deviceRepository = deviceRepository;
+        _preferenceRepository = preferenceRepository;
+        _backgroundJobManager = backgroundJobManager;
+        _currentTenant = currentTenant;
+        _options = options.Value;
+        _logger = logger;
+    }
+
+    public async Task HandleEventAsync(NotificationCreatedEto eventData)
+    {
+        if (!_options.IsEnabled)
+        {
+            return;
+        }
+
+        try
+        {
+            using (_currentTenant.Change(eventData.TenantId))
+            {
+                var info = NotificationTypeRegistry.Get(eventData.Type);
+
+                var preference = await _preferenceRepository.FirstOrDefaultAsync(
+                    p => p.UserId == eventData.UserId && p.Category == info.Category);
+                if (!(preference?.Push ?? NotificationPreferenceDefaults.Push))
+                {
+                    return;
+                }
+
+                var devices = await _deviceRepository.GetListAsync(
+                    d => d.UserId == eventData.UserId && d.IsActive
+                         && d.Platform == NotificationDevicePlatform.WebPush);
+                if (devices.Count == 0)
+                {
+                    return;
+                }
+
+                var severity = eventData.Severity;
+                var payload = WebPushPayload.Build(
+                    eventData.Id, eventData.Title, tag: null, severity,
+                    NotificationTypeRegistry.BuildDeepLink(eventData.Type, eventData.EntityId) ?? "/Notifications");
+
+                foreach (var device in devices)
+                {
+                    await _backgroundJobManager.EnqueueAsync(new WebPushJobArgs
+                    {
+                        DeviceId = device.Id,
+                        TenantId = eventData.TenantId,
+                        PayloadJson = payload,
+                        Topic = WebPushPayload.Topic(eventData.Id),
+                        Urgent = severity >= NotificationSeverity.High,
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Push altyapısı bildirim akışını kırmamalı: kayıt atıldı, kullanıcı uygulama içinde görecek.
+            _logger.LogWarning(ex, "Web push kuyruğa alınamadı. UserId: {UserId}", eventData.UserId);
+        }
+    }
+}
