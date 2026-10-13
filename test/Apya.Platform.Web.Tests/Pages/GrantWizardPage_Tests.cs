@@ -572,4 +572,103 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
         dto.ProjectSummary.ShouldBe("İlk özet");
     }
 
+
+    /* ═══════════════ Hedefler (dönüşümde proje göstergesi olur) ═══════════════ */
+
+    private static SaveWizardTargetInput TargetInput(Guid applicationId, decimal baseline = 0m, decimal target = 200m) => new()
+    {
+        ApplicationId = applicationId,
+        Name = "Eğitilen kişi sayısı",
+        Unit = "kişi",
+        BaselineValue = baseline,
+        TargetValue = target,
+        TargetDate = new DateTime(2027, 6, 30)
+    };
+
+    [Fact]
+    public async Task Hedef_Eklenir_Listelenir_Ve_Silinir()
+    {
+        var (id, _) = await CreateApplicationAsync();
+
+        var added = await _wizard.AddTargetAsync(TargetInput(id));
+        var target = added.Targets.Single();
+        target.Name.ShouldBe("Eğitilen kişi sayısı");
+        target.Unit.ShouldBe("kişi");
+        target.TargetValue.ShouldBe(200m);
+        target.TargetDate.ShouldBe(new DateTime(2027, 6, 30));
+
+        (await _wizard.GetAsync(id)).Targets.Count.ShouldBe(1);
+        (await _wizard.DeleteTargetAsync(id, target.Id)).Targets.ShouldBeEmpty();
+    }
+
+    /// <summary>Göstergeyle aynı kural: burada kabul edilen satır dönüşümde reddedilmemeli.</summary>
+    [Fact]
+    public async Task Hedef_Baslangica_Esit_Olamaz()
+    {
+        var (id, _) = await CreateApplicationAsync();
+
+        (await Should.ThrowAsync<BusinessException>(() => _wizard.AddTargetAsync(TargetInput(id, baseline: 50m, target: 50m))))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantTargetValueInvalid);
+        (await _wizard.GetAsync(id)).Targets.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Gonderilmis_Basvuruya_Hedef_Eklenemez_Silinemez()
+    {
+        var (id, _) = await CreateApplicationAsync();
+        var targetId = (await _wizard.AddTargetAsync(TargetInput(id))).Targets.Single().Id;
+        await _wizard.SubmitAsync(id);
+
+        (await Should.ThrowAsync<BusinessException>(() => _wizard.AddTargetAsync(TargetInput(id))))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantApplicationLocked);
+        (await Should.ThrowAsync<BusinessException>(() => _wizard.DeleteTargetAsync(id, targetId)))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantApplicationLocked);
+        (await _wizard.GetAsync(id)).Targets.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Baska_Basvurunun_Hedefi_Kimligiyle_Silinemez()
+    {
+        var (first, _) = await CreateApplicationAsync();
+        // Yardımcı aynı çağrının başvurusunu yeniden kullanır; ikinci başvuru ayrı kurulur.
+        var second = await CreateTenantOwnedApplicationAsync();
+        var targetId = (await _wizard.AddTargetAsync(TargetInput(first))).Targets.Single().Id;
+
+        await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
+            () => _wizard.DeleteTargetAsync(second, targetId));
+        (await _wizard.GetAsync(first)).Targets.Count.ShouldBe(1);
+    }
+
+    /// <summary>Danışman (host) firmanın başvurusuna hedef ekler: satır FİRMANIN kiracısıyla yazılır.</summary>
+    [Fact]
+    public async Task Danisman_Kiracinin_Basvurusuna_Hedef_Ekler_Satir_Kiracinin_Olur()
+    {
+        var id = await CreateTenantOwnedApplicationAsync();
+
+        var dto = await _wizard.AddTargetAsync(TargetInput(id));
+        dto.Targets.Count.ShouldBe(1, "danışman kiracının hedefini görmeli");
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        using (GetRequiredService<Volo.Abp.Data.IDataFilter<Volo.Abp.MultiTenancy.IMultiTenant>>().Disable())
+        {
+            var row = await GetRequiredService<IRepository<GrantApplicationTarget, Guid>>()
+                .FirstOrDefaultAsync(t => t.GrantApplicationId == id);
+            row.ShouldNotBeNull();
+            row!.TenantId.ShouldBe(FirmTenant);
+        }
+
+        (await _wizard.DeleteTargetAsync(id, dto.Targets.Single().Id)).Targets.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Sihirbaz_Sayfasi_Hedef_Alanlarini_Basar()
+    {
+        var (id, _) = await CreateApplicationAsync();
+
+        var html = await GetResponseAsStringAsync("/Grants/Wizard?id=" + id);
+
+        html.ShouldContain("id=\"TargetRows\"", Case.Sensitive);
+        html.ShouldContain("id=\"TargetAdd\"", Case.Sensitive);
+    }
 }

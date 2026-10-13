@@ -156,6 +156,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
+        public DbSet<GrantApplicationTarget> GrantApplicationTargets { get; set; }
 
 
         /* --- ESKİ/DİĞER TASK MODÜLÜ TABLOLARI --- */
@@ -1167,6 +1168,18 @@ namespace Apya.Platform.EntityFrameworkCore
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "GrantDisbursementTranches", PlatformConsts.DbSchema);
                 b.ConfigureByConvention();
+                b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => x.GrantApplicationId);
+            });
+
+            builder.Entity<GrantApplicationTarget>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantApplicationTargets", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(ProjectIndicatorConsts.MaxNameLength);
+                b.Property(x => x.Unit).HasMaxLength(ProjectIndicatorConsts.MaxUnitLength);
+                b.Property(x => x.BaselineValue).HasColumnType("decimal(18,4)");
+                b.Property(x => x.TargetValue).HasColumnType("decimal(18,4)");
                 b.HasOne<GrantApplication>().WithMany().HasForeignKey(x => x.GrantApplicationId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => x.GrantApplicationId);
             });

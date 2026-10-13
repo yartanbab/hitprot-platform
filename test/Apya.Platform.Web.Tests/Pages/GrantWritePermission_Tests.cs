@@ -56,6 +56,9 @@ public class GrantWritePermission_Tests : PlatformWebTestBase
         await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.SubmitAsync(id));
         await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.SaveSummaryAsync(
             new SaveWizardSummaryInput { ApplicationId = id }));
+        await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.AddTargetAsync(
+            new SaveWizardTargetInput { ApplicationId = id, Name = "Hedef", TargetValue = 1m }));
+        await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.DeleteTargetAsync(id, Guid.NewGuid()));
     }
 
     [Fact]
@@ -71,6 +74,9 @@ public class GrantWritePermission_Tests : PlatformWebTestBase
             await Should.ThrowAsync<AbpAuthorizationException>(() => interests.WithdrawAsync(id));
             await Should.ThrowAsync<AbpAuthorizationException>(() => profile.UpdateMyProfileAsync(new UpdateFirmProfileDto()));
             await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.SubmitAsync(id));
+            await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.AddTargetAsync(
+                new SaveWizardTargetInput { ApplicationId = id, Name = "Hedef", TargetValue = 1m }));
+            await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.DeleteTargetAsync(id, Guid.NewGuid()));
 
             // Karşı yön: görüntüleme yazma iznine bağlı değil.
             (await interests.GetMineAsync()).ShouldBeEmpty();

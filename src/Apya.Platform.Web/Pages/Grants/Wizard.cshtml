@@ -100,6 +100,40 @@
                         <input type="number" min="1" max="120" class="form-control form-control-sm apya-numeric"
                                id="ProjectDuration" style="max-width:140px" />
                     </div>
+
+                    @* Hedefler (isteğe bağlı): başvuru projeye dönüşünce proje göstergesi olur. *@
+                    <div class="apya-field mt-3" id="TargetSection">
+                        <span class="apya-field-label"><span>@L["Grants:Wizard:Targets"]</span></span>
+                        <p class="apya-wiz-hint mb-2">@L["Grants:Wizard:TargetsHint"]</p>
+                        <div id="TargetRows" class="d-flex flex-column gap-1 mb-2"></div>
+                        <div class="row g-2 align-items-end" id="TargetForm">
+                            <div class="col-md-4">
+                                <label class="form-label small mb-1" for="TargetName">@L["Grants:Wizard:Target:Name"]</label>
+                                <input type="text" class="form-control form-control-sm" id="TargetName" maxlength="128" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-1" for="TargetUnit">@L["Grants:Wizard:Target:Unit"]</label>
+                                <input type="text" class="form-control form-control-sm" id="TargetUnit" maxlength="32" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-1" for="TargetBaseline">@L["Grants:Wizard:Target:Baseline"]</label>
+                                <input type="number" step="any" class="form-control form-control-sm apya-numeric" id="TargetBaseline" value="0" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-1" for="TargetValue">@L["Grants:Wizard:Target:Value"]</label>
+                                <input type="number" step="any" class="form-control form-control-sm apya-numeric" id="TargetValue" />
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small mb-1" for="TargetDate">@L["Grants:Wizard:Target:Date"]</label>
+                                <input type="date" class="form-control form-control-sm" id="TargetDate" />
+                            </div>
+                            <div class="col-12">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="TargetAdd">
+                                    <i class="fa fa-plus me-1" aria-hidden="true"></i>@L["Grants:Wizard:Target:Add"]
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 @* Adım 3 · Bütçe *@

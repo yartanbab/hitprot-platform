@@ -131,6 +131,10 @@ public static class PlatformDomainErrorCodes
     public const string GrantFieldLockedByOther = "Platform:Grant:FieldLockedByOther";
     public const string GrantApplicationLocked = "Platform:Grant:ApplicationLocked";
 
+    // Hibe başvurusu hedefleri (dönüşümde proje göstergesine kopyalanır)
+    public const string GrantTargetNameRequired = "Platform:Grant:TargetNameRequired";
+    public const string GrantTargetValueInvalid = "Platform:Grant:TargetValueInvalid";
+
     // 2b · Evrak takibi
     public const string GrantDocumentNotUploaded = "Platform:Grant:DocumentNotUploaded";
     public const string GrantDocumentPackageIncomplete = "Platform:Grant:DocumentPackageIncomplete";

@@ -38,6 +38,7 @@ public class GrantApplicationDetailDto
     public List<GrantDetailActivityDto> Activities { get; set; } = new();
     public List<GrantDisbursementTrancheDto> Tranches { get; set; } = new();
     public List<GrantMilestoneDto> Milestones { get; set; } = new();
+    public List<GrantApplicationTargetDto> Targets { get; set; } = new();
 
     // --- Danışmanlık kaydı ---
     public decimal TotalHours { get; set; }
