@@ -190,6 +190,11 @@ public static class NotificationTypeRegistry
             // her fikir ayrı kayıt, gruplanacak bir şey yok.
             // LIF-11: Karar bildirimi gibi itiraz ekranına götürür. Zorunlu DEĞİL: karar
             // bildirimi bir hakkın süresini taşır, bu yalnız sonucu haber verir.
+            // PRJ-08: bağlantı proje sayfasının Göstergeler sekmesine iner.
+            [NotificationType.ProjectIndicatorBehind] = new(
+                NotificationCategory.Projects, NotificationSeverity.High,
+                "fa fa-bullseye", "/Projects/ProjectDetails/{0}?view=indicators", GroupSimilar: false),
+
             [NotificationType.GrantAppealResolved] = new(
                 NotificationCategory.Grants, NotificationSeverity.High,
                 "fa fa-scale-balanced", "/Grants/Appeal?id={0}", GroupSimilar: false),

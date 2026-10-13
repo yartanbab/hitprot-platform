@@ -465,6 +465,8 @@
         "Notification:TaskDueSoon:Body": "\"{0}\" görevinin bitiş süresine 48 saatten az kaldı.",
         "Notification:ProjectEndingSoon:Title": "Proje bitişine {0} gün kaldı",
         "Notification:ProjectEndingSoon:TitleToday": "Proje bugün bitiyor",
+        "Notification:ProjectIndicatorBehind:Title": "Gösterge hedefin gerisinde",
+        "Notification:ProjectIndicatorBehind:Body": "\"{0}\" projesinde \"{1}\" göstergesinin hedef tarihi ({2}) geçti. Gerçekleşen {3}, hedef {4} (%{5}).",
         "Notification:ProjectEndingSoon:Body": "\"{0}\" projesi {1} tarihinde bitiyor. Projede {2} açık görev var.",
         "Notification:ProjectEndingSoon:BodyNoOpenTasks": "\"{0}\" projesi {1} tarihinde bitiyor. Açık görev kalmadı.",
         "Notification:TaskOverdue:Title": "Vadesi Geçen Görev",

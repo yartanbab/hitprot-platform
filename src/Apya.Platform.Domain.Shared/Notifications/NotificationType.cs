@@ -73,5 +73,8 @@ public enum NotificationType
     DocumentFileExpiry          = 42, // Belgenin geçerliliğine 30 / 7 gün kaldı ya da doldu
 
     // 🔴 LIF-11: Karar bildiriliyordu, itirazın sonucu bildirilmiyordu.
-    GrantAppealResolved         = 43  // İtiraz sonuçlandı (firmaya gider)
+    GrantAppealResolved         = 43, // İtiraz sonuçlandı (firmaya gider)
+
+    // PRJ-08: göstergenin hedef tarihi geçti, hedefe ulaşılmadı.
+    ProjectIndicatorBehind      = 44  // Gösterge geride (proje liderlerine gider)
 }
