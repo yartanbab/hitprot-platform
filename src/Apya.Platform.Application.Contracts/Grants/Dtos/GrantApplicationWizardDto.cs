@@ -32,6 +32,13 @@ public class GrantApplicationWizardDto
     public DateTime? SubmittedAt { get; set; }
     public bool IsReadOnly { get; set; }
 
+    /// <summary>
+    /// Görüntüleyen bu bağlamda hibe YAZMA iznine sahip mi (host: Grants.Edit, firma:
+    /// Grants.ManageApplications). Sunucu yazma uçlarını zaten reddeder; bayrak ekranın yazma
+    /// denetimlerini baştan gizlemesi içindir. "Gönderildi" (IsReadOnly) durumundan AYRIDIR.
+    /// </summary>
+    public bool CanWrite { get; set; }
+
     /// <summary>Bu isteği yapan kullanıcının başvurudaki rolü (kiracı = Firma, host = Danışman).</summary>
     public GrantPartyRole ViewerRole { get; set; }
     public Guid ViewerUserId { get; set; }

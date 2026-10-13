@@ -22,6 +22,13 @@ public class GrantDocumentConsoleDto
 
     public bool IsReadOnly { get; set; }
 
+    /// <summary>
+    /// Görüntüleyen bu bağlamda hibe YAZMA iznine sahip mi (host: Grants.Edit, firma:
+    /// Grants.ManageApplications). Sunucu yazma uçlarını zaten reddeder; bayrak ekranın yazma
+    /// denetimlerini baştan gizlemesi içindir. "Gönderildi" (IsReadOnly) durumundan AYRIDIR.
+    /// </summary>
+    public bool CanWrite { get; set; }
+
     // --- Sayaçlar (tasarım 2b · 5\'li KPI) ---
     public int TotalCount { get; set; }
     public int ApprovedCount { get; set; }

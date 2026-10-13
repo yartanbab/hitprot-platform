@@ -613,6 +613,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             PendingParty = application.PendingParty,
             SubmittedAt = application.SubmittedAt,
             IsReadOnly = application.SubmittedAt.HasValue,
+            CanWrite = await GrantWritePermission.IsGrantedAsync(AuthorizationService, CurrentTenant),
             ViewerRole = ViewerRole,
             ViewerUserId = ViewerUserId,
             ProjectTitle = application.ProjectTitle,

@@ -449,6 +449,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
             ViewerRole = ViewerRole,
             CanReview = ViewerRole == GrantPartyRole.Danisman,
             IsReadOnly = application.SubmittedAt.HasValue,
+            CanWrite = await GrantWritePermission.IsGrantedAsync(AuthorizationService, CurrentTenant),
             HasPackage = !application.PackageStoredFileName.IsNullOrWhiteSpace(),
             PackageCreatedAt = application.PackageCreatedAt
         };

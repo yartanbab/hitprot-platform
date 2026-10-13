@@ -395,10 +395,14 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
     private async Task<GrantAppealConsoleDto> BuildAsync(GrantApplication application)
     {
         var today = Clock.Now.Date;
+        var canWrite = await GrantWritePermission.IsGrantedAsync(AuthorizationService, _currentTenant);
         var dto = new GrantAppealConsoleDto
         {
             ApplicationId = application.Id,
-            CanEditOpinion = IsConsultant
+            CanWrite = canWrite,
+            // Danışman olmak yetmez: yazma izni olmayan danışman görüş kalemini, madde eklemeyi,
+            // sonuç kutusunu ve karar girişi bağlantısını görmez.
+            CanEditOpinion = IsConsultant && canWrite
         };
 
         GrantCall call;

@@ -27,6 +27,9 @@ $(function () {
     var live = false;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
+    // Yazma kapalı mı: başvuru gönderilmiş YA DA görüntüleyenin yazma izni yok. İkisi ayrı
+    // bayraktır — "gönderildi" rozeti yalnız isReadOnly'ye, mesajlaşma yalnız izne bakar.
+    function locked() { return !!model.isReadOnly || model.canWrite === false; }
     function money(v) { return (v || 0).toLocaleString('tr-TR', { maximumFractionDigits: 0 }); }
     function initials(n) {
         return (n || '?').trim().split(/\s+/).slice(0, 2)
@@ -181,10 +184,11 @@ $(function () {
             .text(model.currentStep === model.stepCount
                 ? l('Grants:Wizard:Submit')
                 : l('Grants:Wizard:Next'))
-            .prop('disabled', model.isReadOnly);
+            // Son adımda düğme "Gönder"dir; izinsiz kullanıcı adımlar arasında gezebilmeli.
+            .prop('disabled', model.currentStep === model.stepCount ? locked() : !!model.isReadOnly);
         $('#HandOverBtn')
             .text(model.viewerRole === 0 ? l('Grants:Wizard:HandOverToConsultant') : l('Grants:Wizard:HandOverToFirm'))
-            .prop('disabled', model.isReadOnly);
+            .prop('disabled', locked());
     }
 
     $('#Steps').on('click', '.apya-wiz-step-chip', function () {
@@ -287,7 +291,7 @@ $(function () {
                     esc(targetValue(t.targetValue, t.unit)) +
                     (t.targetDate ? ' · ' + esc(new Date(t.targetDate).toLocaleDateString('tr-TR')) : '') +
                     '</span></span>' +
-                    (model.isReadOnly ? '' :
+                    (locked() ? '' :
                         '<button type="button" class="btn btn-sm btn-outline-danger" data-target-delete="' + esc(t.id) + '"' +
                         ' aria-label="' + esc(l('Grants:Wizard:Target:Delete', t.name)) + '"' +
                         ' title="' + esc(l('Grants:Wizard:Target:Delete', t.name)) + '">' +
@@ -295,7 +299,7 @@ $(function () {
                     '</div>';
             }).join('')
             : '<div class="text-muted small">' + esc(l('Grants:Wizard:Target:Empty')) + '</div>');
-        $('#TargetForm').toggleClass('d-none', !!model.isReadOnly);
+        $('#TargetForm').toggleClass('d-none', locked());
     }
 
     $('#TargetAdd').on('click', function () {
@@ -468,7 +472,7 @@ $(function () {
             (ready ? 'fa-circle-check text-success' : 'fa-circle-exclamation text-warning') +
             '"></i>' + esc(l('Grants:Wizard:Completion')) + ' %' + model.completionPercent + '</div>');
 
-        $('#SubmitWarning').toggleClass('d-none', ready || model.isReadOnly);
+        $('#SubmitWarning').toggleClass('d-none', ready || locked());
         $('#SubmitWarningText').text(l('Grants:Wizard:IncompleteWarning', items.length));
         $('#SubmittedChip').toggleClass('d-none', !model.isReadOnly)
             .text(model.submittedAt ? l('Grants:Wizard:SubmittedOn',
@@ -535,6 +539,8 @@ $(function () {
     $('#MessageBody').on('keydown', function (e) { if (e.key === 'Enter') { sendMessage(); } });
 
     function sendMessage() {
+        // Mesajlaşma gönderimden sonra da açıktır; yalnız yazma izni yoksa kapanır.
+        if (model.canWrite === false) { return; }
         var body = ($('#MessageBody').val() || '').trim();
         if (!body) { return; }
         service.sendMessage({ applicationId: appId, body: body }).then(function () {
@@ -576,9 +582,10 @@ $(function () {
                     : '');
         });
 
-        if (model.isReadOnly) {
+        if (locked()) {
             $('.apya-wiz-step input, .apya-wiz-step textarea').prop('disabled', true);
         }
+        $('#MessageBody, #SendMessageBtn').prop('disabled', model.canWrite === false);
     }
 
     // İlk yükleme düşerse satır içi kart + Tekrar dene, ABP penceresi açılmaz (Faz 4 kararı 2).
