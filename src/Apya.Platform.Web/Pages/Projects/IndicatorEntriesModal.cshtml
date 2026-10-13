@@ -1,0 +1,109 @@
+﻿@page
+@model Apya.Platform.Web.Pages.Projects.IndicatorEntriesModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+    string Num(decimal v) => v.ToString("0.##") + (string.IsNullOrEmpty(Model.Indicator.Unit) ? "" : " " + Model.Indicator.Unit);
+}
+<form method="post" action="@Url.Page("/Projects/IndicatorEntriesModal", new { projectId = Model.ProjectId, indicatorId = Model.IndicatorId })">
+    <abp-modal>
+        <abp-modal-header title="@Model.Indicator.Name — ölçümler"></abp-modal-header>
+        <abp-modal-body>
+            <p class="text-muted" style="font-size:12.5px">
+                Başlangıç <strong>@Num(Model.Indicator.BaselineValue)</strong> ·
+                hedef <strong>@Num(Model.Indicator.TargetValue)</strong> ·
+                gerçekleşen <strong>@Num(Model.Indicator.CurrentValue)</strong> (%@Model.Indicator.ProgressPercent)
+            </p>
+
+            @if (Model.Entries.Count > 0)
+            {
+                <table class="table table-sm apya-clean-table align-middle mb-3">
+                    <thead>
+                        <tr>
+                            <th>Tarih</th>
+                            <th class="text-end">Ulaşılan değer</th>
+                            <th>Not</th>
+                            <th>Kanıt</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in Model.Entries)
+                        {
+                            <tr>
+                                <td>@e.EntryDate.ToString("dd.MM.yyyy")</td>
+                                <td class="text-end apya-numeric">@Num(e.Value)</td>
+                                <td>@e.Note</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(e.DocumentName))
+                                    {
+                                        <i class="fa fa-paperclip text-muted" aria-hidden="true"></i> @e.DocumentName
+                                    }
+                                    else if (e.DocumentFileId.HasValue)
+                                    {
+                                        <span class="text-muted">belge bağlı</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @if (Model.CanManage)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-indicator-entry-delete="@e.Id"
+                                                aria-label="@e.EntryDate.ToString("dd.MM.yyyy") tarihli ölçümü sil" title="Ölçümü sil">
+                                            <i class="fa fa-trash" aria-hidden="true"></i>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="text-muted" style="font-size:12.5px">Henüz ölçüm girilmedi.</p>
+            }
+
+            @if (Model.CanManage)
+            {
+                <span class="apya-overline d-block mb-1">Yeni ölçüm</span>
+                <abp-row>
+                    <abp-column size-md="_6">
+                        <abp-input asp-for="Entry.EntryDate" type="date" label="Tarih" />
+                    </abp-column>
+                    <abp-column size-md="_6">
+                        <abp-input asp-for="Entry.Value" label="Ulaşılan değer (toplam)" data-money-input="true" />
+                    </abp-column>
+                </abp-row>
+                <abp-input asp-for="Entry.Note" label="Not (opsiyonel)" />
+                @if (Model.Documents.Count > 0)
+                {
+                    <abp-select asp-for="Entry.DocumentFileId" asp-items="Model.Documents" label="Kanıt belgesi (opsiyonel)">
+                        <option value="">— Belge yok —</option>
+                    </abp-select>
+                }
+                <p class="text-muted mb-0" style="font-size:12px">
+                    Değer, o tarihte ulaşılan <strong>toplam</strong> düzeydir (o dönemin artışı değil).
+                    Göstergenin güncel değeri en son tarihli ölçümden okunur.
+                </p>
+            }
+        </abp-modal-body>
+        @if (Model.CanManage)
+        {
+            <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+        }
+        else
+        {
+            <abp-modal-footer buttons="@(AbpModalButtons.Close)"></abp-modal-footer>
+        }
+    </abp-modal>
+</form>
+<script>
+    // Ölçüm silme: pencere içinden; sonra sayfa yenilenir (tablo sunucuda basılı).
+    $('[data-indicator-entry-delete]').on('click', function () {
+        var $btn = $(this).prop('disabled', true);
+        apya.platform.projects.projectIndicator
+            .deleteEntry($btn.data('indicator-entry-delete'))
+            .then(function () { window.location.reload(); })
+            .always(function () { $btn.prop('disabled', false); });
+    });
+</script>

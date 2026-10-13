@@ -16,4 +16,10 @@ public interface IProjectIndicatorAppService : IApplicationService
     Task<List<ProjectIndicatorEntryDto>> GetEntriesAsync(Guid indicatorId);
     Task<ProjectIndicatorEntryDto> AddEntryAsync(Guid indicatorId, CreateProjectIndicatorEntryDto input);
     Task DeleteEntryAsync(Guid entryId);
+
+    /// <summary>
+    /// Ölçüme kanıt olarak bağlanabilecek belgeler: göstergenin projesindeki dosyalar. Belge görme
+    /// izni olmayana liste BOŞ döner.
+    /// </summary>
+    Task<List<ProjectIndicatorDocumentOptionDto>> GetDocumentOptionsAsync(Guid indicatorId);
 }

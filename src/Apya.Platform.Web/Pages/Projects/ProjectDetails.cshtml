@@ -557,6 +557,17 @@
                     </button>
                 </span>
             }
+            @if (Model.Indicators != null)
+            {
+                @* Göstergeler (PRJ-08): Finans gibi SABİT ama koşullu — görme izni yoksa basılmaz. *@
+                <span class="apya-console-tab d-none" data-tab="indicators"
+                      title="Projenin hedefleri ve gerçekleşen değerleri">
+                    <button type="button" class="apya-console-tab-main" id="btn-view-indicators"
+                            role="tab" aria-selected="false" aria-controls="view-indicators">
+                        <i class="fa fa-bullseye" aria-hidden="true"></i><span class="apya-console-tab-label">Göstergeler</span>
+                    </button>
+                </span>
+            }
         </div>
 
         <div class="dropdown apya-console-tabadd">
@@ -726,6 +737,14 @@
         {
             <div id="view-finance" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-finance">
                 <partial name="_ProjectFinancePanel" model="Model" />
+            </div>
+        }
+
+        @* --- GÖSTERGELER (PRJ-08) --- *@
+        @if (Model.Indicators != null)
+        {
+            <div id="view-indicators" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-indicators">
+                <partial name="_ProjectIndicatorsPanel" model="Model" />
             </div>
         }
 

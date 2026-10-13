@@ -344,6 +344,7 @@
     "Permission:Projects.ManageBudget": "Manage Budget (lines, tranches, revisions)",
     "Permission:Projects.ManageTeam": "Manage Team",
     "Permission:Projects.ViewIndicators": "View Indicators",
+    "Projects:Indicators:DeleteConfirm": "The indicator \"{0}\" and all its measurements will be deleted.",
     "Permission:Projects.ManageIndicators": "Manage Indicators (targets, measurements)",
     "Permission:Projects.UseAiFeatures": "Use AI Features",
     "Permission:Tasks": "Tasks",

@@ -1,0 +1,43 @@
+﻿@page
+@model Apya.Platform.Web.Pages.Projects.IndicatorModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/Projects/IndicatorModal", new { projectId = Model.ProjectId, id = Model.Id })">
+    <abp-modal>
+        <abp-modal-header title="@(Model.IsEdit ? "Göstergeyi Düzenle" : "Yeni Gösterge")"></abp-modal-header>
+        <abp-modal-body>
+            <abp-row>
+                <abp-column size-md="_8">
+                    <abp-input asp-for="Indicator.Name" label="Gösterge adı" placeholder="Eğitilen kişi sayısı" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="Indicator.Unit" label="Birim (opsiyonel)" placeholder="kişi" />
+                </abp-column>
+            </abp-row>
+            <abp-row>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="Indicator.BaselineValue" label="Başlangıç değeri" data-money-input="true" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="Indicator.TargetValue" label="Hedef değer" data-money-input="true" />
+                </abp-column>
+                <abp-column size-md="_4">
+                    <abp-input asp-for="Indicator.TargetDate" type="date" label="Hedef tarihi (opsiyonel)" />
+                </abp-column>
+            </abp-row>
+            @if (Model.WorkSteps.Count > 0)
+            {
+                <abp-select asp-for="Indicator.WorkStepId" asp-items="Model.WorkSteps" label="İş adımı (opsiyonel)">
+                    <option value="">— İş adımı yok —</option>
+                </abp-select>
+            }
+            <p class="text-muted mb-0" style="font-size:12px">
+                Gerçekleşen değer burada girilmez — gösterge oluştuktan sonra satırdaki
+                <strong>Ölçümler</strong> ile kaydedilir. Hedef, başlangıçtan küçük de olabilir (azaltma hedefi).
+            </p>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

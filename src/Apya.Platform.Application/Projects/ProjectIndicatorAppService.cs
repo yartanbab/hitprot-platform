@@ -164,6 +164,21 @@ public class ProjectIndicatorAppService : ApplicationService, IProjectIndicatorA
         await _entryRepository.DeleteAsync(entry);
     }
 
+    public virtual async Task<List<ProjectIndicatorDocumentOptionDto>> GetDocumentOptionsAsync(Guid indicatorId)
+    {
+        var indicator = await _indicatorRepository.GetAsync(indicatorId);
+        if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default))
+        {
+            return new List<ProjectIndicatorDocumentOptionDto>();
+        }
+
+        var projectId = indicator.ProjectId;
+        return (await _documentFileRepository.GetListAsync(f => f.ProjectId == projectId))
+            .OrderBy(f => f.DisplayName, StringComparer.CurrentCulture)
+            .Select(f => new ProjectIndicatorDocumentOptionDto { DocumentFileId = f.Id, Name = f.DisplayName })
+            .ToList();
+    }
+
     /// <summary>İş adımı verilmişse göstergenin projesine ait olmalıdır; adını da döndürür.</summary>
     private async Task<Dictionary<Guid, string>> EnsureWorkStepAsync(Guid? workStepId, Guid projectId)
     {

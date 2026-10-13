@@ -1,0 +1,137 @@
+﻿@*
+    Proje konsolu → "Göstergeler" sekmesi (PRJ-08).
+
+    Satırlar sunucuda basılır; yüzde ve durum servisten gelir (ProjectIndicatorProgress) —
+    burada ikinci bir hesap YOK. Yazma düğmeleri yalnız yönetme izni olana basılır;
+    sunucu uçları aynı izni ayrıca ister.
+*@
+@using Apya.Platform.Projects
+@model Apya.Platform.Web.Pages.Projects.ProjectDetailsModel
+
+@functions {
+    string Num(decimal v, string? unit) => v.ToString("0.##") + (string.IsNullOrEmpty(unit) ? "" : " " + unit);
+
+    (string Css, string Text) StatusChip(ProjectIndicatorStatus s) => s switch
+    {
+        ProjectIndicatorStatus.Completed => ("apya-chip-positive", "Tamam"),
+        ProjectIndicatorStatus.Behind => ("apya-chip-negative", "Geride"),
+        _ => ("apya-chip-neutral", "Yolunda")
+    };
+
+    string BarTone(ProjectIndicatorStatus s) => s switch
+    {
+        ProjectIndicatorStatus.Completed => "is-positive",
+        ProjectIndicatorStatus.Behind => "is-negative",
+        _ => "is-warning"
+    };
+}
+
+@{
+    var rows = Model.Indicators!;
+    var behind = rows.Count(r => r.Status == ProjectIndicatorStatus.Behind);
+    var done = rows.Count(r => r.Status == ProjectIndicatorStatus.Completed);
+}
+
+<div class="apya-console-filters" style="border-radius:0">
+    <span class="apya-console-filter-label">Göstergeler</span>
+    <span class="apya-chip apya-chip-neutral">@rows.Count gösterge</span>
+    @if (done > 0)
+    {
+        <span class="apya-chip apya-chip-positive">@done tamam</span>
+    }
+    @if (behind > 0)
+    {
+        <span class="apya-chip apya-chip-negative">@behind geride</span>
+    }
+    @if (Model.CanManageIndicators)
+    {
+        <button type="button" class="btn btn-sm btn-primary ms-auto" id="btn-add-indicator">
+            <i class="fa fa-plus me-1" aria-hidden="true"></i>Gösterge ekle
+        </button>
+    }
+</div>
+
+<div class="p-3" id="project-indicators-panel" data-project-id="@Model.Id">
+    @if (rows.Count == 0)
+    {
+        <p class="text-muted mb-0" style="font-size:13px">
+            Bu projede henüz gösterge tanımlı değil. Gösterge, projenin ulaşmak istediği ölçülebilir
+            hedeftir (ör. "Eğitilen kişi sayısı — hedef 200 kişi"); gerçekleşen değer ölçüm girdikçe izlenir.
+        </p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table apya-clean-table align-middle mb-0" id="project-indicators-table">
+                <thead>
+                    <tr>
+                        <th>Gösterge</th>
+                        <th class="text-end">Başlangıç</th>
+                        <th class="text-end">Hedef</th>
+                        <th class="text-end">Gerçekleşen</th>
+                        <th style="min-width:140px">İlerleme</th>
+                        <th>Hedef tarihi</th>
+                        <th>Durum</th>
+                        <th class="text-end"><span class="visually-hidden">İşlemler</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in rows)
+                    {
+                        var (chipCss, chipText) = StatusChip(r.Status);
+                        <tr data-indicator-id="@r.Id">
+                            <td>
+                                <span class="fw-semibold">@r.Name</span>
+                                @if (!string.IsNullOrEmpty(r.WorkStepName))
+                                {
+                                    <span class="apya-chip apya-chip-neutral ms-1" title="Bağlı iş adımı">@r.WorkStepName</span>
+                                }
+                            </td>
+                            <td class="text-end apya-numeric">@Num(r.BaselineValue, r.Unit)</td>
+                            <td class="text-end apya-numeric">@Num(r.TargetValue, r.Unit)</td>
+                            <td class="text-end apya-numeric">
+                                @Num(r.CurrentValue, r.Unit)
+                                @if (r.LastEntryDate.HasValue)
+                                {
+                                    <div class="small text-muted">@r.LastEntryDate.Value.ToString("dd.MM.yyyy")</div>
+                                }
+                                else
+                                {
+                                    <div class="small text-muted">ölçüm yok</div>
+                                }
+                            </td>
+                            <td>
+                                <div class="apya-tile-progress-label">
+                                    <span class="apya-numeric">%@r.ProgressPercent</span>
+                                </div>
+                                <div class="apya-mini-progress @BarTone(r.Status)">
+                                    <span style="width:@(r.ProgressPercent)%"></span>
+                                </div>
+                            </td>
+                            <td>@(r.TargetDate.HasValue ? r.TargetDate.Value.ToString("dd.MM.yyyy") : "—")</td>
+                            <td><span class="apya-chip @chipCss">@chipText</span></td>
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-indicator-entries="@r.Id"
+                                        title="Ölçümleri gör@(Model.CanManageIndicators ? " / ölçüm gir" : "")">
+                                    <i class="fa fa-chart-line me-1" aria-hidden="true"></i>Ölçümler (@r.EntryCount)
+                                </button>
+                                @if (Model.CanManageIndicators)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-indicator-edit="@r.Id"
+                                            aria-label="@r.Name göstergesini düzenle" title="Düzenle">
+                                        <i class="fa fa-pen" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-indicator-delete="@r.Id"
+                                            data-indicator-name="@r.Name"
+                                            aria-label="@r.Name göstergesini sil" title="Sil">
+                                        <i class="fa fa-trash" aria-hidden="true"></i>
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
