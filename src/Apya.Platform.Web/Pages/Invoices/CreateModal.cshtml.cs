@@ -90,7 +90,15 @@ public class CreateModalModel : AbpPageModel
             }).ToList()
         };
 
-        await _invoiceAppService.CreateAsync(dto);
+        var created = await _invoiceAppService.CreateAsync(dto);
+
+        // FIN-05: alış faturasının gider karşılığı yoksa pencere kapanınca uyarı çıkar
+        // (apya-finance-modal.js yanıttaki crossWarning'i okur). Kayıt her durumda yapılmıştır.
+        if ((await _invoiceAppService.GetExpenseCrossCheckAsync(created.Id)).ShouldWarn)
+        {
+            return new JsonResult(new { crossWarning = new { kind = "invoice", invoiceId = created.Id } });
+        }
+
         return NoContent();
     }
 

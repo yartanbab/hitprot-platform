@@ -16,6 +16,12 @@ public interface IInvoiceAppService : IApplicationService
     Task<List<PaymentDto>> GetPaymentsAsync(Guid invoiceId);
     Task<ListResultDto<ProjectLookupDto>> GetProjectLookupAsync();
     Task<ListResultDto<CustomerLookupDto>> GetCustomerLookupAsync();
+
+    /// <summary>
+    /// FIN-05 · Alış faturasının karşılığı olan gider kaydı var mı? Satış faturasında ve gider
+    /// görme izni olmayan kullanıcıda uyarı çıkmaz.
+    /// </summary>
+    Task<FinanceCrossCheckDto> GetExpenseCrossCheckAsync(Guid id);
 }
 
 public class PaymentDto : FullAuditedEntityDto<Guid>

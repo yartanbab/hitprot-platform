@@ -326,6 +326,23 @@ public class ExpenseAppService :
     /// TotalCount'tan az olabilir; toplamlar yine tüm kümedendir.
     /// Genel gider (ProjectId boş) ayrı grup ve EN SONDA.
     /// </summary>
+    /// <inheritdoc />
+    public async Task<Apya.Platform.Invoices.Dtos.FinanceCrossCheckDto> GetInvoiceCrossCheckAsync(Guid id)
+    {
+        var result = new Apya.Platform.Invoices.Dtos.FinanceCrossCheckDto();
+
+        // Fatura görme izni olmayana "fatura yok" bilgisi de verilmez.
+        if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Invoices.Default))
+        {
+            return result;
+        }
+
+        var expense = await Repository.GetAsync(id);
+        var check = LazyServiceProvider.LazyGetRequiredService<Apya.Platform.Invoices.FinanceCrossCheck>();
+        result.ShouldWarn = await check.ExpenseLacksInvoiceAsync(expense);
+        return result;
+    }
+
     public async Task<ExpenseProjectGroupsDto> GetProjectGroupedAsync(GetExpensesInput input)
     {
         const int RowLimit = 500;
