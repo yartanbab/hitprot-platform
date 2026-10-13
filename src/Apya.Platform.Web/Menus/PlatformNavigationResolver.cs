@@ -706,9 +706,23 @@ public class PlatformNavigationResolver : IScopedDependency
         // Kurlar bir dönem Yönetim'e taşınmıştı; kabuk handoff'u (2026-08-13) onu
         // Finans'a geri aldı — kur bir finans verisi, yönetim ayarı değil.
         var finance = new ApplicationMenuItem("Apya.Finance", l["Menu:Finance"], icon: "fa fa-coins", order: 5);
-        // Sıralama (kullanıcı kararı 2026-06-22): 1) Kasalar  2) Para Hareketleri.
-        if (await _permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", l["Menu:CashAccounts"], icon: "fa fa-cash-register", url: "/CashAccounts", order: 1));
+
+        // ── FİNANS MERKEZİ'NE TAŞINDI (2026-10-14, kullanıcı kararı) ─────────
+        // Kasa & Banka, Kurlar ve Raporlar > Proje Bütçesi menüden kaldırıldı:
+        // içerikleri Finans Merkezi'nde (/Finance) toplandı, çatıda tek giriş o.
+        //
+        // SAYFALAR, İZİNLER VE VERİ AYNEN DURUYOR — yalnız menü kaydı yok
+        // (Cariler ve muhasebe raporlarıyla aynı desen, aşağı bak). Finans
+        // Merkezi'ndeki bağlantılar (/CashAccounts, /ExchangeRates) çalışmaya
+        // devam eder. Geri açmak için ilgili satırı yorumdan çıkarmak yeterli.
+        //
+        // "Apya.Finance.CashAccounts" ShellPins VARSAYILANINDAN da çıkarıldı
+        // (PlatformSettings) — yerini Finans Merkezi'nin adı aldı. Kayıtlı
+        // düzende ya da elle konmuş iğnede bu adlar geçmeye devam ederse
+        // havuzda karşılığı olmadığı için sessizce elenir.
+        //
+        // if (await _permission.IsGrantedAsync(PlatformPermissions.CashAccounts.Default))
+        //     finance.AddItem(new ApplicationMenuItem("Apya.Finance.CashAccounts", l["Menu:CashAccounts"], icon: "fa fa-cash-register", url: "/CashAccounts", order: 1));
         // Para Hareketleri hub'ı (Faz 2): Gelir + Gider + Fatura tek listede toplandı.
         // Ayrı Giderler/Gelirler/Faturalar menü öğeleri kaldırıldı (sayfalar hub'dan erişilebilir).
         //
@@ -724,8 +738,9 @@ public class PlatformNavigationResolver : IScopedDependency
             // Etiket ve ikon serbest: sayfa artık transfer ekranı değil, proje
             // bağlamlı finans çatısı.
             finance.AddItem(new ApplicationMenuItem("Apya.Finance.Hub", l["Menu:FinanceHub"], icon: "fa fa-chart-pie", url: "/Finance", order: 2));
-        if (await _permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
-            finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExchangeRates", l["Menu:ExchangeRates"], icon: "fa fa-money-bill-transfer", url: "/ExchangeRates", order: 3));
+        // Finans Merkezi'ne taşındı (2026-10-14) — gerekçe çatının başında.
+        // if (await _permission.IsGrantedAsync(PlatformPermissions.ExchangeRates.Default))
+        //     finance.AddItem(new ApplicationMenuItem("Apya.Finance.ExchangeRates", l["Menu:ExchangeRates"], icon: "fa fa-money-bill-transfer", url: "/ExchangeRates", order: 3));
         // Cariler kullanıcı kararıyla menüden gizlendi (2026-06-22). /Customers sayfası korunur;
         // izinli kullanıcı doğrudan erişebilir. Geri açmak için aşağıyı yorumdan çıkar:
         // if (await _permission.IsGrantedAsync(PlatformPermissions.Customers.Default))
@@ -747,8 +762,12 @@ public class PlatformNavigationResolver : IScopedDependency
         // Sayfa bütçe özetinden beslenir; kapı sayfayla AYNI izin olmalı, yoksa
         // menüdeki öğe tıklanınca 403 verir. (PR #311'den geldi — bu PR aynı
         // satırı taşıdığı için merge'de çakışmıştı.)
-        if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
-            financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
+        //
+        // Finans Merkezi'ne taşındı (2026-10-14) — gerekçe çatının başında.
+        // Alt grubun son öğesiydi: grup aşağıdaki Count denetimiyle kendiliğinden
+        // basılmaz, öğelerden biri geri açılırsa "Raporlar" da geri gelir.
+        // if (await _permission.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
+        //     financeReports.AddItem(new ApplicationMenuItem("Apya.Reports.ProjectBudget", l["Menu:ProjectBudget"], icon: "fa fa-chart-bar", url: "/Reports/ProjectBudget"));
 
         // ── GÖMÜLDÜ (2026-09-06, kullanıcı kararı) ───────────────────────────
         // Cari ekstre, mizan ve yıl sonu değerleme menüden kaldırıldı. Muhasebe
