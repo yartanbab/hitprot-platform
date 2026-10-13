@@ -222,7 +222,7 @@ $(function () {
 
             // İtirazı firma gönderir; danışman görüş yazar.
             $('#SubmitAppealBtn').toggleClass('d-none',
-                !model.isAppealWindowOpen || model.appealedCount === 0);
+                !model.isAppealWindowOpen || model.appealedCount === 0 || model.canWrite === false);
         }
 
         paintItems();

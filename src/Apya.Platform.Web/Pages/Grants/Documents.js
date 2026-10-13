@@ -40,8 +40,10 @@ $(function () {
             : d.status === 1 ? 'fa-clock text-warning'
             : 'fa-circle-dot text-muted';
 
+        // Yazma kapalı: başvuru gönderilmiş ya da görüntüleyenin yazma izni yok.
+        var locked = !!model.isReadOnly || model.canWrite === false;
         var actions = '';
-        if (!model.isReadOnly) {
+        if (!locked) {
             actions += '<button type="button" class="btn btn-sm btn-outline-secondary apya-doc-upload" ' +
                 'data-id="' + d.id + '" title="' + esc(l('Grants:Documents:Upload')) + '">' +
                 '<i class="fa fa-upload"></i></button>';
@@ -50,7 +52,7 @@ $(function () {
             actions += '<a class="btn btn-sm btn-outline-secondary" title="' + esc(l('Grants:Documents:Download')) +
                 '" href="?handler=Download&versionId=' + d.latestVersion.id + '"><i class="fa fa-download"></i></a>';
         }
-        if (model.canReview && !model.isReadOnly && d.latestVersionNo > 0 && d.status !== 2) {
+        if (model.canReview && !locked && d.latestVersionNo > 0 && d.status !== 2) {
             actions += '<button type="button" class="btn btn-sm btn-outline-success apya-doc-approve" data-id="' + d.id +
                 '" title="' + esc(l('Grants:Documents:Approve')) + '"><i class="fa fa-check"></i></button>' +
                 '<button type="button" class="btn btn-sm btn-outline-warning apya-doc-revise" data-id="' + d.id +
@@ -244,13 +246,14 @@ $(function () {
             model.mandatoryApprovedCount, model.mandatoryCount));
         $('#PackageWarning').toggleClass('d-none', missing <= 0);
         $('#PackageWarningText').text(l('Grants:Documents:PackageMissing', missing));
-        $('#CreatePackageBtn').prop('disabled', model.approvedCount === 0);
+        $('#CreatePackageBtn').prop('disabled', model.approvedCount === 0 || model.canWrite === false);
         $('#DownloadPackageBtn').toggleClass('d-none', !model.hasPackage);
 
         $('#LastActivity').text(model.lastActivityAt
             ? l('Grants:Documents:LastActivity', date(model.lastActivityAt)) : '');
-        $('#RemindBtn').toggleClass('d-none', model.isReadOnly);
-        $('#AddDocBtn').toggleClass('d-none', model.isReadOnly);
+        var writeLocked = !!model.isReadOnly || model.canWrite === false;
+        $('#RemindBtn').toggleClass('d-none', writeLocked);
+        $('#AddDocBtn').toggleClass('d-none', writeLocked);
     }
 
     // İlk yükleme düşerse satır içi kart + Tekrar dene, ABP penceresi açılmaz (Faz 4 kararı 2).

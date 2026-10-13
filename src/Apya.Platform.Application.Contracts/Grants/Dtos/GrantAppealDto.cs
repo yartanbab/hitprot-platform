@@ -33,6 +33,13 @@ public class GrantAppealConsoleDto
     /// <summary>Danışman görüş yazabilir; firma yalnız okur.</summary>
     public bool CanEditOpinion { get; set; }
 
+    /// <summary>
+    /// Görüntüleyen bu bağlamda hibe YAZMA iznine sahip mi (host: Grants.Edit, firma:
+    /// Grants.ManageApplications). Sunucu yazma uçlarını zaten reddeder; bayrak ekranın yazma
+    /// denetimlerini baştan gizlemesi içindir. "Gönderildi" (IsReadOnly) durumundan AYRIDIR.
+    /// </summary>
+    public bool CanWrite { get; set; }
+
     public List<GrantAppealItemDto> Items { get; set; } = new();
 
     /// <summary>İtiraz dosyasına giren madde sayısı (tasarımdaki "2/3").</summary>
