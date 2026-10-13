@@ -82,6 +82,41 @@ public class GrantReadOnlyViewer_Tests : PlatformWebTestBase
         }
     }
 
+    /// <summary>
+    /// Ürün kararı (2026-10-14): izinsiz kullanıcı adımlar arasında gezer ama başvurunun ORTAK
+    /// adımı değişmez — uç reddeder, betik de uca gitmeden yalnız ekrandaki adımı değiştirir.
+    /// </summary>
+    [Fact]
+    public async Task Izinsiz_kullanici_adimi_degistiremez_basvurunun_adimi_ayni_kalir()
+    {
+        var id = await ApplicationAsync(null);
+        var wizard = GetRequiredService<IGrantApplicationWizardAppService>();
+        var before = (await wizard.GetAsync(id)).CurrentStep;
+
+        await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.SetStepAsync(id, before + 1));
+
+        (await wizard.GetAsync(id)).CurrentStep.ShouldBe(before);
+
+        var script = ReadScript("Wizard.js");
+        script.ShouldContain("localStep = step;", Case.Sensitive);
+        script.ShouldContain("if (model.canWrite === false && localStep) { model.currentStep = localStep; }", Case.Sensitive);
+        // Üç gezinme yolu da (adım çipi, Geri, İleri) aynı işlevden geçer; uca doğrudan giden kalmadı.
+        script.Split("service.setStep(").Length.ShouldBe(2);
+        script.Split("goToStep(").Length.ShouldBe(5);
+    }
+
+    /// <summary>
+    /// Ürün kararı (2026-10-14): "Bugün" okuma ekranıdır. Yazma izni olmayan danışman için de
+    /// yüklenir (eskiden düzenleme izni istiyor, sayfa açılıp veri gelmiyordu).
+    /// </summary>
+    [Fact]
+    public async Task Yazma_izni_olmayan_danisman_Bugun_ekranini_okur()
+    {
+        var today = await GetRequiredService<IGrantTodayAppService>().GetAsync();
+
+        today.IsHost.ShouldBeTrue();
+    }
+
     private static string ReadScript(string name)
     {
         var path = Path.Combine(

@@ -105,8 +105,9 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
 
         if (dto.IsHost)
         {
-            // Host görünümü kiracılar arası bakar: katalog düzenleme izni şart.
-            await AuthorizationService.CheckAsync(PlatformPermissions.Grants.Edit);
+            // Ürün kararı (2026-10-14): "Bugün" bir OKUMA ekranıdır; hibeleri görme izni (sınıf
+            // düzeyinde Grants.Default) yeter. Eskiden düzenleme izni isteniyordu: yazma izni
+            // olmayan danışman sayfayı açabiliyor ama veri yüklenemiyordu.
             await BuildHostAsync(dto);
         }
         else
