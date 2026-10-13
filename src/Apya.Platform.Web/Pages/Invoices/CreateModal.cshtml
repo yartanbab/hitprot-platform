@@ -24,6 +24,16 @@
                     <select asp-for="InvoiceInfo.CustomerId" asp-items="Model.Customers" class="form-select"></select>
                 </div>
             </div>
+            @* FIN-05 · Bütçe kalemi: proje seçilince dolar (gider/gelir penceresindeki ortak yardımcı),
+               ama burada HİÇBİR ZAMAN zorunlu değildir. *@
+            <div class="row">
+                <div class="col-md-6 mb-3 d-none" data-budget-line-wrap>
+                    <label class="form-label" asp-for="InvoiceInfo.BudgetLineId">
+                        Bütçe kalemi <span class="text-muted fw-normal">(isteğe bağlı)</span>
+                    </label>
+                    <select asp-for="InvoiceInfo.BudgetLineId" class="form-select"></select>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Yön</label>
@@ -113,6 +123,21 @@
             <!-- JavaScript for Items -->
             <script>
                 $(function () {
+                    // Modal AJAX ile yüklendiği için bağlama bir sonraki döngüde yapılır (gider penceresiyle aynı).
+                    setTimeout(function () {
+                        if (!window.apya || !apya.financeModal) { return; }
+                        apya.financeModal.bindBudgetContext({
+                            formSelector: 'form[action$="/Invoices/CreateModal"]',
+                            projectSelector: '#InvoiceInfo_ProjectId',
+                            lineSelector: '#InvoiceInfo_BudgetLineId',
+                            taskSelector: '#InvoiceInfo_NoTask',
+                            lineWrapSelector: '[data-budget-line-wrap]',
+                            taskWrapSelector: '[data-no-task-wrap]',
+                            hintSelector: '[data-no-hint]',
+                            optionalLine: true
+                        });
+                    }, 0);
+
                     var itemIndex = 1;
                     $('#AddInvoiceItemBtn').click(function () {
                         var html = `

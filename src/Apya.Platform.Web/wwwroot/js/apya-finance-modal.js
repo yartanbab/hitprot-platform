@@ -138,7 +138,8 @@
                     $line.append($('<option>').val(l.id).text((l.code ? l.code + ' \u00b7 ' : '') + l.name));
                 });
 
-                if (lookup.requiresBudgetLine) {
+                // optionalLine (FIN-05, fatura): kalem gosterilir ama hicbir zaman zorunlu olmaz.
+                if (lookup.requiresBudgetLine && !opts.optionalLine) {
                     $line.attr('required', 'required').prop('required', true);
                 } else {
                     $line.prop('required', false).removeAttr('required');

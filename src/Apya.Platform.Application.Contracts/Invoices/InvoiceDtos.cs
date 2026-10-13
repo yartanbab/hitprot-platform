@@ -13,6 +13,7 @@ public class InvoiceDto : FullAuditedEntityDto<Guid>
     public string? CustomerName { get; set; }
     public InvoiceDirection Direction { get; set; }
     public Guid? TaskId { get; set; }
+    public Guid? BudgetLineId { get; set; }
     public string InvoiceNumber { get; set; } = string.Empty;
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }
@@ -40,6 +41,9 @@ public class CreateInvoiceDto
     public Guid? CustomerId { get; set; }
     public InvoiceDirection Direction { get; set; } = InvoiceDirection.Sales;
     public Guid? TaskId { get; set; }
+
+    /// <summary>FIN-05 · İsteğe bağlı bütçe kalemi; verilirse faturanın projesine ait olmalıdır.</summary>
+    public Guid? BudgetLineId { get; set; }
     public string InvoiceNumber { get; set; } = string.Empty;
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }

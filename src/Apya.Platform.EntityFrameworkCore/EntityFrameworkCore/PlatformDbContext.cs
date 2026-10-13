@@ -1506,6 +1506,8 @@ namespace Apya.Platform.EntityFrameworkCore
                 // bakmaz — silinmiş bir faturanın numarası aynı kiracıda yeniden kullanılamaz;
                 // bu davranış eskisiyle aynı, değiştirilmedi.)
                 b.HasIndex(x => new { x.TenantId, x.InvoiceNumber }).IsUnique();
+                // FIN-05: fatura bütçe kalemi — FK yok (gider/gelir/görevdeki kalem bağıyla aynı gerekçe).
+                b.HasIndex(x => x.BudgetLineId);
 
                 // Host (TenantId NULL) faturaları yukarıdaki indeksin KAPSAMI DIŞINDA kalır:
                 // SQL Server nullable kolonlu tekil indekse otomatik "[TenantId] IS NOT NULL"

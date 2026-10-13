@@ -74,6 +74,7 @@ public class CreateModalModel : AbpPageModel
             ProjectId     = InvoiceInfo.ProjectId,
             TaskId        = InvoiceInfo.TaskId,
             CustomerId    = InvoiceInfo.CustomerId == Guid.Empty ? null : InvoiceInfo.CustomerId,
+            BudgetLineId  = InvoiceInfo.BudgetLineId == Guid.Empty ? null : InvoiceInfo.BudgetLineId,
             Direction     = InvoiceInfo.Direction,
             InvoiceNumber = InvoiceInfo.InvoiceNumber,
             InvoiceDate   = InvoiceInfo.InvoiceDate,
@@ -98,6 +99,7 @@ public class CreateModalModel : AbpPageModel
         public Guid ProjectId { get; set; }
         public Guid? TaskId { get; set; }
         public Guid? CustomerId { get; set; }
+        public Guid? BudgetLineId { get; set; }
         public InvoiceDirection Direction { get; set; } = InvoiceDirection.Sales;
         public string InvoiceNumber { get; set; } = null!;
         public DateTime InvoiceDate { get; set; } = default;  // OnGetAsync'te Clock.Now ile set edilir
