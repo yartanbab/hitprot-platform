@@ -100,6 +100,14 @@ public class WebPushClientContract_Tests
         script.ShouldContain("PUSH.unsubscribe().then(function() {", Case.Sensitive);
         // Takılırsa çıkış engellenmez.
         script.ShouldContain("window.setTimeout(go, 1500)", Case.Sensitive);
+
+        // Abonelik yoksa (kanal kapalı, izin yok) çıkışa hiç dokunulmaz; kapalı kanalda service worker
+        // da kaydedilmez — anahtarlar tanımlanmadan yayına giren kod davranış değiştirmemeli.
+        script.ShouldContain("!PUSH.hasSynced()) { return; }", Case.Sensitive);
+        script.ShouldContain("if (knownOff()) { return Promise.resolve(false); }", Case.Sensitive);
+        script.IndexOf("markOff();", StringComparison.Ordinal)
+            .ShouldBeLessThan(script.IndexOf("return registration().then(function(reg) {", StringComparison.Ordinal),
+                "yapılandırma, service worker kaydından ÖNCE sorulmalı");
     }
 
     [Fact]

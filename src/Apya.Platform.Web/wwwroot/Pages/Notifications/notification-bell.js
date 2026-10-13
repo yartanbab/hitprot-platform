@@ -133,6 +133,9 @@
         // yüklemesinde sunucuya gidilmesin, ama tarayıcı aboneliği yenilerse
         // (adres değişir) fark edilip yeniden bildirilsin.
         var SS_SYNCED = 'apya.notif.push.endpoint';
+        // Kanal bu kurulumda kapalıysa (VAPID anahtarı tanımlı değil) oturum boyunca
+        // bir daha sorulmaz ve service worker KAYDEDİLMEZ: kapalı kurulumda davranış değişmez.
+        var SS_OFF = 'apya.notif.push.off';
         var QUIET = { abpHandleError: false };
 
         function readSynced() {
@@ -147,6 +150,13 @@
 
         function supported() {
             return 'serviceWorker' in navigator && 'PushManager' in window;
+        }
+
+        function knownOff() {
+            try { return window.sessionStorage.getItem(SS_OFF) === '1'; } catch (e) { return false; }
+        }
+        function markOff() {
+            try { window.sessionStorage.setItem(SS_OFF, '1'); } catch (e) { /* yoksay */ }
         }
 
         // Proxy çağrı anında aranır: zil betiği proxy betiğinden önce yüklenebilir.
@@ -185,12 +195,25 @@
                 return Promise.resolve(false);
             }
 
-            return registration().then(function(reg) {
-                return reg.pushManager.getSubscription().then(function(existing) {
+            if (knownOff()) { return Promise.resolve(false); }
+
+            // Daha önce bildirilmiş abonelik varsa yapılandırma sorulmaz (ağ isteği yok).
+            var config = readSynced()
+                ? Promise.resolve(null)
+                : Promise.resolve(service.getWebPushConfig(QUIET));
+
+            return config.then(function(known) {
+                if (known && (!known.enabled || !known.publicKey)) {
+                    markOff();
+                    return false;
+                }
+
+                return registration().then(function(reg) {
+                  return reg.pushManager.getSubscription().then(function(existing) {
                     if (existing && readSynced() === existing.endpoint) { return true; }
 
-                    return Promise.resolve(service.getWebPushConfig(QUIET)).then(function(config) {
-                        if (!config || !config.enabled || !config.publicKey) { return false; }
+                    return Promise.resolve(known || service.getWebPushConfig(QUIET)).then(function(config) {
+                        if (!config || !config.enabled || !config.publicKey) { markOff(); return false; }
 
                         var key = toBytes(config.publicKey);
                         // Sunucu anahtarı değiştiyse eski abonelik artık işe yaramaz.
@@ -213,6 +236,7 @@
                             });
                         });
                     });
+                  });
                 });
             }).catch(function(e) {
                 console.warn('[NotificationBell] web push aboneliği kurulamadı', e);
@@ -250,7 +274,10 @@
               .catch(function() { return 'NotSubscribed'; });
         }
 
-        return { supported: supported, sync: sync, unsubscribe: unsubscribe, status: status };
+        // Bu sekme, sunucuya bildirilmiş bir abonelik biliyor mu (çıkışta kaldırılacak bir şey var mı).
+        function hasSynced() { return !!readSynced(); }
+
+        return { supported: supported, sync: sync, unsubscribe: unsubscribe, status: status, hasSynced: hasSynced };
     })();
 
     // İzin verilince ve cihaz anahtarı açılınca abonelik kurulur; kapatılınca kaldırılır.
@@ -273,7 +300,8 @@
     document.addEventListener('click', function(e) {
         var link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
         if (!link || !/\/Account\/Logout(\?|$)/i.test(link.getAttribute('href') || '')) { return; }
-        if (link.getAttribute('data-push-done') === '1' || !PUSH.supported()) { return; }
+        // Abonelik yoksa (kanal kapalı, izin verilmemiş) çıkışa HİÇ dokunulmaz.
+        if (link.getAttribute('data-push-done') === '1' || !PUSH.supported() || !PUSH.hasSynced()) { return; }
 
         e.preventDefault();
         e.stopPropagation();
