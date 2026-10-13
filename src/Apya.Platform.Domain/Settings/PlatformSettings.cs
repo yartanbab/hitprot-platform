@@ -381,6 +381,12 @@ public static class PlatformSettings
         /// bilerek sildiği şablon rolü sonraki yayında geri gelmemeli.
         /// </summary>
         public const string TenantRoleTemplatesCreated = Prefix + ".Backfills.TenantRoleTemplatesCreated";
+
+        /// <summary>
+        /// PRJ-08 gösterge izinleri kurulu kiracıların rollerine verildi mi (görme → projeyi gören,
+        /// yönetme → projeyi düzenleyen roller). Telafi BİR KEZ koşar.
+        /// </summary>
+        public const string ProjectIndicatorPermissionsGranted = Prefix + ".Backfills.ProjectIndicatorPermissionsGranted";
     }
 
     /// <summary>

@@ -239,6 +239,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.DocumentTag> DocumentTags { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentFileTag> DocumentFileTags { get; set; }
         public DbSet<ProjectWorkStep> ProjectWorkSteps { get; set; }
+        public DbSet<ProjectIndicator> ProjectIndicators { get; set; }
+        public DbSet<ProjectIndicatorEntry> ProjectIndicatorEntries { get; set; }
         public DbSet<Apya.Platform.Documents.CompliancePackage> CompliancePackages { get; set; }
         public DbSet<Apya.Platform.Documents.ComplianceRequirement> ComplianceRequirements { get; set; }
         public DbSet<Apya.Platform.Documents.ComplianceAssignment> ComplianceAssignments { get; set; }
@@ -2237,6 +2239,34 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.DocumentFileId, x.TagId }).IsUnique()
                     .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.HasIndex(x => x.TagId);
+            });
+
+            /* --- PROJE GÖSTERGESİ (PRJ-08) --- */
+            builder.Entity<ProjectIndicator>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectIndicators", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(ProjectIndicatorConsts.MaxNameLength);
+                b.Property(x => x.Unit).HasMaxLength(ProjectIndicatorConsts.MaxUnitLength);
+                b.Property(x => x.BaselineValue).HasColumnType("decimal(18,4)");
+                b.Property(x => x.TargetValue).HasColumnType("decimal(18,4)");
+                // Restrict: iş adımıyla aynı gerekçe (SQL Server "multiple cascade paths").
+                b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Restrict);
+                // İş adımı bağı için FK yok (görevdeki WorkStepId ile aynı): bağı servis koparır.
+                b.HasIndex(x => x.ProjectId);
+                b.HasIndex(x => x.WorkStepId);
+            });
+
+            builder.Entity<ProjectIndicatorEntry>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "ProjectIndicatorEntries", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Value).HasColumnType("decimal(18,4)");
+                b.Property(x => x.Note).HasMaxLength(ProjectIndicatorConsts.MaxEntryNoteLength);
+                b.HasOne<ProjectIndicator>().WithMany().HasForeignKey(x => x.IndicatorId).OnDelete(DeleteBehavior.Cascade);
+                // Kanıt belgesi için FK yok (gelir/gider belge bağlarıyla aynı gerekçe).
+                b.HasIndex(x => new { x.IndicatorId, x.EntryDate });
+                b.HasIndex(x => x.DocumentFileId);
             });
 
             /* --- PROJE İŞ ADIMI (WORK STEP) --- */

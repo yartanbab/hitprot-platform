@@ -93,6 +93,12 @@ public static class PlatformDomainErrorCodes
     public const string ProjectNameRequired = "Platform:Project:NameRequired";
     public const string ProjectBudgetInvalid = "Platform:Project:BudgetInvalid";
     public const string ProjectScheduleInvalid = "Platform:Project:ScheduleInvalid";
+
+    // PRJ-08 · Proje göstergeleri
+    public const string ProjectIndicatorNameRequired = "Platform:Project:IndicatorNameRequired";
+    public const string ProjectIndicatorTargetInvalid = "Platform:Project:IndicatorTargetInvalid";
+    public const string ProjectIndicatorWorkStepMismatch = "Platform:Project:IndicatorWorkStepMismatch";
+    public const string ProjectIndicatorDocumentMismatch = "Platform:Project:IndicatorDocumentMismatch";
     public const string ProjectCategoryNameRequired = "Platform:ProjectCategory:NameRequired";
     public const string ProjectCategoryNameAlreadyExists = "Platform:ProjectCategory:NameAlreadyExists";
     public const string ProjectCategorySystemReadOnly = "Platform:ProjectCategory:SystemReadOnly";

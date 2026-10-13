@@ -92,6 +92,9 @@ public static class PlatformPermissions
         public const string ManageTeam = Default + ".ManageTeam"; // Projeye üye ekleme/çıkarma
         public const string UseAiFeatures = Default + ".UseAiFeatures";
         public const string ManageCategories = Default + ".ManageCategories"; // Proje kategorilerini tanımlama
+        // PRJ-08: proje göstergeleri (hedef / gerçekleşen). Görme ve yönetme ayrı izinlerdir.
+        public const string ViewIndicators = Default + ".ViewIndicators";
+        public const string ManageIndicators = Default + ".ManageIndicators";
     }
 
     // --- GÖREV (TASK) YETKİLERİ ---
