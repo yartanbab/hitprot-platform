@@ -33,6 +33,9 @@ public class GrantConversionPreviewDto
 
     public List<GrantConversionBudgetMapDto> BudgetMappings { get; set; } = new();
     public List<GrantConversionTaskDto> Tasks { get; set; } = new();
+
+    /// <summary>Başvurunun hedefleri; dönüşümde proje göstergesi olur.</summary>
+    public List<GrantApplicationTargetDto> Targets { get; set; } = new();
     public List<GrantConversionTrancheDto> Tranches { get; set; } = new();
     public List<GrantConversionMemberDto> Members { get; set; } = new();
 
@@ -108,6 +111,9 @@ public class ConvertGrantApplicationInput
 
     /// <summary>Tahsilat dilimleri projenin gelir planına aktarılsın mı.</summary>
     public bool CreateTranches { get; set; } = true;
+
+    /// <summary>Başvurunun hedefleri proje göstergesi olarak aktarılsın mı.</summary>
+    public bool CreateIndicators { get; set; } = true;
 }
 
 public class ConvertGrantBudgetLineInput
@@ -129,5 +135,6 @@ public class GrantConversionResultDto
     public int BudgetLineCount { get; set; }
     public int TaskCount { get; set; }
     public int TrancheCount { get; set; }
+    public int IndicatorCount { get; set; }
     public int MemberCount { get; set; }
 }

@@ -91,6 +91,20 @@ $(function () {
             }).join('')
             : '<div class="apya-cv-hint">' + esc(l('Grants:Conversion:NoTranche')) + '</div>');
 
+        var targets = model.targets || [];
+        $('#TargetCountLabel').text(l('Grants:Conversion:TargetsToIndicators', targets.length));
+        $('#TargetList').html(targets.length
+            ? targets.map(function (t) {
+                var unit = t.unit ? ' ' + t.unit : '';
+                return '<div class="apya-cv-line"><span>' + esc(t.name) + '</span>' +
+                    '<span class="apya-cv-line-date">' +
+                    esc(Number(t.baselineValue).toLocaleString('tr-TR', { maximumFractionDigits: 4 }) + unit + ' → ' +
+                        Number(t.targetValue).toLocaleString('tr-TR', { maximumFractionDigits: 4 }) + unit) +
+                    '</span></div>';
+            }).join('')
+            : '<div class="apya-cv-hint">' + esc(l('Grants:Conversion:NoTarget')) + '</div>');
+        $('#CreateIndicators').prop('disabled', targets.length === 0);
+
         $('#CreateTasks').prop('disabled', tasks.length === 0);
         $('#CreateTranches').prop('disabled', tranches.length === 0);
     }
@@ -150,7 +164,8 @@ $(function () {
             memberUserIds: $('.apya-cv-member:checked').map(function () { return this.value; }).get(),
             budgetLines: lines,
             createTasks: $('#CreateTasks').is(':checked'),
-            createTranches: $('#CreateTranches').is(':checked')
+            createTranches: $('#CreateTranches').is(':checked'),
+            createIndicators: $('#CreateIndicators').is(':checked')
         }).then(function (r) {
             abp.notify.success(l('Grants:Conversion:Created', r.projectCode));
             load();

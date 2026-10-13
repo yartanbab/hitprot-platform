@@ -664,4 +664,65 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
         after.IsStale.ShouldBeTrue();
         after.ApprovedAmount.ShouldBe(600_000m, "proje bütçesi kendiliğinden değişmez");
     }
+
+    /* ═══════════════ Hedefler → proje göstergeleri (PRJ-08) ═══════════════ */
+
+    private async Task AddTargetAsync(Guid applicationId, Guid tenantId)
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        using (GetRequiredService<ICurrentTenant>().Change(tenantId))
+        {
+            await GetRequiredService<IRepository<GrantApplicationTarget, Guid>>().InsertAsync(
+                new GrantApplicationTarget(
+                    Guid.NewGuid(), tenantId, applicationId, "Eğitilen kişi sayısı", "kişi", 0m, 200m, new DateTime(2027, 6, 30)),
+                autoSave: true);
+        }
+        await uow.CompleteAsync();
+    }
+
+    private async Task<System.Collections.Generic.List<Apya.Platform.Projects.ProjectIndicator>> IndicatorsAsync(Guid projectId, Guid tenantId)
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        using (GetRequiredService<ICurrentTenant>().Change(tenantId))
+        {
+            return await GetRequiredService<IRepository<Apya.Platform.Projects.ProjectIndicator, Guid>>()
+                .GetListAsync(i => i.ProjectId == projectId);
+        }
+    }
+
+    [Fact]
+    public async Task Hedefler_Onizlemede_Gorunur_Ve_Kiracinin_Proje_Gostergesi_Olur()
+    {
+        var (id, tenantId) = await SetupAsync();
+        await AddTargetAsync(id, tenantId);
+
+        (await _conversion.GetPreviewAsync(id)).Targets.Single().Name.ShouldBe("Eğitilen kişi sayısı");
+
+        var result = await _conversion.ConvertAsync(Input(id));
+
+        result.IndicatorCount.ShouldBe(1);
+        var indicator = (await IndicatorsAsync(result.ProjectId, tenantId)).Single();
+        indicator.TenantId.ShouldBe(tenantId, "gösterge firmanın kiracısında oluşmalı");
+        indicator.Name.ShouldBe("Eğitilen kişi sayısı");
+        indicator.Unit.ShouldBe("kişi");
+        indicator.BaselineValue.ShouldBe(0m);
+        indicator.TargetValue.ShouldBe(200m);
+        indicator.TargetDate.ShouldBe(new DateTime(2027, 6, 30));
+    }
+
+    [Fact]
+    public async Task Hedef_Aktarimi_Kapatilabilir()
+    {
+        var (id, tenantId) = await SetupAsync();
+        await AddTargetAsync(id, tenantId);
+        var input = Input(id);
+        input.CreateIndicators = false;
+
+        var result = await _conversion.ConvertAsync(input);
+
+        result.IndicatorCount.ShouldBe(0);
+        (await IndicatorsAsync(result.ProjectId, tenantId)).ShouldBeEmpty();
+    }
 }
