@@ -2,6 +2,11 @@ $(function () {
     var service = apya.platform.grants.grantJourney;
     var interestService = apya.platform.grants.grantInterest;
     var l = abp.localization.getResource('Platform');
+    // Salt-okur kullanıcı (yalnız görme izni) yazma denetimlerini görmez; sunucu yazmayı zaten
+    // reddeder. Firma: ManageApplications, danışman: Edit — ikisi taraf-özeldir, biri yeter.
+    var canWrite = abp.auth.isGranted('Platform.Grants.ManageApplications') || abp.auth.isGranted('Platform.Grants.Edit');
+    // Fikir paylaşma sayfası yalnız yazma içindir: izinsiz kullanıcıya bağlantısı gösterilmez.
+    if (!canWrite) { $('a[href="/Grants/Idea"]').addClass('d-none'); }
     var meetingModal = new bootstrap.Modal(document.getElementById('MeetingModal'));
 
     // GrantJourneyItemKind / GrantNextAction enum sıralarıyla birebir.
@@ -105,13 +110,15 @@ $(function () {
         switch (i.kind) {
             case 0:
                 // Açık öneri yoksa (ya da danışman başka saat istediyse) firma saat önerir.
-                if (!i.meeting || i.meeting.status === 2) {
+                if (canWrite && (!i.meeting || i.meeting.status === 2)) {
                     html.push('<button type="button" class="btn btn-sm btn-primary" data-meeting="' + i.interestId + '" data-grant="' + esc(i.grantName) + '">' +
                         esc(l('Grants:Journey:Action:ProposeMeeting')) + '</button>');
                 }
                 html.push(link('/Grants/Detail?id=' + i.grantCallId, 'Grants:Journey:Action:Call', false));
-                html.push('<button type="button" class="btn btn-sm btn-outline-danger" data-withdraw="' + i.interestId + '">' +
-                    esc(l('Grants:Journey:Action:Withdraw')) + '</button>');
+                if (canWrite) {
+                    html.push('<button type="button" class="btn btn-sm btn-outline-danger" data-withdraw="' + i.interestId + '">' +
+                        esc(l('Grants:Journey:Action:Withdraw')) + '</button>');
+                }
                 break;
             case 3: html.push(link('/Grants/Wizard?id=' + i.applicationId, 'Grants:Journey:Action:Continue', true)); break;
             case 4: html.push(link('/Grants/Wizard?id=' + i.applicationId, 'Grants:Journey:Action:View', false)); break;
@@ -126,8 +133,10 @@ $(function () {
             case 8: html.push(link('/Grants/Detail?id=' + i.grantCallId, 'Grants:Journey:Action:Call', false)); break;
             // 19a · Havuzdaki fikrin çağrısı yok; firma yalnız geri çekebilir.
             case 9:
-                html.push('<button type="button" class="btn btn-sm btn-outline-danger" data-withdraw-idea="' + i.interestId + '">' +
-                    esc(l('Grants:Journey:Action:WithdrawIdea')) + '</button>');
+                if (canWrite) {
+                    html.push('<button type="button" class="btn btn-sm btn-outline-danger" data-withdraw-idea="' + i.interestId + '">' +
+                        esc(l('Grants:Journey:Action:WithdrawIdea')) + '</button>');
+                }
                 break;
         }
         return html.join('');

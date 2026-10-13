@@ -1224,6 +1224,7 @@
     "Grants:Wizard:ProjectTitle": "Project name",
     "Grants:Wizard:ProjectSummary": "Project summary",
     "Grants:Wizard:Duration": "Duration (months)",
+    "Grants:ReadOnly:Notice": "This account is not allowed to manage grant applications; you can only view them.",
     "Grants:Wizard:Targets": "Targets (optional)",
     "Grants:Wizard:TargetsHint": "Measurable targets the project aims to reach. They are carried over as project indicators when the application is converted to a project.",
     "Grants:Wizard:Target:Name": "Target",

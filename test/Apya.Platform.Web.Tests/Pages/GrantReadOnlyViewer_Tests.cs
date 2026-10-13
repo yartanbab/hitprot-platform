@@ -92,6 +92,40 @@ public class GrantReadOnlyViewer_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// Firma tarafına özgü ekranlar (çağrı ayrıntısı, yolculuk, profil, fikir) DTO bayrağı taşımaz;
+    /// izni betik sorar. İzin adı sabitin DEĞERİDİR (ScriptPermissionNames_Tests ayrıca denetler).
+    /// </summary>
+    [Fact]
+    public void Firma_ekranlari_yazma_iznini_sorar_ve_denetimleri_buna_baglar()
+    {
+        const string ask = "var canWrite = abp.auth.isGranted('Platform.Grants.ManageApplications') || abp.auth.isGranted('Platform.Grants.Edit');";
+        PlatformPermissions.Grants.ManageApplications.ShouldBe("Platform.Grants.ManageApplications");
+        PlatformPermissions.Grants.Edit.ShouldBe("Platform.Grants.Edit");
+
+        var detail = ReadScript("Detail.js");
+        detail.ShouldContain(ask, Case.Sensitive);
+        detail.ShouldContain("toggleClass('d-none', !canExpress || !canWrite)", Case.Sensitive);
+        detail.ShouldContain("$('#InterestWithdrawBtn').toggleClass('d-none', !pending || !canWrite);", Case.Sensitive);
+
+        var journey = ReadScript("Journey.js");
+        journey.ShouldContain(ask, Case.Sensitive);
+        journey.ShouldContain("if (canWrite && (!i.meeting || i.meeting.status === 2)) {", Case.Sensitive);
+        // Geri çekme düğmelerinin ikisi de (talep ve fikir) izne bağlı.
+        journey.Split("if (canWrite) {").Length.ShouldBe(3);
+        journey.ShouldContain("data-withdraw=\"", Case.Sensitive);
+        journey.ShouldContain("data-withdraw-idea=\"", Case.Sensitive);
+
+        var tenant = ReadScript("Tenant.js");
+        tenant.ShouldContain(ask, Case.Sensitive);
+        tenant.ShouldContain("$('#ProfileForm').prop('disabled', !canWrite);", Case.Sensitive);
+        tenant.ShouldContain("$('#SaveProfileBtn').addClass('d-none');", Case.Sensitive);
+
+        var idea = ReadScript("Idea.js");
+        idea.ShouldContain(ask, Case.Sensitive);
+        idea.ShouldContain("l('Grants:ReadOnly:Notice')", Case.Sensitive);
+    }
+
+    /// <summary>
     /// Denetimler betikle çizildiği için sunucu HTML'inde görünmez; betiğin bayrağı okuduğu kaynaktan
     /// kilitlenir. Bayrak adı DTO'daki özellikle aynıdır (camelCase).
     /// </summary>
