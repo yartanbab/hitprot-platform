@@ -580,6 +580,8 @@
     "Notification:TaskDueSoon:Body": "\"{0}\" is due in less than 48 hours.",
     "Notification:ProjectEndingSoon:Title": "{0} day(s) until the project ends",
     "Notification:ProjectEndingSoon:TitleToday": "The project ends today",
+    "Notification:ProjectIndicatorBehind:Title": "Indicator is behind target",
+    "Notification:ProjectIndicatorBehind:Body": "In \"{0}\", the target date ({2}) of indicator \"{1}\" has passed. Actual {3}, target {4} ({5}%).",
     "Notification:ProjectEndingSoon:Body": "\"{0}\" ends on {1}. The project has {2} open task(s).",
     "Notification:ProjectEndingSoon:BodyNoOpenTasks": "\"{0}\" ends on {1}. No open tasks remain.",
     "Projects:Edit:BudgetFromLines": "This project has budget lines. Finance screens and the budget bar show the total of the lines, not this figure: {0}.",

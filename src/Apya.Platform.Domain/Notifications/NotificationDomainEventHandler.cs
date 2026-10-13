@@ -19,6 +19,7 @@ public class NotificationDomainEventHandler :
     ILocalEventHandler<TaskOverdueEto>,
     ILocalEventHandler<DocumentExpiringEto>,
     ILocalEventHandler<Apya.Platform.Projects.ProjectEndingSoonEto>,
+    ILocalEventHandler<Apya.Platform.Projects.ProjectIndicatorBehindEto>,
     ILocalEventHandler<Apya.Platform.Documents.DocumentFileExpiryEto>,
     ITransientDependency
 {
@@ -220,6 +221,34 @@ public class NotificationDomainEventHandler :
                 entityType: "Project",
                 entityId: eventData.ProjectId,
                 severity: severity
+            );
+        }
+    }
+
+    /// <summary>
+    /// PRJ-08: Gösterge geride. Tekillik anahtarı GÖSTERGE + HEDEF TARİHİ: worker saatte bir
+    /// koştuğu hâlde bir kez bildirilir; hedef tarihi ertelenip yeniden kaçırılırsa yeniden
+    /// bildirilir. Bağlantı projeye iner (bildirim kaydının varlığı PROJE'dir).
+    /// </summary>
+    public async Task HandleEventAsync(Apya.Platform.Projects.ProjectIndicatorBehindEto eventData)
+    {
+        var onceKey =
+            $"{(int)NotificationType.ProjectIndicatorBehind}:ProjectIndicator:{eventData.IndicatorId}:{eventData.TargetDate:yyyyMMdd}";
+
+        string Value(decimal v) => v.ToString("0.##") + (string.IsNullOrEmpty(eventData.Unit) ? "" : " " + eventData.Unit);
+
+        var title = _l["Notification:ProjectIndicatorBehind:Title"];
+        var body = _l["Notification:ProjectIndicatorBehind:Body",
+            eventData.ProjectName, eventData.IndicatorName, eventData.TargetDate.ToString("dd.MM.yyyy"),
+            Value(eventData.CurrentValue), Value(eventData.TargetValue), eventData.ProgressPercent];
+
+        foreach (var userId in Recipients(eventData.RecipientIds.ToArray()))
+        {
+            await _notificationManager.PublishOnceAsync(
+                userId, onceKey, title, body,
+                NotificationType.ProjectIndicatorBehind,
+                entityType: "Project",
+                entityId: eventData.ProjectId
             );
         }
     }
