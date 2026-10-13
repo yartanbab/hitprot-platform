@@ -193,6 +193,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Feedback> Feedbacks { get; set; }
         public DbSet<FeedbackComment> FeedbackComments { get; set; }
         public DbSet<FeedbackAttachment> FeedbackAttachments { get; set; }
+        public DbSet<FeedbackUpload> FeedbackUploads { get; set; }
         public DbSet<FeedbackActivity> FeedbackActivities { get; set; }
 
         /* --- İSTEMCİ HATA TELEMETRİSİ --- */
@@ -2310,6 +2311,18 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => x.FeedbackNumber).IsUnique().HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
                 b.HasIndex(x => x.AssignedUserId);
                 b.HasIndex(x => x.ModuleCode);
+            });
+
+            builder.Entity<FeedbackUpload>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FeedbackUploads", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                b.Property(x => x.StoredFileName).IsRequired().HasMaxLength(FeedbackConsts.MaxFileNameLength);
+
+                // Saklanan ad sunucuda üretilir ve rastgeledir; tekillik sahiplik kaydının kendisidir.
+                b.HasIndex(x => x.StoredFileName).IsUnique();
+                b.HasIndex(x => x.UserId);
             });
 
             builder.Entity<FeedbackAttachment>(b =>

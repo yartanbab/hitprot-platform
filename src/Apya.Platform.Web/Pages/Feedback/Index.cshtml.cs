@@ -50,6 +50,7 @@ public class IndexModel : AbpPageModel
         }
 
         var storedFileName = await _fileStorage.StoreAsync(file);
+        await _feedbackAppService.RegisterUploadAsync(storedFileName);
         return new JsonResult(new { storedFileName });
     }
 
@@ -63,6 +64,7 @@ public class IndexModel : AbpPageModel
         }
 
         var storedFileName = await _fileStorage.StoreAsync(file);
+        await _feedbackAppService.RegisterUploadAsync(storedFileName);
         return new JsonResult(new
         {
             storedFileName,

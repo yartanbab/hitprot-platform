@@ -5463,6 +5463,44 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppFeedbackComments", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Feedbacks.FeedbackUpload", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ClaimedByFeedbackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoredFileName")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AppFeedbackUploads", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.FxRevaluations.FxRevaluationLine", b =>
                 {
                     b.Property<Guid>("Id")

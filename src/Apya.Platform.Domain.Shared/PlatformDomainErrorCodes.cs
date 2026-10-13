@@ -298,6 +298,7 @@ public static class PlatformDomainErrorCodes
     public const string FeedbackBodyRequired = "Platform:Feedback:BodyRequired";
     public const string FeedbackCommentRequired = "Platform:Feedback:CommentRequired";
     public const string FeedbackRateLimitExceeded = "Platform:Feedback:RateLimitExceeded";
+    public const string FeedbackUploadNotFound = "Platform:Feedback:UploadNotFound";
     public const string FeedbackInvalidStatusTransition = "Platform:Feedback:InvalidStatusTransition";
 
     // --- Telemetri (Telemetry) Modülü ---

@@ -14,6 +14,12 @@ public interface IFeedbackAppService : IApplicationService
 {
     Task<FeedbackDto> SubmitAsync(CreateFeedbackDto input);
 
+    /// <summary>
+    /// Yüklenen dosyayı çağıranın adına kaydeder. Uzaktan çağrılamaz: saklanan adı yalnız dosyayı
+    /// diske yazan sayfa bilir. Gönderim yalnız böyle kaydedilmiş, çağırana ait adları kabul eder.
+    /// </summary>
+    Task RegisterUploadAsync(string storedFileName);
+
     /// <summary>Yalnızca çağıran kullanıcının kendi gönderdikleri; iç notlar dönmez.</summary>
     Task<PagedResultDto<FeedbackDto>> GetMyListAsync(PagedAndSortedResultRequestDto input);
 
