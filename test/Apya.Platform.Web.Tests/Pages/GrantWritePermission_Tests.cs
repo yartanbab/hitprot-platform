@@ -59,6 +59,8 @@ public class GrantWritePermission_Tests : PlatformWebTestBase
         await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.AddTargetAsync(
             new SaveWizardTargetInput { ApplicationId = id, Name = "Hedef", TargetValue = 1m }));
         await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.DeleteTargetAsync(id, Guid.NewGuid()));
+        // Adım başvurunun ortak durumudur: değiştirmek de yazmadır.
+        await Should.ThrowAsync<AbpAuthorizationException>(() => wizard.SetStepAsync(id, 2));
     }
 
     [Fact]
