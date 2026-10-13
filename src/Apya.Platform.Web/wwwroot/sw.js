@@ -156,11 +156,11 @@ async function networkOnly(req) {
     return fetch(req);
 }
 
-/* --- Push notification — SUNUCU TARAFI HENÜZ YOK (Faz 2) --------------------
-   Bu işleyici bugün UYKUDA: `pushManager.subscribe()` kod tabanında hiçbir
-   yerden çağrılmıyor, dolayısıyla abonelik oluşmuyor ve push olayı hiç gelmiyor.
-   Sunucu tarafı — VAPID anahtarı, abonelik tablosu, gönderici — Faz 2'de
-   eklenecek (bkz. docs/design/bildirim-sistemi/02-coklu-kanal-plan.md).
+/* --- Push notification (NTF-08 Faz 2) --------------------------------------
+   Abonelik notification-bell.js'te kurulur (kullanıcı masaüstü bildirimine izin
+   verip bu cihazda açık bıraktıysa); sunucu WebPushNotificationHandler →
+   WebPushJob → WebPushSender zinciriyle gönderir. Gövde YALNIZ BAŞLIK taşır
+   (WebPushPayload): `body` alanı gelmez, ayrıntı uygulama içindedir.
    Sayfa AÇIKKEN masaüstü bildirimi buraya gerek duymuyor; onu SignalR olayından
    notification-bell.js gösteriyor.
 

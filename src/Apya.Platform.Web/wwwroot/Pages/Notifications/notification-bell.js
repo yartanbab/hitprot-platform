@@ -123,9 +123,205 @@
         };
     })();
 
+    // ─── Web push aboneliği (NTF-08 Faz 2) ────────────────────────────────────
+    // Sayfa KAPALIYKEN bildirim: tarayıcı, bildirim servisine abone olur; sunucu o
+    // aboneliğe şifreli mesaj yollar; mesajı service worker (/sw.js) gösterir.
+    // Abonelik yalnız kullanıcı masaüstü bildirimine İZİN VERMİŞ ve bu cihazda
+    // AÇIK bırakmışsa kurulur — ayrı bir izin sorusu yoktur.
+    var PUSH = (function() {
+        // Sunucuya bildirilen son abonelik adresi. Oturum deposunda: her sayfa
+        // yüklemesinde sunucuya gidilmesin, ama tarayıcı aboneliği yenilerse
+        // (adres değişir) fark edilip yeniden bildirilsin.
+        var SS_SYNCED = 'apya.notif.push.endpoint';
+        // Kanal bu kurulumda kapalıysa (VAPID anahtarı tanımlı değil) oturum boyunca
+        // bir daha sorulmaz ve service worker KAYDEDİLMEZ: kapalı kurulumda davranış değişmez.
+        var SS_OFF = 'apya.notif.push.off';
+        var QUIET = { abpHandleError: false };
+
+        function readSynced() {
+            try { return window.sessionStorage.getItem(SS_SYNCED); } catch (e) { return null; }
+        }
+        function writeSynced(value) {
+            try {
+                if (value) { window.sessionStorage.setItem(SS_SYNCED, value); }
+                else { window.sessionStorage.removeItem(SS_SYNCED); }
+            } catch (e) { /* yoksay */ }
+        }
+
+        function supported() {
+            return 'serviceWorker' in navigator && 'PushManager' in window;
+        }
+
+        function knownOff() {
+            try { return window.sessionStorage.getItem(SS_OFF) === '1'; } catch (e) { return false; }
+        }
+        function markOff() {
+            try { window.sessionStorage.setItem(SS_OFF, '1'); } catch (e) { /* yoksay */ }
+        }
+
+        // Proxy çağrı anında aranır: zil betiği proxy betiğinden önce yüklenebilir.
+        function deviceService() {
+            return window.apya && apya.platform && apya.platform.notifications
+                && apya.platform.notifications.notificationDevice;
+        }
+
+        function toBytes(base64Url) {
+            var padded = (base64Url + '==='.slice((base64Url.length + 3) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+            var raw = window.atob(padded);
+            var bytes = new Uint8Array(raw.length);
+            for (var i = 0; i < raw.length; i++) { bytes[i] = raw.charCodeAt(i); }
+            return bytes;
+        }
+
+        function sameKey(subscription, keyBytes) {
+            var current = subscription.options && subscription.options.applicationServerKey;
+            if (!current) { return true; } // tarayıcı anahtarı göstermiyor: aynı varsay
+            var a = new Uint8Array(current);
+            if (a.length !== keyBytes.length) { return false; }
+            for (var i = 0; i < a.length; i++) { if (a[i] !== keyBytes[i]) { return false; } }
+            return true;
+        }
+
+        function registration() {
+            return navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(function() { return navigator.serviceWorker.ready; });
+        }
+
+        // Aboneliği kurar ve sunucuya bildirir. Tekrarlanabilir: abonelik zaten
+        // bildirilmişse sunucuya hiç gidilmez. Hata bildirim akışını KESMEZ.
+        function sync() {
+            var service = deviceService();
+            if (!supported() || !service || DESKTOP.state() !== 'PermissionGranted') {
+                return Promise.resolve(false);
+            }
+
+            if (knownOff()) { return Promise.resolve(false); }
+
+            // Daha önce bildirilmiş abonelik varsa yapılandırma sorulmaz (ağ isteği yok).
+            var config = readSynced()
+                ? Promise.resolve(null)
+                : Promise.resolve(service.getWebPushConfig(QUIET));
+
+            return config.then(function(known) {
+                if (known && (!known.enabled || !known.publicKey)) {
+                    markOff();
+                    return false;
+                }
+
+                return registration().then(function(reg) {
+                  return reg.pushManager.getSubscription().then(function(existing) {
+                    if (existing && readSynced() === existing.endpoint) { return true; }
+
+                    return Promise.resolve(known || service.getWebPushConfig(QUIET)).then(function(config) {
+                        if (!config || !config.enabled || !config.publicKey) { markOff(); return false; }
+
+                        var key = toBytes(config.publicKey);
+                        // Sunucu anahtarı değiştiyse eski abonelik artık işe yaramaz.
+                        var fresh = existing && !sameKey(existing, key)
+                            ? existing.unsubscribe().then(function() { return null; })
+                            : Promise.resolve(existing);
+
+                        return fresh.then(function(sub) {
+                            return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+                        }).then(function(sub) {
+                            var json = sub.toJSON();
+                            return Promise.resolve(service.subscribeWebPush({
+                                endpoint: sub.endpoint,
+                                p256dh: json.keys.p256dh,
+                                auth: json.keys.auth,
+                                userAgent: navigator.userAgent
+                            }, QUIET)).then(function() {
+                                writeSynced(sub.endpoint);
+                                return true;
+                            });
+                        });
+                    });
+                  });
+                });
+            }).catch(function(e) {
+                console.warn('[NotificationBell] web push aboneliği kurulamadı', e);
+                return false;
+            });
+        }
+
+        // Çıkışta ve "bu cihazda kapat"ta: abonelik hem sunucudan hem tarayıcıdan
+        // kaldırılır. Ortak bilgisayarda sonraki kişi öncekinin bildirimini görmesin.
+        function unsubscribe() {
+            writeSynced(null);
+            if (!supported()) { return Promise.resolve(false); }
+
+            return navigator.serviceWorker.getRegistration('/').then(function(reg) {
+                return reg ? reg.pushManager.getSubscription() : null;
+            }).then(function(sub) {
+                if (!sub) { return false; }
+                var service = deviceService();
+                var tell = service
+                    ? Promise.resolve(service.unsubscribeWebPush({ endpoint: sub.endpoint }, QUIET)).catch(function() { })
+                    : Promise.resolve();
+                return tell.then(function() { return sub.unsubscribe(); }).then(function() { return true; });
+            }).catch(function(e) {
+                console.warn('[NotificationBell] web push aboneliği kaldırılamadı', e);
+                return false;
+            });
+        }
+
+        // Tercih ekranı için: 'Unsupported' | 'Subscribed' | 'NotSubscribed'.
+        function status() {
+            if (!supported()) { return Promise.resolve('Unsupported'); }
+            return navigator.serviceWorker.getRegistration('/').then(function(reg) {
+                return reg ? reg.pushManager.getSubscription() : null;
+            }).then(function(sub) { return sub ? 'Subscribed' : 'NotSubscribed'; })
+              .catch(function() { return 'NotSubscribed'; });
+        }
+
+        // Bu sekme, sunucuya bildirilmiş bir abonelik biliyor mu (çıkışta kaldırılacak bir şey var mı).
+        function hasSynced() { return !!readSynced(); }
+
+        return { supported: supported, sync: sync, unsubscribe: unsubscribe, status: status, hasSynced: hasSynced };
+    })();
+
+    // İzin verilince ve cihaz anahtarı açılınca abonelik kurulur; kapatılınca kaldırılır.
+    var requestPermission = DESKTOP.request;
+    DESKTOP.request = function() {
+        return requestPermission().then(function(state) {
+            if (state === 'PermissionGranted') { PUSH.sync(); }
+            return state;
+        });
+    };
+    var setEnabledHere = DESKTOP.setEnabledHere;
+    DESKTOP.setEnabledHere = function(on) {
+        setEnabledHere(on);
+        return on ? PUSH.sync() : PUSH.unsubscribe();
+    };
+    DESKTOP.push = PUSH;
+
+    // Çıkış: önce abonelikten çık, sonra çıkış adresine git. Abonelik kaldırma
+    // takılırsa çıkış ENGELLENMEZ (1,5 sn sonra yine gidilir).
+    document.addEventListener('click', function(e) {
+        var link = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (!link || !/\/Account\/Logout(\?|$)/i.test(link.getAttribute('href') || '')) { return; }
+        // Abonelik yoksa (kanal kapalı, izin verilmemiş) çıkışa HİÇ dokunulmaz.
+        if (link.getAttribute('data-push-done') === '1' || !PUSH.supported() || !PUSH.hasSynced()) { return; }
+
+        e.preventDefault();
+        e.stopPropagation();
+        var go = function() {
+            link.setAttribute('data-push-done', '1');
+            link.click();
+        };
+        var timer = window.setTimeout(go, 1500);
+        PUSH.unsubscribe().then(function() {
+            window.clearTimeout(timer);
+            go();
+        });
+    }, true);
+
     window.apyaDesktopNotifications = DESKTOP;
 
     function init() {
+        // İzin önceden verilmişse abonelik sessizce kurulur / tazelenir.
+        PUSH.sync();
+
         // --- SignalR Bağlantısı ---
         if (typeof signalR !== "undefined") {
             var connection = new signalR.HubConnectionBuilder()
