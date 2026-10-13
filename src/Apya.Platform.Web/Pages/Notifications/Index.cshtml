@@ -109,12 +109,15 @@
                     </div>
                     <div id="notif-device-help-text" class="text-sm text-muted mt-2 d-none"></div>
                     <div id="notif-device-hint" class="text-sm text-muted mt-2"></div>
+                    <div id="notif-device-push" class="text-sm text-muted mt-1 d-none"></div>
                 </div>
 
                 <p class="text-sm text-muted">
                     Uygulama içi kapatılan kategoride bildirim hiç üretilmez.
                     Anlık e-posta yalnız kritik bildirimleri hemen gönderir;
                     günlük özet diğerlerini günde bir kez tek iletide toplar.
+                    Tarayıcı bildirimi, uygulama kapalıyken de bu cihaza başlık düzeyinde bildirim gönderir
+                    (yukarıdan bu cihazda açılmış olmalıdır); ayrıntı uygulama içinde kalır.
                 </p>
                 <table class="table table-sm align-middle mb-0">
                     <thead>
@@ -123,10 +126,11 @@
                             <th scope="Column" class="text-center">Uygulama içi</th>
                             <th scope="Column" class="text-center">Anlık e-posta</th>
                             <th scope="Column" class="text-center">Günlük özet</th>
+                            <th scope="Column" class="text-center">Tarayıcı bildirimi</th>
                         </tr>
                     </thead>
                     <tbody id="notif-pref-body">
-                        <tr><td colspan="4" class="text-center py-3">
+                        <tr><td colspan="5" class="text-center py-3">
                             <div class="spinner-border spinner-border-sm" role="status"></div>
                         </td></tr>
                     </tbody>

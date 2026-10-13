@@ -290,7 +290,7 @@ $(function () {
             var $row = $('<tr></tr>').attr('data-category', p.category);
             $row.append($('<td></td>').text(l('Notification:Category:' + key)));
 
-            ['inApp', 'email', 'digest'].forEach(function (channel) {
+            ['inApp', 'email', 'digest', 'push'].forEach(function (channel) {
                 var id = 'pref-' + channel + '-' + p.category;
                 var $cell = $('<td class="text-center"></td>');
                 $cell.append($('<input type="checkbox" class="form-check-input notif-pref-toggle">')
@@ -347,10 +347,25 @@ $(function () {
         $('#notif-device-hint').toggleClass('d-none', !granted);
 
         if (state !== 'PermissionDenied') { $('#notif-device-help-text').addClass('d-none'); }
+
+        // Uygulama KAPALIYKEN bildirim (web push): yalnız bu cihazda açıkken anlamlı.
+        var $push = $('#notif-device-push').addClass('d-none');
+        if (state === 'PermissionGranted' && desktop.push) {
+            desktop.push.status().then(function (status) {
+                var text = {
+                    Subscribed: l('Notifications:Push:Subscribed'),
+                    NotSubscribed: l('Notifications:Push:NotSubscribed'),
+                    Unsupported: l('Notifications:Push:Unsupported')
+                }[status];
+                $push.text(text || '').toggleClass('d-none', !text);
+            });
+        }
     }
 
     $('#notif-device-toggle').on('change', function () {
-        window.apyaDesktopNotifications.setEnabledHere($(this).prop('checked'));
+        // Abonelik kurulması / kaldırılması bitince durum satırı doğru yazılsın.
+        $.when(window.apyaDesktopNotifications.setEnabledHere($(this).prop('checked')))
+            .then(renderDevicePanel, renderDevicePanel);
         renderDevicePanel();
     });
 
@@ -390,8 +405,9 @@ $(function () {
         var inApp = $row.find('[data-channel="inApp"]').prop('checked');
         var email = $row.find('[data-channel="email"]').prop('checked');
         var digest = $row.find('[data-channel="digest"]').prop('checked');
+        var push = $row.find('[data-channel="push"]').prop('checked');
 
-        notificationService.updatePreference({ category: category, inApp: inApp, email: email, digest: digest })
+        notificationService.updatePreference({ category: category, inApp: inApp, email: email, digest: digest, push: push })
             .then(function () { abp.notify.success('Tercih kaydedildi.'); })
             .catch(function () {
                 // Sunucu reddettiyse kutuyu geri al — ekran gerçeği yansıtsın.
