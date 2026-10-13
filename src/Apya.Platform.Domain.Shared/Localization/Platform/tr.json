@@ -1820,6 +1820,7 @@
         "DataTable:Invoice:Loading": "Faturalar yükleniyor...",
         "Platform:Task:TitleRequired": "Görev başlığı boş bırakılamaz.",
         "Platform:Task:ParentNotFound": "Alt görevin bağlanacağı üst görev bulunamadı. Görev silinmiş olabilir; sayfayı yenileyip yeniden deneyin.",
+        "Platform:Task:WorkStepProjectMismatch": "Seçilen iş adımı görevin projesine ait değil.",
         "Platform:Task:ParentProjectMismatch": "Alt görev, üst görevinden farklı bir projeye eklenemez.",
         "Platform:Task:AssigneeNotFound": "Atanan kişi bulunamadı. Görev yalnız kendi ekibinizden birine atanabilir.",
         "Platform:Task:ViewPrivateDenied": "Bu gizli görevi görüntüleme yetkiniz yok. Görevi yalnızca oluşturanlar ve atananlar görebilir.",

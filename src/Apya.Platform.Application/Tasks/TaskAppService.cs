@@ -2124,6 +2124,30 @@ namespace Apya.Platform.Tasks
             }
         }
 
+        /// <summary>
+        /// PRJ-04 · Görevi bir iş adımına bağlar (null = bağı kaldır). Adım görevin PROJESİNE ait
+        /// olmalıdır; kiracı süzgeçli okuma başka kiracının adımını "bulunamadı" sayar.
+        /// </summary>
+        [Authorize(PlatformPermissions.Tasks.Edit)]
+        public async Task SetWorkStepAsync(Guid id, Guid? workStepId)
+        {
+            var task = await Repository.GetAsync(id);
+            await EnsureCanMutateTaskAsync(task);
+
+            if (workStepId.HasValue)
+            {
+                var steps = LazyServiceProvider.LazyGetRequiredService<IRepository<Apya.Platform.Projects.ProjectWorkStep, Guid>>();
+                var step = await steps.GetAsync(workStepId.Value);
+                if (step.ProjectId != task.ProjectId)
+                {
+                    throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.TaskWorkStepProjectMismatch);
+                }
+            }
+
+            task.SetWorkStep(workStepId);
+            await Repository.UpdateAsync(task);
+        }
+
         /// <summary>Yalnız önceliği değiştirir. Toplu işlem için granüler uç.</summary>
         [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task SetPriorityAsync(Guid id, Apya.Platform.Tasks.TaskPriority priority)

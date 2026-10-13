@@ -68,6 +68,12 @@ namespace Apya.Platform.Tasks
         /// tüm görevi okuyup yazmasın diye granüler uç — UpdateStatusAsync ile aynı desen.</summary>
         Task SetAssigneeAsync(Guid id, Guid? assigneeId);
 
+        /// <summary>
+        /// Yalnız iş adımını değiştirir (null = bağı kaldır). Granüler uç: tam güncelleme DTO'suna
+        /// eklenseydi, alanı taşımayan her güncelleme çağrısı bağı sessizce silerdi.
+        /// </summary>
+        Task SetWorkStepAsync(Guid id, Guid? workStepId);
+
         /// <summary>Yalnız önceliği değiştirir. Toplu işlem için granüler uç.</summary>
         Task SetPriorityAsync(Guid id, Apya.Platform.Tasks.TaskPriority priority);
 

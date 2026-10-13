@@ -72,6 +72,9 @@ public class ProjectTimelineAppService : PlatformAppService, IProjectTimelineApp
                 .Where(f => f.ProjectId == projectId)
                 .Select(f => new { f.Id, f.WorkStepId, f.Amount }));
 
+        var stepTaskCounts = await Apya.Platform.Projects.WorkStepProgress.CountAsync(
+            _taskRepository, AsyncExecuter, steps.Select(s => s.Id).ToList());
+
         var dto = new ProjectTimelineDto
         {
             ProjectId = projectId,
@@ -86,7 +89,11 @@ public class ProjectTimelineAppService : PlatformAppService, IProjectTimelineApp
                 Name = s.Name,
                 StartDate = s.StartDate,
                 EndDate = s.EndDate,
-                ProgressPercent = s.ProgressPercent,
+                ProgressPercent = Apya.Platform.Projects.WorkStepProgress.Effective(
+                    s.ProgressPercent, stepTaskCounts.GetValueOrDefault(s.Id)),
+                ProgressFromTasks = stepTaskCounts.GetValueOrDefault(s.Id).Total > 0,
+                TaskCount = stepTaskCounts.GetValueOrDefault(s.Id).Total,
+                CompletedTaskCount = stepTaskCounts.GetValueOrDefault(s.Id).Done,
                 DocumentCount = files.Count(f => f.WorkStepId == s.Id),
                 DocumentedAmount = files.Where(f => f.WorkStepId == s.Id).Sum(f => f.Amount ?? 0m),
             }).ToList(),

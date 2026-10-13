@@ -21,12 +21,15 @@ public class ProjectWorkStepAppService : ApplicationService, IProjectWorkStepApp
     private readonly IRepository<ProjectWorkStep, Guid> _workStepRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly IRepository<DocumentFile, Guid> _documentFileRepository;
+    private readonly IRepository<Apya.Platform.Tasks.TaskItem, Guid> _taskRepository;
 
     public ProjectWorkStepAppService(
         IRepository<ProjectWorkStep, Guid> workStepRepository,
         IRepository<Project, Guid> projectRepository,
-        IRepository<DocumentFile, Guid> documentFileRepository)
+        IRepository<DocumentFile, Guid> documentFileRepository,
+        IRepository<Apya.Platform.Tasks.TaskItem, Guid> taskRepository)
     {
+        _taskRepository = taskRepository;
         _workStepRepository = workStepRepository;
         _projectRepository = projectRepository;
         _documentFileRepository = documentFileRepository;
@@ -69,10 +72,19 @@ public class ProjectWorkStepAppService : ApplicationService, IProjectWorkStepApp
                     .Select(g => new { StepId = g.Key, Count = g.Count() })))
             .ToDictionary(k => k.StepId, v => v.Count);
 
+        // PRJ-04: bağlı görevi olan adımın ilerlemesi görevlerden hesaplanır.
+        var taskCounts = await WorkStepProgress.CountAsync(_taskRepository, AsyncExecuter, stepIds);
+
         foreach (var dto in dtos)
         {
             dto.ProjectName = projectNames.TryGetValue(dto.ProjectId, out var name) ? name : null;
             dto.DocumentCount = counts.TryGetValue(dto.Id, out var count) ? count : 0;
+
+            var tc = taskCounts.GetValueOrDefault(dto.Id);
+            dto.TaskCount = tc.Total;
+            dto.CompletedTaskCount = tc.Done;
+            dto.ProgressFromTasks = tc.Total > 0;
+            dto.ProgressPercent = WorkStepProgress.Effective(dto.ProgressPercent, tc);
         }
 
         return dtos;
@@ -125,6 +137,17 @@ public class ProjectWorkStepAppService : ApplicationService, IProjectWorkStepApp
         if (linked.Count > 0)
         {
             await _documentFileRepository.UpdateManyAsync(linked);
+        }
+
+        // Adıma bağlı görevler de öksüz kalmasın: bağ koparılır, görev silinmez.
+        var linkedTasks = await _taskRepository.GetListAsync(t => t.WorkStepId == id);
+        foreach (var task in linkedTasks)
+        {
+            task.SetWorkStep(null);
+        }
+        if (linkedTasks.Count > 0)
+        {
+            await _taskRepository.UpdateManyAsync(linkedTasks);
         }
 
         await _workStepRepository.DeleteAsync(step);

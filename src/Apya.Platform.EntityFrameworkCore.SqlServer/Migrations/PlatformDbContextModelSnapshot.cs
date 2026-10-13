@@ -10753,6 +10753,9 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("WorkStepId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AssigneeId");
@@ -10764,6 +10767,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("ProjectId");
 
                     SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("ProjectId"), new[] { "TenantId", "Status", "IsPrivate", "IsDeleted" });
+
+                    b.HasIndex("WorkStepId");
 
                     b.HasIndex("TenantId", "DueDate")
                         .HasFilter("[IsDeleted] = 0");

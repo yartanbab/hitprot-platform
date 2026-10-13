@@ -10747,6 +10747,9 @@ namespace Apya.Platform.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("WorkStepId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AssigneeId");
@@ -10758,6 +10761,8 @@ namespace Apya.Platform.Migrations
                     b.HasIndex("ProjectId");
 
                     NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("ProjectId"), new[] { "TenantId", "Status", "IsPrivate", "IsDeleted" });
+
+                    b.HasIndex("WorkStepId");
 
                     b.HasIndex("TenantId", "DueDate")
                         .HasFilter("\"IsDeleted\" = false");

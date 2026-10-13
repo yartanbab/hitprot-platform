@@ -1216,6 +1216,8 @@ namespace Apya.Platform.EntityFrameworkCore
                 // reddediliyor; ikinci bir kaskad davranışı sürpriz üretir.
                 b.Property(t => t.PlannedAmount).HasColumnType("decimal(18,2)");
                 b.HasIndex(t => t.BudgetLineId);
+                // İş adımı bağı (PRJ-04) — FK yok, bkz. TaskItem.WorkStepId.
+                b.HasIndex(t => t.WorkStepId);
 
                 b.HasOne(t => t.Assignee)
                  .WithMany()

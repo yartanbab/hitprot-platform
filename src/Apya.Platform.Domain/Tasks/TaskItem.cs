@@ -68,6 +68,21 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
         PlannedAmount = plannedAmount;
     }
 
+    // --- İş adımı bağı (PRJ-04) ---
+
+    /// <summary>
+    /// Görevin ait olduğu proje iş adımı. Boşsa görev adımsızdır. Adımın ilerlemesi, kendisine
+    /// bağlı görevlerden hesaplanır (bkz. <c>WorkStepProgress</c>); bağlı görevi olmayan adımda
+    /// elle girilen yüzde geçerli kalır.
+    ///
+    /// <para>FK KURULMADI (bütçe kalemiyle aynı gerekçe): adım silinirken bağ uygulama
+    /// katmanında koparılır, ikinci bir kaskad davranışı sürpriz üretir.</para>
+    /// </summary>
+    public Guid? WorkStepId { get; private set; }
+
+    /// <summary>İş adımı bağını kurar/kaldırır. Adımın görevin projesine aitliği çağıranda doğrulanır.</summary>
+    public void SetWorkStep(Guid? workStepId) => WorkStepId = workStepId;
+
     // --- Zamanlama ---
     public DateTime StartDate { get; private set; }
     public DateTime? DueDate { get; private set; }
@@ -105,6 +120,8 @@ public class TaskItem : FullAuditedAggregateRoot<Guid>, IMultiTenant
         if (ProjectId == projectId) return;
         ProjectId = projectId;
         BoardColumnId = null;
+        // İş adımı proje-kapsamlıdır: görev başka projeye geçince eski projenin adımı anlamsızlaşır.
+        WorkStepId = null;
     }
 
     // --- Gizlilik ---

@@ -19,6 +19,9 @@ namespace Apya.Platform.Tasks
         // --- Planlama ---
         public decimal? EstimatedHours { get; set; }
 
+        /// <summary>Görevin ait olduğu proje iş adımı (PRJ-04); adımın ilerlemesi buradan hesaplanır.</summary>
+        public Guid? WorkStepId { get; set; }
+
         /// <summary>Görevin bağlı olduğu bütçe kalemi (görev detayı → Finans sekmesi).</summary>
         public Guid? BudgetLineId { get; set; }
         public string? BudgetLineName { get; set; }
