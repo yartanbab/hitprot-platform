@@ -188,13 +188,13 @@ public class ProjectIndicator_Tests : PlatformEntityFrameworkCoreTestBase
         (await _indicators.GetDocumentOptionsAsync(id)).Select(o => o.DocumentFileId).ShouldBe(new[] { ownFile });
     }
 
+    private static readonly Guid ThirdTenant = Guid.Parse("99990000-cccc-4000-8000-000000000109");
+
+    /// <summary>Kiracı bağlamında başka kiracının projesi ve göstergesi görünmez.</summary>
     [Fact]
     public async Task Baska_kiracinin_projesine_gosterge_acilamaz_gostergesi_okunamaz()
     {
         var foreignProject = await ProjectAsync(OtherTenant);
-
-        await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.CreateAsync(Input(foreignProject)));
-        await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.GetListAsync(foreignProject));
 
         Guid foreignIndicator;
         using (_currentTenant.Change(OtherTenant))
@@ -204,10 +204,39 @@ public class ProjectIndicator_Tests : PlatformEntityFrameworkCoreTestBase
             foreignIndicator = indicator.Id;
         }
 
-        await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.GetEntriesAsync(foreignIndicator));
-        await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.AddEntryAsync(foreignIndicator,
-            new CreateProjectIndicatorEntryDto { EntryDate = new DateTime(2026, 9, 1), Value = 1m }));
-        await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.DeleteAsync(foreignIndicator));
+        using (_currentTenant.Change(ThirdTenant))
+        {
+            await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.CreateAsync(Input(foreignProject)));
+            await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.GetListAsync(foreignProject));
+            await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.GetEntriesAsync(foreignIndicator));
+            await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.AddEntryAsync(foreignIndicator,
+                new CreateProjectIndicatorEntryDto { EntryDate = new DateTime(2026, 9, 1), Value = 1m }));
+            await Should.ThrowAsync<EntityNotFoundException>(() => _indicators.DeleteAsync(foreignIndicator));
+        }
+    }
+
+    /// <summary>
+    /// Host, kiracının proje sayfasını açar (bütçeyle aynı kapsam): göstergeleri görür; yazdığı
+    /// gösterge ve ölçüm HOST'un değil PROJENİN kiracısını taşır — yoksa kiracı kendi verisini göremezdi.
+    /// </summary>
+    [Fact]
+    public async Task Host_kiracinin_projesinde_gostergeyi_gorur_yazdigi_satir_kiracinin_olur()
+    {
+        var tenantProject = await ProjectAsync(OtherTenant);
+
+        var created = await _indicators.CreateAsync(Input(tenantProject));
+        await _indicators.AddEntryAsync(created.Id, new CreateProjectIndicatorEntryDto { EntryDate = new DateTime(2026, 9, 1), Value = 90m });
+
+        (await _indicators.GetListAsync(tenantProject)).Single().CurrentValue.ShouldBe(90m);
+
+        using (_currentTenant.Change(OtherTenant))
+        {
+            // Kiracı kendi bağlamında host'un yazdığını görür.
+            var row = (await _indicators.GetListAsync(tenantProject)).Single();
+            row.CurrentValue.ShouldBe(90m);
+            (await _indicatorRepository.GetAsync(created.Id)).TenantId.ShouldBe(OtherTenant);
+            (await _entryRepository.GetListAsync(e => e.IndicatorId == created.Id)).Single().TenantId.ShouldBe(OtherTenant);
+        }
     }
 
     [Fact]
