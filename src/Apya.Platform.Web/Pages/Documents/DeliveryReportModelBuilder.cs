@@ -38,6 +38,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
     private readonly IProjectTimelineAppService _timelineAppService;
     private readonly IGrantProjectOriginAppService _grantOriginAppService;
     private readonly Apya.Platform.ProjectBudgets.IProjectBudgetAppService _budgetAppService;
+    private readonly IProjectIndicatorAppService _indicatorAppService;
     private readonly ICurrentUser _currentUser;
     private readonly IClock _clock;
 
@@ -51,6 +52,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
         IProjectTimelineAppService timelineAppService,
         IGrantProjectOriginAppService grantOriginAppService,
         Apya.Platform.ProjectBudgets.IProjectBudgetAppService budgetAppService,
+        IProjectIndicatorAppService indicatorAppService,
         ICurrentUser currentUser,
         IClock clock)
     {
@@ -63,6 +65,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
         _timelineAppService = timelineAppService;
         _grantOriginAppService = grantOriginAppService;
         _budgetAppService = budgetAppService;
+        _indicatorAppService = indicatorAppService;
         _currentUser = currentUser;
         _clock = clock;
     }
@@ -223,6 +226,7 @@ public class DeliveryReportModelBuilder : ITransientDependency
         await FillMilestonesAsync(model, projectId, sections);
         await FillBudgetSummaryAsync(model, projectId, sections);
         await FillTaskProgressAsync(model, projectId, sections);
+        await FillIndicatorsAsync(model, projectId, sections);
 
         return model;
     }
@@ -274,6 +278,46 @@ public class DeliveryReportModelBuilder : ITransientDependency
                 })
                 .ToList(),
         };
+    }
+
+    /// <summary>
+    /// PRJ-08 · Göstergeler. Proje sayfasındaki sekmeyle AYNI servisten okunur; yüzde ve durum
+    /// <see cref="ProjectIndicatorProgress"/> kuralından gelir, rapor ikinci bir hesap yapmaz.
+    ///
+    /// <para>🔴 Göstergeleri görme izni olmayan kullanıcıda bölüm BOŞ kalır, rapor DÜŞMEZ
+    /// (bütçe özetiyle aynı desen).</para>
+    /// </summary>
+    private async Task FillIndicatorsAsync(
+        DeliveryReportModel model, Guid projectId, List<ReportSectionKey> sections)
+    {
+        if (!sections.Contains(ReportSectionKey.Indicators))
+        {
+            return;
+        }
+
+        List<ProjectIndicatorDto> indicators;
+        try
+        {
+            indicators = await _indicatorAppService.GetListAsync(projectId);
+        }
+        catch (Volo.Abp.Authorization.AbpAuthorizationException)
+        {
+            return;
+        }
+
+        model.Indicators = indicators
+            .Select(i => new DeliveryReportModel.IndicatorRow
+            {
+                Name = i.Name,
+                Unit = i.Unit,
+                BaselineValue = i.BaselineValue,
+                TargetValue = i.TargetValue,
+                CurrentValue = i.CurrentValue,
+                TargetDate = i.TargetDate,
+                ProgressPercent = i.ProgressPercent,
+                Status = i.Status,
+            })
+            .ToList();
     }
 
     /// <summary>

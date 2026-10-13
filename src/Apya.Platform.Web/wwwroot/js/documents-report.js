@@ -37,7 +37,8 @@ const b = (a, n = {}) => {
   11: "Kilometre taşları",
   12: "Kapak sayfası",
   13: "Bütçe özeti",
-  14: "Görev ilerlemesi"
+  14: "Görev ilerlemesi",
+  15: "Göstergeler"
 }, we = {
   1: "Kurum",
   2: "Banka / finans",
@@ -229,7 +230,7 @@ function Fe(a) {
   const n = a.frequency === 3 ? "üç ayda bir" : "her ay";
   return `Ayın ${a.dayOfMonth}'i, ${n}, ${a.hourOfDay}:00`;
 }
-function Ke({ schedule: a, busy: n, onChanged: l }) {
+function Ge({ schedule: a, busy: n, onChanged: l }) {
   const [i, p] = r.useState(""), [y, f] = r.useState(""), [h, c] = r.useState(!1), x = async () => {
     var d, u;
     try {
@@ -270,7 +271,7 @@ function Ke({ schedule: a, busy: n, onChanged: l }) {
     ] }) : /* @__PURE__ */ e.jsx("button", { type: "button", className: "apya-doc-linkbtn", onClick: () => c(!0), children: "+ Abone ekle" })
   ] });
 }
-function Ue({ projectId: a, packages: n }) {
+function Ke({ projectId: a, packages: n }) {
   const [l, i] = r.useState([]), [p, y] = r.useState(!0), [f, h] = r.useState(!1), [c, x] = r.useState(null), d = r.useCallback(async () => {
     if (!a) {
       i([]), y(!1);
@@ -441,7 +442,7 @@ function Ue({ projectId: a, packages: n }) {
             "Son deneme başarısız: ",
             s.lastError
           ] }),
-          /* @__PURE__ */ e.jsx(Ke, { schedule: s, busy: f, onChanged: d })
+          /* @__PURE__ */ e.jsx(Ge, { schedule: s, busy: f, onChanged: d })
         ]
       },
       s.id
@@ -449,7 +450,7 @@ function Ue({ projectId: a, packages: n }) {
     l.length === 0 && !c && n.length > 0 && /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Kurulu zamanlama yok." })
   ] }) : null;
 }
-function qe({ projectId: a, onPickProject: n }) {
+function Ue({ projectId: a, onPickProject: n }) {
   const [l, i] = r.useState([]), [p, y] = r.useState(null), [f, h] = r.useState([]), [c, x] = r.useState(null), [d, u] = r.useState(!1), [s, j] = r.useState(!1), w = r.useCallback(async () => {
     if (!a) {
       i([]);
@@ -596,7 +597,7 @@ function qe({ projectId: a, onPickProject: n }) {
         ))
       ] })
     ] }),
-    /* @__PURE__ */ e.jsx(Ue, { projectId: a, packages: l })
+    /* @__PURE__ */ e.jsx(Ke, { projectId: a, packages: l })
   ] }) : /* @__PURE__ */ e.jsx("div", { className: "apya-doc-check-card", children: /* @__PURE__ */ e.jsx(
     M,
     {
@@ -613,7 +614,7 @@ function qe({ projectId: a, onPickProject: n }) {
     }
   ) });
 }
-const H = (...a) => a.filter(Boolean).join(" "), Ge = [
+const H = (...a) => a.filter(Boolean).join(" "), qe = [
   { key: "sections", label: "Bölümler" },
   { key: "preview", label: "Önizleme" },
   { key: "distribution", label: "Dağıtım" }
@@ -670,7 +671,7 @@ function Ye({ section: a, onToggle: n, onMove: l, isFirst: i, isLast: p, busy: y
   ] });
 }
 function _e() {
-  var q, G;
+  var U, q;
   const a = new URLSearchParams(window.location.search), [n, l] = r.useState([]), [i, p] = r.useState([]), [y, f] = r.useState(null), [h, c] = r.useState((a.get("projectId") || "").toLowerCase()), [x, d] = r.useState("sections"), [u, s] = r.useState(!0), [j, w] = r.useState(!1), [P, E] = r.useState(null), A = r.useRef(null), o = ye("Platform.Documents.GenerateReports"), z = r.useCallback(async () => {
     s(!0);
     try {
@@ -691,7 +692,7 @@ function _e() {
   const g = r.useMemo(
     () => n.find((t) => t.id === y) ?? null,
     [n, y]
-  ), O = g ? (g.tenantId ?? null) === (((G = (q = window.abp) == null ? void 0 : q.currentTenant) == null ? void 0 : G.id) ?? null) : !1, R = r.useMemo(
+  ), O = g ? (g.tenantId ?? null) === (((q = (U = window.abp) == null ? void 0 : U.currentTenant) == null ? void 0 : q.id) ?? null) : !1, R = r.useMemo(
     () => g ? [...g.sections].sort((t, m) => t.order - m.order) : [],
     [g]
   ), W = async (t) => {
@@ -746,7 +747,7 @@ function _e() {
         w(!1);
       }
     }
-  }, F = (t) => `${T()}Documents/Deliveries?projectId=${h}` + (t ? `&packageId=${t}` : ""), K = async ({ silent: t = !1 } = {}) => {
+  }, F = (t) => `${T()}Documents/Deliveries?projectId=${h}` + (t ? `&packageId=${t}` : ""), G = async ({ silent: t = !1 } = {}) => {
     E(t ? "deliver" : "save");
     try {
       const { pkg: m, created: k } = await Ie({ projectId: h, template: g });
@@ -761,9 +762,9 @@ function _e() {
       window.location.assign(F(null));
       return;
     }
-    const t = await K({ silent: !0 });
+    const t = await G({ silent: !0 });
     t && window.location.assign(F(t.id));
-  }, U = () => {
+  }, K = () => {
     var m;
     const t = A.current;
     if (t) {
@@ -800,7 +801,7 @@ function _e() {
       }
     ),
     /* @__PURE__ */ e.jsx(de, { active: "report", projectId: h || null }),
-    /* @__PURE__ */ e.jsx("div", { className: "apya-doc-tabs mb-3", role: "tablist", children: Ge.map((t) => /* @__PURE__ */ e.jsx(
+    /* @__PURE__ */ e.jsx("div", { className: "apya-doc-tabs mb-3", role: "tablist", children: qe.map((t) => /* @__PURE__ */ e.jsx(
       "button",
       {
         type: "button",
@@ -822,7 +823,7 @@ function _e() {
             size: "sm",
             isLoading: P === "save",
             disabled: !h || !g || P !== null,
-            onClick: () => K(),
+            onClick: () => G(),
             children: "Taslak kaydet"
           }
         ),
@@ -920,8 +921,8 @@ function _e() {
           description: "Soldan bir şablon seçerek bölümlerini düzenleyin."
         }
       ) }),
-      x === "preview" && /* @__PURE__ */ e.jsx(Me, { projectId: h, template: g, onPickProject: U }),
-      x === "distribution" && /* @__PURE__ */ e.jsx(qe, { projectId: h, onPickProject: U })
+      x === "preview" && /* @__PURE__ */ e.jsx(Me, { projectId: h, template: g, onPickProject: K }),
+      x === "distribution" && /* @__PURE__ */ e.jsx(Ue, { projectId: h, onPickProject: K })
     ] })
   ] });
 }

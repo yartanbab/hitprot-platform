@@ -148,6 +148,22 @@ public class DeliveryReportSections_Tests
                 Overdue = 2, CompletionPercent = 50,
             },
 
+            Indicators = new List<DeliveryReportModel.IndicatorRow>
+            {
+                new()
+                {
+                    Name = "Eğitilen kişi sayısı", Unit = "kişi", BaselineValue = 0m, TargetValue = 200m,
+                    CurrentValue = 90m, TargetDate = new DateTime(2026, 6, 30), ProgressPercent = 45,
+                    Status = Apya.Platform.Projects.ProjectIndicatorStatus.Behind,
+                },
+                new()
+                {
+                    Name = "Fire oranı", Unit = "%", BaselineValue = 40m, TargetValue = 10m,
+                    CurrentValue = 10m, ProgressPercent = 100,
+                    Status = Apya.Platform.Projects.ProjectIndicatorStatus.Completed,
+                },
+            },
+
             Contributors = new List<DeliveryReportModel.ContributorRow>
             {
                 new() { UserName = "Ayşe Yılmaz", LoggedHours = 48m, LoggedPersonDays = 6m, SharePercent = 75, TaskCount = 7 },
@@ -183,6 +199,7 @@ public class DeliveryReportSections_Tests
         sections.Add(ReportSectionKey.Milestones);
         sections.Add(ReportSectionKey.BudgetSummary);
         sections.Add(ReportSectionKey.TaskProgress);
+        sections.Add(ReportSectionKey.Indicators);
 
         var model = BuildModel(sections);
         model.Timeline.Clear();
@@ -192,6 +209,7 @@ public class DeliveryReportSections_Tests
         model.BudgetCoverage = null;
         model.BudgetSummary = null;
         model.TaskProgress = null;
+        model.Indicators = null;
 
         var pdf = DeliveryPackageExporter.ToPdf(model);
 
@@ -211,6 +229,7 @@ public class DeliveryReportSections_Tests
     [InlineData(ReportSectionKey.Milestones)]
     [InlineData(ReportSectionKey.BudgetSummary)]
     [InlineData(ReportSectionKey.TaskProgress)]
+    [InlineData(ReportSectionKey.Indicators)]
     public void Uygun_isaretli_her_bolum_tek_basina_da_ciziliyor(ReportSectionKey key)
     {
         ReportSectionAvailability.IsAvailable(key).ShouldBeTrue();

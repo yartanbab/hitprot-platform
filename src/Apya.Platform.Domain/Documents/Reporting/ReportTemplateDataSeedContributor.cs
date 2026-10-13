@@ -211,6 +211,8 @@ public class ReportTemplateDataSeedContributor : IDataSeedContributor, ITransien
         // kurulumların rapor çıktısı bir sonraki DbMigrator turunda kendiliğinden değişmemeli.
         ReportSectionKey.BudgetSummary,
         ReportSectionKey.TaskProgress,
+        // PRJ-08 · aynı kural: sona yazılır, hiçbir sistem şablonu açık getirmez.
+        ReportSectionKey.Indicators,
     };
 
     private static List<TemplateDefinition> BuildDefinitions()

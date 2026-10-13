@@ -84,6 +84,9 @@ internal static class DeliveryPackageExporter
                             case ReportSectionKey.TaskProgress:
                                 col.Item().Element(c => TaskProgressSection(c, model));
                                 break;
+                            case ReportSectionKey.Indicators:
+                                col.Item().Element(c => IndicatorSection(c, model));
+                                break;
                             // CoverPage başlıkta işlenir.
                         }
                     }
@@ -574,6 +577,82 @@ internal static class DeliveryPackageExporter
                 c.Item().PaddingTop(2).Text(value).FontSize(11);
             });
         }
+    }
+
+    private static void IndicatorSection(IContainer container, DeliveryReportModel model)
+    {
+        container.Column(col =>
+        {
+            SectionTitle(col, "Göstergeler");
+
+            var rows = model.Indicators;
+
+            if (rows == null)
+            {
+                col.Item().Text("Gösterge verisi yok.").FontSize(8.5f).FontColor(Grey);
+                return;
+            }
+
+            if (rows.Count == 0)
+            {
+                col.Item().Text("Tanımlı gösterge yok.").FontSize(8.5f).FontColor(Grey);
+                return;
+            }
+
+            col.Item().Table(table =>
+            {
+                table.ColumnsDefinition(c =>
+                {
+                    c.RelativeColumn();
+                    c.ConstantColumn(62);
+                    c.ConstantColumn(62);
+                    c.ConstantColumn(62);
+                    c.ConstantColumn(44);
+                    c.ConstantColumn(58);
+                    c.ConstantColumn(48);
+                });
+
+                table.Header(h =>
+                {
+                    foreach (var t in new[] { "Gösterge", "Başlangıç", "Hedef", "Gerçekleşen", "İlerleme", "Hedef tarihi", "Durum" })
+                        h.Cell().Element(HeaderCell).Text(t).Bold().FontSize(8);
+                });
+
+                foreach (var row in rows)
+                {
+                    table.Cell().Element(DataCell).Text(row.Name);
+                    table.Cell().Element(DataCell).AlignRight().Text(Value(row.BaselineValue, row.Unit));
+                    table.Cell().Element(DataCell).AlignRight().Text(Value(row.TargetValue, row.Unit));
+                    table.Cell().Element(DataCell).AlignRight().Text(Value(row.CurrentValue, row.Unit));
+                    table.Cell().Element(DataCell).AlignRight().Text($"%{row.ProgressPercent}");
+                    table.Cell().Element(DataCell).Text(row.TargetDate.HasValue ? row.TargetDate.Value.ToString("dd.MM.yyyy") : "—");
+
+                    var status = table.Cell().Element(DataCell).Text(StatusText(row.Status));
+                    if (row.Status == Apya.Platform.Projects.ProjectIndicatorStatus.Behind)
+                    {
+                        status.FontColor(Colors.Red.Medium);
+                    }
+                }
+            });
+
+            var behind = rows.Count(r => r.Status == Apya.Platform.Projects.ProjectIndicatorStatus.Behind);
+            if (behind > 0)
+            {
+                col.Item().PaddingTop(4)
+                    .Text($"Hedef tarihi geçmiş, hedefe ulaşmamış gösterge: {behind}")
+                    .FontSize(8.5f).FontColor(Colors.Red.Medium);
+            }
+        });
+
+        static string Value(decimal v, string? unit)
+            => v.ToString("0.##") + (string.IsNullOrEmpty(unit) ? "" : " " + unit);
+
+        static string StatusText(Apya.Platform.Projects.ProjectIndicatorStatus s) => s switch
+        {
+            Apya.Platform.Projects.ProjectIndicatorStatus.Completed => "Tamam",
+            Apya.Platform.Projects.ProjectIndicatorStatus.Behind => "Geride",
+            _ => "Yolunda"
+        };
     }
 
     private static void TaskProgressSection(IContainer container, DeliveryReportModel model)

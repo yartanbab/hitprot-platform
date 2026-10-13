@@ -44,6 +44,9 @@ public static class ReportSectionAvailability
         // --- RPT-02 · bütünleşik ilerleme raporu ---
         ReportSectionKey.BudgetSummary,
         ReportSectionKey.TaskProgress,
+
+        // --- PRJ-08 · proje göstergeleri ---
+        ReportSectionKey.Indicators,
     };
 
     public static bool IsAvailable(ReportSectionKey key) => Available.Contains(key);

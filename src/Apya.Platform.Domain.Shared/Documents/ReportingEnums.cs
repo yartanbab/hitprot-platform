@@ -37,7 +37,13 @@ public enum ReportSectionKey
     BudgetSummary = 13,
 
     /// <summary>RPT-02 · Görev ilerlemesi: durum dağılımı, tamamlanma oranı, geciken sayısı.</summary>
-    TaskProgress = 14
+    TaskProgress = 14,
+
+    /// <summary>
+    /// PRJ-08 · Göstergeler: hedef / gerçekleşen / ilerleme / durum. Proje sayfasındaki
+    /// Göstergeler sekmesiyle AYNI servisten okunur.
+    /// </summary>
+    Indicators = 15
 }
 
 /// <summary>Teslim paketinin yaşam döngüsü. Üretim yalnız Preflight temizse yapılabilir.</summary>
