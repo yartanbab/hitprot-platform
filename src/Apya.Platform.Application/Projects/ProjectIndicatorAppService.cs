@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 using Apya.Platform.Documents;
 using Apya.Platform.Permissions;
 
@@ -38,8 +39,19 @@ public class ProjectIndicatorAppService : ApplicationService, IProjectIndicatorA
         _documentFileRepository = documentFileRepository;
     }
 
+    /// <summary>
+    /// Host bağlamında kiracı süzgecini kapatır; kiracı bağlamında dokunmaz (bütçe servisiyle aynı
+    /// kapsam: host, kiracının proje sayfasını açar). Sorgular proje / gösterge kimliğiyle
+    /// sınırlı olduğu için açılan kapsam o projeyle kalır. Yazılan satır CurrentTenant'ın değil
+    /// PROJENİN kiracısını taşır.
+    /// </summary>
+    private IDisposable? HostScope()
+        => CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null;
+
     public virtual async Task<List<ProjectIndicatorDto>> GetListAsync(Guid projectId)
     {
+        using var scope = HostScope();
+
         // Proje bu kiracıda görülebiliyor mu — yoksa EntityNotFoundException.
         await _projectRepository.GetAsync(projectId);
 
@@ -69,11 +81,13 @@ public class ProjectIndicatorAppService : ApplicationService, IProjectIndicatorA
     [Authorize(PlatformPermissions.Projects.ManageIndicators)]
     public virtual async Task<ProjectIndicatorDto> CreateAsync(CreateUpdateProjectIndicatorDto input)
     {
-        await _projectRepository.GetAsync(input.ProjectId);
+        using var scope = HostScope();
+
+        var project = await _projectRepository.GetAsync(input.ProjectId);
         var stepNames = await EnsureWorkStepAsync(input.WorkStepId, input.ProjectId);
 
         var indicator = new ProjectIndicator(
-            GuidGenerator.Create(), CurrentTenant.Id, input.ProjectId,
+            GuidGenerator.Create(), project.TenantId, input.ProjectId,
             input.Name, input.Unit, input.BaselineValue, input.TargetValue, input.TargetDate, input.WorkStepId);
         await _indicatorRepository.InsertAsync(indicator, autoSave: true);
 
@@ -83,6 +97,8 @@ public class ProjectIndicatorAppService : ApplicationService, IProjectIndicatorA
     [Authorize(PlatformPermissions.Projects.ManageIndicators)]
     public virtual async Task<ProjectIndicatorDto> UpdateAsync(Guid id, CreateUpdateProjectIndicatorDto input)
     {
+        using var scope = HostScope();
+
         var indicator = await _indicatorRepository.GetAsync(id);
         var stepNames = await EnsureWorkStepAsync(input.WorkStepId, indicator.ProjectId);
 
@@ -96,6 +112,8 @@ public class ProjectIndicatorAppService : ApplicationService, IProjectIndicatorA
     [Authorize(PlatformPermissions.Projects.ManageIndicators)]
     public virtual async Task DeleteAsync(Guid id)
     {
+        using var scope = HostScope();
+
         var indicator = await _indicatorRepository.GetAsync(id);
 
         // Ölçümler göstergeyle birlikte gider (yumuşak silmede FK basamaklaması çalışmaz).
@@ -105,6 +123,8 @@ public class ProjectIndicatorAppService : ApplicationService, IProjectIndicatorA
 
     public virtual async Task<List<ProjectIndicatorEntryDto>> GetEntriesAsync(Guid indicatorId)
     {
+        using var scope = HostScope();
+
         await _indicatorRepository.GetAsync(indicatorId);
 
         var entries = (await _entryRepository.GetListAsync(e => e.IndicatorId == indicatorId))
@@ -130,6 +150,8 @@ public class ProjectIndicatorAppService : ApplicationService, IProjectIndicatorA
     [Authorize(PlatformPermissions.Projects.ManageIndicators)]
     public virtual async Task<ProjectIndicatorEntryDto> AddEntryAsync(Guid indicatorId, CreateProjectIndicatorEntryDto input)
     {
+        using var scope = HostScope();
+
         var indicator = await _indicatorRepository.GetAsync(indicatorId);
 
         string? documentName = null;
@@ -148,7 +170,7 @@ public class ProjectIndicatorAppService : ApplicationService, IProjectIndicatorA
         }
 
         var entry = new ProjectIndicatorEntry(
-            GuidGenerator.Create(), CurrentTenant.Id, indicatorId,
+            GuidGenerator.Create(), indicator.TenantId, indicatorId,
             input.EntryDate, input.Value, input.Note, input.DocumentFileId);
         await _entryRepository.InsertAsync(entry, autoSave: true);
 
@@ -160,12 +182,16 @@ public class ProjectIndicatorAppService : ApplicationService, IProjectIndicatorA
     [Authorize(PlatformPermissions.Projects.ManageIndicators)]
     public virtual async Task DeleteEntryAsync(Guid entryId)
     {
+        using var scope = HostScope();
+
         var entry = await _entryRepository.GetAsync(entryId);
         await _entryRepository.DeleteAsync(entry);
     }
 
     public virtual async Task<List<ProjectIndicatorDocumentOptionDto>> GetDocumentOptionsAsync(Guid indicatorId)
     {
+        using var scope = HostScope();
+
         var indicator = await _indicatorRepository.GetAsync(indicatorId);
         if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default))
         {
