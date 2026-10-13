@@ -68,14 +68,14 @@ public class ReportSectionAvailability_Tests
 
     /// <summary>
     /// Enum'a yeni bir bölüm eklenirse uygunluğu bilinçli olarak kararlaştırılsın
-    /// diye tam sayım: bugün 14 anahtarın 14'ü açık.
+    /// diye tam sayım: bugün 15 anahtarın 15'i açık.
     /// </summary>
     [Fact]
     public void Uygun_bolum_sayisi_beklenen_olmali()
     {
         var all = Enum.GetValues<ReportSectionKey>();
 
-        all.Length.ShouldBe(14);
-        all.Count(ReportSectionAvailability.IsAvailable).ShouldBe(14);
+        all.Length.ShouldBe(15);
+        all.Count(ReportSectionAvailability.IsAvailable).ShouldBe(15);
     }
 }

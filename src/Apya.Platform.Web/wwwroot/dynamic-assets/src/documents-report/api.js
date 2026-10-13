@@ -71,6 +71,7 @@ export const SECTION_LABEL = {
   12: 'Kapak sayfası',
   13: 'Bütçe özeti',
   14: 'Görev ilerlemesi',
+  15: 'Göstergeler',
 };
 
 export const RECIPIENT_LABEL = {

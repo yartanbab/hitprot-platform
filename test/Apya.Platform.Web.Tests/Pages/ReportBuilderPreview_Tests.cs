@@ -104,6 +104,39 @@ public class ReportBuilderPreview_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// PRJ-08 · Göstergeler bölümü proje sayfasındaki sekmeyle AYNI servisten gelir: gerçekleşen
+    /// değer en son ölçümden, yüzde ve durum servisin hesabından.
+    /// </summary>
+    [Fact]
+    public async Task Gostergeler_bolumu_gostergelerden_ve_olcumlerden_doluyor()
+    {
+        var (projectId, templateId) = await SetupAsync();
+
+        var indicators = GetRequiredService<Apya.Platform.Projects.IProjectIndicatorAppService>();
+        var indicator = await indicators.CreateAsync(new Apya.Platform.Projects.CreateUpdateProjectIndicatorDto
+        {
+            ProjectId = projectId, Name = "Eğitilen kişi sayısı", Unit = "kişi",
+            BaselineValue = 0m, TargetValue = 200m, TargetDate = new DateTime(2020, 1, 1)
+        });
+        await indicators.AddEntryAsync(indicator.Id, new Apya.Platform.Projects.CreateProjectIndicatorEntryDto
+        {
+            EntryDate = new DateTime(2019, 12, 1), Value = 90m
+        });
+
+        var model = await GetPreviewAsync(projectId, templateId);
+        var rows = model.GetProperty("indicators");
+
+        rows.GetArrayLength().ShouldBe(1);
+        rows[0].GetProperty("name").GetString().ShouldBe("Eğitilen kişi sayısı");
+        rows[0].GetProperty("currentValue").GetDecimal().ShouldBe(90m);
+        rows[0].GetProperty("progressPercent").GetInt32().ShouldBe(45);
+        rows[0].GetProperty("status").GetInt32().ShouldBe((int)Apya.Platform.Projects.ProjectIndicatorStatus.Behind);
+
+        // Şablonsuz önizlemede bölüm açık değildir: veri çekilmez.
+        (await GetPreviewAsync(projectId, null)).GetProperty("indicators").ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    /// <summary>
     /// Bütçe özeti Finans çatısıyla AYNI servisten gelir: kalem varsa onaylanan bütçe
     /// kalemlerin toplamıdır, <c>Project.TotalBudget</c> (burada 999.999) DEĞİL.
     /// </summary>

@@ -76,6 +76,12 @@ public class DeliveryReportModel
     /// <summary>Görev ilerlemesi. Proje listesiyle AYNI kuraldan okunur.</summary>
     public TaskProgressBlock? TaskProgress { get; set; }
 
+    /// <summary>
+    /// PRJ-08 · Göstergeler. Göstergeleri görme izni olmayan kullanıcıda null kalır ve bölüm
+    /// "gösterge verisi yok" basar; boş liste ise "tanımlı gösterge yok" demektir.
+    /// </summary>
+    public List<IndicatorRow>? Indicators { get; set; }
+
     public class ProjectSummaryBlock
     {
         public int CompliancePercent { get; set; }
@@ -168,6 +174,18 @@ public class DeliveryReportModel
         public decimal ApprovedAmount { get; set; }
         public decimal SpentAmount { get; set; }
         public decimal RemainingAmount { get; set; }
+    }
+
+    public class IndicatorRow
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Unit { get; set; }
+        public decimal BaselineValue { get; set; }
+        public decimal TargetValue { get; set; }
+        public decimal CurrentValue { get; set; }
+        public DateTime? TargetDate { get; set; }
+        public int ProgressPercent { get; set; }
+        public Apya.Platform.Projects.ProjectIndicatorStatus Status { get; set; }
     }
 
     public class TaskProgressBlock

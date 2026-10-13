@@ -30,6 +30,7 @@ public class ReportTemplateSectionBackfill_Tests : PlatformEntityFrameworkCoreTe
     {
         ReportSectionKey.BudgetSummary,
         ReportSectionKey.TaskProgress,
+        ReportSectionKey.Indicators,
     };
 
     private readonly ReportTemplateDataSeedContributor _seeder;
@@ -105,7 +106,7 @@ public class ReportTemplateSectionBackfill_Tests : PlatformEntityFrameworkCoreTe
         sections.Length.ShouldBe(Enum.GetValues<ReportSectionKey>().Length, "her bölüm türünün bir satırı olmalı");
 
         var added = sections.Where(s => NewKeys.Contains(s.SectionKey)).ToArray();
-        added.Length.ShouldBe(2);
+        added.Length.ShouldBe(NewKeys.Length);
         added.ShouldAllBe(s => !s.IsEnabled, "eklenen bölüm kullanıcının raporunu değiştirmemeli");
         added.ShouldAllBe(s => s.TenantId == tenantId, "satır şablonun kiracısına yazılmalı");
 
