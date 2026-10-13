@@ -294,6 +294,9 @@ public class TenantPackageManager : ITransientDependency
         // ama kapı yalnız feature false→true olduğunda izin verir; hibesi zaten açık olan
         // paketlerin tavanına bu listeden girer.
         PlatformPermissions.Grants.ManageApplications,
+        // PRJ-08 gösterge izinleri: feature kapısı yok, tavana buradan girer.
+        PlatformPermissions.Projects.ViewIndicators,
+        PlatformPermissions.Projects.ManageIndicators,
     };
 
     private IEnumerable<(Guid Id, string Name)> DefaultPermissionsFor(

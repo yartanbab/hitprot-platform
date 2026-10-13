@@ -143,6 +143,17 @@ namespace Apya.Platform
                 .ForMember(d => d.ProjectName, o => o.Ignore())
                 .ForMember(d => d.DocumentCount, o => o.Ignore());
 
+            // --- PROJE GÖSTERGESİ (PRJ-08) --- hesaplanan alanlar serviste doldurulur.
+            CreateMap<ProjectIndicator, ProjectIndicatorDto>()
+                .ForMember(d => d.WorkStepName, o => o.Ignore())
+                .ForMember(d => d.CurrentValue, o => o.Ignore())
+                .ForMember(d => d.LastEntryDate, o => o.Ignore())
+                .ForMember(d => d.EntryCount, o => o.Ignore())
+                .ForMember(d => d.ProgressPercent, o => o.Ignore())
+                .ForMember(d => d.Status, o => o.Ignore());
+            CreateMap<ProjectIndicatorEntry, ProjectIndicatorEntryDto>()
+                .ForMember(d => d.DocumentName, o => o.Ignore());
+
             // --- CARİ (MÜŞTERİ) MODÜLÜ ---
             CreateMap<Customer, CustomerDto>();
             CreateMap<CreateUpdateCustomerDto, Customer>();

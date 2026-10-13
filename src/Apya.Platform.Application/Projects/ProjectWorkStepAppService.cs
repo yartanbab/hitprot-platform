@@ -139,6 +139,18 @@ public class ProjectWorkStepAppService : ApplicationService, IProjectWorkStepApp
             await _documentFileRepository.UpdateManyAsync(linked);
         }
 
+        // Adıma bağlı göstergeler (PRJ-08) de öksüz kalmasın: bağ koparılır, gösterge silinmez.
+        var indicatorRepository = LazyServiceProvider.LazyGetRequiredService<IRepository<ProjectIndicator, Guid>>();
+        var linkedIndicators = await indicatorRepository.GetListAsync(i => i.WorkStepId == id);
+        foreach (var indicator in linkedIndicators)
+        {
+            indicator.SetWorkStep(null);
+        }
+        if (linkedIndicators.Count > 0)
+        {
+            await indicatorRepository.UpdateManyAsync(linkedIndicators);
+        }
+
         // Adıma bağlı görevler de öksüz kalmasın: bağ koparılır, görev silinmez.
         var linkedTasks = await _taskRepository.GetListAsync(t => t.WorkStepId == id);
         foreach (var task in linkedTasks)

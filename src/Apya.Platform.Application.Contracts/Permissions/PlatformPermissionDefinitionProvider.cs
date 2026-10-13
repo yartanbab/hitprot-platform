@@ -25,6 +25,8 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         projectsPermission.AddChild(PlatformPermissions.Projects.ManageTeam, L("Permission:Projects.ManageTeam"));
         projectsPermission.AddChild(PlatformPermissions.Projects.UseAiFeatures, L("Permission:Projects.UseAiFeatures"));
         projectsPermission.AddChild(PlatformPermissions.Projects.ManageCategories, L("Permission:Projects.ManageCategories"));
+        projectsPermission.AddChild(PlatformPermissions.Projects.ViewIndicators, L("Permission:Projects.ViewIndicators"));
+        projectsPermission.AddChild(PlatformPermissions.Projects.ManageIndicators, L("Permission:Projects.ManageIndicators"));
 
         var tasksPermission = workGroup.AddPermission(PlatformPermissions.Tasks.Default, L("Permission:Tasks"));
         tasksPermission.AddChild(PlatformPermissions.Tasks.Create, L("Permission:Tasks.Create"));

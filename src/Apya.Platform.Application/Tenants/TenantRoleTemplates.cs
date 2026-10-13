@@ -35,6 +35,7 @@ public static class TenantRoleTemplates
     {
         PlatformPermissions.Projects.Default,
         PlatformPermissions.Projects.ViewBudget,
+        PlatformPermissions.Projects.ViewIndicators,
         PlatformPermissions.Tasks.Default,
         PlatformPermissions.Documents.Default,
         PlatformPermissions.DynamicAssets.Default,
@@ -97,6 +98,7 @@ public static class TenantRoleTemplates
                 PlatformPermissions.Projects.Default,
                 PlatformPermissions.Projects.ViewBudget,
                 PlatformPermissions.Projects.ManageBudget,
+                PlatformPermissions.Projects.ViewIndicators,
                 PlatformPermissions.Tasks.Default,
                 PlatformPermissions.Documents.Default,
             }),
