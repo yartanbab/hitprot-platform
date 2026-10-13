@@ -3315,6 +3315,51 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppDocumentFileTags", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Documents.DocumentIncomeLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("DocumentFileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid>("IncomeEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentFileId");
+
+                    b.HasIndex("IncomeEntryId", "DocumentFileId")
+                        .IsUnique();
+
+                    b.ToTable("AppDocumentIncomeLinks", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Documents.DocumentIntegration", b =>
                 {
                     b.Property<Guid>("Id")

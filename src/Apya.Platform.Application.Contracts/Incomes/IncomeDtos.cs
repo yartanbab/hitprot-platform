@@ -25,6 +25,9 @@ public class IncomeEntryDto : FullAuditedEntityDto<Guid>
     public decimal? DonorAmount { get; set; }
     public decimal? DonorRate { get; set; }
     public bool RateLocked { get; set; }
+
+    /// <summary>DOC-08 · Gelire bağlı belgeler (dekont vb.). Yalnız belge izni olana dolar.</summary>
+    public System.Collections.Generic.List<Apya.Platform.ProjectBudgets.Dtos.ProjectExpenseDocumentDto> Documents { get; set; } = new();
 }
 
 public class CreateUpdateIncomeEntryDto
@@ -70,4 +73,11 @@ public class GetIncomeEntriesInput : PagedAndSortedResultRequestDto
     public Guid? CustomerId { get; set; }
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }
+}
+
+/// <summary>DOC-08 · Gelire bağlanabilecek / bağlı bir belge.</summary>
+public class IncomeDocumentOptionDto
+{
+    public Guid DocumentFileId { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

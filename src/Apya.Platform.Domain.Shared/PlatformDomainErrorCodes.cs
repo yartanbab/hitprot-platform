@@ -71,6 +71,7 @@ public static class PlatformDomainErrorCodes
     public const string ExpenseFieldTooLong = "Platform:Expense:FieldTooLong";
     public const string ExpenseAmountInvalid = "Platform:Expense:AmountInvalid";
     public const string ExpenseCashAccountRequired = "Platform:Expense:CashAccountRequired";
+    public const string IncomeDocumentProjectMismatch = "Platform:Income:DocumentProjectMismatch";
 
     // --- Fatura (Invoice) Modülü ---
     public const string InvoiceNumberRequired = "Platform:Invoice:NumberRequired";

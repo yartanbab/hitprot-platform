@@ -24,5 +24,12 @@ $(function () {
     }
 
     wire('#fin-ledger-add-income', 'Incomes/CreateModal');
+
+    // DOC-08: gelir satırındaki "belge bağla" düğmesi.
+    var incomeDocModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Finance/IncomeDocumentModal' });
+    incomeDocModal.onResult(function () { window.location.reload(); });
+    $(document).on('click', '[data-income-doc-link]', function () {
+        incomeDocModal.open({ id: $(this).data('income-doc-link') });
+    });
     wire('#fin-ledger-add-expense', 'Expenses/CreateModal');
 });

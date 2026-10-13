@@ -26,6 +26,11 @@
     var suzgecVar = !string.IsNullOrEmpty(Model.Kind) || Model.LineId.HasValue || Model.AccountId.HasValue;
     // FIN-08: kur girilmediği için ₺ defterine yansımamış kayıtlar toplamda SIFIR sayılır.
     var kurYok = Model.LedgerRows.Count(r => r.IsBookMissing);
+    // DOC-08: belgesi bağlanmamış tahsilatlar. Uyarıdır, engel değil; belge izni yoksa sayılmaz
+    // (belgeler o kullanıcıya hiç yüklenmez, "belgesiz" demek yanıltıcı olurdu).
+    var belgesizTahsilat = Model.CanSeeDocuments && Model.ProjectId.HasValue
+        ? Model.LedgerRows.Count(r => r.IsInflow && !r.Documents.Any())
+        : 0;
 
     // Donör kolonu yalnız projenin donör defteri varsa basılır.
     var donorCurrency = Model.LedgerDonorCurrency;
@@ -172,6 +177,13 @@ else
                                         <i class="fa fa-paperclip" aria-hidden="true"></i>
                                     </a>
                                 }
+                                @if (r.IsInflow && Model.CanLinkIncomeDocuments)
+                                {
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-muted"
+                                            data-income-doc-link="@r.Id" title="Belge bağla" aria-label="Belge bağla">
+                                        <i class="fa fa-link" aria-hidden="true"></i>
+                                    </button>
+                                }
                             </div>
                             <div class="small text-muted">@r.CategoryLabel</div>
                         </td>
@@ -234,6 +246,13 @@ else
                             <div class="fw-normal text-warning" style="font-size:12px" data-book-missing-note>
                                 <i class="fa fa-triangle-exclamation me-1" aria-hidden="true"></i>
                                 @kurYok kaydın kuru girilmemiş; ₺ toplamına dahil değil.
+                            </div>
+                        }
+                        @if (belgesizTahsilat > 0)
+                        {
+                            <div class="fw-normal text-warning" style="font-size:12px" data-income-undocumented-note>
+                                <i class="fa fa-triangle-exclamation me-1" aria-hidden="true"></i>
+                                @belgesizTahsilat tahsilatın belgesi (dekont vb.) bağlanmamış.
                             </div>
                         }
                     </td>

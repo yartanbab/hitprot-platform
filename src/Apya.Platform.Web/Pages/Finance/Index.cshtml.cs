@@ -118,6 +118,15 @@ public class IndexModel : AbpPageModel
     /// <inheritdoc cref="CanCreateIncome"/>
     public bool CanCreateExpense { get; private set; }
 
+    /// <summary>
+    /// DOC-08 · Gelir satırına belge bağlanabilir mi: gelir düzenleme + belge görme izni ve seçili
+    /// proje (belgeler projeden seçilir).
+    /// </summary>
+    public bool CanLinkIncomeDocuments { get; private set; }
+
+    /// <summary>DOC-08 · Belge izni var mı — "belgesiz tahsilat" notu yalnız o zaman anlamlıdır.</summary>
+    public bool CanSeeDocuments { get; private set; }
+
     /// <summary>Gelir-Gider süzgeci: "gelir" | "gider" | boş.</summary>
     [BindProperty(SupportsGet = true)]
     public string? Kind { get; set; }
@@ -282,6 +291,10 @@ public class IndexModel : AbpPageModel
         CanEditProject = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit);
         CanCreateIncome = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Incomes.Create);
         CanCreateExpense = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Create);
+        CanSeeDocuments = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default);
+        CanLinkIncomeDocuments = CanSeeDocuments
+            && ProjectId.HasValue
+            && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Incomes.Edit);
 
         // Sekme başına yükleme: pasif sekmenin sorgusu hiç koşmaz.
         if (ActiveTab == FinanceContext.TabOverview)
@@ -426,7 +439,8 @@ public class IndexModel : AbpPageModel
                         BookAmount = x.BookAmount,
                         DonorAmount = x.DonorAmount,
                         RateLocked = x.RateLocked,
-                        Url = "/Incomes"
+                        Url = "/Incomes",
+                        Documents = x.Documents
                     });
                 }
             });
@@ -1108,7 +1122,7 @@ public class IndexModel : AbpPageModel
 
         public string Url { get; set; } = "#";
 
-        /// <summary>DOC-12 · Gidere eşleştirilmiş belgeler (gelirde hep boş: gelir eşleşmesi yok).</summary>
+        /// <summary>DOC-12 · Gidere eşleştirilmiş, DOC-08 · gelire bağlanmış belgeler.</summary>
         public List<Apya.Platform.ProjectBudgets.Dtos.ProjectExpenseDocumentDto> Documents { get; set; } = new();
     }
 
