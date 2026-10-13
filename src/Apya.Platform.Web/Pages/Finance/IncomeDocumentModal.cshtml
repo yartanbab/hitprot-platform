@@ -1,0 +1,64 @@
+@page
+@model Apya.Platform.Web.Pages.Finance.IncomeDocumentModalModel
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+}
+<form method="post" action="@Url.Page("/Finance/IncomeDocumentModal", new { id = Model.Id })">
+    <abp-modal>
+        <abp-modal-header title="Tahsilata belge bağla"></abp-modal-header>
+        <abp-modal-body>
+            @if (Model.Linked.Any())
+            {
+                <div class="mb-3">
+                    <span class="apya-overline d-block mb-1">Bağlı belgeler</span>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var doc in Model.Linked)
+                        {
+                            <li class="d-flex align-items-center gap-2 py-1">
+                                <i class="fa fa-paperclip text-muted" aria-hidden="true"></i>
+                                <span class="flex-grow-1">@doc.Name</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        data-income-doc-unlink="@doc.DocumentFileId">Bağı kaldır</button>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (Model.Options.Any())
+            {
+                <label class="apya-overline d-block mb-1" for="IncomeDocumentFileId">Bağlanacak belge</label>
+                <select class="form-select" id="IncomeDocumentFileId" name="DocumentFileId">
+                    <option value="">— Seçin —</option>
+                    @foreach (var option in Model.Options)
+                    {
+                        <option value="@option.DocumentFileId">@option.Name</option>
+                    }
+                </select>
+                <p class="text-muted mb-0 mt-2" style="font-size:12px">
+                    Belgeler bu gelirin projesindeki dosyalardan seçilir. Dekont henüz yüklenmediyse önce
+                    Belgeler ekranından projeye yükleyin.
+                </p>
+            }
+            else
+            {
+                <p class="text-muted mb-0" style="font-size:12.5px">
+                    Bağlanabilecek belge yok. Gelir bir projeye bağlı olmalı ve projede henüz bu gelire
+                    bağlanmamış bir belge bulunmalı.
+                </p>
+            }
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>
+<script>
+    // Bağı kaldır: pencere içinden, kaydetmeye gerek kalmadan. Sonra tablo yenilenir.
+    $('[data-income-doc-unlink]').on('click', function () {
+        var $btn = $(this).prop('disabled', true);
+        apya.platform.incomes.incomeEntry
+            .unlinkDocument('@Model.Id', $btn.data('income-doc-unlink'))
+            .then(function () { window.location.reload(); })
+            .always(function () { $btn.prop('disabled', false); });
+    });
+</script>

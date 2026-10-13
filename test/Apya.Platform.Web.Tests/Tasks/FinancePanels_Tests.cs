@@ -294,4 +294,27 @@ public class FinancePanels_Tests : PlatformWebTestBase
         html.ShouldContain($"data-expense-doc=\"{d.Receipt}\"");
         html.ShouldContain($"/Documents?handler=DownloadAttachment&amp;attachmentId={d.Invoice}");
     }
+
+    /// <summary>
+    /// DOC-08 · Belgesi bağlanmamış tahsilat tabloda uyarı olarak görünür ve satırda "belge bağla"
+    /// düğmesi çıkar. Uyarıdır, engel değil.
+    /// </summary>
+    [Fact]
+    public async Task Finans_merkezi_belgesiz_tahsilati_uyarir_ve_belge_baglama_dugmesi_basar()
+    {
+        var s = await SeedAsync("FIN-T");
+        var income = await GetRequiredService<Apya.Platform.Incomes.IIncomeEntryAppService>().CreateAsync(
+            new Apya.Platform.Incomes.CreateUpdateIncomeEntryDto
+            {
+                Title = "Hibe dilimi", Amount = 5000m, Currency = "TRY", IncomeDate = DateTime.Today, ProjectId = s.P1
+            });
+
+        var html = System.Net.WebUtility.HtmlDecode(
+            await GetResponseAsStringAsync($"/Finance?projectId={s.P1}&tab=gelir-gider"));
+
+        html.ShouldContain("data-income-undocumented-note");
+        html.ShouldContain("1 tahsilatın belgesi (dekont vb.) bağlanmamış.");
+        html.ShouldContain($"data-income-doc-link=\"{income.Id}\"");
+    }
+
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -236,6 +237,9 @@ public class IncomeEntryAppService :
         foreach (var m in linked)
             await _cashMovementRepository.DeleteAsync(m);
 
+        // DOC-08: gelir silinince belge bağları da gider; belgeler silinmez.
+        await LinkRepository.DeleteAsync(l => l.IncomeEntryId == id);
+
         await base.DeleteAsync(id);
     }
 
@@ -281,9 +285,118 @@ public class IncomeEntryAppService :
         return await MapToGetOutputDtoAsync(income);
     }
 
+    /* --- DOC-08 · Gelire belge bağlama ---------------------------------------------------- */
+
+    private IRepository<Apya.Platform.Documents.DocumentIncomeLink, Guid> LinkRepository
+        => LazyServiceProvider.LazyGetRequiredService<IRepository<Apya.Platform.Documents.DocumentIncomeLink, Guid>>();
+
+    private IRepository<Apya.Platform.Documents.DocumentFile, Guid> DocumentFileRepository
+        => LazyServiceProvider.LazyGetRequiredService<IRepository<Apya.Platform.Documents.DocumentFile, Guid>>();
+
+    public async Task<List<IncomeDocumentOptionDto>> GetDocumentOptionsAsync(Guid id)
+    {
+        await CheckPolicyAsync(PlatformPermissions.Incomes.Edit);
+        await CheckPolicyAsync(PlatformPermissions.Documents.Default);
+
+        var income = await Repository.GetAsync(id);
+        if (!income.ProjectId.HasValue)
+        {
+            return new List<IncomeDocumentOptionDto>();
+        }
+
+        var linkedIds = (await LinkRepository.GetListAsync(l => l.IncomeEntryId == id))
+            .Select(l => l.DocumentFileId).ToList();
+        var projectId = income.ProjectId.Value;
+
+        var files = await AsyncExecuter.ToListAsync(
+            (await DocumentFileRepository.GetQueryableAsync())
+                .Where(f => f.ProjectId == projectId && !linkedIds.Contains(f.Id))
+                .OrderBy(f => f.DisplayName)
+                .Select(f => new IncomeDocumentOptionDto { DocumentFileId = f.Id, Name = f.DisplayName }));
+        return files;
+    }
+
+    public async Task<List<IncomeDocumentOptionDto>> GetLinkedDocumentsAsync(Guid id)
+    {
+        await CheckPolicyAsync(PlatformPermissions.Documents.Default);
+        await Repository.GetAsync(id);
+
+        var linkQ = await LinkRepository.GetQueryableAsync();
+        var fileQ = await DocumentFileRepository.GetQueryableAsync();
+        return await AsyncExecuter.ToListAsync(
+            from l in linkQ
+            join f in fileQ on l.DocumentFileId equals f.Id
+            where l.IncomeEntryId == id
+            orderby f.DisplayName
+            select new IncomeDocumentOptionDto { DocumentFileId = f.Id, Name = f.DisplayName });
+    }
+
+    public async Task LinkDocumentAsync(Guid id, Guid documentFileId)
+    {
+        await CheckPolicyAsync(PlatformPermissions.Incomes.Edit);
+        await CheckPolicyAsync(PlatformPermissions.Documents.Default);
+
+        // İkisi de kiracı süzgeçli okunur: başka kiracının geliri ya da belgesi "bulunamadı".
+        var income = await Repository.GetAsync(id);
+        var file = await DocumentFileRepository.GetAsync(documentFileId);
+
+        // Belge başka bir projeye aitse bağ, o projenin dosyasını bu projenin tahsilatına iliştirirdi.
+        if (file.ProjectId.HasValue && file.ProjectId != income.ProjectId)
+        {
+            throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.IncomeDocumentProjectMismatch);
+        }
+
+        if (await LinkRepository.AnyAsync(l => l.IncomeEntryId == id && l.DocumentFileId == documentFileId))
+        {
+            return;
+        }
+
+        await LinkRepository.InsertAsync(
+            new Apya.Platform.Documents.DocumentIncomeLink(GuidGenerator.Create(), income.TenantId, documentFileId, id),
+            autoSave: true);
+    }
+
+    public async Task UnlinkDocumentAsync(Guid id, Guid documentFileId)
+    {
+        await CheckPolicyAsync(PlatformPermissions.Incomes.Edit);
+        await Repository.GetAsync(id);
+
+        await LinkRepository.DeleteAsync(
+            l => l.IncomeEntryId == id && l.DocumentFileId == documentFileId, autoSave: true);
+    }
+
     public override async Task<PagedResultDto<IncomeEntryDto>> GetListAsync(GetIncomeEntriesInput input)
     {
         var result = await base.GetListAsync(input);
+
+        // DOC-08 · Bağlı belgeler yalnız DÖNEN satırlar için ve yalnız belge izni olana okunur
+        // (gider satırındaki kalıpla aynı — bkz. ExpenseAppService.GetListAsync).
+        var incomeIds = result.Items.Select(x => x.Id).ToList();
+        if (incomeIds.Count > 0
+            && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default))
+        {
+            var linkQ = await LinkRepository.GetQueryableAsync();
+            var fileQ = await DocumentFileRepository.GetQueryableAsync();
+            var documents = await AsyncExecuter.ToListAsync(
+                from l in linkQ
+                join f in fileQ on l.DocumentFileId equals f.Id
+                where incomeIds.Contains(l.IncomeEntryId) && f.LatestAttachmentId != null
+                orderby l.CreationTime, l.Id
+                select new { l.IncomeEntryId, AttachmentId = f.LatestAttachmentId!.Value, f.DisplayName });
+
+            var byIncome = documents.ToLookup(d => d.IncomeEntryId);
+            foreach (var dto in result.Items)
+            {
+                dto.Documents = byIncome[dto.Id]
+                    .Select(d => new Apya.Platform.ProjectBudgets.Dtos.ProjectExpenseDocumentDto
+                    {
+                        AttachmentId = d.AttachmentId,
+                        Name = d.DisplayName,
+                        DownloadUrl = "/Documents?handler=DownloadAttachment&attachmentId=" + d.AttachmentId
+                    })
+                    .ToList();
+            }
+        }
 
         var accountIds = result.Items
             .Where(x => x.CashAccountId.HasValue)

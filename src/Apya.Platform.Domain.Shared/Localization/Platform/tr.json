@@ -1904,6 +1904,7 @@
         "Platform:Income:AmountInvalid": "Geçersiz tutar. Gelir tutarı sıfırdan büyük olmalıdır.",
         "Platform:CashAccount:NameRequired": "Kasa adı boş bırakılamaz.",
         "Platform:CashAccount:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
+        "Platform:Income:DocumentProjectMismatch": "Seçilen belge bu gelirin projesine ait değil.",
         "Platform:CashAccount:CurrencyInvalid": "Geçersiz para birimi. Lütfen geçerli bir para birimi seçin (örn. TRY, USD, EUR).",
         "Platform:CashAccount:CurrencyLocked": "Bu kasada {MovementCount} hareket var; para birimi değiştirilemez. Hareketler kasanın para biriminde tutulur, değişiklik geçmiş bakiyeyi bozardı. Farklı para birimi için yeni bir kasa açın.",
         "Platform:CashAccount:InUse": "Bu kasada {MovementCount} hareket var; kasa silinirse hareketler raporlarda sahipsiz kalır. Silmek yerine kasayı pasife alın.",

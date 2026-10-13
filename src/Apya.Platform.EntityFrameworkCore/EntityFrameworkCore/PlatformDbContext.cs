@@ -260,6 +260,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.DocumentFieldPermission> DocumentFieldPermissions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentIntegration> DocumentIntegrations { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentExpenseMatch> DocumentExpenseMatches { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentIncomeLink> DocumentIncomeLinks { get; set; }
         public DbSet<ProjectRisk> ProjectRisks { get; set; }
 
         /* --- AI MODÜLÜ --- */
@@ -2041,6 +2042,16 @@ namespace Apya.Platform.EntityFrameworkCore
             });
 
             /* --- EŞLEŞTİRME + RİSK KÜTÜĞÜ (FAZ E) --- */
+            builder.Entity<Apya.Platform.Documents.DocumentIncomeLink>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentIncomeLinks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                // Aynı belge aynı gelire bir kez bağlanır.
+                b.HasIndex(x => new { x.IncomeEntryId, x.DocumentFileId }).IsUnique();
+                b.HasIndex(x => x.DocumentFileId);
+            });
+
             builder.Entity<Apya.Platform.Documents.DocumentExpenseMatch>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "DocumentExpenseMatches", PlatformConsts.DbSchema);
