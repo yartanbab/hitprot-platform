@@ -25,4 +25,10 @@ public interface IExpenseAppService :
     /// (GetExpensesInput — Proje pill'i ProjectId'yi kullanır).
     /// </summary>
     Task<ExpenseProjectGroupsDto> GetProjectGroupedAsync(GetExpensesInput input);
+
+    /// <summary>
+    /// FIN-05 · Projeye yazılmış giderin karşılığı olan alış faturası var mı? Projesiz giderde
+    /// ve fatura görme izni olmayan kullanıcıda uyarı çıkmaz.
+    /// </summary>
+    Task<Apya.Platform.Invoices.Dtos.FinanceCrossCheckDto> GetInvoiceCrossCheckAsync(Guid id);
 }

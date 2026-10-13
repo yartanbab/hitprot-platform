@@ -188,4 +188,85 @@
             return Promise.resolve(svc.getRecordFormLookup(projectId));
         }
     };
+
+    /* -------------------------------------------------------------------------
+       FIN-05 · Fatura <-> gider capraz uyarisi (urun karari 2026-10-13)
+       Fatura ve gider pencereleri kayittan sonra, karsilik bulunamadiysa yanitta
+       { crossWarning: { kind: 'invoice'|'expense', invoiceId } } dondurur.
+       Pencereyi acan sayfalarin cogu kayittan sonra sayfayi YENILER; uyari
+       yenilemede kaybolmasin diye sessionStorage'da tutulur ve kullanici
+       kapatinca silinir. Kayit her durumda yapilmistir: uyari engellemez.
+       ------------------------------------------------------------------------- */
+    var CROSS_KEY = 'apya.finance.crossWarning';
+    var CROSS_MAX_AGE_MS = 2 * 60 * 1000;
+    var crossShowing = false;
+
+    function crossRead() {
+        try {
+            var raw = window.sessionStorage.getItem(CROSS_KEY);
+            if (!raw) { return null; }
+            var w = JSON.parse(raw);
+            if (!w || !w.kind || (Date.now() - (w.at || 0)) > CROSS_MAX_AGE_MS) { crossClear(); return null; }
+            return w;
+        } catch (e) { return null; }
+    }
+    function crossClear() {
+        try { window.sessionStorage.removeItem(CROSS_KEY); } catch (e) { }
+    }
+    function crossText(key, fallback) {
+        try {
+            var v = abp.localization.getResource('Platform')(key);
+            return v && v !== key ? v : fallback;
+        } catch (e) { return fallback; }
+    }
+
+    function crossShow() {
+        if (crossShowing || typeof abp === 'undefined' || !abp.message) { return; }
+        var w = crossRead();
+        if (!w) { return; }
+        crossShowing = true;
+
+        if (w.kind === 'invoice' && w.invoiceId) {
+            abp.message.confirm(
+                crossText('Finance:CrossCheck:InvoiceWithoutExpense',
+                    'Bu al\u0131\u015f faturas\u0131n\u0131n kar\u015f\u0131l\u0131\u011f\u0131 olan bir gider kayd\u0131 bulunamad\u0131. \u015eimdi gider kayd\u0131n\u0131 girmek ister misiniz?'),
+                crossText('Finance:CrossCheck:Title', 'Kar\u015f\u0131l\u0131k bulunamad\u0131')
+            ).then(function (ok) {
+                crossShowing = false;
+                crossClear();
+                if (!ok) { return; }
+                var modal = new abp.ModalManager({ viewUrl: abp.appPath + 'Expenses/CreateModal' });
+                modal.onResult(function () { window.location.reload(); });
+                modal.open({ FromInvoiceId: w.invoiceId });
+            });
+            return;
+        }
+
+        abp.message.warn(
+            crossText('Finance:CrossCheck:ExpenseWithoutInvoice',
+                'Bu giderin kar\u015f\u0131l\u0131\u011f\u0131 olan bir al\u0131\u015f faturas\u0131 bulunamad\u0131. Fatura geldiyse Faturalar ekran\u0131ndan girmeyi unutmay\u0131n.'),
+            crossText('Finance:CrossCheck:Title', 'Kar\u015f\u0131l\u0131k bulunamad\u0131')
+        ).then(function () {
+            crossShowing = false;
+            crossClear();
+        });
+    }
+
+    if (typeof $ !== 'undefined') {
+        $(document).ajaxSuccess(function (event, xhr, settings) {
+            var url = (settings && settings.url) || '';
+            if (!settings || String(settings.type).toUpperCase() !== 'POST') { return; }
+            if (url.indexOf('Invoices/CreateModal') < 0 && url.indexOf('Expenses/CreateModal') < 0) { return; }
+            var w = xhr && xhr.responseJSON && xhr.responseJSON.crossWarning;
+            if (!w || !w.kind) { return; }
+            try {
+                window.sessionStorage.setItem(CROSS_KEY,
+                    JSON.stringify({ kind: w.kind, invoiceId: w.invoiceId || null, at: Date.now() }));
+            } catch (e) { }
+            // Pencere kapanip sayfanin kendi onResult'i calistiktan SONRA goster.
+            setTimeout(crossShow, 300);
+        });
+        // Sayfa yenilendiyse bekleyen uyari burada gosterilir.
+        $(function () { setTimeout(crossShow, 300); });
+    }
 })();

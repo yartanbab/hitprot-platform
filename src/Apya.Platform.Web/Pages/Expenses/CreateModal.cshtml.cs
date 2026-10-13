@@ -21,6 +21,7 @@ public class CreateModalModel : AbpPageModel
     private readonly IProjectAppService _projectAppService;
     private readonly ICustomerAppService _customerAppService;
     private readonly ITaskAppService _taskAppService;
+    private readonly Apya.Platform.Invoices.IInvoiceAppService _invoiceAppService;
 
     [BindProperty(SupportsGet = true)]
     public Guid? TaskId { get; set; }
@@ -29,6 +30,10 @@ public class CreateModalModel : AbpPageModel
     /// TaskId doluysa yok sayılır — görev projeyi zaten belirler.</summary>
     [BindProperty(SupportsGet = true)]
     public Guid? ProjectId { get; set; }
+
+    /// <summary>FIN-05 · "Gider karşılığı yok" uyarısından açılınca alanlar faturadan dolar.</summary>
+    [BindProperty(SupportsGet = true)]
+    public Guid? FromInvoiceId { get; set; }
 
     [BindProperty]
     public CreateUpdateExpenseDto Expense { get; set; } = new();
@@ -47,8 +52,10 @@ public class CreateModalModel : AbpPageModel
         ICashAccountAppService cashAccountAppService,
         IProjectAppService projectAppService,
         ICustomerAppService customerAppService,
-        ITaskAppService taskAppService)
+        ITaskAppService taskAppService,
+        Apya.Platform.Invoices.IInvoiceAppService invoiceAppService)
     {
+        _invoiceAppService = invoiceAppService;
         _expenseAppService = expenseAppService;
         _cashAccountAppService = cashAccountAppService;
         _projectAppService = projectAppService;
@@ -61,7 +68,19 @@ public class CreateModalModel : AbpPageModel
         (Accounts, Projects, Customers, Categories, ProjectDatesJson) =
             await ExpenseLookups.LoadAsync(_cashAccountAppService, _projectAppService, _customerAppService);
 
-        if (TaskId.HasValue)
+        if (FromInvoiceId.HasValue)
+        {
+            // Fatura izni yoksa GetAsync reddeder; pencere o kullanıcıya zaten bu yoldan açılmaz.
+            var invoice = await _invoiceAppService.GetAsync(FromInvoiceId.Value);
+            Expense.Title = "Fatura " + invoice.InvoiceNumber;
+            Expense.Amount = Math.Round(invoice.TotalAmount, 2);
+            Expense.Currency = invoice.Currency;
+            Expense.ExpenseDate = invoice.InvoiceDate.Date;
+            Expense.ProjectId = invoice.ProjectId;
+            Expense.BudgetLineId = invoice.BudgetLineId;
+            Expense.CustomerId = invoice.CustomerId;
+        }
+        else if (TaskId.HasValue)
         {
             Expense.TaskId = TaskId;
 
@@ -82,7 +101,14 @@ public class CreateModalModel : AbpPageModel
     public virtual async Task<IActionResult> OnPostAsync()
     {
         ValidateModel();
-        await _expenseAppService.CreateAsync(Expense);
+        var created = await _expenseAppService.CreateAsync(Expense);
+
+        // FIN-05: projeye yazılan giderin alış faturası yoksa pencere kapanınca uyarı çıkar.
+        if ((await _expenseAppService.GetInvoiceCrossCheckAsync(created.Id)).ShouldWarn)
+        {
+            return new JsonResult(new { crossWarning = new { kind = "expense" } });
+        }
+
         return NoContent();
     }
 }

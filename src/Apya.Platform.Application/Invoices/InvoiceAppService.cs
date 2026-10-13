@@ -155,6 +155,20 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         await _invoiceManager.RecordPaymentAsync(invoiceId, amount, method, reference, cashAccountId);
     }
 
+    /// <inheritdoc />
+    public async Task<FinanceCrossCheckDto> GetExpenseCrossCheckAsync(Guid id)
+    {
+        // Gider görme izni olmayana "gider yok" bilgisi de verilmez.
+        if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Expenses.Default))
+        {
+            return new FinanceCrossCheckDto();
+        }
+
+        var invoice = await _invoiceRepository.GetAsync(id);
+        var check = LazyServiceProvider.LazyGetRequiredService<FinanceCrossCheck>();
+        return new FinanceCrossCheckDto { ShouldWarn = await check.InvoiceLacksExpenseAsync(invoice) };
+    }
+
     public async Task<List<PaymentDto>> GetPaymentsAsync(Guid invoiceId)
     {
         var payments = await _paymentRepository.GetListAsync(p => p.InvoiceId == invoiceId);
