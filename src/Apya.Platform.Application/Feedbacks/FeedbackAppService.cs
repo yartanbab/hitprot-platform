@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Feedbacks.Dtos;
@@ -23,20 +24,62 @@ public class FeedbackAppService : ApplicationService, IFeedbackAppService
     private readonly IRepository<Feedback, Guid> _feedbackRepository;
     private readonly IRepository<FeedbackAttachment, Guid> _attachmentRepository;
     private readonly FeedbackManager _feedbackManager;
+    private readonly IRepository<FeedbackUpload, Guid> _uploadRepository;
 
     public FeedbackAppService(
         IRepository<Feedback, Guid> feedbackRepository,
         IRepository<FeedbackAttachment, Guid> attachmentRepository,
-        FeedbackManager feedbackManager)
+        FeedbackManager feedbackManager,
+        IRepository<FeedbackUpload, Guid> uploadRepository)
     {
+        _uploadRepository = uploadRepository;
         _feedbackRepository = feedbackRepository;
         _attachmentRepository = attachmentRepository;
         _feedbackManager = feedbackManager;
     }
 
+    [RemoteService(IsEnabled = false)]
+    public async Task RegisterUploadAsync(string storedFileName)
+    {
+        await _uploadRepository.InsertAsync(
+            new FeedbackUpload(GuidGenerator.Create(), CurrentTenant.Id, CurrentUser.GetId(), storedFileName),
+            autoSave: true);
+    }
+
+    /// <summary>
+    /// İstekteki saklanan adların HEPSİ çağıranın kendi, henüz kullanılmamış yüklemesi olmalı.
+    /// Adlar istemciden gelir; doğrulanmadığında başkasının dosyasının adını öğrenen biri onu
+    /// kendi geri bildirimine iliştirip indirebiliyordu.
+    /// </summary>
+    private async Task<List<FeedbackUpload>> GetOwnUnclaimedUploadsAsync(CreateFeedbackDto input, Guid userId)
+    {
+        var names = (input.Attachments?.Select(a => (string?)a.StoredFileName) ?? Enumerable.Empty<string?>())
+            .Append(input.ScreenshotFileName)
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Select(n => n!)
+            .Distinct()
+            .ToList();
+
+        if (names.Count == 0)
+        {
+            return new List<FeedbackUpload>();
+        }
+
+        var uploads = await _uploadRepository.GetListAsync(u =>
+            names.Contains(u.StoredFileName) && u.UserId == userId && u.ClaimedByFeedbackId == null);
+
+        if (uploads.Count != names.Count)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.FeedbackUploadNotFound);
+        }
+
+        return uploads;
+    }
+
     public async Task<FeedbackDto> SubmitAsync(CreateFeedbackDto input)
     {
         var userId = CurrentUser.GetId();
+        var uploads = await GetOwnUnclaimedUploadsAsync(input, userId);
 
         var context = new FeedbackSubmissionContext(
             PageUrl: input.PageUrl,
@@ -72,6 +115,15 @@ public class FeedbackAppService : ApplicationService, IFeedbackAppService
                 feedback,
                 input.Attachments.Select(a => (a.FileName, a.StoredFileName, a.ContentType, a.SizeBytes)),
                 CurrentUser.UserName);
+        }
+
+        foreach (var upload in uploads)
+        {
+            upload.Claim(feedback.Id);
+        }
+        if (uploads.Count > 0)
+        {
+            await _uploadRepository.UpdateManyAsync(uploads, autoSave: true);
         }
 
         return MapToDto(feedback, commentCount: 0);
