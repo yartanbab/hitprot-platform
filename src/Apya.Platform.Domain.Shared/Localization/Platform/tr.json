@@ -1312,6 +1312,8 @@
         "Grants:Conversion:PlanHint": "Milestone’lar göreve, tahsilat dilimleri projenin gelir planına dönüşür.",
         "Grants:Conversion:TasksFromMilestones": "{0} milestone → görev",
         "Grants:Conversion:TranchesToIncome": "{0} dilim → gelir planı",
+        "Grants:Conversion:TargetsToIndicators": "{0} hedef → proje göstergesi",
+        "Grants:Conversion:NoTarget": "Başvuruda hedef tanımlı değil.",
         "Grants:Conversion:NoMilestone": "Başvuruda milestone yok.",
         "Grants:Conversion:NoTranche": "Başvuruda tahsilat dilimi yok.",
         "Grants:Conversion:Outcome": "Oluşacak proje",

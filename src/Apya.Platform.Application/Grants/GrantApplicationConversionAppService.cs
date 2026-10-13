@@ -295,6 +295,25 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                     result.TrancheCount++;
                 }
             }
+
+            // Hedefler → proje göstergeleri (PRJ-08). Hedefin kuralları göstergeyle aynı olduğu
+            // için kopya reddedilmez; ölçüm taşınmaz, gösterge başlangıç değeriyle başlar.
+            if (input.CreateIndicators)
+            {
+                var targetRepo = LazyServiceProvider.LazyGetRequiredService<IRepository<GrantApplicationTarget, Guid>>();
+                var indicatorRepo = LazyServiceProvider.LazyGetRequiredService<IRepository<ProjectIndicator, Guid>>();
+
+                var targets = await targetRepo.GetListAsync(t => t.GrantApplicationId == application.Id);
+                foreach (var target in targets.OrderBy(t => t.CreationTime))
+                {
+                    await indicatorRepo.InsertAsync(
+                        new ProjectIndicator(
+                            GuidGenerator.Create(), application.TenantId, project.Id,
+                            target.Name, target.Unit, target.BaselineValue, target.TargetValue, target.TargetDate),
+                        autoSave: true);
+                    result.IndicatorCount++;
+                }
+            }
         }
 
         application.LinkToProject(result.ProjectId);
@@ -468,6 +487,13 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                 {
                     MilestoneId = m.Id, Title = m.Title, DueDate = m.DueDate
                 }).ToList();
+
+            dto.Targets = (await LazyServiceProvider
+                    .LazyGetRequiredService<IRepository<GrantApplicationTarget, Guid>>()
+                    .GetListAsync(t => t.GrantApplicationId == application.Id))
+                .OrderBy(t => t.CreationTime)
+                .Select(GrantApplicationWizardAppService.ToTargetDto)
+                .ToList();
 
             var tranches = (await _grantTrancheRepo.GetListAsync(t => t.GrantApplicationId == application.Id))
                 .OrderBy(t => t.SequenceNo).ToList();

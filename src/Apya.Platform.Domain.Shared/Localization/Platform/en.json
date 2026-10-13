@@ -1408,6 +1408,8 @@
     "Grants:Conversion:PlanHint": "Milestones become tasks and disbursement tranches become the project’s income plan.",
     "Grants:Conversion:TasksFromMilestones": "{0} milestones → tasks",
     "Grants:Conversion:TranchesToIncome": "{0} tranches → income plan",
+    "Grants:Conversion:TargetsToIndicators": "{0} targets → project indicators",
+    "Grants:Conversion:NoTarget": "No targets defined on the application.",
     "Grants:Conversion:NoMilestone": "The application has no milestones.",
     "Grants:Conversion:NoTranche": "The application has no disbursement tranches.",
     "Grants:Conversion:Outcome": "Project to be created",
