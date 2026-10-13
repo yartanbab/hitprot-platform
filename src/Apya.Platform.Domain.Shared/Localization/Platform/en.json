@@ -3594,6 +3594,8 @@
     "Platform:Grant:ApplicationAlreadySubmitted": "This application has already been submitted; it cannot be submitted again.",
     "Platform:Grant:FieldLockedByOther": "{Owner} is currently editing this field. Try again once the lock is released.",
     "Platform:Grant:ApplicationLocked": "The application can no longer be edited because it has been submitted.",
+    "Platform:Notification:DeviceEndpointInvalid": "The notification subscription address does not belong to a recognised browser push service.",
+    "Platform:Notification:WebPushDisabled": "Browser notifications are not enabled on this installation.",
     "Platform:Grant:TargetNameRequired": "Target name cannot be empty.",
     "Platform:Grant:TargetValueInvalid": "Target value cannot equal the baseline value.",
     "Platform:Grant:DocumentNotUploaded": "This action requires the document to be uploaded first.",

@@ -14,6 +14,9 @@ public class NotificationPreferenceDto
 
     /// <summary>Kritik olmayanların günlük özet e-postası.</summary>
     public bool Digest { get; set; }
+
+    /// <summary>Kayıtlı cihazlara tarayıcı bildirimi (NTF-08).</summary>
+    public bool Push { get; set; }
 }
 
 public class UpdateNotificationPreferenceInput
@@ -24,4 +27,7 @@ public class UpdateNotificationPreferenceInput
 
     /// <summary>Gönderilmezse e-posta tercihini izler (alan eklenmeden önceki istemciler).</summary>
     public bool? Digest { get; set; }
+
+    /// <summary>Gönderilmezse mevcut değer korunur (alan eklenmeden önceki istemciler).</summary>
+    public bool? Push { get; set; }
 }

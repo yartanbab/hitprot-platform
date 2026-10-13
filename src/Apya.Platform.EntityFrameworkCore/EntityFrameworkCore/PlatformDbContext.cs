@@ -189,6 +189,7 @@ namespace Apya.Platform.EntityFrameworkCore
         /* --- BİLDİRİM MODÜLÜ --- */
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NotificationPreference> NotificationPreferences { get; set; }
+        public DbSet<NotificationDevice> NotificationDevices { get; set; }
 
         /* --- GERİ BİLDİRİM MODÜLÜ --- */
         public DbSet<Feedback> Feedbacks { get; set; }
@@ -1627,6 +1628,29 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Soft-delete satırı anahtarı rezerve etmesin.
                 b.HasIndex(x => new { x.UserId, x.Category }).IsUnique()
                     .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+                // NTF-08: mevcut satırlar da "açık" doğar (abonelik yoksa zaten gönderim olmaz).
+                b.Property(x => x.Push).HasDefaultValue(true);
+            });
+
+            /* --- BİLDİRİM CİHAZI (NTF-08 · web push aboneliği) --- */
+            builder.Entity<NotificationDevice>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "NotificationDevices", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Endpoint).IsRequired().HasMaxLength(NotificationDeviceConsts.MaxEndpointLength);
+                b.Property(x => x.EndpointHash).IsRequired().HasMaxLength(NotificationDeviceConsts.EndpointHashLength);
+                b.Property(x => x.P256dh).HasMaxLength(NotificationDeviceConsts.MaxKeyLength);
+                b.Property(x => x.Auth).HasMaxLength(NotificationDeviceConsts.MaxKeyLength);
+                b.Property(x => x.DeviceLabel).HasMaxLength(NotificationDeviceConsts.MaxDeviceLabelLength);
+                b.Property(x => x.UserAgent).HasMaxLength(NotificationDeviceConsts.MaxUserAgentLength);
+                b.Property(x => x.DeactivationReason).HasMaxLength(NotificationDeviceConsts.MaxDeactivationReasonLength);
+                // Kullanıcı başına adres başına tek CANLI satır; soft-delete satırı anahtarı rezerve etmesin.
+                b.HasIndex(x => new { x.UserId, x.EndpointHash }).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+                // Gönderim sorgusu: kullanıcının etkin cihazları.
+                b.HasIndex(x => new { x.UserId, x.IsActive });
+                // Aynı adresin başka kullanıcıdaki kaydını bulmak için (ortak tarayıcı).
+                b.HasIndex(x => x.EndpointHash);
             });
 
             /* --- TAKVİM MODÜLÜ YAPILANDIRMASI --- */

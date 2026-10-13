@@ -4051,6 +4051,8 @@
         "Platform:Grant:ApplicationAlreadySubmitted": "Bu başvuru kuruma zaten gönderildi; ikinci kez gönderilemez.",
         "Platform:Grant:FieldLockedByOther": "Bu alanı şu anda {Owner} düzenliyor. Kilit kalkınca tekrar deneyin.",
         "Platform:Grant:ApplicationLocked": "Başvuru kuruma gönderildiği için artık düzenlenemez.",
+        "Platform:Notification:DeviceEndpointInvalid": "Bildirim aboneliği adresi tanınan bir tarayıcı bildirim servisine ait değil.",
+        "Platform:Notification:WebPushDisabled": "Tarayıcı bildirimleri bu kurulumda etkin değil.",
         "Platform:Grant:TargetNameRequired": "Hedef adı boş bırakılamaz.",
         "Platform:Grant:TargetValueInvalid": "Hedef değer başlangıç değeriyle aynı olamaz.",
         "Platform:Grant:DocumentNotUploaded": "Evrak yüklenmeden bu işlem yapılamaz.",
