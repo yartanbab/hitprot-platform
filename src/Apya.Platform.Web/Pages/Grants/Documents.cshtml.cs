@@ -54,6 +54,10 @@ public class DocumentsModel : PlatformPageModel
             return BadRequest(L["Grants:Documents:NoFile"].Value);
         }
 
+        // Yazma izni dosya diske yazılmadan ÖNCE denetlenir. Servis de denetliyor ama o çağrı
+        // yüklemeden sonra geliyordu: izinsiz kullanıcının dosyası önce yazılıp sonra siliniyordu.
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
+
         var storedFileName = await _fileStorage.StoreAsync(file);
 
         try
@@ -95,6 +99,9 @@ public class DocumentsModel : PlatformPageModel
     /// <summary>Onaylı evrakları tek zip'te paketler ve başvuruya bağlar.</summary>
     public async Task<IActionResult> OnPostCreatePackageAsync(Guid applicationId)
     {
+        // Paket dosyası üretilmeden ÖNCE: izinsiz kullanıcı için zip yazılmaz.
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
+
         var content = await _documents.GetPackageContentAsync(applicationId);
         if (content.Entries.Count == 0)
         {
@@ -121,11 +128,21 @@ public class DocumentsModel : PlatformPageModel
         }
 
         var storedFileName = await _fileStorage.StoreGeneratedAsync(bytes, ".zip");
-        await _documents.RegisterPackageAsync(new RegisterGrantDocumentPackageInput
+        try
         {
-            ApplicationId = applicationId,
-            StoredFileName = storedFileName
-        });
+            await _documents.RegisterPackageAsync(new RegisterGrantDocumentPackageInput
+            {
+                ApplicationId = applicationId,
+                StoredFileName = storedFileName
+            });
+        }
+        catch
+        {
+            // Zip yazıldı ama başvuruya bağlanamadı: temizlenmezse hiçbir kayda bağlı olmadan kalır
+            // (yükleme işleyicisiyle aynı kural).
+            _fileStorage.TryDelete(storedFileName);
+            throw;
+        }
 
         return new JsonResult(new { ok = true, entryCount = content.Entries.Count, isComplete = content.IsComplete });
     }
