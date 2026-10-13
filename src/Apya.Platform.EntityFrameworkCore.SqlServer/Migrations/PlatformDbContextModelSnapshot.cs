@@ -9174,6 +9174,109 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppNotifications", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Notifications.NotificationDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Auth")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("DeactivationReason")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("DeleterId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("DeleterId");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DeletionTime");
+
+                    b.Property<string>("DeviceLabel")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("EndpointHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("FailureCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
+                    b.Property<DateTime?>("LastFailureAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<DateTime?>("LastSeenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastSuccessAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("P256dh")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EndpointHash");
+
+                    b.HasIndex("UserId", "EndpointHash")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("UserId", "IsActive");
+
+                    b.ToTable("AppNotificationDevices", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Notifications.NotificationPreference", b =>
                 {
                     b.Property<Guid>("Id")
@@ -9220,6 +9323,11 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("LastModifierId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
+
+                    b.Property<bool>("Push")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")

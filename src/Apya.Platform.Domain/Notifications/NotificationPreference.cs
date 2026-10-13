@@ -32,6 +32,12 @@ public class NotificationPreference : FullAuditedEntity<Guid>, IMultiTenant
     /// </summary>
     public bool Digest { get; set; }
 
+    /// <summary>
+    /// NTF-08 · Açıksa bu kategorinin bildirimleri kayıtlı cihazlara (tarayıcı bildirimi) da gider.
+    /// Varsayılan AÇIK güvenlidir: abonelik (cihaz kaydı) yoksa zaten hiçbir şey gönderilmez.
+    /// </summary>
+    public bool Push { get; set; } = NotificationPreferenceDefaults.Push;
+
     protected NotificationPreference() { }
 
     public NotificationPreference(
@@ -41,7 +47,8 @@ public class NotificationPreference : FullAuditedEntity<Guid>, IMultiTenant
         NotificationCategory category,
         bool inApp,
         bool email,
-        bool? digest = null)
+        bool? digest = null,
+        bool push = NotificationPreferenceDefaults.Push)
         : base(id)
     {
         TenantId = tenantId;
@@ -51,13 +58,16 @@ public class NotificationPreference : FullAuditedEntity<Guid>, IMultiTenant
         Email    = email;
         // Belirtilmezse e-postayı izler: bayrak ayrılmadan önceki davranış.
         Digest   = digest ?? email;
+        Push     = push;
     }
 
-    public void Set(bool inApp, bool email, bool digest)
+    /// <param name="push">Verilmezse (alan eklenmeden önceki istemciler) mevcut değer korunur.</param>
+    public void Set(bool inApp, bool email, bool digest, bool? push = null)
     {
         InApp = inApp;
         Email = email;
         Digest = digest;
+        Push = push ?? Push;
     }
 }
 
@@ -73,4 +83,7 @@ public static class NotificationPreferenceDefaults
     public const bool InApp = true;
     public const bool Email = false;
     public const bool Digest = false;
+
+    /// <summary>Açık: kullanıcı tarayıcıda izin verip abone olmadıkça kanal fiilen kapalıdır.</summary>
+    public const bool Push = true;
 }

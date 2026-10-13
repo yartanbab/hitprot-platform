@@ -397,4 +397,8 @@ public static class PlatformDomainErrorCodes
     /// Sessizce varsayılana düşmek başka yüzeyin düzenini ezerdi; açık hata doğru.
     /// </summary>
     public const string ShellBoardTabsScopeInvalid = "Platform:Shell:BoardTabsScopeInvalid";
+
+    // NTF-08 · Web push aboneliği
+    public const string NotificationDeviceEndpointInvalid = "Platform:Notification:DeviceEndpointInvalid";
+    public const string NotificationWebPushDisabled = "Platform:Notification:WebPushDisabled";
 }

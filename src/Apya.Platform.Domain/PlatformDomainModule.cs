@@ -40,6 +40,10 @@ public class PlatformDomainModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        // NTF-08 · VAPID anahtarları: açık anahtar yapılandırmadan, özel anahtar sırlardan / ortamdan.
+        Configure<Apya.Platform.Notifications.WebPushOptions>(
+            context.Services.GetConfiguration().GetSection("WebPush"));
+
         Configure<AbpLocalizationOptions>(options =>
         {
             options.Languages.Add(new LanguageInfo("ar", "ar", "العربية"));
