@@ -39,16 +39,18 @@ public static class MacroCatalog
         // Başlık anahtarı yalnız host yönetim ekranı içindir; Makro Ekran menü öğesinin CANLI
         // etiketini kullanır (ör. "Çağrılar" kiracıda "Fırsatlar" okunur).
         Menu("GrantsToday", "Apya.Grants.Today", Grants, "Menu:Grants:Today"),
-        Menu("GrantsCalls", "Apya.Grants.Calls", Grants, "Menu:Grants:Calls"),
-        Menu("GrantsRequests", "Apya.Grants.Requests", Grants, "Menu:Grants:Requests"),
-        Menu("GrantsApplications", "Apya.Grants.Applications", Grants, "Menu:Grants:Applications"),
-        Menu("GrantsMyApplications", "Apya.Grants.MyApplications", Grants, "Menu:Grants:MyApplications"),
+        Menu("GrantsCalls", "Apya.Grants.Calls", Grants, "Menu:Grants:Calls",
+            "/Grants", "/Grants/Detail", "/Grants/Journey", "/Grants/Invitation"),
+        Menu("GrantsRequests", "Apya.Grants.Requests", Grants, "Menu:Grants:Requests", "/Grants/Requests"),
+        Menu("GrantsApplications", "Apya.Grants.Applications", Grants, "Menu:Grants:Applications", "/Grants/DetailHost"),
+        Menu("GrantsMyApplications", "Apya.Grants.MyApplications", Grants, "Menu:Grants:MyApplications",
+            "/Grants/MyApplications", "/Grants/Wizard", "/Grants/Appeal", "/Grants/Documents", "/Grants/Implementation"),
 
-        Menu("Boards", "Apya.Work.Boards", Work, "Menu:Boards"),
-        Menu("Projects", "Apya.Work.Projects", Work, "Menu:Projects"),
+        Menu("Boards", "Apya.Work.Boards", Work, "Menu:Boards", "/Tasks/Detail"),
+        Menu("Projects", "Apya.Work.Projects", Work, "Menu:Projects", "/Projects/ProjectDetails"),
         Menu("Calendar", "Apya.Calendar", Calendar, "Menu:Calendar"),
-        Menu("FinanceHub", "Apya.Finance.Hub", Finance, "Menu:FinanceHub"),
-        Menu("Documents", "Apya.Content.Documents", Content, "Menu:Documents")
+        Menu("FinanceHub", "Apya.Finance.Hub", Finance, "Menu:FinanceHub", "/Reports/ProjectBudget"),
+        Menu("Documents", "Apya.Content.Documents", Content, "Menu:Documents", "/Documents")
     };
 
     private static MacroDefinition Modal(string key, string url, string permission, string icon, string area) => new()
@@ -63,8 +65,37 @@ public static class MacroCatalog
         TitleKey = "Macro:" + key, Icon = icon, AreaKey = area
     };
 
-    private static MacroDefinition Menu(string key, string menuName, string area, string titleKey) => new()
+    private static MacroDefinition Menu(string key, string menuName, string area, string titleKey,
+        params string[] notificationPaths) => new()
     {
-        Key = key, Kind = MacroKind.Link, MenuName = menuName, AreaKey = area, TitleKey = titleKey
+        Key = key, Kind = MacroKind.Link, MenuName = menuName, AreaKey = area, TitleKey = titleKey,
+        NotificationPaths = notificationPaths
     };
+
+    /// <summary>
+    /// Bildirim bağlantısının sayıldığı makro (güncelleme rozeti). Yol parçası düzeyinde EN UZUN eşleşme
+    /// kazanır: <c>/Grants/Wizard?id=…</c> "Çağrılar"ın <c>/Grants</c>'ına değil "Başvurularım"a düşer.
+    /// Eşleşmeyen bildirim (geri bildirim, abonelik, yapay zekâ…) hiçbir rozete sayılmaz.
+    /// </summary>
+    public static string? MatchNotificationLink(string? link)
+    {
+        if (string.IsNullOrEmpty(link)) { return null; }
+
+        var cut = link.IndexOfAny(new[] { '?', '#' });
+        var path = cut >= 0 ? link[..cut] : link;
+
+        string? key = null;
+        var best = -1;
+        foreach (var definition in All)
+        {
+            foreach (var prefix in definition.NotificationPaths)
+            {
+                var hit = path.Equals(prefix, System.StringComparison.OrdinalIgnoreCase)
+                          || path.StartsWith(prefix + "/", System.StringComparison.OrdinalIgnoreCase);
+                if (hit && prefix.Length > best) { key = definition.Key; best = prefix.Length; }
+            }
+        }
+
+        return key;
+    }
 }

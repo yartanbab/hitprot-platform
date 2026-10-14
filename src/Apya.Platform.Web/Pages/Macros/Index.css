@@ -220,6 +220,30 @@
     flex: none;
 }
 
+/* Güncelleme rozeti: kartın sağ üst köşesine taşar; accent (kırmızı yalnız bildirim sayısında). */
+.apya-macro-card-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
+    border: 2px solid var(--apya-surface-app-bg);
+    border-radius: 999px;
+    box-sizing: border-box;
+    font: 700 10px/1 var(--apya-font-mono);
+    color: #fff;
+    background: var(--apya-accent-600);
+}
+
+/* accent-600 koyu temada ters döner (tokens). */
+[data-theme="dark"] .apya-macro-card-badge {
+    background: var(--apya-accent-500);
+}
+
 /* "henüz kullanılmadı" yalnız başlangıç setindeki kartta; dar kartta alan adının yerini alır. */
 .apya-macro-card-new {
     display: none;
@@ -585,6 +609,7 @@
 .apya-macro-pager-track {
     display: flex;
     gap: 12px;
+    padding-top: 6px; /* kart rozeti üste taşar; kaydırma kabı kırpmasın */
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;

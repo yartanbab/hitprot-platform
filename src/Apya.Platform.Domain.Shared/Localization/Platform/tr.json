@@ -4240,6 +4240,7 @@
         "Macros:News:Filter:All": "Tümü",
         "Macros:News:Empty": "Gösterilecek haber yok",
         "Macros:UsesTitle": "Son 30 günde {0} kez başlattın",
+        "Macros:Badge": "{0} okunmamış gelişme",
         "Permission:Macros.Manage": "Makro yönetimi",
         "DisplayName:SortOrder": "Sıra",
         "Macros:Admin:Title": "Makro yönetimi",

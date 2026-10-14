@@ -6,12 +6,14 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Apya.Platform.Notifications;
 using Apya.Platform.Permissions;
 using Apya.Platform.Web.Macros;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shouldly;
 using Volo.Abp.Authorization.Permissions;
+using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Security.Claims;
 using Volo.Abp.Timing;
 using Volo.Abp.Uow;
@@ -257,6 +259,41 @@ public class MacroPage_Tests : PlatformWebTestBase
         html.ShouldContain("class=\"apya-macros-starter\"");
         // Düzenle düğmesi bilgi kutusuna taşınır, bölüm başlığında ikinci kopyası olmaz.
         Regex.Matches(html, Regex.Escape(EditButton)).Count.ShouldBe(1);
+    }
+
+    /// <summary>Güncelleme rozeti: kullanıcının okunmamış görev bildirimi "Panolar" kartında sayılır.</summary>
+    [Fact]
+    public async Task Okunmamis_bildirim_kartta_rozet_olarak_basilir()
+    {
+        var userId = Guid.NewGuid();
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            var notifications = GetRequiredService<IRepository<Notification, Guid>>();
+            for (var i = 0; i < 2; i++)
+            {
+                await notifications.InsertAsync(new Notification(Guid.NewGuid(), null, userId,
+                    NotificationType.TaskAssigned, "Atandı", "Gövde", entityType: "Task", entityId: Guid.NewGuid()));
+            }
+
+            await uow.CompleteAsync();
+        }
+
+        Server.PreserveExecutionContext = true;
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(AbpClaimTypes.UserId, userId.ToString()),
+            new Claim(AbpClaimTypes.UserName, "admin")
+        }, "Test"));
+
+        using (GetRequiredService<ICurrentPrincipalAccessor>().Change(principal))
+        {
+            using var client = CreateClient();
+            var html = await client.GetStringAsync("/Makro");
+
+            var boards = Regex.Match(html, "data-macro-key=\"Boards\"[\\s\\S]*?</a>").Value;
+            boards.ShouldContain("class=\"apya-macro-card-badge\" aria-hidden=\"true\">2<");
+            Regex.Matches(html, "apya-macro-card-badge").Count.ShouldBe(1);
+        }
     }
 
     [Fact]

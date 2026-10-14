@@ -10,6 +10,12 @@
 @{
     var cssClass = Model.IsPinned ? "apya-macro-card is-pinned" : "apya-macro-card";
     Func<object?, Microsoft.AspNetCore.Mvc.Razor.HelperResult> body = @<text>
+        @if (Model.Badge > 0)
+        {
+            @* Güncelleme rozeti: okunmamış bildirimden türer, accent (kırmızı yalnız bildirim sayısında). *@
+            <span class="apya-macro-card-badge" aria-hidden="true">@(Model.Badge > 99 ? "99+" : Model.Badge.ToString())</span>
+            <span class="visually-hidden">@L["Macros:Badge", Model.Badge]</span>
+        }
         <span class="apya-macro-card-top">
             <span class="apya-macro-card-icon" aria-hidden="true"><i class="@Model.Icon"></i></span>
             <i class="fa fa-thumbtack apya-macro-card-pin" aria-hidden="true"></i>

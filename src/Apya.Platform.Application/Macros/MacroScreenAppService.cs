@@ -136,8 +136,44 @@ public class MacroScreenAppService : PlatformAppService, IMacroScreenAppService
         {
             Usage = await GetMyUsageAsync(),
             Pins = await _settingsProvider.GetPinsForCurrentUserAsync(settings),
-            Settings = settings
+            Settings = settings,
+            Badges = await GetMyBadgesAsync()
         };
+    }
+
+    /// <summary>Rozette sayılan en fazla okunmamış bildirim (en yeniler); rozet zaten "99+" keser.</summary>
+    public const int MaxBadgeNotifications = 500;
+
+    /// <summary>
+    /// Güncelleme rozeti okunmamış bildirimlerden türetilir (kullanıcı kararları 2026-10-14: ayrı
+    /// "son görülme" kaydı yok, makroyu açmak sıfırlamaz — bildirim okununca düşer). Bağlantı, bildirim
+    /// merkezinin kullandığı NotificationTypeRegistry.BuildDeepLink ile kurulur; eşleme katalogda.
+    /// </summary>
+    private async Task<Dictionary<string, int>> GetMyBadgesAsync()
+    {
+        var badges = new Dictionary<string, int>(StringComparer.Ordinal);
+        if (!CurrentUser.Id.HasValue)
+        {
+            return badges;
+        }
+
+        var userId = CurrentUser.Id.Value;
+        var query = (await _notificationRepository.GetQueryableAsync())
+            .Where(n => n.UserId == userId && !n.IsRead)
+            .OrderByDescending(n => n.LastOccurredAt)
+            .Take(MaxBadgeNotifications)
+            .Select(n => new { n.Type, n.EntityId });
+
+        foreach (var n in await AsyncExecuter.ToListAsync(query))
+        {
+            var key = MacroCatalog.MatchNotificationLink(NotificationTypeRegistry.BuildDeepLink(n.Type, n.EntityId));
+            if (key != null)
+            {
+                badges[key] = badges.GetValueOrDefault(key) + 1;
+            }
+        }
+
+        return badges;
     }
 
     /// <summary>

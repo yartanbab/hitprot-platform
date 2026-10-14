@@ -87,6 +87,12 @@ public class MacroLayoutDto
 
     /// <summary>Host ayarları (yalnız ayar kaydı olan makrolar), kullanıcının kapsamına göre çözülmüş.</summary>
     public List<MacroSettingViewDto> Settings { get; set; } = new();
+
+    /// <summary>
+    /// Güncelleme rozeti: makro anahtarı başına okunmamış bildirim sayısı (bağlantısı o makroya
+    /// eşlenenler, <see cref="MacroCatalog.MatchNotificationLink"/>). Bildirim okununca düşer.
+    /// </summary>
+    public Dictionary<string, int> Badges { get; set; } = new();
 }
 
 public class MacroSettingViewDto
