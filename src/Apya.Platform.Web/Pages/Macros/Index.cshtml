@@ -15,6 +15,8 @@
 @section scripts {
     <abp-script src="/Pages/Macros/Index.js" />
     <abp-script src="/Pages/Macros/Panels.js" />
+    <abp-script src="/Pages/Grants/Poster.js" />
+    <abp-script src="/Pages/Macros/NewsBanner.js" />
 }
 
 @* Hibe satırlarının durum etiketi/tonu hibe ekranlarıyla aynı katalogdan (GrantStatusCatalog). *@
@@ -26,6 +28,18 @@
 @* Makro Ekran — tasarım docs/design/makro-ekran (1a). Adres Türkçe (/Makro), klasör alan kuralıyla
    Pages/Macros. Kartlar sunucuda basılır; Index.js tıklamayı ve sabitlemeyi, Panels.js panelleri yönetir. *@
 <div data-page-description="@L["Macros:Description"]" class="apya-page apya-macros" id="ApyaMacros">
+    @* Haber şeridi: en fazla 5 haber, istemcide dolar (IMacroNewsAppService). Haber yoksa kalkar. *@
+    <section class="apya-macros-news" id="MacrosNews" aria-roledescription="carousel"
+             aria-label="@L["Macros:News:Title"]" hidden>
+        <div class="apya-macros-news-stage" data-news-stage aria-live="polite"></div>
+        <button type="button" class="apya-macros-news-arrow is-prev" data-news-prev aria-label="@L["Macros:News:Prev"]">
+            <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="apya-macros-news-arrow is-next" data-news-next aria-label="@L["Macros:News:Next"]">
+            <i class="fa fa-chevron-right" aria-hidden="true"></i>
+        </button>
+        <div class="apya-macros-news-dots" data-news-dots></div>
+    </section>
     <div class="apya-macros-main has-panels @(Model.RecordGroups.Any() ? "has-records" : "")">
         <div class="apya-macros-col">
             @if (!Model.Screen.Items.Any())
