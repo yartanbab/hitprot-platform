@@ -274,6 +274,51 @@ public class GrantAppealPage_Tests : PlatformWebTestBase
         dto.Stats.SampleSize.ShouldBeLessThan(GrantAppealAppService.MinimumStatsSample);
     }
 
+    /// <summary>
+    /// Kabul edilen itiraz kararı Onaylandı / Kısmi onay'a çevirir (LIF-10). İstatistik yalnız
+    /// "Reddedildi" kararlarını saydığı için kabul edilen itirazlar örneklemden düşüyor, kabul oranı
+    /// hep %0 çıkıyordu (tarayıcı denemesinde "yalnız 0 red kararı var" yazısıyla görüldü).
+    /// </summary>
+    [Fact]
+    public async Task Kabul_Edilen_Itiraz_Istatistikten_Dusmez()
+    {
+        var ids = new System.Collections.Generic.List<Guid>();
+        for (var i = 0; i < GrantAppealAppService.MinimumStatsSample; i++)
+        {
+            var (_, id) = await SetupAsync();
+            await RejectAsync(id);
+            var dto = await _appeal.AddItemAsync(new AddGrantAppealItemInput
+            {
+                ApplicationId = id, Title = "Bütçe gerçekçi bulunmadı"
+            });
+            await _appeal.SaveOpinionAsync(new SaveGrantAppealOpinionInput
+            {
+                ItemId = dto.Items.Single().Id,
+                Stance = GrantAppealStance.Itiraz,
+                Summary = "İtiraz edilebilir."
+            });
+            await _appeal.SubmitAppealAsync(id);
+            ids.Add(id);
+        }
+
+        var before = (await _appeal.GetAsync(ids[0])).Stats;
+
+        await _appeal.AcceptAppealAsync(new AcceptGrantAppealInput { ApplicationId = ids[0] });
+        await _appeal.AcceptAppealAsync(new AcceptGrantAppealInput
+        {
+            ApplicationId = ids[1], Outcome = GrantDecisionOutcome.KismiOnay, ApprovedAmount = 150000
+        });
+        await _appeal.ResolveAppealAsync(ids[2], accepted: false);
+
+        var after = (await _appeal.GetAsync(ids[0])).Stats;
+
+        after.SampleSize.ShouldBe(before.SampleSize, "kabul edilen itiraz aslen bir red kararıdır");
+        after.HasEnoughData.ShouldBeTrue();
+        after.AppealRatePercent.ShouldBe(before.AppealRatePercent);
+        after.AcceptanceRatePercent.ShouldNotBeNull();
+        after.AcceptanceRatePercent!.Value.ShouldBeGreaterThan(0, "iki itiraz kabul edildi");
+    }
+
     [Fact]
     public async Task Firma_Karari_Okur_Ama_Gorus_Yazamaz()
     {

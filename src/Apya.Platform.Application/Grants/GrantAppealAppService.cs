@@ -493,8 +493,12 @@ public class GrantAppealAppService : PlatformAppService, IGrantAppealAppService
                 .Select(a => a.Id).ToList();
             if (applicationIds.Count == 0) { return stats; }
 
+            // Örneklem = ASLINDA red olan kararlar. Kabul edilen itiraz kararı Onaylandı / Kısmi
+            // onay'a çevirir (LIF-10); onlar da sayılmazsa kabul oranı hep %0 çıkar. İtiraz yalnız
+            // red kararına gönderilebildiği için "gönderilmiş + kabul edilmiş" = aslen red.
             var decisions = (await _decisionRepo.GetListAsync(d => applicationIds.Contains(d.GrantApplicationId)))
-                .Where(d => d.Outcome == GrantDecisionOutcome.Reddedildi)
+                .Where(d => d.Outcome == GrantDecisionOutcome.Reddedildi
+                            || (d.AppealSubmittedAt.HasValue && d.AppealAccepted == true))
                 .ToList();
 
             stats.SampleSize = decisions.Count;
