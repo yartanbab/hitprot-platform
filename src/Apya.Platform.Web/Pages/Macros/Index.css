@@ -472,3 +472,345 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+/* --- Haber şeridi (1a: 200px, tam genişlik) -------------------------------- */
+
+.apya-macros-news {
+    position: relative;
+    height: 200px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    border: 1px solid var(--apya-border-default);
+    border-radius: 18px;
+    background: var(--apya-surface-sunken);
+    box-shadow: var(--apya-shadow-card);
+}
+
+.apya-macros-news-stage {
+    position: absolute;
+    inset: 0;
+}
+
+.apya-macros-news-bg {
+    position: absolute;
+    inset: 0;
+    background-position: center right;
+    background-size: cover;
+}
+
+/* Afişsiz türler: düz renk zemin (şartname: "tür etiketine göre düz renk"). */
+.apya-macros-news-bg.kind-platform { background: var(--apya-accent-soft); }
+.apya-macros-news-bg.kind-result { background: color-mix(in srgb, var(--apya-positive-500) 12%, var(--apya-surface-base)); }
+
+/* Metnin 4.5:1 kontrastı bu geçişe dayanıyor — kaldırılmamalı (şartname). */
+.apya-macros-news-scrim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(100deg,
+        var(--apya-surface-base) 0%,
+        var(--apya-surface-base) 46%,
+        color-mix(in srgb, var(--apya-surface-base) 72%, transparent) 62%,
+        transparent 86%);
+}
+
+/* box-sizing şart: content-box'ta dolgu 200px'in dışına taşıp düğmeleri kırpıyor (şartname). */
+.apya-macros-news-body {
+    position: relative;
+    box-sizing: border-box;
+    height: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 28px 28px 60px;
+}
+
+.apya-macros-news-top,
+.apya-macros-news-meta {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.apya-macros-news-top a {
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.apya-macros-news-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--apya-negative-500);
+}
+
+.apya-macros-news-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-accent-600);
+    background: var(--apya-accent-soft);
+}
+
+.apya-macros-news-tag.kind-platform { color: var(--apya-text-secondary); background: var(--apya-surface-sunken); }
+.apya-macros-news-tag.kind-result {
+    color: var(--apya-positive-700);
+    background: color-mix(in srgb, var(--apya-positive-500) 14%, transparent);
+}
+
+.apya-macros-news-source {
+    font: 11.5px var(--apya-font-mono);
+    color: var(--apya-text-secondary);
+}
+
+.apya-macros-news-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--apya-text-primary);
+}
+
+.apya-macros-news-summary {
+    max-width: 470px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--apya-text-secondary);
+}
+
+.apya-macros-news-actions {
+    margin-top: auto;
+}
+
+.apya-macros-news-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--apya-text-secondary);
+    border: 1px solid var(--apya-border-default);
+    border-radius: 50%;
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-md);
+}
+
+.apya-macros-news-arrow:hover {
+    color: var(--apya-accent-500);
+    border-color: var(--apya-accent-500);
+}
+
+.apya-macros-news-arrow:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: 2px;
+}
+
+.apya-macros-news-arrow.is-prev { left: 14px; }
+.apya-macros-news-arrow.is-next { right: 14px; }
+
+.apya-macros-news-dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 12px;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Nokta: 6x6, etkin 16x6; fotoğraf üstünde görünsün diye zemin rengi halka. Dokunma
+   hedefi küçük — oklar ve klavye ana yol, noktalar konum göstergesi. */
+.apya-macros-news-dots button {
+    width: 6px;
+    height: 6px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: var(--apya-border-strong);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--apya-surface-base) 70%, transparent);
+}
+
+.apya-macros-news-dots button.is-active {
+    width: 16px;
+    background: var(--apya-accent-500);
+}
+
+@media (max-width: 575.98px) {
+    .apya-macros-news {
+        height: 168px;
+    }
+
+    .apya-macros-news-body {
+        padding: 12px 16px 26px;
+    }
+
+    .apya-macros-news-arrow {
+        display: none;
+    }
+
+    .apya-macros-news-title {
+        font-size: 16px;
+    }
+}
+
+/* --- Tüm haberler (/Makro/Haberler, 1f) ------------------------------------ */
+
+.apya-macros-newslist-layout {
+    display: grid;
+    grid-template-columns: 188px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.apya-macros-newslist-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.apya-macros-newslist-filters .apya-overline {
+    padding: 0 10px 6px;
+}
+
+.apya-macros-newslist-filter {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 34px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--apya-text-secondary);
+    text-decoration: none;
+}
+
+.apya-macros-newslist-filter:hover {
+    color: var(--apya-text-primary);
+    background: var(--apya-surface-raised);
+}
+
+/* Koyu temada accent-600 metin olarak TERS kontrast verir → metinde accent-500. */
+.apya-macros-newslist-filter.is-active {
+    color: var(--apya-accent-500);
+    background: var(--apya-accent-soft);
+}
+
+.apya-macros-newslist-count {
+    margin-left: auto;
+    font: 11px var(--apya-font-mono);
+}
+
+.apya-macros-newslist-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.apya-macros-newscard {
+    display: flex;
+    min-height: 104px;
+    overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+    border: 1px solid var(--apya-border-default);
+    border-radius: 14px;
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+}
+
+.apya-macros-newscard:hover {
+    color: inherit;
+    border-color: var(--apya-accent-500);
+    box-shadow: var(--apya-shadow-md);
+}
+
+.apya-macros-newscard:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: 2px;
+}
+
+.apya-macros-newscard-thumb {
+    flex: 0 0 132px;
+    background-color: var(--apya-surface-sunken);
+    background-position: center;
+    background-size: cover;
+}
+
+.apya-macros-newscard-thumb.kind-platform { background: var(--apya-accent-soft); }
+.apya-macros-newscard-thumb.kind-result { background: color-mix(in srgb, var(--apya-positive-500) 12%, var(--apya-surface-base)); }
+
+.apya-macros-newscard-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 14px 16px;
+}
+
+.apya-macros-newscard-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--apya-text-primary);
+}
+
+.apya-macros-newscard-summary {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--apya-text-secondary);
+}
+
+.apya-macros-newscard-cta {
+    flex: none;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--apya-accent-500);
+}
+
+@media (max-width: 767.98px) {
+    .apya-macros-newslist-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .apya-macros-newslist-filters {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .apya-macros-newslist-filters .apya-overline {
+        display: none;
+    }
+
+    .apya-macros-newscard-thumb {
+        flex-basis: 72px;
+    }
+
+    .apya-macros-newscard-cta {
+        display: none;
+    }
+}

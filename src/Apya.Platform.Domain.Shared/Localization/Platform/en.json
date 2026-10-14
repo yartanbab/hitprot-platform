@@ -3738,6 +3738,26 @@
     "Macros:Pending:GrantToday": "Grant work for today",
     "Macros:Pending:NearDeadline": "Deadline approaching",
     "Macros:Pending:DraftInvoices": "Draft invoices",
-    "Macros:Pending:LoadFailed": "Some counters could not be loaded"
+    "Macros:Pending:LoadFailed": "Some counters could not be loaded",
+    "Macros:News:Title": "News and updates",
+    "Macros:News:Description": "Open calls, release notes and application results",
+    "Macros:News:All": "All news",
+    "Macros:News:NewCount": "{0} new",
+    "Macros:News:NewBadge": "new",
+    "Macros:News:Prev": "Previous item",
+    "Macros:News:Next": "Next item",
+    "Macros:News:Goto": "Go to item {0}",
+    "Macros:News:Kind:Call": "New call",
+    "Macros:News:Kind:Platform": "Platform",
+    "Macros:News:Kind:Result": "Result",
+    "Macros:News:Cta:Call": "Open call",
+    "Macros:News:Cta:Platform": "Open release notes",
+    "Macros:News:Cta:Result": "Open application",
+    "Macros:News:CallDeadline": "Deadline {0} · {1} days left",
+    "Macros:News:CallOpen": "Open for applications",
+    "Macros:News:ReleaseMore": "{0} more changes in this release",
+    "Macros:News:FilterLabel": "Type",
+    "Macros:News:Filter:All": "All",
+    "Macros:News:Empty": "No news to show"
   }
 }

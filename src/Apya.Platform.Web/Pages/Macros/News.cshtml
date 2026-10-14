@@ -1,0 +1,77 @@
+@page "/Makro/Haberler"
+@using Apya.Platform.Localization
+@using Apya.Platform.Macros.Dtos
+@using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Macros.NewsModel
+@{
+    ViewBag.Title = L["Macros:News:Title"].Value;
+    var kinds = new[] { MacroNewsKind.Call, MacroNewsKind.Platform, MacroNewsKind.Result };
+}
+
+@section styles {
+    <abp-style src="/Pages/Macros/Index.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/Poster.js" />
+    <abp-script src="/Pages/Macros/News.js" />
+}
+
+@* Tüm haberler — tasarım docs/design/makro-ekran (1f). Süzgeç bağlantıdır (?kind=…): sayfa sunucuda
+   basılır, yalnız çağrı afişinin zemini istemcide çizilir (Poster.js, hibe ekranlarıyla aynı yardımcı). *@
+<div data-page-description="@L["Macros:News:Description"]" class="apya-page apya-macros-newslist">
+    <div class="apya-page-head">
+        <a class="btn btn-sm btn-outline-secondary" href="/Makro">
+            <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>@L["Menu:Macros"]
+        </a>
+    </div>
+
+    <div class="apya-macros-newslist-layout">
+        <nav class="apya-macros-newslist-filters" aria-label="@L["Macros:News:FilterLabel"]">
+            <span class="apya-overline">@L["Macros:News:FilterLabel"]</span>
+            <a class="apya-macros-newslist-filter @(Model.Selected == null ? "is-active" : "")" href="/Makro/Haberler"
+               aria-current="@(Model.Selected == null ? "page" : null)">
+                <span>@L["Macros:News:Filter:All"]</span><span class="apya-macros-newslist-count">@Model.All.Count</span>
+            </a>
+            @foreach (var kind in kinds)
+            {
+                var active = Model.Selected == kind;
+                <a class="apya-macros-newslist-filter @(active ? "is-active" : "")" href="/Makro/Haberler?kind=@kind.ToString().ToLowerInvariant()"
+                   aria-current="@(active ? "page" : null)">
+                    <span>@L["Macros:News:Kind:" + kind]</span><span class="apya-macros-newslist-count">@Model.CountOf(kind)</span>
+                </a>
+            }
+        </nav>
+
+        <div class="apya-macros-newslist-items">
+            @if (!Model.Items.Any())
+            {
+                <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-newspaper", Title = L["Macros:News:Empty"].Value }' />
+            }
+            @foreach (var item in Model.Items)
+            {
+                var kind = item.Kind.ToString().ToLowerInvariant();
+                <a class="apya-macros-newscard" href="@Apya.Platform.Web.Pages.Macros.NewsModel.SafeUrl(item.Url)">
+                    <span class="apya-macros-newscard-thumb kind-@kind"
+                          data-poster-issuer="@(item.Kind == MacroNewsKind.Call ? item.Source : null)"
+                          data-poster-file="@item.PosterFileName" aria-hidden="true"></span>
+                    <span class="apya-macros-newscard-body">
+                        <span class="apya-macros-news-meta">
+                            <span class="apya-macros-news-tag kind-@kind">@L["Macros:News:Kind:" + item.Kind]</span>
+                            <span class="apya-macros-news-source">@item.Date.ToString("dd.MM.yyyy")@(string.IsNullOrEmpty(item.Source) ? "" : " · " + item.Source)</span>
+                            @if (item.IsNew)
+                            {
+                                <span class="apya-chip apya-chip-negative">@L["Macros:News:NewBadge"]</span>
+                            }
+                        </span>
+                        <span class="apya-macros-newscard-title">@item.Title</span>
+                        <span class="apya-macros-newscard-summary">@item.Summary</span>
+                    </span>
+                    <span class="apya-macros-newscard-cta">@L["Macros:News:Cta:" + item.Kind]<i class="fa fa-arrow-right ms-1" aria-hidden="true"></i></span>
+                </a>
+            }
+        </div>
+    </div>
+</div>

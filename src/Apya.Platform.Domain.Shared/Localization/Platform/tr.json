@@ -4196,6 +4196,26 @@
         "Macros:Pending:GrantToday": "Bugünkü hibe işleri",
         "Macros:Pending:NearDeadline": "Son tarihi yaklaşan",
         "Macros:Pending:DraftInvoices": "Taslak faturalar",
-        "Macros:Pending:LoadFailed": "Bazı sayaçlar yüklenemedi"
+        "Macros:Pending:LoadFailed": "Bazı sayaçlar yüklenemedi",
+        "Macros:News:Title": "Haberler ve gelişmeler",
+        "Macros:News:Description": "Açık çağrılar, sürüm notları ve başvuru sonuçları",
+        "Macros:News:All": "Tüm haberler",
+        "Macros:News:NewCount": "{0} yeni",
+        "Macros:News:NewBadge": "yeni",
+        "Macros:News:Prev": "Önceki haber",
+        "Macros:News:Next": "Sonraki haber",
+        "Macros:News:Goto": "{0}. habere git",
+        "Macros:News:Kind:Call": "Yeni çağrı",
+        "Macros:News:Kind:Platform": "Platform",
+        "Macros:News:Kind:Result": "Sonuç",
+        "Macros:News:Cta:Call": "Çağrıyı aç",
+        "Macros:News:Cta:Platform": "Sürüm notlarını aç",
+        "Macros:News:Cta:Result": "Başvuruyu aç",
+        "Macros:News:CallDeadline": "Son başvuru {0} · {1} gün kaldı",
+        "Macros:News:CallOpen": "Başvuruya açık",
+        "Macros:News:ReleaseMore": "Bu sürümde {0} değişiklik daha var",
+        "Macros:News:FilterLabel": "Tür",
+        "Macros:News:Filter:All": "Tümü",
+        "Macros:News:Empty": "Gösterilecek haber yok"
     }
 }
