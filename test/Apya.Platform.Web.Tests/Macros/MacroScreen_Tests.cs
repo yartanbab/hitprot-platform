@@ -12,6 +12,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shouldly;
 using Volo.Abp.Authorization.Permissions;
+using Volo.Abp.Security.Claims;
+using Volo.Abp.Timing;
+using Volo.Abp.Uow;
 using Xunit;
 
 namespace Apya.Platform.Macros;
@@ -240,5 +243,47 @@ public class MacroPage_Tests : PlatformWebTestBase
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("pins").ValueKind.ShouldBe(JsonValueKind.Array);
         doc.RootElement.GetProperty("max").GetInt32().ShouldBeGreaterThan(0);
+    }
+
+    private const string EditButton = "class=\"btn btn-sm btn-outline-secondary apya-macros-edit\"";
+
+    /// <summary>Boş durum (3a): kullanım verisi yokken boş kutu değil, başlangıç seti basılır.</summary>
+    [Fact]
+    public async Task Kullanimi_olmayana_baslangic_seti_basilir()
+    {
+        var html = await GetResponseAsStringAsync("/Makro");
+
+        html.ShouldContain("apya-macros is-starter");
+        html.ShouldContain("class=\"apya-macros-starter\"");
+        // Düzenle düğmesi bilgi kutusuna taşınır, bölüm başlığında ikinci kopyası olmaz.
+        Regex.Matches(html, Regex.Escape(EditButton)).Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Kullanim_birikince_baslangic_seti_kalkar()
+    {
+        var userId = Guid.NewGuid();
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            await GetRequiredService<MacroUsageManager>().RecordAsync(userId, "TaskCreate", GetRequiredService<IClock>().Now);
+            await uow.CompleteAsync();
+        }
+
+        Server.PreserveExecutionContext = true;
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(AbpClaimTypes.UserId, userId.ToString()),
+            new Claim(AbpClaimTypes.UserName, "admin")
+        }, "Test"));
+
+        using (GetRequiredService<ICurrentPrincipalAccessor>().Change(principal))
+        {
+            using var client = CreateClient();
+            var html = await client.GetStringAsync("/Makro");
+
+            html.ShouldNotContain("is-starter");
+            html.ShouldNotContain("class=\"apya-macros-starter\"");
+            Regex.Matches(html, Regex.Escape(EditButton)).Count.ShouldBe(1);
+        }
     }
 }

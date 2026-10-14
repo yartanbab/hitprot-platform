@@ -41,6 +41,13 @@ public class IndexModel : PlatformPageModel
 
     public IReadOnlyList<MacroItem> Rest => Screen.Items.Skip(ForYouCount).ToList();
 
+    /// <summary>
+    /// Boş durum (3a): son 30 günde hiç makro başlatılmamış, sıralama henüz kişisel değil. Boş kutu
+    /// yerine "Başlangıç seti" basılır — sabitlenenler (host'un varsayılan sabitledikleri dahil) ve
+    /// host sırası/katalogla dörde tamamlanan kartlar. İlk kullanım kaydından sonra kendiliğinden kalkar.
+    /// </summary>
+    public bool IsStarter => Screen.Items.Count > 0 && Screen.Items.All(item => item.UsageCount == 0);
+
     /// <summary>İstemcinin sabitleme listesini bütün olarak geri yazabilmesi için (bkz. Index.js).</summary>
     public string PinStateJson => JsonSerializer.Serialize(
         new { pins = Screen.Pins, max = Screen.MaxPins }, JsonOptions);

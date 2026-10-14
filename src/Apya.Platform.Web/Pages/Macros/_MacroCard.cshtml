@@ -17,10 +17,15 @@
         <span class="apya-macro-card-title">@Model.Title</span>
         <span class="visually-hidden apya-macro-card-pinned">@L["Macros:Pinned"]</span>
         <span class="apya-macro-card-foot">
-            <span>@Model.Area</span>
+            <span class="apya-macro-card-area">@Model.Area</span>
             @if (Model.UsageCount > 0)
             {
                 <span class="apya-macro-card-uses" title="@L["Macros:UsesTitle", Model.UsageCount]">@(Model.UsageCount)×</span>
+            }
+            else
+            {
+                @* Yalnız başlangıç setinde görünür (Index.css .is-starter); kart ızgaralar arasında taşınabilir. *@
+                <span class="apya-macro-card-new">@L["Macros:NotUsedYet"]</span>
             }
         </span>
     </text>;

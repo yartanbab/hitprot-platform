@@ -179,6 +179,60 @@
     font-family: var(--apya-font-mono);
 }
 
+/* --- Boş durum (3a): başlangıç seti ----------------------------------------- */
+
+.apya-macros-starter {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 13px 16px;
+    border: 1px solid var(--apya-border-default);
+    border-left: 3px solid var(--apya-accent-500);
+    border-radius: 12px;
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+}
+
+.apya-macros-starter-icon {
+    flex: none;
+    font-size: 14px;
+    color: var(--apya-accent-500);
+}
+
+.apya-macros-starter-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-macros-starter-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.apya-macros-starter-desc {
+    font-size: 11.5px;
+    color: var(--apya-text-secondary);
+}
+
+.apya-macros-starter .apya-macros-edit {
+    flex: none;
+}
+
+/* "henüz kullanılmadı" yalnız başlangıç setindeki kartta; dar kartta alan adının yerini alır. */
+.apya-macro-card-new {
+    display: none;
+}
+
+.apya-macros.is-starter [data-macro-grid="for-you"] .apya-macro-card-new {
+    display: inline;
+}
+
+.apya-macros.is-starter [data-macro-grid="for-you"] .apya-macro-card-area {
+    display: none;
+}
+
 /* Düzenleme kipi: sabitli olmayan kart kesikli kenarla "dokunulabilir" görünür. */
 .apya-macros.is-editing .apya-macro-card:not(.is-pinned) {
     border-style: dashed;
@@ -432,6 +486,54 @@
     color: var(--apya-text-primary);
 }
 
+/* Hiç bekleyen iş yoksa sıfır hücreler yerine tek kesikli kutu (3a). */
+.apya-macros-pending.is-empty {
+    border: 1px dashed var(--apya-border-strong);
+    box-shadow: none;
+}
+
+.apya-macros-pending.is-empty .apya-macros-pending-head {
+    display: none;
+}
+
+.apya-macros-pending-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+}
+
+.apya-macros-pending-empty-icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 15px;
+    color: var(--apya-text-secondary);
+    background: var(--apya-surface-sunken);
+}
+
+.apya-macros-pending-empty-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.apya-macros-pending-empty-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.apya-macros-pending-empty-desc {
+    font-size: 11.5px;
+    color: var(--apya-text-secondary);
+}
+
 .apya-macros-pending-warn {
     grid-column: 1 / -1;
     margin: 0;
@@ -480,6 +582,16 @@
 @media (max-width: 575.98px) {
     .apya-macro-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* Başlangıç kutusu: metin tam satır, "Düzenle" alt satıra sağa (metin sıkışmasın). */
+    .apya-macros-starter {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .apya-macros-starter-text {
+        flex: 1 1 calc(100% - 32px);
     }
 }
 
