@@ -25,9 +25,14 @@ public class FinanceRecentTransactionLinks_Tests : PlatformWebTestBase
 {
     private static readonly string[] ModulePages = { "/Incomes", "/Expenses", "/Invoices", "/CashAccounts" };
 
+    private Guid _expenseId;
+    private Guid _incomeId;
+
     private async Task<Guid> SeedAsync()
     {
         var projectId = Guid.NewGuid();
+        _expenseId = Guid.NewGuid();
+        _incomeId = Guid.NewGuid();
         var code = "FUX05-" + Guid.NewGuid().ToString("N")[..6];
 
         var uowManager = GetRequiredService<IUnitOfWorkManager>();
@@ -41,11 +46,11 @@ public class FinanceRecentTransactionLinks_Tests : PlatformWebTestBase
             .InsertAsync(new CashAccount(cashId, "Kasa " + code), autoSave: true);
 
         await GetRequiredService<IRepository<Expense, Guid>>().InsertAsync(
-            new Expense(Guid.NewGuid(), "Gider " + code, 250m, cashId, DateTime.Today, ExpenseCategory.Service, "TRY", projectId: projectId),
+            new Expense(_expenseId, "Gider " + code, 250m, cashId, DateTime.Today, ExpenseCategory.Service, "TRY", projectId: projectId),
             autoSave: true);
 
         await GetRequiredService<IRepository<IncomeEntry, Guid>>().InsertAsync(
-            new IncomeEntry(Guid.NewGuid(), "Gelir " + code, 1_000m, DateTime.Today, projectId: projectId),
+            new IncomeEntry(_incomeId, "Gelir " + code, 1_000m, DateTime.Today, projectId: projectId),
             autoSave: true);
 
         await uow.CompleteAsync();
@@ -71,8 +76,9 @@ public class FinanceRecentTransactionLinks_Tests : PlatformWebTestBase
 
         var links = await RecentTransactionLinksAsync($"/Finance?projectId={projectId}&tab=genel");
 
-        links.ShouldContain($"/Finance?projectId={projectId}&tab=gelir-gider&kind=gelir");
-        links.ShouldContain($"/Finance?projectId={projectId}&tab=gelir-gider&kind=gider");
+        // Satır kaydın kendisine gider: Gelir-Gider tablosundaki satırın çapası.
+        links.ShouldContain($"/Finance?projectId={projectId}&tab=gelir-gider&kind=gelir#fin-ledger-{_incomeId}");
+        links.ShouldContain($"/Finance?projectId={projectId}&tab=gelir-gider&kind=gider#fin-ledger-{_expenseId}");
         // Gelir ve gider satırı artık projesiz liste sayfasına çıkmaz.
         links.ShouldNotContain("/Incomes");
         links.ShouldNotContain("/Expenses");
@@ -89,6 +95,36 @@ public class FinanceRecentTransactionLinks_Tests : PlatformWebTestBase
         var links = await RecentTransactionLinksAsync("/Finance?tab=genel");
 
         links.ShouldNotBeEmpty();
-        links.ShouldAllBe(href => ModulePages.Contains(href));
+        // Fatura satırı faturayı seçili açtırır (?invoiceId=…); gelir ve gider sayfaları kayda
+        // odaklanmayı bilmez, onlara yalın adres gider.
+        links.ShouldAllBe(href => ModulePages.Contains(href) || href.StartsWith("/Invoices?invoiceId="));
+    }
+
+    /// <summary>FUX-05 · Çapanın hedefi: Gelir-Gider tablosunda her satır kendi kimliğiyle basılır.</summary>
+    [Fact]
+    public async Task Gelir_gider_satiri_capa_hedefini_tasir()
+    {
+        var projectId = await SeedAsync();
+
+        var html = await GetResponseAsStringAsync($"/Finance?projectId={projectId}&tab=gelir-gider");
+
+        html.ShouldContain($"id=\"fin-ledger-{_expenseId}\"");
+        html.ShouldContain($"id=\"fin-ledger-{_incomeId}\"");
+    }
+
+    /// <summary>
+    /// FUX-05 · Fatura listesi adresteki <c>invoiceId</c>'yi okur ve ilk yüklemede o faturayı seçer
+    /// (/Invoices ve Finans Merkezi Faturalar sekmesi aynı betiği kullanır).
+    /// </summary>
+    [Fact]
+    public void Fatura_listesi_adresteki_faturayi_secer()
+    {
+        var path = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..",
+            "src", "Apya.Platform.Web", "Pages", "Invoices", "index.js");
+        System.IO.File.Exists(path).ShouldBeTrue();
+        var js = System.IO.File.ReadAllText(path);
+
+        js.ShouldContain("new URLSearchParams(window.location.search).get('invoiceId')");
+        js.ShouldContain("if (focusing) { state.selectedId = focusInvoiceId; }");
     }
 }
