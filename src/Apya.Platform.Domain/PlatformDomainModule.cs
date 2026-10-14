@@ -96,6 +96,7 @@ public class PlatformDomainModule : AbpModule
         context.AddBackgroundWorkerAsync<Apya.Platform.Telemetry.TelemetryRetentionWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.Notifications.NotificationDigestWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.Notifications.NotificationCleanupWorker>();
+        context.AddBackgroundWorkerAsync<Apya.Platform.Macros.MacroUsageCleanupWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.IssueTasks.IssueTaskAutomationWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.Grants.GrantDeadlineReminderWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.Grants.GrantIdeaInvitationReminderWorker>();

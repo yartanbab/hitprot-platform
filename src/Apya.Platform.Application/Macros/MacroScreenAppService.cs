@@ -30,17 +30,20 @@ public class MacroScreenAppService : PlatformAppService, IMacroScreenAppService
     private readonly IRepository<ProjectMember, Guid> _memberRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<Notification, Guid> _notificationRepository;
+    private readonly MacroUsageManager _usageManager;
 
     public MacroScreenAppService(
         IRepository<Project, Guid> projectRepository,
         IRepository<ProjectMember, Guid> memberRepository,
         IRepository<TaskItem, Guid> taskRepository,
-        IRepository<Notification, Guid> notificationRepository)
+        IRepository<Notification, Guid> notificationRepository,
+        MacroUsageManager usageManager)
     {
         _projectRepository = projectRepository;
         _memberRepository = memberRepository;
         _taskRepository = taskRepository;
         _notificationRepository = notificationRepository;
+        _usageManager = usageManager;
     }
 
     public async Task<MacroMyProjectsDto> GetMyProjectsAsync()
@@ -103,6 +106,24 @@ public class MacroScreenAppService : PlatformAppService, IMacroScreenAppService
         }
 
         return result;
+    }
+
+    public async Task RecordUseAsync(string key)
+    {
+        if (!CurrentUser.Id.HasValue || string.IsNullOrWhiteSpace(key)
+            || !MacroCatalog.All.Any(definition => definition.Key == key))
+        {
+            return;
+        }
+
+        await _usageManager.RecordAsync(CurrentUser.Id.Value, key, Clock.Now);
+    }
+
+    public async Task<Dictionary<string, int>> GetMyUsageAsync()
+    {
+        return CurrentUser.Id.HasValue
+            ? await _usageManager.GetCountsAsync(CurrentUser.Id.Value, Clock.Now)
+            : new Dictionary<string, int>();
     }
 
     /// <summary>

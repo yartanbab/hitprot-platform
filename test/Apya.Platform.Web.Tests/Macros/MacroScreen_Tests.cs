@@ -90,6 +90,27 @@ public class MacroScreen_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// Sabitlenmeyenler son 30 günlük kullanıma göre çoktan aza dizilir; eşitlikte katalog sırası
+    /// korunur. Sabitlenen, kullanımı az olsa da önde kalır.
+    /// </summary>
+    [Fact]
+    public void Sabitlenmeyenler_kullanima_gore_dizilir_esitlikte_katalog_sirasi()
+    {
+        var items = MacroCatalog.All
+            .Select((definition, index) => new MacroItem(definition, index, definition.Key, "/x", "fa fa-x", "alan"))
+            .ToList();
+
+        var ordered = MacroLauncher.Order(items,
+            new[] { "Apya.Work.Boards" },
+            new Dictionary<string, int> { ["InvoiceCreate"] = 9, ["IncomeCreate"] = 4, ["ExpenseCreate"] = 4, ["Boards"] = 1 });
+
+        ordered.Select(item => item.Key).Take(5)
+            .ShouldBe(new[] { "Boards", "InvoiceCreate", "ExpenseCreate", "IncomeCreate", "TaskCreate" });
+        ordered.Single(item => item.Key == "InvoiceCreate").UsageCount.ShouldBe(9);
+        ordered.Single(item => item.Key == "TaskCreate").UsageCount.ShouldBe(0);
+    }
+
+    /// <summary>
     /// İğne adı kenar çubuğuyla ORTAK ayarda durur: virgül listeyi böler, alt çizgi LeptonX'in
     /// <c>MenuItem_*</c> kimliğiyle karışır, aynı ad iki makroda olursa biri öbürünün iğnesini taşır.
     /// </summary>

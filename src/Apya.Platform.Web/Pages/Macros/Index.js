@@ -47,8 +47,8 @@
         }
     }
 
-    // Sabitlenenler önce (sabitlenme sırasıyla), gerisi katalog sırasıyla —
-    // sunucudaki MacroLauncher.Order ile aynı kural.
+    // Sabitlenenler önce (sabitlenme sırasıyla), gerisi son 30 günlük kullanıma göre,
+    // eşitlikte katalog sırasıyla — sunucudaki MacroLauncher.Order ile aynı kural.
     function reorder() {
         var pins = currentPins();
         var all = cards().sort(function (a, b) {
@@ -59,7 +59,8 @@
                 if (ib === -1) { return -1; }
                 return ia - ib;
             }
-            return Number(a.dataset.order) - Number(b.dataset.order);
+            return (Number(b.dataset.usage) - Number(a.dataset.usage)) ||
+                   (Number(a.dataset.order) - Number(b.dataset.order));
         });
         all.forEach(function (card, i) {
             (i < FOR_YOU_COUNT ? forYouGrid : restGrid).appendChild(card);
@@ -95,6 +96,21 @@
         saveLocal();
     }
 
+    // Kullanım sayacı (sıralama bundan beslenir). keepalive: bağlantı makrosunda sayfa hemen
+    // değişiyor, istek yarıda kalmasın. Ateşle-unut: sayaç kritik değil, hata kullanıcıya gösterilmez.
+    function recordUse(key) {
+        if (!key) { return; }
+        var token = (document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1];
+        try {
+            fetch(abp.appPath + 'api/app/macro-screen/record-use?key=' + encodeURIComponent(key), {
+                method: 'POST',
+                credentials: 'same-origin',
+                keepalive: true,
+                headers: { 'RequestVerificationToken': token ? decodeURIComponent(token) : '' }
+            }).catch(function () { /* yoksay */ });
+        } catch (err) { /* yoksay */ }
+    }
+
     function setEditing(on) {
         editing = on;
         root.classList.toggle('is-editing', on);
@@ -118,6 +134,8 @@
             cards().forEach(syncCard);
             return;
         }
+
+        recordUse(card.dataset.macroKey);
 
         if (card.dataset.modalUrl) {
             e.preventDefault();

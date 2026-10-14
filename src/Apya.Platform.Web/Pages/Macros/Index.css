@@ -164,9 +164,19 @@
 
 /* text-tertiary küçük metinde AA'nın altında kalıyor → secondary. */
 .apya-macro-card-foot {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    width: 100%;
     margin-top: auto;
     font-size: 10.5px;
     color: var(--apya-text-secondary);
+}
+
+/* Kullanım sayacı ("31×") — sayılar daima mono (şartname). */
+.apya-macro-card-uses {
+    margin-left: auto;
+    font-family: var(--apya-font-mono);
 }
 
 /* Düzenleme kipi: sabitli olmayan kart kesikli kenarla "dokunulabilir" görünür. */

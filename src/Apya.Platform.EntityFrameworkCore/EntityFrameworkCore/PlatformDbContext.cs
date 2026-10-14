@@ -36,6 +36,7 @@ using Apya.Platform.ProjectBudgets;
 using Apya.Platform.Grants;
 using Apya.Platform.Tasks;
 using Apya.Platform.Notifications;
+using Apya.Platform.Macros;
 using Apya.Platform.Feedbacks;
 using Apya.Platform.Telemetry;
 using Apya.Platform.IssueTasks;
@@ -190,6 +191,9 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NotificationPreference> NotificationPreferences { get; set; }
         public DbSet<NotificationDevice> NotificationDevices { get; set; }
+
+        /* --- MAKRO EKRAN --- */
+        public DbSet<MacroUsageDaily> MacroUsageDaily { get; set; }
 
         /* --- GERİ BİLDİRİM MODÜLÜ --- */
         public DbSet<Feedback> Feedbacks { get; set; }
@@ -1651,6 +1655,21 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.UserId, x.IsActive });
                 // Aynı adresin başka kullanıcıdaki kaydını bulmak için (ortak tarayıcı).
                 b.HasIndex(x => x.EndpointHash);
+            });
+
+            /* --- MAKRO EKRAN · KULLANIM SAYACI (günlük toplanmış) --- */
+            builder.Entity<MacroUsageDaily>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "MacroUsageDaily", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.MacroKey).IsRequired().HasMaxLength(MacroUsageConsts.MaxKeyLength);
+                // Kullanıcı başına makro başına GÜN başına tek satır; okuma da bu sırayla süzer.
+                // Host satırı (TenantId NULL) iki sağlayıcıda da benzersizlik dışında kalır (SQL Server
+                // EF'in eklediği "IS NOT NULL" süzgeciyle, PostgreSQL NULL'ları ayrı saydığı için);
+                // eşzamanlı ilk tıklama ikinci satır doğurabilir — okuma topladığı için sonuç değişmez.
+                b.HasIndex(x => new { x.TenantId, x.UserId, x.MacroKey, x.Day }).IsUnique();
+                // Temizlik işçisi: pencere dışı günler.
+                b.HasIndex(x => x.Day);
             });
 
             /* --- TAKVİM MODÜLÜ YAPILANDIRMASI --- */
