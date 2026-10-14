@@ -6,6 +6,11 @@
 @model Apya.Platform.Web.Pages.Macros.IndexModel
 @{
     ViewBag.Title = L["Menu:Macros"].Value;
+    // Başlangıç setinde (3a) düğme bilgi kutusuna taşınır; Index.js onu kök içinde sınıfıyla bulur.
+    Func<object?, Microsoft.AspNetCore.Mvc.Razor.HelperResult> editButton =
+        @<button type="button" class="btn btn-sm btn-outline-secondary apya-macros-edit" aria-pressed="false">
+            <i class="fa fa-thumbtack me-1" aria-hidden="true"></i><span>@L["Macros:Edit"]</span>
+        </button>;
 }
 
 @section styles {
@@ -27,7 +32,7 @@
 
 @* Makro Ekran — tasarım docs/design/makro-ekran (1a). Adres Türkçe (/Makro), klasör alan kuralıyla
    Pages/Macros. Kartlar sunucuda basılır; Index.js tıklamayı ve sabitlemeyi, Panels.js panelleri yönetir. *@
-<div data-page-description="@L["Macros:Description"]" class="apya-page apya-macros" id="ApyaMacros">
+<div data-page-description="@L["Macros:Description"]" class="apya-page apya-macros@(Model.IsStarter ? " is-starter" : "")" id="ApyaMacros">
     @* Haber şeridi: en fazla 5 haber, istemcide dolar (IMacroNewsAppService). Haber yoksa kalkar. *@
     <section class="apya-macros-news" id="MacrosNews" aria-roledescription="carousel"
              aria-label="@L["Macros:News:Title"]" hidden>
@@ -50,13 +55,32 @@
             {
                 <script type="application/json" id="apya-macro-pins">@Html.Raw(Model.PinStateJson)</script>
 
+                @if (Model.IsStarter)
+                {
+                    @* Boş durum (3a): kullanım verisi yok → boş kutu yerine başlangıç seti. *@
+                    <div class="apya-macros-starter" role="note">
+                        <i class="fa fa-wand-magic-sparkles apya-macros-starter-icon" aria-hidden="true"></i>
+                        <span class="apya-macros-starter-text">
+                            <span class="apya-macros-starter-title">@L["Macros:Starter:Title"]</span>
+                            <span class="apya-macros-starter-desc">@L["Macros:Starter:Description"]</span>
+                        </span>
+                        @editButton(null)
+                    </div>
+                }
+
                 <section aria-labelledby="MacrosForYouHeading">
                     <div class="apya-macros-section-head">
-                        <h2 class="apya-overline" id="MacrosForYouHeading">@L["Macros:ForYou"]</h2>
-                        <span class="apya-chip apya-chip-accent">@L["Macros:ForYouByUsage"]</span>
-                        <button type="button" class="btn btn-sm btn-outline-secondary apya-macros-edit" aria-pressed="false">
-                            <i class="fa fa-thumbtack me-1" aria-hidden="true"></i><span>@L["Macros:Edit"]</span>
-                        </button>
+                        @if (Model.IsStarter)
+                        {
+                            <h2 class="apya-overline" id="MacrosForYouHeading">@L["Macros:Starter"]</h2>
+                            <span class="apya-chip apya-chip-neutral">@L["Macros:StarterByUsage"]</span>
+                        }
+                        else
+                        {
+                            <h2 class="apya-overline" id="MacrosForYouHeading">@L["Macros:ForYou"]</h2>
+                            <span class="apya-chip apya-chip-accent">@L["Macros:ForYouByUsage"]</span>
+                            @editButton(null)
+                        }
                     </div>
                     <p class="apya-macros-edit-hint" hidden>@L["Macros:EditHint"]</p>
                     <div class="apya-macro-grid" data-macro-grid="for-you">

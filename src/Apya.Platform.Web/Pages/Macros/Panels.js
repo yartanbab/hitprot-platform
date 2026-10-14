@@ -259,6 +259,18 @@
                 return;
             }
             var total = cells.reduce(function (sum, c) { return sum + (c.count || 0); }, 0);
+            // Hepsi sıfırsa (ve kaynak düşmediyse) sıfır hücre ızgarası yerine tek kutu (3a).
+            pending.classList.toggle('is-empty', total === 0 && !failures);
+            if (total === 0 && !failures) {
+                bodyOf(pending).innerHTML =
+                    '<div class="apya-macros-pending-empty">' +
+                    '<span class="apya-macros-pending-empty-icon" aria-hidden="true"><i class="fa fa-inbox"></i></span>' +
+                    '<span class="apya-macros-pending-empty-text">' +
+                    '<span class="apya-macros-pending-empty-title">' + esc(l('Macros:Pending:Empty')) + '</span>' +
+                    '<span class="apya-macros-pending-empty-desc">' + esc(l('Macros:Pending:EmptyDescription')) + '</span>' +
+                    '</span></div>';
+                return;
+            }
             totalEl.textContent = l('Macros:Pending:Total', total);
             totalEl.hidden = total === 0;
             bodyOf(pending).innerHTML = cells.map(cell).join('') +
