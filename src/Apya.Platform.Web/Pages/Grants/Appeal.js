@@ -40,8 +40,10 @@ $(function () {
             '<span class="apya-chip apya-chip-' + stanceTone[i.stance] + '">' +
             esc(l('Grants:Appeal:Stance:' + stanceKeys[i.stance])) + '</span>' +
             (model.canEditOpinion && !model.appealSubmittedAt
-                ? '<button type="button" class="btn btn-sm btn-outline-secondary apya-ap-edit">' +
-                  '<i class="fa fa-pen"></i></button>' : '') +
+                ? '<button type="button" class="btn btn-sm btn-outline-secondary apya-ap-edit"' +
+                  ' title="' + esc(l('Grants:Appeal:OpinionModal:Title')) + '"' +
+                  ' aria-label="' + esc(l('Grants:Appeal:OpinionModal:Title')) + '">' +
+                  '<i class="fa fa-pen" aria-hidden="true"></i></button>' : '') +
             '</span></div>';
     }
 
