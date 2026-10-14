@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Volo.Abp.Data;
@@ -10,10 +12,13 @@ using Volo.Abp.Guids;
 namespace Apya.Platform.Grants;
 
 /// <summary>
-/// ab-ilan.com "Proje, Hibe ve Fonlar" kategorisindeki duyuruları (kalkınma ajansı, KOSGEB,
-/// TÜBİTAK/Eureka, AB ve büyükelçilik çağrıları) HOST kataloğuna kurar. Veri gömülü
-/// <c>Grants/SeedData/ab-ilan-hibe-duyurulari.json</c> dosyasındadır; duyuru metninin tamamı
+/// Duyuru sitelerinden derlenen hibe çağrılarını HOST kataloğuna kurar: ab-ilan.com "Proje, Hibe ve
+/// Fonlar" kategorisi, STGM hibe duyuruları ve TÜBİTAK çağrı duyuruları. Veri gömülü
+/// <c>Grants/SeedData/*.json</c> dosyalarındadır (her dosya bir kaynak); duyuru metninin tamamı
 /// programın açıklamasına yazılır.
+///
+/// <para>Var olan bir programa yeni dönem eklemek için aynı Id ve yeni dönemle bir satır yazılır:
+/// program atlanır, yalnız çağrı eklenir.</para>
 ///
 /// <para>🔴 HOST-ONLY ve yeniden çalıştırılabilir — <see cref="ErasmusYouthCatalogDataSeedContributor"/>
 /// ile aynı sözleşme: program sabit Id'siyle, çağrı (program, dönem) çiftiyle aranır; var olan
@@ -23,9 +28,9 @@ namespace Apya.Platform.Grants;
 /// olanlar arşiv olarak <see cref="GrantCallStatus.Kapandi"/> yazılır. Tutarlar yalnız TL ise
 /// yazılır; döviz cinsinden tavanlar açıklamada kalır ve <c>MaxAmount</c> 0 ("tavan belirtilmemiş").</para>
 /// </summary>
-public class AbIlanGrantCatalogDataSeedContributor : IDataSeedContributor, ITransientDependency
+public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
-    private const string ResourceName = "Apya.Platform.Grants.SeedData.ab-ilan-hibe-duyurulari.json";
+    private const string ResourcePrefix = "Apya.Platform.Grants.SeedData.";
     private const double DefaultMinMatchScore = 40.0;
 
     private readonly IRepository<Grant, Guid> _grantRepository;
@@ -33,7 +38,7 @@ public class AbIlanGrantCatalogDataSeedContributor : IDataSeedContributor, ITran
     private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepository;
     private readonly IGuidGenerator _guidGenerator;
 
-    public AbIlanGrantCatalogDataSeedContributor(
+    public GrantAnnouncementCatalogDataSeedContributor(
         IRepository<Grant, Guid> grantRepository,
         IRepository<GrantCall, Guid> callRepository,
         IRepository<GrantCriteriaTag, Guid> criteriaRepository,
@@ -109,13 +114,20 @@ public class AbIlanGrantCatalogDataSeedContributor : IDataSeedContributor, ITran
         }
     }
 
-    private static async Task<GrantSeed[]> ReadSeedsAsync()
+    private static async Task<List<GrantSeed>> ReadSeedsAsync()
     {
-        await using var stream = typeof(AbIlanGrantCatalogDataSeedContributor).Assembly
-            .GetManifestResourceStream(ResourceName)!;
-        var seeds = await JsonSerializer.DeserializeAsync<GrantSeed[]>(
-            stream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        return seeds!;
+        var assembly = typeof(GrantAnnouncementCatalogDataSeedContributor).Assembly;
+        var seeds = new List<GrantSeed>();
+        foreach (var name in assembly.GetManifestResourceNames()
+                     .Where(n => n.StartsWith(ResourcePrefix) && n.EndsWith(".json"))
+                     .OrderBy(n => n, StringComparer.Ordinal))
+        {
+            await using var stream = assembly.GetManifestResourceStream(name)!;
+            seeds.AddRange((await JsonSerializer.DeserializeAsync<GrantSeed[]>(
+                stream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }))!);
+        }
+
+        return seeds;
     }
 
     /// <summary>

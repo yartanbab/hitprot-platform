@@ -1361,7 +1361,7 @@
     "period": "2026/2",
     "status": "Acik",
     "openDate": null,
-    "deadline": null,
+    "deadline": "2026-06-30",
     "maxAmount": 0,
     "minAmount": null,
     "budget": null,
