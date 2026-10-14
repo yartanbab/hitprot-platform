@@ -944,6 +944,9 @@ public class PlatformNavigationResolver : IScopedDependency
         // Sürüm notu yayın onayı — host-only izin; kiracıda hiç görünmez.
         if (await _permission.IsGrantedAsync(PlatformPermissions.ReleaseNotes.Manage))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.ReleaseNotesAdmin", l["Menu:ReleaseNotesAdmin"], icon: "fa fa-stamp", url: "/Admin/ReleaseNotes"));
+        // Makro Ekran yönetimi — host-only izin; tek ayar bütün kiracılar için geçerli.
+        if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Macros.Manage))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.MacrosAdmin", l["Menu:MacrosAdmin"], icon: "fa fa-sliders", url: "/Admin/Macros"));
         if (platform.Items.Count > 0) roots.Add(platform);
 
         // Kilitli özellikler — üst pakette açılacak bir şeyi OLAN kiracıya TEK keşif öğesi.

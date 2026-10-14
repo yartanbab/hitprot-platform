@@ -194,6 +194,7 @@ namespace Apya.Platform.EntityFrameworkCore
 
         /* --- MAKRO EKRAN --- */
         public DbSet<MacroUsageDaily> MacroUsageDaily { get; set; }
+        public DbSet<MacroSetting> MacroSettings { get; set; }
 
         /* --- GERİ BİLDİRİM MODÜLÜ --- */
         public DbSet<Feedback> Feedbacks { get; set; }
@@ -1670,6 +1671,20 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasIndex(x => new { x.TenantId, x.UserId, x.MacroKey, x.Day }).IsUnique();
                 // Temizlik işçisi: pencere dışı günler.
                 b.HasIndex(x => x.Day);
+            });
+
+            /* --- MAKRO EKRAN · HOST AYARI (varsayılan açık model; satır yoksa katalog hâli) --- */
+            builder.Entity<MacroSetting>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "MacroSettings", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.MacroKey).IsRequired().HasMaxLength(MacroUsageConsts.MaxKeyLength);
+                b.Property(x => x.DisplayName).HasMaxLength(MacroSettingConsts.MaxDisplayNameLength);
+                b.Property(x => x.Icon).HasMaxLength(MacroSettingConsts.MaxIconLength);
+                b.Property(x => x.Packages).IsRequired().HasMaxLength(MacroSettingConsts.MaxPackagesLength);
+                b.Property(x => x.Roles).IsRequired().HasMaxLength(MacroSettingConsts.MaxRolesLength);
+                // Makro başına tek ayar satırı.
+                b.HasIndex(x => x.MacroKey).IsUnique();
             });
 
             /* --- TAKVİM MODÜLÜ YAPILANDIRMASI --- */

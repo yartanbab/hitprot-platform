@@ -48,7 +48,8 @@
     }
 
     // Sabitlenenler önce (sabitlenme sırasıyla), gerisi son 30 günlük kullanıma göre,
-    // eşitlikte katalog sırasıyla — sunucudaki MacroLauncher.Order ile aynı kural.
+    // eşitlikte host sırası, o da yoksa katalog sırası (data-order = MacroItem.TieBreakOrder) —
+    // sunucudaki MacroLauncher.Order ile aynı kural.
     function reorder() {
         var pins = currentPins();
         var all = cards().sort(function (a, b) {

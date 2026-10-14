@@ -27,4 +27,10 @@ public interface IMacroScreenAppService : IApplicationService
 
     /// <summary>Son 30 günde makro anahtarı başına kullanım (yalnız oturumdaki kullanıcı).</summary>
     Task<Dictionary<string, int>> GetMyUsageAsync();
+
+    /// <summary>
+    /// Makro Ekran düzeni tek çağrıda: kullanım, sabitlemeler (kayıt yoksa host varsayılanlarıyla) ve
+    /// host ayarları (kullanıcının paket/rol kapsamına göre çözülmüş).
+    /// </summary>
+    Task<MacroLayoutDto> GetMyLayoutAsync();
 }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Apya.Platform.DynamicAssets.Webhooks;
 using Apya.Platform.Grants;
 using Apya.Platform.Macros;
+using Apya.Platform.Macros.Dtos;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Settings;
@@ -51,6 +52,7 @@ public class ShellAppService : PlatformAppService, IShellAppService
     private readonly IRepository<GrantApplication, Guid> _grantApplicationRepository;
     private readonly IRepository<GrantInterest, Guid> _grantInterestRepository;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly MacroSettingsProvider _macroSettings;
 
     public ShellAppService(
         IHostEnvironment hostEnvironment,
@@ -61,7 +63,8 @@ public class ShellAppService : PlatformAppService, IShellAppService
         IRepository<WebhookSubscription, Guid> webhookSubscriptionRepository,
         IRepository<GrantApplication, Guid> grantApplicationRepository,
         IRepository<GrantInterest, Guid> grantInterestRepository,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        MacroSettingsProvider macroSettings)
     {
         _hostEnvironment = hostEnvironment;
         _settingManager = settingManager;
@@ -72,18 +75,21 @@ public class ShellAppService : PlatformAppService, IShellAppService
         _grantApplicationRepository = grantApplicationRepository;
         _grantInterestRepository = grantInterestRepository;
         _mtFilter = mtFilter;
+        _macroSettings = macroSettings;
     }
 
     public async Task<ShellStateDto> GetStateAsync()
     {
+        // Host makro ayarları (önbellekli): sabitleme varsayılanı ve "+ Yeni" listesi aynı kaynaktan.
+        var macroSettings = await _macroSettings.GetForCurrentUserAsync();
         return new ShellStateDto
         {
-            Pins = await GetPinsAsync(),
+            Pins = await _macroSettings.GetPinsForCurrentUserAsync(macroSettings),
             Badges = await GetBadgesAsync(),
             Projects = await GetProjectsAsync(),
             Health = GetHealth(_hostEnvironment.EnvironmentName),
             Can = await GetCanAsync(),
-            Creates = await GetCreatesAsync(),
+            Creates = await GetCreatesAsync(macroSettings),
             SavedViews = await GetSavedViewsAsync()
         };
     }
@@ -100,25 +106,36 @@ public class ShellAppService : PlatformAppService, IShellAppService
     }
 
     /// <summary>
-    /// Katalogdaki adresli makrolar, katalog sırasıyla. Yalnız izin denetimi (önbellekli) — sayaç
-    /// ya da sorgu YOK: bu çağrı her sayfada çalışıyor.
+    /// Katalogdaki adresli makrolar; host ayarı uygulanmış (gizli/kapsam dışı düşer, ad ve ikon
+    /// değişebilir, host sırası önce). Yalnız izin denetimi ve önbellekli ayar — sayaç ya da sorgu
+    /// YOK: bu çağrı her sayfada çalışıyor.
     /// </summary>
-    private async Task<List<ShellCreateDto>> GetCreatesAsync()
+    private async Task<List<ShellCreateDto>> GetCreatesAsync(IReadOnlyCollection<MacroSettingViewDto> macroSettings)
     {
+        var byKey = macroSettings.ToDictionary(s => s.Key, StringComparer.Ordinal);
         var creates = new List<ShellCreateDto>();
-        foreach (var definition in MacroCatalog.All.Where(d => d.Url != null))
+        var ordered = MacroCatalog.All
+            .Select((definition, index) => (Definition: definition, Index: index))
+            .Where(x => x.Definition.Url != null)
+            .OrderBy(x => byKey.GetValueOrDefault(x.Definition.Key)?.SortOrder ?? int.MaxValue)
+            .ThenBy(x => x.Index);
+
+        foreach (var (definition, _) in ordered)
         {
-            if (await IsGrantedAsync(definition.Permission!))
+            var setting = byKey.GetValueOrDefault(definition.Key);
+            if (setting is { IsVisible: false } || !await IsGrantedAsync(definition.Permission!))
             {
-                creates.Add(new ShellCreateDto
-                {
-                    Key = definition.Key,
-                    Title = L[definition.TitleKey!],
-                    Url = definition.Url!,
-                    Icon = definition.Icon!,
-                    IsModal = definition.Kind == MacroKind.Modal
-                });
+                continue;
             }
+
+            creates.Add(new ShellCreateDto
+            {
+                Key = definition.Key,
+                Title = setting?.DisplayName ?? L[definition.TitleKey!],
+                Url = definition.Url!,
+                Icon = setting?.Icon ?? definition.Icon!,
+                IsModal = definition.Kind == MacroKind.Modal
+            });
         }
 
         return creates;
@@ -364,16 +381,6 @@ public class ShellAppService : PlatformAppService, IShellAppService
             PlatformSettings.Shell.Pins, string.Join(",", cleaned));
 
         return cleaned;
-    }
-
-    private async Task<List<string>> GetPinsAsync()
-    {
-        var raw = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.Shell.Pins)
-                  ?? PlatformSettingDefaults.ShellPins;
-
-        return raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                  .Distinct()
-                  .ToList();
     }
 
     private async Task<ShellBadgesDto> GetBadgesAsync()

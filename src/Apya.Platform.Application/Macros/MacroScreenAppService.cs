@@ -31,19 +31,22 @@ public class MacroScreenAppService : PlatformAppService, IMacroScreenAppService
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<Notification, Guid> _notificationRepository;
     private readonly MacroUsageManager _usageManager;
+    private readonly MacroSettingsProvider _settingsProvider;
 
     public MacroScreenAppService(
         IRepository<Project, Guid> projectRepository,
         IRepository<ProjectMember, Guid> memberRepository,
         IRepository<TaskItem, Guid> taskRepository,
         IRepository<Notification, Guid> notificationRepository,
-        MacroUsageManager usageManager)
+        MacroUsageManager usageManager,
+        MacroSettingsProvider settingsProvider)
     {
         _projectRepository = projectRepository;
         _memberRepository = memberRepository;
         _taskRepository = taskRepository;
         _notificationRepository = notificationRepository;
         _usageManager = usageManager;
+        _settingsProvider = settingsProvider;
     }
 
     public async Task<MacroMyProjectsDto> GetMyProjectsAsync()
@@ -124,6 +127,17 @@ public class MacroScreenAppService : PlatformAppService, IMacroScreenAppService
         return CurrentUser.Id.HasValue
             ? await _usageManager.GetCountsAsync(CurrentUser.Id.Value, Clock.Now)
             : new Dictionary<string, int>();
+    }
+
+    public async Task<MacroLayoutDto> GetMyLayoutAsync()
+    {
+        var settings = await _settingsProvider.GetForCurrentUserAsync();
+        return new MacroLayoutDto
+        {
+            Usage = await GetMyUsageAsync(),
+            Pins = await _settingsProvider.GetPinsForCurrentUserAsync(settings),
+            Settings = settings
+        };
     }
 
     /// <summary>

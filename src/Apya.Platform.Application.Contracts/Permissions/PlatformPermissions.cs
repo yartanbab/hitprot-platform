@@ -208,6 +208,13 @@ public static class PlatformPermissions
         public const string Manage = Default + ".Manage";       // Fatura açma / belge ekleme / tahsilat onaylama
     }
 
+    // --- MAKRO EKRAN YÖNETİMİ (host) ---
+    public static class Macros
+    {
+        /// <summary>Makro Ekran kataloğundaki makroları gizleme/adlandırma/kapsam/sıra/varsayılan sabit. Host-only.</summary>
+        public const string Manage = GroupName + ".Macros.Manage";
+    }
+
     // --- SÜRÜM NOTU YAYIN ONAYI (host) ---
     public static class ReleaseNotes
     {

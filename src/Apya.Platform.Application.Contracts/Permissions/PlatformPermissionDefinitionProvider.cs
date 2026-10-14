@@ -226,6 +226,13 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
             PlatformPermissions.ReleaseNotes.Manage,
             L("Permission:ReleaseNotes.Manage"),
             MultiTenancySides.Host);
+
+        // Makro Ekran yönetimi — tek ayar bütün kiracılar için geçerli (MacroSetting IMultiTenant
+        // değil); kiracı yöneticisine sızmasın diye MultiTenancySides.Host.
+        systemGroup.AddPermission(
+            PlatformPermissions.Macros.Manage,
+            L("Permission:Macros.Manage"),
+            MultiTenancySides.Host);
     }
 
     private static LocalizableString L(string name)
