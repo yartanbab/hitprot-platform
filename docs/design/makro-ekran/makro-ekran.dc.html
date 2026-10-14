@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="./image-slot.js"></script>
+<style>
+:root{
+--apya-brand-500:#2563EB;--apya-brand-700:#1E40AF;
+--apya-accent-50:#EEF2FF;--apya-accent-500:#4F46E5;--apya-accent-600:#4338CA;--apya-accent-soft:rgba(79,70,229,.10);
+--apya-positive-500:#059669;--apya-positive-700:#065F46;
+--apya-negative-500:#DC2626;--apya-negative-700:#991B1B;
+--apya-warning-500:#D97706;--apya-warning-700:#92400E;
+--apya-ai-500:#7C3AED;--apya-ai-600:#6D28D9;
+--apya-neutral-500:#6B7280;
+--apya-surface-app-bg:#F5F5F5;--apya-surface-sidebar:#FFFFFF;--apya-surface-base:#FFFFFF;--apya-surface-raised:#F9FAFB;--apya-surface-sunken:#F3F4F6;--apya-surface-hover:#F3F4F6;
+--apya-text-primary:#111827;--apya-text-secondary:#4B5563;--apya-text-tertiary:#9CA3AF;
+--apya-border-subtle:#F3F4F6;--apya-border-default:#E5E7EB;--apya-border-strong:#D1D5DB;
+--apya-shadow-sm:0 1px 2px 0 rgba(17,24,39,.05);
+--apya-shadow-md:0 4px 6px -1px rgba(17,24,39,.08),0 2px 4px -2px rgba(17,24,39,.04);
+--apya-shadow-lg:0 10px 15px -3px rgba(17,24,39,.10),0 4px 6px -4px rgba(17,24,39,.05);
+--apya-shadow-card:0 1px 2px rgba(17,24,39,.04),0 8px 24px -16px rgba(17,24,39,.14);
+--apya-font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+--apya-font-mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+}
+.apya-dark{
+--apya-accent-500:#6366F1;--apya-accent-600:#4F46E5;--apya-accent-soft:rgba(99,102,241,.13);
+--apya-brand-500:#60A5FA;--apya-brand-700:#93C5FD;
+--apya-positive-500:#10B981;--apya-positive-700:#34D399;
+--apya-negative-500:#F87171;--apya-negative-700:#FCA5A5;
+--apya-warning-500:#FBBF24;--apya-warning-700:#FCD34D;
+--apya-ai-500:#A78BFA;--apya-ai-600:#8B5CF6;
+--apya-surface-app-bg:#0A0A0B;--apya-surface-sidebar:#0C0C0E;--apya-surface-base:#0F0F11;--apya-surface-raised:#141416;--apya-surface-sunken:#070708;--apya-surface-hover:#1C1C20;
+--apya-text-primary:#F4F4F5;--apya-text-secondary:#A1A1AA;--apya-text-tertiary:#71717A;
+--apya-border-subtle:rgba(255,255,255,.04);--apya-border-default:rgba(255,255,255,.07);--apya-border-strong:rgba(255,255,255,.12);
+--apya-shadow-card:0 1px 2px rgba(0,0,0,.40),0 10px 30px -18px rgba(0,0,0,.70);
+}
+body{margin:0;background:#e9e7e2;font-family:var(--apya-font-sans);-webkit-font-smoothing:antialiased}
+a{color:var(--apya-accent-500);text-decoration:none}
+a:hover{color:var(--apya-accent-600)}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08)}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px var(--apya-font-mono);padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 var(--apya-font-sans);color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:34px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px var(--apya-font-mono);padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 var(--apya-font-sans);color:rgba(0,0,0,.55);max-width:760px}
+.dv-card{max-width:100%;border:1px solid rgba(0,0,0,.10);border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.08);overflow:hidden;background:#fff}
+.dv-opt:target .dv-oid{background:#4F46E5;color:#fff}
+.dv-next{margin:22px 0 0;font:12px/1.5 var(--apya-font-sans);color:rgba(0,0,0,.5)}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Uç haller — boş durum ve ön izleme hatası</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Boş durum (#6): yeni kiracının kullanım verisi yok. Boş kutu göstermek yerine host’un <code>defaultPinned</code> işaretlediği role uygun 4 makro doldurulur; şerit başlığı sıralamanın henüz kişiselleşmediğini söyler.</div>
+<div class="dv-card" style="width:1180px">
+<div style="height:600px;display:flex;flex-direction:column;background:var(--apya-surface-app-bg);color:var(--apya-text-primary)">
+  <div style="height:64px;flex:none;display:flex;align-items:center;gap:10px;padding:0 24px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+    <span style="font-size:13px;color:var(--apya-text-tertiary)">Kısayollar</span>
+    <i class="fa fa-chevron-right" style="font-size:9px;color:var(--apya-border-strong)"></i>
+    <span style="font-size:13px;font-weight:600">Makro Ekran</span>
+  </div>
+  <div style="flex:1 1 auto;min-height:0;padding:24px 28px;display:flex;flex-direction:column;gap:18px">
+    <div>
+      <div style="font-size:20px;font-weight:700;letter-spacing:-.02em">Makro Ekran</div>
+      <div style="margin-top:3px;font-size:12.5px;color:var(--apya-text-secondary)">Kullandıkça sıralama kendini sana göre düzenler.</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:11px;padding:13px 16px;border:1px solid var(--apya-border-default);border-left:3px solid var(--apya-accent-500);border-radius:12px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm)">
+      <i class="fa fa-wand-magic-sparkles" style="font-size:14px;color:var(--apya-accent-500)"></i>
+      <span style="min-width:0;display:flex;flex-direction:column;gap:2px">
+        <span style="font-size:13px;font-weight:600">Rolüne göre başlangıç seti hazır</span>
+        <span style="font-size:11.5px;color:var(--apya-text-secondary)">Hibe Uzmanı için en çok kullanılan 4 işlem sabitlendi. İstediğini kaldırıp kendininkini sabitleyebilirsin.</span>
+      </span>
+      <button type="button" style="margin-left:auto;flex:none;height:32px;padding:0 12px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);color:var(--apya-text-secondary);font:600 12px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-surface-hover);color:var(--apya-text-primary)">Düzenle</button>
+    </div>
+
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary)">Başlangıç seti</span>
+        <span style="padding:2px 10px;border-radius:999px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:11px;font-weight:600">rolüne göre · kullanımın biriktikçe değişir</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px">
+        <sc-for list="{{ emptyHero }}" as="m" hint-placeholder-count="4">
+          <button type="button" style="flex:none;width:172px;min-height:172px;display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:16px;text-align:left;border:1px solid var(--apya-border-default);border-radius:16px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-card);cursor:pointer;font-family:var(--apya-font-sans)" style-hover="border-color:var(--apya-accent-500);box-shadow:var(--apya-shadow-md)">
+            <span style="display:flex;align-items:center;gap:10px;width:100%">
+              <span style="width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:11px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-size:17px"><i class="{{ m.icon }}"></i></span>
+              <i class="fa fa-thumbtack" style="margin-left:auto;font-size:11px;color:var(--apya-accent-500)"></i>
+            </span>
+            <span style="font-size:14.5px;font-weight:700;line-height:1.25">{{ m.title }}</span>
+            <span style="font-size:11.5px;line-height:1.4;color:var(--apya-text-secondary)">{{ m.sub }}</span>
+            <span style="margin-top:auto;padding-top:4px;font-size:10.5px;color:var(--apya-text-tertiary)">henüz kullanılmadı</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;border:1px dashed var(--apya-border-strong);border-radius:14px;background:var(--apya-surface-base)">
+      <span style="width:38px;height:38px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:var(--apya-surface-sunken);color:var(--apya-text-tertiary);font-size:15px"><i class="fa fa-inbox"></i></span>
+      <span style="min-width:0;display:flex;flex-direction:column;gap:2px">
+        <span style="font-size:13px;font-weight:600">Bekleyen iş yok</span>
+        <span style="font-size:11.5px;color:var(--apya-text-secondary)">Geciken görev, eksik belge veya onay bekleyen kayıt oluştuğunda burada listelenir.</span>
+      </span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="3b">
+<div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Ön izleme hata hali (#4): <code>previewToken</code> harcanmış veya çağrının son başvurusu geçmiş. Onay butonu kapalı, sebep satır satır yazılı — kısmen yazılmış kayıt yok.</div>
+<div class="dv-card" style="width:1120px">
+<div style="height:600px;display:flex;flex-direction:column;background:var(--apya-surface-app-bg);color:var(--apya-text-primary)">
+  <div style="height:64px;flex:none;display:flex;align-items:center;gap:10px;padding:0 24px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+    <span style="font-size:13px;color:var(--apya-text-tertiary)">Makro Ekran</span>
+    <i class="fa fa-chevron-right" style="font-size:9px;color:var(--apya-border-strong)"></i>
+    <span style="font-size:13px;font-weight:600">Çağrıdan başvuru başlat</span>
+    <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--apya-negative-500) 12%,transparent);color:var(--apya-negative-700);font-size:11px;font-weight:600"><i class="fa fa-triangle-exclamation" style="font-size:10px"></i>çalıştırılamıyor</span>
+  </div>
+
+  <div style="flex:1 1 auto;min-height:0;display:flex;gap:20px;padding:22px 24px">
+    <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1px solid color-mix(in srgb,var(--apya-negative-500) 35%,var(--apya-border-default));border-radius:12px;background:color-mix(in srgb,var(--apya-negative-500) 6%,var(--apya-surface-base))">
+        <i class="fa fa-circle-exclamation" style="margin-top:2px;font-size:15px;color:var(--apya-negative-500)"></i>
+        <span style="min-width:0;display:flex;flex-direction:column;gap:4px">
+          <span style="font-size:13.5px;font-weight:700;color:var(--apya-negative-700)">Bu ön izleme artık geçerli değil</span>
+          <span style="font-size:12px;line-height:1.5;color:var(--apya-text-secondary)">Hazırlandığı andan beri çağrı ve şablon değişti. Hiçbir kayıt oluşturulmadı — ön izlemeyi yenileyip yeniden onaylaman gerekiyor.</span>
+        </span>
+      </div>
+
+      <div style="border:1px solid var(--apya-border-default);border-radius:12px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);overflow:hidden">
+        <div style="padding:11px 16px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary);border-bottom:1px solid var(--apya-border-subtle)">Engeller</div>
+        <sc-for list="{{ blockers }}" as="b" hint-placeholder-count="3">
+          <div style="display:flex;align-items:flex-start;gap:11px;padding:12px 16px;border-bottom:1px solid var(--apya-border-subtle)">
+            <span style="width:26px;height:26px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;background:{{ b.bg }};color:{{ b.fg }};font-size:11px"><i class="{{ b.icon }}"></i></span>
+            <span style="min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:12.5px;font-weight:600;line-height:1.3">{{ b.title }}</span>
+              <span style="font-size:11.5px;color:var(--apya-text-secondary);line-height:1.4">{{ b.sub }}</span>
+            </span>
+            <span style="flex:none;font-size:11.5px;font-weight:600;color:var(--apya-accent-500)">{{ b.action }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding:12px 16px;border:1px solid var(--apya-border-default);border-radius:12px;background:var(--apya-surface-raised);font-size:11.5px;line-height:1.5;color:var(--apya-text-secondary)">
+        Makro idempotent çalışır: onay tek kullanımlık bir <span style="font-family:var(--apya-font-mono);color:var(--apya-text-primary)">previewToken</span> harcar. Aynı ön izlemeye iki kez basmak ikinci bir başvuru oluşturmaz.
+      </div>
+    </div>
+
+    <div style="flex:0 0 280px;width:280px;display:flex;flex-direction:column;gap:12px">
+      <div style="padding:16px;border:1px solid var(--apya-border-default);border-radius:12px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);display:flex;flex-direction:column;gap:9px">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary)">Ön izleme</span>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--apya-text-secondary)"><span>Hazırlandı</span><span style="font-family:var(--apya-font-mono);color:var(--apya-text-primary)">09:12</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--apya-text-secondary)"><span>Geçerlilik</span><span style="font-family:var(--apya-font-mono);color:var(--apya-negative-700);font-weight:600">doldu</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--apya-text-secondary)"><span>Oluşan kayıt</span><span style="font-family:var(--apya-font-mono);color:var(--apya-text-primary)">0</span></div>
+      </div>
+      <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+        <button type="button" style="height:42px;border:1px solid var(--apya-accent-500);border-radius:10px;background:var(--apya-accent-500);color:#fff;font:700 13px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-accent-600)"><i class="fa fa-rotate" style="margin-right:7px;font-size:12px"></i>Ön izlemeyi yenile</button>
+        <button type="button" disabled="disabled" style="height:38px;border:1px solid var(--apya-border-default);border-radius:10px;background:var(--apya-surface-sunken);color:var(--apya-text-tertiary);font:600 12.5px var(--apya-font-sans);cursor:not-allowed">Onayla ve oluştur</button>
+        <button type="button" style="height:34px;border:none;background:transparent;color:var(--apya-text-secondary);font:600 12px var(--apya-font-sans);cursor:pointer" style-hover="color:var(--apya-text-primary)">Vazgeç</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Sonraki adım: “makro çalıştırma günlüğü ekranı” · “kullanım sayacının host tarafındaki raporu”</p>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Host · makro yönetimi (/Admin/Makrolar) — üret, düzenle, sil</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Master-detail — repodaki <code>.apya-md</code> deseni (sol liste 380px, seçili satır accent-soft + sol kenarlık). Sağda tek sayfada tanım: kimlik, tür, kapsam, adımlar, yayın. Bileşik makronun adımları sürüklenerek sıralanır.</div>
+<div class="dv-card" style="width:1180px">
+<div style="height:880px;display:flex;flex-direction:column;background:var(--apya-surface-app-bg);color:var(--apya-text-primary)">
+  <div style="height:64px;flex:none;display:flex;align-items:center;gap:10px;padding:0 24px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+    <span style="font-size:13px;color:var(--apya-text-tertiary)">Platform</span>
+    <i class="fa fa-chevron-right" style="font-size:9px;color:var(--apya-border-strong)"></i>
+    <span style="font-size:13px;font-weight:600">Makro Yönetimi</span>
+    <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--apya-warning-500) 14%,transparent);color:var(--apya-warning-700);font-size:11px;font-weight:600"><i class="fa fa-shield-halved" style="font-size:10px"></i>host yetkisi</span>
+  </div>
+
+  <div style="flex:1 1 auto;min-height:0;padding:22px 24px;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+      <div>
+        <div style="font-size:19px;font-weight:700;letter-spacing:-.02em">Makro Yönetimi</div>
+        <div style="margin-top:3px;font-size:12.5px;color:var(--apya-text-secondary)">Burada tanımlanan makrolar kiracıların Makro Ekranında görünür. Kullanıcı yalnız sırasını ve sabitlemesini değiştirir.</div>
+      </div>
+      <button type="button" style="height:34px;padding:0 14px;border:1px solid var(--apya-accent-500);border-radius:8px;background:var(--apya-accent-500);color:#fff;font:600 12.5px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-accent-600)"><i class="fa fa-plus" style="margin-right:6px;font-size:11px"></i>Yeni makro</button>
+    </div>
+
+    <div style="flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(300px,340px) 1fr;border:1px solid var(--apya-border-default);border-radius:12px;background:var(--apya-surface-raised);box-shadow:var(--apya-shadow-sm);overflow:hidden">
+
+      <div style="display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--apya-border-subtle);background:var(--apya-surface-base)">
+        <div style="display:flex;flex-direction:column;gap:8px;padding:12px;border-bottom:1px solid var(--apya-border-subtle)">
+          <div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-sunken);color:var(--apya-text-tertiary);font-size:12.5px"><i class="fa fa-magnifying-glass" style="font-size:11px"></i>Makro ara…</div>
+          <div style="display:flex;gap:6px">
+            <span style="padding:3px 11px;border-radius:999px;background:var(--apya-accent-soft);color:var(--apya-accent-600);font-size:11px;font-weight:600">Tümü 14</span>
+            <span style="padding:3px 11px;border-radius:999px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:11px;font-weight:600">Yayında 11</span>
+            <span style="padding:3px 11px;border-radius:999px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:11px;font-weight:600">Taslak 3</span>
+          </div>
+        </div>
+        <div style="flex:1 1 auto;min-height:0;overflow:hidden">
+          <sc-for list="{{ adminList }}" as="a" hint-placeholder-count="8" data-rows="8">
+            <div style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;border-left:2px solid {{ a.mark }};border-bottom:1px solid var(--apya-border-subtle);background:{{ a.bg }};cursor:pointer">
+              <span style="width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:12px"><i class="{{ a.icon }}"></i></span>
+              <span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:13px;font-weight:600;line-height:1.25;color:{{ a.fg }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.title }}</span>
+                <span style="font-size:11px;color:var(--apya-text-tertiary);line-height:1.25">{{ a.meta }}</span>
+              </span>
+              <span style="flex:none;display:inline-flex;align-items:center;padding:2px 9px;border-radius:999px;background:{{ a.chipBg }};color:{{ a.chipFg }};font-size:10.5px;font-weight:600">{{ a.state }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-top:1px solid var(--apya-border-subtle);font-size:11px;color:var(--apya-text-tertiary)"><span>14 makro</span><span>1–8 gösteriliyor</span></div>
+      </div>
+
+      <div style="min-width:0;background:var(--apya-surface-base);padding:18px 22px;display:flex;flex-direction:column;gap:13px;overflow:hidden">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <span style="width:44px;height:44px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-size:18px"><i class="fa fa-bullhorn"></i></span>
+          <span style="min-width:0;display:flex;flex-direction:column;gap:4px">
+            <span style="font-size:16px;font-weight:700;letter-spacing:-.01em">Çağrıdan başvuru başlat</span>
+            <span style="font-size:11.5px;color:var(--apya-text-tertiary);font-family:var(--apya-font-mono)">makro.grants.startApplication · v4 · son 30 günde 312 çalıştırma</span>
+          </span>
+          <span style="margin-left:auto;display:flex;gap:8px">
+            <button type="button" style="height:32px;padding:0 12px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);color:var(--apya-text-secondary);font:600 12px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-surface-hover)"><i class="fa fa-copy" style="margin-right:6px;font-size:11px"></i>Kopyala</button>
+            <button type="button" style="height:32px;padding:0 12px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);color:var(--apya-negative-700);font:600 12px var(--apya-font-sans);cursor:pointer" style-hover="background:color-mix(in srgb,var(--apya-negative-500) 8%,transparent)"><i class="fa fa-trash" style="margin-right:6px;font-size:11px"></i>Sil</button>
+          </span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">Görünen ad</span><span style="display:flex;align-items:center;height:34px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);font-size:13px">Çağrıdan başvuru başlat</span></label>
+          <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">İkon</span><span style="display:flex;align-items:center;gap:8px;height:34px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);font-size:13px"><i class="fa fa-bullhorn" style="color:var(--apya-accent-500)"></i><span style="font-family:var(--apya-font-mono);font-size:12px">fa fa-bullhorn</span><i class="fa fa-chevron-down" style="margin-left:auto;font-size:10px;color:var(--apya-text-tertiary)"></i></span></label>
+          <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">Tür</span><span style="display:flex;align-items:center;height:34px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);font-size:13px">Bileşik akış (ön izlemeli)<i class="fa fa-chevron-down" style="margin-left:auto;font-size:10px;color:var(--apya-text-tertiary)"></i></span></label>
+          <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">Gerekli izin</span><span style="display:flex;align-items:center;height:34px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);font-family:var(--apya-font-mono);font-size:12px">Grants.Edit<i class="fa fa-chevron-down" style="margin-left:auto;font-size:10px;color:var(--apya-text-tertiary)"></i></span></label>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">Kime görünsün</span>
+          <div style="display:flex;flex-wrap:wrap;gap:7px">
+            <span style="padding:3px 11px;border-radius:999px;background:var(--apya-accent-soft);color:var(--apya-accent-600);font-size:11.5px;font-weight:600">Tüm kiracılar <i class="fa fa-xmark" style="margin-left:5px;font-size:10px"></i></span>
+            <span style="padding:3px 11px;border-radius:999px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:11.5px;font-weight:600">Paket: Pro + Enterprise <i class="fa fa-xmark" style="margin-left:5px;font-size:10px"></i></span>
+            <span style="padding:3px 11px;border-radius:999px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:11.5px;font-weight:600">Rol: Hibe Uzmanı <i class="fa fa-xmark" style="margin-left:5px;font-size:10px"></i></span>
+            <span style="padding:3px 11px;border:1px dashed var(--apya-border-strong);border-radius:999px;color:var(--apya-text-tertiary);font-size:11.5px;font-weight:600"><i class="fa fa-plus" style="margin-right:5px;font-size:10px"></i>kapsam ekle</span>
+          </div>
+        </div>
+
+        <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border:1px solid var(--apya-border-default);border-radius:12px;background:var(--apya-surface-sunken);overflow:hidden">
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--apya-border-default)">
+            <span style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--apya-text-tertiary)">Adımlar</span>
+            <span style="font-size:11px;color:var(--apya-text-tertiary)">sürükleyerek sırala · ön izlemede bu sırayla listelenir</span>
+            <button type="button" style="margin-left:auto;height:28px;padding:0 10px;border:1px solid var(--apya-border-default);border-radius:7px;background:var(--apya-surface-base);color:var(--apya-text-secondary);font:600 11.5px var(--apya-font-sans);cursor:pointer" style-hover="border-color:var(--apya-accent-500);color:var(--apya-accent-500)"><i class="fa fa-plus" style="margin-right:5px;font-size:10px"></i>Adım ekle</button>
+          </div>
+          <div style="flex:1 1 auto;min-height:0;overflow:hidden">
+            <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--apya-border-default);background:var(--apya-surface-base)">
+                <i class="fa fa-grip-vertical" style="font-size:11px;color:var(--apya-text-tertiary);cursor:grab"></i>
+                <span style="width:20px;height:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;background:var(--apya-surface-sunken);font-family:var(--apya-font-mono);font-size:10.5px;font-weight:700;color:var(--apya-text-secondary)">{{ s.no }}</span>
+                <span style="min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:12.5px;font-weight:600;line-height:1.25">{{ s.title }}</span>
+                  <span style="font-size:11px;color:var(--apya-text-tertiary);line-height:1.25;font-family:var(--apya-font-mono)">{{ s.op }}</span>
+                </span>
+                <i class="fa fa-pen" style="font-size:11px;color:var(--apya-text-tertiary)"></i>
+                <i class="fa fa-trash" style="font-size:11px;color:var(--apya-text-tertiary)"></i>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="flex:none;display:flex;align-items:center;gap:12px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--apya-text-secondary)"><span style="width:34px;height:20px;border-radius:999px;background:var(--apya-accent-500);position:relative;display:inline-block"><span style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff"></span></span>Yeni kullanıcıya sabitli gelsin</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--apya-text-secondary)"><span style="width:34px;height:20px;border-radius:999px;background:var(--apya-border-strong);position:relative;display:inline-block"><span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff"></span></span>Ön izleme atlanabilsin</label>
+          <span style="margin-left:auto;display:flex;gap:8px">
+            <button type="button" style="height:34px;padding:0 14px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);color:var(--apya-text-secondary);font:600 12.5px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-surface-hover)">Taslak olarak kaydet</button>
+            <button type="button" style="height:34px;padding:0 16px;border:1px solid var(--apya-accent-500);border-radius:8px;background:var(--apya-accent-500);color:#fff;font:700 12.5px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-accent-600)">Yayınla</button>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Tablo + sağdan drawer — repodaki liste ekranlarının (DataTables + <code>.apya-drawer</code>) deseni. Çok makro olduğunda sıralama/filtreleme ve toplu işlem (yayından kaldır, sil) burada daha rahat.</div>
+<div class="dv-card" style="width:1180px">
+<div style="height:700px;display:flex;flex-direction:column;background:var(--apya-surface-app-bg);color:var(--apya-text-primary);position:relative">
+  <div style="height:64px;flex:none;display:flex;align-items:center;gap:10px;padding:0 24px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+    <span style="font-size:13px;color:var(--apya-text-tertiary)">Platform</span>
+    <i class="fa fa-chevron-right" style="font-size:9px;color:var(--apya-border-strong)"></i>
+    <span style="font-size:13px;font-weight:600">Makro Yönetimi</span>
+  </div>
+
+  <div style="flex:1 1 auto;min-height:0;padding:22px 24px 26px;display:flex;flex-direction:column">
+    <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border:1px solid var(--apya-border-default);border-radius:12px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--apya-border-subtle)">
+        <span style="display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-sunken);color:var(--apya-text-tertiary);font-size:12.5px;min-width:220px"><i class="fa fa-magnifying-glass" style="font-size:11px"></i>Ara</span>
+        <span style="display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;font-size:12.5px;color:var(--apya-text-secondary)">Durum: Tümü<i class="fa fa-chevron-down" style="font-size:9px"></i></span>
+        <span style="display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;font-size:12.5px;color:var(--apya-text-secondary)">Kapsam: Tümü<i class="fa fa-chevron-down" style="font-size:9px"></i></span>
+        <span style="margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:4px 11px;border-radius:999px;background:var(--apya-accent-soft);color:var(--apya-accent-600);font-size:11.5px;font-weight:600">2 seçili<i class="fa fa-eye-slash" style="font-size:10px"></i>Yayından kaldır<i class="fa fa-trash" style="font-size:10px"></i>Sil</span>
+        <button type="button" style="height:32px;padding:0 13px;border:1px solid var(--apya-accent-500);border-radius:8px;background:var(--apya-accent-500);color:#fff;font:600 12px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-accent-600)"><i class="fa fa-plus" style="margin-right:6px;font-size:11px"></i>Yeni makro</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:34px 2.2fr 1fr 1.2fr 0.8fr 0.8fr 72px;gap:0;padding:0 16px;height:38px;align-items:center;border-bottom:1px solid var(--apya-border-default);background:var(--apya-surface-raised);font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--apya-text-tertiary)">
+        <span><i class="fa fa-square" style="color:var(--apya-border-strong)"></i></span>
+        <span>Makro</span><span>Tür</span><span>Kapsam</span><span>Kullanım 30g</span><span>Durum</span><span></span>
+      </div>
+
+      <div style="flex:1 1 auto;min-height:0;overflow:hidden">
+        <sc-for list="{{ adminRows }}" as="r" hint-placeholder-count="8">
+          <div style="display:grid;grid-template-columns:34px 2.2fr 1fr 1.2fr 0.8fr 0.8fr 72px;align-items:center;padding:0 16px;height:52px;border-bottom:1px solid var(--apya-border-subtle);background:{{ r.bg }}" style-hover="background:var(--apya-surface-raised)">
+            <span><i class="{{ r.check }}" style="font-size:12px;color:{{ r.checkColor }}"></i></span>
+            <span style="display:flex;align-items:center;gap:10px;min-width:0">
+              <span style="width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:12px"><i class="{{ r.icon }}"></i></span>
+              <span style="min-width:0;display:flex;flex-direction:column;gap:1px">
+                <span style="font-size:13px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.title }}</span>
+                <span style="font-size:10.5px;color:var(--apya-text-tertiary);font-family:var(--apya-font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.key }}</span>
+              </span>
+            </span>
+            <span style="font-size:12px;color:var(--apya-text-secondary)">{{ r.type }}</span>
+            <span style="font-size:12px;color:var(--apya-text-secondary)">{{ r.scope }}</span>
+            <span style="font-family:var(--apya-font-mono);font-size:12.5px;color:var(--apya-text-primary)">{{ r.usage }}</span>
+            <span><span style="display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:{{ r.chipBg }};color:{{ r.chipFg }};font-size:10.5px;font-weight:600">{{ r.state }}</span></span>
+            <span style="display:flex;justify-content:flex-end;gap:10px;color:var(--apya-text-tertiary);font-size:12px"><i class="fa fa-pen"></i><i class="fa fa-ellipsis-vertical"></i></span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--apya-border-subtle);font-size:11.5px;color:var(--apya-text-tertiary)"><span>14 kayıttan 1–8</span><span style="display:flex;gap:6px"><span style="padding:2px 9px;border:1px solid var(--apya-border-default);border-radius:6px">1</span><span style="padding:2px 9px;border:1px solid var(--apya-border-default);border-radius:6px;color:var(--apya-text-secondary)">2</span></span></div>
+    </div>
+  </div>
+
+  <div style="position:absolute;top:0;right:0;bottom:0;width:440px;background:var(--apya-surface-base);border-left:1px solid var(--apya-border-default);box-shadow:-18px 0 40px -24px rgba(17,24,39,.35);display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--apya-border-subtle)">
+      <span style="width:34px;height:34px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-size:14px"><i class="fa fa-camera"></i></span>
+      <span style="min-width:0;display:flex;flex-direction:column;gap:2px">
+        <span style="font-size:14.5px;font-weight:700">Fatura yakala</span>
+        <span style="font-size:11px;color:var(--apya-text-tertiary);font-family:var(--apya-font-mono)">makro.finance.captureInvoice · taslak</span>
+      </span>
+      <i class="fa fa-xmark" style="margin-left:auto;font-size:14px;color:var(--apya-text-tertiary)"></i>
+    </div>
+    <div style="flex:1 1 auto;min-height:0;overflow:hidden;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">Görünen ad</span><span style="display:flex;align-items:center;height:34px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;font-size:13px">Fatura yakala</span></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">Tür</span><span style="display:flex;align-items:center;height:34px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;font-size:13px">Modal / sayfa aç<i class="fa fa-chevron-down" style="margin-left:auto;font-size:10px;color:var(--apya-text-tertiary)"></i></span></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">Hedef</span><span style="display:flex;align-items:center;height:34px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;font-family:var(--apya-font-mono);font-size:12px">/Expenses/Capture</span></label>
+      <label style="display:flex;flex-direction:column;gap:5px"><span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">Gerekli izin</span><span style="display:flex;align-items:center;height:34px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;font-family:var(--apya-font-mono);font-size:12px">Expenses.Create<i class="fa fa-chevron-down" style="margin-left:auto;font-size:10px;color:var(--apya-text-tertiary)"></i></span></label>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <span style="font-size:11px;font-weight:600;color:var(--apya-text-secondary)">Kapsam</span>
+        <div style="display:flex;flex-wrap:wrap;gap:7px">
+          <span style="padding:4px 11px;border-radius:999px;background:var(--apya-accent-soft);color:var(--apya-accent-600);font-size:11.5px;font-weight:600">Tüm kiracılar <i class="fa fa-xmark" style="margin-left:5px;font-size:10px"></i></span>
+          <span style="padding:4px 11px;border:1px dashed var(--apya-border-strong);border-radius:999px;color:var(--apya-text-tertiary);font-size:11.5px;font-weight:600"><i class="fa fa-plus" style="margin-right:5px;font-size:10px"></i>ekle</span>
+        </div>
+      </div>
+      <div style="padding:12px 14px;border:1px solid var(--apya-border-default);border-radius:10px;background:var(--apya-surface-raised);font-size:11.5px;line-height:1.5;color:var(--apya-text-secondary)">Tek adımlı makro — ön izleme ekranı yok, doğrudan hedefi açar. Çok adımlı akış için türü “Bileşik akış” yap, adım listesi açılsın.</div>
+    </div>
+    <div style="display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--apya-border-subtle)">
+      <button type="button" style="flex:1;height:38px;border:1px solid var(--apya-border-default);border-radius:9px;background:var(--apya-surface-base);color:var(--apya-negative-700);font:600 12.5px var(--apya-font-sans);cursor:pointer" style-hover="background:color-mix(in srgb,var(--apya-negative-500) 8%,transparent)">Sil</button>
+      <button type="button" style="flex:2;height:38px;border:1px solid var(--apya-accent-500);border-radius:9px;background:var(--apya-accent-500);color:#fff;font:700 12.5px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-accent-600)">Kaydet ve yayınla</button>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Sonraki adım: “<a class="dv-oid" href="#2a">2a</a> kalsın, adım editörünü aç” · “<a class="dv-oid" href="#2b">2b</a>’deki tabloyu <a class="dv-oid" href="#2a">2a</a>’nın sol listesi yerine koy” · “kiracı yöneticisi de kendi makrosunu yazabilsin”</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Makro ekran — /Makro · üç yerleşim + dokunmatik</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Tek ızgara, sıklığa göre. Haberlerin altında sağ köşede bildirimler (en yeni üstte), solda makro ızgaraları; en altta bekleyen işler. En üstte tam genişlik haber banner’ı — görsel arka plan, metin ve makro butonu önde, sağ/sol oklarla geçiş, ortada nokta göstergesi (5 haber; gerisi <a href="#1f">1f</a> “Tüm haberler”de). Altında kare makro ızgaraları — “Senin için” de tüm makrolarla aynı 124px ölçüsünde, en altta bekleyen işler.</div>
+<div class="dv-card" style="width:1440px">
+<div style="display:flex;height:1180px;background:var(--apya-surface-app-bg);font-size:13px;color:var(--apya-text-primary)">
+
+  <div style="flex:0 0 320px;width:320px;background:var(--apya-surface-sidebar);border-right:1px solid var(--apya-border-default);display:flex;flex-direction:column;overflow:hidden">
+    <div style="height:64px;display:flex;align-items:center;padding:0 22px;gap:9px;flex:none">
+      <span style="font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--apya-text-primary)">Apya</span>
+      <span style="padding:1px 5px 0;font-size:8.5px;font-weight:700;letter-spacing:.6px;line-height:1.5;text-transform:uppercase;border-radius:5px;color:var(--apya-accent-500);background:var(--apya-accent-soft)">PLATFORM</span>
+      <i class="fa fa-chevron-left" style="margin-left:auto;font-size:11px;color:var(--apya-text-tertiary)"></i>
+    </div>
+    <div style="flex:1 1 auto;overflow:hidden;display:flex;flex-direction:column">
+
+      <div style="padding:15px 22px 4px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-secondary);border-top:1px solid var(--apya-border-subtle)">Sabitlenenler</div>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-bullhorn" style="width:16px;font-size:13px"></i><span>Çağrılar</span></a>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-table-columns" style="width:16px;font-size:13px"></i><span>Panolar</span><span style="margin-left:auto;font-size:11px;font-weight:600;color:var(--apya-negative-700);font-family:var(--apya-font-mono)">7</span></a>
+
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:9px 16px 1px;padding:0 10px 0 22px;border-radius:8px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-weight:600;font-size:13px"><i class="fa fa-bolt" style="width:16px;font-size:13px"></i><span>Makro Ekran</span></a>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-chart-line" style="width:16px;font-size:13px"></i><span>Genel Bakış</span></a>
+
+      <div style="padding:15px 22px 4px;margin-top:8px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-secondary);border-top:1px solid var(--apya-border-subtle)">İş Yönetimi</div>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-rocket" style="width:16px;font-size:13px"></i><span>Projeler</span><i class="fa fa-chevron-down" style="margin-left:auto;font-size:9px;color:var(--apya-text-tertiary)"></i></a>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-table-columns" style="width:16px;font-size:13px"></i><span>Panolar</span></a>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-calendar-days" style="width:16px;font-size:13px"></i><span>Takvim</span></a>
+
+      <div style="padding:15px 22px 4px;margin-top:8px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-secondary);border-top:1px solid var(--apya-border-subtle)">Hibe Yönetimi</div>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-sun" style="width:16px;font-size:13px"></i><span>Bugün</span></a>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-bullhorn" style="width:16px;font-size:13px"></i><span>Çağrılar</span></a>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-list-check" style="width:16px;font-size:13px"></i><span>Başvurularım</span><span style="margin-left:auto;min-width:18px;height:18px;padding:0 5px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:color-mix(in srgb,var(--apya-warning-500) 14%,transparent);color:var(--apya-warning-700);font-size:10.5px;font-weight:700;font-family:var(--apya-font-mono)">4</span></a>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-route" style="width:16px;font-size:13px"></i><span>Hibe Yolculuğum</span></a>
+
+      <div style="padding:15px 22px 4px;margin-top:8px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-secondary);border-top:1px solid var(--apya-border-subtle)">Finans &amp; Bütçe</div>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-cash-register" style="width:16px;font-size:13px"></i><span>Kasa &amp; Banka</span></a>
+      <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-chart-pie" style="width:16px;font-size:13px"></i><span>Finans Merkezi</span></a>
+
+      <div style="margin-top:auto;padding:10px 0 12px;border-top:1px solid var(--apya-border-subtle)">
+        <a href="#1a" style="display:flex;align-items:center;gap:10px;height:36px;margin:1px 16px;padding:0 10px 0 22px;border-radius:8px;color:var(--apya-text-secondary);font-size:13px"><i class="fa fa-gear" style="width:16px;font-size:13px"></i><span>Ayarlar</span></a>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column">
+    <div style="height:64px;flex:none;display:flex;align-items:center;gap:14px;padding:0 24px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+      <div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;border:1px solid var(--apya-border-default);border-radius:8px;font-size:12.5px;color:var(--apya-text-secondary)"><span style="width:20px;height:20px;border-radius:50%;background:var(--apya-brand-500);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">H</span>Hitprot<i class="fa fa-chevron-down" style="font-size:9px;color:var(--apya-text-tertiary)"></i></div>
+      <div style="display:flex;align-items:center;gap:2px">
+        <span style="width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;color:var(--apya-border-default)"><i class="fa fa-chevron-left" style="font-size:13px"></i></span>
+        <span style="width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;color:var(--apya-text-secondary)"><i class="fa fa-chevron-right" style="font-size:13px"></i></span>
+        <span style="width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;color:var(--apya-text-secondary)"><i class="fa fa-clock-rotate-left" style="font-size:13px"></i></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <span style="font-size:13px;color:var(--apya-text-tertiary)">Kısayollar</span>
+        <i class="fa fa-chevron-right" style="font-size:9px;color:var(--apya-border-strong)"></i>
+        <span style="font-size:13px;font-weight:600;color:var(--apya-text-primary)">Makro Ekran</span>
+      </div>
+      <div style="flex:1 1 auto;display:flex;justify-content:center">
+        <div style="display:flex;align-items:center;gap:8px;width:420px;height:34px;padding:0 10px 0 12px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-sunken);color:var(--apya-text-tertiary);font-size:13px"><i class="fa fa-magnifying-glass" style="font-size:12px"></i><span>Ara veya komut çalıştır…</span><span style="margin-left:auto;padding:1px 6px;border:1px solid var(--apya-border-default);border-radius:4px;background:var(--apya-surface-base);font-family:var(--apya-font-mono);font-size:10.5px">⌘K</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;color:var(--apya-text-secondary);font-size:15px">
+        <i class="fa fa-moon"></i><i class="fa fa-bars-staggered"></i><i class="fa fa-bell"></i>
+        <span style="width:30px;height:30px;border-radius:50%;background:var(--apya-brand-500);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">MY</span>
+      </div>
+    </div>
+
+    <div style="flex:1 1 auto;min-height:0;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:18px">
+
+      <div style="flex:none;position:relative;height:200px;border:1px solid var(--apya-border-default);border-radius:18px;background:var(--apya-surface-sunken);box-shadow:var(--apya-shadow-card);overflow:hidden">
+        <span style="position:absolute;inset:0">
+          <image-slot id="news-banner-bg" shape="rect" placeholder="Banner arka plan görseli"></image-slot>
+        </span>
+        <span style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,var(--apya-surface-base) 0%,var(--apya-surface-base) 46%,color-mix(in srgb,var(--apya-surface-base) 72%,transparent) 62%,transparent 86%)"></span>
+        <div style="position:relative;box-sizing:border-box;height:100%;max-width:640px;display:flex;flex-direction:column;gap:9px;padding:18px 28px 30px">
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--apya-negative-500) 12%,transparent);color:var(--apya-negative-700);font-size:11px;font-weight:600"><span style="width:5px;height:5px;border-radius:50%;background:var(--apya-negative-500)"></span>3 yeni</span>
+            <a href="#1f" style="font-size:11.5px;font-weight:600">Tüm haberler</a>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:6px;background:var(--apya-accent-soft);color:var(--apya-accent-600);font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase">Yeni çağrı</span>
+            <span style="font-size:11.5px;color:var(--apya-text-secondary);font-family:var(--apya-font-mono)">17.09.2026 · TÜBİTAK</span>
+          </div>
+          <div style="font-size:23px;font-weight:700;line-height:1.15;letter-spacing:-.02em;text-wrap:pretty">TÜBİTAK 1501 ikinci dönem açıldı</div>
+          <div style="max-width:470px;font-size:12.5px;line-height:1.45;color:var(--apya-text-secondary);text-wrap:pretty">Destek oranı %60’a çıktı, son başvuru 14 Ekim.</div>
+          <div style="margin-top:auto;display:flex;align-items:center;gap:10px">
+            <button type="button" style="height:38px;padding:0 16px;border:1px solid var(--apya-accent-500);border-radius:9px;background:var(--apya-accent-500);color:#fff;font:700 12.5px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-accent-600)">Çağrıdan başvuru başlat</button>
+            <button type="button" style="height:38px;padding:0 14px;border:1px solid var(--apya-border-default);border-radius:9px;background:var(--apya-surface-base);color:var(--apya-text-secondary);font:600 12.5px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-surface-hover);color:var(--apya-text-primary)">Çağrı detayı</button>
+          </div>
+        </div>
+        <button type="button" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--apya-border-default);border-radius:50%;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-md);color:var(--apya-text-secondary);cursor:pointer" style-hover="border-color:var(--apya-accent-500);color:var(--apya-accent-500)"><i class="fa fa-chevron-left" style="font-size:12px"></i></button>
+        <button type="button" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--apya-border-default);border-radius:50%;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-md);color:var(--apya-text-secondary);cursor:pointer" style-hover="border-color:var(--apya-accent-500);color:var(--apya-accent-500)"><i class="fa fa-chevron-right" style="font-size:12px"></i></button>
+        <div style="position:absolute;left:0;right:0;bottom:12px;display:flex;justify-content:center;gap:6px">
+          <sc-for list="{{ newsDots }}" as="d" hint-placeholder-count="5">
+            <span style="width:{{ d.w }};height:6px;border-radius:999px;background:{{ d.bg }};box-shadow:0 0 0 1px color-mix(in srgb,var(--apya-surface-base) 70%,transparent)"></span>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex:none;display:flex;align-items:center;gap:11px;padding:11px 16px;border:1px solid color-mix(in srgb,var(--apya-positive-500) 30%,var(--apya-border-default));border-radius:12px;background:color-mix(in srgb,var(--apya-positive-500) 7%,var(--apya-surface-base))">
+        <span style="width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:color-mix(in srgb,var(--apya-positive-500) 15%,transparent);color:var(--apya-positive-700);font-size:12px"><i class="fa fa-check"></i></span>
+        <span style="min-width:0;display:flex;flex-direction:column;gap:2px">
+          <span style="font-size:12.5px;font-weight:600">Çağrıdan başvuru başlat tamamlandı — 3 aşama, 11 görev, 6 belge talebi oluştu</span>
+          <span style="font-size:11px;color:var(--apya-text-tertiary);font-family:var(--apya-font-mono)">GRT-2026-0147 · 8 sn önce</span>
+        </span>
+        <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <a href="#1a" style="font-size:12px;font-weight:600">Başvuruyu aç</a>
+          <button type="button" style="height:30px;padding:0 12px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);color:var(--apya-text-secondary);font:600 12px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-surface-hover);color:var(--apya-text-primary)"><i class="fa fa-rotate-left" style="margin-right:6px;font-size:10.5px"></i>Geri al</button>
+          <i class="fa fa-xmark" style="font-size:12px;color:var(--apya-text-tertiary)"></i>
+        </span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:532px 1fr 1fr;gap:16px;align-items:stretch">
+      <div style="min-width:0;display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary)">Senin için</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:999px;background:var(--apya-accent-soft);color:var(--apya-accent-600);font-size:11px;font-weight:600">son 30 günkü kullanımına göre</span>
+          <span style="margin-left:auto;display:flex;gap:8px">
+            <button type="button" style="height:30px;padding:0 11px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);color:var(--apya-text-secondary);font:600 12px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-surface-hover);color:var(--apya-text-primary)"><i class="fa fa-thumbtack" style="margin-right:6px;font-size:10.5px"></i>Düzenle</button>
+            <button type="button" style="height:30px;padding:0 13px;border:1px solid var(--apya-accent-500);border-radius:8px;background:var(--apya-accent-500);color:#fff;font:600 12px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-accent-600)"><i class="fa fa-plus" style="margin-right:6px;font-size:10.5px"></i>Makro ekle</button>
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <sc-for list="{{ hero }}" as="m" hint-placeholder-count="4">
+            <button type="button" style="min-width:0;min-height:124px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:13px;text-align:left;border:1px solid var(--apya-accent-500);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);cursor:pointer;font-family:var(--apya-font-sans)" style-hover="box-shadow:var(--apya-shadow-md)">
+              <span style="display:flex;align-items:center;gap:6px;width:100%">
+                <span style="position:relative;width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-size:14px">
+                  <i class="{{ m.icon }}"></i>
+                  <span style="position:absolute;top:-6px;right:-6px;display:{{ m.badgeShow }};align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:var(--apya-negative-500);color:#fff;font-family:var(--apya-font-mono);font-size:10px;font-weight:700;border:1.5px solid var(--apya-surface-base)">{{ m.badge }}</span>
+                </span>
+                <i class="fa fa-thumbtack" style="margin-left:auto;font-size:10px;color:var(--apya-accent-500)"></i>
+              </span>
+              <span style="font-size:12.5px;font-weight:600;line-height:1.3;color:var(--apya-text-primary)">{{ m.title }}</span>
+              <span style="margin-top:auto;padding-top:2px;font-size:10.5px;color:var(--apya-text-tertiary);font-family:var(--apya-font-mono)">{{ m.short }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary)">Tüm makrolar</span>
+          <span style="font-size:11.5px;color:var(--apya-text-tertiary)">12 işlem · sıklığa göre</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <sc-for list="{{ rest }}" as="m" hint-placeholder-count="12">
+            <button type="button" style="min-width:0;height:124px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:13px;text-align:left;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);cursor:pointer;font-family:var(--apya-font-sans)" style-hover="border-color:var(--apya-accent-500);background:var(--apya-surface-raised)">
+              <span style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:14px">
+                <i class="{{ m.icon }}"></i>
+                <span style="position:absolute;top:-6px;right:-6px;display:{{ m.badgeShow }};align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:var(--apya-negative-500);color:#fff;font-family:var(--apya-font-mono);font-size:10px;font-weight:700;border:1.5px solid var(--apya-surface-base)">{{ m.badge }}</span>
+              </span>
+              <span style="font-size:12.5px;font-weight:600;line-height:1.3;color:var(--apya-text-primary)">{{ m.title }}</span>
+              <span style="margin-top:auto;font-size:10.5px;color:var(--apya-text-tertiary);font-family:var(--apya-font-mono)">{{ m.use }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      </div>
+
+      <div style="position:relative;min-width:0;min-height:0">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);overflow:hidden">
+        <div style="flex:none;display:flex;align-items:center;gap:9px;padding:12px 16px;border-bottom:1px solid var(--apya-border-subtle)">
+          <span style="font-size:13px;font-weight:600">Bildirimler</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 6px;border-radius:999px;background:var(--apya-negative-500);color:#fff;font-family:var(--apya-font-mono);font-size:10.5px;font-weight:700">3</span>
+          <span style="font-size:11px;color:var(--apya-text-tertiary)">en yeni üstte</span>
+          <a href="#1a" style="margin-left:auto;font-size:11.5px;font-weight:600">Tümü</a>
+        </div>
+        <div style="flex:1 1 auto;min-height:0;overflow-y:auto">
+        <sc-for list="{{ notifications }}" as="b" hint-placeholder-count="8">
+          <a href="#1a" style="display:flex;align-items:flex-start;gap:10px;padding:11px 16px;border-bottom:1px solid var(--apya-border-subtle);background:{{ b.bg }};color:inherit" style-hover="background:var(--apya-surface-raised)">
+            <span style="flex:none;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:{{ b.iconBg }};color:{{ b.iconFg }};font-size:11px"><i class="{{ b.icon }}"></i></span>
+            <span style="min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:12px;font-weight:600;line-height:1.35;color:var(--apya-text-primary);text-wrap:pretty">{{ b.title }}</span>
+              <span style="font-size:11px;color:var(--apya-text-tertiary);line-height:1.3">{{ b.meta }}</span>
+              <span style="display:{{ b.actionShow }};align-items:center;gap:5px;margin-top:3px;font-size:11px;font-weight:600;color:var(--apya-accent-500)"><i class="fa fa-bolt" style="font-size:9px"></i>{{ b.action }}</span>
+            </span>
+            <span style="flex:none;width:7px;height:7px;margin-top:5px;border-radius:50%;background:{{ b.dot }}"></span>
+          </a>
+        </sc-for>
+        </div>
+      </div>
+      </div>
+
+      <div style="position:relative;min-width:0;min-height:0">
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);overflow:hidden">
+        <div style="flex:none;display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--apya-border-subtle)">
+          <span style="font-size:13px;font-weight:600">Bana ait kayıtlar</span>
+          <span style="font-size:11px;color:var(--apya-text-tertiary)">canlı</span>
+        </div>
+        <div style="flex:1 1 auto;min-height:0;overflow-y:auto">
+          <sc-for list="{{ myGroups }}" as="g" hint-placeholder-count="3">
+            <div>
+              <div style="display:flex;align-items:center;gap:7px;padding:9px 16px 6px;background:var(--apya-surface-raised);border-bottom:1px solid var(--apya-border-subtle)">
+                <i class="{{ g.icon }}" style="font-size:10.5px;color:var(--apya-text-tertiary)"></i>
+                <span style="font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--apya-text-secondary)">{{ g.title }}</span>
+                <span style="margin-left:auto;font-family:var(--apya-font-mono);font-size:10.5px;color:var(--apya-text-tertiary)">{{ g.count }}</span>
+              </div>
+              <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+                <a href="#1a" style="display:flex;align-items:center;gap:9px;padding:9px 16px;border-bottom:1px solid var(--apya-border-subtle);background:{{ it.bg }};color:inherit" style-hover="background:var(--apya-surface-raised)">
+                  <span style="flex:none;width:6px;height:6px;border-radius:50%;background:{{ it.dot }}"></span>
+                  <span style="min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:1px">
+                    <span style="font-size:12px;font-weight:600;line-height:1.3;color:var(--apya-text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ it.title }}</span>
+                    <span style="font-size:10.5px;color:var(--apya-text-tertiary);line-height:1.3">{{ it.meta }}</span>
+                  </span>
+                  <i class="{{ it.flagIcon }}" style="flex:none;font-size:9.5px;color:var(--apya-accent-500);opacity:{{ it.flagOp }}"></i>
+                </a>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </div>
+      </div>
+
+      <div style="flex:none;min-width:0;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);overflow:hidden">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--apya-border-subtle)">
+          <span style="font-size:13px;font-weight:600">Bekleyen işler</span>
+          <span style="display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--apya-warning-500) 14%,transparent);color:var(--apya-warning-700);font-size:11px;font-weight:600">21 kayıt</span>
+          <a href="#1a" style="margin-left:auto;font-size:12px;font-weight:600">Tümünü gör</a>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr)">
+          <sc-for list="{{ queue }}" as="q" hint-placeholder-count="5">
+            <a href="#1a" style="min-width:0;display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-right:1px solid var(--apya-border-subtle);color:inherit" style-hover="background:var(--apya-surface-raised)">
+              <span style="display:flex;align-items:baseline;gap:8px">
+                <span style="font-size:22px;font-weight:700;letter-spacing:-.02em;font-family:var(--apya-font-mono);color:{{ q.color }}">{{ q.count }}</span>
+                <i class="{{ q.icon }}" style="font-size:11px;color:var(--apya-text-tertiary)"></i>
+              </span>
+              <span style="font-size:12px;font-weight:600;color:var(--apya-text-primary);line-height:1.3">{{ q.title }}</span>
+              <span style="font-size:11px;color:var(--apya-text-tertiary);line-height:1.35">{{ q.sub }}</span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Klavye-öncelikli: ekranın kendisi büyük bir komut alanı. Yaz-filtrele, 1-9 tuşlarıyla çalıştır. Aynı 16 makro, liste ritminde; bekleyen işler sağ kolonda.</div>
+<div class="dv-card" style="width:1120px">
+<div style="height:760px;display:flex;flex-direction:column;background:var(--apya-surface-app-bg);color:var(--apya-text-primary)">
+  <div style="height:64px;flex:none;display:flex;align-items:center;gap:14px;padding:0 24px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+    <span style="font-size:13px;color:var(--apya-text-tertiary)">Kısayollar</span>
+    <i class="fa fa-chevron-right" style="font-size:9px;color:var(--apya-border-strong)"></i>
+    <span style="font-size:13px;font-weight:600">Makro Ekran</span>
+    <span style="margin-left:auto;font-size:11.5px;color:var(--apya-text-tertiary)">içerik alanı — kenar çubuğu <a href="#1a">1a</a>’daki gibi</span>
+  </div>
+
+  <div style="flex:1 1 auto;min-height:0;display:flex;gap:20px;padding:22px 24px">
+    <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 18px;border:1px solid var(--apya-accent-500);border-radius:14px;background:var(--apya-surface-base);box-shadow:0 0 0 3px var(--apya-accent-soft)">
+        <i class="fa fa-bolt" style="font-size:15px;color:var(--apya-accent-500)"></i>
+        <span style="font-size:16px;color:var(--apya-text-tertiary)">Makro ara veya yaz: “başvuru başlat”…</span>
+        <span style="margin-left:auto;display:flex;gap:6px;font-family:var(--apya-font-mono);font-size:10.5px;color:var(--apya-text-tertiary)">
+          <span style="padding:2px 6px;border:1px solid var(--apya-border-default);border-radius:4px">↑↓ gez</span>
+          <span style="padding:2px 6px;border:1px solid var(--apya-border-default);border-radius:4px">↵ çalıştır</span>
+          <span style="padding:2px 6px;border:1px solid var(--apya-border-default);border-radius:4px">1-9 doğrudan</span>
+        </span>
+      </div>
+
+      <div style="flex:1 1 auto;min-height:0;overflow:hidden;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm)">
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 18px 7px;border-bottom:1px solid var(--apya-border-subtle)">
+          <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary)">Oluştur</span>
+          <span style="font-size:11px;color:var(--apya-text-tertiary)">sabitlenenler önce · aynı liste ⌘K paletinde de çıkar</span>
+        </div>
+        <sc-for list="{{ keyboard }}" as="m" hint-placeholder-count="10">
+          <a href="#1b" style="display:flex;align-items:center;gap:12px;padding:0 18px;height:52px;border-bottom:1px solid var(--apya-border-subtle);color:inherit;background:{{ m.bg }}" style-hover="background:var(--apya-surface-raised)">
+            <span style="width:22px;height:22px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;border:1px solid var(--apya-border-default);background:var(--apya-surface-sunken);font-family:var(--apya-font-mono);font-size:11px;font-weight:700;color:var(--apya-text-secondary)">{{ m.key }}</span>
+            <span style="width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-size:13px"><i class="{{ m.icon }}"></i></span>
+            <span style="min-width:0;display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:13.5px;font-weight:600;line-height:1.2">{{ m.title }}</span>
+              <span style="font-size:11.5px;color:var(--apya-text-tertiary);line-height:1.2">{{ m.sub }}</span>
+            </span>
+            <span style="margin-left:auto;display:flex;align-items:center;gap:12px">
+              <span style="font-size:10.5px;color:var(--apya-text-tertiary);font-family:var(--apya-font-mono)">{{ m.use }}</span>
+              <i class="{{ m.cls }}" style="font-size:11px;color:{{ m.color }};opacity:{{ m.op }}"></i>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:0 0 300px;width:300px;display:flex;flex-direction:column;gap:12px">
+      <div style="border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);overflow:hidden">
+        <div style="padding:11px 16px;font-size:12.5px;font-weight:600;border-bottom:1px solid var(--apya-border-subtle)">Bekleyen işler</div>
+        <sc-for list="{{ queue }}" as="q" hint-placeholder-count="5">
+          <a href="#1b" style="display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--apya-border-subtle);color:inherit" style-hover="background:var(--apya-surface-raised)">
+            <span style="width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:var(--apya-surface-sunken);font-size:12px;color:var(--apya-text-secondary)"><i class="{{ q.icon }}"></i></span>
+            <span style="min-width:0;display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:12.5px;font-weight:600;line-height:1.25">{{ q.title }}</span>
+              <span style="font-size:11px;color:var(--apya-text-tertiary);line-height:1.25">{{ q.sub }}</span>
+            </span>
+            <span style="margin-left:auto;font-family:var(--apya-font-mono);font-size:15px;font-weight:700;color:{{ q.color }}">{{ q.count }}</span>
+          </a>
+        </sc-for>
+      </div>
+      <div style="padding:13px 16px;border:1px dashed var(--apya-border-strong);border-radius:14px;background:var(--apya-surface-raised);font-size:11.5px;line-height:1.5;color:var(--apya-text-secondary)">
+        Sıralama: sabitlenenler sabit, gerisi son 30 günlük kullanım sayına göre. Yer değiştiren buton üstteki şeritte “Senin için” etiketiyle çıkar.
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Makroya basıldıktan sonrası: tek sayfalık ön izleme. Ne oluşacağı kalem kalem listelenir, sorumlu değiştirilebilir, “Onayla”ya kadar hiçbir kayıt yazılmaz.</div>
+<div class="dv-card" style="width:1120px">
+<div style="height:760px;display:flex;flex-direction:column;background:var(--apya-surface-app-bg);color:var(--apya-text-primary)">
+  <div style="height:64px;flex:none;display:flex;align-items:center;gap:10px;padding:0 24px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+    <span style="font-size:13px;color:var(--apya-text-tertiary)">Makro Ekran</span>
+    <i class="fa fa-chevron-right" style="font-size:9px;color:var(--apya-border-strong)"></i>
+    <span style="font-size:13px;font-weight:600">Çağrıdan başvuru başlat</span>
+    <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:var(--apya-accent-soft);color:var(--apya-accent-600);font-size:11px;font-weight:600"><i class="fa fa-eye" style="font-size:10px"></i>ön izleme — henüz kaydedilmedi</span>
+  </div>
+
+  <div style="flex:1 1 auto;min-height:0;display:flex;gap:20px;padding:22px 24px">
+    <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm)">
+        <span style="width:40px;height:40px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-size:16px"><i class="fa fa-bullhorn"></i></span>
+        <span style="min-width:0;display:flex;flex-direction:column;gap:3px">
+          <span style="font-size:14.5px;font-weight:700;letter-spacing:-.01em">TÜBİTAK 1501 — Sanayi Ar-Ge · 2026/2</span>
+          <span style="font-size:11.5px;color:var(--apya-text-secondary)">Şablon: Ar-Ge Standart Aşama Seti · Son başvuru 14 Ekim 2026</span>
+        </span>
+        <button type="button" style="margin-left:auto;height:32px;padding:0 12px;border:1px solid var(--apya-border-default);border-radius:8px;background:var(--apya-surface-base);color:var(--apya-text-secondary);font:600 12px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-surface-hover)">Şablonu değiştir</button>
+      </div>
+
+      <div style="flex:1 1 auto;min-height:0;overflow:hidden;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);display:flex;flex-direction:column">
+        <div style="padding:11px 18px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary);border-bottom:1px solid var(--apya-border-subtle)">Oluşturulacak kayıtlar</div>
+        <div style="flex:1 1 auto;min-height:0;overflow:hidden">
+          <sc-for list="{{ preview }}" as="p" hint-placeholder-count="6">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 18px;border-bottom:1px solid var(--apya-border-subtle)">
+              <span style="width:26px;height:26px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:11px"><i class="{{ p.icon }}"></i></span>
+              <span style="min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:3px">
+                <span style="font-size:12.5px;font-weight:600;line-height:1.3">{{ p.title }}</span>
+                <span style="font-size:11.5px;color:var(--apya-text-tertiary);line-height:1.4">{{ p.sub }}</span>
+              </span>
+              <span style="flex:none;display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-family:var(--apya-font-mono);font-size:11px;font-weight:600">{{ p.count }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:0 0 300px;width:300px;display:flex;flex-direction:column;gap:12px">
+      <div style="padding:16px;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);display:flex;flex-direction:column;gap:12px">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary)">Sorumlu</span>
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--apya-border-default);border-radius:10px;background:var(--apya-surface-sunken)">
+          <span style="width:26px;height:26px;border-radius:50%;background:var(--apya-brand-500);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">MY</span>
+          <span style="font-size:12.5px;font-weight:600">Mert Yartanbaba</span>
+          <i class="fa fa-chevron-down" style="margin-left:auto;font-size:10px;color:var(--apya-text-tertiary)"></i>
+        </div>
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary)">Termin hesabı</span>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--apya-text-secondary)">
+          <div style="display:flex;justify-content:space-between"><span>İlk aşama başlangıcı</span><span style="font-family:var(--apya-font-mono);color:var(--apya-text-primary)">18.09.2026</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Belge toplama bitiş</span><span style="font-family:var(--apya-font-mono);color:var(--apya-text-primary)">03.10.2026</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Son başvuru</span><span style="font-family:var(--apya-font-mono);color:var(--apya-warning-700);font-weight:600">14.10.2026</span></div>
+        </div>
+      </div>
+
+      <div style="padding:14px 16px;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-raised)">
+        <div style="font-size:11px;color:var(--apya-text-secondary);line-height:1.5">Onayladığında <strong style="color:var(--apya-text-primary)">3 aşama</strong>, <strong style="color:var(--apya-text-primary)">11 görev</strong> ve <strong style="color:var(--apya-text-primary)">6 belge talebi</strong> oluşur; firmaya tek bildirim gider.</div>
+      </div>
+
+      <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+        <button type="button" style="height:42px;border:1px solid var(--apya-accent-500);border-radius:10px;background:var(--apya-accent-500);color:#fff;font:700 13px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-accent-600)">Onayla ve oluştur</button>
+        <button type="button" style="height:38px;border:1px solid var(--apya-border-default);border-radius:10px;background:var(--apya-surface-base);color:var(--apya-text-secondary);font:600 12.5px var(--apya-font-sans);cursor:pointer" style-hover="background:var(--apya-surface-hover);color:var(--apya-text-primary)">Vazgeç</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1d">
+<div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Dokunmatik (1024×768 tablet): 6’lı büyük kart ızgarası, hepsi 44px’in çok üstünde. Kenar çubuğu dokunmatikte genişletilmiş kalır — repo kuralı. Koyu tema.</div>
+<div class="dv-card apya-dark" style="width:1024px">
+<div style="display:flex;height:768px;background:var(--apya-surface-app-bg);color:var(--apya-text-primary)">
+  <div style="flex:0 0 250px;width:250px;background:var(--apya-surface-sidebar);border-right:1px solid var(--apya-border-default);display:flex;flex-direction:column">
+    <div style="height:64px;display:flex;align-items:center;padding:0 20px;gap:8px">
+      <span style="font-size:16px;font-weight:700;letter-spacing:-.02em">Apya</span>
+      <span style="padding:1px 5px 0;font-size:8.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;border-radius:5px;color:var(--apya-accent-500);background:var(--apya-accent-soft)">PLATFORM</span>
+    </div>
+    <div style="padding:15px 20px 4px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-secondary);border-top:1px solid var(--apya-border-subtle)">Sabitlenenler</div>
+    <a href="#1d" style="display:flex;align-items:center;gap:10px;height:44px;margin:1px 14px;padding:0 10px 0 20px;border-radius:8px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-weight:600;font-size:13.5px"><i class="fa fa-bolt" style="width:16px"></i>Makro Ekran</a>
+    <a href="#1d" style="display:flex;align-items:center;gap:10px;height:44px;margin:1px 14px;padding:0 10px 0 20px;border-radius:8px;color:var(--apya-text-secondary);font-size:13.5px"><i class="fa fa-sun" style="width:16px"></i>Bugün</a>
+    <a href="#1d" style="display:flex;align-items:center;gap:10px;height:44px;margin:1px 14px;padding:0 10px 0 20px;border-radius:8px;color:var(--apya-text-secondary);font-size:13.5px"><i class="fa fa-table-columns" style="width:16px"></i>Panolar<span style="margin-left:auto;font-family:var(--apya-font-mono);font-size:11.5px;font-weight:600;color:var(--apya-negative-700)">7</span></a>
+    <div style="padding:15px 20px 4px;margin-top:8px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-secondary);border-top:1px solid var(--apya-border-subtle)">Hibe Yönetimi</div>
+    <a href="#1d" style="display:flex;align-items:center;gap:10px;height:44px;margin:1px 14px;padding:0 10px 0 20px;border-radius:8px;color:var(--apya-text-secondary);font-size:13.5px"><i class="fa fa-bullhorn" style="width:16px"></i>Çağrılar</a>
+    <a href="#1d" style="display:flex;align-items:center;gap:10px;height:44px;margin:1px 14px;padding:0 10px 0 20px;border-radius:8px;color:var(--apya-text-secondary);font-size:13.5px"><i class="fa fa-list-check" style="width:16px"></i>Başvurularım</a>
+    <div style="margin-top:auto;padding:10px 0 14px;border-top:1px solid var(--apya-border-subtle)">
+      <a href="#1d" style="display:flex;align-items:center;gap:10px;height:44px;margin:1px 14px;padding:0 10px 0 20px;border-radius:8px;color:var(--apya-text-secondary);font-size:13.5px"><i class="fa fa-gear" style="width:16px"></i>Ayarlar</a>
+    </div>
+  </div>
+
+  <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column">
+    <div style="height:64px;flex:none;display:flex;align-items:center;gap:12px;padding:0 20px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+      <span style="font-size:14px;font-weight:600">Makro Ekran</span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border:1px solid var(--apya-border-default);border-radius:10px;background:var(--apya-surface-sunken);color:var(--apya-text-tertiary);font-size:13px"><i class="fa fa-magnifying-glass" style="font-size:12px"></i>Ara</span>
+      <span style="width:40px;height:40px;border-radius:50%;background:var(--apya-brand-500);color:#172554;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">MY</span>
+    </div>
+
+    <div style="flex:1 1 auto;min-height:0;overflow:hidden;padding:20px;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary)">Senin için</span>
+        <span style="font-size:11.5px;color:var(--apya-text-tertiary)">en çok kullandığın 6 işlem</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <sc-for list="{{ touch }}" as="m" hint-placeholder-count="6">
+          <button type="button" style="display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-height:132px;padding:18px;text-align:left;border:1px solid var(--apya-border-default);border-radius:16px;background:var(--apya-surface-raised);cursor:pointer;font-family:var(--apya-font-sans)" style-active="background:var(--apya-surface-hover)">
+            <span style="width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-size:19px"><i class="{{ m.icon }}"></i></span>
+            <span style="font-size:15px;font-weight:700;line-height:1.25;color:var(--apya-text-primary)">{{ m.title }}</span>
+            <span style="font-size:12px;line-height:1.4;color:var(--apya-text-secondary)">{{ m.sub }}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="flex:1 1 auto;min-height:0;border:1px solid var(--apya-border-default);border-radius:16px;background:var(--apya-surface-base);overflow:hidden">
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--apya-border-subtle)">
+          <span style="font-size:13.5px;font-weight:600">Bekleyen işler</span>
+          <a href="#1d" style="margin-left:auto;font-size:12.5px;font-weight:600">Tümü</a>
+        </div>
+        <sc-for list="{{ queueShort }}" as="q" hint-placeholder-count="3">
+          <a href="#1d" style="display:flex;align-items:center;gap:12px;height:56px;padding:0 18px;border-bottom:1px solid var(--apya-border-subtle);color:inherit">
+            <span style="width:34px;height:34px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;background:var(--apya-surface-sunken);color:var(--apya-text-secondary);font-size:13px"><i class="{{ q.icon }}"></i></span>
+            <span style="font-size:13.5px;font-weight:600">{{ q.title }}</span>
+            <span style="margin-left:auto;font-family:var(--apya-font-mono);font-size:17px;font-weight:700;color:{{ q.color }}">{{ q.count }}</span>
+            <i class="fa fa-chevron-right" style="font-size:11px;color:var(--apya-text-tertiary)"></i>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1g">
+<div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Mobil: alt tab bar yok — gezinme hamburger menüde, arama üst barda. Masaüstünün üç paneli sekmeye indirildi. Masaüstüyle aynı banner (parmakla kaydırılıyor) + sayfalı makro ızgarası (6’lı sayfalar, sağa kaydırınca kalanlar geliyor), altındaki bölüm sekmeli — Bildirimler / Kayıtlarım / Bekleyen aynı yüzeyi paylaşıyor, tek liste kendi içinde kayıyor.</div>
+<div class="dv-card" style="width:390px;border-radius:26px">
+<div style="height:844px;display:flex;flex-direction:column;background:var(--apya-surface-app-bg);color:var(--apya-text-primary)">
+  <div style="height:52px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 22px 6px;font-family:var(--apya-font-mono);font-size:12px;font-weight:600">
+    <span>09:41</span>
+    <span style="display:flex;gap:6px;font-family:var(--apya-font-sans)"><i class="fa fa-signal" style="font-size:11px"></i><i class="fa fa-wifi" style="font-size:11px"></i><i class="fa fa-battery-full" style="font-size:11px"></i></span>
+  </div>
+
+  <div style="height:56px;flex:none;display:flex;align-items:center;gap:10px;padding:0 20px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+    <span style="display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-left:-8px;color:var(--apya-text-secondary);font-size:16px"><i class="fa fa-bars"></i></span>
+    <span style="font-size:16px;font-weight:700;letter-spacing:-.02em">Apya</span>
+    <span style="padding:1px 5px 0;font-size:8.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;border-radius:5px;color:var(--apya-accent-500);background:var(--apya-accent-soft)">PLATFORM</span>
+    <span style="margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;color:var(--apya-text-secondary);font-size:15px"><i class="fa fa-magnifying-glass"></i></span><span style="position:relative;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;color:var(--apya-text-secondary);font-size:15px"><i class="fa fa-bell"></i><span style="position:absolute;top:4px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--apya-negative-500);border:1.5px solid var(--apya-surface-base)"></span></span>
+    <span style="width:34px;height:34px;border-radius:50%;background:var(--apya-brand-500);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">MY</span>
+  </div>
+
+  <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:14px;padding:16px 20px 0">
+    <div style="flex:none;overflow:hidden;margin:0 -20px">
+      <div style="display:flex;gap:12px;padding:2px 20px">
+        <sc-for list="{{ news }}" as="w" hint-placeholder-count="5">
+          <div style="flex:0 0 344px;width:344px;position:relative;height:124px;border:1px solid var(--apya-border-default);border-radius:16px;background:var(--apya-surface-sunken);box-shadow:var(--apya-shadow-card);overflow:hidden">
+            <span style="position:absolute;inset:0">
+              <image-slot id="{{ w.slotTab }}" shape="rect" placeholder="banner görseli"></image-slot>
+            </span>
+            <span style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,color-mix(in srgb,var(--apya-surface-base) 94%,transparent) 0%,color-mix(in srgb,var(--apya-surface-base) 88%,transparent) 56%,transparent 100%)"></span>
+            <div style="position:relative;box-sizing:border-box;height:100%;max-width:250px;display:flex;flex-direction:column;gap:5px;padding:12px 14px">
+              <span style="display:flex;align-items:center;gap:7px">
+                <span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;background:{{ w.tagBg }};color:{{ w.tagFg }};font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase">{{ w.tag }}</span>
+                <span style="font-size:10px;color:var(--apya-text-secondary);font-family:var(--apya-font-mono)">{{ w.date }}</span>
+              </span>
+              <span style="font-size:14px;font-weight:700;line-height:1.2;letter-spacing:-.01em;text-wrap:pretty">{{ w.title }}</span>
+              <span style="margin-top:auto;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--apya-accent-500)">{{ w.cta }}<i class="fa fa-arrow-right" style="font-size:8.5px"></i></span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;padding:9px 20px 0">
+        <span style="display:flex;gap:5px">
+          <sc-for list="{{ newsDots }}" as="d" hint-placeholder-count="5">
+            <span style="width:{{ d.w }};height:5px;border-radius:999px;background:{{ d.bg }}"></span>
+          </sc-for>
+        </span>
+        <a href="#1f" style="margin-left:auto;font-size:11.5px;font-weight:600">Tüm haberler</a>
+      </div>
+    </div>
+
+    <div style="flex:none">
+      <div style="overflow:hidden;margin:0 -20px">
+        <div style="display:flex;gap:16px;padding:0 20px">
+          <sc-for list="{{ macroPages }}" as="p" hint-placeholder-count="2">
+            <div style="flex:0 0 322px;width:322px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+              <sc-for list="{{ p.items }}" as="m" hint-placeholder-count="6">
+                <button type="button" style="position:relative;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px 8px;text-align:center;border:1px solid var(--apya-border-default);border-radius:16px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);cursor:pointer;font-family:var(--apya-font-sans)" style-active="background:var(--apya-surface-hover)">
+                  <span style="position:absolute;top:8px;right:8px;display:{{ m.badgeShow }};align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--apya-negative-500);color:#fff;font-family:var(--apya-font-mono);font-size:10.5px;font-weight:700">{{ m.badge }}</span>
+                  <span style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--apya-accent-soft);color:var(--apya-accent-500);font-size:17px"><i class="{{ m.icon }}"></i></span>
+                  <span style="font-size:11.5px;font-weight:600;line-height:1.25">{{ m.title }}</span>
+                  <span style="display:{{ m.queueShow }};align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--apya-warning-700)"><i class="fa fa-cloud-arrow-up" style="font-size:9px"></i>{{ m.queueLabel }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;margin-top:10px">
+        <span style="font-size:10.5px;color:var(--apya-text-tertiary)">Sabitlemek için uzun bas</span>
+        <span style="margin-left:auto;display:flex;gap:5px">
+          <sc-for list="{{ macroDots }}" as="d" hint-placeholder-count="2">
+            <span style="width:{{ d.w }};height:5px;border-radius:999px;background:{{ d.bg }}"></span>
+          </sc-for>
+        </span>
+      </div>
+    </div>
+
+    <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border:1px solid var(--apya-border-default);border-top-left-radius:16px;border-top-right-radius:16px;border-bottom:none;background:var(--apya-surface-base);overflow:hidden;padding-bottom:env(safe-area-inset-bottom)">
+      <div style="flex:none;display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--apya-border-default)">
+        <sc-for list="{{ mobileTabs }}" as="t" hint-placeholder-count="3">
+          <span style="min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;height:40px;border-bottom:2px solid {{ t.rule }};color:{{ t.fg }}">
+            <span style="font-size:11.5px;font-weight:600;line-height:1.2">{{ t.label }}</span>
+            <span style="display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:16px;padding:0 6px;border-radius:999px;background:{{ t.badgeBg }};color:{{ t.badgeFg }};font-family:var(--apya-font-mono);font-size:10px;font-weight:700">{{ t.count }}</span>
+          </span>
+        </sc-for>
+      </div>
+      <div style="flex:1 1 auto;min-height:0;overflow-y:auto">
+        <sc-for list="{{ notifications }}" as="b" hint-placeholder-count="11">
+          <a href="#1g" style="display:flex;align-items:flex-start;gap:10px;padding:11px 16px;border-bottom:1px solid var(--apya-border-subtle);background:{{ b.bg }};color:inherit">
+            <span style="flex:none;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;background:{{ b.iconBg }};color:{{ b.iconFg }};font-size:12px"><i class="{{ b.icon }}"></i></span>
+            <span style="min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:2px">
+              <span style="font-size:12.5px;font-weight:600;line-height:1.35;text-wrap:pretty">{{ b.title }}</span>
+              <span style="font-size:11px;color:var(--apya-text-tertiary);line-height:1.3">{{ b.meta }}</span>
+            </span>
+            <span style="flex:none;width:7px;height:7px;margin-top:6px;border-radius:50%;background:{{ b.dot }}"></span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1f">
+<div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>“Tüm haberler” — şeritteki oktan sonuna gelince veya başlıktaki bağlantıdan açılır. Aynı kart anatomisi, tek kolon tam genişlik; solda tür filtreleri.</div>
+<div class="dv-card" style="width:1120px">
+<div style="height:700px;display:flex;flex-direction:column;background:var(--apya-surface-app-bg);color:var(--apya-text-primary)">
+  <div style="height:64px;flex:none;display:flex;align-items:center;gap:10px;padding:0 24px;background:var(--apya-surface-base);border-bottom:1px solid var(--apya-border-default)">
+    <a href="#1a" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--apya-text-secondary)"><i class="fa fa-arrow-left" style="font-size:11px"></i>Makro Ekran</a>
+    <i class="fa fa-chevron-right" style="font-size:9px;color:var(--apya-border-strong)"></i>
+    <span style="font-size:13px;font-weight:600">Hibeler ve gelişmeler</span>
+  </div>
+  <div style="flex:1 1 auto;min-height:0;display:flex;gap:20px;padding:22px 24px">
+    <div style="flex:0 0 188px;width:188px;display:flex;flex-direction:column;gap:5px">
+      <span style="padding:0 10px 6px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--apya-text-tertiary)">Tür</span>
+      <sc-for list="{{ newsFilters }}" as="f" hint-placeholder-count="5">
+        <a href="#1f" style="display:flex;align-items:center;gap:9px;height:34px;padding:0 10px;border-radius:8px;background:{{ f.bg }};color:{{ f.fg }};font-size:12.5px;font-weight:600">{{ f.label }}<span style="margin-left:auto;font-family:var(--apya-font-mono);font-size:11px;opacity:.8">{{ f.count }}</span></a>
+      </sc-for>
+    </div>
+    <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+      <sc-for list="{{ news }}" as="w" hint-placeholder-count="5">
+        <a href="#1f" style="flex:none;display:flex;min-height:104px;border:1px solid var(--apya-border-default);border-radius:14px;background:var(--apya-surface-base);box-shadow:var(--apya-shadow-sm);overflow:hidden;color:inherit" style-hover="border-color:var(--apya-accent-500);box-shadow:var(--apya-shadow-md)">
+          <span style="flex:0 0 132px;width:132px;min-width:0;position:relative;background:var(--apya-surface-sunken)">
+            <image-slot id="{{ w.slotList }}" shape="rect" placeholder="{{ w.ph }}"></image-slot>
+          </span>
+          <span style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:5px;padding:14px 16px">
+            <span style="display:flex;align-items:center;gap:7px">
+              <span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;background:{{ w.tagBg }};color:{{ w.tagFg }};font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase">{{ w.tag }}</span>
+              <span style="font-size:10.5px;color:var(--apya-text-tertiary);font-family:var(--apya-font-mono)">{{ w.date }}</span>
+            </span>
+            <span style="font-size:14.5px;font-weight:700;line-height:1.3;text-wrap:pretty">{{ w.title }}</span>
+            <span style="font-size:12px;line-height:1.45;color:var(--apya-text-secondary);text-wrap:pretty">{{ w.sub }}</span>
+          </span>
+          <span style="flex:none;display:flex;align-items:center;padding:0 18px;font-size:11.5px;font-weight:600;color:var(--apya-accent-500)">{{ w.cta }}<i class="fa fa-arrow-right" style="margin-left:6px;font-size:9px"></i></span>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Sonraki adım için: “<a class="dv-oid" href="#1a">1a</a> kalsın ama ön izleme <a class="dv-oid" href="#1c">1c</a>’deki gibi açılsın” · “<a class="dv-oid" href="#1b">1b</a>’yi ⌘K paletinin içine taşı” · “makro listesini şu 8 işlemle değiştir”</p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const neg = 'var(--apya-negative-700)', warn = 'var(--apya-warning-700)', acc = 'var(--apya-accent-500)';
+    const hero = [
+      { icon: 'fa fa-bullhorn', title: 'Çağrıdan başvuru başlat', sub: 'Aşamalar, görevler ve belge listesi tek akışta', use: 'bu ay 24 kez' },
+      { icon: 'fa fa-file-circle-exclamation', title: 'Eksik belgeleri iste', sub: 'Tek mesaj + takip görevi', use: 'bu ay 19 kez' },
+      { icon: 'fa fa-lightbulb', title: 'Fikri çağrıyla eşleştir', sub: 'Uygun çağrıyı öner, firmayı davet et', use: 'bu ay 12 kez' },
+      { icon: 'fa fa-plus', title: 'Görev aç', sub: 'Projeye veya başvuruya bağlı yeni görev', use: 'bu ay 31 kez' }
+    ];
+    const rest = [
+      { icon: 'fa fa-camera', title: 'Fatura yakala', use: '11×' },
+      { icon: 'fa fa-calendar-days', title: 'Takvime etkinlik', use: '9×' },
+      { icon: 'fa fa-sun', title: 'Bugün', use: '8×' },
+      { icon: 'fa fa-list-check', title: 'Başvurularım', use: '7×' },
+      { icon: 'fa fa-table-columns', title: 'Panolar', use: '7×' },
+      { icon: 'fa fa-rocket', title: 'Yeni proje', use: '6×' },
+      { icon: 'fa fa-route', title: 'Hibe yolculuğu', use: '5×' },
+      { icon: 'fa fa-file-invoice', title: 'Fatura ekle', use: '14×' },
+      { icon: 'fa fa-arrow-down', title: 'Gelir ekle', use: '10×' },
+      { icon: 'fa fa-arrow-up', title: 'Gider ekle', use: '13×' },
+      { icon: 'fa fa-cash-register', title: 'Kasa hareketi', use: '5×' },
+      { icon: 'fa fa-chart-pie', title: 'Finans merkezi', use: '4×' },
+    ];
+    const queue = [
+      { icon: 'fa fa-table-columns', title: 'Geciken görevler', sub: 'en eskisi 9 gün', count: '7', color: neg },
+      { icon: 'fa fa-hand', title: 'Karar bekleyen ilgi talepleri', sub: '2’si bugün geldi', count: '4', color: warn },
+      { icon: 'fa fa-file-circle-exclamation', title: 'Eksik belgeli başvurular', sub: '11 belge bekliyor', count: '3', color: warn },
+      { icon: 'fa fa-bullhorn', title: 'Son tarihi yaklaşan çağrılar', sub: 'en yakını 6 gün', count: '2', color: warn },
+      { icon: 'fa fa-file-invoice', title: 'Onay bekleyen gider / fatura', sub: 'toplam ₺184.300', count: '5', color: 'var(--apya-text-primary)' }
+    ];
+    // Repo kuralı (apya-shell.css .apya-shell-pin): yalnız .is-pinned opak + accent;
+    // sabitlenmemiş iğne tertiary renkte ve .45 opaklıkta.
+    const pinOn = { cls: 'fa fa-thumbtack', color: 'var(--apya-accent-500)', op: '1' };
+    const pinOff = { cls: 'fa fa-thumbtack', color: 'var(--apya-text-tertiary)', op: '.45' };
+    const keyboard = [
+      { key: '1', icon: 'fa fa-bullhorn', title: 'Çağrıdan başvuru başlat', sub: 'Hibe · 4 adımı tek akışta', use: '24×', ...pinOn, bg: 'var(--apya-accent-soft)' },
+      { key: '2', icon: 'fa fa-file-circle-exclamation', title: 'Eksik belgeleri iste', sub: 'Hibe · tek mesaj + takip görevi', use: '19×', ...pinOn, bg: 'transparent' },
+      { key: '3', icon: 'fa fa-plus', title: 'Görev aç', sub: 'İş Yönetimi · proje veya başvuru', use: '31×', ...pinOn, bg: 'transparent' },
+      { key: '4', icon: 'fa fa-lightbulb', title: 'Fikri çağrıyla eşleştir', sub: 'Hibe · öner ve davet et', use: '12×', ...pinOff, bg: 'transparent' },
+      { key: '5', icon: 'fa fa-calendar-days', title: 'Takvime etkinlik ekle', sub: 'Takvim', use: '9×', ...pinOff, bg: 'transparent' },
+      { key: '6', icon: 'fa fa-sun', title: 'Bugün', sub: 'Hibe · günün kuyruğu', use: '8×', ...pinOff, bg: 'transparent' },
+      { key: '7', icon: 'fa fa-list-check', title: 'Başvurularım', sub: 'Hibe', use: '7×', ...pinOff, bg: 'transparent' },
+      { key: '8', icon: 'fa fa-rocket', title: 'Yeni proje', sub: 'İş Yönetimi', use: '6×', ...pinOff, bg: 'transparent' },
+      { key: '9', icon: 'fa fa-camera', title: 'Fatura yakala', sub: 'Finans & Bütçe · fotoğraftan gider', use: '11×', ...pinOff, bg: 'transparent' },
+      { key: '0', icon: 'fa fa-file-invoice', title: 'Fatura ekle', sub: 'Finans & Bütçe · gelir/gider ekle de burada', use: '14×', ...pinOff, bg: 'transparent' }
+    ];
+    const preview = [
+      { icon: 'fa fa-folder-open', title: 'Başvuru kaydı açılacak', sub: 'GRT-2026-0147 · Hitprot Makina · durum: Hazırlık', count: '1' },
+      { icon: 'fa fa-diagram-project', title: 'Aşamalar üretilecek', sub: 'Ön hazırlık · Belge toplama · Kurul sunumu', count: '3' },
+      { icon: 'fa fa-list-check', title: 'Görevler açılacak', sub: 'Şablondaki aşama görevleri, terminleriyle', count: '11' },
+      { icon: 'fa fa-file-circle-exclamation', title: 'Belge talepleri kurulacak', sub: 'Vergi levhası, SGK borcu yoktur, bilanço, faaliyet raporu…', count: '6' },
+      { icon: 'fa fa-user-check', title: 'Sorumlu atanacak', sub: 'Tüm aşamalar Mert Yartanbaba’ya', count: '11' },
+      { icon: 'fa fa-bell', title: 'Bildirim gidecek', sub: 'Firmaya tek özet mesaj — belge listesi ekli', count: '1' }
+    ];
+    const touch = [
+      { icon: 'fa fa-bullhorn', title: 'Başvuru başlat', sub: 'Çağrıdan tek akışta' },
+      { icon: 'fa fa-file-circle-exclamation', title: 'Belge iste', sub: 'Eksikleri tek mesajla' },
+      { icon: 'fa fa-plus', title: 'Görev aç', sub: 'Proje veya başvuruya' },
+      { icon: 'fa fa-lightbulb', title: 'Fikir eşleştir', sub: 'Çağrı öner, davet et' },
+      { icon: 'fa fa-camera', title: 'Fatura yakala', sub: 'Fotoğraftan gider' },
+      { icon: 'fa fa-list-check', title: 'Başvurularım', sub: 'Yürüyen dosyalar' }
+    ];
+    const mobile = [
+      { icon: 'fa fa-camera', title: 'Fatura yakala' },
+      { icon: 'fa fa-plus', title: 'Görev aç' },
+      { icon: 'fa fa-bullhorn', title: 'Başvuru başlat' },
+      { icon: 'fa fa-file-circle-exclamation', title: 'Belge iste' },
+      { icon: 'fa fa-sun', title: 'Bugün' },
+      { icon: 'fa fa-calendar-days', title: 'Takvim' },
+      { icon: 'fa fa-file-invoice', title: 'Fatura ekle' },
+      { icon: 'fa fa-arrow-up', title: 'Gider ekle' },
+      { icon: 'fa fa-arrow-down', title: 'Gelir ekle' }
+    ];
+    // Sıralama tek yerde: sayaç metninden okunur, sabitlenenler önce.
+    // Elle dizilim değil — sayaçlar değişirse sıra kendiliğinden düzelir.
+    const n = v => parseInt(String(v).replace(/\D+/g, ''), 10) || 0;
+    const byUse = (a, b) => n(b.use) - n(a.use);
+    hero.sort(byUse);
+    hero.forEach(m => { m.short = n(m.use) + '×'; });
+    // Başkalarının güncellediği kayıt sayısı: makro üzerinde rozet olarak görünür.
+    const updates = { 'Çağrıdan başvuru başlat': 2, 'Eksik belgeleri iste': 3, 'Görev aç': 1, 'Fatura yakala': 2, 'Fatura ekle': 1 };
+    [...hero, ...rest].forEach(m => {
+      const c = updates[m.title] || 0;
+      m.badge = String(c);
+      m.badgeShow = c ? 'inline-flex' : 'none';
+    });
+    const news = [
+      { slot: 'news-1', ph: 'TÜBİTAK görseli', tag: 'Yeni çağrı', tagBg: 'var(--apya-accent-soft)', tagFg: 'var(--apya-accent-600)', date: '17.09', title: 'TÜBİTAK 1501 ikinci dönem açıldı', sub: 'Sanayi Ar-Ge destek oranı %60’a çıktı, son başvuru 14 Ekim.', cta: 'Çağrıyı aç' },
+      { slot: 'news-2', ph: 'KOSGEB görseli', tag: 'Mevzuat', tagBg: 'color-mix(in srgb, var(--apya-warning-500) 15%, transparent)', tagFg: 'var(--apya-warning-700)', date: '15.09', title: 'KOSGEB belge listesi değişti', sub: 'Faaliyet raporu artık zorunlu — açık başvurularınız etkileniyor.', cta: '3 başvuruyu gör' },
+      { slot: 'news-3', ph: 'Platform görseli', tag: 'Platform', tagBg: 'var(--apya-surface-sunken)', tagFg: 'var(--apya-text-secondary)', date: '12.09', title: 'Fatura yakala makrosu yayında', sub: 'Fotoğraftan gider kaydı; mobilde de kullanılabilir.', cta: 'Nasıl çalışır' },
+      { slot: 'news-4', ph: 'Ufuk Avrupa görseli', tag: 'Yeni çağrı', tagBg: 'var(--apya-accent-soft)', tagFg: 'var(--apya-accent-600)', date: '10.09', title: 'Ufuk Avrupa küme çağrısı', sub: 'Ortak arayan 4 firma eşleştirme havuzunda.', cta: 'Havuzu gör' },
+      { slot: 'news-5', ph: 'KOSGEB görseli', tag: 'Sonuç', tagBg: 'color-mix(in srgb, var(--apya-positive-500) 14%, transparent)', tagFg: 'var(--apya-positive-700)', date: '08.09', title: 'İki başvurunuz kabul edildi', sub: 'KOSGEB Ar-Ge 2026/1 sonuçları yayınlandı.', cta: 'Sonuçları aç' }
+    ];
+    rest.sort(byUse);
+    keyboard.sort((a, b) => (b.op === '1' ? 1 : 0) - (a.op === '1' ? 1 : 0) || byUse(a, b));
+    keyboard.forEach((m, i) => { m.key = String((i + 1) % 10); });
+
+    news.forEach(w => { w.slotList = w.slot + '-list'; w.slotMobile = w.slot + '-m'; });
+    news.forEach(w => { w.slotTab = w.slot + '-t'; });
+    const macroAll = [...mobile,
+      { icon: 'fa fa-cash-register', title: 'Kasa hareketi' },
+      { icon: 'fa fa-rocket', title: 'Yeni proje' },
+      { icon: 'fa fa-book', title: 'Doküman yükle' }
+    ];
+    macroAll.forEach(m => {
+      const c = updates[m.title] || 0;
+      m.badge = String(c);
+      m.badgeShow = c ? 'inline-flex' : 'none';
+      // Çevrimdışı kuyruk: şebeke yokken çekilen fotoğraflar yerelde bekler.
+      m.queueShow = m.title === 'Fatura yakala' ? 'inline-flex' : 'none';
+      m.queueLabel = '2 bekliyor';
+    });
+    const macroPages = [];
+    for (let i = 0; i < macroAll.length; i += 6) macroPages.push({ items: macroAll.slice(i, i + 6) });
+    const macroDots = macroPages.map((_, i) => i === 0
+      ? { w: '16px', bg: 'var(--apya-accent-500)' }
+      : { w: '5px', bg: 'var(--apya-border-strong)' });
+    const mobileTabs = [
+      { label: 'Bildirimler', count: '3', rule: 'var(--apya-accent-500)', fg: 'var(--apya-accent-600)', badgeBg: 'var(--apya-negative-500)', badgeFg: '#fff' },
+      { label: 'Kayıtlarım', count: '16', rule: 'transparent', fg: 'var(--apya-text-secondary)', badgeBg: 'var(--apya-surface-sunken)', badgeFg: 'var(--apya-text-secondary)' },
+      { label: 'Bekleyen', count: '21', rule: 'transparent', fg: 'var(--apya-text-secondary)', badgeBg: 'var(--apya-surface-sunken)', badgeFg: 'var(--apya-text-secondary)' }
+    ];
+    const newsDots = news.map((_, i) => i === 0
+      ? { w: '16px', bg: 'var(--apya-accent-500)' }
+      : { w: '5px', bg: 'var(--apya-border-strong)' });
+    // En yeni üstte: dakika cinsinden yaşa göre artan sıralanır.
+    const unread = { bg: 'var(--apya-accent-soft)', dot: 'var(--apya-accent-500)' };
+    const read = { bg: 'transparent', dot: 'transparent' };
+    const notifications = [
+      { age: 4, icon: 'fa fa-file-circle-exclamation', iconBg: 'color-mix(in srgb, var(--apya-warning-500) 14%, transparent)', iconFg: 'var(--apya-warning-700)', title: 'Hitprot Makina 2 belge yükledi', meta: '4 dk · GRT-2026-0147', ...unread },
+      { age: 26, icon: 'fa fa-user-check', iconBg: 'var(--apya-accent-soft)', iconFg: 'var(--apya-accent-500)', title: 'Elif Demir “Kurul sunumu” görevini sana atadı', meta: '26 dk · TÜBİTAK 1501', ...unread },
+      { age: 95, icon: 'fa fa-circle-check', iconBg: 'color-mix(in srgb, var(--apya-positive-500) 14%, transparent)', iconFg: 'var(--apya-positive-700)', title: 'KOSGEB Ar-Ge 2026/1 sonucu: kabul', meta: '1 sa 35 dk · 2 başvuru', ...unread },
+      { age: 240, icon: 'fa fa-clock', iconBg: 'var(--apya-surface-sunken)', iconFg: 'var(--apya-text-secondary)', title: 'Ufuk Avrupa çağrısında son 6 gün', meta: '4 sa · hatırlatma', ...read },
+      { age: 1440, icon: 'fa fa-arrow-up', iconBg: 'var(--apya-surface-sunken)', iconFg: 'var(--apya-text-secondary)', title: 'Gider onayı bekleyen 5 kayıt var', meta: 'dün · ₺184.300', ...read },
+      { age: 1620, icon: 'fa fa-comment', iconBg: 'var(--apya-surface-sunken)', iconFg: 'var(--apya-text-secondary)', title: 'Can Özkan “Belge toplama” aşamasına not ekledi', meta: 'dün · GRT-2026-0138', ...read },
+      { age: 2880, icon: 'fa fa-lightbulb', iconBg: 'var(--apya-surface-sunken)', iconFg: 'var(--apya-text-secondary)', title: 'Yeni fikir başvurusu: akıllı sera sensörü', meta: '2 gün · eşleştirme bekliyor', ...read },
+      { age: 4320, icon: 'fa fa-file-invoice', iconBg: 'var(--apya-surface-sunken)', iconFg: 'var(--apya-text-secondary)', title: 'Mart dönemi mizanı hazır', meta: '3 gün · Finans Merkezi', ...read },
+      { age: 5760, icon: 'fa fa-bullhorn', iconBg: 'var(--apya-surface-sunken)', iconFg: 'var(--apya-text-secondary)', title: 'TEYDEB çağrı takvimi güncellendi', meta: '4 gün · Çağrılar', ...read },
+      { age: 7200, icon: 'fa fa-user-plus', iconBg: 'var(--apya-surface-sunken)', iconFg: 'var(--apya-text-secondary)', title: 'Zeynep Arslan ekibe katıldı', meta: '5 gün · Hibe Uzmanı', ...read },
+      { age: 8640, icon: 'fa fa-route', iconBg: 'var(--apya-surface-sunken)', iconFg: 'var(--apya-text-secondary)', title: 'Hibe yolculuğu raporu hazırlandı', meta: '6 gün · 2026 Q3', ...read }
+    ].sort((a, b) => a.age - b.age);
+    // Bildirim → makro: aksiyonu olan bildirim ön izlemeli makroyu açar.
+    const notifActions = {
+      'Hitprot Makina 2 belge yükledi': 'Eksik belgeleri iste',
+      'Gider onayı bekleyen 5 kayıt var': 'Gider onaylarını topla',
+      'Yeni fikir başvurusu: akıllı sera sensörü': 'Fikri çağrıyla eşleştir'
+    };
+    notifications.forEach(b => {
+      b.action = notifActions[b.title] || '';
+      b.actionShow = b.action ? 'inline-flex' : 'none';
+    });
+
+    const dotWarn = 'var(--apya-warning-500)', dotOk = 'var(--apya-positive-500)', dotIdle = 'var(--apya-border-strong)';
+    // fresh: son görüşünden beri gelişme olan kayıt — satır accent zeminli.
+    const myGroups = [
+      { icon: 'fa fa-rocket', title: 'Projelerim', count: '6', items: [
+        { title: 'Akıllı Sera Sensörü', meta: '2 sa önce güncellendi · 3 açık görev', dot: dotWarn, fresh: true },
+        { title: 'Hat Otomasyonu Faz 2', meta: 'Devam ediyor · %62', dot: dotOk },
+        { title: 'Enerji İzleme Platformu', meta: 'Planlama', dot: dotIdle },
+        { title: 'Dijital İkiz Pilotu', meta: 'Devam ediyor · %31', dot: dotOk },
+        { title: 'Atık Isı Geri Kazanımı', meta: 'Bütçe onayı bekliyor', dot: dotIdle },
+        { title: 'Kalite Görü Sistemi', meta: 'Kapandı · rapor hazır', dot: dotIdle }
+      ] },
+      { icon: 'fa fa-bullhorn', title: 'İlgili çağrılarım', count: '4', items: [
+        { title: 'TÜBİTAK 1501 · 2026/2', meta: 'Destek oranı değişti · son 27 gün', dot: dotWarn, fresh: true },
+        { title: 'Ufuk Avrupa Küme', meta: 'Son 6 gün', dot: dotWarn },
+        { title: 'KOSGEB Ar-Ge 2026/2', meta: 'Takip ediliyor', dot: dotIdle },
+        { title: 'TEYDEB 1707 Sipariş Ar-Ge', meta: 'Takvim güncellendi', dot: dotIdle },
+        { title: 'İSTKA Yenilikçi İstanbul', meta: 'Son 41 gün', dot: dotIdle }
+      ] },
+      { icon: 'fa fa-route', title: 'Hibe süreçleri', count: '5', items: [
+        { title: 'GRT-2026-0147', meta: '2 belge yüklendi · 4 dk', dot: dotWarn, fresh: true },
+        { title: 'GRT-2026-0138', meta: 'Kurul sunumu', dot: dotOk },
+        { title: 'GRT-2026-0121', meta: 'Sonuç bekliyor', dot: dotIdle },
+        { title: 'GRT-2026-0109', meta: 'Kabul · sözleşme aşaması', dot: dotOk },
+        { title: 'GRT-2025-0402', meta: 'İzleme raporu · 12 gün', dot: dotWarn }
+      ] }
+    ];
+    myGroups.forEach(g => g.items.forEach(it => {
+      it.bg = it.fresh ? 'var(--apya-accent-soft)' : 'transparent';
+      it.flagIcon = it.fresh ? 'fa fa-arrow-up-right-dots' : 'fa fa-arrow-up-right-dots';
+      it.flagOp = it.fresh ? '1' : '0';
+    }));
+
+    const newsFilters = [
+      { label: 'Tümü', count: '18', bg: 'var(--apya-accent-soft)', fg: 'var(--apya-accent-600)' },
+      { label: 'Yeni çağrı', count: '7', bg: 'transparent', fg: 'var(--apya-text-secondary)' },
+      { label: 'Mevzuat', count: '4', bg: 'transparent', fg: 'var(--apya-text-secondary)' },
+      { label: 'Sonuç', count: '5', bg: 'transparent', fg: 'var(--apya-text-secondary)' },
+      { label: 'Platform', count: '2', bg: 'transparent', fg: 'var(--apya-text-secondary)' }
+    ];
+
+    const live = { state: 'Yayında', chipBg: 'color-mix(in srgb, var(--apya-positive-500) 14%, transparent)', chipFg: 'var(--apya-positive-700)' };
+    const draft = { state: 'Taslak', chipBg: 'var(--apya-surface-sunken)', chipFg: 'var(--apya-text-secondary)' };
+    const off = { state: 'Arşiv', chipBg: 'var(--apya-surface-sunken)', chipFg: 'var(--apya-text-tertiary)' };
+    const sel = { bg: 'var(--apya-accent-soft)', mark: 'var(--apya-accent-500)', fg: 'var(--apya-accent-500)' };
+    const un = { bg: 'transparent', mark: 'transparent', fg: 'var(--apya-text-primary)' };
+    const adminList = [
+      { icon: 'fa fa-bullhorn', title: 'Çağrıdan başvuru başlat', meta: 'Bileşik · 6 adım · 312 çalıştırma', ...sel, ...live },
+      { icon: 'fa fa-file-circle-exclamation', title: 'Eksik belgeleri iste', meta: 'Bileşik · 3 adım · 198 çalıştırma', ...un, ...live },
+      { icon: 'fa fa-lightbulb', title: 'Fikri çağrıyla eşleştir', meta: 'Bileşik · 4 adım · 121 çalıştırma', ...un, ...live },
+      { icon: 'fa fa-plus', title: 'Görev aç', meta: 'Modal · /Tasks/CreateModal', ...un, ...live },
+      { icon: 'fa fa-camera', title: 'Fatura yakala', meta: 'Modal · /Expenses/Capture', ...un, ...draft },
+      { icon: 'fa fa-file-invoice', title: 'Fatura ekle', meta: 'Modal · /Invoices/CreateModal', ...un, ...live },
+      { icon: 'fa fa-arrow-down', title: 'Gelir ekle', meta: 'Modal · /Incomes/CreateModal', ...un, ...live },
+      { icon: 'fa fa-arrow-up', title: 'Gider ekle', meta: 'Modal · /Expenses/CreateModal', ...un, ...live }
+    ];
+    const steps = [
+      { no: '1', title: 'Başvuru kaydı aç', op: 'GrantApplication.Create(callId, tenantId)' },
+      { no: '2', title: 'Şablondan aşamaları üret', op: 'GrantStageTemplate.Apply(templateId)' },
+      { no: '3', title: 'Aşama görevlerini aç', op: 'Tasks.CreateFromStages(dueOffsets)' },
+      { no: '4', title: 'Belge checklist’ini kur', op: 'GrantDocumentRequirement.Seed(callId)' },
+      { no: '5', title: 'Sorumlu ata', op: 'Assign(currentUser | selected)' },
+      { no: '6', title: 'Firmaya bildirim gönder', op: 'Notification.Send(template: docsRequested)' }
+    ];
+    const rowOn = { check: 'fa fa-square-check', checkColor: 'var(--apya-accent-500)', bg: 'var(--apya-accent-soft)' };
+    const rowOff = { check: 'fa fa-square', checkColor: 'var(--apya-border-strong)', bg: 'transparent' };
+    const adminRows = [
+      { icon: 'fa fa-bullhorn', title: 'Çağrıdan başvuru başlat', key: 'makro.grants.startApplication', type: 'Bileşik · 6 adım', scope: 'Tüm kiracılar', usage: '312', ...rowOff, ...live },
+      { icon: 'fa fa-file-circle-exclamation', title: 'Eksik belgeleri iste', key: 'makro.grants.requestDocs', type: 'Bileşik · 3 adım', scope: 'Rol: Hibe Uzmanı', usage: '198', ...rowOff, ...live },
+      { icon: 'fa fa-lightbulb', title: 'Fikri çağrıyla eşleştir', key: 'makro.grants.matchIdea', type: 'Bileşik · 4 adım', scope: 'Host', usage: '121', ...rowOff, ...live },
+      { icon: 'fa fa-plus', title: 'Görev aç', key: 'makro.tasks.create', type: 'Modal', scope: 'Tüm kiracılar', usage: '744', ...rowOff, ...live },
+      { icon: 'fa fa-camera', title: 'Fatura yakala', key: 'makro.finance.captureInvoice', type: 'Modal', scope: 'Tüm kiracılar', usage: '—', ...rowOn, ...draft },
+      { icon: 'fa fa-arrow-up', title: 'Gider ekle', key: 'makro.finance.addExpense', type: 'Modal', scope: 'Paket: Pro+', usage: '286', ...rowOff, ...live },
+      { icon: 'fa fa-arrow-down', title: 'Gelir ekle', key: 'makro.finance.addIncome', type: 'Modal', scope: 'Paket: Pro+', usage: '203', ...rowOn, ...live },
+      { icon: 'fa fa-scale-unbalanced', title: 'Mizan raporu', key: 'makro.reports.trialBalance', type: 'Bağlantı', scope: 'Host', usage: '4', ...rowOff, ...off }
+    ];
+    const emptyHero = [
+      { icon: 'fa fa-bullhorn', title: 'Çağrıdan başvuru başlat', sub: 'Rolünde en çok kullanılan işlem' },
+      { icon: 'fa fa-file-circle-exclamation', title: 'Eksik belgeleri iste', sub: 'Karşılanmamış belgeler için tek mesaj' },
+      { icon: 'fa fa-plus', title: 'Görev aç', sub: 'Projeye veya başvuruya bağlı görev' },
+      { icon: 'fa fa-camera', title: 'Fatura yakala', sub: 'Fotoğraftan gider kaydı' }
+    ];
+    const blockers = [
+      { icon: 'fa fa-calendar-xmark', title: 'Çağrının son başvuru tarihi geçti', sub: 'TÜBİTAK 1501 · 2026/2 — son başvuru 14.10.2026, çağrı kapandı', action: 'Çağrı değiştir', bg: 'color-mix(in srgb, var(--apya-negative-500) 12%, transparent)', fg: 'var(--apya-negative-700)' },
+      { icon: 'fa fa-diagram-project', title: 'Aşama şablonu güncellendi', sub: 'Ar-Ge Standart Aşama Seti v3 → v4: 2 aşama eklendi', action: 'Yeni şablonu gör', bg: 'color-mix(in srgb, var(--apya-warning-500) 14%, transparent)', fg: 'var(--apya-warning-700)' },
+      { icon: 'fa fa-user-slash', title: 'Sorumlu artık bu kiracıda değil', sub: 'Mert Yartanbaba · yetkisi 16.09.2026’da kaldırıldı', action: 'Sorumlu seç', bg: 'var(--apya-surface-sunken)', fg: 'var(--apya-text-secondary)' }
+    ];
+    return { hero, rest, queue, keyboard, preview, touch, mobile, mobileTabs, macroPages, macroDots, news, newsFilters, newsDots, notifications, myGroups, adminList, steps, adminRows, emptyHero, blockers, queueShort: queue.slice(0, 3) };
+  }
+}
+
+</script>
+</body>
+</html>
