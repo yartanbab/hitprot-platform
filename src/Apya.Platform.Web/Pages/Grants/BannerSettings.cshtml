@@ -1,0 +1,44 @@
+@page
+@using Apya.Platform.Grants
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.BannerSettingsModel
+@{
+    ViewBag.Title = L["Grants:BannerSettings:Title"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Grants/Shared.css" />
+}
+
+@* Başlık + açıklama app header'da; sayfa içinde tekrarlanmıyor. *@
+<div data-page-description="@L["Grants:BannerSettings:Description"]" class="apya-page apya-grant-scope">
+    @if (TempData["Saved"] != null)
+    {
+        <div class="alert alert-success" role="status">@L["Grants:BannerSettings:Saved"]</div>
+    }
+
+    <form method="post">
+        <div class="card mb-3">
+            <fieldset class="card-body d-flex flex-column gap-3">
+                <legend class="fw-bold fs-6 mb-0">@L["Grants:BannerSettings:Layout"]</legend>
+                @foreach (var variant in GrantDetailBannerVariants.All)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="Variant" id="Variant_@variant"
+                               value="@variant" checked="@(Model.Variant == variant)" />
+                        <label class="form-check-label" for="Variant_@variant">
+                            <span class="fw-semibold">@L["Grants:BannerSettings:Variant:" + variant]</span>
+                            <span class="d-block small text-muted">@L["Grants:BannerSettings:Variant:" + variant + ":Hint"]</span>
+                        </label>
+                    </div>
+                }
+            </fieldset>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save me-1" aria-hidden="true"></i>@L["Grants:BannerSettings:Save"]
+        </button>
+    </form>
+</div>

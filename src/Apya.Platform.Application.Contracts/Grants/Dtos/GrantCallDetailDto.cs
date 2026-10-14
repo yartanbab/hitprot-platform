@@ -14,6 +14,9 @@ public class GrantCallDetailDto
     public string GrantName { get; set; } = string.Empty;
     public string Issuer { get; set; } = string.Empty;
     public string? Description { get; set; }
+
+    /// <summary>Programın afiş görseli (saklanan dosya adı); yoksa null.</summary>
+    public string? PosterFileName { get; set; }
     public string? SourceUrl { get; set; }
     public string? Objective { get; set; }
     public string? Priorities { get; set; }

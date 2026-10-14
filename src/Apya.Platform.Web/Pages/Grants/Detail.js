@@ -35,7 +35,13 @@ $(function () {
     function paintHead(d) {
         $('#CallTitle').text(d.grantName);
         $('#CallIssuer').text(d.issuer + ' · ' + d.period);
-        $('#CallDescription').text(d.description || '');
+        // Afiş düzenine göre kurum ile dönem ayrı da durur; basılmayan kimlik sessizce atlanır.
+        $('#CallIssuerName').text(d.issuer);
+        $('#CallPeriod').text(d.period);
+        $('#CallIssuerMark').text(issuerMark(d.issuer));
+        // Görsel yoksa fırsat kartlarındaki kuruma özel zemin (Poster.js).
+        $('#CallPoster').attr('style', apyaGrantPoster.style(d.issuer, d.posterFileName));
+        paintDescription(d.description);
 
         $('#BucketChip')
             .attr('class', 'apya-chip apya-chip-' + bucketTone[d.bucket])
@@ -63,6 +69,29 @@ $(function () {
         paintInterest(d);
         paintBookmark(d.isBookmarked);
     }
+
+    // Kurum karosu küçük: kısa ad (KOSGEB) olduğu gibi, uzun ad baş harfleriyle yazılır.
+    function issuerMark(name) {
+        name = (name || '').trim();
+        if (name.length <= 8) { return name; }
+        return name.split(/\s+/).map(function (w) { return w.charAt(0); }).join('')
+            .toLocaleUpperCase('tr-TR').slice(0, 5);
+    }
+
+    // Özet CSS'te birkaç satıra kırpılır; düğme yalnız metin gerçekten taşıyorsa görünür.
+    function paintDescription(text) {
+        var $text = $('#CallDescription').removeClass('is-open').text(text || '');
+        var clipped = $text[0].scrollHeight > $text[0].clientHeight + 1;
+        $('#CallDescriptionToggle').toggleClass('d-none', !clipped)
+            .attr('aria-expanded', 'false').text(l('Grants:Detail:ShowMore'));
+    }
+
+    $('#CallDescriptionToggle').on('click', function () {
+        var open = !$('#CallDescription').hasClass('is-open');
+        $('#CallDescription').toggleClass('is-open', open);
+        $(this).attr('aria-expanded', String(open))
+            .text(l(open ? 'Grants:Detail:ShowLess' : 'Grants:Detail:ShowMore'));
+    });
 
     // Azami 0 = üst limit yok; açık uçlu aralık "5.000.000+ ₺" yazılır.
     function amountRange(min, max) {

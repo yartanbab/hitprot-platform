@@ -457,6 +457,18 @@ public static class PlatformSettings
         public const string CorporatePlan = Prefix + ".Pricing.CorporatePlan";
         public const string JointPlan = Prefix + ".Pricing.JointPlan";
     }
+
+    /// <summary>
+    /// Hibe modülü ayarları — host (Global) seviyesinde.
+    /// </summary>
+    public static class Grants
+    {
+        /// <summary>
+        /// Kiracı hibe detayının afiş düzeni: cover / side / overlay
+        /// (bkz. Apya.Platform.Grants.GrantDetailBannerVariants).
+        /// </summary>
+        public const string DetailBannerVariant = Prefix + ".Grants.DetailBannerVariant";
+    }
 }
 
 /// <summary>Ayarların kod içinde tekrarlanmaması için varsayılanlar tek yerde.</summary>

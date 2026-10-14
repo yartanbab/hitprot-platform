@@ -13,14 +13,19 @@ namespace Apya.Platform.Web.Pages.Grants;
 public class DetailModel : PlatformPageModel
 {
     private readonly IGrantFunnelAppService _funnel;
+    private readonly IGrantDetailBannerSettingsAppService _bannerSettings;
 
-    public DetailModel(IGrantFunnelAppService funnel)
+    public DetailModel(IGrantFunnelAppService funnel, IGrantDetailBannerSettingsAppService bannerSettings)
     {
         _funnel = funnel;
+        _bannerSettings = bannerSettings;
     }
 
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
+
+    /// <summary>Afiş düzeni (host ayarı): cover / side / overlay.</summary>
+    public string BannerVariant { get; private set; } = GrantDetailBannerVariants.Default;
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -31,6 +36,7 @@ public class DetailModel : PlatformPageModel
 
         // 18c · Huni: sayfa açılışı bir görüntülenme; ekran içi yenilemeler (JS) sayılmaz. Host'un bakışı sayılmaz.
         await _funnel.RecordTenantViewAsync(Id);
+        BannerVariant = (await _bannerSettings.GetAsync()).Variant;
         return Page();
     }
 }

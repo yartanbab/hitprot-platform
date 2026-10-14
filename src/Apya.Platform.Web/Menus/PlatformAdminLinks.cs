@@ -116,6 +116,10 @@ public static class PlatformAdminLinks
 
         new("Apya.Admin.GrantNotificationTemplates", PlatformPermissions.Grants.Edit,
             "Menu:Grants:NotificationTemplates", "Settings:Admin.GrantNotificationTemplates.Desc",
-            "/Grants/NotificationTemplates", "fa fa-bell", Group: Grants)
+            "/Grants/NotificationTemplates", "fa fa-bell", Group: Grants),
+
+        new("Apya.Admin.GrantBannerSettings", PlatformPermissions.Grants.Edit,
+            "Menu:Grants:BannerSettings", "Settings:Admin.GrantBannerSettings.Desc",
+            "/Grants/BannerSettings", "fa fa-panorama", Group: Grants)
     };
 }
