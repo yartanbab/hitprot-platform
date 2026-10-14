@@ -1,0 +1,31 @@
+@using Apya.Platform.Localization
+@using Apya.Platform.Macros
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Macros.MacroItem
+@*
+    Makro kartı. Bağlantı <a>, pencere <button>: ikisi de klavyeyle odaklanır ve tıklanır.
+    data-pin-name kenar çubuğuyla ORTAK sabitleme ayarındaki addır (menü adı ya da Apya.Macro.<anahtar>).
+*@
+@{
+    var cssClass = Model.IsPinned ? "apya-macro-card is-pinned" : "apya-macro-card";
+    Func<object?, Microsoft.AspNetCore.Mvc.Razor.HelperResult> body = @<text>
+        <span class="apya-macro-card-top">
+            <span class="apya-macro-card-icon" aria-hidden="true"><i class="@Model.Icon"></i></span>
+            <i class="fa fa-thumbtack apya-macro-card-pin" aria-hidden="true"></i>
+        </span>
+        <span class="apya-macro-card-title">@Model.Title</span>
+        <span class="visually-hidden apya-macro-card-pinned">@L["Macros:Pinned"]</span>
+        <span class="apya-macro-card-foot">@Model.Area</span>
+    </text>;
+}
+@if (Model.Kind == MacroKind.Modal)
+{
+    <button type="button" class="@cssClass" data-macro-key="@Model.Key" data-pin-name="@Model.PinName"
+            data-order="@Model.CatalogIndex" data-modal-url="@Model.Url">@body(null)</button>
+}
+else
+{
+    <a class="@cssClass" href="@Model.Url" data-macro-key="@Model.Key" data-pin-name="@Model.PinName"
+       data-order="@Model.CatalogIndex">@body(null)</a>
+}
