@@ -105,7 +105,10 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         // Çağrı kimliği katalogda aranmıyordu: uydurma bir kimlik için de takip satırı açılıyordu.
         using (_mtFilter.Disable())
         {
-            if (!await _callRepo.AnyAsync(c => c.Id == grantCallId && c.TenantId == null))
+            // Yalnız YAYINDAKİ çağrı takibe alınır: taslak çağrı kimliğiyle "var" yanıtı alınmamalı
+            // (ayrıntı ucu da aynı koşulla "bulunamadı" der).
+            if (!await _callRepo.AnyAsync(c =>
+                    c.Id == grantCallId && c.TenantId == null && c.Status == GrantCallStatus.Acik))
             {
                 throw new EntityNotFoundException(typeof(GrantCall), grantCallId);
             }

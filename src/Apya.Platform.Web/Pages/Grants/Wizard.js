@@ -191,21 +191,31 @@ $(function () {
             .prop('disabled', locked());
     }
 
+    // Adım başvurunun ortak durumudur; kaydetmek yazma izni ister. İzinsiz kullanıcı yalnız
+    // kendi ekranında gezer: adım sunucuya yazılmaz, yeniden yüklemede de ekrandaki adım korunur.
+    var localStep = null;
+    function goToStep(step) {
+        if (model.canWrite === false) {
+            localStep = step;
+            paint();
+            return;
+        }
+        service.setStep(appId, step).then(function (dto) { model = dto; paint(); });
+    }
+
     $('#Steps').on('click', '.apya-wiz-step-chip', function () {
-        service.setStep(appId, Number($(this).data('goto'))).then(function (dto) {
-            model = dto; paint();
-        });
+        goToStep(Number($(this).data('goto')));
     });
 
     $('#PrevBtn').on('click', function () {
         if (model.currentStep > 1) {
-            service.setStep(appId, model.currentStep - 1).then(function (dto) { model = dto; paint(); });
+            goToStep(model.currentStep - 1);
         }
     });
 
     $('#NextBtn').on('click', function () {
         if (model.currentStep < model.stepCount) {
-            service.setStep(appId, model.currentStep + 1).then(function (dto) { model = dto; paint(); });
+            goToStep(model.currentStep + 1);
             return;
         }
         service.submit(appId).then(function (dto) {
@@ -509,7 +519,9 @@ $(function () {
     }
 
     function paintPending() {
-        var items = model.pendingFields || [];
+        // "Bu adımda kalanlar" sunucudaki ortak adıma göre hesaplanır; izinsiz kullanıcı başka
+        // adımda geziyor olabilir ve zaten dolduramaz: liste ona boş gösterilir.
+        var items = model.canWrite === false ? [] : (model.pendingFields || []);
         $('#PendingList').html(items.length
             ? items.map(function (p) {
                 return '<div class="apya-wiz-person"><i class="fa fa-circle-dot text-warning"></i>' +
@@ -552,6 +564,9 @@ $(function () {
 
     // ---------- Çizim ----------
     function paint() {
+        // İzinsiz kullanıcının ekrandaki adımı, sunucudaki ortak adımı ezer (yalnız bu ekranda).
+        if (model.canWrite === false && localStep) { model.currentStep = localStep; }
+
         $('#GrantName').text(model.grantName);
         $('#GrantMeta').text([model.issuer, model.period,
             model.deadline ? l('Grants:Wizard:DeadlineOn', new Date(model.deadline).toLocaleDateString('tr-TR')) : null]

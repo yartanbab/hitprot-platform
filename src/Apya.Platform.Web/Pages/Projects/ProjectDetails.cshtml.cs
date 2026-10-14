@@ -65,6 +65,12 @@ public class ProjectDetailsModel : PlatformPageModel
     /// </summary>
     public Apya.Platform.Grants.Dtos.GrantProjectOriginDto? GrantOrigin { get; set; }
 
+    /// <summary>
+    /// PRJ-09 · Kapanmamış risk sayısı; kimlik şeridindeki rozet risk kütüğüne (zaman çizelgesi
+    /// sayfası) götürür. Kütüğü açamayacak kullanıcıda ya da açık risk yokken null/0 kalır, rozet basılmaz.
+    /// </summary>
+    public int? OpenRiskCount { get; set; }
+
     /// <summary>PRJ-08 · Göstergeler sekmesi. Görme izni yoksa null kalır ve sekme basılmaz.</summary>
     public System.Collections.Generic.List<Apya.Platform.Projects.ProjectIndicatorDto>? Indicators { get; set; }
     public bool CanManageIndicators { get; set; }
@@ -140,6 +146,20 @@ public class ProjectDetailsModel : PlatformPageModel
         // Bütçe ile aynı desen: yetkisi olmayan kullanıcıda sessizce atlanır.
         try { GrantOrigin = await _grantProjectOrigin.GetByProjectAsync(Id); }
         catch (Volo.Abp.Authorization.AbpAuthorizationException) { GrantOrigin = null; }
+
+        // Rozetin hedefi (zaman çizelgesi sayfası) belge izni ister: izni olmayana köprü de basılmaz.
+        // Host bağlamında kiracı projesi bu servisten görünmez (EntityNotFound): sayfa düşmez, rozet çıkmaz.
+        if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default))
+        {
+            try
+            {
+                OpenRiskCount = await LazyServiceProvider
+                    .LazyGetRequiredService<Apya.Platform.Documents.IProjectTimelineAppService>()
+                    .GetOpenRiskCountAsync(Id);
+            }
+            catch (Volo.Abp.Authorization.AbpAuthorizationException) { OpenRiskCount = null; }
+            catch (Volo.Abp.Domain.Entities.EntityNotFoundException) { OpenRiskCount = null; }
+        }
 
         // Bütçe ile aynı desen: görme izni yoksa sessizce atlanır, sekme basılmaz.
         try

@@ -3304,6 +3304,7 @@
     "Platform:Grant:InterestIdeaNotLinked": "This idea is not linked to a call yet; applications and meetings run through a call.",
     "Platform:Grant:InterestAlreadyLinked": "This idea is already linked to a call.",
     "Platform:Grant:IdeaCallNotOpen": "An idea can only be linked to a published call whose deadline has not passed.",
+    "Platform:Grant:DispatchCallNotOpen": "Only a published call whose deadline has not passed can be sent to firms.",
     "Platform:Grant:InvitationCallNotOpen": "An invitation can only be sent for a published call whose deadline has not passed.",
     "Platform:Grant:InvitationNoRecipients": "No companies match the selected conditions.",
     "Platform:Grant:InvitationMessageRequired": "Write the invitation message.",

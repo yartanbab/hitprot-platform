@@ -213,6 +213,50 @@ public class GrantDispatchPage_Tests : PlatformWebTestBase
         ikinci.SkippedCount.ShouldBe(1);
     }
 
+    /// <summary>Açık çağrının programına TASLAK (yayınlanmamış) bir çağrı ekler.</summary>
+    private async Task<Guid> DraftCallIdAsync()
+    {
+        var openId = await OpenCallIdAsync();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        var repo = GetRequiredService<IRepository<GrantCall, Guid>>();
+        var grantId = (await repo.GetAsync(openId)).GrantId;
+        var draft = new GrantCall(Guid.NewGuid(), grantId, "TASLAK-" + Guid.NewGuid().ToString("N")[..6], GrantCallStatus.Taslak);
+        await repo.InsertAsync(draft, autoSave: true);
+        await uow.CompleteAsync();
+        return draft.Id;
+    }
+
+    /// <summary>
+    /// Taslak çağrı firmaya görünmez; gönderim bunu denetlemiyordu: firmaya öneri ve takip satırı
+    /// yazılıyor, çağrının adı ve son tarihi bildirimle gidiyordu.
+    /// </summary>
+    [Fact]
+    public async Task Taslak_Cagri_Firmalara_Gonderilemez_Hicbir_Kayit_Yazilmaz()
+    {
+        var tenantId = await CreateFirmAsync("Taslak");
+        var service = GetRequiredService<IGrantHostDispatchAppService>();
+        var draftId = await DraftCallIdAsync();
+
+        (await Should.ThrowAsync<Volo.Abp.BusinessException>(() => service.SendAsync(new SendHostRecommendationInput
+        {
+            GrantCallId = draftId,
+            TenantIds = { tenantId },
+            SendNotification = true,
+            SendEmail = false
+        }))).Code.ShouldBe(PlatformDomainErrorCodes.GrantDispatchCallNotOpen);
+
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        using (GetRequiredService<Volo.Abp.Data.IDataFilter<Volo.Abp.MultiTenancy.IMultiTenant>>().Disable())
+        {
+            (await GetRequiredService<IRepository<GrantRecommendation, Guid>>()
+                .GetListAsync(r => r.GrantCallId == draftId)).ShouldBeEmpty();
+            (await GetRequiredService<IRepository<GrantBookmark, Guid>>()
+                .GetListAsync(b => b.GrantCallId == draftId)).ShouldBeEmpty();
+        }
+    }
+
     [Fact]
     public async Task Kanallar_Kapaliyken_Bildirim_Ve_Eposta_Gitmez()
     {

@@ -387,6 +387,13 @@ public static class PlatformSettings
         /// yönetme → projeyi düzenleyen roller). Telafi BİR KEZ koşar.
         /// </summary>
         public const string ProjectIndicatorPermissionsGranted = Prefix + ".Backfills.ProjectIndicatorPermissionsGranted";
+
+        /// <summary>
+        /// PRJ-08 gösterge izinleri HOST rollerine verildi mi. Kiracı telafisinden ayrı işaret:
+        /// ilk telafi yalnız kiracıları dolaşıyordu ve onun işareti bazı kurulumlarda çoktan
+        /// "yapıldı"; host tarafı bu işaretle ayrıca BİR KEZ koşar.
+        /// </summary>
+        public const string ProjectIndicatorHostPermissionsGranted = Prefix + ".Backfills.ProjectIndicatorHostPermissionsGranted";
     }
 
     /// <summary>

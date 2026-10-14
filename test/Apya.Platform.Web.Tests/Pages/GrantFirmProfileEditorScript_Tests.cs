@@ -88,7 +88,9 @@ public class GrantFirmProfileEditorScript_Tests
     public void Profil_formu_yalniz_son_basarili_profil_okumasindan_sonra_acilir()
     {
         var script = Script();
-        const string unlock = "$('#ProfileForm').prop('disabled', false)";
+        // Kilit, yazma izni olan kullanıcıda açılır; salt-okur kullanıcıda profil okunur ama
+        // alanlar kapalı kalır (#653).
+        const string unlock = "$('#ProfileForm').prop('disabled', !canWrite)";
 
         // Eski zincir: hata dalı yok, yanıt bekçisiz boyanıyordu.
         script.ShouldNotContain("}).then(paintProfile);");

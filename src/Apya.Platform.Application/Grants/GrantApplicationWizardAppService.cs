@@ -207,8 +207,14 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         return await BuildAsync(application);
     }
 
+    /// <summary>
+    /// Bulunulan adım başvurunun ORTAK durumudur (iki taraf aynı adımı görür): değiştirmek yazma
+    /// izni ister. Yazma izni olmayan kullanıcı adımlar arasında yalnız kendi ekranında gezer
+    /// (Wizard.js), bu uca gelmez.
+    /// </summary>
     public async Task<GrantApplicationWizardDto> SetStepAsync(Guid applicationId, int step)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var application = await GetApplicationAsync(applicationId);
         application.SetStep(step);
         await _appRepo.UpdateAsync(application, autoSave: true);
