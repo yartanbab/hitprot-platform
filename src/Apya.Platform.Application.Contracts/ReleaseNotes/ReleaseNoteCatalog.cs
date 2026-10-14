@@ -69,12 +69,17 @@ public static class ReleaseNoteCatalog
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Makro Ekran: sık yaptığınız işler tek yerde",
                 "Sol menüde yeni bir \"Makro Ekran\" var. Sık yaptığınız işleri (yeni görev, gider, " +
-                "proje gibi) tek tıkla başlatır; üyesi olduğunuz projeleri, okunmamış bildirimlerinizi, " +
-                "size atanmış kayıtları ve bekleyen işlerinizi aynı ekranda toplar. Sık kullandığınız " +
-                "işleri sabitleyebilirsiniz. Üstteki haber şeridinde açık hibe çağrıları, yenilikler ve " +
-                "başvurularınızla ilgili sonuçlar görünür. \"+ Yeni\" menüsü ve komut paleti (Ctrl K) de " +
-                "aynı iş listesinden beslenir. Ekranı ilk açtığınızda bir başlangıç seti görürsünüz; " +
-                "kullandıkça sıralama size göre değişir."),
+                "proje gibi) ve sık açtığınız sayfaları tek tıkla başlatır; yalnız yetkiniz olan işler " +
+                "görünür. İşler son 30 günde ne kadar kullandığınıza göre sıralanır; ekranı ilk " +
+                "açtığınızda bir başlangıç seti görürsünüz. \"Düzenle\" ile istediğiniz işi sabitleyip " +
+                "başa alabilirsiniz. Bir işle ilgili okumadığınız bildirim varsa kartın köşesinde " +
+                "sayısı görünür; bildirimi okuyunca kaybolur. Yanında okunmamış bildirimleriniz, size " +
+                "ait kayıtlar (projeleriniz, ilgilendiğiniz çağrılar, hibe başvurularınız) ve bekleyen " +
+                "işleriniz (geciken görevler, yaklaşan son tarihler, onay bekleyen faturalar) toplanır. " +
+                "Üstteki haber şeridinde açık hibe çağrıları, yenilikler ve başvuru sonuçlarınız görünür; " +
+                "hepsi \"Tüm haberler\" sayfasında. Telefonda işler kaydırılabilir sayfalarda durur, bir " +
+                "işi sabitlemek için üzerine uzun basarsınız; bildirimler, kayıtlar ve bekleyen işler " +
+                "sekmelere ayrılır. \"+ Yeni\" menüsü ve komut paleti (Ctrl K) de aynı iş listesinden beslenir."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Danışman önerisini \"İlgilenmiyorum\" ile kapatabiliyorsunuz",
