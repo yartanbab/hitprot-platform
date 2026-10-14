@@ -96,19 +96,15 @@ $(function () {
         return document.querySelector('.apya-console-search input');
     }
 
-    // "+ Yeni" menüsüyle AYNI kaynak: kabuk durumundaki oluşturma yetkileri.
-    // Yetkisi olmayana satır gösterip 403 aldırmayız.
+    // "+ Yeni" menüsüyle AYNI kaynak: kabuk durumundaki oluşturma listesi (Makro Ekran
+    // kataloğunun adresli satırları, sunucuda izne göre süzülmüş — ShellStateDto.Creates).
+    // Yetkisi olmayana satır gösterip 403 aldırmayız. Menüdeki sayfalar "GİT"te zaten var.
     function createEntries() {
-        var can = (window.apyaShellStateValue && window.apyaShellStateValue.can) || null;
-        if (!can) { return []; }
-        var all = [
-            { label: 'Yeni görev', url: '/Tasks/CreateModal', allowed: can.createTask },
-            { label: 'Yeni proje', url: '/Projects/CreateModal', allowed: can.createProject }
-            // Hibe satırı kaldırıldı — gerekçesi apya-shell-actions.js'te:
-            // /Grants/CreateModal kaldırılmış program penceresini açıyordu.
-        ];
-        return all.filter(function (a) { return a.allowed; }).map(function (a) {
-            return { kind: 'create', label: a.label, url: a.url, icon: 'fa fa-plus', section: '' };
+        var creates = (window.apyaShellStateValue && window.apyaShellStateValue.creates) || [];
+        return creates.map(function (c) {
+            return c.isModal
+                ? { kind: 'create', label: c.title, url: c.url, icon: c.icon, section: '' }
+                : { kind: 'nav', label: c.title, href: c.url, icon: c.icon, section: '' };
         });
     }
 
