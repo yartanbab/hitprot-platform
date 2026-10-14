@@ -13,6 +13,12 @@ public interface IProjectTimelineAppService : IApplicationService
 {
     Task<ProjectTimelineDto> GetAsync(Guid projectId);
 
+    /// <summary>
+    /// PRJ-09 · Projenin KAPANMAMIŞ risk sayısı. Proje konsolundaki rozet için: zaman çizelgesinin
+    /// tamamını (adımlar, belgeler, bütçe) yüklemeden tek sayım.
+    /// </summary>
+    Task<int> GetOpenRiskCountAsync(Guid projectId);
+
     Task<ProjectRiskDto> CreateRiskAsync(CreateUpdateProjectRiskDto input);
 
     Task<ProjectRiskDto> UpdateRiskAsync(Guid id, CreateUpdateProjectRiskDto input);
