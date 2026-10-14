@@ -25,6 +25,13 @@ public class ShellStateDto
     /// <summary>Üst bardaki "+ Yeni" menüsünün hangi satırları basacağı.</summary>
     public ShellCanDto Can { get; set; } = new();
 
+    /// <summary>
+    /// Oluşturma eylemleri: Makro Ekran kataloğunun ADRESLİ satırları (pencere ya da menüde olmayan
+    /// sayfa), izne göre süzülmüş. "+ Yeni" menüsü ve komut paletinin "OLUŞTUR" grubu bu TEK listeden
+    /// beslenir — eskiden iki betikte elle eşit tutulan iki kopya vardı.
+    /// </summary>
+    public List<ShellCreateDto> Creates { get; set; } = new();
+
     /// <summary>Kullanıcının kayıtlı görünümleri (üst bardaki görünüm çipi).</summary>
     public List<ShellSavedViewDto> SavedViews { get; set; } = new();
 }
@@ -113,6 +120,22 @@ public class ShellCanDto
     /// gerçekte yaptığı işi söylüyor (kullanıcı kararı 2026-08-14).
     /// </summary>
     public bool CreateUser { get; set; }
+}
+
+/// <summary>Bir oluşturma eylemi (bkz. <see cref="ShellStateDto.Creates"/>).</summary>
+public class ShellCreateDto
+{
+    /// <summary>Katalog anahtarı (MacroCatalog) — kısayol tuşları buna bağlanır.</summary>
+    public string Key { get; set; } = string.Empty;
+
+    public string Title { get; set; } = string.Empty;
+
+    public string Url { get; set; } = string.Empty;
+
+    public string Icon { get; set; } = string.Empty;
+
+    /// <summary>true → bulunduğu sayfada pencere açılır; false → sayfaya gidilir.</summary>
+    public bool IsModal { get; set; }
 }
 
 public class ShellBadgesDto

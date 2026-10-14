@@ -77,23 +77,28 @@ $(function () {
     }
 
     // =========================================================================
-    // Oluşturma eylemleri — tek kaynak. Menü satırları da, kısayol bağlamaları
-    // da, kısayol penceresindeki liste de BURADAN üretilir.
+    // Oluşturma eylemleri — tek kaynak: kabuk durumundaki liste (ShellStateDto.Creates,
+    // Makro Ekran kataloğu, sunucuda izne göre süzülmüş). Menü satırları da, kısayol
+    // bağlamaları da, kısayol penceresindeki liste de BURADAN üretilir; komut paleti
+    // aynı listeyi okur. Tek harfli kısayol yalnız iki eski eylemde (G/P); yenileri
+    // tuşsuz gelir.
+    //
+    // 🔴 Hibe girişi BİLEREK yok. Eskiden 'h' → /Grants/CreateModal vardı; o pencere
+    // bir çağrı değil 5 alanlık bir hibe PROGRAMI yaratıyordu. Program /Grants/Import'ta
+    // (metin yapıştır → alan çıkar) doğuyor. ShellCanDto.CreateGrant sunucuda duruyor:
+    // hibeye bir oluşturma akışı gelirse satır kataloğa (MacroCatalog) eklenir.
     // =========================================================================
+    var SHORTCUT_KEYS = { TaskCreate: 'g', ProjectCreate: 'p' };
+
     function createActions() {
-        var can = (state && state.can) || {};
-        var all = [
-            { key: 'g', label: 'Görev', url: '/Tasks/CreateModal', allowed: !!can.createTask },
-            { key: 'p', label: 'Proje', url: '/Projects/CreateModal', allowed: !!can.createProject }
-            // 🔴 Hibe girişi BİLEREK yok. Eskiden 'h' → /Grants/CreateModal vardı;
-            // o pencere bir çağrı değil 5 alanlık bir hibe PROGRAMI yaratıyordu.
-            // Tur 22'de program penceresi kaldırıldı, program /Grants/Import'ta
-            // (metin yapıştır → alan çıkar) doğuyor — ve "+ Yeni" yalnız modal
-            // açabildiği için tam sayfa olan Import buraya konamıyor.
-            // ShellCanDto.CreateGrant sunucuda duruyor: hibeye modal bir
-            // oluşturma akışı gelirse satır buraya geri eklenir.
-        ];
-        return all.filter(function (a) { return a.allowed; });
+        return ((state && state.creates) || []).map(function (c) {
+            return { key: SHORTCUT_KEYS[c.key] || '', label: c.title, url: c.url, isModal: !!c.isModal };
+        });
+    }
+
+    // Pencere eylemi bulunduğu sayfada açılır; sayfa eylemi (ör. Masraf yakala) oraya gider.
+    function runAction(action) {
+        if (action.isModal) { openModal(action.url); } else { location.href = action.url; }
     }
 
     // =========================================================================
@@ -120,9 +125,9 @@ $(function () {
         menu.setAttribute('role', 'menu');
         menu.hidden = true;
         menu.innerHTML = actions.map(function (a) {
-            return '<button type="button" class="apya-shell-menu-row" role="menuitem" data-url="' + a.url + '">' +
-                   '<span>' + a.label + '</span>' +
-                   '<kbd class="apya-shell-kbd">' + a.key.toUpperCase() + '</kbd></button>';
+            return '<button type="button" class="apya-shell-menu-row" role="menuitem" data-index="' + actions.indexOf(a) + '">' +
+                   '<span>' + escapeHtml(a.label) + '</span>' +
+                   (a.key ? '<kbd class="apya-shell-kbd">' + a.key.toUpperCase() + '</kbd>' : '') + '</button>';
         }).join('');
 
         wrap.appendChild(btn);
@@ -134,7 +139,7 @@ $(function () {
             var row = e.target.closest('.apya-shell-menu-row');
             if (!row) { return; }
             closeMenu(btn, menu);
-            openModal(row.dataset.url);
+            runAction(actions[Number(row.dataset.index)]);
         });
     }
 
@@ -315,8 +320,8 @@ $(function () {
         ];
 
         if (!sayfaSahip) {
-            var creates = createActions().map(function (a) {
-                return [a.key.toUpperCase(), 'Yeni ' + a.label.toLocaleLowerCase('tr')];
+            var creates = createActions().filter(function (a) { return a.key; }).map(function (a) {
+                return [a.key.toUpperCase(), a.label];
             });
             if (creates.length) { groups.splice(2, 0, ['OLUŞTUR', creates]); }
         }
@@ -728,8 +733,8 @@ $(function () {
         if (e.key === '/') { e.preventDefault(); openPalette(); return; }
 
         if (overlayOpen()) { return; }
-        var hit = createActions().filter(function (a) { return a.key === e.key.toLowerCase(); })[0];
-        if (hit) { e.preventDefault(); openModal(hit.url); }
+        var hit = createActions().filter(function (a) { return a.key && a.key === e.key.toLowerCase(); })[0];
+        if (hit) { e.preventDefault(); runAction(hit); }
     });
 
     (window.apyaShellState || Promise.resolve(null))

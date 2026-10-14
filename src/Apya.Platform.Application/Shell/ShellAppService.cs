@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Apya.Platform.DynamicAssets.Webhooks;
 using Apya.Platform.Grants;
+using Apya.Platform.Macros;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Settings;
@@ -82,6 +83,7 @@ public class ShellAppService : PlatformAppService, IShellAppService
             Projects = await GetProjectsAsync(),
             Health = GetHealth(_hostEnvironment.EnvironmentName),
             Can = await GetCanAsync(),
+            Creates = await GetCreatesAsync(),
             SavedViews = await GetSavedViewsAsync()
         };
     }
@@ -95,6 +97,31 @@ public class ShellAppService : PlatformAppService, IShellAppService
             CreateGrant = await IsGrantedAsync(PlatformPermissions.Grants.Create),
             CreateUser = await IsGrantedAsync(IdentityPermissions.Users.Create)
         };
+    }
+
+    /// <summary>
+    /// Katalogdaki adresli makrolar, katalog sırasıyla. Yalnız izin denetimi (önbellekli) — sayaç
+    /// ya da sorgu YOK: bu çağrı her sayfada çalışıyor.
+    /// </summary>
+    private async Task<List<ShellCreateDto>> GetCreatesAsync()
+    {
+        var creates = new List<ShellCreateDto>();
+        foreach (var definition in MacroCatalog.All.Where(d => d.Url != null))
+        {
+            if (await IsGrantedAsync(definition.Permission!))
+            {
+                creates.Add(new ShellCreateDto
+                {
+                    Key = definition.Key,
+                    Title = L[definition.TitleKey!],
+                    Url = definition.Url!,
+                    Icon = definition.Icon!,
+                    IsModal = definition.Kind == MacroKind.Modal
+                });
+            }
+        }
+
+        return creates;
     }
 
     public async Task<List<ShellSavedViewDto>> SetSavedViewsAsync(List<ShellSavedViewDto> views)
