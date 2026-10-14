@@ -35,6 +35,62 @@
         if (btn) { btn.addEventListener('click', retry, { once: true }); }
     }
 
+    // =========================================================================
+    // Telefon (1g): paneller tek yüzeyde, sekmeyle seçilir. Sekme çubuğu yalnız dar ekranda
+    // görünür (Index.css); geniş ekranda root[data-mobile-tab] hiçbir şeyi gizlemez.
+    // =========================================================================
+    var tabs = root.querySelector('.apya-macros-tabs');
+
+    function tabButtons() {
+        return tabs ? Array.prototype.slice.call(tabs.querySelectorAll('[role="tab"]')) : [];
+    }
+
+    function selectTab(name, focus) {
+        root.dataset.mobileTab = name;
+        tabButtons().forEach(function (t) {
+            var on = t.dataset.tab === name;
+            t.classList.toggle('is-active', on);
+            t.setAttribute('aria-selected', on ? 'true' : 'false');
+            t.tabIndex = on ? 0 : -1;
+            if (on && focus) { t.focus(); }
+        });
+    }
+
+    function setTabCount(name, count) {
+        var el = root.querySelector('[data-tab-count="' + name + '"]');
+        if (!el) { return; }
+        el.textContent = count > 99 ? '99+' : String(count);
+        el.hidden = !count;
+    }
+
+    // Paneli hiç basılmayan kaynağın sekmesi de kalkar (ör. bütün bekleyen kaynakları boş döndü).
+    function hideTab(name) {
+        var tab = tabs && tabs.querySelector('[data-tab="' + name + '"]');
+        if (!tab) { return; }
+        tab.hidden = true;
+        if (root.dataset.mobileTab === name) {
+            var next = tabButtons().filter(function (t) { return !t.hidden; })[0];
+            if (next) { selectTab(next.dataset.tab); }
+        }
+    }
+
+    if (tabs) {
+        tabs.addEventListener('click', function (e) {
+            var tab = e.target.closest('[role="tab"]');
+            if (tab) { selectTab(tab.dataset.tab); }
+        });
+        // WAI-ARIA sekme düzeni: oklar sekmeler arasında gezer.
+        tabs.addEventListener('keydown', function (e) {
+            if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') { return; }
+            var visible = tabButtons().filter(function (t) { return !t.hidden; });
+            var i = visible.indexOf(document.activeElement);
+            if (i === -1) { return; }
+            e.preventDefault();
+            var next = visible[(i + (e.key === 'ArrowRight' ? 1 : visible.length - 1)) % visible.length];
+            selectTab(next.dataset.tab, true);
+        });
+    }
+
     function emptyHtml(icon, text) {
         return '<div class="apya-console-state"><span class="apya-console-state-icon is-muted">' +
                '<i class="fa ' + icon + '" aria-hidden="true"></i></span><p>' + esc(text) + '</p></div>';
@@ -70,6 +126,7 @@
             var unread = res[1] || 0;
             unreadEl.textContent = unread > 99 ? '99+' : String(unread);
             unreadEl.hidden = unread === 0;
+            setTabCount('notifications', unread);
             bodyOf(notifications).innerHTML = items.length
                 ? items.map(notificationRow).join('')
                 : emptyHtml('fa-bell', l('Macros:Notifications:Empty'));
@@ -187,6 +244,10 @@
             .then(function (parts) {
                 var html = parts.join('');
                 bodyOf(records).innerHTML = html || emptyHtml('fa-inbox', l('Macros:Records:Empty'));
+                // Sekme balonu = grup sayılarının toplamı (grup başlığında basılan sayı).
+                setTabCount('records', Array.prototype.reduce.call(
+                    records.querySelectorAll('.apya-macros-group-count'),
+                    function (sum, el) { return sum + (Number(el.textContent) || 0); }, 0));
             }, function (err) {
                 failed(records, 'Macros:Records:LoadFailed', loadRecords, err);
             });
@@ -255,10 +316,11 @@
             var cells = [].concat.apply([], parts);
             if (!cells.length) {
                 // Hiç hücre yoksa: ya hepsi düştü (hata kutusu) ya da gösterilecek sayaç yok (bölüm kalkar).
-                if (failures) { failed(pending, 'Macros:Pending:LoadFailed', loadPending); } else { pending.hidden = true; }
+                if (failures) { failed(pending, 'Macros:Pending:LoadFailed', loadPending); } else { pending.hidden = true; hideTab('pending'); }
                 return;
             }
             var total = cells.reduce(function (sum, c) { return sum + (c.count || 0); }, 0);
+            setTabCount('pending', total);
             // Hepsi sıfırsa (ve kaynak düşmediyse) sıfır hücre ızgarası yerine tek kutu (3a).
             pending.classList.toggle('is-empty', total === 0 && !failures);
             if (total === 0 && !failures) {

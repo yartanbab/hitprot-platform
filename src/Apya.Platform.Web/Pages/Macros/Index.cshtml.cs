@@ -61,6 +61,12 @@ public class IndexModel : PlatformPageModel
     /// </summary>
     public List<string> PendingSources { get; } = new();
 
+    /// <summary>
+    /// Telefonda (1g) panellerin sekmeleri: notifications · records · pending. Üç panel yan yana
+    /// sığmıyor, aynı yüzeyi paylaşıyor. Tek panel varsa sekme basılmaz (boş liste).
+    /// </summary>
+    public List<string> MobileTabs { get; } = new();
+
     /// <summary>Panel kararına giren izinler — sayfa bunları bir kez sorar, karar saf fonksiyonda.</summary>
     public static readonly string[] PanelPermissions =
     {
@@ -87,6 +93,16 @@ public class IndexModel : PlatformPageModel
         var (groups, sources) = ResolvePanels(CurrentTenant.Id == null, granted);
         RecordGroups.AddRange(groups);
         PendingSources.AddRange(sources);
+        MobileTabs.AddRange(ResolveMobileTabs(groups, sources));
+    }
+
+    /// <summary>Bildirimler her zaman var; kayıt ve bekleyen sekmesi paneli basılıyorsa. Tek sekme anlamsız.</summary>
+    public static List<string> ResolveMobileTabs(IReadOnlyCollection<string> groups, IReadOnlyCollection<string> sources)
+    {
+        var tabs = new List<string> { "notifications" };
+        if (groups.Count > 0) { tabs.Add("records"); }
+        if (sources.Count > 0) { tabs.Add("pending"); }
+        return tabs.Count > 1 ? tabs : new List<string>();
     }
 
     /// <summary>

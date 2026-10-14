@@ -32,7 +32,8 @@
 
 @* Makro Ekran — tasarım docs/design/makro-ekran (1a). Adres Türkçe (/Makro), klasör alan kuralıyla
    Pages/Macros. Kartlar sunucuda basılır; Index.js tıklamayı ve sabitlemeyi, Panels.js panelleri yönetir. *@
-<div data-page-description="@L["Macros:Description"]" class="apya-page apya-macros@(Model.IsStarter ? " is-starter" : "")" id="ApyaMacros">
+<div data-page-description="@L["Macros:Description"]" class="apya-page apya-macros@(Model.IsStarter ? " is-starter" : "")" id="ApyaMacros"
+     data-mobile-tab="@(Model.MobileTabs.FirstOrDefault())">
     @* Haber şeridi: en fazla 5 haber, istemcide dolar (IMacroNewsAppService). Haber yoksa kalkar. *@
     <section class="apya-macros-news" id="MacrosNews" aria-roledescription="carousel"
              aria-label="@L["Macros:News:Title"]" hidden>
@@ -89,6 +90,14 @@
                             <partial name="_MacroCard" model="item" />
                         }
                     </div>
+                    @* Telefon (1g): bütün makrolar 6'lı sayfalarda, sağa kaydırılır; Index.js kartları buraya taşır. *@
+                    <div class="apya-macro-pager" data-macro-pager hidden>
+                        <div class="apya-macro-pager-track" data-pager-track></div>
+                        <div class="apya-macro-pager-foot">
+                            <span class="apya-macro-pager-hint">@L["Macros:LongPressHint"]</span>
+                            <span class="apya-macro-pager-dots" data-pager-dots aria-hidden="true"></span>
+                        </div>
+                    </div>
                 </section>
 
                 <section aria-labelledby="MacrosAllHeading" hidden="@(!Model.Rest.Any())">
@@ -106,8 +115,30 @@
             }
         </div>
 
+        @* Telefon (1g): paneller tek yüzeyi paylaşır, sekmeyle seçilir (Panels.js). Geniş ekranda gizli. *@
+        @if (Model.MobileTabs.Any())
+        {
+            <div class="apya-macros-tabs" role="tablist" aria-label="@L["Macros:Tabs"]">
+                @foreach (var tab in Model.MobileTabs)
+                {
+                    var first = tab == Model.MobileTabs[0];
+                    var (label, target) = tab switch
+                    {
+                        "records" => (L["Macros:Tabs:Records"], "MacrosRecords"),
+                        "pending" => (L["Macros:Tabs:Pending"], "MacrosPending"),
+                        _ => (L["Macros:Notifications"], "MacrosNotifications")
+                    };
+                    <button type="button" role="tab" class="apya-macros-tab@(first ? " is-active" : "")" data-tab="@tab"
+                            aria-controls="@target" aria-selected="@(first ? "true" : "false")" tabindex="@(first ? 0 : -1)">
+                        <span>@label</span>
+                        <span class="apya-macros-tab-count@(tab == "notifications" ? " is-alert" : "")" data-tab-count="@tab" hidden></span>
+                    </button>
+                }
+            </div>
+        }
+
         @* Paneller kendi içinde kayar: kabın satır yüksekliğini sol sütun belirler (absolute iç panel). *@
-        <div class="apya-macros-panel-slot">
+        <div class="apya-macros-panel-slot" data-mobile-panel="notifications">
             <section class="apya-macros-panel" id="MacrosNotifications" aria-labelledby="MacrosNotificationsHeading">
                 <div class="apya-macros-panel-head">
                     <h2 class="apya-macros-panel-title" id="MacrosNotificationsHeading">@L["Macros:Notifications"]</h2>
@@ -121,7 +152,7 @@
 
         @if (Model.RecordGroups.Any())
         {
-            <div class="apya-macros-panel-slot">
+            <div class="apya-macros-panel-slot" data-mobile-panel="records">
                 <section class="apya-macros-panel" id="MacrosRecords" aria-labelledby="MacrosRecordsHeading"
                          data-groups="@string.Join(",", Model.RecordGroups)">
                     <div class="apya-macros-panel-head">
@@ -135,7 +166,7 @@
 
     @if (Model.PendingSources.Any())
     {
-        <section class="apya-macros-pending" id="MacrosPending" aria-labelledby="MacrosPendingHeading"
+        <section class="apya-macros-pending" id="MacrosPending" aria-labelledby="MacrosPendingHeading" data-mobile-panel="pending"
                  data-sources="@string.Join(",", Model.PendingSources)">
             <div class="apya-macros-pending-head">
                 <h2 class="apya-macros-panel-title" id="MacrosPendingHeading">@L["Macros:Pending"]</h2>
