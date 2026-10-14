@@ -26,6 +26,178 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.10.14",
+            date: "14 Ekim 2026",
+            title: "Projelerinize ölçülebilir göstergeler, hibe başvurusuna hedefler, hazır roller ve yeni " +
+                   "Makro Ekran; Finans Merkezi tek girişte toplandı",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Projelerinize ölçülebilir göstergeler ekleyebiliyorsunuz",
+                "Proje sayfasında yeni bir \"Göstergeler\" sekmesi var. Her gösterge için bir ad, birim, " +
+                "başlangıç değeri, hedef ve isterseniz hedef tarihi girersiniz (örneğin \"Yeni istihdam · " +
+                "kişi · 0 → 10 · 31 Aralık\"). Ölçüm girdikçe gösterge ilerleme yüzdesini ve durumunu " +
+                "(Yolunda, Geride, Tamamlandı) gösterir; ölçüme kanıt belgesi bağlayabilirsiniz. " +
+                "Teslim raporunda da yeni bir \"Göstergeler\" bölümü var. Hedef tarihi geçtiği hâlde " +
+                "hedefine ulaşmamış göstergeler proje liderlerine bildirim olarak gelir. " +
+                "Yetkiler: \"Göstergeleri Görme\" ve \"Göstergeleri Yönetme\". Projeyi görebilen roller " +
+                "görme, projeyi düzenleyebilen roller yönetme yetkisini kendiliğinden aldı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe başvurusuna ölçülebilir hedefler yazılabiliyor",
+                "Başvuru sihirbazının ikinci adımında artık hedefler tablosu var: projenin varmayı " +
+                "hedeflediği sonuçları (ad, birim, başlangıç, hedef, hedef tarihi) başvuru aşamasında " +
+                "yazabilirsiniz. Hedefler isteğe bağlıdır, başvurunun tamamlanma oranını etkilemez. " +
+                "Başvuru onaylanıp projeye dönüştürülürken hedefler projenin göstergelerine aktarılır; " +
+                "aynı bilgiyi yeniden girmeniz gerekmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevleri iş adımına bağlayabiliyorsunuz",
+                "Görev düzenleme penceresinde yeni bir \"İş adımı\" seçimi var. Bir iş adımına görev bağladığınızda " +
+                "adımın ilerlemesi artık bağlı görevlerden hesaplanır: tamamlanan görev arttıkça adımın " +
+                "yüzdesi kendiliğinden yükselir. Adıma hiç görev bağlı değilse eskisi gibi elle girdiğiniz " +
+                "yüzde geçerlidir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hazır roller: Proje Sorumlusu, Muhasebe, Gözlemci",
+                "Firmanız artık yalnız \"Yönetici\" rolüyle başlamıyor; üç hazır rol geliyor. " +
+                "Proje Sorumlusu proje, görev, belge, form ve takvimi yönetir, finansı yalnız görür. " +
+                "Muhasebe gider, gelir, fatura, cari, kasa ve kurları yönetir, projeleri görür ve bütçe " +
+                "kalemlerini düzenleyebilir. Gözlemci her şeyi görür ama hiçbir şeyi değiştiremez. " +
+                "Roller, rol yönetimi ekranında durur; izinlerini dilediğiniz gibi değiştirebilir, " +
+                "kullanmadığınız rolü silebilirsiniz. Aynı adda bir rolünüz zaten varsa ona dokunulmadı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Makro Ekran: sık yaptığınız işler tek yerde",
+                "Sol menüde yeni bir \"Makro Ekran\" var. Sık yaptığınız işleri (yeni görev, gider, " +
+                "proje gibi) tek tıkla başlatır; üyesi olduğunuz projeleri, okunmamış bildirimlerinizi, " +
+                "size atanmış kayıtları ve bekleyen işlerinizi aynı ekranda toplar. Sık kullandığınız " +
+                "işleri sabitleyebilirsiniz. Üstteki haber şeridinde açık hibe çağrıları, yenilikler ve " +
+                "başvurularınızla ilgili sonuçlar görünür. \"+ Yeni\" menüsü ve komut paleti (Ctrl K) de " +
+                "aynı iş listesinden beslenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Gelir kaydına belge bağlayabiliyorsunuz",
+                "Finans Merkezi'nin Gelir-Gider tablosunda gelir satırlarında artık \"Belge bağla\" düğmesi " +
+                "var: tahsilatın dekontunu ya da faturasını Dokümanlar'dan seçip gelire bağlarsınız. " +
+                "Belge bağlamak zorunlu değildir; belgesi bağlanmamış tahsilat sayısı tablonun üstünde " +
+                "hatırlatma olarak yazar."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Faturaya bütçe kalemi; alış faturası ile gider arasında çift kayıt uyarısı",
+                "Fatura oluştururken artık isteğe bağlı olarak projenin bütçe kalemini seçebilirsiniz. " +
+                "Aynı alım bazen hem alış faturası hem gider olarak iki kez giriliyordu. Artık alış " +
+                "faturası kaydettiğinizde program aynı proje, para birimi ve tutarda, yakın tarihli bir " +
+                "gider arar; bulamazsa \"gider de girmek ister misiniz?\" diye sorar ve gider penceresini " +
+                "faturanın bilgileriyle dolu açar. Gider girerken de karşılık gelen alış faturası varsa " +
+                "uyarır. Uyarı yalnız bilgi verir, kaydı engellemez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Fon dilimini \"itiraz sürecinde\" olarak işaretleyebiliyorsunuz",
+                "Finans Merkezi > Dilimler & kesintiler sekmesinde her dilim satırında yeni bir itiraz " +
+                "düğmesi var. Bekleyen ya da kısmen tahsil edilmiş bir dilimi \"itiraz sürecinde\" olarak " +
+                "işaretleyebilir, itiraz sonuçlanınca işareti kaldırabilirsiniz. Bu durum daha önce " +
+                "yalnız rozet olarak görünüyor, ekrandan ayarlanamıyordu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Yeni yetki: \"Bütçe Düzenleme\"",
+                "Bütçe kalemi, fon dilimi, tahsilat, kesinti ve revizyon girmek için şimdiye kadar " +
+                "\"Proje Düzenleme\" yetkisi gerekiyordu; finans ekibine projeyi düzenleme hakkı vermeden " +
+                "bütçe kurdurmak mümkün değildi. Artık ayrı bir \"Bütçe Düzenleme\" yetkisi var. " +
+                "Kimsenin yetkisi daralmadı: proje düzenleme yetkisi olan herkes bütçe girmeye devam eder. " +
+                "Bütçeyi görebilmek için \"Bütçe Görüntüleme\" yetkisi de gerekir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Finans Merkezi tek giriş oldu; kayıtlara doğrudan gidiliyor",
+                "Kasa & Banka, Kurlar ve Proje Bütçesi sol menüden kalktı; içerikleri zaten Finans " +
+                "Merkezi'nin sekmelerinde. Finans Merkezi'nin Genel sekmesindeki \"Son İşlemler\" " +
+                "satırları artık kaydın kendisine götürür: gelir ya da gider satırı Gelir-Gider tablosunda " +
+                "o satırı vurgulu açar, fatura satırı o faturayı seçili açar. Gider satırından eşleştirilmiş " +
+                "belgesine tek tıkla gidilir. Hibe ve etkinlik projelerinde de artık Faturalar sekmesi var."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje sayfasında açık risk sayısı",
+                "Projede kapanmamış risk varsa proje sayfasının üst şeridinde \"N açık risk\" rozeti " +
+                "görünür; rozete basınca zaman çizelgesindeki risk kütüğü kartı açılır. Riskler daha önce " +
+                "yalnız zaman çizelgesi sayfasının en altındaydı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe çağrısı sayfası görselli bir afişle açılıyor",
+                "Hibe çağrısının ayrıntı sayfasının üstünde artık programın afiş görseli, kurum adı, " +
+                "özet ve \"İlgileniyorum\" düğmesi bir arada duruyor. Uzun özet dört satırda kesilir, " +
+                "\"Devamını göster\" ile açılır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "İlgi formundaki cevaplar başvuru özetine aktarılıyor",
+                "Bir hibe çağrısına ilgi bildirirken yazdığınız proje fikri, çözülen sorun, hedef kitle ve " +
+                "planlanan faaliyetler, başvurunuz açıldığında proje özetine ön yazı olarak gelir. " +
+                "Özeti sihirbazda dilediğiniz gibi düzenleyebilirsiniz; aynı metni yeniden yazmanız gerekmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Yalnız görme yetkisi olan kullanıcılar hibe ekranlarında değiştirme düğmesi görmüyor",
+                "Hibe başvurusunu yönetme yetkisi olmayan kullanıcılar (örneğin Gözlemci rolü) başvuru " +
+                "sihirbazında, belgelerde, itirazda, çağrı ayrıntısında, hibe yolculuğunda ve firma " +
+                "profilinde artık kaydet, ekle, gönder gibi düğmeleri görmüyor; ekranları okuyabiliyorlar. " +
+                "Daha önce düğmeler görünüyor, basınca \"yetkiniz yok\" hatası çıkıyordu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Faturalardaki \"Gecikmiş\" süzgeci çalışıyor",
+                "Faturalar ekranındaki \"Gecikmiş\" süzgeci hiçbir faturayı göstermiyordu. Artık vadesi " +
+                "geçmiş, ödenmemiş ve iptal edilmemiş faturaları listeliyor; bu faturalarda \"Gecikmiş\" " +
+                "rozeti görünüyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Proje listesindeki bütçe rakamı proje sayfasıyla aynı",
+                "Proje listesi \"harcanan bütçe\" olarak çalışma saatlerinin maliyetini gösteriyordu; " +
+                "proje sayfası ise girilen giderlerin toplamını. Aynı proje listede ₺0, proje sayfasında " +
+                "bir milyonun üzerinde görünebiliyordu. Artık ikisi de giderlerin toplamını ve bütçe " +
+                "kalemlerinin toplamını gösteriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kuru girilmemiş dövizli kayıt \"0,00 ₺\" yerine \"kur yok\" görünüyor",
+                "Kayıt anında kuru bulunamayan dövizli gelir ya da gider, Finans Merkezi'nin Gelir-Gider " +
+                "tablosunda \"0,00 ₺\" olarak görünüyor ve gerçekten sıfır tutarlı bir kayıtla " +
+                "karışıyordu. Artık \"kur yok\" yazıyor ve toplamın altında kaç kaydın ₺ toplamına " +
+                "girmediği belirtiliyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Son başvuru tarihi geçmiş çağrılar artık önerilmiyor",
+                "Son başvuru tarihi geçtiği hâlde durumu güncellenmemiş hibe çağrıları katalogda, " +
+                "\"bir daha denemek için\" önerisinde ve form çağrı listesinde çıkabiliyor; bu çağrılara " +
+                "ilgi bildirilebiliyordu. Artık tarihi geçmiş çağrı listelenmiyor ve ilgi kabul etmiyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bildirim zili ve günlük özet e-postası",
+                "Zil rozeti büyük sayılarda kesiliyordu; artık sayıyı tam gösteriyor ve zilin köşesine " +
+                "oturuyor. Günlük bildirim özeti e-postası geçici bir e-posta sunucusu hatasında o gün hiç " +
+                "gitmiyordu; artık sıraya alınıp yeniden deneniyor ve sistem yeniden başlatıldığında " +
+                "özetin saati kaymıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "İçinde dosya olan klasör yanlışlıkla silinmiyor",
+                "Dokümanlar'da içi dolu bir klasör silinebiliyor ve içindeki belgelere ulaşılamıyordu; " +
+                "bir klasör kendi alt klasörünün içine de taşınabiliyordu. Artık içi dolu klasör " +
+                "silinmeden önce boşaltılması istenir, klasör kendi içine taşınamaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Gizli görevler her ekranda gizli kalıyor",
+                "Gizli olarak işaretlenen görevler görev listesinde gizleniyordu ama proje sayfası, Genel " +
+                "Bakış, proje bütçesi, belge kapsamı, takvim, pano sütunları, görev şablonları, yapay zekâ " +
+                "asistanı ve dış paylaşım bağlantıları gibi yollardan görülebiliyordu. Artık gizli görev ve " +
+                "ekleri yalnız görmeye yetkili kişilere görünür; göremediğiniz bir görevin altına alt görev " +
+                "de açılamaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Security,
+                "Yetkiler her işlemde sunucuda da denetleniyor",
+                "Bazı işlemler yalnız ekranda gizleniyor, doğrudan istekle yapılabiliyordu. Artık sunucu da " +
+                "denetliyor: bütçe rakamları ve gider satırları bütçe görme yetkisi olmadan okunamıyor; " +
+                "proje, cari ve görev adları görme yetkisi olmayana verilmiyor; belge ve formda değişiklik, " +
+                "görev oluşturma ve ek silme ilgili yetkiyi istiyor; hibe başvurusunda değişiklik \"Hibe " +
+                "Başvurusu Yönetme\" yetkisini istiyor. Rollerinizi bu yetkilere göre kurduysanız sizin için " +
+                "bir şey değişmez; bir kullanıcı daha önce yapabildiği bir işi artık yapamıyorsa rolüne " +
+                "ilgili yetkiyi ekleyin.")
+        ),
+
+        new ReleaseNote(
             version: "2026.10.06",
             date: "6 Ekim 2026",
             title: "Projenizin bitişi yaklaşınca artık haber alıyorsunuz; harcamadan belgesine tek " +
