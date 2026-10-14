@@ -54,25 +54,19 @@ public class IndexModel : AbpPageModel
 
     private async Task LoadAccountsAsync()
     {
-        var result = await _cashAccountAppService.GetListAsync(
-            new GetCashAccountsInput { MaxResultCount = 1000, IsActive = true });
+        var rows = await CashAccountBalanceLoader.LoadActiveAsync(_cashAccountAppService, _cashMovementAppService);
 
-        var accounts = new List<AccountCardModel>();
-        foreach (var a in result.Items)
+        var accounts = rows.Select(r => new AccountCardModel
         {
-            var balance = await _cashMovementAppService.GetBalanceAsync(a.Id);
-            accounts.Add(new AccountCardModel
-            {
-                Id = a.Id,
-                Name = a.Name,
-                Type = a.Type,
-                Currency = a.Currency,
-                BankName = a.BankName,
-                Branch = a.Branch,
-                Iban = a.Iban,
-                Balance = balance.CurrentBalance
-            });
-        }
+            Id = r.Account.Id,
+            Name = r.Account.Name,
+            Type = r.Account.Type,
+            Currency = r.Account.Currency,
+            BankName = r.Account.BankName,
+            Branch = r.Account.Branch,
+            Iban = r.Account.Iban,
+            Balance = r.Balance
+        }).ToList();
 
         Accounts = accounts.OrderByDescending(a => a.Balance).ToList();
         DistinctCurrencyCount = accounts.Select(a => a.Currency).Distinct().Count();
