@@ -1,6 +1,7 @@
 $(function () {
 
     var svc = apya.platform.dynamicAssets.webhooks.webhookSubscription;
+    var l = abp.localization.getResource('Platform');
 
     var createModal = new abp.ModalManager(abp.appPath + 'DynamicAssets/Webhooks/CreateModal');
     var editModal   = new abp.ModalManager(abp.appPath + 'DynamicAssets/Webhooks/EditModal');
@@ -181,7 +182,9 @@ $(function () {
                         '<p class="text-start text-muted mb-2">Bu değeri şimdi kopyalayın — güvenlik nedeniyle bir daha gösterilmeyecek.</p>' +
                         '<div class="input-group">' +
                             '<input type="text" id="apya-secret-reveal-input" class="form-control" readonly value="' + escapeHtml(secret) + '">' +
-                            '<button type="button" class="btn btn-outline-secondary" id="apya-secret-copy-btn"><i class="fa fa-copy"></i></button>' +
+                            '<button type="button" class="btn btn-outline-secondary" id="apya-secret-copy-btn"' +
+                                ' title="' + escapeHtml(l('Webhooks:CopySecret')) + '" aria-label="' + escapeHtml(l('Webhooks:CopySecret')) + '">' +
+                                '<i class="fa fa-copy" aria-hidden="true"></i></button>' +
                         '</div>',
                     confirmButtonText: 'Kapat',
                     didOpen: function () {
