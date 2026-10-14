@@ -670,5 +670,8 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
 
         html.ShouldContain("id=\"TargetRows\"", Case.Sensitive);
         html.ShouldContain("id=\"TargetAdd\"", Case.Sensitive);
+        // Ham tarih alanı ABP tarih seçicisine bırakılırsa tarayıcıda düz metin kutusuna döner ve betik
+        // yerel biçimli metni sunucuya yollar (tarayıcı denemesinde yakalandı).
+        html.ShouldContain("<input type=\"date\" abp-data-datepicker=\"false\" class=\"form-control form-control-sm\" id=\"TargetDate\"", Case.Sensitive);
     }
 }
