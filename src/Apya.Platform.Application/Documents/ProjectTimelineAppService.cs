@@ -226,6 +226,13 @@ public class ProjectTimelineAppService : PlatformAppService, IProjectTimelineApp
         return full.IsNullOrWhiteSpace() ? user.UserName : full;
     }
 
+    public virtual async Task<int> GetOpenRiskCountAsync(Guid projectId)
+    {
+        // GetAsync ile aynı görünürlük: proje bu bağlamda görülemiyorsa EntityNotFoundException.
+        await _projectRepository.GetAsync(projectId);
+        return await _riskRepository.CountAsync(r => r.ProjectId == projectId && !r.IsClosed);
+    }
+
     private async Task<List<ProjectRiskDto>> BuildRisksAsync(Guid projectId, List<ProjectWorkStep> steps)
     {
         var risks = (await _riskRepository.GetListAsync(r => r.ProjectId == projectId))
