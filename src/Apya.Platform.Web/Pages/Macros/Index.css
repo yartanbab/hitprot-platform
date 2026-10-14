@@ -579,6 +579,150 @@
     }
 }
 
+/* --- Telefon (1g): sayfalı makro ızgarası + sekmeli paneller ---------------- */
+
+/* Index.js telefonda kartları 6'lı sayfalara taşır; sayfa yatay kaydırılır. */
+.apya-macro-pager-track {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+}
+
+.apya-macro-pager-track::-webkit-scrollbar {
+    display: none;
+}
+
+/* Sonraki sayfanın kenarı görünür: kaydırılabildiği belli olsun. */
+.apya-macro-page {
+    flex: 0 0 calc(100% - 28px);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: start;
+    gap: 10px;
+    scroll-snap-align: start;
+}
+
+.apya-macro-page .apya-macro-card {
+    aspect-ratio: 1 / 1;
+    min-height: 0;
+    padding: 10px;
+    border-radius: 16px;
+}
+
+.apya-macro-page .apya-macro-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 16px;
+}
+
+.apya-macro-page .apya-macro-card-title {
+    font-size: 11.5px;
+}
+
+.apya-macro-page .apya-macro-card-foot {
+    display: none;
+}
+
+.apya-macro-pager-foot {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 10px;
+}
+
+.apya-macro-pager-hint {
+    font-size: 10.5px;
+    color: var(--apya-text-secondary);
+}
+
+.apya-macro-pager-dots {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+}
+
+.apya-macro-pager-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--apya-border-strong);
+    transition: width 0.15s;
+}
+
+.apya-macro-pager-dot.is-active {
+    width: 14px;
+    background: var(--apya-accent-500);
+}
+
+/* Uzun basışta iOS bağlantı önizlemesi ve metin seçimi açılmasın. */
+@media (pointer: coarse) {
+    .apya-macro-card {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}
+
+.apya-macros-tabs {
+    display: none;
+}
+
+.apya-macros-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    margin-bottom: -1px;
+    padding: 0 6px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--apya-text-secondary);
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+}
+
+.apya-macros-tab.is-active {
+    color: var(--apya-accent-600);
+    border-bottom-color: var(--apya-accent-500);
+}
+
+/* accent-600 koyu temada ters döner (tokens) → metin için açık ton. */
+[data-theme="dark"] .apya-macros-tab.is-active {
+    color: var(--apya-accent-300);
+}
+
+.apya-macros-tab:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: -2px;
+}
+
+.apya-macros-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    font: 700 10px/1 var(--apya-font-mono);
+    color: var(--apya-text-secondary);
+    background: var(--apya-surface-sunken);
+}
+
+/* Kırmızı yalnız bildirim sayısında (uygulama notları, karar 4). */
+.apya-macros-tab-count.is-alert {
+    color: #fff;
+    background: var(--apya-negative-500);
+}
+
 @media (max-width: 575.98px) {
     .apya-macro-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -592,6 +736,36 @@
 
     .apya-macros-starter-text {
         flex: 1 1 calc(100% - 32px);
+    }
+
+    .apya-macros-tabs {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
+        margin-bottom: -8px;
+        border-bottom: 1px solid var(--apya-border-default);
+    }
+
+    /* Yalnız seçili sekmenin paneli (Panels.js root[data-mobile-tab]). */
+    .apya-macros[data-mobile-tab] [data-mobile-panel] {
+        display: none;
+    }
+
+    .apya-macros[data-mobile-tab="notifications"] [data-mobile-panel="notifications"],
+    .apya-macros[data-mobile-tab="records"] [data-mobile-panel="records"],
+    .apya-macros[data-mobile-tab="pending"] [data-mobile-panel="pending"] {
+        display: block;
+    }
+
+    .apya-macros[data-mobile-tab] .apya-macros-pending {
+        margin-top: 8px;
+    }
+
+    /* Sekme etiketi panel başlığının yerini tutar; bağlantı ve sayaç çipi kalır. */
+    .apya-macros[data-mobile-tab] .apya-macros-panel-title,
+    .apya-macros[data-mobile-tab] .apya-macros-panel-head .apya-macros-bubble,
+    .apya-macros[data-mobile-tab] #MacrosRecords .apya-macros-panel-head {
+        display: none;
     }
 }
 

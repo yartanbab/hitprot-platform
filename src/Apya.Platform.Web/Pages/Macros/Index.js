@@ -29,6 +29,13 @@
     var restGrid = root.querySelector('[data-macro-grid="rest"]');
     var restSection = restGrid.closest('section');
 
+    // Telefon (1g): iki ızgara yerine tek sayfalı ızgara (Index.css ile aynı kırılım).
+    var PAGE_SIZE = 6;
+    var phone = window.matchMedia('(max-width: 575.98px)');
+    var pager = root.querySelector('[data-macro-pager]');
+    var track = pager.querySelector('[data-pager-track]');
+    var dots = pager.querySelector('[data-pager-dots]');
+
     function currentPins() {
         return window.apyaShellPins ? window.apyaShellPins.list() : localPins;
     }
@@ -63,11 +70,49 @@
             return (Number(b.dataset.usage) - Number(a.dataset.usage)) ||
                    (Number(a.dataset.order) - Number(b.dataset.order));
         });
-        all.forEach(function (card, i) {
-            (i < FOR_YOU_COUNT ? forYouGrid : restGrid).appendChild(card);
-        });
-        restSection.hidden = all.length <= FOR_YOU_COUNT;
+        place(all);
     }
+
+    // Sıralı kartları yerleştirir: geniş ekranda "Senin için" (ilk 4) + "Tüm makrolar",
+    // telefonda 6'lı sayfalar. Kartlar taşınır (yeniden basılmaz): olay ve durumları korunur.
+    function place(all) {
+        if (phone.matches) {
+            var pages = [];
+            all.forEach(function (card, i) {
+                if (i % PAGE_SIZE === 0) {
+                    pages.push(document.createElement('div'));
+                    pages[pages.length - 1].className = 'apya-macro-page';
+                }
+                pages[pages.length - 1].appendChild(card);
+            });
+            track.replaceChildren.apply(track, pages);
+            dots.innerHTML = pages.length > 1 ? new Array(pages.length + 1).join('<span class="apya-macro-pager-dot"></span>') : '';
+            syncDots();
+        } else {
+            all.forEach(function (card, i) {
+                (i < FOR_YOU_COUNT ? forYouGrid : restGrid).appendChild(card);
+            });
+            track.replaceChildren();
+            dots.innerHTML = '';
+        }
+        pager.hidden = !phone.matches;
+        forYouGrid.hidden = phone.matches;
+        restSection.hidden = phone.matches || all.length <= FOR_YOU_COUNT;
+    }
+
+    function syncDots() {
+        var max = track.scrollWidth - track.clientWidth;
+        var count = dots.children.length;
+        var current = max > 0 && count > 1 ? Math.round(track.scrollLeft / max * (count - 1)) : 0;
+        Array.prototype.forEach.call(dots.children, function (dot, i) {
+            dot.classList.toggle('is-active', i === current);
+        });
+    }
+
+    track.addEventListener('scroll', syncDots, { passive: true });
+    // Sunucu sırası = belge sırası (önce "Senin için", sonra "Tüm makrolar").
+    if (phone.matches) { place(cards()); }
+    phone.addEventListener('change', function () { place(cards()); });
 
     function saveLocal() {
         abp.ajax({
@@ -80,21 +125,23 @@
         });
     }
 
+    // Değiştirdiyse true (sınırda false).
     function togglePin(name) {
         var pins = currentPins();
         var adding = pins.indexOf(name) === -1;
         if (adding && pins.length >= maxPins) {
             abp.notify.warn(l('Macros:PinLimit', maxPins));
-            return;
+            return false;
         }
 
         if (window.apyaShellPins) {
             window.apyaShellPins.toggle(name);
-            return;
+            return true;
         }
 
         if (adding) { localPins.push(name); } else { localPins.splice(localPins.indexOf(name), 1); }
         saveLocal();
+        return true;
     }
 
     // Kullanım sayacı (sıralama bundan beslenir). keepalive: bağlantı makrosunda sayfa hemen
@@ -125,9 +172,57 @@
 
     editBtn.addEventListener('click', function () { setEditing(!editing); });
 
+    // Dokunmatik (1g): karta uzun basış sabitler ya da kaldırır. Parmak kayarsa (sayfa kaydırma)
+    // iptal; basışın ardından gelen tıklama makroyu başlatmaz. "Düzenle" erişilebilir yol olarak kalır.
+    var LONG_PRESS_MS = 500;
+    var press = null;
+    var swallowClick = false;
+
+    root.addEventListener('pointerdown', function (e) {
+        swallowClick = false;
+        var card = e.pointerType === 'touch' && !editing && e.target.closest('.apya-macro-card');
+        if (!card) { return; }
+        press = {
+            x: e.clientX,
+            y: e.clientY,
+            timer: setTimeout(function () {
+                press = null;
+                swallowClick = true;
+                var pinning = currentPins().indexOf(card.dataset.pinName) === -1;
+                if (!togglePin(card.dataset.pinName)) { return; }
+                if (navigator.vibrate) { navigator.vibrate(10); }
+                cards().forEach(syncCard);
+                reorder();
+                abp.notify.info(l(pinning ? 'Macros:PinAdded' : 'Macros:PinRemoved'));
+            }, LONG_PRESS_MS)
+        };
+    });
+
+    function cancelPress(e) {
+        if (!press) { return; }
+        if (e.type === 'pointermove' && Math.abs(e.clientX - press.x) < 10 && Math.abs(e.clientY - press.y) < 10) { return; }
+        clearTimeout(press.timer);
+        press = null;
+    }
+
+    ['pointermove', 'pointerup', 'pointercancel'].forEach(function (type) {
+        root.addEventListener(type, cancelPress);
+    });
+
+    // Uzun basışta tarayıcının bağlantı menüsü açılmasın.
+    root.addEventListener('contextmenu', function (e) {
+        if ((press || swallowClick) && e.target.closest('.apya-macro-card')) { e.preventDefault(); }
+    });
+
     root.addEventListener('click', function (e) {
         var card = e.target.closest('.apya-macro-card');
         if (!card) { return; }
+
+        if (swallowClick) {
+            swallowClick = false;
+            e.preventDefault();
+            return;
+        }
 
         if (editing) {
             e.preventDefault();

@@ -60,6 +60,17 @@ public class MacroPanelSources_Tests
             .Sources.ShouldBe(new[] { "overdueTasks" });
         IndexModel.ResolvePanels(isHost: false, Granted()).Sources.ShouldBeEmpty();
     }
+
+    /// <summary>Telefon sekmeleri (1g) basılan panellerle aynı; tek panel kalınca sekme basılmaz.</summary>
+    [Fact]
+    public void Telefon_sekmeleri_basilan_panelleri_izler()
+    {
+        IndexModel.ResolveMobileTabs(new[] { "projects" }, new[] { "overdueTasks" })
+            .ShouldBe(new[] { "notifications", "records", "pending" });
+        IndexModel.ResolveMobileTabs(new string[0], new[] { "overdueTasks" })
+            .ShouldBe(new[] { "notifications", "pending" });
+        IndexModel.ResolveMobileTabs(new string[0], new string[0]).ShouldBeEmpty();
+    }
 }
 
 /// <summary>Panellerin gerçek render'ı (host bağlamı, test barındırıcısı her izni verir).</summary>
@@ -77,5 +88,20 @@ public class MacroPanelsPage_Tests : PlatformWebTestBase
         // Host'ta firma talepleri grubu yok → hibe durum kataloğu da basılmaz.
         html.ShouldNotContain("window.apyaGrantStatus");
         Regex.IsMatch(html, @"Macros[^""]*\.js").ShouldBeTrue();
+    }
+
+    /// <summary>Telefon düzeni (1g): sayfalı ızgara kabı, sekmeler ve sekmeye bağlı paneller basılır.</summary>
+    [Fact]
+    public async Task Telefon_duzeni_sayfali_izgara_ve_sekmeleri_basar()
+    {
+        var html = await GetResponseAsStringAsync("/Makro");
+
+        html.ShouldContain("data-mobile-tab=\"notifications\"");
+        html.ShouldContain("data-macro-pager");
+        Regex.Matches(html, "role=\"tab\"").Count.ShouldBe(3);
+        html.ShouldContain("aria-controls=\"MacrosRecords\"");
+        html.ShouldContain("data-mobile-panel=\"notifications\"");
+        html.ShouldContain("data-mobile-panel=\"records\"");
+        html.ShouldContain("data-mobile-panel=\"pending\"");
     }
 }
