@@ -263,6 +263,59 @@ public class ProjectIndicator_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     /// <summary>
+    /// Host rolleri de telafi edilir (ilk sürüm yalnız kiracıları dolaşıyordu: host'ta yönetici
+    /// dışındaki roller Göstergeler sekmesini göremiyordu). Ayrı işaretle bir kez koşar.
+    /// </summary>
+    [Fact]
+    public async Task Telafi_host_rollerini_de_kapsar_ve_bir_kez_kosar()
+    {
+        const string provider = RolePermissionValueProvider.ProviderName;
+        var settings = GetRequiredService<ISettingManager>();
+        var grants = GetRequiredService<IPermissionGrantRepository>();
+        var seeder = GetRequiredService<IPermissionDataSeeder>();
+        var contributor = GetRequiredService<ProjectIndicatorPermissionDataSeedContributor>();
+        var roles = GetRequiredService<Volo.Abp.Identity.IIdentityRoleRepository>();
+
+        var viewer = "host-goren-" + Guid.NewGuid().ToString("N")[..6];
+        var editor = "host-duzenleyen-" + Guid.NewGuid().ToString("N")[..6];
+        var outsider = "host-disarida-" + Guid.NewGuid().ToString("N")[..6];
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            foreach (var name in new[] { viewer, editor, outsider })
+            {
+                await roles.InsertAsync(new Volo.Abp.Identity.IdentityRole(Guid.NewGuid(), name, null), autoSave: true);
+            }
+
+            await seeder.SeedAsync(provider, viewer, new[] { PlatformPermissions.Projects.Default }, null);
+            await seeder.SeedAsync(provider, editor,
+                new[] { PlatformPermissions.Projects.Default, PlatformPermissions.Projects.Edit }, null);
+        });
+
+        Task<bool> HasAsync(string role, string permission) => WithUnitOfWorkAsync(async () =>
+            await grants.FindAsync(permission, provider, role) != null);
+        Task SeedAsHostAsync() => WithUnitOfWorkAsync(() => contributor.SeedAsync(new DataSeedContext()));
+
+        await WithUnitOfWorkAsync(() => settings.SetGlobalAsync(
+            PlatformSettings.Backfills.ProjectIndicatorHostPermissionsGranted, null));
+        await SeedAsHostAsync();
+
+        (await HasAsync(viewer, PlatformPermissions.Projects.ViewIndicators)).ShouldBeTrue();
+        (await HasAsync(viewer, PlatformPermissions.Projects.ManageIndicators)).ShouldBeFalse();
+        (await HasAsync(editor, PlatformPermissions.Projects.ManageIndicators)).ShouldBeTrue();
+        (await HasAsync(outsider, PlatformPermissions.Projects.ViewIndicators)).ShouldBeFalse();
+
+        // İkinci koşu: bilerek kaldırılan izin geri gelmez.
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var grant = await grants.FindAsync(PlatformPermissions.Projects.ViewIndicators, provider, viewer);
+            await grants.DeleteAsync(grant!, autoSave: true);
+        });
+        await SeedAsHostAsync();
+        (await HasAsync(viewer, PlatformPermissions.Projects.ViewIndicators)).ShouldBeFalse();
+    }
+
+    /// <summary>
     /// Kurulu kiracılar: projeyi gören rol göstergeleri görür, düzenleyen rol yönetir; telafi bir kez koşar.
     /// </summary>
     [Fact]

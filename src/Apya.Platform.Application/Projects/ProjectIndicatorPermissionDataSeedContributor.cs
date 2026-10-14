@@ -20,6 +20,9 @@ namespace Apya.Platform.Projects;
 /// <para>🔴 BİR KEZ koşar (<see cref="PlatformSettings.Backfills.ProjectIndicatorPermissionsGranted"/>):
 /// bir rolden bilerek kaldırılan izin sonraki yayında geri gelmemeli.</para>
 ///
+/// <para>Host rolleri de kapsanır (ayrı işaret:
+/// <see cref="PlatformSettings.Backfills.ProjectIndicatorHostPermissionsGranted"/>).</para>
+///
 /// <para>🔴 Yalnız HOST bağlamında koşar; yeni kiracının yönetici rolü tüm kiracı izinlerini kimlik
 /// tohumlayıcısından, hazır roller <c>TenantRoleTemplates</c>'ten alır. İzinlerin paket tavanına
 /// girmesini <c>TenantPackageManager.LateAddedPermissions</c> üstlenir.</para>
@@ -62,6 +65,21 @@ public class ProjectIndicatorPermissionDataSeedContributor : IDataSeedContributo
             return;
         }
 
+        // Host rolleri: izinler iki tarafta da tanımlı. İlk telafi yalnız kiracıları dolaşıyordu;
+        // host'ta yönetici dışındaki roller (proje yöneticisi, çalışan…) göstergeleri göremiyordu.
+        var hostDone = await _settingManager.GetOrNullGlobalAsync(
+            PlatformSettings.Backfills.ProjectIndicatorHostPermissionsGranted);
+        if (hostDone != "true")
+        {
+            using (_currentTenant.Change(null))
+            {
+                await GrantInCurrentContextAsync(null);
+            }
+
+            await _settingManager.SetGlobalAsync(
+                PlatformSettings.Backfills.ProjectIndicatorHostPermissionsGranted, "true");
+        }
+
         var done = await _settingManager.GetOrNullGlobalAsync(
             PlatformSettings.Backfills.ProjectIndicatorPermissionsGranted);
         if (done == "true")
@@ -73,25 +91,31 @@ public class ProjectIndicatorPermissionDataSeedContributor : IDataSeedContributo
         {
             using (_currentTenant.Change(tenant.Id))
             {
-                foreach (var role in await _roleRepository.GetListAsync())
-                {
-                    foreach (var (has, gets) in Rules)
-                    {
-                        var grant = await _grantRepository.FindAsync(
-                            has, RolePermissionValueProvider.ProviderName, role.Name);
-                        if (grant == null)
-                        {
-                            continue;
-                        }
-
-                        await _permissionDataSeeder.SeedAsync(
-                            RolePermissionValueProvider.ProviderName, role.Name, new[] { gets }, tenant.Id);
-                    }
-                }
+                await GrantInCurrentContextAsync(tenant.Id);
             }
         }
 
         await _settingManager.SetGlobalAsync(
             PlatformSettings.Backfills.ProjectIndicatorPermissionsGranted, "true");
+    }
+
+    /// <summary>Geçerli bağlamdaki (host ya da bir kiracı) her role, sahip olduğu proje iznine göre.</summary>
+    private async Task GrantInCurrentContextAsync(System.Guid? tenantId)
+    {
+        foreach (var role in await _roleRepository.GetListAsync())
+        {
+            foreach (var (has, gets) in Rules)
+            {
+                var grant = await _grantRepository.FindAsync(
+                    has, RolePermissionValueProvider.ProviderName, role.Name);
+                if (grant == null)
+                {
+                    continue;
+                }
+
+                await _permissionDataSeeder.SeedAsync(
+                    RolePermissionValueProvider.ProviderName, role.Name, new[] { gets }, tenantId);
+            }
+        }
     }
 }

@@ -189,6 +189,9 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(
             new SettingDefinition(PlatformSettings.Backfills.ProjectIndicatorPermissionsGranted)
                 .WithProviders(GlobalSettingValueProvider.ProviderName));
+        context.Add(
+            new SettingDefinition(PlatformSettings.Backfills.ProjectIndicatorHostPermissionsGranted)
+                .WithProviders(GlobalSettingValueProvider.ProviderName));
 
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
