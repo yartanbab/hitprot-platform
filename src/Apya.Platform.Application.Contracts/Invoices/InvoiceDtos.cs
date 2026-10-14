@@ -21,6 +21,14 @@ public class InvoiceDto : FullAuditedEntityDto<Guid>
     public decimal TaxRate { get; set; }
     public string Currency { get; set; } = "TRY";
     public InvoiceStatus Status { get; set; }
+
+    /// <summary>
+    /// FIN-10 · Vadesi geçmiş ve tamamı ödenmemiş (iptal edilmemiş) fatura. Saklanmaz, okunurken
+    /// hesaplanır: "Gecikmiş" durumu hiçbir yerde atanmadığı için Faturalar ekranındaki süzgeç
+    /// boş kalıyordu. Kural cari ekstresindeki gecikmiş tutarla aynı: hiç ödeme almamış (hâlâ
+    /// Taslak görünen) fatura da sayılır.
+    /// </summary>
+    public bool IsOverdue { get; set; }
     public string? Notes { get; set; }
     public List<InvoiceItemDto> Items { get; set; } = new();
     public decimal PaidAmount { get; set; }
