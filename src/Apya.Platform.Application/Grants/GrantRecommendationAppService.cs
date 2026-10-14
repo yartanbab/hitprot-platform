@@ -170,6 +170,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 GrantName = grant.Name,
                 Issuer = grant.Issuer,
                 Description = grant.Description,
+                PosterFileName = grant.PosterFileName,
                 SourceUrl = grant.SourceUrl,
                 Objective = grant.Objective,
                 Priorities = grant.Priorities,

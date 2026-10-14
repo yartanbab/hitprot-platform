@@ -55,6 +55,312 @@
 .apya-detail-prose { white-space: pre-line; }
 
 /* =============================================================================
+   Üst afiş — üç düzen (cover / side / overlay), host ayarıyla seçilir.
+   Ölçüler tasarım paketinden; renkler platform token'ı (tasarımdaki mavi → accent).
+   Görsel her temada koyu zemindir: üstündeki yazı ve hap renkleri bu yüzden sabit.
+   ============================================================================= */
+.apya-banner-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.apya-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.apya-banner-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+    padding: 28px;
+}
+
+.apya-banner-title {
+    margin: 0;
+    color: var(--apya-text-primary);
+    font-size: 20px;
+    font-weight: var(--apya-weight-bold);
+    line-height: 1.25;
+    letter-spacing: var(--apya-tracking-tight);
+    text-wrap: pretty;
+}
+
+.apya-banner-media {
+    position: relative;
+    background-color: var(--apya-surface-sunken);
+    background-position: center;
+    background-size: cover;
+}
+
+.apya-banner-summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-base);
+    line-height: 1.65;
+    text-wrap: pretty;
+}
+
+.apya-banner-summary.is-open { display: block; }
+.apya-banner-summary:empty { display: none; }
+
+.apya-banner-mark {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid var(--apya-border-default);
+    background: var(--apya-surface-base);
+    color: var(--apya-text-primary);
+    font-weight: 800;
+    line-height: 1.1;
+    text-align: center;
+}
+
+.apya-banner .apya-banner-days {
+    background: rgba(255, 255, 255, 0.92);
+    color: #374151;
+    backdrop-filter: blur(6px);
+}
+
+/* --- cover: kapak görseli kartın üstünde, kurum karosu alt kenara taşar --- */
+.apya-banner--cover > .card { overflow: hidden; }
+.apya-banner--cover .apya-banner-media { height: 240px; }
+
+.apya-banner--cover .apya-banner-days {
+    position: absolute;
+    top: var(--apya-space-4);
+    right: var(--apya-space-4);
+}
+
+.apya-banner--cover .apya-banner-mark {
+    position: absolute;
+    bottom: -28px;
+    left: 28px;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--apya-radius-card);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    font-size: 11px;
+}
+
+.apya-banner--cover .apya-banner-body { padding-top: 40px; }
+
+/* Birincil eylem satırın sonunda durur. */
+.apya-banner-bar #InterestBtn { order: 1; }
+
+/* --- side: başlık solda, görsel sağda; eylemler kartın içinde --- */
+.apya-banner-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 32px;
+    align-items: start;
+}
+
+.apya-banner--side .apya-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.apya-banner--side .apya-banner-back {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--apya-text-secondary);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-banner--side .apya-banner-back:hover { color: var(--apya-text-primary); }
+
+.apya-banner-issuer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.apya-banner--side .apya-banner-mark {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-color: color-mix(in srgb, var(--apya-accent-500) 24%, var(--apya-border-default));
+    border-radius: 10px;
+    background: var(--apya-accent-soft);
+    font-size: 9px;
+}
+
+.apya-banner-issuer-name {
+    color: var(--apya-text-secondary);
+    font-size: var(--apya-fs-xs);
+    font-weight: var(--apya-weight-semibold);
+}
+
+.apya-banner-issuer-sub {
+    color: var(--apya-text-tertiary);
+    font-size: var(--apya-text-xs);
+}
+
+.apya-banner--side .apya-banner-title { font-size: 26px; }
+.apya-banner--side .apya-banner-actions { margin-top: var(--apya-space-2); }
+
+.apya-banner--side .apya-banner-media {
+    height: 250px;
+    border-radius: var(--apya-radius-xl);
+}
+
+.apya-banner--side .apya-detail-metrics {
+    margin-top: var(--apya-space-3);
+    padding-top: 24px;
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+.apya-banner--side .apya-detail-metric {
+    padding: 0;
+    background: none;
+}
+
+/* --- overlay: başlık görselin üstünde, metrikler görselden taşan şeritte --- */
+/* Yükseklik asgari: uzun başlık ya da alt satıra inen düğmeler görseli uzatır, üst üste binmez.
+   Alt boşluk, görselden taşan metrik şeridine yer açar. */
+.apya-banner--overlay .apya-banner-media {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 320px;
+    padding: 20px 20px 60px;
+    overflow: hidden;
+    border-radius: var(--apya-radius-card);
+    color: #fff;
+}
+
+.apya-banner--overlay .apya-banner-media::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(17, 24, 39, 0.15) 0%, rgba(17, 24, 39, 0.05) 35%, rgba(17, 24, 39, 0.82) 100%);
+}
+
+.apya-banner--overlay .apya-banner-bar {
+    position: relative;
+    justify-content: space-between;
+    margin: 0;
+}
+
+/* "Cam" düğmeler. Birincil eylem (İlgileniyorum) dolu kalır; takipteki yer imi daha yoğun cam. */
+.apya-banner--overlay .apya-banner-bar .btn:not(#InterestBtn) {
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    backdrop-filter: blur(8px);
+}
+
+.apya-banner--overlay .apya-banner-bar .btn:not(#InterestBtn):hover,
+.apya-banner--overlay .apya-banner-bar .btn-primary:not(#InterestBtn) {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.apya-banner--overlay .apya-banner-text {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--apya-space-3);
+    padding: 0 12px;
+}
+
+/* Görsel üstünde yarı saydam rozet okunmaz; ton korunur, zemin dolu olur. */
+.apya-banner--overlay .apya-banner-text .apya-chip {
+    background: rgba(255, 255, 255, 0.92);
+    color: #374151;
+}
+
+.apya-banner--overlay .apya-banner-text .apya-chip-positive { background: #dcfce7; color: #166534; }
+.apya-banner--overlay .apya-banner-text .apya-chip-warning { background: #fef3c7; color: #92400e; }
+.apya-banner--overlay .apya-banner-text .apya-chip-negative { background: #fee2e2; color: #991b1b; }
+
+.apya-banner-tag {
+    padding: 4px 10px;
+    border-radius: var(--apya-radius-md);
+    background: #fff;
+    color: var(--apya-accent-700);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.apya-banner-period {
+    color: rgba(255, 255, 255, 0.85);
+    font-family: var(--apya-font-mono);
+    font-size: var(--apya-fs-xs);
+}
+
+.apya-banner--overlay .apya-banner-title {
+    max-width: 720px;
+    color: #fff;
+    font-size: 30px;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.apya-banner--overlay .apya-detail-metrics {
+    position: relative;
+    gap: 0;
+    margin: -36px 32px 0;
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-base);
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+}
+
+.apya-banner--overlay .apya-detail-metric {
+    padding: 18px 22px;
+    border-right: 1px solid var(--apya-border-subtle);
+    border-radius: 0;
+    background: none;
+}
+
+.apya-banner--overlay .apya-detail-metric:last-child { border-right: 0; }
+
+.apya-banner--overlay > .card { margin-top: 20px; }
+
+/* Özet de not da yoksa boş kart basılmaz. */
+.apya-banner--overlay > .card:not(:has(.apya-banner-body > :not(:empty):not(.d-none))) { display: none; }
+
+@media (max-width: 899.98px) {
+    .apya-detail-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .apya-banner--cover .apya-banner-media { height: 180px; }
+
+    .apya-banner-split { grid-template-columns: minmax(0, 1fr); }
+
+    .apya-banner--side .apya-banner-media {
+        order: -1;
+        height: auto;
+        aspect-ratio: 16 / 9;
+    }
+
+    .apya-banner--overlay .apya-banner-media {
+        min-height: 240px;
+        padding: 16px 16px 52px;
+    }
+
+    .apya-banner--overlay .apya-banner-title { font-size: 24px; }
+    .apya-banner--overlay .apya-banner-text { padding: 0 4px; }
+
+    .apya-banner--overlay .apya-detail-metrics { margin: -36px 16px 0; }
+    .apya-banner--overlay .apya-detail-metric:nth-child(2n) { border-right: 0; }
+    .apya-banner--overlay .apya-detail-metric:nth-child(-n + 2) { border-bottom: 1px solid var(--apya-border-subtle); }
+}
+
+/* =============================================================================
    Tur 14 · İlgi akışı — "İlginiz iletildi" şeridi, dört adım, onay diyaloğu.
    Tasarım 14a. Değerler token; tasarımdaki 10px köşe radius-lg'ye, #A7F3D0 kenarlık
    positive-500'ün karışımına indi. Diyaloğun 16px köşesi UYGULANMADI: tema köprüsü

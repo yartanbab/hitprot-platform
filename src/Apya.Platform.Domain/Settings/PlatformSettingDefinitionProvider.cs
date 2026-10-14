@@ -253,6 +253,15 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
                 .WithProviders(GlobalSettingValueProvider.ProviderName)
         );
 
+        // --- Hibe detayı afiş düzeni --- (host seviyesinde)
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.Grants.DetailBannerVariant,
+                defaultValue: Apya.Platform.Grants.GrantDetailBannerVariants.Default,
+                displayName: L("Setting:Grants.DetailBannerVariant"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName)
+        );
+
         // --- Geri bildirim modülü --- (hepsi host seviyesinde)
         context.Add(
             new SettingDefinition(

@@ -119,6 +119,8 @@ public class EndpointAuthorization_Tests : PlatformWebTestBase
     [Theory]
     [InlineData("/api/app/login-screen-settings")]
     [InlineData("/LoginScreenSettings/Get")]
+    [InlineData("/api/app/grant-detail-banner-settings")]
+    [InlineData("/GrantDetailBannerSettings/Get")]
     public async Task Sunucu_Ici_Oturumsuz_Metotlar_Uc_Degildir(string url)
     {
         var response = await Client.GetAsync(url);
