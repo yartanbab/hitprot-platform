@@ -520,8 +520,12 @@ public static class PlatformSettingDefaults
     /// "Apya.Grants.Applications" 2026-09-15'te "Apya.Grants.Requests"e çevrildi: hibe
     /// menüsü sadeleşti (tur 22), Başvurular ayrı menü değil Talepler'in bir sekmesi.
     /// </para>
+    /// <para>
+    /// "Apya.Finance.CashAccounts" 2026-10-14'te "Apya.Finance.Hub"a çevrildi: Kasa &amp;
+    /// Banka menüden kalktı, içeriği Finans Merkezi'nde.
+    /// </para>
     /// </summary>
-    public const string ShellPins = "Apya.Finance.CashAccounts,Apya.Grants.Requests";
+    public const string ShellPins = "Apya.Finance.Hub,Apya.Grants.Requests";
 
     /// <summary>Sabitlenebilir en fazla öğe — liste kenar çubuğunu boğmasın.</summary>
     public const int ShellPinsMax = 12;

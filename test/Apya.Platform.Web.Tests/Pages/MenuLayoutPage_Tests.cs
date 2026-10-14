@@ -79,46 +79,61 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     {
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
-        var cash = System.Array.IndexOf(sidebar, "/CashAccounts");
+        var finance = System.Array.IndexOf(sidebar, "/Finance");
         var documents = System.Array.IndexOf(sidebar, "/Documents");
 
-        cash.ShouldBeGreaterThan(-1);
+        finance.ShouldBeGreaterThan(-1);
         documents.ShouldBeGreaterThan(-1);
-        cash.ShouldBeLessThan(documents);
+        finance.ShouldBeLessThan(documents);
     }
 
     /// <summary>
-    /// Finans TEK ÇATI (2026-09-03): rapor ekranları artık ayrı bir kök kategori
-    /// değil, çatının içindeki "Raporlar" alt grubu. Ölçü, Proje Bütçesi'nin
-    /// Finans'ın kendi maddeleriyle Genel Bakış arasında kalması — eskiden
-    /// İçerik'ten sonra gelen ayrı bir bölümdeydi.
+    /// Kasa &amp; Banka, Kurlar ve Raporlar &gt; Proje Bütçesi menüden KALDIRILDI
+    /// (2026-10-14): içerikleri Finans Merkezi'nde toplandı, çatının tek girişi o.
     /// </summary>
     [Fact]
-    public async Task Finans_raporlari_catinin_icinde_durur()
+    public async Task Finans_catisinda_yalniz_Finans_Merkezi_durur()
     {
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
-        var cash = System.Array.IndexOf(sidebar, "/CashAccounts");
-        var budget = System.Array.IndexOf(sidebar, "/Reports/ProjectBudget");
-        var documents = System.Array.IndexOf(sidebar, "/Documents");
+        sidebar.ShouldContain("/Finance");
+        sidebar.ShouldNotContain("/CashAccounts");
+        sidebar.ShouldNotContain("/ExchangeRates");
+        sidebar.ShouldNotContain("/Reports/ProjectBudget");
+    }
 
-        budget.ShouldBeGreaterThan(cash);
-        budget.ShouldBeLessThan(documents);
+    /// <summary>
+    /// Kaldırılan öğeler düzenleme ekranının havuzunda da yok; son öğesi giden
+    /// "Raporlar" alt grubu boş başlık olarak kalmaz. Varsayılan iğne de havuzda
+    /// karşılığı olan bir ada bakmalı, yoksa iğneye hiç dokunmamış kullanıcıda
+    /// boşa düşer.
+    /// </summary>
+    [Fact]
+    public async Task Kaldirilan_finans_ogeleri_duzenleme_ekraninda_ve_varsayilan_ignede_yok()
+    {
+        var html = await GetResponseAsStringAsync("/Settings/Menu");
+
+        html.ShouldContain("data-nav-node=\"Apya.Finance.Hub\"");
+        html.ShouldNotContain("data-nav-node=\"Apya.Finance.CashAccounts\"");
+        html.ShouldNotContain("data-nav-node=\"Apya.Finance.ExchangeRates\"");
+        html.ShouldNotContain("data-nav-node=\"Apya.Finance.Reports\"");
+        html.ShouldNotContain("data-nav-node=\"Apya.Reports.ProjectBudget\"");
+
+        var pins = Apya.Platform.Settings.PlatformSettingDefaults.ShellPins;
+        pins.ShouldContain("Apya.Finance.Hub");
+        pins.ShouldNotContain("Apya.Finance.CashAccounts");
     }
 
     /// <summary>
     /// "Özet Raporlar" menüden KALDIRILDI (2026-09-07) — Genel Bakış'la aynı işi
-    /// yapıyordu. Test eskiden öğenin İş Yönetimi'ndeki sırasını ölçüyordu;
-    /// artık kaldırılışın kalıcılığını ve yan hasar bırakmadığını ölçüyor:
-    /// aynı "Apya.Reports.*" ailesinden olan Proje Bütçesi Finans'ta DURMALI.
+    /// yapıyordu. Kaldırılışın kalıcılığını ölçer.
     /// </summary>
     [Fact]
-    public async Task Ozet_raporlar_menude_yok_ama_finans_raporlari_duruyor()
+    public async Task Ozet_raporlar_menude_yok()
     {
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
         sidebar.ShouldNotContain("/Reports");
-        sidebar.ShouldContain("/Reports/ProjectBudget");
         sidebar.ShouldContain("/Dashboard");
     }
 
@@ -241,17 +256,17 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     public async Task Madde_baska_bir_gruba_tasinabilir()
     {
         await SetLayoutAsync("""
-            {"items":{"Apya.Platform":["Apya.Finance.ExchangeRates","Apya.Platform.Notifications"]}}
+            {"items":{"Apya.Platform":["Apya.Content.Documents","Apya.Platform.Notifications"]}}
             """);
 
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
-        // Kurlar hâlâ menüde ama artık Platform bölümünün ilk maddesi.
-        sidebar.ShouldContain("/ExchangeRates");
-        Array.IndexOf(sidebar, "/ExchangeRates")
+        // Dokümanlar hâlâ menüde ama artık Platform bölümünün ilk maddesi.
+        sidebar.ShouldContain("/Documents");
+        Array.IndexOf(sidebar, "/Documents")
             .ShouldBeLessThan(Array.IndexOf(sidebar, "/Notifications"));
-        // Finans'ta kalan iki madde bozulmadı.
-        sidebar.ShouldContain("/CashAccounts");
+        // İçerik'te kalan madde bozulmadı.
+        sidebar.ShouldContain("/DynamicAssets");
     }
 
     // ── Sıralama ─────────────────────────────────────────────────────────────
@@ -267,27 +282,34 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
 
         // Bölüm başlıklarının URL'si yok; ilk çocuklarının sırasıyla ölçülür.
         var documents = Array.IndexOf(sidebar, "/Documents");
-        var cash = Array.IndexOf(sidebar, "/CashAccounts");
+        var finance = Array.IndexOf(sidebar, "/Finance");
         var dashboard = Array.IndexOf(sidebar, "/Dashboard");
 
         documents.ShouldBeGreaterThan(-1);
-        cash.ShouldBeGreaterThan(-1);
+        finance.ShouldBeGreaterThan(-1);
         dashboard.ShouldBeGreaterThan(-1);
-        documents.ShouldBeLessThan(cash);
-        cash.ShouldBeLessThan(dashboard);
+        documents.ShouldBeLessThan(finance);
+        finance.ShouldBeLessThan(dashboard);
     }
 
+    /// <summary>
+    /// Koddaki sıra Dokümanlar → Şablonlar; kayıtlı düzen tersine çevirir.
+    /// (Eskiden Finans'ın iki maddesiyle ölçülüyordu; 2026-10-14'te çatıda tek
+    /// madde kaldığı için İçerik grubuna taşındı.)
+    /// </summary>
     [Fact]
     public async Task Grup_ici_sira_kayitli_duzene_gore_uygulanir()
     {
         await SetLayoutAsync("""
-            {"items":{"Apya.Finance":["Apya.Finance.ExchangeRates","Apya.Finance.CashAccounts"]}}
+            {"items":{"Apya.Content":["Apya.Content.DynamicAssets","Apya.Content.Documents"]}}
             """);
 
         var sidebar = SidebarUrls(await GetResponseAsStringAsync("/Settings"));
 
-        Array.IndexOf(sidebar, "/ExchangeRates")
-            .ShouldBeLessThan(Array.IndexOf(sidebar, "/CashAccounts"));
+        Array.IndexOf(sidebar, "/DynamicAssets")
+            .ShouldBeGreaterThan(-1);
+        Array.IndexOf(sidebar, "/DynamicAssets")
+            .ShouldBeLessThan(Array.IndexOf(sidebar, "/Documents"));
     }
 
     // ── Dayanıklılık ─────────────────────────────────────────────────────────
@@ -398,7 +420,7 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     {
         await SetLayoutAsync("""
             {"groups":[{"n":"Apya.User.gunluk","t":"Günlük","i":"fa fa-star"}],
-             "items":{"Apya.User.gunluk":["Apya.Finance.ExchangeRates"]}}
+             "items":{"Apya.User.gunluk":["Apya.Finance.Hub"]}}
             """);
 
         var html = await GetResponseAsStringAsync("/Settings");
@@ -406,7 +428,7 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
 
         Text(menu).ShouldContain("Günlük");
         // Taşınan öğe artık o kategorinin altında; menüden düşmedi.
-        SidebarUrls(html).ShouldContain("/ExchangeRates");
+        SidebarUrls(html).ShouldContain("/Finance");
     }
 
     /// <summary>
@@ -418,12 +440,12 @@ public class MenuLayoutPage_Tests : PlatformWebTestBase
     public async Task Silinen_kategorinin_cocuklari_koddaki_yerine_doner()
     {
         await SetLayoutAsync("""
-            {"items":{"Apya.User.gunluk":["Apya.Finance.ExchangeRates"]}}
+            {"items":{"Apya.User.gunluk":["Apya.Finance.Hub"]}}
             """);
 
         var html = await GetResponseAsStringAsync("/Settings");
 
-        SidebarUrls(html).ShouldContain("/ExchangeRates");
+        SidebarUrls(html).ShouldContain("/Finance");
         Text(Parse(html).DocumentNode.SelectSingleNode("//ul[contains(@class,'lpx-nav-menu')]"))
             .ShouldNotContain("Günlük");
     }
