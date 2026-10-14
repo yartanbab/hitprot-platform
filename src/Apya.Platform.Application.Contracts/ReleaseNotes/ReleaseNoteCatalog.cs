@@ -73,7 +73,16 @@ public static class ReleaseNoteCatalog
                 "size atanmış kayıtları ve bekleyen işlerinizi aynı ekranda toplar. Sık kullandığınız " +
                 "işleri sabitleyebilirsiniz. Üstteki haber şeridinde açık hibe çağrıları, yenilikler ve " +
                 "başvurularınızla ilgili sonuçlar görünür. \"+ Yeni\" menüsü ve komut paleti (Ctrl K) de " +
-                "aynı iş listesinden beslenir."),
+                "aynı iş listesinden beslenir. Ekranı ilk açtığınızda bir başlangıç seti görürsünüz; " +
+                "kullandıkça sıralama size göre değişir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Danışman önerisini \"İlgilenmiyorum\" ile kapatabiliyorsunuz",
+                "\"Bugün\" sayfasındaki fırsat kartında, danışmanınızın önerdiği bir hibe çağrısı sizin için " +
+                "uygun değilse artık \"İlgilenmiyorum\" düğmesiyle kapatabilirsiniz. Kapatılan öneri " +
+                "kartınızdan ve \"danışman önerdi\" rozetinden düşer; sıradaki öneri varsa kart onunla " +
+                "dolar. Çağrı katalogda görünmeye devam eder. Kapatma geri alınamaz; danışmanınız aynı " +
+                "çağrıyı yeniden önerebilir."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Gelir kaydına belge bağlayabiliyorsunuz",
@@ -113,6 +122,12 @@ public static class ReleaseNoteCatalog
                 "satırları artık kaydın kendisine götürür: gelir ya da gider satırı Gelir-Gider tablosunda " +
                 "o satırı vurgulu açar, fatura satırı o faturayı seçili açar. Gider satırından eşleştirilmiş " +
                 "belgesine tek tıkla gidilir. Hibe ve etkinlik projelerinde de artık Faturalar sekmesi var."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibeden doğan projede bütçe kaleminin gerekçesi korunuyor",
+                "Hibe başvurusunda her bütçe satırı için yazdığınız gerekçe, başvuru projeye dönüştürülürken " +
+                "kayboluyordu. Artık projenin bütçe kalemine aktarılıyor ve Finans Merkezi'nin Kalemler " +
+                "tablosunda kalem adının altında görünüyor. Daha önce dönüştürülmüş projelerde bu alan boş kalır."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Proje sayfasında açık risk sayısı",
