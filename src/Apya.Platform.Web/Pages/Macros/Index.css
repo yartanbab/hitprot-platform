@@ -1,8 +1,9 @@
 /* =============================================================================
    Makro Ekran (/Makro) — tasarım docs/design/makro-ekran (1a, 1d).
    Renk/gölge yalnız token'dan (tokens.css); koyu tema [data-theme="dark"]
-   token'larıyla kendiliğinden gelir. Paneller (bildirimler, kayıtlarım) gelince
-   ana ızgara 532px + 1fr + 1fr olur; şimdilik yalnız makro sütunu var.
+   token'larıyla kendiliğinden gelir.
+   Geniş ekranda: makro sütunu 532px + Bildirimler + Bana ait kayıtlar (1fr + 1fr),
+   altında tam genişlik Bekleyen işler.
    ============================================================================= */
 
 .apya-macros-main {
@@ -10,6 +11,17 @@
     grid-template-columns: minmax(0, 532px);
     gap: 16px;
     align-items: start;
+}
+
+/* Paneller sol sütunun yüksekliğinde durur: iç panel absolute → satır yüksekliğini
+   makro ızgarası belirler, uzun liste satırı büyütüp Bekleyen işleri aşağı itmez. */
+.apya-macros-main.has-panels {
+    grid-template-columns: minmax(0, 532px) minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+}
+
+.apya-macros-main.has-panels:not(.has-records) {
+    grid-template-columns: minmax(0, 532px) minmax(0, 1fr);
 }
 
 .apya-macros-col {
@@ -160,6 +172,287 @@
 /* Düzenleme kipi: sabitli olmayan kart kesikli kenarla "dokunulabilir" görünür. */
 .apya-macros.is-editing .apya-macro-card:not(.is-pinned) {
     border-style: dashed;
+}
+
+/* --- Paneller -------------------------------------------------------------- */
+
+.apya-macros-panel-slot {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+}
+
+.apya-macros-panel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--apya-border-default);
+    border-radius: 14px;
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+}
+
+.apya-macros-panel-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+
+.apya-macros-panel-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--apya-text-primary);
+}
+
+.apya-macros-bubble {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    font: 700 10.5px/1 var(--apya-font-mono);
+    color: #fff;
+    background: var(--apya-negative-500);
+}
+
+.apya-macros-panel-note {
+    font-size: 11px;
+    color: var(--apya-text-secondary);
+}
+
+.apya-macros-panel-link {
+    margin-left: auto;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.apya-macros-panel-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.apya-macros-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 16px;
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+
+.apya-macros-row:hover {
+    color: inherit;
+    background: var(--apya-surface-raised);
+}
+
+.apya-macros-row:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: -2px;
+}
+
+.apya-macros-row.is-unread,
+.apya-macros-row.is-fresh {
+    background: var(--apya-accent-soft);
+}
+
+.apya-macros-row-icon {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 11px;
+    color: var(--apya-text-secondary);
+    background: var(--apya-surface-sunken);
+}
+
+.apya-macros-row-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.apya-macros-row-title {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--apya-text-primary);
+}
+
+.apya-macros-row-meta {
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--apya-text-secondary);
+}
+
+.apya-macros-row-dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    margin-top: 5px;
+    border-radius: 50%;
+}
+
+.apya-macros-row.is-unread .apya-macros-row-dot {
+    background: var(--apya-accent-500);
+}
+
+/* Bana ait kayıtlar: grup başlığı + tek satırlık kayıtlar. */
+.apya-macros-group-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--apya-text-secondary);
+    background: var(--apya-surface-raised);
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+
+.apya-macros-group-count {
+    margin-left: auto;
+    font-family: var(--apya-font-mono);
+}
+
+.apya-macros-record {
+    align-items: center;
+    gap: 9px;
+    padding: 9px 16px;
+}
+
+.apya-macros-record .apya-macros-row-title {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.apya-macros-status {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--apya-border-strong);
+}
+
+.apya-macros-status.tone-warning { background: var(--apya-warning-500); }
+.apya-macros-status.tone-positive { background: var(--apya-positive-500); }
+.apya-macros-status.tone-negative { background: var(--apya-negative-500); }
+
+.apya-macros-fresh {
+    flex: none;
+    font-size: 9.5px;
+    color: var(--apya-accent-500);
+}
+
+/* Bekleyen işler: tam genişlik, sıfır sayaç soluk ama yerinde (ızgara kaymaz). */
+.apya-macros-pending {
+    margin-top: 18px;
+    overflow: hidden;
+    border: 1px solid var(--apya-border-default);
+    border-radius: 14px;
+    background: var(--apya-surface-base);
+    box-shadow: var(--apya-shadow-sm);
+}
+
+.apya-macros-pending-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--apya-border-subtle);
+}
+
+.apya-macros-pending-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.apya-macros-pending-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 14px 16px;
+    color: inherit;
+    text-decoration: none;
+    border-right: 1px solid var(--apya-border-subtle);
+}
+
+.apya-macros-pending-cell:hover {
+    color: inherit;
+    background: var(--apya-surface-raised);
+}
+
+.apya-macros-pending-cell:focus-visible {
+    outline: 2px solid var(--apya-accent-500);
+    outline-offset: -2px;
+}
+
+.apya-macros-pending-count {
+    font: 700 22px/1 var(--apya-font-mono);
+    letter-spacing: -0.02em;
+    color: var(--apya-text-primary);
+}
+
+.apya-macros-pending-cell.tone-negative .apya-macros-pending-count { color: var(--apya-negative-700); }
+.apya-macros-pending-cell.tone-warning .apya-macros-pending-count { color: var(--apya-warning-700); }
+.apya-macros-pending-cell.is-zero .apya-macros-pending-count { color: var(--apya-text-tertiary); }
+
+.apya-macros-pending-title {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--apya-text-primary);
+}
+
+.apya-macros-pending-warn {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 8px 16px;
+    font-size: 11.5px;
+    color: var(--apya-text-secondary);
+    border-top: 1px solid var(--apya-border-subtle);
+}
+
+/* --- Orta genişlik: paneller makroların altına, iki sütun ------------------- */
+
+@media (max-width: 1399.98px) {
+    .apya-macros-main.has-panels,
+    .apya-macros-main.has-panels:not(.has-records) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .apya-macros-main.has-panels > .apya-macros-col,
+    .apya-macros-main.has-panels:not(.has-records) > .apya-macros-panel-slot {
+        grid-column: 1 / -1;
+    }
+
+    .apya-macros-panel-slot {
+        height: 380px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .apya-macros-main.has-panels {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 /* --- Dar ekran (1d tablet; telefon düzeni ayrı iş) -------------------------- */
