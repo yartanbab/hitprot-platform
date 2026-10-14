@@ -177,4 +177,36 @@ public class MacroScreenAppService_Tests : PlatformEntityFrameworkCoreTestBase
         result.TotalCount.ShouldBe(0);
         result.Items.ShouldBeEmpty();
     }
+
+    private Task NotifyAsync(Guid userId, NotificationType type, bool read = false)
+    {
+        var n = new Notification(Guid.NewGuid(), _currentTenant.Id, userId, type, "Rozet", "Gövde",
+            entityType: "Test", entityId: Guid.NewGuid());
+        if (read) { n.MarkAsRead(); }
+        return _notifications.InsertAsync(n, autoSave: true);
+    }
+
+    /// <summary>
+    /// Güncelleme rozeti: okunmamış bildirimin bağlantısı makroya eşlenir (katalog); okunmuş, başkasının
+    /// ya da eşlenmeyen bildirim (geri bildirim) sayılmaz.
+    /// </summary>
+    [Fact]
+    public async Task Rozet_okunmamis_bildirimi_eslenen_makroya_sayar()
+    {
+        var me = Guid.NewGuid();
+        await NotifyAsync(me, NotificationType.TaskAssigned);              // /Tasks/Detail/{id} → Panolar
+        await NotifyAsync(me, NotificationType.TaskAssigned);
+        await NotifyAsync(me, NotificationType.TaskAssigned, read: true);
+        await NotifyAsync(me, NotificationType.GrantDecisionIssued);       // /Grants/Appeal?id= → Başvurularım
+        await NotifyAsync(me, NotificationType.FeedbackResponded);         // /Feedback → makro yok
+        await NotifyAsync(Guid.NewGuid(), NotificationType.TaskAssigned);  // başkasının
+
+        Dictionary<string, int> badges;
+        using (As(me))
+        {
+            badges = (await WithUnitOfWorkAsync(() => _service.GetMyLayoutAsync())).Badges;
+        }
+
+        badges.ShouldBe(new Dictionary<string, int> { ["Boards"] = 2, ["GrantsMyApplications"] = 1 }, ignoreOrder: true);
+    }
 }

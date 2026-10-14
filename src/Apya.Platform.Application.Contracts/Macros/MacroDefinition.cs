@@ -52,6 +52,12 @@ public sealed class MacroDefinition
     /// <summary>Kartın altındaki alan adının yerelleştirme anahtarı (menü grup başlıklarıyla aynı anahtarlar).</summary>
     public required string AreaKey { get; init; }
 
+    /// <summary>
+    /// Güncelleme rozeti: bu makroya sayılan bildirimlerin bağlantı yolları (sorgusuz, ör.
+    /// <c>/Tasks/Detail</c>). Eşleme <see cref="MacroCatalog.MatchNotificationLink"/>'te; boşsa rozet yok.
+    /// </summary>
+    public string[] NotificationPaths { get; init; } = System.Array.Empty<string>();
+
     /// <summary>Kenar çubuğuyla ORTAK sabitleme ayarında (Platform.Shell.Pins) bu makronun adı.</summary>
     public string PinName => MenuName ?? PinPrefix + Key;
 }

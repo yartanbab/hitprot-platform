@@ -3782,6 +3782,7 @@
     "Macros:News:Filter:All": "All",
     "Macros:News:Empty": "No news to show",
     "Macros:UsesTitle": "Started {0} times in the last 30 days",
+    "Macros:Badge": "{0} unread updates",
     "Permission:Macros.Manage": "Macro management",
     "DisplayName:SortOrder": "Order",
     "Macros:Admin:Title": "Macro management",

@@ -45,10 +45,14 @@ bugünkü kodla ölçüldü; kararlar aynı gün kullanıcıyla verildi. **Şart
 - "Fatura yakala" mevcut `/Expenses/Capture` ("Masraf Yakala") sayfasıdır. Otomatik okuma hâlâ
   deneme verisi üretir (`dynamic-assets/src/expense/hooks/fixtures.js`), fotoğraf sunucuya gitmez.
 - Mobil (1g, ≤575px): **çevrimdışı kuyruk ("☁ N bekliyor") yapılmadı** — yakalama sayfası fotoğrafı
-  bugün sunucuya hiç göndermiyor, kuyruklanacak bir yükleme yok. **Kart güncelleme rozeti** (karar 4)
-  masaüstünde de yapılmadı; ayrı iş. Uzun basış menü açmaz, sabitlemeyi doğrudan açar/kapatır ve
+  bugün sunucuya hiç göndermiyor, kuyruklanacak bir yükleme yok. Uzun basış menü açmaz, sabitlemeyi doğrudan açar/kapatır ve
   bildirimle söyler; "Düzenle" erişilebilir yol olarak kalır. Sekme yüksekliği 40 değil 44px
   (dokunma hedefi ≥44px kuralı).
+- **Kart güncelleme rozeti** (karar 4): okunmamış bildirimin bağlantısı katalogdaki
+  `NotificationPaths` ile makroya eşlenir (en uzun yol parçası kazanır; geri bildirim, abonelik,
+  yapay zekâ bildirimleri hiçbir rozete girmez). **Makroyu açmak rozeti sıfırlamaz** — bildirim
+  okununca düşer (kullanıcı kararı 2026-10-14; şartnamedeki "açınca sıfırlanır" yerine). Pencere
+  (oluşturma) makrolarında rozet yok.
 
 ## Şartnamenin tutmayan varsayımları (ölçüm)
 

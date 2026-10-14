@@ -49,6 +49,10 @@ public class MacroLauncher : IScopedDependency
         // kenar çubuğu aynı sabitleme listesini kabuk durumundan okur (MacroSettingsProvider).
         var layout = await _macroScreen.GetMyLayoutAsync();
         var items = ApplySettings(await GetVisibleAsync(), layout.Settings);
+        foreach (var item in items)
+        {
+            item.Badge = layout.Badges.GetValueOrDefault(item.Key);
+        }
 
         return new MacroScreen
         {
@@ -191,6 +195,9 @@ public class MacroItem
 
     /// <summary>Son 30 gündeki kullanım (Makro Ekran'dan başlatma sayısı).</summary>
     public int UsageCount { get; set; }
+
+    /// <summary>Güncelleme rozeti: bu makroya eşlenen okunmamış bildirim sayısı.</summary>
+    public int Badge { get; set; }
 
     /// <summary>Host'un verdiği sıra (0–999); yoksa null.</summary>
     public int? HostOrder { get; set; }
