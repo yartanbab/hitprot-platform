@@ -29,4 +29,7 @@ public interface IGrantRecommendationAppService : IApplicationService
 
     /// <summary>13b · Takipteki çağrıya not düşer; boş not siler. Takipte değilse hata.</summary>
     Task SetBookmarkNoteAsync(SetGrantBookmarkNoteInput input);
+
+    /// <summary>LIF-08 · Firma, danışmanın bu çağrı için gönderdiği öneriyi kapatır. Öneri yoksa hata.</summary>
+    Task DismissRecommendationAsync(Guid grantCallId);
 }

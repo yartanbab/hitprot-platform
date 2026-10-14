@@ -41,4 +41,16 @@ public class GrantRecommendation : FullAuditedAggregateRoot<Guid>, IMultiTenant
             Status = GrantRecommendationStatus.Applied;
         }
     }
+
+    /// <summary>
+    /// LIF-08: firma öneriyi kapatır ("ilgilenmiyorum"). Başvuruya dönmüş öneri kapatılmaz —
+    /// o artık bir öneri değil, yürüyen bir iş.
+    /// </summary>
+    public void Dismiss()
+    {
+        if (Status != GrantRecommendationStatus.Applied)
+        {
+            Status = GrantRecommendationStatus.Dismissed;
+        }
+    }
 }

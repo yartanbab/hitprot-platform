@@ -155,8 +155,10 @@ $(function () {
     // ---------- Kiracı: fırsat, danışman, başvurular ----------
     function paintOpportunity(o) {
         var $card = $('#TodayOpportunity');
-        if (!o) { $card.addClass('d-none'); return; }
+        var $dismiss = $('#OpportunityDismiss');
+        if (!o) { $card.addClass('d-none'); $dismiss.addClass('d-none'); return; }
         $card.removeClass('d-none').attr('href', '/Grants/Detail?id=' + o.grantCallId);
+        $dismiss.removeClass('d-none').data('call', o.grantCallId);
         var amount = o.maxAmount != null ? l('Grants:Today:Opportunity:Amount', money(o.maxAmount)) : '';
         $('#OpportunityTitle').text(l('Grants:Today:Opportunity:Title', o.issuer + ' · ' + o.grantName));
         $('#OpportunityDetail').text([
@@ -165,6 +167,19 @@ $(function () {
             o.daysRemaining != null ? l('Grants:Today:DaysLeft', o.daysRemaining) : ''
         ].filter(Boolean).join(' · '));
     }
+
+    // LIF-08: öneriyi kapat. Sıradaki öneri varsa kart onunla yeniden dolar, yoksa gizlenir.
+    $('#OpportunityDismiss').on('click', function () {
+        var callId = $(this).data('call');
+        if (!callId) { return; }
+        abp.message.confirm(l('Grants:Today:Opportunity:Dismiss:Confirm')).then(function (ok) {
+            if (!ok) { return; }
+            apya.platform.grants.grantRecommendation.dismissRecommendation(callId).then(function () {
+                abp.notify.success(l('Grants:Today:Opportunity:Dismissed'));
+                load();
+            });
+        });
+    });
 
     function paintConsultantItems(m) {
         var rows = m.consultantItems || [];
