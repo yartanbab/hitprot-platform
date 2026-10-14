@@ -36,17 +36,19 @@ public static class MacroCatalog
         Modal("CashMovementCreate", "/CashMovements/CreateModal", PlatformPermissions.CashMovements.Create, "fa fa-cash-register", Finance),
 
         // Hibe: host ve kiracı ayrı öğeler görür; hangisinin basılacağına menü ağacı karar verir.
-        Menu("GrantsToday", "Apya.Grants.Today", Grants),
-        Menu("GrantsCalls", "Apya.Grants.Calls", Grants),
-        Menu("GrantsRequests", "Apya.Grants.Requests", Grants),
-        Menu("GrantsApplications", "Apya.Grants.Applications", Grants),
-        Menu("GrantsMyApplications", "Apya.Grants.MyApplications", Grants),
+        // Başlık anahtarı yalnız host yönetim ekranı içindir; Makro Ekran menü öğesinin CANLI
+        // etiketini kullanır (ör. "Çağrılar" kiracıda "Fırsatlar" okunur).
+        Menu("GrantsToday", "Apya.Grants.Today", Grants, "Menu:Grants:Today"),
+        Menu("GrantsCalls", "Apya.Grants.Calls", Grants, "Menu:Grants:Calls"),
+        Menu("GrantsRequests", "Apya.Grants.Requests", Grants, "Menu:Grants:Requests"),
+        Menu("GrantsApplications", "Apya.Grants.Applications", Grants, "Menu:Grants:Applications"),
+        Menu("GrantsMyApplications", "Apya.Grants.MyApplications", Grants, "Menu:Grants:MyApplications"),
 
-        Menu("Boards", "Apya.Work.Boards", Work),
-        Menu("Projects", "Apya.Work.Projects", Work),
-        Menu("Calendar", "Apya.Calendar", Calendar),
-        Menu("FinanceHub", "Apya.Finance.Hub", Finance),
-        Menu("Documents", "Apya.Content.Documents", Content)
+        Menu("Boards", "Apya.Work.Boards", Work, "Menu:Boards"),
+        Menu("Projects", "Apya.Work.Projects", Work, "Menu:Projects"),
+        Menu("Calendar", "Apya.Calendar", Calendar, "Menu:Calendar"),
+        Menu("FinanceHub", "Apya.Finance.Hub", Finance, "Menu:FinanceHub"),
+        Menu("Documents", "Apya.Content.Documents", Content, "Menu:Documents")
     };
 
     private static MacroDefinition Modal(string key, string url, string permission, string icon, string area) => new()
@@ -61,8 +63,8 @@ public static class MacroCatalog
         TitleKey = "Macro:" + key, Icon = icon, AreaKey = area
     };
 
-    private static MacroDefinition Menu(string key, string menuName, string area) => new()
+    private static MacroDefinition Menu(string key, string menuName, string area, string titleKey) => new()
     {
-        Key = key, Kind = MacroKind.Link, MenuName = menuName, AreaKey = area
+        Key = key, Kind = MacroKind.Link, MenuName = menuName, AreaKey = area, TitleKey = titleKey
     };
 }

@@ -1,0 +1,65 @@
+@page
+@using System.Text.Json
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Admin.Macros.IndexModel
+@{
+    ViewBag.Title = L["Macros:Admin:Title"].Value;
+    var options = JsonSerializer.Serialize(new
+    {
+        packages = Model.Packages.Select(p => new { value = (int)p, name = p.ToString() }),
+        roles = Model.RoleSuggestions,
+        menu = Model.MenuLinks
+    }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+}
+
+@section styles {
+    <abp-style src="/Pages/Admin/Macros/Index.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Admin/Macros/Index.js" />
+}
+
+@* Makro Yönetimi — tasarım docs/design/makro-ekran (2a). Master-detail apya-shell.css §13. *@
+<div data-page-description="@L["Macros:Admin:Description"]" class="apya-page apya-macro-admin">
+    <script type="application/json" id="apya-macro-admin-options">@Html.Raw(options)</script>
+    <datalist id="MacroRoleSuggestions">
+        @foreach (var role in Model.RoleSuggestions)
+        {
+            <option value="@role"></option>
+        }
+    </datalist>
+
+    <div class="apya-md" id="MacroAdminMd">
+        <div class="apya-md-list">
+            <div class="apya-md-toolbar">
+                <input type="search" id="MacroAdminFilter" class="form-control form-control-sm"
+                       placeholder="@L["Macros:Admin:Search"]" aria-label="@L["Macros:Admin:Search"]" />
+                <div class="apya-pilltab-row" role="group" aria-label="@L["Macros:Admin:FilterLabel"]">
+                    <button type="button" class="apya-pilltab-btn active" data-filter="all" aria-pressed="true">
+                        @L["Macros:Admin:Filter:All"] <span data-count="all"></span>
+                    </button>
+                    <button type="button" class="apya-pilltab-btn" data-filter="custom" aria-pressed="false">
+                        @L["Macros:Admin:Filter:Custom"] <span data-count="custom"></span>
+                    </button>
+                    <button type="button" class="apya-pilltab-btn" data-filter="hidden" aria-pressed="false">
+                        @L["Macros:Admin:Filter:Hidden"] <span data-count="hidden"></span>
+                    </button>
+                </div>
+            </div>
+            <ul class="apya-md-items" id="MacroAdminList" role="listbox" aria-label="@L["Macros:Admin:Title"]"></ul>
+            <div class="apya-md-empty" id="MacroAdminListEmpty" hidden>
+                <i class="fa fa-inbox" aria-hidden="true"></i>
+                <span>@L["Macros:Admin:NoMatch"]</span>
+            </div>
+        </div>
+        <div class="apya-md-detail" id="MacroAdminDetail">
+            <div class="apya-md-empty">
+                <i class="fa fa-bolt" aria-hidden="true"></i>
+                <span>@L["Macros:Admin:SelectHint"]</span>
+            </div>
+        </div>
+    </div>
+</div>

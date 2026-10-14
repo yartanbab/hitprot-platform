@@ -28,10 +28,10 @@
 @if (Model.Kind == MacroKind.Modal)
 {
     <button type="button" class="@cssClass" data-macro-key="@Model.Key" data-pin-name="@Model.PinName"
-            data-order="@Model.CatalogIndex" data-usage="@Model.UsageCount" data-modal-url="@Model.Url">@body(null)</button>
+            data-order="@Model.TieBreakOrder" data-usage="@Model.UsageCount" data-modal-url="@Model.Url">@body(null)</button>
 }
 else
 {
     <a class="@cssClass" href="@Model.Url" data-macro-key="@Model.Key" data-pin-name="@Model.PinName"
-       data-order="@Model.CatalogIndex" data-usage="@Model.UsageCount">@body(null)</a>
+       data-order="@Model.TieBreakOrder" data-usage="@Model.UsageCount">@body(null)</a>
 }

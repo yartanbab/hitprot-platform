@@ -40,7 +40,10 @@ public sealed class MacroDefinition
     /// <summary>Adresli makroda gereken izin. Menüye bağlıda görünürlüğü menü ağacı belirler.</summary>
     public string? Permission { get; init; }
 
-    /// <summary>Adresli makroda etiketin yerelleştirme anahtarı; menüye bağlıda menü etiketi kullanılır.</summary>
+    /// <summary>
+    /// Etiketin yerelleştirme anahtarı. Menüye bağlı makroda yalnız host yönetim ekranı okur; Makro
+    /// Ekran menü öğesinin canlı etiketini kullanır.
+    /// </summary>
     public string? TitleKey { get; init; }
 
     /// <summary>Font Awesome sınıfı. Menüye bağlıda boşsa menünün ikonu kullanılır.</summary>

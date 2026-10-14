@@ -4,67 +4,61 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Localization;
 using Apya.Platform.Macros;
+using Apya.Platform.Macros.Dtos;
 using Apya.Platform.Settings;
 using Apya.Platform.Web.Menus;
 using Microsoft.Extensions.Localization;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.DependencyInjection;
-using Volo.Abp.SettingManagement;
 
 namespace Apya.Platform.Web.Macros;
 
 /// <summary>
 /// Makro Ekran'ın listesini kurar: katalogdan (<see cref="MacroCatalog"/>) kullanıcının
-/// görebildiklerini süzer; sabitlenenler (kenar çubuğuyla ORTAK ayar) önce, gerisi son 30 günde
-/// en çok kullanılandan aza, eşitlikte katalog sırası.
+/// görebildiklerini süzer, host ayarını uygular (gizli/kapsam dışı düşer, ad ve ikon değişebilir);
+/// sabitlenenler (kenar çubuğuyla ORTAK ayar) önce, gerisi son 30 günde en çok kullanılandan aza,
+/// eşitlikte host sırası, o da yoksa katalog sırası.
 ///
 /// <para>Görünürlük iki kaynaktan gelir ve ikisi de makroya özgü değildir: menüye bağlı
 /// bağlantıda menü ağacı (<see cref="PlatformNavigationResolver.GetGrantedLinksAsync"/>),
-/// adresli makroda katalogdaki izin. Sunucu bir makroyu basmıyorsa istemci de onu bilmez.</para>
+/// adresli makroda katalogdaki izin. Host ayarı yalnız DARALTIR — izni olmayana makro açmaz.
+/// Sunucu bir makroyu basmıyorsa istemci de onu bilmez.</para>
 /// </summary>
 public class MacroLauncher : IScopedDependency
 {
     private readonly PlatformNavigationResolver _navigation;
     private readonly IPermissionChecker _permission;
-    private readonly ISettingManager _settingManager;
     private readonly IStringLocalizer<PlatformResource> _l;
     private readonly IMacroScreenAppService _macroScreen;
 
     public MacroLauncher(
         PlatformNavigationResolver navigation,
         IPermissionChecker permission,
-        ISettingManager settingManager,
         IStringLocalizer<PlatformResource> l,
         IMacroScreenAppService macroScreen)
     {
         _navigation = navigation;
         _permission = permission;
-        _settingManager = settingManager;
         _l = l;
         _macroScreen = macroScreen;
     }
 
     public async Task<MacroScreen> GetAsync()
     {
-        var items = await GetVisibleAsync();
-        var usage = await _macroScreen.GetMyUsageAsync();
-
-        // ShellAppService.GetPinsAsync ile AYNI okuma: kullanıcı kaydı yoksa varsayılan liste.
-        var raw = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.Shell.Pins)
-                  ?? PlatformSettingDefaults.ShellPins;
-        var pins = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                      .Distinct()
-                      .ToList();
+        // Kullanım + sabitleme (kayıt yoksa host varsayılanlarıyla) + host ayarı tek çağrıda;
+        // kenar çubuğu aynı sabitleme listesini kabuk durumundan okur (MacroSettingsProvider).
+        var layout = await _macroScreen.GetMyLayoutAsync();
+        var items = ApplySettings(await GetVisibleAsync(), layout.Settings);
 
         return new MacroScreen
         {
-            Items = Order(items, pins, usage),
-            Pins = pins,
+            Items = Order(items, layout.Pins, layout.Usage),
+            Pins = layout.Pins,
             MaxPins = PlatformSettingDefaults.ShellPinsMax
         };
     }
 
-    /// <summary>Kullanıcının görebildiği makrolar, katalog sırasıyla (sabitleme uygulanmamış).</summary>
+    /// <summary>Kullanıcının görebildiği makrolar, katalog sırasıyla (host ayarı ve sabitleme uygulanmamış).</summary>
     public async Task<List<MacroItem>> GetVisibleAsync()
     {
         var links = await _navigation.GetGrantedLinksAsync();
@@ -94,9 +88,38 @@ public class MacroLauncher : IScopedDependency
     }
 
     /// <summary>
+    /// Host ayarını uygular: görünmeyen (gizli ya da kullanıcı kapsam dışı) düşer; ad ve ikon host'unki
+    /// olur; host sırası kullanım eşitliğinde sıralamaya girer. Ayar kaydı olmayan makro olduğu gibi kalır.
+    /// </summary>
+    public static List<MacroItem> ApplySettings(IEnumerable<MacroItem> items, IEnumerable<MacroSettingViewDto> settings)
+    {
+        var byKey = settings.ToDictionary(s => s.Key, StringComparer.Ordinal);
+        var result = new List<MacroItem>();
+        foreach (var item in items)
+        {
+            if (byKey.TryGetValue(item.Key, out var setting))
+            {
+                if (!setting.IsVisible)
+                {
+                    continue;
+                }
+
+                item.Title = setting.DisplayName ?? item.Title;
+                item.Icon = setting.Icon ?? item.Icon;
+                item.HostOrder = setting.SortOrder;
+            }
+
+            result.Add(item);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Sabitlenenler önce (sabitlenme sırasıyla); gerisi son 30 günlük kullanıma göre çoktan aza,
-    /// eşitlikte katalog sırasıyla. Sabitli adın karşılığı yoksa (izin değişmiş, menü öğesi kalkmış)
-    /// sessizce atlanır — kenar çubuğuyla aynı davranış. İstemci (Index.js reorder) aynı kuralı uygular.
+    /// eşitlikte <see cref="MacroItem.TieBreakOrder"/> (host sırası, yoksa katalog). Sabitli adın
+    /// karşılığı yoksa (izin değişmiş, menü öğesi kalkmış, host gizlemiş) sessizce atlanır — kenar
+    /// çubuğuyla aynı davranış. İstemci (Index.js reorder) aynı kuralı uygular.
     /// </summary>
     public static List<MacroItem> Order(
         IReadOnlyList<MacroItem> items,
@@ -115,8 +138,9 @@ public class MacroLauncher : IScopedDependency
             item.IsPinned = true;
         }
 
-        // OrderBy kararlı: eşit kullanımda katalog sırası (items zaten o sırada) korunur.
-        var rest = items.Where(item => !item.IsPinned).OrderByDescending(item => item.UsageCount);
+        var rest = items.Where(item => !item.IsPinned)
+            .OrderByDescending(item => item.UsageCount)
+            .ThenBy(item => item.TieBreakOrder);
         return pinned.Concat(rest).ToList();
     }
 }
@@ -148,17 +172,32 @@ public class MacroItem
 
     public string Key { get; }
 
-    /// <summary>Katalogdaki sıra — istemci sabitleme sonrası yeniden dizerken kullanır.</summary>
+    /// <summary>Katalogdaki sıra.</summary>
     public int CatalogIndex { get; }
 
     public MacroKind Kind { get; }
     public string PinName { get; }
-    public string Title { get; }
+
+    /// <summary>Katalog/menü adı ya da host'un verdiği ad.</summary>
+    public string Title { get; set; }
+
     public string Url { get; }
-    public string Icon { get; }
+
+    /// <summary>Katalog/menü ikonu ya da host'un verdiği ikon.</summary>
+    public string Icon { get; set; }
+
     public string Area { get; }
     public bool IsPinned { get; set; }
 
     /// <summary>Son 30 gündeki kullanım (Makro Ekran'dan başlatma sayısı).</summary>
     public int UsageCount { get; set; }
+
+    /// <summary>Host'un verdiği sıra (0–999); yoksa null.</summary>
+    public int? HostOrder { get; set; }
+
+    /// <summary>
+    /// Kullanım eşitliğinde sıra: host sırası verilmişse önce o (katalog sırası kendi içinde), yoksa
+    /// katalog sırası. İstemci aynı değeri <c>data-order</c>'dan okur.
+    /// </summary>
+    public int TieBreakOrder => (HostOrder ?? 999_999) * 1000 + CatalogIndex;
 }

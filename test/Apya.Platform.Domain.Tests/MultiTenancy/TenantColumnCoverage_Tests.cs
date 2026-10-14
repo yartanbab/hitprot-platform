@@ -45,6 +45,8 @@ public class TenantColumnCoverage_Tests
         ["Apya.Platform.Tenants.PlatformPackageFeature"] = HostCatalog,
         ["Apya.Platform.Tenants.PlatformPackagePermission"] = HostCatalog,
         ["Apya.Platform.ReleaseNotes.ReleaseNotePublication"] = HostCatalog,
+        // Makro Ekran host ayarı: tek kayıt bütün kiracılar için geçerli; izin host-only.
+        ["Apya.Platform.Macros.MacroSetting"] = HostCatalog,
         ["Apya.Platform.Grants.GrantCallDailyStat"] = HostCatalog,
 
         ["Apya.Platform.Tasks.TaskChecklistItem"] = ChildOf("TaskItem"),
