@@ -1,0 +1,64 @@
+@page "/Makro"
+@using Apya.Platform.Localization
+@using Apya.Platform.Web.Pages.Shared
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Macros.IndexModel
+@{
+    ViewBag.Title = L["Menu:Macros"].Value;
+}
+
+@section styles {
+    <abp-style src="/Pages/Macros/Index.css" />
+}
+
+@section scripts {
+    <abp-script src="/Pages/Macros/Index.js" />
+}
+
+@* Makro Ekran — tasarım docs/design/makro-ekran (1a). Adres Türkçe (/Makro), klasör alan kuralıyla
+   Pages/Macros. Kartlar sunucuda basılır; Index.js yalnız tıklamayı ve sabitlemeyi yönetir. *@
+<div data-page-description="@L["Macros:Description"]" class="apya-page apya-macros" id="ApyaMacros">
+    @if (!Model.Screen.Items.Any())
+    {
+        <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-bolt", Title = L["Macros:Empty:Title"].Value, Description = L["Macros:Empty:Description"].Value }' />
+    }
+    else
+    {
+        <script type="application/json" id="apya-macro-pins">@Html.Raw(Model.PinStateJson)</script>
+
+        <div class="apya-macros-main">
+            <div class="apya-macros-col">
+                <section aria-labelledby="MacrosForYouHeading">
+                    <div class="apya-macros-section-head">
+                        <h2 class="apya-overline" id="MacrosForYouHeading">@L["Macros:ForYou"]</h2>
+                        <span class="apya-chip apya-chip-accent">@L["Macros:ForYouPinnedFirst"]</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary apya-macros-edit" aria-pressed="false">
+                            <i class="fa fa-thumbtack me-1" aria-hidden="true"></i><span>@L["Macros:Edit"]</span>
+                        </button>
+                    </div>
+                    <p class="apya-macros-edit-hint" hidden>@L["Macros:EditHint"]</p>
+                    <div class="apya-macro-grid" data-macro-grid="for-you">
+                        @foreach (var item in Model.ForYou)
+                        {
+                            <partial name="_MacroCard" model="item" />
+                        }
+                    </div>
+                </section>
+
+                <section aria-labelledby="MacrosAllHeading" hidden="@(!Model.Rest.Any())">
+                    <div class="apya-macros-section-head">
+                        <h2 class="apya-overline" id="MacrosAllHeading">@L["Macros:All"]</h2>
+                        <span class="apya-macros-count">@L["Macros:Count", Model.Rest.Count]</span>
+                    </div>
+                    <div class="apya-macro-grid" data-macro-grid="rest">
+                        @foreach (var item in Model.Rest)
+                        {
+                            <partial name="_MacroCard" model="item" />
+                        }
+                    </div>
+                </section>
+            </div>
+        </div>
+    }
+</div>

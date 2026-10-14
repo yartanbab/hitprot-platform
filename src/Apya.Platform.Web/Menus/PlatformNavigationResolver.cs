@@ -72,6 +72,7 @@ public class PlatformNavigationResolver : IScopedDependency
     private readonly ISettingProvider _settingProvider;
 
     private NavResolution? _cached;
+    private IReadOnlyDictionary<string, ApplicationMenuItem>? _grantedLinks;
 
     public PlatformNavigationResolver(
         IStringLocalizer<PlatformResource> l,
@@ -97,6 +98,38 @@ public class PlatformNavigationResolver : IScopedDependency
     public async Task<NavResolution> ResolveAsync()
     {
         return _cached ??= await ResolveCoreAsync();
+    }
+
+    /// <summary>
+    /// İzin süzgecinden geçmiş KOD ağacının adresli öğeleri, ada göre. Kullanıcının menü düzeni
+    /// (gizleme, taşıma) UYGULANMAZ: menüden gizlenen sayfa açılabilir olmaya devam eder. Makro
+    /// Ekran'ın menüye bağlı bağlantıları adresi, etiketi ve görünürlüğü buradan alır — ikinci
+    /// bir adres/izin kaynağı açılmasın diye.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<string, ApplicationMenuItem>> GetGrantedLinksAsync()
+    {
+        if (_grantedLinks != null)
+        {
+            return _grantedLinks;
+        }
+
+        var links = new Dictionary<string, ApplicationMenuItem>(StringComparer.Ordinal);
+
+        void Collect(IEnumerable<ApplicationMenuItem> items)
+        {
+            foreach (var item in items)
+            {
+                if (!string.IsNullOrEmpty(item.Url))
+                {
+                    links.TryAdd(item.Name, item);
+                }
+
+                Collect(item.Items);
+            }
+        }
+
+        Collect(await BuildTreeAsync());
+        return _grantedLinks = links;
     }
 
     private async Task<bool> IsGrantedAnyAsync(IEnumerable<string> permissions)
@@ -576,6 +609,11 @@ public class PlatformNavigationResolver : IScopedDependency
 
         roots.Add(new ApplicationMenuItem(
             "Apya.Dashboard", l["Menu:Dashboard"], icon: "fa fa-chart-line", url: "/Dashboard", order: 1));
+
+        // Makro Ekran (2026-10-14): sık işleri tek tıkla başlatan ekran. Genel Bakış gibi izinsiz;
+        // ekrandaki her makro kendi izniyle süzülür (MacroCatalog). Giriş sayfası Genel Bakış kalır.
+        roots.Add(new ApplicationMenuItem(
+            "Apya.Macros", l["Menu:Macros"], icon: "fa fa-bolt", url: "/Makro", order: 1));
 
         // İşler
         // NOT: eskiden burada ayrı bir "Ana Sayfa" (PlatformMenus.Home, url "~/") öğesi de vardı —

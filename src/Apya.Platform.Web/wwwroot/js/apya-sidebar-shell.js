@@ -182,6 +182,8 @@ $(function () {
 
         sidebar.querySelectorAll('.apya-shell-pin').forEach(syncPinButton);
         renderPinnedSection();
+        // Makro Ekran (Pages/Macros/Index.js) aynı listeyi gösteriyor.
+        document.dispatchEvent(new CustomEvent('apya:pins-changed'));
 
         // Sunucuya yaz — başarısız olursa sessizce yut: sabitleme kritik değil,
         // kullanıcıya hata kutusu göstermek gezinmeyi bölerdi. Bir sonraki
@@ -431,6 +433,14 @@ $(function () {
             if (!data) { return; }
             state = data;
             pins = (data.pins || []).slice();
+
+            // Makro Ekran da bu listeye yazar (menüde karşılığı olmayan makro iğneleri
+            // "Apya.Macro.*" adıyla aynı ayarda durur; Sabitlenenler bölümü onları atlar).
+            // Liste sunucuya BÜTÜN olarak yazıldığı için iki ayrı kopya birbirini ezerdi.
+            window.apyaShellPins = {
+                list: function () { return pins.slice(); },
+                toggle: togglePin
+            };
 
             sidebar.classList.add('apya-shell-ready');
             setupSections();
