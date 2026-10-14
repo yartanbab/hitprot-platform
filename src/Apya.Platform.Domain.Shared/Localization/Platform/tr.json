@@ -3744,6 +3744,7 @@
         "Platform:Grant:InterestIdeaNotLinked": "Bu fikir henüz bir çağrıyla ilişkilendirilmedi; başvuru ve görüşme çağrı üzerinden yürür.",
         "Platform:Grant:InterestAlreadyLinked": "Bu fikir zaten bir çağrıyla ilişkilendirilmiş.",
         "Platform:Grant:IdeaCallNotOpen": "Fikir yalnız yayındaki ve son tarihi geçmemiş bir çağrıyla ilişkilendirilebilir.",
+        "Platform:Grant:DispatchCallNotOpen": "Firmalara yalnız yayındaki ve son tarihi geçmemiş bir çağrı gönderilebilir.",
         "Platform:Grant:InvitationCallNotOpen": "Davet yalnız yayındaki ve son tarihi geçmemiş bir çağrı için gönderilebilir.",
         "Platform:Grant:InvitationNoRecipients": "Seçilen koşullara uyan firma yok.",
         "Platform:Grant:InvitationMessageRequired": "Davet mesajını yazın.",
