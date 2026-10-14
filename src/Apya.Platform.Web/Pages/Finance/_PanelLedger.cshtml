@@ -162,7 +162,8 @@ else
             <tbody>
                 @foreach (var r in Model.LedgerRows)
                 {
-                    <tr>
+                    @* FUX-05 · "Son İşlemler" satırı buraya çapayla gelir; :target vurgular. *@
+                    <tr id="@IndexModel.LedgerRowAnchor(r.Id)" class="apya-ledger-row">
                         <td class="apya-numeric text-muted">@r.Date.ToString("dd.MM.yyyy")</td>
                         <td>
                             <div class="d-flex align-items-center gap-2">

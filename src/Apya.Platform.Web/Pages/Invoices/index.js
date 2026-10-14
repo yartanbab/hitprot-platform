@@ -259,6 +259,13 @@ $(function () {
             state.all = result.items || [];
             if (!keepSelection) { state.selectedId = null; }
             applyFilter();
+            // FUX-05 · Adresteki fatura (yalnız ilk yüklemede, bir kez) seçili açılır.
+            var focusing = false;
+            if (focusInvoiceId) {
+                focusing = state.filtered.some(function (x) { return x.id === focusInvoiceId; });
+                if (focusing) { state.selectedId = focusInvoiceId; }
+                focusInvoiceId = null;
+            }
             var stillThere = state.filtered.some(function (x) { return x.id === state.selectedId; });
             if (!stillThere) {
                 state.selectedId = null;
@@ -273,6 +280,11 @@ $(function () {
             }
             renderList();
             if (state.selectedId) { select(state.selectedId); }
+            // select() listeyi yeniden çizer: kaydırma onun ardından, güncel öğede.
+            if (focusing) {
+                var selectedItem = $list.find('.apya-md-item.selected')[0];
+                if (selectedItem) { selectedItem.scrollIntoView({ block: 'nearest' }); }
+            }
         }, function (err) {
             if (!isLatest()) { return; }
             state.loading = false;
@@ -313,6 +325,10 @@ $(function () {
     if (presetCustomerId) {
         createModal.open({ customerId: presetCustomerId });
     }
+
+    // FUX-05 · Finans Merkezi "Son İşlemler" satırı ?invoiceId=... ile gelir: liste ilk kez
+    // yüklenince o fatura seçili açılır (süzgeçte değilse ya da görülemiyorsa sessizce geçilir).
+    var focusInvoiceId = new URLSearchParams(window.location.search).get('invoiceId');
 
     load();
 });

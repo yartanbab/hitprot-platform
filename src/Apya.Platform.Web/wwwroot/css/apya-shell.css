@@ -3116,6 +3116,9 @@ i.apya-priority-dot {
    (canlıda ölçüldü). Sıra önemli: seçili, odaklıyı ezer. */
 .apya-console-views table.dataTable > tbody > tr.is-focused > td { background: var(--apya-surface-sunken) !important; }
 .apya-console-views table.dataTable > tbody > tr.is-selected > td { background: var(--apya-accent-soft) !important; }
+/* FUX-05 · Finans Merkezi "Son İşlemler" bağlantısıyla gelinen Gelir-Gider satırı (çapa).
+   Aynı !important gerekçesi: .apya-clean-table zemini sabitliyor. */
+.apya-ledger-row:target > td { background: var(--apya-accent-soft) !important; }
 
 /* .apya-row-actions (§10) opaklığı yönetir; burada yalnız düzen + ton. */
 .apya-console-due { display: inline-flex; align-items: center; gap: 8px; }

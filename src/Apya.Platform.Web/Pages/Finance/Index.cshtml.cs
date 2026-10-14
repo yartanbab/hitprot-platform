@@ -617,7 +617,7 @@ public class IndexModel : AbpPageModel
                     CategoryLabel = CategoryLabels.ForIncome(x.Category),
                     ProjectName = NameOf(projects, x.ProjectId),
                     CustomerName = NameOf(customers, x.CustomerId),
-                    Url = TransactionUrl("/Incomes", FinanceContext.TabLedger, "gelir")
+                    Url = TransactionUrl("/Incomes", FinanceContext.TabLedger, x.Id, "gelir")
                 });
             }
         }));
@@ -639,7 +639,7 @@ public class IndexModel : AbpPageModel
                     CategoryLabel = CategoryLabels.ForExpense(x.Category),
                     ProjectName = NameOf(projects, x.ProjectId),
                     CustomerName = NameOf(customers, x.CustomerId),
-                    Url = TransactionUrl("/Expenses", FinanceContext.TabLedger, "gider")
+                    Url = TransactionUrl("/Expenses", FinanceContext.TabLedger, x.Id, "gider")
                 });
             }
         }));
@@ -662,7 +662,7 @@ public class IndexModel : AbpPageModel
                     CategoryLabel = isSales ? "Satış geliri" : "Alış gideri",
                     ProjectName = x.ProjectName,
                     CustomerName = x.CustomerName,
-                    Url = TransactionUrl("/Invoices", FinanceContext.TabInvoices)
+                    Url = TransactionUrl("/Invoices", FinanceContext.TabInvoices, x.Id)
                 });
             }
         }));
@@ -810,16 +810,27 @@ public class IndexModel : AbpPageModel
     /// kullanıcıya ya da bu şablona kapalıysa (ör. etkinlik şablonunda Fonlama yok) modül
     /// sayfasına düşülür — yasak ya da var olmayan sekmeye bağlantı basılmaz. Proje seçili
     /// değilken korunacak bağlam yoktur; davranış eskisi gibidir.</para>
+    ///
+    /// <para>Bağlantı kaydın kendisini de taşır: Gelir-Gider tablosunda satırın çapası
+    /// (<see cref="LedgerRowAnchor"/>; satır vurgulanır), faturada <c>invoiceId</c> (liste o
+    /// faturayı seçili açar — /Invoices sayfası da aynı betiği kullanır). Projesiz gelir ve gider
+    /// sayfaları kayda odaklanmayı bilmez; onlara yalın adres gider.</para>
     /// </summary>
-    private string TransactionUrl(string moduleUrl, string tabCode, string? ledgerKind = null)
+    private string TransactionUrl(string moduleUrl, string tabCode, Guid recordId, string? ledgerKind = null)
     {
+        var isInvoice = tabCode == FinanceContext.TabInvoices;
         if (!ProjectId.HasValue || Tabs.All(t => t.Code != tabCode))
         {
-            return moduleUrl;
+            return isInvoice ? $"{moduleUrl}?invoiceId={recordId}" : moduleUrl;
         }
 
-        return tabCode == FinanceContext.TabLedger ? LedgerUrl(ledgerKind, null, null) : TabUrl(tabCode);
+        return isInvoice
+            ? $"{TabUrl(tabCode)}&invoiceId={recordId}"
+            : $"{LedgerUrl(ledgerKind, null, null)}#{LedgerRowAnchor(recordId)}";
     }
+
+    /// <summary>Gelir-Gider satırının çapası; "Son İşlemler" bağlantısı satıra bununla gelir.</summary>
+    public static string LedgerRowAnchor(Guid id) => "fin-ledger-" + id;
 
     /// <summary>
     /// Gelir-Gider süzgeç bağlantısı. Çağıran, süzgecin TAMAMINI verir (kısmi
