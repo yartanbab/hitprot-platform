@@ -177,6 +177,30 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
             () => service.ToggleBookmarkAsync(Guid.NewGuid()));
     }
 
+    /// <summary>Açık çağrının programına TASLAK (yayınlanmamış) bir çağrı ekler.</summary>
+    private async Task<Guid> DraftCallIdAsync()
+    {
+        var openId = await OpenCallIdAsync();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        using var uow = uowManager.Begin(requiresNew: true);
+        var repo = GetRequiredService<IRepository<GrantCall, Guid>>();
+        var grantId = (await repo.GetAsync(openId)).GrantId;
+        var draft = new GrantCall(Guid.NewGuid(), grantId, "TASLAK-" + Guid.NewGuid().ToString("N")[..6], GrantCallStatus.Taslak);
+        await repo.InsertAsync(draft, autoSave: true);
+        await uow.CompleteAsync();
+        return draft.Id;
+    }
+
+    /// <summary>Taslak çağrı kimliğiyle takip açılamaz: "var" yanıtı da verilmez (ayrıntı ucuyla aynı).</summary>
+    [Fact]
+    public async Task Taslak_Cagri_Takibe_Alinamaz()
+    {
+        var service = GetRequiredService<IGrantRecommendationAppService>();
+
+        await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
+            async () => await service.ToggleBookmarkAsync(await DraftCallIdAsync()));
+    }
+
     /// <summary>13b · Not takibin parçasıdır: takipteyken yazılır, boş not siler, takip kalkınca not da gider.</summary>
     [Fact]
     public async Task Takip_Notu_Yazilir_Bos_Not_Siler()

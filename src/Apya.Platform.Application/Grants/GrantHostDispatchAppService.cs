@@ -200,6 +200,13 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         EnsureHostContext();
 
         var call = await _callRepo.GetAsync(input.GrantCallId);
+        // Taslak, planlanan ya da kapanmış çağrı firmaya görünmez. Denetlenmiyordu: taslak çağrı
+        // için firmaya öneri + takip satırı yazılıyor, adı ve son tarihi bildirim ve e-postayla
+        // gidiyor, bildirimin bağlantısı ise "bulunamadı" sayfasına düşüyordu.
+        if (!call.IsOpenOn(Clock.Now))
+        {
+            throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.GrantDispatchCallNotOpen);
+        }
         var grant = await _grantRepo.GetAsync(call.GrantId);
 
         // 6d · Metin artık host'un düzenlediği şablondan gelir; daha önce burada

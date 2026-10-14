@@ -197,6 +197,7 @@ public static class PlatformDomainErrorCodes
     public const string GrantInterestIdeaNotLinked = "Platform:Grant:InterestIdeaNotLinked";
     public const string GrantInterestAlreadyLinked = "Platform:Grant:InterestAlreadyLinked";
     public const string GrantIdeaCallNotOpen = "Platform:Grant:IdeaCallNotOpen";
+    public const string GrantDispatchCallNotOpen = "Platform:Grant:DispatchCallNotOpen";
     public const string GrantInvitationCallNotOpen = "Platform:Grant:InvitationCallNotOpen";
     public const string GrantInvitationNoRecipients = "Platform:Grant:InvitationNoRecipients";
     public const string GrantInvitationMessageRequired = "Platform:Grant:InvitationMessageRequired";
