@@ -243,9 +243,11 @@ public class GrantLoadFailureScripts_Tests
         markup.ShouldContain("<button type=\"button\" class=\"btn btn-sm btn-primary\" id=\"CreatePackageBtn\" disabled>");
 
         var paint = Body(Grants("Documents.js"), "function paint()");
-        paint.ShouldContain("$('#CreatePackageBtn').prop('disabled', model.approvedCount === 0);");
-        paint.ShouldContain("$('#RemindBtn').toggleClass('d-none', model.isReadOnly);");
-        paint.ShouldContain("$('#AddDocBtn').toggleClass('d-none', model.isReadOnly);");
+        // Yazma kapalı = başvuru gönderilmiş YA DA görüntüleyenin yazma izni yok (#652).
+        paint.ShouldContain("$('#CreatePackageBtn').prop('disabled', model.approvedCount === 0 || model.canWrite === false);");
+        paint.ShouldContain("var writeLocked = !!model.isReadOnly || model.canWrite === false;");
+        paint.ShouldContain("$('#RemindBtn').toggleClass('d-none', writeLocked);");
+        paint.ShouldContain("$('#AddDocBtn').toggleClass('d-none', writeLocked);");
     }
 
     /// <summary>
