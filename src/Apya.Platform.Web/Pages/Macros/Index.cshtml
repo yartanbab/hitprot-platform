@@ -14,21 +14,28 @@
 
 @section scripts {
     <abp-script src="/Pages/Macros/Index.js" />
+    <abp-script src="/Pages/Macros/Panels.js" />
+}
+
+@* Hibe satırlarının durum etiketi/tonu hibe ekranlarıyla aynı katalogdan (GrantStatusCatalog). *@
+@if (Model.RecordGroups.Contains("interests"))
+{
+    <partial name="/Pages/Grants/_StatusMap.cshtml" />
 }
 
 @* Makro Ekran — tasarım docs/design/makro-ekran (1a). Adres Türkçe (/Makro), klasör alan kuralıyla
-   Pages/Macros. Kartlar sunucuda basılır; Index.js yalnız tıklamayı ve sabitlemeyi yönetir. *@
+   Pages/Macros. Kartlar sunucuda basılır; Index.js tıklamayı ve sabitlemeyi, Panels.js panelleri yönetir. *@
 <div data-page-description="@L["Macros:Description"]" class="apya-page apya-macros" id="ApyaMacros">
-    @if (!Model.Screen.Items.Any())
-    {
-        <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-bolt", Title = L["Macros:Empty:Title"].Value, Description = L["Macros:Empty:Description"].Value }' />
-    }
-    else
-    {
-        <script type="application/json" id="apya-macro-pins">@Html.Raw(Model.PinStateJson)</script>
+    <div class="apya-macros-main has-panels @(Model.RecordGroups.Any() ? "has-records" : "")">
+        <div class="apya-macros-col">
+            @if (!Model.Screen.Items.Any())
+            {
+                <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-bolt", Title = L["Macros:Empty:Title"].Value, Description = L["Macros:Empty:Description"].Value }' />
+            }
+            else
+            {
+                <script type="application/json" id="apya-macro-pins">@Html.Raw(Model.PinStateJson)</script>
 
-        <div class="apya-macros-main">
-            <div class="apya-macros-col">
                 <section aria-labelledby="MacrosForYouHeading">
                     <div class="apya-macros-section-head">
                         <h2 class="apya-overline" id="MacrosForYouHeading">@L["Macros:ForYou"]</h2>
@@ -58,7 +65,45 @@
                         }
                     </div>
                 </section>
-            </div>
+            }
         </div>
+
+        @* Paneller kendi içinde kayar: kabın satır yüksekliğini sol sütun belirler (absolute iç panel). *@
+        <div class="apya-macros-panel-slot">
+            <section class="apya-macros-panel" id="MacrosNotifications" aria-labelledby="MacrosNotificationsHeading">
+                <div class="apya-macros-panel-head">
+                    <h2 class="apya-macros-panel-title" id="MacrosNotificationsHeading">@L["Macros:Notifications"]</h2>
+                    <span class="apya-macros-bubble" data-unread hidden></span>
+                    <span class="apya-macros-panel-note">@L["Macros:Notifications:Newest"]</span>
+                    <a class="apya-macros-panel-link" href="/Notifications">@L["Macros:Notifications:All"]</a>
+                </div>
+                <div class="apya-macros-panel-body" data-panel-body aria-live="polite"></div>
+            </section>
+        </div>
+
+        @if (Model.RecordGroups.Any())
+        {
+            <div class="apya-macros-panel-slot">
+                <section class="apya-macros-panel" id="MacrosRecords" aria-labelledby="MacrosRecordsHeading"
+                         data-groups="@string.Join(",", Model.RecordGroups)">
+                    <div class="apya-macros-panel-head">
+                        <h2 class="apya-macros-panel-title" id="MacrosRecordsHeading">@L["Macros:Records"]</h2>
+                    </div>
+                    <div class="apya-macros-panel-body" data-panel-body aria-live="polite"></div>
+                </section>
+            </div>
+        }
+    </div>
+
+    @if (Model.PendingSources.Any())
+    {
+        <section class="apya-macros-pending" id="MacrosPending" aria-labelledby="MacrosPendingHeading"
+                 data-sources="@string.Join(",", Model.PendingSources)">
+            <div class="apya-macros-pending-head">
+                <h2 class="apya-macros-panel-title" id="MacrosPendingHeading">@L["Macros:Pending"]</h2>
+                <span class="apya-chip apya-chip-warning" data-pending-total hidden></span>
+            </div>
+            <div class="apya-macros-pending-grid" data-panel-body aria-live="polite"></div>
+        </section>
     }
 </div>
