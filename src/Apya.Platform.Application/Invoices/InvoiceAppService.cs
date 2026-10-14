@@ -237,6 +237,9 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             TaxRate = x.TaxRate,
             Currency = x.Currency,
             Status = x.Status,
+            IsOverdue = x.Status != InvoiceStatus.Cancelled
+                        && x.Status != InvoiceStatus.Paid
+                        && x.DueDate < Clock.Now,
             Notes = x.Notes,
             CreationTime = x.CreationTime,
             Items = (lineItems ?? x.Items).Select(i => new InvoiceItemDto

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
@@ -163,6 +164,38 @@ public class FinanceRecordRules_Tests : PlatformEntityFrameworkCoreTestBase
         (await Should.ThrowAsync<BusinessException>(() => _invoices.CreateAsync(input)))
             .Code.ShouldBe(PlatformDomainErrorCodes.BudgetLineProjectMismatch);
         (await _invoiceRepository.GetListAsync(i => i.ProjectId == input.ProjectId)).ShouldBeEmpty();
+    }
+
+    /* ═══════════════ Gecikmiş fatura (FIN-10) ═══════════════ */
+
+    /// <summary>
+    /// "Gecikmiş" hiçbir yerde atanmıyordu; Faturalar ekranının süzgeci boş kalıyordu. Bayrak okunurken
+    /// hesaplanır: vadesi geçmiş, tamamı ödenmemiş ve iptal edilmemiş fatura (hiç ödeme almamış, hâlâ
+    /// Taslak görünen de sayılır — cari ekstresindeki gecikmiş tutarla aynı kural).
+    /// </summary>
+    [Fact]
+    public async Task Vadesi_gecmis_odenmemis_fatura_gecikmis_sayilir_odenince_sayilmaz()
+    {
+        var late = await InvoiceInputAsync(1, 100);
+        late.InvoiceDate = new DateTime(2026, 8, 1);
+        late.DueDate = new DateTime(2026, 9, 1);
+        var lateId = (await _invoices.CreateAsync(late)).Id;
+
+        var future = await InvoiceInputAsync(1, 100);
+        future.DueDate = DateTime.Today.AddDays(30);
+        var futureId = (await _invoices.CreateAsync(future)).Id;
+
+        (await _invoices.GetAsync(lateId)).IsOverdue.ShouldBeTrue("hiç ödeme almamış (Taslak) fatura da gecikmiş sayılır");
+        (await _invoices.GetAsync(futureId)).IsOverdue.ShouldBeFalse();
+
+        // Kısmi ödeme: hâlâ gecikmiş. Tamamı ödenince değil.
+        await _invoices.AddPaymentAsync(lateId, 20m, "Nakit", "kismi");
+        (await _invoices.GetAsync(lateId)).IsOverdue.ShouldBeTrue();
+        await _invoices.AddPaymentAsync(lateId, 100m, "Nakit", "kalan");
+        (await _invoices.GetAsync(lateId)).IsOverdue.ShouldBeFalse();
+
+        var list = await _invoices.GetListAsync(new Volo.Abp.Application.Dtos.PagedAndSortedResultRequestDto { MaxResultCount = 1000 });
+        list.Items.Single(i => i.Id == futureId).IsOverdue.ShouldBeFalse("liste de aynı bayrağı taşır");
     }
 
     /* ═══════════════ Kur kaynağı ═══════════════ */

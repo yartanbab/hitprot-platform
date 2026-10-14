@@ -52,8 +52,9 @@ $(function () {
         return iso ? luxon.DateTime.fromISO(iso).toLocaleString() : '—';
     }
 
-    function statusChip(status) {
-        var s = STATUS[status] || STATUS[0];
+    // "Gecikmiş" saklanan bir durum değil, sunucunun hesapladığı bayraktır (isOverdue).
+    function statusChip(status, isOverdue) {
+        var s = isOverdue ? STATUS[4] : (STATUS[status] || STATUS[0]);
         return '<span class="apya-chip ' + s.chip + '">' + s.text + '</span>';
     }
 
@@ -61,7 +62,11 @@ $(function () {
         var q = ($('#InvoiceFilter').val() || '').toLocaleLowerCase('tr-TR').trim();
         state.filtered = state.all.filter(function (x) {
             if (scopeProjectId && x.projectId !== scopeProjectId) { return false; }
-            if (state.status !== '' && String(x.status) !== state.status) { return false; }
+            if (state.status === '4') {
+                if (!x.isOverdue) { return false; }
+            } else if (state.status !== '' && String(x.status) !== state.status) {
+                return false;
+            }
             if (!q) { return true; }
             return ((x.invoiceNumber || '').toLocaleLowerCase('tr-TR').indexOf(q) !== -1)
                 || ((x.customerName || '').toLocaleLowerCase('tr-TR').indexOf(q) !== -1);
@@ -105,7 +110,7 @@ $(function () {
                 '  </span>' +
                 '  <span class="apya-md-item-side">' +
                 '    <span class="d-block apya-numeric fw-bold" style="font-size:12.5px">' + fmt(x.totalAmount) + ' ' + esc(x.currency) + '</span>' +
-                '    ' + statusChip(x.status) +
+                '    ' + statusChip(x.status, x.isOverdue) +
                 '  </span>' +
                 '</button></li>'
             );
@@ -153,7 +158,7 @@ $(function () {
             '<div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">' +
             '  <div class="min-w-0">' +
             '    <div class="d-flex align-items-center gap-2 flex-wrap">' +
-            '      <span class="h6 mb-0">' + esc(d.invoiceNumber || '(numarasız)') + '</span>' + statusChip(d.status) +
+            '      <span class="h6 mb-0">' + esc(d.invoiceNumber || '(numarasız)') + '</span>' + statusChip(d.status, d.isOverdue) +
             '    </div>' +
             '    <div class="text-muted mt-1" style="font-size:12.5px">' + esc(d.customerName || d.projectName || '—') + '</div>' +
             '  </div>' +
