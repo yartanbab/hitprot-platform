@@ -73,7 +73,87 @@ satırından doğrulayın (`dbmigrator\Logs\logs.txt`).
 ## 🔴 Deploy ÖNCESİ yapılacaklar (bu belgenin ekleri)
 
 ### A. Veritabanı yedeği
-12 migration, biri mevcut satırları güncelliyor (`Add_TenantId_To_ChildEntities`). Yedek alın.
+12 migration, biri mevcut satırları güncelliyor (`Add_TenantId_To_ChildEntities`). Yedek alın:
+Plesk → **Veritabanları** → canlı veritabanı → **Dökümü dışa aktar** (Export Dump). Oluşan dosyayı
+bilgisayarınıza da indirin; yalnız sunucuda duran yedek, sunucu sorununda işe yaramaz.
+
+### A2. Prova — yedeğin kopyasında DbMigrator (önerilen)
+
+Migration'lar canlı veriyle hiç çalıştırılmadı (yerelde yalnız kopya veride ve sahte bağlantıyla
+denendi). Canlıya dokunmadan önce aynı işlemi canlı verinin bir kopyasında yapın. Canlı veritabanı,
+uygulama ve kullanıcılar bu adımlardan **etkilenmez**.
+
+**1. Prova veritabanı.** Plesk → Veritabanları → **Veritabanı Ekle** → Tür *Microsoft SQL Server*,
+ad `apya_prova` (canlıyla aynı sunucu; kullanıcı canlınınkiyle aynı olabilir). Sonra `apya_prova` →
+**Dökümü içe aktar** (Import Dump) → A adımındaki yedek dosyası.
+
+**2. Prova klasörü.** `C:\inetpub\vhosts\pargetto.com\dbmigrator-prova\` klasörünü açın ve
+`Apya-DbMigrator-208a35a0.zip`'i bu klasörün **köküne** açın. Sunucudaki
+`apya.pargetto.com\appsettings.secrets.json` dosyasını bu klasöre **Kopyala**yın (Taşı değil), sonra
+**kopyayı** düzenleyin: `ConnectionStrings` → `SqlServer` (ve varsa `Default`) içindeki
+`Database=` değerini `apya_prova` yapın. `migrate.bat`'taki `CLIENTSECRET` satırını doldurun.
+
+> 🔴 Çalıştırmadan önce `dbmigrator-prova\appsettings.secrets.json`'u bir kez daha açın:
+> bağlantı dizesinde **canlı veritabanının adı geçmemeli**. Yanlış klasörün dosyası düzenlenirse
+> prova canlıya uygulanır.
+
+**3. Önce sayın.** Plesk → Veritabanları → `apya_prova` → sorgu ekranında (ya da SSMS ile):
+
+```sql
+SELECT N'Projeler' t, COUNT(*) n FROM AppProjects UNION ALL
+SELECT N'Görevler', COUNT(*) FROM AppTasks UNION ALL
+SELECT N'Görev yorumları', COUNT(*) FROM AppTaskComments UNION ALL
+SELECT N'Görev ekleri', COUNT(*) FROM AppTaskAttachments UNION ALL
+SELECT N'Faturalar', COUNT(*) FROM AppInvoices UNION ALL
+SELECT N'Fatura kalemleri', COUNT(*) FROM AppInvoiceItems UNION ALL
+SELECT N'Giderler', COUNT(*) FROM AppExpenses UNION ALL
+SELECT N'Gelirler', COUNT(*) FROM AppIncomeEntries UNION ALL
+SELECT N'Kasa hareketleri', COUNT(*) FROM AppCashMovements UNION ALL
+SELECT N'Cariler', COUNT(*) FROM AppCustomers UNION ALL
+SELECT N'Belgeler', COUNT(*) FROM AppDocumentFiles UNION ALL
+SELECT N'Fon dilimleri', COUNT(*) FROM AppFundingTranches UNION ALL
+SELECT N'Gelire bağlı dilim', COUNT(*) FROM AppFundingTranches WHERE IncomeEntryId IS NOT NULL UNION ALL
+SELECT N'Hibe başvuruları', COUNT(*) FROM AppGrantApplications UNION ALL
+SELECT N'Hibe çağrıları', COUNT(*) FROM AppGrantCalls UNION ALL
+SELECT N'Kullanıcılar', COUNT(*) FROM AbpUsers UNION ALL
+SELECT N'Roller', COUNT(*) FROM AbpRoles UNION ALL
+SELECT N'Rol/kullanıcı izinleri', COUNT(*) FROM AbpPermissionGrants;
+```
+
+Sonucu bir yere kaydedin. Ayrıca B adımındaki yinelenen proje kodu sorgusunu burada da çalıştırın.
+
+**4. Çalıştırın.** Plesk → Zamanlanmış Görevler → *Bir komut çalıştır* → komut alanına
+**tırnaksız** `C:\inetpub\vhosts\pargetto.com\dbmigrator-prova\migrate.bat` → **Şimdi Çalıştır**.
+Başarı ölçütü: `dbmigrator-prova\Logs\logs.txt` sonunda
+**"Successfully completed all database migrations."** Görmüyorsanız **canlıya geçmeyin**; log'un son
+50 satırını saklayın.
+
+**5. Sonra sayın.** Aynı sorguyu yeniden çalıştırın. Beklenen:
+
+| Satır | Beklenen |
+|---|---|
+| Projeler, Görevler, yorumlar, ekler, faturalar, kalemler, giderler, gelirler, kasa hareketleri, cariler, belgeler, fon dilimleri, hibe başvuruları, kullanıcılar | **Birebir aynı** |
+| Hibe çağrıları | Artar (host kataloğuna tohumlanan duyurular; var olan çağrıya dokunulmaz) |
+| Roller | Kiracı başına en çok 3 artar (Proje Sorumlusu, Muhasebe, Gözlemci; aynı adda rol varsa artmaz) |
+| Rol/kullanıcı izinleri | Artar (yeni yetkiler eklenir; hiçbiri silinmez) |
+| Gelire bağlı dilim | Aynı ya da az (yalnız silinmiş bir geliri gösteren bağ kaldırılır; tutar değişmez) |
+
+Bir de kiracı bilgisinin doğru kopyalandığını ölçün — ikisi de **0** dönmeli:
+
+```sql
+SELECT COUNT(*) FROM AppTaskComments c JOIN AppTasks t ON t.Id = c.TaskId
+ WHERE ISNULL(c.TenantId, '00000000-0000-0000-0000-000000000000')
+    <> ISNULL(t.TenantId, '00000000-0000-0000-0000-000000000000');
+SELECT COUNT(*) FROM AppInvoiceItems i JOIN AppInvoices v ON v.Id = i.InvoiceId
+ WHERE ISNULL(i.TenantId, '00000000-0000-0000-0000-000000000000')
+    <> ISNULL(v.TenantId, '00000000-0000-0000-0000-000000000000');
+```
+
+"Birebir aynı" olması gereken bir satır değiştiyse canlıya geçmeyin.
+
+**6. Temizlik.** Zamanlanmış görevi silin (içinde istemci sırrı var), `dbmigrator-prova` klasörünü ve
+`apya_prova` veritabanını silin. Prova başarılıysa canlıda aynı adımları `dbmigrator` klasörü ve canlı
+veritabanıyla tekrarlayın (C–E maddeleri ve "OKU-BENI.txt" sırası).
 
 ### B. Yinelenen proje kodu sayımı — atlanamaz
 `Precision_ProjectCode_DigestFlag` proje kodu için tekil indeks kurar; yinelenen kod varsa
