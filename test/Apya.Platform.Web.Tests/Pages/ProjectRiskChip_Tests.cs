@@ -41,8 +41,22 @@ public class ProjectRiskChip_Tests : PlatformWebTestBase
         var html = await PageAsync(projectId);
 
         html.ShouldContain("data-project-risks", Case.Sensitive);
-        html.ShouldContain("href=\"/Documents/Timeline?projectId=" + projectId + "\"", Case.Sensitive);
+        // Rozet kütük kartının çapasıyla gelir; zaman çizelgesi kartı veriyle çizdikten sonra ona kaydırır.
+        html.ShouldContain("href=\"/Documents/Timeline?projectId=" + projectId + "#risk-kutugu\"", Case.Sensitive);
         html.ShouldContain("2 açık risk", Case.Sensitive);
+    }
+
+    /// <summary>Çapanın hedefi: zaman çizelgesindeki risk kartı aynı kimliği taşır ve ona kaydırılır.</summary>
+    [Fact]
+    public void Zaman_cizelgesi_risk_kartina_capayla_odaklanir()
+    {
+        var path = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..",
+            "src", "Apya.Platform.Web", "wwwroot", "dynamic-assets", "src", "documents-project", "TimelineRoot.jsx");
+        System.IO.File.Exists(path).ShouldBeTrue();
+        var jsx = System.IO.File.ReadAllText(path);
+
+        jsx.ShouldContain("id=\"risk-kutugu\"", Case.Sensitive);
+        jsx.ShouldContain("window.location.hash !== '#risk-kutugu'", Case.Sensitive);
     }
 
     [Fact]

@@ -79,6 +79,16 @@ export function TimelineRoot() {
 
   useEffect(() => { load(); }, [load]);
 
+  // PRJ-09 · Proje konsolundaki "N açık risk" rozeti #risk-kutugu ile gelir. Kart veriyle birlikte
+  // çizildiği için tarayıcının kendi çapa atlaması onu bulamaz; ilk yüklemeden sonra bir kez kaydırılır.
+  const [riskFocusDone, setRiskFocusDone] = useState(false);
+  useEffect(() => {
+    if (riskFocusDone || !data || window.location.hash !== '#risk-kutugu') { return; }
+    setRiskFocusDone(true);
+    const card = document.getElementById('risk-kutugu');
+    if (card) { card.scrollIntoView({ block: 'start' }); }
+  }, [data, riskFocusDone]);
+
   // PRJ-09: Risk dört ardışık tarayıcı istem kutusuyla giriliyordu; artık tek pencere
   // (RiskDialog). Kayıt başarısız olursa pencere AÇIK kalır — yazılan kaybolmaz.
   const [riskDialogOpen, setRiskDialogOpen] = useState(false);
@@ -202,8 +212,8 @@ export function TimelineRoot() {
         ))}
       </div>
 
-      {/* Risk kütüğü */}
-      <div className="apya-doc-check-card">
+      {/* Risk kütüğü — proje konsolundaki rozetin çapası (PRJ-09) */}
+      <div className="apya-doc-check-card" id="risk-kutugu">
         <div className="apya-doc-check-head">
           <span style={{ fontSize: 13.5, fontWeight: 600 }}>Risk kütüğü</span>
           <Button variant="outline" size="sm" disabled={busy} onClick={() => setRiskDialogOpen(true)}>
