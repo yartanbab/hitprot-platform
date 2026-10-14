@@ -248,7 +248,7 @@ public class DocumentAdminAppService : ApplicationService, IDocumentAdminAppServ
                     break;
 
                 case DocumentRuleActionType.SetStatus when int.TryParse(change.Payload, out var status):
-                    file.ChangeStatus((DocumentFileStatus)status);
+                    file.ChangeStatus((DocumentFileStatus)status, CurrentUser.Id, Clock.Now);
                     break;
 
                 case DocumentRuleActionType.SetPeriodCode:

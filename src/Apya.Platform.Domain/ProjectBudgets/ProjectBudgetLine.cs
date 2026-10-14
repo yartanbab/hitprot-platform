@@ -57,6 +57,12 @@ public class ProjectBudgetLine : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// </summary>
     public Guid? SourceGrantLineId { get; private set; }
 
+    /// <summary>
+    /// CNV-04: kalemin gerekçesi. Hibe başvurusundan dönüşen projede başvurunun bütçe
+    /// satırındaki gerekçe buraya taşınır; firma aynı metni projede yeniden yazmaz.
+    /// </summary>
+    public string? Justification { get; private set; }
+
     /// <summary>EF Core için.</summary>
     protected ProjectBudgetLine()
     {
@@ -85,6 +91,16 @@ public class ProjectBudgetLine : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     /// <summary>Kalemin doğduğu başvuru bütçe satırını kaydeder (dönüşüm ve geri dolum).</summary>
     public void LinkToGrantLine(Guid grantLineId) => SourceGrantLineId = grantLineId;
+
+    public void SetJustification(string? justification)
+    {
+        var clean = justification?.Trim();
+        Justification = string.IsNullOrEmpty(clean)
+            ? null
+            : clean.Length > ProjectBudgetConsts.MaxJustificationLength
+                ? clean[..ProjectBudgetConsts.MaxJustificationLength]
+                : clean;
+    }
 
     public void SetCode(string? code)
     {

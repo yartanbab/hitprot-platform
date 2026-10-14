@@ -47,6 +47,10 @@ public class DocumentFile : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public DocumentFileStatus Status { get; private set; } = DocumentFileStatus.Draft;
 
+    /// <summary>DOC-09: belgeyi "Kesin"e alan kullanıcı ve an. Taslakta ve eski kayıtlarda boş.</summary>
+    public Guid? FinalizedByUserId { get; private set; }
+    public DateTime? FinalizedAt { get; private set; }
+
     /// <summary>
     /// Belgenin geçerlilik bitişi (sözleşme bitişi vb.).
     /// Kullanıcının belge ayrıntısında girdiği tarih BUDUR; hatırlatmasını
@@ -133,7 +137,31 @@ public class DocumentFile : FullAuditedAggregateRoot<Guid>, IMultiTenant
             ? referenceDate.AddMonths(retentionMonths.Value)
             : null;
 
-    public void ChangeStatus(DocumentFileStatus status) => Status = status;
+    /// <summary>
+    /// Durumu değiştirir. DOC-09: belge "Kesin"e alınırken kimin, ne zaman aldığı kaydedilir;
+    /// teslim önizlemesi bunu gösterir. Eskiden bu bilgi yalnız erişim izinde serbest metindi.
+    ///
+    /// <para>Eşleşme (<see cref="DocumentFileStatus.Matched"/>) ve eşleşmenin kalkması
+    /// (yeniden <see cref="DocumentFileStatus.Final"/>) kesinleştirme sayılmaz: iz korunur.
+    /// Taslağa dönüş izi siler.</para>
+    /// </summary>
+    public void ChangeStatus(DocumentFileStatus status, Guid? byUserId, DateTime now)
+    {
+        var wasFinalized = Status is DocumentFileStatus.Final or DocumentFileStatus.Matched;
+
+        if (status == DocumentFileStatus.Final && !wasFinalized)
+        {
+            FinalizedByUserId = byUserId;
+            FinalizedAt = now;
+        }
+        else if (status == DocumentFileStatus.Draft)
+        {
+            FinalizedByUserId = null;
+            FinalizedAt = null;
+        }
+
+        Status = status;
+    }
 
     public void Lock() => IsLocked = true;
     public void Unlock() => IsLocked = false;

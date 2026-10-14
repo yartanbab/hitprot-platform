@@ -191,7 +191,7 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
         // Eşleşen belge "Matched" durumuna geçer — liste ve uygunluk buna bakıyor.
         if (file.Status != DocumentFileStatus.Matched)
         {
-            file.ChangeStatus(DocumentFileStatus.Matched);
+            file.ChangeStatus(DocumentFileStatus.Matched, CurrentUser.Id, Clock.Now);
             await _fileRepository.UpdateAsync(file);
         }
 
@@ -222,7 +222,7 @@ public class DocumentMatchingAppService : ApplicationService, IDocumentMatchingA
             var file = await _fileRepository.FindAsync(match.DocumentFileId);
             if (file != null && file.Status == DocumentFileStatus.Matched)
             {
-                file.ChangeStatus(DocumentFileStatus.Final);
+                file.ChangeStatus(DocumentFileStatus.Final, CurrentUser.Id, Clock.Now);
                 await _fileRepository.UpdateAsync(file);
             }
         }

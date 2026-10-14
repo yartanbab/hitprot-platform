@@ -7,6 +7,9 @@ public static class ProjectBudgetConsts
 
     public const int MaxNameLength = 128;
 
+    /// <summary>Başvuru bütçe satırındaki gerekçeyle aynı sınır (GrantApplicationBudgetLine).</summary>
+    public const int MaxJustificationLength = 512;
+
     /// <summary>Kesinti gerekçesi ve revizyon açıklaması.</summary>
     public const int MaxReasonLength = 512;
 

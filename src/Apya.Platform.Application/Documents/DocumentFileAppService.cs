@@ -249,7 +249,7 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         file.SetAmount(input.Amount, input.Currency);
         file.SetDates(input.DocumentDate, input.PeriodCode, input.ExpiryDate);
         file.SetExternalRef(input.ExternalRef);
-        file.ChangeStatus(input.Status);
+        file.ChangeStatus(input.Status, CurrentUser.Id, Clock.Now);
 
         // Saklama süresi tipten gelir; belge tarihi yoksa yükleme tarihine göre hesaplanır.
         if (input.DocumentTypeId.HasValue)

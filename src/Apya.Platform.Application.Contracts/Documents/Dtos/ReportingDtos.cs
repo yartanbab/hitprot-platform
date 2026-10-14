@@ -83,6 +83,10 @@ public class DeliveryPackageItemDto : EntityDto<Guid>
     public string? AnnexNumber { get; set; }
     public DateTime? ExpiryDate { get; set; }
     public long FileSize { get; set; }
+
+    /// <summary>DOC-09: belgeyi "Kesin"e alan kullanıcı. Kayıt yoksa (eski belge, taslak) boş.</summary>
+    public string? FinalizedByName { get; set; }
+    public DateTime? FinalizedAt { get; set; }
 }
 
 public class CreateUpdateDeliveryPackageDto

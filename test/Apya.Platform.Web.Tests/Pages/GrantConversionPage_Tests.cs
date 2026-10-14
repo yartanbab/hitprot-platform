@@ -83,6 +83,7 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
             var line = new GrantApplicationBudgetLine(
                 Guid.NewGuid(), tenantId, application.Id, GrantCostItemKind.Personel);
             line.SetAmount(600_000m);
+            line.SetJustification("Iki arastirmaci, 12 ay");
             await budgetRepo.InsertAsync(line, autoSave: true);
 
             await milestoneRepo.InsertAsync(
@@ -584,6 +585,8 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
                 .GetListAsync(t => t.ProjectId == result.ProjectId)).Single();
 
             projectLine.SourceGrantLineId.ShouldBe(grantLine.Id);
+            // CNV-04: gerekçe başvuruda yazılmıştı; projede yeniden sorulmaz.
+            projectLine.Justification.ShouldBe("Iki arastirmaci, 12 ay");
             projectTranche.SourceGrantTrancheId.ShouldBe(grantTranche.Id);
         }
     }

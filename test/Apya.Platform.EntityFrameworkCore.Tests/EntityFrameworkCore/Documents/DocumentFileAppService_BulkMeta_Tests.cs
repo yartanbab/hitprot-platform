@@ -73,7 +73,7 @@ public class DocumentFileAppService_BulkMeta_Tests : PlatformEntityFrameworkCore
         file.SetAmount(1234.56m, "TRY");
         file.SetDates(DocDate, "2026-Q3", null);
         file.SetExternalRef("EXT-1");
-        file.ChangeStatus(DocumentFileStatus.Final);
+        file.ChangeStatus(DocumentFileStatus.Final, null, DateTime.Now);
         file.ApplyRetention(type.RetentionMonths, DocDate);
         if (locked)
         {

@@ -554,6 +554,18 @@ public class DeliveryPackageAppService : ApplicationService, IDeliveryPackageApp
                     .Select(a => new { a.Id, a.FileSize })))
             .ToDictionary(k => k.Id, v => v.FileSize);
 
+        // DOC-09: "Kesin"i kimin çektiği — tek sorguda ad çözümü.
+        var finalizerIds = files.Where(f => f.FinalizedByUserId.HasValue)
+            .Select(f => f.FinalizedByUserId!.Value).Distinct().ToList();
+        var finalizerNames = finalizerIds.Count == 0
+            ? new Dictionary<Guid, string>()
+            : (await _identityRepository.GetListAsync(u => finalizerIds.Contains(u.Id)))
+                .ToDictionary(u => u.Id, u =>
+                {
+                    var full = $"{u.Name} {u.Surname}".Trim();
+                    return string.IsNullOrWhiteSpace(full) ? u.UserName : full;
+                });
+
         detail.Items = items.Select(i =>
         {
             var file = fileById.GetValueOrDefault(i.DocumentFileId);
@@ -566,6 +578,8 @@ public class DeliveryPackageAppService : ApplicationService, IDeliveryPackageApp
                 Order = i.Order,
                 AnnexNumber = i.AnnexNumber,
                 ExpiryDate = file?.ExpiryDate,
+                FinalizedByName = file?.FinalizedByUserId is { } finalizer ? finalizerNames.GetValueOrDefault(finalizer) : null,
+                FinalizedAt = file?.FinalizedAt,
                 FileSize = file?.LatestAttachmentId != null ? sizes.GetValueOrDefault(file.LatestAttachmentId.Value) : 0,
             };
         }).ToList();
