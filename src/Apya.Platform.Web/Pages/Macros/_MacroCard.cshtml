@@ -16,16 +16,22 @@
         </span>
         <span class="apya-macro-card-title">@Model.Title</span>
         <span class="visually-hidden apya-macro-card-pinned">@L["Macros:Pinned"]</span>
-        <span class="apya-macro-card-foot">@Model.Area</span>
+        <span class="apya-macro-card-foot">
+            <span>@Model.Area</span>
+            @if (Model.UsageCount > 0)
+            {
+                <span class="apya-macro-card-uses" title="@L["Macros:UsesTitle", Model.UsageCount]">@(Model.UsageCount)×</span>
+            }
+        </span>
     </text>;
 }
 @if (Model.Kind == MacroKind.Modal)
 {
     <button type="button" class="@cssClass" data-macro-key="@Model.Key" data-pin-name="@Model.PinName"
-            data-order="@Model.CatalogIndex" data-modal-url="@Model.Url">@body(null)</button>
+            data-order="@Model.CatalogIndex" data-usage="@Model.UsageCount" data-modal-url="@Model.Url">@body(null)</button>
 }
 else
 {
     <a class="@cssClass" href="@Model.Url" data-macro-key="@Model.Key" data-pin-name="@Model.PinName"
-       data-order="@Model.CatalogIndex">@body(null)</a>
+       data-order="@Model.CatalogIndex" data-usage="@Model.UsageCount">@body(null)</a>
 }

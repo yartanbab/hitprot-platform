@@ -15,7 +15,8 @@ namespace Apya.Platform.Web.Macros;
 
 /// <summary>
 /// Makro Ekran'ın listesini kurar: katalogdan (<see cref="MacroCatalog"/>) kullanıcının
-/// görebildiklerini süzer, kenar çubuğuyla ORTAK sabitleme ayarına göre dizer.
+/// görebildiklerini süzer; sabitlenenler (kenar çubuğuyla ORTAK ayar) önce, gerisi son 30 günde
+/// en çok kullanılandan aza, eşitlikte katalog sırası.
 ///
 /// <para>Görünürlük iki kaynaktan gelir ve ikisi de makroya özgü değildir: menüye bağlı
 /// bağlantıda menü ağacı (<see cref="PlatformNavigationResolver.GetGrantedLinksAsync"/>),
@@ -27,22 +28,26 @@ public class MacroLauncher : IScopedDependency
     private readonly IPermissionChecker _permission;
     private readonly ISettingManager _settingManager;
     private readonly IStringLocalizer<PlatformResource> _l;
+    private readonly IMacroScreenAppService _macroScreen;
 
     public MacroLauncher(
         PlatformNavigationResolver navigation,
         IPermissionChecker permission,
         ISettingManager settingManager,
-        IStringLocalizer<PlatformResource> l)
+        IStringLocalizer<PlatformResource> l,
+        IMacroScreenAppService macroScreen)
     {
         _navigation = navigation;
         _permission = permission;
         _settingManager = settingManager;
         _l = l;
+        _macroScreen = macroScreen;
     }
 
     public async Task<MacroScreen> GetAsync()
     {
         var items = await GetVisibleAsync();
+        var usage = await _macroScreen.GetMyUsageAsync();
 
         // ShellAppService.GetPinsAsync ile AYNI okuma: kullanıcı kaydı yoksa varsayılan liste.
         var raw = await _settingManager.GetOrNullForCurrentUserAsync(PlatformSettings.Shell.Pins)
@@ -53,7 +58,7 @@ public class MacroLauncher : IScopedDependency
 
         return new MacroScreen
         {
-            Items = Order(items, pins),
+            Items = Order(items, pins, usage),
             Pins = pins,
             MaxPins = PlatformSettingDefaults.ShellPinsMax
         };
@@ -89,12 +94,20 @@ public class MacroLauncher : IScopedDependency
     }
 
     /// <summary>
-    /// Sabitlenenler önce (sabitlenme sırasıyla), gerisi katalog sırasıyla. Sabitli adın
-    /// karşılığı yoksa (izin değişmiş, menü öğesi kalkmış) sessizce atlanır — kenar çubuğuyla
-    /// aynı davranış.
+    /// Sabitlenenler önce (sabitlenme sırasıyla); gerisi son 30 günlük kullanıma göre çoktan aza,
+    /// eşitlikte katalog sırasıyla. Sabitli adın karşılığı yoksa (izin değişmiş, menü öğesi kalkmış)
+    /// sessizce atlanır — kenar çubuğuyla aynı davranış. İstemci (Index.js reorder) aynı kuralı uygular.
     /// </summary>
-    public static List<MacroItem> Order(IReadOnlyList<MacroItem> items, IReadOnlyList<string> pins)
+    public static List<MacroItem> Order(
+        IReadOnlyList<MacroItem> items,
+        IReadOnlyList<string> pins,
+        IReadOnlyDictionary<string, int>? usage = null)
     {
+        foreach (var item in items)
+        {
+            item.UsageCount = usage != null && usage.TryGetValue(item.Key, out var count) ? count : 0;
+        }
+
         var byPin = items.ToDictionary(item => item.PinName, StringComparer.Ordinal);
         var pinned = pins.Where(byPin.ContainsKey).Distinct().Select(pin => byPin[pin]).ToList();
         foreach (var item in pinned)
@@ -102,7 +115,9 @@ public class MacroLauncher : IScopedDependency
             item.IsPinned = true;
         }
 
-        return pinned.Concat(items.Where(item => !item.IsPinned)).ToList();
+        // OrderBy kararlı: eşit kullanımda katalog sırası (items zaten o sırada) korunur.
+        var rest = items.Where(item => !item.IsPinned).OrderByDescending(item => item.UsageCount);
+        return pinned.Concat(rest).ToList();
     }
 }
 
@@ -143,4 +158,7 @@ public class MacroItem
     public string Icon { get; }
     public string Area { get; }
     public bool IsPinned { get; set; }
+
+    /// <summary>Son 30 gündeki kullanım (Makro Ekran'dan başlatma sayısı).</summary>
+    public int UsageCount { get; set; }
 }

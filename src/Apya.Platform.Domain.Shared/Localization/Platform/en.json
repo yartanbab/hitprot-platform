@@ -3695,7 +3695,7 @@
     "DisplayName:HasConsortiumPartner": "Consortium partner",
     "Macros:Description": "Your frequent tasks, one click away",
     "Macros:ForYou": "For you",
-    "Macros:ForYouPinnedFirst": "pinned first",
+    "Macros:ForYouByUsage": "by your last 30 days",
     "Macros:All": "All macros",
     "Macros:Count": "{0} actions",
     "Macros:Edit": "Edit",
@@ -3758,6 +3758,7 @@
     "Macros:News:ReleaseMore": "{0} more changes in this release",
     "Macros:News:FilterLabel": "Type",
     "Macros:News:Filter:All": "All",
-    "Macros:News:Empty": "No news to show"
+    "Macros:News:Empty": "No news to show",
+    "Macros:UsesTitle": "Started {0} times in the last 30 days"
   }
 }

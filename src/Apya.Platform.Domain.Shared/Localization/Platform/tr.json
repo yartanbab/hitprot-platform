@@ -4153,7 +4153,7 @@
         "DisplayName:HasConsortiumPartner": "Konsorsiyum ortağı",
         "Macros:Description": "Sık yaptığın işler tek tıkla",
         "Macros:ForYou": "Senin için",
-        "Macros:ForYouPinnedFirst": "sabitlediklerin önce",
+        "Macros:ForYouByUsage": "son 30 günkü kullanımına göre",
         "Macros:All": "Tüm makrolar",
         "Macros:Count": "{0} işlem",
         "Macros:Edit": "Düzenle",
@@ -4216,6 +4216,7 @@
         "Macros:News:ReleaseMore": "Bu sürümde {0} değişiklik daha var",
         "Macros:News:FilterLabel": "Tür",
         "Macros:News:Filter:All": "Tümü",
-        "Macros:News:Empty": "Gösterilecek haber yok"
+        "Macros:News:Empty": "Gösterilecek haber yok",
+        "Macros:UsesTitle": "Son 30 günde {0} kez başlattın"
     }
 }

@@ -9046,6 +9046,39 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppIssueTaskLinks", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Macros.MacroUsageDaily", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Day")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MacroKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Day");
+
+                    b.HasIndex("TenantId", "UserId", "MacroKey", "Day")
+                        .IsUnique();
+
+                    b.ToTable("AppMacroUsageDaily", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Notifications.Notification", b =>
                 {
                     b.Property<Guid>("Id")
