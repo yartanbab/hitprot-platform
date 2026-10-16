@@ -23,22 +23,49 @@ function fmtMoney(amount, currency) {
  * (bkz. Pages/Expenses/CreateModal.cshtml.cs).
  *
  * Kayıt kapanınca görev detayı tazelenir; yeni satır sekmede belirir.
+ *
+ * ABP modali body'ye basılır, görev detayının Radix yığınında DEĞİLDİR: içindeki
+ * her basma/odak "dışarı etkileşim" sayılıp görevi kapatıyor, odak geri çekiliyor,
+ * tekerlek kilitleniyordu. Kap, Radix'in belge düzeyinde dinlediği olaylardan
+ * yalıtılır (bkz. ajax-error-detail.js isolateLayer; mousedown'a DOKUNULMAZ —
+ * select2 dışarı-kapatması onu dinler). Esc'i görev detayı `.modal.show` görünce bırakır.
+ * Form sunucudan yüklenirken (`onSettled` gelene dek) düğme meşgul gösterilir.
  */
-function openFinanceModal(page, taskId, onSaved) {
+const ISOLATED_EVENTS = ['pointerdown', 'focusin', 'wheel', 'touchmove'];
+const stopPropagation = (e) => e.stopPropagation();
+
+function openFinanceModal(page, taskId, onSaved, onSettled) {
     const manager = window?.abp?.ModalManager;
     if (!manager) {
         window?.abp?.notify?.error?.('Kayıt formu yüklenemedi.');
+        onSettled?.();
         return;
     }
     const appPath = window?.abp?.appPath ?? '/';
+    // Odak görev detayında kalırsa modal ona geçerken Radix FocusScope'un focusout'u
+    // odağı geri çeker, Bootstrap focustrap yeniden ileri iter (ping-pong).
+    // Bırakılan odakta (relatedTarget yok) Radix karışmaz.
+    document.activeElement?.blur?.();
     const modal = new manager({ viewUrl: `${appPath}${page}?TaskId=${taskId}` });
     modal.onResult(() => onSaved?.());
+    modal.onOpen(() => onSettled?.());
     modal.open();
+
+    // Kap open() içinde EŞZAMANLI oluşturulur; yükleme hatasında modal hiç açılmaz
+    // (ABP hatayı kendisi gösterir) → meşgul durum süreyle de çözülür.
+    const container = document.getElementById(modal.getModalId());
+    if (container) {
+        container.setAttribute('data-apya-overlay', 'abp-modal');
+        container.style.pointerEvents = 'auto';
+        ISOLATED_EVENTS.forEach((name) => container.addEventListener(name, stopPropagation, { passive: true }));
+    }
+    setTimeout(() => onSettled?.(), 10000);
 }
 
 /** Sekme başlığındaki "Gider ekle" / "Gelir ekle" / "Fatura ekle" — her biri kendi izniyle. */
 function FinanceActions({ taskId }) {
     const queryClient = useQueryClient();
+    const [loadingPage, setLoadingPage] = useState(null);
     const canAddExpense = isGranted('Platform.Expenses.Create');
     const canAddIncome = isGranted('Platform.Incomes.Create');
     const canAddInvoice = isGranted('Platform.Invoices.Create');
@@ -46,6 +73,11 @@ function FinanceActions({ taskId }) {
     if (!taskId || (!canAddExpense && !canAddIncome && !canAddInvoice)) { return null; }
 
     const refresh = () => queryClient.invalidateQueries({ queryKey: ['task-detail', taskId] });
+    const open = (page) => {
+        if (loadingPage) { return; }
+        setLoadingPage(page);
+        openFinanceModal(page, taskId, refresh, () => setLoadingPage((cur) => (cur === page ? null : cur)));
+    };
 
     return (
         <div className="flex shrink-0 items-center gap-2">
@@ -54,7 +86,9 @@ function FinanceActions({ taskId }) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => openFinanceModal('Expenses/CreateModal', taskId, refresh)}
+                    isLoading={loadingPage === 'Expenses/CreateModal'}
+                    disabled={Boolean(loadingPage)}
+                    onClick={() => open('Expenses/CreateModal')}
                 >
                     <i className="fa-solid fa-arrow-up text-[11px]" />
                     Gider ekle
@@ -65,7 +99,9 @@ function FinanceActions({ taskId }) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => openFinanceModal('Incomes/CreateModal', taskId, refresh)}
+                    isLoading={loadingPage === 'Incomes/CreateModal'}
+                    disabled={Boolean(loadingPage)}
+                    onClick={() => open('Incomes/CreateModal')}
                 >
                     <i className="fa-solid fa-arrow-down text-[11px]" />
                     Gelir ekle
@@ -76,7 +112,9 @@ function FinanceActions({ taskId }) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => openFinanceModal('Invoices/CreateModal', taskId, refresh)}
+                    isLoading={loadingPage === 'Invoices/CreateModal'}
+                    disabled={Boolean(loadingPage)}
+                    onClick={() => open('Invoices/CreateModal')}
                 >
                     <i className="fa-solid fa-file-invoice text-[11px]" />
                     Fatura ekle

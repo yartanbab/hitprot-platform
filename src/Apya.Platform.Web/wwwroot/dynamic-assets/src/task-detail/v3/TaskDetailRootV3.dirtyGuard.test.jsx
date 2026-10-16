@@ -125,6 +125,18 @@ describe('TaskDetailRootV3 — kirli formda çıkış pencere açar (CON-01)', (
         expect(svc.update).not.toHaveBeenCalled();
     });
 
+    it('üstte ABP modali (Gider/Gelir/Fatura ekle) açıkken Esc görevi KAPATMAZ', async () => {
+        const onClose = await open();
+        const abpModal = document.createElement('div');
+        abpModal.className = 'modal show';
+        document.body.appendChild(abpModal);
+
+        await userEvent.keyboard('{Escape}');
+
+        expect(onClose).not.toHaveBeenCalled();
+        abpModal.remove();
+    });
+
     it.each(EXITS)('temiz formda %s doğrudan kapatır (pencere çizilmez)', async (_name, exit) => {
         const onClose = await open();
 
