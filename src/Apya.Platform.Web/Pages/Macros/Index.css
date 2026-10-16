@@ -807,6 +807,15 @@
     box-shadow: var(--apya-shadow-card);
 }
 
+/* Afiş üstten ve yanlardan kenara yaslanır: .lpx-content'in ≥768px'teki 2em (28px)
+   dolgusu apya-theme-bridge.css'ten gelir; alt boşluk (margin-bottom) aynen kalır. */
+@media (min-width: 768px) {
+    .apya-macros-news {
+        margin-top: -28px;
+        margin-inline: -28px;
+    }
+}
+
 .apya-macros-news-stage {
     position: absolute;
     inset: 0;
