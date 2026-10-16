@@ -1,6 +1,6 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { FinanceTab } from './FinanceTab';
 
@@ -106,11 +106,20 @@ describe('FinanceTab · kayit ekleme aksiyonlari', () => {
             auth: { isGranted: (p) => permissions.includes(p) },
             ModalManager: vi.fn(function ModalManager() {
                 this.onResult = vi.fn();
-                this.open = vi.fn();
+                this.onOpen = vi.fn();
+                this.getModalId = () => 'Abp_Modal_test';
+                // ABP gibi: kap open() icinde ESZAMANLI body'ye basilir.
+                this.open = vi.fn(() => {
+                    const c = document.createElement('div');
+                    c.id = 'Abp_Modal_test';
+                    document.body.prepend(c);
+                });
             }),
         };
         return window.abp.ModalManager;
     }
+
+    afterEach(() => document.getElementById('Abp_Modal_test')?.remove());
 
     it('izin varsa gider ve gelir butonlari basilir', () => {
         grant('Platform.Expenses.Create', 'Platform.Incomes.Create');
@@ -145,6 +154,39 @@ describe('FinanceTab · kayit ekleme aksiyonlari', () => {
         fireEvent.click(screen.getByRole('button', { name: /gelir ekle/i }));
 
         expect(ModalManager).toHaveBeenCalledWith({ viewUrl: '/Incomes/CreateModal?TaskId=t-1' });
+    });
+
+    it('modal kabi Radix gorev penceresinden yalitilir (carpi/odak gorevi kapatmasin)', () => {
+        grant('Platform.Expenses.Create');
+        renderWithClient(<FinanceTab taskId="t-1" task={{ id: 't-1', expenses: [], incomes: [] }} />);
+        const docListener = vi.fn();
+        document.addEventListener('pointerdown', docListener);
+        document.addEventListener('focusin', docListener);
+
+        fireEvent.click(screen.getByRole('button', { name: /gider ekle/i }));
+        const container = document.getElementById('Abp_Modal_test');
+        fireEvent.pointerDown(container);
+        fireEvent.focusIn(container);
+
+        expect(container).toHaveAttribute('data-apya-overlay', 'abp-modal');
+        expect(container.style.pointerEvents).toBe('auto');
+        expect(docListener).not.toHaveBeenCalled();
+        document.removeEventListener('pointerdown', docListener);
+        document.removeEventListener('focusin', docListener);
+    });
+
+    it('form yuklenirken dugme mesgul ve ikinci modal acilmaz; modal acilinca serbest', () => {
+        const ModalManager = grant('Platform.Expenses.Create', 'Platform.Incomes.Create');
+        renderWithClient(<FinanceTab taskId="t-1" task={{ id: 't-1', expenses: [], incomes: [] }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /gider ekle/i }));
+        expect(screen.getByRole('button', { name: /gider ekle/i })).toHaveAttribute('aria-busy', 'true');
+        fireEvent.click(screen.getByRole('button', { name: /gelir ekle/i }));
+        expect(ModalManager).toHaveBeenCalledTimes(1);
+
+        const onOpen = ModalManager.mock.instances[0].onOpen.mock.calls[0][0];
+        act(() => onOpen());
+        expect(screen.getByRole('button', { name: /gider ekle/i })).not.toHaveAttribute('aria-busy');
     });
 });
 
@@ -278,6 +320,8 @@ describe('FinanceTab · faturalar', () => {
             auth: { isGranted: () => true },
             ModalManager: vi.fn(function ModalManager() {
                 this.onResult = vi.fn();
+                this.onOpen = vi.fn();
+                this.getModalId = () => 'Abp_Modal_none';
                 this.open = vi.fn();
             }),
         };

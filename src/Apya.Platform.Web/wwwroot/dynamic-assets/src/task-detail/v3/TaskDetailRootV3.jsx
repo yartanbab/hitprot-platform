@@ -704,6 +704,9 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                         /* Üstte açık bir katman varsa modal kapanmasın — o katman
                            kendi Esc'ini zaten işliyor. */
                         if (transfer || openSubtaskId) { e.preventDefault(); return; }
+                        /* Görevden açılan ABP modali (Gider/Gelir/Fatura ekle) Radix
+                           yığınında değil; Esc'i Bootstrap kendisi işler. */
+                        if (document.querySelector('.modal.show')) { e.preventDefault(); return; }
                         e.preventDefault();
                         requestClose();
                     }}
