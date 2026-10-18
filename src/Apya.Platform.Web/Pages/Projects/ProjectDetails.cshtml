@@ -88,9 +88,11 @@
     // Toplu işlem + satır aksiyonları izne bağlı; JS bunları kök elemandan okur.
     var canChangeStatus = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.ChangeStatus);
     var canDeleteTasks  = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Delete);
-    var canBulk = canChangeStatus || canDeleteTasks;
     // Gantt'ta bar sürükleyip tarih kaydetmek görev düzenleme yetkisi ister.
     var canEditTasks = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Edit);
+    // P-04 · Toplu atama ile toplu erteleme/öncelik/iş adımı da toplu işlemdir (panoyla aynı uçlar).
+    var canAssignTasks = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Assign);
+    var canBulk = canChangeStatus || canDeleteTasks || canEditTasks || canAssignTasks;
 }
 
 <style>
@@ -762,9 +764,9 @@
 </div>
 
 @* ─── Toplu işlem çubuğu — seçim varken konsolun altında yüzer ───
-   Ata / Tarihi ötele YOK: ikisi de tam DTO ile UpdateAsync gerektiriyor,
-   kısmi güncelleme (patch) uç noktası repoda yok. Durum değiştir ve Sil
-   mevcut UpdateStatusAsync / DeleteAsync ile gerçek işlem yapar. *@
+   P-04 · Panodaki toplu çubukla aynı eylemler, aynı tekil uçlar (SIRAYLA çağrılır):
+   durum ve nedenli iptal (ChangeStatus), son tarih / öncelik / iş adımı (Edit),
+   atama (Assign), silme (Delete). Atama ve iş adımı listeleri ilk açılışta yüklenir. *@
 @if (canViewTasks && canBulk)
 {
     <div class="apya-console-bulkbar d-none" id="bulk-bar" role="region" aria-label="Toplu işlem">
@@ -783,6 +785,46 @@
                     <button type="button" class="apya-console-menu-item" data-bulk-status="3">Testte</button>
                     <button type="button" class="apya-console-menu-item" data-bulk-status="4">Tamamlandı</button>
                 </div>
+            </div>
+            <button type="button" class="apya-console-bulkbar-btn" id="bulk-cancel">İptal et</button>
+        }
+        @if (canEditTasks)
+        {
+            <div class="dropdown dropup">
+                <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Son tarih <i class="fa fa-chevron-up ms-1" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu">
+                    <button type="button" class="apya-console-menu-item" data-bulk-defer="1">1 gün ertele</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-defer="3">3 gün ertele</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-defer="7">1 hafta ertele</button>
+                </div>
+            </div>
+            <div class="dropdown dropup">
+                <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Öncelik <i class="fa fa-chevron-up ms-1" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu">
+                    <button type="button" class="apya-console-menu-item" data-bulk-priority="1">Düşük</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-priority="2">Orta</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-priority="3">Yüksek</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-priority="4">Kritik</button>
+                </div>
+            </div>
+            <div class="dropdown dropup">
+                <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    İş adımı <i class="fa fa-chevron-up ms-1" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu" data-bulk-workstep-menu></div>
+            </div>
+        }
+        @if (canAssignTasks)
+        {
+            <div class="dropdown dropup">
+                <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Ata <i class="fa fa-chevron-up ms-1" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu" data-bulk-assign-menu></div>
             </div>
         }
         @if (canDeleteTasks)
