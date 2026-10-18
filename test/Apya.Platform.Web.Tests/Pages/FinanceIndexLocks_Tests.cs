@@ -675,6 +675,33 @@ public class FinanceIndexLocks_Tests
             i.FromDate == DateTime.Parse(start) && i.ToDate == DateTime.Parse(end).AddDays(1).AddTicks(-1)));
     }
 
+    /// <summary>
+    /// F-05 · Gelir-Gider Excel çıktısı ekrandaki süzgeçle (burada dönem) okur, kaynak başına 1000 kayıt ister
+    /// ve satırları taşır. Eskiden tablonun dışa aktarımı yoktu.
+    /// </summary>
+    [Fact]
+    public async Task Gelir_gider_excel_ekrandaki_suzgecle_satirlari_tasir()
+    {
+        var page = DonorPage();
+        page.Period = "ozel";
+        page.From = new DateTime(2026, 3, 1);
+        page.To = new DateTime(2026, 3, 31);
+        _expenses.GetListAsync(Arg.Any<GetExpensesInput>()).Returns(new PagedResultDto<ExpenseDto>(1, new List<ExpenseDto>
+        {
+            new() { Id = Guid.NewGuid(), Title = "Kırtasiye alımı", Amount = 120m, Currency = "TRY", BookAmount = 120m, ExpenseDate = new DateTime(2026, 3, 5) }
+        }));
+
+        var result = await page.OnGetLedgerExcelAsync();
+
+        var file = result.ShouldBeOfType<FileContentResult>();
+        file.ContentType.ShouldBe("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        await _expenses.Received().GetListAsync(Arg.Is<GetExpensesInput>(i => i.MaxResultCount == 1000 && i.FromDate == new DateTime(2026, 3, 1)));
+        using var workbook = new ClosedXML.Excel.XLWorkbook(new MemoryStream(file.FileContents));
+        var cells = workbook.Worksheet(1).CellsUsed().Select(c => c.GetString()).ToList();
+        cells.ShouldContain("Kırtasiye alımı");
+        cells.ShouldContain(c => c.Contains("01.03.2026 – 31.03.2026"));
+    }
+
     [Fact]
     public async Task Donem_secilmezse_tarih_suzgeci_gitmez()
     {
