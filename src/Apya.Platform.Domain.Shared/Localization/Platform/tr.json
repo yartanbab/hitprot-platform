@@ -2620,7 +2620,7 @@
         "Dashboard:Blockers:Dependents": "{0} bağımlı görev bekliyor",
         "Dashboard:Blockers:OpenTask": "Görevi aç →",
         "Dashboard:Blockers:EmptyTitle": "Tıkanan iş yok",
-        "Dashboard:Blockers:EmptyDescription": "Açık işlerin hepsi son günlerde hareket görmüş.",
+        "Dashboard:Blockers:EmptyDescription": "Hareketsiz kalmış açık iş bulunmuyor.",
         "Dashboard:Ai:Title": "AI önerileri",
         "Dashboard:Ai:Subtitle": "sessiz inbox",
         "Dashboard:Ai:EmptyTitle": "AI şu an sessiz",

@@ -458,7 +458,7 @@ function BlockersBlock({ query }) {
             meta={items.length > 0 ? t('Dashboard:Print:Count', '{0} kayıt', items.length) : null}
             query={query}
             isEmpty={items.length === 0}
-            emptyText={t('Dashboard:Blockers:EmptyDescription', 'Açık işlerin hepsi son günlerde hareket görmüş.')}
+            emptyText={t('Dashboard:Blockers:EmptyDescription', 'Hareketsiz kalmış açık iş bulunmuyor.')}
         >
             <table className="w-full border-collapse">
                 <thead>

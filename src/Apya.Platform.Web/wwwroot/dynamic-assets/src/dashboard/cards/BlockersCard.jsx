@@ -40,7 +40,7 @@ function BlockersCard({ editMode }) {
                 <EmptyState
                     compact
                     title={t('Dashboard:Blockers:EmptyTitle', 'Tıkanan iş yok')}
-                    description={t('Dashboard:Blockers:EmptyDescription', 'Açık işlerin hepsi son günlerde hareket görmüş.')}
+                    description={t('Dashboard:Blockers:EmptyDescription', 'Hareketsiz kalmış açık iş bulunmuyor.')}
                 />
             }
         >

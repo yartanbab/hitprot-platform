@@ -967,7 +967,7 @@ function ka({ editMode: t }) {
         {
           compact: !0,
           title: n("Dashboard:Blockers:EmptyTitle", "Tıkanan iş yok"),
-          description: n("Dashboard:Blockers:EmptyDescription", "Açık işlerin hepsi son günlerde hareket görmüş.")
+          description: n("Dashboard:Blockers:EmptyDescription", "Hareketsiz kalmış açık iş bulunmuyor.")
         }
       ),
       children: /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col gap-3", children: a.slice(0, 3).map((r, i) => /* @__PURE__ */ e.jsxs("li", { className: "flex flex-col gap-1", children: [
@@ -1742,7 +1742,7 @@ function ts({ query: t }) {
       meta: s.length > 0 ? n("Dashboard:Print:Count", "{0} kayıt", s.length) : null,
       query: t,
       isEmpty: s.length === 0,
-      emptyText: n("Dashboard:Blockers:EmptyDescription", "Açık işlerin hepsi son günlerde hareket görmüş."),
+      emptyText: n("Dashboard:Blockers:EmptyDescription", "Hareketsiz kalmış açık iş bulunmuyor."),
       children: /* @__PURE__ */ e.jsxs("table", { className: "w-full border-collapse", children: [
         /* @__PURE__ */ e.jsx("thead", { children: /* @__PURE__ */ e.jsxs("tr", { children: [
           /* @__PURE__ */ e.jsx("th", { className: `${b} w-[14px]`, "aria-hidden": "true" }),
