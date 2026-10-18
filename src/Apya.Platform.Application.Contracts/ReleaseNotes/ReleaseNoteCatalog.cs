@@ -120,6 +120,19 @@ public static class ReleaseNoteCatalog
                 "Kimsenin yetkisi daralmadı: proje düzenleme yetkisi olan herkes bütçe girmeye devam eder. " +
                 "Bütçeyi görebilmek için \"Bütçe Görüntüleme\" yetkisi de gerekir."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Gelir-Gider tablosunda dönem seçimi",
+                "Finans Merkezi'nin Gelir-Gider sekmesinde artık dönem seçebiliyorsunuz: bu ay, geçen ay, " +
+                "bu çeyrek, bu yıl, proje dönemi ya da özel bir tarih aralığı. Tablo ve dip toplam seçilen " +
+                "döneme göre hesaplanıyor; dönem seçilmediğinde dip satır \"Toplam\" diyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Danışmanınızın notu ve \"İlgilenmiyorum\" çağrı sayfasında",
+                "Danışmanınız bir çağrıyı size önerirken not yazdıysa, not artık Fırsatlar kartında ve " +
+                "çağrının sayfasında görünüyor. Çağrı sayfasından \"İlgilenmiyorum\" diyerek öneriyi " +
+                "kapatabilirsiniz. Danışmanınız önerinin görüldüğünü, kapatıldığını ya da ilgi " +
+                "bildirdiğinizi kendi ekranında görüyor."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Finans Merkezi tek giriş oldu; kayıtlara doğrudan gidiliyor",
                 "Kasa & Banka, Kurlar ve Proje Bütçesi sol menüden kalktı; içerikleri zaten Finans " +
@@ -164,6 +177,19 @@ public static class ReleaseNoteCatalog
                 "Giriş ekranındaki dil listesinde çevirisi bulunmayan 16 dil vardı; birini seçince " +
                 "ekranların neredeyse tamamı Türkçe kalıyordu. Artık yalnız çevirisi olan Türkçe ve " +
                 "İngilizce sunuluyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Fırsatlar ekranında başvurularınız bir tıkla açılıyor",
+                "Fırsatlar ekranının altındaki \"Başvurularım\" kartlarında başvurunun adına basınca " +
+                "başvuru açılıyor; \"Tümünü gör\" bağlantısı Başvurularım ekranına götürüyor. Sekme başlığı " +
+                "da menüdeki gibi \"Fırsatlar\". Başvuru sihirbazındaki \"Firma profilini düzenle\" " +
+                "bağlantısı profil formunu açık getiriyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Yeni kullanıcı ilk girişte iki tanıtım penceresiyle karşılaşmıyor",
+                "Tanıtım turunu ilk kez bitiren kullanıcıya hemen ardından o sürümün \"Yenilikler\" " +
+                "penceresi açılıyordu. Artık turu bitiren yeni kullanıcı için o anki notlar okunmuş " +
+                "sayılıyor; sonraki sürümlerin notları her zamanki gibi açılıyor."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Faturalardaki \"Gecikmiş\" süzgeci çalışıyor",
@@ -214,17 +240,16 @@ public static class ReleaseNoteCatalog
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Henüz çalışmayan düğmeler kaldırıldı",
-                "Fatura ayrıntısındaki \"Gönder\", Cari Yönetimi'ndeki \"Dışa Aktar\" ve \"Ekstre Gönder\", " +
-                "görev menüsündeki \"Şablon olarak kaydet\" ve \"Alt göreve dönüştür\" düğmeleri basınca " +
-                "yalnız \"yakında\" uyarısı veriyordu; kaldırıldılar. Faturayı yazdırma, cari ekstresini " +
-                "görüntüleme ve PDF ya da Excel olarak alma yerinde."),
+                "Fatura ayrıntısındaki \"Gönder\" düğmesi ile görev menüsündeki \"Şablon olarak kaydet\" ve " +
+                "\"Alt göreve dönüştür\" maddeleri basınca yalnız \"yakında\" uyarısı veriyordu; " +
+                "kaldırıldılar. Faturayı yazdırma yerinde."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
-                "Genel Bakış'taki \"Mizan farkı\" kutucuğu kaldırıldı",
-                "İstatistiklerin Finans sekmesindeki \"Mizan farkı\" kutucuğu, yönetsel mizanın borç ve " +
-                "alacak toplamları arasındaki farkı gösteriyordu. Bu özet çift taraflı bir defter olmadığı " +
-                "için iki toplam eşit çıkmaz; kutucuk kayıtlarınız doğruyken de bir fark göstererek " +
-                "yanıltıyordu. Mizan raporunun kendisi yerinde."),
+                "Takvimdeki hibe tarihleri doğru ekrana götürüyor",
+                "Takvimdeki hibe maddelerine basınca \"yetkiniz yok\" hatası çıkıyordu. Artık kilometre taşı " +
+                "ve son başvuru maddeleri başvurunuzu, rapor teslimi ve dilim vadesi maddeleri Uygulama & " +
+                "Tahsilat ekranını açıyor. Rapor teslim tarihleri ve dilim vadeleri takvime eklendi; " +
+                "\"Ara rapor\" etiketi \"Kilometre taşı\" oldu."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Gizli görevler her ekranda gizli kalıyor",
