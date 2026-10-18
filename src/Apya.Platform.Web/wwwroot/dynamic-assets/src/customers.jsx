@@ -547,12 +547,6 @@ function CustomerDetail({ c, canEdit, canDelete, onBack, onEdit, onStatement, on
 
       {/* Alt aksiyonlar */}
       <div className="flex gap-2 pt-1 border-t border-[var(--apya-border-subtle)] mt-1">
-        <button type="button"
-          onClick={() => abpNotify('info', 'E-posta ile ekstre gönderimi yakında eklenecek.')}
-          className="h-10 px-3.5 rounded-lg border border-[var(--apya-border-default)] text-xs font-medium text-[var(--apya-text-secondary)] flex items-center gap-2 hover:bg-[var(--apya-border-subtle)] transition-colors mt-3">
-          <i className="fa fa-paper-plane" aria-hidden="true" />
-          Ekstre Gönder
-        </button>
         <button type="button" onClick={openNewInvoice}
           className="h-10 px-3.5 rounded-lg text-xs font-semibold text-white flex items-center gap-2 transition-colors hover:opacity-90 mt-3"
           style={{ background: 'var(--apya-accent-500)' }}>
@@ -751,12 +745,6 @@ function CustomersIsland() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button type="button"
-            className="h-9 px-3.5 rounded-lg border border-[var(--apya-border-default)] text-xs font-medium text-[var(--apya-text-secondary)] flex items-center gap-2 hover:bg-[var(--apya-border-subtle)] transition-colors"
-            onClick={() => {/* İleride: Excel export */ abpNotify('info', 'Dışa aktarma yakında gelecek.');}}>
-            <i className="fa fa-download" aria-hidden="true" />
-            Dışa Aktar
-          </button>
           {canCreate && (
             <button type="button"
               className="h-9 px-3.5 rounded-lg text-xs font-semibold text-white flex items-center gap-2 transition-colors hover:opacity-90"

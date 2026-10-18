@@ -70,8 +70,6 @@ export function TaskDetailHeaderV3({
     onArchive,
     onDelete,
     onOpenTransfer,
-    onSaveAsTemplate,
-    onConvertToSubtask,
     onExportPdf,
     /* Yetki (root hesaplar; sunucudaki EnsureCanMutateTaskAsync ile aynı kural). Eskiden
        menü ve alanlar herkese açıktı, yetkisiz kullanıcı tıklayınca 403 alıyordu. */
@@ -125,9 +123,7 @@ export function TaskDetailHeaderV3({
         { label: 'Bağlantıyı kopyala', icon: 'fa-link', kbd: '⌘L', onClick: run(copyLink) },
         { label: 'Çoğalt', icon: 'fa-copy', kbd: '⌘D', allowed: canEdit, onClick: run(onDuplicate) },
         { label: 'Başka projeye kopyala', icon: 'fa-clone', allowed: canEdit, onClick: run(() => onOpenTransfer?.('copy')) },
-        { label: 'Şablon olarak kaydet', icon: 'fa-bookmark', allowed: canEdit, onClick: run(onSaveAsTemplate) },
         { label: 'Taşı (başka proje)', icon: 'fa-right-left', separator: true, allowed: canEdit, onClick: run(() => onOpenTransfer?.('move')) },
-        { label: 'Alt göreve dönüştür', icon: 'fa-diagram-project', allowed: canEdit, onClick: run(onConvertToSubtask) },
         { label: isWatched ? 'Takibi bırak' : 'Takip et', icon: 'fa-eye', onClick: run(onToggleWatch) },
         { label: 'Arşivle', icon: 'fa-box-archive', separator: true, allowed: canChangeStatus, onClick: run(onArchive) },
         { label: 'Yazdır', icon: 'fa-print', kbd: '⌘P', onClick: run(() => window.print()) },

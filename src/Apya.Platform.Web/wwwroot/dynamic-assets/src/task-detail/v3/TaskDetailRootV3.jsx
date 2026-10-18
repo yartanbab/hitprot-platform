@@ -540,8 +540,6 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 onArchive={handleArchive}
                 onDelete={handleDelete}
                 onOpenTransfer={(mode) => setTransfer({ mode })}
-                onSaveAsTemplate={() => notify.info('Şablon olarak kaydetme yakında.')}
-                onConvertToSubtask={() => notify.info('Alt göreve dönüştürme yakında.')}
                 onExportPdf={handleExportPdf}
                 canEdit={canEdit}
                 canChangeStatus={canChangeStatus}
