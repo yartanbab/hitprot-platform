@@ -8,7 +8,8 @@
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.Grants.IndexModel
 @{
-    ViewBag.Title = Model.IsHost ? L["Grants:Calls:Title"].Value : "Hibeler";
+    // H-16 · Kiracıda ekran menüdeki adıyla açılır ("Fırsatlar", OPS-03); başlık eskiden "Hibeler" diyordu.
+    ViewBag.Title = Model.IsHost ? L["Grants:Calls:Title"].Value : L["Menu:Grants:Opportunities"].Value;
 }
 
 @section styles {
@@ -112,7 +113,7 @@
 else
 {
     @* 1d · Kiracı: Uygun Hibeler. Başlık + açıklama app header'da. *@
-    <div data-page-description="Profilinize uygun açık hibe çağrıları ve başvurularınız" class="apya-page apya-grant-scope">
+    <div data-page-description="@L["Grants:Feed:PageDescription"]" class="apya-page apya-grant-scope">
 
         @* 10c/13a · Başlık cümlesi: kaç uygun çağrı, en yakın son tarih hangi kartta.
            11c · KPI kartları KALDIRILDI: "Onaylanan 2 · Tahsil 3,4M" firma için karar değiştirmiyor. *@
@@ -318,10 +319,10 @@ else
         </div>
 
         <div id="FeedEmpty" class="d-none">
-            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-wand-magic-sparkles", Title = "Şu an size uygun açık çağrı yok.", Description = "Profilinizi tamamlayın ya da tüm açık hibeleri inceleyin." }' />
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-wand-magic-sparkles", Title = L["Grants:Feed:Empty"].Value, Description = L["Grants:Feed:EmptyHint"].Value }' />
         </div>
         <div id="BookmarkEmpty" class="d-none">
-            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-bookmark", Title = "Henüz takip ettiğiniz çağrı yok.", Description = "Herhangi bir kartın köşesindeki yer imiyle takibe alabilirsiniz; danışmanınız da sizin adınıza işaretleyebilir." }' />
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-bookmark", Title = L["Grants:Feed:BookmarkEmpty"].Value, Description = L["Grants:Feed:BookmarkEmptyHint"].Value }' />
         </div>
 
         @* 13b · Takip notu — kartın köşesindeki kalemle açılır. Modal sayfa kabının dışında; kapsam sınıfı kendisinde. *@
@@ -331,7 +332,7 @@ else
                     <form id="BookmarkNoteForm">
                         <div class="modal-header">
                             <h5 class="modal-title" id="BookmarkNoteTitle">@L["Grants:Feed:Bookmark:NoteTitle"]</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="@L["Common:Close"]"></button>
                         </div>
                         <div class="modal-body d-flex flex-column gap-2">
                             <div class="fw-semibold" id="BookmarkNoteCall"></div>
@@ -348,10 +349,14 @@ else
             </div>
         </div>
 
-        @* --- Başvurularım --- *@
-        <h5 class="fw-bold mb-3 mt-4"><i class="fa fa-file-signature me-2"></i>Başvurularım</h5>
+        @* --- Başvurularım --- H-16 · Kartlar eskiden tıklanamıyordu: başvuru adı başvurunun kendisine,
+           başlıktaki bağlantı Başvurularım ekranına götürür. Firma kilometre taşlarını yalnız burada görür. *@
+        <div class="d-flex align-items-baseline justify-content-between gap-2 mb-3 mt-4">
+            <h5 class="fw-bold mb-0"><i class="fa fa-file-signature me-2"></i>@L["Grants:Mine:Title"]</h5>
+            <a href="/Grants/MyApplications" class="small">@L["Grants:Feed:Apps:All"]</a>
+        </div>
         <div id="AppsList" class="d-flex flex-column gap-2"></div>
-        <div id="AppsEmpty" class="text-muted small d-none">Henüz başvurunuz yok.</div>
+        <div id="AppsEmpty" class="text-muted small d-none">@L["Grants:Feed:Apps:Empty"]</div>
     </div>
 
 }
