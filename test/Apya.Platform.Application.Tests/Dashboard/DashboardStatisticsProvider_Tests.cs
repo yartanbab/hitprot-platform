@@ -17,7 +17,6 @@ using Apya.Platform.Localization;
 using Apya.Platform.Notifications;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
-using Apya.Platform.Reports;
 using Apya.Platform.Tasks;
 using Apya.Platform.Telemetry;
 using Microsoft.Extensions.Localization;
@@ -85,7 +84,6 @@ public class DashboardStatisticsProvider_Tests
             Substitute.For<IRepository<GrantDisbursementTranche, Guid>>(),
             Substitute.For<IRepository<ClientError, Guid>>(),
             Substitute.For<IRepository<IdentityUser, Guid>>(),
-            Substitute.For<ITrialBalanceAppService>(),
             _permissionChecker,
             _featureChecker,
             _executer,
@@ -147,6 +145,21 @@ public class DashboardStatisticsProvider_Tests
         // Bütçe kutucukları ViewBudget'a bağlı olmalı — özel yetki, Projects.Default değil.
         stats.Single(s => s.Key == "budget-usage")
             .RequiredPermission.ShouldBe(PlatformPermissions.Projects.ViewBudget);
+    }
+
+    /// <summary>
+    /// X-05 · "Mizan farkı" kutucuğu sunulmaz: mizan çift taraflı değil, yönetsel bir özet; borç − alacak
+    /// yapı gereği sıfır olmaz. Kutucuk sağlıklı defterde bile büyük bir "fark" gösterip kaydın hatalı
+    /// olduğunu düşündürüyordu.
+    /// </summary>
+    [Fact]
+    public async Task Mizan_farki_kutucugu_sunulmaz()
+    {
+        _permissionChecker.IsGrantedAsync(Arg.Any<string>()).Returns(false);
+
+        var stats = await BuildSut().BuildAsync(new DashboardQueryDto());
+
+        stats.ShouldNotContain(s => s.Key == "trial-balance");
     }
 
     /// <summary>
