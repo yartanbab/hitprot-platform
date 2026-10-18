@@ -17,8 +17,6 @@ function renderHeader(overrides = {}) {
         onArchive: vi.fn(),
         onDelete: vi.fn(),
         onOpenTransfer: vi.fn(),
-        onSaveAsTemplate: vi.fn(),
-        onConvertToSubtask: vi.fn(),
         onExportPdf: vi.fn(),
     };
     render(<TaskDetailHeaderV3 task={TASK} titleValue={TASK.title} {...spies} {...overrides} />);
@@ -178,23 +176,18 @@ describe('TaskDetailHeaderV3 / ⋯ menusu', () => {
         });
     });
 
-    // ── Su an ISLEVSIZ olan maddeler (yalnizca bildirim gosteriyorlar) ──
-    it('STUB: Sablon olarak kaydet yalnizca handler i cagirir, gercek islev yok', () => {
-        const spies = renderHeader();
-        clickMenuItem('Şablon olarak kaydet');
-        expect(spies.onSaveAsTemplate).toHaveBeenCalledTimes(1);
-    });
-
-    it('STUB: Alt goreve donustur yalnizca handler i cagirir, gercek islev yok', () => {
-        const spies = renderHeader();
-        clickMenuItem('Alt göreve dönüştür');
-        expect(spies.onConvertToSubtask).toHaveBeenCalledTimes(1);
-    });
-
-    it('STUB: PDF olarak disa aktar yalnizca handler i cagirir, gercek islev yok', () => {
+    it('PDF olarak disa aktar onExportPdf i cagirir', () => {
         const spies = renderHeader();
         clickMenuItem('PDF olarak dışa aktar');
         expect(spies.onExportPdf).toHaveBeenCalledTimes(1);
+    });
+
+    /* X-05 · Iki madde yalniz "yakinda" bildirimi gosteriyordu; islevi olmayan madde menude durmaz. */
+    it('islevi olmayan Sablon olarak kaydet ve Alt goreve donustur menude yok', () => {
+        renderHeader();
+        fireEvent.click(screen.getByRole('button', { name: /diğer seçenekler/i }));
+        expect(screen.queryByText('Şablon olarak kaydet')).not.toBeInTheDocument();
+        expect(screen.queryByText('Alt göreve dönüştür')).not.toBeInTheDocument();
     });
 });
 

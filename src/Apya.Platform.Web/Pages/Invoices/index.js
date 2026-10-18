@@ -168,8 +168,6 @@ $(function () {
                   apya.hint('Faturaya kısmi ya da tam tahsilat kaydı ekler. Ödenen tutar genel toplamı karşılayınca fatura Ödendi durumuna geçer.', 'bottom')
                 : '') +
             '    <button type="button" class="btn btn-sm btn-outline-secondary" id="InvoiceDetailPrint"><i class="fa fa-print me-1"></i>Yazdır</button>' +
-            '    <button type="button" class="btn btn-sm btn-primary" id="InvoiceDetailSend"><i class="fa fa-paper-plane me-1"></i>Gönder</button>' +
-            apya.hint('Faturayı e-posta ile karşı tarafa göndermek için. Bu işlev henüz devrede değil.', 'bottom') +
             '  </div>' +
             '</div>' +
 
@@ -207,9 +205,6 @@ $(function () {
         });
         $('#InvoiceDetailPrint').on('click', function () {
             window.open(abp.appPath + 'Invoices/Print/' + d.id, '_blank');
-        });
-        $('#InvoiceDetailSend').on('click', function () {
-            abp.notify.info('E-posta ile gönderim yakında eklenecek.');
         });
         $('#InvoiceDetailPay').on('click', function () {
             paymentModal.open({ invoiceId: d.id });
