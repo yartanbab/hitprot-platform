@@ -316,6 +316,9 @@ $(function () {
             '<div class="apya-feed-amount-row"><span class="apya-feed-amount-value">' + esc(ceiling(r.maxAmount)) + '</span>' +
             (r.supportRatePercent != null ? '<span class="apya-feed-rate">' + esc(l('Grants:Feed:Card:Rate', r.supportRatePercent)) + '</span>' : '') + '</div>' +
             '<p class="apya-feed-why">' + esc(whySentence(r)) + '</p>' +
+            // H-07 · Danışmanın öneriyle gönderdiği not firmaya ulaşır.
+            (r.hostRecommendationNote ? '<p class="apya-feed-host-note"><i class="fa fa-comment-dots" aria-hidden="true"></i><span><strong>' +
+                esc(l('Grants:Feed:Card:HostNote')) + '</strong> ' + esc(r.hostRecommendationNote) + '</span></p>' : '') +
             (gap ? '<p class="apya-feed-gap"><i class="fa fa-circle-exclamation"></i>' + esc(gap) + '</p>' : '') +
             (activeTab === 'bookmarked' ? bookmarkLine(r) : '') +
             '<div class="apya-feed-foot">' +

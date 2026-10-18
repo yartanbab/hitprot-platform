@@ -29,6 +29,12 @@ public class HostRecommendationCandidateDto
 
     public bool AlreadyApplied { get; set; }
 
+    /// <summary>H-07 · Gönderilen önerinin firmadaki durumu (Görüldü, İlgilenmiyor…); gönderilmediyse null.</summary>
+    public GrantRecommendationStatus? RecommendationStatus { get; set; }
+
+    /// <summary>H-07 · Firma bu çağrıya ilgi bildirdi mi (geri çekilmemiş talep).</summary>
+    public bool HasInterest { get; set; }
+
     public Guid? AssignedUserId { get; set; }
     public string? AssignedUserName { get; set; }
 }

@@ -442,6 +442,28 @@ $(function () {
         });
     });
 
+    // H-07 · Danışmanın önerisi: not firmaya görünür; ayrıntıyı açmak öneriyi "Görüldü" yapar
+    // (danışman gönderim ekranında görür), "İlgilenmiyorum" öneriyi kapatır.
+    function paintHostRecommendation(d) {
+        $('#HostRecNote').toggleClass('d-none', !d.isHostRecommended);
+        $('#HostRecNoteText').text(d.hostRecommendationNote || '');
+        $('#HostRecDismissBtn').toggleClass('d-none', !d.isHostRecommended || !canWrite);
+        if (d.isHostRecommended) {
+            // İkincil işaret: düşerse ekranı bölmez, bir sonraki açılışta yeniden denenir.
+            service.markRecommendationSeen(callId, { abpHandleError: false }).catch(function () { });
+        }
+    }
+
+    $('#HostRecDismissBtn').on('click', function () {
+        abp.message.confirm(l('Grants:Today:Opportunity:Dismiss:Confirm')).then(function (ok) {
+            if (!ok) { return; }
+            service.dismissRecommendation(callId).then(function () {
+                abp.notify.success(l('Grants:Today:Opportunity:Dismissed'));
+                $('#HostRecNote').addClass('d-none');
+            });
+        });
+    });
+
     // Yalnız açılışta ve Tekrar dene ile çağrılır (ilgi/geri çekme kendi okumasını yapar).
     // Yükleme hatası ABP penceresi değil satır içi kart (Faz 4 kararı 2).
     function load() {
@@ -454,6 +476,7 @@ $(function () {
             paintBudget(d);
             paintProcess(d);
             paintSide(d);
+            paintHostRecommendation(d);
         }, function (err) {
             // Boş başlık kartı ve "—" metrikli kart yığını kartın altında kalmasın.
             $('.apya-detail-head, .apya-detail-layout').addClass('d-none');
