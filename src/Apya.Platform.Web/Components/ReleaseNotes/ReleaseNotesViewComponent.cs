@@ -38,9 +38,9 @@ public class ReleaseNotesViewComponent : AbpViewComponent
         }
 
         // Tanıtım turu henüz görülmediyse burası SUSAR: yeni kullanıcı ilk girişte
-        // iki modalı üst üste almasın. Tur bitince (veya atlanınca) bu pencere normal
-        // akışına döner — o sırada onaylı en yeni sürümü hâlâ görmemiş olacağı için
-        // bir sonraki sayfa açılışında gösterilir.
+        // iki modalı üst üste almasın. Hiç sürüm notu görmemiş kullanıcı turu bitirince
+        // o anki sürüm görülmüş sayılır (K-12, ProductTourController); pencere bundan
+        // sonra yalnız yeni sürümlerde ve host'un yeni onayladığı maddelerde açılır.
         if (!await _settingProvider.IsTrueAsync(PlatformSettings.Tour.Completed))
         {
             return Content(string.Empty);
