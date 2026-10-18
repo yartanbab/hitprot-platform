@@ -156,6 +156,18 @@
 
 .apya-feed-gap > i { margin-top: 2px; }
 
+/* H-07 · Danışmanın öneriyle gönderdiği not. */
+.apya-feed-host-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 0;
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+}
+
+.apya-feed-host-note > i { margin-top: 2px; color: var(--apya-accent-500); }
+
 /* 13b · Takip satırı: ne zaman/kim işaretledi + firmanın notu + kalem. */
 .apya-feed-bookmark {
     display: flex;

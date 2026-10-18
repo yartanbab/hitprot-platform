@@ -137,6 +137,21 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         }
     }
 
+    public async Task MarkRecommendationSeenAsync(Guid grantCallId)
+    {
+        // Kiracı filtresi açık: yalnız bu firmaya gönderilmiş yeni öneriler. Öneri yoksa sessizce
+        // geçilir — ayrıntı her açılışta çağırır, önerisiz çağrı hata değildir.
+        var recommendations = await _hostRecRepo.GetListAsync(r => r.GrantCallId == grantCallId
+            && r.Source == GrantRecommendationSource.Host
+            && r.Status == GrantRecommendationStatus.New);
+
+        foreach (var recommendation in recommendations)
+        {
+            recommendation.MarkSeen();
+            await _hostRecRepo.UpdateAsync(recommendation, autoSave: true);
+        }
+    }
+
     public async Task SetBookmarkNoteAsync(SetGrantBookmarkNoteInput input)
     {
         // Kiracı filtresi açık: başka firmanın takibi bulunmaz. Takipte olmayan çağrıya
@@ -156,6 +171,12 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         // ekran SON kaydı gösterir, eski gerekçe geçmişte kalır.
         var interest = (await _interestRepo.GetListAsync(i => i.GrantCallId == grantCallId))
             .OrderByDescending(i => i.CreationTime)
+            .FirstOrDefault();
+        // H-07 · Danışmanın bu çağrı için gönderdiği (kapatılmamış) öneri ve notu.
+        var hostRec = (await _hostRecRepo.GetListAsync(r => r.GrantCallId == grantCallId
+                && r.Source == GrantRecommendationSource.Host
+                && r.Status != GrantRecommendationStatus.Dismissed))
+            .OrderByDescending(r => r.CreationTime)
             .FirstOrDefault();
         var today = Clock.Now.Date;
 
@@ -268,6 +289,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 AlreadyApplied = applied.Contains(call.Id),
                 IsBookmarked = bookmarked.Contains(call.Id),
                 RequiresConsortium = grant.RequiresConsortium,
+                IsHostRecommended = hostRec != null,
+                HostRecommendationNote = hostRec?.Note,
                 InterestId = interest?.Id,
                 InterestCreationTime = interest?.CreationTime,
                 InterestWithdrawnAt = interest?.WithdrawnAt,
@@ -419,11 +442,11 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
             .GroupBy(i => i.GrantCallId!.Value)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(i => i.CreationTime).First().Status);
 
-        // 2b) Host'un gönderdiği aktif öneriler (B3, tenant-scoped, Dismissed hariç).
-        var hostRecCallIds = (await _hostRecRepo.GetListAsync(
+        // 2b) Host'un gönderdiği aktif öneriler (B3, tenant-scoped, Dismissed hariç) ve notları (H-07).
+        var hostRecNotes = (await _hostRecRepo.GetListAsync(
                 r => r.Source == GrantRecommendationSource.Host && r.Status != GrantRecommendationStatus.Dismissed))
-            .Select(r => r.GrantCallId)
-            .ToHashSet();
+            .GroupBy(r => r.GrantCallId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.CreationTime).First().Note);
 
         // 3) Katalog (host TenantId=null → filtreyi kapat).
         // 🔴 Filtre kapalıyken TenantId koşulu ELLE konur: aksi halde sorgu TÜM kiracıların
@@ -473,7 +496,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 var score = _matcher.Score(signals, grant, gtags, weightsByGrant[grant.Id]);
                 var eligibility = _matcher.Evaluate(signals, grant, today);
                 var days = DaysRemaining(call, today);
-                var isHostRecommended = hostRecCallIds.Contains(call.Id);
+                var isHostRecommended = hostRecNotes.ContainsKey(call.Id);
 
                 var reasonRule = ReasonRuleOf(eligibility);
                 var (reasonFirm, reasonGrant) = reasonRule.HasValue
@@ -498,6 +521,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                         ? interestStatus
                         : null,
                     IsHostRecommended = isHostRecommended,
+                    HostRecommendationNote = hostRecNotes.GetValueOrDefault(call.Id),
                     IsRecommended = score >= grant.MinMatchScore || isHostRecommended,
                     Bucket = eligibility.Bucket,
                     PassedRules = RulesWith(eligibility, GrantRuleOutcome.Passed),

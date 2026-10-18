@@ -32,4 +32,10 @@ public interface IGrantRecommendationAppService : IApplicationService
 
     /// <summary>LIF-08 · Firma, danışmanın bu çağrı için gönderdiği öneriyi kapatır. Öneri yoksa hata.</summary>
     Task DismissRecommendationAsync(Guid grantCallId);
+
+    /// <summary>
+    /// H-07 · Firma çağrının ayrıntısını açtı: danışmanın bu çağrı için gönderdiği yeni öneri
+    /// "Görüldü" olur. Öneri yoksa bir şey yapmaz (ayrıntı her açılışta çağırır).
+    /// </summary>
+    Task MarkRecommendationSeenAsync(Guid grantCallId);
 }

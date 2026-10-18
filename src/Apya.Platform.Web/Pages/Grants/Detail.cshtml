@@ -53,6 +53,14 @@
     {
         <div class="apya-banner-summary" id="CallDescription"></div>
         <button type="button" id="CallDescriptionToggle" class="btn btn-link btn-sm p-0 align-self-start d-none" aria-expanded="false"></button>
+        @* H-07 · Danışmanın önerisi: notu ve "İlgilenmiyorum". Durumu JS boyar. *@
+        <div id="HostRecNote" class="apya-side-note d-none">
+            <i class="fa fa-star mt-1"></i>
+            <span class="d-flex flex-column gap-1">
+                <span><strong>@L["Grants:Detail:HostRec:Title"]</strong> <span id="HostRecNoteText"></span></span>
+                <button type="button" id="HostRecDismissBtn" class="btn btn-link btn-sm p-0 align-self-start d-none">@L["Grants:Today:Opportunity:Dismiss"]</button>
+            </span>
+        </div>
         @* Uygun bulunmayan talebin gerekçesi — host'un yazdığı cümle birebir. *@
         <div id="InterestFeedback" class="apya-side-note d-none">
             <i class="fa fa-circle-info mt-1"></i>

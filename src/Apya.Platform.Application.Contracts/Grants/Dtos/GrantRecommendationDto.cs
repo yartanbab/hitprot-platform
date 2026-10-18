@@ -36,6 +36,9 @@ public class GrantRecommendationDto
     /// <summary>Host bu çağrıyı bu firmaya bilinçli olarak gönderdi mi (B3 host-push).</summary>
     public bool IsHostRecommended { get; set; }
 
+    /// <summary>H-07 · Danışmanın öneriyle gönderdiği not (kartta firmaya gösterilir); yoksa null.</summary>
+    public string? HostRecommendationNote { get; set; }
+
     // --- 13b · Takip ettiklerim ---
 
     /// <summary>Firmanın takip notu; yalnız takipteki çağrıda ve not yazıldıysa dolu.</summary>

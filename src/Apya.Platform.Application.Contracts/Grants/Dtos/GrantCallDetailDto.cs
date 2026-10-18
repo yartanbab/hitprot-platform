@@ -68,6 +68,14 @@ public class GrantCallDetailDto
     /// <summary>Çağrı konsorsiyum şartı taşıyor mu — ilgi formundaki ortak sorusu buna göre görünür.</summary>
     public bool RequiresConsortium { get; set; }
 
+    // --- H-07 · Danışman önerisi ---
+
+    /// <summary>Danışman bu çağrıyı bu firmaya önerdi ve firma öneriyi kapatmadı.</summary>
+    public bool IsHostRecommended { get; set; }
+
+    /// <summary>Danışmanın öneriyle gönderdiği not; yoksa null.</summary>
+    public string? HostRecommendationNote { get; set; }
+
     // --- İlgi talebi (son kayıt) ---
 
     /// <summary>Son talebin kimliği — "İlgimi geri çek" buna gider.</summary>

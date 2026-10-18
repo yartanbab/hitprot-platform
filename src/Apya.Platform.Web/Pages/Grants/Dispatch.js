@@ -100,6 +100,15 @@ $(function () {
         if (c.alreadyApplied) {
             chips += '<span class="apya-chip apya-chip-accent">' + esc(l('Grants:Dispatch:Applied')) + '</span>';
         }
+        // H-07 · Gönderilen önerinin firmadaki karşılığı (GrantRecommendationStatus: 1 Seen, 3 Dismissed).
+        if (c.recommendationStatus === 1) {
+            chips += '<span class="apya-chip apya-chip-neutral">' + esc(l('Grants:Dispatch:Rec:Seen')) + '</span>';
+        } else if (c.recommendationStatus === 3) {
+            chips += '<span class="apya-chip apya-chip-warning">' + esc(l('Grants:Dispatch:Rec:Dismissed')) + '</span>';
+        }
+        if (c.hasInterest) {
+            chips += '<span class="apya-chip apya-chip-positive">' + esc(l('Grants:Dispatch:Rec:Interested')) + '</span>';
+        }
 
         var warning = '';
         if (c.warningRule != null) {

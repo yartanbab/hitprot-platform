@@ -43,6 +43,19 @@ public class GrantRecommendation : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     /// <summary>
+    /// H-07 · Firma çağrının ayrıntısını açınca danışmanın önerisi "Görüldü" olur; danışman bunu
+    /// gönderim ekranında görür. Yalnız yeni öneri işaretlenir — başvuruya dönmüş ya da kapatılmış
+    /// öneri geri çevrilmez.
+    /// </summary>
+    public void MarkSeen()
+    {
+        if (Status == GrantRecommendationStatus.New)
+        {
+            Status = GrantRecommendationStatus.Seen;
+        }
+    }
+
+    /// <summary>
     /// LIF-08: firma öneriyi kapatır ("ilgilenmiyorum"). Başvuruya dönmüş öneri kapatılmaz —
     /// o artık bir öneri değil, yürüyen bir iş.
     /// </summary>
