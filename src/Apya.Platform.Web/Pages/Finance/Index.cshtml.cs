@@ -137,6 +137,29 @@ public class IndexModel : AbpPageModel
     [BindProperty(SupportsGet = true)]
     public Guid? AccountId { get; set; }
 
+    /// <summary>
+    /// F-05 · Gelir-Gider dönemi: "bu-ay" | "gecen-ay" | "bu-ceyrek" | "bu-yil" | "proje" | "ozel" | boş
+    /// (tüm zamanlar). "ozel" aralığı <see cref="From"/>/<see cref="To"/> ile gelir. Süzgeç gelir ve
+    /// gider servislerine iletilir; dip toplam yalnız dönem seçiliyken "dönem toplamı" der.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? Period { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public DateTime? From { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public DateTime? To { get; set; }
+
+    /// <summary>Çözülmüş dönemin ilk günü; dönem yoksa ya da başı açıksa null.</summary>
+    public DateTime? PeriodStart { get; private set; }
+
+    /// <summary>Çözülmüş dönemin son günü (dahil); dönem yoksa ya da sonu açıksa null.</summary>
+    public DateTime? PeriodEnd { get; private set; }
+
+    /// <summary>Dönem süzgeci etkin mi: dip toplam "dönem toplamı" der, donör tarih denetimi kısmi sayılır.</summary>
+    public bool LedgerPeriodActive => PeriodStart.HasValue || PeriodEnd.HasValue;
+
     /// <summary>Kırılım anahtarı matris yönlerinden birinde mi.</summary>
     public bool IsMatrixBreakdown
         => Breakdown == "kalem-gorev" || Breakdown == "gorev-kalem";
@@ -373,6 +396,10 @@ public class IndexModel : AbpPageModel
             return;
         }
 
+        (PeriodStart, PeriodEnd) = ResolveLedgerPeriod();
+        // Servis bitişi "<=" ile karşılaştırır: saatli kayıt son günden düşmesin diye günün sonu verilir.
+        var periodEndInclusive = PeriodEnd?.AddDays(1).AddTicks(-1);
+
         var accountNames = new Dictionary<Guid, string>();
         await TryAddAsync(async () =>
         {
@@ -415,6 +442,8 @@ public class IndexModel : AbpPageModel
                     MaxResultCount = MaxPerSource,
                     ProjectId = ProjectId,
                     CashAccountId = AccountId,
+                    FromDate = PeriodStart,
+                    ToDate = periodEndInclusive,
                     Sorting = "IncomeDate desc"
                 });
                 if (page.TotalCount > page.Items.Count)
@@ -455,6 +484,8 @@ public class IndexModel : AbpPageModel
                     MaxResultCount = MaxPerSource,
                     ProjectId = ProjectId,
                     CashAccountId = AccountId,
+                    FromDate = PeriodStart,
+                    ToDate = periodEndInclusive,
                     Sorting = "ExpenseDate desc"
                 });
                 if (page.TotalCount > page.Items.Count)
@@ -832,14 +863,67 @@ public class IndexModel : AbpPageModel
     /// güncelleme yok) — böylece "şu çipe basınca hangi hâle geçilecek" bağlantıya
     /// bakınca okunur, sayfada gizli durum birikmez.
     /// </summary>
-    public string LedgerUrl(string? kind, Guid? lineId, Guid? accountId)
+    /// <para>F-05 · Seçili dönem korunur (<paramref name="keepPeriod"/>); "Filtreleri temizle" onu da bırakır.</para>
+    public string LedgerUrl(string? kind, Guid? lineId, Guid? accountId, bool keepPeriod = true)
     {
         var q = new List<string> { $"tab={FinanceContext.TabLedger}" };
         if (ProjectId.HasValue) q.Insert(0, $"projectId={ProjectId.Value}");
         if (!string.IsNullOrEmpty(kind)) q.Add($"kind={kind}");
         if (lineId.HasValue) q.Add($"lineId={lineId.Value}");
         if (accountId.HasValue) q.Add($"accountId={accountId.Value}");
+        if (keepPeriod && !string.IsNullOrEmpty(Period))
+        {
+            q.Add($"period={Uri.EscapeDataString(Period)}");
+            if (Period == "ozel")
+            {
+                if (From.HasValue) q.Add($"from={From.Value:yyyy-MM-dd}");
+                if (To.HasValue) q.Add($"to={To.Value:yyyy-MM-dd}");
+            }
+        }
         return "/Finance?" + string.Join("&", q);
+    }
+
+    /// <summary>F-05 · Dönem seçeneği: öbür süzgeçler korunur, yalnız dönem değişir (boş = tüm zamanlar).</summary>
+    public string LedgerPeriodUrl(string? period)
+    {
+        var url = LedgerUrl(Kind, LineId, AccountId, keepPeriod: false);
+        return string.IsNullOrEmpty(period) ? url : $"{url}&period={Uri.EscapeDataString(period)}";
+    }
+
+    /// <summary>
+    /// F-05 · Dönem anahtarını takvim aralığına çevirir. Bilinmeyen anahtar ve tarihsiz projede "proje"
+    /// süzgeç kurmaz; özel aralıkta uçlar ters girildiyse yer değiştirir.
+    /// </summary>
+    private (DateTime? Start, DateTime? End) ResolveLedgerPeriod()
+    {
+        if (string.IsNullOrEmpty(Period))
+        {
+            return (null, null);
+        }
+
+        if (Period == "proje")
+        {
+            return (SelectedProject?.StartDate?.Date, SelectedProject?.EndDate?.Date);
+        }
+
+        if (Period == "ozel")
+        {
+            var from = From?.Date;
+            var to = To?.Date;
+            return from > to ? (to, from) : (from, to);
+        }
+
+        var today = Clock.Now.Date;
+        var month = new DateTime(today.Year, today.Month, 1);
+        var quarter = new DateTime(today.Year, (today.Month - 1) / 3 * 3 + 1, 1);
+        return Period switch
+        {
+            "bu-ay" => (month, month.AddMonths(1).AddDays(-1)),
+            "gecen-ay" => (month.AddMonths(-1), month.AddDays(-1)),
+            "bu-ceyrek" => (quarter, quarter.AddMonths(3).AddDays(-1)),
+            "bu-yil" => (new DateTime(today.Year, 1, 1), new DateTime(today.Year, 12, 31)),
+            _ => (null, null)
+        };
     }
 
     private static string? NameOf(Dictionary<Guid, string> map, Guid? id)
@@ -1044,7 +1128,7 @@ public class IndexModel : AbpPageModel
                 "Finance:Donor:Unverified:Dates:Title",
                 "Finance:Donor:Unverified:Dates:NoAccess"));
         }
-        else if (LedgerTruncated || !string.IsNullOrEmpty(Kind) || LineId.HasValue || AccountId.HasValue)
+        else if (LedgerTruncated || !string.IsNullOrEmpty(Kind) || LineId.HasValue || AccountId.HasValue || LedgerPeriodActive)
         {
             EligibilityFindings.Add(Unverified(
                 "Finance:Donor:Unverified:Dates:PartialTitle",
