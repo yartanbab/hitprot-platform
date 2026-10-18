@@ -35,6 +35,15 @@ public class InvoiceDto : FullAuditedEntityDto<Guid>
     public decimal Balance => TotalAmount - PaidAmount;
 }
 
+/// <summary>
+/// F-05 · Fatura listesi süzgeci. Proje süzgeci sunucuda: uç eskiden süzgeç almıyordu, çağıranlar son
+/// sayfayı bellekte projeye süzüyordu ve çok faturalı kiracıda projenin eski faturaları hiç görünmüyordu.
+/// </summary>
+public class GetInvoicesInput : PagedAndSortedResultRequestDto
+{
+    public Guid? ProjectId { get; set; }
+}
+
 public class InvoiceItemDto : EntityDto<Guid>
 {
     public string Description { get; set; } = string.Empty;

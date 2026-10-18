@@ -194,8 +194,26 @@ public class FinanceRecordRules_Tests : PlatformEntityFrameworkCoreTestBase
         await _invoices.AddPaymentAsync(lateId, 100m, "Nakit", "kalan");
         (await _invoices.GetAsync(lateId)).IsOverdue.ShouldBeFalse();
 
-        var list = await _invoices.GetListAsync(new Volo.Abp.Application.Dtos.PagedAndSortedResultRequestDto { MaxResultCount = 1000 });
+        var list = await _invoices.GetListAsync(new GetInvoicesInput { MaxResultCount = 1000 });
         list.Items.Single(i => i.Id == futureId).IsOverdue.ShouldBeFalse("liste de aynı bayrağı taşır");
+    }
+
+    /// <summary>
+    /// F-05 · Fatura listesi projeye sunucuda süzülür: uç eskiden süzgeç almıyordu, Faturalar sekmesi ve
+    /// "Son İşlemler" son sayfayı bellekte süzüyordu — çok faturalı kiracıda projenin eski faturaları
+    /// hiç görünmüyordu.
+    /// </summary>
+    [Fact]
+    public async Task Fatura_listesi_projeye_sunucuda_suzulur()
+    {
+        var mine = await InvoiceInputAsync(1, 100);
+        var mineId = (await _invoices.CreateAsync(mine)).Id;
+        await _invoices.CreateAsync(await InvoiceInputAsync(1, 200));
+
+        var scoped = await _invoices.GetListAsync(new GetInvoicesInput { ProjectId = mine.ProjectId, MaxResultCount = 10 });
+
+        scoped.TotalCount.ShouldBe(1);
+        scoped.Items.ShouldHaveSingleItem().Id.ShouldBe(mineId);
     }
 
     /* ═══════════════ Kur kaynağı ═══════════════ */

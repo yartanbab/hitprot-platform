@@ -373,7 +373,7 @@ public class ListLoadFailureScripts_Tests
         var load = Between(script, "function load(keepSelection) {", "// ── Olaylar ──");
         ShouldAppearInOrder(load,
             "var initial = !state.all.length;",
-            "{ maxResultCount: 200, sorting: 'invoiceDate desc' }, { abpHandleError: !initial })",
+            "{ maxResultCount: PAGE_SIZE, sorting: 'invoiceDate desc', projectId: scopeProjectId || undefined }, { abpHandleError: !initial })",
             "}, function (err) {",
             "if (!isLatest()) { return; }",
             "if (!state.all.length) {",

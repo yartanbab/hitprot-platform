@@ -6,7 +6,9 @@ $(function () {
     var createModal = new abp.ModalManager(abp.appPath + 'Invoices/CreateModal');
     var paymentModal = new abp.ModalManager(abp.appPath + 'Invoices/PaymentModal');
 
-    var state = { all: [], filtered: [], selectedId: null, status: '', loading: false, loadFailed: false };
+    var state = { all: [], filtered: [], selectedId: null, status: '', loading: false, loadFailed: false, total: 0 };
+    // F-05 · Sunucu sayfa sayfa verir; "Daha fazla yükle" sonraki sayfayı ekler (liste sessizce kesilmez).
+    var PAGE_SIZE = 200;
     var nextList = apya.latest();
     var nextDetail = apya.latest();
 
@@ -25,6 +27,9 @@ $(function () {
     var $loadError = $('<div hidden></div>')
         .on('click', '.js-invoices-retry', function () { $(this).prop('disabled', true); load(); })
         .insertAfter($empty);
+    var $loadMore = $('<button type="button" class="btn btn-sm btn-outline-secondary mt-2" hidden>Daha fazla yükle</button>')
+        .on('click', loadMore)
+        .insertAfter($loadError);
 
     // Finans sekmesine gomuldugunde liste O PROJEYLE sinirlanir. /Invoices
     // sayfasinda oznitelik yoktur -> null -> davranis eskisiyle birebir ayni.
@@ -86,6 +91,7 @@ $(function () {
         $list.empty();
         $list.attr('aria-busy', waiting ? 'true' : null);
         $loadError.prop('hidden', !failed);
+        $loadMore.prop('hidden', waiting || failed || state.total <= state.all.length);
         $empty.prop('hidden', waiting || failed || state.filtered.length > 0);
         $clearFilters.prop('hidden', !(($('#InvoiceFilter').val() || '').trim() || state.status !== ''));
         if (waiting) {
@@ -106,7 +112,8 @@ $(function () {
                 '  <i class="fa ' + directionIcon + '" style="width:14px" aria-hidden="true"></i>' +
                 '  <span class="apya-md-item-body">' +
                 '    <span class="apya-md-item-title d-block">' + esc(x.invoiceNumber || '(numarasız)') + '</span>' +
-                '    <span class="apya-md-item-sub d-block">' + esc(x.customerName || x.projectName || '—') + ' · ' + fmtDate(x.invoiceDate) + '</span>' +
+                '    <span class="apya-md-item-sub d-block">' + (x.direction === 1 ? 'Alış' : 'Satış') + ' · ' +
+                esc(x.customerName || x.projectName || '—') + ' · ' + fmtDate(x.invoiceDate) + '</span>' +
                 '  </span>' +
                 '  <span class="apya-md-item-side">' +
                 '    <span class="d-block apya-numeric fw-bold" style="font-size:12.5px">' + fmt(x.totalAmount) + ' ' + esc(x.currency) + '</span>' +
@@ -120,7 +127,8 @@ $(function () {
                .on('click', function () { select(x.id); });
             $list.append(li);
         });
-        $('#InvoicesPagerInfo').text(state.filtered.length + ' fatura');
+        $('#InvoicesPagerInfo').text(state.filtered.length + ' fatura' +
+            (state.total > state.all.length ? ' · ' + state.all.length + ' / ' + state.total + ' yüklendi' : ''));
     }
 
     function renderDetailEmpty() {
@@ -241,17 +249,30 @@ $(function () {
     // Liste hiç gelmemişken (açılış, Tekrar dene) yükleme hatası ABP penceresi açmaz, liste yerine
     // kart basılır (Faz 4 kararı 2). Veri ekrandayken (oluştur/ödeme sonrası) yenileme düşerse liste
     // korunur ve tek kanal ABP penceresidir — sessiz kalsaydı yeni fatura "kayboldu" sanılırdı.
+    // Sonraki sayfa listeye eklenir; seçim ve süzgeç korunur.
+    function loadMore() {
+        $loadMore.prop('disabled', true);
+        Promise.resolve(service.getList({ skipCount: state.all.length, maxResultCount: PAGE_SIZE, sorting: 'invoiceDate desc', projectId: scopeProjectId || undefined }))
+            .then(function (result) {
+                state.total = result.totalCount || state.total;
+                state.all = state.all.concat(result.items || []);
+                applyFilter();
+            })
+            .finally(function () { $loadMore.prop('disabled', false); });
+    }
+
     function load(keepSelection) {
         var isLatest = nextList();
         var initial = !state.all.length;
         state.loading = true;
         state.loadFailed = false;
         if (!state.all.length) { renderList(); }
-        Promise.resolve(service.getList({ maxResultCount: 200, sorting: 'invoiceDate desc' }, { abpHandleError: !initial })).then(function (result) {
+        Promise.resolve(service.getList({ maxResultCount: PAGE_SIZE, sorting: 'invoiceDate desc', projectId: scopeProjectId || undefined }, { abpHandleError: !initial })).then(function (result) {
             if (!isLatest()) { return; }
             state.loading = false;
             state.loadFailed = false;
             state.all = result.items || [];
+            state.total = result.totalCount || state.all.length;
             if (!keepSelection) { state.selectedId = null; }
             applyFilter();
             // FUX-05 · Adresteki fatura (yalnız ilk yüklemede, bir kez) seçili açılır.

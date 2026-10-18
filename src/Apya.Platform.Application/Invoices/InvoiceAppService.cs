@@ -42,9 +42,13 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         _invoiceManager = invoiceManager;
     }
 
-    public async Task<PagedResultDto<InvoiceDto>> GetListAsync(PagedAndSortedResultRequestDto input)
+    public async Task<PagedResultDto<InvoiceDto>> GetListAsync(GetInvoicesInput input)
     {
         var query = await _invoiceRepository.GetQueryableAsync();
+        if (input.ProjectId.HasValue)
+        {
+            query = query.Where(x => x.ProjectId == input.ProjectId.Value);
+        }
         var totalCount = await AsyncExecuter.CountAsync(query);
 
         var sorting = string.IsNullOrWhiteSpace(input.Sorting) ? "InvoiceDate desc" : input.Sorting;

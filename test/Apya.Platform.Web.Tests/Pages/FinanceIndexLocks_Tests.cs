@@ -73,7 +73,7 @@ public class FinanceIndexLocks_Tests
             .Returns(new PagedResultDto<IncomeEntryDto>(0, new List<IncomeEntryDto>()));
         _expenses.GetListAsync(Arg.Any<GetExpensesInput>())
             .Returns(new PagedResultDto<ExpenseDto>(0, new List<ExpenseDto>()));
-        _invoices.GetListAsync(Arg.Any<PagedAndSortedResultRequestDto>())
+        _invoices.GetListAsync(Arg.Any<GetInvoicesInput>())
             .Returns(new PagedResultDto<InvoiceDto>(0, new List<InvoiceDto>()));
         _invoices.GetProjectLookupAsync().Returns(new ListResultDto<ProjectLookupDto>(new List<ProjectLookupDto>()));
         _invoices.GetCustomerLookupAsync().Returns(new ListResultDto<CustomerLookupDto>(new List<CustomerLookupDto>()));
@@ -178,7 +178,7 @@ public class FinanceIndexLocks_Tests
     {
         _incomes.GetListAsync(Arg.Any<GetIncomeEntriesInput>()).ThrowsAsync(new AbpAuthorizationException());
         _expenses.GetListAsync(Arg.Any<GetExpensesInput>()).ThrowsAsync(new AbpAuthorizationException());
-        _invoices.GetListAsync(Arg.Any<PagedAndSortedResultRequestDto>()).ThrowsAsync(new AbpAuthorizationException());
+        _invoices.GetListAsync(Arg.Any<GetInvoicesInput>()).ThrowsAsync(new AbpAuthorizationException());
         _cashMovements.GetListAsync(Arg.Any<GetCashMovementsInput>()).ThrowsAsync(new AbpAuthorizationException());
         _cashAccounts.GetListAsync(Arg.Any<GetCashAccountsInput>()).ThrowsAsync(new AbpAuthorizationException());
 
@@ -195,7 +195,7 @@ public class FinanceIndexLocks_Tests
     public async Task Yalniz_gelir_izniyle_son_islemler_KISMI()
     {
         _expenses.GetListAsync(Arg.Any<GetExpensesInput>()).ThrowsAsync(new AbpAuthorizationException());
-        _invoices.GetListAsync(Arg.Any<PagedAndSortedResultRequestDto>()).ThrowsAsync(new AbpAuthorizationException());
+        _invoices.GetListAsync(Arg.Any<GetInvoicesInput>()).ThrowsAsync(new AbpAuthorizationException());
         _cashMovements.GetListAsync(Arg.Any<GetCashMovementsInput>()).ThrowsAsync(new AbpAuthorizationException());
 
         var page = BuildPage(PlatformPermissions.Projects.Default, PlatformPermissions.Incomes.Default);
@@ -369,7 +369,7 @@ public class FinanceIndexLocks_Tests
 
         await _incomes.DidNotReceive().GetListAsync(Arg.Any<GetIncomeEntriesInput>());
         await _expenses.DidNotReceive().GetListAsync(Arg.Any<GetExpensesInput>());
-        await _invoices.DidNotReceive().GetListAsync(Arg.Any<PagedAndSortedResultRequestDto>());
+        await _invoices.DidNotReceive().GetListAsync(Arg.Any<GetInvoicesInput>());
         await _cashAccounts.DidNotReceive().GetListAsync(Arg.Any<GetCashAccountsInput>());
         await _cashMovements.DidNotReceive().GetBalanceAsync(Arg.Any<Guid>());
         await _rates.DidNotReceive().GetListAsync(Arg.Any<GetExchangeRatesInput>());
@@ -413,6 +413,20 @@ public class FinanceIndexLocks_Tests
         await _incomes.Received().GetListAsync(Arg.Any<GetIncomeEntriesInput>());
         await _expenses.Received().GetListAsync(Arg.Any<GetExpensesInput>());
         await _cashAccounts.Received().GetListAsync(Arg.Any<GetCashAccountsInput>());
+    }
+
+    /// <summary>
+    /// F-05 · Genel'in "Son İşlemler"i faturaları projeye SUNUCUDA süzer: eskiden son 100 fatura bellekte
+    /// süzülüyordu, çok faturalı kiracıda projenin faturası listeye hiç girmiyordu.
+    /// </summary>
+    [Fact]
+    public async Task Son_islemler_faturalari_projeye_sunucuda_suzer()
+    {
+        var page = ProjectPage(FinanceContext.TabOverview, sessionTenantId: null, projectTenantId: null);
+
+        await page.OnGetAsync();
+
+        await _invoices.Received().GetListAsync(Arg.Is<GetInvoicesInput>(i => i.ProjectId == page.ProjectId));
     }
 
     /// <summary>
