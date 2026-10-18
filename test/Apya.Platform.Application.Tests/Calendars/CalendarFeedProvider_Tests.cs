@@ -83,6 +83,8 @@ public class CalendarFeedProvider_Tests
             Substitute.For<IRepository<GrantApplication, Guid>>(),
             Substitute.For<IRepository<GrantCall, Guid>>(),
             Substitute.For<IRepository<Grant, Guid>>(),
+            Substitute.For<IRepository<GrantReport, Guid>>(),
+            Substitute.For<IRepository<GrantDisbursementTranche, Guid>>(),
             _projectRepo,
             _customerRepo,
             Substitute.For<IRepository<CashAccount, Guid>>(),
@@ -92,7 +94,8 @@ public class CalendarFeedProvider_Tests
             _currentUser,
             Substitute.For<IDataFilter>(),
             _settingProvider,
-            clock);
+            clock,
+            Substitute.For<Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource>>());
     }
 
     private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
