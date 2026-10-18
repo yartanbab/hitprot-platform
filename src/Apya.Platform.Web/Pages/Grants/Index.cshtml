@@ -52,7 +52,8 @@
                         <i class="fa fa-pen-to-square me-1"></i>@L["Grants:Sources:ManualEntry"]
                     </a>
                 }
-                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+                @* X-05 · Kazıyıcı bağlı değilken düğme yalnız "atlandı" koşusu bırakıyordu. *@
+                @if (Model.ScraperConnected && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
                 {
                     <button type="button" id="ScrapeAllBtn" class="btn btn-primary">
                         <i class="fa fa-rotate me-1"></i>@L["Grants:Sources:ScrapeAll"]
