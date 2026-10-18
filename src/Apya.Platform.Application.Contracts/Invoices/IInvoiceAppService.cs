@@ -9,7 +9,7 @@ namespace Apya.Platform.Invoices;
 
 public interface IInvoiceAppService : IApplicationService
 {
-    Task<PagedResultDto<InvoiceDto>> GetListAsync(PagedAndSortedResultRequestDto input);
+    Task<PagedResultDto<InvoiceDto>> GetListAsync(GetInvoicesInput input);
     Task<InvoiceDto> GetAsync(Guid id);
     Task<InvoiceDto> CreateAsync(CreateInvoiceDto input);
     Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference, Guid? cashAccountId = null);

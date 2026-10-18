@@ -8,6 +8,7 @@ using Apya.Platform.Expenses;
 using Apya.Platform.ExchangeRates;
 using Apya.Platform.Incomes;
 using Apya.Platform.Invoices;
+using Apya.Platform.Invoices.Dtos;
 using Apya.Platform.Permissions;
 using Apya.Platform.ProjectBudgets;
 using Apya.Platform.ProjectBudgets.Dtos;
@@ -677,9 +678,9 @@ public class IndexModel : AbpPageModel
 
         readable.Add(await TryAddAsync(async () =>
         {
-            // Fatura ucunda proje süzgeci yok; sayfalanmış sonuç bellekte süzülür.
-            var page = await _invoiceAppService.GetListAsync(new PagedAndSortedResultRequestDto { MaxResultCount = MaxPerSource });
-            foreach (var x in page.Items.Where(i => !ProjectId.HasValue || i.ProjectId == ProjectId.Value))
+            // F-05 · Proje süzgeci sunucuda: son sayfayı bellekte süzmek projenin eski faturalarını düşürüyordu.
+            var page = await _invoiceAppService.GetListAsync(new GetInvoicesInput { MaxResultCount = MaxPerSource, ProjectId = ProjectId });
+            foreach (var x in page.Items)
             {
                 var isSales = x.Direction == InvoiceDirection.Sales;
                 rows.Add(new TransactionRow
