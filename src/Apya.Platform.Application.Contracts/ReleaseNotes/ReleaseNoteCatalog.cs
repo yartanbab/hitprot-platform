@@ -133,6 +133,20 @@ public static class ReleaseNoteCatalog
                 "kapatabilirsiniz. Danışmanınız önerinin görüldüğünü, kapatıldığını ya da ilgi " +
                 "bildirdiğinizi kendi ekranında görüyor."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Gelir-Gider tablosu Excel'e aktarılabiliyor",
+                "Finans Merkezi'nin Gelir-Gider sekmesinde yeni bir \"Excel\" düğmesi var. Dosya, ekranda " +
+                "seçtiğiniz tür, kalem, kasa ve dönemle aynı kayıtları; tarih, kategori, bütçe kalemi, kasa, " +
+                "tutar ve ₺ karşılığıyla birlikte içeriyor. Dosyanın sonunda toplam gelir, gider ve net yer " +
+                "alıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Proje listesinde toplu atama, öncelik, erteleme ve iş adımı",
+                "Proje sayfasının liste görünümünde birden fazla görev seçtiğinizde artık panodaki gibi " +
+                "toplu işlem yapabiliyorsunuz: görevleri bir kişiye atayın, önceliğini değiştirin, son " +
+                "tarihini 1 gün, 3 gün ya da 1 hafta öteleyin, bir iş adımına bağlayın ya da nedenini " +
+                "yazarak iptal edin. Daha önce listede yalnız durum değiştirme ve silme vardı."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Finans Merkezi tek giriş oldu; kayıtlara doğrudan gidiliyor",
                 "Kasa & Banka, Kurlar ve Proje Bütçesi sol menüden kalktı; içerikleri zaten Finans " +
@@ -250,6 +264,14 @@ public static class ReleaseNoteCatalog
                 "ve son başvuru maddeleri başvurunuzu, rapor teslimi ve dilim vadesi maddeleri Uygulama & " +
                 "Tahsilat ekranını açıyor. Rapor teslim tarihleri ve dilim vadeleri takvime eklendi; " +
                 "\"Ara rapor\" etiketi \"Kilometre taşı\" oldu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Projenin eski faturaları da listede görünüyor",
+                "Finans Merkezi'nin Faturalar sekmesi ve Genel sekmesindeki \"Son İşlemler\", projenin " +
+                "faturalarını yalnız en son kesilen faturalar arasından buluyordu; faturası çok olan " +
+                "hesaplarda projenin eski faturaları görünmüyordu. Artık projenin bütün faturaları geliyor. " +
+                "Faturalar ekranı da uzun listede \"Daha fazla yükle\" ile devam ediyor ve her satırda " +
+                "faturanın alış mı satış mı olduğu yazıyor."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Gizli görevler her ekranda gizli kalıyor",
