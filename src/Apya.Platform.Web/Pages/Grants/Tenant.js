@@ -168,6 +168,12 @@ $(function () {
         $('#ProfileEditor').toggleClass('d-none');
     });
 
+    // H-16 · Başvuru sihirbazının "Firma profilini düzenle" bağlantısı #profil ile gelir: düzenleyici
+    // kapalı açılıp kullanıcı onu aramak zorunda kalmasın.
+    if (location.hash === '#profil') {
+        $('#ProfileEditor').removeClass('d-none')[0].scrollIntoView({ block: 'start' });
+    }
+
     $('#SaveProfileBtn').on('click', function () {
         var $btn = $(this).prop('disabled', true);
         var consortium = $('#ProfileConsortium').val();
@@ -430,13 +436,15 @@ $(function () {
                     return '<div>#' + t.sequenceNo + ' · ' + money(t.amount) + ' · ' +
                         trancheStatusLabels[t.status] + ' · ' + fmtDate(t.dueDate) + '</div>';
                 }).concat((a.milestones || []).map(function (m) {
-                    return '<div>' + esc(m.title) + ' · ' + (m.isCompleted ? 'Tamamlandı' : 'Bekliyor') +
+                    return '<div>' + esc(m.title) + ' · ' +
+                        l(m.isCompleted ? 'Grants:Feed:Apps:MilestoneDone' : 'Grants:Feed:Apps:MilestonePending') +
                         ' · ' + fmtDate(m.dueDate) + '</div>';
                 })).join('');
                 $l.append(
                     '<div class="card"><div class="card-body py-2">' +
                     '<div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">' +
-                    '<div><span class="fw-semibold">' + esc(a.grantName || '-') + '</span> ' +
+                    // H-16 · Başvuru adı başvurunun kendisine götürür (kart eskiden tıklanamıyordu).
+                    '<div><a class="fw-semibold" href="/Grants/Wizard?id=' + a.id + '">' + esc(a.grantName || '-') + '</a> ' +
                     '<span class="text-muted small">' + esc(a.period || '') + '</span></div>' +
                     '<div class="d-flex align-items-center gap-2">' +
                     (a.approvedAmount != null
