@@ -2226,7 +2226,7 @@
     "Dashboard:Blockers:Dependents": "{0} dependent tasks waiting",
     "Dashboard:Blockers:OpenTask": "Open task →",
     "Dashboard:Blockers:EmptyTitle": "Nothing is blocked",
-    "Dashboard:Blockers:EmptyDescription": "All open work has moved recently.",
+    "Dashboard:Blockers:EmptyDescription": "No open work has stalled.",
     "Dashboard:Ai:Title": "AI suggestions",
     "Dashboard:Ai:Subtitle": "quiet inbox",
     "Dashboard:Ai:EmptyTitle": "AI is quiet right now",
