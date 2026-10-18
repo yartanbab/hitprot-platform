@@ -2117,7 +2117,7 @@
         "RegistrationRequest:Sent:Message": "Kayıt talebiniz bize ulaştı. Sürecin devamı şöyle işleyecek:",
         "RegistrationRequest:Sent:Step1": "Ekibimiz talebinizi ve seçtiğiniz paketi değerlendirir.",
         "RegistrationRequest:Sent:Step2": "Onayladığımızda protokol ve KVKK metinlerini onaylamanız için size bir bağlantı göndeririz.",
-        "RegistrationRequest:Sent:Step3": "Onayınızın ardından hesabınız açılır ve giriş bilgileriniz e-postayla iletilir.",
+        "RegistrationRequest:Sent:Step3": "Protokolü onaylarken yönetici şifrenizi siz belirlersiniz; hesabınız o anda açılır ve hemen giriş yapabilirsiniz.",
         "RegistrationRequest:CompanyType:Company": "Şirket",
         "RegistrationRequest:CompanyType:Association": "Dernek",
         "RegistrationRequest:CompanyType:Foundation": "Vakıf",

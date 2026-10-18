@@ -345,6 +345,20 @@ public class RegistrationRequestPages_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// X-05 · Aday yönetici şifresini protokol sayfasında kendisi belirler, hesap onayla birlikte
+    /// açılır. Sayfa "giriş bilgileriniz e-postayla iletilir" diyordu; böyle bir e-posta yok, aday
+    /// gelmeyecek bir postayı bekliyordu.
+    /// </summary>
+    [Fact]
+    public async Task Talep_alindi_sayfasi_giris_bilgisi_epostasi_vaat_etmez()
+    {
+        var html = WebUtility.HtmlDecode(await GetResponseAsStringAsync("/Account/RegistrationRequestSent"));
+
+        html.ShouldNotContain("giriş bilgileriniz e-postayla");
+        html.ShouldContain("şifrenizi siz belirlersiniz");
+    }
+
+    /// <summary>
     /// Hesap düzeninin kahraman sütunundaki yasal bağlantılar YENİ SEKMEDE açılmalı.
     /// Düzendeki her sayfada bir form var; aynı sekmede açılan "Aydınlatma Metni"
     /// kayıt talebi sihirbazında yarıda kalan bilgileri siliyordu (ACC-08).
