@@ -1,8 +1,9 @@
 import { j as e, b as ye, r as g } from "./react-vendor-D7YDiBbi.js";
 import { E as re, R as mt, t as Ft, w as Mt, m as Lt } from "./index-DgpuJ91w.js";
-import { c as k, B as z, b as ue, d as xe, S as ce, D as pt, h as bt, T as Bt } from "./Dialog-BdrRxZcw.js";
+import { c as k, B as z, S as ue, b as xe, D as pt, g as ft, T as Bt } from "./Dialog-D3HpJNIB.js";
 import { D as qt } from "./useDeviceMode-Bkxjujsr.js";
 import { a as _t } from "./QueryProvider-D2Hvqdr9.js";
+import { S as ce } from "./Skeleton-C92LWNeC.js";
 import { a as K } from "./httpClient-BNoyY5yK.js";
 import { d as Gt } from "./draggableActivation-Ybw9Upbh.js";
 import { u as W, b as L, a as U } from "./query-vendor-Db2mwxYI.js";
@@ -22,19 +23,19 @@ const O = {
   { key: "grant", sources: [3] },
   { key: "money", sources: [4, 5] },
   { key: "cash", sources: [6] }
-], Pe = [1, 2, 3, 4, 5, 6], I = { DUE_TODAY: 1, OVERDUE: 2 }, Vt = (t) => t.risk === I.OVERDUE || t.risk === I.DUE_TODAY, ft = 864e5, Ie = (t) => new Date(t.getFullYear(), t.getMonth(), t.getDate()), M = (t, a) => new Date(t.getFullYear(), t.getMonth(), t.getDate() + a);
+], Pe = [1, 2, 3, 4, 5, 6], I = { DUE_TODAY: 1, OVERDUE: 2 }, Vt = (t) => t.risk === I.OVERDUE || t.risk === I.DUE_TODAY, bt = 864e5, Ie = (t) => new Date(t.getFullYear(), t.getMonth(), t.getDate()), M = (t, a) => new Date(t.getFullYear(), t.getMonth(), t.getDate() + a);
 function E(t) {
   const a = (s) => (s < 10 ? "0" : "") + s;
   return `${t.getFullYear()}-${a(t.getMonth() + 1)}-${a(t.getDate())}`;
 }
 function Me(t) {
   const a = (t.getDay() + 6) % 7;
-  return new Date(t.getTime() - a * ft);
+  return new Date(t.getTime() - a * bt);
 }
 const ht = (t) => Me(new Date(t.getFullYear(), t.getMonth(), 1)), Le = 42;
 function gt(t) {
   const a = ht(t);
-  return Array.from({ length: Le }, (s, r) => new Date(a.getTime() + r * ft));
+  return Array.from({ length: Le }, (s, r) => new Date(a.getTime() + r * bt));
 }
 const Xt = new Intl.DateTimeFormat("tr-TR", { month: "long", year: "numeric" }), Jt = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", weekday: "long" }), Zt = new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short" }), C = {
   monthTitle: (t) => Xt.format(t),
@@ -125,12 +126,12 @@ function ra(t) {
 }
 const it = (t) => !!t.startTime, lt = (t) => t.getDay() === 0 || t.getDay() === 6;
 function na(t, { today: a, capacity: s = null, horizonDays: r = 21, fallbackPerDay: l = 3 } = {}) {
-  const c = E(a), p = (t ?? []).filter((h) => !h.isDone), d = p.filter((h) => h.date.slice(0, 10) < c && h.risk === I.OVERDUE), o = d.filter((h) => h.canReschedule), i = d.filter((h) => !h.canReschedule), m = {}, f = {};
+  const c = E(a), p = (t ?? []).filter((h) => !h.isDone), d = p.filter((h) => h.date.slice(0, 10) < c && h.risk === I.OVERDUE), o = d.filter((h) => h.canReschedule), i = d.filter((h) => !h.canReschedule), m = {}, b = {};
   for (const h of p) {
     const n = h.date.slice(0, 10);
-    n < c || (m[n] = (m[n] ?? 0) + (h.loadHours ?? 0), f[n] = (f[n] ?? 0) + 1);
+    n < c || (m[n] = (m[n] ?? 0) + (h.loadHours ?? 0), b[n] = (b[n] ?? 0) + 1);
   }
-  const b = [];
+  const f = [];
   let u = 0;
   for (const h of o) {
     let n = null;
@@ -140,9 +141,9 @@ function na(t, { today: a, capacity: s = null, horizonDays: r = 21, fallbackPerD
         u += 1;
         continue;
       }
-      const v = E(x), D = m[v] ?? 0, $ = f[v] ?? 0, j = h.loadHours ?? 0, w = s && j > s;
+      const v = E(x), D = m[v] ?? 0, $ = b[v] ?? 0, j = h.loadHours ?? 0, w = s && j > s;
       if (s && !w ? D + j <= s : $ < l) {
-        m[v] = D + j, f[v] = $ + 1, n = x;
+        m[v] = D + j, b[v] = $ + 1, n = x;
         break;
       }
       u += 1;
@@ -152,9 +153,9 @@ function na(t, { today: a, capacity: s = null, horizonDays: r = 21, fallbackPerD
       for (; lt(x); ) x = M(x, 1);
       n = x;
     }
-    b.push({ item: h, date: n });
+    f.push({ item: h, date: n });
   }
-  return { suggestions: b, fixed: i };
+  return { suggestions: f, fixed: i };
 }
 const ia = {
   [I.OVERDUE]: { label: "Gecikmiş", className: "bg-negative-50 text-negative-700" },
@@ -245,8 +246,8 @@ function oa({ dayKey: t, items: a, capacity: s, onSelectItem: r, onClose: l }) {
       /* @__PURE__ */ e.jsxs("div", { className: "min-w-0", children: [
         /* @__PURE__ */ e.jsx("p", { className: "truncate text-[13px] font-semibold text-text-primary", children: C.dayTitle(c) }),
         /* @__PURE__ */ e.jsx("p", { className: "mt-0.5 truncate text-[11.5px] text-text-tertiary", children: Object.keys(o).length === 0 ? "Planlanmış öğe yok" : Object.entries(o).map(([i, m]) => {
-          var f;
-          return `${m} ${((f = O[i]) == null ? void 0 : f.plural) ?? "öğe"}`;
+          var b;
+          return `${m} ${((b = O[i]) == null ? void 0 : b.plural) ?? "öğe"}`;
         }).join(" · ") })
       ] }),
       l && /* @__PURE__ */ e.jsx(
@@ -380,12 +381,12 @@ function pa({
   pending: o = {},
   errors: i = {},
   focusedDay: m,
-  onFocusDay: f,
-  onNavigate: b
+  onFocusDay: b,
+  onNavigate: f
 }) {
   const u = gt(t), h = E(s), [n, x] = ye.useState(null), [v, D] = ye.useState(null), $ = ye.useRef(null), j = m ?? p ?? h, w = (S) => {
     const N = M(/* @__PURE__ */ new Date(`${j}T00:00:00`), S);
-    u.some((F) => E(F) === E(N)) || b == null || b(N), f == null || f(E(N));
+    u.some((F) => E(F) === E(N)) || f == null || f(N), b == null || b(E(N));
   }, A = (S) => {
     const N = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[S.key];
     if (N) {
@@ -430,7 +431,7 @@ function pa({
               "aria-selected": te,
               "aria-label": `${C.dayTitle(S)}${F.length ? `, ${F.length} öğe` : ", boş"}`,
               onClick: () => {
-                f == null || f(N), c(N);
+                b == null || b(N), c(N);
               },
               onDragOver: n ? (T) => {
                 T.preventDefault(), T.dataTransfer.dropEffect = "move", v !== N && D(N);
@@ -493,8 +494,8 @@ function pa({
     )
   ] });
 }
-const ba = { 1: "Google", 2: "Outlook", 3: "iCloud" };
-function fa(t) {
+const fa = { 1: "Google", 2: "Outlook", 3: "iCloud" };
+function ba(t) {
   const a = String(t ?? "").trim().split(/\s+/).filter(Boolean);
   return a.length === 0 ? "?" : a.length === 1 ? a[0].slice(0, 2).toLocaleUpperCase("tr") : (a[0][0] + a[a.length - 1][0]).toLocaleUpperCase("tr");
 }
@@ -510,8 +511,8 @@ function ha({
   teamOpen: o = !1,
   onToggleTeam: i,
   teamContent: m,
-  teamMembers: f = [],
-  riskCounts: b
+  teamMembers: b = [],
+  riskCounts: f
 }) {
   const u = (t ?? []).filter((x) => x.isAvailable);
   if (u.length === 0) return null;
@@ -623,7 +624,7 @@ function ha({
                   }
                 ),
                 /* @__PURE__ */ e.jsxs("span", { className: "min-w-0 flex-1", children: [
-                  /* @__PURE__ */ e.jsx("span", { className: "block truncate text-[12px] font-medium text-text-primary", children: ba[x.provider] ?? "Takvim" }),
+                  /* @__PURE__ */ e.jsx("span", { className: "block truncate text-[12px] font-medium text-text-primary", children: fa[x.provider] ?? "Takvim" }),
                   /* @__PURE__ */ e.jsx("span", { className: k(
                     "block truncate text-[10.5px]",
                     x.error ? "text-negative-700" : "text-text-tertiary"
@@ -658,8 +659,8 @@ function ha({
                 ]
               }
             ),
-            f.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex flex-wrap items-center gap-1 px-2 pb-1", children: [
-              f.slice(0, 3).map((x) => /* @__PURE__ */ e.jsxs(
+            b.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex flex-wrap items-center gap-1 px-2 pb-1", children: [
+              b.slice(0, 3).map((x) => /* @__PURE__ */ e.jsxs(
                 "span",
                 {
                   title: x.name,
@@ -670,7 +671,7 @@ function ha({
                       {
                         className: "flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[8.5px] font-bold text-[color:var(--apya-avatar-fg)]",
                         "aria-hidden": "true",
-                        children: fa(x.name)
+                        children: ba(x.name)
                       }
                     ),
                     /* @__PURE__ */ e.jsx("span", { className: "max-w-[86px] truncate", children: x.name })
@@ -678,19 +679,19 @@ function ha({
                 },
                 x.userId
               )),
-              f.length > 3 && /* @__PURE__ */ e.jsxs("span", { className: "text-[10.5px] font-medium text-text-tertiary", children: [
+              b.length > 3 && /* @__PURE__ */ e.jsxs("span", { className: "text-[10.5px] font-medium text-text-tertiary", children: [
                 "+",
-                f.length - 3
+                b.length - 3
               ] })
             ] }),
             m
           ] }),
-          b && (b.overdue > 0 || b.dueToday > 0 || b.syncError > 0) && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+          f && (f.overdue > 0 || f.dueToday > 0 || f.syncError > 0) && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
             /* @__PURE__ */ e.jsx("p", { className: "mt-2 border-t border-subtle px-2 pb-1 pt-2 text-[10.5px] font-bold uppercase tracking-wider text-text-tertiary", children: "Risk" }),
             [
-              { key: "overdue", label: "Gecikmiş", value: b.overdue, dot: "bg-negative" },
-              { key: "dueToday", label: "Bugün son gün", value: b.dueToday, dot: "bg-warning" },
-              { key: "syncError", label: "Senkron hatası", value: b.syncError, dot: "bg-negative-700" }
+              { key: "overdue", label: "Gecikmiş", value: f.overdue, dot: "bg-negative" },
+              { key: "dueToday", label: "Bugün son gün", value: f.dueToday, dot: "bg-warning" },
+              { key: "syncError", label: "Senkron hatası", value: f.syncError, dot: "bg-negative-700" }
             ].filter((x) => x.value > 0).map((x) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 px-2 py-1", children: [
               /* @__PURE__ */ e.jsx("span", { className: k("h-[7px] w-[7px] shrink-0 rounded-full", x.dot), "aria-hidden": "true" }),
               /* @__PURE__ */ e.jsx("span", { className: "flex-1 text-[11.5px] text-text-secondary", children: x.label }),
@@ -766,8 +767,8 @@ function va({
   filterCount: o = 0,
   onClearFilters: i,
   lastSyncAt: m,
-  syncError: f = !1,
-  canCreateTask: b = !0,
+  syncError: b = !1,
+  canCreateTask: f = !0,
   compact: u = !1
 }) {
   const h = a !== "agenda", n = ya(m);
@@ -809,19 +810,19 @@ function va({
           ]
         }
       ),
-      (n || f) && /* @__PURE__ */ e.jsxs(
+      (n || b) && /* @__PURE__ */ e.jsxs(
         "span",
         {
           className: k(
             "flex items-center gap-1.5 rounded-md px-2 py-1 text-[11.5px] font-medium",
-            f ? "bg-negative-50 text-negative-700" : "text-text-tertiary"
+            b ? "bg-negative-50 text-negative-700" : "text-text-tertiary"
           ),
-          title: f ? "Bir dış takvim senkronlanamıyor" : "Dış takvimlerin son senkron zamanı",
+          title: b ? "Bir dış takvim senkronlanamıyor" : "Dış takvimlerin son senkron zamanı",
           children: [
             /* @__PURE__ */ e.jsx(
               "span",
               {
-                className: k("h-[6px] w-[6px] rounded-full", f ? "bg-negative" : "bg-positive"),
+                className: k("h-[6px] w-[6px] rounded-full", b ? "bg-negative" : "bg-positive"),
                 "aria-hidden": "true"
               }
             ),
@@ -882,7 +883,7 @@ function va({
         },
         x
       )) }),
-      b && !u && /* @__PURE__ */ e.jsxs(z, { variant: "primary", size: "sm", onClick: Ne, children: [
+      f && !u && /* @__PURE__ */ e.jsxs(z, { variant: "primary", size: "sm", onClick: Ne, children: [
         /* @__PURE__ */ e.jsx("i", { className: "fa fa-plus me-1.5", "aria-hidden": "true" }),
         "Yeni görev"
       ] })
@@ -916,12 +917,12 @@ function Sa({ days: t, byDay: a, today: s, capacity: r, onSelectItem: l, onSelec
     }, 6e4);
     return () => clearInterval(j);
   }, []);
-  const f = t.map(E), b = {}, u = {};
-  for (const j of f) {
+  const b = t.map(E), f = {}, u = {};
+  for (const j of b) {
     const w = a[j] ?? [];
-    b[j] = w.filter(it), u[j] = w.filter((A) => !it(A));
+    f[j] = w.filter(it), u[j] = w.filter((A) => !it(A));
   }
-  const h = f.flatMap((j) => b[j]), { start: n, end: x } = ra(h), v = Array.from({ length: x - n }, (j, w) => n + w), D = (x - n) * ee, $ = f.includes(d) && i >= n * 60 && i <= x * 60;
+  const h = b.flatMap((j) => f[j]), { start: n, end: x } = ra(h), v = Array.from({ length: x - n }, (j, w) => n + w), D = (x - n) * ee, $ = b.includes(d) && i >= n * 60 && i <= x * 60;
   return g.useEffect(() => {
     if (!$ || !o.current) return;
     const j = (i - n * 60) / 60 * ee;
@@ -978,7 +979,7 @@ function Sa({ days: t, byDay: a, today: s, capacity: r, onSelectItem: l, onSelec
             /* @__PURE__ */ e.jsx("br", {}),
             "tarih"
           ] }),
-          f.map((j) => /* @__PURE__ */ e.jsxs("div", { className: "flex min-h-[46px] flex-col gap-[3px] border-l border-subtle p-1", children: [
+          b.map((j) => /* @__PURE__ */ e.jsxs("div", { className: "flex min-h-[46px] flex-col gap-[3px] border-l border-subtle p-1", children: [
             u[j].slice(0, 4).map((w) => /* @__PURE__ */ e.jsxs(
               "button",
               {
@@ -1037,7 +1038,7 @@ function Sa({ days: t, byDay: a, today: s, capacity: r, onSelectItem: l, onSelec
               },
               j
             )) }),
-            f.map((j) => /* @__PURE__ */ e.jsxs("div", { className: "relative border-l border-subtle", children: [
+            b.map((j) => /* @__PURE__ */ e.jsxs("div", { className: "relative border-l border-subtle", children: [
               v.map((w, A) => /* @__PURE__ */ e.jsx(
                 "div",
                 {
@@ -1046,7 +1047,7 @@ function Sa({ days: t, byDay: a, today: s, capacity: r, onSelectItem: l, onSelec
                 },
                 w
               )),
-              b[j].map((w) => {
+              f[j].map((w) => {
                 const A = je(w.startTime), S = w.endTime ? je(w.endTime) : A + 60, N = (A - n * 60) / 60 * ee, F = Math.max((S - A) / 60 * ee, 18);
                 return /* @__PURE__ */ e.jsxs(
                   "button",
@@ -1100,25 +1101,25 @@ function Da({ item: t }) {
     staleTime: 10 * 6e4
   }), d = L({
     mutationFn: async () => {
-      const f = new FormData();
-      f.append("file", new Blob([`${t.title}
+      const b = new FormData();
+      b.append("file", new Blob([`${t.title}
 
 ${c}`], { type: "text/plain" }), "toplanti-notlari.txt");
-      const b = await fetch(`/api/ai-task-generator/parse?projectId=${a}`, {
+      const f = await fetch(`/api/ai-task-generator/parse?projectId=${a}`, {
         method: "POST",
-        body: f,
+        body: b,
         headers: { "X-Requested-With": "XMLHttpRequest" }
       });
-      if (!b.ok) throw new Error("Notlardan görev çıkarılamadı.");
-      return b.json();
+      if (!f.ok) throw new Error("Notlardan görev çıkarılamadı.");
+      return f.json();
     },
-    onSuccess: (f) => l(new Set(((f == null ? void 0 : f.suggestions) ?? []).map((b, u) => u)))
+    onSuccess: (b) => l(new Set(((b == null ? void 0 : b.suggestions) ?? []).map((f, u) => u)))
   }), o = L({
     mutationFn: () => {
-      var f;
+      var b;
       return K.post("/api/ai-task-generator/create-tasks", {
         projectId: a,
-        approvedTasks: (((f = d.data) == null ? void 0 : f.suggestions) ?? []).filter((b, u) => r.has(u))
+        approvedTasks: (((b = d.data) == null ? void 0 : b.suggestions) ?? []).filter((f, u) => r.has(u))
       });
     },
     /* Olay takvimin kendi dinleyicisiyle feed ve ekip yükünü tazeler, damga Pano'yu. */
@@ -1132,12 +1133,12 @@ ${c}`], { type: "text/plain" }), "toplanti-notlari.txt");
         "select",
         {
           value: a,
-          onChange: (f) => s(f.target.value),
+          onChange: (b) => s(b.target.value),
           "aria-label": "Görevlerin ekleneceği proje",
           className: "mt-1.5 w-full rounded-md border border-default bg-surface-base px-2 py-1.5 text-[12px] text-text-primary",
           children: [
             /* @__PURE__ */ e.jsx("option", { value: "", children: "Proje seçin…" }),
-            (p.data ?? []).map((f) => /* @__PURE__ */ e.jsx("option", { value: f.id, children: f.name }, f.id))
+            (p.data ?? []).map((b) => /* @__PURE__ */ e.jsx("option", { value: b.id, children: b.name }, b.id))
           ]
         }
       ),
@@ -1154,21 +1155,21 @@ ${c}`], { type: "text/plain" }), "toplanti-notlari.txt");
       ),
       d.isError && /* @__PURE__ */ e.jsx("p", { className: "mt-1.5 text-[11px] text-negative-700", children: d.error.message }),
       i.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "mt-2", children: [
-        i.map((f, b) => /* @__PURE__ */ e.jsxs("label", { className: "flex cursor-pointer items-start gap-2 border-b border-subtle py-1.5 last:border-b-0", children: [
+        i.map((b, f) => /* @__PURE__ */ e.jsxs("label", { className: "flex cursor-pointer items-start gap-2 border-b border-subtle py-1.5 last:border-b-0", children: [
           /* @__PURE__ */ e.jsx(
             "input",
             {
               type: "checkbox",
-              checked: r.has(b),
+              checked: r.has(f),
               onChange: () => l((u) => {
                 const h = new Set(u);
-                return h.has(b) ? h.delete(b) : h.add(b), h;
+                return h.has(f) ? h.delete(f) : h.add(f), h;
               }),
               className: "mt-1 h-3.5 w-3.5 accent-[color:var(--apya-accent-500)]"
             }
           ),
-          /* @__PURE__ */ e.jsx("span", { className: "min-w-0 flex-1 text-[12px] text-text-primary", children: f.title })
-        ] }, `${f.title}-${b}`)),
+          /* @__PURE__ */ e.jsx("span", { className: "min-w-0 flex-1 text-[12px] text-text-primary", children: b.title })
+        ] }, `${b.title}-${f}`)),
         /* @__PURE__ */ e.jsx(
           z,
           {
@@ -1195,10 +1196,10 @@ function oe({ label: t, children: a }) {
   ] }) : null;
 }
 function Ta({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: l, isPending: c, error: p, onRetry: d }) {
-  const [o, i] = g.useState(() => t.date.slice(0, 10)), m = O[t.source], f = Ca[t.risk], b = t.date.slice(0, 10);
-  g.useEffect(() => i(b), [b]);
+  const [o, i] = g.useState(() => t.date.slice(0, 10)), m = O[t.source], b = Ca[t.risk], f = t.date.slice(0, 10);
+  g.useEffect(() => i(f), [f]);
   const u = () => {
-    !o || o === b || r(t, /* @__PURE__ */ new Date(`${o}T00:00:00`));
+    !o || o === f || r(t, /* @__PURE__ */ new Date(`${o}T00:00:00`));
   };
   return /* @__PURE__ */ e.jsx(ue, { open: !0, onOpenChange: (h) => {
     h || s();
@@ -1209,7 +1210,7 @@ function Ta({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: l, 
           m && /* @__PURE__ */ e.jsx("i", { className: k("fa text-[10px]", m.icon), "aria-hidden": "true" }),
           m == null ? void 0 : m.label
         ] }),
-        f && /* @__PURE__ */ e.jsx("span", { className: k("rounded-md px-2 py-1 text-[11px] font-bold", f.cls), children: f.text }),
+        b && /* @__PURE__ */ e.jsx("span", { className: k("rounded-md px-2 py-1 text-[11px] font-bold", b.cls), children: b.text }),
         t.isDone && /* @__PURE__ */ e.jsx("span", { className: "rounded-md bg-positive-50 px-2 py-1 text-[11px] font-bold text-positive-700", children: "Tamamlandı" }),
         /* @__PURE__ */ e.jsx(
           "button",
@@ -1243,7 +1244,7 @@ function Ta({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: l, 
         {
           size: "sm",
           variant: "outline",
-          onClick: () => r(t, M(/* @__PURE__ */ new Date(`${b}T00:00:00`), 1)),
+          onClick: () => r(t, M(/* @__PURE__ */ new Date(`${f}T00:00:00`), 1)),
           children: "+1 gün ertele"
         }
       )
@@ -1260,9 +1261,9 @@ function Ta({ item: t, capacity: a, onClose: s, onReschedule: r, onComplete: l, 
             "aria-label": "Son tarih"
           }
         ),
-        o !== b && /* @__PURE__ */ e.jsx(z, { size: "sm", variant: "primary", onClick: u, children: "Uygula" })
+        o !== f && /* @__PURE__ */ e.jsx(z, { size: "sm", variant: "primary", onClick: u, children: "Uygula" })
       ] }) : /* @__PURE__ */ e.jsxs("span", { className: "text-text-secondary", children: [
-        C.dayTitle(/* @__PURE__ */ new Date(`${b}T00:00:00`)),
+        C.dayTitle(/* @__PURE__ */ new Date(`${f}T00:00:00`)),
         /* @__PURE__ */ e.jsx("span", { className: "ml-1.5 text-text-tertiary", children: "· takvimden değiştirilemez" })
       ] }) }),
       /* @__PURE__ */ e.jsx(oe, { label: "Bağlam", children: t.subtitle }),
@@ -1398,11 +1399,11 @@ function qe(t) {
 }
 function qa({ account: t, onSave: a, saving: s }) {
   var h;
-  const r = La[t.provider] ?? { label: "Takvim", icon: "fa-calendar", brand: "bg-neutral-700" }, l = Aa(), c = za(), [p, d] = g.useState(() => new Set(t.syncSources ?? [])), [o, i] = g.useState(t.conflictRule ?? 0), [m, f] = g.useState(t.isSyncEnabled);
+  const r = La[t.provider] ?? { label: "Takvim", icon: "fa-calendar", brand: "bg-neutral-700" }, l = Aa(), c = za(), [p, d] = g.useState(() => new Set(t.syncSources ?? [])), [o, i] = g.useState(t.conflictRule ?? 0), [m, b] = g.useState(t.isSyncEnabled);
   g.useEffect(() => {
-    d(new Set(t.syncSources ?? [])), i(t.conflictRule ?? 0), f(t.isSyncEnabled);
+    d(new Set(t.syncSources ?? [])), i(t.conflictRule ?? 0), b(t.isSyncEnabled);
   }, [t]);
-  const b = m !== t.isSyncEnabled || o !== t.conflictRule || p.size !== (t.syncSources ?? []).length || [...p].some((n) => !(t.syncSources ?? []).includes(n)), u = (n) => d((x) => {
+  const f = m !== t.isSyncEnabled || o !== t.conflictRule || p.size !== (t.syncSources ?? []).length || [...p].some((n) => !(t.syncSources ?? []).includes(n)), u = (n) => d((x) => {
     const v = new Set(x);
     return v.has(n) ? v.delete(n) : v.add(n), v;
   });
@@ -1423,7 +1424,7 @@ function qa({ account: t, onSave: a, saving: s }) {
           {
             type: "checkbox",
             checked: m,
-            onChange: (n) => f(n.target.checked),
+            onChange: (n) => b(n.target.checked),
             className: "h-3.5 w-3.5 accent-[color:var(--apya-accent-500)]"
           }
         ),
@@ -1477,7 +1478,7 @@ function qa({ account: t, onSave: a, saving: s }) {
           n
         );
       }) }),
-      b && /* @__PURE__ */ e.jsxs("div", { className: "mt-3 flex items-center gap-2", children: [
+      f && /* @__PURE__ */ e.jsxs("div", { className: "mt-3 flex items-center gap-2", children: [
         /* @__PURE__ */ e.jsx(
           z,
           {
@@ -1535,7 +1536,7 @@ const _a = [
 ];
 function Ga({ open: t }) {
   var j, w, A, S;
-  const a = Ka(t), s = Pa(), r = Ia(t), l = Oa(), c = Fa(), p = Ma(), [d, o] = g.useState(""), [i, m] = g.useState(""), [f, b] = g.useState(60), [u, h] = g.useState(!1), n = (j = a.data) != null && j.path ? `${window.location.origin}${a.data.path}` : "", x = d.trim(), v = /^https?:\/\//i.test(x), D = x !== "" && !v && !p.data, $ = async () => {
+  const a = Ka(t), s = Pa(), r = Ia(t), l = Oa(), c = Fa(), p = Ma(), [d, o] = g.useState(""), [i, m] = g.useState(""), [b, f] = g.useState(60), [u, h] = g.useState(!1), n = (j = a.data) != null && j.path ? `${window.location.origin}${a.data.path}` : "", x = d.trim(), v = /^https?:\/\//i.test(x), D = x !== "" && !v && !p.data, $ = async () => {
     try {
       await navigator.clipboard.writeText(n), h(!0), setTimeout(() => h(!1), 2e3);
     } catch {
@@ -1614,8 +1615,8 @@ function Ga({ open: t }) {
           /* @__PURE__ */ e.jsx(
             "select",
             {
-              value: f,
-              onChange: (N) => b(Number(N.target.value)),
+              value: b,
+              onChange: (N) => f(Number(N.target.value)),
               "aria-label": "Yenileme sıklığı",
               className: "rounded-md border border-default bg-surface-base px-2 py-1.5 text-[12px] text-text-primary",
               children: _a.map((N) => /* @__PURE__ */ e.jsx("option", { value: N.value, children: N.label }, N.value))
@@ -1640,7 +1641,7 @@ function Ga({ open: t }) {
               variant: "primary",
               disabled: !v || l.isPending,
               onClick: () => l.mutate(
-                { url: x, displayName: i, color: "accent", refreshMinutes: f },
+                { url: x, displayName: i, color: "accent", refreshMinutes: b },
                 { onSuccess: () => {
                   o(""), m(""), p.reset();
                 } }
@@ -1795,7 +1796,7 @@ function Wa({ open: t, items: a, today: s, capacity: r, onClose: l }) {
   g.useEffect(() => {
     o(new Set(c.map((n) => n.item.key)));
   }, [c]);
-  const i = Ha(), m = i.data ?? [], f = new Map(m.filter((n) => !n.succeeded).map((n) => [n.sourceId, n.error])), b = (n) => o((x) => {
+  const i = Ha(), m = i.data ?? [], b = new Map(m.filter((n) => !n.succeeded).map((n) => [n.sourceId, n.error])), f = (n) => o((x) => {
     const v = new Set(x);
     return v.has(n) ? v.delete(n) : v.add(n), v;
   }), u = c.filter((n) => d.has(n.item.key)), h = () => {
@@ -1836,7 +1837,7 @@ function Wa({ open: t, items: a, today: s, capacity: r, onClose: l }) {
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex-1 overflow-y-auto px-4 py-2", children: [
       c.map(({ item: n, date: x }) => {
-        const v = f.get(n.sourceId);
+        const v = b.get(n.sourceId);
         return /* @__PURE__ */ e.jsxs(
           "label",
           {
@@ -1850,7 +1851,7 @@ function Wa({ open: t, items: a, today: s, capacity: r, onClose: l }) {
                 {
                   type: "checkbox",
                   checked: d.has(n.key),
-                  onChange: () => b(n.key),
+                  onChange: () => f(n.key),
                   className: "mt-1 h-3.5 w-3.5 accent-[color:var(--apya-accent-500)]"
                 }
               ),
@@ -1912,7 +1913,7 @@ const Va = [
 ], ke = ["Kaynaklar", "Dış takvim", "Kurallar"];
 function Xa({ open: t, counts: a, onDone: s }) {
   var u, h;
-  const [r, l] = g.useState(0), [c, p] = g.useState(() => new Set(Pe)), [d, o] = g.useState(8), i = Qa(), m = Nt(), f = () => {
+  const [r, l] = g.useState(0), [c, p] = g.useState(() => new Set(Pe)), [d, o] = g.useState(8), i = Qa(), m = Nt(), b = () => {
     i.mutate(
       {
         dailyCapacityHours: d > 0 ? d : 0,
@@ -1923,13 +1924,13 @@ function Xa({ open: t, counts: a, onDone: s }) {
          kaybolur ve kullanıcı kurulumu yaptığını sanır. */
       { onSuccess: s }
     );
-  }, b = (n) => p((x) => {
+  }, f = (n) => p((x) => {
     const v = new Set(x);
     return v.has(n) ? v.delete(n) : v.add(n), v;
   });
   return /* @__PURE__ */ e.jsx(pt, { open: t, onOpenChange: (n) => {
     n || s();
-  }, children: /* @__PURE__ */ e.jsxs(bt, { className: "w-full max-w-[520px] p-0 h-auto max-h-[88dvh] tablet:min-h-0", children: [
+  }, children: /* @__PURE__ */ e.jsxs(ft, { className: "w-full max-w-[520px] p-0 h-auto max-h-[88dvh] tablet:min-h-0", children: [
     /* @__PURE__ */ e.jsxs("header", { className: "shrink-0 border-b border-subtle px-5 py-4", children: [
       /* @__PURE__ */ e.jsx("h2", { className: "text-[18px] font-semibold tracking-tight text-text-primary", children: "Takviminizi kurun" }),
       /* @__PURE__ */ e.jsx("p", { className: "mt-1 text-[12px] leading-snug text-text-tertiary", children: "Hangi kaynakları göreceğinizi seçin, dilerseniz dış takvim bağlayın. Her ayarı sonradan değiştirebilirsiniz." }),
@@ -1957,7 +1958,7 @@ function Xa({ open: t, counts: a, onDone: s }) {
               type: "button",
               role: "switch",
               "aria-checked": x,
-              onClick: () => b(n),
+              onClick: () => f(n),
               className: k(
                 "flex items-center gap-2.5 rounded-md border px-3 py-2 text-left transition-colors duration-fast",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus",
@@ -2041,8 +2042,8 @@ function Xa({ open: t, counts: a, onDone: s }) {
         ke.length
       ] }),
       /* @__PURE__ */ e.jsx("span", { className: "flex-1" }),
-      /* @__PURE__ */ e.jsx(z, { size: "sm", variant: "ghost", onClick: f, disabled: i.isPending, children: "Şimdilik atla" }),
-      r < ke.length - 1 ? /* @__PURE__ */ e.jsx(z, { size: "sm", variant: "primary", onClick: () => l((n) => n + 1), children: "Devam" }) : /* @__PURE__ */ e.jsx(z, { size: "sm", variant: "primary", onClick: f, disabled: i.isPending, children: i.isPending ? "Kaydediliyor…" : "Bitir" })
+      /* @__PURE__ */ e.jsx(z, { size: "sm", variant: "ghost", onClick: b, disabled: i.isPending, children: "Şimdilik atla" }),
+      r < ke.length - 1 ? /* @__PURE__ */ e.jsx(z, { size: "sm", variant: "primary", onClick: () => l((n) => n + 1), children: "Devam" }) : /* @__PURE__ */ e.jsx(z, { size: "sm", variant: "primary", onClick: b, disabled: i.isPending, children: i.isPending ? "Kaydediliyor…" : "Bitir" })
     ] })
   ] }) });
 }
@@ -2074,7 +2075,7 @@ function ct({ children: t }) {
 function Za({ open: t, onClose: a }) {
   return /* @__PURE__ */ e.jsx(pt, { open: t, onOpenChange: (s) => {
     s || a();
-  }, children: /* @__PURE__ */ e.jsxs(bt, { className: "w-full max-w-[480px] p-0", children: [
+  }, children: /* @__PURE__ */ e.jsxs(ft, { className: "w-full max-w-[480px] p-0", children: [
     /* @__PURE__ */ e.jsxs("header", { className: "flex items-center justify-between border-b border-subtle px-5 py-3", children: [
       /* @__PURE__ */ e.jsx("h2", { className: "text-[15px] font-semibold text-text-primary", children: "Klavye kısayolları" }),
       /* @__PURE__ */ e.jsx(
@@ -2112,14 +2113,14 @@ function es({ polite: t, assertive: a }) {
 }
 const ts = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
 function as({ items: t, month: a, today: s, generatedAt: r }) {
-  var b;
+  var f;
   const l = gt(a), c = E(s), p = {};
   for (const u of t ?? [])
-    (p[b = u.date.slice(0, 10)] ?? (p[b] = [])).push(u);
+    (p[f = u.date.slice(0, 10)] ?? (p[f] = [])).push(u);
   const d = Me(s), o = (t ?? []).filter((u) => {
     const h = u.date.slice(0, 10);
     return h >= E(d) && h <= E(M(d, 7));
-  }), { overdue: i, days: m } = kt(o, s), f = (u) => u === I.OVERDUE ? "border-l-[3px] border-l-black" : u === I.DUE_TODAY ? "border-l-[3px] border-l-neutral-500" : "border-l-[3px] border-l-neutral-300";
+  }), { overdue: i, days: m } = kt(o, s), b = (u) => u === I.OVERDUE ? "border-l-[3px] border-l-black" : u === I.DUE_TODAY ? "border-l-[3px] border-l-neutral-500" : "border-l-[3px] border-l-neutral-300";
   return /* @__PURE__ */ e.jsxs("div", { className: "apya-print-root hidden print:block", children: [
     /* @__PURE__ */ e.jsxs("section", { className: "apya-print-page", children: [
       /* @__PURE__ */ e.jsxs("header", { className: "flex items-end justify-between border-b-2 border-black pb-2", children: [
@@ -2155,7 +2156,7 @@ function as({ items: t, month: a, today: s, generatedAt: r }) {
                 {
                   className: k(
                     "mt-0.5 truncate ps-1 text-[7.5pt] leading-tight",
-                    f(v.risk),
+                    b(v.risk),
                     v.risk === I.OVERDUE ? "font-semibold" : "font-normal",
                     v.isDone && "line-through"
                   ),
@@ -2245,7 +2246,7 @@ function ss({ rows: t, days: a, capacity: s, loading: r }) {
           /* @__PURE__ */ e.jsx("span", { className: "shrink-0 font-mono text-[10.5px] tabular-nums text-text-tertiary", children: C.hours(c.totalHours) })
         ] }),
         /* @__PURE__ */ e.jsx("div", { className: "mt-0.5 flex gap-[2px]", children: (l.length ? l : (c.days ?? []).map((d) => d.date.slice(0, 10))).map((d) => {
-          const o = p[d], i = (o == null ? void 0 : o.hours) ?? 0, m = s && i > s, f = s ? Math.min(i / s, 1) : i > 0 ? 1 : 0;
+          const o = p[d], i = (o == null ? void 0 : o.hours) ?? 0, m = s && i > s, b = s ? Math.min(i / s, 1) : i > 0 ? 1 : 0;
           return /* @__PURE__ */ e.jsx(
             "span",
             {
@@ -2255,7 +2256,7 @@ function ss({ rows: t, days: a, capacity: s, loading: r }) {
                 "span",
                 {
                   className: k("block h-full", m ? "bg-negative" : "bg-accent"),
-                  style: { width: `${f * 100}%` }
+                  style: { width: `${b * 100}%` }
                 }
               )
             },
@@ -2313,12 +2314,12 @@ function os({ defaultView: t = "month" } = {}) {
   const p = g.useCallback((m) => {
     we.includes(m) && (r(m), Ae(Dt, m));
   }, []), d = g.useCallback((m) => {
-    c((f) => {
-      const b = new Set(f);
-      return b.has(m) ? b.delete(m) : b.add(m), Ae(Fe, [...b].join(",")), b;
+    c((b) => {
+      const f = new Set(b);
+      return f.has(m) ? f.delete(m) : f.add(m), Ae(Fe, [...f].join(",")), f;
     });
   }, []), o = g.useCallback((m) => {
-    a || we.includes(m) && r((f) => f === m ? f : m);
+    a || we.includes(m) && r((b) => b === m ? b : m);
   }, [a]), i = g.useCallback(() => {
     const m = new Set(de);
     c(m), Ae(Fe, [...m].join(","));
@@ -2339,24 +2340,24 @@ function ds(t, a) {
   } : s);
 }
 function us({ onOfflineFailure: t } = {}) {
-  const a = U(), [s, r] = g.useState(null), [l, c] = g.useState({}), [p, d] = g.useState({}), o = g.useRef({}), i = g.useCallback((b) => {
-    delete o.current[b], c((u) => {
-      if (!u[b]) return u;
+  const a = U(), [s, r] = g.useState(null), [l, c] = g.useState({}), [p, d] = g.useState({}), o = g.useRef({}), i = g.useCallback((f) => {
+    delete o.current[f], c((u) => {
+      if (!u[f]) return u;
       const h = { ...u };
-      return delete h[b], h;
+      return delete h[f], h;
     });
   }, []), m = L({
-    mutationFn: ({ item: b, newDate: u }) => K.post("/api/app/calendar/reschedule-item", {
-      source: b.source,
-      sourceId: b.sourceId,
+    mutationFn: ({ item: f, newDate: u }) => K.post("/api/app/calendar/reschedule-item", {
+      source: f.source,
+      sourceId: f.sourceId,
       newDate: E(u)
     }),
-    onMutate: async ({ item: b, newDate: u }) => {
+    onMutate: async ({ item: f, newDate: u }) => {
       await a.cancelQueries({ queryKey: H });
       const h = a.getQueriesData({ queryKey: H });
-      return i(b.key), d((n) => ({ ...n, [b.key]: !0 })), cs(a, b.key, E(u)), { snapshot: h, previousDate: b.date.slice(0, 10) };
+      return i(f.key), d((n) => ({ ...n, [f.key]: !0 })), cs(a, f.key, E(u)), { snapshot: h, previousDate: f.date.slice(0, 10) };
     },
-    onError: (b, { item: u, newDate: h }, n) => {
+    onError: (f, { item: u, newDate: h }, n) => {
       var x;
       if (typeof navigator < "u" && !navigator.onLine) {
         t == null || t({
@@ -2367,10 +2368,10 @@ function us({ onOfflineFailure: t } = {}) {
       }
       (x = n == null ? void 0 : n.snapshot) == null || x.forEach(([v, D]) => a.setQueryData(v, D)), o.current[u.key] = { item: u, newDate: h }, c((v) => ({
         ...v,
-        [u.key]: (b == null ? void 0 : b.message) || "Kaydedilemedi — tarih değişmedi."
+        [u.key]: (f == null ? void 0 : f.message) || "Kaydedilemedi — tarih değişmedi."
       }));
     },
-    onSuccess: (b, { item: u, newDate: h }, n) => {
+    onSuccess: (f, { item: u, newDate: h }, n) => {
       nt(), r({
         key: u.key,
         message: `“${u.title}” ${E(h)} tarihine taşındı.`,
@@ -2380,33 +2381,33 @@ function us({ onOfflineFailure: t } = {}) {
         })
       });
     },
-    onSettled: (b, u, { item: h }) => {
+    onSettled: (f, u, { item: h }) => {
       d((n) => {
         const x = { ...n };
         return delete x[h.key], x;
       }), a.invalidateQueries({ queryKey: H });
     }
-  }), f = L({
-    mutationFn: ({ item: b }) => K.post("/api/app/calendar/complete-item", {
-      source: b.source,
-      sourceId: b.sourceId
+  }), b = L({
+    mutationFn: ({ item: f }) => K.post("/api/app/calendar/complete-item", {
+      source: f.source,
+      sourceId: f.sourceId
     }),
-    onMutate: async ({ item: b }) => {
+    onMutate: async ({ item: f }) => {
       await a.cancelQueries({ queryKey: H });
       const u = a.getQueriesData({ queryKey: H });
-      return i(b.key), d((h) => ({ ...h, [b.key]: !0 })), ds(a, b.key), { snapshot: u };
+      return i(f.key), d((h) => ({ ...h, [f.key]: !0 })), ds(a, f.key), { snapshot: u };
     },
-    onError: (b, { item: u }, h) => {
+    onError: (f, { item: u }, h) => {
       var n;
       (n = h == null ? void 0 : h.snapshot) == null || n.forEach(([x, v]) => a.setQueryData(x, v)), o.current[u.key] = { item: u }, c((x) => ({
         ...x,
-        [u.key]: (b == null ? void 0 : b.message) || "Tamamlanamadı."
+        [u.key]: (f == null ? void 0 : f.message) || "Tamamlanamadı."
       }));
     },
-    onSuccess: (b, { item: u }) => {
+    onSuccess: (f, { item: u }) => {
       nt(), r({ key: u.key, message: `“${u.title}” tamamlandı.`, undo: null });
     },
-    onSettled: (b, u, { item: h }) => {
+    onSettled: (f, u, { item: h }) => {
       d((n) => {
         const x = { ...n };
         return delete x[h.key], x;
@@ -2414,17 +2415,17 @@ function us({ onOfflineFailure: t } = {}) {
     }
   });
   return {
-    reschedule: (b, u) => m.mutate({ item: b, newDate: u }),
-    complete: (b) => f.mutate({ item: b }),
-    retry: (b, u) => u ? m.mutate({ item: b, newDate: u }) : f.mutate({ item: b }),
+    reschedule: (f, u) => m.mutate({ item: f, newDate: u }),
+    complete: (f) => b.mutate({ item: f }),
+    retry: (f, u) => u ? m.mutate({ item: f, newDate: u }) : b.mutate({ item: f }),
     /** Reddedilen son işlemi aynen yineler; kayıt yoksa yalnız hata şeridini kapatır. */
-    retryFailed: (b) => {
-      const u = o.current[b];
+    retryFailed: (f) => {
+      const u = o.current[f];
       if (!u) {
-        i(b);
+        i(f);
         return;
       }
-      u.newDate ? m.mutate({ item: u.item, newDate: u.newDate }) : f.mutate({ item: u.item });
+      u.newDate ? m.mutate({ item: u.item, newDate: u.newDate }) : b.mutate({ item: u.item });
     },
     lastAction: s,
     dismissAction: () => r(null),
@@ -2506,7 +2507,7 @@ function ps({
     return window.addEventListener("keydown", o), () => window.removeEventListener("keydown", o);
   }, [d, t, a, s, r, l, c, p]);
 }
-function bs({ from: t, to: a, enabled: s }) {
+function fs({ from: t, to: a, enabled: s }) {
   const r = E(t), l = E(a);
   return W({
     queryKey: ["calendar", "team-load", r, l],
@@ -2530,9 +2531,9 @@ function ut(t) {
   } catch {
   }
 }
-function fs({ onFlush: t }) {
+function bs({ onFlush: t }) {
   const [a, s] = g.useState(() => typeof navigator > "u" ? !0 : navigator.onLine), [r, l] = g.useState(() => Ke().length), c = g.useRef(!1), p = g.useCallback((o) => {
-    const m = Ke().filter((f) => f.key !== o.key).concat(o);
+    const m = Ke().filter((b) => b.key !== o.key).concat(o);
     ut(m), l(m.length);
   }, []), d = g.useCallback(async () => {
     if (c.current) return;
@@ -2544,8 +2545,8 @@ function fs({ onFlush: t }) {
         for (const m of o)
           try {
             await t(m);
-          } catch (f) {
-            Qt(f) || i.push(m);
+          } catch (b) {
+            Qt(b) || i.push(m);
           }
         ut(i), l(i.length);
       } finally {
@@ -2592,7 +2593,7 @@ function ks() {
 }
 function vs() {
   var Xe, ge, Je, Ze, et, tt, at, st;
-  const [t, a] = hs(), s = gs(a), r = s === "narrow", l = g.useMemo(() => Ie(/* @__PURE__ */ new Date()), []), [c, p] = g.useState(l), [d, o] = g.useState(null), [i, m] = g.useState(null), [f, b] = g.useState(!1), [u, h] = g.useState(!1), [n, x] = g.useState(!1), [v, D] = g.useState(!1), [$, j] = g.useState(null), [w, A] = g.useState(!1), { view: S, setView: N, applyResponsiveDefault: F, enabledSources: V, toggleSource: De, resetSources: X } = os();
+  const [t, a] = hs(), s = gs(a), r = s === "narrow", l = g.useMemo(() => Ie(/* @__PURE__ */ new Date()), []), [c, p] = g.useState(l), [d, o] = g.useState(null), [i, m] = g.useState(null), [b, f] = g.useState(!1), [u, h] = g.useState(!1), [n, x] = g.useState(!1), [v, D] = g.useState(!1), [$, j] = g.useState(null), [w, A] = g.useState(!1), { view: S, setView: N, applyResponsiveDefault: F, enabledSources: V, toggleSource: De, resetSources: X } = os();
   g.useEffect(() => {
     a !== 0 && F(r ? "agenda" : "month");
   }, [a, r, F]);
@@ -2623,19 +2624,19 @@ function vs() {
     };
   }, [S, c, l]), { data: T, error: J, isPending: ae, isError: _e, isFetching: Et, isPlaceholderData: $t, refetch: Ge } = ns(B), me = _e && !T, Ce = `${E(B.from)}/${E(B.to)}`, [pe, Ye] = g.useState(null), se = (pe == null ? void 0 : pe.feedKey) === Ce, Rt = () => {
     Ye({ feedKey: Ce, error: J }), Ge().finally(() => Ye((y) => (y == null ? void 0 : y.feedKey) === Ce ? null : y));
-  }, Ue = g.useId(), _ = xs(B), Qe = Ua(), Te = bs({ from: B.from, to: B.to, enabled: w });
+  }, Ue = g.useId(), _ = xs(B), Qe = Ua(), Te = fs({ from: B.from, to: B.to, enabled: w });
   Ut();
-  const q = fs({
+  const q = bs({
     onFlush: (y) => K.post("/api/app/calendar/reschedule-item", y.payload)
-  }), be = g.useMemo(
+  }), fe = g.useMemo(
     () => {
       var y;
       return [...(T == null ? void 0 : T.items) ?? [], ...((y = _.data) == null ? void 0 : y.items) ?? []];
     },
     [T, _.data]
   ), Q = g.useMemo(
-    () => be.filter((y) => V.has(y.source)),
-    [be, V]
+    () => fe.filter((y) => V.has(y.source)),
+    [fe, V]
   ), G = g.useMemo(() => yt(Q), [Q]), Y = (T == null ? void 0 : T.dailyCapacityHours) ?? null, He = g.useMemo(() => {
     const y = {};
     for (const R of (T == null ? void 0 : T.sources) ?? []) y[R.source] = R.count;
@@ -2661,7 +2662,7 @@ function vs() {
   g.useEffect(() => {
     d && !G[d] && !ae && (d >= E(B.from) && d <= E(B.to) || o(null));
   }, [d, G, ae, B]);
-  const fe = g.useCallback((y) => m(y.key), []), Ve = g.useCallback(() => {
+  const be = g.useCallback((y) => m(y.key), []), Ve = g.useCallback(() => {
     p(l), o(E(l));
   }, [l]), P = us({ onOfflineFailure: q.enqueue }), he = !!((Je = (ge = (Xe = window.abp) == null ? void 0 : Xe.auth) == null ? void 0 : ge.isGranted) != null && Je.call(ge, "Platform.Tasks.Create")), Pt = g.useCallback((y) => {
     const R = $ ?? d;
@@ -2681,13 +2682,13 @@ function vs() {
     },
     onToggleHelp: () => D((y) => !y)
   });
-  const $e = be.length > 0, It = $e && Q.length === 0, Ot = d ? G[d] ?? [] : [], ie = i ? be.find((y) => y.key === i) ?? null : null, Re = d && /* @__PURE__ */ e.jsx(
+  const $e = fe.length > 0, It = $e && Q.length === 0, Ot = d ? G[d] ?? [] : [], ie = i ? fe.find((y) => y.key === i) ?? null : null, Re = d && /* @__PURE__ */ e.jsx(
     oa,
     {
       dayKey: d,
       items: Ot,
       capacity: Y,
-      onSelectItem: fe,
+      onSelectItem: be,
       onClose: () => o(null)
     }
   );
@@ -2772,7 +2773,7 @@ function vs() {
           compact: s !== "wide",
           externalAccounts: ((Ze = _.data) == null ? void 0 : Ze.accounts) ?? [],
           externalLoading: _.isFetching,
-          onOpenSync: () => b(!0),
+          onOpenSync: () => f(!0),
           teamOpen: w,
           onToggleTeam: () => A((y) => !y),
           teamContent: w ? /* @__PURE__ */ e.jsx(
@@ -2834,7 +2835,7 @@ function vs() {
             today: l,
             capacity: Y,
             selectedDay: d,
-            onSelectItem: fe,
+            onSelectItem: be,
             onSelectDay: o,
             onDropItem: P.reschedule,
             focusedDay: $,
@@ -2851,7 +2852,7 @@ function vs() {
             today: l,
             capacity: Y,
             selectedDay: d,
-            onSelectItem: fe,
+            onSelectItem: be,
             onSelectDay: o
           }
         ) : /* @__PURE__ */ e.jsx(
@@ -2859,7 +2860,7 @@ function vs() {
           {
             items: Q,
             today: l,
-            onSelectItem: fe,
+            onSelectItem: be,
             onSmartDefer: () => h(!0)
           }
         ),
@@ -2910,7 +2911,7 @@ function vs() {
         assertive: ((st = (at = (tt = _.data) == null ? void 0 : tt.accounts) == null ? void 0 : at.find((y) => y.error)) == null ? void 0 : st.error) ?? ""
       }
     ),
-    /* @__PURE__ */ e.jsx(Ya, { open: f, onClose: () => b(!1) }),
+    /* @__PURE__ */ e.jsx(Ya, { open: b, onClose: () => f(!1) }),
     /* @__PURE__ */ e.jsx(
       Wa,
       {

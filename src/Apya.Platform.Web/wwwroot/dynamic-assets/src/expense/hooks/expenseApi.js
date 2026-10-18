@@ -4,8 +4,8 @@ import { api } from '../../lib/api/httpClient';
  * Saha harcama girişinin GERÇEK sunucu uçları.
  *
  * Bu dosyadan önce gönderim `fixtures.js`'e gidiyordu: kullanıcı "Masraf
- * kaydedildi" görüyor, ortada hiçbir kayıt olmuyordu. OCR hâlâ fixture —
- * sunucuda gider için OCR ucu YOK — ama ekran bunu artık kullanıcıya söylüyor.
+ * kaydedildi" görüyor, ortada hiçbir kayıt olmuyordu. Sunucuda gider için fiş
+ * okuma ucu YOK; bu yüzden form boş açılır (F-01), fotoğraf sunucuya gönderilmez.
  */
 
 /** Kayıt formunun bağlam seçicileri: proje ve kasa listesi. */

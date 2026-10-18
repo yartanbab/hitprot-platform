@@ -1,27 +1,30 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { CameraCapture } from './components/CameraCapture';
-import { OcrProcessingScreen } from './components/OcrProcessingScreen';
 import { ExpenseFormSheet } from './components/ExpenseFormSheet';
 import { SuccessConfirmation } from './components/SuccessConfirmation';
 import {
-    useBudgetLines, useCaptureContext, useOcrParse, useOfflineState, useQueueFlush, useSubmitExpense,
+    useBudgetLines, useCaptureContext, useOfflineState, useQueueFlush, useSubmitExpense,
 } from './hooks/useExpenseCapture';
 import { ThemeToggle } from '../components/ui';
 import { useToast } from '../lib/feedback';
 import { formatMoney } from '../lib/utils';
 
 /**
- * State machine — 4 phase:
- *   capture → ocr → form → success → (capture | exit)
+ * State machine — 3 phase:
+ *   capture → form → success → (capture | exit)
+ *
+ * F-01: Eskiden capture ile form arasında bir "ocr" aşaması vardı; gerçek okuma yoktu,
+ * sahte değerler (dosya boyutundan tutar, hazır listeden tedarikçi) öneriliyor ve ekran
+ * "AI otomatik okur" diyordu. Sunucuda gider için okuma ucu olana dek form BOŞ açılır,
+ * fotoğraf formun üstünde gösterilir; kullanıcı değerleri ona bakarak girer.
  *
  * APYA-107 refinements:
  *   - submit başarılı → toast.success "Kaydedildi" + 800ms sonra capture'a
  *     otomatik dönüş (saha kullanıcısı ardışık masraf girer; success screen
  *     zaman kaybı). Kullanıcı önce close ederse success screen kalır.
  *   - submit hatası → toast.error + form açık kalır (kullanıcı düzeltsin).
- *   - OCR fail → ham form'la devam, kullanıcı manuel doldurur (sessiz fallback).
  */
-const PHASES = { CAPTURE: 'capture', OCR: 'ocr', FORM: 'form', SUCCESS: 'success' };
+const PHASES = { CAPTURE: 'capture', FORM: 'form', SUCCESS: 'success' };
 const SUCCESS_AUTO_RESET_MS = 1500;        /* Success ekranı görünür kalsın ki
                                               kullanıcı "kaydedildi"yi okusun;
                                               sonra otomatik capture'a dön. */
@@ -36,34 +39,22 @@ export function ExpenseCaptureFlow() {
     const lines = useBudgetLines(projectId);
     const { isOnline, queued, refreshQueued } = useOfflineState();
 
-    const ocr = useOcrParse();
     const submit = useSubmitExpense();
     const toast = useToast();
 
-    const handleFile = useCallback(async (file) => {
+    const handleFile = useCallback((file) => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(URL.createObjectURL(file));
-        setPhase(PHASES.OCR);
-        try {
-            await ocr.mutateAsync(file);
-            setPhase(PHASES.FORM);
-        } catch (err) {
-            /* OCR fail — form'u boş aç, kullanıcı manuel doldursun. */
-            toast.warning('Otomatik okuma başarısız', {
-                description: 'Alanları manuel girebilirsin.',
-            });
-            setPhase(PHASES.FORM);
-        }
-    }, [previewUrl, ocr, toast]);
+        setPhase(PHASES.FORM);
+    }, [previewUrl]);
 
     const resetForCapture = useCallback(() => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
         setSubmittedResult(null);
-        ocr.reset();
         submit.reset();
         setPhase(PHASES.CAPTURE);
-    }, [previewUrl, ocr, submit]);
+    }, [previewUrl, submit]);
 
     const handleSubmit = useCallback(async (payload) => {
         try {
@@ -156,7 +147,6 @@ export function ExpenseCaptureFlow() {
 
             <main className="max-w-2xl mx-auto p-4">
                 {phase === PHASES.CAPTURE && <CameraCapture onFile={handleFile} />}
-                {phase === PHASES.OCR && <OcrProcessingScreen previewUrl={previewUrl} />}
                 {phase === PHASES.SUCCESS && (
                     <SuccessConfirmation
                         result={submittedResult}
@@ -171,7 +161,7 @@ export function ExpenseCaptureFlow() {
                 onOpenChange={(open) => {
                     if (!open) setPhase(PHASES.CAPTURE);
                 }}
-                ocrResult={ocr.data}
+                previewUrl={previewUrl}
                 onSubmit={handleSubmit}
                 isSubmitting={submit.isPending}
                 context={context.data}

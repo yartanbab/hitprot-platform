@@ -1,17 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Sheet, Button, Badge, Input, MoneyInput, Combobox } from '../../components/ui';
-import { ConfidenceMeter } from '../../components/ai';
+import React, { useEffect, useState } from 'react';
+import { Sheet, Button, Input, MoneyInput, Combobox } from '../../components/ui';
 import { cn, formatMoney } from '../../lib/utils';
-import { LOW_CONFIDENCE_THRESHOLD } from '../hooks/fixtures';
 
 /**
  * Expense form — bottom sheet on mobile, side drawer on tablet/desktop.
- * AI'dan gelen değerlerle pre-filled. Kullanıcı düzeltir, gönderir.
+ * BOŞ açılır; çekilen fotoğraf üstte gösterilir, kullanıcı değerleri ona bakarak girer.
+ *
+ * F-01: Form eskiden sahte "AI okuma" değerleriyle (dosya boyutundan tutar, hazır listeden
+ * tedarikçi) dolu açılıyor, alanlarda güven rozeti ve "AI emin değil" ipucu gösteriyordu.
+ * Okuma gerçek değildi; kullanıcı uydurma değeri kaydedebilirdi. Sunucuya hiç gitmeyen
+ * KDV alanı da kalktı (gider sözleşmesinde KDV yok).
  *
  * APYA-107 refinements:
- *   - Per-field confidence: ocrResult.fields[k].confidence düşükse alan
- *     warning border + alt ipucu alır. Form bu alanlara FOCUS DA bizzat
- *     yapar — kullanıcı en şüpheli alanı en başta görür, doğrular.
  *   - Form 4 kritik alan (Tutar, Tarih, Tedarikçi, Kategori); ekstralar
  *     "Daha fazla" disclosure'ında.
  *   - APYA-106 primitive'leri: MoneyInput (locale + currency), Input,
@@ -44,43 +44,16 @@ const SELECT_CLS = [
 ].join(' ');
 
 export function ExpenseFormSheet({
-    open, onOpenChange, ocrResult, onSubmit, isSubmitting,
+    open, onOpenChange, previewUrl, onSubmit, isSubmitting,
     context, lines, onProjectChange, isOffline,
 }) {
-    const [form, setForm] = useState(() => initialFromOcr(ocrResult));
+    const [form, setForm] = useState(emptyForm);
     const [showMore, setShowMore] = useState(false);
-    const firstLowConfFieldRef = useRef(null);
 
-    /* OCR sonucu değişince form'u sıfırla. Kullanıcı düzelmeye başladıysa
-       yine de yeni OCR'a geç — capture flow yeni dosya = yeni session. */
+    /* Yeni fotoğraf = yeni kayıt: form sıfırlanır. */
     useEffect(() => {
-        setForm(initialFromOcr(ocrResult));
-    }, [ocrResult]);
-
-    /* Form açıldığında en düşük güvenli alana focus. Strategy: kullanıcı
-       şüpheli alanı görür, hemen düzeltir. Tutar gibi yüksek güvenli alanlara
-       focus etmek hata; kullanıcı zaten doğru olduğunu görüyor. */
-    useEffect(() => {
-        if (!open || !ocrResult?.fields) return;
-        const t = setTimeout(() => firstLowConfFieldRef.current?.focus?.(), 80);
-        return () => clearTimeout(t);
-    }, [open, ocrResult]);
-
-    const fieldConfidence = useMemo(
-        () => ocrResult?.fields ?? {},
-        [ocrResult],
-    );
-
-    /* "İlk low-conf" alanı belirle — auto-focus için. Sıra: vendor → category
-       → date → amount (UX'e göre kullanıcının düzeltmek isteyeceği sıra). */
-    const firstLowConf = useMemo(() => {
-        const order = ['vendor', 'category', 'date', 'amount'];
-        for (const key of order) {
-            const c = fieldConfidence[key]?.confidence;
-            if (c != null && c < LOW_CONFIDENCE_THRESHOLD) return key;
-        }
-        return null;
-    }, [fieldConfidence]);
+        setForm(emptyForm());
+    }, [previewUrl]);
 
     const update = (field) => (e) =>
         setForm((s) => ({ ...s, [field]: e?.target ? e.target.value : e }));
@@ -98,28 +71,18 @@ export function ExpenseFormSheet({
         const payload = {
             ...form,
             amount: typeof form.amount === 'number' ? form.amount : parseFloat(form.amount),
-            taxRate: typeof form.taxRate === 'number' ? form.taxRate : parseFloat(form.taxRate),
         };
         await onSubmit(payload);
     };
 
-    const globalConfidence = ocrResult?.confidence ?? 0;
-    const confLabel = globalConfidence >= 0.85 ? 'Yüksek güven'
-                    : globalConfidence >= 0.65 ? 'Orta güven'
-                    : 'Düşük güven — kontrol edin';
-    const confVariant = globalConfidence >= 0.85 ? 'positive'
-                      : globalConfidence >= 0.65 ? 'warning'
-                      : 'critical';
-
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
-            <Sheet.Content title="Masraf detayları" description="AI tarafından okunan tutarları doğrulayın ve gönderin">
+            <Sheet.Content title="Masraf detayları" description="Fişteki bilgileri girin ve gönderin">
                 {/* flex-1 min-h-0: Sheet yalnız max-height taşıdığı için h-full auto'ya
                     düşüyordu; gövde kaymıyor, mobilde Gönder ekran dışında kalıyordu. */}
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
                     <header className="px-4 pt-2 pb-3 border-b border-subtle flex items-center justify-between">
                         <h2 className="text-lg font-semibold">Masraf Detayları</h2>
-                        <Badge variant={confVariant} size="sm" withDot>{confLabel}</Badge>
                     </header>
 
                     <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
@@ -127,8 +90,22 @@ export function ExpenseFormSheet({
                             <div className="rounded-xl border border-warning bg-warning-subtle px-3 py-2 text-[12.5px] text-warning">
                                 <i className="fa-solid fa-wifi-slash mr-1.5" />
                                 Bağlantı yok — kayıt <strong>cihazda saklanır</strong>, bağlantı gelince
-                                gönderilir. Fotoğraf kuyruğa girmez; kayıt belgesiz oluşur.
+                                gönderilir.
                             </div>
+                        )}
+
+                        {previewUrl && (
+                            <figure className="flex flex-col gap-1.5">
+                                <img
+                                    src={previewUrl}
+                                    alt="Çekilen fiş fotoğrafı"
+                                    className="max-h-64 w-full rounded-md border border-subtle bg-surface-sunken object-contain"
+                                />
+                                <figcaption className="text-xs text-text-tertiary">
+                                    Fotoğraf yalnız bu ekranda görünür, kayda eklenmez. Belgeyi sonradan
+                                    Dokümanlar'dan bu gidere bağlayabilirsin.
+                                </figcaption>
+                            </figure>
                         )}
 
                         {/* ── BAĞLAM (tasarım 1d): proje · kalem · kasa ───────────
@@ -176,52 +153,45 @@ export function ExpenseFormSheet({
                             </select>
                         </Field>
 
-                        <Field label="Tutar" required confidence={fieldConfidence.amount?.confidence}>
+                        <Field label="Tutar" required>
                             <MoneyInput
-                                ref={firstLowConf === 'amount' ? firstLowConfFieldRef : undefined}
                                 value={form.amount}
                                 onValueChange={(v) => setForm((s) => ({ ...s, amount: v ?? '' }))}
                                 currency={form.currency}
                                 currencies={CURRENCIES}
                                 onCurrencyChange={(c) => setForm((s) => ({ ...s, currency: c }))}
                                 size="lg"
-                                invalid={fieldConfidence.amount?.confidence < LOW_CONFIDENCE_THRESHOLD}
                                 required
                                 min={0.01}
                             />
                         </Field>
 
-                        <Field label="Tarih" required confidence={fieldConfidence.date?.confidence}>
+                        <Field label="Tarih" required>
                             <Input
-                                ref={firstLowConf === 'date' ? firstLowConfFieldRef : undefined}
                                 type="date"
                                 required
                                 size="lg"
                                 value={form.date}
                                 onChange={update('date')}
-                                invalid={fieldConfidence.date?.confidence < LOW_CONFIDENCE_THRESHOLD}
                             />
                         </Field>
 
-                        <Field label="Tedarikçi" required confidence={fieldConfidence.vendor?.confidence}>
+                        <Field label="Tedarikçi" required>
                             <Input
-                                ref={firstLowConf === 'vendor' ? firstLowConfFieldRef : undefined}
                                 type="text"
                                 required
                                 size="lg"
                                 value={form.vendor}
                                 onChange={update('vendor')}
-                                invalid={fieldConfidence.vendor?.confidence < LOW_CONFIDENCE_THRESHOLD}
                                 placeholder="örn. Migros A.Ş."
                             />
                         </Field>
 
-                        <Field label="Kategori" confidence={fieldConfidence.category?.confidence}>
+                        <Field label="Kategori">
                             <Combobox
                                 options={CATEGORY_OPTIONS}
                                 value={form.category}
                                 onChange={(value) => setForm((s) => ({ ...s, category: value }))}
-                                invalid={fieldConfidence.category?.confidence < LOW_CONFIDENCE_THRESHOLD}
                                 placeholder="Kategori seç"
                             />
                         </Field>
@@ -236,15 +206,6 @@ export function ExpenseFormSheet({
 
                         {showMore && (
                             <>
-                                <Field label="KDV Oranı (%)">
-                                    <Input
-                                        type="number"
-                                        step="0.1"
-                                        value={form.taxRate}
-                                        onChange={update('taxRate')}
-                                        className="font-tabular"
-                                    />
-                                </Field>
                                 <Field label="Not">
                                     <textarea
                                         rows={2}
@@ -292,42 +253,24 @@ export function ExpenseFormSheet({
     );
 }
 
-function Field({ label, required, confidence, children }) {
-    /* Per-field confidence rozeti — yalnızca değer gelmişse ve <0.95 ise göster.
-       0.95+ "kesin biliyorum" anlamında; UI'ı kalabalıklaştırmak gereksiz.
-       <LOW_CONFIDENCE_THRESHOLD ise alt satırda "AI emin değil" ipucu. */
-    const showMeter = confidence != null && confidence < 0.95;
-    const isLowConf = confidence != null && confidence < LOW_CONFIDENCE_THRESHOLD;
-
+function Field({ label, required, children }) {
     return (
         <label className="flex flex-col gap-1.5">
-            <span className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-text-secondary">
-                    {label}{required && <span className="text-text-negative ml-0.5">*</span>}
-                </span>
-                {showMeter && (
-                    <ConfidenceMeter score={confidence} showLabel={false} size="sm" />
-                )}
+            <span className="text-sm font-medium text-text-secondary">
+                {label}{required && <span className="text-text-negative ml-0.5">*</span>}
             </span>
             {children}
-            {isLowConf && (
-                <span className="text-xs text-text-warning">
-                    AI bu alandan emin değil — doğrula.
-                </span>
-            )}
         </label>
     );
 }
 
-function initialFromOcr(ocr) {
-    const f = ocr?.fields ?? {};
+function emptyForm() {
     return {
-        amount:   f.amount?.value   ?? '',
-        currency: f.currency?.value ?? 'TRY',
-        date:     f.date?.value     ?? new Date().toISOString().slice(0, 10),
-        vendor:   f.vendor?.value   ?? '',
-        category: f.category?.value ?? '',
-        taxRate:  f.taxRate?.value  ?? 20,
+        amount:   '',
+        currency: 'TRY',
+        date:     new Date().toISOString().slice(0, 10),
+        vendor:   '',
+        category: '',
         note:     '',
     };
 }

@@ -1,6 +1,6 @@
-import { r as c, j as o, b as x } from "./react-vendor-D7YDiBbi.js";
-import { t as ne, g as se, h as z, S as oe, i as ie, b as _, c as U, d as G, e as R, f as T, D as L, j as le, k as q } from "./ui-vendor-UYevF8mE.js";
-import { t as de } from "./index-DgpuJ91w.js";
+import { r as c, j as s, b as x } from "./react-vendor-D7YDiBbi.js";
+import { t as ne, g as se, h as z, S as oe, i as ie, b as _, c as U, d as G, e as R, f as T, D as L, j as de, k as q } from "./ui-vendor-UYevF8mE.js";
+import { t as le } from "./index-DgpuJ91w.js";
 const W = "apya-theme", D = "system", J = c.createContext({
   preference: D,
   resolvedTheme: "light",
@@ -31,35 +31,35 @@ function I(r) {
   e.setAttribute("data-theme", r), r === "dark" ? e.classList.add("dark") : e.classList.remove("dark"), e.classList.remove("lpx-theme-light", "lpx-theme-dark", "lpx-theme-dim"), e.classList.add(r === "dark" ? "lpx-theme-dark" : "lpx-theme-light");
 }
 function Ie({ children: r, defaultPreference: e = D }) {
-  const [t, a] = c.useState(() => ce() ?? e), [n, s] = c.useState(() => B(t)), d = c.useCallback((l) => {
-    if (l !== "light" && l !== "dark" && l !== "system") return;
-    a(l);
+  const [t, a] = c.useState(() => ce() ?? e), [n, o] = c.useState(() => B(t)), l = c.useCallback((d) => {
+    if (d !== "light" && d !== "dark" && d !== "system") return;
+    a(d);
     try {
-      window.localStorage.setItem(W, l);
+      window.localStorage.setItem(W, d);
     } catch {
     }
-    const f = B(l);
-    s(f), I(f);
+    const f = B(d);
+    o(f), I(f);
   }, []);
   c.useEffect(() => {
     if (t !== "system" || typeof window > "u" || !window.matchMedia)
       return;
-    const l = window.matchMedia("(prefers-color-scheme: dark)"), f = () => {
+    const d = window.matchMedia("(prefers-color-scheme: dark)"), f = () => {
       const b = K() ? "dark" : "light";
-      s(b), I(b);
+      o(b), I(b);
     };
-    return l.addEventListener("change", f), () => l.removeEventListener("change", f);
+    return d.addEventListener("change", f), () => d.removeEventListener("change", f);
   }, [t]), c.useEffect(() => {
     I(B(t));
   }, []);
   const u = c.useCallback(() => {
-    const l = ["light", "dark", "system"], f = l.indexOf(t), b = l[(f + 1) % l.length];
-    d(b);
-  }, [t, d]), m = c.useMemo(
-    () => ({ preference: t, resolvedTheme: n, setPreference: d, toggle: u }),
-    [t, n, d, u]
+    const d = ["light", "dark", "system"], f = d.indexOf(t), b = d[(f + 1) % d.length];
+    l(b);
+  }, [t, l]), m = c.useMemo(
+    () => ({ preference: t, resolvedTheme: n, setPreference: l, toggle: u }),
+    [t, n, l, u]
   );
-  return /* @__PURE__ */ o.jsx(J.Provider, { value: m, children: r });
+  return /* @__PURE__ */ s.jsx(J.Provider, { value: m, children: r });
 }
 function Oe() {
   const r = c.useContext(J);
@@ -139,41 +139,41 @@ const ue = z(
       size: "md"
     }
   }
-), $e = x.forwardRef(function({
+), Ye = x.forwardRef(function({
   className: e,
   variant: t,
   size: a,
   asChild: n = !1,
-  isLoading: s = !1,
-  loadingText: d,
+  isLoading: o = !1,
+  loadingText: l,
   leadingIcon: u,
   trailingIcon: m,
-  disabled: l,
+  disabled: d,
   children: f,
   type: b = "button",
-  ...v
+  ...g
 }, y) {
-  const j = n ? oe : "button", g = l || s;
-  return /* @__PURE__ */ o.jsxs(
+  const j = n ? oe : "button", v = d || o;
+  return /* @__PURE__ */ s.jsxs(
     j,
     {
       ref: y,
       type: n ? void 0 : b,
-      disabled: n ? void 0 : g,
-      "aria-busy": s || void 0,
-      "data-loading": s || void 0,
+      disabled: n ? void 0 : v,
+      "aria-busy": o || void 0,
+      "data-loading": o || void 0,
       className: i(ue({ variant: t, size: a }), e),
-      ...v,
+      ...g,
       children: [
-        s ? /* @__PURE__ */ o.jsx(me, {}) : u,
-        n ? /* @__PURE__ */ o.jsx(ie, { children: f }) : /* @__PURE__ */ o.jsx("span", { className: s ? "opacity-80" : void 0, children: s && d ? d : f }),
-        !s && m
+        o ? /* @__PURE__ */ s.jsx(me, {}) : u,
+        n ? /* @__PURE__ */ s.jsx(ie, { children: f }) : /* @__PURE__ */ s.jsx("span", { className: o ? "opacity-80" : void 0, children: o && l ? l : f }),
+        !o && m
       ]
     }
   );
 });
 function me() {
-  return /* @__PURE__ */ o.jsx(
+  return /* @__PURE__ */ s.jsx(
     "svg",
     {
       className: "animate-spin",
@@ -184,7 +184,7 @@ function me() {
       stroke: "currentColor",
       strokeWidth: "2",
       "aria-hidden": "true",
-      children: /* @__PURE__ */ o.jsx("path", { d: "M21 12a9 9 0 1 1-6.219-8.56", strokeLinecap: "round" })
+      children: /* @__PURE__ */ s.jsx("path", { d: "M21 12a9 9 0 1 1-6.219-8.56", strokeLinecap: "round" })
     }
   );
 }
@@ -201,11 +201,11 @@ const fe = {
   compact: "p-3",
   comfortable: "p-4",
   spacious: "p-6"
-}, N = x.forwardRef(function({ className: e, variant: t = "default", density: a, children: n, ...s }, d) {
-  return /* @__PURE__ */ o.jsx(
+}, N = x.forwardRef(function({ className: e, variant: t = "default", density: a, children: n, ...o }, l) {
+  return /* @__PURE__ */ s.jsx(
     "div",
     {
-      ref: d,
+      ref: l,
       "data-density": a,
       className: i(
         "rounded-xl overflow-hidden",
@@ -213,15 +213,15 @@ const fe = {
         fe[t],
         e
       ),
-      ...s,
+      ...o,
       children: n
     }
   );
-}), be = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, s) {
-  return /* @__PURE__ */ o.jsx(
+}), be = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, o) {
+  return /* @__PURE__ */ s.jsx(
     "div",
     {
-      ref: s,
+      ref: o,
       className: i(
         "flex flex-col gap-1",
         "border-b border-subtle",
@@ -232,11 +232,11 @@ const fe = {
       children: a
     }
   );
-}), xe = x.forwardRef(function({ className: e, as: t = "h3", children: a, ...n }, s) {
-  return /* @__PURE__ */ o.jsx(
+}), xe = x.forwardRef(function({ className: e, as: t = "h3", children: a, ...n }, o) {
+  return /* @__PURE__ */ s.jsx(
     t,
     {
-      ref: s,
+      ref: o,
       className: i(
         "text-lg font-semibold leading-tight text-text-primary",
         e
@@ -245,8 +245,8 @@ const fe = {
       children: a
     }
   );
-}), pe = x.forwardRef(function({ className: e, children: t, ...a }, n) {
-  return /* @__PURE__ */ o.jsx(
+}), he = x.forwardRef(function({ className: e, children: t, ...a }, n) {
+  return /* @__PURE__ */ s.jsx(
     "p",
     {
       ref: n,
@@ -255,21 +255,21 @@ const fe = {
       children: t
     }
   );
-}), he = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, s) {
-  return /* @__PURE__ */ o.jsx(
+}), pe = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, o) {
+  return /* @__PURE__ */ s.jsx(
     "div",
     {
-      ref: s,
+      ref: o,
       className: i(P[t], e),
       ...n,
       children: a
     }
   );
-}), ve = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, s) {
-  return /* @__PURE__ */ o.jsx(
+}), ge = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, o) {
+  return /* @__PURE__ */ s.jsx(
     "div",
     {
-      ref: s,
+      ref: o,
       className: i(
         "flex items-center justify-end gap-2",
         "border-t border-subtle bg-surface-sunken",
@@ -283,30 +283,10 @@ const fe = {
 });
 N.Header = be;
 N.Title = xe;
-N.Description = pe;
-N.Body = he;
-N.Footer = ve;
-function Ye({ className: r, width: e, height: t, rounded: a = "md", ...n }) {
-  const s = {};
-  return e !== void 0 && (s.width = typeof e == "number" ? `${e}px` : e), t !== void 0 && (s.height = typeof t == "number" ? `${t}px` : t), /* @__PURE__ */ o.jsx(
-    "div",
-    {
-      "aria-busy": "true",
-      "aria-live": "polite",
-      className: i(
-        "skeleton",
-        a === "full" && "rounded-full",
-        a === "sm" && "rounded-sm",
-        a === "md" && "rounded-md",
-        a === "lg" && "rounded-lg",
-        r
-      ),
-      style: s,
-      ...n
-    }
-  );
-}
-const $ = z(
+N.Description = he;
+N.Body = pe;
+N.Footer = ge;
+const Y = z(
   i(
     "block w-full bg-surface-base text-text-primary",
     "rounded-md border",
@@ -333,57 +313,57 @@ const $ = z(
       tone: "default"
     }
   }
-), ge = x.forwardRef(function({
+), ve = x.forwardRef(function({
   className: e,
   size: t,
   invalid: a,
   leading: n,
-  trailing: s,
-  type: d = "text",
+  trailing: o,
+  type: l = "text",
   ...u
 }, m) {
-  const l = a ? "error" : "default";
-  return !n && !s ? /* @__PURE__ */ o.jsx(
+  const d = a ? "error" : "default";
+  return !n && !o ? /* @__PURE__ */ s.jsx(
     "input",
     {
       ref: m,
-      type: d,
+      type: l,
       "aria-invalid": a || void 0,
-      className: i($({ size: t, tone: l }), e),
+      className: i(Y({ size: t, tone: d }), e),
       ...u
     }
-  ) : /* @__PURE__ */ o.jsxs(
+  ) : /* @__PURE__ */ s.jsxs(
     "span",
     {
       className: i(
-        $({ size: t, tone: l }),
+        Y({ size: t, tone: d }),
         "inline-flex items-center gap-2 px-0",
         "focus-within:shadow-focus focus-within:border-focus",
         e
       ),
       children: [
-        n && /* @__PURE__ */ o.jsx("span", { className: "flex-none pl-3 text-text-tertiary", children: n }),
-        /* @__PURE__ */ o.jsx(
+        n && /* @__PURE__ */ s.jsx("span", { className: "flex-none pl-3 text-text-tertiary", children: n }),
+        /* @__PURE__ */ s.jsx(
           "input",
           {
             ref: m,
-            type: d,
+            type: l,
             "aria-invalid": a || void 0,
             className: i(
               "flex-1 min-w-0 bg-transparent outline-none border-0 p-0",
               "text-text-primary placeholder:text-text-tertiary",
               !n && "pl-3",
-              !s && "pr-3",
+              !o && "pr-3",
               "disabled:cursor-not-allowed disabled:text-text-disabled"
             ),
             ...u
           }
         ),
-        s && /* @__PURE__ */ o.jsx("span", { className: "flex-none pr-3 text-text-tertiary", children: s })
+        o && /* @__PURE__ */ s.jsx("span", { className: "flex-none pr-3 text-text-tertiary", children: o })
       ]
     }
   );
-}), Y = {
+}), $ = {
   TRY: "₺",
   USD: "$",
   EUR: "€",
@@ -398,8 +378,8 @@ function H(r) {
   const t = e.lastIndexOf(","), a = e.lastIndexOf(".");
   let n;
   t > a ? n = e.replace(/\./g, "").replace(",", ".") : a > t ? n = e.replace(/,/g, "") : n = e, n = n.replace(/[^\d.\-]/g, "");
-  const s = Number(n);
-  return Number.isFinite(s) ? s : null;
+  const o = Number(n);
+  return Number.isFinite(o) ? o : null;
 }
 function O(r, e, t) {
   return r == null || !Number.isFinite(r) ? "" : new Intl.NumberFormat(e, {
@@ -408,65 +388,65 @@ function O(r, e, t) {
     useGrouping: !0
   }).format(r);
 }
-const He = x.forwardRef(function({
+const $e = x.forwardRef(function({
   value: e,
   onValueChange: t,
   currency: a = "TRY",
   currencies: n,
   /* opsiyonel array → dropdown */
-  onCurrencyChange: s,
-  locale: d = "tr-TR",
+  onCurrencyChange: o,
+  locale: l = "tr-TR",
   fractionDigits: u = 2,
   min: m,
-  max: l,
+  max: d,
   invalid: f,
   size: b,
-  placeholder: v = "0,00",
+  placeholder: g = "0,00",
   className: y,
   inputClassName: j,
-  ...g
+  ...v
 }, Z) {
-  const [F, C] = c.useState(() => O(e, d, u)), M = c.useRef(!1);
+  const [F, k] = c.useState(() => O(e, l, u)), M = c.useRef(!1);
   x.useEffect(() => {
-    M.current || C(O(e, d, u));
-  }, [e, d, u]);
-  const A = c.useCallback((p) => {
-    const h = p.target.value;
-    C(h);
-    const w = H(h);
+    M.current || k(O(e, l, u));
+  }, [e, l, u]);
+  const A = c.useCallback((h) => {
+    const p = h.target.value;
+    k(p);
+    const w = H(p);
     t == null || t(w);
-  }, [t]), V = c.useCallback((p) => {
-    M.current = !0, e != null && (C(String(e).replace(".", d.startsWith("tr") ? "," : ".")), requestAnimationFrame(() => {
-      var h, w;
-      return (w = (h = p.target) == null ? void 0 : h.select) == null ? void 0 : w.call(h);
+  }, [t]), V = c.useCallback((h) => {
+    M.current = !0, e != null && (k(String(e).replace(".", l.startsWith("tr") ? "," : ".")), requestAnimationFrame(() => {
+      var p, w;
+      return (w = (p = h.target) == null ? void 0 : p.select) == null ? void 0 : w.call(p);
     }));
-  }, [e, d]), ee = c.useCallback((p) => {
+  }, [e, l]), ee = c.useCallback((h) => {
     var w;
     M.current = !1;
-    const h = H(F);
-    t == null || t(h), C(O(h, d, u)), (w = g.onBlur) == null || w.call(g, p);
-  }, [F, t, d, u, g]), te = c.useMemo(() => e == null ? !1 : m != null && e < m || l != null && e > l, [e, m, l]), re = Y[a] ?? a, ae = n && n.length > 1 && s ? /* @__PURE__ */ o.jsx(
+    const p = H(F);
+    t == null || t(p), k(O(p, l, u)), (w = v.onBlur) == null || w.call(v, h);
+  }, [F, t, l, u, v]), te = c.useMemo(() => e == null ? !1 : m != null && e < m || d != null && e > d, [e, m, d]), re = $[a] ?? a, ae = n && n.length > 1 && o ? /* @__PURE__ */ s.jsx(
     "select",
     {
       value: a,
-      onChange: (p) => s(p.target.value),
-      "aria-label": de("Common:Currency", "Para birimi"),
+      onChange: (h) => o(h.target.value),
+      "aria-label": le("Common:Currency", "Para birimi"),
       className: i(
         "bg-transparent border-0 outline-none text-sm text-text-secondary",
         "pr-1 -mr-1 cursor-pointer",
         "focus-visible:outline-none"
       ),
-      children: n.map((p) => /* @__PURE__ */ o.jsx("option", { value: p, children: Y[p] ?? p }, p))
+      children: n.map((h) => /* @__PURE__ */ s.jsx("option", { value: h, children: $[h] ?? h }, h))
     }
-  ) : /* @__PURE__ */ o.jsx("span", { className: "font-medium text-text-secondary", children: re });
-  return /* @__PURE__ */ o.jsx(
-    ge,
+  ) : /* @__PURE__ */ s.jsx("span", { className: "font-medium text-text-secondary", children: re });
+  return /* @__PURE__ */ s.jsx(
+    ve,
     {
       ref: Z,
       inputMode: "decimal",
       type: "text",
       value: F,
-      placeholder: v,
+      placeholder: g,
       onChange: A,
       onFocus: V,
       onBlur: ee,
@@ -474,7 +454,7 @@ const He = x.forwardRef(function({
       size: b,
       trailing: ae,
       className: i("font-tabular text-right", y),
-      ...g
+      ...v
     }
   );
 }), we = z(
@@ -515,9 +495,9 @@ const He = x.forwardRef(function({
   critical: "bg-critical-500",
   ai: "bg-ai-500"
 };
-function _e({ variant: r = "neutral", size: e, withDot: t = !1, className: a, children: n, ...s }) {
-  return /* @__PURE__ */ o.jsxs("span", { className: i(we({ variant: r, size: e }), a), ...s, children: [
-    t && /* @__PURE__ */ o.jsx(
+function He({ variant: r = "neutral", size: e, withDot: t = !1, className: a, children: n, ...o }) {
+  return /* @__PURE__ */ s.jsxs("span", { className: i(we({ variant: r, size: e }), a), ...o, children: [
+    t && /* @__PURE__ */ s.jsx(
       "span",
       {
         className: i("inline-block h-1.5 w-1.5 rounded-full", ye[r]),
@@ -543,24 +523,24 @@ function X(r, e) {
   const a = document.activeElement;
   a && a !== document.body || (r.preventDefault(), t.focus({ preventScroll: !0 }));
 }
-function k({ open: r, onOpenChange: e, children: t }) {
+function C({ open: r, onOpenChange: e, children: t }) {
   const a = Q(r);
-  return /* @__PURE__ */ o.jsx(L, { open: r, onOpenChange: e, children: /* @__PURE__ */ o.jsx(S.Provider, { value: a, children: t }) });
+  return /* @__PURE__ */ s.jsx(L, { open: r, onOpenChange: e, children: /* @__PURE__ */ s.jsx(S.Provider, { value: a, children: t }) });
 }
-const je = x.forwardRef(function({ side: e, className: t, children: a, title: n, description: s, onCloseAutoFocus: d, ...u }, m) {
-  const l = x.useContext(S), f = e === "bottom" ? "inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom" : e === "right" ? "inset-y-0 right-0 w-full max-w-md border-l animate-sheet-right" : i(
+const je = x.forwardRef(function({ side: e, className: t, children: a, title: n, description: o, onCloseAutoFocus: l, ...u }, m) {
+  const d = x.useContext(S), f = e === "bottom" ? "inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom" : e === "right" ? "inset-y-0 right-0 w-full max-w-md border-l animate-sheet-right" : i(
     "inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom",
     "tablet:inset-x-auto tablet:inset-y-0 tablet:right-0 tablet:left-auto tablet:bottom-auto",
     "tablet:w-full tablet:max-w-md tablet:max-h-none tablet:rounded-none tablet:border-l tablet:border-t-0",
     "tablet:animate-sheet-right"
   );
-  return /* @__PURE__ */ o.jsxs(_, { children: [
-    /* @__PURE__ */ o.jsx(U, { className: i(
+  return /* @__PURE__ */ s.jsxs(_, { children: [
+    /* @__PURE__ */ s.jsx(U, { className: i(
       "fixed inset-0 z-modal-backdrop",
       "bg-surface-overlay backdrop-blur-sm",
       "animate-overlay-fade"
     ) }),
-    /* @__PURE__ */ o.jsxs(
+    /* @__PURE__ */ s.jsxs(
       G,
       {
         ref: m,
@@ -575,42 +555,42 @@ const je = x.forwardRef(function({ side: e, className: t, children: a, title: n,
         ),
         ...u,
         onCloseAutoFocus: (b) => {
-          d == null || d(b), X(b, l);
+          l == null || l(b), X(b, d);
         },
         children: [
-          e !== "right" && /* @__PURE__ */ o.jsx("div", { className: "tablet:hidden flex justify-center pt-2 pb-1", children: /* @__PURE__ */ o.jsx("div", { className: "h-1 w-10 rounded-full bg-neutral-300", "aria-hidden": "true" }) }),
-          n && /* @__PURE__ */ o.jsx(R, { className: "sr-only", children: n }),
-          s && /* @__PURE__ */ o.jsx(T, { className: "sr-only", children: s }),
+          e !== "right" && /* @__PURE__ */ s.jsx("div", { className: "tablet:hidden flex justify-center pt-2 pb-1", children: /* @__PURE__ */ s.jsx("div", { className: "h-1 w-10 rounded-full bg-neutral-300", "aria-hidden": "true" }) }),
+          n && /* @__PURE__ */ s.jsx(R, { className: "sr-only", children: n }),
+          o && /* @__PURE__ */ s.jsx(T, { className: "sr-only", children: o }),
           a
         ]
       }
     )
   ] });
-}), Ne = le, ke = q, Ce = R, De = T;
-k.Trigger = Ne;
-k.Close = ke;
-k.Content = je;
-k.Title = Ce;
-k.Description = De;
+}), Ne = de, Ce = q, ke = R, De = T;
+C.Trigger = Ne;
+C.Close = Ce;
+C.Content = je;
+C.Title = ke;
+C.Description = De;
 function E({ open: r, onOpenChange: e, children: t }) {
   const a = Q(r);
-  return /* @__PURE__ */ o.jsx(L, { open: r, onOpenChange: e, children: /* @__PURE__ */ o.jsx(S.Provider, { value: a, children: t }) });
+  return /* @__PURE__ */ s.jsx(L, { open: r, onOpenChange: e, children: /* @__PURE__ */ s.jsx(S.Provider, { value: a, children: t }) });
 }
 const Re = x.forwardRef(function({
   title: e,
   description: t,
   size: a = "default",
   fullscreen: n = !1,
-  className: s,
-  children: d,
+  className: o,
+  children: l,
   onOpenChange: u,
   onCloseAutoFocus: m,
-  ...l
+  ...d
 }, f) {
-  const b = x.useContext(S), v = a === "compact" && !n, y = n ? i(
+  const b = x.useContext(S), g = a === "compact" && !n, y = n ? i(
     "w-[calc(100vw-2*var(--apya-space-4))]",
     "h-[calc(100svh-2*var(--apya-space-4))]"
-  ) : v ? i(
+  ) : g ? i(
     "w-[calc(100vw-2*var(--apya-space-4))] max-w-md",
     "h-auto max-h-[calc(100svh-2*var(--apya-space-4))]",
     "overflow-y-auto overflow-x-hidden"
@@ -624,8 +604,8 @@ const Re = x.forwardRef(function({
        (SetupWizard.jsx `tablet:min-h-0`); kaynağı burası. */
     "tablet:min-h-[min(520px,88svh)]"
   );
-  return /* @__PURE__ */ o.jsxs(_, { children: [
-    /* @__PURE__ */ o.jsx(
+  return /* @__PURE__ */ s.jsxs(_, { children: [
+    /* @__PURE__ */ s.jsx(
       U,
       {
         className: i(
@@ -635,7 +615,7 @@ const Re = x.forwardRef(function({
         )
       }
     ),
-    /* @__PURE__ */ o.jsx("div", { className: "fixed inset-0 z-modal flex items-center justify-center pointer-events-none", children: /* @__PURE__ */ o.jsxs(
+    /* @__PURE__ */ s.jsx("div", { className: "fixed inset-0 z-modal flex items-center justify-center pointer-events-none", children: /* @__PURE__ */ s.jsxs(
       G,
       {
         ref: f,
@@ -648,26 +628,26 @@ const Re = x.forwardRef(function({
           "bg-surface-base text-text-primary",
           "border border-default rounded-[var(--apya-radius-xl)] shadow-xl",
           "flex flex-col",
-          !v && "overflow-hidden",
+          !g && "overflow-hidden",
           "focus-visible:outline-none",
           "animate-dialog-in",
           y,
           /* Mobil: tam ekran, köşesiz, safe-area. Modal içi footer'ın
              iOS home indicator'ın altında kalmaması için padding.
              compact'ta basılmaz: küçük pencere telefonda da kart kalır. */
-          !v && "mobile:w-screen mobile:h-[100svh] mobile:max-w-none",
-          !v && "mobile:rounded-none mobile:border-0",
-          !v && "mobile:pb-[env(safe-area-inset-bottom)]",
-          s
+          !g && "mobile:w-screen mobile:h-[100svh] mobile:max-w-none",
+          !g && "mobile:rounded-none mobile:border-0",
+          !g && "mobile:pb-[env(safe-area-inset-bottom)]",
+          o
         ),
-        ...l,
+        ...d,
         onCloseAutoFocus: (j) => {
           m == null || m(j), X(j, b);
         },
         children: [
-          e != null ? /* @__PURE__ */ o.jsx(R, { className: "sr-only", children: e }) : null,
-          t ? /* @__PURE__ */ o.jsx(T, { className: "sr-only", children: t }) : null,
-          d
+          e != null ? /* @__PURE__ */ s.jsx(R, { className: "sr-only", children: e }) : null,
+          t ? /* @__PURE__ */ s.jsx(T, { className: "sr-only", children: t }) : null,
+          l
         ]
       }
     ) })
@@ -678,19 +658,18 @@ E.Close = Te;
 E.Title = Se;
 E.Description = Ee;
 export {
-  $e as B,
+  Ye as B,
   E as D,
-  ge as I,
-  He as M,
-  Ye as S,
+  ve as I,
+  $e as M,
+  C as S,
   Ie as T,
   ze as a,
-  k as b,
+  je as b,
   i as c,
-  je as d,
-  _e as e,
+  He as d,
+  ue as e,
   Pe as f,
-  ue as g,
-  Re as h,
+  Re as g,
   Oe as u
 };

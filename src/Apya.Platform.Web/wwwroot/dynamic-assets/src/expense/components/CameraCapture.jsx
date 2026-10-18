@@ -71,7 +71,7 @@ export function CameraCapture({ onFile }) {
                 <p className="text-base font-semibold text-text-primary">Faturayı çek</p>
                 <p className="text-sm text-text-secondary mt-1">
                     Mobilde direkt kamera açılır. Masaüstünde dosya sürükle ya da tıkla.
-                    AI tutarı, tarihi ve tedarikçiyi otomatik okur.
+                    Fotoğraf formun üstünde görünür; tutarı, tarihi ve tedarikçiyi ona bakarak girersin.
                 </p>
             </div>
 

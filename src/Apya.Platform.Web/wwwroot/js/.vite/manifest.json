@@ -1,15 +1,15 @@
 {
-  "_Combobox-BTNS1Ncj.js": {
-    "file": "Combobox-BTNS1Ncj.js",
+  "_Combobox-CHhgTuMW.js": {
+    "file": "Combobox-CHhgTuMW.js",
     "name": "Combobox",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_Dialog-BdrRxZcw.js",
+      "_Dialog-D3HpJNIB.js",
       "_index-DgpuJ91w.js"
     ]
   },
-  "_Dialog-BdrRxZcw.js": {
-    "file": "Dialog-BdrRxZcw.js",
+  "_Dialog-D3HpJNIB.js": {
+    "file": "Dialog-D3HpJNIB.js",
     "name": "Dialog",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
@@ -31,13 +31,13 @@
       "_react-vendor-D7YDiBbi.js"
     ]
   },
-  "_ProcessRibbon-D9pM1s89.js": {
-    "file": "ProcessRibbon-D9pM1s89.js",
+  "_ProcessRibbon-BG7HsNES.js": {
+    "file": "ProcessRibbon-BG7HsNES.js",
     "name": "ProcessRibbon",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_ui-vendor-UYevF8mE.js",
-      "_Dialog-BdrRxZcw.js",
+      "_Dialog-D3HpJNIB.js",
       "_index-DgpuJ91w.js"
     ]
   },
@@ -60,12 +60,21 @@
       "_ui-vendor-UYevF8mE.js"
     ]
   },
-  "_SkeletonShape-Ds5M097Q.js": {
-    "file": "SkeletonShape-Ds5M097Q.js",
+  "_Skeleton-C92LWNeC.js": {
+    "file": "Skeleton-C92LWNeC.js",
+    "name": "Skeleton",
+    "imports": [
+      "_react-vendor-D7YDiBbi.js",
+      "_Dialog-D3HpJNIB.js"
+    ]
+  },
+  "_SkeletonShape-BbC44F8k.js": {
+    "file": "SkeletonShape-BbC44F8k.js",
     "name": "SkeletonShape",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_Dialog-BdrRxZcw.js"
+      "_Skeleton-C92LWNeC.js",
+      "_Dialog-D3HpJNIB.js"
     ]
   },
   "_api-DzWAfcOg.js": {
@@ -133,12 +142,12 @@
     "file": "react-vendor-D7YDiBbi.js",
     "name": "react-vendor"
   },
-  "_registerServiceWorker-BqopwOEk.js": {
-    "file": "registerServiceWorker-BqopwOEk.js",
+  "_registerServiceWorker-CD7jAaT2.js": {
+    "file": "registerServiceWorker-CD7jAaT2.js",
     "name": "registerServiceWorker",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
-      "_Dialog-BdrRxZcw.js"
+      "_Dialog-D3HpJNIB.js"
     ]
   },
   "_signalr-vendor-CjTpd8t3.js": {
@@ -159,13 +168,13 @@
       "_react-vendor-D7YDiBbi.js"
     ]
   },
-  "_useDirtyGuard-BU_DDlEJ.js": {
-    "file": "useDirtyGuard-BU_DDlEJ.js",
+  "_useDirtyGuard-D_9NgM7w.js": {
+    "file": "useDirtyGuard-D_9NgM7w.js",
     "name": "useDirtyGuard",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_ui-vendor-UYevF8mE.js",
-      "_Dialog-BdrRxZcw.js",
+      "_Dialog-D3HpJNIB.js",
       "_index-DgpuJ91w.js"
     ]
   },
@@ -177,9 +186,10 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
+      "_Dialog-D3HpJNIB.js",
       "_useDeviceMode-Bkxjujsr.js",
       "_QueryProvider-D2Hvqdr9.js",
+      "_Skeleton-C92LWNeC.js",
       "_httpClient-BNoyY5yK.js",
       "_draggableActivation-Ybw9Upbh.js",
       "_query-vendor-Db2mwxYI.js",
@@ -206,12 +216,13 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
+      "_Dialog-D3HpJNIB.js",
       "_QueryProvider-D2Hvqdr9.js",
       "_signalr-vendor-CjTpd8t3.js",
       "_useDeviceMode-Bkxjujsr.js",
-      "_registerServiceWorker-BqopwOEk.js",
+      "_registerServiceWorker-CD7jAaT2.js",
       "_grid-vendor-Fh34umPY.js",
+      "_Skeleton-C92LWNeC.js",
       "_query-vendor-Db2mwxYI.js",
       "_httpClient-BNoyY5yK.js",
       "_dataChanged-CDwwWMH8.js"
@@ -225,9 +236,9 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
-      "_SkeletonShape-Ds5M097Q.js",
-      "_ProcessRibbon-D9pM1s89.js",
+      "_Dialog-D3HpJNIB.js",
+      "_SkeletonShape-BbC44F8k.js",
+      "_ProcessRibbon-BG7HsNES.js",
       "_api-DzWAfcOg.js",
       "_ModalPortal-CVz5ohco.js"
     ]
@@ -240,8 +251,8 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
-      "_SkeletonShape-Ds5M097Q.js"
+      "_Dialog-D3HpJNIB.js",
+      "_SkeletonShape-BbC44F8k.js"
     ]
   },
   "src/documents-project.jsx": {
@@ -252,9 +263,9 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
-      "_SkeletonShape-Ds5M097Q.js",
-      "_ProcessRibbon-D9pM1s89.js"
+      "_Dialog-D3HpJNIB.js",
+      "_SkeletonShape-BbC44F8k.js",
+      "_ProcessRibbon-BG7HsNES.js"
     ]
   },
   "src/documents-report.jsx": {
@@ -265,9 +276,9 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
-      "_SkeletonShape-Ds5M097Q.js",
-      "_ProcessRibbon-D9pM1s89.js",
+      "_Dialog-D3HpJNIB.js",
+      "_SkeletonShape-BbC44F8k.js",
+      "_ProcessRibbon-BG7HsNES.js",
       "_api-DzWAfcOg.js"
     ]
   },
@@ -279,9 +290,9 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
-      "_SkeletonShape-Ds5M097Q.js",
-      "_ProcessRibbon-D9pM1s89.js"
+      "_Dialog-D3HpJNIB.js",
+      "_SkeletonShape-BbC44F8k.js",
+      "_ProcessRibbon-BG7HsNES.js"
     ]
   },
   "src/documents.jsx": {
@@ -292,11 +303,12 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
-      "_useDirtyGuard-BU_DDlEJ.js",
+      "_Dialog-D3HpJNIB.js",
+      "_useDirtyGuard-D_9NgM7w.js",
       "_ModalPortal-CVz5ohco.js",
-      "_ProcessRibbon-D9pM1s89.js",
-      "_SkeletonShape-Ds5M097Q.js",
+      "_ProcessRibbon-BG7HsNES.js",
+      "_SkeletonShape-BbC44F8k.js",
+      "_Skeleton-C92LWNeC.js",
       "_draggableActivation-Ybw9Upbh.js",
       "_Hint-BhMztyJX.js"
     ]
@@ -309,10 +321,10 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
+      "_Dialog-D3HpJNIB.js",
       "_QueryProvider-D2Hvqdr9.js",
-      "_registerServiceWorker-BqopwOEk.js",
-      "_Combobox-BTNS1Ncj.js",
+      "_registerServiceWorker-CD7jAaT2.js",
+      "_Combobox-CHhgTuMW.js",
       "_query-vendor-Db2mwxYI.js",
       "_httpClient-BNoyY5yK.js",
       "_permanentRejection-SvaBclz0.js"
@@ -395,13 +407,14 @@
     "imports": [
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
-      "_Dialog-BdrRxZcw.js",
+      "_Dialog-D3HpJNIB.js",
       "_QueryProvider-D2Hvqdr9.js",
       "_query-vendor-Db2mwxYI.js",
-      "_Combobox-BTNS1Ncj.js",
-      "_useDirtyGuard-BU_DDlEJ.js",
+      "_Combobox-CHhgTuMW.js",
+      "_useDirtyGuard-D_9NgM7w.js",
       "_RichTextEditorV3-CNzWfphS.js",
       "_httpClient-BNoyY5yK.js",
+      "_Skeleton-C92LWNeC.js",
       "_ui-vendor-UYevF8mE.js",
       "_draggableActivation-Ybw9Upbh.js",
       "_dataChanged-CDwwWMH8.js"
