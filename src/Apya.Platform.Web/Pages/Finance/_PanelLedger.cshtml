@@ -23,7 +23,20 @@
     // birimlerindeki tutarları toplamak anlamsız olurdu. Satırda her ikisi de var.
     var gelir = Model.LedgerRows.Where(r => r.IsInflow).Sum(r => r.BookAmount);
     var gider = Model.LedgerRows.Where(r => !r.IsInflow).Sum(r => r.BookAmount);
-    var suzgecVar = !string.IsNullOrEmpty(Model.Kind) || Model.LineId.HasValue || Model.AccountId.HasValue;
+    var suzgecVar = !string.IsNullOrEmpty(Model.Kind) || Model.LineId.HasValue || Model.AccountId.HasValue || Model.LedgerPeriodActive;
+    // F-05 · Dönem çipinin etiketi: hazır dönemde adı, proje/özel aralıkta tarihleri.
+    string Day(DateTime? d) => d?.ToString("dd.MM.yyyy") ?? "…";
+    var donemAraligi = $"{Day(Model.PeriodStart)} – {Day(Model.PeriodEnd)}";
+    var donemAdi = !Model.LedgerPeriodActive ? L["Finance:Ledger:Period:All"].Value
+        : Model.Period switch
+        {
+            "bu-ay" => L["Finance:Ledger:Period:ThisMonth"].Value,
+            "gecen-ay" => L["Finance:Ledger:Period:LastMonth"].Value,
+            "bu-ceyrek" => L["Finance:Ledger:Period:ThisQuarter"].Value,
+            "bu-yil" => L["Finance:Ledger:Period:ThisYear"].Value,
+            _ => donemAraligi
+        };
+    var projeDonemiVar = Model.SelectedProject?.StartDate != null || Model.SelectedProject?.EndDate != null;
     // FIN-08: kur girilmediği için ₺ defterine yansımamış kayıtlar toplamda SIFIR sayılır.
     var kurYok = Model.LedgerRows.Count(r => r.IsBookMissing);
     // DOC-08: belgesi bağlanmamış tahsilatlar. Uyarıdır, engel değil; belge izni yoksa sayılmaz
@@ -90,9 +103,57 @@
         </div>
     }
 
+    @* F-05 · Dönem: hazır dönemler bağlantı, özel aralık küçük bir GET formu (öbür süzgeçler gizli alanla korunur). *@
+    <div class="dropdown">
+        <button type="button" class="apya-filter-chip @(Model.LedgerPeriodActive ? "is-active" : "")"
+                data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+            <span>@L["Finance:Ledger:Period:Label"]: @donemAdi</span>
+            <i class="fa fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        <div class="dropdown-menu apya-console-menu">
+            <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerPeriodUrl(null)">@L["Finance:Ledger:Period:All"]</a>
+            <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerPeriodUrl("bu-ay")">@L["Finance:Ledger:Period:ThisMonth"]</a>
+            <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerPeriodUrl("gecen-ay")">@L["Finance:Ledger:Period:LastMonth"]</a>
+            <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerPeriodUrl("bu-ceyrek")">@L["Finance:Ledger:Period:ThisQuarter"]</a>
+            <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerPeriodUrl("bu-yil")">@L["Finance:Ledger:Period:ThisYear"]</a>
+            @if (projeDonemiVar)
+            {
+                <a class="apya-console-menu-item text-decoration-none" href="@Model.LedgerPeriodUrl("proje")">@L["Finance:Ledger:Period:Project"]</a>
+            }
+            <form method="get" action="/Finance" class="d-flex flex-column gap-2 px-3 py-2 border-top mt-1">
+                @if (Model.ProjectId.HasValue)
+                {
+                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                }
+                <input type="hidden" name="tab" value="@FinanceContext.TabLedger" />
+                @if (!string.IsNullOrEmpty(Model.Kind))
+                {
+                    <input type="hidden" name="kind" value="@Model.Kind" />
+                }
+                @if (Model.LineId.HasValue)
+                {
+                    <input type="hidden" name="lineId" value="@Model.LineId" />
+                }
+                @if (Model.AccountId.HasValue)
+                {
+                    <input type="hidden" name="accountId" value="@Model.AccountId" />
+                }
+                <input type="hidden" name="period" value="ozel" />
+                <span class="small fw-semibold">@L["Finance:Ledger:Period:Custom"]</span>
+                <label class="small d-flex flex-column gap-1">@L["Finance:Ledger:Period:From"]
+                    <input type="date" name="from" class="form-control form-control-sm" value="@(Model.Period == "ozel" ? Model.PeriodStart?.ToString("yyyy-MM-dd") : null)" />
+                </label>
+                <label class="small d-flex flex-column gap-1">@L["Finance:Ledger:Period:To"]
+                    <input type="date" name="to" class="form-control form-control-sm" value="@(Model.Period == "ozel" ? Model.PeriodEnd?.ToString("yyyy-MM-dd") : null)" />
+                </label>
+                <button type="submit" class="btn btn-sm btn-primary align-self-start">@L["Finance:Ledger:Period:Apply"]</button>
+            </form>
+        </div>
+    </div>
+
     @if (suzgecVar)
     {
-        <a href="@Model.LedgerUrl(null, null, null)" class="apya-console-filter-clear text-decoration-none">Filtreleri temizle</a>
+        <a href="@Model.LedgerUrl(null, null, null, keepPeriod: false)" class="apya-console-filter-clear text-decoration-none">Filtreleri temizle</a>
     }
 
     @* FUX-01: Proje seçiliyken kayıt penceresi BURADA, proje önden seçili açılır (Ledger.js).
@@ -240,8 +301,9 @@ else
             <tfoot>
                 <tr class="fw-bold">
                     <td colspan="4">
-                        DÖNEM TOPLAMI
-                        <span class="fw-normal text-muted ms-2" style="font-size:12px">@Model.LedgerRows.Count kayıt</span>
+                        @* F-05 · Dönem seçilmeden "dönem toplamı" demez. *@
+                        @(Model.LedgerPeriodActive ? L["Finance:Ledger:PeriodTotal"] : L["Finance:Ledger:Total"])
+                        <span class="fw-normal text-muted ms-2" style="font-size:12px">@(Model.LedgerPeriodActive ? donemAraligi + " · " : "")@Model.LedgerRows.Count kayıt</span>
                         @if (kurYok > 0)
                         {
                             <div class="fw-normal text-warning" style="font-size:12px" data-book-missing-note>

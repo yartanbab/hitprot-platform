@@ -30,6 +30,7 @@ using Volo.Abp.Application.Dtos;
 using Volo.Abp.Authorization;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.Timing;
 using Xunit;
 
 namespace Apya.Platform.Pages;
@@ -110,6 +111,10 @@ public class FinanceIndexLocks_Tests
         services.AddSingleton<IAuthorizationService>(authorization);
         services.AddSingleton(localizerFactory);
         services.AddSingleton(currentTenant);
+        // F-05 · Hazır dönemler (bu ay, bu çeyrek…) bugüne göre çözülür: saat sabit.
+        var clock = Substitute.For<IClock>();
+        clock.Now.Returns(new DateTime(2026, 10, 15, 9, 30, 0));
+        services.AddSingleton(clock);
 
         return new IndexModel(
             _expenses, _incomes, _invoices, _cashAccounts, _cashMovements, _rates,
@@ -546,6 +551,7 @@ public class FinanceIndexLocks_Tests
     [InlineData("kind")]
     [InlineData("line")]
     [InlineData("account")]
+    [InlineData("period")]
     public async Task Suzgecli_listede_tarih_denetimi_eksik(string filter)
     {
         var page = DonorPage();
@@ -553,6 +559,7 @@ public class FinanceIndexLocks_Tests
         {
             case "kind": page.Kind = "gider"; break;
             case "line": page.LineId = Guid.NewGuid(); break;
+            case "period": page.Period = "ozel"; page.From = new DateTime(2026, 3, 1); break;
             default: page.AccountId = Guid.NewGuid(); break;
         }
 
@@ -607,6 +614,62 @@ public class FinanceIndexLocks_Tests
         await page.OnGetAsync();
 
         ShouldBeUnverified(page, "Finance:Donor:Unverified:Dates:Title", "Finance:Donor:Unverified:Dates:NoProjectDates");
+    }
+
+    /// <summary>
+    /// F-05 · Gelir-Gider dönem süzgeci gelir ve gider servislerine iletilir; bitiş günü TAMAMIYLA dahildir
+    /// (servis "&lt;= ToDate" karşılaştırır, saatli kayıt son günden düşmesin). Eskiden dönem seçilemiyordu
+    /// ama dip satır yine "dönem toplamı" diyordu.
+    /// </summary>
+    [Fact]
+    public async Task Ozel_donem_gelir_ve_gider_servislerine_iletilir()
+    {
+        var page = DonorPage();
+        page.Period = "ozel";
+        page.From = new DateTime(2026, 3, 31);
+        page.To = new DateTime(2026, 3, 1);
+
+        await page.OnGetAsync();
+
+        // Uçlar ters girildi: yer değiştirir.
+        page.PeriodStart.ShouldBe(new DateTime(2026, 3, 1));
+        page.PeriodEnd.ShouldBe(new DateTime(2026, 3, 31));
+        page.LedgerPeriodActive.ShouldBeTrue();
+        var end = new DateTime(2026, 4, 1).AddTicks(-1);
+        await _expenses.Received().GetListAsync(Arg.Is<GetExpensesInput>(i => i.FromDate == new DateTime(2026, 3, 1) && i.ToDate == end));
+        await _incomes.Received().GetListAsync(Arg.Is<GetIncomeEntriesInput>(i => i.FromDate == new DateTime(2026, 3, 1) && i.ToDate == end));
+        page.LedgerUrl("gider", null, null).ShouldContain("period=ozel&from=2026-03-31&to=2026-03-01");
+        page.LedgerUrl(null, null, null, keepPeriod: false).ShouldNotContain("period=");
+    }
+
+    [Theory]
+    [InlineData("bu-ay", "2026-10-01", "2026-10-31")]
+    [InlineData("gecen-ay", "2026-09-01", "2026-09-30")]
+    [InlineData("bu-ceyrek", "2026-10-01", "2026-12-31")]
+    [InlineData("bu-yil", "2026-01-01", "2026-12-31")]
+    [InlineData("proje", "2026-01-01", "2026-12-31")]
+    public async Task Hazir_donem_takvim_araligina_cozulur(string period, string start, string end)
+    {
+        var page = DonorPage();
+        page.Period = period;
+
+        await page.OnGetAsync();
+
+        page.PeriodStart.ShouldBe(DateTime.Parse(start));
+        page.PeriodEnd.ShouldBe(DateTime.Parse(end));
+        await _expenses.Received().GetListAsync(Arg.Is<GetExpensesInput>(i =>
+            i.FromDate == DateTime.Parse(start) && i.ToDate == DateTime.Parse(end).AddDays(1).AddTicks(-1)));
+    }
+
+    [Fact]
+    public async Task Donem_secilmezse_tarih_suzgeci_gitmez()
+    {
+        var page = DonorPage();
+
+        await page.OnGetAsync();
+
+        page.LedgerPeriodActive.ShouldBeFalse();
+        await _expenses.Received().GetListAsync(Arg.Is<GetExpensesInput>(i => i.FromDate == null && i.ToDate == null));
     }
 
     /// <summary>Her başlık gerçekten koştu ve temiz → liste boş (panelin olumlu özeti bu yolda basılır).</summary>
