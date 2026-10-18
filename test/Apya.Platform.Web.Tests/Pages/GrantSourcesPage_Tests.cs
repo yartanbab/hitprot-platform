@@ -39,6 +39,35 @@ public class GrantSourcesPage_Tests : PlatformWebTestBase
             .ShouldBeTrue("sayfa demeti Sources.js içermeli");
     }
 
+    /// <summary>
+    /// X-05 · Kazıyıcı bağlı değilken "Tümünü Tara" her kaynak için yalnız "atlandı" koşusu
+    /// bırakıyordu; düğme çizilmez, konsol çağrıların şimdilik elle girildiğini söyler.
+    /// </summary>
+    [Fact]
+    public async Task Kaziyici_bagli_degilken_Tumunu_Tara_cizilmez()
+    {
+        var html = await GetResponseAsStringAsync("/Grants/Sources");
+
+        html.ShouldNotContain("ScrapeAllBtn");
+        html.ShouldContain("Otomatik tarama henüz bağlı değil");
+    }
+
+    [Fact]
+    public void Kaziyici_baglaninca_Tumunu_Tara_geri_gelir()
+    {
+        var tenant = GetRequiredService<Volo.Abp.MultiTenancy.ICurrentTenant>();
+
+        new Apya.Platform.Web.Pages.Grants.SourcesModel(new ConnectedScraper()).ScraperConnected.ShouldBeTrue();
+        new Apya.Platform.Web.Pages.Grants.IndexModel(tenant, new ConnectedScraper()).ScraperConnected.ShouldBeTrue();
+        new Apya.Platform.Web.Pages.Grants.SourcesModel(new NotConfiguredGrantScraper()).ScraperConnected.ShouldBeFalse();
+    }
+
+    private sealed class ConnectedScraper : IGrantScraper
+    {
+        public Task<GrantScrapeOutcome> ScrapeAsync(GrantSource source, System.Threading.CancellationToken cancellationToken = default)
+            => Task.FromResult(GrantScrapeOutcome.Skipped());
+    }
+
     [Fact]
     public async Task Elle_Giris_Sayfasi_Render_Oluyor()
     {

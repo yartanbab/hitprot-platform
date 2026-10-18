@@ -25,7 +25,8 @@ public class GrantCallsPage_Tests : PlatformWebTestBase
         html.ShouldContain("CallGrid");
         html.ShouldContain("CallList");
         html.ShouldContain("href=\"/Grants/Import\"");
-        html.ShouldContain("ScrapeAllBtn");
+        // X-05 · Test host'u NotConfiguredGrantScraper ile koşar: kazıyıcı bağlı değil, "Tümünü Tara" çizilmez.
+        html.ShouldNotContain("ScrapeAllBtn");
         Regex.IsMatch(html, @"Index[^""]*\.js").ShouldBeTrue("sayfa demeti Index.js içermeli");
         Regex.IsMatch(html, @"Calls[^""]*\.css").ShouldBeTrue("sayfa demeti Calls.css içermeli");
     }

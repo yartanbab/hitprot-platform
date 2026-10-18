@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.MultiTenancy;
+using Apya.Platform.Grants;
 using Apya.Platform.Permissions;
 using Apya.Platform.Web.Pages;
 
@@ -18,9 +19,16 @@ public class IndexModel : PlatformPageModel
     [BindProperty(SupportsGet = true)]
     public string? Tab { get; set; }
 
-    public IndexModel(ICurrentTenant currentTenant)
+    /// <summary>
+    /// X-05 · Kazıyıcı bağlanmadıysa (<see cref="NotConfiguredGrantScraper"/>) "Tümünü Tara" çizilmez:
+    /// düğme her kaynak için yalnız "atlandı" koşusu bırakıyordu. Gerçek kazıyıcı kaydedilince geri gelir.
+    /// </summary>
+    public bool ScraperConnected { get; }
+
+    public IndexModel(ICurrentTenant currentTenant, IGrantScraper scraper)
     {
         _currentTenant = currentTenant;
+        ScraperConnected = scraper is not NotConfiguredGrantScraper;
     }
 
     public void OnGet()

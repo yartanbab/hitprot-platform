@@ -830,6 +830,7 @@
         "Grants:Sources:Title": "Kaynaklar",
         "Grants:Sources:Description": "Kaynakların tarama durumu ve taslak kuyruğu",
         "Grants:Sources:Note": "Kazıma taslak üretir; parametreleri host tamamlar. Yayınlanmayan hiçbir çağrı kiracı tarafında görünmez.",
+        "Grants:Sources:ScraperOff": "Otomatik tarama henüz bağlı değil. Kaynakları kaydedebilirsiniz; çağrıları şimdilik Elle Hibe Gir ile ekleyin.",
         "Grants:Sources:ManualEntry": "Elle Hibe Gir",
         "Grants:Sources:ScrapeAll": "Tümünü Tara",
         "Grants:Sources:Kpi:ActiveSources": "Aktif Kaynak",

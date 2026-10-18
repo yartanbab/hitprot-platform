@@ -927,6 +927,7 @@
     "Grants:Sources:Title": "Sources",
     "Grants:Sources:Description": "Scrape status of sources and the draft queue",
     "Grants:Sources:Note": "Scraping only produces drafts; the host completes the parameters. No unpublished call is visible to tenants.",
+    "Grants:Sources:ScraperOff": "Automatic scanning is not connected yet. You can save sources; add calls with Manual Grant Entry for now.",
     "Grants:Sources:ManualEntry": "Add Grant Manually",
     "Grants:Sources:ScrapeAll": "Scrape All",
     "Grants:Sources:Kpi:ActiveSources": "Active Sources",
