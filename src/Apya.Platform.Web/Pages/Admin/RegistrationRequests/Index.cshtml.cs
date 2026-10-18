@@ -98,6 +98,36 @@ public class IndexModel : PlatformPageModel
     /// </summary>
     public async Task<IActionResult> OnPostIssueInviteAsync(Guid id)
     {
+        await IssueInviteAsync(id);
+        return RedirectToPage(new { Status, Filter, PageIndex });
+    }
+
+    /// <summary>
+    /// K-03 · Karar ve davet tek adımda: talep formdaki paket, bedel ve notla "Onaylandı" kaydedilir, davet
+    /// bağlantısı aynı istekte üretilip postalanır. Eskiden önce durum seçilip kaydediliyor, sonra ayrı
+    /// formdan davet üretiliyordu; ikinci adım unutulunca aday bekliyordu.
+    /// </summary>
+    public async Task<IActionResult> OnPostApproveAndInviteAsync(
+        Guid id,
+        SalesPlan? approvedPlan,
+        decimal? offeredAmount,
+        string? adminNote)
+    {
+        await _registrationRequestAppService.UpdateAsync(id, new UpdateRegistrationRequestDto
+        {
+            Status = RegistrationRequestStatus.Approved,
+            ApprovedPlan = approvedPlan,
+            OfferedAmount = offeredAmount,
+            AdminNote = adminNote
+        });
+
+        TempData["Saved"] = true;
+        await IssueInviteAsync(id);
+        return RedirectToPage(new { Status, Filter, PageIndex });
+    }
+
+    private async Task IssueInviteAsync(Guid id)
+    {
         try
         {
             var invite = await _registrationRequestAppService.IssueInviteAsync(id);
@@ -115,8 +145,6 @@ public class IndexModel : PlatformPageModel
         {
             TempData["InviteError"] = "Davet bağlantısı yalnız ONAYLANMIŞ talep için üretilebilir. Önce durumu \"Onaylandı\" yapın.";
         }
-
-        return RedirectToPage(new { Status, Filter, PageIndex });
     }
 
     private async Task LoadAsync()

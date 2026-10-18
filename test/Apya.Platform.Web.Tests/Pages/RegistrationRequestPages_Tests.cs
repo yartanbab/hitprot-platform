@@ -287,6 +287,51 @@ public class RegistrationRequestPages_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// K-03 · "Onayla ve davet gönder" kararı kaydeder ve daveti aynı adımda üretir: talep "protokol
+    /// bekliyor" durumuna geçer. Eskiden önce durum "Onaylandı" seçilip kaydediliyor, sonra ayrı formdan
+    /// davet üretiliyordu; ikinci adım unutulunca aday bekliyordu.
+    /// </summary>
+    [Fact]
+    public async Task Onayla_ve_davet_gonder_karari_ve_daveti_tek_adimda_yazar()
+    {
+        var id = await CreateRegistrationRequestAsync("Tek Adim Testi", "Tek Adim Kurumu");
+
+        var listHtml = WebUtility.HtmlDecode(await GetResponseAsStringAsync("/Admin/RegistrationRequests"));
+        listHtml.ShouldContain("Onayla ve davet gönder");
+        var token = AntiforgeryToken(listHtml);
+
+        var response = await Client.PostAsync(
+            "/Admin/RegistrationRequests?handler=ApproveAndInvite",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["id"] = id.ToString(),
+                ["Status"] = string.Empty,
+                ["Filter"] = string.Empty,
+                ["PageIndex"] = "1",
+                ["approvedPlan"] = nameof(SalesPlan.Standard),
+                ["offeredAmount"] = "12000.25",
+                ["__Invariant"] = "offeredAmount",
+                ["adminNote"] = "Tek adımda onay.",
+                ["__RequestVerificationToken"] = token
+            }));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            var saved = await GetRequiredService<IRepository<RegistrationRequest, Guid>>().GetAsync(id);
+
+            saved.Status.ShouldBe(RegistrationRequestStatus.AwaitingProtocol);
+            saved.ApprovedPlan.ShouldBe(SalesPlan.Standard);
+            saved.OfferedAmount.ShouldBe(12000.25m);
+            saved.AdminNote.ShouldBe("Tek adımda onay.");
+            saved.InviteIssuedAt.ShouldNotBeNull();
+
+            await uow.CompleteAsync();
+        }
+    }
+
+    /// <summary>
     /// Panelde basılan bedel, HTML sayı alanının beklediği NOKTALI biçimde olmalı.
     /// Türkçe kültürle basılsaydı ("24.000,50") tarayıcı alanı boş gösterir ve
     /// kaydeden host bedeli sessizce siler.
