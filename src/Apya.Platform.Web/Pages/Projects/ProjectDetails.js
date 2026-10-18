@@ -464,6 +464,95 @@ $(function () {
         });
     });
 
+    // P-04 · Panodaki toplu çubukla aynı eylemler; her biri var olan tekil uca SIRAYLA gider.
+    function runBulk(call, doneMsg) {
+        var ids = bulk.ids();
+        if (!ids.length) { return; }
+        runSequential(ids, call)
+            .then(function (result) {
+                console_.notifyBulkResult(ids, result, doneMsg, taskLabel);
+                clearSelection();
+                reloadAll(false);
+            });
+    }
+
+    $('#bulk-cancel').click(function () {
+        var ids = bulk.ids();
+        if (!ids.length) { return; }
+        Swal.fire({
+            title: ids.length + ' görev iptal edilecek',
+            input: 'text',
+            inputLabel: 'İptal nedeni (isteğe bağlı)',
+            inputAttributes: { maxlength: 256 },
+            showCancelButton: true,
+            confirmButtonText: 'İptal et',
+            cancelButtonText: 'Vazgeç'
+        }).then(function (result) {
+            if (!result.isConfirmed) { return; }
+            var reason = (result.value || '').trim() || null;
+            runBulk(function (id) { return taskService.cancel(id, reason, { abpHandleError: false }); }, 'görev iptal edildi.');
+        });
+    });
+
+    $('[data-bulk-defer]').click(function () {
+        var days = parseInt($(this).data('bulk-defer'), 10);
+        runBulk(function (id) { return taskService.defer(id, days, { abpHandleError: false }); }, 'görev ' + days + ' gün ertelendi.');
+    });
+
+    $('[data-bulk-priority]').click(function () {
+        var priority = parseInt($(this).data('bulk-priority'), 10);
+        var label = $(this).text().trim();
+        runBulk(function (id) { return taskService.setPriority(id, priority, { abpHandleError: false }); },
+            'görevin önceliği "' + label + '" yapıldı.');
+    });
+
+    // Atama ve iş adımı menüleri ilk açılışta BİR KEZ doldurulur (her seçimde istek atmasın);
+    // yükleme düşerse bir sonraki açılışta yeniden denenir.
+    var $assignMenu = $('[data-bulk-assign-menu]');
+    $assignMenu.closest('.dropdown').on('show.bs.dropdown', function () {
+        if ($assignMenu.data('filled')) { return; }
+        $assignMenu.data('filled', true);
+        taskService.getUsersLookup().then(function (res) {
+            $assignMenu.empty().append(
+                $('<button type="button" class="apya-console-menu-item" data-bulk-assign="">').text('Atamayı kaldır'));
+            ((res && res.items) || []).forEach(function (u) {
+                $assignMenu.append($('<button type="button" class="apya-console-menu-item">')
+                    .attr('data-bulk-assign', u.id).text(u.userName || u.name || ''));
+            });
+        }, function () { $assignMenu.data('filled', false); });
+    });
+    $assignMenu.on('click', '[data-bulk-assign]', function () {
+        var userId = $(this).attr('data-bulk-assign') || null;
+        var who = $(this).text().trim();
+        runBulk(function (id) { return taskService.setAssignee(id, userId, { abpHandleError: false }); },
+            userId ? 'görev "' + who + '" kişisine atandı.' : 'görevin ataması kaldırıldı.');
+    });
+
+    var $stepMenu = $('[data-bulk-workstep-menu]');
+    $stepMenu.closest('.dropdown').on('show.bs.dropdown', function () {
+        if ($stepMenu.data('filled')) { return; }
+        $stepMenu.data('filled', true);
+        apya.platform.projects.projectWorkStep.getList(projectId).then(function (steps) {
+            $stepMenu.empty();
+            if (!steps || !steps.length) {
+                $stepMenu.append($('<span class="apya-console-menu-item text-muted">').text('Bu projede iş adımı yok.'));
+                return;
+            }
+            $stepMenu.append(
+                $('<button type="button" class="apya-console-menu-item" data-bulk-workstep="">').text('İş adımından çıkar'));
+            steps.forEach(function (s) {
+                $stepMenu.append($('<button type="button" class="apya-console-menu-item">')
+                    .attr('data-bulk-workstep', s.id).text(s.order + ' · ' + s.name));
+            });
+        }, function () { $stepMenu.data('filled', false); });
+    });
+    $stepMenu.on('click', '[data-bulk-workstep]', function () {
+        var stepId = $(this).attr('data-bulk-workstep') || null;
+        var name = $(this).text().trim();
+        runBulk(function (id) { return taskService.setWorkStep(id, stepId, { abpHandleError: false }); },
+            stepId ? 'görev "' + name + '" adımına bağlandı.' : 'görev iş adımından çıkarıldı.');
+    });
+
     // Satır hover aksiyonu: Tamamla
     $(document).on('click', '[data-complete-id]', function (e) {
         e.stopPropagation(); // satır tıklaması görev detayını açmasın

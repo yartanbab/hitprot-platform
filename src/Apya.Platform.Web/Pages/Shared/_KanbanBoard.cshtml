@@ -64,13 +64,6 @@
                     @* Hedefler panodaki kolonlardan JS ile doldurulur (özel kolonlar dâhil). *@
                     <div class="dropdown-menu apya-console-menu js-kb-move-menu"></div>
                 </span>
-                <span class="dropdown">
-                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Son tarih</button>
-                    <div class="dropdown-menu apya-console-menu">
-                        <button type="button" class="apya-console-menu-item js-kb-defer" data-days="1">1 gün ertele</button>
-                        <button type="button" class="apya-console-menu-item js-kb-defer" data-days="7">1 hafta ertele</button>
-                    </div>
-                </span>
                 <button type="button" class="apya-console-bulkbar-btn js-kb-cancel-tasks">İptal et</button>
             }
             @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Assign))
@@ -83,6 +76,15 @@
             }
             @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Edit))
             {
+                @* P-04 · Erteleme sunucuda Tasks.Edit ister (DeferAsync); eskiden durum değiştirme yetkisiyle
+                   gösteriliyordu ve yalnız o yetkisi olan kullanıcı 403 alıyordu. *@
+                <span class="dropdown">
+                    <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Son tarih</button>
+                    <div class="dropdown-menu apya-console-menu">
+                        <button type="button" class="apya-console-menu-item js-kb-defer" data-days="1">1 gün ertele</button>
+                        <button type="button" class="apya-console-menu-item js-kb-defer" data-days="7">1 hafta ertele</button>
+                    </div>
+                </span>
                 <span class="dropdown">
                     <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">Öncelik</button>
                     <div class="dropdown-menu apya-console-menu">
