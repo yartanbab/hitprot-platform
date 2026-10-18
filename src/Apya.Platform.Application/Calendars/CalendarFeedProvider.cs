@@ -9,10 +9,12 @@ using Apya.Platform.Expenses;
 using Apya.Platform.Grants;
 using Apya.Platform.Incomes;
 using Apya.Platform.Invoices;
+using Apya.Platform.Localization;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Settings;
 using Apya.Platform.Tasks;
+using Microsoft.Extensions.Localization;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
@@ -61,6 +63,8 @@ public class CalendarFeedProvider : ITransientDependency
     private readonly IRepository<GrantApplication, Guid> _grantAppRepo;
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<Grant, Guid> _grantRepo;
+    private readonly IRepository<GrantReport, Guid> _reportRepo;
+    private readonly IRepository<GrantDisbursementTranche, Guid> _trancheRepo;
     private readonly IRepository<Project, Guid> _projectRepo;
     private readonly IRepository<Customer, Guid> _customerRepo;
     private readonly IRepository<CashAccount, Guid> _cashAccountRepo;
@@ -72,6 +76,7 @@ public class CalendarFeedProvider : ITransientDependency
     private readonly IDataFilter _dataFilter;
     private readonly ISettingProvider _settingProvider;
     private readonly IClock _clock;
+    private readonly IStringLocalizer<PlatformResource> _l;
 
     public CalendarFeedProvider(
         IRepository<TaskItem, Guid> taskRepo,
@@ -83,6 +88,8 @@ public class CalendarFeedProvider : ITransientDependency
         IRepository<GrantApplication, Guid> grantAppRepo,
         IRepository<GrantCall, Guid> callRepo,
         IRepository<Grant, Guid> grantRepo,
+        IRepository<GrantReport, Guid> reportRepo,
+        IRepository<GrantDisbursementTranche, Guid> trancheRepo,
         IRepository<Project, Guid> projectRepo,
         IRepository<Customer, Guid> customerRepo,
         IRepository<CashAccount, Guid> cashAccountRepo,
@@ -92,7 +99,8 @@ public class CalendarFeedProvider : ITransientDependency
         ICurrentUser currentUser,
         IDataFilter dataFilter,
         ISettingProvider settingProvider,
-        IClock clock)
+        IClock clock,
+        IStringLocalizer<PlatformResource> l)
     {
         _taskRepo          = taskRepo;
         _invoiceRepo       = invoiceRepo;
@@ -103,6 +111,8 @@ public class CalendarFeedProvider : ITransientDependency
         _grantAppRepo      = grantAppRepo;
         _callRepo          = callRepo;
         _grantRepo         = grantRepo;
+        _reportRepo        = reportRepo;
+        _trancheRepo       = trancheRepo;
         _projectRepo       = projectRepo;
         _customerRepo      = customerRepo;
         _cashAccountRepo   = cashAccountRepo;
@@ -113,6 +123,7 @@ public class CalendarFeedProvider : ITransientDependency
         _dataFilter        = dataFilter;
         _settingProvider   = settingProvider;
         _clock             = clock;
+        _l                 = l;
     }
 
     /// <summary>Kaynak → gerektirdiği izin. Ray satırı ve kilit kararı bunu kullanır.</summary>
@@ -314,13 +325,36 @@ public class CalendarFeedProvider : ITransientDependency
     }
 
     /// <summary>
-    /// Hibe son tarihleri: tamamlanmamış ara raporlar (milestone) + başvurulan
-    /// çağrıların kapanış tarihi. Çağrı katalogu HOST'ta tutulur (TenantId null), bu
-    /// yüzden çağrı okuması multi-tenant süzgeci kapatılarak yapılır.
+    /// Hibe tarihleri: tamamlanmamış kilometre taşları, onaylanmamış raporların teslim tarihi,
+    /// ödenmemiş dilimlerin vadesi ve başvurulan çağrıların kapanış tarihi. Çağrı katalogu
+    /// HOST'ta tutulur (TenantId null), bu yüzden çağrı okuması multi-tenant süzgeci kapatılarak
+    /// yapılır.
+    /// <para>H-08 · Her madde başvurunun kendi ekranına gider: kilometre taşı ve son başvuru
+    /// sihirbaza, rapor ve dilim Uygulama &amp; Tahsilat'a. Eskiden hepsi host'a özel izin isteyen
+    /// /Grants/Applications'a gidiyordu ve firma yetki hatası alıyordu. Raporlar ve dilimler
+    /// takvimde hiç yoktu.</para>
     /// </summary>
     private async Task<List<CalendarItemDto>> LoadGrantsAsync(DateTime from, DateTime toExclusive, DateTime today)
     {
         var result = new List<CalendarItemDto>();
+
+        CalendarItemDto GrantItem(Guid id, string title, DateTime due, string subtitle, string href)
+        {
+            var day = due.Date;
+            return new CalendarItemDto
+            {
+                Key           = $"{(int)CalendarSourceType.Grant}:{id}",
+                Source        = CalendarSourceType.Grant,
+                SourceId      = id,
+                Title         = title,
+                Date          = day,
+                IsDone        = false,
+                Risk          = Risk(day, today, false),
+                Subtitle      = subtitle,
+                Href          = href,
+                CanReschedule = false
+            };
+        }
 
         var milestoneQuery = await _milestoneRepo.GetQueryableAsync();
         var milestones = await _executer.ToListAsync(
@@ -330,27 +364,36 @@ public class CalendarFeedProvider : ITransientDependency
                 .OrderBy(m => m.DueDate)
                 .Take(MaxItemsPerSource));
 
-        result.AddRange(milestones.Select(m =>
-        {
-            var day = m.DueDate!.Value.Date;
-            return new CalendarItemDto
-            {
-                Key           = $"{(int)CalendarSourceType.Grant}:{m.Id}",
-                Source        = CalendarSourceType.Grant,
-                SourceId      = m.Id,
-                Title         = m.Title,
-                Date          = day,
-                IsDone        = false,
-                Risk          = Risk(day, today, false),
-                Subtitle      = "Ara rapor",
-                Href          = "/Grants/Applications",
-                CanReschedule = false
-            };
-        }));
+        result.AddRange(milestones.Select(m => GrantItem(m.Id, m.Title, m.DueDate!.Value,
+            _l["Calendar:Grant:Milestone"], $"/Grants/Wizard?id={m.GrantApplicationId}")));
 
-        // Başvurulan çağrıların son başvuru tarihleri.
+        var reportQuery = await _reportRepo.GetQueryableAsync();
+        var reports = await _executer.ToListAsync(
+            reportQuery
+                .Where(r => r.Status != GrantReportStatus.Onaylandi && r.DueDate != null
+                            && r.DueDate >= from && r.DueDate < toExclusive)
+                .OrderBy(r => r.DueDate)
+                .Take(MaxItemsPerSource));
+
+        result.AddRange(reports.Select(r => GrantItem(r.Id, r.Title, r.DueDate!.Value,
+            _l["Calendar:Grant:ReportDue"], $"/Grants/Implementation?id={r.GrantApplicationId}")));
+
+        var trancheQuery = await _trancheRepo.GetQueryableAsync();
+        var tranches = await _executer.ToListAsync(
+            trancheQuery
+                .Where(t => t.Status != GrantDisbursementTrancheStatus.Odendi && t.DueDate != null
+                            && t.DueDate >= from && t.DueDate < toExclusive)
+                .OrderBy(t => t.DueDate)
+                .Take(MaxItemsPerSource));
+
+        result.AddRange(tranches.Select(t => GrantItem(t.Id, _l["Calendar:Grant:Tranche", t.SequenceNo], t.DueDate!.Value,
+            _l["Calendar:Grant:TrancheDue"], $"/Grants/Implementation?id={t.GrantApplicationId}")));
+
+        // Başvurulan çağrıların son başvuru tarihleri; madde o çağrıdaki başvuruya gider.
         var appQuery = await _grantAppRepo.GetQueryableAsync();
-        var callIds  = await _executer.ToListAsync(appQuery.Select(a => a.GrantCallId).Distinct());
+        var apps = await _executer.ToListAsync(appQuery.Select(a => new { a.Id, a.GrantCallId }));
+        var appByCall = apps.GroupBy(a => a.GrantCallId).ToDictionary(g => g.Key, g => g.First().Id);
+        var callIds = appByCall.Keys.ToList();
         if (callIds.Count == 0)
         {
             return result;
@@ -375,23 +418,8 @@ public class CalendarFeedProvider : ITransientDependency
 
         var grantNames = grants.ToDictionary(g => g.Id, g => g.Name);
 
-        result.AddRange(calls.Select(c =>
-        {
-            var day = c.Deadline!.Value.Date;
-            return new CalendarItemDto
-            {
-                Key           = $"{(int)CalendarSourceType.Grant}:{c.Id}",
-                Source        = CalendarSourceType.Grant,
-                SourceId      = c.Id,
-                Title         = grantNames.GetValueOrDefault(c.GrantId) ?? c.Period,
-                Date          = day,
-                IsDone        = false,
-                Risk          = Risk(day, today, false),
-                Subtitle      = "Son başvuru",
-                Href          = "/Grants/Applications",
-                CanReschedule = false
-            };
-        }));
+        result.AddRange(calls.Select(c => GrantItem(c.Id, grantNames.GetValueOrDefault(c.GrantId) ?? c.Period,
+            c.Deadline!.Value, _l["Calendar:Grant:CallDeadline"], $"/Grants/Wizard?id={appByCall[c.Id]}")));
 
         return result;
     }

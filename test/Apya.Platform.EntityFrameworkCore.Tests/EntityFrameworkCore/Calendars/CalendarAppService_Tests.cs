@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Apya.Platform.Calendars;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.Expenses;
+using Apya.Platform.Grants;
 using Apya.Platform.Invoices;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
@@ -104,6 +105,52 @@ public class CalendarAppService_Tests : PlatformEntityFrameworkCoreTestBase
 
         // Öğeler tarihe göre sıralı gelir — ekran ayrıca sıralama yapmaz.
         feed.Items.Select(i => i.Date).ShouldBe(feed.Items.Select(i => i.Date).OrderBy(d => d));
+    }
+
+    /// <summary>
+    /// H-08 · Hibe maddeleri başvurunun kendi ekranına gider: kilometre taşı ve son başvuru
+    /// sihirbaza, rapor ve dilim Uygulama &amp; Tahsilat'a. Eskiden hepsi host'a özel izin isteyen
+    /// /Grants/Applications'a gidiyordu; rapor teslimi ve dilim vadesi takvimde hiç yoktu.
+    /// </summary>
+    [Fact]
+    public async Task GetFeedAsync_hibe_maddeleri_basvurunun_ekranina_gider()
+    {
+        var today = _clock.Now.Date;
+        var grant = new Grant(Guid.NewGuid(), "Takvim Hibesi", "Takvim Kurumu", 100_000m, minMatchScore: 0);
+        await GetRequiredService<IRepository<Grant, Guid>>().InsertAsync(grant, autoSave: true);
+        var call = new GrantCall(Guid.NewGuid(), grant.Id, "TKV/2026", GrantCallStatus.Acik);
+        call.SetSchedule(today.AddDays(-30), today.AddDays(3));
+        await GetRequiredService<IRepository<GrantCall, Guid>>().InsertAsync(call, autoSave: true);
+
+        var app = new GrantApplication(Guid.NewGuid(), _currentTenant.Id, call.Id, today.AddDays(-10));
+        await GetRequiredService<IRepository<GrantApplication, Guid>>().InsertAsync(app, autoSave: true);
+        var milestone = new GrantMilestone(Guid.NewGuid(), _currentTenant.Id, app.Id, "Ön rapor", today.AddDays(1));
+        await GetRequiredService<IRepository<GrantMilestone, Guid>>().InsertAsync(milestone, autoSave: true);
+        var tranche = new GrantDisbursementTranche(Guid.NewGuid(), _currentTenant.Id, app.Id, 2, 5_000m, today.AddDays(2));
+        await GetRequiredService<IRepository<GrantDisbursementTranche, Guid>>().InsertAsync(tranche, autoSave: true);
+        var report = new GrantReport(Guid.NewGuid(), _currentTenant.Id, app.Id, tranche.Id, 1, "Ara faaliyet raporu", today.AddDays(2));
+        await GetRequiredService<IRepository<GrantReport, Guid>>().InsertAsync(report, autoSave: true);
+
+        CalendarFeedDto feed;
+        using (Volo.Abp.Localization.CultureHelper.Use("tr"))
+        {
+            feed = await _calendar.GetFeedAsync(new GetCalendarFeedInput
+            {
+                From    = today.AddDays(-1),
+                To      = today.AddDays(7),
+                Sources = new System.Collections.Generic.List<CalendarSourceType> { CalendarSourceType.Grant }
+            });
+        }
+
+        var items = feed.Items.Where(i => i.Source == CalendarSourceType.Grant).ToDictionary(i => i.SourceId);
+        items[milestone.Id].Href.ShouldBe($"/Grants/Wizard?id={app.Id}");
+        items[milestone.Id].Subtitle.ShouldBe("Kilometre taşı");
+        items[call.Id].Href.ShouldBe($"/Grants/Wizard?id={app.Id}");
+        items[report.Id].Href.ShouldBe($"/Grants/Implementation?id={app.Id}");
+        items[report.Id].Subtitle.ShouldBe("Rapor teslimi");
+        items[tranche.Id].Href.ShouldBe($"/Grants/Implementation?id={app.Id}");
+        items[tranche.Id].Title.ShouldBe("2. dilim");
+        feed.Items.ShouldNotContain(i => i.Href == "/Grants/Applications");
     }
 
     [Fact]
