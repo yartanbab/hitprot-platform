@@ -1,10 +1,11 @@
 import { r as t, j as e } from "./react-vendor-D7YDiBbi.js";
 import { E as V, t as ze, R as Ns, u as Ss, w as ae, m as ws } from "./index-DgpuJ91w.js";
-import { S as Ca, B as E, e as q, g as Cs, I as Y } from "./Dialog-BdrRxZcw.js";
-import { u as zs, U as Is } from "./useDirtyGuard-BU_DDlEJ.js";
+import { B as E, d as q, e as Cs, I as Y } from "./Dialog-D3HpJNIB.js";
+import { u as zs, U as Is } from "./useDirtyGuard-D_9NgM7w.js";
 import { M as Ze } from "./ModalPortal-CVz5ohco.js";
-import { a as he, g as Ds, b as Es, c as B, d as Rs, e as Ts, u as Bs, f as Fs, h as Ps, i as $s, j as fe, k as Ls, l as As, r as Ms, w as Ks, m as Ws, n as qs, o as Us, p as Os, q as Ys, s as Hs, t as _s, v as Ge, x as Gs, y as Vs, z as Js, A as Qs, B as za, E as Ve, D as Zs, P as Xs, C as et, F as Ia, G as at, H as st, I as tt, J as Da, K as nt, L as lt, M as it, N as rt } from "./ProcessRibbon-D9pM1s89.js";
-import { S as ge } from "./SkeletonShape-Ds5M097Q.js";
+import { a as he, g as Ds, b as Es, c as B, d as Rs, e as Ts, u as Bs, f as Fs, h as Ps, i as $s, j as fe, k as Ls, l as As, r as Ms, w as Ks, m as Ws, n as qs, o as Us, p as Os, q as Ys, s as Hs, t as _s, v as Ge, x as Gs, y as Vs, z as Js, A as Qs, B as Ca, E as Ve, D as Zs, P as Xs, C as et, F as za, G as at, H as st, I as tt, J as Ia, K as nt, L as lt, M as it, N as rt } from "./ProcessRibbon-BG7HsNES.js";
+import { S as ge } from "./SkeletonShape-BbC44F8k.js";
+import { S as Da } from "./Skeleton-C92LWNeC.js";
 import { d as La } from "./draggableActivation-Ybw9Upbh.js";
 import { H as Je } from "./Hint-BhMztyJX.js";
 const F = (...a) => a.filter(Boolean).join(" "), _ = {
@@ -402,7 +403,7 @@ function gt({
   onRestore: c
 }) {
   const h = u.length > 0 && u.every((D) => v.has(D.id)), T = Math.max(1, Math.ceil(o / b)), A = g === 0 && y === "list" ? M : [];
-  return a && !r ? y === "grid" ? /* @__PURE__ */ e.jsx("div", { className: "apya-tile-grid p-3", children: Array.from({ length: 6 }).map((D, P) => /* @__PURE__ */ e.jsx(Ca, { height: 120, rounded: "lg" }, P)) }) : /* @__PURE__ */ e.jsx("div", { className: "p-3 d-flex flex-column gap-2", children: Array.from({ length: 8 }).map((D, P) => /* @__PURE__ */ e.jsx(Ca, { height: 40, rounded: "md" }, P)) }) : r ? /* @__PURE__ */ e.jsx(V, { variant: "error", title: "Belge listesi yüklenemedi", error: r, onRetry: n, retrying: a }) : u.length === 0 && A.length === 0 ? /* @__PURE__ */ e.jsx(
+  return a && !r ? y === "grid" ? /* @__PURE__ */ e.jsx("div", { className: "apya-tile-grid p-3", children: Array.from({ length: 6 }).map((D, P) => /* @__PURE__ */ e.jsx(Da, { height: 120, rounded: "lg" }, P)) }) : /* @__PURE__ */ e.jsx("div", { className: "p-3 d-flex flex-column gap-2", children: Array.from({ length: 8 }).map((D, P) => /* @__PURE__ */ e.jsx(Da, { height: 40, rounded: "md" }, P)) }) : r ? /* @__PURE__ */ e.jsx(V, { variant: "error", title: "Belge listesi yüklenemedi", error: r, onRetry: n, retrying: a }) : u.length === 0 && A.length === 0 ? /* @__PURE__ */ e.jsx(
     V,
     {
       icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-inbox" }),
@@ -2005,7 +2006,7 @@ function Yt() {
     const l = ++de.current;
     De(s.id), sa(!0);
     try {
-      const x = await za(s.id);
+      const x = await Ca(s.id);
       l === de.current && ke(x);
     } catch (x) {
       if (l !== de.current) return;
@@ -2042,7 +2043,7 @@ function Yt() {
         })),
         tags: s.tags || []
       }), x = !0, H("Belge güncellendi.");
-      const w = await za(s.id);
+      const w = await Ca(s.id);
       return l === de.current && ke(w), await W(), !0;
     } catch (w) {
       return ae(w) || B("error", "Belge güncellenemedi."), console.error("[Documents] handleSave", w), x;
@@ -2064,7 +2065,7 @@ function Yt() {
     const l = Ee.current;
     if (l.length)
       try {
-        l.length === 1 ? await tt(l[0], s) : await Da(l, s), H(l.length === 1 ? "Belge taşındı." : `${l.length} belge taşındı.`), se(/* @__PURE__ */ new Set()), await W();
+        l.length === 1 ? await tt(l[0], s) : await Ia(l, s), H(l.length === 1 ? "Belge taşındı." : `${l.length} belge taşındı.`), se(/* @__PURE__ */ new Set()), await W();
       } catch (x) {
         ae(x) || B("error", "Taşıma başarısız oldu."), console.error("[Documents] move", x);
       } finally {
@@ -2079,7 +2080,7 @@ function Yt() {
       return;
     }
     try {
-      await Da(Array.from(Q), l.id), H(`${Q.size} belge taşındı.`), se(/* @__PURE__ */ new Set()), await W();
+      await Ia(Array.from(Q), l.id), H(`${Q.size} belge taşındı.`), se(/* @__PURE__ */ new Set()), await W();
     } catch (x) {
       ae(x) || B("error", "Toplu taşıma başarısız oldu."), console.error("[Documents] bulkMove", x);
     }
@@ -2329,12 +2330,12 @@ function Yt() {
                 summary: Z,
                 busy: es,
                 onApplyAll: () => We(
-                  Ia,
+                  za,
                   ((Z == null ? void 0 : Z.items) ?? []).map(Ke),
                   "Öneriler uygulandı."
                 ),
                 onApply: (s) => We(
-                  Ia,
+                  za,
                   [Ke(s)],
                   "Öneri uygulandı."
                 ),

@@ -1,20 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { expenseFixtures } from './fixtures';
 import { createExpense, fetchBudgetLines, fetchCaptureContext } from './expenseApi';
 import { flushQueue, offlineQueue } from './offlineQueue';
-
-/**
- * OCR HÂLÂ FIXTURE. Sunucuda gider için OCR ucu yok; sahte "okundu" değerleri
- * üretmek yerine kaldırmak da bir seçenekti, ama akış fotoğraf çekip formu
- * ön-doldurma üzerine kurulu. Ekran bunu kullanıcıya söylüyor ("otomatik okuma
- * denemedir"), kayıt her hâlükârda kullanıcının onayladığı değerlerle gider.
- */
-export function useOcrParse() {
-    return useMutation({
-        mutationFn: (file) => expenseFixtures.ocr(file),
-    });
-}
 
 /** Proje + kasa seçicileri. Bağlam olmadan gider oluşturulamaz (kasa zorunlu). */
 export function useCaptureContext() {
