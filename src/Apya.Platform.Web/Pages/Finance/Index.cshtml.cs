@@ -40,6 +40,8 @@ namespace Apya.Platform.Web.Pages.Finance;
 public class IndexModel : AbpPageModel
 {
     private const int MaxPerSource = 100;
+    /// <summary>F-05 · Excel çıktısında kaynak başına okunan kayıt (ABP sayfa üst sınırı).</summary>
+    private const int ExportMaxPerSource = 1000;
     private const int MaxTransactionsShown = 12;
     private const int MaxProjects = 1000;
 
@@ -388,7 +390,7 @@ public class IndexModel : AbpPageModel
     /// GİRMEZ — kendi sekmesi var ve iki yerde göstermek aynı parayı iki kez
     /// saydırırdı (Genel'deki "Son İşlemler" listesindeki çift sayım kuralıyla aynı).
     /// </summary>
-    private async Task LoadLedgerAsync()
+    private async Task LoadLedgerAsync(int maxPerSource = MaxPerSource)
     {
         // Host kapsamı: kiracının gelir/gider kayıtları bu bağlamda boş küme gelir — sorgu atılmaz
         // (Gelir-Gider sekmesi HostScopeState basar; donör tarih denetimi denetlenemedi satırı üretir).
@@ -440,7 +442,7 @@ public class IndexModel : AbpPageModel
             {
                 var page = await _incomeAppService.GetListAsync(new GetIncomeEntriesInput
                 {
-                    MaxResultCount = MaxPerSource,
+                    MaxResultCount = maxPerSource,
                     ProjectId = ProjectId,
                     CashAccountId = AccountId,
                     FromDate = PeriodStart,
@@ -482,7 +484,7 @@ public class IndexModel : AbpPageModel
             {
                 var page = await _expenseAppService.GetListAsync(new GetExpensesInput
                 {
-                    MaxResultCount = MaxPerSource,
+                    MaxResultCount = maxPerSource,
                     ProjectId = ProjectId,
                     CashAccountId = AccountId,
                     FromDate = PeriodStart,
@@ -882,6 +884,54 @@ public class IndexModel : AbpPageModel
             }
         }
         return "/Finance?" + string.Join("&", q);
+    }
+
+    /// <summary>F-05 · Ekrandaki Gelir-Gider süzgeçleriyle (tür, kalem, kasa, dönem) Excel çıktısı.</summary>
+    public string LedgerExcelUrl => LedgerUrl(Kind, LineId, AccountId) + "&handler=LedgerExcel";
+
+    /// <summary>
+    /// F-05 · Gelir-Gider tablosunun Excel çıktısı: ekrandaki süzgeçler aynen uygulanır, satırlar ve ₺ defter
+    /// toplamları ekrandakinin aynısıdır. Kaynak başına en fazla <see cref="ExportMaxPerSource"/> kayıt okunur;
+    /// kesilirse, ya da bir kaynağı görme yetkisi yoksa, dosyanın sonuna yazılır.
+    /// </summary>
+    public async Task<IActionResult> OnGetLedgerExcelAsync()
+    {
+        if (!await AuthorizationService.IsGrantedAnyAsync(FinanceContext.PageAnyOfPermissions))
+        {
+            return Forbid();
+        }
+
+        await LoadProjectContextAsync();
+        CanSeeDocuments = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Documents.Default);
+        await LoadLedgerAsync(ExportMaxPerSource);
+
+        string Day(DateTime? d) => d?.ToString("dd.MM.yyyy") ?? "…";
+        var scope = SelectedProject?.Name ?? "Tüm projeler";
+        var period = LedgerPeriodActive ? $"{Day(PeriodStart)} – {Day(PeriodEnd)}" : "tüm zamanlar";
+        var filters = new List<string>();
+        if (Kind == "gelir") filters.Add("yalnız gelir");
+        if (Kind == "gider") filters.Add("yalnız gider");
+        if (LineId.HasValue) filters.Add("kalem: " + LedgerLineOptions.FirstOrDefault(o => o.Id == LineId).Name);
+        if (AccountId.HasValue) filters.Add("kasa: " + LedgerAccountOptions.FirstOrDefault(o => o.Id == AccountId).Name);
+        var title = $"Gelir-Gider — {scope} — {period}" + (filters.Count > 0 ? " — " + string.Join(", ", filters) : "");
+
+        var notes = new List<string>();
+        if (LedgerTruncated)
+        {
+            notes.Add($"Kaynak başına en fazla {ExportMaxPerSource} kayıt alındı; tüm kayıtlar için dönemi daraltın.");
+        }
+        if (IncomesLocked)
+        {
+            notes.Add("Gelir kayıtlarını görme yetkiniz yok; dosyada yer almıyor.");
+        }
+        if (ExpensesLocked)
+        {
+            notes.Add("Gider kayıtlarını görme yetkiniz yok; dosyada yer almıyor.");
+        }
+
+        var bytes = LedgerExcelExporter.Build(LedgerRows, title, notes, LedgerDonorCurrency, CanSeeDocuments);
+        var code = new string((SelectedProject?.Code ?? "tum-projeler").Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray());
+        return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"Gelir-Gider-{code}.xlsx");
     }
 
     /// <summary>F-05 · Dönem seçeneği: öbür süzgeçler korunur, yalnız dönem değişir (boş = tüm zamanlar).</summary>

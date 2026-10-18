@@ -160,6 +160,13 @@
        Çıplak /Incomes ve /Expenses bağlantıları seçili projeyi düşürüyordu. Proje seçili
        değilken — ya da kullanıcının oluşturma izni yokken — eski bağlantı kalır. *@
     <span class="ms-auto d-flex gap-2" @(Model.ProjectId.HasValue ? $"data-fin-ledger-project={Model.ProjectId.Value}" : null)>
+        @* F-05 · Ekrandaki süzgeçlerle (tür, kalem, kasa, dönem) Excel çıktısı. *@
+        @if (Model.LedgerRows.Any())
+        {
+            <a href="@Model.LedgerExcelUrl" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-file-excel me-1" aria-hidden="true"></i>Excel
+            </a>
+        }
         @if (!Model.IncomesLocked)
         {
             @if (Model.ProjectId.HasValue && Model.CanCreateIncome)
