@@ -2295,7 +2295,6 @@
     "Dashboard:Stat:cash-balance": "Cash balance",
     "Dashboard:Stat:receivables-payables": "Customer balance",
     "Dashboard:Stat:fx-revaluation": "FX revaluation",
-    "Dashboard:Stat:trial-balance": "Trial balance difference",
     "Dashboard:Stat:active-grants": "Active grants",
     "Dashboard:Stat:grant-upcoming-docs": "Upcoming grant documents",
     "Dashboard:Stat:grant-collected-ratio": "Grant collected",

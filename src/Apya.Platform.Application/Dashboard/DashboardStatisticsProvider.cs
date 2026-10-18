@@ -53,6 +53,11 @@ namespace Apya.Platform.Dashboard;
 /// <c>reopened-tasks</c> / <c>assignment-transfers</c> (audit log taraması gerektirir;
 /// ayrı bir iş olarak bırakıldı).
 /// </para>
+/// <para>
+/// Setten KALDIRILAN: <c>trial-balance</c> ("Mizan farkı"). Mizan çift taraflı değil, yönetsel bir
+/// özet; borç − alacak yapı gereği sıfır olmaz. Kutucuk sağlıklı defterde bile büyük bir "fark"
+/// gösterip kaydın hatalı olduğunu düşündürüyordu (geliştirme taraması 2026-10-18, X-05).
+/// </para>
 /// </summary>
 public class DashboardStatisticsProvider : ITransientDependency
 {
@@ -75,7 +80,6 @@ public class DashboardStatisticsProvider : ITransientDependency
     private readonly IRepository<GrantDisbursementTranche, Guid> _trancheRepo;
     private readonly IRepository<ClientError, Guid> _clientErrorRepo;
     private readonly IRepository<IdentityUser, Guid> _userRepo;
-    private readonly Apya.Platform.Reports.ITrialBalanceAppService _trialBalance;
 
     private readonly IPermissionChecker _permissionChecker;
     private readonly IFeatureChecker _featureChecker;
@@ -106,7 +110,6 @@ public class DashboardStatisticsProvider : ITransientDependency
         IRepository<GrantDisbursementTranche, Guid> trancheRepo,
         IRepository<ClientError, Guid> clientErrorRepo,
         IRepository<IdentityUser, Guid> userRepo,
-        Apya.Platform.Reports.ITrialBalanceAppService trialBalance,
         IPermissionChecker permissionChecker,
         IFeatureChecker featureChecker,
         IAsyncQueryableExecuter executer,
@@ -135,7 +138,6 @@ public class DashboardStatisticsProvider : ITransientDependency
         _trancheRepo = trancheRepo;
         _clientErrorRepo = clientErrorRepo;
         _userRepo = userRepo;
-        _trialBalance = trialBalance;
         _permissionChecker = permissionChecker;
         _featureChecker = featureChecker;
         _executer = executer;
@@ -343,8 +345,6 @@ public class DashboardStatisticsProvider : ITransientDependency
             StatUnit.Money, ReceivablesPayablesAsync),
         new("fx-revaluation", DashboardStatGroup.Finance, PlatformPermissions.FxRevaluations.Default,
             StatUnit.Money, FxRevaluationAsync, PlatformFeatures.MultiCurrency),
-        new("trial-balance", DashboardStatGroup.Finance, PlatformPermissions.Reports.TrialBalance,
-            StatUnit.Money, TrialBalanceDifferenceAsync),
 
         // --- Hibe ---
         new("active-grants", DashboardStatGroup.Grants, PlatformPermissions.Grants.Default,
@@ -665,22 +665,6 @@ public class DashboardStatisticsProvider : ITransientDependency
                 .Select(s => new { s.TotalTryValue }));
 
         return latest == null ? new StatValue(null, null) : StatValue.Of(latest.TotalTryValue);
-    }
-
-    /// <summary>
-    /// Mizan denge farkı (borç − alacak). Sağlıklı bir defterde 0'dır; sıfırdan
-    /// sapma incelenecek bir kayıt olduğunu gösterir. Mevcut
-    /// <see cref="Apya.Platform.Reports.ITrialBalanceAppService"/> yeniden kullanılır.
-    /// </summary>
-    private async Task<StatValue> TrialBalanceDifferenceAsync(DashboardPeriod period, Guid? projectId)
-    {
-        var report = await _trialBalance.GetAsync(new Apya.Platform.Reports.GetTrialBalanceInput
-        {
-            FromDate = period.Start,
-            ToDate = period.EndExclusive.AddDays(-1)
-        });
-
-        return StatValue.Of(report.TotalDebit - report.TotalCredit);
     }
 
     // ─────────────────────────── Hibe ───────────────────────────
