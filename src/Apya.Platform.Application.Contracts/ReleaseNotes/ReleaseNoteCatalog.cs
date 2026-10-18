@@ -159,6 +159,12 @@ public static class ReleaseNoteCatalog
                 "profilinde artık kaydet, ekle, gönder gibi düğmeleri görmüyor; ekranları okuyabiliyorlar. " +
                 "Daha önce düğmeler görünüyor, basınca \"yetkiniz yok\" hatası çıkıyordu."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Dil seçiminde yalnız Türkçe ve İngilizce",
+                "Giriş ekranındaki dil listesinde çevirisi bulunmayan 16 dil vardı; birini seçince " +
+                "ekranların neredeyse tamamı Türkçe kalıyordu. Artık yalnız çevirisi olan Türkçe ve " +
+                "İngilizce sunuluyor."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Faturalardaki \"Gecikmiş\" süzgeci çalışıyor",
                 "Faturalar ekranındaki \"Gecikmiş\" süzgeci hiçbir faturayı göstermiyordu. Artık vadesi " +
@@ -197,6 +203,28 @@ public static class ReleaseNoteCatalog
                 "Dokümanlar'da içi dolu bir klasör silinebiliyor ve içindeki belgelere ulaşılamıyordu; " +
                 "bir klasör kendi alt klasörünün içine de taşınabiliyordu. Artık içi dolu klasör " +
                 "silinmeden önce boşaltılması istenir, klasör kendi içine taşınamaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Masraf Yakala uydurma tutar ve tedarikçi önermiyor",
+                "Masraf Yakala fişi okuyormuş gibi tutarı, tarihi ve tedarikçiyi kendisi dolduruyordu; bu " +
+                "değerler fotoğraftan değil, hazır bir örnek listeden geliyordu. Artık form boş açılır ve " +
+                "fotoğraf formun üstünde durur; tutarı, tarihi ve tedarikçiyi fotoğrafa bakarak siz " +
+                "girersiniz. Hiçbir yere kaydedilmeyen KDV alanı da formdan kalktı. Fotoğraf kayda " +
+                "eklenmez; belgeyi Dokümanlar'dan gidere bağlayabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Henüz çalışmayan düğmeler kaldırıldı",
+                "Fatura ayrıntısındaki \"Gönder\", Cari Yönetimi'ndeki \"Dışa Aktar\" ve \"Ekstre Gönder\", " +
+                "görev menüsündeki \"Şablon olarak kaydet\" ve \"Alt göreve dönüştür\" düğmeleri basınca " +
+                "yalnız \"yakında\" uyarısı veriyordu; kaldırıldılar. Faturayı yazdırma, cari ekstresini " +
+                "görüntüleme ve PDF ya da Excel olarak alma yerinde."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Genel Bakış'taki \"Mizan farkı\" kutucuğu kaldırıldı",
+                "İstatistiklerin Finans sekmesindeki \"Mizan farkı\" kutucuğu, yönetsel mizanın borç ve " +
+                "alacak toplamları arasındaki farkı gösteriyordu. Bu özet çift taraflı bir defter olmadığı " +
+                "için iki toplam eşit çıkmaz; kutucuk kayıtlarınız doğruyken de bir fark göstererek " +
+                "yanıltıyordu. Mizan raporunun kendisi yerinde."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Gizli görevler her ekranda gizli kalıyor",
