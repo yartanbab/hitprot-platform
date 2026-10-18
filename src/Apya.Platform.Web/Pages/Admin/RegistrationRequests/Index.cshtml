@@ -293,10 +293,20 @@
                                                               placeholder="Görüşme notu, onay/ret gerekçesi">@item.AdminNote</textarea>
                                                 </div>
 
-                                                <div class="col-12">
+                                                <div class="col-12 d-flex flex-wrap gap-2">
                                                     <button type="submit" class="btn btn-sm btn-primary">
                                                         <i class="fa fa-save me-1" aria-hidden="true"></i> Kaydet
                                                     </button>
+                                                    @* K-03 · Karar + davet tek adımda: formdaki paket, bedel ve notla "Onaylandı"
+                                                       kaydedip daveti üretir. Enter tuşu formun İLK gönder düğmesini (Kaydet)
+                                                       tetikler; bu düğme yalnız tıklanınca çalışır. Davet zaten üretildiyse
+                                                       (protokol bekliyor) aşağıdaki "Yeni davet bağlantısı üret" kullanılır. *@
+                                                    @if (!item.InviteUsedAt.HasValue && item.Status != RegistrationRequestStatus.AwaitingProtocol)
+                                                    {
+                                                        <button type="submit" class="btn btn-sm btn-success" asp-page-handler="ApproveAndInvite">
+                                                            <i class="fa fa-paper-plane me-1" aria-hidden="true"></i> Onayla ve davet gönder
+                                                        </button>
+                                                    }
                                                 </div>
                                             </form>
 
