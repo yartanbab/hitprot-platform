@@ -68,3 +68,16 @@ describe('apya-gantt.js — yükleme hatası pini (Faz 4)', () => {
         expect(bindUi).toContain("if ($(e.target).closest('.js-gantt-retry').length) { return load(); }");
     });
 });
+
+/** QA-13 · İptal edilen görev "Tamamlandı" yeşiliyle çizilmez; açıklamada kendi anahtarı var. */
+describe('apya-gantt.js — iptal tonu (QA-13)', () => {
+    it('durum 0 kendi tonunu alır ve dolgusu boştur', () => {
+        expect(src).toContain("t.status === 0 ? 'is-cancelled'");
+        expect(src).toContain('t.status === 0 ? 0 :');
+    });
+
+    it('açıklamada İptal anahtarı var, iç not (backend alanı) yok', () => {
+        expect(src).toContain("l('Tasks:Timeline:Legend:Cancelled')");
+        expect(src).not.toContain('Legend:NoBaseline');
+    });
+});
