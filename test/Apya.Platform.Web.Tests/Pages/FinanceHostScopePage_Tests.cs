@@ -6,6 +6,7 @@ using Apya.Platform.Projects;
 using Apya.Platform.Web.Pages.Finance;
 using Shouldly;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.TenantManagement;
 using Volo.Abp.Uow;
 using Xunit;
 
@@ -46,6 +47,19 @@ public class FinanceHostScopePage_Tests : PlatformWebTestBase
         return projectId;
     }
 
+    /// <summary>
+    /// Gerçek (yaşayan) kiracı. D-2 (#771): host proje listesi silinmiş ya da var olmayan kiracıların projelerini
+    /// döndürmez; uydurma kiracı kimliğiyle kurulan proje Finans Merkezi'nde seçilemezdi.
+    /// </summary>
+    private async Task<Guid> CreateTenantAsync()
+    {
+        using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        var tenant = await GetRequiredService<ITenantManager>().CreateAsync("FinKiraci-" + Guid.NewGuid().ToString("N")[..6]);
+        await GetRequiredService<ITenantRepository>().InsertAsync(tenant, autoSave: true);
+        await uow.CompleteAsync();
+        return tenant.Id;
+    }
+
     private async Task<string> TabAsync(Guid projectId, string tab)
         => WebUtility.HtmlDecode(await GetResponseAsStringAsync($"/Finance?projectId={projectId}&tab={tab}"));
 
@@ -55,7 +69,7 @@ public class FinanceHostScopePage_Tests : PlatformWebTestBase
     [Fact]
     public async Task Kiraci_projesinde_kiraci_kayitlarina_bakan_paneller_host_kapsami_durumunu_basar()
     {
-        var projectId = await CreateProjectAsync("FIN07-H1", tenantId: Guid.NewGuid());
+        var projectId = await CreateProjectAsync("FIN07-H1", tenantId: await CreateTenantAsync());
 
         // Genel: bütçe bloğu basılır (bütçe servisi kiracı süzgecini kapatır); iki panel durum basar.
         var overview = await TabAsync(projectId, FinanceContext.TabOverview);
