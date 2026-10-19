@@ -49,6 +49,47 @@ describe('TaskGeneralTabV3 açıklama editörü', () => {
     });
 });
 
+describe('TaskGeneralTabV3 kişi bahsetme (P-09)', () => {
+    const people = [
+        { id: 'u-1', name: 'Ayşe', surname: 'Yılmaz', userName: 'ayse' },
+        { id: 'u-2', name: 'Mehmet', surname: 'Kaya', userName: 'mehmet' },
+    ];
+
+    it('seçilen kişi metne girer ve gönderimde kimliğiyle gider', async () => {
+        const addComment = vi.fn(() => Promise.resolve('c-1'));
+        window.apya.platform.tasks.task.getUsersLookup = vi.fn(() => Promise.resolve({ items: people }));
+        window.apya.platform.tasks.task.addComment = addComment;
+        render(wrap(A, A.description));
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Kişi bahset' }));
+        await userEvent.type(screen.getByLabelText('Kişi ara'), 'ayş');
+        await userEvent.click(await screen.findByRole('button', { name: /Ayşe Yılmaz/ }));
+
+        const box = screen.getByPlaceholderText(/Bir yorum yazın/);
+        expect(box).toHaveValue('@Ayşe Yılmaz ');
+        await userEvent.type(box, 'bakar mısın');
+        await userEvent.click(screen.getByRole('button', { name: /Gönder/ }));
+
+        await waitFor(() => expect(addComment).toHaveBeenCalledWith(A.id, '@Ayşe Yılmaz bakar mısın', ['u-1']));
+    });
+
+    it('metinden silinen bahsetme gönderilmez', async () => {
+        const addComment = vi.fn(() => Promise.resolve('c-2'));
+        window.apya.platform.tasks.task.getUsersLookup = vi.fn(() => Promise.resolve({ items: people }));
+        window.apya.platform.tasks.task.addComment = addComment;
+        render(wrap(A, A.description));
+
+        await userEvent.click(await screen.findByRole('button', { name: 'Kişi bahset' }));
+        await userEvent.click(await screen.findByRole('button', { name: /Mehmet Kaya/ }));
+        const box = screen.getByPlaceholderText(/Bir yorum yazın/);
+        await userEvent.clear(box);
+        await userEvent.type(box, 'genel not');
+        await userEvent.click(screen.getByRole('button', { name: /Gönder/ }));
+
+        await waitFor(() => expect(addComment).toHaveBeenCalledWith(A.id, 'genel not', []));
+    });
+});
+
 describe('TaskGeneralTabV3 kontrol listesi', () => {
     it('madde eklenemezse yazılan metin giriş alanına geri konur', async () => {
         const addItem = vi.fn(() => Promise.reject(new Error('Sunucu reddetti')));

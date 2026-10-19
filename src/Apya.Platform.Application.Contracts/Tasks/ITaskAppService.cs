@@ -41,7 +41,8 @@ namespace Apya.Platform.Tasks
         Task<List<TagDto>> GetAllTagsAsync();
 
         // Yorum Metodları
-        Task<Guid> AddCommentAsync(Guid taskId, string text);
+        /// <param name="mentionedUserIds">P-09 · Yorumda seçiciyle bahsedilen kişiler (isteğe bağlı).</param>
+        Task<Guid> AddCommentAsync(Guid taskId, string text, List<Guid>? mentionedUserIds = null);
         Task<Guid> ReplyToCommentAsync(Guid parentCommentId, string text); // Instagram tarzı yanıt
         Task UpdateCommentAsync(Guid commentId, string text);  // yalnızca yorum sahibi
         Task DeleteCommentAsync(Guid commentId);               // yalnızca yorum sahibi

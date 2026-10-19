@@ -1151,7 +1151,7 @@ namespace Apya.Platform.Tasks
         }
 
         // --- 6. YORUM METODLARI ---
-        public async Task<Guid> AddCommentAsync(Guid taskId, string text)
+        public async Task<Guid> AddCommentAsync(Guid taskId, string text, List<Guid>? mentionedUserIds = null)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -1173,10 +1173,35 @@ namespace Apya.Platform.Tasks
                 CreatorId     = task.CreatorId,
                 CommentUserId = CurrentUser.Id ?? Guid.Empty,
                 CommenterName = CurrentUser.UserName ?? "Bilinmeyen",
-                CommentText   = text
+                CommentText   = text,
+                MentionedUserIds = await ResolveMentionsAsync(task, mentionedUserIds)
             });
 
             return comment.Id;
+        }
+
+        /// <summary>
+        /// P-09 · Bahsedilen kişiler: kimlik istekten gelir, bu yüzden yalnız çağıranın bağlamındaki
+        /// kullanıcılar kalır (kiracı süzgeci açık okunur) ve yorumu yazan çıkar. Gizli görevde
+        /// yalnız görevi zaten gören sahipler (açan, atanan) kalır — bahsetme görevi başkasına açmaz.
+        /// </summary>
+        private async Task<List<Guid>> ResolveMentionsAsync(TaskItem task, List<Guid>? mentionedUserIds)
+        {
+            var ids = (mentionedUserIds ?? new List<Guid>())
+                .Where(id => id != Guid.Empty && id != CurrentUser.Id)
+                .Distinct()
+                .Take(20)
+                .ToList();
+            if (task.IsPrivate)
+            {
+                ids = ids.Where(id => id == task.CreatorId || id == task.AssigneeId).ToList();
+            }
+            if (!ids.Any())
+            {
+                return ids;
+            }
+
+            return (await _userRepository.GetListByIdsAsync(ids)).Select(u => u.Id).ToList();
         }
 
         // Instagram tarzı yanıt: bir yoruma cevap. Tek seviye thread tutarız —

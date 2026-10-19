@@ -32,6 +32,9 @@ function CollapseButton({ open, onClick, label }) {
     );
 }
 
+/* P-09 · Bahsetme etiketi: görev atama menüleriyle aynı ad (ad soyad, yoksa kullanıcı adı). */
+const personName = (u) => [u?.name, u?.surname].filter(Boolean).join(' ') || u?.userName || '';
+
 const fmtDate = (iso) => (iso
     ? new Intl.DateTimeFormat('tr-TR', {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -79,6 +82,32 @@ export function TaskGeneralTabV3({
     const [replyingToId, setReplyingToId] = useState(null);
     const [replyDraft, setReplyDraft] = useState('');
 
+    /* P-09 · Kişi bahsetme. Seçilen kişi metne "@Ad Soyad " olarak girer; gönderimde yalnız
+       metinde HÂLÂ duran bahsetmeler kimlikle sunucuya gider (yazarken silinen bahsetme bildirim
+       üretmez). Kişi listesi atama menüsüyle aynı uçtan, seçici ilk açıldığında yüklenir. */
+    const [mentions, setMentions] = useState([]);
+    const [mentionOpen, setMentionOpen] = useState(false);
+    const [mentionFilter, setMentionFilter] = useState('');
+    const { data: people, isFetched: peopleFetched } = useQuery({
+        queryKey: ['task-users-lookup'],
+        queryFn: () => Promise.resolve(window?.apya?.platform?.tasks?.task?.getUsersLookup())
+            .then((res) => res?.items ?? []),
+        enabled: mentionOpen,
+        staleTime: 60_000,
+        meta: { persist: false },
+    });
+    const mentionNeedle = mentionFilter.trim().toLocaleLowerCase('tr-TR');
+    const mentionChoices = (people ?? []).filter((u) => !mentionNeedle
+        || `${personName(u)} ${u.userName ?? ''}`.toLocaleLowerCase('tr-TR').includes(mentionNeedle));
+
+    const addMention = (u) => {
+        const label = personName(u);
+        setCommentDraft((d) => `${d && !/\s$/.test(d) ? `${d} ` : d}@${label} `);
+        setMentions((list) => (list.some((m) => m.id === u.id) ? list : [...list, { id: u.id, label }]));
+        setMentionOpen(false);
+        setMentionFilter('');
+    };
+
     const { data: comments = [] } = useQuery({
         queryKey: ['task-comments', taskId],
         queryFn: () => Promise.resolve(window?.apya?.platform?.tasks?.task?.getComments(taskId)),
@@ -97,9 +126,11 @@ export function TaskGeneralTabV3({
         if (!text || !taskId || sending) return;
         setSending(true);
         try {
-            await Promise.resolve(window.apya.platform.tasks.task.addComment(taskId, text));
+            const mentionedIds = mentions.filter((m) => text.includes(`@${m.label}`)).map((m) => m.id);
+            await Promise.resolve(window.apya.platform.tasks.task.addComment(taskId, text, mentionedIds));
             await invalidateComments();
             setCommentDraft('');
+            setMentions([]);
         } catch (err) {
             notifyError(err, 'Yorum gönderilemedi.');
         } finally {
@@ -227,7 +258,7 @@ export function TaskGeneralTabV3({
                         {/* Yazma kutusu — odak durumu focus-within yerine state ile sürülür:
                             focus-within var() tabanlı gölge/kenarlık kombinasyonunda alt bardaki
                             düğmelere de sızıyordu. */}
-                        <div className="flex gap-[11px] items-start">
+                        <div className="relative flex gap-[11px] items-start">
                             <Avatar name={currentUserName} />
                             <div className={`flex-1 min-w-0 flex flex-col rounded-[13px] border overflow-hidden transition-[border-color,box-shadow] duration-fast ${
                                 composerFocused
@@ -251,8 +282,20 @@ export function TaskGeneralTabV3({
                                         {/* Yalnız gerçekten iş yapan araç kalır (QA-18): "Dosya ekle" ve
                                             "Görsel ekle" yorum metnine " [Dosya] " / " [Görsel] " yazıyordu
                                             (dosya eklenmiyordu), "Bahset" seçicisi ve bildirimi olmayan bir
-                                            "@" basıyordu. Dosyalar görevin Dosyalar sekmesinde; kişi bahsetme
-                                            seçici + bildirimle birlikte gelecek (P-09). */}
+                                            "@" basıyordu. Dosyalar görevin Dosyalar sekmesinde. Kişi bahsetme
+                                            artık seçici + bildirimle çalışıyor (P-09). */}
+                                        <button
+                                            type="button"
+                                            title="Kişi bahset"
+                                            aria-label="Kişi bahset"
+                                            aria-haspopup="dialog"
+                                            aria-expanded={mentionOpen}
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => setMentionOpen((v) => !v)}
+                                            className={`flex items-center justify-center h-7 w-7 rounded-[7px] hover:bg-surface-hover hover:text-primary cursor-pointer ${mentionOpen ? 'text-primary' : 'text-text-tertiary'}`}
+                                        >
+                                            <i className="fa-solid fa-at text-[12px]" />
+                                        </button>
                                         {[
                                             { icon: 'fa-regular fa-face-smile', title: '👍 ekle', add: ' 👍 ' },
                                         ].map((tool) => (
@@ -283,6 +326,51 @@ export function TaskGeneralTabV3({
                                     </button>
                                 </div>
                             </div>
+
+                            {/* Seçici yazma kutusunun DIŞINDA: kutu overflow-hidden, içeride kırpılırdı. */}
+                            {mentionOpen && (
+                                <div
+                                    role="dialog"
+                                    aria-label="Bahsedilecek kişi"
+                                    onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setMentionOpen(false); }}
+                                    className="absolute left-[43px] top-full z-20 mt-1 w-64 min-w-[200px] max-w-[calc(100%-43px)] rounded-[11px] border border-default bg-surface-base p-1.5 shadow-lg"
+                                >
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={mentionFilter}
+                                        onChange={(e) => setMentionFilter(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Escape') { e.preventDefault(); setMentionOpen(false); }
+                                            if (e.key === 'Enter' && mentionChoices[0]) { e.preventDefault(); addMention(mentionChoices[0]); }
+                                        }}
+                                        placeholder="Kişi ara…"
+                                        aria-label="Kişi ara"
+                                        className="mb-1 h-8 w-full rounded-[8px] border border-default bg-surface-raised px-2.5 text-[12px] text-text-primary focus:border-focus focus:outline-none"
+                                    />
+                                    <ul className="m-0 max-h-56 list-none overflow-y-auto p-0">
+                                        {mentionChoices.map((u) => (
+                                            <li key={u.id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addMention(u)}
+                                                    className="w-full rounded-[7px] px-2.5 py-1.5 text-left text-[12.5px] text-text-primary hover:bg-surface-hover cursor-pointer"
+                                                >
+                                                    {personName(u)}
+                                                    {u.userName && personName(u) !== u.userName && (
+                                                        <span className="ml-1 text-[11px] text-text-tertiary">({u.userName})</span>
+                                                    )}
+                                                </button>
+                                            </li>
+                                        ))}
+                                        {!mentionChoices.length && (
+                                            <li className="px-2.5 py-2 text-[12px] text-text-tertiary">
+                                                {peopleFetched ? 'Eşleşen kişi yok' : 'Yükleniyor…'}
+                                            </li>
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-1">

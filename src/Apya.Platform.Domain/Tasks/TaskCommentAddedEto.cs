@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Apya.Platform.Tasks;
 
@@ -19,4 +20,7 @@ public class TaskCommentAddedEto
 
     public string CommenterName { get; set; } = string.Empty;
     public string CommentText   { get; set; } = string.Empty;
+
+    /// <summary>P-09 · Bahsedilen kişiler — "Sizden bahsedildi" alır, ayrıca genel yorum bildirimi almaz.</summary>
+    public List<Guid> MentionedUserIds { get; set; } = new();
 }
