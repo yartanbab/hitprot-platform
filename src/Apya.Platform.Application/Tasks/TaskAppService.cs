@@ -1228,12 +1228,15 @@ namespace Apya.Platform.Tasks
             var userNames = changes.Select(c => c.UserName).Where(n => !string.IsNullOrEmpty(n)).Distinct().ToList();
 
             var names = new Dictionary<Guid, string>();
+            var displayByUserName = new Dictionary<string, string>();
             var people = await _identityRepository.GetListAsync(u => ids.Contains(u.Id) || userNames.Contains(u.UserName));
-            foreach (var u in people) { names[u.Id] = TaskPersonName.Of(u.Name, u.Surname, u.UserName); }
+            foreach (var u in people)
+            {
+                names[u.Id] = TaskPersonName.Of(u.Name, u.Surname, u.UserName);
+                displayByUserName.TryAdd(u.UserName, names[u.Id]);
+            }
             foreach (var p in await _projectLookupRepository.GetListAsync(p => ids.Contains(p.Id))) { names[p.Id] = p.Name; }
             foreach (var t in await Repository.GetListAsync(t => ids.Contains(t.Id))) { names[t.Id] = t.Title; }
-            var displayByUserName = people.GroupBy(u => u.UserName)
-                .ToDictionary(g => g.Key, g => TaskPersonName.Of(g.First().Name, g.First().Surname, g.Key));
 
             return changes
                 .OrderByDescending(c => c.EntityChange.ChangeTime)
