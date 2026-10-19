@@ -327,23 +327,28 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         }
     };
 
-    const handleArchive = async () => {
+    /* ⋯ menüsünün durum eylemleri (Arşivle = Tamamlandı, İptal et = İptal) Kaydet'i
+       beklemeden yazılır. İptal görev detayından yapılamıyordu (QA-19): rozet menüsü İptal'i
+       bilerek göstermiyor ("⋯ menüsünden yapılır") ama ⋯ menüsünde yalnız Arşivle vardı. */
+    const applyStatusNow = async (status, okText, failText) => {
         taskDetailStore.markChanged();
         try {
-            await Promise.resolve(svc()?.updateStatus(currentTaskId, 4));
+            await Promise.resolve(svc()?.updateStatus(currentTaskId, status));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
             /* Rebase kullanıcının kaydetmediği durum seçimini korur; Kaydet arşivi geri
                almasın diye eylemin yazdığı alan forma işlenir (diğer düzenlemeler kalır). */
-            form.setField('status', 4);
+            form.setField('status', status);
             /* Kolon bağı da sunucudakine eşitlenir: kullanıcının seçtiği özel kolon
                formda kalırsa Kaydet görevi o kolonun durumuna geri çekerdi. */
             form.setField('boardColumnId',
                 queryClient.getQueryData(['task-detail', currentTaskId])?.boardColumnId ?? null);
-            notify.info('Görev arşivlendi (Tamamlandı).');
+            notify.info(okText);
         } catch (err) {
-            notifyError(err, 'Görev arşivlenemedi.');
+            notifyError(err, failText);
         }
     };
+    const handleArchive = () => applyStatusNow(4, 'Görev arşivlendi (Tamamlandı).', 'Görev arşivlenemedi.');
+    const handleCancelTask = () => applyStatusNow(0, 'Görev iptal edildi.', 'Görev iptal edilemedi.');
 
     const handleDelete = async () => {
         if (!window.confirm('Bu görev ve tüm alt görevleri kalıcı olarak silinecek. Devam edilsin mi?')) return;
@@ -540,6 +545,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 onToggleWatch={handleToggleWatch}
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}
+                onCancelTask={handleCancelTask}
                 onDelete={handleDelete}
                 onOpenTransfer={(mode) => setTransfer({ mode })}
                 onExportPdf={handleExportPdf}

@@ -143,6 +143,17 @@ describe('TaskDetailRootV3 — form sunucu verisine yeniden temellenir (STA-04)'
         expect(screen.getByRole('button', { name: 'Kaydet' })).toBeDisabled();
     });
 
+    it('Görevi iptal et anında İptal durumunu yazar, form kirli görünmez (QA-19)', async () => {
+        await openLoaded();
+        svc.get.mockImplementation(() => Promise.resolve({ ...TASK, status: 0 }));
+
+        clickMenuItem('Görevi iptal et');
+
+        await waitFor(() => expect(svc.updateStatus).toHaveBeenCalledWith(TASK.id, 0));
+        await waitFor(() => expect(screen.getAllByText('İptal').length).toBeGreaterThan(0));
+        expect(screen.queryByText(DIRTY)).not.toBeInTheDocument();
+    });
+
     it('tazelemeyle gelen durum değişikliği, kullanıcının önceliğini ezmeden kaydedilir', async () => {
         await openLoaded();
 
