@@ -43,9 +43,19 @@ public class CreateTaskShareLinkDto
     [StringLength(TaskShareConsts.MaxRecipientNameLength)]
     public string RecipientName { get; set; } = string.Empty;
 
+    private string? _recipientEmail;
+
+    /// <summary>
+    /// İsteğe bağlı. Boş metin "yok" sayılır (QA-41): form alanı boş bırakılınca "" geliyordu ve
+    /// [EmailAddress] boş metni geçersiz saydığı için e-postasız bağlantı hiç üretilemiyordu.
+    /// </summary>
     [StringLength(TaskShareConsts.MaxRecipientEmailLength)]
     [EmailAddress]
-    public string? RecipientEmail { get; set; }
+    public string? RecipientEmail
+    {
+        get => _recipientEmail;
+        set => _recipientEmail = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
 
     [Range(1, TaskShareConsts.MaxLifetimeDays)]
     public int LifetimeDays { get; set; } = TaskShareConsts.DefaultLifetimeDays;
