@@ -289,10 +289,14 @@ $(function () {
     }
 
     // ─── DataTable ─────────────────────────────────────────────────────────
+    // QA-27 · Varsayılan sıra son tarih (yakın olan önce; son tarihsiz görevler sonda — sunucu kuralı).
+    // Eskiden başlığa göre alfabetikti.
+    var columns = buildColumns();
+    var dueColumn = columns.map(function (c) { return c.data; }).indexOf('dueDate');
     var dataTable = $('#TasksTable').DataTable(abp.libs.datatables.normalizeConfiguration({
         serverSide: true,
         paging: true,
-        order: [[canBulk ? 1 : 0, 'asc']],
+        order: [[dueColumn >= 0 ? dueColumn : (canBulk ? 1 : 0), 'asc']],
         searching: true,
         ajax: abp.libs.datatables.createAjax(taskService.getList, listFilter),
         // Satıra data-id — klavye kısayolları (j/k gezinme, ↵, x, 1-4) satırları
@@ -300,7 +304,7 @@ $(function () {
         createdRow: function (row, data) {
             $(row).attr('data-id', data.id);
         },
-        columnDefs: buildColumns()
+        columnDefs: columns
     }));
 
     var hierarchy = console_.createSubtaskHierarchy({

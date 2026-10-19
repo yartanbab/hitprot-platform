@@ -275,6 +275,24 @@ namespace Apya.Platform.Tasks
         }
 
         // --- 1b. GET LIST (özel kolon adlarını batch doldurur) ---
+        /// <summary>
+        /// QA-27 · Son tarihe göre sıralamada son tarihsiz görevler HER sağlayıcıda sona gider (SQL Server artan
+        /// sırada NULL'u başa koyar, PostgreSQL sona). Diğer sütunlar ABP'nin dinamik sıralamasıyla.
+        /// </summary>
+        protected override IQueryable<TaskItem> ApplySorting(IQueryable<TaskItem> query, GetTasksInput input)
+        {
+            var sorting = input.Sorting?.Trim();
+            if (sorting != null && sorting.StartsWith("dueDate", StringComparison.OrdinalIgnoreCase))
+            {
+                var nullsLast = query.OrderBy(t => t.DueDate == null);
+                return sorting.EndsWith("desc", StringComparison.OrdinalIgnoreCase)
+                    ? nullsLast.ThenByDescending(t => t.DueDate).ThenBy(t => t.Title)
+                    : nullsLast.ThenBy(t => t.DueDate).ThenBy(t => t.Title);
+            }
+
+            return base.ApplySorting(query, input);
+        }
+
         public override async Task<PagedResultDto<TaskDto>> GetListAsync(GetTasksInput input)
         {
             var result = await base.GetListAsync(input);
