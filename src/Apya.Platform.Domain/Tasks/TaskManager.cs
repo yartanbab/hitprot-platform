@@ -28,6 +28,7 @@ public class TaskManager : DomainService
     private readonly IRepository<IssueTaskLink, Guid> _issueTaskLinkRepository;
     private readonly IRepository<IdentityUser, Guid> _userRepository;
     private readonly IRepository<FundingTranche, Guid> _trancheRepository;
+    private readonly IRepository<TaskWatcher, Guid> _watcherRepository;
 
     /// <summary>
     /// 🔴 PRJ-07 · Alt görevin bağlanacağı üst görevi doğrular.
@@ -76,9 +77,11 @@ public class TaskManager : DomainService
         IRepository<IncomeEntry, Guid> incomeRepository,
         IRepository<IssueTaskLink, Guid> issueTaskLinkRepository,
         IRepository<IdentityUser, Guid> userRepository,
-        IRepository<FundingTranche, Guid> trancheRepository)
+        IRepository<FundingTranche, Guid> trancheRepository,
+        IRepository<TaskWatcher, Guid> watcherRepository)
     {
         _trancheRepository = trancheRepository;
+        _watcherRepository = watcherRepository;
         _taskRepository = taskRepository;
         _checklistRepository = checklistRepository;
         _commentRepository = commentRepository;
@@ -89,6 +92,27 @@ public class TaskManager : DomainService
         _incomeRepository = incomeRepository;
         _issueTaskLinkRepository = issueTaskLinkRepository;
         _userRepository = userRepository;
+    }
+
+    /// <summary>
+    /// P-09 · Atanan değişince ESKİ sorumlu görevin izleyicisi olarak kalır (kullanıcı kararı
+    /// 2026-10-19): işi devreden kişi yorum, durum ve vade bildirimlerini almayı sürdürür,
+    /// istemezse "İzle"yi kapatır. Atama kaldırıldığında da (yeni sorumlu yok) aynı kural geçer.
+    /// </summary>
+    public async Task KeepPreviousAssigneeWatchingAsync(Guid taskId, Guid? previousAssigneeId, Guid? newAssigneeId)
+    {
+        if (previousAssigneeId == null || previousAssigneeId == newAssigneeId)
+        {
+            return;
+        }
+
+        if (await _watcherRepository.AnyAsync(w => w.TaskId == taskId && w.UserId == previousAssigneeId.Value))
+        {
+            return;
+        }
+
+        await _watcherRepository.InsertAsync(
+            new TaskWatcher(GuidGenerator.Create(), taskId, previousAssigneeId.Value), autoSave: true);
     }
 
     /// <summary>

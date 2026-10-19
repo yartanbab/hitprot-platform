@@ -1046,6 +1046,8 @@ namespace Apya.Platform.Tasks
                 }
             }
 
+            await _taskManager.KeepPreviousAssigneeWatchingAsync(task.Id, previousAssigneeId, task.AssigneeId);
+
             // BİLDİRİM: Atanan kişi değiştiyse event yayınla
             if (task.AssigneeId.HasValue && task.AssigneeId != previousAssigneeId)
             {
@@ -2105,6 +2107,7 @@ namespace Apya.Platform.Tasks
 
             task.AssignTo(assigneeId);
             await Repository.UpdateAsync(task);
+            await _taskManager.KeepPreviousAssigneeWatchingAsync(task.Id, previousAssigneeId, task.AssigneeId);
 
             // BİLDİRİM: yalnız gerçekten DEĞİŞTİYSE ve biri atandıysa (atama
             // kaldırıldığında kimseye bildirim gitmez).
