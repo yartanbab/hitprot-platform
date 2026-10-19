@@ -256,7 +256,10 @@ public static class ReleaseNoteCatalog
                 "Henüz çalışmayan düğmeler kaldırıldı",
                 "Fatura ayrıntısındaki \"Gönder\" düğmesi ile görev menüsündeki \"Şablon olarak kaydet\" ve " +
                 "\"Alt göreve dönüştür\" maddeleri basınca yalnız \"yakında\" uyarısı veriyordu; " +
-                "kaldırıldılar. Faturayı yazdırma yerinde."),
+                "kaldırıldılar. Faturayı yazdırma yerinde. Görev yorumundaki \"Dosya ekle\", \"Görsel ekle\" " +
+                "ve \"Bahset\" düğmeleri ile açıklama alanındaki \"Görsel ekle\" ve \"Kişi bahset\" yalnız metne " +
+                "yer tutucu yazıyordu, yorum beğenileri de kaydedilmiyordu; bunlar da kaldırıldı. Dosya ve " +
+                "görselleri görevin Dosyalar sekmesinden ekleyebilirsiniz."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Takvimdeki hibe tarihleri doğru ekrana götürüyor",
@@ -272,6 +275,47 @@ public static class ReleaseNoteCatalog
                 "hesaplarda projenin eski faturaları görünmüyordu. Artık projenin bütün faturaları geliyor. " +
                 "Faturalar ekranı da uzun listede \"Daha fazla yükle\" ile devam ediyor ve her satırda " +
                 "faturanın alış mı satış mı olduğu yazıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevler arasında bağımlılık kurabiliyorsunuz",
+                "Görev detayının Bağımlılıklar sekmesinde artık \"Öncül ekle\" var: aynı projedeki bir görevi, " +
+                "bu görev başlamadan bitmesi gereken iş olarak seçersiniz. Sekme, bu göreve bağlı ardıl " +
+                "görevleri de listeler. Zaman Çizelgesi'ndeki bağ okları ve kritik yol bu bağlardan çizilir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevi görev detayından iptal edebiliyorsunuz",
+                "Görev detayının ⋯ menüsünde \"Görevi iptal et\" var; eskiden iptal yalnız listeden ve " +
+                "panodan yapılabiliyordu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje sayfasındaki sayılar anında güncelleniyor",
+                "Proje sayfasının üstündeki İlerleme, Gecikmiş ve 7 Gün İçinde değerleri bir görevi " +
+                "eklediğinizde, tamamladığınızda ya da iptal ettiğinizde sayfayı yenilemeden güncellenir. " +
+                "Finans sekmesindeki \"Görev ilerlemesi\" her projede %0 görünüyordu; artık gerçek değeri " +
+                "gösterir. Projeler listesindeki sayaçlar da kartlardaki sayılarla aynıdır: \"Yaklaşan görev\" " +
+                "yerine proje sayfasıyla aynı \"7 gün içinde\" sayacı ve süzgeci geldi. Yeni proje " +
+                "oluştururken \"Oluştur ve görev ekle\" doğrudan Yeni Görev penceresini açar."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bugün biten görev \"gecikmiş\" sayılmıyor",
+                "Son tarihi bugün olan görev, gün daha bitmeden proje kartında, raporda ve görev satırındaki " +
+                "kırmızı tarihte \"gecikmiş\" görünüyordu; proje sayfası ise saymıyordu. Artık her ekranda " +
+                "görev ancak son günü geçince gecikmiş sayılır. İptal ettiğiniz görevler de projenin risk " +
+                "değerlendirmesini artık artırmıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Silinen görevin alt görevleri de siliniyor",
+                "Görev silinirken \"tüm alt görevleri de silinecek\" deniyordu ama alt görevler kalıyordu; " +
+                "listede görünmüyor, proje ilerlemesini ise düşürüyordu. Artık alt görevler de silinir; " +
+                "önceden böyle kalmış alt görevler bu güncellemeyle temizlenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev sayfası düzeltmeleri",
+                "Görev sayfasında Kaydet çubuğu artık ekranın altında hep görünür; değiştirdiğiniz durumun ya da " +
+                "önceliğin kaydedilmeyi beklediğini gözden kaçırmazsınız. \"Çoğalt\" kopyanın kendi sayfasını " +
+                "açar, sekme başlığı görevin güncel adını gösterir ve sayfa telefonda yana taşmaz. Atanan " +
+                "seçicilerinde ve yorumlarda kişiler ad soyadıyla görünür; Zaman Çizelgesi'nde iptal edilen " +
+                "görevler tamamlananlardan ayrı renkte çizilir."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Security,
                 "Gizli görevler her ekranda gizli kalıyor",
