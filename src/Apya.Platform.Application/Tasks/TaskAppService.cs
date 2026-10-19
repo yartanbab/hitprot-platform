@@ -984,6 +984,8 @@ namespace Apya.Platform.Tasks
                 await _taskManager.EnsureAssigneeIsValidAsync(input.AssigneeId);
             }
 
+            var before = TaskChangeSnapshot.Of(task); // N-03
+
             // Rich Domain: tüm alanları tek metotta güncelle
             var previousAssigneeId = task.Update(
                 input.Title,
@@ -1060,6 +1062,9 @@ namespace Apya.Platform.Tasks
                     AssignerName   = ActorName("Sistem")
                 });
             }
+
+            // N-03 · Formdan yapılan durum / son tarih / öncelik değişikliği ve alınan atama da bildirilir.
+            await _taskManager.PublishChangesAsync(task, before, CurrentUser.Id, ActorName("Bilinmeyen"));
 
             var tagDtos = await SyncTagsAsync(task.Id, input.TagNames);
 
@@ -1232,6 +1237,7 @@ namespace Apya.Platform.Tasks
             await _localEventBus.PublishAsync(new TaskCommentAddedEto
             {
                 TaskId        = parent.TaskId,
+                ReplyToUserId = parent.CreatorId, // N-03 · yanıtlanan yorumun yazarı
                 TaskTitle     = task.Title,
                 AssigneeId    = task.AssigneeId,
                 CreatorId     = task.CreatorId,
@@ -2141,6 +2147,10 @@ namespace Apya.Platform.Tasks
             task.AssignTo(assigneeId);
             await Repository.UpdateAsync(task);
             await _taskManager.KeepPreviousAssigneeWatchingAsync(task.Id, previousAssigneeId, task.AssigneeId);
+            // N-03 · Eski sorumlu "Görev sizden alındı" alır (yeni sorumlu aşağıda TaskAssigned).
+            await _taskManager.PublishChangesAsync(task,
+                new TaskChangeSnapshot(task.Status, task.DueDate, task.Priority, previousAssigneeId),
+                CurrentUser.Id, ActorName("Sistem"));
 
             // BİLDİRİM: yalnız gerçekten DEĞİŞTİYSE ve biri atandıysa (atama
             // kaldırıldığında kimseye bildirim gitmez).
@@ -2187,8 +2197,10 @@ namespace Apya.Platform.Tasks
         {
             var task = await Repository.GetAsync(id);
             await EnsureCanMutateTaskAsync(task);
+            var before = TaskChangeSnapshot.Of(task); // N-03
             task.ChangePriority(priority);
             await Repository.UpdateAsync(task);
+            await _taskManager.PublishChangesAsync(task, before, CurrentUser.Id, ActorName("Bilinmeyen"));
         }
 
         /// <summary>
@@ -2258,8 +2270,10 @@ namespace Apya.Platform.Tasks
             var newDue = basis.AddDays(days);
             var newStart = newDue < task.StartDate ? newDue : task.StartDate;
 
+            var before = TaskChangeSnapshot.Of(task); // N-03
             task.UpdateSchedule(newStart, newDue);
             await Repository.UpdateAsync(task);
+            await _taskManager.PublishChangesAsync(task, before, CurrentUser.Id, ActorName("Bilinmeyen"));
 
             return ObjectMapper.Map<TaskItem, TaskDto>(task);
         }
@@ -2284,8 +2298,10 @@ namespace Apya.Platform.Tasks
                 start = due.Value;
             }
 
+            var before = TaskChangeSnapshot.Of(task); // N-03
             task.UpdateSchedule(start, due);
             await Repository.UpdateAsync(task);
+            await _taskManager.PublishChangesAsync(task, before, CurrentUser.Id, ActorName("Bilinmeyen"));
         }
 
         // --- ZAMAN TAKİBİ ---

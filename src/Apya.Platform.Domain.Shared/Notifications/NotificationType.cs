@@ -80,5 +80,13 @@ public enum NotificationType
 
     // H-03: başvuru sihirbazının mesajı ve sıra devri karşı tarafa ulaşmıyordu.
     GrantMessageReceived        = 45, // Başvuruda yeni mesaj (karşı tarafa gider)
-    GrantHandedOver             = 46  // Başvurunun sırası size geçti
+    GrantHandedOver             = 46, // Başvurunun sırası size geçti
+
+    // N-03: görevin muhatabına giden ama hiç üretilmeyen değişiklikler.
+    CommentReplied              = 47, // Yorumunuza yanıt verildi
+    TaskUnassigned              = 48, // Görev sizden alındı (eski sorumluya)
+    TaskDueDateChanged          = 49, // Görevinizin son tarihi değişti
+    TaskPriorityRaised          = 50, // Görevinizin önceliği Kritik'e çıktı
+    ProjectMemberRemoved        = 51, // Proje ekibinden çıkarıldınız
+    ProjectMemberRoleChanged    = 52  // Proje ekibindeki rolünüz değişti
 }

@@ -9,6 +9,7 @@ using Apya.Platform.ProjectBudgets;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
+using Volo.Abp.EventBus.Local;
 using Volo.Abp.Identity;
 
 namespace Apya.Platform.Tasks;
@@ -29,6 +30,7 @@ public class TaskManager : DomainService
     private readonly IRepository<IdentityUser, Guid> _userRepository;
     private readonly IRepository<FundingTranche, Guid> _trancheRepository;
     private readonly IRepository<TaskWatcher, Guid> _watcherRepository;
+    private readonly ILocalEventBus _localEventBus;
 
     /// <summary>
     /// 🔴 PRJ-07 · Alt görevin bağlanacağı üst görevi doğrular.
@@ -78,10 +80,12 @@ public class TaskManager : DomainService
         IRepository<IssueTaskLink, Guid> issueTaskLinkRepository,
         IRepository<IdentityUser, Guid> userRepository,
         IRepository<FundingTranche, Guid> trancheRepository,
-        IRepository<TaskWatcher, Guid> watcherRepository)
+        IRepository<TaskWatcher, Guid> watcherRepository,
+        ILocalEventBus localEventBus)
     {
         _trancheRepository = trancheRepository;
         _watcherRepository = watcherRepository;
+        _localEventBus = localEventBus;
         _taskRepository = taskRepository;
         _checklistRepository = checklistRepository;
         _commentRepository = commentRepository;
@@ -114,6 +118,67 @@ public class TaskManager : DomainService
         await _watcherRepository.InsertAsync(
             new TaskWatcher(GuidGenerator.Create(), taskId, previousAssigneeId.Value), autoSave: true);
     }
+
+    /// <summary>
+    /// N-03 · Görevin muhataplarına giden değişiklik bildirimleri TEK yerden: hangi ekran değiştirirse
+    /// değiştirsin (düzenleme formu, pano sütunu, hızlı uçlar, toplu çubuk) aynı kural.
+    /// <list type="bullet">
+    /// <item>Durum değiştiyse <see cref="TaskStatusChangedEto"/> (atanan, açan, izleyiciler). Eskiden yalnız
+    /// durum ucundan gidiyordu; formdan ve pano sütunundan değişen durum sessizdi.</item>
+    /// <item>Atama alındıysa eski sorumluya "Görev sizden alındı" (yeni sorumlu TaskAssigned alır).</item>
+    /// <item>Sorumlu aynı kaldıysa: son tarih değiştiyse ve öncelik Kritik'e çıktıysa sorumluya.</item>
+    /// </list>
+    /// Alıcı olayı yapan kişiyse işleyici göndermez.
+    /// </summary>
+    public async Task PublishChangesAsync(TaskItem task, TaskChangeSnapshot before, Guid? actorId, string actorName)
+    {
+        if (task.Status != before.Status)
+        {
+            await _localEventBus.PublishAsync(new TaskStatusChangedEto
+            {
+                TaskId = task.Id,
+                TaskTitle = task.Title,
+                OldStatus = before.Status,
+                NewStatus = task.Status,
+                AssigneeId = task.AssigneeId,
+                CreatorId = task.CreatorId,
+                ModifierUserId = actorId,
+                ChangedByName = actorName
+            });
+        }
+
+        if (before.AssigneeId.HasValue && task.AssigneeId != before.AssigneeId)
+        {
+            await PublishChangeAsync(task, TaskChangeKind.Unassigned, before.AssigneeId.Value, actorId, actorName);
+        }
+
+        if (!task.AssigneeId.HasValue || task.AssigneeId != before.AssigneeId)
+        {
+            return; // yeni sorumlu zaten "Yeni görev" bildirimini aldı
+        }
+
+        if (task.DueDate?.Date != before.DueDate?.Date)
+        {
+            await PublishChangeAsync(task, TaskChangeKind.DueDateChanged, task.AssigneeId.Value, actorId, actorName);
+        }
+
+        if (task.Priority == TaskPriority.Critical && before.Priority != TaskPriority.Critical)
+        {
+            await PublishChangeAsync(task, TaskChangeKind.PriorityRaised, task.AssigneeId.Value, actorId, actorName);
+        }
+    }
+
+    private Task PublishChangeAsync(TaskItem task, TaskChangeKind kind, Guid recipientId, Guid? actorId, string actorName)
+        => _localEventBus.PublishAsync(new TaskChangedEto
+        {
+            TaskId = task.Id,
+            TaskTitle = task.Title,
+            Kind = kind,
+            RecipientId = recipientId,
+            ModifierUserId = actorId,
+            ChangedByName = actorName,
+            NewDueDate = task.DueDate
+        });
 
     /// <summary>
     /// Atanan kişi çağıranın KENDİ bağlamındaki bir kullanıcı olmalı. Kimlik istekten gelir ve hiç

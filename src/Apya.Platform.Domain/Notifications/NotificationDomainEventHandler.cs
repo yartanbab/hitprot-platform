@@ -17,6 +17,7 @@ public class NotificationDomainEventHandler :
     ILocalEventHandler<TaskAssignedEto>,
     ILocalEventHandler<TaskCommentAddedEto>,
     ILocalEventHandler<TaskStatusChangedEto>,
+    ILocalEventHandler<TaskChangedEto>,
     ILocalEventHandler<TaskDueSoonEto>,
     ILocalEventHandler<TaskOverdueEto>,
     ILocalEventHandler<DocumentExpiringEto>,
@@ -120,6 +121,23 @@ public class NotificationDomainEventHandler :
             );
         }
 
+        // N-03 · Yanıt verilen yorumun yazarı "Yorumunuza yanıt" alır; bahsedildiyse yalnız bahsetmeyi.
+        if (eventData.ReplyToUserId is { } repliedTo && repliedTo != Guid.Empty
+            && repliedTo != eventData.CommentUserId && !mentioned.Contains(repliedTo))
+        {
+            await _notificationManager.PublishAsync(
+                repliedTo,
+                _l["Notification:CommentReplied:Title"],
+                _l["Notification:CommentReplied:Body", eventData.CommenterName, eventData.TaskTitle, eventData.CommentText],
+                NotificationType.CommentReplied,
+                entityType: "Task",
+                entityId: eventData.TaskId,
+                actorUserId: actorUserId,
+                actorName: eventData.CommenterName
+            );
+            mentioned.Add(repliedTo); // aynı yorum için ikinci (genel) bildirim gitmesin
+        }
+
         if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.CommentUserId
             && !mentioned.Contains(eventData.AssigneeId.Value))
         {
@@ -164,6 +182,47 @@ public class NotificationDomainEventHandler :
                 actorName: eventData.CommenterName
             );
         }
+    }
+
+    // --- N-03 · Görevin tek muhatabına giden değişiklik (atama alındı, son tarih, öncelik) ---
+    public async Task HandleEventAsync(TaskChangedEto eventData)
+    {
+        if (eventData.RecipientId == Guid.Empty || eventData.RecipientId == eventData.ModifierUserId)
+        {
+            return;
+        }
+
+        NotificationType type;
+        string title;
+        string body;
+        switch (eventData.Kind)
+        {
+            case TaskChangeKind.Unassigned:
+                type = NotificationType.TaskUnassigned;
+                title = _l["Notification:TaskUnassigned:Title"];
+                body = _l["Notification:TaskUnassigned:Body", eventData.ChangedByName, eventData.TaskTitle];
+                break;
+            case TaskChangeKind.DueDateChanged:
+                type = NotificationType.TaskDueDateChanged;
+                title = _l["Notification:TaskDueDateChanged:Title"];
+                body = eventData.NewDueDate.HasValue
+                    ? _l["Notification:TaskDueDateChanged:Body", eventData.ChangedByName, eventData.TaskTitle,
+                        eventData.NewDueDate.Value.ToString("dd.MM.yyyy")]
+                    : _l["Notification:TaskDueDateChanged:Body:Removed", eventData.ChangedByName, eventData.TaskTitle];
+                break;
+            default:
+                type = NotificationType.TaskPriorityRaised;
+                title = _l["Notification:TaskPriorityRaised:Title"];
+                body = _l["Notification:TaskPriorityRaised:Body", eventData.ChangedByName, eventData.TaskTitle];
+                break;
+        }
+
+        await _notificationManager.PublishAsync(
+            eventData.RecipientId, title, body, type,
+            entityType: "Task",
+            entityId: eventData.TaskId,
+            actorUserId: eventData.ModifierUserId,
+            actorName: eventData.ChangedByName);
     }
 
     // --- Durum Değiştiğinde ---
