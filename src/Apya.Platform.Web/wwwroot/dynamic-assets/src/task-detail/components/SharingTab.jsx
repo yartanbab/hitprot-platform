@@ -50,6 +50,9 @@ export function SharingTab({ taskId }) {
         try {
             const created = await create({
                 ...form,
+                recipientName: form.recipientName.trim(),
+                // QA-41: boş e-posta "yok" demektir; "" gönderilirse sunucu doğrulaması reddeder.
+                recipientEmail: form.recipientEmail.trim() || null,
                 lifetimeDays: Number(form.lifetimeDays) || 14,
             });
             setJustCreated(created);
@@ -113,6 +116,7 @@ export function SharingTab({ taskId }) {
                         value={form.recipientName}
                         onChange={set('recipientName')}
                         placeholder="Kime? (ad soyad)"
+                        aria-label="Alıcının adı soyadı"
                         className="min-w-0 flex-[2_1_180px] rounded-[8px] border border-default bg-surface-raised px-2.5 py-2 text-[12.5px] text-text-primary"
                     />
                     <input
@@ -120,17 +124,23 @@ export function SharingTab({ taskId }) {
                         value={form.recipientEmail}
                         onChange={set('recipientEmail')}
                         placeholder="E-posta (isteğe bağlı)"
+                        aria-label="Alıcının e-postası (isteğe bağlı)"
                         className="min-w-0 flex-[2_1_180px] rounded-[8px] border border-default bg-surface-raised px-2.5 py-2 text-[12.5px] text-text-primary"
                     />
-                    <input
-                        type="number"
-                        min="1"
-                        max="90"
-                        value={form.lifetimeDays}
-                        onChange={set('lifetimeDays')}
-                        title="Geçerlilik (gün)"
-                        className="w-[92px] rounded-[8px] border border-default bg-surface-raised px-2.5 py-2 text-[12.5px] text-text-primary"
-                    />
+                    {/* QA-40: kutuda yalnız "14" görünüyordu; birim yazılır, ad erişilebilir. */}
+                    <label className="flex items-center gap-1.5 text-[12px] text-text-secondary">
+                        <input
+                            type="number"
+                            min="1"
+                            max="90"
+                            value={form.lifetimeDays}
+                            onChange={set('lifetimeDays')}
+                            title="Geçerlilik (gün)"
+                            aria-label="Geçerlilik süresi (gün)"
+                            className="w-[72px] rounded-[8px] border border-default bg-surface-raised px-2.5 py-2 text-[12.5px] text-text-primary"
+                        />
+                        gün geçerli
+                    </label>
                 </div>
 
                 <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[12px] text-text-secondary">

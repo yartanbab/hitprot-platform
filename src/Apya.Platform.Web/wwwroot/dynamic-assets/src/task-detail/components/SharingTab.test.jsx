@@ -73,6 +73,22 @@ describe('SharingTab', () => {
         expect(arg.taskId).toBe('t-1');
     });
 
+    /** QA-40/41: e-posta boşken null gider ("" sunucu doğrulamasına takılıyordu); alanların adı var. */
+    it('e-posta bos birakilinca null gonderilir', async () => {
+        renderWithClient(<SharingTab taskId="t-1" />);
+        await screen.findByText(/Ahmet Yılmaz/);
+
+        fireEvent.change(screen.getByLabelText('Alıcının adı soyadı'), { target: { value: ' Ayşe Yılmaz ' } });
+        expect(screen.getByLabelText('Geçerlilik süresi (gün)')).toHaveValue(14);
+        expect(screen.getByLabelText('Alıcının e-postası (isteğe bağlı)')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('Bağlantı üret'));
+
+        await waitFor(() => expect(window.apya.platform.tasks.taskShare.create).toHaveBeenCalled());
+        const arg = window.apya.platform.tasks.taskShare.create.mock.calls[0][0];
+        expect(arg.recipientName).toBe('Ayşe Yılmaz');
+        expect(arg.recipientEmail).toBeNull();
+    });
+
     /**
      * 🔴 Token sunucuda SAKLANMAZ — yalnız create yanıtında döner. Kutu kaybolursa
      * link kalıcı olarak gider; bu yüzden üretilen bağlantı ekranda kalmalı.

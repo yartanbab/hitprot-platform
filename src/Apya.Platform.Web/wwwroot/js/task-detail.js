@@ -1380,6 +1380,9 @@ function lr({ taskId: t }) {
       try {
         const b = await r({
           ...n,
+          recipientName: n.recipientName.trim(),
+          // QA-41: boş e-posta "yok" demektir; "" gönderilirse sunucu doğrulaması reddeder.
+          recipientEmail: n.recipientEmail.trim() || null,
           lifetimeDays: Number(n.lifetimeDays) || 14
         });
         m(b), i(Wt);
@@ -1435,6 +1438,7 @@ function lr({ taskId: t }) {
             value: n.recipientName,
             onChange: p("recipientName"),
             placeholder: "Kime? (ad soyad)",
+            "aria-label": "Alıcının adı soyadı",
             className: "min-w-0 flex-[2_1_180px] rounded-[8px] border border-default bg-surface-raised px-2.5 py-2 text-[12.5px] text-text-primary"
           }
         ),
@@ -1445,21 +1449,26 @@ function lr({ taskId: t }) {
             value: n.recipientEmail,
             onChange: p("recipientEmail"),
             placeholder: "E-posta (isteğe bağlı)",
+            "aria-label": "Alıcının e-postası (isteğe bağlı)",
             className: "min-w-0 flex-[2_1_180px] rounded-[8px] border border-default bg-surface-raised px-2.5 py-2 text-[12.5px] text-text-primary"
           }
         ),
-        /* @__PURE__ */ e.jsx(
-          "input",
-          {
-            type: "number",
-            min: "1",
-            max: "90",
-            value: n.lifetimeDays,
-            onChange: p("lifetimeDays"),
-            title: "Geçerlilik (gün)",
-            className: "w-[92px] rounded-[8px] border border-default bg-surface-raised px-2.5 py-2 text-[12.5px] text-text-primary"
-          }
-        )
+        /* @__PURE__ */ e.jsxs("label", { className: "flex items-center gap-1.5 text-[12px] text-text-secondary", children: [
+          /* @__PURE__ */ e.jsx(
+            "input",
+            {
+              type: "number",
+              min: "1",
+              max: "90",
+              value: n.lifetimeDays,
+              onChange: p("lifetimeDays"),
+              title: "Geçerlilik (gün)",
+              "aria-label": "Geçerlilik süresi (gün)",
+              className: "w-[72px] rounded-[8px] border border-default bg-surface-raised px-2.5 py-2 text-[12.5px] text-text-primary"
+            }
+          ),
+          "gün geçerli"
+        ] })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex flex-wrap gap-x-4 gap-y-1.5 text-[12px] text-text-secondary", children: [
         /* @__PURE__ */ e.jsxs("label", { className: "flex items-center gap-1.5 cursor-pointer", children: [
