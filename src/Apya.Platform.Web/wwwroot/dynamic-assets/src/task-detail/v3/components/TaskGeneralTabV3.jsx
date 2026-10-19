@@ -50,8 +50,9 @@ function CommentText({ text, attachments }) {
                     <React.Fragment key={i}>
                         {i > 0 && '\n'}
                         {file ? (
+                            /* Bağlantı belirteci (text-text-link): koyu temada text-primary 4,3:1 kalıyordu (AA 4,5). */
                             <a href={file.downloadUrl} target="_blank" rel="noopener noreferrer"
-                               className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">
+                               className="inline-flex items-center gap-1 font-semibold text-text-link hover:underline">
                                 <i className="fa-solid fa-paperclip text-[11px]" aria-hidden="true" />{name}
                             </a>
                         ) : line}

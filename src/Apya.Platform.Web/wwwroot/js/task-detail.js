@@ -5029,18 +5029,21 @@ function vn({ text: t, attachments: s }) {
     return /* @__PURE__ */ e.jsxs(Le.Fragment, { children: [
       i > 0 && `
 `,
-      n ? /* @__PURE__ */ e.jsxs(
-        "a",
-        {
-          href: n.downloadUrl,
-          target: "_blank",
-          rel: "noopener noreferrer",
-          className: "inline-flex items-center gap-1 font-semibold text-primary hover:underline",
-          children: [
-            /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-paperclip text-[11px]", "aria-hidden": "true" }),
-            o
-          ]
-        }
+      n ? (
+        /* Bağlantı belirteci (text-text-link): koyu temada text-primary 4,3:1 kalıyordu (AA 4,5). */
+        /* @__PURE__ */ e.jsxs(
+          "a",
+          {
+            href: n.downloadUrl,
+            target: "_blank",
+            rel: "noopener noreferrer",
+            className: "inline-flex items-center gap-1 font-semibold text-text-link hover:underline",
+            children: [
+              /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-paperclip text-[11px]", "aria-hidden": "true" }),
+              o
+            ]
+          }
+        )
       ) : r
     ] }, i);
   }) });
