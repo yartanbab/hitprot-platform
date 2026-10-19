@@ -168,12 +168,15 @@ describe('TaskDetailHeaderV3 / ⋯ menusu', () => {
         expect(content.className).toContain('overflow-y-auto');
     });
 
-    it('kisayol bloğundaki dort satirin tamami render edilir', () => {
+    /* QA-17 · Kısayol bloğu yalnız TANIMLI kısayolları gösterir; "Bağlantı kopyala ⌘L" hiçbir
+       yerde bağlı değildi. */
+    it('kisayol bloğu yalniz tanimli uc kisayolu gosterir', () => {
         renderHeader();
         fireEvent.click(screen.getByRole('button', { name: /diğer seçenekler/i }));
-        ['Kaydet', 'Yorum gönder', 'Kapat / iptal', 'Bağlantı kopyala'].forEach((label) => {
+        ['Kaydet', 'Yorum gönder', 'Kapat / iptal'].forEach((label) => {
             expect(screen.getByText(label)).toBeInTheDocument();
         });
+        expect(screen.queryByText('Bağlantı kopyala')).toBeNull();
     });
 
     it('PDF olarak disa aktar onExportPdf i cagirir', () => {

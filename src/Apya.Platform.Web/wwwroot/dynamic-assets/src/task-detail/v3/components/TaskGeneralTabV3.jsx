@@ -17,11 +17,14 @@ function Avatar({ name, size = 32 }) {
     );
 }
 
-function CollapseButton({ open, onClick }) {
+function CollapseButton({ open, onClick, label }) {
     return (
         <button
             type="button"
             onClick={onClick}
+            aria-expanded={open}
+            aria-label={`${label} — ${open ? 'daralt' : 'genişlet'}`}
+            title={open ? 'Daralt' : 'Genişlet'}
             className="flex items-center justify-center h-7 w-7 rounded-lg text-text-tertiary hover:bg-surface-hover hover:text-text-primary cursor-pointer"
         >
             <i className={`fa-solid ${open ? 'fa-chevron-up' : 'fa-chevron-down'} text-[12px]`} />
@@ -75,8 +78,6 @@ export function TaskGeneralTabV3({
     const [sending, setSending] = useState(false);
     const [replyingToId, setReplyingToId] = useState(null);
     const [replyDraft, setReplyDraft] = useState('');
-    /* Beğeni backend'de YOK — yalnız oturum içi. Kalıcı değil, bilinçli boşluk. */
-    const [likes, setLikes] = useState({});
 
     const { data: comments = [] } = useQuery({
         queryKey: ['task-comments', taskId],
@@ -119,11 +120,6 @@ export function TaskGeneralTabV3({
         }
     };
 
-    const toggleLike = (id) => setLikes((prev) => {
-        const cur = prev[id] ?? { liked: false, count: 0 };
-        return { ...prev, [id]: { liked: !cur.liked, count: cur.count + (cur.liked ? -1 : 1) } };
-    });
-
     const canSend = Boolean(commentDraft.trim()) && !sending;
 
     return (
@@ -158,7 +154,7 @@ export function TaskGeneralTabV3({
                             {doneCount}/{items.length}
                         </span>
                     </div>
-                    <CollapseButton open={checklistOpen} onClick={() => setChecklistOpen((v) => !v)} />
+                    <CollapseButton label="Kontrol listesi" open={checklistOpen} onClick={() => setChecklistOpen((v) => !v)} />
                 </div>
 
                 {checklistOpen && (
@@ -224,7 +220,7 @@ export function TaskGeneralTabV3({
                             {comments.length}
                         </span>
                     </div>
-                    <CollapseButton open={commentsOpen} onClick={() => setCommentsOpen((v) => !v)} />
+                    <CollapseButton label="Yorumlar" open={commentsOpen} onClick={() => setCommentsOpen((v) => !v)} />
                 </div>
 
                 {commentsOpen && (
@@ -248,16 +244,18 @@ export function TaskGeneralTabV3({
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendComment(); }
                                     }}
-                                    placeholder="Bir yorum yazın… (@bahset, Ctrl+Enter ile gönder)"
+                                    placeholder="Bir yorum yazın… (Ctrl+Enter ile gönder)"
                                     className="w-full p-3 border-0 bg-transparent text-text-primary text-[13px] leading-[1.6] resize-none focus:outline-none"
                                 />
                                 <div className="flex items-center justify-between px-2.5 py-[7px] border-t border-subtle bg-surface-base">
                                     <div className="flex items-center gap-0.5">
+                                        {/* Yalnız gerçekten iş yapan araç kalır (QA-18): "Dosya ekle" ve
+                                            "Görsel ekle" yorum metnine " [Dosya] " / " [Görsel] " yazıyordu
+                                            (dosya eklenmiyordu), "Bahset" seçicisi ve bildirimi olmayan bir
+                                            "@" basıyordu. Dosyalar görevin Dosyalar sekmesinde; kişi bahsetme
+                                            seçici + bildirimle birlikte gelecek (P-09). */}
                                         {[
-                                            { icon: 'fa-solid fa-paperclip', title: 'Dosya ekle', add: ' [Dosya] ' },
-                                            { icon: 'fa-regular fa-image', title: 'Görsel ekle', add: ' [Görsel] ' },
-                                            { icon: 'fa-regular fa-face-smile', title: 'Emoji', add: ' 👍 ' },
-                                            { icon: 'fa-solid fa-at', title: 'Bahset', add: ' @' },
+                                            { icon: 'fa-regular fa-face-smile', title: '👍 ekle', add: ' 👍 ' },
                                         ].map((tool) => (
                                             <button
                                                 key={tool.title}
@@ -290,7 +288,6 @@ export function TaskGeneralTabV3({
 
                         <div className="flex flex-col gap-1">
                             {comments.map((c) => {
-                                const like = likes[c.id] ?? { liked: false, count: 0 };
                                 return (
                                     <div key={c.id} className="flex gap-[11px] items-start py-3 border-t border-subtle">
                                         <Avatar name={c.authorName} />
@@ -302,18 +299,6 @@ export function TaskGeneralTabV3({
                                             <p className="m-0 text-[13px] leading-[1.65] text-text-secondary whitespace-pre-wrap">{c.text}</p>
 
                                             <div className="flex items-center gap-1.5 mt-[3px]">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleLike(c.id)}
-                                                    className={`flex items-center gap-1.5 h-[26px] px-[9px] rounded-full border text-[11px] font-semibold cursor-pointer ${
-                                                        like.liked
-                                                            ? 'border-primary bg-primary-subtle text-primary'
-                                                            : 'border-default bg-transparent text-text-tertiary hover:border-focus'
-                                                    }`}
-                                                >
-                                                    <i className="fa-regular fa-thumbs-up text-[10px]" />
-                                                    {like.count}
-                                                </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => {
