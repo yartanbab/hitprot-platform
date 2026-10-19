@@ -124,6 +124,7 @@
                     Tarayıcı bildirimi, uygulama kapalıyken de bu cihaza başlık düzeyinde bildirim gönderir
                     (yukarıdan bu cihazda açılmış olmalıdır); ayrıntı uygulama içinde kalır.
                 </p>
+                <div class="table-responsive apya-notif-pref-table">
                 <table class="table table-sm align-middle mb-0">
                     <thead>
                         <tr>
@@ -140,6 +141,7 @@
                         </td></tr>
                     </tbody>
                 </table>
+                </div>
 
                 @* Sessiz saatler (kullanıcı kararı 2026-10-19, varsayılan kapalı): yalnız tarayıcı bildirimini erteler;
                    uygulama içi bildirim her zaman anında düşer. *@
@@ -197,6 +199,18 @@
         background-color: var(--apya-accent-600); color: #fff; }
 
     .apya-notif-search { width: 15rem; max-width: 100%; }
+
+    /* Tercihler tablosu telefonda pencereyi taşırıyordu (375 px'te 459 px): başlıklar alt satıra iner, hücre
+       boşluğu daralır; yine sığmazsa tablo kendi kabında kayar. */
+    @@media (max-width: 575.98px) {
+        .apya-notif-pref-table thead th { white-space: normal; }
+        .apya-notif-pref-table .table > :not(caption) > * > * { padding-inline: 0.25rem; }
+    }
+
+    /* Pencerede OKUNAN açıklamalar .text-muted (üçüncül token): koyuda #71717A 3,5:1, AA altı (ölçüldü).
+       Kurum profili ve hibe kapsamındaki AA değerleri burada da kullanılır. */
+    #notif-pref-modal { --apya-text-tertiary: #6B7280; }
+    [data-theme="dark"] #notif-pref-modal { --apya-text-tertiary: #8A8A93; }
 
     /* Tercihler modalındaki "bu cihaz" bloğu: kategori matrisinden önce gelir,
        çünkü kanal hiç açık değilse matristeki seçimlerin bu cihazda karşılığı yok. */
