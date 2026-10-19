@@ -350,11 +350,14 @@
             var sub = !!t.parentTaskId;
             var x = xOf(w, taskStart(t));
             var wid = Math.max(6, (taskEnd(t).diff(taskStart(t), 'days') + 1) * pxPerDay());
-            var tone = isOverdue(t) ? 'is-negative' : (isClosed(t) ? 'is-positive' : (sub ? 'is-sub' : 'is-accent'));
+            // İptal edilen görev tamamlanmış gibi YEŞİL çizilmez (QA-13): kendi sönük tonu var.
+            var tone = isOverdue(t) ? 'is-negative'
+                : (t.status === 0 ? 'is-cancelled'
+                : (isClosed(t) ? 'is-positive' : (sub ? 'is-sub' : 'is-accent')));
             var pending = !!state.pending[t.id];
 
             // İlerleme dolgusu: tamamlandıysa %100, sürüyorsa geçen süre oranı.
-            var pct = t.status === 4 ? 100 : (function () {
+            var pct = t.status === 4 ? 100 : t.status === 0 ? 0 : (function () {
                 var total = taskEnd(t).diff(taskStart(t), 'days') + 1;
                 var gone = day(new Date()).diff(taskStart(t), 'days') + 1;
                 return Math.max(0, Math.min(100, Math.round(gone / total * 100)));
@@ -430,10 +433,10 @@
                 '<span><i class="apya-gantt-key is-accent"></i>' + l('Tasks:Timeline:Legend:Active') + '</span>' +
                 '<span><i class="apya-gantt-key is-positive"></i>' + l('Tasks:Timeline:Legend:Done') + '</span>' +
                 '<span><i class="apya-gantt-key is-negative"></i>' + l('Tasks:Timeline:Legend:Overdue') + '</span>' +
+                '<span><i class="apya-gantt-key is-cancelled"></i>' + l('Tasks:Timeline:Legend:Cancelled') + '</span>' +
                 '<span><i class="apya-gantt-key is-sub"></i>' + l('Tasks:Timeline:Legend:Subtask') + '</span>' +
                 '<span><i class="apya-gantt-key is-today"></i>' + l('Tasks:Timeline:Legend:Today', moment().format('DD.MM.YYYY')) + '</span>' +
                 '<span class="apya-gantt-spacer"></span>' +
-                '<span class="apya-gantt-hint">' + l('Tasks:Timeline:Legend:NoBaseline') + '</span>' +
                 '</div>';
         }
 
