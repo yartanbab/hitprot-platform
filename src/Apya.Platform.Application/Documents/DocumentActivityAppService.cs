@@ -93,8 +93,8 @@ public class DocumentActivityAppService : ApplicationService, IDocumentActivityA
         var userIds = logs.Where(l => l.CreatorId.HasValue).Select(l => l.CreatorId!.Value).Distinct().ToList();
         var userQueryable = await _identityRepository.GetQueryableAsync();
         var userNames = (await AsyncExecuter.ToListAsync(
-                userQueryable.AsNoTracking().Where(u => userIds.Contains(u.Id)).Select(u => new { u.Id, u.UserName })))
-            .ToDictionary(k => k.Id, v => v.UserName);
+                userQueryable.AsNoTracking().Where(u => userIds.Contains(u.Id)).Select(u => new { u.Id, u.UserName, u.Name, u.Surname })))
+            .ToDictionary(k => k.Id, v => Apya.Platform.Tasks.TaskPersonName.Of(v.Name, v.Surname, v.UserName));
 
         var fileIds = logs.Where(l => l.DocumentFileId.HasValue).Select(l => l.DocumentFileId!.Value).Distinct().ToList();
         var fileQueryable = await _fileRepository.GetQueryableAsync();

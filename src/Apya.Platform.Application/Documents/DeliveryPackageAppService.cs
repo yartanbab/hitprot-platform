@@ -600,8 +600,8 @@ public class DeliveryPackageAppService : ApplicationService, IDeliveryPackageApp
         var userIds = runs.Where(r => r.CreatorId.HasValue).Select(r => r.CreatorId!.Value).Distinct().ToList();
         var userQueryable = await _identityRepository.GetQueryableAsync();
         var userNames = (await AsyncExecuter.ToListAsync(
-                userQueryable.AsNoTracking().Where(u => userIds.Contains(u.Id)).Select(u => new { u.Id, u.UserName })))
-            .ToDictionary(k => k.Id, v => v.UserName);
+                userQueryable.AsNoTracking().Where(u => userIds.Contains(u.Id)).Select(u => new { u.Id, u.UserName, u.Name, u.Surname })))
+            .ToDictionary(k => k.Id, v => Apya.Platform.Tasks.TaskPersonName.Of(v.Name, v.Surname, v.UserName));
 
         return runs.Select(r => new ReportRunDto
         {

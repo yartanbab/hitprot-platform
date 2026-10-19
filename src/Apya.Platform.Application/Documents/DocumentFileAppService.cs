@@ -837,8 +837,8 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         var uploaderIds = attachments.Where(a => a.CreatorId.HasValue).Select(a => a.CreatorId!.Value).Distinct().ToList();
         var userQueryable = await _identityRepository.GetQueryableAsync();
         var userNames = (await AsyncExecuter.ToListAsync(
-                userQueryable.AsNoTracking().Where(u => uploaderIds.Contains(u.Id)).Select(u => new { u.Id, u.UserName })))
-            .ToDictionary(k => k.Id, v => v.UserName);
+                userQueryable.AsNoTracking().Where(u => uploaderIds.Contains(u.Id)).Select(u => new { u.Id, u.UserName, u.Name, u.Surname })))
+            .ToDictionary(k => k.Id, v => Apya.Platform.Tasks.TaskPersonName.Of(v.Name, v.Surname, v.UserName));
 
         var fileTagQueryable = await _fileTagRepository.GetQueryableAsync();
         var tagQueryable = await _tagRepository.GetQueryableAsync();
@@ -980,8 +980,8 @@ public class DocumentFileAppService : ApplicationService, IDocumentFileAppServic
         var uploaderIds = attachments.Where(a => a.CreatorId.HasValue).Select(a => a.CreatorId!.Value).Distinct().ToList();
         var userQueryable = await _identityRepository.GetQueryableAsync();
         var userNames = (await AsyncExecuter.ToListAsync(
-                userQueryable.AsNoTracking().Where(u => uploaderIds.Contains(u.Id)).Select(u => new { u.Id, u.UserName })))
-            .ToDictionary(k => k.Id, v => v.UserName);
+                userQueryable.AsNoTracking().Where(u => uploaderIds.Contains(u.Id)).Select(u => new { u.Id, u.UserName, u.Name, u.Surname })))
+            .ToDictionary(k => k.Id, v => Apya.Platform.Tasks.TaskPersonName.Of(v.Name, v.Surname, v.UserName));
 
         return attachments
             .OrderByDescending(a => a.VersionNumber)

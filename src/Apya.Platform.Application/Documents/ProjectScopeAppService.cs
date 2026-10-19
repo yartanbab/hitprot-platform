@@ -432,8 +432,8 @@ public class ProjectScopeAppService : ApplicationService, IProjectScopeAppServic
         return (await AsyncExecuter.ToListAsync(
                 queryable.AsNoTracking()
                     .Where(u => distinct.Contains(u.Id))
-                    .Select(u => new { u.Id, u.UserName })))
-            .ToDictionary(k => k.Id, v => v.UserName);
+                    .Select(u => new { u.Id, u.UserName, u.Name, u.Surname })))
+            .ToDictionary(k => k.Id, v => Apya.Platform.Tasks.TaskPersonName.Of(v.Name, v.Surname, v.UserName));
     }
 
     private async Task<Dictionary<Guid, string>> GetTypeNamesAsync(List<Guid> typeIds)
