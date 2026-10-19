@@ -107,8 +107,11 @@ public class Notification : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>
     /// Aynı gruba yeni bir olay düştü: yeni satır açmak yerine bu satır tazelenir.
     /// Metin son olaya göre güncellenir, sayaç artar — "X görevine 3 yeni yorum".
+    /// N-08 · Yeni olay daha önemliyse satırın önemi YÜKSELİR (düşmez): grubun ilk olayı "Normal"
+    /// olduğu için sonradan gelen Yüksek olay sıradan push'la gidiyordu.
     /// </summary>
-    public void Repeat(string title, string body, Guid? actorUserId = null, string? actorName = null)
+    public void Repeat(string title, string body, Guid? actorUserId = null, string? actorName = null,
+        NotificationSeverity? severity = null)
     {
         Title           = title;
         Body            = body;
@@ -116,5 +119,9 @@ public class Notification : FullAuditedAggregateRoot<Guid>, IMultiTenant
         ActorName       = actorName;
         OccurrenceCount++;
         LastOccurredAt  = DateTime.UtcNow;
+        if (severity > Severity)
+        {
+            Severity = severity.Value;
+        }
     }
 }
