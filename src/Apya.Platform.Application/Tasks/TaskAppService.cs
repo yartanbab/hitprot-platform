@@ -1151,15 +1151,15 @@ namespace Apya.Platform.Tasks
         public async Task<ListResultDto<IdentityUserDto>> GetUsersLookupAsync()
         {
             var users = await _userRepository.GetListAsync(maxResultCount: 500, sorting: "UserName");
+            // QA-26 · Seçiciler yalnız kimlik ve ad okur: e-posta ve telefon görev ekranına gönderilmez
+            // (eskiden ekipteki herkesin iletişim bilgisi her görev sayfasında tarayıcıya iniyordu).
             var userDtos = users.Select(u => new IdentityUserDto
             {
                 Id = u.Id,
                 UserName = u.UserName,
                 Name = u.Name,
                 Surname = u.Surname,
-                Email = u.Email,
-                PhoneNumber = u.PhoneNumber,
-                IsActive = true
+                IsActive = u.IsActive
             }).ToList();
 
             return new ListResultDto<IdentityUserDto>(userDtos);
