@@ -1,5 +1,6 @@
 $(function () {
-    // Komut paleti — yalnız menü navigasyonu (P4 kapsam kararı, backend yok).
+    // Komut paleti — menü navigasyonu + X-01 kayıt araması (görev, proje, hibe başvurusu, fatura;
+    // kullanıcı kararı 2026-10-19, eski P4 "backend yok" kapsamının yerine).
     // Veri kaynağı: sidebar zaten permission-filtered server-render edilmiş —
     // burada tekrar sorgulamak yerine DOM'dan scrape edilir (tek doğru kaynak,
     // kullanıcı hangi öğeleri görüyorsa palette de aynısını listeler).
@@ -85,6 +86,7 @@ $(function () {
         });
         input.addEventListener('input', function () {
             render(input.value);
+            searchRecords((input.value || '').trim());
         });
         input.addEventListener('keydown', onKeydown);
     }
@@ -108,6 +110,29 @@ $(function () {
         });
     }
 
+    // X-01 · Kayıt araması (görev, proje, hibe başvurusu, fatura). Yazarken 250 ms bekler; yanıt yalnız
+    // sorgu hâlâ aynıysa basılır. Sunucu her türü izin ve kapsamıyla arar; hata sessizdir (palet menüyle çalışır).
+    var records = [];
+    var recordsFor = '';
+    var recordTimer = null;
+    var RECORD_ICON = { task: 'fa fa-list-check', project: 'fa fa-diagram-project', grant: 'fa fa-award', invoice: 'fa fa-file-invoice' };
+
+    function searchRecords(raw) {
+        clearTimeout(recordTimer);
+        var svc = window.apya && apya.platform && apya.platform.search && apya.platform.search.recordSearch;
+        if (!svc || raw.length < 2) { records = []; recordsFor = ''; return; }
+        recordTimer = setTimeout(function () {
+            Promise.resolve(svc.search(raw, { abpHandleError: false, apyaBackground: true })).then(function (res) {
+                if ((input.value || '').trim() !== raw) { return; }
+                records = (res || []).map(function (r) {
+                    return { kind: 'nav', label: r.title, href: r.url, icon: RECORD_ICON[r.kind] || 'fa fa-file', section: r.subtitle || '', group: 'KAYITLAR' };
+                });
+                recordsFor = raw;
+                render(raw);
+            }, function () { });
+        }, 250);
+    }
+
     function buildEntries(q) {
         var entries = [];
 
@@ -117,6 +142,11 @@ $(function () {
                 kind: 'page', label: '"' + q + '" — bu sayfada ara',
                 icon: 'fa fa-magnifying-glass', section: 'Enter', group: 'BU SAYFADA ARA'
             });
+        }
+
+        // 1b) KAYITLAR — sunucudan gelen kayıt sonuçları (sorgu aynıysa)
+        if (q && recordsFor && recordsFor.toLocaleLowerCase('tr-TR') === q) {
+            entries = entries.concat(records);
         }
 
         // 2) GİT — menüden toplanan sayfalar

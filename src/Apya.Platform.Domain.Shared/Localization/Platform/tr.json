@@ -2602,6 +2602,7 @@
         "Dashboard:Summary:BudgetUsage": "Bütçe kullanımı",
         "Dashboard:Summary:DueTrend": "Teslim dağılımı",
         "Dashboard:Deliveries:Title": "Bu ay teslim edilecekler",
+        "RecordSearch:UnknownTenant": "Bilinmeyen müşteri",
         "Dashboard:Deliveries:Overdue": "Gecikmiş",
         "Dashboard:Deliveries:Subtitle": "{0} iş · {1} gecikmiş",
         "Dashboard:Deliveries:AllTasks": "Görev listesi →",
