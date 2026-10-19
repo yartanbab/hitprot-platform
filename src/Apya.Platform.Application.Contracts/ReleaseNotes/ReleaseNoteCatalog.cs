@@ -26,6 +26,133 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.10.19",
+            date: "19 Ekim 2026",
+            title: "Bildirimler anında ve her cihazda; görev yorumunda kişiden bahsetme, Ctrl K ile kayıt arama, " +
+                   "işlem sürerken ekranda gösterge",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bildirimler anında, her sayfada",
+                "Zil sayacı ve bildirim balonu artık hangi sayfada olursanız olun anında güncellenir; yeni " +
+                "bildirimi görmek için sayfayı yenilemeniz gerekmez. Balon bildirimin içeriğini gösterir, " +
+                "tıklayınca ilgili kayda gider. Bağlantı koparsa sessizce yeniden bağlanılır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Telefon ve masaüstü bildirimleri daha güvenilir",
+                "Bildirim izni verdiyseniz, uygulama açık ama başka bir pencerenin arkasındayken de masaüstü " +
+                "bildirimi alırsınız (eskiden yalnız sekme kapalıyken geliyordu). Önemli bildirimler siz " +
+                "kapatana kadar ekranda kalır ve telefonda titreşir; aynı göreve gelen ikinci yorum da sizi " +
+                "yeniden uyarır. Bildirime tıklayınca açık olan uygulama penceresi ilgili kayda gider."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevinizdeki değişikliklerden haberiniz oluyor",
+                "Yorumunuza yanıt verildiğinde, görev sizden alındığında, görevinizin son tarihi değiştiğinde ya " +
+                "da önceliği Kritik yapıldığında bildirim alırsınız. Panoda kart taşınarak ya da formdan " +
+                "yapılan durum değişiklikleri de bildirilir. Proje ekibinden çıkarıldığınızda ya da rolünüz " +
+                "değiştiğinde de haberiniz olur."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görev yorumunda kişiden bahsedebiliyorsunuz",
+                "Yorum kutusundaki \"@\" düğmesi kişi listesini açar; seçtiğiniz kişi yoruma \"@Ad Soyad\" " +
+                "olarak girer ve yorumu gönderdiğinizde \"Sizden bahsedildi\" bildirimi alır. Yazarken " +
+                "metinden sildiğiniz bahsetme bildirim üretmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Takip ettiğiniz görevlerden haber alıyorsunuz",
+                "Görev menüsündeki \"Takip et\" artık işe yarıyor: takip ettiğiniz görevin yorumları, durum " +
+                "değişiklikleri ve son tarih uyarıları size de bildirim olarak gelir. Görev başkasına " +
+                "devredildiğinde önceki sorumlu görevi takip etmeye devam eder; istemezse takibi bırakır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Ctrl K ile görev, proje, başvuru ve fatura bulabiliyorsunuz",
+                "Ctrl K ile açılan arama artık yalnız menü sayfalarını değil kayıtları da bulur: görevi adıyla, " +
+                "projeyi adı ya da koduyla, hibe başvurusunu program adıyla, faturayı numarasıyla. Yalnız " +
+                "görmeye yetkili olduğunuz kayıtlar listelenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe başvurusunda mesaj, sıra devri ve evrak anında bildiriliyor",
+                "Başvuru sihirbazında danışmanınıza yazdığınız mesaj ya da başvurunun sırasını ona " +
+                "devretmeniz artık karşı tarafa anında bildirim ve e-posta olarak gider; danışmanınızın " +
+                "mesajları ve size devrettiği başvurular da size aynı şekilde ulaşır. Danışmanınız bir evrakı " +
+                "onayladığında ya da size bir evrak yüklediğinde de bildirim alırsınız. Son mesaj karşı " +
+                "taraftan geldiyse \"Bugün\" ekranınızda \"yanıt bekleyen mesaj\" olarak görünür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Başvuruyu göndermeden önce özet görüyorsunuz",
+                "\"Gönder\" düğmesi önce bir özet penceresi açar: başvurunun tamamlanma oranı, tüm adımlarda " +
+                "boş kalan alanlar ve eksik zorunlu belgeler listelenir. Eksik olsa da göndermeye karar " +
+                "verebilirsiniz; gönderim geri alınamaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Yapay zekâ görev taslakları hazır olunca haber veriyor",
+                "Bir belgeden yapay zekâyla görev çıkardığınızda iş bitince \"Görev taslakları hazır\" " +
+                "bildirimi alırsınız; bildirime tıklayınca taslakları inceleme penceresi açılır. Sayfadan " +
+                "ayrılsanız ya da iş uzun sürse de taslaklar kaybolmaz. Belgeden görev çıkarılamazsa bu da " +
+                "bildirilir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "İşlem sürerken ekranda gösterge var",
+                "Bir sayfadan diğerine geçerken ya da bir düğmeye bastığınızda işlem sürüyorsa sayfanın " +
+                "tepesinde ince bir çubuk, bastığınız düğmede dönen bir simge görünür. İşlem sürerken aynı " +
+                "düğmeye yeniden basmak işi ikinci kez yapmaz (iki kayıt, iki e-posta oluşmaz)."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevler listesinde toplu iptal, erteleme, öncelik ve atama",
+                "Görevler listesinde birden çok görev seçtiğinizde çıkan çubuk artık proje sayfasındaki ve panodaki gibi iptal " +
+                "(isteğe bağlı nedenle), son tarihi 1 gün / 3 gün / 1 hafta erteleme, öncelik değiştirme ve " +
+                "kişiye atama sunar."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Projeye eklendiğinizde haberiniz oluyor",
+                "Bir projenin ekibine eklendiğinizde \"Projeye eklendiniz\" bildirimi alırsınız; bildirim " +
+                "projenin sayfasını açar."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görev sayfası dizüstü ekranlarda daha geniş",
+                "Görev sayfasında açıklama ve yorumlar, dizüstü ekranlarda yan paneldeki Detaylar yüzünden " +
+                "çok dar bir sütuna sıkışıyordu. Artık yer yetmediğinde Detaylar alta geçer, açıklama ve " +
+                "yorumlar sayfanın tam genişliğini kullanır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe duyuruları ilgili çalışanlara gidiyor",
+                "Hibe başvurunuzla ilgili duyurular (aşama, karar, mesaj, evrak) artık şirketinizde hibe " +
+                "ekranlarını görebilen çalışanlara gider; hibe ekranına erişimi olmayan çalışanların zili " +
+                "bu bildirimlerle dolmaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "TCMB kurları alış kuruyla ve bültenin tarihiyle kaydediliyor",
+                "Kurlar sayfasındaki \"TCMB'den Güncelle\" artık Merkez Bankası'nın döviz alış kurunu kaydeder " +
+                "ve kaydı bültenin kendi tarihiyle yazar (hafta sonu ya da pazartesi sabahı çalıştırıldığında " +
+                "Cuma kuru doğru tarihle gelir). Geçmiş bir gün seçerek o günün kurunu da getirebilirsiniz; " +
+                "hafta sonu ve resmî tatiller için kur yayımlanmadığı bildirilir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev paylaşım bağlantısı e-postasız da oluşturuluyor",
+                "Görevi ekip dışıyla paylaşırken e-posta alanı \"isteğe bağlı\" yazıyordu ama boş " +
+                "bırakıldığında bağlantı oluşturulamıyordu. Artık yalnız alıcının adıyla bağlantı " +
+                "oluşturabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Genel Bakış'ta bu ayın teslimleri görünüyor",
+                "\"Bu ay teslim edilecekler\" kartını çok sayıda eski gecikmiş iş dolduruyor, bu ayın işleri " +
+                "görünmüyordu. Artık gecikmiş işler kartın başında ayrı bir \"Gecikmiş\" başlığında, en yeni " +
+                "gecikmeler önce görünür; bu ayın teslimleri ise her zaman listelenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Projeler sayfasındaki sayılar seçtiğiniz kapsamı izliyor",
+                "\"Yalnız bana atananlar\" seçiliyken üstteki kutucuklar (aktif proje, bütçe, riskli proje, " +
+                "geciken ve yaklaşan görev, ortalama ilerleme) hâlâ tüm projelerin toplamını gösteriyordu. " +
+                "Artık listede gördüğünüz projelerden hesaplanır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kişiler her yerde ad soyadıyla görünüyor",
+                "Görevlerin zaman kayıtlarında, dosyaları yükleyende, görev belgelerinde, Dokümanlar'da " +
+                "(yükleyen, işlem geçmişi, teslim paketi) ve bildirim metinlerinde kişiler kullanıcı adıyla " +
+                "görünüyordu. Artık her yerde ad soyadıyla görünür. Görevi başka projeye taşırken aynı adlı " +
+                "projeler kodlarıyla ayrılır.")
+        ),
+
+        new ReleaseNote(
             version: "2026.10.14",
             date: "14 Ekim 2026",
             title: "Projelerinize ölçülebilir göstergeler, hibe başvurusuna hedefler, hazır roller ve yeni " +
