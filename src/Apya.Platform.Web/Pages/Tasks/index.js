@@ -1146,7 +1146,8 @@ $(function () {
             checkLimit++;
             if (checkLimit > 20) {
                 clearInterval(checkInterval);
-                abp.notify.error("İşlem zaman aşımına uğradı veya beklenen veri gelmedi.");
+                // N-09 · İş sürüyor olabilir: hazır olunca bildirim gelir (bağlantısı bu pencereyi açar).
+                abp.notify.info("Taslaklar hazırlanmaya devam ediyor; hazır olunca bildirim alacaksınız.");
                 return;
             }
             abp.ajax({ type: 'GET', url: '/api/app/draft-task/pending-drafts/' + batchId, cache: false })
@@ -1158,6 +1159,12 @@ $(function () {
                 });
         }, 3000);
     });
+
+    // N-09 · "Görev taslakları hazır" bildiriminden gelindiyse (?drafts={batchId}) inceleme açılır.
+    var draftsBatchId = new URLSearchParams(window.location.search).get('drafts');
+    if (draftsBatchId) {
+        reviewModal.open({ BatchId: draftsBatchId });
+    }
 
     // ─── Açılış sekmesi (?tab= / ?view=) ───────────────────────────────────
     // İki parametre var çünkü iki soru var: ?view= HANGİ GÖRÜNÜŞ (list/kanban/…),

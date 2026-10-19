@@ -694,7 +694,8 @@ $(function () {
             checks++;
             if (checks > 20) {
                 clearInterval(iv);
-                abp.notify.error('İşlem zaman aşımına uğradı.');
+                // N-09 · İş sürüyor olabilir: hazır olunca bildirim gelir (bağlantısı inceleme penceresini açar).
+                abp.notify.info('Taslaklar hazırlanmaya devam ediyor; hazır olunca bildirim alacaksınız.');
                 return;
             }
             abp.ajax({

@@ -101,5 +101,9 @@ public enum NotificationType
 
     // N-07: geri bildirim yalnız gönderene "alındı" diyordu; ekip ancak paneli açınca görüyordu.
     FeedbackSubmitted           = 58, // Yeni geri bildirim (HOST'a, panel yetkisiyle)
-    FeedbackAssigned            = 59  // Geri bildirim size atandı
+    FeedbackAssigned            = 59, // Geri bildirim size atandı
+
+    // N-09: belgeden görev çıkarma sonucu yalnız açık sayfaya gidiyordu.
+    AiDraftsReady               = 60, // Görev taslakları hazır, onay bekliyor (başlatana)
+    AiDraftsFailed              = 61  // Görev taslağı çıkarılamadı (başlatana)
 }
