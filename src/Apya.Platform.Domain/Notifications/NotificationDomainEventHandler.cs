@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
+using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus;
 using Apya.Platform.Localization;
 using Apya.Platform.Tasks;
@@ -25,13 +27,49 @@ public class NotificationDomainEventHandler :
 {
     private readonly NotificationManager _notificationManager;
     private readonly IStringLocalizer<PlatformResource> _l;
+    private readonly IRepository<TaskWatcher, Guid> _watcherRepository;
+    private readonly IRepository<TaskItem, Guid> _taskRepository;
+    private readonly IDataFilter _dataFilter;
 
     public NotificationDomainEventHandler(
         NotificationManager notificationManager,
-        IStringLocalizer<PlatformResource> l)
+        IStringLocalizer<PlatformResource> l,
+        IRepository<TaskWatcher, Guid> watcherRepository,
+        IRepository<TaskItem, Guid> taskRepository,
+        IDataFilter dataFilter)
     {
         _notificationManager = notificationManager;
         _l = l;
+        _watcherRepository = watcherRepository;
+        _taskRepository = taskRepository;
+        _dataFilter = dataFilter;
+    }
+
+    /// <summary>
+    /// P-09 · Görevin izleyicileri ("İzle" düğmesi ve atama değişince eski sorumlu): yorum, durum
+    /// ve vade bildirimleri onlara da gider. Atanan, açan ve olayı yapan zaten ayrıca ele alındığı
+    /// için dışarıda bırakılır. Gizli görevde izleyici listesi kullanılmaz: görme hakkı sahiplikten
+    /// gelir (TaskPrivacyQueryFilter) ve sahiplere bildirim zaten gidiyor.
+    /// Görev kimlikle okunur; vade işçisi kiracı süzgeci kapalı yayınladığı için süzgeç burada da kapalı.
+    /// </summary>
+    private async Task<List<Guid>> WatchersAsync(Guid taskId, params Guid?[] exclude)
+    {
+        TaskItem? task;
+        using (_dataFilter.Disable<Volo.Abp.MultiTenancy.IMultiTenant>())
+        {
+            task = await _taskRepository.FindAsync(taskId, includeDetails: false);
+        }
+
+        if (task == null || task.IsPrivate)
+        {
+            return new List<Guid>();
+        }
+
+        return (await _watcherRepository.GetListAsync(w => w.TaskId == taskId))
+            .Select(w => w.UserId)
+            .Where(id => id != Guid.Empty && !exclude.Contains(id))
+            .Distinct()
+            .ToList();
     }
 
     public async Task HandleEventAsync(TaskAssignedEto eventData)
@@ -89,6 +127,20 @@ public class NotificationDomainEventHandler :
                 actorName: eventData.CommenterName
             );
         }
+
+        foreach (var watcherId in await WatchersAsync(eventData.TaskId, eventData.CommentUserId, eventData.AssigneeId, eventData.CreatorId))
+        {
+            await _notificationManager.PublishAsync(
+                watcherId,
+                title,
+                body,
+                NotificationType.TaskCommentAdded,
+                entityType: "Task",
+                entityId: eventData.TaskId,
+                actorUserId: actorUserId,
+                actorName: eventData.CommenterName
+            );
+        }
     }
 
     // --- Durum Değiştiğinde ---
@@ -136,6 +188,20 @@ public class NotificationDomainEventHandler :
                 actorName: eventData.ChangedByName
             );
         }
+
+        foreach (var watcherId in await WatchersAsync(eventData.TaskId, eventData.ModifierUserId, eventData.AssigneeId, eventData.CreatorId))
+        {
+            await _notificationManager.PublishAsync(
+                watcherId,
+                title,
+                body,
+                NotificationType.TaskStatusChanged,
+                entityType: "Task",
+                entityId: eventData.TaskId,
+                actorUserId: eventData.ModifierUserId,
+                actorName: eventData.ChangedByName
+            );
+        }
     }
 
     // --- Deadline Uyarıları (FEA-002) ---
@@ -143,7 +209,9 @@ public class NotificationDomainEventHandler :
     {
         // 🔴 NTF-11: Eskiden YALNIZ atanana gidiyordu — atanmamış görev tamamen
         // sessizdi ve ETO'da zaten taşınan CreatorId hiç kullanılmıyordu.
-        foreach (var userId in Recipients(eventData.AssigneeId, eventData.CreatorId))
+        var dueSoonRecipients = Recipients(eventData.AssigneeId, eventData.CreatorId).ToList();
+        dueSoonRecipients.AddRange(await WatchersAsync(eventData.TaskId, eventData.AssigneeId, eventData.CreatorId));
+        foreach (var userId in dueSoonRecipients)
         {
             await _notificationManager.PublishAsync(
                 userId,
@@ -171,7 +239,9 @@ public class NotificationDomainEventHandler :
         // 🔴 NTF-11: Atanan VE görevi açan. Yalnız atanana gönderilseydi atanmamış
         // görev tamamen sessiz kalırdı; diğer görev bildirimleri (yorum, atama, durum)
         // zaten sahibe de gidiyor.
-        foreach (var userId in Recipients(eventData.AssigneeId, eventData.CreatorId))
+        var overdueRecipients = Recipients(eventData.AssigneeId, eventData.CreatorId).ToList();
+        overdueRecipients.AddRange(await WatchersAsync(eventData.TaskId, eventData.AssigneeId, eventData.CreatorId));
+        foreach (var userId in overdueRecipients)
         {
             await _notificationManager.PublishOnceAsync(
                 userId, onceKey, title, body,
