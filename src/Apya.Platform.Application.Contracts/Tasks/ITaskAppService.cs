@@ -63,6 +63,9 @@ namespace Apya.Platform.Tasks
 
         Task AddAttachmentAsync(Guid taskId, string fileName, string storedFileName, long fileSize);
         Task<List<TaskAttachmentDto>> GetAttachmentsAsync(Guid taskId);
+
+        /// <summary>QA-23 · Görevin alan bazında değişiklik geçmişi (ABP denetim kaydından), en yeni önce.</summary>
+        Task<List<TaskHistoryEntryDto>> GetHistoryAsync(Guid taskId);
         Task DeleteAttachmentAsync(Guid attachmentId);
         Task UpdateStatusAsync(Guid id, Apya.Platform.Tasks.TaskStatus status);
 

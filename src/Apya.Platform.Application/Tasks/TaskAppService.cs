@@ -1203,6 +1203,62 @@ namespace Apya.Platform.Tasks
             return new ListResultDto<IdentityUserDto>(userDtos);
         }
 
+        /// <summary>
+        /// QA-23 · Alan bazında değişiklik geçmişi. Görev değişiklikleri AbpEntityChanges'e zaten yazılıyor
+        /// (PlatformWebModule EntityHistorySelectors); burada okunur ve Türkçe biçimlenir. Görme kuralı görevin
+        /// kendisiyle aynı (gizli görev). Oluşturma kaydı alanları listelemez (ilk değerler zaten görevde).
+        /// </summary>
+        public async Task<List<TaskHistoryEntryDto>> GetHistoryAsync(Guid taskId)
+        {
+            await EnsureTaskAccessAllowedAsync(taskId);
+
+            var changes = await LazyServiceProvider.LazyGetRequiredService<Volo.Abp.AuditLogging.IAuditLogRepository>()
+                .GetEntityChangesWithUsernameAsync(taskId.ToString(), typeof(TaskItem).FullName!);
+            if (changes.Count == 0)
+            {
+                return new List<TaskHistoryEntryDto>();
+            }
+
+            // Kişi ve proje adları: değişiklikte geçen kimlikler + değişikliği yapanların kullanıcı adları.
+            var ids = changes.SelectMany(c => c.EntityChange.PropertyChanges)
+                .Where(p => p.PropertyName is "AssigneeId" or "ProjectId" or "ParentTaskId")
+                .SelectMany(p => new[] { TaskHistoryFormatter.Raw(p.OriginalValue), TaskHistoryFormatter.Raw(p.NewValue) })
+                .Select(v => Guid.TryParse(v, out var g) ? g : (Guid?)null)
+                .Where(g => g.HasValue).Select(g => g!.Value).Distinct().ToList();
+            var userNames = changes.Select(c => c.UserName).Where(n => !string.IsNullOrEmpty(n)).Distinct().ToList();
+
+            var names = new Dictionary<Guid, string>();
+            var people = await _identityRepository.GetListAsync(u => ids.Contains(u.Id) || userNames.Contains(u.UserName));
+            foreach (var u in people) { names[u.Id] = TaskPersonName.Of(u.Name, u.Surname, u.UserName); }
+            foreach (var p in await _projectLookupRepository.GetListAsync(p => ids.Contains(p.Id))) { names[p.Id] = p.Name; }
+            foreach (var t in await Repository.GetListAsync(t => ids.Contains(t.Id))) { names[t.Id] = t.Title; }
+            var displayByUserName = people.GroupBy(u => u.UserName)
+                .ToDictionary(g => g.Key, g => TaskPersonName.Of(g.First().Name, g.First().Surname, g.Key));
+
+            return changes
+                .OrderByDescending(c => c.EntityChange.ChangeTime)
+                .Select(c => new TaskHistoryEntryDto
+                {
+                    ChangeTime = c.EntityChange.ChangeTime,
+                    ChangedBy = string.IsNullOrEmpty(c.UserName) ? null : displayByUserName.GetValueOrDefault(c.UserName, c.UserName),
+                    Kind = c.EntityChange.ChangeType switch
+                    {
+                        Volo.Abp.Auditing.EntityChangeType.Created => "Oluşturuldu",
+                        Volo.Abp.Auditing.EntityChangeType.Deleted => "Silindi",
+                        _ => "Güncellendi"
+                    },
+                    Changes = c.EntityChange.ChangeType == Volo.Abp.Auditing.EntityChangeType.Updated
+                        ? c.EntityChange.PropertyChanges
+                            .Select(p => TaskHistoryFormatter.Format(p.PropertyName, p.OriginalValue, p.NewValue, names))
+                            .Where(x => x != null).Select(x => x!).ToList()
+                        : new List<TaskHistoryChangeDto>()
+                })
+                // Yalnız teknik alanı değişen güncelleme (ör. uyarı bayrağı) gösterilmez.
+                .Where(e => e.Kind != "Güncellendi" || e.Changes.Count > 0)
+                .Take(100)
+                .ToList();
+        }
+
         // --- 6. YORUM METODLARI ---
         public async Task<Guid> AddCommentAsync(Guid taskId, string text, List<Guid>? mentionedUserIds = null)
         {

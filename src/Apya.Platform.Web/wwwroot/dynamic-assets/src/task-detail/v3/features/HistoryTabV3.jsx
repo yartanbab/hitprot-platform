@@ -1,14 +1,11 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 /**
  * Geçmiş sekmesi (V3). SALT OKUMA — DB'ye yazmaz, yeni şema gerektirmez.
  *
- * Kaynak, görevin kendi denetim alanlarıdır (`AuditedEntityDto`: creationTime /
- * creatorId / lastModificationTime / lastModifierId) ve durum geçişini gösteren
- * gerçek kolonlar (completedDate, cancelledDate, cancelReason). Alan bazında
- * "şu değer şununla değişti" günlüğü YOK — ABP denetim kaydı henüz bir uçtan
- * dışarı verilmiyor. O yüzden başlık "değişiklik geçmişi" değil "kayıt bilgileri":
- * olmayan bir şeyi varmış gibi sunmuyoruz.
+ * Üstte görevin kendi denetim alanları ("Kayıt bilgileri"); altta QA-23 (kullanıcı kararı 2026-10-19):
+ * ABP denetim kaydından ALAN BAZINDA değişiklik geçmişi (kim, ne zaman, eski → yeni) — `getHistory` ucu.
  */
 
 const fmt = (iso) => (iso
@@ -31,8 +28,44 @@ function Row({ label, value, hint }) {
     );
 }
 
+/* Anahtar görevin son güncellenme anını da taşır: kayıttan sonra sekme açılınca yeni değişiklik görünür. */
+function useTaskHistory(taskId, version) {
+    return useQuery({
+        queryKey: ['task-history', taskId, version ?? null],
+        queryFn: () => {
+            const s = window?.apya?.platform?.tasks?.task;
+            if (!s) return Promise.reject(new Error('ABP görev servisi yüklenmedi.'));
+            return Promise.resolve(s.getHistory(taskId));
+        },
+        enabled: Boolean(taskId),
+        meta: { persist: false },
+    });
+}
+
+function HistoryEntry({ entry }) {
+    return (
+        <li className="flex flex-col gap-1 px-3.5 py-3">
+            <span className="text-[12px] text-text-tertiary">
+                <span className="font-mono">{fmt(entry.changeTime)}</span>
+                {entry.changedBy ? ` · ${entry.changedBy}` : ''}
+                {entry.kind !== 'Güncellendi' ? ` · ${entry.kind}` : ''}
+            </span>
+            {entry.changes.map((c, i) => (
+                <span key={i} className="text-[12.5px] text-text-primary">
+                    <span className="font-semibold">{c.field}:</span>{' '}
+                    {c.oldValue != null && <span className="text-text-tertiary line-through">{c.oldValue}</span>}
+                    {c.oldValue != null && ' → '}
+                    <span className="font-semibold">{c.newValue ?? '—'}</span>
+                </span>
+            ))}
+        </li>
+    );
+}
+
 export function HistoryTabV3({ task = {}, nameById }) {
     const who = (id) => (id && nameById?.get?.(id)) || null;
+    const history = useTaskHistory(task.id, task.lastModificationTime);
+    const entries = history.data ?? [];
 
     const rows = [
         { label: 'Görev kodu', value: task.code || '—' },
@@ -73,9 +106,22 @@ export function HistoryTabV3({ task = {}, nameById }) {
                 </div>
             </div>
 
-            <p className="m-0 text-[11.5px] text-text-tertiary">
-                Alan bazında değişiklik günlüğü (hangi alan, eski/yeni değer) henüz yayınlanmadı.
-            </p>
+            <div className="overflow-hidden rounded-2xl border border-subtle bg-surface-base shadow-xs">
+                <div className="flex items-center gap-2.5 px-3.5 py-3 border-b border-subtle bg-surface-raised">
+                    <i className="fa-solid fa-list-ul text-[13px] text-text-tertiary" />
+                    <h2 className="m-0 text-[13.5px] font-bold text-text-primary">Değişiklik geçmişi</h2>
+                </div>
+                {history.isPending && <p className="m-0 px-3.5 py-3 text-[12.5px] text-text-tertiary">Yükleniyor…</p>}
+                {history.isError && <p className="m-0 px-3.5 py-3 text-[12.5px] text-text-tertiary">Geçmiş yüklenemedi.</p>}
+                {history.isSuccess && !entries.length && (
+                    <p className="m-0 px-3.5 py-3 text-[12.5px] text-text-tertiary">Henüz kayıtlı değişiklik yok.</p>
+                )}
+                {entries.length > 0 && (
+                    <ul className="m-0 p-0 list-none divide-y divide-subtle">
+                        {entries.map((e, i) => <HistoryEntry key={i} entry={e} />)}
+                    </ul>
+                )}
+            </div>
         </div>
     );
 }
