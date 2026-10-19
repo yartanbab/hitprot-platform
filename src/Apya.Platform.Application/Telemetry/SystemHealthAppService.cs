@@ -114,7 +114,8 @@ public partial class SystemHealthAppService : ApplicationService, ISystemHealthA
                 ErrorTrend           = await BuildErrorTrendAsync(auditQuery, since),
                 ErrorsByTenant       = await GetTenantStatsAsync(auditQuery, since),
                 ClientErrorsBySource = await GetClientErrorsBySourceAsync(since),
-                TenantOptions        = await GetTenantOptionsAsync()
+                TenantOptions        = await GetTenantOptionsAsync(),
+                NotificationChannels = await GetNotificationChannelsAsync()
             };
         }
     }
