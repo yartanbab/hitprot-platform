@@ -768,6 +768,37 @@ $(function () {
         reloadAll(false);
     });
 
+    // --- Şerit tazeleme (QA-06) ---
+    // İlerleme / Gecikmiş / 7 Gün İçinde sunucuda çizilir ve sayfa içi görev yazmalarından
+    // sonra (liste, pano, Zaman Çizelgesi, görev detayı) yenilenmiyordu: görev tamamlanınca
+    // şerit "0/6" kalıyordu. Bu yazmaların hepsi apya.dataChanged ile duyurulur; şerit aynı
+    // tek kuraldan (GetTaskSummaryAsync) yeniden okunur. Okuma yazma yapmaz ve olayı yeniden
+    // yaymaz — döngü yok. Arka plan isteği: düşerse eski değer kalır, pencere açılmaz.
+    var projectService = (apya.platform.projects && apya.platform.projects.project)
+        || apya.platform.application.projects.project;
+    var stripTimer = null;
+    function barWidth(n, total) { return (total > 0 ? Math.floor(n * 100 / total) : 0) + '%'; }
+    function paintStrip(s) {
+        var $progress = $('#bar-progress');
+        $progress.find('.apya-console-bar-value strong').text('%' + s.completionPercent);
+        $progress.find('.apya-console-bar-value small').text('· ' + s.done + '/' + s.total);
+        $progress.find('.apya-mini-progress')
+            .toggleClass('is-positive', s.completionPercent === 100)
+            .toggleClass('is-progress', s.completionPercent !== 100)
+            .find('span').css('width', s.completionPercent + '%');
+        $('#bar-overdue .apya-console-bar-value strong').text(s.overdue);
+        $('#bar-overdue .apya-mini-progress span').css('width', barWidth(s.overdue, s.total));
+        $('#bar-due7 .apya-console-bar-value strong').text(s.dueSoon);
+        $('#bar-due7 .apya-mini-progress span').css('width', barWidth(s.dueSoon, s.total));
+    }
+    document.addEventListener(apya.dataChanged.EVENT, function () {
+        clearTimeout(stripTimer);
+        stripTimer = setTimeout(function () {
+            projectService.getTaskSummary(projectId, { abpHandleError: false, apyaBackground: true })
+                .then(paintStrip, function () { });
+        }, 400);
+    });
+
     // --- 4. Projeyi Sil ---
     // Bu ekranda YOK. ⋯ menüsündeki madde artık /Projects/Edit/{id}?tab=danger
     // adresine götürüyor; silme orada, proje kodu elle yazıldıktan sonra ve

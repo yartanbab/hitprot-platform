@@ -99,6 +99,23 @@ public class ProjectTaskProgress_Tests
         summary.Overdue.ShouldBe(1);
     }
 
+    /// <summary>Proje detayı şeridindeki "7 Gün İçinde": açık, son tarihi bugün..bugün+7 (iki uç dahil).</summary>
+    [Fact]
+    public void Yedi_gun_icinde_biten_acik_gorevler_sayilir()
+    {
+        var summary = ProjectTaskProgress.Summarize(new List<TaskDto>
+        {
+            Task(TaskStatus.Todo, Now.Date),                 // bugün → dahil
+            Task(TaskStatus.InProgress, Now.Date.AddDays(7)), // 7. gün → dahil
+            Task(TaskStatus.Todo, Now.Date.AddDays(8)),      // 8. gün → değil
+            Task(TaskStatus.Todo, Now.Date.AddDays(-1)),     // gecikmiş → değil
+            Task(TaskStatus.Done, Now.Date.AddDays(2)),      // bitmiş → değil
+            Task(TaskStatus.Cancelled, Now.Date.AddDays(2)), // iptal → değil
+        }, Now);
+
+        summary.DueSoon.ShouldBe(2);
+    }
+
     [Fact]
     public void Gorevsiz_projede_her_sey_sifir()
     {

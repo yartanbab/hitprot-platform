@@ -11,21 +11,15 @@
 @{
     ViewBag.Title = Model.Project?.Name;
 
-    var totalTasks     = Model.Tasks?.Count ?? 0;
-    var completedTasks = Model.Tasks?.Count(t => t.Status == Apya.Platform.Tasks.TaskStatus.Done) ?? 0; // Done=4 (önceki "==3" InReview'i sayıyordu → bug)
-    var progressPct    = totalTasks > 0 ? (int)Math.Round((double)completedTasks / totalTasks * 100) : 0;
-
-    // Gecikmiş / 7 gün içinde — şerit barlarının kaynağı. İptal (0) ve Tamamlandı (4)
-    // aciliyet saymaz (apya-task-render.js dueDateChip ile aynı kural).
-    var today = DateTime.Today;
-    bool IsOpen(Apya.Platform.Tasks.TaskDto t) =>
-        t.Status != Apya.Platform.Tasks.TaskStatus.Done &&
-        t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled;
-
-    var overdueCount = Model.Tasks?.Count(t => IsOpen(t) && t.DueDate.HasValue && t.DueDate.Value.Date < today) ?? 0;
-    var due7Count    = Model.Tasks?.Count(t => IsOpen(t) && t.DueDate.HasValue
-                                              && t.DueDate.Value.Date >= today
-                                              && t.DueDate.Value.Date <= today.AddDays(7)) ?? 0;
+    // Şerit (İlerleme / Gecikmiş / 7 Gün İçinde) sunucudaki TEK kuraldan (ProjectTaskProgress)
+    // ve projenin TÜM görevlerinden gelir — liste kartı ve Finans sekmesiyle aynı sayılar.
+    // Sayfa içi görev yazmalarından sonra ProjectDetails.js aynı kuralı GetTaskSummaryAsync
+    // ile yeniden okur.
+    var totalTasks     = Model.Project?.TaskCount ?? 0;
+    var completedTasks = Model.Project?.CompletedTaskCount ?? 0;
+    var progressPct    = Model.Project?.ProgressPercent ?? 0;
+    var overdueCount   = Model.Project?.OverdueTaskCount ?? 0;
+    var due7Count      = Model.Project?.DueSoonTaskCount ?? 0;
 
     // Ekip = ProjectMember kayıtları (8. adım). Şerit facepile'ı bunu gösterir;
     // henüz görevi olmayan üye de görünür.

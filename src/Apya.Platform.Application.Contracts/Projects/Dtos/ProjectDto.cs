@@ -77,6 +77,10 @@ public class ProjectDto : AuditedEntityDto<Guid>
     /// ve liste/kart gecikme rozetinin girdisi.</summary>
     public int OverdueTaskCount { get; set; }
 
+    /// <summary>Açık ve son tarihi bugün ile 7 gün sonrası arasında olan görev sayısı —
+    /// proje detayı şeridindeki "7 Gün İçinde".</summary>
+    public int DueSoonTaskCount { get; set; }
+
     /// <summary>En eski gecikmiş görevin kaç gündür geciktiği; gecikme yoksa null.</summary>
     public int? OldestOverdueDays { get; set; }
 
