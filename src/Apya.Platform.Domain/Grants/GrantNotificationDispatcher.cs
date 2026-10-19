@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Notifications;
 using Microsoft.Extensions.Logging;
+using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
@@ -28,14 +29,24 @@ public class GrantNotificationDispatcher : DomainService
     private readonly IIdentityUserRepository _userRepo;
     private readonly IEmailSender _emailSender;
     private readonly IDataFilter _dataFilter;
+    private readonly IPermissionStore _permissionStore;
+
+    /// <summary>
+    /// N-04 · Hibe duyurusunu alacak kişinin taşıması gereken izin (PlatformPermissions.Grants.Default).
+    /// Domain, Application.Contracts'taki sabite başvuramaz; değer eşitliği testle kilitli
+    /// (GrantNotificationRecipients_Tests).
+    /// </summary>
+    public const string RecipientPermission = "Platform.Grants";
 
     public GrantNotificationDispatcher(
         IRepository<GrantNotificationTemplate, Guid> templateRepo,
         NotificationManager notificationManager,
         IIdentityUserRepository userRepo,
         IEmailSender emailSender,
-        IDataFilter dataFilter)
+        IDataFilter dataFilter,
+        IPermissionStore permissionStore)
     {
+        _permissionStore = permissionStore;
         _templateRepo = templateRepo;
         _notificationManager = notificationManager;
         _userRepo = userRepo;
@@ -115,8 +126,48 @@ public class GrantNotificationDispatcher : DomainService
             var userIds = (await _userRepo.GetListAsync())
                 .Where(u => u.IsActive).Select(u => u.Id).ToList();
 
-            return await DispatchAsync(trigger, userIds, values, entityType, entityId, sendEmail);
+            return await DispatchAsync(trigger, await WithGrantPermissionAsync(userIds), values, entityType, entityId, sendEmail);
         }
+    }
+
+    /// <summary>
+    /// N-04 · Yalnız hibeleri görme yetkisi olanlar (kullanıcıya ya da rolüne verilmiş). Eskiden kiracının
+    /// bütün etkin kullanıcıları alıyordu: hibe modülüne yetkisi olmayan çalışan da zilde görüp tıklayınca
+    /// erişim hatası alıyordu. Kiracıda yetkili kimse yoksa (yanlış yapılandırma) duyuru sessizce
+    /// kaybolmasın diye eski davranışa düşülür. Çağıran kiracı bağlamını ayarlamış olmalıdır.
+    /// </summary>
+    private async Task<List<Guid>> WithGrantPermissionAsync(List<Guid> userIds)
+    {
+        var allowed = new List<Guid>();
+        foreach (var userId in userIds)
+        {
+            if (await HasGrantPermissionAsync(userId))
+            {
+                allowed.Add(userId);
+            }
+        }
+
+        return allowed.Count > 0 ? allowed : userIds;
+    }
+
+    private async Task<bool> HasGrantPermissionAsync(Guid userId)
+    {
+        if (await _permissionStore.IsGrantedAsync(
+                RecipientPermission, UserPermissionValueProvider.ProviderName, userId.ToString()))
+        {
+            return true;
+        }
+
+        foreach (var roleName in await _userRepo.GetRoleNamesAsync(userId))
+        {
+            if (await _permissionStore.IsGrantedAsync(
+                    RecipientPermission, RolePermissionValueProvider.ProviderName, roleName))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

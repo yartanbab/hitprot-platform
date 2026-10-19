@@ -99,9 +99,10 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
 
         html.ShouldContain("apya-wiz-layout");
         html.ShouldContain("Şu an formda");
-        // Hub adresi Wizard.js içindedir (demet olarak referanslanır); sayfada
-        // doğrulanabilecek olan SignalR istemcisinin yüklendiğidir.
-        html.ShouldContain("signalr", Case.Insensitive);
+        // Hub adresi Wizard.js içindedir (demet olarak referanslanır). SignalR istemcisi N-01'den
+        // (#743) beri GLOBAL demetle her sayfada gelir; sayfa kendi kopyasını yüklemez — bu bağ
+        // NotificationLiveChannel_Tests'te kilitli (demette zilden ve AI istemcisinden önce).
+        html.ShouldNotContain("signalr.min.js", Case.Insensitive);
         System.Text.RegularExpressions.Regex.IsMatch(html, @"Wizard[^""]*\.js")
             .ShouldBeTrue("sayfa demeti Wizard.js içermeli");
     }
