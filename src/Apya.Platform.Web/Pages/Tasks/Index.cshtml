@@ -16,7 +16,10 @@
     var canDeleteTasks = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Delete);
     // Gantt'ta bar sürükleyip tarih kaydetmek görev düzenleme yetkisi ister.
     var canEditTasks = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Edit);
-    var canBulk = canChangeStatus || canDeleteTasks;
+    var canAssignTasks = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Assign);
+    // QA-33 · Liste toplu çubuğu aynı sayfanın panosuyla eşit: erteleme/öncelik düzenleme,
+    // atama atama yetkisiyle gelir (P-04'te proje sayfası için yapılanın aynısı).
+    var canBulk = canChangeStatus || canDeleteTasks || canEditTasks || canAssignTasks;
     var canCreate = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create);
 }
 
@@ -514,6 +517,40 @@
                     <button type="button" class="apya-console-menu-item" data-bulk-status="3">Testte</button>
                     <button type="button" class="apya-console-menu-item" data-bulk-status="4">Tamamlandı</button>
                 </div>
+            </div>
+            <button type="button" class="apya-console-bulkbar-btn" id="bulk-cancel">İptal et</button>
+        }
+        @if (canEditTasks)
+        {
+            <div class="dropdown dropup">
+                <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Son tarih <i class="fa fa-chevron-up ms-1" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu">
+                    <button type="button" class="apya-console-menu-item" data-bulk-defer="1">1 gün ertele</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-defer="3">3 gün ertele</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-defer="7">1 hafta ertele</button>
+                </div>
+            </div>
+            <div class="dropdown dropup">
+                <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Öncelik <i class="fa fa-chevron-up ms-1" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu">
+                    <button type="button" class="apya-console-menu-item" data-bulk-priority="1">Düşük</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-priority="2">Orta</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-priority="3">Yüksek</button>
+                    <button type="button" class="apya-console-menu-item" data-bulk-priority="4">Kritik</button>
+                </div>
+            </div>
+        }
+        @if (canAssignTasks)
+        {
+            <div class="dropdown dropup">
+                <button type="button" class="apya-console-bulkbar-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    Ata <i class="fa fa-chevron-up ms-1" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu apya-console-menu" data-bulk-assign-menu></div>
             </div>
         }
         @if (canDeleteTasks)

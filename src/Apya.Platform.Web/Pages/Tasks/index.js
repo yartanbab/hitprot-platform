@@ -676,6 +676,70 @@ $(function () {
             });
         });
 
+        // QA-33 · Panodaki toplu çubukla aynı eylemler (proje sayfası P-04 ile aynı uçlar);
+        // her biri var olan tekil uca SIRAYLA gider, sonunda tek özet.
+        function runBulk(call, doneMsg) {
+            var ids = bulk.ids();
+            if (!ids.length) { return; }
+            console_.runSequential(ids, function (id) { return Promise.resolve(call(id)); })
+                .then(function (result) {
+                    console_.notifyBulkResult(ids, result, doneMsg, taskLabel);
+                    bulk.clear();
+                    reloadAll();
+                });
+        }
+
+        $('#bulk-cancel').on('click', function () {
+            var ids = bulk.ids();
+            if (!ids.length) { return; }
+            Swal.fire({
+                title: ids.length + ' görev iptal edilecek',
+                input: 'text',
+                inputLabel: 'İptal nedeni (isteğe bağlı)',
+                inputAttributes: { maxlength: 256 },
+                showCancelButton: true,
+                confirmButtonText: 'İptal et',
+                cancelButtonText: 'Vazgeç'
+            }).then(function (result) {
+                if (!result.isConfirmed) { return; }
+                var reason = (result.value || '').trim() || null;
+                runBulk(function (id) { return taskService.cancel(id, reason, { abpHandleError: false }); }, 'görev iptal edildi.');
+            });
+        });
+
+        $('#bulk-bar').on('click', '[data-bulk-defer]', function () {
+            var days = parseInt($(this).data('bulk-defer'), 10);
+            runBulk(function (id) { return taskService.defer(id, days, { abpHandleError: false }); }, 'görev ' + days + ' gün ertelendi.');
+        });
+
+        $('#bulk-bar').on('click', '[data-bulk-priority]', function () {
+            var priority = parseInt($(this).data('bulk-priority'), 10);
+            var label = $(this).text().trim();
+            runBulk(function (id) { return taskService.setPriority(id, priority, { abpHandleError: false }); },
+                'görevin önceliği "' + label + '" yapıldı.');
+        });
+
+        // Atama menüsü ilk açılışta BİR KEZ doldurulur; yükleme düşerse sonraki açılışta yeniden denenir.
+        var $assignMenu = $('[data-bulk-assign-menu]');
+        $assignMenu.closest('.dropdown').on('show.bs.dropdown', function () {
+            if ($assignMenu.data('filled')) { return; }
+            $assignMenu.data('filled', true);
+            taskService.getUsersLookup({ abpHandleError: false }).then(function (res) {
+                $assignMenu.empty().append(
+                    $('<button type="button" class="apya-console-menu-item" data-bulk-assign="">').text('Atamayı kaldır'));
+                ((res && res.items) || []).forEach(function (u) {
+                    $assignMenu.append($('<button type="button" class="apya-console-menu-item">')
+                        .attr('data-bulk-assign', u.id).text(apyaTask.personLabel(u)));
+                });
+            }, function () { $assignMenu.data('filled', false); });
+        });
+        $assignMenu.on('click', '[data-bulk-assign]', function () {
+            var userId = $(this).attr('data-bulk-assign') || null;
+            var who = $(this).text().trim();
+            runBulk(function (id) { return taskService.setAssignee(id, userId, { abpHandleError: false }); },
+                userId ? 'görev "' + who + '" kişisine atandı.' : 'görevin ataması kaldırıldı.');
+        });
+
         $('#bulk-delete').on('click', function () {
             var ids = bulk.ids();
             if (!ids.length) { return; }
