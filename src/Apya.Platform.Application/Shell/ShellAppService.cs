@@ -10,6 +10,7 @@ using Apya.Platform.Macros;
 using Apya.Platform.Macros.Dtos;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
+using Apya.Platform.RegistrationRequests;
 using Apya.Platform.Settings;
 using Apya.Platform.Shell;
 using Apya.Platform.Shell.Dtos;
@@ -53,6 +54,7 @@ public class ShellAppService : PlatformAppService, IShellAppService
     private readonly IRepository<GrantInterest, Guid> _grantInterestRepository;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly MacroSettingsProvider _macroSettings;
+    private readonly IRepository<RegistrationRequest, Guid> _registrationRequestRepository;
 
     public ShellAppService(
         IHostEnvironment hostEnvironment,
@@ -64,8 +66,10 @@ public class ShellAppService : PlatformAppService, IShellAppService
         IRepository<GrantApplication, Guid> grantApplicationRepository,
         IRepository<GrantInterest, Guid> grantInterestRepository,
         IDataFilter<IMultiTenant> mtFilter,
-        MacroSettingsProvider macroSettings)
+        MacroSettingsProvider macroSettings,
+        IRepository<RegistrationRequest, Guid> registrationRequestRepository)
     {
+        _registrationRequestRepository = registrationRequestRepository;
         _hostEnvironment = hostEnvironment;
         _settingManager = settingManager;
         _taskRepository = taskRepository;
@@ -424,6 +428,14 @@ public class ShellAppService : PlatformAppService, IShellAppService
                     i.Status == GrantInterestStatus.Yeni ||
                     i.Status == GrantInterestStatus.Inceleniyor);
             }
+        }
+
+        // --- Yeni kayıt talepleri (K-02) ---
+        // Talepler host kaydıdır; menü öğesi de yalnız bu izinle çıkar.
+        if (CurrentTenant.Id == null && await IsGrantedAsync(PlatformPermissions.RegistrationRequests.Default))
+        {
+            var requestQuery = await _registrationRequestRepository.GetQueryableAsync();
+            badges.NewRegistrationRequests = requestQuery.Count(r => r.Status == RegistrationRequestStatus.New);
         }
 
         // --- Webhook hataları ---

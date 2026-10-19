@@ -375,6 +375,8 @@ $(function () {
         // ✅ OPS-03: Başvurular kendi menü öğesine çıktı, rozet geri bağlandı. Tek çapaya
         // iki rozet basma sorunu da kalmadı — her sayı kendi öğesinde.
         addBadge('Apya.Grants.Applications', b.pendingGrantApplications, 'apya-shell-badge--warning');
+        // K-02 · Henüz ele alınmamış kayıt talepleri (host).
+        addBadge('Apya.Platform.RegistrationRequests', b.newRegistrationRequests, 'apya-shell-badge--warning');
         addBadge('Apya.Platform.Webhooks', b.webhookErrors, 'apya-shell-badge--negative');
     }
 

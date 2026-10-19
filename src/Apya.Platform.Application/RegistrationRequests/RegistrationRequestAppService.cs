@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Accounts;
 using Apya.Platform.Agreements;
+using Apya.Platform.Notifications;
 using Apya.Platform.Permissions;
 using Apya.Platform.RegistrationRequests.Dtos;
 using Apya.Platform.Tenants;
@@ -32,6 +33,9 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
     private readonly RegisteredEmailChecker _registeredEmailChecker;
     private readonly SalesPlanPricing _pricing;
     private readonly RegistrationInviteMailer _inviteMailer;
+    private readonly RegistrationRequestMailer _requestMailer;
+    private readonly PermittedUserFinder _permittedUsers;
+    private readonly NotificationManager _notificationManager;
     private readonly IClock _clock;
 
     public RegistrationRequestAppService(
@@ -41,14 +45,20 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         RegisteredEmailChecker registeredEmailChecker,
         SalesPlanPricing pricing,
         RegistrationInviteMailer inviteMailer,
-        IClock clock)
+        IClock clock,
+        RegistrationRequestMailer requestMailer,
+        PermittedUserFinder permittedUsers,
+        NotificationManager notificationManager)
     {
+        _permittedUsers = permittedUsers;
+        _notificationManager = notificationManager;
         _repository = repository;
         _registrationRequestManager = registrationRequestManager;
         _tenantProfileManager = tenantProfileManager;
         _registeredEmailChecker = registeredEmailChecker;
         _pricing = pricing;
         _inviteMailer = inviteMailer;
+        _requestMailer = requestMailer;
         _clock = clock;
     }
 
@@ -82,7 +92,35 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
                 Message = TrimToNull(input.Message)
             });
 
+        // K-02 · Adaya referans numaralı "talebiniz alındı" postası; gönderilemezse talep yine kayıtlıdır.
+        await _requestMailer.TrySendReceivedAsync(request);
+        await NotifyHostAsync(request);
+
         return request.Id;
+    }
+
+    /// <summary>
+    /// N-05 · Yeni talep, Kayıt Talepleri yetkisi olan host kullanıcılarına ANINDA bildirilir (zil, balon,
+    /// push). Talep host kaydıdır; aday oturumsuzdur ve tarayıcısında kiracı seçimi kalmış olabilir —
+    /// bağlam açıkça host'a çevrilir.
+    /// </summary>
+    private async Task NotifyHostAsync(RegistrationRequest request)
+    {
+        using (CurrentTenant.Change(null))
+        {
+            var recipients = await _permittedUsers.WithPermissionAsync(
+                await _permittedUsers.ActiveUserIdsAsync(), PlatformPermissions.RegistrationRequests.Default);
+
+            var title = L["Notification:RegistrationRequestReceived:Title"];
+            var body = L["Notification:RegistrationRequestReceived:Body",
+                request.CompanyName, RegistrationRequestReference.Of(request.Id)];
+            foreach (var userId in recipients)
+            {
+                await _notificationManager.PublishAsync(
+                    userId, title, body, NotificationType.RegistrationRequestReceived,
+                    entityType: "RegistrationRequest", entityId: request.Id);
+            }
+        }
     }
 
     /// <summary>
@@ -156,6 +194,7 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         EnsureHostContext();
 
         var request = await _repository.GetAsync(id);
+        var wasRejected = request.Status == RegistrationRequestStatus.Rejected;
 
         request.SetStatus(input.Status);
 
@@ -169,6 +208,13 @@ public class RegistrationRequestAppService : PlatformAppService, IRegistrationRe
         request.SetAdminNote(TrimToNull(input.AdminNote));
 
         await _repository.UpdateAsync(request, autoSave: true);
+
+        // K-02 · Reddedildiği AN adaya bir kez haber verilir (gerekçesiz, kullanıcı kararı); durum başka
+        // bir şeyle yeniden kaydedilirse ikinci posta gitmez.
+        if (!wasRejected && request.Status == RegistrationRequestStatus.Rejected)
+        {
+            await _requestMailer.TrySendRejectedAsync(request);
+        }
 
         return ObjectMapper.Map<RegistrationRequest, RegistrationRequestDto>(request);
     }

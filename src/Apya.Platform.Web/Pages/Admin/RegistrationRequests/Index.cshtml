@@ -129,7 +129,10 @@
                     {
                         var detailId = "registration-detail-" + item.Id;
                         <tr>
-                            <td class="text-nowrap">@item.CreationTime.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td class="text-nowrap">
+                                @item.CreationTime.ToString("dd.MM.yyyy HH:mm")<br />
+                                <span class="text-muted small font-monospace">@item.Reference</span>
+                            </td>
                             <td>
                                 @item.CompanyName<br />
                                 <span class="text-muted small">@L["RegistrationRequest:CompanyType:" + item.CompanyType]</span>

@@ -613,6 +613,8 @@
     "Notification:ProjectMemberRemoved:Body": "You were removed from the \"{0}\" project team.",
     "Notification:ProjectMemberRoleChanged:Title": "Your project role changed",
     "Notification:ProjectMemberRoleChanged:Body": "Your role in \"{0}\" is now: {1}.",
+    "Notification:RegistrationRequestReceived:Title": "New registration request",
+    "Notification:RegistrationRequestReceived:Body": "{0} wants to join the platform ({1}).",
     "Notification:ProjectRole:Lead": "Lead",
     "Notification:ProjectRole:Member": "Member",
     "Notification:ProjectRole:Observer": "Observer",
