@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using Volo.Abp;
 using Volo.Abp.Account;
+using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
@@ -23,6 +25,12 @@ namespace Apya.Platform;
     )]
 public class PlatformApplicationModule : AbpModule
 {
+    public override void OnApplicationInitialization(ApplicationInitializationContext context)
+    {
+        // F-06b · Dövizli projesi olan kiracılara her iş günü TCMB kuru (kullanıcı kararı 2026-10-19).
+        context.AddBackgroundWorkerAsync<ExchangeRates.TcmbDailySyncWorker>();
+    }
+
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         // APYA-147 (BUG-A): IHttpClientFactory kaydı — ExchangeRateAppService TCMB

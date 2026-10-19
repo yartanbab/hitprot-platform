@@ -22,17 +22,17 @@ public class ExchangeRateAppService :
         CreateUpdateExchangeRateDto>,
     IExchangeRateAppService
 {
-    private const string TcmbTodayUrl = "https://www.tcmb.gov.tr/kurlar/today.xml";
-    private static readonly string[] TcmbCurrencies = { "USD", "EUR", "GBP" };
+    /// <summary>TCMB'den çekilen standart para birimleri (günlük iş bunlara projelerin döviz kodlarını ekler).</summary>
+    public static readonly string[] TcmbCurrencies = { "USD", "EUR", "GBP" };
 
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ITcmbRateClient _tcmbClient;
 
     public ExchangeRateAppService(
         IRepository<ExchangeRate, Guid> repository,
-        IHttpClientFactory httpClientFactory)
+        ITcmbRateClient tcmbClient)
         : base(repository)
     {
-        _httpClientFactory = httpClientFactory;
+        _tcmbClient = tcmbClient;
         GetPolicyName = PlatformPermissions.ExchangeRates.Default;
         GetListPolicyName = PlatformPermissions.ExchangeRates.Default;
         CreatePolicyName = PlatformPermissions.ExchangeRates.Create;
@@ -80,36 +80,27 @@ public class ExchangeRateAppService :
     [Authorize(PlatformPermissions.ExchangeRates.Create)]
     public async Task<int> SyncFromTcmbAsync(DateTime? date = null)
     {
-        var client = _httpClientFactory.CreateClient();
-        client.Timeout = TimeSpan.FromSeconds(15);
-
         // F-06 · Tarih verilirse o günün arşiv bülteni; gelecek tarihin bülteni olmaz.
         if (date.HasValue && date.Value.Date > Clock.Now.Date)
         {
             throw new UserFriendlyException("Gelecek bir tarihin TCMB kuru yok.");
         }
-        var url = date.HasValue ? TcmbRateParser.ArchiveUrl(date.Value.Date) : TcmbTodayUrl;
 
-        string xml;
+        string? xml;
         try
         {
-            using var response = await client.GetAsync(url);
-            if (date.HasValue && response.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                throw new UserFriendlyException(
-                    $"{date.Value:dd.MM.yyyy} için TCMB kur yayımlamadı (hafta sonu ya da resmî tatil). " +
-                    "Önceki iş gününün kurunu seçin.");
-            }
-            response.EnsureSuccessStatusCode();
-            xml = await response.Content.ReadAsStringAsync();
-        }
-        catch (UserFriendlyException)
-        {
-            throw;
+            xml = await _tcmbClient.FetchAsync(date?.Date);
         }
         catch (Exception ex)
         {
             throw new UserFriendlyException("TCMB kurları alınamadı: " + ex.Message);
+        }
+
+        if (xml == null)
+        {
+            throw new UserFriendlyException(
+                $"{date!.Value:dd.MM.yyyy} için TCMB kur yayımlamadı (hafta sonu ya da resmî tatil). " +
+                "Önceki iş gününün kurunu seçin.");
         }
 
         // F-06 · ALIŞ kuru ve bültenin KENDİ tarihi (TcmbRateParser); "today" artık bülten günüdür.
