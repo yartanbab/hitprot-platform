@@ -162,6 +162,22 @@ public static class ReleaseNoteCatalog
                 "gecikmişleri gösterir; daha fazlası varsa \"Tüm gecikmişler\" bağlantısı Görevler listesini " +
                 "gecikmiş süzgeciyle açar."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevi kimin izlediği görünüyor",
+                "Görev sayfasının Detaylar kartında \"İzleyenler\" satırı var: görevin yorum, durum ve son tarih " +
+                "bildirimlerini sorumlu ve açan dışında kimlerin aldığını buradan görürsünüz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görevler listesi son tarihe göre açılıyor",
+                "Görevler listesi artık başlık sırası yerine son tarihe göre açılır: yaklaşan işler üstte, son " +
+                "tarihi olmayan görevler en altta. Başka bir sütuna tıklayarak sırayı değiştirebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "iPhone ve iPad'de bildirim için yönlendirme",
+                "iPhone ve iPad'de bildirimler yalnız ana ekrana eklenen uygulamada çalışır. Bildirim " +
+                "Tercihleri sayfası Safari'de açıldığında artık \"desteklenmiyor\" yerine Paylaş → Ana Ekrana " +
+                "Ekle adımını anlatır."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Görev paylaşım bağlantısı e-postasız da oluşturuluyor",
                 "Görevi ekip dışıyla paylaşırken e-posta alanı \"isteğe bağlı\" yazıyordu ama boş " +
@@ -197,6 +213,12 @@ public static class ReleaseNoteCatalog
                 "Yalnız etiket değiştiğinde de \"Son kayıt\" saati güncelleniyor",
                 "Görev sayfasında yalnız etiket değiştirip kaydettiğinizde alttaki \"Son kayıt\" saati eski " +
                 "kalıyordu; kaydın gerçekleştiği anlaşılmıyordu. Artık her kayıtta güncellenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "İlerleme yüzdeleri her yerde aynı şekilde yuvarlanıyor",
+                "Görev ilerlemesi ile gösterge ilerlemesi farklı yuvarlanıyordu: 2/3 göstergede %66, 200 görevden " +
+                "199'u bitince proje %100 görünüyordu. Artık ikisi de en yakın tama yuvarlanır (2/3 → %67); iş " +
+                "bitmeden %100, iş başlamışken %0 gösterilmez."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Görev ekranları ekip üyelerinin iletişim bilgilerini indirmiyor",
