@@ -49,7 +49,8 @@ public static class MacroCatalog
         Menu("Boards", "Apya.Work.Boards", Work, "Menu:Boards", "/Tasks/Detail"),
         Menu("Projects", "Apya.Work.Projects", Work, "Menu:Projects", "/Projects/ProjectDetails"),
         Menu("Calendar", "Apya.Calendar", Calendar, "Menu:Calendar"),
-        Menu("FinanceHub", "Apya.Finance.Hub", Finance, "Menu:FinanceHub", "/Reports/ProjectBudget"),
+        // B-16 · Geciken fatura bildirimi (/Invoices?invoiceId=) de finans çatısının rozetine düşer.
+        Menu("FinanceHub", "Apya.Finance.Hub", Finance, "Menu:FinanceHub", "/Reports/ProjectBudget", "/Invoices"),
         Menu("Documents", "Apya.Content.Documents", Content, "Menu:Documents", "/Documents")
     };
 

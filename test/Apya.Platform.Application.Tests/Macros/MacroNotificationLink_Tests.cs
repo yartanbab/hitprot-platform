@@ -22,6 +22,7 @@ public class MacroNotificationLink_Tests
     [InlineData("/Grants/Requests", "GrantsRequests")]
     [InlineData("/Grants/DetailHost?id=1", "GrantsApplications")]
     [InlineData("/Reports/ProjectBudget?ProjectId=1", "FinanceHub")]
+    [InlineData("/Invoices?invoiceId=1", "FinanceHub")]
     [InlineData("/Documents?folder=1", "Documents")]
     [InlineData("/Feedback", null)]
     [InlineData("/GrantsX", null)]

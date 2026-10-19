@@ -108,5 +108,8 @@ public enum NotificationType
     AiDraftsFailed              = 61, // Görev taslağı çıkarılamadı (başlatana)
 
     // B-13: geciken görev proje sorumlusuna hiç ulaşmıyordu.
-    TaskOverdueEscalated        = 62  // Projenizdeki görev 3+ gündür gecikmede (proje sorumlularına)
+    TaskOverdueEscalated        = 62, // Projenizdeki görev 3+ gündür gecikmede (proje sorumlularına)
+
+    // B-16: fatura listesi "gecikmiş" diyordu ama vade sessizce geçiyordu.
+    InvoiceOverdue              = 63  // Faturanın vadesi geçti, ödenmedi (kesen + proje sorumluları)
 }
