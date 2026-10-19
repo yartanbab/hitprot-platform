@@ -30,7 +30,6 @@ const SHORTCUTS = [
     { what: 'Kaydet', key: 'Ctrl S' },
     { what: 'Yorum gönder', key: 'Ctrl ↵' },
     { what: 'Kapat / iptal', key: 'Esc' },
-    { what: 'Bağlantı kopyala', key: '⌘ L' },
 ];
 
 /** Seçim satırı — Popover.Close ile sarılır ki tıklamadan sonra menü kapansın.
@@ -120,15 +119,15 @@ export function TaskDetailHeaderV3({
     /* `allowed: false` olan madde hiç çizilmez: Çoğalt/Kopyala/Taşı sunucuda TransferAsync
        (düzenleme), Arşivle UpdateStatus (durum), Sil DeleteAsync (silme) uçlarına gider. */
     const menuItems = [
-        { label: 'Bağlantıyı kopyala', icon: 'fa-link', kbd: '⌘L', onClick: run(copyLink) },
-        { label: 'Çoğalt', icon: 'fa-copy', kbd: '⌘D', allowed: canEdit, onClick: run(onDuplicate) },
+        { label: 'Bağlantıyı kopyala', icon: 'fa-link', onClick: run(copyLink) },
+        { label: 'Çoğalt', icon: 'fa-copy', allowed: canEdit, onClick: run(onDuplicate) },
         { label: 'Başka projeye kopyala', icon: 'fa-clone', allowed: canEdit, onClick: run(() => onOpenTransfer?.('copy')) },
         { label: 'Taşı (başka proje)', icon: 'fa-right-left', separator: true, allowed: canEdit, onClick: run(() => onOpenTransfer?.('move')) },
         { label: isWatched ? 'Takibi bırak' : 'Takip et', icon: 'fa-eye', onClick: run(onToggleWatch) },
         { label: 'Arşivle', icon: 'fa-box-archive', separator: true, allowed: canChangeStatus, onClick: run(onArchive) },
-        { label: 'Yazdır', icon: 'fa-print', kbd: '⌘P', onClick: run(() => window.print()) },
+        { label: 'Yazdır', icon: 'fa-print', kbd: 'Ctrl P', onClick: run(() => window.print()) },
         { label: 'PDF olarak dışa aktar', icon: 'fa-file-pdf', onClick: run(onExportPdf) },
-        { label: 'Sil', icon: 'fa-trash-can', kbd: '⌫', separator: true, danger: true, allowed: canDelete, onClick: run(onDelete) },
+        { label: 'Sil', icon: 'fa-trash-can', separator: true, danger: true, allowed: canDelete, onClick: run(onDelete) },
     ].filter((item) => item.allowed !== false);
 
     return (
