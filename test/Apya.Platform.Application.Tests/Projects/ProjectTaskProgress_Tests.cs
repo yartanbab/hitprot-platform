@@ -82,6 +82,23 @@ public class ProjectTaskProgress_Tests
         summary.Overdue.ShouldBe(3);
     }
 
+    /// <summary>
+    /// QA-07 · Son tarih gün olarak girilir (00:00). Saat düzeyinde karşılaştırma bugün
+    /// biten görevi gece yarısından itibaren gecikmiş sayıyordu; proje detayı şeridi ve
+    /// görev süzgeçleri saymıyordu — aynı proje iki ekranda farklı gecikme gösteriyordu.
+    /// </summary>
+    [Fact]
+    public void Bugun_biten_gorev_gecikmis_sayilmaz()
+    {
+        var summary = ProjectTaskProgress.Summarize(new List<TaskDto>
+        {
+            Task(TaskStatus.Todo, Now.Date),             // bugün bitiyor → henüz vakti var
+            Task(TaskStatus.Todo, Now.Date.AddDays(-1)), // dün bitti → gecikmiş
+        }, Now);
+
+        summary.Overdue.ShouldBe(1);
+    }
+
     [Fact]
     public void Gorevsiz_projede_her_sey_sifir()
     {

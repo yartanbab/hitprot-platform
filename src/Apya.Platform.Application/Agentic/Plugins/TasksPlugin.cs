@@ -56,7 +56,8 @@ public class TasksPlugin
 
         var overdueTasks = query
             .Where(t => t.Status != Apya.Platform.Tasks.TaskStatus.Done && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
-            .Where(t => t.DueDate.HasValue && t.DueDate.Value < now)
+            // Gün düzeyi: bugün biten görev henüz gecikmiş değil (ProjectTaskProgress kuralı).
+            .Where(t => t.DueDate.HasValue && t.DueDate.Value < now.Date)
             .ToList();
 
         if (!overdueTasks.Any())

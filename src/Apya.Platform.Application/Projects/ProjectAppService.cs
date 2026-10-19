@@ -806,13 +806,15 @@ public class ProjectAppService :
             .Where(t => t.Status != Apya.Platform.Tasks.TaskStatus.Done
                      && t.Status != Apya.Platform.Tasks.TaskStatus.Cancelled)
             .ToList();
-        var overdue = openTasks.Where(t => t.DueDate.HasValue && t.DueDate.Value < now).ToList();
+        // Gün düzeyi (ProjectTaskProgress ile aynı kural): bugün biten görev gecikmiş değil,
+        // "sıradaki son tarih"tir.
+        var overdue = openTasks.Where(t => t.DueDate.HasValue && t.DueDate.Value.Date < now.Date).ToList();
         dto.OverdueTaskCount = overdue.Count;
         dto.OldestOverdueDays = overdue.Count > 0
             ? (int)(now.Date - overdue.Min(t => t.DueDate!.Value).Date).TotalDays
             : null;
         dto.NextDueDate = openTasks
-            .Where(t => t.DueDate.HasValue && t.DueDate.Value >= now)
+            .Where(t => t.DueDate.HasValue && t.DueDate.Value.Date >= now.Date)
             .Select(t => t.DueDate)
             .DefaultIfEmpty(null)
             .Min();

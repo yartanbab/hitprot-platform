@@ -23,11 +23,13 @@ public static class ProjectMetricsCalculator
                 "Projede henüz görev yok. Öngörü için görev eklemeye başlayın.");
         }
 
+        // İptal edilen görev ne gecikir ne de bekleyen kritik iştir: sayılsaydı bir işi
+        // iptal etmek riski hiç düşürmezdi. Gecikme gün düzeyinde (ProjectTaskProgress).
         var delayedTasks = tasks.Count(t =>
-            t.DueDate.HasValue && t.DueDate.Value < now && t.Status != TaskStatus.Done);
+            t.DueDate.HasValue && t.DueDate.Value.Date < now.Date && IsOpen(t));
 
         var criticalPending = tasks.Count(t =>
-            t.Priority == TaskPriority.Critical && t.Status != TaskStatus.Done);
+            t.Priority == TaskPriority.Critical && IsOpen(t));
 
         var completedTasks = tasks.Count(t => t.Status == TaskStatus.Done);
         var completionRate = tasks.Count > 0 ? (double)completedTasks / tasks.Count : 0;
@@ -62,6 +64,9 @@ public static class ProjectMetricsCalculator
         return (score, "danger",
             $"Kritik Seviye! Gecikmeler ve daralan süre nedeniyle teslimat riski %{score} olarak öngörüldü.");
     }
+
+    private static bool IsOpen(TaskDto t) =>
+        t.Status != TaskStatus.Done && t.Status != TaskStatus.Cancelled;
 
     public static (int remainingDays, int totalProjectDays, int timeUsagePercent, string color, string label, bool notStarted)
         CalculateTimeMetrics(
