@@ -656,7 +656,10 @@ $(function () {
 
     function renderSortIndicators() {
         $console.find('[data-sort-col]').each(function () {
-            $(this).toggleClass('is-sorted', $(this).data('sort-col') === state.sort);
+            // Görsel işaret (is-sorted) ekran okuyucuya da söylensin (QA-10): düğmeler sütun
+            // başlığı değil, bu yüzden aria-sort değil aria-pressed.
+            var sorted = $(this).data('sort-col') === state.sort;
+            $(this).toggleClass('is-sorted', sorted).attr('aria-pressed', sorted ? 'true' : 'false');
         });
     }
 

@@ -254,7 +254,10 @@
                     <div class="apya-pform-cats" role="radiogroup" aria-label="Proje türü">
                         @foreach (var cat in Model.CategoryCards)
                         {
+                            @* aria-label: dar ekranda açıklama satırı gizlenince radyonun erişilebilir adı
+                               hesaplanmıyordu (QA-11). *@
                             <button type="button" class="apya-pform-cat" role="radio" aria-checked="false"
+                                    aria-label="@cat.Label — @cat.Description"
                                     data-cat="@cat.Value" data-hint="@cat.Hint">
                                 <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--@cat.Tone" aria-hidden="true">
                                     <i class="fa @cat.Icon"></i>
