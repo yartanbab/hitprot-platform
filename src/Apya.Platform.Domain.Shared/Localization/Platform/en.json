@@ -2053,6 +2053,8 @@
     "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io.",
     "Platform:RateLimitExceeded": "Too many requests in a short time. Please try again in a minute.",
     "Platform:Task:TitleRequired": "Task title cannot be empty.",
+    "Platform:Task:DependencySelf": "A task cannot be its own predecessor.",
+    "Platform:Task:DependencyCycle": "This link would create a cycle: the selected task already comes after this task. Choose a task that comes before it.",
     "Platform:Task:ParentNotFound": "The parent task for this subtask could not be found. It may have been deleted; refresh the page and try again.",
     "Platform:Task:WorkStepProjectMismatch": "The selected work step does not belong to the task's project.",
     "Platform:Task:ParentProjectMismatch": "A subtask cannot be added to a different project than its parent task.",

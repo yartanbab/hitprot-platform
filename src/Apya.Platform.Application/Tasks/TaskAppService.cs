@@ -917,7 +917,7 @@ namespace Apya.Platform.Tasks
             if (input.PredecessorIds != null && input.PredecessorIds.Any())
             {
                 await EnsurePredecessorsVisibleAsync(input.PredecessorIds);
-                foreach (var predId in input.PredecessorIds)
+                foreach (var predId in input.PredecessorIds.Distinct())
                 {
                     await _dependencyRepository.InsertAsync(new TaskDependency(GuidGenerator.Create(), newTask.Id, predId));
                 }
@@ -1037,12 +1037,14 @@ namespace Apya.Platform.Tasks
                     .Select(x => x.PredecessorTaskId)
                     .ToHashSet();
                 await EnsurePredecessorsVisibleAsync(input.PredecessorIds.Where(x => !existing.Contains(x)));
+                // D-1 · Öz-bağ ve döngü reddedilir (arayüz sunmuyor ama doğrudan istek kurabiliyordu).
+                await _taskManager.EnsureNoDependencyCycleAsync(id, input.PredecessorIds);
             }
 
             await _dependencyRepository.DeleteDirectAsync(x => x.TaskId == id);
             if (input.PredecessorIds != null && input.PredecessorIds.Any())
             {
-                foreach (var predId in input.PredecessorIds)
+                foreach (var predId in input.PredecessorIds.Distinct())
                 {
                     await _dependencyRepository.InsertAsync(new TaskDependency(GuidGenerator.Create(), id, predId));
                 }

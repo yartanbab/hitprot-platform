@@ -261,6 +261,38 @@ public class TaskManager : DomainService
         await _taskRepository.DeleteManyAsync(ids);
     }
 
+    /// <summary>
+    /// D-1 · Öncül bağı kurulmadan önce: görev kendisine ve kendi ardılına (dolaylı da) bağlanamaz. Bağ
+    /// "P bitmeden T başlamaz" demektir; P zaten T'den sonra geliyorsa (T → … → P) bağ döngü kurar ve kritik
+    /// yol ile Zaman Çizelgesi hesabı sonsuza girer. P'nin öncülleri yukarı doğru taranır; T'ye ulaşılırsa döngü.
+    /// </summary>
+    public async Task EnsureNoDependencyCycleAsync(Guid taskId, IEnumerable<Guid> predecessorIds)
+    {
+        foreach (var predecessorId in predecessorIds.Distinct())
+        {
+            if (predecessorId == taskId)
+            {
+                throw new BusinessException(PlatformDomainErrorCodes.TaskDependencySelf);
+            }
+
+            var seen = new HashSet<Guid> { predecessorId };
+            var frontier = new List<Guid> { predecessorId };
+            while (frontier.Count > 0)
+            {
+                var current = frontier;
+                var upward = (await _dependencyRepository.GetListAsync(x => current.Contains(x.TaskId)))
+                    .Select(x => x.PredecessorTaskId)
+                    .ToList();
+                if (upward.Contains(taskId))
+                {
+                    throw new BusinessException(PlatformDomainErrorCodes.TaskDependencyCycle);
+                }
+                // Bozuk veride var olan döngü taramayı sonsuza sokmasın.
+                frontier = upward.Where(seen.Add).ToList();
+            }
+        }
+    }
+
     /// <summary>Tenant içindeki bir sonraki görev sırası. DB sequence kullanılmaz —
     /// çift provider'da (Postgres/MSSQL) sequence taşınması güvenilir değil.</summary>
     public async Task<int> GetNextNumberAsync()
