@@ -61,6 +61,7 @@ public static class ProjectTaskProgress
                                       && t.DueDate.HasValue
                                       && t.DueDate.Value.Date >= now.Date
                                       && t.DueDate.Value.Date <= now.Date.AddDays(7)),
-            CompletionPercent: total > 0 ? (int)Math.Round((double)done / total * 100) : 0);
+            // QA-36 · Göstergelerle aynı yuvarlama: bitmeden %100 yok (eskiden 199/200 → %100).
+            CompletionPercent: total > 0 ? ProgressPercent.Of((decimal)done / total) : 0);
     }
 }
