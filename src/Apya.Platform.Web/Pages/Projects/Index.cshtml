@@ -104,12 +104,13 @@
             <i class="fa fa-filter apya-proj-kpi-hint" aria-hidden="true"></i>
         </button>
 
-        <button type="button" class="apya-proj-kpi is-clickable" data-kpi-filter="week"
-                aria-pressed="false" title="Bu hafta biten projeleri filtrele">
+        @* Proje detayı ve Görevler şeridindeki "7 Gün İçinde" ile aynı kural (bugün..+7). *@
+        <button type="button" class="apya-proj-kpi is-clickable" data-kpi-filter="dueSoon"
+                aria-pressed="false" title="7 gün içinde bitecek görevi olan projeleri filtrele">
             <span class="kpi-icon-box kpi-icon-box--xs kpi-icon-box--warning" aria-hidden="true"><i class="fa fa-clock"></i></span>
             <div class="apya-proj-kpi-text">
-                <div class="apya-overline">Yaklaşan görev</div>
-                <div class="apya-proj-kpi-value apya-numeric" id="KpiUpcomingTasks">—</div>
+                <div class="apya-overline">7 gün içinde</div>
+                <div class="apya-proj-kpi-value apya-numeric" id="KpiDueSoonTasks">—</div>
             </div>
             <i class="fa fa-filter apya-proj-kpi-hint" aria-hidden="true"></i>
         </button>

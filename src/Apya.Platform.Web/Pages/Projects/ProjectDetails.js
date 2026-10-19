@@ -635,6 +635,15 @@ $(function () {
         createModal.open({ projectId: projectId });
     });
 
+    // "Oluştur ve görev ekle" (Projeler · Yeni Proje) buraya ?yeniGorev=1 ile gelir: pencere
+    // doğrudan açılır. Parametre adresten silinir ki yenileme pencereyi yeniden açmasın.
+    var startUrl = new URL(window.location.href);
+    if (startUrl.searchParams.has('yeniGorev')) {
+        startUrl.searchParams.delete('yeniGorev');
+        history.replaceState(history.state, '', startUrl.pathname + startUrl.search + startUrl.hash);
+        $('#btn-create-task').trigger('click');
+    }
+
     var reviewModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Tasks/Drafts/ReviewModal' });
 
     // --- 2b. AI Görev Oluşturucu (Yeni Arka Plan İşleme Modülü) ---

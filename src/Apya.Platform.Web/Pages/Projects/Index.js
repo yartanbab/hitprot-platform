@@ -60,8 +60,7 @@ $(function () {
         density: 'cozy',       // cozy | tight
         myScope: false,        // yalnız bana atanmış görevi olan projeler
         narrow: false,         // kap listeyi taşıyamıyor
-        openProjectId: null,
-        taskKpi: { overdue: null, upcoming: null }
+        openProjectId: null
     };
 
     // ------------------------------------------------------------- KALICILIK
@@ -198,6 +197,7 @@ $(function () {
         { key: 'all', label: 'Tümü', test: function () { return true; } },
         { key: 'risk', label: 'Riskli', risky: true, test: function (p) { return riskOf(p) === 'high'; } },
         { key: 'overdue', label: 'Gecikmiş görevi olan', test: function (p) { return (p.overdueTaskCount || 0) > 0; } },
+        { key: 'dueSoon', label: '7 gün içinde görevi olan', test: function (p) { return (p.dueSoonTaskCount || 0) > 0; } },
         { key: 'week', label: 'Bu hafta biten', test: function (p) { return p.daysRemaining !== null && p.daysRemaining !== undefined && p.daysRemaining >= 0 && p.daysRemaining <= 7; } },
         // Bu iki filtre DAVRANIŞ anahtarına bakar, kategori adına değil: kiracı sistem
         // kategorisini yeniden adlandıramaz ama kendi kategorisine "Hibe" diyebilir —
@@ -221,7 +221,8 @@ $(function () {
             // Cari gömüldü (2026-09-06): müşteri adı artık listede gösterilmediği için
             // aramanın kapsamı da ad + koddan ibaret. Alan DTO'da duruyor.
             return lower(p.name).indexOf(q) >= 0
-                || lower(p.code).indexOf(q) >= 0;
+                || lower(p.code).indexOf(q) >= 0
+                || lower(p.tenantName).indexOf(q) >= 0;
         });
     }
 
@@ -364,7 +365,7 @@ $(function () {
             '  <div style="min-width:0">' +
             '    <div class="apya-proj-name">' + esc(p.name) + '</div>' +
             '    <div class="apya-proj-name-sub">' +
-            '      <span class="apya-proj-code apya-numeric">' + esc(p.code) + '</span>' + chips.join('') +
+            '      <span class="apya-proj-code apya-numeric">' + esc(p.code) + '</span>' + tenantHtml(p) + chips.join('') +
             '    </div>' +
             '  </div>' +
             '</div>' +
@@ -382,6 +383,14 @@ $(function () {
             moreButtonHtml(p) +
             '</div>' +
             '</div>';
+    }
+
+    // Host "tüm projeler" görünümünde aynı ad ve kodlu projeler farklı kiracılarda olabilir:
+    // kiracı adı olmadan ayırt edilemiyordu (QA-03). Sunucu adı YALNIZ host'a doldurur.
+    function tenantHtml(p) {
+        return p.tenantName
+            ? ' <span class="apya-proj-tenant" title="Proje hesabı"><i class="fa fa-building me-1" aria-hidden="true"></i>' + esc(p.tenantName) + '</span>'
+            : '';
     }
 
     // ================================================================= KART
@@ -423,7 +432,7 @@ $(function () {
             '  <div style="flex:1 1 auto;min-width:0">' +
             '    <div class="apya-proj-card-title">' + esc(p.name) + '</div>' +
             '    <div class="apya-proj-card-sub">' +
-            '      <span class="apya-numeric">' + esc(p.code) + '</span>' +
+            '      <span class="apya-numeric">' + esc(p.code) + '</span>' + tenantHtml(p) +
             '    </div>' +
             '  </div>' +
             '</div>' +
@@ -492,8 +501,7 @@ $(function () {
         // servisten gelir; gelmişse yazılır.
         if (!all.length && (state.loading || state.loadFailed)) {
             $('#KpiActiveProjects, #KpiTotalBudget, #KpiAvgProgress, #KpiAtRisk').text('—');
-            $('#KpiOverdueTasks').text(state.taskKpi.overdue !== null ? state.taskKpi.overdue : '—');
-            $('#KpiUpcomingTasks').text(state.taskKpi.upcoming !== null ? state.taskKpi.upcoming : '—');
+            $('#KpiOverdueTasks, #KpiDueSoonTasks').text('—');
         } else {
             $('#KpiActiveProjects').text(all.filter(function (p) { return p.displayStatus !== 'Planlama'; }).length);
             if (CAN_VIEW_BUDGET) {
@@ -506,12 +514,13 @@ $(function () {
             // aksi hâlde "şeritte 2, ekranda 3 kırmızı kenar" tutarsızlığı olurdu.
             $('#KpiAtRisk').text(all.filter(function (p) { return riskOf(p) === 'high'; }).length);
 
-            // Görev sayaçları proje kaydında değil, görev servisinde. Yüklenene kadar
-            // yerel toplam gösterilir ki şerit hiç boş kalmasın.
-            $('#KpiOverdueTasks').text(state.taskKpi.overdue !== null
-                ? state.taskKpi.overdue
-                : all.reduce(function (s, p) { return s + (p.overdueTaskCount || 0); }, 0));
-            $('#KpiUpcomingTasks').text(state.taskKpi.upcoming !== null ? state.taskKpi.upcoming : '—');
+            // Görev sayaçları KARTLARLA AYNI kümeden (proje kaydındaki sayılar, sunucuda tek
+            // kural: ProjectTaskProgress). Eskiden görev servisinden geliyordu: host'un "tüm
+            // projeler" görünümünde yalnız host görevlerini sayıyordu (QA-01: 67'ye karşı
+            // kartlarda 955) ve "Yaklaşan görev" 48 saatlik görev sayısı iken tıklanınca
+            // "Bu hafta biten" PROJE süzgeci çalışıyordu (QA-02).
+            $('#KpiOverdueTasks').text(all.reduce(function (s, p) { return s + (p.overdueTaskCount || 0); }, 0));
+            $('#KpiDueSoonTasks').text(all.reduce(function (s, p) { return s + (p.dueSoonTaskCount || 0); }, 0));
         }
 
         $console.find('[data-kpi-filter]').each(function () {
@@ -844,13 +853,18 @@ $(function () {
     // değişiklik sayfa yenilenmeden de doğru sonucu versin.
     function recomputeProject(p, tasks) {
         var now = Date.now();
+        // Gün düzeyi (ProjectTaskProgress): bugün biten görev gecikmiş değil, "sıradaki"dir.
+        var today = new Date(); today.setHours(0, 0, 0, 0);
+        var soonEnd = new Date(today); soonEnd.setDate(soonEnd.getDate() + 7);
+        function dueDay(t) { var d = new Date(t.dueDate); d.setHours(0, 0, 0, 0); return d; }
         var open = tasks.filter(taskIsOpen);
-        var overdue = open.filter(function (t) { return t.dueDate && Date.parse(t.dueDate) < now; });
+        var overdue = open.filter(function (t) { return t.dueDate && dueDay(t) < today; });
 
         p.taskCount = tasks.length;
         p.completedTaskCount = tasks.filter(function (t) { return t.status === 4; }).length;
         p.progressPercent = p.taskCount > 0 ? Math.round(100 * p.completedTaskCount / p.taskCount) : 0;
         p.overdueTaskCount = overdue.length;
+        p.dueSoonTaskCount = open.filter(function (t) { return t.dueDate && dueDay(t) >= today && dueDay(t) <= soonEnd; }).length;
         p.oldestOverdueDays = overdue.length
             ? Math.max.apply(null, overdue.map(function (t) {
                 return Math.floor((now - Date.parse(t.dueDate)) / 86400000);
@@ -858,33 +872,22 @@ $(function () {
             : null;
 
         var upcoming = open
-            .filter(function (t) { return t.dueDate && Date.parse(t.dueDate) >= now; })
+            .filter(function (t) { return t.dueDate && dueDay(t) >= today; })
             .map(function (t) { return Date.parse(t.dueDate); });
         p.nextDueDate = upcoming.length ? new Date(Math.min.apply(null, upcoming)).toISOString() : null;
     }
 
-    // Görev mutasyonu sonrası ortak kuyruk: yerel yeniden hesap → tam render →
-    // arka planda görev sayaçlarını sunucudan tazele.
-    //
-    // "Geçmiş görev" KPI'ı proje kaydından değil görev servisinden geliyor; sunucu
-    // yanıtını beklemek şeridi bir tur bayat bırakırdı. Bu yüzden projenin gecikme
-    // sayısındaki YEREL fark şeride hemen uygulanır, arka plandaki çağrı da tam
-    // değeri getirip üzerine yazar.
+    // Görev mutasyonu sonrası ortak kuyruk: yerel yeniden hesap → tam render. Şeridin
+    // görev sayaçları proje kayıtlarının toplamı olduğu için render ile birlikte güncellenir.
     function afterTaskMutation() {
         var p = findProject(drawer.projectId);
         // drawer.complete false ise (görev listesi sayfalama sınırına takıldı)
-        // yerel yeniden hesap yapılmaz; sayılar sunucu tazelemesiyle güncellenir.
+        // yerel yeniden hesap yapılmaz.
         if (p && drawer.complete) {
-            var before = p.overdueTaskCount || 0;
             recomputeProject(p, drawer.tasks);
-            var delta = (p.overdueTaskCount || 0) - before;
-            if (delta !== 0 && state.taskKpi.overdue !== null) {
-                state.taskKpi.overdue = Math.max(0, state.taskKpi.overdue + delta);
-            }
         }
         renderDrawer();
         render();
-        loadTaskKpis();
     }
 
     // ============================================================== YÜKLEME
@@ -939,22 +942,6 @@ $(function () {
         state.totalCount = 0;
         state.truncated = false;
         return load(false);
-    }
-
-    // Gecikmiş / 48 saat içinde dolacak GÖREV sayıları — proje kaydında değil,
-    // görev servisinde. Şeritteki iki hücre bunları gösterir.
-    // Yan yükleme (Faz 4 kararı 2): düşerse ABP penceresi açılmaz; sayaç gelmemişse "—" kalır.
-    function loadTaskKpis() {
-        if (!taskService) { return; }
-        var now = moment();
-        taskService.getList({
-            maxDueDate: now.format(), statuses: [1, 2, 3], maxResultCount: 1
-        }, { abpHandleError: false }).then(function (r) { state.taskKpi.overdue = r.totalCount; renderKpis(); }, function () { });
-
-        taskService.getList({
-            minDueDate: now.format(), maxDueDate: now.clone().add(48, 'hours').format(),
-            statuses: [1, 2, 3], maxResultCount: 1
-        }, { abpHandleError: false }).then(function (r) { state.taskKpi.upcoming = r.totalCount; renderKpis(); }, function () { });
     }
 
     // ============================================================== OLAYLAR
@@ -1202,11 +1189,12 @@ $(function () {
         }
         // "Oluştur ve görev ekle": listeye dönmek yerine doğrudan görev paneline.
         if (result && result.goToTasks && result.id) {
-            window.location.href = '/Projects/ProjectDetails/' + result.id;
+            // ?yeniGorev=1: detay açılır açılmaz "Yeni Görev" penceresi gelir (QA-04 —
+            // eskiden yalnız detaya gidiyordu, görev ekleme kullanıcıya kalıyordu).
+            window.location.href = '/Projects/ProjectDetails/' + result.id + '?yeniGorev=1';
             return;
         }
         reload();
-        loadTaskKpis();
     });
     $(document).on('click', '#NewProjectButton, [data-new-project]', function (e) {
         e.preventDefault();
@@ -1272,5 +1260,4 @@ $(function () {
     placeSort();
     render();
     load(false);
-    loadTaskKpis();
 });
