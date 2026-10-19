@@ -668,7 +668,7 @@
     "Tasks:Timeline:Legend:NoBaseline": "Baseline and variance badge are not drawn — no backend field.",
     "Tasks:Timeline:DatesUpdated": "Dates updated for {0} task(s).",
     "Tasks:Priority:Low": "Low",
-    "Tasks:Priority:Medium": "Normal",
+    "Tasks:Priority:Medium": "Medium",
     "Tasks:Priority:High": "High",
     "Tasks:Priority:Critical": "Critical",
     "Tasks:Create:Title": "Create New Task",

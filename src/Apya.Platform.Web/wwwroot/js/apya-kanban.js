@@ -885,7 +885,7 @@
                     var btn = el('button', 'apya-console-menu-item js-kb-assign');
                     btn.type = 'button';
                     btn.setAttribute('data-user-id', u.id);
-                    btn.textContent = u.userName || u.name || '';
+                    btn.textContent = (window.apyaTask && apyaTask.personLabel) ? apyaTask.personLabel(u) : (u.userName || u.name || '');
                     menu.appendChild(btn);
                 });
             });
@@ -1077,7 +1077,7 @@
                         items.forEach(function (u) {
                             var ub = el('button', 'kanban-popmenu-subitem');
                             ub.type = 'button';
-                            ub.textContent = u.userName || u.name || '';
+                            ub.textContent = (window.apyaTask && apyaTask.personLabel) ? apyaTask.personLabel(u) : (u.userName || u.name || '');
                             ub.addEventListener('click', function () {
                                 runCardAction(taskSvc.setAssignee(task.id, u.id),
                                     '"' + ub.textContent + '" kişisine atandı.');

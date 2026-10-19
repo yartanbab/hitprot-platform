@@ -94,6 +94,18 @@
         return '<span class="text-muted small">' + fmt + '</span>';
     }
 
+    /** Kişi seçicisi etiketi — TaskPersonName.Label ile aynı kural: "Ad Soyad (kullanıcı adı)",
+     *  ad yoksa kullanıcı adı. Seçiciler kullanıcı adını ("calisan1") basıyordu (QA-05). */
+    function personLabel(u) {
+        if (!u) return '';
+        var full = [u.name, u.surname]
+            .filter(function (s) { return s && String(s).trim(); })
+            .join(' ')
+            .trim();
+        if (!full) return u.userName || '';
+        return u.userName ? full + ' (' + u.userName + ')' : full;
+    }
+
     function commentCount(comments) {
         var n = (comments || []).length;
         if (!n) return '';
@@ -167,6 +179,7 @@
         priorityBadge: priorityBadge,
         assigneeAvatar: assigneeAvatar,
         dueDateChip: dueDateChip,
+        personLabel: personLabel,
         commentCount: commentCount,
         statusChip: statusChip,
         subtaskToggle: subtaskToggle,

@@ -517,7 +517,7 @@ $(function () {
                 $('<button type="button" class="apya-console-menu-item" data-bulk-assign="">').text('Atamayı kaldır'));
             ((res && res.items) || []).forEach(function (u) {
                 $assignMenu.append($('<button type="button" class="apya-console-menu-item">')
-                    .attr('data-bulk-assign', u.id).text(u.userName || u.name || ''));
+                    .attr('data-bulk-assign', u.id).text(apyaTask.personLabel(u)));
             });
         }, function () { $assignMenu.data('filled', false); });
     });
