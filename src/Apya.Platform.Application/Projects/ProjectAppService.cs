@@ -552,6 +552,11 @@ public class ProjectAppService :
             dto.SpentBudget = ProjectMetricsCalculator.CalculateBudgetSpent(timeLogs, project.HourlyRate);
             dto.BudgetPercent = ProjectMetricsCalculator.CalculateBudgetPercent(dto.SpentBudget, project.TotalBudget);
 
+            // Şerit (İlerleme / Gecikmiş / 7 Gün İçinde) ve Finans sekmesi liste kartıyla aynı
+            // kuraldan okur. Eskiden detay bu alanları hiç doldurmuyordu: Finans sekmesi her
+            // projede "Görev ilerlemesi %0" gösteriyordu, şerit ise kendi Razor hesabını yapıyordu.
+            ApplyTaskProgress(dto, ProjectTaskProgress.Summarize(dto.Tasks, now));
+
             var risk = ProjectMetricsCalculator.CalculateAiRisk(dto, dto.Tasks, now);
             dto.AiRiskScore = risk.score;
             dto.AiRiskColor = risk.color;
@@ -575,6 +580,30 @@ public class ProjectAppService :
             }
 
             return dto;
+        }
+    }
+
+    public async Task<ProjectTaskSummaryDto> GetTaskSummaryAsync(Guid id)
+    {
+        using (CurrentTenant.Id == null ? DataFilter.Disable<IMultiTenant>() : null)
+        {
+            // Erişim GetDetailAsync ile aynı: kiracı kullanıcısı başka kiracının projesini
+            // göremez (404), host tüm kiracıları görür.
+            await Repository.GetAsync(id);
+
+            var taskItems = await AsyncExecuter.ToListAsync(
+                (await _taskRepository.GetQueryableAsync()).Where(t => t.ProjectId == id));
+            var tasks = ObjectMapper.Map<List<TaskItem>, List<Apya.Platform.Tasks.TaskDto>>(taskItems);
+            var progress = ProjectTaskProgress.Summarize(tasks, Clock.Now);
+
+            return new ProjectTaskSummaryDto
+            {
+                Total = progress.Total,
+                Done = progress.Done,
+                CompletionPercent = progress.CompletionPercent,
+                Overdue = progress.Overdue,
+                DueSoon = progress.DueSoon
+            };
         }
     }
 
@@ -795,9 +824,7 @@ public class ProjectAppService :
         // Tamamlanma kuralı ProjectTaskProgress'te: rapor da aynı yerden okuyor, iki ekran
         // aynı proje için farklı yüzde gösteremez.
         var progress = ProjectTaskProgress.Summarize(projectTasks, now);
-        dto.ProgressPercent = progress.CompletionPercent;
-        dto.TaskCount = progress.Total;
-        dto.CompletedTaskCount = progress.Done;
+        ApplyTaskProgress(dto, progress);
 
         // Gecikme/son tarih metrikleri — Projeler listesindeki risk kenarı, gecikme
         // rozeti ve "sonraki <tarih>" metni tek yerden beslensin diye burada türetilir.
@@ -809,7 +836,6 @@ public class ProjectAppService :
         // Gün düzeyi (ProjectTaskProgress ile aynı kural): bugün biten görev gecikmiş değil,
         // "sıradaki son tarih"tir.
         var overdue = openTasks.Where(t => t.DueDate.HasValue && t.DueDate.Value.Date < now.Date).ToList();
-        dto.OverdueTaskCount = overdue.Count;
         dto.OldestOverdueDays = overdue.Count > 0
             ? (int)(now.Date - overdue.Min(t => t.DueDate!.Value).Date).TotalDays
             : null;
@@ -840,6 +866,17 @@ public class ProjectAppService :
         dto.DisplayStatus = (progress.Total == 0 || time.notStarted)
             ? "Planlama"
             : risk.color == "danger" ? "Risk" : "Aktif";
+    }
+
+    /// <summary>İlerleme/gecikme alanları — liste kartı, proje detayı şeridi ve Finans sekmesi
+    /// aynı yerden dolar.</summary>
+    private static void ApplyTaskProgress(ProjectDto dto, ProjectTaskProgress.Summary progress)
+    {
+        dto.ProgressPercent = progress.CompletionPercent;
+        dto.TaskCount = progress.Total;
+        dto.CompletedTaskCount = progress.Done;
+        dto.OverdueTaskCount = progress.Overdue;
+        dto.DueSoonTaskCount = progress.DueSoon;
     }
 
     private static string ToInitials(string? displayName)

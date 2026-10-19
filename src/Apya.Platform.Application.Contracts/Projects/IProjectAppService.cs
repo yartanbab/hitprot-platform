@@ -21,6 +21,12 @@ namespace Apya.Platform.Projects
         Task<ProjectDetailDto> GetDetailAsync(Guid id);
 
         /// <summary>
+        /// Proje detayı şeridinin (İlerleme / Gecikmiş / 7 Gün İçinde) sayfa içi görev
+        /// yazmalarından sonraki tazelemesi; GetDetailAsync ile aynı kural ve kapsam.
+        /// </summary>
+        Task<ProjectTaskSummaryDto> GetTaskSummaryAsync(Guid id);
+
+        /// <summary>
         /// Projeler listesi KPI şeridi için tüm (sayfalanmamış) proje setinin özetini döner.
         /// </summary>
         Task<ProjectsSummaryDto> GetProjectsSummaryAsync();

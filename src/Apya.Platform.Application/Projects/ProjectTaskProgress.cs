@@ -33,6 +33,7 @@ public static class ProjectTaskProgress
         int Todo,
         int Cancelled,
         int Overdue,
+        int DueSoon,
         int CompletionPercent);
 
     public static Summary Summarize(IReadOnlyCollection<TaskDto> tasks, DateTime now)
@@ -53,6 +54,13 @@ public static class ProjectTaskProgress
             Todo: tasks.Count(t => t.Status == TaskStatus.Todo),
             Cancelled: tasks.Count(t => t.Status == TaskStatus.Cancelled),
             Overdue: overdue,
+            // Proje detayı şeridindeki "7 Gün İçinde": açık ve son tarihi bugün ile 7 gün
+            // sonrası arasında (gün düzeyi, iki uç dahil).
+            DueSoon: tasks.Count(t => t.Status != TaskStatus.Done
+                                      && t.Status != TaskStatus.Cancelled
+                                      && t.DueDate.HasValue
+                                      && t.DueDate.Value.Date >= now.Date
+                                      && t.DueDate.Value.Date <= now.Date.AddDays(7)),
             CompletionPercent: total > 0 ? (int)Math.Round((double)done / total * 100) : 0);
     }
 }
