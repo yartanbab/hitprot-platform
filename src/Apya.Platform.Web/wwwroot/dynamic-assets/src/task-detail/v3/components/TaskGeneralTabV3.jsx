@@ -184,7 +184,21 @@ export function TaskGeneralTabV3({
         const text = replyDraft.trim();
         if (!text || !taskId) return;
         try {
-            await Promise.resolve(window.apya.platform.tasks.task.replyToComment(parentId, text));
+            /* B-17 · Yanıtta "@Ad Soyad" yazılan kişiler gönderimde kişi listesinden eşlenir (yanıt kutusunda ayrı
+               seçici yok); sunucu yalnız görevi görebilenlere bildirir. */
+            let mentionedIds = [];
+            if (text.includes('@')) {
+                const all = await queryClient.fetchQuery({
+                    queryKey: ['task-users-lookup'],
+                    queryFn: () => Promise.resolve(window?.apya?.platform?.tasks?.task?.getUsersLookup())
+                        .then((res) => res?.items ?? []),
+                    staleTime: 60_000,
+                });
+                mentionedIds = (all ?? [])
+                    .filter((u) => { const n = personName(u); return n && text.includes(`@${n}`); })
+                    .map((u) => u.id);
+            }
+            await Promise.resolve(window.apya.platform.tasks.task.replyToComment(parentId, text, mentionedIds));
             await invalidateComments();
             setReplyDraft('');
             setReplyingToId(null);

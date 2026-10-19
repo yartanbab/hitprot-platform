@@ -43,7 +43,8 @@ namespace Apya.Platform.Tasks
         // Yorum Metodları
         /// <param name="mentionedUserIds">P-09 · Yorumda seçiciyle bahsedilen kişiler (isteğe bağlı).</param>
         Task<Guid> AddCommentAsync(Guid taskId, string text, List<Guid>? mentionedUserIds = null);
-        Task<Guid> ReplyToCommentAsync(Guid parentCommentId, string text); // Instagram tarzı yanıt
+        /// <summary>Instagram tarzı yanıt. B-17: <paramref name="mentionedUserIds"/> yorumdaki gibi "Sizden bahsedildi" üretir.</summary>
+        Task<Guid> ReplyToCommentAsync(Guid parentCommentId, string text, List<Guid>? mentionedUserIds = null);
         Task UpdateCommentAsync(Guid commentId, string text);  // yalnızca yorum sahibi
         Task DeleteCommentAsync(Guid commentId);               // yalnızca yorum sahibi
         Task<List<TaskCommentDto>> GetCommentsAsync(Guid taskId);
