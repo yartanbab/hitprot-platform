@@ -40,6 +40,27 @@ public class NotificationPreference_Tests : PlatformEntityFrameworkCoreTestBase
         preferences.ShouldAllBe(p => p.Email == (p.Category == NotificationCategory.Grants));
     }
 
+    /// <summary>Sessiz saatler (kullanıcı kararı 2026-10-19): varsayılan kapalı, 22:00–08:00; kaydedilen geri okunur.</summary>
+    [Fact]
+    public async Task Sessiz_saatler_varsayilan_kapali_kaydedilen_geri_okunur()
+    {
+        var initial = await _appService.GetQuietHoursAsync();
+        initial.Enabled.ShouldBeFalse();
+        initial.Start.ShouldBe("22:00");
+        initial.End.ShouldBe("08:00");
+
+        await WithUnitOfWorkAsync(() => _appService.UpdateQuietHoursAsync(
+            new NotificationQuietHoursDto { Enabled = true, Start = "23:30", End = "07:15" }));
+
+        var saved = await _appService.GetQuietHoursAsync();
+        saved.Enabled.ShouldBeTrue();
+        saved.Start.ShouldBe("23:30");
+        saved.End.ShouldBe("07:15");
+
+        await Should.ThrowAsync<Volo.Abp.UserFriendlyException>(() => _appService.UpdateQuietHoursAsync(
+            new NotificationQuietHoursDto { Enabled = true, Start = "08:00", End = "08:00" }));
+    }
+
     [Fact]
     public async Task Update_Should_Persist_And_Be_Read_Back()
     {

@@ -35,6 +35,12 @@ public interface INotificationAppService : IApplicationService
     /// <summary>Bir kategorinin kanal tercihini kaydeder.</summary>
     Task UpdatePreferenceAsync(UpdateNotificationPreferenceInput input);
 
+    /// <summary>Sessiz saatler (kullanıcı ayarı; kayıt yoksa kapalı, 22:00–08:00).</summary>
+    Task<NotificationQuietHoursDto> GetQuietHoursAsync();
+
+    /// <summary>Sessiz saatleri kaydeder. Başlangıç ile bitiş aynı olamaz.</summary>
+    Task UpdateQuietHoursAsync(NotificationQuietHoursDto input);
+
     /// <summary>Bildirimi siler (soft delete).</summary>
     Task DeleteAsync(Guid id);
 }

@@ -15,6 +15,8 @@ using Shouldly;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.SettingManagement;
+using Apya.Platform.Settings;
 using Volo.Abp.Timing;
 using Volo.Abp.Uow;
 using Xunit;
@@ -80,26 +82,32 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
     {
         public List<WebPushJobArgs> Jobs { get; } = new();
         public List<BackgroundJobPriority> Priorities { get; } = new();
+        public List<TimeSpan?> Delays { get; } = new();
 
         public Task<string> EnqueueAsync<TArgs>(
             TArgs args, BackgroundJobPriority priority = BackgroundJobPriority.Normal, TimeSpan? delay = null)
         {
             Jobs.Add((WebPushJobArgs)(object)args!);
             Priorities.Add(priority);
+            Delays.Add(delay);
             return Task.FromResult(Guid.NewGuid().ToString());
         }
     }
 
-    private async Task<List<WebPushJobArgs>> HandleAsync(NotificationCreatedEto eto, WebPushOptions? options = null)
+    private WebPushNotificationHandler Handler(IBackgroundJobManager jobs, WebPushOptions? options = null)
+        => new(_deviceRepository, _preferenceRepository, jobs, _currentTenant,
+            Options.Create(options ?? Enabled()), GetRequiredService<ISettingManager>(), _clock,
+            NullLogger<WebPushNotificationHandler>.Instance);
+
+    private async Task<CapturingJobManager> QueueAsync(NotificationCreatedEto eto, WebPushOptions? options = null)
     {
         var jobs = new CapturingJobManager();
-        var handler = new WebPushNotificationHandler(
-            _deviceRepository, _preferenceRepository, jobs, _currentTenant,
-            Options.Create(options ?? Enabled()), NullLogger<WebPushNotificationHandler>.Instance);
-
-        await WithUnitOfWorkAsync(() => handler.HandleEventAsync(eto));
-        return jobs.Jobs;
+        await WithUnitOfWorkAsync(() => Handler(jobs, options).HandleEventAsync(eto));
+        return jobs;
     }
+
+    private async Task<List<WebPushJobArgs>> HandleAsync(NotificationCreatedEto eto, WebPushOptions? options = null)
+        => (await QueueAsync(eto, options)).Jobs;
 
     [Fact]
     public async Task Bildirim_kullanicinin_her_etkin_cihazina_kuyruklanir_baskasinin_cihazina_gitmez()
@@ -122,14 +130,43 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
     {
         var user = Guid.NewGuid();
         await DeviceAsync(user);
-        var jobs = new CapturingJobManager();
-        var handler = new WebPushNotificationHandler(
-            _deviceRepository, _preferenceRepository, jobs, _currentTenant,
-            Options.Create(Enabled()), NullLogger<WebPushNotificationHandler>.Instance);
-
-        await WithUnitOfWorkAsync(() => handler.HandleEventAsync(Event(user, Guid.NewGuid())));
+        var jobs = await QueueAsync(Event(user, Guid.NewGuid()));
 
         jobs.Priorities.ShouldBe(new[] { BackgroundJobPriority.High });
+    }
+
+    /// <summary>
+    /// Sessiz saatler (kullanıcı kararı 2026-10-19, varsayılan kapalı): kullanıcı açtıysa pencere içindeki Normal
+    /// push pencere sonuna ertelenir (okunduysa gitmesin diye bildirim kimliğini taşır); Yüksek/Kritik anında gider.
+    /// </summary>
+    [Fact]
+    public async Task Sessiz_saatlerde_normal_push_pencere_sonuna_ertelenir_yuksek_aninda_gider()
+    {
+        var user = Guid.NewGuid();
+        await DeviceAsync(user);
+        var normal = Event(user, Guid.NewGuid());
+        normal.Severity = NotificationSeverity.Normal;
+
+        (await QueueAsync(normal)).Delays.Single().ShouldBeNull("varsayılan: kapalı");
+
+        // Şu anı her zaman içine alan pencere: bir saat önce → bir saat sonra.
+        var now = _clock.Now;
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var settings = GetRequiredService<ISettingManager>();
+            await settings.SetForUserAsync(user, PlatformSettings.NotificationQuietHours.Enabled, "true");
+            await settings.SetForUserAsync(user, PlatformSettings.NotificationQuietHours.Window,
+                now.AddHours(-1).ToString("HH:mm") + "-" + now.AddHours(1).ToString("HH:mm"));
+        });
+
+        var quiet = await QueueAsync(normal);
+        quiet.Delays.Single()!.Value.ShouldBeInRange(TimeSpan.FromMinutes(58), TimeSpan.FromMinutes(61));
+        quiet.Jobs.Single().NotificationId.ShouldBe(normal.Id);
+        quiet.Priorities.Single().ShouldBe(BackgroundJobPriority.Normal);
+
+        var urgent = await QueueAsync(Event(user, Guid.NewGuid()));
+        urgent.Delays.Single().ShouldBeNull("Yüksek önem sessiz saati dinlemez");
+        urgent.Jobs.Single().NotificationId.ShouldBeNull();
     }
 
     /// <summary>
@@ -195,7 +232,7 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     private WebPushJob Job(IWebPushSender sender)
-        => new(_deviceRepository, sender, _currentTenant, _clock, _uowManager);
+        => new(_deviceRepository, GetRequiredService<IRepository<Notification, Guid>>(), sender, _currentTenant, _clock, _uowManager);
 
     private static WebPushJobArgs Args(Guid deviceId) => new() { DeviceId = deviceId, PayloadJson = "{}" };
 
@@ -243,6 +280,28 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
         row.IsActive.ShouldBeTrue();
         row.FailureCount.ShouldBe(1);
         row.LastFailureAt.ShouldNotBeNull();
+    }
+
+    /// <summary>Sessiz saatler yüzünden ertelenen push, bildirim o arada uygulamada okunduysa sabah ekrana düşmez.</summary>
+    [Fact]
+    public async Task Ertelenen_push_bu_arada_okunduysa_gonderilmez()
+    {
+        var user = Guid.NewGuid();
+        var device = await DeviceAsync(user);
+        var notifications = GetRequiredService<IRepository<Notification, Guid>>();
+        var unread = new Notification(Guid.NewGuid(), null, user, NotificationType.TaskAssigned, "Yeni görev", "Gövde");
+        var read = new Notification(Guid.NewGuid(), null, user, NotificationType.TaskAssigned, "Yeni görev", "Gövde");
+        read.MarkAsRead();
+        await notifications.InsertAsync(unread, autoSave: true);
+        await notifications.InsertAsync(read, autoSave: true);
+
+        var skipped = new FakeSender(WebPushSendResult.Sent);
+        await Job(skipped).ExecuteAsync(new WebPushJobArgs { DeviceId = device.Id, PayloadJson = "{}", NotificationId = read.Id });
+        skipped.Calls.ShouldBe(0);
+
+        var sent = new FakeSender(WebPushSendResult.Sent);
+        await Job(sent).ExecuteAsync(new WebPushJobArgs { DeviceId = device.Id, PayloadJson = "{}", NotificationId = unread.Id });
+        sent.Calls.ShouldBe(1);
     }
 
     [Fact]

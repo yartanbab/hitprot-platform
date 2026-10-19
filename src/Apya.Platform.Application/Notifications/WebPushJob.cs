@@ -18,6 +18,9 @@ public class WebPushJobArgs
     public string PayloadJson { get; set; } = string.Empty;
     public string? Topic { get; set; }
     public bool Urgent { get; set; }
+
+    /// <summary>Yalnız sessiz saatler yüzünden ertelenen işte dolu: bildirim bu arada okunduysa push gitmez.</summary>
+    public Guid? NotificationId { get; set; }
 }
 
 /// <summary>
@@ -30,6 +33,7 @@ public class WebPushJobArgs
 public class WebPushJob : AsyncBackgroundJob<WebPushJobArgs>, ITransientDependency
 {
     private readonly IRepository<NotificationDevice, Guid> _deviceRepository;
+    private readonly IRepository<Notification, Guid> _notificationRepository;
     private readonly IWebPushSender _sender;
     private readonly ICurrentTenant _currentTenant;
     private readonly IClock _clock;
@@ -37,12 +41,14 @@ public class WebPushJob : AsyncBackgroundJob<WebPushJobArgs>, ITransientDependen
 
     public WebPushJob(
         IRepository<NotificationDevice, Guid> deviceRepository,
+        IRepository<Notification, Guid> notificationRepository,
         IWebPushSender sender,
         ICurrentTenant currentTenant,
         IClock clock,
         IUnitOfWorkManager unitOfWorkManager)
     {
         _deviceRepository = deviceRepository;
+        _notificationRepository = notificationRepository;
         _sender = sender;
         _currentTenant = currentTenant;
         _clock = clock;
@@ -60,6 +66,14 @@ public class WebPushJob : AsyncBackgroundJob<WebPushJobArgs>, ITransientDependen
             if (device == null || !device.IsActive)
             {
                 // İş kuyruktayken abonelikten çıkılmış ya da cihaz pasifleşmiş: gönderilmez.
+                await uow.CompleteAsync();
+                return;
+            }
+
+            // Sessiz saatler: sabaha ertelenen bildirim o arada uygulamada okunduysa (ya da silindiyse) ekrana düşmez.
+            if (args.NotificationId is { } notificationId
+                && (await _notificationRepository.FindAsync(notificationId))?.IsRead != false)
+            {
                 await uow.CompleteAsync();
                 return;
             }
