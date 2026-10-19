@@ -60,6 +60,11 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Tasks, NotificationSeverity.Critical,
                 "fa fa-calendar-xmark", "/Tasks/Detail/{0}", GroupSimilar: false),
 
+            // B-16 · Fatura listesi ?invoiceId= ile o faturayı seçili açar.
+            [NotificationType.InvoiceOverdue] = new(
+                NotificationCategory.Finance, NotificationSeverity.High,
+                "fa fa-file-invoice-dollar", "/Invoices?invoiceId={0}", GroupSimilar: false),
+
             // B-13 · Yükseltme proje sorumlusunadır: işi o yapmıyor, haberdar olup müdahale ediyor → Yüksek.
             [NotificationType.TaskOverdueEscalated] = new(
                 NotificationCategory.Tasks, NotificationSeverity.High,
