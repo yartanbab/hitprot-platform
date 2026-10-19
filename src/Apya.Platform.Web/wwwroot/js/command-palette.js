@@ -125,7 +125,7 @@ $(function () {
             Promise.resolve(svc.search(raw, { abpHandleError: false, apyaBackground: true })).then(function (res) {
                 if ((input.value || '').trim() !== raw) { return; }
                 records = (res || []).map(function (r) {
-                    return { kind: 'nav', label: r.title, href: r.url, icon: RECORD_ICON[r.kind] || 'fa fa-file', section: r.subtitle || '', group: 'KAYITLAR' };
+                    return { kind: 'nav', label: r.title, href: r.url, icon: RECORD_ICON[r.kind] || 'fa fa-file', section: r.subtitle || '', group: 'KAYITLAR', record: true };
                 });
                 recordsFor = raw;
                 render(raw);
@@ -133,8 +133,33 @@ $(function () {
         }, 250);
     }
 
+    // X-02 · Son açılan kayıtlar (yalnız paletten açılan KAYITLAR satırları). Anahtar kullanıcıya ve kiracıya
+    // özel: aynı tarayıcıyı paylaşan iki kullanıcı birbirinin kayıtlarını görmez.
+    var RECENT_MAX = 5;
+    function recentKey() {
+        var u = (window.abp && abp.currentUser) || {};
+        return 'apya.cp.recent.' + (u.tenantId || 'host') + '.' + (u.id || 'anon');
+    }
+    function readRecents() {
+        try { return JSON.parse(localStorage.getItem(recentKey()) || '[]') || []; } catch (e) { return []; }
+    }
+    function rememberRecent(entry) {
+        try {
+            var list = readRecents().filter(function (r) { return r.href !== entry.href; });
+            list.unshift({ label: entry.label, href: entry.href, icon: entry.icon, section: entry.section || '' });
+            localStorage.setItem(recentKey(), JSON.stringify(list.slice(0, RECENT_MAX)));
+        } catch (e) { /* depolama kapalı: palet yine çalışır */ }
+    }
+
     function buildEntries(q) {
         var entries = [];
+
+        // 0) SON AÇILANLAR — yalnız sorgu boşken.
+        if (!q) {
+            entries = readRecents().map(function (r) {
+                return { kind: 'nav', label: r.label, href: r.href, icon: r.icon, section: r.section, group: 'SON AÇILANLAR', record: true };
+            });
+        }
 
         // 1) BU SAYFADA ARA — yalnız sorgu varken ve sayfanın arama alanı varken.
         if (q && pageSearchInput()) {
@@ -215,7 +240,11 @@ $(function () {
     // Tek çalıştırma noktası — klavye ve fare aynı yoldan geçer.
     function run(entry) {
         if (!entry) { return; }
-        if (entry.kind === 'nav') { navigate(entry.href); return; }
+        if (entry.kind === 'nav') {
+            if (entry.record) { rememberRecent(entry); }
+            navigate(entry.href);
+            return;
+        }
         if (entry.kind === 'create') {
             close();
             if (window.abp && abp.ModalManager) { new abp.ModalManager(entry.url).open(); }
