@@ -16,8 +16,21 @@ export function useProjectOptions() {
     });
 
     const projects = query.data ?? [];
-    const options = projects.map((p) => ({ value: p.id, label: p.name }));
+    const options = projectOptionsOf(projects);
     const nameById = new Map(projects.map((p) => [p.id, p.name]));
 
     return { options, nameById, isLoading: query.isLoading };
+}
+
+/**
+ * QA-37 · Adı çakışan projelerde etikete kod eklenir ("Yeşil Enerji Dönüşümü · PRJ-2026-010");
+ * tekil adlar olduğu gibi kalır. Taşı/Kopyala penceresi ve proje seçicisi bu etiketi gösterir.
+ */
+export function projectOptionsOf(projects) {
+    const counts = new Map();
+    projects.forEach((p) => counts.set(p.name, (counts.get(p.name) ?? 0) + 1));
+    return projects.map((p) => ({
+        value: p.id,
+        label: counts.get(p.name) > 1 && p.code ? `${p.name} · ${p.code}` : p.name,
+    }));
 }
