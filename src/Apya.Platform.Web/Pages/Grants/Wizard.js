@@ -218,12 +218,54 @@ $(function () {
             goToStep(model.currentStep + 1);
             return;
         }
+        openSubmitReview();
+    });
+
+    // H-04 · Gönderim geri alınamaz: önce özet (boş alanlar, eksik zorunlu evrak, tamamlanma).
+    // Firma tek başına gönderebilir (kullanıcı kararı 10-19); pencere yalnız bilgilendirir.
+    function openSubmitReview() {
+        var $btn = $('#NextBtn').prop('disabled', true);
+        service.getSubmitReview(appId).then(function (r) {
+            var parts = ['<p class="text-start mb-2">' + esc(l('Grants:Wizard:SubmitConfirm:Completion', r.completionPercent)) + '</p>'];
+            if (r.missingFields.length) {
+                parts.push('<div class="text-start fw-semibold">' + esc(l('Grants:Wizard:SubmitConfirm:MissingFields')) + '</div>' +
+                    '<ul class="text-start small mb-2">' + r.missingFields.map(function (f) {
+                        var note = f.fieldKey.indexOf(':note') > 0;
+                        return '<li>' + esc(fieldLabel(f.fieldKey.replace(':note', ''))) +
+                            (note ? ' · ' + esc(l('Grants:Wizard:JustificationMissing')) : '') + '</li>';
+                    }).join('') + '</ul>');
+            }
+            if (r.missingDocuments.length) {
+                parts.push('<div class="text-start fw-semibold">' + esc(l('Grants:Wizard:SubmitConfirm:MissingDocuments')) + '</div>' +
+                    '<ul class="text-start small mb-1">' + r.missingDocuments.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>' +
+                    '<p class="text-start small mb-2"><a href="/Grants/Documents?id=' + encodeURIComponent(appId) + '">' +
+                    esc(l('Grants:Wizard:GoToDocuments')) + '</a></p>');
+            }
+            if (!r.missingFields.length && !r.missingDocuments.length) {
+                parts.push('<p class="text-start mb-2">' + esc(l('Grants:Wizard:SubmitConfirm:AllComplete')) + '</p>');
+            }
+            parts.push('<p class="text-start small mb-0 text-danger">' + esc(l('Grants:Wizard:SubmitConfirm:Irreversible')) + '</p>');
+            return Swal.fire({
+                title: l('Grants:Wizard:SubmitConfirm:Title'),
+                html: parts.join(''),
+                showCancelButton: true,
+                focusCancel: true,
+                confirmButtonText: l('Grants:Wizard:Submit'),
+                cancelButtonText: l('Grants:Wizard:SubmitConfirm:Cancel')
+            });
+        }).then(function (res) {
+            $btn.prop('disabled', locked());
+            if (res && res.isConfirmed) { submitNow(); }
+        }, function () { $btn.prop('disabled', locked()); });
+    }
+
+    function submitNow() {
         service.submit(appId).then(function (dto) {
             model = dto; paint();
             abp.notify.success(l('Grants:Wizard:SubmittedNotice'));
             announce(null);
         });
-    });
+    }
 
     $('#HandOverBtn').on('click', function () {
         service.handOver(appId).then(function (dto) {

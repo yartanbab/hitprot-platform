@@ -280,6 +280,20 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         return await BuildAsync(application);
     }
 
+    public async Task<GrantWizardSubmitReviewDto> GetSubmitReviewAsync(Guid applicationId)
+    {
+        var application = await GetApplicationAsync(applicationId);
+        var dto = await BuildAsync(application);
+        var locks = await InHostScopeAsync(() => _lockRepo.GetListAsync(l => l.GrantApplicationId == application.Id));
+
+        return new GrantWizardSubmitReviewDto
+        {
+            CompletionPercent = dto.CompletionPercent,
+            MissingFields = BuildPendingFields(application, dto, locks, FillableSteps),
+            MissingDocuments = await GetMissingRequiredDocumentNamesAsync(application.Id)
+        };
+    }
+
     /// <summary>
     /// 🔴 Gönderim huninin en kritik anıydı ve HİÇBİR iz bırakmıyordu: ne akış kaydı,
     /// ne bildirim. Danışman firmanın gönderdiğini ancak listeyi elle açarsa görüyordu
@@ -314,7 +328,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
 
     private async Task AnnounceSubmissionAsync(GrantApplication application)
     {
-        var missing = await CountMissingRequiredDocumentsAsync(application.Id);
+        var missing = (await GetMissingRequiredDocumentNamesAsync(application.Id)).Count;
         var documentState = missing == 0
             ? L["Grants:Notify:Trigger:ApplicationSubmitted:DocumentsComplete"].Value
             : L["Grants:Notify:Trigger:ApplicationSubmitted:DocumentsMissing", missing].Value;
@@ -346,13 +360,16 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             nameof(GrantApplication), application.Id);
     }
 
-    /// <summary>Zorunlu olup onaylanmamış evrak sayısı — gönderim bildiriminin gövdesine girer.</summary>
-    private async Task<int> CountMissingRequiredDocumentsAsync(Guid applicationId)
+    /// <summary>Zorunlu olup onaylanmamış evrak — sayısı gönderim bildirimine, adları gönderim
+    /// öncesi özete (H-04) girer.</summary>
+    private async Task<List<string>> GetMissingRequiredDocumentNamesAsync(Guid applicationId)
     {
         var documents = await InHostScopeAsync(() => _docRepo.GetListAsync(d => d.GrantApplicationId == applicationId));
-        return documents.Count(d =>
-            d.Obligation == GrantDocumentObligation.Zorunlu &&
-            d.Status != GrantDocumentStatus.Onaylandi);
+        return documents
+            .Where(d => d.Obligation == GrantDocumentObligation.Zorunlu && d.Status != GrantDocumentStatus.Onaylandi)
+            .OrderBy(d => d.Order)
+            .Select(d => d.Name)
+            .ToList();
     }
 
     // ------------------------------------------------------------------ kilit
@@ -676,18 +693,25 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             })
             .ToList();
 
-        dto.PendingFields = BuildPendingFields(application, dto, locks);
+        // Gönder adımında "kalanlar" BÜTÜN doldurulabilir adımlardır: eskiden bulunulan adıma
+        // bakıldığı için 4. adımda liste boş, "N alan hâlâ boş" uyarısı hep "0" diyordu.
+        dto.PendingFields = BuildPendingFields(application, dto, locks,
+            application.CurrentStep == GrantApplication.StepCount ? FillableSteps : new[] { application.CurrentStep });
         dto.CompletionPercent = CalculateCompletion(application, dto);
         dto.Firm = await BuildFirmSummaryAsync(application);
 
         return dto;
     }
 
-    /// <summary>Sağ panel · "Bu Adımda Kalanlar" — yalnız BULUNULAN adımın eksikleri.</summary>
+    /// <summary>Alan girilen adımlar: 2 (proje özeti) ve 3 (bütçe).</summary>
+    private static readonly int[] FillableSteps = { 2, 3 };
+
+    /// <summary>Sağ panel · "Bu Adımda Kalanlar" — verilen adımların eksikleri.</summary>
     private static List<GrantWizardPendingFieldDto> BuildPendingFields(
         GrantApplication application,
         GrantApplicationWizardDto dto,
-        List<GrantApplicationFieldLock> locks)
+        List<GrantApplicationFieldLock> locks,
+        int[] steps)
     {
         var pending = new List<GrantWizardPendingFieldDto>();
 
@@ -702,7 +726,8 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             });
         }
 
-        switch (application.CurrentStep)
+        foreach (var step in steps)
+        switch (step)
         {
             case 2:
                 if (application.ProjectTitle.IsNullOrWhiteSpace()) { Add(FieldSummaryTitle, "ProjectTitle"); }
