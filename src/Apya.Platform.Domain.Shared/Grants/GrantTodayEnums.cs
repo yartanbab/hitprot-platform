@@ -34,7 +34,10 @@ public enum GrantTodayItemKind
     InterestReview = 8,
 
     /// <summary>Dosya gönderildi, kurum inceliyor (host "Kurumda" sekmesi).</summary>
-    WaitingOnInstitution = 9
+    WaitingOnInstitution = 9,
+
+    /// <summary>Uygulama dönemi: ödeme diliminin vadesi yaklaşıyor ya da geçti, dilim ödenmedi (host).</summary>
+    TrancheDue = 10
 }
 
 /// <summary>Bir işin şu an kimde olduğu — host'taki üç sekme, kiracıdaki "sizde / danışmanınızda" ayrımı.</summary>

@@ -159,6 +159,38 @@ public class GrantToday_Tests : PlatformEntityFrameworkCoreTestBase
         onMe.Value.ShouldBe(2);
     }
 
+    /// <summary>
+    /// H-05 · Projeye dönmüş başvurunun ödenmemiş, vadesi yaklaşan dilimi danışmanın Bugün'üne düşer;
+    /// eskiden uygulama dönemi Bugün'den tamamen çıkıyordu. Atanan danışman satırda taşınır
+    /// ("Bana atananlar" süzgeci buna bakar).
+    /// </summary>
+    [Fact]
+    public async Task Host_uygulama_donemindeki_dilim_vadesini_atananla_gorur()
+    {
+        var (_, call) = await CreateHostCallAsync("Uygulama Programı", daysToDeadline: 40);
+        var tenant = await CreateTenantAsync("Uygulamadaki Firma");
+        var application = await CreateApplicationAsync(tenant, call, firmDocs: 0);
+        var consultant = Guid.NewGuid();
+        using (_currentTenant.Change(tenant))
+        {
+            var app = await _appRepository.GetAsync(application.Id);
+            app.LinkToProject(Guid.NewGuid());
+            app.AssignTo(consultant);
+            await _appRepository.UpdateAsync(app, autoSave: true);
+            await GetRequiredService<IRepository<GrantDisbursementTranche, Guid>>().InsertAsync(
+                new GrantDisbursementTranche(Guid.NewGuid(), tenant, application.Id, 2, 150_000m, _clock.Now.Date.AddDays(5)),
+                autoSave: true);
+        }
+
+        var dto = await _today.GetAsync();
+
+        var item = dto.Items.Concat(dto.MoreItems).Single(i => i.ApplicationId == application.Id);
+        item.Kind.ShouldBe(GrantTodayItemKind.TrancheDue);
+        item.Value.ShouldBe(2, "dilim sırası");
+        item.DaysRemaining.ShouldBe(5);
+        item.AssignedUserId.ShouldBe(consultant);
+    }
+
     [Fact]
     public async Task Host_bekleyen_ilgi_taleplerini_tek_satirda_sayar()
     {
