@@ -122,6 +122,7 @@ export function DocumentsTabV3({ taskId }) {
                 ) : (
                     <RichTextEditorV3
                         value={draftContent}
+                        ariaLabel="Belge içeriği"
                         placeholder="Belgeyi buraya yazın…"
                         onChange={(html) => { setDraftContent(html); setDirty(true); }}
                     />

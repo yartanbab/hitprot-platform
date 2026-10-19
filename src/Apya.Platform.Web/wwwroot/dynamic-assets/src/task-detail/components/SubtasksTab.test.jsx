@@ -93,7 +93,8 @@ describe('SubtasksTab', () => {
 
     it('tamamlanmis alt gorevin checkboxi geri Yapilacak yapar', async () => {
         renderWithQueryClient(<SubtasksTab taskId="parent-1" task={TASK} onOpenSubtask={vi.fn()} />);
-        fireEvent.click(screen.getByRole('button', { name: /Üçüncü alt görev tamamlandı işaretle/i }));
+        // QA-44: tamamlanmış satırın adı ne yapacağını söyler.
+        fireEvent.click(screen.getByRole('button', { name: /Üçüncü alt görev tamamlandı işaretini kaldır/i }));
         await waitFor(() => expect(window.apya.platform.tasks.task.updateStatus).toHaveBeenCalledWith('sub-3', 1));
     });
 });

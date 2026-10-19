@@ -268,6 +268,7 @@ function DocumentEditor({ documentId, onBack, onChanged, onDeleted }) {
             <RichTextEditorV3
                 value={doc.data.content || ''}
                 onChange={setContent}
+                ariaLabel="Belge içeriği"
                 placeholder="Belge içeriği…"
             />
         </div>

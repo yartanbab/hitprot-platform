@@ -52,8 +52,8 @@
       "_dataChanged-CDwwWMH8.js"
     ]
   },
-  "_RichTextEditorV3-Bh6Kk-DM.js": {
-    "file": "RichTextEditorV3-Bh6Kk-DM.js",
+  "_RichTextEditorV3-CsU1qQrh.js": {
+    "file": "RichTextEditorV3-CsU1qQrh.js",
     "name": "RichTextEditorV3",
     "imports": [
       "_react-vendor-D7YDiBbi.js",
@@ -369,7 +369,7 @@
       "_react-vendor-D7YDiBbi.js",
       "_index-DgpuJ91w.js",
       "_dataChanged-CDwwWMH8.js",
-      "_RichTextEditorV3-Bh6Kk-DM.js"
+      "_RichTextEditorV3-CsU1qQrh.js"
     ]
   },
   "src/public-form.jsx": {
@@ -412,7 +412,7 @@
       "_query-vendor-Db2mwxYI.js",
       "_Combobox-CHhgTuMW.js",
       "_useDirtyGuard-D_9NgM7w.js",
-      "_RichTextEditorV3-Bh6Kk-DM.js",
+      "_RichTextEditorV3-CsU1qQrh.js",
       "_httpClient-BNoyY5yK.js",
       "_Skeleton-C92LWNeC.js",
       "_ui-vendor-UYevF8mE.js",

@@ -58,7 +58,7 @@ function toInitialHtml(value) {
     return `<p>${escaped.replace(/\n/g, '<br>')}</p>`;
 }
 
-export function RichTextEditorV3({ value, onChange, placeholder, readOnly = false }) {
+export function RichTextEditorV3({ value, onChange, placeholder, readOnly = false, ariaLabel = 'Görev açıklaması' }) {
     const editorRef = useRef(null);
     const initialHtmlRef = useRef(toInitialHtml(value));
     const [linkOpen, setLinkOpen] = useState(false);
@@ -184,8 +184,8 @@ export function RichTextEditorV3({ value, onChange, placeholder, readOnly = fals
                 role="textbox"
                 aria-multiline="true"
                 aria-readonly={readOnly || undefined}
-                aria-label="Görev açıklaması"
-                data-ph={readOnly ? 'Açıklama eklenmemiş.' : (placeholder ?? "Bu görevin detayları nelerdir? (@kişi, #etiket)…")}
+                aria-label={ariaLabel}
+                data-ph={readOnly ? 'Açıklama eklenmemiş.' : (placeholder ?? 'Bu görevin detayları nelerdir?')}
                 onInput={(e) => onChange?.(e.currentTarget.innerHTML)}
                 className="apya-rte-surface min-h-[150px] p-4 text-[13.5px] leading-[1.7] text-text-primary bg-surface-base focus:outline-none"
                 dangerouslySetInnerHTML={{ __html: initialHtmlRef.current }}
