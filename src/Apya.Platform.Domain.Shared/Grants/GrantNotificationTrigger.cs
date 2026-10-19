@@ -104,5 +104,14 @@ public enum GrantNotificationTrigger
     /// (<see cref="DecisionIssued"/>) bildiriliyordu ama itirazın SONUCU bildirilmiyordu — firma
     /// itirazını gönderdikten sonra ne olduğunu ancak ekranı açıp bakarsa öğreniyordu.
     /// </summary>
-    AppealResolved = 19
+    AppealResolved = 19,
+
+    /// <summary>
+    /// H-03 · Başvuru sihirbazında karşı taraf mesaj yazdı. Firma yazdıysa atanan danışmana (yoksa
+    /// host ekibine), danışman yazdıysa firmaya gider. Mesajlar karşı tarafa hiç ulaşmıyordu.
+    /// </summary>
+    MessageReceived = 20,
+
+    /// <summary>H-03 · Sıra karşı tarafa devredildi ("Danışmana devret" / "Firmaya geri ver"). Devralana gider.</summary>
+    HandedOver = 21
 }

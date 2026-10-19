@@ -203,6 +203,16 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Grants, NotificationSeverity.Normal,
                 "fa fa-lightbulb", "/Grants/Ideas?open={0}", GroupSimilar: false),
 
+            // H-03 · İki taraflı sihirbaz: bağlantı sihirbazın kendisi (yazışma sağ panelde). Aynı
+            // başvuruda art arda gelen mesajlar tek satırda sayılır.
+            [NotificationType.GrantMessageReceived] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-comments", "/Grants/Wizard?id={0}", GroupSimilar: true),
+
+            [NotificationType.GrantHandedOver] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-right-left", "/Grants/Wizard?id={0}", GroupSimilar: false),
+
             // ── Finans ────────────────────────────────────────────────────────
             // Derin link hepsinde proje bütçe raporu: sayfa Projects.ViewBudget
             // denetimli olduğu için bildirimden gelen kullanıcı yetkisi yoksa

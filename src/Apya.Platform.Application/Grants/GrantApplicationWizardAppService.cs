@@ -238,7 +238,15 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         // ayırt edici bilgidir.
         await _activityRecorder.RecordAsync(
             application.TenantId, application.Id, GrantActivityKind.HandedOver,
-            L[$"Grants:Party:{target}"].Value);
+            L[$"Grants:Party:{target}"].Value, ViewerRole);
+
+        // H-03 · Devralan taraf haberdar olur; eskiden sıra sessizce el değiştiriyordu.
+        await NotifyCounterpartyAsync(application, target, GrantNotificationTrigger.HandedOver,
+            new Dictionary<string, string?>
+            {
+                ["{devreden}"] = ViewerName,
+                ["{çağrı_adı}"] = await GetGrantNameAsync(application)
+            });
 
         var mine = await InHostScopeAsync(() => _lockRepo.GetListAsync(
             l => l.GrantApplicationId == application.Id && l.OwnerUserId == ViewerUserId));
@@ -334,7 +342,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             : L["Grants:Notify:Trigger:ApplicationSubmitted:DocumentsMissing", missing].Value;
 
         await _activityRecorder.RecordAsync(
-            application.TenantId, application.Id, GrantActivityKind.Submitted, documentState);
+            application.TenantId, application.Id, GrantActivityKind.Submitted, documentState, ViewerRole);
 
         // Çağrı ve program HOST kataloğundadır; firma kendi bağlamında gönderir. Süzgeç açıkken
         // satırlar görünmüyor, bildirimdeki çağrı adı boş çıkıyordu (EnsureCallOpenAsync ile aynı okuma).
@@ -475,6 +483,17 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             ViewerUserId, ViewerName, ViewerRole, input.Body.Trim());
         await _messageRepo.InsertAsync(message, autoSave: true);
 
+        // H-03 · Mesaj karşı tarafa ulaşır (zil + e-posta). Eskiden yalnız sihirbazı açık tutan görüyordu.
+        await NotifyCounterpartyAsync(application,
+            ViewerRole == GrantPartyRole.Firma ? GrantPartyRole.Danisman : GrantPartyRole.Firma,
+            GrantNotificationTrigger.MessageReceived,
+            new Dictionary<string, string?>
+            {
+                ["{gönderen}"] = ViewerName,
+                ["{çağrı_adı}"] = await GetGrantNameAsync(application),
+                ["{mesaj}"] = message.Body.Length > 200 ? message.Body[..200] + "…" : message.Body
+            });
+
         return new GrantApplicationMessageDto
         {
             Id = message.Id,
@@ -487,6 +506,51 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
     }
 
     // ------------------------------------------------------------------ yardımcılar
+
+    /// <summary>
+    /// H-03 · Başvurudaki karşı tarafa bildirim. Danışman tarafı: başvuruya atanan danışman, atama
+    /// yoksa host ekibi. Firma tarafı: kiracının etkin kullanıcıları. Host'un kendi (kiracısız)
+    /// başvurusunda karşı taraf yoktur.
+    /// </summary>
+    private async Task NotifyCounterpartyAsync(
+        GrantApplication application, GrantPartyRole recipientSide,
+        GrantNotificationTrigger trigger, IReadOnlyDictionary<string, string?> values)
+    {
+        if (!application.TenantId.HasValue)
+        {
+            return;
+        }
+
+        if (recipientSide == GrantPartyRole.Firma)
+        {
+            await _notifyDispatcher.DispatchToTenantAsync(
+                trigger, application.TenantId, values, nameof(GrantApplication), application.Id);
+            return;
+        }
+
+        if (application.AssignedUserId is { } consultantId)
+        {
+            using (CurrentTenant.Change(null))
+            {
+                await _notifyDispatcher.DispatchAsync(
+                    trigger, new[] { consultantId }, values, nameof(GrantApplication), application.Id);
+            }
+            return;
+        }
+
+        await _notifyDispatcher.DispatchToTenantAsync(trigger, null, values, nameof(GrantApplication), application.Id);
+    }
+
+    /// <summary>Programın adı — çağrı ve program host kataloğundadır (EnsureCallOpenAsync ile aynı okuma).</summary>
+    private async Task<string> GetGrantNameAsync(GrantApplication application)
+    {
+        using (_mtFilter.Disable())
+        {
+            var call = await _callRepo.FirstOrDefaultAsync(c => c.Id == application.GrantCallId);
+            var grant = call == null ? null : await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId);
+            return grant?.Name ?? string.Empty;
+        }
+    }
 
     /// <summary>
     /// Host (danışman) kiracının başvurusunda çalışır. Başvurunun kendisi süzgeç kapatılarak

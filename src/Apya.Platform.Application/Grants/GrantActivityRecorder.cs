@@ -39,8 +39,12 @@ public class GrantActivityRecorder : ITransientDependency
 
     public static string Tranche(int sequenceNo, string amounts) => $"#{sequenceNo} · {amounts}";
 
-    /// <summary>Danışman eylemi olarak kaydeder; çağıran başvurunun kiracısını verir.</summary>
-    public async Task RecordAsync(Guid? tenantId, Guid applicationId, GrantActivityKind kind, string context)
+    /// <summary>Eylemi kaydeder; çağıran başvurunun kiracısını ve eylemi yapanın rolünü verir (varsayılan
+    /// Danışman: host ekranları). Sihirbaz kendi ViewerRole kuralını geçer — eskiden her eylem "Danışman"
+    /// yazılıyordu, firmanın gönderdiği ya da devrettiği başvuru akışta danışmanın eylemi görünüyordu (H-03).
+    /// Rol o anki kiracı bağlamından türetilemez: host yazarken başvurunun kiracısına geçer.</summary>
+    public async Task RecordAsync(Guid? tenantId, Guid applicationId, GrantActivityKind kind, string context,
+        GrantPartyRole actorRole = GrantPartyRole.Danisman)
     {
         var actorName = string.IsNullOrWhiteSpace(_currentUser.Name)
             ? (_currentUser.UserName ?? "?")
@@ -48,6 +52,6 @@ public class GrantActivityRecorder : ITransientDependency
 
         await _activityRepo.InsertAsync(new GrantApplicationActivity(
             _guidGenerator.Create(), tenantId, applicationId, kind,
-            _currentUser.GetId(), actorName, GrantPartyRole.Danisman, context), autoSave: true);
+            _currentUser.GetId(), actorName, actorRole, context), autoSave: true);
     }
 }

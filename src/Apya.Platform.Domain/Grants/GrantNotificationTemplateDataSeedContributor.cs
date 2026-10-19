@@ -53,11 +53,15 @@ public class GrantNotificationTemplateDataSeedContributor : IDataSeedContributor
                 _l[$"Grants:Notify:Trigger:{trigger}:Subject"],
                 _l[$"Grants:Notify:Trigger:{trigger}:Body"],
                 inApp: true,
-                // E-posta yalnız kaçırılması pahalıya patlayan üç tetikleyicide açık
-                // gelir; kalanı uygulama içinde kalır ve günlük özete düşer.
+                // E-posta yalnız kaçırılması pahalıya patlayan tetikleyicilerde açık gelir;
+                // kalanı uygulama içinde kalır ve günlük özete düşer. Mesaj ve sıra devri
+                // ANINDA e-postayla gider (kullanıcı kararı 10-19): iki taraflı başvuruda yanıt
+                // bekleyen taraf ekrana bakmadıkça haberi olmuyordu.
                 email: trigger is GrantNotificationTrigger.DecisionIssued
                                 or GrantNotificationTrigger.DocumentDeadlineNear
-                                or GrantNotificationTrigger.ReportDeadlineNear);
+                                or GrantNotificationTrigger.ReportDeadlineNear
+                                or GrantNotificationTrigger.MessageReceived
+                                or GrantNotificationTrigger.HandedOver);
 
             await _repository.InsertAsync(template, autoSave: true);
         }

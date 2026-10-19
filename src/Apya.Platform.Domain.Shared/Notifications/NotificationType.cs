@@ -76,5 +76,9 @@ public enum NotificationType
     GrantAppealResolved         = 43, // İtiraz sonuçlandı (firmaya gider)
 
     // PRJ-08: göstergenin hedef tarihi geçti, hedefe ulaşılmadı.
-    ProjectIndicatorBehind      = 44  // Gösterge geride (proje liderlerine gider)
+    ProjectIndicatorBehind      = 44, // Gösterge geride (proje liderlerine gider)
+
+    // H-03: başvuru sihirbazının mesajı ve sıra devri karşı tarafa ulaşmıyordu.
+    GrantMessageReceived        = 45, // Başvuruda yeni mesaj (karşı tarafa gider)
+    GrantHandedOver             = 46  // Başvurunun sırası size geçti
 }
