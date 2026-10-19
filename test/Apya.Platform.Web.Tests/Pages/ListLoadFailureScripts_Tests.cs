@@ -178,7 +178,8 @@ public class ListLoadFailureScripts_Tests
 
         var kpis = Between(script, "function renderKpis() {", "function renderFilters()");
         ShouldAppearInOrder(kpis,
-            "if (!all.length && (state.loading || state.loadFailed)) {",
+            // QA-35 (#756): kutucuklar kapsamı izler; "yükleniyor/yüklenemedi" kararı ham listeden verilir.
+            "if (!state.items.length && (state.loading || state.loadFailed)) {",
             "$('#KpiActiveProjects, #KpiTotalBudget, #KpiAvgProgress, #KpiAtRisk').text('—');",
             "} else {",
             "$('#KpiActiveProjects').text(");
