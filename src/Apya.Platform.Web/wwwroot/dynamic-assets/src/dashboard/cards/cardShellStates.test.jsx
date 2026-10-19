@@ -207,6 +207,9 @@ describe('DeliveriesCard / ProjectHealthCard · alt başlık', () => {
         expect(await screen.findByText('1 iş · 68 gecikmiş')).toBeInTheDocument();
         expect(screen.getByText('Gecikmiş')).toBeInTheDocument();
         expect(screen.getByText('Bu hafta')).toBeInTheDocument();
+        // Kart en yeni gecikmişleri gösterir; fazlası Görevler listesinde gecikmiş süzgeciyle.
+        expect(screen.getByRole('link', { name: 'Tüm gecikmişler (68) →' }))
+            .toHaveAttribute('href', '/Tasks?overdue=1');
     });
 
     it('kalıcı önbellek geri yüklenirken "0 iş" / "0 aktif proje" YOK', () => {

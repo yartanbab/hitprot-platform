@@ -60,14 +60,14 @@ function C({
   emptyState: D,
   skeleton: k,
   isFetching: N = !1,
-  isStale: O = !1,
+  isStale: K = !1,
   dataUpdatedAt: M,
   bleed: B = !1,
   className: j,
   bodyClassName: W,
   children: S
 }) {
-  const I = !o && !c && O && N, $ = x.useId(), H = c && m ? $ : void 0;
+  const I = !o && !c && K && N, $ = x.useId(), H = c && m ? $ : void 0;
   return /* @__PURE__ */ e.jsxs(
     "section",
     {
@@ -257,7 +257,7 @@ function Ft(t, s, a = _) {
 function re(t) {
   return Math.round(t * 100) / 100;
 }
-function Kt({ values: t = [], color: s = "var(--apya-brand-500)", ariaLabel: a }) {
+function Ot({ values: t = [], color: s = "var(--apya-brand-500)", ariaLabel: a }) {
   const r = x.useId().replace(/:/g, "");
   if (t.length < 2) return null;
   const i = Ht(t.length), l = Mt(t);
@@ -289,8 +289,8 @@ function Kt({ values: t = [], color: s = "var(--apya-brand-500)", ariaLabel: a }
     }
   );
 }
-const Ot = ["var(--apya-positive-500)", "color-mix(in srgb, var(--apya-negative-500) 45%, transparent)"];
-function $t({ groups: t = [], colors: s = Ot, ariaLabel: a }) {
+const Kt = ["var(--apya-positive-500)", "color-mix(in srgb, var(--apya-negative-500) 45%, transparent)"];
+function $t({ groups: t = [], colors: s = Kt, ariaLabel: a }) {
   if (!t.length) return null;
   const r = Math.max(...t.flatMap((o) => o.values), 0), i = ne / t.length, l = Math.min(4.5, i * 0.62 / 2), u = l * 0.22;
   return /* @__PURE__ */ e.jsx(
@@ -649,7 +649,7 @@ function ee({ label: t, value: s, pill: a, pillTone: r = "neutral", caption: i, 
           ] }),
           i && /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary truncate", children: i })
         ] }),
-        D && /* @__PURE__ */ e.jsx("div", { className: "h-9 mt-auto -mx-[16px]", children: /* @__PURE__ */ e.jsx(Kt, { values: c, ariaLabel: n("Dashboard:Summary:DueTrend", "Teslim dağılımı") }) })
+        D && /* @__PURE__ */ e.jsx("div", { className: "h-9 mt-auto -mx-[16px]", children: /* @__PURE__ */ e.jsx(Ot, { values: c, ariaLabel: n("Dashboard:Summary:DueTrend", "Teslim dağılımı") }) })
       ]
     }
   );
@@ -745,7 +745,15 @@ function ma({ filter: t, editMode: s }) {
       ),
       children: /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-2.5", children: i.map((d) => /* @__PURE__ */ e.jsxs(ke.Fragment, { children: [
         /* @__PURE__ */ e.jsx(xa, { groupKey: d.key, count: d.items.length }),
-        /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col gap-[3px]", children: d.items.map((m) => /* @__PURE__ */ e.jsx(ha, { item: m }, m.taskId)) })
+        /* @__PURE__ */ e.jsx("ul", { className: "flex flex-col gap-[3px]", children: d.items.map((m) => /* @__PURE__ */ e.jsx(ha, { item: m }, m.taskId)) }),
+        d.key === "Overdue" && o > d.items.length && /* @__PURE__ */ e.jsx(
+          "a",
+          {
+            href: "/Tasks?overdue=1",
+            className: "self-end text-[12px] font-medium text-text-link hover:underline",
+            children: n("Dashboard:Deliveries:AllOverdue", "Tüm gecikmişler ({0}) →", o)
+          }
+        )
       ] }, d.key)) })
     }
   );
@@ -1306,13 +1314,13 @@ function Fa() {
     return ge;
   }
 }
-function Ka(t) {
+function Oa(t) {
   try {
     window.localStorage.setItem(rt, t);
   } catch {
   }
 }
-function Oa({ open: t, onOpenChange: s, presentCardKeys: a = [], onAdd: r }) {
+function Ka({ open: t, onOpenChange: s, presentCardKeys: a = [], onAdd: r }) {
   const [i, l] = x.useState(""), u = x.useMemo(() => {
     const o = i.trim().toLocaleLowerCase();
     return Object.entries(J).map(([c, d]) => ({ key: c, meta: d, label: n(d.titleKey, d.fallback) })).filter((c) => !o || c.label.toLocaleLowerCase().includes(o));
@@ -1464,12 +1472,12 @@ function Qa({ viewKey: t, range: s, onReady: a }) {
   x.useEffect(() => {
     D && (a == null || a());
   }, [D, a]);
-  const k = Ge(), N = x.useMemo(() => Ua(), []), O = x.useMemo(() => qa(/* @__PURE__ */ new Date(), k), [k]), M = x.useMemo(() => _a(s), [s]), B = z.find((I) => I.key === t) ?? z.find((I) => I.key === ge) ?? z[0], [j, W] = Le[s] ?? Le.Month, S = {
+  const k = Ge(), N = x.useMemo(() => Ua(), []), K = x.useMemo(() => qa(/* @__PURE__ */ new Date(), k), [k]), M = x.useMemo(() => _a(s), [s]), B = z.find((I) => I.key === t) ?? z.find((I) => I.key === ge) ?? z[0], [j, W] = Le[s] ?? Le.Month, S = {
     tenantName: N == null ? void 0 : N.tenantName,
     userName: N == null ? void 0 : N.userName,
     viewLabel: n(B.labelKey, B.fallback),
     rangeLabel: `${n(j, W)} · ${za(M, k)}`,
-    stamp: O
+    stamp: K
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "apya-print-root hidden print:block", children: [
     /* @__PURE__ */ e.jsxs("section", { className: "apya-print-page", children: [
@@ -1518,7 +1526,7 @@ function xe({ tenantName: t, userName: s, viewLabel: a, rangeLabel: r, stamp: i,
     ] })
   ] });
 }
-function K({ title: t, meta: s, query: a, isEmpty: r, emptyText: i, children: l }) {
+function O({ title: t, meta: s, query: a, isEmpty: r, emptyText: i, children: l }) {
   return /* @__PURE__ */ e.jsxs("section", { className: "mt-4", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline justify-between gap-3 border-b border-black pb-1 break-after-avoid", children: [
       /* @__PURE__ */ e.jsx("h2", { className: "text-[10pt] font-bold uppercase tracking-wide", children: t }),
@@ -1533,7 +1541,7 @@ function He({ children: t }) {
 function Xa({ query: t, locale: s }) {
   const a = t.data;
   return /* @__PURE__ */ e.jsx(
-    K,
+    O,
     {
       title: n("Dashboard:Card:SummaryStrip", "Sayısal özet"),
       query: t,
@@ -1564,7 +1572,7 @@ function Xa({ query: t, locale: s }) {
           {
             label: n("Dashboard:Summary:Blocked", "Tıkanan iş"),
             value: a.blocked,
-            note: n("Dashboard:Summary:BlockedAvg", "ort. {0} g", Ke(a.blockedAvgIdleDays, 1))
+            note: n("Dashboard:Summary:BlockedAvg", "ort. {0} g", Oe(a.blockedAvgIdleDays, 1))
           }
         ),
         /* @__PURE__ */ e.jsx(
@@ -1576,7 +1584,7 @@ function Xa({ query: t, locale: s }) {
             permission: n("Permission:Invoices", "Faturalar"),
             note: [
               a.pendingApprovalAmount != null ? A(a.pendingApprovalAmount, a.currency, s) : null,
-              a.pendingApprovalAvgAgeHours != null ? n("Dashboard:Summary:AvgWait", "ortalama bekleme {0} sa", Ke(a.pendingApprovalAvgAgeHours, 0)) : null
+              a.pendingApprovalAvgAgeHours != null ? n("Dashboard:Summary:AvgWait", "ortalama bekleme {0} sa", Oe(a.pendingApprovalAvgAgeHours, 0)) : null
             ].filter(Boolean).join(" · ")
           }
         ),
@@ -1608,7 +1616,7 @@ function X({ label: t, value: s, note: a, locked: r, permission: i }) {
 function Ja({ query: t }) {
   const s = t.data ?? [], a = s.filter((r) => r.locked).length;
   return /* @__PURE__ */ e.jsx(
-    K,
+    O,
     {
       title: n("Dashboard:Statistics:Title", "İstatistikler"),
       meta: s.length > 0 ? n(
@@ -1648,7 +1656,7 @@ function Ja({ query: t }) {
 function Za({ query: t, locale: s }) {
   const a = t.data ?? [], r = a.filter((i) => i.state === "Overdue").length;
   return /* @__PURE__ */ e.jsx(
-    K,
+    O,
     {
       title: n("Dashboard:Deliveries:Title", "Bu ay teslim edilecekler"),
       meta: a.length > 0 ? n("Dashboard:Deliveries:Subtitle", "{0} iş · {1} gecikmiş", a.length, r) : null,
@@ -1700,7 +1708,7 @@ function Ne() {
 function es({ query: t }) {
   const s = t.data ?? [];
   return /* @__PURE__ */ e.jsx(
-    K,
+    O,
     {
       title: n("Dashboard:Health:Title", "Proje sağlığı"),
       meta: s.length > 0 ? n("Dashboard:Health:Subtitle", "{0} aktif proje", s.length) : null,
@@ -1738,7 +1746,7 @@ function es({ query: t }) {
 function ts({ query: t }) {
   const s = t.data ?? [];
   return /* @__PURE__ */ e.jsx(
-    K,
+    O,
     {
       title: n("Dashboard:Blockers:Title", "Tıkanan işler & risk"),
       meta: s.length > 0 ? n("Dashboard:Print:Count", "{0} kayıt", s.length) : null,
@@ -1773,7 +1781,7 @@ function as({ query: t, locale: s }) {
   var c;
   const a = t.data, r = (a == null ? void 0 : a.locked) === !0, i = Array.isArray(a) ? a : (a == null ? void 0 : a.items) ?? [], l = i.reduce((d, m) => d + (m.amount ?? 0), 0), u = i.length ? Math.round(i.reduce((d, m) => d + m.ageHours, 0) / i.length) : 0, o = ((c = i[0]) == null ? void 0 : c.currency) ?? "TRY";
   return /* @__PURE__ */ e.jsx(
-    K,
+    O,
     {
       title: n("Dashboard:Approvals:Title", "Bende bekleyen kararlar"),
       meta: i.length > 0 ? n("Dashboard:Approvals:Total", "Toplam {0} · ort. bekleme {1} sa", A(l, o, s), u) : null,
@@ -1805,7 +1813,7 @@ function as({ query: t, locale: s }) {
 function ss({ query: t, locale: s }) {
   const a = t.data, r = (a == null ? void 0 : a.locked) === !0, i = (a == null ? void 0 : a.points) ?? [], l = (a == null ? void 0 : a.currency) ?? "TRY", u = i.some((o) => o.income > 0 || o.expense > 0);
   return /* @__PURE__ */ e.jsx(
-    K,
+    O,
     {
       title: n("Dashboard:IncomeExpense:Title", "Gelir / gider"),
       meta: n("Dashboard:IncomeExpense:Subtitle", "Son 6 ay"),
@@ -1840,7 +1848,7 @@ function ns({ query: t, locale: s }) {
   for (let l = 0; l < a.length; l += 7) r.push(a.slice(l, l + 7));
   const i = a.reduce((l, u) => u.count > ((l == null ? void 0 : l.count) ?? 0) ? u : l, null);
   return /* @__PURE__ */ e.jsxs(
-    K,
+    O,
     {
       title: n("Dashboard:Heatmap:Title", "Teslim yoğunluğu"),
       meta: n("Dashboard:Heatmap:Subtitle", "Önümüzdeki 4 hafta · hafta × gün"),
@@ -1883,7 +1891,7 @@ function rs(t, s) {
 function Fe(t) {
   return t == null ? "—" : `%${Math.round(t * 100)}`;
 }
-function Ke(t, s) {
+function Oe(t, s) {
   return typeof t != "number" || !Number.isFinite(t) ? "—" : s > 0 ? Number(t.toFixed(s)) : Math.round(t);
 }
 const it = [
@@ -1893,7 +1901,7 @@ const it = [
 ];
 function is() {
   var Ee, Ce;
-  const [t, s] = x.useState(() => Fa()), [a, r] = x.useState(() => xs()), [i, l] = x.useState(!1), [u, o] = x.useState(!1), [c, d] = x.useState(null), [m, f] = x.useState("idle"), D = x.useRef(!1), k = $a(t), N = Ga(), O = Wa(), M = Ue(), B = x.useMemo(() => ({ range: a }), [a]), j = c ?? ((Ee = k.data) == null ? void 0 : Ee.cards) ?? [], W = x.useRef(null), [S, I] = x.useState(null);
+  const [t, s] = x.useState(() => Fa()), [a, r] = x.useState(() => xs()), [i, l] = x.useState(!1), [u, o] = x.useState(!1), [c, d] = x.useState(null), [m, f] = x.useState("idle"), D = x.useRef(!1), k = $a(t), N = Ga(), K = Wa(), M = Ue(), B = x.useMemo(() => ({ range: a }), [a]), j = c ?? ((Ee = k.data) == null ? void 0 : Ee.cards) ?? [], W = x.useRef(null), [S, I] = x.useState(null);
   x.useLayoutEffect(() => {
     const h = W.current;
     if (!h) return;
@@ -1917,7 +1925,7 @@ function is() {
   }, [m]), ct = x.useCallback(() => {
     D.current || (D.current = !0, f("ready"), window.requestAnimationFrame(() => window.print()));
   }, []), we = x.useCallback((h) => {
-    s(h), Ka(h), d(null), l(!1);
+    s(h), Oa(h), d(null), l(!1);
   }, []), dt = x.useCallback((h) => {
     i && $ === "desktop" && d((w) => {
       const P = w ?? j;
@@ -1948,7 +1956,7 @@ function is() {
       }
     );
   }, [N, t, c, j, M]), mt = x.useCallback(() => {
-    O.mutate(t, {
+    K.mutate(t, {
       onSuccess: () => {
         d(null), l(!1);
       },
@@ -1956,7 +1964,7 @@ function is() {
         (h == null ? void 0 : h.message) || n("Dashboard:Layout:ResetError", "Düzen sıfırlanamadı.")
       )
     });
-  }, [O, t, M]), xt = x.useCallback((h) => {
+  }, [K, t, M]), xt = x.useCallback((h) => {
     const w = J[h];
     if (!w) return;
     const P = c ?? j, F = P.reduce((Q, Z) => Math.max(Q, Z.y + Z.h), 0);
@@ -2060,13 +2068,13 @@ function is() {
           canEdit: Te,
           onReset: mt,
           onOpenCatalog: () => o(!0),
-          isResetting: O.isPending
+          isResetting: K.isPending
         }
       )
     ] }),
     m !== "idle" && /* @__PURE__ */ e.jsx(Qa, { viewKey: t, range: a, onReady: ct }),
     /* @__PURE__ */ e.jsx(
-      Oa,
+      Ka,
       {
         open: u,
         onOpenChange: o,
@@ -2334,9 +2342,9 @@ function fs() {
   return ps(t), Et(), bs(s), null;
 }
 St();
-const Oe = document.getElementById("apya-dashboard-root");
-Oe && bt(
-  Oe,
+const Ke = document.getElementById("apya-dashboard-root");
+Ke && bt(
+  Ke,
   "dashboard",
   /* @__PURE__ */ e.jsx(jt, { children: /* @__PURE__ */ e.jsx(Nt, { children: /* @__PURE__ */ e.jsx(kt, { children: /* @__PURE__ */ e.jsx(wt, { children: /* @__PURE__ */ e.jsxs(Ct, { children: [
     /* @__PURE__ */ e.jsx(fs, {}),

@@ -45,6 +45,7 @@ beforeEach(() => {
         get: vi.fn(() => Promise.resolve(TASK)),
         update: vi.fn(() => Promise.resolve(TASK)),
         updateStatus: vi.fn(() => Promise.resolve()),
+        cancel: vi.fn(() => Promise.resolve()),
         delete: vi.fn(() => Promise.resolve()),
         getUsersLookup: vi.fn(() => Promise.resolve({ items: [] })),
         getProjectsLookup: vi.fn(() => Promise.resolve([])),
@@ -149,9 +150,27 @@ describe('TaskDetailRootV3 — form sunucu verisine yeniden temellenir (STA-04)'
 
         clickMenuItem('Görevi iptal et');
 
-        await waitFor(() => expect(svc.updateStatus).toHaveBeenCalledWith(TASK.id, 0));
+        // İptal kendi ucundan (neden kaydedilir); testte Swal yok → nedensiz.
+        await waitFor(() => expect(svc.cancel).toHaveBeenCalledWith(TASK.id, null));
         await waitFor(() => expect(screen.getAllByText('İptal').length).toBeGreaterThan(0));
         expect(screen.queryByText(DIRTY)).not.toBeInTheDocument();
+    });
+
+    it('Görevi iptal et liste ve panoyla aynı şekilde nedeni sorar; vazgeçilirse iptal edilmez (UX-4)', async () => {
+        await openLoaded();
+        window.Swal = { fire: vi.fn()
+            .mockResolvedValueOnce({ isConfirmed: false })
+            .mockResolvedValueOnce({ isConfirmed: true, value: '  Bütçe onaylanmadı ' }) };
+        try {
+            clickMenuItem('Görevi iptal et');
+            await waitFor(() => expect(window.Swal.fire).toHaveBeenCalledTimes(1));
+            expect(svc.cancel).not.toHaveBeenCalled();
+
+            clickMenuItem('Görevi iptal et');
+            await waitFor(() => expect(svc.cancel).toHaveBeenCalledWith(TASK.id, 'Bütçe onaylanmadı'));
+        } finally {
+            delete window.Swal;
+        }
     });
 
     it('tazelemeyle gelen durum değişikliği, kullanıcının önceliğini ezmeden kaydedilir', async () => {

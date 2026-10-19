@@ -343,10 +343,10 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     /* ⋯ menüsünün durum eylemleri (Arşivle = Tamamlandı, İptal et = İptal) Kaydet'i
        beklemeden yazılır. İptal görev detayından yapılamıyordu (QA-19): rozet menüsü İptal'i
        bilerek göstermiyor ("⋯ menüsünden yapılır") ama ⋯ menüsünde yalnız Arşivle vardı. */
-    const applyStatusNow = async (status, okText, failText) => {
+    const applyStatusNow = async (status, okText, failText, call) => {
         taskDetailStore.markChanged();
         try {
-            await Promise.resolve(svc()?.updateStatus(currentTaskId, status));
+            await Promise.resolve(call ? call() : svc()?.updateStatus(currentTaskId, status));
             await queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] });
             /* Rebase kullanıcının kaydetmediği durum seçimini korur; Kaydet arşivi geri
                almasın diye eylemin yazdığı alan forma işlenir (diğer düzenlemeler kalır). */
@@ -361,7 +361,26 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         }
     };
     const handleArchive = () => applyStatusNow(4, 'Görev arşivlendi (Tamamlandı).', 'Görev arşivlenemedi.');
-    const handleCancelTask = () => applyStatusNow(0, 'Görev iptal edildi.', 'Görev iptal edilemedi.');
+    /* Liste ve panoyla aynı: iptal nedeni sorulur (isteğe bağlı) ve iptal kendi ucundan yapılır, neden
+       görevin geçmişine yazılır. Vazgeçilirse hiçbir şey olmaz. Swal yüklü değilse nedensiz iptal edilir. */
+    const handleCancelTask = async () => {
+        let reason = null;
+        if (window.Swal) {
+            const answer = await window.Swal.fire({
+                title: 'Görev iptal edilsin mi?',
+                input: 'text',
+                inputLabel: 'İptal nedeni (isteğe bağlı)',
+                inputAttributes: { maxlength: 256 },
+                showCancelButton: true,
+                confirmButtonText: 'İptal et',
+                cancelButtonText: 'Vazgeç'
+            });
+            if (!answer.isConfirmed) return;
+            reason = (answer.value || '').trim() || null;
+        }
+        await applyStatusNow(0, 'Görev iptal edildi.', 'Görev iptal edilemedi.',
+            () => svc()?.cancel(currentTaskId, reason));
+    };
 
     const handleDelete = async () => {
         if (!window.confirm('Bu görev ve tüm alt görevleri kalıcı olarak silinecek. Devam edilsin mi?')) return;

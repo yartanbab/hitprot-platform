@@ -2256,6 +2256,7 @@
     "Dashboard:Summary:BudgetUsage": "Budget usage",
     "Dashboard:Summary:DueTrend": "Delivery distribution",
     "RecordSearch:UnknownTenant": "Unknown customer",
+    "Dashboard:Deliveries:AllOverdue": "All overdue ({0}) →",
     "Dashboard:Deliveries:Overdue": "Overdue",
     "Dashboard:Deliveries:Title": "Due this month",
     "Dashboard:Deliveries:Subtitle": "{0} items · {1} overdue",
