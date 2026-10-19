@@ -340,9 +340,9 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
         }
     };
 
-    /* ⋯ menüsünün durum eylemleri (Arşivle = Tamamlandı, İptal et = İptal) Kaydet'i
-       beklemeden yazılır. İptal görev detayından yapılamıyordu (QA-19): rozet menüsü İptal'i
-       bilerek göstermiyor ("⋯ menüsünden yapılır") ama ⋯ menüsünde yalnız Arşivle vardı. */
+    /* ⋯ menüsünün durum eylemi (İptal et) Kaydet'i beklemeden yazılır. İptal görev detayından
+       yapılamıyordu (QA-19): rozet menüsü İptal'i bilerek göstermiyor ("⋯ menüsünden yapılır").
+       "Arşivle" (= Tamamlandı) QA-20 kararıyla kaldırıldı. */
     const applyStatusNow = async (status, okText, failText, call) => {
         taskDetailStore.markChanged();
         try {
@@ -360,7 +360,6 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             notifyError(err, failText);
         }
     };
-    const handleArchive = () => applyStatusNow(4, 'Görev arşivlendi (Tamamlandı).', 'Görev arşivlenemedi.');
     /* Liste ve panoyla aynı: iptal nedeni sorulur (isteğe bağlı) ve iptal kendi ucundan yapılır, neden
        görevin geçmişine yazılır. Vazgeçilirse hiçbir şey olmaz. Swal yüklü değilse nedensiz iptal edilir. */
     const handleCancelTask = async () => {
@@ -584,7 +583,6 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 isWatched={isWatched}
                 onToggleWatch={handleToggleWatch}
                 onDuplicate={handleDuplicate}
-                onArchive={handleArchive}
                 onCancelTask={handleCancelTask}
                 onDelete={handleDelete}
                 onOpenTransfer={(mode) => setTransfer({ mode })}

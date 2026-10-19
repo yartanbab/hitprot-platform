@@ -98,12 +98,6 @@ export function TaskDetailHeader({
                                     <i className="fa fa-copy w-4" aria-hidden="true" />Çoğalt
                                     <span className="ml-auto text-[11px]">Yakında</span>
                                 </button>
-                                <button type="button" role="menuitem" disabled
-                                    title="Yakında"
-                                    className="flex w-full cursor-not-allowed items-center gap-2 px-3 py-2 text-left text-sm text-text-tertiary">
-                                    <i className="fa fa-box-archive w-4" aria-hidden="true" />Arşivle
-                                    <span className="ml-auto text-[11px]">Yakında</span>
-                                </button>
                                 {canDelete && (
                                     <>
                                         <div className="my-1 h-px bg-border-subtle" />

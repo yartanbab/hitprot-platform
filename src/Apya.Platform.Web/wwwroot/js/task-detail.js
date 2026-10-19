@@ -1,17 +1,17 @@
 import { j as e, r as f, b as Le } from "./react-vendor-D7YDiBbi.js";
-import { t as ue, n as P, E as gs, e as vs, R as js, m as Ta, I as Ns, a as ws } from "./index-DgpuJ91w.js";
-import { D as It, g as Ft, d as Tt, B as re, I as Qe, M as ks } from "./Dialog-D3HpJNIB.js";
+import { t as ue, n as E, E as ys, e as gs, R as vs, m as Da, I as js, a as Ns } from "./index-DgpuJ91w.js";
+import { D as It, g as Ft, d as Tt, B as re, I as Qe, M as ws } from "./Dialog-D3HpJNIB.js";
 import { a as dt } from "./QueryProvider-D2Hvqdr9.js";
-import { u as Z, a as ne, b as te } from "./query-vendor-Db2mwxYI.js";
-import { C as Sa } from "./Combobox-CHhgTuMW.js";
-import { U as At, u as $a } from "./useDirtyGuard-D_9NgM7w.js";
-import { i as Ze, a as Xe, s as be, p as ft, d as Pa, b as Ht, R as Ea, c as Fe, e as Ba, f as Ia, g as Cs, P as Ds } from "./RichTextEditorV3-CsU1qQrh.js";
-import { r as Ts } from "./httpClient-BNoyY5yK.js";
+import { u as J, a as ne, b as te } from "./query-vendor-Db2mwxYI.js";
+import { C as Ta } from "./Combobox-CHhgTuMW.js";
+import { U as At, u as Sa } from "./useDirtyGuard-D_9NgM7w.js";
+import { i as Ze, a as Xe, s as be, p as ft, d as $a, b as Qt, R as Pa, c as Fe, e as Ea, f as Ba, g as ks, P as Cs } from "./RichTextEditorV3-CsU1qQrh.js";
+import { r as Ds } from "./httpClient-BNoyY5yK.js";
 import { S as ke } from "./Skeleton-C92LWNeC.js";
-import { R as Ce, T as De, P as Te, C as Se, A as Ss, a as zt, D as $s, b as Ps, c as Es, d as Bs, e as Is } from "./ui-vendor-UYevF8mE.js";
-import { d as Fa } from "./draggableActivation-Ybw9Upbh.js";
-import { i as Fs } from "./dataChanged-CDwwWMH8.js";
-function As({
+import { R as Ce, T as De, P as Te, C as Se, A as Ts, a as zt, D as Ss, b as $s, c as Ps, d as Es, e as Bs } from "./ui-vendor-UYevF8mE.js";
+import { d as Ia } from "./draggableActivation-Ybw9Upbh.js";
+import { i as Is } from "./dataChanged-CDwwWMH8.js";
+function Fs({
   open: t,
   onRequestClose: s,
   fullscreen: a,
@@ -48,7 +48,7 @@ function As({
     }
   );
 }
-function zs({ title: t, header: s, footer: a, children: r }) {
+function As({ title: t, header: s, footer: a, children: r }) {
   return /* @__PURE__ */ e.jsx(
     "div",
     {
@@ -62,7 +62,7 @@ function zs({ title: t, header: s, footer: a, children: r }) {
     }
   );
 }
-function Ls({ isPrivate: t }) {
+function zs({ isPrivate: t }) {
   return t ? /* @__PURE__ */ e.jsxs(
     "span",
     {
@@ -87,7 +87,7 @@ const St = {
   3: { text: "Yüksek", variant: "warning" },
   4: { text: "Kritik", variant: "negative" }
 };
-function Ms({
+function Ls({
   task: t,
   canDelete: s,
   onClose: a,
@@ -124,7 +124,7 @@ function Ms({
       /* @__PURE__ */ e.jsxs("div", { className: "mt-2 flex flex-wrap items-center gap-2", children: [
         /* @__PURE__ */ e.jsx(Tt, { variant: m.variant, children: m.text }),
         /* @__PURE__ */ e.jsx(Tt, { variant: h.variant, children: h.text }),
-        /* @__PURE__ */ e.jsx(Ls, { isPrivate: t == null ? void 0 : t.isPrivate })
+        /* @__PURE__ */ e.jsx(zs, { isPrivate: t == null ? void 0 : t.isPrivate })
       ] })
     ] }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex flex-none items-center gap-1", children: [
@@ -198,21 +198,6 @@ function Ms({
                   ]
                 }
               ),
-              /* @__PURE__ */ e.jsxs(
-                "button",
-                {
-                  type: "button",
-                  role: "menuitem",
-                  disabled: !0,
-                  title: "Yakında",
-                  className: "flex w-full cursor-not-allowed items-center gap-2 px-3 py-2 text-left text-sm text-text-tertiary",
-                  children: [
-                    /* @__PURE__ */ e.jsx("i", { className: "fa fa-box-archive w-4", "aria-hidden": "true" }),
-                    "Arşivle",
-                    /* @__PURE__ */ e.jsx("span", { className: "ml-auto text-[11px]", children: "Yakında" })
-                  ]
-                }
-              ),
               s && /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
                 /* @__PURE__ */ e.jsx("div", { className: "my-1 h-px bg-border-subtle" }),
                 /* @__PURE__ */ e.jsxs(
@@ -248,9 +233,9 @@ function Ms({
     ] })
   ] }) });
 }
-const Ks = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(t)) : null;
-function Rs({ lastSavedAt: t, isDirty: s, isSaving: a, onCancel: r, onSave: i }) {
-  const o = Ks(t);
+const Ms = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(t)) : null;
+function Ks({ lastSavedAt: t, isDirty: s, isSaving: a, onCancel: r, onSave: i }) {
+  const o = Ms(t);
   return /* @__PURE__ */ e.jsx("footer", { className: "flex-none border-t border-subtle px-[var(--apya-space-5)] py-[var(--apya-space-3)]", children: /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-[var(--apya-space-4)]", children: [
     /* @__PURE__ */ e.jsx("span", { className: "truncate text-[13px] text-text-tertiary", children: o ? `Son kayıt: ${o}` : " " }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex flex-none items-center gap-2", children: [
@@ -269,7 +254,7 @@ function Rs({ lastSavedAt: t, isDirty: s, isSaving: a, onCancel: r, onSave: i })
     ] })
   ] }) });
 }
-const Wt = "block h-10 w-full rounded-md border border-default bg-surface-base px-3 text-sm text-text-primary focus-visible:outline-none focus-visible:shadow-focus focus-visible:border-focus", qs = "block w-full rounded-md border border-default bg-surface-base px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:shadow-focus focus-visible:border-focus";
+const Ht = "block h-10 w-full rounded-md border border-default bg-surface-base px-3 text-sm text-text-primary focus-visible:outline-none focus-visible:shadow-focus focus-visible:border-focus", Rs = "block w-full rounded-md border border-default bg-surface-base px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:shadow-focus focus-visible:border-focus";
 function je({ label: t, htmlFor: s, error: a, children: r }) {
   return /* @__PURE__ */ e.jsxs("div", { children: [
     /* @__PURE__ */ e.jsx("label", { htmlFor: s, className: "mb-1 block text-[13px] font-medium text-text-secondary", children: t }),
@@ -277,7 +262,7 @@ function je({ label: t, htmlFor: s, error: a, children: r }) {
     a && /* @__PURE__ */ e.jsx("p", { className: "mt-1 text-[13px] text-text-negative", children: a })
   ] });
 }
-function Gs({ value: t, onChange: s }) {
+function qs({ value: t, onChange: s }) {
   const [a, r] = f.useState(""), i = () => {
     const o = a.trim();
     o && !t.includes(o) && s([...t, o]), r("");
@@ -310,7 +295,7 @@ function Gs({ value: t, onChange: s }) {
     )
   ] });
 }
-function Ys({
+function Gs({
   values: t,
   errors: s,
   onFieldChange: a,
@@ -334,7 +319,7 @@ function Ys({
           id: "task-status",
           value: t.status,
           onChange: (o) => a("status", Number(o.target.value)),
-          className: Wt,
+          className: Ht,
           children: Object.entries(St).map(([o, n]) => /* @__PURE__ */ e.jsx("option", { value: o, children: n.text }, o))
         }
       ) }),
@@ -344,13 +329,13 @@ function Ys({
           id: "task-priority",
           value: t.priority,
           onChange: (o) => a("priority", Number(o.target.value)),
-          className: Wt,
+          className: Ht,
           children: Object.entries($t).map(([o, n]) => /* @__PURE__ */ e.jsx("option", { value: o, children: n.text }, o))
         }
       ) })
     ] }),
     /* @__PURE__ */ e.jsx(je, { label: "Atanan", htmlFor: "task-assignee", children: /* @__PURE__ */ e.jsx(
-      Sa,
+      Ta,
       {
         id: "task-assignee",
         options: r,
@@ -382,7 +367,7 @@ function Ys({
         }
       ) })
     ] }),
-    /* @__PURE__ */ e.jsx(je, { label: "Etiketler", htmlFor: "task-tags-input", children: /* @__PURE__ */ e.jsx(Gs, { value: t.tagNames, onChange: (o) => a("tagNames", o) }) }),
+    /* @__PURE__ */ e.jsx(je, { label: "Etiketler", htmlFor: "task-tags-input", children: /* @__PURE__ */ e.jsx(qs, { value: t.tagNames, onChange: (o) => a("tagNames", o) }) }),
     /* @__PURE__ */ e.jsx(je, { label: "Açıklama", htmlFor: "task-description", children: /* @__PURE__ */ e.jsx(
       "textarea",
       {
@@ -390,32 +375,32 @@ function Ys({
         rows: 5,
         value: t.description,
         onChange: (o) => a("description", o.target.value),
-        className: qs
+        className: Rs
       }
     ) })
   ] });
 }
-const Jt = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(t)) : "—";
+const Wt = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(t)) : "—";
 function _e({ label: t, value: s }) {
   return /* @__PURE__ */ e.jsxs("div", { children: [
     /* @__PURE__ */ e.jsx("dt", { className: "text-[13px] text-text-tertiary", children: t }),
     /* @__PURE__ */ e.jsx("dd", { className: "mt-0.5 text-text-primary", children: s ?? "—" })
   ] });
 }
-function _s({ task: t, creatorName: s, lastModifierName: a }) {
+function Ys({ task: t, creatorName: s, lastModifierName: a }) {
   return /* @__PURE__ */ e.jsxs("aside", { className: "space-y-[var(--apya-space-4)] rounded-[var(--apya-radius-lg)] border border-subtle bg-surface-sunken p-[var(--apya-space-4)]", children: [
     /* @__PURE__ */ e.jsx("h3", { className: "text-[13px] font-semibold text-text-secondary", children: "Detaylar" }),
     /* @__PURE__ */ e.jsxs("dl", { className: "space-y-3 text-sm", children: [
       /* @__PURE__ */ e.jsx(_e, { label: "Oluşturan", value: s }),
-      /* @__PURE__ */ e.jsx(_e, { label: "Oluşturulma zamanı", value: Jt(t.creationTime) }),
+      /* @__PURE__ */ e.jsx(_e, { label: "Oluşturulma zamanı", value: Wt(t.creationTime) }),
       /* @__PURE__ */ e.jsx(_e, { label: "Güncelleyen", value: a }),
-      /* @__PURE__ */ e.jsx(_e, { label: "Son güncelleme zamanı", value: Jt(t.lastModificationTime) }),
+      /* @__PURE__ */ e.jsx(_e, { label: "Son güncelleme zamanı", value: Wt(t.lastModificationTime) }),
       /* @__PURE__ */ e.jsx(_e, { label: "Proje", value: t.projectName })
     ] })
   ] });
 }
-const Us = "group relative flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:shadow-focus", Vs = "border-brand-500 text-text-primary";
-function Os({ tabs: t, activeCode: s, onSelect: a, onOpenPicker: r, pickerOpen: i }) {
+const _s = "group relative flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:shadow-focus", Us = "border-brand-500 text-text-primary";
+function Vs({ tabs: t, activeCode: s, onSelect: a, onOpenPicker: r, pickerOpen: i }) {
   const o = f.useRef(/* @__PURE__ */ new Map()), n = (x) => {
     var m;
     a(x.code), (m = o.current.get(x.code)) == null || m.focus();
@@ -439,7 +424,7 @@ function Os({ tabs: t, activeCode: s, onSelect: a, onOpenPicker: r, pickerOpen: 
           tabIndex: h ? 0 : -1,
           onClick: () => a(x.code),
           onKeyDown: (p) => l(p, m),
-          className: `${Us} ${h ? Vs : ""}`,
+          className: `${_s} ${h ? Us : ""}`,
           children: [
             /* @__PURE__ */ e.jsx("i", { className: `fa ${x.icon}`, "aria-hidden": "true" }),
             x.title
@@ -462,14 +447,14 @@ function Os({ tabs: t, activeCode: s, onSelect: a, onOpenPicker: r, pickerOpen: 
     )
   ] });
 }
-const Qs = {
+const Os = {
   gorev: "Görev",
   iletisim: "İletişim",
   gecmis: "Geçmiş",
   finans: "Finans",
   ileri: "İleri Özellikler"
 };
-function Hs({ entries: t, onAdd: s, onRemove: a, busyCode: r }) {
+function Qs({ entries: t, onAdd: s, onRemove: a, busyCode: r }) {
   const [i, o] = f.useState(""), n = f.useMemo(() => {
     const l = i.trim().toLocaleLowerCase("tr-TR"), x = l ? t.filter((h) => h.title.toLocaleLowerCase("tr-TR").includes(l)) : t, m = /* @__PURE__ */ new Map();
     return x.forEach((h) => {
@@ -497,7 +482,7 @@ function Hs({ entries: t, onAdd: s, onRemove: a, busyCode: r }) {
         /* @__PURE__ */ e.jsxs("div", { className: "mt-2 max-h-80 overflow-y-auto", children: [
           n.size === 0 && /* @__PURE__ */ e.jsx("p", { className: "px-2 py-3 text-sm text-text-tertiary", children: "Sonuç bulunamadı." }),
           [...n.entries()].map(([l, x]) => /* @__PURE__ */ e.jsxs("div", { className: "mb-2", children: [
-            /* @__PURE__ */ e.jsx("p", { className: "px-2 py-1 text-[11px] font-semibold uppercase text-text-tertiary", children: Qs[l] ?? l }),
+            /* @__PURE__ */ e.jsx("p", { className: "px-2 py-1 text-[11px] font-semibold uppercase text-text-tertiary", children: Os[l] ?? l }),
             x.map((m) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-surface-raised", children: [
               /* @__PURE__ */ e.jsx("i", { className: `fa ${m.icon} w-4 text-text-tertiary`, "aria-hidden": "true" }),
               /* @__PURE__ */ e.jsx("span", { className: "flex-1 truncate text-sm text-text-primary", children: m.title }),
@@ -529,7 +514,7 @@ function Hs({ entries: t, onAdd: s, onRemove: a, busyCode: r }) {
     }
   );
 }
-function Ws({ trail: t = [], current: s, onNavigate: a }) {
+function Hs({ trail: t = [], current: s, onNavigate: a }) {
   return t.length === 0 ? null : /* @__PURE__ */ e.jsxs("nav", { "aria-label": "Görev gezinme yolu", className: "flex items-center gap-1.5 text-sm text-text-secondary", children: [
     t.map((r) => /* @__PURE__ */ e.jsxs(Le.Fragment, { children: [
       /* @__PURE__ */ e.jsx(
@@ -546,7 +531,7 @@ function Ws({ trail: t = [], current: s, onNavigate: a }) {
     /* @__PURE__ */ e.jsx("span", { className: "font-medium text-text-primary", children: s.title })
   ] });
 }
-function Js(t) {
+function Ws(t) {
   var r, i, o;
   const s = (o = (i = (r = window == null ? void 0 : window.apya) == null ? void 0 : r.platform) == null ? void 0 : i.tasks) == null ? void 0 : o.task;
   if (!s) return Promise.reject(new Error("ABP görev servisi yüklenmedi."));
@@ -558,9 +543,9 @@ function Js(t) {
   });
 }
 function Lt(t) {
-  return Z({
+  return J({
     queryKey: ["task-detail", t],
-    queryFn: () => Js(t),
+    queryFn: () => Ws(t),
     enabled: !!t,
     /* Detay düzenlenebilir canlı kayıt: kanban, liste ve proje konsolu aynı
        görevi React Query dışından değiştiriyor. Her açılışta (modal yeni
@@ -578,21 +563,21 @@ function de(t) {
   var s, a, r;
   return !!((r = (a = (s = window == null ? void 0 : window.abp) == null ? void 0 : s.auth) == null ? void 0 : a.isGranted) != null && r.call(a, t));
 }
-const Zs = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, Mt = "task";
-function Aa() {
+const Js = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, Mt = "task";
+function Fa() {
   if (typeof window > "u") return null;
   const t = new URLSearchParams(window.location.search).get(Mt);
-  return t && Zs.test(t) ? t : null;
+  return t && Js.test(t) ? t : null;
 }
 function Kt() {
   if (typeof window > "u") return;
   const t = new URL(window.location.href);
   t.searchParams.delete(Mt), window.history.replaceState(null, "", t.pathname + t.search + t.hash);
 }
-function za(t, s) {
+function Aa(t, s) {
   const a = f.useRef(s);
   a.current = s, f.useEffect(() => {
-    if (!t || Aa() === t) return;
+    if (!t || Fa() === t) return;
     const r = new URL(window.location.href);
     r.searchParams.set(Mt, t), window.history.pushState({ apyaTask: t }, "", r.pathname + r.search + r.hash);
   }, [t]), f.useEffect(() => {
@@ -603,7 +588,7 @@ function za(t, s) {
     return window.addEventListener("popstate", r), () => window.removeEventListener("popstate", r);
   }, []);
 }
-const Xs = {
+const Zs = {
   title: "",
   description: "",
   startDate: "",
@@ -621,7 +606,7 @@ const Xs = {
   budgetLineId: null,
   plannedAmount: null
 };
-function Zt(t) {
+function Jt(t) {
   return t ? {
     title: t.title ?? "",
     description: t.description ?? "",
@@ -640,19 +625,19 @@ function Zt(t) {
     sprint: t.sprint ?? "",
     budgetLineId: t.budgetLineId ?? null,
     plannedAmount: t.plannedAmount ?? null
-  } : Xs;
+  } : Zs;
 }
-const La = (t, s) => JSON.stringify(t) === JSON.stringify(s);
-function Xt(t, s, a) {
+const za = (t, s) => JSON.stringify(t) === JSON.stringify(s);
+function Zt(t, s, a) {
   const r = {};
-  for (const i of Object.keys(a)) r[i] = La(t[i], s[i]) ? a[i] : t[i];
+  for (const i of Object.keys(a)) r[i] = za(t[i], s[i]) ? a[i] : t[i];
   return r;
 }
-function Ma(t) {
-  const [s, a] = f.useState(t == null ? void 0 : t.id), r = f.useMemo(() => Zt(t), [t]), [i, o] = f.useState(r), [n, l] = f.useState(r), [x, m] = f.useState({});
-  if ((t == null ? void 0 : t.id) !== s || r !== i && !La(r, i)) {
+function La(t) {
+  const [s, a] = f.useState(t == null ? void 0 : t.id), r = f.useMemo(() => Jt(t), [t]), [i, o] = f.useState(r), [n, l] = f.useState(r), [x, m] = f.useState({});
+  if ((t == null ? void 0 : t.id) !== s || r !== i && !za(r, i)) {
     const y = (t == null ? void 0 : t.id) !== void 0 && t.id === s;
-    a(t == null ? void 0 : t.id), o(r), l(y ? Xt(n, i, r) : r), y || m({});
+    a(t == null ? void 0 : t.id), o(r), l(y ? Zt(n, i, r) : r), y || m({});
   }
   const h = f.useCallback((y, b) => {
     l((j) => ({ ...j, [y]: b })), m((j) => {
@@ -694,27 +679,27 @@ function Ma(t) {
     l(r), m({});
   }, [r]), N = f.useCallback((y, b) => {
     if (!b) return;
-    const j = Zt(b);
-    l((w) => Xt(w, y, j));
+    const j = Jt(b);
+    l((w) => Zt(w, y, j));
   }, []);
   return { values: n, setField: h, isDirty: p, errors: x, validate: u, toUpdateDto: c, reset: d, commitSaved: N };
 }
-function ea(t) {
+function Xt(t) {
   return [t.name, t.surname].filter(Boolean).join(" ") || t.userName;
 }
-function er() {
+function Xs() {
   var s, a, r;
   const t = (r = (a = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : a.tasks) == null ? void 0 : r.task;
   return t ? Promise.resolve(t.getUsersLookup()) : Promise.reject(new Error("ABP görev servisi yüklenmedi."));
 }
-function Ka() {
+function Ma() {
   var i;
-  const t = Z({
+  const t = J({
     queryKey: ["task-detail", "users-lookup"],
-    queryFn: er,
+    queryFn: Xs,
     staleTime: 3e5,
     retry: !1
-  }), s = ((i = t.data) == null ? void 0 : i.items) ?? [], a = s.map((o) => ({ value: o.id, label: ea(o) })), r = new Map(s.map((o) => [o.id, ea(o)]));
+  }), s = ((i = t.data) == null ? void 0 : i.items) ?? [], a = s.map((o) => ({ value: o.id, label: Xt(o) })), r = new Map(s.map((o) => [o.id, Xt(o)]));
   return { options: a, nameById: r, isLoading: t.isLoading };
 }
 function Pt() {
@@ -722,14 +707,14 @@ function Pt() {
   const t = (r = (a = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : a.tasks) == null ? void 0 : r.task;
   return t || null;
 }
-function tr(t) {
+function er(t) {
   const s = Pt();
   return s ? Promise.resolve(s.getFeatureAssignments(t)) : Promise.reject(new Error("ABP görev servisi yüklenmedi."));
 }
-function Ra(t) {
-  const s = ne(), a = ["task-features", t], r = Z({
+function Ka(t) {
+  const s = ne(), a = ["task-features", t], r = J({
     queryKey: a,
-    queryFn: () => tr(t),
+    queryFn: () => er(t),
     enabled: !!t,
     staleTime: 3e4,
     meta: { persist: !1 },
@@ -760,7 +745,7 @@ function We(t) {
     canDelete: a && de("Platform.Tasks.Delete")
   };
 }
-const qa = "rounded-2xl border border-subtle bg-surface-base shadow-xs", $e = `${qa} overflow-hidden`;
+const Ra = "rounded-2xl border border-subtle bg-surface-base shadow-xs", $e = `${Ra} overflow-hidden`;
 function Je({ title: t, badge: s, action: a }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 px-4 py-3.5 border-b border-subtle", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5 min-w-0", children: [
@@ -770,7 +755,7 @@ function Je({ title: t, badge: s, action: a }) {
     a
   ] });
 }
-function Ga({ children: t, tone: s = "positive" }) {
+function qa({ children: t, tone: s = "positive" }) {
   const a = s === "positive" ? "bg-success-subtle text-success" : "bg-neutral-subtle text-text-secondary";
   return /* @__PURE__ */ e.jsx("span", { className: `flex shrink-0 items-center h-[22px] px-[9px] rounded-full font-mono text-[11px] font-bold ${a}`, children: t });
 }
@@ -802,14 +787,14 @@ const Ke = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: 
   hour: "2-digit",
   minute: "2-digit"
 }).format(new Date(t)) : "";
-function Ya(t) {
+function Ga(t) {
   return t ? t < 1024 ? `${t} B` : t < 1024 * 1024 ? `${Math.round(t / 1024)} KB` : `${(t / 1024 / 1024).toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB` : "0 KB";
 }
 function yt(t) {
   const s = Math.max(0, Math.floor(t || 0)), a = Math.floor(s / 3600), r = Math.floor(s % 3600 / 60);
   return !a && !r ? `${s}sn` : a ? r ? `${a}s ${r}dk` : `${a}s` : `${r}dk`;
 }
-function ar(t) {
+function tr(t) {
   const s = Math.max(0, Math.floor(t || 0)), a = (r) => String(r).padStart(2, "0");
   return `${a(Math.floor(s / 3600))}:${a(Math.floor(s / 60) % 60)}:${a(s % 60)}`;
 }
@@ -821,13 +806,13 @@ const we = {
   code: { icon: "fa-file-code", bg: "bg-success-subtle", fg: "text-success" },
   zip: { icon: "fa-file-zipper", bg: "bg-warning-subtle", fg: "text-warning" },
   other: { icon: "fa-file", bg: "bg-neutral-subtle", fg: "text-text-secondary" }
-}, ta = (t = "") => _a(t) === we.image;
-function _a(t = "") {
+}, ea = (t = "") => Ya(t) === we.image;
+function Ya(t = "") {
   var a;
   const s = ((a = t.split(".").pop()) == null ? void 0 : a.toLowerCase()) ?? "";
   return s === "pdf" ? we.pdf : ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"].includes(s) ? we.image : ["doc", "docx", "odt", "rtf", "txt"].includes(s) ? we.doc : ["xls", "xlsx", "csv", "ods"].includes(s) ? we.sheet : ["json", "js", "ts", "cs", "xml", "yml", "yaml", "sql"].includes(s) ? we.code : ["zip", "rar", "7z", "tar", "gz"].includes(s) ? we.zip : we.other;
 }
-function sr({ taskId: t, task: s, onOpenSubtask: a }) {
+function ar({ taskId: t, task: s, onOpenSubtask: a }) {
   const [r, i] = f.useState(""), [o, n] = f.useState(!1), l = ne(), x = (s == null ? void 0 : s.subTasks) ?? [], m = x.filter((c) => c.status === 4).length, h = () => l.invalidateQueries({ queryKey: ["task-detail", t] }), p = async () => {
     const c = r.trim();
     if (c) {
@@ -840,7 +825,7 @@ function sr({ taskId: t, task: s, onOpenSubtask: a }) {
           projectId: s == null ? void 0 : s.projectId
         })), i(""), await h();
       } catch (d) {
-        P(d, "Alt görev eklenemedi.");
+        E(d, "Alt görev eklenemedi.");
       } finally {
         n(!1);
       }
@@ -850,14 +835,14 @@ function sr({ taskId: t, task: s, onOpenSubtask: a }) {
     try {
       await Promise.resolve(window.apya.platform.tasks.task.updateStatus(d.id, d.status === 4 ? 1 : 4)), await h();
     } catch (N) {
-      P(N, "Alt görev durumu güncellenemedi.");
+      E(N, "Alt görev durumu güncellenemedi.");
     }
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-3.5", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 flex-wrap", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3", children: [
         /* @__PURE__ */ e.jsx("h2", { className: "m-0 text-[14px] font-bold text-text-primary", children: "Alt görevler" }),
-        x.length > 0 && /* @__PURE__ */ e.jsxs(Ga, { children: [
+        x.length > 0 && /* @__PURE__ */ e.jsxs(qa, { children: [
           m,
           "/",
           x.length
@@ -931,19 +916,19 @@ function sr({ taskId: t, task: s, onOpenSubtask: a }) {
     x.length === 0 && /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[12.5px] text-text-tertiary", children: "Henüz alt görev yok." })
   ] });
 }
-function Ua() {
+function _a() {
   var s, a, r;
   const t = (r = (a = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : a.tasks) == null ? void 0 : r.task;
   return t || null;
 }
-function rr(t) {
-  const s = Ua();
+function sr(t) {
+  const s = _a();
   return s ? Promise.resolve(s.getAttachments(t)) : Promise.reject(new Error("ABP görev servisi yüklenmedi."));
 }
-async function nr(t, s) {
+async function rr(t, s) {
   const a = new FormData();
   a.append("file", s);
-  const r = {}, i = Ts();
+  const r = {}, i = Ds();
   i && (r.RequestVerificationToken = i);
   const o = await fetch(`/api/tasks/attachments/upload/${t}`, {
     method: "POST",
@@ -961,18 +946,18 @@ async function nr(t, s) {
   return n;
 }
 function ht(t, { enabled: s = !0 } = {}) {
-  const a = ne(), r = ["task-attachments", t], i = Z({
+  const a = ne(), r = ["task-attachments", t], i = J({
     queryKey: r,
-    queryFn: () => rr(t),
+    queryFn: () => sr(t),
     enabled: !!t && s,
     staleTime: 3e4,
     meta: { persist: !1 },
     retry: !1
   }), o = () => a.invalidateQueries({ queryKey: r }), n = te({
-    mutationFn: (x) => nr(t, x),
+    mutationFn: (x) => rr(t, x),
     onSuccess: o
   }), l = te({
-    mutationFn: (x) => Promise.resolve(Ua().deleteAttachment(x)),
+    mutationFn: (x) => Promise.resolve(_a().deleteAttachment(x)),
     onSuccess: o
   });
   return {
@@ -983,12 +968,12 @@ function ht(t, { enabled: s = !0 } = {}) {
     isUploading: n.isPending
   };
 }
-function ir({ taskId: t }) {
+function nr({ taskId: t }) {
   const { attachments: s, upload: a, remove: r, isUploading: i } = ht(t), o = ne(), n = f.useRef(null), [l, x] = f.useState(!1), m = de("Platform.Tasks.ShareExternally"), h = async (c, d) => {
     try {
       await window.apya.platform.tasks.taskShare.setAttachmentGuestVisibility(c, d), o.invalidateQueries({ queryKey: ["task-attachments", t] });
     } catch (N) {
-      P(N, "Görünürlük değiştirilemedi.");
+      E(N, "Görünürlük değiştirilemedi.");
     }
   }, p = async (c) => {
     var d, N, y;
@@ -996,7 +981,7 @@ function ir({ taskId: t }) {
       try {
         await a(c), (y = (N = (d = window == null ? void 0 : window.abp) == null ? void 0 : d.notify) == null ? void 0 : N.success) == null || y.call(N, "Dosya yüklendi.");
       } catch (b) {
-        P(b, "Dosya yüklenemedi.");
+        E(b, "Dosya yüklenemedi.");
       } finally {
         n.current && (n.current.value = "");
       }
@@ -1004,7 +989,7 @@ function ir({ taskId: t }) {
     try {
       await r(c);
     } catch (N) {
-      P(N, `${d} silinemedi.`);
+      E(N, `${d} silinemedi.`);
     }
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-3.5", children: [
@@ -1022,7 +1007,7 @@ function ir({ taskId: t }) {
       }
     ),
     s.length === 0 ? /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[12.5px] text-text-tertiary", children: "Henüz dosya yüklenmemiş." }) : /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-3", children: s.map((c) => {
-      const d = _a(c.fileName);
+      const d = Ya(c.fileName);
       return /* @__PURE__ */ e.jsxs(
         "div",
         {
@@ -1032,7 +1017,7 @@ function ir({ taskId: t }) {
               /* @__PURE__ */ e.jsx("span", { className: `flex shrink-0 items-center justify-center h-[38px] w-[38px] rounded-[10px] ${d.bg} ${d.fg}`, children: /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${d.icon} text-[15px]` }) }),
               /* @__PURE__ */ e.jsxs("div", { className: "min-w-0 flex-1", children: [
                 /* @__PURE__ */ e.jsx("div", { className: "truncate text-[12.5px] font-bold text-text-primary", title: c.fileName, children: c.fileName }),
-                /* @__PURE__ */ e.jsx("div", { className: "font-mono text-[11px] text-text-tertiary", children: Ya(c.fileSize) })
+                /* @__PURE__ */ e.jsx("div", { className: "font-mono text-[11px] text-text-tertiary", children: Ga(c.fileSize) })
               ] })
             ] }),
             m && !c.isGuestUpload && /* @__PURE__ */ e.jsxs("label", { className: "flex items-center gap-1.5 text-[11px] text-text-tertiary cursor-pointer", children: [
@@ -1118,14 +1103,14 @@ function ot() {
   const t = (r = (a = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : a.tasks) == null ? void 0 : r.task;
   return t || null;
 }
-function lr(t) {
+function ir(t) {
   const s = ot();
   return s ? Promise.resolve(s.getChecklistItems(t)) : Promise.reject(new Error("ABP görev servisi yüklenmedi."));
 }
 function Rt(t) {
-  const s = ne(), a = ["task-checklist", t], r = Z({
+  const s = ne(), a = ["task-checklist", t], r = J({
     queryKey: a,
-    queryFn: () => lr(t),
+    queryFn: () => ir(t),
     enabled: !!t,
     staleTime: 3e4,
     /* toggleChecklistItem ters çevirir; bayat gösterim yanlış yöne yazar (proje
@@ -1150,7 +1135,7 @@ function Rt(t) {
     removeItem: l.mutateAsync
   };
 }
-function or({ taskId: t, readOnly: s = !1 }) {
+function lr({ taskId: t, readOnly: s = !1 }) {
   const { items: a, isLoading: r, addItem: i, toggleItem: o, removeItem: n } = Rt(t), [l, x] = f.useState(""), m = a.filter((u) => u.isDone).length, h = a.length ? Math.round(m / a.length * 100) : 0, p = async () => {
     const u = l.trim();
     if (!(!u || !t)) {
@@ -1158,7 +1143,7 @@ function or({ taskId: t, readOnly: s = !1 }) {
       try {
         await i(u);
       } catch (c) {
-        x(u), P(c, "Madde eklenemedi.");
+        x(u), E(c, "Madde eklenemedi.");
       }
     }
   };
@@ -1194,7 +1179,7 @@ function or({ taskId: t, readOnly: s = !1 }) {
             type: "button",
             disabled: s,
             "aria-label": u.isDone ? "Tamamlandı işaretini kaldır" : "Tamamlandı işaretle",
-            onClick: () => o(u.id).catch((c) => P(c, "Durum güncellenemedi.")),
+            onClick: () => o(u.id).catch((c) => E(c, "Durum güncellenemedi.")),
             className: `flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white ${s ? "cursor-default" : "cursor-pointer"} transition-colors duration-fast ${u.isDone ? "bg-success border-success" : "bg-transparent border-strong"}`,
             children: u.isDone && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[9px]" })
           }
@@ -1206,7 +1191,7 @@ function or({ taskId: t, readOnly: s = !1 }) {
             type: "button",
             title: "Sil",
             "aria-label": `${u.text} maddesini sil`,
-            onClick: () => n(u.id).catch((c) => P(c, "Madde silinemedi.")),
+            onClick: () => n(u.id).catch((c) => E(c, "Madde silinemedi.")),
             className: "flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-negative-subtle hover:text-negative cursor-pointer",
             children: /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-trash-can text-[11px]" })
           }
@@ -1229,7 +1214,7 @@ function or({ taskId: t, readOnly: s = !1 }) {
     ] })
   ] });
 }
-function cr({ taskId: t, task: s }) {
+function or({ taskId: t, task: s }) {
   const [a, r] = f.useState(""), [i, o] = f.useState(null), [n, l] = f.useState(""), [x, m] = f.useState(!1), h = ne(), p = (s == null ? void 0 : s.comments) ?? [], u = async (d) => {
     var N, y, b;
     if (d == null || d.preventDefault(), !(!a.trim() || x)) {
@@ -1239,7 +1224,7 @@ function cr({ taskId: t, task: s }) {
           window.apya.platform.tasks.task.addComment(t, a.trim())
         ), r(""), h.invalidateQueries({ queryKey: ["task-detail", t] }), (b = (y = (N = window == null ? void 0 : window.abp) == null ? void 0 : N.notify) == null ? void 0 : y.success) == null || b.call(y, "Yorum eklendi.");
       } catch (j) {
-        P(j, "Yorum eklenemedi.");
+        E(j, "Yorum eklenemedi.");
       } finally {
         m(!1);
       }
@@ -1253,7 +1238,7 @@ function cr({ taskId: t, task: s }) {
           window.apya.platform.tasks.task.replyToComment(d, n.trim())
         ), l(""), o(null), h.invalidateQueries({ queryKey: ["task-detail", t] }), (b = (y = (N = window == null ? void 0 : window.abp) == null ? void 0 : N.notify) == null ? void 0 : y.success) == null || b.call(y, "Yanıt eklendi.");
       } catch (j) {
-        P(j, "Yanıt eklenemedi.");
+        E(j, "Yanıt eklenemedi.");
       } finally {
         m(!1);
       }
@@ -1327,8 +1312,8 @@ function gt() {
   var t, s, a;
   return ((a = (s = (t = window == null ? void 0 : window.apya) == null ? void 0 : t.platform) == null ? void 0 : s.tasks) == null ? void 0 : a.taskShare) ?? null;
 }
-function dr(t) {
-  const s = ne(), a = ["task-share-links", t], r = Z({
+function cr(t) {
+  const s = ne(), a = ["task-share-links", t], r = J({
     queryKey: a,
     queryFn: () => {
       const l = gt();
@@ -1357,7 +1342,7 @@ function dr(t) {
     isCreating: o.isPending
   };
 }
-const aa = {
+const ta = {
   recipientName: "",
   recipientEmail: "",
   lifetimeDays: 14,
@@ -1365,11 +1350,11 @@ const aa = {
   allowUpload: !0,
   allowDownload: !0
 };
-function xr(t) {
+function dr(t) {
   return t ? new Date(t).toLocaleDateString("tr-TR") : "—";
 }
-function ur({ taskId: t }) {
-  const { links: s, isPending: a, create: r, revoke: i, isCreating: o } = dr(t), [n, l] = f.useState(aa), [x, m] = f.useState(null);
+function xr({ taskId: t }) {
+  const { links: s, isPending: a, create: r, revoke: i, isCreating: o } = cr(t), [n, l] = f.useState(ta), [x, m] = f.useState(null);
   if (!de("Platform.Tasks.ShareExternally"))
     return /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[12.5px] text-text-tertiary", children: "Görevi ekip dışıyla paylaşma yetkiniz yok." });
   const p = (y) => (b) => {
@@ -1385,18 +1370,18 @@ function ur({ taskId: t }) {
           recipientEmail: n.recipientEmail.trim() || null,
           lifetimeDays: Number(n.lifetimeDays) || 14
         });
-        m(b), l(aa);
+        m(b), l(ta);
       } catch (b) {
-        P(b, "Paylaşım linki üretilemedi.");
+        E(b, "Paylaşım linki üretilemedi.");
       }
   }, c = (y) => `${window.location.origin}${y}`, d = (y) => {
-    var b, j, w, D;
-    (b = navigator.clipboard) == null || b.writeText(c(y)), (D = (w = (j = window == null ? void 0 : window.abp) == null ? void 0 : j.notify) == null ? void 0 : w.info) == null || D.call(w, "Bağlantı kopyalandı.");
+    var b, j, w, S;
+    (b = navigator.clipboard) == null || b.writeText(c(y)), (S = (w = (j = window == null ? void 0 : window.abp) == null ? void 0 : j.notify) == null ? void 0 : w.info) == null || S.call(w, "Bağlantı kopyalandı.");
   }, N = async (y) => {
     try {
       await i(y);
     } catch (b) {
-      P(b, "Bağlantı iptal edilemedi.");
+      E(b, "Bağlantı iptal edilemedi.");
     }
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-3.5", children: [
@@ -1511,7 +1496,7 @@ function ur({ taskId: t }) {
               ] }) : null
             ] }),
             /* @__PURE__ */ e.jsxs("div", { className: "text-[11.5px] text-text-tertiary", children: [
-              y.isActive ? `${xr(y.expiresAt)} tarihine kadar geçerli` : y.revokedAt ? "İptal edildi" : "Süresi doldu",
+              y.isActive ? `${dr(y.expiresAt)} tarihine kadar geçerli` : y.revokedAt ? "İptal edildi" : "Süresi doldu",
               " · ",
               y.accessCount,
               " erişim",
@@ -1535,7 +1520,7 @@ function ur({ taskId: t }) {
     )) })
   ] });
 }
-function pr({ task: t }) {
+function ur({ task: t }) {
   var a;
   const s = [];
   return t != null && t.creationTime && s.push({
@@ -1590,7 +1575,7 @@ const Ae = (t) => t ? new Intl.DateTimeFormat("tr-TR", {
   hour: "2-digit",
   minute: "2-digit"
 }).format(new Date(t)) : null;
-function mr({ label: t, value: s, hint: a }) {
+function pr({ label: t, value: s, hint: a }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex items-start justify-between gap-4 px-3.5 py-3", children: [
     /* @__PURE__ */ e.jsx("span", { className: "shrink-0 text-[12.5px] font-semibold text-text-secondary", children: t }),
     /* @__PURE__ */ e.jsxs("span", { className: "min-w-0 text-right", children: [
@@ -1599,7 +1584,7 @@ function mr({ label: t, value: s, hint: a }) {
     ] })
   ] });
 }
-function fr({ task: t = {}, nameById: s }) {
+function mr({ task: t = {}, nameById: s }) {
   const a = (i) => {
     var o;
     return i && ((o = s == null ? void 0 : s.get) == null ? void 0 : o.call(s, i)) || null;
@@ -1628,21 +1613,21 @@ function fr({ task: t = {}, nameById: s }) {
         /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-clock-rotate-left text-[13px] text-text-tertiary" }),
         /* @__PURE__ */ e.jsx("h2", { className: "m-0 text-[13.5px] font-bold text-text-primary", children: "Kayıt bilgileri" })
       ] }),
-      /* @__PURE__ */ e.jsx("div", { className: "divide-y divide-subtle", children: r.map((i) => /* @__PURE__ */ e.jsx(mr, { ...i }, i.label)) })
+      /* @__PURE__ */ e.jsx("div", { className: "divide-y divide-subtle", children: r.map((i) => /* @__PURE__ */ e.jsx(pr, { ...i }, i.label)) })
     ] }),
     /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[11.5px] text-text-tertiary", children: "Alan bazında değişiklik günlüğü (hangi alan, eski/yeni değer) henüz yayınlanmadı." })
   ] });
 }
-function br(t) {
+function fr(t) {
   var a, r, i;
   const s = (i = (r = (a = window == null ? void 0 : window.apya) == null ? void 0 : a.platform) == null ? void 0 : r.projectBudgets) == null ? void 0 : i.projectBudget;
   return s != null && s.getRecordFormLookup ? Promise.resolve(s.getRecordFormLookup(t)) : Promise.reject(new Error("Bütçe servisi yüklenmedi."));
 }
-function hr(t) {
+function br(t) {
   var i;
-  const s = de("Platform.Projects.ViewBudget"), a = Z({
+  const s = de("Platform.Projects.ViewBudget"), a = J({
     queryKey: ["task-detail", "budget-lines", t],
-    queryFn: () => br(t),
+    queryFn: () => fr(t),
     enabled: !!t && s,
     staleTime: 6e4,
     retry: !1
@@ -1668,9 +1653,9 @@ function pt(t, s = {}) {
     n != null && n !== "" && r.append(o, n);
   }), `${a}Documents/Matching?${r.toString()}`;
 }
-const Va = () => de("Platform.Documents"), yr = () => de("Platform.Documents.ManageMeta");
-function gr(t) {
-  const s = !!t && Va(), a = Z({
+const Ua = () => de("Platform.Documents"), hr = () => de("Platform.Documents.ManageMeta");
+function yr(t) {
+  const s = !!t && Ua(), a = J({
     queryKey: ["task-detail", "expense-matches", t],
     queryFn: () => ut({ url: pt("Matches", { projectId: t }), type: "GET" }),
     enabled: s,
@@ -1682,18 +1667,18 @@ function gr(t) {
     r.has(i.expenseId) || r.set(i.expenseId, []), r.get(i.expenseId).push(i);
   }), { byExpense: r, enabled: s, isLoading: a.isLoading };
 }
-function vr(t, s) {
-  const a = Z({
+function gr(t, s) {
+  const a = J({
     queryKey: ["task-detail", "expense-candidates", t],
     queryFn: () => ut({ url: pt("Candidates", { expenseId: t }), type: "GET" }),
-    enabled: !!t && s && Va(),
+    enabled: !!t && s && Ua(),
     staleTime: 3e4,
     meta: { persist: !1 },
     retry: !1
   });
   return { candidates: a.data ?? [], isLoading: a.isLoading };
 }
-function jr(t) {
+function vr(t) {
   const s = ne(), a = (o) => {
     s.invalidateQueries({ queryKey: ["task-detail", "expense-matches", t] }), s.invalidateQueries({ queryKey: ["task-detail", "expense-candidates", o] });
   }, r = te({
@@ -1710,11 +1695,11 @@ function jr(t) {
   });
   return { link: r, unlink: i, isBusy: r.isPending || i.isPending };
 }
-function Nr(t) {
+function jr(t) {
   return t == null ? "—" : new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", minimumFractionDigits: 2 }).format(t);
 }
-function wr({ expenseId: t, projectId: s, matches: a }) {
-  const { candidates: r, isLoading: i } = vr(t, !0), { link: o, unlink: n, isBusy: l } = jr(s), x = yr(), m = new Set(a.map((p) => p.documentFileId)), h = r.filter((p) => !m.has(p.documentFileId));
+function Nr({ expenseId: t, projectId: s, matches: a }) {
+  const { candidates: r, isLoading: i } = gr(t, !0), { link: o, unlink: n, isBusy: l } = vr(s), x = hr(), m = new Set(a.map((p) => p.documentFileId)), h = r.filter((p) => !m.has(p.documentFileId));
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-3 px-4 pb-3.5 pt-1 bg-surface-raised", children: [
     a.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1.5", children: [
       /* @__PURE__ */ e.jsx("span", { className: "text-[10.5px] font-bold uppercase tracking-[.07em] text-text-tertiary", children: "Bağlı evraklar" }),
@@ -1734,7 +1719,7 @@ function wr({ expenseId: t, projectId: s, matches: a }) {
             disabled: l,
             onClick: () => n.mutate(
               { matchId: p.id, expenseId: t },
-              { onError: (u) => P(u, "Evrak bağı kaldırılamadı.") }
+              { onError: (u) => E(u, "Evrak bağı kaldırılamadı.") }
             ),
             children: "Kaldır"
           }
@@ -1749,7 +1734,7 @@ function wr({ expenseId: t, projectId: s, matches: a }) {
         /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-file-lines text-[11px] text-text-tertiary" }),
         /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0 truncate text-[12px] text-text-primary", children: p.displayName }),
         /* @__PURE__ */ e.jsxs("span", { className: "shrink-0 font-mono text-[11px] text-text-tertiary lt-860:hidden", children: [
-          Nr(p.amount),
+          jr(p.amount),
           " · ",
           Ke(p.documentDate)
         ] }),
@@ -1766,7 +1751,7 @@ function wr({ expenseId: t, projectId: s, matches: a }) {
             disabled: l,
             onClick: () => o.mutate(
               { documentFileId: p.documentFileId, expenseId: t, score: p.score },
-              { onError: (u) => P(u, "Evrak bağlanamadı.") }
+              { onError: (u) => E(u, "Evrak bağlanamadı.") }
             ),
             children: "Bağla"
           }
@@ -1783,8 +1768,8 @@ function ge(t, s) {
     return `${(t || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} ${a}`.trim();
   }
 }
-const kr = ["pointerdown", "focusin", "wheel", "touchmove"], Cr = (t) => t.stopPropagation();
-function Dr(t, s, a, r) {
+const wr = ["pointerdown", "focusin", "wheel", "touchmove"], kr = (t) => t.stopPropagation();
+function Cr(t, s, a, r) {
   var x, m, h, p, u, c, d;
   const i = (x = window == null ? void 0 : window.abp) == null ? void 0 : x.ModalManager;
   if (!i) {
@@ -1796,14 +1781,14 @@ function Dr(t, s, a, r) {
   const n = new i({ viewUrl: `${o}${t}?TaskId=${s}` });
   n.onResult(() => a == null ? void 0 : a()), n.onOpen(() => r == null ? void 0 : r()), n.open();
   const l = document.getElementById(n.getModalId());
-  l && (l.setAttribute("data-apya-overlay", "abp-modal"), l.style.pointerEvents = "auto", kr.forEach((N) => l.addEventListener(N, Cr, { passive: !0 }))), setTimeout(() => r == null ? void 0 : r(), 1e4);
+  l && (l.setAttribute("data-apya-overlay", "abp-modal"), l.style.pointerEvents = "auto", wr.forEach((N) => l.addEventListener(N, kr, { passive: !0 }))), setTimeout(() => r == null ? void 0 : r(), 1e4);
 }
-function Tr({ taskId: t }) {
+function Dr({ taskId: t }) {
   const s = ne(), [a, r] = f.useState(null), i = de("Platform.Expenses.Create"), o = de("Platform.Incomes.Create"), n = de("Platform.Invoices.Create");
   if (!t || !i && !o && !n)
     return null;
   const l = () => s.invalidateQueries({ queryKey: ["task-detail", t] }), x = (m) => {
-    a || (r(m), Dr(m, t, l, () => r((h) => h === m ? null : h)));
+    a || (r(m), Cr(m, t, l, () => r((h) => h === m ? null : h)));
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "flex shrink-0 items-center gap-2", children: [
     i && /* @__PURE__ */ e.jsxs(
@@ -1853,18 +1838,18 @@ function Tr({ taskId: t }) {
     )
   ] });
 }
-const sa = {
+const aa = {
   0: { label: "Taslak", bg: "bg-neutral-subtle", fg: "text-text-secondary" },
   1: { label: "Gönderildi", bg: "bg-primary-subtle", fg: "text-primary" },
   2: { label: "Ödendi", bg: "bg-success-subtle", fg: "text-success" },
   3: { label: "İptal", bg: "bg-neutral-subtle", fg: "text-text-tertiary" },
   4: { label: "Gecikti", bg: "bg-negative-subtle", fg: "text-negative" }
 };
-function Sr({ invoices: t, action: s }) {
+function Tr({ invoices: t, action: s }) {
   return /* @__PURE__ */ e.jsxs("div", { className: $e, children: [
     /* @__PURE__ */ e.jsx(Je, { title: "Faturalar", action: s }),
     t.map((a) => {
-      const r = sa[a.status] ?? sa[0];
+      const r = aa[a.status] ?? aa[0];
       return /* @__PURE__ */ e.jsxs(
         "div",
         {
@@ -1895,7 +1880,7 @@ function Sr({ invoices: t, action: s }) {
     })
   ] });
 }
-function $r({ line: t, projectId: s, matches: a, docsEnabled: r }) {
+function Sr({ line: t, projectId: s, matches: a, docsEnabled: r }) {
   const [i, o] = f.useState(!1), n = t.kind === "income";
   return /* @__PURE__ */ e.jsxs("div", { className: "border-t border-subtle first:border-t-0", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3.5 px-4 py-3 hover:bg-surface-raised", children: [
@@ -1929,7 +1914,7 @@ function $r({ line: t, projectId: s, matches: a, docsEnabled: r }) {
         }
       )
     ] }),
-    r && i && /* @__PURE__ */ e.jsx(wr, { expenseId: t.id, projectId: s, matches: a })
+    r && i && /* @__PURE__ */ e.jsx(Nr, { expenseId: t.id, projectId: s, matches: a })
   ] });
 }
 function vt({ label: t, value: s, tone: a, note: r }) {
@@ -1939,12 +1924,12 @@ function vt({ label: t, value: s, tone: a, note: r }) {
     r && /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-tertiary", children: r })
   ] });
 }
-function Pr({ options: t, isLoading: s, lineId: a, planned: r, onField: i }) {
+function $r({ options: t, isLoading: s, lineId: a, planned: r, onField: i }) {
   return s ? null : t.length === 0 ? /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[12px] text-text-tertiary", children: "Bu projede bütçe kalemi tanımlı değil — kalemler Finans & Bütçe ekranından açılır." }) : /* @__PURE__ */ e.jsxs("div", { className: "grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3", children: [
     /* @__PURE__ */ e.jsxs("label", { className: "flex flex-col gap-1.5", children: [
       /* @__PURE__ */ e.jsx("span", { className: "text-[10.5px] font-bold uppercase tracking-[.07em] text-text-tertiary", children: "Bütçe kalemi" }),
       /* @__PURE__ */ e.jsx(
-        Sa,
+        Ta,
         {
           options: t,
           value: a ?? void 0,
@@ -1957,7 +1942,7 @@ function Pr({ options: t, isLoading: s, lineId: a, planned: r, onField: i }) {
     /* @__PURE__ */ e.jsxs("label", { className: "flex flex-col gap-1.5", children: [
       /* @__PURE__ */ e.jsx("span", { className: "text-[10.5px] font-bold uppercase tracking-[.07em] text-text-tertiary", children: "Görev bütçesi" }),
       /* @__PURE__ */ e.jsx(
-        ks,
+        ws,
         {
           value: r,
           onValueChange: (o) => i("plannedAmount", o),
@@ -1970,17 +1955,17 @@ function Pr({ options: t, isLoading: s, lineId: a, planned: r, onField: i }) {
     ] })
   ] });
 }
-function Er({ task: t, form: s, spentByCurrency: a, readOnly: r }) {
-  const i = (s ? s.values.projectId : t == null ? void 0 : t.projectId) ?? null, { options: o, lines: n, canViewBudget: l, isLoading: x } = hr(i), m = !!s && !r && l && !!i, h = (s ? s.values.budgetLineId : t == null ? void 0 : t.budgetLineId) ?? null, p = (s ? s.values.plannedAmount : t == null ? void 0 : t.plannedAmount) ?? null;
+function Pr({ task: t, form: s, spentByCurrency: a, readOnly: r }) {
+  const i = (s ? s.values.projectId : t == null ? void 0 : t.projectId) ?? null, { options: o, lines: n, canViewBudget: l, isLoading: x } = br(i), m = !!s && !r && l && !!i, h = (s ? s.values.budgetLineId : t == null ? void 0 : t.budgetLineId) ?? null, p = (s ? s.values.plannedAmount : t == null ? void 0 : t.plannedAmount) ?? null;
   if (!m && (!h || p == null))
     return null;
-  const u = n.find((D) => D.id === h), c = u ? u.remainingAmount : t == null ? void 0 : t.budgetLineRemaining, d = a, N = !!h && p != null, y = (p ?? 0) - d, b = p > 0 ? Math.round(d / p * 100) : 0, j = y < 0, w = () => {
+  const u = n.find((S) => S.id === h), c = u ? u.remainingAmount : t == null ? void 0 : t.budgetLineRemaining, d = a, N = !!h && p != null, y = (p ?? 0) - d, b = p > 0 ? Math.round(d / p * 100) : 0, j = y < 0, w = () => {
     s.setField("budgetLineId", null), s.setField("plannedAmount", null);
   };
   return (
     /* Kırpmayan kart ŞART: kalem seçicisinin listesi kartın içine absolute
        konumlanır, TAB_CARD'ın overflow-hidden'ı onu alt kenarda keserdi. */
-    /* @__PURE__ */ e.jsxs("div", { className: qa, children: [
+    /* @__PURE__ */ e.jsxs("div", { className: Ra, children: [
       /* @__PURE__ */ e.jsx(
         Je,
         {
@@ -1990,7 +1975,7 @@ function Er({ task: t, form: s, spentByCurrency: a, readOnly: r }) {
       ),
       /* @__PURE__ */ e.jsxs("div", { className: "px-4 pb-4 pt-1 flex flex-col gap-3", children: [
         m ? /* @__PURE__ */ e.jsx(
-          Pr,
+          $r,
           {
             options: o,
             isLoading: x,
@@ -2048,8 +2033,8 @@ function jt({ label: t, value: s, tone: a }) {
     )
   ] });
 }
-function Br({ task: t, taskId: s, form: a, readOnly: r = !1 }) {
-  const i = (t == null ? void 0 : t.expenses) || [], o = (t == null ? void 0 : t.incomes) || [], n = (t == null ? void 0 : t.invoices) || [], l = (a ? a.values.projectId : t == null ? void 0 : t.projectId) ?? null, { byExpense: x, enabled: m } = gr(l), h = i.filter((y) => (y.currency || "TRY") === "TRY").reduce((y, b) => y + (b.amount || 0), 0), p = /* @__PURE__ */ e.jsx(Er, { task: t, form: a, spentByCurrency: h, readOnly: r }), u = /* @__PURE__ */ e.jsx(Tr, { taskId: s ?? (t == null ? void 0 : t.id) });
+function Er({ task: t, taskId: s, form: a, readOnly: r = !1 }) {
+  const i = (t == null ? void 0 : t.expenses) || [], o = (t == null ? void 0 : t.incomes) || [], n = (t == null ? void 0 : t.invoices) || [], l = (a ? a.values.projectId : t == null ? void 0 : t.projectId) ?? null, { byExpense: x, enabled: m } = yr(l), h = i.filter((y) => (y.currency || "TRY") === "TRY").reduce((y, b) => y + (b.amount || 0), 0), p = /* @__PURE__ */ e.jsx(Pr, { task: t, form: a, spentByCurrency: h, readOnly: r }), u = /* @__PURE__ */ e.jsx(Dr, { taskId: s ?? (t == null ? void 0 : t.id) });
   if (i.length === 0 && o.length === 0 && n.length === 0)
     return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-4", children: [
       p,
@@ -2066,7 +2051,7 @@ function Br({ task: t, taskId: s, form: a, readOnly: r = !1 }) {
       ] })
     ] });
   const d = Array.from(new Set([...i, ...o].map((y) => y.currency || "TRY"))).map((y) => {
-    const b = o.filter((w) => (w.currency || "TRY") === y).reduce((w, D) => w + (D.amount || 0), 0), j = i.filter((w) => (w.currency || "TRY") === y).reduce((w, D) => w + (D.amount || 0), 0);
+    const b = o.filter((w) => (w.currency || "TRY") === y).reduce((w, S) => w + (S.amount || 0), 0), j = i.filter((w) => (w.currency || "TRY") === y).reduce((w, S) => w + (S.amount || 0), 0);
     return { cur: y, inc: b, exp: j, net: b - j };
   }), N = [
     ...o.map((y) => ({ ...y, kind: "income" })),
@@ -2087,11 +2072,11 @@ function Br({ task: t, taskId: s, form: a, readOnly: r = !1 }) {
         }
       )
     ] }, y)),
-    n.length > 0 && /* @__PURE__ */ e.jsx(Sr, { invoices: n, action: N.length === 0 ? u : null }),
+    n.length > 0 && /* @__PURE__ */ e.jsx(Tr, { invoices: n, action: N.length === 0 ? u : null }),
     N.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: $e, children: [
       /* @__PURE__ */ e.jsx(Je, { title: "Finans kalemleri", action: u }),
       N.map((y) => /* @__PURE__ */ e.jsx(
-        $r,
+        Sr,
         {
           line: y,
           projectId: l,
@@ -2104,18 +2089,18 @@ function Br({ task: t, taskId: s, form: a, readOnly: r = !1 }) {
     /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[11px] text-text-tertiary", children: "Buradan eklenen kayıt göreve ve projesine etiketlenir; düzenleme/silme Finans modülünden yapılır. Evraklar Belgeler modülünde yaşar, buradan gidere bağlanır." })
   ] });
 }
-function Ir({ taskId: t }) {
-  const { attachments: s, isLoading: a, upload: r, remove: i, isUploading: o } = ht(t), n = f.useRef(null), [l, x] = f.useState(!1), m = s.filter((u) => ta(u.fileName)), h = async (u) => {
+function Br({ taskId: t }) {
+  const { attachments: s, isLoading: a, upload: r, remove: i, isUploading: o } = ht(t), n = f.useRef(null), [l, x] = f.useState(!1), m = s.filter((u) => ea(u.fileName)), h = async (u) => {
     var c, d, N, y, b, j;
     if (u) {
-      if (!ta(u.name)) {
+      if (!ea(u.name)) {
         (N = (d = (c = window == null ? void 0 : window.abp) == null ? void 0 : c.notify) == null ? void 0 : d.error) == null || N.call(d, "Galeriye yalnız görsel dosya yüklenebilir.");
         return;
       }
       try {
         await r(u), (j = (b = (y = window == null ? void 0 : window.abp) == null ? void 0 : y.notify) == null ? void 0 : b.success) == null || j.call(b, "Görsel yüklendi.");
       } catch (w) {
-        P(w, "Görsel yüklenemedi.");
+        E(w, "Görsel yüklenemedi.");
       } finally {
         n.current && (n.current.value = "");
       }
@@ -2124,7 +2109,7 @@ function Ir({ taskId: t }) {
     try {
       await i(u);
     } catch (d) {
-      P(d, `${c} silinemedi.`);
+      E(d, `${c} silinemedi.`);
     }
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-3.5", children: [
@@ -2171,7 +2156,7 @@ function Ir({ taskId: t }) {
           /* @__PURE__ */ e.jsxs("figcaption", { className: "flex items-center justify-between gap-2 p-2.5", children: [
             /* @__PURE__ */ e.jsxs("div", { className: "min-w-0", children: [
               /* @__PURE__ */ e.jsx("div", { className: "truncate text-[12px] font-bold text-text-primary", title: u.fileName, children: u.fileName }),
-              /* @__PURE__ */ e.jsx("div", { className: "font-mono text-[11px] text-text-tertiary", children: Ya(u.fileSize) })
+              /* @__PURE__ */ e.jsx("div", { className: "font-mono text-[11px] text-text-tertiary", children: Ga(u.fileSize) })
             ] }),
             /* @__PURE__ */ e.jsx(
               "button",
@@ -2220,14 +2205,14 @@ function Ir({ taskId: t }) {
     )
   ] });
 }
-const Fr = [
+const Ir = [
   { key: "title", label: "Başlık", align: "left" },
   { key: "status", label: "Durum", align: "left" },
   { key: "priority", label: "Öncelik", align: "left" },
   { key: "assignee", label: "Atanan", align: "left" },
   { key: "dueDate", label: "Termin", align: "right" }
 ];
-function ra(t, s) {
+function sa(t, s) {
   switch (s) {
     case "title":
       return (t.title || "").toLocaleLowerCase("tr");
@@ -2243,13 +2228,13 @@ function ra(t, s) {
       return null;
   }
 }
-function Ar(t, s, a, r) {
-  const i = ra(t, a), o = ra(s, a), n = i === null || i === "", l = o === null || o === "";
+function Fr(t, s, a, r) {
+  const i = sa(t, a), o = sa(s, a), n = i === null || i === "", l = o === null || o === "";
   return n && l ? 0 : n ? 1 : l ? -1 : i === o ? 0 : (i < o ? -1 : 1) * (r === "asc" ? 1 : -1);
 }
-function zr({ task: t = {}, onOpenSubtask: s }) {
+function Ar({ task: t = {}, onOpenSubtask: s }) {
   const [a, r] = f.useState({ key: "dueDate", dir: "asc" }), i = (t == null ? void 0 : t.subTasks) ?? [], o = f.useMemo(
-    () => [...i].sort((l, x) => Ar(l, x, a.key, a.dir)),
+    () => [...i].sort((l, x) => Fr(l, x, a.key, a.dir)),
     [i, a.key, a.dir]
   ), n = (l) => r((x) => x.key === l ? { key: l, dir: x.dir === "asc" ? "desc" : "asc" } : { key: l, dir: "asc" });
   return i.length === 0 ? /* @__PURE__ */ e.jsx(
@@ -2260,7 +2245,7 @@ function zr({ task: t = {}, onOpenSubtask: s }) {
       description: "Alt Görevler sekmesinden ekledikleriniz burada tablo olarak listelenir."
     }
   ) : /* @__PURE__ */ e.jsx("div", { className: `${$e} overflow-x-auto`, children: /* @__PURE__ */ e.jsxs("table", { className: "w-full border-collapse text-[12.5px]", children: [
-    /* @__PURE__ */ e.jsx("thead", { children: /* @__PURE__ */ e.jsx("tr", { className: "bg-surface-raised", children: Fr.map((l) => {
+    /* @__PURE__ */ e.jsx("thead", { children: /* @__PURE__ */ e.jsx("tr", { className: "bg-surface-raised", children: Ir.map((l) => {
       const x = a.key === l.key;
       return /* @__PURE__ */ e.jsx(
         "th",
@@ -2285,7 +2270,7 @@ function zr({ task: t = {}, onOpenSubtask: s }) {
       );
     }) }) }),
     /* @__PURE__ */ e.jsx("tbody", { children: o.map((l) => {
-      const x = be(l.status), m = ft(l.priority), h = Pa(l.dueDate);
+      const x = be(l.status), m = ft(l.priority), h = $a(l.dueDate);
       return /* @__PURE__ */ e.jsxs(
         "tr",
         {
@@ -2330,7 +2315,7 @@ function zr({ task: t = {}, onOpenSubtask: s }) {
     }) })
   ] }) });
 }
-function Lr({ taskId: t, task: s = {}, onOpenSubtask: a }) {
+function zr({ taskId: t, task: s = {}, onOpenSubtask: a }) {
   const r = ne(), i = (s == null ? void 0 : s.subTasks) ?? [], [o, n] = f.useState(null), [l, x] = f.useState(null), m = async (h, p) => {
     const u = i.find((c) => c.id === h);
     if (!(!u || u.status === p || !We(u).canChangeStatus)) {
@@ -2338,7 +2323,7 @@ function Lr({ taskId: t, task: s = {}, onOpenSubtask: a }) {
       try {
         await Promise.resolve(window.apya.platform.tasks.task.updateStatus(h, p)), await r.invalidateQueries({ queryKey: ["task-detail", t] });
       } catch (c) {
-        P(c, "Alt görev durumu güncellenemedi.");
+        E(c, "Alt görev durumu güncellenemedi.");
       } finally {
         x(null);
       }
@@ -2357,7 +2342,7 @@ function Lr({ taskId: t, task: s = {}, onOpenSubtask: a }) {
     // üretilmiyor) → sınıf HTML'de durur ama CSS'i yoktur ve ızgara sessizce
     // tek sütuna düşer. auto-fit zaten istediğimizi yapıyor: dört durum
     // sütunu geniş alanda yan yana, dar alanda alt alta sarar.
-    /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3 items-start", children: Ht.map((h) => {
+    /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3 items-start", children: Qt.map((h) => {
       const p = be(h), u = i.filter((d) => d.status === h), c = o === h;
       return /* @__PURE__ */ e.jsxs(
         "section",
@@ -2417,7 +2402,7 @@ function Lr({ taskId: t, task: s = {}, onOpenSubtask: a }) {
                           onChange: (b) => m(d.id, Number(b.target.value)),
                           disabled: !y,
                           className: `h-[24px] px-1.5 rounded-[6px] border border-subtle bg-surface-base text-[10.5px] text-text-secondary ${y ? "cursor-pointer" : "cursor-default"}`,
-                          children: Ht.map((b) => /* @__PURE__ */ e.jsx("option", { value: b, children: be(b).label }, b))
+                          children: Qt.map((b) => /* @__PURE__ */ e.jsx("option", { value: b, children: be(b).label }, b))
                         }
                       )
                     ] })
@@ -2433,7 +2418,7 @@ function Lr({ taskId: t, task: s = {}, onOpenSubtask: a }) {
     }) })
   );
 }
-const Mr = [
+const Lr = [
   "Ocak",
   "Şubat",
   "Mart",
@@ -2446,21 +2431,21 @@ const Mr = [
   "Ekim",
   "Kasım",
   "Aralık"
-], Kr = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"], na = (t) => String(t).padStart(2, "0"), Oa = (t, s, a) => `${t}-${na(s + 1)}-${na(a)}`;
+], Mr = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"], ra = (t) => String(t).padStart(2, "0"), Va = (t, s, a) => `${t}-${ra(s + 1)}-${ra(a)}`;
 function Et(t) {
   if (!t) return null;
   const s = /^(\d{4}-\d{2}-\d{2})/.exec(String(t));
   return s ? s[1] : null;
 }
-function Rr(t, s) {
+function Kr(t, s) {
   const r = (new Date(t, s, 1).getDay() + 6) % 7, i = new Date(t, s + 1, 0).getDate(), o = [];
   for (let n = 0; n < 42; n++) {
     const l = n - r + 1;
-    o.push(l >= 1 && l <= i ? { key: Oa(t, s, l), day: l, inMonth: !0 } : { key: `bos-${n}`, day: null, inMonth: !1 });
+    o.push(l >= 1 && l <= i ? { key: Va(t, s, l), day: l, inMonth: !0 } : { key: `bos-${n}`, day: null, inMonth: !1 });
   }
   return o;
 }
-function qr(t) {
+function Rr(t) {
   const s = /* @__PURE__ */ new Map(), a = (r, i) => {
     const o = Et(r);
     o && (s.has(o) || s.set(o, []), s.get(o).push(i));
@@ -2470,8 +2455,8 @@ function qr(t) {
     a(r.startDate, { id: r.id, title: r.title, kind: "start", isSelf: !1, status: r.status }), a(r.dueDate, { id: r.id, title: r.title, kind: "due", isSelf: !1, status: r.status });
   return s;
 }
-function Gr({ task: t = {}, onOpenSubtask: s }) {
-  const a = f.useMemo(() => qr(t), [t]), [r, i] = f.useState(() => {
+function qr({ task: t = {}, onOpenSubtask: s }) {
+  const a = f.useMemo(() => Rr(t), [t]), [r, i] = f.useState(() => {
     const m = Et(t == null ? void 0 : t.startDate) ?? Et(t == null ? void 0 : t.dueDate);
     if (m) {
       const [p, u] = m.split("-").map(Number);
@@ -2479,10 +2464,10 @@ function Gr({ task: t = {}, onOpenSubtask: s }) {
     }
     const h = /* @__PURE__ */ new Date();
     return { year: h.getFullYear(), month: h.getMonth() };
-  }), o = f.useMemo(() => Rr(r.year, r.month), [r.year, r.month]), n = (m) => i(({ year: h, month: p }) => {
+  }), o = f.useMemo(() => Kr(r.year, r.month), [r.year, r.month]), n = (m) => i(({ year: h, month: p }) => {
     const u = p + m;
     return { year: h + Math.floor(u / 12), month: (u % 12 + 12) % 12 };
-  }), l = /* @__PURE__ */ new Date(), x = Oa(l.getFullYear(), l.getMonth(), l.getDate());
+  }), l = /* @__PURE__ */ new Date(), x = Va(l.getFullYear(), l.getMonth(), l.getDate());
   return a.size === 0 ? /* @__PURE__ */ e.jsx(
     he,
     {
@@ -2493,7 +2478,7 @@ function Gr({ task: t = {}, onOpenSubtask: s }) {
   ) : /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col rounded-2xl border border-subtle bg-surface-base shadow-xs overflow-hidden", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 px-3.5 py-3 border-b border-subtle bg-surface-raised", children: [
       /* @__PURE__ */ e.jsxs("h2", { className: "m-0 text-[13.5px] font-bold text-text-primary", children: [
-        Mr[r.month],
+        Lr[r.month],
         " ",
         r.year
       ] }),
@@ -2529,7 +2514,7 @@ function Gr({ task: t = {}, onOpenSubtask: s }) {
         )
       ] })
     ] }),
-    /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-7 border-b border-subtle bg-surface-raised", children: Kr.map((m) => /* @__PURE__ */ e.jsx("span", { className: "px-2 py-1.5 text-center text-[11px] font-bold text-text-tertiary", children: m }, m)) }),
+    /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-7 border-b border-subtle bg-surface-raised", children: Mr.map((m) => /* @__PURE__ */ e.jsx("span", { className: "px-2 py-1.5 text-center text-[11px] font-bold text-text-tertiary", children: m }, m)) }),
     /* @__PURE__ */ e.jsx("div", { className: "grid grid-cols-7", children: o.map((m) => {
       const h = m.inMonth ? a.get(m.key) ?? [] : [], p = m.key === x;
       return /* @__PURE__ */ e.jsxs(
@@ -2569,14 +2554,14 @@ function He() {
   const t = (r = (a = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : a.tasks) == null ? void 0 : r.task;
   return t || null;
 }
-function Yr(t) {
+function Gr(t) {
   const s = He();
   return s ? Promise.resolve(s.getDocuments(t)) : Promise.reject(new Error("ABP görev servisi yüklenmedi."));
 }
-function _r(t) {
-  const s = ne(), a = ["task-documents", t], r = Z({
+function Yr(t) {
+  const s = ne(), a = ["task-documents", t], r = J({
     queryKey: a,
-    queryFn: () => Yr(t),
+    queryFn: () => Gr(t),
     enabled: !!t,
     staleTime: 3e4,
     meta: { persist: !1 },
@@ -2602,8 +2587,8 @@ function _r(t) {
     isSaving: n.isPending
   };
 }
-function Ur(t) {
-  return Z({
+function _r(t) {
+  return J({
     queryKey: ["task-document", t],
     queryFn: () => Promise.resolve(He().getDocument(t)),
     enabled: !!t,
@@ -2613,35 +2598,35 @@ function Ur(t) {
     retry: !1
   });
 }
-function Vr({ taskId: t }) {
-  const { documents: s, isLoading: a, createDocument: r, updateDocument: i, removeDocument: o, isSaving: n } = _r(t), [l, x] = f.useState(null), [m, h] = f.useState(""), [p, u] = f.useState(""), [c, d] = f.useState(!1), [N, y] = f.useState(!1), { data: b, isFetching: j } = Ur(l);
+function Ur({ taskId: t }) {
+  const { documents: s, isLoading: a, createDocument: r, updateDocument: i, removeDocument: o, isSaving: n } = Yr(t), [l, x] = f.useState(null), [m, h] = f.useState(""), [p, u] = f.useState(""), [c, d] = f.useState(!1), [N, y] = f.useState(!1), { data: b, isFetching: j } = _r(l);
   f.useEffect(() => {
     !b || b.id !== l || (h(b.title ?? ""), u(b.content ?? ""), d(!1));
   }, [b == null ? void 0 : b.id]);
   const w = async () => {
     try {
-      const E = await r("Yeni belge");
-      E != null && E.id && x(E.id);
-    } catch (E) {
-      P(E, "Belge oluşturulamadı.");
+      const I = await r("Yeni belge");
+      I != null && I.id && x(I.id);
+    } catch (I) {
+      E(I, "Belge oluşturulamadı.");
     }
-  }, D = async () => {
-    var Q, _, Y, L, q, V;
-    const E = m.trim();
-    if (!E)
-      return (Y = (_ = (Q = window == null ? void 0 : window.abp) == null ? void 0 : Q.notify) == null ? void 0 : _.error) == null || Y.call(_, "Belge başlığı boş olamaz."), !1;
+  }, S = async () => {
+    var Q, G, Y, z, R, V;
+    const I = m.trim();
+    if (!I)
+      return (Y = (G = (Q = window == null ? void 0 : window.abp) == null ? void 0 : Q.notify) == null ? void 0 : G.error) == null || Y.call(G, "Belge başlığı boş olamaz."), !1;
     try {
-      return await i({ id: l, title: E, content: p }), d(!1), (V = (q = (L = window == null ? void 0 : window.abp) == null ? void 0 : L.notify) == null ? void 0 : q.success) == null || V.call(q, "Belge kaydedildi."), !0;
-    } catch (U) {
-      return P(U, "Belge kaydedilemedi."), !1;
+      return await i({ id: l, title: I, content: p }), d(!1), (V = (R = (z = window == null ? void 0 : window.abp) == null ? void 0 : z.notify) == null ? void 0 : R.success) == null || V.call(R, "Belge kaydedildi."), !0;
+    } catch (O) {
+      return E(O, "Belge kaydedilemedi."), !1;
     }
-  }, z = async (E, Q) => {
+  }, P = async (I, Q) => {
     try {
-      await o(E), l === E && x(null);
-    } catch (_) {
-      P(_, `“${Q}” silinemedi.`);
+      await o(I), l === I && x(null);
+    } catch (G) {
+      E(G, `“${Q}” silinemedi.`);
     }
-  }, F = () => {
+  }, q = () => {
     if (c) {
       y(!0);
       return;
@@ -2654,7 +2639,7 @@ function Vr({ taskId: t }) {
         "button",
         {
           type: "button",
-          onClick: F,
+          onClick: q,
           "aria-label": "Belge listesine dön",
           className: "flex items-center justify-center h-8 w-8 rounded-[9px] border border-subtle bg-surface-base text-text-tertiary hover:text-text-primary cursor-pointer",
           children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-arrow-left text-[12px]" })
@@ -2666,8 +2651,8 @@ function Vr({ taskId: t }) {
           type: "text",
           value: m,
           "aria-label": "Belge başlığı",
-          onChange: (E) => {
-            h(E.target.value), d(!0);
+          onChange: (I) => {
+            h(I.target.value), d(!0);
           },
           className: "flex-1 min-w-0 h-9 px-3 rounded-[10px] border border-subtle bg-surface-base text-[13.5px] font-bold text-text-primary focus:border-focus focus:shadow-focus focus:outline-none"
         }
@@ -2676,7 +2661,7 @@ function Vr({ taskId: t }) {
         "button",
         {
           type: "button",
-          onClick: D,
+          onClick: S,
           disabled: n || !c,
           className: `flex items-center gap-2 h-9 px-3.5 rounded-[10px] text-white text-[12.5px] font-bold ${n || !c ? "bg-border-strong cursor-not-allowed" : "bg-primary hover:bg-primary-hover cursor-pointer"}`,
           children: [
@@ -2687,13 +2672,13 @@ function Vr({ taskId: t }) {
       )
     ] }),
     j && !b ? /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[12.5px] text-text-tertiary", children: "Belge yükleniyor…" }) : /* @__PURE__ */ e.jsx(
-      Ea,
+      Pa,
       {
         value: p,
         ariaLabel: "Belge içeriği",
         placeholder: "Belgeyi buraya yazın…",
-        onChange: (E) => {
-          u(E), d(!0);
+        onChange: (I) => {
+          u(I), d(!0);
         }
       }
     ),
@@ -2707,8 +2692,8 @@ function Vr({ taskId: t }) {
           y(!1), d(!1), x(null);
         },
         onSave: async () => {
-          const E = await D();
-          y(!1), E && x(null);
+          const I = await S();
+          y(!1), I && x(null);
         }
       }
     )
@@ -2737,7 +2722,7 @@ function Vr({ taskId: t }) {
         description: "Toplantı notu, teknik şartname ya da teslim tutanağı gibi metinleri buraya yazabilirsiniz."
       }
     ),
-    s.length > 0 && /* @__PURE__ */ e.jsx("div", { className: "flex flex-col rounded-2xl border border-subtle bg-surface-base shadow-xs overflow-hidden", children: s.map((E) => /* @__PURE__ */ e.jsxs(
+    s.length > 0 && /* @__PURE__ */ e.jsx("div", { className: "flex flex-col rounded-2xl border border-subtle bg-surface-base shadow-xs overflow-hidden", children: s.map((I) => /* @__PURE__ */ e.jsxs(
       "div",
       {
         className: "group flex items-center gap-3 px-3.5 py-3 border-b border-subtle last:border-b-0 hover:bg-surface-raised",
@@ -2747,11 +2732,11 @@ function Vr({ taskId: t }) {
             "button",
             {
               type: "button",
-              onClick: () => x(E.id),
+              onClick: () => x(I.id),
               className: "flex-1 min-w-0 bg-transparent border-0 p-0 text-left cursor-pointer",
               children: [
-                /* @__PURE__ */ e.jsx("span", { className: "block truncate text-[13px] font-bold text-text-primary", children: E.title }),
-                /* @__PURE__ */ e.jsx("span", { className: "block text-[11.5px] text-text-tertiary", children: E.contentLength > 0 ? `${E.editorName} · ${xt(E.lastModificationTime ?? E.creationTime)}` : "Boş belge — açıp yazmaya başlayın" })
+                /* @__PURE__ */ e.jsx("span", { className: "block truncate text-[13px] font-bold text-text-primary", children: I.title }),
+                /* @__PURE__ */ e.jsx("span", { className: "block text-[11.5px] text-text-tertiary", children: I.contentLength > 0 ? `${I.editorName} · ${xt(I.lastModificationTime ?? I.creationTime)}` : "Boş belge — açıp yazmaya başlayın" })
               ]
             }
           ),
@@ -2760,15 +2745,15 @@ function Vr({ taskId: t }) {
             {
               type: "button",
               title: "Sil",
-              "aria-label": `${E.title} belgesini sil`,
-              onClick: () => z(E.id, E.title),
+              "aria-label": `${I.title} belgesini sil`,
+              onClick: () => P(I.id, I.title),
               className: "flex shrink-0 items-center justify-center h-[28px] w-[28px] rounded-[8px] text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-negative-subtle hover:text-negative cursor-pointer",
               children: /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-trash-can text-[12px]" })
             }
           )
         ]
       },
-      E.id
+      I.id
     )) })
   ] });
 }
@@ -2777,14 +2762,14 @@ function Me() {
   const t = (r = (a = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : a.tasks) == null ? void 0 : r.task;
   return t || null;
 }
-function Or(t) {
+function Vr(t) {
   const s = Me();
   return s ? Promise.resolve(s.getLinkedForms(t)) : Promise.reject(new Error("ABP görev servisi yüklenmedi."));
 }
-function Qr(t) {
-  const s = ne(), a = ["task-forms", t], r = Z({
+function Or(t) {
+  const s = ne(), a = ["task-forms", t], r = J({
     queryKey: a,
-    queryFn: () => Or(t),
+    queryFn: () => Vr(t),
     enabled: !!t,
     staleTime: 3e4,
     meta: { persist: !1 },
@@ -2808,8 +2793,8 @@ function Qr(t) {
     isLinking: o.isPending
   };
 }
-function Hr(t, s) {
-  return Z({
+function Qr(t, s) {
+  return J({
     queryKey: ["task-form-options", t],
     queryFn: () => Promise.resolve(Me().getFormOptions(t)),
     enabled: !!t && !!s,
@@ -2817,8 +2802,8 @@ function Hr(t, s) {
     retry: !1
   });
 }
-function Wr(t, s) {
-  return Z({
+function Hr(t, s) {
+  return J({
     queryKey: ["task-form-responses", t, s],
     queryFn: () => Promise.resolve(Me().getFormResponses(t, s)),
     enabled: !!t && !!s,
@@ -2826,8 +2811,8 @@ function Wr(t, s) {
     retry: !1
   });
 }
-function Jr({ taskId: t, documentId: s }) {
-  const { data: a, isLoading: r } = Wr(t, s);
+function Wr({ taskId: t, documentId: s }) {
+  const { data: a, isLoading: r } = Hr(t, s);
   return r ? /* @__PURE__ */ e.jsx("p", { className: "m-0 px-3.5 py-2.5 text-[12px] text-text-tertiary", children: "Yanıtlar yükleniyor…" }) : a != null && a.length ? /* @__PURE__ */ e.jsx("ul", { className: "m-0 list-none p-0", children: a.map((i) => /* @__PURE__ */ e.jsxs("li", { className: "flex items-center justify-between gap-3 px-3.5 py-2 border-t border-subtle", children: [
     /* @__PURE__ */ e.jsxs("span", { className: "flex items-center gap-2 min-w-0", children: [
       /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${i.isGuestSubmission ? "fa-user-clock" : "fa-user"} text-[10px] text-text-tertiary` }),
@@ -2837,25 +2822,25 @@ function Jr({ taskId: t, documentId: s }) {
     /* @__PURE__ */ e.jsx("span", { className: "shrink-0 font-mono text-[11px] text-text-tertiary", children: xt(i.creationTime) })
   ] }, i.id)) }) : /* @__PURE__ */ e.jsx("p", { className: "m-0 px-3.5 py-2.5 text-[12px] text-text-tertiary", children: "Bu görevde henüz yanıt yok." });
 }
-function Zr({ taskId: t }) {
-  const { forms: s, isLoading: a, linkForm: r, unlinkForm: i, setGuestFillable: o, isLinking: n } = Qr(t), [l, x] = f.useState(!1), [m, h] = f.useState(null), { data: p, isLoading: u } = Hr(t, l), c = de("Platform.Tasks.ShareExternally"), d = async (b) => {
+function Jr({ taskId: t }) {
+  const { forms: s, isLoading: a, linkForm: r, unlinkForm: i, setGuestFillable: o, isLinking: n } = Or(t), [l, x] = f.useState(!1), [m, h] = f.useState(null), { data: p, isLoading: u } = Qr(t, l), c = de("Platform.Tasks.ShareExternally"), d = async (b) => {
     try {
       await r(b), x(!1);
     } catch (j) {
-      P(j, "Form bağlanamadı.");
+      E(j, "Form bağlanamadı.");
     }
   }, N = async (b) => {
     if (window.confirm(`“${b.title}” bağlantısı kaldırılsın mı? Form ve toplanmış yanıtlar silinmez.`))
       try {
         await i(b.id);
       } catch (j) {
-        P(j, "Bağlantı kaldırılamadı.");
+        E(j, "Bağlantı kaldırılamadı.");
       }
   }, y = async (b, j) => {
     try {
       await o({ linkId: b.id, value: j });
     } catch (w) {
-      P(w, "Ayar değiştirilemedi.");
+      E(w, "Ayar değiştirilemedi.");
     }
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-3.5", children: [
@@ -2919,7 +2904,7 @@ function Zr({ taskId: t }) {
             ]
           }
         ),
-        b.responseCount > 0 && /* @__PURE__ */ e.jsx(Ga, { children: b.responseCount }),
+        b.responseCount > 0 && /* @__PURE__ */ e.jsx(qa, { children: b.responseCount }),
         b.isPublished && b.slug && /* @__PURE__ */ e.jsx(
           "a",
           {
@@ -2955,11 +2940,11 @@ function Zr({ taskId: t }) {
         ),
         "Süreli paylaşım linkiyle ekip dışından da doldurulabilsin"
       ] }),
-      m === b.documentId && /* @__PURE__ */ e.jsx(Jr, { taskId: t, documentId: b.documentId })
+      m === b.documentId && /* @__PURE__ */ e.jsx(Wr, { taskId: t, documentId: b.documentId })
     ] }, b.id))
   ] });
 }
-const Xr = {
+const Zr = {
   0: "bg-neutral-400",
   1: "bg-text-tertiary",
   2: "bg-warning",
@@ -2972,7 +2957,7 @@ function Nt(t) {
   return Number.isNaN(s.getTime()) ? null : s;
 }
 const Ue = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit" }).format(t) : "—";
-function en({ task: t = {} }) {
+function Xr({ task: t = {} }) {
   const s = f.useMemo(() => [{ ...t, __main: !0 }, ...t.subTasks || []].map((n, l) => ({
     id: n.id || `row-${l}`,
     name: n.title || "Başlıksız görev",
@@ -3024,7 +3009,7 @@ function en({ task: t = {} }) {
         /* @__PURE__ */ e.jsx("div", { className: "relative flex-1 h-full rounded-lg bg-neutral-subtle", children: /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: `absolute top-[7px] bottom-[7px] flex items-center px-2.5 rounded-[7px] shadow-xs ${Xr[o.status] || "bg-primary"}`,
+            className: `absolute top-[7px] bottom-[7px] flex items-center px-2.5 rounded-[7px] shadow-xs ${Zr[o.status] || "bg-primary"}`,
             style: { left: `${x}%`, width: `${m}%` },
             title: `${Ue(o.start)} – ${Ue(o.end)}`,
             children: /* @__PURE__ */ e.jsxs("span", { className: "truncate text-[10.5px] font-bold text-white", children: [
@@ -3060,7 +3045,7 @@ function Bt(t, s = {}) {
     ...s
   };
 }
-function ia({ icon: t, iconTone: s, title: a, note: r, children: i }) {
+function na({ icon: t, iconTone: s, title: a, note: r, children: i }) {
   return /* @__PURE__ */ e.jsxs("div", { className: $e, children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5 px-4 py-3.5 border-b border-subtle", children: [
       /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${t} text-[12px] ${s}` }),
@@ -3070,11 +3055,11 @@ function ia({ icon: t, iconTone: s, title: a, note: r, children: i }) {
     i
   ] });
 }
-function tn({ task: t = {}, readOnly: s = !1 }) {
+function en({ task: t = {}, readOnly: s = !1 }) {
   const a = ne(), r = t.predecessorIds || [], i = () => {
-    var j, w, D;
-    return (D = (w = (j = window == null ? void 0 : window.apya) == null ? void 0 : j.platform) == null ? void 0 : w.tasks) == null ? void 0 : D.task;
-  }, { data: o = [] } = Z({
+    var j, w, S;
+    return (S = (w = (j = window == null ? void 0 : window.apya) == null ? void 0 : j.platform) == null ? void 0 : w.tasks) == null ? void 0 : S.task;
+  }, { data: o = [] } = J({
     queryKey: ["task-dependency-candidates", t.projectId ?? null],
     queryFn: async () => {
       var w;
@@ -3085,7 +3070,7 @@ function tn({ task: t = {}, readOnly: s = !1 }) {
     staleTime: 3e4,
     meta: { persist: !1 },
     retry: !1
-  }), { data: n = [], isLoading: l } = Z({
+  }), { data: n = [], isLoading: l } = J({
     queryKey: ["task-dependency-edges", t.projectId ?? null],
     queryFn: async () => {
       var j;
@@ -3095,7 +3080,7 @@ function tn({ task: t = {}, readOnly: s = !1 }) {
     staleTime: 3e4,
     meta: { persist: !1 },
     retry: !1
-  }), x = f.useMemo(() => new Map(o.map((j) => [j.id, j])), [o]), m = n.filter((j) => j.predecessorTaskId === t.id).map((j) => j.taskId), h = o.filter((j) => j.id !== t.id && !r.includes(j.id) && !m.includes(j.id)), [p, u] = f.useState(""), { data: c = [], isLoading: d } = Z({
+  }), x = f.useMemo(() => new Map(o.map((j) => [j.id, j])), [o]), m = n.filter((j) => j.predecessorTaskId === t.id).map((j) => j.taskId), h = o.filter((j) => j.id !== t.id && !r.includes(j.id) && !m.includes(j.id)), [p, u] = f.useState(""), { data: c = [], isLoading: d } = J({
     queryKey: ["task-predecessors", t.id, r],
     queryFn: async () => {
       const j = i();
@@ -3110,31 +3095,31 @@ function tn({ task: t = {}, readOnly: s = !1 }) {
     meta: { persist: !1 },
     retry: !1
   }), N = async (j) => {
-    var w, D, z;
+    var w, S, P;
     try {
       await Promise.resolve(i().update(t.id, Bt(t, {
-        predecessorIds: r.filter((F) => F !== j)
-      }))), await a.invalidateQueries({ queryKey: ["task-detail", t.id] }), await a.invalidateQueries({ queryKey: ["task-dependency-edges"] }), (z = (D = (w = window == null ? void 0 : window.abp) == null ? void 0 : w.notify) == null ? void 0 : D.info) == null || z.call(D, "Bağlantı kaldırıldı.");
-    } catch (F) {
-      P(F, "Bağlantı kaldırılamadı.");
+        predecessorIds: r.filter((q) => q !== j)
+      }))), await a.invalidateQueries({ queryKey: ["task-detail", t.id] }), await a.invalidateQueries({ queryKey: ["task-dependency-edges"] }), (P = (S = (w = window == null ? void 0 : window.abp) == null ? void 0 : w.notify) == null ? void 0 : S.info) == null || P.call(S, "Bağlantı kaldırıldı.");
+    } catch (q) {
+      E(q, "Bağlantı kaldırılamadı.");
     }
   }, y = async () => {
-    var j, w, D;
+    var j, w, S;
     if (p)
       try {
         await Promise.resolve(i().update(t.id, Bt(t, {
           predecessorIds: [...r, p]
-        }))), u(""), await a.invalidateQueries({ queryKey: ["task-detail", t.id] }), await a.invalidateQueries({ queryKey: ["task-dependency-edges"] }), (D = (w = (j = window == null ? void 0 : window.abp) == null ? void 0 : j.notify) == null ? void 0 : w.success) == null || D.call(w, "Öncül eklendi.");
-      } catch (z) {
-        P(z, "Öncül eklenemedi.");
+        }))), u(""), await a.invalidateQueries({ queryKey: ["task-detail", t.id] }), await a.invalidateQueries({ queryKey: ["task-dependency-edges"] }), (S = (w = (j = window == null ? void 0 : window.abp) == null ? void 0 : j.notify) == null ? void 0 : w.success) == null || S.call(w, "Öncül eklendi.");
+      } catch (P) {
+        E(P, "Öncül eklenemedi.");
       }
   }, b = (j) => {
-    var w, D, z;
-    return (z = (D = (w = window == null ? void 0 : window.apya) == null ? void 0 : w.taskDetail) == null ? void 0 : D.open) == null ? void 0 : z.call(D, j);
+    var w, S, P;
+    return (P = (S = (w = window == null ? void 0 : window.apya) == null ? void 0 : w.taskDetail) == null ? void 0 : S.open) == null ? void 0 : P.call(S, j);
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-4", children: [
     /* @__PURE__ */ e.jsxs(
-      ia,
+      na,
       {
         icon: "fa-arrow-left-long",
         iconTone: "text-warning",
@@ -3204,14 +3189,14 @@ function tn({ task: t = {}, readOnly: s = !1 }) {
       }
     ),
     /* @__PURE__ */ e.jsx(
-      ia,
+      na,
       {
         icon: "fa-arrow-right-long",
         iconTone: "text-primary",
         title: "Ardıl görevler",
         note: "bu görev bitince başlar",
         children: l ? /* @__PURE__ */ e.jsx("p", { className: "m-0 px-4 py-5 text-[12.5px] text-text-tertiary", children: "Yükleniyor…" }) : m.length === 0 ? /* @__PURE__ */ e.jsx(he, { icon: "fa-diagram-project", title: "Ardıl görev yok", description: "Bu görevi öncül olarak gösteren bir görev yok." }) : m.map((j) => {
-          const w = x.get(j), D = w && w.status != null ? be(w.status) : null;
+          const w = x.get(j), S = w && w.status != null ? be(w.status) : null;
           return /* @__PURE__ */ e.jsxs(
             "div",
             {
@@ -3227,7 +3212,7 @@ function tn({ task: t = {}, readOnly: s = !1 }) {
                     children: (w == null ? void 0 : w.title) || "(erişilemeyen görev)"
                   }
                 ),
-                D && /* @__PURE__ */ e.jsx(Pe, { bg: D.bg, fg: D.fg, children: D.label })
+                S && /* @__PURE__ */ e.jsx(Pe, { bg: S.bg, fg: S.fg, children: S.label })
               ]
             },
             j
@@ -3241,8 +3226,8 @@ function ze() {
   var t, s, a;
   return ((a = (s = (t = window == null ? void 0 : window.apya) == null ? void 0 : t.platform) == null ? void 0 : s.tasks) == null ? void 0 : a.task) || null;
 }
-function an(t) {
-  const s = ne(), a = ["task-timelogs", t], r = ["task-active-timelog"], i = Z({
+function tn(t) {
+  const s = ne(), a = ["task-timelogs", t], r = ["task-active-timelog"], i = J({
     queryKey: a,
     queryFn: () => {
       var m;
@@ -3252,7 +3237,7 @@ function an(t) {
     staleTime: 15e3,
     meta: { persist: !1 },
     retry: !1
-  }), o = Z({
+  }), o = J({
     queryKey: r,
     /* Kayıt yokken uç 204 döner, proxy undefined çözer; TanStack v5 undefined'ı
        hata sayıp önceki çalışan kaydı ekranda bırakır (sayaç durmazdı). */
@@ -3289,11 +3274,11 @@ function an(t) {
     isMutating: l.isPending || x.isPending
   };
 }
-function la(t) {
+function ia(t) {
   return t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(t)) : "—";
 }
-function sn({ taskId: t, task: s = {} }) {
-  const a = an(t), r = a.activeLog && a.activeLog.taskId === t ? a.activeLog : null, [i, o] = f.useState(() => Date.now());
+function an({ taskId: t, task: s = {} }) {
+  const a = tn(t), r = a.activeLog && a.activeLog.taskId === t ? a.activeLog : null, [i, o] = f.useState(() => Date.now());
   f.useEffect(() => {
     if (!r) return;
     const d = setInterval(() => o(Date.now()), 1e3);
@@ -3303,7 +3288,7 @@ function sn({ taskId: t, task: s = {} }) {
     try {
       r ? await a.stop() : await a.start();
     } catch (d) {
-      P(d, "Zaman takibi güncellenemedi.");
+      E(d, "Zaman takibi güncellenemedi.");
     }
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-4", children: [
@@ -3326,7 +3311,7 @@ function sn({ taskId: t, task: s = {} }) {
             {
               className: "font-mono text-[32px] font-bold tracking-[-.03em] text-text-primary",
               style: { fontVariantNumeric: "tabular-nums" },
-              children: ar(x)
+              children: tr(x)
             }
           ),
           /* @__PURE__ */ e.jsx("span", { className: "text-[12px] font-medium text-text-tertiary", children: r ? "Kayıt sürüyor" : "Sayaç duraklatıldı" })
@@ -3368,9 +3353,9 @@ function sn({ taskId: t, task: s = {} }) {
               /* @__PURE__ */ e.jsx(bt, { name: d.userName, size: 26 }),
               /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0 truncate text-[12.5px] text-text-primary", children: d.note || d.userName || "Kullanıcı" }),
               /* @__PURE__ */ e.jsxs("span", { className: "shrink-0 font-mono text-[11px] text-text-tertiary lt-860:hidden", children: [
-                la(d.startTime),
+                ia(d.startTime),
                 " → ",
-                N ? "sürüyor" : la(d.endTime)
+                N ? "sürüyor" : ia(d.endTime)
               ] }),
               /* @__PURE__ */ e.jsx("span", { className: "shrink-0 font-mono text-[12.5px] font-bold text-text-primary", children: N ? "Aktif" : yt(d.secondsSpent || 0) })
             ]
@@ -3403,7 +3388,7 @@ const et = [
     order: 1,
     permission: null,
     implemented: !0,
-    component: sr,
+    component: ar,
     surfaces: ["task"]
   },
   {
@@ -3415,7 +3400,7 @@ const et = [
     order: 2,
     permission: null,
     implemented: !0,
-    component: ir,
+    component: nr,
     surfaces: ["task"]
   },
   {
@@ -3429,7 +3414,7 @@ const et = [
     order: 6,
     permission: null,
     implemented: !0,
-    component: zr,
+    component: Ar,
     surfaces: ["task"]
   },
   {
@@ -3441,7 +3426,7 @@ const et = [
     order: 7,
     permission: null,
     implemented: !0,
-    component: Lr,
+    component: zr,
     surfaces: ["task"]
   },
   {
@@ -3453,7 +3438,7 @@ const et = [
     order: 8,
     permission: null,
     implemented: !0,
-    component: Gr,
+    component: qr,
     surfaces: ["task", "project", "tasks"]
   },
   {
@@ -3465,7 +3450,7 @@ const et = [
     order: 10,
     permission: null,
     implemented: !0,
-    component: or,
+    component: lr,
     surfaces: ["task", "project"]
   },
   {
@@ -3477,7 +3462,7 @@ const et = [
     order: 11,
     permission: null,
     implemented: !0,
-    component: en,
+    component: Xr,
     surfaces: ["task", "project", "tasks"]
   },
   {
@@ -3489,7 +3474,7 @@ const et = [
     order: 12,
     permission: null,
     implemented: !0,
-    component: tn,
+    component: en,
     surfaces: ["task", "project"]
   },
   {
@@ -3501,7 +3486,7 @@ const et = [
     order: 13,
     permission: null,
     implemented: !0,
-    component: Br,
+    component: Er,
     // Proje ve /Tasks yüzeylerinde Finans katalog modülü değil SABİT sekme
     // (bütçe kapılı) — o yüzden yalnız 'task'.
     surfaces: ["task"]
@@ -3515,7 +3500,7 @@ const et = [
     order: 14,
     permission: null,
     implemented: !0,
-    component: fr,
+    component: mr,
     surfaces: ["task", "project"]
   },
   {
@@ -3527,7 +3512,7 @@ const et = [
     order: 15,
     permission: null,
     implemented: !0,
-    component: pr,
+    component: ur,
     hidden: !0
     // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
   },
@@ -3540,7 +3525,7 @@ const et = [
     order: 20,
     permission: null,
     implemented: !0,
-    component: cr,
+    component: or,
     hidden: !0
     // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
   },
@@ -3556,7 +3541,7 @@ const et = [
     order: 25,
     permission: "Platform.Tasks.ShareExternally",
     implemented: !0,
-    component: ur,
+    component: xr,
     surfaces: ["task"]
   },
   {
@@ -3596,7 +3581,7 @@ const et = [
     order: 23,
     permission: null,
     implemented: !0,
-    component: sn,
+    component: an,
     surfaces: ["task"]
   },
   {
@@ -3680,7 +3665,7 @@ const et = [
     order: 9,
     permission: null,
     implemented: !0,
-    component: Vr,
+    component: Ur,
     surfaces: ["task", "project"]
   },
   {
@@ -3694,7 +3679,7 @@ const et = [
     order: 9.5,
     permission: null,
     implemented: !0,
-    component: Zr,
+    component: Jr,
     surfaces: ["task", "project"]
   },
   {
@@ -3706,34 +3691,34 @@ const et = [
     order: 34,
     permission: null,
     implemented: !0,
-    component: Ir,
+    component: Br,
     surfaces: ["task", "project", "tasks"]
   }
 ];
-function Qa(t = []) {
+function Oa(t = []) {
   const s = new Set(t);
   return et.filter((a) => !a.hidden).filter((a) => a.implemented && (a.isCore || s.has(a.code))).sort((a, r) => a.order - r.order);
 }
-function Ha(t = []) {
+function Qa(t = []) {
   const s = new Set(t);
   return et.filter((a) => !a.hidden).filter((a) => !a.isCore).filter((a) => !a.permission || de(a.permission)).map((a) => ({ ...a, isAssigned: s.has(a.code) })).sort((a, r) => a.order - r.order);
 }
 let rt = null;
 const ct = /* @__PURE__ */ new Set(), wt = /* @__PURE__ */ new Set();
 let nt = !1;
-function oa() {
+function la() {
   ct.forEach((t) => t());
 }
-function rn(t) {
+function sn(t) {
   return typeof t == "string" && t ? t : t && typeof t == "object" && typeof t.id == "string" && t.id ? t.id : null;
 }
-const J = {
+const W = {
   open(t) {
-    const s = rn(t);
-    s && (rt = s, oa());
+    const s = sn(t);
+    s && (rt = s, la());
   },
   close() {
-    rt = null, oa();
+    rt = null, la();
   },
   subscribe(t) {
     return ct.add(t), () => ct.delete(t);
@@ -3755,79 +3740,79 @@ const J = {
   /** Yalnız yazma olduysa sonuç yayınlar: salt bakıp kapatmak sayfayı yeniden yüklemez.
       'this' kullanılmaz; metot referansla da geçirilebilir. */
   emitResultIfChanged() {
-    nt && J.emitResult();
+    nt && W.emitResult();
   },
   /** Yalnız testler için. */
   reset() {
     rt = null, nt = !1, ct.clear(), wt.clear();
   }
-}, ca = "apya.taskDetail.fullscreen";
-function Wa({ taskId: t, presentation: s = "modal", onClose: a }) {
-  const [r, i] = f.useState(t), [o, n] = f.useState([]), { data: l, isPending: x, isError: m, refetch: h } = Lt(r), p = $a(), u = Ma(l), c = Ka(), d = Ra(r), [N, y] = f.useState("general"), [b, j] = f.useState(!1), w = Le.useRef(null), D = f.useMemo(
+}, oa = "apya.taskDetail.fullscreen";
+function Ha({ taskId: t, presentation: s = "modal", onClose: a }) {
+  const [r, i] = f.useState(t), [o, n] = f.useState([]), { data: l, isPending: x, isError: m, refetch: h } = Lt(r), p = Sa(), u = La(l), c = Ma(), d = Ka(r), [N, y] = f.useState("general"), [b, j] = f.useState(!1), w = Le.useRef(null), S = f.useMemo(
+    () => Oa(d.assignedCodes),
+    [d.assignedCodes]
+  ), P = f.useMemo(
     () => Qa(d.assignedCodes),
     [d.assignedCodes]
-  ), z = f.useMemo(
-    () => Ha(d.assignedCodes),
-    [d.assignedCodes]
-  ), F = D.find((B) => B.code === N) ?? D[0];
+  ), q = S.find((B) => B.code === N) ?? S[0];
   Le.useEffect(() => {
-    F.code !== N && y(F.code);
-  }, [F, N]);
-  const E = F == null ? void 0 : F.component, Q = ne(), [_, Y] = f.useState(
+    q.code !== N && y(q.code);
+  }, [q, N]);
+  const I = q == null ? void 0 : q.component, Q = ne(), [G, Y] = f.useState(
     () => {
       var B;
-      return ((B = window.localStorage) == null ? void 0 : B.getItem(ca)) === "1";
+      return ((B = window.localStorage) == null ? void 0 : B.getItem(oa)) === "1";
     }
-  ), [L, q] = f.useState(!1), [V, U] = f.useState(!1), O = f.useCallback(() => {
+  ), [z, R] = f.useState(!1), [V, O] = f.useState(!1), _ = f.useCallback(() => {
     Kt(), a == null || a();
   }, [a]);
-  za(s === "page" ? null : t, O), Le.useEffect(() => {
+  Aa(s === "page" ? null : t, _), Le.useEffect(() => {
     u.isDirty ? p.markDirty() : p.markClean();
   });
   const X = f.useCallback(() => {
-    L || (U(!1), p.requestClose(O));
-  }, [p, O, L]), H = f.useCallback(() => {
+    z || (O(!1), p.requestClose(_));
+  }, [p, _, z]), Z = f.useCallback(() => {
     Y((B) => {
       var K;
       const A = !B;
-      return (K = window.localStorage) == null || K.setItem(ca, A ? "1" : "0"), A;
+      return (K = window.localStorage) == null || K.setItem(oa, A ? "1" : "0"), A;
     });
-  }, []), T = de("Platform.Tasks.Delete"), [R, G] = f.useState(!1), [ee, oe] = f.useState(!1), ie = f.useCallback(async () => {
+  }, []), D = de("Platform.Tasks.Delete"), [M, U] = f.useState(!1), [ae, ie] = f.useState(!1), oe = f.useCallback(async () => {
     var B, A, K;
-    oe(!0);
+    ie(!0);
     try {
-      await Promise.resolve(window.apya.platform.tasks.task.delete(r)), (K = (A = (B = window == null ? void 0 : window.abp) == null ? void 0 : B.notify) == null ? void 0 : A.info) == null || K.call(A, "Başarıyla silindi."), G(!1), p.markClean(), O();
+      await Promise.resolve(window.apya.platform.tasks.task.delete(r)), (K = (A = (B = window == null ? void 0 : window.abp) == null ? void 0 : B.notify) == null ? void 0 : A.info) == null || K.call(A, "Başarıyla silindi."), U(!1), p.markClean(), _();
     } catch (xe) {
-      P(xe, "Görev silinemedi.");
+      E(xe, "Görev silinemedi.");
     } finally {
-      oe(!1);
+      ie(!1);
     }
-  }, [r, p, O]), ae = f.useCallback(async () => {
+  }, [r, p, _]), se = f.useCallback(async () => {
     var B, A, K;
     if (!u.validate()) return !1;
-    q(!0);
+    R(!0);
     try {
       return await Promise.resolve(
         window.apya.platform.tasks.task.update(r, u.toUpdateDto())
-      ), await Q.invalidateQueries({ queryKey: ["task-detail", r] }), J.emitResult(), (K = (A = (B = window == null ? void 0 : window.abp) == null ? void 0 : B.notify) == null ? void 0 : A.success) == null || K.call(A, "Kaydedildi."), !0;
+      ), await Q.invalidateQueries({ queryKey: ["task-detail", r] }), W.emitResult(), (K = (A = (B = window == null ? void 0 : window.abp) == null ? void 0 : B.notify) == null ? void 0 : A.success) == null || K.call(A, "Kaydedildi."), !0;
     } catch (xe) {
-      return P(xe, "Kaydedilemedi."), !1;
+      return E(xe, "Kaydedilemedi."), !1;
     } finally {
-      q(!1);
+      R(!1);
     }
-  }, [r, u, p, Q]), ce = f.useCallback(() => {
-    ae();
-  }, [ae]), W = f.useCallback(async () => {
-    if (U(!1), !u.validate()) {
+  }, [r, u, p, Q]), H = f.useCallback(() => {
+    se();
+  }, [se]), ce = f.useCallback(async () => {
+    if (O(!1), !u.validate()) {
       p.resolvePendingClose("stay"), y("general");
       return;
     }
-    await ae() ? p.resolvePendingClose("saved") : U(!0);
-  }, [p, u, ae]), se = f.useCallback((B, A) => {
+    await se() ? p.resolvePendingClose("saved") : O(!0);
+  }, [p, u, se]), $ = f.useCallback((B, A) => {
     p.requestClose(() => {
       n((K) => [...K, { id: r, title: (l == null ? void 0 : l.title) ?? "" }]), i(B), y("general"), p.markClean();
     });
-  }, [p, r, l]), $ = f.useCallback((B) => {
+  }, [p, r, l]), ee = f.useCallback((B) => {
     p.requestClose(() => {
       n((A) => {
         const K = A.findIndex((xe) => xe.id === B);
@@ -3838,13 +3823,13 @@ function Wa({ taskId: t, presentation: s = "modal", onClose: a }) {
     try {
       await d.addFeature(B), y(B), j(!1);
     } catch (A) {
-      P(A, "Özellik eklenemedi.");
+      E(A, "Özellik eklenemedi.");
     }
   }, [d]), g = f.useCallback(async (B) => {
     try {
       await d.removeFeature(B), y((A) => A === B ? "general" : A);
     } catch (A) {
-      P(A, "Özellik kaldırılamadı.");
+      E(A, "Özellik kaldırılamadı.");
     }
   }, [d]);
   Le.useEffect(() => {
@@ -3868,19 +3853,19 @@ function Wa({ taskId: t, presentation: s = "modal", onClose: a }) {
     /* @__PURE__ */ e.jsx(re, { variant: "ghost", onClick: () => h(), children: "Tekrar dene" })
   ] }) : /* @__PURE__ */ e.jsxs("div", { className: "flex min-h-0 flex-col gap-[var(--apya-space-4)]", children: [
     /* @__PURE__ */ e.jsx(
-      Ws,
+      Hs,
       {
         trail: o,
         current: { id: r, title: (l == null ? void 0 : l.title) ?? "" },
-        onNavigate: $
+        onNavigate: ee
       }
     ),
     /* @__PURE__ */ e.jsxs("div", { className: "relative", ref: w, children: [
       /* @__PURE__ */ e.jsx(
-        Os,
+        Vs,
         {
-          tabs: D,
-          activeCode: F.code,
+          tabs: S,
+          activeCode: q.code,
           onSelect: (B) => {
             y(B), j(!1);
           },
@@ -3889,9 +3874,9 @@ function Wa({ taskId: t, presentation: s = "modal", onClose: a }) {
         }
       ),
       b && /* @__PURE__ */ e.jsx(
-        Hs,
+        Qs,
         {
-          entries: z,
+          entries: P,
           busyCode: d.isMutating ? d.mutatingCode : null,
           onAdd: C,
           onRemove: g
@@ -3903,11 +3888,11 @@ function Wa({ taskId: t, presentation: s = "modal", onClose: a }) {
       {
         role: "tabpanel",
         id: "task-feature-tabpanel",
-        "aria-labelledby": `task-tab-${F.code}`,
+        "aria-labelledby": `task-tab-${q.code}`,
         className: "grid gap-[var(--apya-space-5)] tablet:grid-cols-[2fr_1fr]",
         children: [
-          F.code === "general" ? /* @__PURE__ */ e.jsx(
-            Ys,
+          q.code === "general" ? /* @__PURE__ */ e.jsx(
+            Gs,
             {
               values: u.values,
               errors: u.errors,
@@ -3915,17 +3900,17 @@ function Wa({ taskId: t, presentation: s = "modal", onClose: a }) {
               assigneeOptions: c.options,
               isLoadingAssignees: c.isLoading
             }
-          ) : /* @__PURE__ */ e.jsx(f.Suspense, { fallback: /* @__PURE__ */ e.jsx(ke, { className: "h-24 w-full" }), children: E && /* @__PURE__ */ e.jsx(
-            E,
+          ) : /* @__PURE__ */ e.jsx(f.Suspense, { fallback: /* @__PURE__ */ e.jsx(ke, { className: "h-24 w-full" }), children: I && /* @__PURE__ */ e.jsx(
+            I,
             {
               taskId: r,
               task: l,
               form: u,
-              onOpenSubtask: se
+              onOpenSubtask: $
             }
           ) }),
           /* @__PURE__ */ e.jsx(
-            _s,
+            Ys,
             {
               task: l,
               creatorName: c.nameById.get(l.creatorId),
@@ -3935,33 +3920,33 @@ function Wa({ taskId: t, presentation: s = "modal", onClose: a }) {
         ]
       }
     )
-  ] }), I = s === "page" ? zs : As;
+  ] }), F = s === "page" ? As : Fs;
   return /* @__PURE__ */ e.jsxs(
-    I,
+    F,
     {
       open: !0,
-      fullscreen: _,
+      fullscreen: G,
       onRequestClose: X,
       title: l ? `Görev Detayı: ${l.title}` : "Görev Detayı",
       header: /* @__PURE__ */ e.jsx(
-        Ms,
+        Ls,
         {
           task: l ?? { title: "Yükleniyor…" },
-          canDelete: T,
-          fullscreen: _,
-          onToggleFullscreen: H,
+          canDelete: D,
+          fullscreen: G,
+          onToggleFullscreen: Z,
           onClose: X,
-          onDelete: () => G(!0)
+          onDelete: () => U(!0)
         }
       ),
       footer: /* @__PURE__ */ e.jsx(
-        Rs,
+        Ks,
         {
           lastSavedAt: l == null ? void 0 : l.lastModificationTime,
           isDirty: p.isDirty,
-          isSaving: L,
+          isSaving: z,
           onCancel: X,
-          onSave: ce
+          onSave: H
         }
       ),
       children: [
@@ -3970,34 +3955,34 @@ function Wa({ taskId: t, presentation: s = "modal", onClose: a }) {
           At,
           {
             open: p.pendingClose,
-            isSaving: L,
+            isSaving: z,
             errorText: V ? ue("Common:Unsaved:SaveFailed", "Kaydedilemedi. Düzenlemeye dönebilir ya da değişiklikleri atabilirsiniz.") : void 0,
             onStay: () => {
-              U(!1), p.resolvePendingClose("stay");
+              O(!1), p.resolvePendingClose("stay");
             },
             onDiscard: () => {
-              U(!1), u.reset(), p.resolvePendingClose("discard");
+              O(!1), u.reset(), p.resolvePendingClose("discard");
             },
-            onSave: W
+            onSave: ce
           }
         ),
-        R && /* @__PURE__ */ e.jsx(
-          nn,
+        M && /* @__PURE__ */ e.jsx(
+          rn,
           {
             taskTitle: (l == null ? void 0 : l.title) ?? "",
-            busy: ee,
-            onCancel: () => G(!1),
-            onConfirm: ie
+            busy: ae,
+            onCancel: () => U(!1),
+            onConfirm: oe
           }
         )
       ]
     }
   );
 }
-function nn({ taskTitle: t, busy: s, onCancel: a, onConfirm: r }) {
+function rn({ taskTitle: t, busy: s, onCancel: a, onConfirm: r }) {
   const [i, o] = f.useState(""), n = i.trim() === "SİL";
   return /* @__PURE__ */ e.jsxs(
-    ln,
+    nn,
     {
       label: "Görev silinecek",
       title: "Görev silinecek",
@@ -4038,7 +4023,7 @@ function nn({ taskTitle: t, busy: s, onCancel: a, onConfirm: r }) {
     }
   );
 }
-function ln({ label: t, title: s, description: a, children: r, actions: i }) {
+function nn({ label: t, title: s, description: a, children: r, actions: i }) {
   return /* @__PURE__ */ e.jsx(
     "div",
     {
@@ -4055,11 +4040,11 @@ function ln({ label: t, title: s, description: a, children: r, actions: i }) {
     }
   );
 }
-const on = [
+const ln = [
   { value: !1, icon: "fa-globe", title: "Herkese açık", desc: "Görevi, erişimi olan tüm ekip üyeleri görebilir." },
   { value: !0, icon: "fa-lock", title: "Özel görev", desc: "Görev gizli işaretlenir; yalnızca yetkili kullanıcılar erişir." }
 ];
-function cn({ isPrivate: t = !1, onChange: s = () => {
+function on({ isPrivate: t = !1, onChange: s = () => {
 }, disabled: a = !1 }) {
   const r = !!t, [i, o] = f.useState(null);
   return /* @__PURE__ */ e.jsxs(Ce, { modal: !0, children: [
@@ -4088,7 +4073,7 @@ function cn({ isPrivate: t = !1, onChange: s = () => {
             /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-shield-halved text-primary text-base" }),
             /* @__PURE__ */ e.jsx("h3", { className: "text-[14px] font-bold text-text-primary", children: "Görünürlük" })
           ] }),
-          /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-2", children: on.map((n) => {
+          /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-2", children: ln.map((n) => {
             const l = r === n.value;
             return /* @__PURE__ */ e.jsxs(
               "button",
@@ -4111,24 +4096,24 @@ function cn({ isPrivate: t = !1, onChange: s = () => {
             );
           }) }),
           /* @__PURE__ */ e.jsx("p", { className: "text-[11px] text-text-tertiary mt-3", children: "Değişiklik “Kaydet” ile uygulanır." }),
-          /* @__PURE__ */ e.jsx(Ss, { className: "fill-surface-base stroke-subtle" })
+          /* @__PURE__ */ e.jsx(Ts, { className: "fill-surface-base stroke-subtle" })
         ]
       }
     ) })
   ] });
 }
-const da = "z-popover rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast max-h-[var(--radix-popover-content-available-height)] overflow-y-auto", dn = "flex items-center gap-[11px] w-full px-[9px] py-2 rounded-[9px] text-[12.5px] font-medium text-left cursor-pointer hover:bg-surface-hover", xn = [
+const ca = "z-popover rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast max-h-[var(--radix-popover-content-available-height)] overflow-y-auto", cn = "flex items-center gap-[11px] w-full px-[9px] py-2 rounded-[9px] text-[12.5px] font-medium text-left cursor-pointer hover:bg-surface-hover", dn = [
   { what: "Kaydet", key: "Ctrl S" },
   { what: "Yorum gönder", key: "Ctrl ↵" },
   { what: "Kapat / iptal", key: "Esc" }
 ];
-function un({ children: t }) {
+function xn({ children: t }) {
   return /* @__PURE__ */ e.jsx(zt, { asChild: !0, children: t });
 }
-function pn({ children: t }) {
+function un({ children: t }) {
   return /* @__PURE__ */ e.jsx("kbd", { className: "inline-flex items-center h-[19px] px-1.5 rounded-[5px] border border-default border-b-2 bg-neutral-subtle font-mono text-[10px] font-semibold text-text-secondary", children: t });
 }
-function mn({
+function pn({
   task: t = {},
   presentation: s = "modal",
   onClose: a,
@@ -4149,57 +4134,55 @@ function mn({
   isWatched: d,
   onToggleWatch: N,
   onDuplicate: y,
-  onArchive: b,
-  onCancelTask: j,
-  onDelete: w,
-  onOpenTransfer: D,
-  onExportPdf: z,
+  onCancelTask: b,
+  onDelete: j,
+  onOpenTransfer: w,
+  onExportPdf: S,
   /* Yetki (root hesaplar; sunucudaki EnsureCanMutateTaskAsync ile aynı kural). Eskiden
      menü ve alanlar herkese açıktı, yetkisiz kullanıcı tıklayınca 403 alıyordu. */
-  canEdit: F = !0,
-  canChangeStatus: E = !0,
-  canDelete: Q = !0
+  canEdit: P = !0,
+  canChangeStatus: q = !0,
+  canDelete: I = !0
 }) {
-  const [_, Y] = f.useState(!1), [L, q] = f.useState(null), [V, U] = f.useState(!1), O = f.useRef(null), X = f.useId(), H = Fe(L), T = n ?? t.status, R = Ba(l), G = Ia(
-    R,
-    T,
+  const [Q, G] = f.useState(!1), [Y, z] = f.useState(null), [R, V] = f.useState(!1), O = f.useRef(null), _ = f.useId(), X = Fe(Y), Z = n ?? t.status, D = Ea(l), M = Ba(
+    D,
+    Z,
     x === void 0 ? t.boardColumnId : x
-  ), ee = { ...be(T), ...G ? { label: G.label } : {} }, oe = ($) => {
+  ), U = { ...be(Z), ...M ? { label: M.label } : {} }, ae = ($) => {
     o("status", $.status), o("boardColumnId", $.boardColumnId);
-  }, ie = t.code || "GRV-—", ae = () => {
+  }, ie = t.code || "GRV-—", oe = () => {
     var $;
-    ($ = navigator.clipboard) == null || $.writeText(ie), Y(!0), setTimeout(() => Y(!1), 1800);
-  }, ce = () => {
-    var $, C, g, v;
-    ($ = navigator.clipboard) == null || $.writeText(`${window.location.origin}/Tasks?task=${t.id || ""}`), (v = (g = (C = window == null ? void 0 : window.abp) == null ? void 0 : C.notify) == null ? void 0 : g.success) == null || v.call(g, "Görev bağlantısı panoya kopyalandı.");
-  }, W = ($) => () => {
-    U(!1), $ == null || $();
-  }, se = [
-    { label: "Bağlantıyı kopyala", icon: "fa-link", onClick: W(ce) },
-    { label: "Çoğalt", icon: "fa-copy", allowed: F, onClick: W(y) },
-    { label: "Başka projeye kopyala", icon: "fa-clone", allowed: F, onClick: W(() => D == null ? void 0 : D("copy")) },
-    { label: "Taşı (başka proje)", icon: "fa-right-left", separator: !0, allowed: F, onClick: W(() => D == null ? void 0 : D("move")) },
-    { label: d ? "Takibi bırak" : "Takip et", icon: "fa-eye", onClick: W(N) },
-    { label: "Arşivle", icon: "fa-box-archive", separator: !0, allowed: E, onClick: W(b) },
-    { label: "Görevi iptal et", icon: "fa-ban", allowed: E && t.status !== 0, onClick: W(j) },
-    { label: "Yazdır", icon: "fa-print", kbd: "Ctrl P", onClick: W(() => window.print()) },
-    { label: "PDF olarak dışa aktar", icon: "fa-file-pdf", onClick: W(z) },
-    { label: "Sil", icon: "fa-trash-can", separator: !0, danger: !0, allowed: Q, onClick: W(w) }
+    ($ = navigator.clipboard) == null || $.writeText(ie), G(!0), setTimeout(() => G(!1), 1800);
+  }, se = () => {
+    var $, ee, C, g;
+    ($ = navigator.clipboard) == null || $.writeText(`${window.location.origin}/Tasks?task=${t.id || ""}`), (g = (C = (ee = window == null ? void 0 : window.abp) == null ? void 0 : ee.notify) == null ? void 0 : C.success) == null || g.call(C, "Görev bağlantısı panoya kopyalandı.");
+  }, H = ($) => () => {
+    V(!1), $ == null || $();
+  }, ce = [
+    { label: "Bağlantıyı kopyala", icon: "fa-link", onClick: H(se) },
+    { label: "Çoğalt", icon: "fa-copy", allowed: P, onClick: H(y) },
+    { label: "Başka projeye kopyala", icon: "fa-clone", allowed: P, onClick: H(() => w == null ? void 0 : w("copy")) },
+    { label: "Taşı (başka proje)", icon: "fa-right-left", separator: !0, allowed: P, onClick: H(() => w == null ? void 0 : w("move")) },
+    { label: d ? "Takibi bırak" : "Takip et", icon: "fa-eye", onClick: H(N) },
+    { label: "Görevi iptal et", icon: "fa-ban", separator: !0, allowed: q && t.status !== 0, onClick: H(b) },
+    { label: "Yazdır", icon: "fa-print", kbd: "Ctrl P", onClick: H(() => window.print()) },
+    { label: "PDF olarak dışa aktar", icon: "fa-file-pdf", onClick: H(S) },
+    { label: "Sil", icon: "fa-trash-can", separator: !0, danger: !0, allowed: I, onClick: H(j) }
   ].filter(($) => $.allowed !== !1);
-  return /* @__PURE__ */ e.jsxs("header", { ref: q, className: "shrink-0 px-6 lt-860:px-4 pt-[18px] pb-4 border-b border-subtle bg-surface-base", children: [
+  return /* @__PURE__ */ e.jsxs("header", { ref: z, className: "shrink-0 px-6 lt-860:px-4 pt-[18px] pb-4 border-b border-subtle bg-surface-base", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "flex items-start justify-between gap-4", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2 flex-wrap min-w-0 flex-1", children: [
         /* @__PURE__ */ e.jsxs(
           "button",
           {
             type: "button",
-            onClick: ae,
+            onClick: oe,
             title: "Kodu kopyala",
             className: "flex items-center gap-1.5 h-[26px] px-[9px] rounded-[7px] border border-primary bg-primary-subtle text-primary font-mono text-[11px] font-bold tracking-[.04em] cursor-pointer",
             children: [
               /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-hashtag text-[9px] opacity-70" }),
               /* @__PURE__ */ e.jsx("span", { children: ie }),
-              /* @__PURE__ */ e.jsx("i", { className: `${_ ? "fa-solid fa-check" : "fa-regular fa-copy"} text-[9px] opacity-60` })
+              /* @__PURE__ */ e.jsx("i", { className: `${Q ? "fa-solid fa-check" : "fa-regular fa-copy"} text-[9px] opacity-60` })
             ]
           }
         ),
@@ -4208,29 +4191,29 @@ function mn({
             "button",
             {
               type: "button",
-              disabled: !F,
-              className: `flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] border border-default text-[12px] font-semibold ${F ? "cursor-pointer" : "cursor-default"} ${ee.bg} ${ee.fg}`,
+              disabled: !P,
+              className: `flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] border border-default text-[12px] font-semibold ${P ? "cursor-pointer" : "cursor-default"} ${U.bg} ${U.fg}`,
               children: [
                 /* @__PURE__ */ e.jsx("span", { className: "h-[7px] w-[7px] rounded-full bg-current animate-pulse" }),
-                /* @__PURE__ */ e.jsx("span", { children: ee.label }),
-                F && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-chevron-down text-[8px] opacity-60" })
+                /* @__PURE__ */ e.jsx("span", { children: U.label }),
+                P && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-chevron-down text-[8px] opacity-60" })
               ]
             }
           ) }),
-          /* @__PURE__ */ e.jsx(Te, { container: H, children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${da} w-[196px]`, children: [
+          /* @__PURE__ */ e.jsx(Te, { container: X, children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${ca} w-[196px]`, children: [
             /* @__PURE__ */ e.jsx("div", { className: "px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary", children: "Durumu değiştir" }),
-            R.map(($) => {
-              const C = (G == null ? void 0 : G.key) === $.key;
-              return /* @__PURE__ */ e.jsx(un, { children: /* @__PURE__ */ e.jsxs(
+            D.map(($) => {
+              const ee = (M == null ? void 0 : M.key) === $.key;
+              return /* @__PURE__ */ e.jsx(xn, { children: /* @__PURE__ */ e.jsxs(
                 "button",
                 {
                   type: "button",
-                  onClick: () => oe($),
-                  className: `flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${C ? "bg-primary-subtle text-primary" : "text-text-primary hover:bg-surface-hover"}`,
+                  onClick: () => ae($),
+                  className: `flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${ee ? "bg-primary-subtle text-primary" : "text-text-primary hover:bg-surface-hover"}`,
                   children: [
                     /* @__PURE__ */ e.jsx("span", { className: `h-2 w-2 rounded-full ${$.dot}` }),
                     /* @__PURE__ */ e.jsx("span", { className: "flex-1", children: $.label }),
-                    C && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[10px]" })
+                    ee && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[10px]" })
                   ]
                 }
               ) }, $.key);
@@ -4241,7 +4224,7 @@ function mn({
           /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-eye text-[10px]" }),
           "Takip ediliyor"
         ] }),
-        !F && /* @__PURE__ */ e.jsxs(
+        !P && /* @__PURE__ */ e.jsxs(
           "span",
           {
             title: "Bu görevi yalnız oluşturan, atanan kişi ya da ekip yöneticisi düzenleyebilir. Yorum yazabilirsiniz.",
@@ -4255,11 +4238,11 @@ function mn({
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-1.5 shrink-0", children: [
         /* @__PURE__ */ e.jsx("div", { className: "lt-860:hidden", children: /* @__PURE__ */ e.jsx(
-          cn,
+          on,
           {
             isPrivate: p ?? !!t.isPrivate,
             onChange: ($) => o("isPrivate", $),
-            disabled: !F
+            disabled: !P
           }
         ) }),
         /* @__PURE__ */ e.jsx("div", { className: "h-5 w-px bg-border-default mx-1" }),
@@ -4273,32 +4256,32 @@ function mn({
             children: /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${r ? "fa-compress" : "fa-expand"} text-[12px]` })
           }
         ),
-        /* @__PURE__ */ e.jsxs(Ce, { modal: !0, open: V, onOpenChange: U, children: [
+        /* @__PURE__ */ e.jsxs(Ce, { modal: !0, open: R, onOpenChange: V, children: [
           /* @__PURE__ */ e.jsx(De, { asChild: !0, children: /* @__PURE__ */ e.jsx(
             "button",
             {
               type: "button",
               title: "Diğer seçenekler",
-              className: `flex items-center justify-center h-8 w-8 rounded-[9px] cursor-pointer ${V ? "bg-surface-hover text-text-primary" : "text-text-tertiary hover:bg-surface-hover hover:text-text-primary"}`,
+              className: `flex items-center justify-center h-8 w-8 rounded-[9px] cursor-pointer ${R ? "bg-surface-hover text-text-primary" : "text-text-tertiary hover:bg-surface-hover hover:text-text-primary"}`,
               children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-ellipsis text-sm" })
             }
           ) }),
-          /* @__PURE__ */ e.jsx(Te, { container: H, children: /* @__PURE__ */ e.jsxs(
+          /* @__PURE__ */ e.jsx(Te, { container: X, children: /* @__PURE__ */ e.jsxs(
             Se,
             {
               sideOffset: 6,
               align: "end",
-              collisionBoundary: H ?? [],
+              collisionBoundary: X ?? [],
               collisionPadding: 12,
-              className: `${da} w-[244px]`,
+              className: `${ca} w-[244px]`,
               children: [
-                se.map(($) => /* @__PURE__ */ e.jsxs(
+                ce.map(($) => /* @__PURE__ */ e.jsxs(
                   "button",
                   {
                     type: "button",
                     onClick: $.onClick,
                     className: [
-                      dn,
+                      cn,
                       $.danger ? "text-negative" : "text-text-secondary",
                       $.separator ? "border-t border-subtle mt-[5px]" : ""
                     ].join(" "),
@@ -4315,9 +4298,9 @@ function mn({
                     /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-keyboard text-[11px] text-text-tertiary" }),
                     /* @__PURE__ */ e.jsx("span", { className: "text-[10px] font-extrabold uppercase tracking-[.09em] text-text-tertiary", children: "Kısayollar" })
                   ] }),
-                  xn.map(($) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-2.5 py-1", children: [
+                  dn.map(($) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-2.5 py-1", children: [
                     /* @__PURE__ */ e.jsx("span", { className: "text-[11.5px] text-text-secondary", children: $.what }),
-                    /* @__PURE__ */ e.jsx(pn, { children: $.key })
+                    /* @__PURE__ */ e.jsx(un, { children: $.key })
                   ] }, $.what))
                 ] })
               ]
@@ -4343,15 +4326,15 @@ function mn({
           ref: O,
           role: "textbox",
           "aria-label": ue("Tasks:Detail:TitleLabel", "Görev başlığı"),
-          "aria-readonly": !F || void 0,
+          "aria-readonly": !P || void 0,
           "aria-invalid": !!h || void 0,
-          "aria-describedby": h ? X : void 0,
-          contentEditable: F,
+          "aria-describedby": h ? _ : void 0,
+          contentEditable: P,
           suppressContentEditableWarning: !0,
           spellCheck: !1,
-          onInput: F ? ($) => o("title", $.currentTarget.textContent.trim()) : void 0,
-          onBlur: F ? ($) => o("title", $.currentTarget.textContent.trim()) : void 0,
-          className: `flex-1 min-w-0 text-[24px] lt-560:text-[20px] font-extrabold tracking-[-.025em] leading-[1.2] text-text-primary px-2 -ml-2 py-[3px] rounded-[9px] border ${h ? "border-negative" : "border-transparent"} ${F ? `cursor-text hover:bg-neutral-subtle focus:bg-neutral-subtle focus:shadow-focus focus:outline-none ${h ? "" : "hover:border-subtle focus:border-focus"}` : ""}`,
+          onInput: P ? ($) => o("title", $.currentTarget.textContent.trim()) : void 0,
+          onBlur: P ? ($) => o("title", $.currentTarget.textContent.trim()) : void 0,
+          className: `flex-1 min-w-0 text-[24px] lt-560:text-[20px] font-extrabold tracking-[-.025em] leading-[1.2] text-text-primary px-2 -ml-2 py-[3px] rounded-[9px] border ${h ? "border-negative" : "border-transparent"} ${P ? `cursor-text hover:bg-neutral-subtle focus:bg-neutral-subtle focus:shadow-focus focus:outline-none ${h ? "" : "hover:border-subtle focus:border-focus"}` : ""}`,
           children: m ?? t.title ?? "Başlıksız görev"
         }
       ),
@@ -4366,10 +4349,10 @@ function mn({
         }
       )
     ] }),
-    h && /* @__PURE__ */ e.jsx("p", { id: X, role: "alert", className: "mt-1 mb-0 text-[12px] font-semibold text-negative", children: h })
+    h && /* @__PURE__ */ e.jsx("p", { id: _, role: "alert", className: "mt-1 mb-0 text-[12px] font-semibold text-negative", children: h })
   ] });
 }
-const it = "z-popover rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast", xa = "w-full h-[34px] pl-[31px] pr-3 rounded-[9px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none";
+const it = "z-popover rounded-[14px] border border-default bg-surface-elevated p-2 shadow-float animate-fade-in-fast", da = "w-full h-[34px] pl-[31px] pr-3 rounded-[9px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none";
 function Ne({ children: t }) {
   return /* @__PURE__ */ e.jsx(zt, { asChild: !0, children: t });
 }
@@ -4379,7 +4362,7 @@ function ye({ label: t, children: s }) {
     s
   ] });
 }
-function ua({ name: t, size: s = 26 }) {
+function xa({ name: t, size: s = 26 }) {
   return /* @__PURE__ */ e.jsx(
     "span",
     {
@@ -4389,12 +4372,12 @@ function ua({ name: t, size: s = 26 }) {
     }
   );
 }
-function pa(t) {
+function ua(t) {
   if (t == null) return "—";
   const s = Math.max(0, Math.round(Number(t) * 60)), a = Math.floor(s / 60), r = s % 60;
   return a ? r ? `${a}s ${r}dk` : `${a}s` : `${r}dk`;
 }
-function fn({
+function mn({
   task: t = {},
   assigneeOptions: s = [],
   projectOptions: a = [],
@@ -4421,21 +4404,21 @@ function fn({
   dueDateError: j
 }) {
   var C, g;
-  const w = f.useId(), D = f.useId(), [z, F] = f.useState(""), [E, Q] = f.useState(""), [_, Y] = f.useState(""), [L, q] = f.useState(!1), [V, U] = f.useState(null), O = i ?? t.status, X = Ba(o), H = Ia(
+  const w = f.useId(), S = f.useId(), [P, q] = f.useState(""), [I, Q] = f.useState(""), [G, Y] = f.useState(""), [z, R] = f.useState(!1), [V, O] = f.useState(null), _ = i ?? t.status, X = Ea(o), Z = Ba(
     X,
-    O,
+    _,
     n === void 0 ? t.boardColumnId : n
-  ), T = { ...be(O), ...H ? { label: H.label } : {} }, R = (v) => {
+  ), D = { ...be(_), ...Z ? { label: Z.label } : {} }, M = (v) => {
     r("status", v.status), r("boardColumnId", v.boardColumnId);
-  }, G = ft(l ?? t.priority), ee = x ?? t.assigneeId ?? null, oe = m ?? t.projectId ?? null, ie = ((C = s.find((v) => v.value === ee)) == null ? void 0 : C.label) || t.assigneeName || "Atanmamış", ae = ((g = a.find((v) => v.value === oe)) == null ? void 0 : g.label) || t.projectName || "Projesiz", ce = Pa(h ?? t.dueDate), W = s.filter(
-    (v) => !z || v.label.toLowerCase().includes(z.toLowerCase())
-  ), se = a.filter(
-    (v) => !E || v.label.toLowerCase().includes(E.toLowerCase())
-  ), $ = () => {
-    const v = _.trim();
-    v && !u.includes(v) && r("tagNames", [...u, v]), Y(""), q(!1);
+  }, U = ft(l ?? t.priority), ae = x ?? t.assigneeId ?? null, ie = m ?? t.projectId ?? null, oe = ((C = s.find((v) => v.value === ae)) == null ? void 0 : C.label) || t.assigneeName || "Atanmamış", se = ((g = a.find((v) => v.value === ie)) == null ? void 0 : g.label) || t.projectName || "Projesiz", H = $a(h ?? t.dueDate), ce = s.filter(
+    (v) => !P || v.label.toLowerCase().includes(P.toLowerCase())
+  ), $ = a.filter(
+    (v) => !I || v.label.toLowerCase().includes(I.toLowerCase())
+  ), ee = () => {
+    const v = G.trim();
+    v && !u.includes(v) && r("tagNames", [...u, v]), Y(""), R(!1);
   };
-  return /* @__PURE__ */ e.jsx("div", { ref: U, className: "px-6 lt-860:px-4 py-[18px] border-b border-subtle bg-surface-base", children: /* @__PURE__ */ e.jsx(
+  return /* @__PURE__ */ e.jsx("div", { ref: O, className: "px-6 lt-860:px-4 py-[18px] border-b border-subtle bg-surface-base", children: /* @__PURE__ */ e.jsx(
     "fieldset",
     {
       disabled: y,
@@ -4448,8 +4431,8 @@ function fn({
               type: "button",
               className: "flex items-center gap-[9px] max-w-full px-[9px] -ml-[9px] py-[5px] rounded-[9px] border border-transparent hover:bg-neutral-subtle hover:border-subtle cursor-pointer",
               children: [
-                /* @__PURE__ */ e.jsx(ua, { name: ee ? ie : null }),
-                /* @__PURE__ */ e.jsx("span", { className: "text-[13px] font-semibold text-text-primary truncate", children: ie }),
+                /* @__PURE__ */ e.jsx(xa, { name: ae ? oe : null }),
+                /* @__PURE__ */ e.jsx("span", { className: "text-[13px] font-semibold text-text-primary truncate", children: oe }),
                 /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-chevron-down text-[8px] text-text-tertiary" })
               ]
             }
@@ -4462,10 +4445,10 @@ function fn({
                 {
                   autoFocus: !0,
                   type: "text",
-                  value: z,
-                  onChange: (v) => F(v.target.value),
+                  value: P,
+                  onChange: (v) => q(v.target.value),
                   placeholder: "Kişi ara…",
-                  className: xa
+                  className: da
                 }
               )
             ] }),
@@ -4475,7 +4458,7 @@ function fn({
                 {
                   type: "button",
                   onClick: () => r("assigneeId", null),
-                  className: `flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] text-left cursor-pointer ${ee ? "text-text-primary hover:bg-surface-hover" : "bg-primary-subtle text-primary font-semibold"}`,
+                  className: `flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] text-left cursor-pointer ${ae ? "text-text-primary hover:bg-surface-hover" : "bg-primary-subtle text-primary font-semibold"}`,
                   children: [
                     /* @__PURE__ */ e.jsx("span", { className: "flex h-6 w-6 items-center justify-center rounded-full bg-neutral-subtle text-text-tertiary", children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-user-slash text-[9px]" }) }),
                     /* @__PURE__ */ e.jsx("span", { children: "Atanmamış" })
@@ -4483,16 +4466,16 @@ function fn({
                 }
               ) }),
               s.length === 0 && /* @__PURE__ */ e.jsx("div", { className: "px-2 py-1.5 text-[12px] text-text-tertiary", children: "Kullanıcı listesi yükleniyor…" }),
-              W.map((v) => /* @__PURE__ */ e.jsx(Ne, { children: /* @__PURE__ */ e.jsxs(
+              ce.map((v) => /* @__PURE__ */ e.jsx(Ne, { children: /* @__PURE__ */ e.jsxs(
                 "button",
                 {
                   type: "button",
                   onClick: () => r("assigneeId", v.value),
-                  className: `flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-left cursor-pointer ${ee === v.value ? "bg-primary-subtle" : "hover:bg-surface-hover"}`,
+                  className: `flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-left cursor-pointer ${ae === v.value ? "bg-primary-subtle" : "hover:bg-surface-hover"}`,
                   children: [
-                    /* @__PURE__ */ e.jsx(ua, { name: v.label, size: 24 }),
+                    /* @__PURE__ */ e.jsx(xa, { name: v.label, size: 24 }),
                     /* @__PURE__ */ e.jsx("span", { className: "flex-1 text-[12.5px] font-semibold text-text-primary truncate", children: v.label }),
-                    ee === v.value && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[10px] text-primary" })
+                    ae === v.value && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[10px] text-primary" })
                   ]
                 }
               ) }, v.value))
@@ -4501,7 +4484,7 @@ function fn({
         ] }) }),
         /* @__PURE__ */ e.jsxs(ye, { label: "Son tarih", children: [
           /* @__PURE__ */ e.jsxs("label", { className: "flex items-center gap-[9px] px-[9px] -ml-[9px] py-[5px] rounded-[9px] border border-transparent hover:bg-neutral-subtle hover:border-subtle cursor-pointer", children: [
-            /* @__PURE__ */ e.jsx("i", { className: `fa-regular fa-calendar text-[13px] ${ce.tone}` }),
+            /* @__PURE__ */ e.jsx("i", { className: `fa-regular fa-calendar text-[13px] ${H.tone}` }),
             /* @__PURE__ */ e.jsx(
               "input",
               {
@@ -4515,7 +4498,7 @@ function fn({
               }
             )
           ] }),
-          j ? /* @__PURE__ */ e.jsx("span", { id: w, role: "alert", className: "-mt-0.5 text-[10.5px] font-semibold text-negative", children: j }) : ce.hint && /* @__PURE__ */ e.jsx("span", { className: `-mt-0.5 text-[10.5px] font-semibold ${ce.tone}`, children: ce.hint })
+          j ? /* @__PURE__ */ e.jsx("span", { id: w, role: "alert", className: "-mt-0.5 text-[10.5px] font-semibold text-negative", children: j }) : H.hint && /* @__PURE__ */ e.jsx("span", { className: `-mt-0.5 text-[10.5px] font-semibold ${H.tone}`, children: H.hint })
         ] }),
         /* @__PURE__ */ e.jsxs(ye, { label: "Başlangıç", children: [
           /* @__PURE__ */ e.jsxs("label", { className: "flex items-center gap-[9px] px-[9px] -ml-[9px] py-[5px] rounded-[9px] border border-transparent hover:bg-neutral-subtle hover:border-subtle cursor-pointer", children: [
@@ -4528,12 +4511,12 @@ function fn({
                 onChange: (v) => r("startDate", v.target.value),
                 "aria-label": "Başlangıç",
                 "aria-invalid": !!b || void 0,
-                "aria-describedby": b ? D : void 0,
+                "aria-describedby": b ? S : void 0,
                 className: "bg-transparent border-0 p-0 text-text-primary text-[13px] font-semibold cursor-pointer focus:outline-none"
               }
             )
           ] }),
-          b && /* @__PURE__ */ e.jsx("span", { id: D, role: "alert", className: "-mt-0.5 text-[10.5px] font-semibold text-negative", children: b })
+          b && /* @__PURE__ */ e.jsx("span", { id: S, role: "alert", className: "-mt-0.5 text-[10.5px] font-semibold text-negative", children: b })
         ] }),
         /* @__PURE__ */ e.jsx(ye, { label: "İlerleme", children: /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1.5 pt-[5px]", children: [
           /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline justify-between", children: [
@@ -4556,10 +4539,10 @@ function fn({
             "button",
             {
               type: "button",
-              className: `flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] text-[12.5px] font-bold cursor-pointer ${T.bg} ${T.fg}`,
+              className: `flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] text-[12.5px] font-bold cursor-pointer ${D.bg} ${D.fg}`,
               children: [
-                /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${T.icon} text-[11px]` }),
-                /* @__PURE__ */ e.jsx("span", { children: T.label }),
+                /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${D.icon} text-[11px]` }),
+                /* @__PURE__ */ e.jsx("span", { children: D.label }),
                 /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-chevron-down text-[8px] opacity-60" })
               ]
             }
@@ -4567,17 +4550,17 @@ function fn({
           /* @__PURE__ */ e.jsx(Te, { container: Fe(V), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${it} w-[196px]`, children: [
             /* @__PURE__ */ e.jsx("div", { className: "px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary", children: "Durumu değiştir" }),
             X.map((v) => {
-              const I = (H == null ? void 0 : H.key) === v.key;
+              const F = (Z == null ? void 0 : Z.key) === v.key;
               return /* @__PURE__ */ e.jsx(Ne, { children: /* @__PURE__ */ e.jsxs(
                 "button",
                 {
                   type: "button",
-                  onClick: () => R(v),
-                  className: `flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${I ? "bg-primary-subtle text-primary" : "text-text-primary hover:bg-surface-hover"}`,
+                  onClick: () => M(v),
+                  className: `flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${F ? "bg-primary-subtle text-primary" : "text-text-primary hover:bg-surface-hover"}`,
                   children: [
                     /* @__PURE__ */ e.jsx("span", { className: `h-2 w-2 rounded-full ${v.dot}` }),
                     /* @__PURE__ */ e.jsx("span", { className: "flex-1", children: v.label }),
-                    I && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[10px]" })
+                    F && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[10px]" })
                   ]
                 }
               ) }, v.key);
@@ -4589,18 +4572,18 @@ function fn({
             "button",
             {
               type: "button",
-              className: `flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] text-[12.5px] font-bold cursor-pointer ${G.bg} ${G.fg}`,
+              className: `flex items-center gap-[7px] h-[26px] px-2.5 rounded-[7px] text-[12.5px] font-bold cursor-pointer ${U.bg} ${U.fg}`,
               children: [
-                /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${G.icon} text-[11px]` }),
-                /* @__PURE__ */ e.jsx("span", { children: G.label }),
+                /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${U.icon} text-[11px]` }),
+                /* @__PURE__ */ e.jsx("span", { children: U.label }),
                 /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-chevron-down text-[8px] opacity-60" })
               ]
             }
           ) }),
           /* @__PURE__ */ e.jsx(Te, { container: Fe(V), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${it} w-[184px]`, children: [
             /* @__PURE__ */ e.jsx("div", { className: "px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary", children: "Öncelik seç" }),
-            Cs.map((v) => {
-              const I = Ds[v], B = (l ?? t.priority) === v;
+            ks.map((v) => {
+              const F = Cs[v], B = (l ?? t.priority) === v;
               return /* @__PURE__ */ e.jsx(Ne, { children: /* @__PURE__ */ e.jsxs(
                 "button",
                 {
@@ -4608,8 +4591,8 @@ function fn({
                   onClick: () => r("priority", v),
                   className: `flex items-center gap-[9px] w-full px-[9px] py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${B ? "bg-primary-subtle text-primary" : "text-text-primary hover:bg-surface-hover"}`,
                   children: [
-                    /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${I.icon} text-[11px] w-[13px]` }),
-                    /* @__PURE__ */ e.jsx("span", { className: "flex-1", children: I.label }),
+                    /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${F.icon} text-[11px] w-[13px]` }),
+                    /* @__PURE__ */ e.jsx("span", { className: "flex-1", children: F.label }),
                     B && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[10px]" })
                   ]
                 }
@@ -4629,7 +4612,7 @@ function fn({
                   {
                     type: "button",
                     "aria-label": "Etiketi kaldır",
-                    onClick: () => r("tagNames", u.filter((I) => I !== v)),
+                    onClick: () => r("tagNames", u.filter((F) => F !== v)),
                     className: "flex items-center p-0 border-0 bg-transparent text-current opacity-55 hover:opacity-100 hover:text-negative cursor-pointer",
                     children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-xmark text-[9px]" })
                   }
@@ -4638,16 +4621,16 @@ function fn({
             },
             v
           )),
-          y ? u.length === 0 && /* @__PURE__ */ e.jsx("span", { className: "text-[12px] text-text-tertiary", children: "—" }) : L ? /* @__PURE__ */ e.jsx(
+          y ? u.length === 0 && /* @__PURE__ */ e.jsx("span", { className: "text-[12px] text-text-tertiary", children: "—" }) : z ? /* @__PURE__ */ e.jsx(
             "input",
             {
               autoFocus: !0,
               type: "text",
-              value: _,
+              value: G,
               onChange: (v) => Y(v.target.value),
-              onBlur: $,
+              onBlur: ee,
               onKeyDown: (v) => {
-                v.key === "Enter" && $(), v.key === "Escape" && (Y(""), q(!1));
+                v.key === "Enter" && ee(), v.key === "Escape" && (Y(""), R(!1));
               },
               placeholder: "Etiket…",
               className: "h-6 w-24 px-2 rounded-[7px] border border-focus bg-surface-base text-text-primary text-[11.5px] shadow-focus focus:outline-none"
@@ -4657,7 +4640,7 @@ function fn({
             {
               type: "button",
               "aria-label": "Yeni etiket ekle",
-              onClick: () => q(!0),
+              onClick: () => R(!0),
               className: "flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] border border-dashed border-strong bg-transparent text-text-tertiary text-[11.5px] font-semibold hover:border-focus hover:text-primary hover:bg-primary-subtle cursor-pointer",
               children: [
                 /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-plus text-[9px]" }),
@@ -4674,7 +4657,7 @@ function fn({
               className: "flex items-center gap-[9px] max-w-full px-[9px] -ml-[9px] py-[5px] rounded-[9px] border border-transparent hover:bg-neutral-subtle hover:border-subtle cursor-pointer",
               children: [
                 /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-folder-open text-[13px] text-text-tertiary" }),
-                /* @__PURE__ */ e.jsx("span", { className: "text-[13px] font-semibold text-text-primary truncate", children: ae }),
+                /* @__PURE__ */ e.jsx("span", { className: "text-[13px] font-semibold text-text-primary truncate", children: se }),
                 /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-chevron-down text-[8px] text-text-tertiary" })
               ]
             }
@@ -4687,10 +4670,10 @@ function fn({
                 {
                   autoFocus: !0,
                   type: "text",
-                  value: E,
+                  value: I,
                   onChange: (v) => Q(v.target.value),
                   placeholder: "Proje ara…",
-                  className: xa
+                  className: da
                 }
               )
             ] }),
@@ -4700,23 +4683,23 @@ function fn({
                 {
                   type: "button",
                   onClick: () => r("projectId", null),
-                  className: `flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${oe ? "text-text-primary hover:bg-surface-hover" : "bg-primary-subtle text-primary"}`,
+                  className: `flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${ie ? "text-text-primary hover:bg-surface-hover" : "bg-primary-subtle text-primary"}`,
                   children: [
                     /* @__PURE__ */ e.jsx("span", { className: "h-[9px] w-[9px] shrink-0 rounded-[3px] bg-neutral-400" }),
                     /* @__PURE__ */ e.jsx("span", { className: "flex-1", children: "Projesiz" })
                   ]
                 }
               ) }),
-              se.map((v) => /* @__PURE__ */ e.jsx(Ne, { children: /* @__PURE__ */ e.jsxs(
+              $.map((v) => /* @__PURE__ */ e.jsx(Ne, { children: /* @__PURE__ */ e.jsxs(
                 "button",
                 {
                   type: "button",
                   onClick: () => r("projectId", v.value),
-                  className: `flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${oe === v.value ? "bg-primary-subtle text-primary" : "text-text-primary hover:bg-surface-hover"}`,
+                  className: `flex items-center gap-2.5 w-full px-2 py-[7px] rounded-[9px] text-[12.5px] font-semibold text-left cursor-pointer ${ie === v.value ? "bg-primary-subtle text-primary" : "text-text-primary hover:bg-surface-hover"}`,
                   children: [
                     /* @__PURE__ */ e.jsx("span", { className: "h-[9px] w-[9px] shrink-0 rounded-[3px] bg-primary" }),
                     /* @__PURE__ */ e.jsx("span", { className: "flex-1 truncate", children: v.label }),
-                    oe === v.value && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[10px] text-primary" })
+                    ie === v.value && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[10px] text-primary" })
                   ]
                 }
               ) }, v.value))
@@ -4751,22 +4734,22 @@ function fn({
         ] }) }),
         /* @__PURE__ */ e.jsx(ye, { label: "Harcanan / tahmin", children: /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-[9px] h-8", children: [
           /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-clock text-[13px] text-text-tertiary" }),
-          /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[13px] font-bold text-text-primary", children: pa(t.spentHours ?? 0) }),
+          /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[13px] font-bold text-text-primary", children: ua(t.spentHours ?? 0) }),
           /* @__PURE__ */ e.jsxs("span", { className: "text-[12px] text-text-tertiary", children: [
             "/ ",
-            t.estimatedHours != null ? pa(t.estimatedHours) : "—"
+            t.estimatedHours != null ? ua(t.estimatedHours) : "—"
           ] })
         ] }) })
       ] })
     }
   ) });
 }
-const bn = "z-popover w-[225px] rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast max-h-[var(--radix-popover-content-available-height)] overflow-y-auto";
+const fn = "z-popover w-[225px] rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast max-h-[var(--radix-popover-content-available-height)] overflow-y-auto";
 function qt({ entries: t = [], onPick: s, children: a }) {
   const [r, i] = f.useState(null), o = Fe(r);
   return /* @__PURE__ */ e.jsx("span", { ref: i, className: "contents", children: /* @__PURE__ */ e.jsxs(Ce, { modal: !0, children: [
     /* @__PURE__ */ e.jsx(De, { asChild: !0, children: a }),
-    /* @__PURE__ */ e.jsx(Te, { container: o, children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", collisionPadding: 12, className: bn, children: [
+    /* @__PURE__ */ e.jsx(Te, { container: o, children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", collisionPadding: 12, className: fn, children: [
       /* @__PURE__ */ e.jsx("div", { className: "px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary", children: "Özellik ekle" }),
       t.map((n) => /* @__PURE__ */ e.jsx(zt, { asChild: !0, children: /* @__PURE__ */ e.jsxs(
         "button",
@@ -4789,7 +4772,7 @@ function qt({ entries: t = [], onPick: s, children: a }) {
     ] }) })
   ] }) });
 }
-function hn({
+function bn({
   activeTab: t,
   onTabChange: s,
   orderedTabs: a = [],
@@ -4814,7 +4797,7 @@ function hn({
             type: "button",
             draggable: !0,
             title: "Sürükleyerek sırayı değiştirin",
-            ...Fa(() => s(d.code)),
+            ...Ia(() => s(d.code)),
             onDragStart: (b) => {
               i(d.code);
               try {
@@ -4878,7 +4861,7 @@ function hn({
     ] })
   ] });
 }
-function yn({
+function hn({
   activeTab: t,
   onTabChange: s,
   orderedTabs: a = [],
@@ -4906,7 +4889,7 @@ function yn({
               type: "button",
               draggable: !0,
               title: "Sürükleyerek sırayı değiştirin",
-              ...Fa(() => s(p.code)),
+              ...Ia(() => s(p.code)),
               onDragStart: (d) => {
                 i(p.code);
                 try {
@@ -4972,14 +4955,14 @@ function Ie({ label: t, value: s, avatarName: a }) {
     ] })
   ] });
 }
-const ma = (t) => t ? new Intl.DateTimeFormat("tr-TR", {
+const pa = (t) => t ? new Intl.DateTimeFormat("tr-TR", {
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
   hour: "2-digit",
   minute: "2-digit"
 }).format(new Date(t)) : "—";
-function gn({ task: t = {}, nameById: s }) {
+function yn({ task: t = {}, nameById: s }) {
   const a = (o, n) => {
     var l;
     return o || n && ((l = s == null ? void 0 : s.get) == null ? void 0 : l.call(s, n)) || null;
@@ -4987,15 +4970,15 @@ function gn({ task: t = {}, nameById: s }) {
   return /* @__PURE__ */ e.jsx("aside", { className: "flex flex-col gap-3.5 min-w-0", children: /* @__PURE__ */ e.jsxs("div", { className: "rounded-2xl border border-subtle bg-surface-base p-[18px] shadow-xs", children: [
     /* @__PURE__ */ e.jsx("h3", { className: "mt-0 mb-1.5 text-[13.5px] font-bold text-text-primary", children: "Detaylar" }),
     /* @__PURE__ */ e.jsx(Ie, { label: "Oluşturan", value: r || "Bilinmiyor", avatarName: r }),
-    /* @__PURE__ */ e.jsx(Ie, { label: "Oluşturma tarihi", value: ma(t.creationTime) }),
+    /* @__PURE__ */ e.jsx(Ie, { label: "Oluşturma tarihi", value: pa(t.creationTime) }),
     /* @__PURE__ */ e.jsx(Ie, { label: "Güncelleyen", value: i || "—", avatarName: i }),
-    /* @__PURE__ */ e.jsx(Ie, { label: "Son güncelleme", value: ma(t.lastModificationTime) }),
+    /* @__PURE__ */ e.jsx(Ie, { label: "Son güncelleme", value: pa(t.lastModificationTime) }),
     /* @__PURE__ */ e.jsx(Ie, { label: "Görev tipi", value: t.taskType }),
     /* @__PURE__ */ e.jsx(Ie, { label: "Sprint", value: t.sprint }),
     /* @__PURE__ */ e.jsx(Ie, { label: "İzleyenler", value: (t.watcherNames || []).join(", ") || "Kimse izlemiyor" })
   ] }) });
 }
-const fa = "flex flex-col rounded-2xl border border-subtle bg-surface-base p-[18px] shadow-xs";
+const ma = "flex flex-col rounded-2xl border border-subtle bg-surface-base p-[18px] shadow-xs";
 function kt({ name: t, size: s = 32 }) {
   return /* @__PURE__ */ e.jsx(
     "span",
@@ -5006,7 +4989,7 @@ function kt({ name: t, size: s = 32 }) {
     }
   );
 }
-function ba({ open: t, onClick: s, label: a }) {
+function fa({ open: t, onClick: s, label: a }) {
   return /* @__PURE__ */ e.jsx(
     "button",
     {
@@ -5021,7 +5004,7 @@ function ba({ open: t, onClick: s, label: a }) {
   );
 }
 const Ve = (t) => [t == null ? void 0 : t.name, t == null ? void 0 : t.surname].filter(Boolean).join(" ") || (t == null ? void 0 : t.userName) || "", mt = "📎 ";
-function vn({ text: t, attachments: s }) {
+function gn({ text: t, attachments: s }) {
   const a = String(t ?? "").split(`
 `);
   return /* @__PURE__ */ e.jsx("p", { className: "m-0 text-[13px] leading-[1.65] text-text-secondary whitespace-pre-wrap", children: a.map((r, i) => {
@@ -5048,14 +5031,14 @@ function vn({ text: t, attachments: s }) {
     ] }, i);
   }) });
 }
-const ha = (t) => t ? new Intl.DateTimeFormat("tr-TR", {
+const ba = (t) => t ? new Intl.DateTimeFormat("tr-TR", {
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
   hour: "2-digit",
   minute: "2-digit"
 }).format(new Date(t)) : "";
-function jn({
+function vn({
   task: t = {},
   onFieldChange: s = () => {
   },
@@ -5073,62 +5056,62 @@ function jn({
       try {
         await r.addItem(g);
       } catch (v) {
-        p((I) => I || g), P(v, "Madde eklenemedi.");
+        p((F) => F || g), E(v, "Madde eklenemedi.");
       }
     }
-  }, [y, b] = f.useState(!0), [j, w] = f.useState(""), [D, z] = f.useState(!1), [F, E] = f.useState(!1), [Q, _] = f.useState(null), [Y, L] = f.useState(""), [q, V] = f.useState([]), [U, O] = f.useState(!1), [X, H] = f.useState(""), { data: T, isFetched: R } = Z({
+  }, [y, b] = f.useState(!0), [j, w] = f.useState(""), [S, P] = f.useState(!1), [q, I] = f.useState(!1), [Q, G] = f.useState(null), [Y, z] = f.useState(""), [R, V] = f.useState([]), [O, _] = f.useState(!1), [X, Z] = f.useState(""), { data: D, isFetched: M } = J({
     queryKey: ["task-users-lookup"],
     queryFn: () => {
-      var g, v, I, B;
-      return Promise.resolve((B = (I = (v = (g = window == null ? void 0 : window.apya) == null ? void 0 : g.platform) == null ? void 0 : v.tasks) == null ? void 0 : I.task) == null ? void 0 : B.getUsersLookup()).then((A) => (A == null ? void 0 : A.items) ?? []);
+      var g, v, F, B;
+      return Promise.resolve((B = (F = (v = (g = window == null ? void 0 : window.apya) == null ? void 0 : g.platform) == null ? void 0 : v.tasks) == null ? void 0 : F.task) == null ? void 0 : B.getUsersLookup()).then((A) => (A == null ? void 0 : A.items) ?? []);
     },
-    enabled: U,
+    enabled: O,
     staleTime: 6e4,
     meta: { persist: !1 }
-  }), G = X.trim().toLocaleLowerCase("tr-TR"), ee = (T ?? []).filter((g) => !G || `${Ve(g)} ${g.userName ?? ""}`.toLocaleLowerCase("tr-TR").includes(G)), oe = (g) => {
+  }), U = X.trim().toLocaleLowerCase("tr-TR"), ae = (D ?? []).filter((g) => !U || `${Ve(g)} ${g.userName ?? ""}`.toLocaleLowerCase("tr-TR").includes(U)), ie = (g) => {
     const v = Ve(g);
-    w((I) => `${I && !/\s$/.test(I) ? `${I} ` : I}@${v} `), V((I) => I.some((B) => B.id === g.id) ? I : [...I, { id: g.id, label: v }]), O(!1), H("");
-  }, { data: ie = [] } = Z({
+    w((F) => `${F && !/\s$/.test(F) ? `${F} ` : F}@${v} `), V((F) => F.some((B) => B.id === g.id) ? F : [...F, { id: g.id, label: v }]), _(!1), Z("");
+  }, { data: oe = [] } = J({
     queryKey: ["task-comments", n],
     queryFn: () => {
-      var g, v, I, B;
-      return Promise.resolve((B = (I = (v = (g = window == null ? void 0 : window.apya) == null ? void 0 : g.platform) == null ? void 0 : v.tasks) == null ? void 0 : I.task) == null ? void 0 : B.getComments(n));
+      var g, v, F, B;
+      return Promise.resolve((B = (F = (v = (g = window == null ? void 0 : window.apya) == null ? void 0 : g.platform) == null ? void 0 : v.tasks) == null ? void 0 : F.task) == null ? void 0 : B.getComments(n));
     },
     enabled: !!n,
     staleTime: 1e4,
     meta: { persist: !1 }
-  }), ae = ht(n, {
-    enabled: ie.some((g) => String(g.text ?? "").includes(mt))
-  }), ce = async (g) => {
+  }), se = ht(n, {
+    enabled: oe.some((g) => String(g.text ?? "").includes(mt))
+  }), H = async (g) => {
     if (g)
       try {
-        await ae.upload(g), w((v) => (v && !v.endsWith(`
+        await se.upload(g), w((v) => (v && !v.endsWith(`
 `) ? v + `
 ` : v) + mt + g.name);
       } catch (v) {
-        P(v, "Dosya eklenemedi.");
+        E(v, "Dosya eklenemedi.");
       }
-  }, W = async () => {
+  }, ce = async () => {
     await l.invalidateQueries({ queryKey: ["task-comments", n] }), await l.invalidateQueries({ queryKey: ["task-detail", n] });
-  }, se = async () => {
+  }, $ = async () => {
     const g = j.trim();
-    if (!(!g || !n || F)) {
-      E(!0);
+    if (!(!g || !n || q)) {
+      I(!0);
       try {
-        const v = q.filter((I) => g.includes(`@${I.label}`)).map((I) => I.id);
-        await Promise.resolve(window.apya.platform.tasks.task.addComment(n, g, v)), await W(), w(""), V([]);
+        const v = R.filter((F) => g.includes(`@${F.label}`)).map((F) => F.id);
+        await Promise.resolve(window.apya.platform.tasks.task.addComment(n, g, v)), await ce(), w(""), V([]);
       } catch (v) {
-        P(v, "Yorum gönderilemedi.");
+        E(v, "Yorum gönderilemedi.");
       } finally {
-        E(!1);
+        I(!1);
       }
     }
-  }, $ = async (g) => {
+  }, ee = async (g) => {
     const v = Y.trim();
     if (!(!v || !n))
       try {
-        let I = [];
-        v.includes("@") && (I = (await l.fetchQuery({
+        let F = [];
+        v.includes("@") && (F = (await l.fetchQuery({
           queryKey: ["task-users-lookup"],
           queryFn: () => {
             var A, K, xe, Re;
@@ -5138,11 +5121,11 @@ function jn({
         }) ?? []).filter((A) => {
           const K = Ve(A);
           return K && v.includes(`@${K}`);
-        }).map((A) => A.id)), await Promise.resolve(window.apya.platform.tasks.task.replyToComment(g, v, I)), await W(), L(""), _(null);
-      } catch (I) {
-        P(I, "Yanıt gönderilemedi.");
+        }).map((A) => A.id)), await Promise.resolve(window.apya.platform.tasks.task.replyToComment(g, v, F)), await ce(), z(""), G(null);
+      } catch (F) {
+        E(F, "Yanıt gönderilemedi.");
       }
-  }, C = !!j.trim() && !F;
+  }, C = !!j.trim() && !q;
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-4 min-w-0", children: [
     /* @__PURE__ */ e.jsxs("section", { className: "flex flex-col gap-[9px]", children: [
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between", children: [
@@ -5150,7 +5133,7 @@ function jn({
         /* @__PURE__ */ e.jsx("span", { className: "text-[11px] text-text-tertiary", children: "Zengin metin · WYSIWYG" })
       ] }),
       /* @__PURE__ */ e.jsx(
-        Ea,
+        Pa,
         {
           value: a ?? t.description ?? "",
           onChange: (g) => s("description", g),
@@ -5159,7 +5142,7 @@ function jn({
         n
       )
     ] }),
-    /* @__PURE__ */ e.jsxs("section", { className: fa, children: [
+    /* @__PURE__ */ e.jsxs("section", { className: ma, children: [
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3", children: [
         /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5", children: [
           /* @__PURE__ */ e.jsx("h2", { className: "text-[13.5px] font-bold text-text-primary", children: "Kontrol listesi" }),
@@ -5169,7 +5152,7 @@ function jn({
             u.length
           ] })
         ] }),
-        /* @__PURE__ */ e.jsx(ba, { label: "Kontrol listesi", open: x, onClick: () => m((g) => !g) })
+        /* @__PURE__ */ e.jsx(fa, { label: "Kontrol listesi", open: x, onClick: () => m((g) => !g) })
       ] }),
       x && /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1 mt-3.5", children: [
         /* @__PURE__ */ e.jsx("div", { className: "h-1.5 mb-2 rounded-full bg-neutral-subtle overflow-hidden", children: /* @__PURE__ */ e.jsx(
@@ -5186,7 +5169,7 @@ function jn({
               type: "button",
               disabled: o,
               "aria-label": g.isDone ? "Tamamlandı işaretini kaldır" : "Tamamlandı işaretle",
-              onClick: () => r.toggleItem(g.id).catch((v) => P(v, "Durum güncellenemedi.")),
+              onClick: () => r.toggleItem(g.id).catch((v) => E(v, "Durum güncellenemedi.")),
               className: `flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white ${o ? "cursor-default" : "cursor-pointer"} transition-colors duration-fast ${g.isDone ? "bg-success border-success" : "bg-transparent border-strong"}`,
               children: g.isDone && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[9px]" })
             }
@@ -5197,7 +5180,7 @@ function jn({
             {
               type: "button",
               title: "Sil",
-              onClick: () => r.removeItem(g.id).catch((v) => P(v, "Madde silinemedi.")),
+              onClick: () => r.removeItem(g.id).catch((v) => E(v, "Madde silinemedi.")),
               className: "flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-negative-subtle hover:text-negative cursor-pointer",
               children: /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-trash-can text-[11px]" })
             }
@@ -5218,28 +5201,28 @@ function jn({
         )
       ] })
     ] }),
-    /* @__PURE__ */ e.jsxs("section", { className: fa, children: [
+    /* @__PURE__ */ e.jsxs("section", { className: ma, children: [
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3", children: [
         /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-2.5", children: [
           /* @__PURE__ */ e.jsx("h2", { className: "text-[13.5px] font-bold text-text-primary", children: "Yorumlar & güncellemeler" }),
-          /* @__PURE__ */ e.jsx("span", { className: "flex items-center justify-center h-5 min-w-[20px] px-[7px] rounded-full bg-primary-subtle text-primary text-[11px] font-extrabold", children: ie.length })
+          /* @__PURE__ */ e.jsx("span", { className: "flex items-center justify-center h-5 min-w-[20px] px-[7px] rounded-full bg-primary-subtle text-primary text-[11px] font-extrabold", children: oe.length })
         ] }),
-        /* @__PURE__ */ e.jsx(ba, { label: "Yorumlar", open: y, onClick: () => b((g) => !g) })
+        /* @__PURE__ */ e.jsx(fa, { label: "Yorumlar", open: y, onClick: () => b((g) => !g) })
       ] }),
       y && /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-[18px] mt-4", children: [
         /* @__PURE__ */ e.jsxs("div", { className: "relative flex gap-[11px] items-start", children: [
           /* @__PURE__ */ e.jsx(kt, { name: i }),
-          /* @__PURE__ */ e.jsxs("div", { className: `flex-1 min-w-0 flex flex-col rounded-[13px] border overflow-hidden transition-[border-color,box-shadow] duration-fast ${D ? "border-focus bg-surface-base shadow-focus" : "border-default bg-surface-raised"}`, children: [
+          /* @__PURE__ */ e.jsxs("div", { className: `flex-1 min-w-0 flex flex-col rounded-[13px] border overflow-hidden transition-[border-color,box-shadow] duration-fast ${S ? "border-focus bg-surface-base shadow-focus" : "border-default bg-surface-raised"}`, children: [
             /* @__PURE__ */ e.jsx(
               "textarea",
               {
                 rows: 2,
                 value: j,
                 onChange: (g) => w(g.target.value),
-                onFocus: () => z(!0),
-                onBlur: () => z(!1),
+                onFocus: () => P(!0),
+                onBlur: () => P(!1),
                 onKeyDown: (g) => {
-                  g.key === "Enter" && (g.ctrlKey || g.metaKey) && (g.preventDefault(), se());
+                  g.key === "Enter" && (g.ctrlKey || g.metaKey) && (g.preventDefault(), $());
                 },
                 placeholder: "Bir yorum yazın… (Ctrl+Enter ile gönder)",
                 className: "w-full p-3 border-0 bg-transparent text-text-primary text-[13px] leading-[1.6] resize-none focus:outline-none"
@@ -5254,10 +5237,10 @@ function jn({
                     title: "Kişi bahset",
                     "aria-label": "Kişi bahset",
                     "aria-haspopup": "dialog",
-                    "aria-expanded": U,
+                    "aria-expanded": O,
                     onMouseDown: (g) => g.preventDefault(),
-                    onClick: () => O((g) => !g),
-                    className: `flex items-center justify-center h-7 w-7 rounded-[7px] hover:bg-surface-hover hover:text-primary cursor-pointer ${U ? "text-primary" : "text-text-tertiary"}`,
+                    onClick: () => _((g) => !g),
+                    className: `flex items-center justify-center h-7 w-7 rounded-[7px] hover:bg-surface-hover hover:text-primary cursor-pointer ${O ? "text-primary" : "text-text-tertiary"}`,
                     children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-at text-[12px]" })
                   }
                 ),
@@ -5266,19 +5249,19 @@ function jn({
                   {
                     title: "Dosya ekle",
                     onMouseDown: (g) => g.preventDefault(),
-                    className: `flex items-center justify-center h-7 w-7 rounded-[7px] hover:bg-surface-hover hover:text-primary cursor-pointer ${ae.isUploading ? "text-primary" : "text-text-tertiary"}`,
+                    className: `flex items-center justify-center h-7 w-7 rounded-[7px] hover:bg-surface-hover hover:text-primary cursor-pointer ${se.isUploading ? "text-primary" : "text-text-tertiary"}`,
                     children: [
-                      /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${ae.isUploading ? "fa-circle-notch fa-spin" : "fa-paperclip"} text-[12px]` }),
+                      /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${se.isUploading ? "fa-circle-notch fa-spin" : "fa-paperclip"} text-[12px]` }),
                       /* @__PURE__ */ e.jsx(
                         "input",
                         {
                           type: "file",
                           "aria-label": "Dosya ekle",
                           className: "sr-only",
-                          disabled: ae.isUploading || !n,
+                          disabled: se.isUploading || !n,
                           onChange: (g) => {
                             var v;
-                            ce((v = g.target.files) == null ? void 0 : v[0]), g.target.value = "";
+                            H((v = g.target.files) == null ? void 0 : v[0]), g.target.value = "";
                           }
                         }
                       )
@@ -5304,24 +5287,24 @@ function jn({
                 "button",
                 {
                   type: "button",
-                  onClick: se,
+                  onClick: $,
                   disabled: !C,
                   className: `flex items-center gap-[7px] h-[30px] px-3.5 rounded-[9px] text-[12px] font-bold shadow-xs ${C ? "bg-primary text-white cursor-pointer hover:bg-primary-hover" : "bg-border-default text-text-tertiary cursor-not-allowed"}`,
                   children: [
-                    /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${F ? "fa-circle-notch fa-spin" : "fa-paper-plane"} text-[10px]` }),
+                    /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${q ? "fa-circle-notch fa-spin" : "fa-paper-plane"} text-[10px]` }),
                     "Gönder"
                   ]
                 }
               )
             ] })
           ] }),
-          U && /* @__PURE__ */ e.jsxs(
+          O && /* @__PURE__ */ e.jsxs(
             "div",
             {
               role: "dialog",
               "aria-label": "Bahsedilecek kişi",
               onBlur: (g) => {
-                g.currentTarget.contains(g.relatedTarget) || O(!1);
+                g.currentTarget.contains(g.relatedTarget) || _(!1);
               },
               className: "absolute left-[43px] top-full z-20 mt-1 w-64 min-w-[200px] max-w-[calc(100%-43px)] rounded-[11px] border border-default bg-surface-base p-1.5 shadow-lg",
               children: [
@@ -5331,9 +5314,9 @@ function jn({
                     autoFocus: !0,
                     type: "text",
                     value: X,
-                    onChange: (g) => H(g.target.value),
+                    onChange: (g) => Z(g.target.value),
                     onKeyDown: (g) => {
-                      g.key === "Escape" && (g.preventDefault(), O(!1)), g.key === "Enter" && ee[0] && (g.preventDefault(), oe(ee[0]));
+                      g.key === "Escape" && (g.preventDefault(), _(!1)), g.key === "Enter" && ae[0] && (g.preventDefault(), ie(ae[0]));
                     },
                     placeholder: "Kişi ara…",
                     "aria-label": "Kişi ara",
@@ -5341,11 +5324,11 @@ function jn({
                   }
                 ),
                 /* @__PURE__ */ e.jsxs("ul", { className: "m-0 max-h-56 list-none overflow-y-auto p-0", children: [
-                  ee.map((g) => /* @__PURE__ */ e.jsx("li", { children: /* @__PURE__ */ e.jsxs(
+                  ae.map((g) => /* @__PURE__ */ e.jsx("li", { children: /* @__PURE__ */ e.jsxs(
                     "button",
                     {
                       type: "button",
-                      onClick: () => oe(g),
+                      onClick: () => ie(g),
                       className: "w-full rounded-[7px] px-2.5 py-1.5 text-left text-[12.5px] text-text-primary hover:bg-surface-hover cursor-pointer",
                       children: [
                         Ve(g),
@@ -5357,26 +5340,26 @@ function jn({
                       ]
                     }
                   ) }, g.id)),
-                  !ee.length && /* @__PURE__ */ e.jsx("li", { className: "px-2.5 py-2 text-[12px] text-text-tertiary", children: R ? "Eşleşen kişi yok" : "Yükleniyor…" })
+                  !ae.length && /* @__PURE__ */ e.jsx("li", { className: "px-2.5 py-2 text-[12px] text-text-tertiary", children: M ? "Eşleşen kişi yok" : "Yükleniyor…" })
                 ] })
               ]
             }
           )
         ] }),
-        /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-1", children: ie.map((g) => /* @__PURE__ */ e.jsxs("div", { className: "flex gap-[11px] items-start py-3 border-t border-subtle", children: [
+        /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-1", children: oe.map((g) => /* @__PURE__ */ e.jsxs("div", { className: "flex gap-[11px] items-start py-3 border-t border-subtle", children: [
           /* @__PURE__ */ e.jsx(kt, { name: g.authorName }),
           /* @__PURE__ */ e.jsxs("div", { className: "flex-1 min-w-0 flex flex-col gap-1.5", children: [
             /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline gap-2.5 flex-wrap", children: [
               /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-bold text-text-primary", children: g.authorName }),
-              /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10.5px] text-text-tertiary", children: ha(g.creationTime) })
+              /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10.5px] text-text-tertiary", children: ba(g.creationTime) })
             ] }),
-            /* @__PURE__ */ e.jsx(vn, { text: g.text, attachments: ae.attachments }),
+            /* @__PURE__ */ e.jsx(gn, { text: g.text, attachments: se.attachments }),
             /* @__PURE__ */ e.jsx("div", { className: "flex items-center gap-1.5 mt-[3px]", children: /* @__PURE__ */ e.jsxs(
               "button",
               {
                 type: "button",
                 onClick: () => {
-                  _((v) => v === g.id ? null : g.id), L("");
+                  G((v) => v === g.id ? null : g.id), z("");
                 },
                 className: "flex items-center gap-1.5 h-[26px] px-[9px] rounded-full text-text-tertiary text-[11px] font-semibold hover:bg-surface-hover hover:text-primary cursor-pointer",
                 children: [
@@ -5392,9 +5375,9 @@ function jn({
                   autoFocus: !0,
                   type: "text",
                   value: Y,
-                  onChange: (v) => L(v.target.value),
+                  onChange: (v) => z(v.target.value),
                   onKeyDown: (v) => {
-                    v.key === "Enter" && $(g.id);
+                    v.key === "Enter" && ee(g.id);
                   },
                   placeholder: `@${g.authorName} kullanıcısına yanıt ver…`,
                   className: "flex-1 h-8 px-3 rounded-[9px] border border-focus bg-surface-base text-text-primary text-[12px] shadow-focus focus:outline-none"
@@ -5404,7 +5387,7 @@ function jn({
                 "button",
                 {
                   type: "button",
-                  onClick: () => $(g.id),
+                  onClick: () => ee(g.id),
                   className: "h-8 px-3.5 rounded-[9px] bg-primary text-white text-[12px] font-bold cursor-pointer hover:bg-primary-hover",
                   children: "Yanıtla"
                 }
@@ -5415,7 +5398,7 @@ function jn({
               /* @__PURE__ */ e.jsxs("div", { className: "min-w-0", children: [
                 /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline gap-2", children: [
                   /* @__PURE__ */ e.jsx("span", { className: "text-[12px] font-bold text-text-primary", children: v.authorName }),
-                  /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10px] text-text-tertiary", children: ha(v.creationTime) })
+                  /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10px] text-text-tertiary", children: ba(v.creationTime) })
                 ] }),
                 /* @__PURE__ */ e.jsx("p", { className: "mt-[3px] mb-0 text-[12.5px] leading-[1.6] text-text-secondary whitespace-pre-wrap", children: v.text })
               ] })
@@ -5426,7 +5409,7 @@ function jn({
     ] })
   ] });
 }
-function Nn({
+function jn({
   lastSavedAt: t,
   isDirty: s,
   isSaving: a,
@@ -5481,7 +5464,7 @@ function Nn({
     ] })
   ] });
 }
-const wn = Object.fromEntries(et.map((t) => [t.code, t])), kn = {
+const Nn = Object.fromEntries(et.map((t) => [t.code, t])), wn = {
   "subtask-table": { desc: "Alt görevlerin sıralanabilir tablosu", bg: "bg-neutral-subtle", fg: "text-text-secondary" },
   "subtask-board": { desc: "Alt görevleri duruma göre sütunlarda taşı", bg: "bg-primary-subtle", fg: "text-primary" },
   calendar: { desc: "Görev ve alt görev tarihleri aylık ızgarada", bg: "bg-primary-subtle", fg: "text-primary" },
@@ -5503,7 +5486,7 @@ const wn = Object.fromEntries(et.map((t) => [t.code, t])), kn = {
   ai: { desc: "Akıllı görev analizi, özet ve öneriler", bg: "bg-ai-subtle", fg: "text-ai-500" },
   automations: { desc: "Durum ve eylem tetikleyici kurallar", bg: "bg-ai-subtle", fg: "text-ai-500" },
   "custom-fields": { desc: "Göreve özel form alanları tanımlayın", bg: "bg-success-subtle", fg: "text-success" }
-}, Cn = /* @__PURE__ */ new Set([
+}, kn = /* @__PURE__ */ new Set([
   "risks",
   "dashboard",
   "comments",
@@ -5512,9 +5495,9 @@ const wn = Object.fromEntries(et.map((t) => [t.code, t])), kn = {
   "approvals",
   "ai",
   "automations"
-]), Dn = (t) => Cn.has(t);
-function Tn(t) {
-  const s = wn[t], a = kn[t];
+]), Cn = (t) => kn.has(t);
+function Dn(t) {
+  const s = Nn[t], a = wn[t];
   return s ? {
     code: t,
     title: s.title,
@@ -5525,8 +5508,8 @@ function Tn(t) {
   } : null;
 }
 et.filter((t) => !t.hidden).length;
-function ya({ code: t, onRemoveFeature: s, pickerEntries: a = [], onPickFeature: r, canRemove: i = !0 }) {
-  const o = Tn(t) ?? { title: t, desc: "", icon: "fa-cube", bg: "bg-neutral-subtle", fg: "text-text-secondary" };
+function ha({ code: t, onRemoveFeature: s, pickerEntries: a = [], onPickFeature: r, canRemove: i = !0 }) {
+  const o = Dn(t) ?? { title: t, desc: "", icon: "fa-cube", bg: "bg-neutral-subtle", fg: "text-text-secondary" };
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center gap-3 py-14 px-6 rounded-2xl border border-dashed border-strong bg-surface-base text-center", children: [
     /* @__PURE__ */ e.jsx("span", { className: `flex items-center justify-center h-14 w-14 rounded-2xl ${o.bg} ${o.fg}`, children: /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${o.icon} text-[22px]` }) }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1.5 max-w-[420px]", children: [
@@ -5564,25 +5547,25 @@ function ya({ code: t, onRemoveFeature: s, pickerEntries: a = [], onPickFeature:
     ] })
   ] });
 }
-function Ja({ open: t, onClose: s, label: a, children: r }) {
+function Wa({ open: t, onClose: s, label: a, children: r }) {
   return /* @__PURE__ */ e.jsx(
-    $s,
+    Ss,
     {
       open: t,
       onOpenChange: (i) => {
         i || s == null || s();
       },
-      children: /* @__PURE__ */ e.jsxs(Ps, { children: [
-        /* @__PURE__ */ e.jsx(Es, { className: "fixed inset-0", style: { pointerEvents: "none" } }),
-        /* @__PURE__ */ e.jsx(Bs, { asChild: !0, "aria-describedby": void 0, children: /* @__PURE__ */ e.jsxs("div", { className: "fixed inset-0 z-modal", children: [
-          /* @__PURE__ */ e.jsx(Is, { className: "sr-only", children: a }),
+      children: /* @__PURE__ */ e.jsxs($s, { children: [
+        /* @__PURE__ */ e.jsx(Ps, { className: "fixed inset-0", style: { pointerEvents: "none" } }),
+        /* @__PURE__ */ e.jsx(Es, { asChild: !0, "aria-describedby": void 0, children: /* @__PURE__ */ e.jsxs("div", { className: "fixed inset-0 z-modal", children: [
+          /* @__PURE__ */ e.jsx(Bs, { className: "sr-only", children: a }),
           r
         ] }) })
       ] })
     }
   );
 }
-const Sn = [
+const Tn = [
   { key: "subtasks", label: "Alt görevler", countKey: "subtasks", unit: "alt görev" },
   { key: "checklist", label: "Kontrol listesi", countKey: "checklist", unit: "madde" },
   { key: "comments", label: "Yorumlar", countKey: "comments", unit: "yorum" },
@@ -5590,7 +5573,7 @@ const Sn = [
   { key: "keepAssignee", label: "Sorumluyu koru", desc: "Aksi halde atanmamış gelir" },
   { key: "keepLinks", label: "Bağımlılıkları koru", desc: "Öncül / ardıl bağlantılar" },
   { key: "shiftDates", label: "Tarihleri bugüne kaydır", desc: "Başlangıç ve son tarih ötelenir" }
-], ga = {
+], ya = {
   subtasks: !0,
   checklist: !0,
   comments: !1,
@@ -5599,7 +5582,7 @@ const Sn = [
   keepLinks: !0,
   shiftDates: !1
 };
-function $n({ on: t, onClick: s, label: a }) {
+function Sn({ on: t, onClick: s, label: a }) {
   return /* @__PURE__ */ e.jsx(
     "button",
     {
@@ -5619,7 +5602,7 @@ function $n({ on: t, onClick: s, label: a }) {
     }
   );
 }
-function Pn({
+function $n({
   open: t,
   mode: s = "move",
   onClose: a,
@@ -5629,27 +5612,27 @@ function Pn({
   counts: n = {},
   onCreateProject: l
 }) {
-  const [x, m] = f.useState(s), [h, p] = f.useState([]), [u, c] = f.useState(""), [d, N] = f.useState(""), [y, b] = f.useState(ga), [j, w] = f.useState(!1);
+  const [x, m] = f.useState(s), [h, p] = f.useState([]), [u, c] = f.useState(""), [d, N] = f.useState(""), [y, b] = f.useState(ya), [j, w] = f.useState(!1);
   f.useEffect(() => {
-    t && (m(s), p([]), c(""), N(""), b(ga));
+    t && (m(s), p([]), c(""), N(""), b(ya));
   }, [t, s]);
-  const D = f.useMemo(
-    () => i.filter((T) => T.value && T.value !== o),
+  const S = f.useMemo(
+    () => i.filter((D) => D.value && D.value !== o),
     [i, o]
-  ), z = D.filter((T) => !u || T.label.toLowerCase().includes(u.toLowerCase())), F = D.length > 0 && h.length === D.length;
+  ), P = S.filter((D) => !u || D.label.toLowerCase().includes(u.toLowerCase())), q = S.length > 0 && h.length === S.length;
   if (!t) return null;
-  const E = (T) => p((R) => R.includes(T) ? R.filter((G) => G !== T) : [...R, T]), Q = (T) => {
-    var R;
-    return ((R = i.find((G) => G.value === T)) == null ? void 0 : R.label) ?? "";
-  }, _ = async () => {
-    const T = d.trim();
-    if (!(!T || j)) {
+  const I = (D) => p((M) => M.includes(D) ? M.filter((U) => U !== D) : [...M, D]), Q = (D) => {
+    var M;
+    return ((M = i.find((U) => U.value === D)) == null ? void 0 : M.label) ?? "";
+  }, G = async () => {
+    const D = d.trim();
+    if (!(!D || j)) {
       w(!0);
       try {
-        const R = await (l == null ? void 0 : l(T));
-        R && p((G) => [...G, R]), N("");
-      } catch (R) {
-        P(R, "Proje oluşturulamadı.");
+        const M = await (l == null ? void 0 : l(D));
+        M && p((U) => [...U, M]), N("");
+      } catch (M) {
+        E(M, "Proje oluşturulamadı.");
       } finally {
         w(!1);
       }
@@ -5663,8 +5646,8 @@ function Pn({
         w(!1);
       }
     }
-  }, L = x === "move", q = h.length, V = L ? q > 1 ? "Taşı ve kopyala" : "Taşı" : q > 1 ? `${q} projeye kopyala` : "Kopyala", U = Object.values(y).filter(Boolean).length, O = h.map(Q).filter(Boolean), X = O.length ? `${O.length > 2 ? `${O.slice(0, 2).join(", ")} +${O.length - 2}` : O.join(", ")} · ${U} seçenek açık` : `Proje seçilmedi · ${U} seçenek açık`, H = (T) => `flex items-center gap-[7px] h-[30px] px-[15px] rounded-lg border-0 text-[12.5px] font-bold cursor-pointer ${T ? "bg-surface-base text-primary shadow-xs" : "bg-transparent text-text-tertiary"}`;
-  return /* @__PURE__ */ e.jsx(Ja, { open: t, onClose: a, label: L ? "Başka projeye taşı" : "Başka projelere kopyala", children: /* @__PURE__ */ e.jsx(
+  }, z = x === "move", R = h.length, V = z ? R > 1 ? "Taşı ve kopyala" : "Taşı" : R > 1 ? `${R} projeye kopyala` : "Kopyala", O = Object.values(y).filter(Boolean).length, _ = h.map(Q).filter(Boolean), X = _.length ? `${_.length > 2 ? `${_.slice(0, 2).join(", ")} +${_.length - 2}` : _.join(", ")} · ${O} seçenek açık` : `Proje seçilmedi · ${O} seçenek açık`, Z = (D) => `flex items-center gap-[7px] h-[30px] px-[15px] rounded-lg border-0 text-[12.5px] font-bold cursor-pointer ${D ? "bg-surface-base text-primary shadow-xs" : "bg-transparent text-text-tertiary"}`;
+  return /* @__PURE__ */ e.jsx(Wa, { open: t, onClose: a, label: z ? "Başka projeye taşı" : "Başka projelere kopyala", children: /* @__PURE__ */ e.jsx(
     "div",
     {
       "data-apya-overlay": !0,
@@ -5676,16 +5659,16 @@ function Pn({
         {
           role: "dialog",
           "aria-modal": "true",
-          "aria-label": L ? "Başka projeye taşı" : "Başka projelere kopyala",
-          onClick: (T) => T.stopPropagation(),
+          "aria-label": z ? "Başka projeye taşı" : "Başka projelere kopyala",
+          onClick: (D) => D.stopPropagation(),
           className: "flex flex-col w-full max-w-[760px] max-h-[88vh] rounded-[20px] border border-default bg-surface-base shadow-xl overflow-hidden animate-dialog-in",
           children: [
             /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-4 px-[22px] pt-5 pb-4 border-b border-subtle", children: [
               /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3 min-w-0", children: [
                 /* @__PURE__ */ e.jsx("span", { className: "flex shrink-0 items-center justify-center h-10 w-10 rounded-[13px] bg-primary-subtle text-primary", children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-folder-tree text-base" }) }),
                 /* @__PURE__ */ e.jsxs("div", { className: "min-w-0", children: [
-                  /* @__PURE__ */ e.jsx("h3", { className: "m-0 text-base font-extrabold tracking-[-.02em] text-text-primary", children: L ? "Başka projeye taşı" : "Başka projelere kopyala" }),
-                  /* @__PURE__ */ e.jsx("p", { className: "mt-0.5 mb-0 text-[12px] leading-[1.5] text-text-tertiary", children: L ? "Görev ilk seçtiğiniz projeye taşınır; birden fazla seçerseniz kalanlara kopya oluşturulur." : "Görevin kopyası seçtiğiniz her projede oluşturulur; bu görev yerinde kalır." })
+                  /* @__PURE__ */ e.jsx("h3", { className: "m-0 text-base font-extrabold tracking-[-.02em] text-text-primary", children: z ? "Başka projeye taşı" : "Başka projelere kopyala" }),
+                  /* @__PURE__ */ e.jsx("p", { className: "mt-0.5 mb-0 text-[12px] leading-[1.5] text-text-tertiary", children: z ? "Görev ilk seçtiğiniz projeye taşınır; birden fazla seçerseniz kalanlara kopya oluşturulur." : "Görevin kopyası seçtiğiniz her projede oluşturulur; bu görev yerinde kalır." })
                 ] })
               ] }),
               /* @__PURE__ */ e.jsx(
@@ -5700,11 +5683,11 @@ function Pn({
               )
             ] }),
             /* @__PURE__ */ e.jsx("div", { className: "px-[22px] pt-3.5", children: /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-1 p-[3px] w-max rounded-[11px] bg-neutral-subtle", children: [
-              /* @__PURE__ */ e.jsxs("button", { type: "button", onClick: () => m("move"), className: H(L), children: [
+              /* @__PURE__ */ e.jsxs("button", { type: "button", onClick: () => m("move"), className: Z(z), children: [
                 /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-right-left text-[10px]" }),
                 "Taşı"
               ] }),
-              /* @__PURE__ */ e.jsxs("button", { type: "button", onClick: () => m("copy"), className: H(!L), children: [
+              /* @__PURE__ */ e.jsxs("button", { type: "button", onClick: () => m("copy"), className: Z(!z), children: [
                 /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-clone text-[10px]" }),
                 "Kopyala"
               ] })
@@ -5714,15 +5697,15 @@ function Pn({
                 /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-2.5", children: [
                   /* @__PURE__ */ e.jsxs("span", { className: "text-[10.5px] font-extrabold uppercase tracking-[.08em] text-text-tertiary", children: [
                     "Hedef projeler · ",
-                    q
+                    R
                   ] }),
                   /* @__PURE__ */ e.jsx(
                     "button",
                     {
                       type: "button",
-                      onClick: () => p(F ? [] : D.map((T) => T.value)),
+                      onClick: () => p(q ? [] : S.map((D) => D.value)),
                       className: "p-0 border-0 bg-transparent text-primary text-[11px] font-bold cursor-pointer hover:underline",
-                      children: F ? "Seçimi temizle" : "Tümünü seç"
+                      children: q ? "Seçimi temizle" : "Tümünü seç"
                     }
                   )
                 ] }),
@@ -5733,32 +5716,32 @@ function Pn({
                     {
                       type: "text",
                       value: u,
-                      onChange: (T) => c(T.target.value),
+                      onChange: (D) => c(D.target.value),
                       placeholder: "Proje ara…",
                       className: "w-full h-[38px] pl-[33px] pr-3 rounded-[10px] border border-default bg-neutral-subtle text-text-primary text-[12.5px] focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none"
                     }
                   )
                 ] }),
                 /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-1.5 max-h-[240px] overflow-y-auto custom-scrollbar", children: [
-                  z.map((T) => {
-                    const R = h.includes(T.value), G = L && h[0] === T.value;
+                  P.map((D) => {
+                    const M = h.includes(D.value), U = z && h[0] === D.value;
                     return /* @__PURE__ */ e.jsxs(
                       "button",
                       {
                         type: "button",
-                        onClick: () => E(T.value),
-                        className: `flex items-center gap-[11px] px-3 py-[11px] rounded-[11px] border text-left cursor-pointer hover:border-focus ${R ? "border-primary bg-primary-subtle" : "border-subtle bg-surface-base"}`,
+                        onClick: () => I(D.value),
+                        className: `flex items-center gap-[11px] px-3 py-[11px] rounded-[11px] border text-left cursor-pointer hover:border-focus ${M ? "border-primary bg-primary-subtle" : "border-subtle bg-surface-base"}`,
                         children: [
-                          /* @__PURE__ */ e.jsx("span", { className: `flex shrink-0 items-center justify-center h-[18px] w-[18px] rounded-[5px] border-[1.5px] text-white ${R ? "bg-primary border-primary" : "bg-transparent border-strong"}`, children: R && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[9px]" }) }),
+                          /* @__PURE__ */ e.jsx("span", { className: `flex shrink-0 items-center justify-center h-[18px] w-[18px] rounded-[5px] border-[1.5px] text-white ${M ? "bg-primary border-primary" : "bg-transparent border-strong"}`, children: M && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[9px]" }) }),
                           /* @__PURE__ */ e.jsx("span", { className: "h-2.5 w-2.5 shrink-0 rounded-[3px] bg-primary" }),
-                          /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0 text-[12.5px] font-semibold text-text-primary truncate", children: T.label }),
-                          G && /* @__PURE__ */ e.jsx("span", { className: "flex shrink-0 items-center h-5 px-2 rounded-md bg-primary text-white text-[10px] font-extrabold", children: "TAŞINACAK" })
+                          /* @__PURE__ */ e.jsx("span", { className: "flex-1 min-w-0 text-[12.5px] font-semibold text-text-primary truncate", children: D.label }),
+                          U && /* @__PURE__ */ e.jsx("span", { className: "flex shrink-0 items-center h-5 px-2 rounded-md bg-primary text-white text-[10px] font-extrabold", children: "TAŞINACAK" })
                         ]
                       },
-                      T.value
+                      D.value
                     );
                   }),
-                  z.length === 0 && /* @__PURE__ */ e.jsx("div", { className: "py-6 text-center text-[12px] text-text-tertiary", children: "Uygun proje bulunamadı." })
+                  P.length === 0 && /* @__PURE__ */ e.jsx("div", { className: "py-6 text-center text-[12px] text-text-tertiary", children: "Uygun proje bulunamadı." })
                 ] }),
                 /* @__PURE__ */ e.jsxs("div", { className: "flex gap-[7px] mt-1", children: [
                   /* @__PURE__ */ e.jsx(
@@ -5766,9 +5749,9 @@ function Pn({
                     {
                       type: "text",
                       value: d,
-                      onChange: (T) => N(T.target.value),
-                      onKeyDown: (T) => {
-                        T.key === "Enter" && (T.preventDefault(), _());
+                      onChange: (D) => N(D.target.value),
+                      onKeyDown: (D) => {
+                        D.key === "Enter" && (D.preventDefault(), G());
                       },
                       placeholder: "Yeni proje adı…",
                       className: "flex-1 min-w-0 h-9 px-3 rounded-[10px] border border-dashed border-strong bg-transparent text-text-primary text-[12.5px] focus:border-solid focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none"
@@ -5779,14 +5762,14 @@ function Pn({
                     {
                       type: "button",
                       title: "Yeni proje oluştur",
-                      onClick: _,
+                      onClick: G,
                       disabled: !d.trim() || j,
                       className: "flex shrink-0 items-center justify-center h-9 w-9 rounded-[10px] bg-primary-subtle text-primary cursor-pointer hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed",
                       children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-folder-plus text-[12px]" })
                     }
                   )
                 ] }),
-                L && q > 1 && /* @__PURE__ */ e.jsxs("div", { className: "flex items-start gap-[9px] px-3 py-[11px] rounded-[11px] border border-warning bg-warning-subtle", children: [
+                z && R > 1 && /* @__PURE__ */ e.jsxs("div", { className: "flex items-start gap-[9px] px-3 py-[11px] rounded-[11px] border border-warning bg-warning-subtle", children: [
                   /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-circle-info text-[12px] text-warning mt-px" }),
                   /* @__PURE__ */ e.jsxs("span", { className: "text-[11.5px] leading-[1.5] text-text-secondary", children: [
                     "Taşıma tek hedefe yapılır: ",
@@ -5797,20 +5780,20 @@ function Pn({
               ] }),
               /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-[9px] min-w-0", children: [
                 /* @__PURE__ */ e.jsx("span", { className: "text-[10.5px] font-extrabold uppercase tracking-[.08em] text-text-tertiary", children: "Neler taşınsın?" }),
-                /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-0.5", children: Sn.map((T) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3 px-2.5 py-[9px] rounded-[10px] hover:bg-surface-raised", children: [
+                /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-0.5", children: Tn.map((D) => /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-3 px-2.5 py-[9px] rounded-[10px] hover:bg-surface-raised", children: [
                   /* @__PURE__ */ e.jsxs("div", { className: "flex-1 min-w-0 flex flex-col gap-px", children: [
-                    /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-semibold text-text-primary", children: T.label }),
-                    /* @__PURE__ */ e.jsx("span", { className: "text-[11px] text-text-tertiary", children: T.countKey ? `${n[T.countKey] ?? 0} ${T.unit}` : T.desc })
+                    /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] font-semibold text-text-primary", children: D.label }),
+                    /* @__PURE__ */ e.jsx("span", { className: "text-[11px] text-text-tertiary", children: D.countKey ? `${n[D.countKey] ?? 0} ${D.unit}` : D.desc })
                   ] }),
                   /* @__PURE__ */ e.jsx(
-                    $n,
+                    Sn,
                     {
-                      on: y[T.key],
-                      label: T.label,
-                      onClick: () => b((R) => ({ ...R, [T.key]: !R[T.key] }))
+                      on: y[D.key],
+                      label: D.label,
+                      onClick: () => b((M) => ({ ...M, [D.key]: !M[D.key] }))
                     }
                   )
-                ] }, T.key)) })
+                ] }, D.key)) })
               ] })
             ] }),
             /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3.5 px-[22px] py-3.5 border-t border-subtle bg-surface-raised", children: [
@@ -5830,8 +5813,8 @@ function Pn({
                   {
                     type: "button",
                     onClick: Y,
-                    disabled: !q || j,
-                    className: `flex items-center gap-2 h-9 px-5 rounded-[10px] text-white text-[12.5px] font-bold shadow-sm ${q && !j ? "bg-primary hover:bg-primary-hover cursor-pointer" : "bg-border-strong cursor-not-allowed"}`,
+                    disabled: !R || j,
+                    className: `flex items-center gap-2 h-9 px-5 rounded-[10px] text-white text-[12.5px] font-bold shadow-sm ${R && !j ? "bg-primary hover:bg-primary-hover cursor-pointer" : "bg-border-strong cursor-not-allowed"}`,
                     children: [
                       /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${j ? "fa-circle-notch fa-spin" : "fa-arrow-right"} text-[10px]` }),
                       V
@@ -5846,7 +5829,7 @@ function Pn({
     }
   ) });
 }
-const En = [
+const Pn = [
   { code: "general", title: "Genel", icon: "fa-circle-info" },
   { code: "checklist", title: "Kontrol", icon: "fa-square-check" },
   { code: "comments", title: "Yorumlar", icon: "fa-comments" },
@@ -5858,12 +5841,12 @@ const En = [
   code: { icon: "fa-file-code", bg: "bg-success-subtle", fg: "text-success" },
   other: { icon: "fa-file", bg: "bg-neutral-subtle", fg: "text-text-secondary" }
 };
-function Bn(t = "") {
+function En(t = "") {
   var a;
   const s = (a = t.split(".").pop()) == null ? void 0 : a.toLowerCase();
   return s === "pdf" ? Oe.pdf : ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(s) ? Oe.img : ["doc", "docx", "odt", "rtf"].includes(s) ? Oe.doc : ["json", "js", "ts", "cs", "xml", "yml", "yaml"].includes(s) ? Oe.code : Oe.other;
 }
-const In = (t) => t ? t < 1024 ? `${t} B` : t < 1024 * 1024 ? `${Math.round(t / 1024)} KB` : `${(t / 1024 / 1024).toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB` : "—", Fn = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(t)) : "—", An = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit" }).format(new Date(t)) : "—";
+const Bn = (t) => t ? t < 1024 ? `${t} B` : t < 1024 * 1024 ? `${Math.round(t / 1024)} KB` : `${(t / 1024 / 1024).toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB` : "—", In = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(t)) : "—", Fn = (t) => t ? new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "2-digit" }).format(new Date(t)) : "—";
 function Ct({ name: t, size: s = 22 }) {
   return /* @__PURE__ */ e.jsx(
     "span",
@@ -5880,7 +5863,7 @@ function lt({ label: t, children: s }) {
     s
   ] });
 }
-function zn({
+function An({
   subtaskId: t,
   parentCode: s,
   onClose: a,
@@ -5888,14 +5871,14 @@ function zn({
   onDeleted: i,
   currentUserName: o = "Ben"
 }) {
-  var W, se, $;
+  var ce, $, ee;
   const n = ne(), { data: l } = Lt(t), x = Rt(t), m = ht(t), [h, p] = f.useState("general"), [u, c] = f.useState(""), [d, N] = f.useState(""), [y, b] = f.useState(""), j = f.useRef(null), w = f.useRef(null);
   l && w.current !== l.id && (w.current = l.id, c(l.description ?? ""));
-  const { data: D = [] } = Z({
+  const { data: S = [] } = J({
     queryKey: ["task-comments", t],
     queryFn: () => {
-      var C, g, v, I;
-      return Promise.resolve((I = (v = (g = (C = window == null ? void 0 : window.apya) == null ? void 0 : C.platform) == null ? void 0 : g.tasks) == null ? void 0 : v.task) == null ? void 0 : I.getComments(t));
+      var C, g, v, F;
+      return Promise.resolve((F = (v = (g = (C = window == null ? void 0 : window.apya) == null ? void 0 : C.platform) == null ? void 0 : g.tasks) == null ? void 0 : v.task) == null ? void 0 : F.getComments(t));
     },
     enabled: !!t,
     staleTime: 1e4,
@@ -5907,45 +5890,45 @@ function zn({
     };
     return window.addEventListener("keydown", C), () => window.removeEventListener("keydown", C);
   }, [a]), !l) return null;
-  const { canEdit: z, canChangeStatus: F, canDelete: E } = We(l), Q = ($ = (se = (W = window == null ? void 0 : window.apya) == null ? void 0 : W.platform) == null ? void 0 : se.tasks) == null ? void 0 : $.task, _ = be(l.status), Y = ft(l.priority), L = x.items ?? [], q = L.filter((C) => C.isDone).length, V = L.length ? Math.round(q / L.length * 100) : 0, U = m.attachments ?? [], O = { checklist: L.length, comments: D.length, files: U.length }, X = async () => {
+  const { canEdit: P, canChangeStatus: q, canDelete: I } = We(l), Q = (ee = ($ = (ce = window == null ? void 0 : window.apya) == null ? void 0 : ce.platform) == null ? void 0 : $.tasks) == null ? void 0 : ee.task, G = be(l.status), Y = ft(l.priority), z = x.items ?? [], R = z.filter((C) => C.isDone).length, V = z.length ? Math.round(R / z.length * 100) : 0, O = m.attachments ?? [], _ = { checklist: z.length, comments: S.length, files: O.length }, X = async () => {
     await n.invalidateQueries({ queryKey: ["task-detail", t] });
-  }, H = async (C) => {
+  }, Z = async (C) => {
     try {
       await Promise.resolve(C()), await X();
     } catch (g) {
-      P(g, "Alt görev güncellenemedi.");
+      E(g, "Alt görev güncellenemedi.");
     }
-  }, T = (C) => H(() => Q.update(l.id, Bt(l, C))), R = () => H(() => Q.updateStatus(l.id, l.status >= 4 ? 1 : l.status + 1)), G = () => H(() => Q.setPriority(l.id, l.priority >= 4 ? 1 : l.priority + 1)), ee = () => {
-    (l.description ?? "") !== u && T({ description: u || null });
-  }, oe = async () => {
+  }, D = (C) => Z(() => Q.update(l.id, Bt(l, C))), M = () => Z(() => Q.updateStatus(l.id, l.status >= 4 ? 1 : l.status + 1)), U = () => Z(() => Q.setPriority(l.id, l.priority >= 4 ? 1 : l.priority + 1)), ae = () => {
+    (l.description ?? "") !== u && D({ description: u || null });
+  }, ie = async () => {
     const C = d.trim();
     if (C) {
       N("");
       try {
         await x.addItem(C);
       } catch (g) {
-        P(g, "Madde eklenemedi.");
+        E(g, "Madde eklenemedi.");
       }
     }
-  }, ie = async () => {
+  }, oe = async () => {
     const C = y.trim();
     if (C) {
       b("");
       try {
         await Promise.resolve(Q.addComment(l.id, C)), await n.invalidateQueries({ queryKey: ["task-comments", t] });
       } catch (g) {
-        P(g, "Yorum gönderilemedi.");
+        E(g, "Yorum gönderilemedi.");
       }
     }
-  }, ae = async () => {
+  }, se = async () => {
     if (window.confirm("Bu alt görevi silmek istediğinize emin misiniz?"))
       try {
         await Promise.resolve(Q.delete(l.id)), i == null || i(l.id), a == null || a();
       } catch (C) {
-        P(C, "Alt görev silinemedi.");
+        E(C, "Alt görev silinemedi.");
       }
-  }, ce = "flex items-center justify-center h-[30px] w-[30px] rounded-lg text-text-tertiary cursor-pointer";
-  return /* @__PURE__ */ e.jsxs(Ja, { open: !0, onClose: a, label: `${l.code} alt görev detayı`, children: [
+  }, H = "flex items-center justify-center h-[30px] w-[30px] rounded-lg text-text-tertiary cursor-pointer";
+  return /* @__PURE__ */ e.jsxs(Wa, { open: !0, onClose: a, label: `${l.code} alt görev detayı`, children: [
     /* @__PURE__ */ e.jsx(
       "div",
       {
@@ -5980,17 +5963,17 @@ function zn({
                     type: "button",
                     title: "Tam detayda aç",
                     onClick: () => r == null ? void 0 : r(l.id),
-                    className: `${ce} hover:bg-surface-hover hover:text-primary`,
+                    className: `${H} hover:bg-surface-hover hover:text-primary`,
                     children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-up-right-from-square text-[11px]" })
                   }
                 ),
-                E && /* @__PURE__ */ e.jsx(
+                I && /* @__PURE__ */ e.jsx(
                   "button",
                   {
                     type: "button",
                     title: "Alt görevi sil",
-                    onClick: ae,
-                    className: `${ce} hover:bg-negative-subtle hover:text-negative`,
+                    onClick: se,
+                    className: `${H} hover:bg-negative-subtle hover:text-negative`,
                     children: /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-trash-can text-[11px]" })
                   }
                 ),
@@ -6000,7 +5983,7 @@ function zn({
                     type: "button",
                     title: "Kapat",
                     onClick: a,
-                    className: `${ce} hover:bg-surface-hover hover:text-text-primary`,
+                    className: `${H} hover:bg-surface-hover hover:text-text-primary`,
                     children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-xmark text-[13px]" })
                   }
                 )
@@ -6012,13 +5995,13 @@ function zn({
                 "button",
                 {
                   type: "button",
-                  onClick: R,
+                  onClick: M,
                   title: "Durumu değiştir",
-                  disabled: !F,
-                  className: `flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] text-[11.5px] font-bold ${F ? "cursor-pointer" : "cursor-default"} ${_.bg} ${_.fg}`,
+                  disabled: !q,
+                  className: `flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] text-[11.5px] font-bold ${q ? "cursor-pointer" : "cursor-default"} ${G.bg} ${G.fg}`,
                   children: [
-                    /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${_.icon} text-[10px]` }),
-                    _.label
+                    /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${G.icon} text-[10px]` }),
+                    G.label
                   ]
                 }
               ),
@@ -6026,10 +6009,10 @@ function zn({
                 "button",
                 {
                   type: "button",
-                  onClick: G,
+                  onClick: U,
                   title: "Önceliği değiştir",
-                  disabled: !z,
-                  className: `flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] text-[11.5px] font-bold ${z ? "cursor-pointer" : "cursor-default"} ${Y.bg} ${Y.fg}`,
+                  disabled: !P,
+                  className: `flex items-center gap-1.5 h-6 px-[9px] rounded-[7px] text-[11.5px] font-bold ${P ? "cursor-pointer" : "cursor-default"} ${Y.bg} ${Y.fg}`,
                   children: [
                     /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${Y.icon} text-[10px]` }),
                     Y.label
@@ -6037,7 +6020,7 @@ function zn({
                 }
               ),
               (l.tags ?? []).map((C) => /* @__PURE__ */ e.jsx("span", { className: "flex items-center h-6 px-[9px] rounded-[7px] border border-default bg-neutral-subtle text-text-secondary text-[11px] font-semibold", children: C.name }, C.id ?? C.name)),
-              !z && /* @__PURE__ */ e.jsxs(
+              !P && /* @__PURE__ */ e.jsxs(
                 "span",
                 {
                   title: "Bu alt görevi yalnız oluşturan, atanan kişi ya da ekip yöneticisi düzenleyebilir. Yorum yazabilirsiniz.",
@@ -6057,7 +6040,7 @@ function zn({
               ] }) }),
               /* @__PURE__ */ e.jsx(lt, { label: "Son tarih", children: /* @__PURE__ */ e.jsxs("span", { className: "flex items-center gap-[7px] h-[22px] text-[12.5px] font-semibold text-text-primary", children: [
                 /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-calendar text-[11px] text-text-tertiary" }),
-                An(l.dueDate)
+                Fn(l.dueDate)
               ] }) }),
               /* @__PURE__ */ e.jsx(lt, { label: "Süre", children: /* @__PURE__ */ e.jsxs("span", { className: "flex items-center h-[22px] font-mono text-[12.5px] font-bold text-text-primary", children: [
                 l.spentHours ?? 0,
@@ -6076,8 +6059,8 @@ function zn({
               ] }) })
             ] })
           ] }),
-          /* @__PURE__ */ e.jsx("div", { className: "flex items-center gap-1 px-5 py-2.5 border-b border-subtle shrink-0 overflow-x-auto custom-scrollbar", children: En.map((C) => {
-            const g = h === C.code, v = O[C.code] ?? 0;
+          /* @__PURE__ */ e.jsx("div", { className: "flex items-center gap-1 px-5 py-2.5 border-b border-subtle shrink-0 overflow-x-auto custom-scrollbar", children: Pn.map((C) => {
+            const g = h === C.code, v = _[C.code] ?? 0;
             return /* @__PURE__ */ e.jsxs(
               "button",
               {
@@ -6102,9 +6085,9 @@ function zn({
                   rows: 7,
                   value: u,
                   onChange: (C) => c(C.target.value),
-                  onBlur: z ? ee : void 0,
-                  readOnly: !z,
-                  placeholder: z ? "Bu alt görevin detayları…" : "Açıklama yok.",
+                  onBlur: P ? ae : void 0,
+                  readOnly: !P,
+                  placeholder: P ? "Bu alt görevin detayları…" : "Açıklama yok.",
                   className: "w-full p-3 rounded-xl border border-default bg-surface-base text-text-primary text-[13px] leading-[1.65] resize-y focus:border-focus focus:shadow-focus focus:outline-none"
                 }
               ),
@@ -6121,27 +6104,27 @@ function zn({
               /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between", children: [
                 /* @__PURE__ */ e.jsx("span", { className: "text-[12px] font-bold text-text-primary", children: "Kontrol listesi" }),
                 /* @__PURE__ */ e.jsxs("span", { className: "font-mono text-[11px] font-bold text-text-tertiary", children: [
-                  q,
+                  R,
                   "/",
-                  L.length
+                  z.length
                 ] })
               ] }),
               /* @__PURE__ */ e.jsx("div", { className: "h-[5px] rounded-full bg-neutral-subtle overflow-hidden", children: /* @__PURE__ */ e.jsx("div", { className: "h-full rounded-full bg-success", style: { width: `${V}%` } }) }),
               /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-[3px] mt-1", children: [
-                L.map((C) => /* @__PURE__ */ e.jsxs("div", { className: "group flex items-center gap-[11px] px-[11px] py-[9px] rounded-[10px] border border-subtle bg-surface-base hover:border-default", children: [
+                z.map((C) => /* @__PURE__ */ e.jsxs("div", { className: "group flex items-center gap-[11px] px-[11px] py-[9px] rounded-[10px] border border-subtle bg-surface-base hover:border-default", children: [
                   /* @__PURE__ */ e.jsx(
                     "button",
                     {
                       type: "button",
                       "aria-label": "Tamamlandı işaretle",
                       onClick: () => x.toggleItem(C.id),
-                      disabled: !z,
-                      className: `flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white ${z ? "cursor-pointer" : "cursor-default"} ${C.isDone ? "bg-success border-success" : "bg-transparent border-strong"}`,
+                      disabled: !P,
+                      className: `flex shrink-0 items-center justify-center h-[18px] w-[18px] p-0 rounded-[5px] border-[1.5px] text-white ${P ? "cursor-pointer" : "cursor-default"} ${C.isDone ? "bg-success border-success" : "bg-transparent border-strong"}`,
                       children: C.isDone && /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-check text-[9px]" })
                     }
                   ),
                   /* @__PURE__ */ e.jsx("span", { className: `flex-1 min-w-0 text-[12.5px] font-semibold ${C.isDone ? "line-through text-text-tertiary" : "text-text-primary"}`, children: C.text }),
-                  z && /* @__PURE__ */ e.jsx(
+                  P && /* @__PURE__ */ e.jsx(
                     "button",
                     {
                       type: "button",
@@ -6152,14 +6135,14 @@ function zn({
                     }
                   )
                 ] }, C.id)),
-                z && /* @__PURE__ */ e.jsx(
+                P && /* @__PURE__ */ e.jsx(
                   "input",
                   {
                     type: "text",
                     value: d,
                     onChange: (C) => N(C.target.value),
                     onKeyDown: (C) => {
-                      C.key === "Enter" && oe();
+                      C.key === "Enter" && ie();
                     },
                     placeholder: "Yeni madde yaz ve Enter'a bas…",
                     className: "h-9 mt-1 px-3 rounded-[10px] border border-dashed border-strong bg-transparent text-text-primary text-[12.5px] focus:border-solid focus:border-focus focus:bg-surface-base focus:shadow-focus focus:outline-none"
@@ -6177,7 +6160,7 @@ function zn({
                     value: y,
                     onChange: (C) => b(C.target.value),
                     onKeyDown: (C) => {
-                      C.key === "Enter" && !C.shiftKey && (C.preventDefault(), ie());
+                      C.key === "Enter" && !C.shiftKey && (C.preventDefault(), oe());
                     },
                     placeholder: "Yorum yaz ve Enter'a bas…",
                     className: "flex-1 min-w-0 px-3 py-2.5 rounded-[11px] border border-default bg-surface-base text-text-primary text-[12.5px] leading-[1.6] resize-none focus:border-focus focus:shadow-focus focus:outline-none"
@@ -6187,22 +6170,22 @@ function zn({
                   "button",
                   {
                     type: "button",
-                    onClick: ie,
+                    onClick: oe,
                     "aria-label": "Yorumu gönder",
                     className: `flex shrink-0 items-center justify-center h-[34px] w-[34px] rounded-[10px] ${y.trim() ? "bg-primary text-white cursor-pointer hover:bg-primary-hover" : "bg-border-default text-text-tertiary cursor-not-allowed"}`,
                     children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-paper-plane text-[11px]" })
                   }
                 )
               ] }),
-              D.length === 0 ? /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center gap-[7px] py-7 rounded-xl border border-dashed border-default", children: [
+              S.length === 0 ? /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center gap-[7px] py-7 rounded-xl border border-dashed border-default", children: [
                 /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-comments text-xl text-text-tertiary" }),
                 /* @__PURE__ */ e.jsx("span", { className: "text-[12px] text-text-tertiary", children: "Henüz yorum yok" })
-              ] }) : D.map((C) => /* @__PURE__ */ e.jsxs("div", { className: "flex gap-2.5 items-start p-3 rounded-xl border border-subtle bg-surface-base", children: [
+              ] }) : S.map((C) => /* @__PURE__ */ e.jsxs("div", { className: "flex gap-2.5 items-start p-3 rounded-xl border border-subtle bg-surface-base", children: [
                 /* @__PURE__ */ e.jsx(Ct, { name: C.authorName, size: 28 }),
                 /* @__PURE__ */ e.jsxs("div", { className: "flex-1 min-w-0", children: [
                   /* @__PURE__ */ e.jsxs("div", { className: "flex items-baseline gap-2 flex-wrap", children: [
                     /* @__PURE__ */ e.jsx("span", { className: "text-[12px] font-bold text-text-primary", children: C.authorName }),
-                    /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10px] text-text-tertiary", children: Fn(C.creationTime) })
+                    /* @__PURE__ */ e.jsx("span", { className: "font-mono text-[10px] text-text-tertiary", children: In(C.creationTime) })
                   ] }),
                   /* @__PURE__ */ e.jsx("p", { className: "mt-1 mb-0 text-[12.5px] leading-[1.6] text-text-secondary whitespace-pre-wrap", children: C.text })
                 ] })
@@ -6218,7 +6201,7 @@ function zn({
                   onChange: (C) => {
                     var v;
                     const g = (v = C.target.files) == null ? void 0 : v[0];
-                    C.target.value = "", g && m.upload(g).catch((I) => P(I, "Dosya yüklenemedi."));
+                    C.target.value = "", g && m.upload(g).catch((F) => E(F, "Dosya yüklenemedi."));
                   }
                 }
               ),
@@ -6238,14 +6221,14 @@ function zn({
                   ]
                 }
               ),
-              U.map((C) => {
-                const g = Bn(C.fileName);
+              O.map((C) => {
+                const g = En(C.fileName);
                 return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center gap-[11px] px-3 py-[11px] rounded-xl border border-subtle bg-surface-base", children: [
                   /* @__PURE__ */ e.jsx("span", { className: `flex shrink-0 items-center justify-center h-[34px] w-[34px] rounded-[9px] ${g.bg} ${g.fg}`, children: /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${g.icon} text-[13px]` }) }),
                   /* @__PURE__ */ e.jsxs("div", { className: "flex-1 min-w-0", children: [
                     /* @__PURE__ */ e.jsx("div", { className: "text-[12.5px] font-bold text-text-primary truncate", children: C.fileName }),
                     /* @__PURE__ */ e.jsxs("div", { className: "font-mono text-[10.5px] text-text-tertiary", children: [
-                      In(C.fileSize),
+                      Bn(C.fileSize),
                       " · ",
                       C.uploaderName
                     ] })
@@ -6264,7 +6247,7 @@ function zn({
                     {
                       type: "button",
                       title: "Sil",
-                      onClick: () => m.remove(C.id).catch((v) => P(v, "Dosya silinemedi.")),
+                      onClick: () => m.remove(C.id).catch((v) => E(v, "Dosya silinemedi.")),
                       className: "flex shrink-0 items-center justify-center h-[26px] w-[26px] rounded-[7px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer",
                       children: /* @__PURE__ */ e.jsx("i", { className: "fa-regular fa-trash-can text-[11px]" })
                     }
@@ -6301,10 +6284,10 @@ function zn({
     )
   ] });
 }
-const Za = "apya.taskDetail.tabOrder", Ln = "taskdetail";
-function va() {
+const Ja = "apya.taskDetail.tabOrder", zn = "taskdetail";
+function ga() {
   try {
-    const t = localStorage.getItem(Za);
+    const t = localStorage.getItem(Ja);
     if (!t) return [];
     const s = JSON.parse(t);
     return Array.isArray(s) ? s.filter((a) => typeof a == "string") : [];
@@ -6312,13 +6295,13 @@ function va() {
     return [];
   }
 }
-function Mn(t) {
+function Ln(t) {
   try {
-    localStorage.setItem(Za, JSON.stringify(t));
+    localStorage.setItem(Ja, JSON.stringify(t));
   } catch {
   }
 }
-function ja() {
+function va() {
   const t = document.querySelector("[data-tab-order]"), s = t == null ? void 0 : t.getAttribute("data-tab-order");
   if (!s) return null;
   try {
@@ -6328,7 +6311,7 @@ function ja() {
     return null;
   }
 }
-function Na(t) {
+function ja(t) {
   try {
     const s = (document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1];
     fetch("/api/app/shell/set-board-tabs", {
@@ -6339,7 +6322,7 @@ function Na(t) {
         RequestVerificationToken: s ? decodeURIComponent(s) : ""
       },
       body: JSON.stringify({
-        scope: Ln,
+        scope: zn,
         tabs: t.map((a) => ({ kind: a, ref: "", title: "" }))
       })
     }).catch(() => {
@@ -6347,12 +6330,12 @@ function Na(t) {
   } catch {
   }
 }
-function Kn(t) {
-  const [s, a] = f.useState(() => ja() ?? va()), [r, i] = f.useState(null);
+function Mn(t) {
+  const [s, a] = f.useState(() => va() ?? ga()), [r, i] = f.useState(null);
   f.useEffect(() => {
-    if (ja() === null) {
-      const m = va();
-      m.length && Na(m);
+    if (va() === null) {
+      const m = ga();
+      m.length && ja(m);
     }
   }, []);
   const o = f.useMemo(() => {
@@ -6374,12 +6357,12 @@ function Kn(t) {
   }, [r, o]), l = f.useCallback((m) => i(m), []), x = f.useCallback(() => {
     i(null), a((m) => {
       const h = m.length ? m : o.map((p) => p.code);
-      return Mn(h), Na(h), h;
+      return Ln(h), ja(h), h;
     });
   }, [o]);
   return { orderedTabs: o, draggingCode: r, handleDragStart: l, handleDragEnd: x, reorderTo: n };
 }
-function Rn(t) {
+function Kn(t) {
   const s = f.useRef(null);
   f.useEffect(() => {
     if (!(!t || typeof document > "u")) {
@@ -6391,7 +6374,7 @@ function Rn(t) {
     }
   }, [t]);
 }
-function qn() {
+function Rn() {
   const [t, s] = f.useState(0), a = f.useRef(null), r = f.useCallback((i) => {
     var o;
     (o = a.current) == null || o.disconnect(), a.current = null, i && (s(i.getBoundingClientRect().width), !(typeof ResizeObserver > "u") && (a.current = new ResizeObserver((n) => {
@@ -6403,40 +6386,40 @@ function qn() {
     return (i = a.current) == null ? void 0 : i.disconnect();
   }, []), [r, t];
 }
-const Gn = 780;
-function Yn(t) {
-  return t > 0 && t < Gn;
+const qn = 780;
+function Gn(t) {
+  return t > 0 && t < qn;
 }
-function _n() {
+function Yn() {
   var s, a, r;
   const t = (r = (a = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : a.tasks) == null ? void 0 : r.task;
   return t ? Promise.resolve(t.getProjectsLookup()) : Promise.reject(new Error("ABP görev servisi yüklenmedi."));
 }
-function Un() {
-  const t = Z({
+function _n() {
+  const t = J({
     queryKey: ["task-detail", "projects-lookup"],
-    queryFn: _n,
+    queryFn: Yn,
     staleTime: 3e5,
     retry: !1
-  }), s = t.data ?? [], a = Vn(s), r = new Map(s.map((i) => [i.id, i.name]));
+  }), s = t.data ?? [], a = Un(s), r = new Map(s.map((i) => [i.id, i.name]));
   return { options: a, nameById: r, isLoading: t.isLoading };
 }
-function Vn(t) {
+function Un(t) {
   const s = /* @__PURE__ */ new Map();
   return t.forEach((a) => s.set(a.name, (s.get(a.name) ?? 0) + 1)), t.map((a) => ({
     value: a.id,
     label: s.get(a.name) > 1 && a.code ? `${a.name} · ${a.code}` : a.name
   }));
 }
-function On(t) {
+function Vn(t) {
   var a, r, i;
   const s = (i = (r = (a = window == null ? void 0 : window.apya) == null ? void 0 : a.platform) == null ? void 0 : r.projects) == null ? void 0 : i.boardColumn;
   return s ? Promise.resolve(s.getListByProject(t, { abpHandleError: !1 })) : Promise.resolve([]);
 }
-function Qn(t) {
-  const s = Z({
+function On(t) {
+  const s = J({
     queryKey: ["task-detail", "board-columns", t],
-    queryFn: () => On(t),
+    queryFn: () => Vn(t),
     enabled: !!t,
     staleTime: 6e4,
     retry: !1,
@@ -6446,7 +6429,7 @@ function Qn(t) {
   });
   return t ? s.data ?? [] : [];
 }
-const wa = "apya.taskDetail.fullscreen", pe = {
+const Na = "apya.taskDetail.fullscreen", pe = {
   ok: (t) => {
     var s, a, r;
     return (r = (a = (s = window == null ? void 0 : window.abp) == null ? void 0 : s.notify) == null ? void 0 : a.success) == null ? void 0 : r.call(a, t);
@@ -6460,100 +6443,100 @@ const wa = "apya.taskDetail.fullscreen", pe = {
     return (r = (a = (s = window == null ? void 0 : window.abp) == null ? void 0 : s.notify) == null ? void 0 : a.error) == null ? void 0 : r.call(a, t);
   }
 };
-function Hn(t) {
+function Qn(t) {
   return t.toLocaleUpperCase("tr-TR").replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || `PRJ-${Date.now().toString().slice(-6)}`;
 }
-function ka() {
+function wa() {
   var a;
   const t = (a = window == null ? void 0 : window.abp) == null ? void 0 : a.currentUser;
   return [t == null ? void 0 : t.name, t == null ? void 0 : t.surName].filter((r) => r && String(r).trim()).join(" ").trim() || (t == null ? void 0 : t.userName) || "Ben";
 }
-function Xa({ taskId: t, presentation: s = "modal", onClose: a, switchToTask: r }) {
-  const [i, o] = f.useState(t), { data: n, isPending: l, isError: x, error: m, refetch: h } = Lt(i), p = ne(), u = $a(), c = Ma(n), d = Ka(), N = Un(), y = Qn(
+function Za({ taskId: t, presentation: s = "modal", onClose: a, switchToTask: r }) {
+  const [i, o] = f.useState(t), { data: n, isPending: l, isError: x, error: m, refetch: h } = Lt(i), p = ne(), u = Sa(), c = La(n), d = Ma(), N = _n(), y = On(
     n != null && n.projectId && c.values.projectId === n.projectId ? n.projectId : null
-  ), b = Ra(i), j = Rt(i), [w, D] = f.useState("general"), [z, F] = f.useState(!1), [E, Q] = f.useState(!1), [_, Y] = f.useState(!1), [L, q] = f.useState(null), [V, U] = f.useState(null), [O, X] = f.useState(!1), [H, T] = f.useState(!1), [R, G] = f.useState(() => {
+  ), b = Ka(i), j = Rt(i), [w, S] = f.useState("general"), [P, q] = f.useState(!1), [I, Q] = f.useState(!1), [G, Y] = f.useState(!1), [z, R] = f.useState(null), [V, O] = f.useState(null), [_, X] = f.useState(!1), [Z, D] = f.useState(!1), [M, U] = f.useState(() => {
     try {
-      return localStorage.getItem(wa) === "true";
+      return localStorage.getItem(Na) === "true";
     } catch {
       return !1;
     }
   });
-  za(s === "page" ? null : i), Rn(s === "page" ? n == null ? void 0 : n.title : null);
-  const [ee, oe] = qn(), ie = Yn(oe), [ae, ce] = f.useState(null);
-  n != null && n.id && n.id !== ae && (ce(n.id), X(!!n.isFavorite), T(!!n.isWatched)), f.useEffect(() => {
+  Aa(s === "page" ? null : i), Kn(s === "page" ? n == null ? void 0 : n.title : null);
+  const [ae, ie] = Rn(), oe = Gn(ie), [se, H] = f.useState(null);
+  n != null && n.id && n.id !== se && (H(n.id), X(!!n.isFavorite), D(!!n.isWatched)), f.useEffect(() => {
     c.isDirty ? u.markDirty() : u.markClean();
   }), f.useEffect(() => {
-    const k = p.getQueryCache().subscribe((M) => {
+    const k = p.getQueryCache().subscribe((L) => {
       var le;
-      M.type === "updated" && ((le = M.action) == null ? void 0 : le.type) === "invalidate" && !Fs(M.query.queryKey) && J.markChanged();
-    }), S = p.getMutationCache().subscribe((M) => {
-      M.type === "added" && J.markChanged();
+      L.type === "updated" && ((le = L.action) == null ? void 0 : le.type) === "invalidate" && !Is(L.query.queryKey) && W.markChanged();
+    }), T = p.getMutationCache().subscribe((L) => {
+      L.type === "added" && W.markChanged();
     });
     return () => {
-      k(), S();
+      k(), T();
     };
   }, [p]);
-  const W = f.useCallback(() => {
+  const ce = f.useCallback(() => {
     Kt(), a == null || a();
-  }, [a]), se = f.useCallback(() => {
-    z || (Y(!1), u.requestClose(W));
-  }, [u, W, z]), $ = (k) => {
+  }, [a]), $ = f.useCallback(() => {
+    P || (Y(!1), u.requestClose(ce));
+  }, [u, ce, P]), ee = (k) => {
     Y(!1), u.requestClose(() => (r ?? o)(k));
   }, C = f.useCallback(() => {
-    G((k) => {
-      const S = !k;
+    U((k) => {
+      const T = !k;
       try {
-        localStorage.setItem(wa, String(S));
+        localStorage.setItem(Na, String(T));
       } catch {
       }
-      return S;
+      return T;
     });
   }, []), g = f.useMemo(
+    () => Oa(b.assignedCodes),
+    [b.assignedCodes]
+  ), v = Mn(g), F = f.useMemo(
     () => Qa(b.assignedCodes),
     [b.assignedCodes]
-  ), v = Kn(g), I = f.useMemo(
-    () => Ha(b.assignedCodes),
-    [b.assignedCodes]
-  ), B = (k, S) => {
-    if (S) {
-      D(k);
+  ), B = (k, T) => {
+    if (T) {
+      S(k);
       return;
     }
-    us(k);
+    xs(k);
   }, A = f.useMemo(() => {
-    var k, S, M, le, me;
+    var k, T, L, le, me;
     return {
       subtasks: ((k = n == null ? void 0 : n.subTasks) == null ? void 0 : k.length) ?? 0,
-      files: ((S = n == null ? void 0 : n.attachments) == null ? void 0 : S.length) ?? 0,
-      dependencies: ((M = n == null ? void 0 : n.predecessorIds) == null ? void 0 : M.length) ?? 0,
+      files: ((T = n == null ? void 0 : n.attachments) == null ? void 0 : T.length) ?? 0,
+      dependencies: ((L = n == null ? void 0 : n.predecessorIds) == null ? void 0 : L.length) ?? 0,
       comments: ((le = n == null ? void 0 : n.comments) == null ? void 0 : le.length) ?? 0,
       checklist: ((me = j.items) == null ? void 0 : me.length) ?? 0
     };
-  }, [n, j.items]), K = et.find((k) => k.code === w), xe = j.items ?? [], Re = xe.filter((k) => k.isDone).length, qe = xe.length ? Math.round(Re / xe.length * 100) : 0, Gt = f.useRef(null), [Yt, ts] = f.useState(0), _t = () => c.validate() ? !0 : (pe.err(ue("Tasks:Detail:Validation:Summary", "Kaydedilemedi: işaretli alanları düzeltin.")), ts((k) => k + 1), !1);
+  }, [n, j.items]), K = et.find((k) => k.code === w), xe = j.items ?? [], Re = xe.filter((k) => k.isDone).length, qe = xe.length ? Math.round(Re / xe.length * 100) : 0, Gt = f.useRef(null), [Yt, es] = f.useState(0), _t = () => c.validate() ? !0 : (pe.err(ue("Tasks:Detail:Validation:Summary", "Kaydedilemedi: işaretli alanları düzeltin.")), es((k) => k + 1), !1);
   f.useEffect(() => {
-    var S, M;
+    var T, L;
     if (!Yt) return;
-    const k = (S = Gt.current) == null ? void 0 : S.querySelector('[aria-invalid="true"]');
-    k == null || k.focus(), (M = k == null ? void 0 : k.scrollIntoView) == null || M.call(k, { block: "nearest" });
+    const k = (T = Gt.current) == null ? void 0 : T.querySelector('[aria-invalid="true"]');
+    k == null || k.focus(), (L = k == null ? void 0 : k.scrollIntoView) == null || L.call(k, { block: "nearest" });
   }, [Yt]);
   const tt = f.useCallback(async () => {
     if (!_t()) return !1;
-    F(!0);
+    q(!0);
     try {
-      const k = c.values, S = await Promise.resolve(window.apya.platform.tasks.task.update(i, c.toUpdateDto()));
+      const k = c.values, T = await Promise.resolve(window.apya.platform.tasks.task.update(i, c.toUpdateDto()));
       await p.invalidateQueries({ queryKey: ["task-detail", i] });
-      const M = p.getQueryState(["task-detail", i]);
-      return c.commitSaved(k, (M == null ? void 0 : M.status) === "success" ? M.data : S), J.emitResult(), Q(!0), setTimeout(() => Q(!1), 2e3), pe.ok("Görev başarıyla güncellendi."), !0;
+      const L = p.getQueryState(["task-detail", i]);
+      return c.commitSaved(k, (L == null ? void 0 : L.status) === "success" ? L.data : T), W.emitResult(), Q(!0), setTimeout(() => Q(!1), 2e3), pe.ok("Görev başarıyla güncellendi."), !0;
     } catch (k) {
-      return P(k, "Kaydedilemedi."), !1;
+      return E(k, "Kaydedilemedi."), !1;
     } finally {
-      F(!1);
+      q(!1);
     }
-  }, [i, c, p]), as = () => {
+  }, [i, c, p]), ts = () => {
     Y(!1), u.resolvePendingClose("stay");
-  }, ss = () => {
+  }, as = () => {
     Y(!1), c.reset(), u.resolvePendingClose("discard");
-  }, rs = async () => {
+  }, ss = async () => {
     if (Y(!1), !_t()) {
       u.resolvePendingClose("stay");
       return;
@@ -6561,71 +6544,71 @@ function Xa({ taskId: t, presentation: s = "modal", onClose: a, switchToTask: r 
     await tt() ? u.resolvePendingClose("saved") : Y(!0);
   };
   f.useEffect(() => {
-    const k = (S) => {
-      if ((S.ctrlKey || S.metaKey) && S.key.toLowerCase() === "s") {
-        S.preventDefault(), c.isDirty && !z && !u.pendingClose && tt();
+    const k = (T) => {
+      if ((T.ctrlKey || T.metaKey) && T.key.toLowerCase() === "s") {
+        T.preventDefault(), c.isDirty && !P && !u.pendingClose && tt();
         return;
       }
-      S.key === "Escape" && L && (S.stopPropagation(), q(null));
+      T.key === "Escape" && z && (T.stopPropagation(), R(null));
     };
     return window.addEventListener("keydown", k), () => window.removeEventListener("keydown", k);
-  }, [tt, c.isDirty, z, L, u.pendingClose]);
+  }, [tt, c.isDirty, P, z, u.pendingClose]);
   const Ee = () => {
-    var k, S, M;
-    return (M = (S = (k = window == null ? void 0 : window.apya) == null ? void 0 : k.platform) == null ? void 0 : S.tasks) == null ? void 0 : M.task;
-  }, ns = async () => {
-    var S;
-    const k = !O;
-    X(k), J.markChanged();
+    var k, T, L;
+    return (L = (T = (k = window == null ? void 0 : window.apya) == null ? void 0 : k.platform) == null ? void 0 : T.tasks) == null ? void 0 : L.task;
+  }, rs = async () => {
+    var T;
+    const k = !_;
+    X(k), W.markChanged();
     try {
-      await Promise.resolve((S = Ee()) == null ? void 0 : S.toggleFavorite(i));
-    } catch (M) {
-      X(!k), P(M, "Favori güncellenemedi.");
+      await Promise.resolve((T = Ee()) == null ? void 0 : T.toggleFavorite(i));
+    } catch (L) {
+      X(!k), E(L, "Favori güncellenemedi.");
     }
-  }, is = () => {
+  }, ns = () => {
     if (!i) return;
     const k = document.createElement("a");
     k.href = `/Tasks/Detail/${i}?handler=Pdf`, k.rel = "noopener", document.body.appendChild(k), k.click(), k.remove();
-  }, ls = async () => {
-    var S;
-    const k = !H;
-    T(k), J.markChanged();
+  }, is = async () => {
+    var T;
+    const k = !Z;
+    D(k), W.markChanged();
     try {
-      await Promise.resolve((S = Ee()) == null ? void 0 : S.toggleWatch(i)), pe.info(k ? "Görev takip ediliyor." : "Takip bırakıldı.");
-    } catch (M) {
-      T(!k), P(M, "Takip durumu güncellenemedi.");
+      await Promise.resolve((T = Ee()) == null ? void 0 : T.toggleWatch(i)), pe.info(k ? "Görev takip ediliyor." : "Takip bırakıldı.");
+    } catch (L) {
+      D(!k), E(L, "Takip durumu güncellenemedi.");
     }
-  }, os = async () => {
-    var k, S;
-    J.markChanged();
+  }, ls = async () => {
+    var k, T;
+    W.markChanged();
     try {
-      const M = await Promise.resolve((k = Ee()) == null ? void 0 : k.transfer(i, {
+      const L = await Promise.resolve((k = Ee()) == null ? void 0 : k.transfer(i, {
         mode: 2,
         // Copy
         targetProjectIds: n != null && n.projectId ? [n.projectId] : [],
         include: { subtasks: !0, checklist: !0, comments: !1, files: !0, keepAssignee: !0, keepLinks: !0, shiftDates: !1 }
       }));
       await p.invalidateQueries({ queryKey: ["task-detail"] }), pe.ok("Görev çoğaltıldı.");
-      const le = (S = M == null ? void 0 : M.createdTaskIds) == null ? void 0 : S[0];
-      le && $(le);
-    } catch (M) {
-      P(M, "Görev çoğaltılamadı.");
+      const le = (T = L == null ? void 0 : L.createdTaskIds) == null ? void 0 : T[0];
+      le && ee(le);
+    } catch (L) {
+      E(L, "Görev çoğaltılamadı.");
     }
-  }, Ut = async (k, S, M, le) => {
+  }, os = async (k, T, L, le) => {
     var me, fe;
-    J.markChanged();
+    W.markChanged();
     try {
       await Promise.resolve(le ? le() : (me = Ee()) == null ? void 0 : me.updateStatus(i, k)), await p.invalidateQueries({ queryKey: ["task-detail", i] }), c.setField("status", k), c.setField(
         "boardColumnId",
         ((fe = p.getQueryData(["task-detail", i])) == null ? void 0 : fe.boardColumnId) ?? null
-      ), pe.info(S);
+      ), pe.info(T);
     } catch (ve) {
-      P(ve, M);
+      E(ve, L);
     }
-  }, cs = () => Ut(4, "Görev arşivlendi (Tamamlandı).", "Görev arşivlenemedi."), ds = async () => {
+  }, cs = async () => {
     let k = null;
     if (window.Swal) {
-      const S = await window.Swal.fire({
+      const T = await window.Swal.fire({
         title: "Görev iptal edilsin mi?",
         input: "text",
         inputLabel: "İptal nedeni (isteğe bağlı)",
@@ -6634,100 +6617,100 @@ function Xa({ taskId: t, presentation: s = "modal", onClose: a, switchToTask: r 
         confirmButtonText: "İptal et",
         cancelButtonText: "Vazgeç"
       });
-      if (!S.isConfirmed) return;
-      k = (S.value || "").trim() || null;
+      if (!T.isConfirmed) return;
+      k = (T.value || "").trim() || null;
     }
-    await Ut(
+    await os(
       0,
       "Görev iptal edildi.",
       "Görev iptal edilemedi.",
       () => {
-        var S;
-        return (S = Ee()) == null ? void 0 : S.cancel(i, k);
+        var T;
+        return (T = Ee()) == null ? void 0 : T.cancel(i, k);
       }
     );
-  }, xs = async () => {
+  }, ds = async () => {
     var k;
     if (window.confirm("Bu görev ve tüm alt görevleri kalıcı olarak silinecek. Devam edilsin mi?")) {
-      J.markChanged();
+      W.markChanged();
       try {
-        await Promise.resolve((k = Ee()) == null ? void 0 : k.delete(i)), pe.info("Görev silindi."), u.markClean(), W();
-      } catch (S) {
-        P(S, "Görev silinemedi.");
+        await Promise.resolve((k = Ee()) == null ? void 0 : k.delete(i)), pe.info("Görev silindi."), u.markClean(), ce();
+      } catch (T) {
+        E(T, "Görev silinemedi.");
       }
     }
+  }, xs = async (k) => {
+    try {
+      await b.addFeature(k), S(k), pe.ok("Özellik başarıyla eklendi.");
+    } catch (T) {
+      E(T, "Özellik eklenemedi.");
+    }
+  }, Ut = async (k) => {
+    try {
+      await b.removeFeature(k), S("general"), pe.info("Özellik görevden kaldırıldı.");
+    } catch (T) {
+      E(T, "Özellik kaldırılamadı.");
+    }
   }, us = async (k) => {
-    try {
-      await b.addFeature(k), D(k), pe.ok("Özellik başarıyla eklendi.");
-    } catch (S) {
-      P(S, "Özellik eklenemedi.");
-    }
-  }, Vt = async (k) => {
-    try {
-      await b.removeFeature(k), D("general"), pe.info("Özellik görevden kaldırıldı.");
-    } catch (S) {
-      P(S, "Özellik kaldırılamadı.");
-    }
-  }, ps = async (k) => {
     var le, me, fe, ve, Be, st, Ye;
-    const S = ((ve = (fe = (me = (le = window == null ? void 0 : window.apya) == null ? void 0 : le.platform) == null ? void 0 : me.application) == null ? void 0 : fe.projects) == null ? void 0 : ve.project) ?? ((Ye = (st = (Be = window == null ? void 0 : window.apya) == null ? void 0 : Be.platform) == null ? void 0 : st.projects) == null ? void 0 : Ye.project);
-    if (!(S != null && S.create)) throw new Error("Proje servisi yüklenmedi.");
-    const M = await Promise.resolve(S.create({
+    const T = ((ve = (fe = (me = (le = window == null ? void 0 : window.apya) == null ? void 0 : le.platform) == null ? void 0 : me.application) == null ? void 0 : fe.projects) == null ? void 0 : ve.project) ?? ((Ye = (st = (Be = window == null ? void 0 : window.apya) == null ? void 0 : Be.platform) == null ? void 0 : st.projects) == null ? void 0 : Ye.project);
+    if (!(T != null && T.create)) throw new Error("Proje servisi yüklenmedi.");
+    const L = await Promise.resolve(T.create({
       name: k,
-      code: Hn(k),
+      code: Qn(k),
       currency: "TRY"
     }));
-    return await p.invalidateQueries({ queryKey: ["task-detail", "projects-lookup"] }), pe.ok(`“${k}” projesi oluşturuldu.`), (M == null ? void 0 : M.id) ?? M;
-  }, ms = async ({ mode: k, targetProjectIds: S, include: M }) => {
+    return await p.invalidateQueries({ queryKey: ["task-detail", "projects-lookup"] }), pe.ok(`“${k}” projesi oluşturuldu.`), (L == null ? void 0 : L.id) ?? L;
+  }, ps = async ({ mode: k, targetProjectIds: T, include: L }) => {
     var le, me;
-    J.markChanged();
+    W.markChanged();
     try {
       const fe = await Promise.resolve((le = Ee()) == null ? void 0 : le.transfer(i, {
         mode: k === "move" ? 1 : 2,
-        targetProjectIds: S,
-        include: M
+        targetProjectIds: T,
+        include: L
       }));
-      await p.invalidateQueries({ queryKey: ["task-detail", i] }), k === "move" && c.setField("projectId", S[0]);
-      const ve = S.map((st) => {
+      await p.invalidateQueries({ queryKey: ["task-detail", i] }), k === "move" && c.setField("projectId", T[0]);
+      const ve = T.map((st) => {
         var Ye;
-        return (Ye = N.options.find((ys) => ys.value === st)) == null ? void 0 : Ye.label;
+        return (Ye = N.options.find((hs) => hs.value === st)) == null ? void 0 : Ye.label;
       }).filter(Boolean), Be = ((me = fe == null ? void 0 : fe.createdTaskIds) == null ? void 0 : me.length) ?? 0;
-      pe.ok(k === "move" ? Be ? `“${ve[0]}” projesine taşındı, ${Be} projeye kopyalandı.` : `Görev “${ve[0]}” projesine taşındı.` : Be > 1 ? `${Be} projeye kopyalandı.` : `Kopya “${ve[0]}” projesinde oluşturuldu.`), q(null);
+      pe.ok(k === "move" ? Be ? `“${ve[0]}” projesine taşındı, ${Be} projeye kopyalandı.` : `Görev “${ve[0]}” projesine taşındı.` : Be > 1 ? `${Be} projeye kopyalandı.` : `Kopya “${ve[0]}” projesinde oluşturuldu.`), R(null);
     } catch (fe) {
-      P(fe, "Transfer tamamlanamadı.");
+      E(fe, "Transfer tamamlanamadı.");
     }
-  }, { canEdit: at, canChangeStatus: fs, canDelete: bs } = We(n), hs = w === "general" ? /* @__PURE__ */ e.jsxs(
+  }, { canEdit: at, canChangeStatus: ms, canDelete: fs } = We(n), bs = w === "general" ? /* @__PURE__ */ e.jsxs(
     "div",
     {
-      ref: ee,
-      className: `grid gap-5 items-start ${ie ? "grid-cols-[minmax(0,1fr)]" : "grid-cols-[minmax(0,1fr)_330px] lt-1080:grid-cols-[minmax(0,1fr)]"}`,
+      ref: ae,
+      className: `grid gap-5 items-start ${oe ? "grid-cols-[minmax(0,1fr)]" : "grid-cols-[minmax(0,1fr)_330px] lt-1080:grid-cols-[minmax(0,1fr)]"}`,
       children: [
         /* @__PURE__ */ e.jsx(
-          jn,
+          vn,
           {
             task: n,
             onFieldChange: c.setField,
             descriptionValue: c.values.description,
             checklist: j,
             readOnly: !at,
-            currentUserName: ka()
+            currentUserName: wa()
           }
         ),
         /* @__PURE__ */ e.jsx(
           "div",
           {
-            className: ie ? "w-full grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3.5" : "w-full lt-1080:grid lt-1080:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] lt-1080:gap-3.5",
-            children: /* @__PURE__ */ e.jsx(gn, { task: n, nameById: d.nameById })
+            className: oe ? "w-full grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3.5" : "w-full lt-1080:grid lt-1080:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] lt-1080:gap-3.5",
+            children: /* @__PURE__ */ e.jsx(yn, { task: n, nameById: d.nameById })
           }
         )
       ]
     }
-  ) : Dn(w) ? /* @__PURE__ */ e.jsx(
-    ya,
+  ) : Cn(w) ? /* @__PURE__ */ e.jsx(
+    ha,
     {
       code: w,
-      onRemoveFeature: Vt,
-      pickerEntries: I,
+      onRemoveFeature: Ut,
+      pickerEntries: F,
       onPickFeature: B,
       canRemove: !(K != null && K.isCore)
     }
@@ -6738,33 +6721,33 @@ function Xa({ taskId: t, presentation: s = "modal", onClose: a, switchToTask: r 
       task: n,
       form: c,
       nameById: d.nameById,
-      onOpenSubtask: U,
+      onOpenSubtask: O,
       readOnly: !at
     }
   ) : /* @__PURE__ */ e.jsx(
-    ya,
+    ha,
     {
       code: w,
-      onRemoveFeature: Vt,
-      pickerEntries: I,
+      onRemoveFeature: Ut,
+      pickerEntries: F,
       onPickFeature: B,
       canRemove: !(K != null && K.isCore)
     }
-  ) }), Ge = x && ((m == null ? void 0 : m.status) === 404 || (m == null ? void 0 : m.status) === 403) ? m.status : null, Ot = l ? /* @__PURE__ */ e.jsxs("div", { className: "p-8 space-y-4", children: [
+  ) }), Ge = x && ((m == null ? void 0 : m.status) === 404 || (m == null ? void 0 : m.status) === 403) ? m.status : null, Vt = l ? /* @__PURE__ */ e.jsxs("div", { className: "p-8 space-y-4", children: [
     /* @__PURE__ */ e.jsx(ke, { className: "h-8 w-1/3" }),
     /* @__PURE__ */ e.jsx(ke, { className: "h-20 w-full" }),
     /* @__PURE__ */ e.jsx(ke, { className: "h-64 w-full" })
   ] }) : Ge ? /* @__PURE__ */ e.jsx(
-    gs,
+    ys,
     {
       variant: Ge === 404 ? "error" : "locked",
       icon: Ge === 404 ? /* @__PURE__ */ e.jsx("i", { className: "fa fa-magnifying-glass" }) : void 0,
       title: Ge === 404 ? ue("Tasks:Detail:NotFound:Title", "Bu görev bulunamadı") : ue("Tasks:Detail:Forbidden:Title", "Bu görevi görüntüleyemezsiniz"),
-      description: Ge === 404 ? ue("Tasks:Detail:NotFound:Body", "Görev silinmiş ya da bağlantı eskimiş olabilir.") : vs(m),
+      description: Ge === 404 ? ue("Tasks:Detail:NotFound:Body", "Görev silinmiş ya da bağlantı eskimiş olabilir.") : gs(m),
       action: s === "page" ? /* @__PURE__ */ e.jsx(re, { asChild: !0, size: "sm", children: /* @__PURE__ */ e.jsxs("a", { href: "/Tasks", children: [
         /* @__PURE__ */ e.jsx("i", { className: "fa fa-arrow-left", "aria-hidden": "true" }),
         ue("Tasks:Detail:BackToList", "Görevlere dön")
-      ] }) }) : /* @__PURE__ */ e.jsx(re, { variant: "secondary", size: "sm", onClick: se, children: ue("Common:Close", "Kapat") })
+      ] }) }) : /* @__PURE__ */ e.jsx(re, { variant: "secondary", size: "sm", onClick: $, children: ue("Common:Close", "Kapat") })
     }
   ) : x && !n ? (
     /* Yalnız İLK yükleme hatası. Görev ekrandayken düşen tazeleme (odak dönüşü, kayıt sonrası
@@ -6773,16 +6756,16 @@ function Xa({ taskId: t, presentation: s = "modal", onClose: a, switchToTask: r 
     /* @__PURE__ */ e.jsxs("div", { className: "p-12 text-center flex flex-col items-center gap-3", children: [
       /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-triangle-exclamation text-3xl text-warning" }),
       /* @__PURE__ */ e.jsx("p", { className: "text-text-secondary font-medium", children: "Görev detayları yüklenemedi." }),
-      /* @__PURE__ */ e.jsx(js, { onRetry: h })
+      /* @__PURE__ */ e.jsx(vs, { onRetry: h })
     ] })
   ) : /* @__PURE__ */ e.jsxs("div", { ref: Gt, className: "flex flex-col flex-1 min-h-0 bg-surface-base", children: [
     /* @__PURE__ */ e.jsx(
-      mn,
+      pn,
       {
         task: n,
         presentation: s,
-        onClose: se,
-        isFullscreen: R,
+        onClose: $,
+        isFullscreen: M,
         onToggleFullscreen: C,
         onFieldChange: c.setField,
         statusValue: c.values.status,
@@ -6791,24 +6774,23 @@ function Xa({ taskId: t, presentation: s = "modal", onClose: a, switchToTask: r 
         titleValue: n == null ? void 0 : n.title,
         titleError: c.errors.title,
         isPrivateValue: c.values.isPrivate,
-        isFavorite: O,
-        onToggleFavorite: ns,
-        isWatched: H,
-        onToggleWatch: ls,
-        onDuplicate: os,
-        onArchive: cs,
-        onCancelTask: ds,
-        onDelete: xs,
-        onOpenTransfer: (k) => q({ mode: k }),
-        onExportPdf: is,
+        isFavorite: _,
+        onToggleFavorite: rs,
+        isWatched: Z,
+        onToggleWatch: is,
+        onDuplicate: ls,
+        onCancelTask: cs,
+        onDelete: ds,
+        onOpenTransfer: (k) => R({ mode: k }),
+        onExportPdf: ns,
         canEdit: at,
-        canChangeStatus: fs,
-        canDelete: bs
+        canChangeStatus: ms,
+        canDelete: fs
       }
     ),
     /* @__PURE__ */ e.jsxs("div", { className: "flex-1 min-h-0 overflow-y-auto custom-scrollbar", children: [
       /* @__PURE__ */ e.jsx(
-        fn,
+        mn,
         {
           task: n,
           assigneeOptions: d.options,
@@ -6827,118 +6809,118 @@ function Xa({ taskId: t, presentation: s = "modal", onClose: a, switchToTask: r 
           tagsValue: c.values.tagNames,
           progressPercent: qe,
           progressNote: `${Re}/${xe.length} madde`,
-          onOpenTransfer: (k) => q({ mode: k }),
+          onOpenTransfer: (k) => R({ mode: k }),
           readOnly: !at
         }
       ),
       /* @__PURE__ */ e.jsxs("div", { className: "flex items-stretch min-w-0", children: [
         s === "page" && /* @__PURE__ */ e.jsx(
-          yn,
+          hn,
           {
             activeTab: w,
-            onTabChange: D,
+            onTabChange: S,
             orderedTabs: v.orderedTabs,
             draggingCode: v.draggingCode,
             onDragStart: v.handleDragStart,
             onDragEnd: v.handleDragEnd,
             onReorderTo: v.reorderTo,
             onReorderDrop: () => pe.info("Sekme sırası güncellendi."),
-            pickerEntries: I,
+            pickerEntries: F,
             onPickFeature: B,
             counts: A
           }
         ),
         /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col min-w-0 flex-1", children: [
           /* @__PURE__ */ e.jsx("div", { className: s === "page" ? "gte-861:hidden" : "", children: /* @__PURE__ */ e.jsx(
-            hn,
+            bn,
             {
               activeTab: w,
-              onTabChange: D,
+              onTabChange: S,
               orderedTabs: v.orderedTabs,
               draggingCode: v.draggingCode,
               onDragStart: v.handleDragStart,
               onDragEnd: v.handleDragEnd,
               onReorderTo: v.reorderTo,
               onReorderDrop: () => pe.info("Sekme sırası güncellendi."),
-              pickerEntries: I,
+              pickerEntries: F,
               onPickFeature: B,
               counts: A,
               isDirty: c.isDirty
             }
           ) }),
-          /* @__PURE__ */ e.jsx("div", { className: "flex-1 min-h-[420px] px-6 py-[22px] lt-860:px-4 bg-surface-raised", children: hs })
+          /* @__PURE__ */ e.jsx("div", { className: "flex-1 min-h-[420px] px-6 py-[22px] lt-860:px-4 bg-surface-raised", children: bs })
         ] })
       ] })
     ] }),
     /* @__PURE__ */ e.jsx(
-      Nn,
+      jn,
       {
         lastSavedAt: n == null ? void 0 : n.lastModificationTime,
         isDirty: c.isDirty,
-        isSaving: z,
-        justSaved: E,
-        onCancel: se,
+        isSaving: P,
+        justSaved: I,
+        onCancel: $,
         onSave: tt,
         sticky: s === "page"
       }
     )
-  ] }), Qt = /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
+  ] }), Ot = /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
     /* @__PURE__ */ e.jsx(
-      Pn,
+      $n,
       {
-        open: !!L,
-        mode: (L == null ? void 0 : L.mode) ?? "move",
-        onClose: () => q(null),
-        onConfirm: ms,
+        open: !!z,
+        mode: (z == null ? void 0 : z.mode) ?? "move",
+        onClose: () => R(null),
+        onConfirm: ps,
         projectOptions: N.options,
         currentProjectId: c.values.projectId,
         counts: A,
-        onCreateProject: ps
+        onCreateProject: us
       }
     ),
     V && /* @__PURE__ */ e.jsx(
-      zn,
+      An,
       {
         subtaskId: V,
         parentCode: n == null ? void 0 : n.code,
-        onClose: () => U(null),
+        onClose: () => O(null),
         onOpenFull: (k) => {
-          U(null), $(k);
+          O(null), ee(k);
         },
         onDeleted: () => p.invalidateQueries({ queryKey: ["task-detail", i] }),
-        currentUserName: ka()
+        currentUserName: wa()
       }
     ),
     /* @__PURE__ */ e.jsx(
       At,
       {
         open: u.pendingClose,
-        isSaving: z,
-        errorText: _ ? ue("Common:Unsaved:SaveFailed", "Kaydedilemedi. Düzenlemeye dönebilir ya da değişiklikleri atabilirsiniz.") : void 0,
-        onStay: as,
-        onDiscard: ss,
-        onSave: rs
+        isSaving: P,
+        errorText: G ? ue("Common:Unsaved:SaveFailed", "Kaydedilemedi. Düzenlemeye dönebilir ya da değişiklikleri atabilirsiniz.") : void 0,
+        onStay: ts,
+        onDiscard: as,
+        onSave: ss
       }
     )
   ] });
   return s === "page" ? /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
-    /* @__PURE__ */ e.jsx("div", { className: "flex flex-col w-full min-h-[calc(100vh-54px)] border-y border-subtle bg-surface-base", children: Ot }),
-    Qt
+    /* @__PURE__ */ e.jsx("div", { className: "flex flex-col w-full min-h-[calc(100vh-54px)] border-y border-subtle bg-surface-base", children: Vt }),
+    Ot
   ] }) : /* @__PURE__ */ e.jsxs(e.Fragment, { children: [
     /* @__PURE__ */ e.jsx(It, { open: !0, onOpenChange: (k) => {
-      k || se();
+      k || $();
     }, children: /* @__PURE__ */ e.jsx(
       Ft,
       {
         title: n != null && n.title ? `Görev Detayı: ${n.title}` : "Görev Detayı",
-        fullscreen: R,
-        className: R ? "p-0 rounded-xl border border-default shadow-xl short:h-[100svh]" : "w-[min(96vw,1180px)] max-w-none p-0 rounded-[18px] border border-default shadow-xl short:h-[100svh]",
+        fullscreen: M,
+        className: M ? "p-0 rounded-xl border border-default shadow-xl short:h-[100svh]" : "w-[min(96vw,1180px)] max-w-none p-0 rounded-[18px] border border-default shadow-xl short:h-[100svh]",
         onInteractOutside: (k) => {
-          var S, M;
-          k.preventDefault(), !(L || V || u.pendingClose) && ((M = (S = k.target) == null ? void 0 : S.closest) != null && M.call(S, "[data-apya-overlay]") || se());
+          var T, L;
+          k.preventDefault(), !(z || V || u.pendingClose) && ((L = (T = k.target) == null ? void 0 : T.closest) != null && L.call(T, "[data-apya-overlay]") || $());
         },
         onEscapeKeyDown: (k) => {
-          if (L || V) {
+          if (z || V) {
             k.preventDefault();
             return;
           }
@@ -6946,29 +6928,29 @@ function Xa({ taskId: t, presentation: s = "modal", onClose: a, switchToTask: r 
             k.preventDefault();
             return;
           }
-          k.preventDefault(), se();
+          k.preventDefault(), $();
         },
-        children: Ot
+        children: Vt
       }
     ) }),
-    Qt
+    Ot
   ] });
 }
-function Wn(t) {
+function Hn(t) {
   window.location.assign("/Tasks/Detail/" + encodeURIComponent(t));
 }
-function Jn() {
+function Wn() {
   const t = f.useSyncExternalStore(
-    J.subscribe,
-    J.getSnapshot,
+    W.subscribe,
+    W.getSnapshot,
     () => null
   );
-  return t ? /* @__PURE__ */ e.jsx(Ns, { name: "task-detail", fallback: (s) => /* @__PURE__ */ e.jsx(Zn, { ...s }), children: /* @__PURE__ */ e.jsx(Xn, { taskId: t }) }) : null;
+  return t ? /* @__PURE__ */ e.jsx(js, { name: "task-detail", fallback: (s) => /* @__PURE__ */ e.jsx(Jn, { ...s }), children: /* @__PURE__ */ e.jsx(Zn, { taskId: t }) }) : null;
 }
-function Zn(t) {
+function Jn(t) {
   const s = () => {
     var a;
-    Kt(), J.close(), (a = window.apya) != null && a.taskDetailV3Enabled ? J.emitResultIfChanged() : J.emitResult();
+    Kt(), W.close(), (a = window.apya) != null && a.taskDetailV3Enabled ? W.emitResultIfChanged() : W.emitResult();
   };
   return /* @__PURE__ */ e.jsx(It, { open: !0, onOpenChange: (a) => {
     a || s();
@@ -6977,35 +6959,35 @@ function Zn(t) {
     {
       title: ue("Common:SectionError:Title", "Bu bölüm gösterilemedi"),
       className: "w-full max-w-[480px] h-auto tablet:min-h-0 justify-center p-6",
-      children: /* @__PURE__ */ e.jsx(ws, { ...t, onClose: s })
+      children: /* @__PURE__ */ e.jsx(Ns, { ...t, onClose: s })
     }
   ) });
 }
-function Xn({ taskId: t }) {
+function Zn({ taskId: t }) {
   var s;
   return (s = window.apya) != null && s.taskDetailV3Enabled ? /* @__PURE__ */ e.jsx(dt, { children: /* @__PURE__ */ e.jsx(
-    Xa,
+    Za,
     {
       taskId: t,
       presentation: "modal",
       onClose: () => {
-        J.close(), J.emitResultIfChanged();
+        W.close(), W.emitResultIfChanged();
       }
     },
     t
   ) }) : /* @__PURE__ */ e.jsx(dt, { children: /* @__PURE__ */ e.jsx(
-    Wa,
+    Ha,
     {
       taskId: t,
       presentation: "modal",
       onClose: () => {
-        J.close(), J.emitResult();
+        W.close(), W.emitResult();
       }
     },
     t
   ) });
 }
-function es() {
+function Xa() {
   var a;
   try {
     const r = new URLSearchParams(window.location.search).get("taskui");
@@ -7015,46 +6997,46 @@ function es() {
   const t = document.getElementById("task-detail-island"), s = (a = t == null ? void 0 : t.dataset) == null ? void 0 : a.taskui;
   return s === "v1" || s === "v2" ? s : "v3";
 }
-function ei() {
-  return es() === "v2";
+function Xn() {
+  return Xa() === "v2";
 }
-function ti() {
-  return es() === "v3";
+function ei() {
+  return Xa() === "v3";
 }
 window.apya = window.apya || {};
-window.apya.taskDetailV3Enabled = ti();
-window.apya.taskDetailV2Enabled = ei() && !window.apya.taskDetailV3Enabled;
-const Ca = {
+window.apya.taskDetailV3Enabled = ei();
+window.apya.taskDetailV2Enabled = Xn() && !window.apya.taskDetailV3Enabled;
+const ka = {
   open: (t) => {
-    J.open(t);
+    W.open(t);
   },
-  close: () => J.close(),
-  onResult: (t) => J.onResult(t)
+  close: () => W.close(),
+  onResult: (t) => W.onResult(t)
 };
-typeof window.apya._taskDetailFlush == "function" ? window.apya._taskDetailFlush(Ca) : window.apya.taskDetail = Ca;
-function Da() {
+typeof window.apya._taskDetailFlush == "function" ? window.apya._taskDetailFlush(ka) : window.apya.taskDetail = ka;
+function Ca() {
   let t = document.getElementById("task-detail-island");
-  if (t || (t = document.createElement("div"), t.id = "task-detail-island", document.body.appendChild(t)), t._reactRoot || (t._reactRoot = Ta(t, "task-detail", /* @__PURE__ */ e.jsx(Jn, {}))), window.apya.taskDetailV2Enabled || window.apya.taskDetailV3Enabled) {
-    const s = Aa();
-    s && J.open(s);
+  if (t || (t = document.createElement("div"), t.id = "task-detail-island", document.body.appendChild(t)), t._reactRoot || (t._reactRoot = Da(t, "task-detail", /* @__PURE__ */ e.jsx(Wn, {}))), window.apya.taskDetailV2Enabled || window.apya.taskDetailV3Enabled) {
+    const s = Fa();
+    s && W.open(s);
   }
 }
-document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", Da) : Da();
-function ai({ taskId: t }) {
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", Ca) : Ca();
+function ti({ taskId: t }) {
   var a;
   const s = () => {
     window.history.length > 1 ? window.history.back() : window.location.href = "/Tasks";
   };
   return (a = window.apya) != null && a.taskDetailV3Enabled ? /* @__PURE__ */ e.jsx(dt, { children: /* @__PURE__ */ e.jsx(
-    Xa,
+    Za,
     {
       taskId: t,
       presentation: "page",
       onClose: s,
-      switchToTask: Wn
+      switchToTask: Hn
     }
   ) }) : /* @__PURE__ */ e.jsx(dt, { children: /* @__PURE__ */ e.jsx(
-    Wa,
+    Ha,
     {
       taskId: t,
       presentation: "page",
@@ -7065,5 +7047,5 @@ function ai({ taskId: t }) {
 const Dt = document.getElementById("task-detail-page-island");
 if (Dt) {
   const t = Dt.getAttribute("data-task-id");
-  t && Ta(Dt, "task-detail-page", /* @__PURE__ */ e.jsx(ai, { taskId: t }));
+  t && Da(Dt, "task-detail-page", /* @__PURE__ */ e.jsx(ti, { taskId: t }));
 }
