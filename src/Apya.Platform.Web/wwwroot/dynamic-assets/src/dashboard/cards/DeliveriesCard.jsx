@@ -84,6 +84,13 @@ function DeliveriesCard({ filter, editMode }) {
                         <ul className="flex flex-col gap-[3px]">
                             {group.items.map((item) => <DeliveryRow key={item.taskId} item={item} />)}
                         </ul>
+                        {/* Kart en yeni gecikmişleri gösterir; fazlası Görevler listesinde gecikmiş süzgeciyle. */}
+                        {group.key === 'Overdue' && overdueTotal > group.items.length && (
+                            <a href="/Tasks?overdue=1"
+                               className="self-end text-[12px] font-medium text-text-link hover:underline">
+                                {t('Dashboard:Deliveries:AllOverdue', 'Tüm gecikmişler ({0}) →', overdueTotal)}
+                            </a>
+                        )}
                     </React.Fragment>
                 ))}
             </div>
