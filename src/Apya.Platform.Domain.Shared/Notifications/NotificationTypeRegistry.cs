@@ -316,6 +316,15 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Feedback, NotificationSeverity.Info,
                 "fa fa-list-check", "/Feedback", GroupSimilar: false),
 
+            // N-07 · Ekip tarafı: bağlantı yönetim panelinde kaydın detayını açar.
+            [NotificationType.FeedbackSubmitted] = new(
+                NotificationCategory.Feedback, NotificationSeverity.Normal,
+                "fa fa-comment-dots", "/Admin/Feedback?open={0}", GroupSimilar: false),
+
+            [NotificationType.FeedbackAssigned] = new(
+                NotificationCategory.Feedback, NotificationSeverity.Normal,
+                "fa fa-user-check", "/Admin/Feedback?open={0}", GroupSimilar: false),
+
             // Paket süresi → "Paketim" ekranı. Bildirim tekil kayda değil kiracının kendi
             // durumuna işaret eder; şablonda {0} yoktur.
             [NotificationType.SubscriptionExpiring] = new(

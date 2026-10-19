@@ -51,6 +51,6 @@ public class MacroNotificationLink_Tests
         // N-05 · Kayıt talepleri host yönetim sayfasıdır; makrosu yok, rozete bilinçli olarak girmez.
         unmapped.ShouldAllBe(path =>
             path == "/Feedback" || path == "/Subscription" || path == "/AiCenter/Evaluations" || path.StartsWith("/Calendars")
-            || path == "/Admin/RegistrationRequests");
+            || path == "/Admin/RegistrationRequests" || path == "/Admin/Feedback");
     }
 }

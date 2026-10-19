@@ -250,6 +250,12 @@ $(function () {
         });
     });
 
+    // N-07 · Bildirimden gelindiyse (?open={id}) kaydın detayı hemen açılır.
+    var openId = new URLSearchParams(window.location.search).get('open');
+    if (openId) {
+        detailModal.open({ id: openId });
+    }
+
     $(document).on('click', '.detail-delete-btn', function () {
         var id = $(this).data('id');
         abp.message.confirm('Bu geri bildirim kalıcı olarak silinsin mi?', function (confirmed) {
