@@ -91,5 +91,11 @@ public enum NotificationType
     ProjectMemberRoleChanged    = 52, // Proje ekibindeki rolünüz değişti
 
     // N-05: aday formu gönderiyordu ama host ancak listeyi açınca görüyordu.
-    RegistrationRequestReceived = 53  // Yeni kayıt talebi (HOST'a, Kayıt Talepleri yetkisiyle)
+    RegistrationRequestReceived = 53, // Yeni kayıt talebi (HOST'a, Kayıt Talepleri yetkisiyle)
+
+    // N-06: hibe evrakı ve danışman ataması muhatabına ulaşmıyordu.
+    GrantDocumentUploaded       = 54, // Evrakın yeni sürümü yüklendi (karşı tarafa)
+    GrantDocumentApproved       = 55, // Danışman evrakı onayladı (firmaya)
+    GrantApplicationAssigned    = 56, // Başvurunun sorumlu danışmanı oldunuz
+    GrantInterestAssigned       = 57  // İlgi talebi size atandı
 }

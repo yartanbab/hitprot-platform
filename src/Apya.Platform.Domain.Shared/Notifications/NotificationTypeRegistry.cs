@@ -104,6 +104,24 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Projects, NotificationSeverity.Normal,
                 "fa fa-user-gear", "/Projects/ProjectDetails/{0}", GroupSimilar: false),
 
+            // N-06 · Evrak konsolu iki tarafın ortak ekranı; art arda yüklenen/onaylanan evrak tek satırda sayılır.
+            [NotificationType.GrantDocumentUploaded] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-file-arrow-up", "/Grants/Documents?id={0}", GroupSimilar: true),
+
+            [NotificationType.GrantDocumentApproved] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-file-circle-check", "/Grants/Documents?id={0}", GroupSimilar: true),
+
+            [NotificationType.GrantApplicationAssigned] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-user-check", "/Grants/DetailHost?id={0}", GroupSimilar: false),
+
+            // İlgi talepleri ekranı tekil kayda odaklanmıyor; listeye götürür.
+            [NotificationType.GrantInterestAssigned] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-user-check", "/Grants/Requests", GroupSimilar: false),
+
             // N-05 · Yeni müşteri adayı: önem Yüksek (kilit ekranında kalır), liste "Yeni" süzgeciyle açılır.
             [NotificationType.RegistrationRequestReceived] = new(
                 NotificationCategory.System, NotificationSeverity.High,

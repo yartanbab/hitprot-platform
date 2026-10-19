@@ -515,31 +515,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
     private async Task NotifyCounterpartyAsync(
         GrantApplication application, GrantPartyRole recipientSide,
         GrantNotificationTrigger trigger, IReadOnlyDictionary<string, string?> values)
-    {
-        if (!application.TenantId.HasValue)
-        {
-            return;
-        }
-
-        if (recipientSide == GrantPartyRole.Firma)
-        {
-            await _notifyDispatcher.DispatchToTenantAsync(
-                trigger, application.TenantId, values, nameof(GrantApplication), application.Id);
-            return;
-        }
-
-        if (application.AssignedUserId is { } consultantId)
-        {
-            using (CurrentTenant.Change(null))
-            {
-                await _notifyDispatcher.DispatchAsync(
-                    trigger, new[] { consultantId }, values, nameof(GrantApplication), application.Id);
-            }
-            return;
-        }
-
-        await _notifyDispatcher.DispatchToTenantAsync(trigger, null, values, nameof(GrantApplication), application.Id);
-    }
+        => await _notifyDispatcher.DispatchToPartyAsync(application, recipientSide, trigger, values);
 
     /// <summary>Programın adı — çağrı ve program host kataloğundadır (EnsureCallOpenAsync ile aynı okuma).</summary>
     private async Task<string> GetGrantNameAsync(GrantApplication application)

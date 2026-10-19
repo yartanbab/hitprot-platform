@@ -14,6 +14,7 @@ using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.Users;
 using Apya.Platform.Grants.Dtos;
+using Apya.Platform.Notifications;
 using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Grants;
@@ -167,12 +168,41 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
             assigneeName = $"{user.Name} {user.Surname}".Trim();
         }
 
+        var previous = application.AssignedUserId;
         application.AssignTo(input.UserId);
         await _appRepo.UpdateAsync(application, autoSave: true);
         await LogAsync(application, GrantActivityKind.AssignmentChanged, assigneeName);
 
         var call = await GetCallAsync(application.GrantCallId);
+        if (input.UserId != previous)
+        {
+            await NotifyAssigneeAsync(application, call, input.UserId);
+        }
+
         return await BuildAsync(call.Id, null);
+    }
+
+    /// <summary>
+    /// N-06 · Atanan danışman haberdar edilir (kendini atayana gitmez): panoda adını görene dek haberi
+    /// olmuyordu.
+    /// </summary>
+    private async Task NotifyAssigneeAsync(GrantApplication application, GrantCall call, Guid? userId)
+    {
+        if (userId is not { } assigneeId || assigneeId == CurrentUser.Id)
+        {
+            return;
+        }
+
+        var grant = await _grantRepo.FindAsync(call.GrantId);
+        var tenant = application.TenantId.HasValue ? await _tenantRepo.FindAsync(application.TenantId.Value) : null;
+        await LazyServiceProvider.LazyGetRequiredService<NotificationManager>().PublishAsync(
+            assigneeId,
+            L["Notification:GrantApplicationAssigned:Title"],
+            L["Notification:GrantApplicationAssigned:Body", tenant?.Name ?? "-", grant?.Name ?? call.Period],
+            NotificationType.GrantApplicationAssigned,
+            nameof(GrantApplication), application.Id,
+            actorUserId: CurrentUser.Id,
+            actorName: CurrentUser.Name ?? CurrentUser.UserName);
     }
 
     // ------------------------------------------------------------------ yardımcılar
