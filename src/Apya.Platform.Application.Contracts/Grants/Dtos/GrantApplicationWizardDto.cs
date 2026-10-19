@@ -101,6 +101,21 @@ public class GrantWizardBudgetLineDto
     public bool IsEligible { get; set; }
 }
 
+/// <summary>
+/// H-04 · "Kuruma gönder" öncesi özet. Gönderim geri alınamaz; pencere boş alanları, eksik
+/// zorunlu evrakı ve tamamlanmayı gösterir. Yalnız okur, yazmaz.
+/// </summary>
+public class GrantWizardSubmitReviewDto
+{
+    public int CompletionPercent { get; set; }
+
+    /// <summary>Bütün adımlardaki boş alanlar (anahtar biçimi PendingFields ile aynı).</summary>
+    public List<GrantWizardPendingFieldDto> MissingFields { get; set; } = new();
+
+    /// <summary>Zorunlu olup onaylanmamış evrakın adları.</summary>
+    public List<string> MissingDocuments { get; set; } = new();
+}
+
 public class GrantWizardPendingFieldDto
 {
     public string FieldKey { get; set; } = null!;

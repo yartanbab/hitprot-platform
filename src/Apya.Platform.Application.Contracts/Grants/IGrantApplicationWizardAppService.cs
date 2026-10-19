@@ -31,6 +31,9 @@ public interface IGrantApplicationWizardAppService : IApplicationService
 
     Task<GrantApplicationWizardDto> SubmitAsync(Guid applicationId);
 
+    /// <summary>H-04 · Gönderim öncesi özet (boş alanlar, eksik zorunlu evrak); yazmaz.</summary>
+    Task<GrantWizardSubmitReviewDto> GetSubmitReviewAsync(Guid applicationId);
+
     // --- Canlı düzenleme ---
 
     Task<GrantFieldLockResultDto> AcquireLockAsync(GrantFieldLockInput input);
