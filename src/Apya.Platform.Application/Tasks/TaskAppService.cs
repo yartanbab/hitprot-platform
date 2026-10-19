@@ -1068,7 +1068,17 @@ namespace Apya.Platform.Tasks
             // N-03 · Formdan yapılan durum / son tarih / öncelik değişikliği ve alınan atama da bildirilir.
             await _taskManager.PublishChangesAsync(task, before, CurrentUser.Id, ActorName("Bilinmeyen"));
 
+            var tagsBefore = (await _taskTagRepository.GetListAsync(x => x.TaskId == task.Id))
+                .Select(x => x.TagId).ToHashSet();
             var tagDtos = await SyncTagsAsync(task.Id, input.TagNames);
+
+            // QA-38 · Etiketler ayrı tabloda: yalnız etiket değişen kayıtta görev satırı değişmediği için
+            // "Son kayıt" saati eski kalıyordu. Etiket kümesi değiştiyse görev de değişmiş sayılır.
+            if (!tagsBefore.SetEquals(tagDtos.Select(t => t.Id)))
+            {
+                task.LastModificationTime = Clock.Now;
+                await Repository.UpdateAsync(task);
+            }
 
             // REV-002: Manuel DTO yerine AutoMapper
             var taskDto = ObjectMapper.Map<TaskItem, TaskDto>(task);
