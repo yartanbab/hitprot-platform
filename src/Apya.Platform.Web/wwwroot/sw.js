@@ -176,6 +176,7 @@ async function networkOnly(req) {
    göstereceği için çıkarıldı. Bildirim üzerinden onay istenirse ayrı bir iş
    olarak, uçlarıyla birlikte planlanır. */
 
+const SEVERITY_HIGH = 3;
 const SEVERITY_CRITICAL = 4;
 
 self.addEventListener('push', (event) => {
@@ -192,21 +193,29 @@ self.addEventListener('push', (event) => {
    olduğunu bilir, sekmenin GÖRÜNÜR olduğunu bilmez; bunu yalnız burası bilir
    (ve çoklu sunucu örneğinde de doğru kalır).
    Kritik bildirim istisnadır: sessize alınmaz. */
+/* N-02 · Bastırma yalnız uygulama ODAKTAYKEN: kullanıcı o an uygulamaya bakıyorsa olay zaten
+   SignalR balonuyla ve zil sayacıyla geldi. Eskiden "görünür" (visibilityState) yetiyordu: başka bir
+   uygulamanın arkasında kalan ya da ikinci ekrandaki görünür pencere bildirimi tamamen yutuyordu. */
 async function showPushNotification(payload) {
     const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const isVisible = clientList.some((client) => client.visibilityState === 'visible');
+    const isFocused = clientList.some((client) => client.focused);
 
-    if (isVisible && payload.severity !== SEVERITY_CRITICAL) return;
+    if (isFocused && payload.severity !== SEVERITY_CRITICAL) return;
+
+    const important = (payload.severity || 0) >= SEVERITY_HIGH;
+    const tag = payload.tag || (payload.notificationId ? `apya-${payload.notificationId}` : undefined);
 
     await self.registration.showNotification(payload.title || 'Apya', {
         body: payload.body,
         icon: '/icons/apya-icon.svg',
         badge: '/icons/apya-icon.svg',
-        /* Aynı tag → mevcut bildirim güncellenir, yığılmaz. Sunucu tag'i
-           bildirimin GroupKey'inden üretir; grup yoksa satır kimliği kullanılır. */
-        tag: payload.tag || (payload.notificationId ? `apya-${payload.notificationId}` : undefined),
-        renotify: false,
-        requireInteraction: payload.severity === SEVERITY_CRITICAL,
+        /* Aynı tag → mevcut bildirim güncellenir, yığılmaz. Gruplanan bildirimin tekrarı (ikinci yorum,
+           ikinci mesaj) AYNI tag'le gelir; renotify olmadan sessizce üzerine yazılıyordu (N-02). */
+        tag,
+        renotify: Boolean(tag),
+        /* Önemli (Yüksek/Kritik) bildirim kullanıcı kapatana dek ekranda kalır ve titreşir (telefon). */
+        requireInteraction: important,
+        vibrate: important ? [200, 100, 200] : undefined,
         data: { url: payload.url || '/Dashboard' },
     });
 }
@@ -222,6 +231,16 @@ self.addEventListener('notificationclick', (event) => {
         const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
         for (const c of clientList) {
             if (c.url.includes(url) && 'focus' in c) return c.focus();
+        }
+        /* N-02 · Uygulama açık ama başka sayfadaysa o pencere kayda götürülür (yeni sekme yığılmaz);
+           pencere bu service worker'ın denetiminde değilse gezinme reddedilir → yeni pencere. */
+        for (const c of clientList) {
+            if ('navigate' in c) {
+                try {
+                    const moved = await c.navigate(url);
+                    if (moved) return moved.focus();
+                } catch (_) { /* denetimsiz pencere */ }
+            }
         }
         if (self.clients.openWindow) return self.clients.openWindow(url);
     })());

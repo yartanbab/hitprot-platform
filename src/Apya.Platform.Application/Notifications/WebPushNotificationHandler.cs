@@ -79,6 +79,9 @@ public class WebPushNotificationHandler : ILocalEventHandler<NotificationCreated
                     eventData.Id, eventData.Title, tag: null, severity,
                     NotificationTypeRegistry.BuildDeepLink(eventData.Type, eventData.EntityId) ?? "/Notifications");
 
+                // N-02 · Acil (Yüksek/Kritik) push kuyrukta öne geçer: geniş dağıtımda (kiracının bütün
+                // kullanıcıları) sıradan bildirimlerin arkasında beklemesin.
+                var urgent = severity >= NotificationSeverity.High;
                 foreach (var device in devices)
                 {
                     await _backgroundJobManager.EnqueueAsync(new WebPushJobArgs
@@ -87,8 +90,8 @@ public class WebPushNotificationHandler : ILocalEventHandler<NotificationCreated
                         TenantId = eventData.TenantId,
                         PayloadJson = payload,
                         Topic = WebPushPayload.Topic(eventData.Id),
-                        Urgent = severity >= NotificationSeverity.High,
-                    });
+                        Urgent = urgent,
+                    }, urgent ? BackgroundJobPriority.High : BackgroundJobPriority.Normal);
                 }
             }
         }
