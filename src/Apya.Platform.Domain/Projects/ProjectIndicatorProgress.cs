@@ -8,7 +8,8 @@ namespace Apya.Platform.Projects;
 public static class ProjectIndicatorProgress
 {
     /// <summary>
-    /// Başlangıçtan hedefe gidilen yolun yüzdesi (0-100). Aşağı YUVARLANIR: %99,6 "tamam" sayılmaz.
+    /// Başlangıçtan hedefe gidilen yolun yüzdesi (0-100), görev ilerlemesiyle aynı yuvarlama kuralı
+    /// (<see cref="ProgressPercent"/>, QA-36): %99,6 "tamam" sayılmaz, 2/3 %67 okunur.
     /// Azaltma hedefinde (hedef &lt; başlangıç) aynı formül doğru çalışır.
     /// </summary>
     public static int Percent(decimal baseline, decimal target, decimal current)
@@ -19,8 +20,7 @@ public static class ProjectIndicatorProgress
             return current == target ? 100 : 0;
         }
 
-        var ratio = Math.Clamp((current - baseline) / span, 0m, 1m);
-        return (int)Math.Floor(ratio * 100m);
+        return ProgressPercent.Of((current - baseline) / span);
     }
 
     public static ProjectIndicatorStatus Status(int percent, DateTime? targetDate, DateTime today)
