@@ -354,6 +354,7 @@
         "Notifications:Desktop:StatusNotRequested": "Tarayıcı izni henüz istenmedi.",
         "Notifications:Desktop:StatusDenied": "Tarayıcı bildirim izni kapalı.",
         "Notifications:Desktop:StatusUnsupported": "Bu tarayıcı masaüstü bildirimini desteklemiyor.",
+        "Notifications:Desktop:StatusIosInstall": "iPhone ve iPad'de bildirim almak için Safari'de Paylaş → Ana Ekrana Ekle ile APYA'yı ekleyin ve uygulamayı ana ekrandan açın (iOS 16.4 ve üzeri). Ardından bu sayfadan bildirimleri açabilirsiniz.",
         "Notifications:Desktop:BackgroundOnlyHint": "Bildirim yalnız uygulama arka plandayken gösterilir; ekranda açıkken zil ve anlık uyarı yeterlidir.",
         "Notifications:Desktop:Test": "Bu cihazda dene",
         "Notifications:Desktop:TestBody": "Masaüstü bildirimleri çalışıyor.",
