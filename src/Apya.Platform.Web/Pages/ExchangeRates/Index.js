@@ -87,7 +87,8 @@ $(function () {
     $('#SyncTcmbButton').click(function (e) {
         e.preventDefault();
         abp.ui.setBusy();
-        apya.platform.exchangeRates.exchangeRate.syncFromTcmb()
+        // F-06 · Tarih seçildiyse o günün arşiv bülteni; boşsa bugünkü bülten.
+        apya.platform.exchangeRates.exchangeRate.syncFromTcmb($('#SyncTcmbDate').val() || null)
             .then(function (count) {
                 abp.notify.success(count + ' kur TCMB\'den güncellendi.');
                 dataTable.ajax.reload();

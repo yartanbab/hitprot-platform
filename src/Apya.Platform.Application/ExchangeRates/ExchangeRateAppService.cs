@@ -78,33 +78,47 @@ public class ExchangeRateAppService :
     }
 
     [Authorize(PlatformPermissions.ExchangeRates.Create)]
-    public async Task<int> SyncFromTcmbAsync()
+    public async Task<int> SyncFromTcmbAsync(DateTime? date = null)
     {
         var client = _httpClientFactory.CreateClient();
         client.Timeout = TimeSpan.FromSeconds(15);
 
+        // F-06 · Tarih verilirse o günün arşiv bülteni; gelecek tarihin bülteni olmaz.
+        if (date.HasValue && date.Value.Date > Clock.Now.Date)
+        {
+            throw new UserFriendlyException("Gelecek bir tarihin TCMB kuru yok.");
+        }
+        var url = date.HasValue ? TcmbRateParser.ArchiveUrl(date.Value.Date) : TcmbTodayUrl;
+
         string xml;
         try
         {
-            xml = await client.GetStringAsync(TcmbTodayUrl);
+            using var response = await client.GetAsync(url);
+            if (date.HasValue && response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                throw new UserFriendlyException(
+                    $"{date.Value:dd.MM.yyyy} için TCMB kur yayımlamadı (hafta sonu ya da resmî tatil). " +
+                    "Önceki iş gününün kurunu seçin.");
+            }
+            response.EnsureSuccessStatusCode();
+            xml = await response.Content.ReadAsStringAsync();
+        }
+        catch (UserFriendlyException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
             throw new UserFriendlyException("TCMB kurları alınamadı: " + ex.Message);
         }
 
-        var doc = XDocument.Parse(xml);
-        var today = DateTime.Today;
+        // F-06 · ALIŞ kuru ve bültenin KENDİ tarihi (TcmbRateParser); "today" artık bülten günüdür.
+        var bulletin = TcmbRateParser.Parse(xml, TcmbCurrencies, date ?? Clock.Now.Date);
+        var today = bulletin.Date;
         var count = 0;
 
-        foreach (var code in TcmbCurrencies)
+        foreach (var (code, rate) in bulletin.BuyingRates)
         {
-            var node = doc.Descendants("Currency")
-                .FirstOrDefault(c => (string?)c.Attribute("CurrencyCode") == code);
-            var sellingText = node?.Element("ForexSelling")?.Value;
-            if (string.IsNullOrWhiteSpace(sellingText)) continue;
-            if (!decimal.TryParse(sellingText, NumberStyles.Any, CultureInfo.InvariantCulture, out var rate) || rate <= 0)
-                continue;
 
             var existing = await Repository.FirstOrDefaultAsync(x =>
                 x.FromCurrency == code && x.ToCurrency == "TRY" && x.RateDate == today);
