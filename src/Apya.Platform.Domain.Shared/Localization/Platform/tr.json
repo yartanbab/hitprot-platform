@@ -1519,6 +1519,7 @@
         "Grants:Today:MessageAwaitingReply:Detail": "Son mesaj danışmanınızdan geldi; yanıtınızı başvurunun mesaj panelinden yazın.",
         "Grants:Today:MessageAwaitingReply:Detail:Host": "Son mesaj firmadan geldi; yanıtlayın ya da sırayı devredin.",
         "Grants:Today:MessageAwaitingReply:Cta": "Mesajlara git",
+        "Grants:Mine:AwaitingReply": "Danışmanınızın mesajı yanıt bekliyor",
         "Grants:Today:SubmitPackage:Title": "{0}: {2} dosyası kuruma gönderilmeye hazır",
         "Grants:Today:SubmitPackage:Detail": "Evrak ve form tamam; gönderim paketini oluşturup portala yükleyin.",
         "Grants:Today:SubmitPackage:Cta": "Dosyaya git",

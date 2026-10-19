@@ -73,6 +73,9 @@ public class GrantMyApplicationRowDto
     /// pencere "kapalı" (ikinci kez gönderilemez) ama dosya kurumda bekliyor.
     /// </summary>
     public bool AppealPending { get; set; }
+
+    /// <summary>H-03 · Son mesaj danışmandan geldi; firma yanıt vermeli (açık başvurularda).</summary>
+    public bool AwaitingReply { get; set; }
 }
 
 /// <summary>

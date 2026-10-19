@@ -1615,6 +1615,7 @@
     "Grants:Today:MessageAwaitingReply:Detail": "The last message came from your consultant; reply from the application's message panel.",
     "Grants:Today:MessageAwaitingReply:Detail:Host": "The last message came from the firm; reply or hand the turn over.",
     "Grants:Today:MessageAwaitingReply:Cta": "Go to messages",
+    "Grants:Mine:AwaitingReply": "Your consultant's message awaits a reply",
     "Grants:Today:SubmitPackage:Title": "{0}: the {2} file is ready to send to the institution",
     "Grants:Today:SubmitPackage:Detail": "Documents and form are complete; build the submission package and upload it to the portal.",
     "Grants:Today:SubmitPackage:Cta": "Open the file",
