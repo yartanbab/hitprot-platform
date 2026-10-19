@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Notifications;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Tasks;
@@ -27,15 +28,18 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
     private readonly IIdentityUserRepository _userRepository;
     private readonly IDataFilter _dataFilter;
     private readonly IRepository<Project, Guid> _projectRepository;
+    private readonly NotificationManager _notificationManager;
 
     public ProjectMemberAppService(
         IRepository<ProjectMember, Guid> memberRepository,
         IRepository<TaskItem, Guid> taskRepository,
         IIdentityUserRepository userRepository,
         IDataFilter dataFilter,
-        IRepository<Project, Guid> projectRepository)
+        IRepository<Project, Guid> projectRepository,
+        NotificationManager notificationManager)
     {
         _projectRepository = projectRepository;
+        _notificationManager = notificationManager;
         _memberRepository = memberRepository;
         _taskRepository = taskRepository;
         _userRepository = userRepository;
@@ -105,18 +109,41 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
     /// görür; host, okuma tarafıyla aynı kapsamda kiracı projelerini de açar. Görünmeyen ya da
     /// var olmayan proje "bulunamadı" sayılır.
     /// </summary>
-    private async Task EnsureProjectExistsAsync(Guid projectId)
+    private async Task<Project> EnsureProjectExistsAsync(Guid projectId)
     {
         using (CurrentTenant.Id == null ? _dataFilter.Disable<IMultiTenant>() : null)
         {
-            await _projectRepository.GetAsync(projectId);
+            return await _projectRepository.GetAsync(projectId);
         }
+    }
+
+    /// <summary>
+    /// P-09 · Ekibe eklenen kişi bunu bildirimden öğrenir (tür ve proje bağlantısı kayıt
+    /// defterinde hazırdı, hiç yayınlanmıyordu). Kendini ekleyene gitmez. "Atananlardan doldur"
+    /// zaten görevde çalışan kişileri eklediği için bildirim üretmez.
+    /// </summary>
+    private async Task NotifyAddedAsync(Project project, Guid userId)
+    {
+        if (userId == CurrentUser.Id)
+        {
+            return;
+        }
+
+        await _notificationManager.PublishAsync(
+            userId,
+            L["Notification:ProjectMemberAdded:Title"],
+            L["Notification:ProjectMemberAdded:Body", project.Name],
+            NotificationType.ProjectMemberAdded,
+            entityType: "Project",
+            entityId: project.Id,
+            actorUserId: CurrentUser.Id,
+            actorName: CurrentUser.Name ?? CurrentUser.UserName);
     }
 
     [Authorize(PlatformPermissions.Projects.ManageTeam)]
     public async Task<ProjectMemberDto> AddAsync(AddProjectMemberDto input)
     {
-        await EnsureProjectExistsAsync(input.ProjectId);
+        var project = await EnsureProjectExistsAsync(input.ProjectId);
 
         var user = await _userRepository.FindAsync(input.UserId)
             ?? throw new UserFriendlyException("Kullanıcı bulunamadı.");
@@ -140,6 +167,7 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
 
                 existing.Restore(input.Role);
                 await _memberRepository.UpdateAsync(existing, autoSave: true);
+                await NotifyAddedAsync(project, input.UserId);
                 return ToDto(existing, user, 0);
             }
         }
@@ -148,6 +176,7 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
             GuidGenerator.Create(), input.ProjectId, input.UserId, input.Role, CurrentTenant.Id);
 
         await _memberRepository.InsertAsync(member, autoSave: true);
+        await NotifyAddedAsync(project, input.UserId);
         return ToDto(member, user, 0);
     }
 
