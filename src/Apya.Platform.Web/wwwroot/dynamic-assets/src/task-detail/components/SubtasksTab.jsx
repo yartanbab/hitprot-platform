@@ -89,7 +89,7 @@ export function SubtasksTab({ taskId, task, onOpenSubtask }) {
                         >
                             <button
                                 type="button"
-                                aria-label={`${sub.title} tamamlandı işaretle`}
+                                aria-label={isDone ? `${sub.title} tamamlandı işaretini kaldır` : `${sub.title} tamamlandı işaretle`}
                                 onClick={(e) => toggleDone(e, sub)}
                                 disabled={!canToggle}
                                 className={`flex shrink-0 items-center justify-center h-[19px] w-[19px] p-0 rounded-md border-[1.5px] text-white ${canToggle ? 'cursor-pointer' : 'cursor-default'} ${

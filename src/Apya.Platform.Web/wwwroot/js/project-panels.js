@@ -1,7 +1,7 @@
 import { r as j, j as e } from "./react-vendor-D7YDiBbi.js";
 import { m as se } from "./index-DgpuJ91w.js";
 import { o as ee } from "./dataChanged-CDwwWMH8.js";
-import { S as Z, R as re } from "./RichTextEditorV3-Bh6Kk-DM.js";
+import { S as Z, R as re } from "./RichTextEditorV3-CsU1qQrh.js";
 function k() {
   var s, r, a;
   const t = (a = (r = (s = window == null ? void 0 : window.apya) == null ? void 0 : s.platform) == null ? void 0 : r.tasks) == null ? void 0 : a.task;
@@ -33,7 +33,7 @@ function _(t, { force: s = !1 } = {}) {
   const r = t ?? "__all__";
   if (!s && E.has(r))
     return E.get(r);
-  const a = v(k().getList({ projectId: L(t), maxResultCount: 1e3, rootOnly: !1 })).then((l) => (l == null ? void 0 : l.items) ?? []);
+  const a = v(k().getList({ projectId: L(t), maxResultCount: 1e3, rootOnly: !1 })).then((o) => (o == null ? void 0 : o.items) ?? []);
   return E.set(r, a), a.catch(() => {
     E.delete(r);
   }), a;
@@ -48,24 +48,24 @@ function $(t, s) {
   );
   return j.useEffect(() => {
     if (r) return;
-    const l = (n) => {
+    const o = (n) => {
       var c;
       ((c = n == null ? void 0 : n.detail) == null ? void 0 : c.kind) === t && a(!0);
     };
-    return document.addEventListener("apya:project-panel-shown", l), () => document.removeEventListener("apya:project-panel-shown", l);
+    return document.addEventListener("apya:project-panel-shown", o), () => document.removeEventListener("apya:project-panel-shown", o);
   }, [t, r]), r;
 }
 function G(t, s) {
-  const [r, a] = j.useState({ status: "idle", data: null, error: null }), l = j.useRef(t);
-  l.current = t;
+  const [r, a] = j.useState({ status: "idle", data: null, error: null }), o = j.useRef(t);
+  o.current = t;
   const n = j.useRef(0), c = j.useCallback((m) => {
-    const o = ++n.current;
-    return a((x) => ({ ...x, status: x.data ? "reloading" : "loading", error: null })), l.current().then(
+    const l = ++n.current;
+    return a((x) => ({ ...x, status: x.data ? "reloading" : "loading", error: null })), o.current().then(
       (x) => {
-        o === n.current && a({ status: "ready", data: x, error: null });
+        l === n.current && a({ status: "ready", data: x, error: null });
       },
       (x) => {
-        o === n.current && a((i) => m && i.data ? { status: "ready", data: i.data, error: null } : { status: "error", data: null, error: x });
+        l === n.current && a((i) => m && i.data ? { status: "ready", data: i.data, error: null } : { status: "error", data: null, error: x });
       }
     );
   }, []), d = j.useCallback(() => c(!1), [c]), b = j.useCallback(() => c(!0), [c]);
@@ -74,17 +74,17 @@ function G(t, s) {
   }, [s, r.status, d]), { ...r, reload: d, refresh: b };
 }
 function O(t, s, r) {
-  const a = ["ready", "reloading", "error"].includes(r.status), { refresh: l } = r;
+  const a = ["ready", "reloading", "error"].includes(r.status), { refresh: o } = r;
   j.useEffect(() => {
     if (!a) return;
     let n = null;
     const c = () => {
       n === null && (n = setTimeout(() => {
-        n = null, l();
+        n = null, o();
       }, 0));
     }, d = (m) => {
-      var o;
-      ((o = m == null ? void 0 : m.detail) == null ? void 0 : o.kind) === t && c();
+      var l;
+      ((l = m == null ? void 0 : m.detail) == null ? void 0 : l.kind) === t && c();
     };
     document.addEventListener("apya:project-panel-shown", d);
     const b = ee(() => {
@@ -93,34 +93,34 @@ function O(t, s, r) {
     return () => {
       n !== null && clearTimeout(n), document.removeEventListener("apya:project-panel-shown", d), b();
     };
-  }, [t, s, a, l]);
+  }, [t, s, a, o]);
 }
 function M(t, s, r) {
-  const a = new Map(t.map((c) => [c.id, { task: c, records: [] }])), l = { task: null, records: [] };
+  const a = new Map(t.map((c) => [c.id, { task: c, records: [] }])), o = { task: null, records: [] };
   for (const c of s) {
     const d = a.get(r(c));
-    (d ? d.records : l.records).push(c);
+    (d ? d.records : o.records).push(c);
   }
   const n = [...a.values()].filter((c) => c.records.length > 0);
-  return l.records.length > 0 && n.push(l), n;
+  return o.records.length > 0 && n.push(o), n;
 }
-function H(t, s, r, a, l = null) {
-  const n = new Map(s.map((o) => [o.id, o])), c = new Map(t.map((o) => [o.id, { project: o, tasks: [], records: [] }])), d = (o, x) => (c.has(o) || c.set(o, { project: { id: o, name: x || "" }, tasks: [], records: [] }), c.get(o));
-  for (const o of s)
-    o.projectId && d(o.projectId, o.projectName).tasks.push(o);
+function H(t, s, r, a, o = null) {
+  const n = new Map(s.map((l) => [l.id, l])), c = new Map(t.map((l) => [l.id, { project: l, tasks: [], records: [] }])), d = (l, x) => (c.has(l) || c.set(l, { project: { id: l, name: x || "" }, tasks: [], records: [] }), c.get(l));
+  for (const l of s)
+    l.projectId && d(l.projectId, l.projectName).tasks.push(l);
   const b = { project: null, tasks: [], records: [] };
-  for (const o of r) {
-    const x = n.get(a(o)), i = (x == null ? void 0 : x.projectId) ?? (l ? l(o) : null);
-    (i ? d(i, x == null ? void 0 : x.projectName) : b).records.push(o);
+  for (const l of r) {
+    const x = n.get(a(l)), i = (x == null ? void 0 : x.projectId) ?? (o ? o(l) : null);
+    (i ? d(i, x == null ? void 0 : x.projectName) : b).records.push(l);
   }
-  b.tasks = s.filter((o) => !o.projectId);
-  const m = [...c.values()].filter((o) => o.records.length > 0);
+  b.tasks = s.filter((l) => !l.projectId);
+  const m = [...c.values()].filter((l) => l.records.length > 0);
   return b.records.length > 0 && m.push(b), m;
 }
 function ne(t, s, r = /* @__PURE__ */ new Date()) {
   const a = new Date(r.getFullYear(), r.getMonth(), r.getDate());
-  return t.filter((l) => {
-    const n = s.get(l.predecessorTaskId);
+  return t.filter((o) => {
+    const n = s.get(o.predecessorTaskId);
     return !n || n.status === 4 ? !1 : !!n.dueDate && new Date(n.dueDate) < a;
   });
 }
@@ -145,8 +145,8 @@ function z({ onRetry: t }) {
     )
   ] });
 }
-function R({ icon: t, title: s, desc: r, action: a = null, tone: l = "primary" }) {
-  const n = l === "success" ? "bg-success-subtle text-success" : "bg-primary-subtle text-primary";
+function R({ icon: t, title: s, desc: r, action: a = null, tone: o = "primary" }) {
+  const n = o === "success" ? "bg-success-subtle text-success" : "bg-primary-subtle text-primary";
   return /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col items-center gap-2 py-14 px-6 text-center", children: [
     /* @__PURE__ */ e.jsx("span", { className: `flex h-11 w-11 items-center justify-center rounded-xl ${n}`, children: /* @__PURE__ */ e.jsx("i", { className: `fa-solid ${t} text-[18px]`, "aria-hidden": "true" }) }),
     /* @__PURE__ */ e.jsx("span", { className: "text-[14px] font-bold text-text-primary", children: s }),
@@ -185,21 +185,21 @@ const P = {
     var s, r, a;
     return (a = (r = (s = window == null ? void 0 : window.abp) == null ? void 0 : s.notify) == null ? void 0 : r.error) == null ? void 0 : a.call(r, t);
   }
-}, oe = (t) => t ? new Date(t).toLocaleDateString("tr-TR") : "";
-function le({ projectId: t, kind: s, mountEl: r }) {
-  const a = !t, l = $(s, r), n = G(
+}, le = (t) => t ? new Date(t).toLocaleDateString("tr-TR") : "";
+function oe({ projectId: t, kind: s, mountEl: r }) {
+  const a = !t, o = $(s, r), n = G(
     () => Promise.all([
       _(t),
       g.projectDocuments(t),
       a ? g.projectsLookup() : Promise.resolve([])
     ]),
-    l
+    o
   ), [c, d] = j.useState(null), [b, m] = j.useState(!1);
-  if (O(s, r, n), !l || n.status === "idle" || n.status === "loading")
+  if (O(s, r, n), !o || n.status === "idle" || n.status === "loading")
     return /* @__PURE__ */ e.jsx(F, {});
   if (n.status === "error")
     return /* @__PURE__ */ e.jsx(z, { onRetry: n.reload });
-  const [o, x, i] = n.data;
+  const [l, x, i] = n.data;
   if (c)
     return /* @__PURE__ */ e.jsx(
       ce,
@@ -216,7 +216,7 @@ function le({ projectId: t, kind: s, mountEl: r }) {
     return /* @__PURE__ */ e.jsx(
       ie,
       {
-        tasks: o,
+        tasks: l,
         showProject: a,
         onCancel: () => m(!1),
         onCreated: (u) => {
@@ -263,7 +263,7 @@ function le({ projectId: t, kind: s, mountEl: r }) {
             /* @__PURE__ */ e.jsxs("span", { className: "shrink-0 text-[11px] text-text-tertiary", children: [
               w.editorName,
               " · ",
-              oe(w.lastModificationTime ?? w.creationTime)
+              le(w.lastModificationTime ?? w.creationTime)
             ] })
           ]
         }
@@ -272,22 +272,22 @@ function le({ projectId: t, kind: s, mountEl: r }) {
   });
   return /* @__PURE__ */ e.jsxs("div", { className: "pb-4", children: [
     /* @__PURE__ */ e.jsx("div", { className: "flex items-center justify-end px-4 py-3", children: y }),
-    a ? H(i, o, x, (u) => u.taskId).map((u) => {
+    a ? H(i, l, x, (u) => u.taskId).map((u) => {
       var C;
       return /* @__PURE__ */ e.jsxs("section", { children: [
         /* @__PURE__ */ e.jsx(K, { project: u.project }),
         h(u.tasks, u.records)
       ] }, ((C = u.project) == null ? void 0 : C.id) ?? "no-project");
-    }) : h(o, x)
+    }) : h(l, x)
   ] });
 }
 function ie({ tasks: t, showProject: s = !1, onCancel: r, onCreated: a }) {
   var x;
-  const [l, n] = j.useState(((x = t[0]) == null ? void 0 : x.id) ?? ""), [c, d] = j.useState(""), [b, m] = j.useState(!1), o = async () => {
-    if (!(!l || !c.trim() || b)) {
+  const [o, n] = j.useState(((x = t[0]) == null ? void 0 : x.id) ?? ""), [c, d] = j.useState(""), [b, m] = j.useState(!1), l = async () => {
+    if (!(!o || !c.trim() || b)) {
       m(!0);
       try {
-        const i = await g.createDocument(l, c.trim());
+        const i = await g.createDocument(o, c.trim());
         P.ok("Belge oluşturuldu."), a(i);
       } catch (i) {
         P.err((i == null ? void 0 : i.message) || "Belge oluşturulamadı."), m(!1);
@@ -301,7 +301,7 @@ function ie({ tasks: t, showProject: s = !1, onCancel: r, onCreated: a }) {
       /* @__PURE__ */ e.jsx(
         "select",
         {
-          value: l,
+          value: o,
           onChange: (i) => n(i.target.value),
           className: "h-9 px-2 rounded-lg border border-default bg-surface-base text-[12.5px] text-text-primary",
           children: t.map((i) => /* @__PURE__ */ e.jsx("option", { value: i.id, children: (s && i.projectName ? i.projectName + " — " : "") + (i.number > 0 ? `GRV-${i.number} · ` : "") + i.title }, i.id))
@@ -318,7 +318,7 @@ function ie({ tasks: t, showProject: s = !1, onCancel: r, onCreated: a }) {
           value: c,
           onChange: (i) => d(i.target.value),
           onKeyDown: (i) => {
-            i.key === "Enter" && o();
+            i.key === "Enter" && l();
           },
           placeholder: "Toplantı notu, kapsam taslağı…",
           className: "h-9 px-2.5 rounded-lg border border-default bg-surface-base text-[12.5px] text-text-primary focus:outline-none focus:border-focus"
@@ -339,8 +339,8 @@ function ie({ tasks: t, showProject: s = !1, onCancel: r, onCreated: a }) {
         "button",
         {
           type: "button",
-          onClick: o,
-          disabled: b || !c.trim() || !l,
+          onClick: l,
+          disabled: b || !c.trim() || !o,
           className: "h-8 px-4 rounded-lg bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed",
           children: "Oluştur"
         }
@@ -349,28 +349,28 @@ function ie({ tasks: t, showProject: s = !1, onCancel: r, onCreated: a }) {
   ] });
 }
 function ce({ documentId: t, onBack: s, onChanged: r, onDeleted: a }) {
-  const l = G(() => g.document(t), !0), [n, c] = j.useState(null), [d, b] = j.useState(null), [m, o] = j.useState(!1);
-  if (l.status !== "ready")
-    return l.status === "error" ? /* @__PURE__ */ e.jsx(z, { onRetry: l.reload }) : /* @__PURE__ */ e.jsx(F, {});
-  const x = n ?? l.data.title, i = n !== null || d !== null, y = async () => {
+  const o = G(() => g.document(t), !0), [n, c] = j.useState(null), [d, b] = j.useState(null), [m, l] = j.useState(!1);
+  if (o.status !== "ready")
+    return o.status === "error" ? /* @__PURE__ */ e.jsx(z, { onRetry: o.reload }) : /* @__PURE__ */ e.jsx(F, {});
+  const x = n ?? o.data.title, i = n !== null || d !== null, y = async () => {
     if (!m) {
-      o(!0);
+      l(!0);
       try {
         await g.updateDocument(t, {
           title: x,
-          content: d ?? l.data.content
+          content: d ?? o.data.content
         }), P.ok("Belge kaydedildi."), r(), s();
       } catch (u) {
-        P.err((u == null ? void 0 : u.message) || "Belge kaydedilemedi."), o(!1);
+        P.err((u == null ? void 0 : u.message) || "Belge kaydedilemedi."), l(!1);
       }
     }
   }, h = async () => {
     if (!(m || !window.confirm("Belge silinecek (geri alınabilir arşive gider). Devam edilsin mi?"))) {
-      o(!0);
+      l(!0);
       try {
         await g.deleteDocument(t), P.ok("Belge silindi."), a();
       } catch (u) {
-        P.err((u == null ? void 0 : u.message) || "Belge silinemedi."), o(!1);
+        P.err((u == null ? void 0 : u.message) || "Belge silinemedi."), l(!1);
       }
     }
   };
@@ -423,23 +423,24 @@ function ce({ documentId: t, onBack: s, onChanged: r, onDeleted: a }) {
     /* @__PURE__ */ e.jsx(
       re,
       {
-        value: l.data.content || "",
+        value: o.data.content || "",
         onChange: b,
+        ariaLabel: "Belge içeriği",
         placeholder: "Belge içeriği…"
       }
     )
   ] });
 }
 function de({ projectId: t, kind: s, mountEl: r }) {
-  const a = !t, l = $(s, r), n = G(
+  const a = !t, o = $(s, r), n = G(
     () => Promise.all([
       _(t),
       g.projectForms(t),
       a ? g.projectsLookup() : Promise.resolve([])
     ]),
-    l
+    o
   );
-  if (O(s, r, n), !l || n.status === "idle" || n.status === "loading")
+  if (O(s, r, n), !o || n.status === "idle" || n.status === "loading")
     return /* @__PURE__ */ e.jsx(F, {});
   if (n.status === "error")
     return /* @__PURE__ */ e.jsx(z, { onRetry: n.reload });
@@ -453,7 +454,7 @@ function de({ projectId: t, kind: s, mountEl: r }) {
         desc: "Form Yönetimi'ndeki bir formu görev detayından bağlayın; yanıtlar o görev bağlamında toplansın."
       }
     );
-  const m = (o, x) => M(o, x, (i) => i.taskId).map((i) => {
+  const m = (l, x) => M(l, x, (i) => i.taskId).map((i) => {
     var y;
     return /* @__PURE__ */ e.jsxs("section", { children: [
       /* @__PURE__ */ e.jsx(Y, { task: i.task }),
@@ -484,27 +485,27 @@ function de({ projectId: t, kind: s, mountEl: r }) {
       ] }, h.id)) })
     ] }, ((y = i.task) == null ? void 0 : y.id) ?? "orphan");
   });
-  return /* @__PURE__ */ e.jsx("div", { className: "pb-4", children: a ? H(b, c, d, (o) => o.taskId).map((o) => {
+  return /* @__PURE__ */ e.jsx("div", { className: "pb-4", children: a ? H(b, c, d, (l) => l.taskId).map((l) => {
     var x;
     return /* @__PURE__ */ e.jsxs("section", { children: [
-      /* @__PURE__ */ e.jsx(K, { project: o.project }),
-      m(o.tasks, o.records)
-    ] }, ((x = o.project) == null ? void 0 : x.id) ?? "no-project");
+      /* @__PURE__ */ e.jsx(K, { project: l.project }),
+      m(l.tasks, l.records)
+    ] }, ((x = l.project) == null ? void 0 : x.id) ?? "no-project");
   }) : m(c, d) });
 }
 const V = "__project__:", A = (t) => V + t;
 function ue({ projectId: t, kind: s, mountEl: r }) {
-  const a = !t, l = $(s, r), n = G(
+  const a = !t, o = $(s, r), n = G(
     () => Promise.all([
       _(t),
       g.projectChecklist(t),
       a ? g.projectsLookup() : Promise.resolve([])
     ]),
-    l
+    o
   );
   O(s, r, n);
-  const [c, d] = j.useState(null), [b, m] = j.useState(""), [o, x] = j.useState(!1);
-  if (!l || n.status === "idle" || n.status === "loading")
+  const [c, d] = j.useState(null), [b, m] = j.useState(""), [l, x] = j.useState(!1);
+  if (!o || n.status === "idle" || n.status === "loading")
     return /* @__PURE__ */ e.jsx(F, {});
   if (n.status === "error")
     return /* @__PURE__ */ e.jsx(z, { onRetry: n.reload });
@@ -531,7 +532,7 @@ function ue({ projectId: t, kind: s, mountEl: r }) {
       {
         type: "checkbox",
         checked: f.isDone,
-        disabled: o,
+        disabled: l,
         onChange: () => D(() => g.toggleChecklistItem(f.id)),
         className: "h-[15px] w-[15px] accent-[var(--apya-accent-500,#4F46E5)] cursor-pointer",
         "aria-label": f.text
@@ -543,7 +544,7 @@ function ue({ projectId: t, kind: s, mountEl: r }) {
       {
         type: "button",
         title: "Maddeyi sil",
-        disabled: o,
+        disabled: l,
         onClick: () => D(() => g.deleteChecklistItem(f.id)),
         className: "opacity-0 group-hover:opacity-100 h-6 w-6 rounded-md text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer",
         children: /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-xmark text-[11px]", "aria-hidden": "true" })
@@ -666,19 +667,19 @@ function ue({ projectId: t, kind: s, mountEl: r }) {
   ] });
 }
 function xe({ projectId: t, kind: s, mountEl: r }) {
-  const a = !t, l = $(s, r), n = G(
+  const a = !t, o = $(s, r), n = G(
     () => Promise.all([
       _(t),
       g.projectDependencies(t),
       a ? g.projectsLookup() : Promise.resolve([])
     ]),
-    l
+    o
   );
-  if (O(s, r, n), !l || n.status === "idle" || n.status === "loading")
+  if (O(s, r, n), !o || n.status === "idle" || n.status === "loading")
     return /* @__PURE__ */ e.jsx(F, {});
   if (n.status === "error")
     return /* @__PURE__ */ e.jsx(z, { onRetry: n.reload });
-  const [c, d, b] = n.data, m = new Map(c.map((h) => [h.id, h])), o = ne(d, m), x = new Set(o.map((h) => h.predecessorTaskId + "→" + h.taskId));
+  const [c, d, b] = n.data, m = new Map(c.map((h) => [h.id, h])), l = ne(d, m), x = new Set(l.map((h) => h.predecessorTaskId + "→" + h.taskId));
   if (d.length === 0)
     return /* @__PURE__ */ e.jsx(
       R,
@@ -704,11 +705,11 @@ function xe({ projectId: t, kind: s, mountEl: r }) {
     ) : /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-tertiary", children: "(görünmeyen görev)" });
   };
   return /* @__PURE__ */ e.jsxs("div", { className: "pb-4", children: [
-    o.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex items-start gap-2.5 m-4 mb-0 px-3.5 py-3 rounded-xl bg-negative-subtle border border-negative/30", children: [
+    l.length > 0 && /* @__PURE__ */ e.jsxs("div", { className: "flex items-start gap-2.5 m-4 mb-0 px-3.5 py-3 rounded-xl bg-negative-subtle border border-negative/30", children: [
       /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-link-slash text-[13px] text-negative mt-0.5", "aria-hidden": "true" }),
       /* @__PURE__ */ e.jsxs("div", { className: "text-[12px] leading-[1.55] text-negative", children: [
         /* @__PURE__ */ e.jsxs("b", { children: [
-          o.length,
+          l.length,
           " bağlantı bloke ediyor:"
         ] }),
         " öncülü tamamlanmamış ve termini geçmiş görevler ardıllarını bekletiyor. Satırlarda ⚠ ile işaretli."
@@ -756,12 +757,12 @@ function xe({ projectId: t, kind: s, mountEl: r }) {
   }
 }
 const pe = [
-  ["view-documents", "documents", le],
+  ["view-documents", "documents", oe],
   ["view-forms", "forms", de],
   ["view-checklist", "checklist", ue],
   ["view-dependencies", "dependencies", xe]
 ];
 for (const [t, s, r] of pe) {
-  const a = document.getElementById(t), l = a == null ? void 0 : a.getAttribute("data-project-id");
-  a && (l || a.getAttribute("data-scope") === "all") && se(a, `project-panels:${s}`, /* @__PURE__ */ e.jsx(r, { projectId: l || null, kind: s, mountEl: a }));
+  const a = document.getElementById(t), o = a == null ? void 0 : a.getAttribute("data-project-id");
+  a && (o || a.getAttribute("data-scope") === "all") && se(a, `project-panels:${s}`, /* @__PURE__ */ e.jsx(r, { projectId: o || null, kind: s, mountEl: a }));
 }

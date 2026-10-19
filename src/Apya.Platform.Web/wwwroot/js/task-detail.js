@@ -5,7 +5,7 @@ import { a as ot } from "./QueryProvider-D2Hvqdr9.js";
 import { u as J, a as re, b as te } from "./query-vendor-Db2mwxYI.js";
 import { C as Da } from "./Combobox-CHhgTuMW.js";
 import { U as Et, u as Ta } from "./useDirtyGuard-D_9NgM7w.js";
-import { i as He, a as We, s as be, p as ut, d as Sa, b as Vt, R as $a, c as Ee, e as Pa, f as Ea, g as ks, P as Cs } from "./RichTextEditorV3-Bh6Kk-DM.js";
+import { i as He, a as We, s as be, p as ut, d as Sa, b as Vt, R as $a, c as Ee, e as Pa, f as Ea, g as ks, P as Cs } from "./RichTextEditorV3-CsU1qQrh.js";
 import { r as Ds } from "./httpClient-BNoyY5yK.js";
 import { S as we } from "./Skeleton-C92LWNeC.js";
 import { R as ke, T as Ce, P as De, C as Te, A as Ts, a as Bt, D as Ss, b as $s, c as Ps, d as Es, e as Bs } from "./ui-vendor-UYevF8mE.js";
@@ -895,7 +895,7 @@ function ar({ taskId: t, task: s, onOpenSubtask: a }) {
                 "button",
                 {
                   type: "button",
-                  "aria-label": `${c.title} tamamlandı işaretle`,
+                  "aria-label": N ? `${c.title} tamamlandı işaretini kaldır` : `${c.title} tamamlandı işaretle`,
                   onClick: (b) => x(b, c),
                   disabled: !y,
                   className: `flex shrink-0 items-center justify-center h-[19px] w-[19px] p-0 rounded-md border-[1.5px] text-white ${y ? "cursor-pointer" : "cursor-default"} ${N ? "bg-success border-success" : "bg-transparent border-strong"}`,
@@ -2690,6 +2690,7 @@ function Ur({ taskId: t }) {
       $a,
       {
         value: p,
+        ariaLabel: "Belge içeriği",
         placeholder: "Belgeyi buraya yazın…",
         onChange: (E) => {
           x(E), d(!0);
