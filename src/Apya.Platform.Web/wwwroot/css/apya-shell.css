@@ -8794,3 +8794,33 @@ html[data-sidebar] .apya-sidebar-resizer {
 }
 .apya-cal-more:hover { color: var(--apya-accent-500); background: var(--apya-surface-hover); }
 .apya-cal-more:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+/* İşlem göstergesi (apya-activity.js): sayfa geçişi ve kullanıcının tetiklediği istekte üst çubuk,
+   tıklanan düğmede dönen simge. Çubuk tıklamayı engellemez (pointer-events: none). */
+.apya-activity {
+    position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 2100;
+    pointer-events: none; overflow: hidden; opacity: 0; transition: opacity .15s ease;
+}
+.apya-activity.is-active { opacity: 1; }
+.apya-activity::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%;
+    background: var(--apya-brand-500, #2563EB); border-radius: 0 2px 2px 0;
+    animation: apyaActivityBar 1.1s ease-in-out infinite;
+}
+@keyframes apyaActivityBar {
+    0% { left: -40%; width: 40%; }
+    60% { left: 60%; width: 45%; }
+    100% { left: 105%; width: 10%; }
+}
+html.apya-activity-busy, html.apya-activity-busy body { cursor: progress; }
+[data-apya-pending] { cursor: progress; white-space: nowrap; }
+[data-apya-pending]::after {
+    content: ''; display: inline-block; width: .85em; height: .85em; margin-inline-start: .45em;
+    vertical-align: -.12em; border: 2px solid currentColor; border-inline-end-color: transparent;
+    border-radius: 50%; animation: apyaActivitySpin .7s linear infinite;
+}
+@keyframes apyaActivitySpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+    .apya-activity::before { animation: none; left: 0; width: 100%; opacity: .6; }
+    [data-apya-pending]::after { animation: none; border-inline-end-color: currentColor; opacity: .5; }
+}
