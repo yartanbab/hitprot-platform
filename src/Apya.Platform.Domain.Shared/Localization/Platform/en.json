@@ -469,6 +469,7 @@
     "Notifications:Desktop:StatusNotRequested": "Browser permission has not been requested yet.",
     "Notifications:Desktop:StatusDenied": "Browser notification permission is blocked.",
     "Notifications:Desktop:StatusUnsupported": "This browser does not support desktop notifications.",
+    "Notifications:Desktop:StatusIosInstall": "To get notifications on iPhone and iPad, add APYA with Share → Add to Home Screen in Safari and open the app from the home screen (iOS 16.4 or later). Then turn notifications on from this page.",
     "Notifications:Desktop:BackgroundOnlyHint": "Notifications appear only while the app is in the background; when it is on screen the bell and the in-app alert are enough.",
     "Notifications:Desktop:Test": "Try it on this device",
     "Notifications:Desktop:TestBody": "Desktop notifications are working.",

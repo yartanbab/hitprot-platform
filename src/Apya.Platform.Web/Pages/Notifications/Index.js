@@ -325,8 +325,13 @@ $(function () {
         $('#notif-device-help').text(l('Notifications:Desktop:HowTo'));
         $('#notif-device-help-text').text(l('Notifications:Desktop:HowToHelp'));
 
+        // B-14 · iPhone/iPad Safari sekmesinde bildirim API'si yoktur; ana ekrana eklenen uygulamada vardır.
+        var iosNotInstalled = (/iPhone|iPad|iPod/.test(navigator.userAgent || '')
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
+            && !((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true);
+
         var statusText = {
-            NotSupported:         l('Notifications:Desktop:StatusUnsupported'),
+            NotSupported:         l(iosNotInstalled ? 'Notifications:Desktop:StatusIosInstall' : 'Notifications:Desktop:StatusUnsupported'),
             NotRequested:         l('Notifications:Desktop:StatusNotRequested'),
             PermissionDenied:     l('Notifications:Desktop:StatusDenied'),
             PermissionGranted:    l('Notifications:Desktop:StatusOn'),
