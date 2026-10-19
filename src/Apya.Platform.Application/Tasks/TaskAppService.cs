@@ -1259,7 +1259,7 @@ namespace Apya.Platform.Tasks
 
         // Instagram tarzı yanıt: bir yoruma cevap. Tek seviye thread tutarız —
         // bir yanıta yanıt verilirse kök yoruma bağlanır.
-        public async Task<Guid> ReplyToCommentAsync(Guid parentCommentId, string text)
+        public async Task<Guid> ReplyToCommentAsync(Guid parentCommentId, string text, List<Guid>? mentionedUserIds = null)
         {
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -1283,7 +1283,9 @@ namespace Apya.Platform.Tasks
                 CreatorId     = task.CreatorId,
                 CommentUserId = CurrentUser.Id ?? Guid.Empty,
                 CommenterName = ActorName("Bilinmeyen"),
-                CommentText   = text
+                CommentText   = text,
+                // B-17 · Yanıtta bahsedilenler de yorumdaki kuralla (görevi görebilenler) bildirim alır.
+                MentionedUserIds = await ResolveMentionsAsync(task, mentionedUserIds)
             });
 
             return reply.Id;

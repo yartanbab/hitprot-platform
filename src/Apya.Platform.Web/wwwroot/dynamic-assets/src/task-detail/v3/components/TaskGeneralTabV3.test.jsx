@@ -78,6 +78,27 @@ describe('TaskGeneralTabV3 yoruma dosya (UX-5)', () => {
     });
 });
 
+describe('TaskGeneralTabV3 yanıtta bahsetme (B-17)', () => {
+    it('yanıttaki @Ad Soyad kişi listesinden eşlenip kimliğiyle gider', async () => {
+        const reply = vi.fn(() => Promise.resolve('r-1'));
+        window.apya.platform.tasks.task.getComments = vi.fn(() => Promise.resolve([
+            { id: 'c-1', authorName: 'Can Öztürk', text: 'İlk yorum', creationTime: '2026-10-19T10:00:00' },
+        ]));
+        window.apya.platform.tasks.task.getUsersLookup = vi.fn(() => Promise.resolve({ items: [
+            { id: 'u-1', name: 'Ayşe', surname: 'Yılmaz', userName: 'ayse' },
+            { id: 'u-2', name: 'Mehmet', surname: 'Kaya', userName: 'mehmet' },
+        ] }));
+        window.apya.platform.tasks.task.replyToComment = reply;
+        render(wrap(A, A.description));
+
+        await userEvent.click(await screen.findByRole('button', { name: /Yanıtla/ }));
+        const box = await screen.findByPlaceholderText(/yanıt/i);
+        await userEvent.type(box, '@Ayşe Yılmaz bakar mısın{enter}');
+
+        await waitFor(() => expect(reply).toHaveBeenCalledWith('c-1', '@Ayşe Yılmaz bakar mısın', ['u-1']));
+    });
+});
+
 describe('TaskGeneralTabV3 kişi bahsetme (P-09)', () => {
     const people = [
         { id: 'u-1', name: 'Ayşe', surname: 'Yılmaz', userName: 'ayse' },
