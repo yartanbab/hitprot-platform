@@ -34,7 +34,10 @@
 <partial name="_ApyaThemeBootstrap" />
 <island-preload entry="task-detail" />
 
-<div data-page-description="Görev detayları" class="apya-page max-w-7xl mx-auto py-4 px-4">
+@* w-full + min-w-0 ŞART (QA-31): .lpx-content sütun yönlü flex; mx-auto (otomatik yan boşluk)
+   öğenin genişliğe uzamasını kapatır ve genişlik içeriğin EN KÜÇÜK genişliğine oturur —
+   375px telefonda sayfa 669px oluyor, yatay kaydırma çıkıyordu. *@
+<div data-page-description="Görev detayları" class="apya-page max-w-7xl mx-auto w-full min-w-0 py-4 px-4">
     @* Embedded React Island Mount Point *@
     <div id="task-detail-page-island" data-task-id="@Model.Id" data-tab-order="@tabOrder"></div>
 </div>
