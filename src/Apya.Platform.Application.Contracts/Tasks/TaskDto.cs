@@ -40,6 +40,12 @@ namespace Apya.Platform.Tasks
         /// <summary>Mevcut kullanıcı bu görevi takip ediyor mu (TaskWatcher join'inden).</summary>
         public bool IsWatched { get; set; }
 
+        /// <summary>
+        /// B-15 · Görevi izleyenlerin adları (ad soyad, yoksa kullanıcı adı) — yorum, durum ve vade bildirimlerini
+        /// alanlar. Yalnız tekil okumada (görev detayı) doldurulur.
+        /// </summary>
+        public System.Collections.Generic.List<string> WatcherNames { get; set; } = new();
+
         public DateTime StartDate { get; set; }
         public DateTime? DueDate { get; set; }
         public DateTime? CompletedDate { get; set; }
