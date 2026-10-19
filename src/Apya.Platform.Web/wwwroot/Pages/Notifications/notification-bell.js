@@ -318,6 +318,9 @@
 
     window.apyaDesktopNotifications = DESKTOP;
 
+    // N-01 · Anlık kanal (SignalR) bağlı mı? Değilse sayaç yedek tazelemeyle güncel tutulur.
+    var live = false;
+
     function init() {
         // İzin önceden verilmişse abonelik sessizce kurulur / tazelenir.
         PUSH.sync();
@@ -330,6 +333,7 @@
                 .build();
 
             connection.on("ReceiveNotification", function(notificationDto) {
+                live = true;
                 refreshBadge();
                 notifyToast(notificationDto);
                 DESKTOP.show(notificationDto);
@@ -346,25 +350,54 @@
                 }
             });
 
-            // TD-W-006: Reconnect lifecycle — kullanıcıyı bağlantı durumundan haberdar et.
+            // N-01 · Bağlantı artık HER sayfada kurulur. Geçici kopmalar (uyku, ağ değişimi, sunucu
+            // yeniden başlatma) eskiden her sayfada balon üretirdi; şimdi sessizce yeniden bağlanılır,
+            // kopukken sayaç aşağıdaki yedek tazelemeyle güncel tutulur. Bağlantı tamamen düşerse
+            // kullanıcıya bir kez, kalıcı olmayan bir uyarı gösterilir.
             var l = abp.localization.getResource('Platform');
+            var lostNotified = false;
 
             connection.onreconnecting(function(error) {
+                live = false;
                 console.warn('[NotificationHub] reconnecting:', error);
-                abp.notify.warn(l('Connection:Reconnecting'), l('Connection:Title'));
             });
 
-            connection.onreconnected(function(connectionId) {
-                abp.notify.success(l('Connection:Reconnected'), l('Connection:Title'));
+            connection.onreconnected(function() {
+                live = true;
+                lostNotified = false;
+                refreshBadge(); // kopukken kaçan bildirimler sayaca yansısın
             });
 
             connection.onclose(function(error) {
-                console.error('[NotificationHub] connection closed:', error);
-                abp.notify.error(l('Connection:Lost'), l('Connection:ErrorTitle'), { sticky: true });
+                live = false;
+                console.warn('[NotificationHub] connection closed:', error);
+                if (!lostNotified && document.visibilityState === 'visible') {
+                    lostNotified = true;
+                    abp.notify.warn(l('Connection:Lost'), l('Connection:Title'));
+                }
+                setTimeout(start, 30000);
             });
 
-            connection.start().catch(err => console.error("SignalR hatası: " + err.toString()));
+            var start = function () {
+                connection.start()
+                    .then(function () { live = true; refreshBadge(); })
+                    .catch(function (err) {
+                        live = false;
+                        console.warn('[NotificationHub] bağlanılamadı: ' + err);
+                        setTimeout(start, 30000);
+                    });
+            };
+            start();
         }
+
+        // N-01 · Yedek tazeleme: anlık kanal kurulamadıysa ya da koptuysa zil sayacı sekmeye
+        // dönüşte ve sekme görünürken dakikada bir sunucudan okunur.
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') { refreshBadge(); }
+        });
+        setInterval(function () {
+            if (!live && document.visibilityState === 'visible') { refreshBadge(); }
+        }, 60000);
 
         // --- Event Handlers ---
         $('#notificationDropdown').on('show.bs.dropdown', function () {
@@ -453,18 +486,29 @@
 
     // Aciliyet toast biçimini seçer: kritik bir uyarı mavi bilgi kutusunda
     // kaybolmasın, kritikte kendiliğinden kapanmasın.
+    // N-01 · Balon NE olduğunu söyler: başlık türün adı ("Sizden bahsedildi"), ileti kim/ne
+    // (bildirim gövdesi, ör. "admin, "X" görevinde sizden bahsetti: …"). Eskiden ileti yalnız başlık,
+    // başlık sabit "Yeni Bildirim"di. Gövde kullanıcı metni taşır (yorum) → HTML olarak kaçışlanır
+    // (abp.notify iletiyi innerHTML ile basar). Balona tıklamak kaydı açar.
     function notifyToast(dto) {
         var severity = dto.severity || 0;
+        var esc = (abp.utils && abp.utils.htmlEscape) || function (s) { return $('<div>').text(s).html(); };
+        var body = (dto.body || '').length > 160 ? dto.body.substring(0, 157) + '…' : (dto.body || '');
+        var message = esc(body || dto.title || '');
+        var title = esc(dto.title || 'Yeni Bildirim');
+        var options = dto.deepLinkUrl
+            ? { onclick: function () { window.location.href = dto.deepLinkUrl; } }
+            : {};
 
         if (severity >= SEVERITY.CRITICAL) {
-            abp.notify.error(dto.title, "Yeni Bildirim", { sticky: true });
+            abp.notify.error(message, title, $.extend({ sticky: true }, options));
             return;
         }
         if (severity >= SEVERITY.HIGH) {
-            abp.notify.warn(dto.title, "Yeni Bildirim");
+            abp.notify.warn(message, title, options);
             return;
         }
-        abp.notify.info(dto.title, "Yeni Bildirim");
+        abp.notify.info(message, title, options);
     }
 
     // --- Badge Güncelleme ---

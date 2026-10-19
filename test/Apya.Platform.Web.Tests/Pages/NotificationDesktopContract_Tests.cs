@@ -65,7 +65,8 @@ public class NotificationDesktopContract_Tests : PlatformWebTestBase
         var start = source.IndexOf("\"ReceiveNotification\"", StringComparison.Ordinal);
         if (start < 0) { return new List<string>(); }
 
-        var end = source.IndexOf("});", start, StringComparison.Ordinal);
+        // Gönderim commit sonrasına sarmalanınca kapanış "}));" olur (N-01); ilk "})" nesnenin sonu.
+        var end = source.IndexOf("})", start, StringComparison.Ordinal);
         if (end < 0) { return new List<string>(); }
 
         return Regex.Matches(source[start..end], @"^\s*(\w+)\s*=", RegexOptions.Multiline)
