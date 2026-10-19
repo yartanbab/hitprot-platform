@@ -45,6 +45,13 @@ public static class ReleaseNoteCatalog
                 "yeniden uyarır. Bildirime tıklayınca açık olan uygulama penceresi ilgili kayda gider."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Sessiz saatler",
+                "Bildirim tercihlerinde sessiz saatleri açarsanız (ör. 22:00–08:00) bu saatlerde normal önemdeki " +
+                "telefon ve masaüstü bildirimleri pencere bitince gelir; Yüksek ve Kritik bildirimler her zaman " +
+                "anında gelir. Arada uygulamada okuduğunuz bildirim sonradan gelmez. Uygulama içi bildirimler " +
+                "etkilenmez. Varsayılan olarak kapalıdır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Görevinizdeki değişikliklerden haberiniz oluyor",
                 "Yorumunuza yanıt verildiğinde, görev sizden alındığında, görevinizin son tarihi değiştiğinde ya " +
                 "da önceliği Kritik yapıldığında bildirim alırsınız. Panoda kart taşınarak ya da formdan " +
@@ -66,6 +73,19 @@ public static class ReleaseNoteCatalog
                 "Yanıtlarda da kişiden bahsedebiliyorsunuz",
                 "Bir yoruma yanıt yazarken \"@Ad Soyad\" yazdığınız kişi de \"Sizden bahsedildi\" bildirimi alır " +
                 "(yalnız görevi görebilen kişiler)."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Görevde kim neyi değiştirdi görünüyor",
+                "Görevin Geçmiş sekmesi artık değişiklikleri tek tek listeler: kim, ne zaman, hangi alanı neyden " +
+                "neye değiştirdi (ör. \"Durum: Yapılacak → Sürüyor\", sorumlu, son tarih, öncelik). Kaydettiğiniz " +
+                "değişiklik sayfayı yenilemeden listeye düşer. Geçmiş sekmesini görev ekranındaki \"Özellik ekle\" " +
+                "menüsünden açabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görev menüsünden \"Arşivle\" kaldırıldı",
+                "\"Arşivle\" görevi Tamamlandı yapıyor ve proje ilerlemesini olduğundan yüksek gösteriyordu. " +
+                "Görevi tamamlamak için durum seçicisini, vazgeçilen görev için menüdeki \"Görevi iptal et\"i " +
+                "kullanın."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Takip ettiğiniz görevlerden haber alıyorsunuz",
