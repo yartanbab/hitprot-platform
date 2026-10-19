@@ -200,7 +200,7 @@ public class NotificationManager : DomainService
             p => p.UserId == userId && p.Category == category);
 
         return stored == null
-            ? (NotificationPreferenceDefaults.InApp, NotificationPreferenceDefaults.Email)
+            ? (NotificationPreferenceDefaults.InApp, NotificationPreferenceDefaults.EmailFor(category))
             : (stored.InApp, stored.Email);
     }
 
