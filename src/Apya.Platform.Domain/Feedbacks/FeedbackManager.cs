@@ -7,6 +7,7 @@ using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
 using Volo.Abp.Timing;
+using Volo.Abp.Users;
 
 namespace Apya.Platform.Feedbacks;
 
@@ -22,6 +23,12 @@ public class FeedbackManager : DomainService
     private readonly IFeedbackNumberGenerator _numberGenerator;
     private readonly NotificationManager _notificationManager;
     private readonly IClock _clock;
+
+    /// <summary>
+    /// N-07 · Yeni geri bildirimi alacak ekip: paneli görme izni (PlatformPermissions.Feedbacks.Default).
+    /// Domain, Application.Contracts'taki sabite başvuramaz; değer eşitliği testle kilitli.
+    /// </summary>
+    public const string TeamPermission = "Platform.Feedbacks";
 
     public FeedbackManager(
         IRepository<Feedback, Guid> feedbackRepository,
@@ -114,7 +121,35 @@ public class FeedbackManager : DomainService
             "Geri bildiriminiz alındı",
             $"Bildiriminiz {feedback.FeedbackNumber} numarasıyla alındı. Gelişmeleri \"Geri Bildirimlerim\" sayfasından takip edebilirsiniz.");
 
+        await NotifyTeamAsync(feedback, submitterUserId, context.SubmittedByUserName);
+
         return feedback;
+    }
+
+    /// <summary>
+    /// N-07 · Yeni geri bildirim, paneli görme yetkisi olan host kullanıcılarına ANINDA bildirilir. Eskiden
+    /// yalnız gönderene "alındı" gidiyordu; ekip ancak paneli açınca görüyordu. Anonim gönderimde ad
+    /// yazılmaz; gönderen "Kritik" işaretlediyse önem Yüksek (kilit ekranında kalır).
+    /// </summary>
+    private async Task NotifyTeamAsync(Feedback feedback, Guid submitterUserId, string? submitterName)
+    {
+        using (CurrentTenant.Change(null))
+        {
+            var finder = LazyServiceProvider.LazyGetRequiredService<PermittedUserFinder>();
+            var recipients = await finder.WithPermissionAsync(await finder.ActiveUserIdsAsync(), TeamPermission);
+
+            var body = feedback.IsAnonymous || submitterName.IsNullOrWhiteSpace()
+                ? $"{feedback.FeedbackNumber} · {feedback.Subject}"
+                : $"{submitterName}: {feedback.Subject} ({feedback.FeedbackNumber})";
+            var severity = feedback.Severity == FeedbackPriority.Critical ? NotificationSeverity.High : (NotificationSeverity?)null;
+
+            foreach (var userId in recipients.Where(id => id != submitterUserId))
+            {
+                await _notificationManager.PublishAsync(
+                    userId, "Yeni geri bildirim", body, NotificationType.FeedbackSubmitted,
+                    entityType: "Feedback", entityId: feedback.Id, severity: severity);
+            }
+        }
     }
 
     public async Task ChangeStatusAsync(Feedback feedback, FeedbackStatus newStatus, string? actorName = null)
@@ -172,6 +207,18 @@ public class FeedbackManager : DomainService
             newValue: feedback.AssignedUserName,
             actorName: actorName,
             isInternal: true);
+
+        // N-07 · Atanan kişi haberdar edilir (kendini atayana gitmez). Atanan host kullanıcısıdır.
+        if (userId is { } assigneeId && assigneeId != LazyServiceProvider.LazyGetRequiredService<ICurrentUser>().Id)
+        {
+            using (CurrentTenant.Change(null))
+            {
+                await _notificationManager.PublishAsync(
+                    assigneeId, "Geri bildirim size atandı", $"{feedback.FeedbackNumber} · {feedback.Subject}",
+                    NotificationType.FeedbackAssigned, entityType: "Feedback", entityId: feedback.Id,
+                    actorName: actorName);
+            }
+        }
     }
 
     public async Task SetPriorityAsync(Feedback feedback, FeedbackPriority priority, string? actorName = null)

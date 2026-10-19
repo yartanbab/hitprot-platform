@@ -97,5 +97,9 @@ public enum NotificationType
     GrantDocumentUploaded       = 54, // Evrakın yeni sürümü yüklendi (karşı tarafa)
     GrantDocumentApproved       = 55, // Danışman evrakı onayladı (firmaya)
     GrantApplicationAssigned    = 56, // Başvurunun sorumlu danışmanı oldunuz
-    GrantInterestAssigned       = 57  // İlgi talebi size atandı
+    GrantInterestAssigned       = 57, // İlgi talebi size atandı
+
+    // N-07: geri bildirim yalnız gönderene "alındı" diyordu; ekip ancak paneli açınca görüyordu.
+    FeedbackSubmitted           = 58, // Yeni geri bildirim (HOST'a, panel yetkisiyle)
+    FeedbackAssigned            = 59  // Geri bildirim size atandı
 }
