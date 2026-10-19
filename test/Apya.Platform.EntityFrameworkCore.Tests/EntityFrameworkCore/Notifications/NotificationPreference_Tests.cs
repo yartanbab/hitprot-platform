@@ -36,7 +36,8 @@ public class NotificationPreference_Tests : PlatformEntityFrameworkCoreTestBase
 
         preferences.Count.ShouldBe(Enum.GetValues<NotificationCategory>().Length);
         preferences.ShouldAllBe(p => p.InApp);        // varsayılan: uygulama içi açık
-        preferences.ShouldAllBe(p => !p.Email);       // varsayılan: e-posta kapalı
+        // varsayılan: e-posta kapalı — Hibe hariç (B-12, kullanıcı kararı 2026-10-19)
+        preferences.ShouldAllBe(p => p.Email == (p.Category == NotificationCategory.Grants));
     }
 
     [Fact]

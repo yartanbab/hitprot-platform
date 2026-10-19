@@ -205,7 +205,7 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
                 {
                     Category = category,
                     InApp    = pref?.InApp ?? NotificationPreferenceDefaults.InApp,
-                    Email    = pref?.Email ?? NotificationPreferenceDefaults.Email,
+                    Email    = pref?.Email ?? NotificationPreferenceDefaults.EmailFor(category),
                     Digest   = pref?.Digest ?? NotificationPreferenceDefaults.Digest,
                     Push     = pref?.Push ?? NotificationPreferenceDefaults.Push
                 };

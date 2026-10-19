@@ -77,12 +77,20 @@ public class NotificationPreference : FullAuditedEntity<Guid>, IMultiTenant
 /// İki e-posta kanalı da varsayılan olarak KAPALI: açık gelseydi mevcut her kullanıcı, hiç
 /// istemeden e-posta almaya başlardı. Kullanıcı hangi kategoriden ne istediğini kendi seçer.
 /// </para>
+/// <para>
+/// İSTİSNA — Hibe (kullanıcı kararı 2026-10-19, B-12): hibe e-postası varsayılan AÇIK. Danışman-firma
+/// yazışması, kurum kararı ve son tarihler kaçırılınca hak kaybı doğurur; kapalı varsayılan, tercih
+/// ekranını hiç açmamış herkesi e-postasız bırakıyordu. Kişi tercih ekranından kapatabilir.
+/// </para>
 /// </summary>
 public static class NotificationPreferenceDefaults
 {
     public const bool InApp = true;
     public const bool Email = false;
     public const bool Digest = false;
+
+    /// <summary>Kategoriye göre e-posta varsayılanı: yalnız Hibe açık (B-12).</summary>
+    public static bool EmailFor(NotificationCategory category) => category == NotificationCategory.Grants;
 
     /// <summary>Açık: kullanıcı tarayıcıda izin verip abone olmadıkça kanal fiilen kapalıdır.</summary>
     public const bool Push = true;
