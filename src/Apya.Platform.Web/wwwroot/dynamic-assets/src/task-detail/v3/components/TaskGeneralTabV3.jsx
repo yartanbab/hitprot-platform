@@ -3,6 +3,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { RichTextEditorV3 } from './RichTextEditorV3';
 import { initialsOf, avatarColorOf } from '../taskMetaV3';
 import { notifyError } from '../../../lib/api/abpErrors';
+import { useTaskAttachments } from '../../hooks/useTaskAttachments';
 
 const CARD_CLS = 'flex flex-col rounded-2xl border border-subtle bg-surface-base p-[18px] shadow-xs';
 
@@ -34,6 +35,32 @@ function CollapseButton({ open, onClick, label }) {
 
 /* P-09 · Bahsetme etiketi: görev atama menüleriyle aynı ad (ad soyad, yoksa kullanıcı adı). */
 const personName = (u) => [u?.name, u?.surname].filter(Boolean).join(' ') || u?.userName || '';
+
+/* UX-5 · Yorumdaki "📎 dosya adı" satırı, görevin eklerinde aynı adlı dosya varsa indirme bağlantısıdır. */
+export const ATTACHMENT_MARK = '📎 ';
+
+function CommentText({ text, attachments }) {
+    const lines = String(text ?? '').split('\n');
+    return (
+        <p className="m-0 text-[13px] leading-[1.65] text-text-secondary whitespace-pre-wrap">
+            {lines.map((line, i) => {
+                const name = line.startsWith(ATTACHMENT_MARK) ? line.slice(ATTACHMENT_MARK.length).trim() : null;
+                const file = name ? attachments.find((a) => a.fileName === name) : null;
+                return (
+                    <React.Fragment key={i}>
+                        {i > 0 && '\n'}
+                        {file ? (
+                            <a href={file.downloadUrl} target="_blank" rel="noopener noreferrer"
+                               className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">
+                                <i className="fa-solid fa-paperclip text-[11px]" aria-hidden="true" />{name}
+                            </a>
+                        ) : line}
+                    </React.Fragment>
+                );
+            })}
+        </p>
+    );
+}
 
 const fmtDate = (iso) => (iso
     ? new Intl.DateTimeFormat('tr-TR', {
@@ -115,6 +142,21 @@ export function TaskGeneralTabV3({
         staleTime: 10_000,
         meta: { persist: false },
     });
+
+    /* UX-5 · Yoruma dosya: Dosyalar sekmesiyle aynı yükleme ucu ve aynı ek listesi (önbellek paylaşılır). Liste
+       yalnız bir yorumda ek bağlantısı varsa istenir. */
+    const files = useTaskAttachments(taskId, {
+        enabled: comments.some((c) => String(c.text ?? '').includes(ATTACHMENT_MARK)),
+    });
+    const attachFile = async (file) => {
+        if (!file) return;
+        try {
+            await files.upload(file);
+            setCommentDraft((d) => (d && !d.endsWith('\n') ? d + '\n' : d) + ATTACHMENT_MARK + file.name);
+        } catch (err) {
+            notifyError(err, 'Dosya eklenemedi.');
+        }
+    };
 
     const invalidateComments = async () => {
         await queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] });
@@ -282,7 +324,7 @@ export function TaskGeneralTabV3({
                                         {/* Yalnız gerçekten iş yapan araç kalır (QA-18): "Dosya ekle" ve
                                             "Görsel ekle" yorum metnine " [Dosya] " / " [Görsel] " yazıyordu
                                             (dosya eklenmiyordu), "Bahset" seçicisi ve bildirimi olmayan bir
-                                            "@" basıyordu. Dosyalar görevin Dosyalar sekmesinde. Kişi bahsetme
+                                            "@" basıyordu. Ataç (UX-5) dosyayı görevin Dosyalar sekmesine yükler ve yoruma bağlantısını ekler. Kişi bahsetme
                                             artık seçici + bildirimle çalışıyor (P-09). */}
                                         <button
                                             type="button"
@@ -296,6 +338,21 @@ export function TaskGeneralTabV3({
                                         >
                                             <i className="fa-solid fa-at text-[12px]" />
                                         </button>
+                                        {/* UX-5 · Dosya görevin Dosyalar sekmesine yüklenir, yoruma bağlantısı düşer. */}
+                                        <label
+                                            title="Dosya ekle"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            className={`flex items-center justify-center h-7 w-7 rounded-[7px] hover:bg-surface-hover hover:text-primary cursor-pointer ${files.isUploading ? 'text-primary' : 'text-text-tertiary'}`}
+                                        >
+                                            <i className={`fa-solid ${files.isUploading ? 'fa-circle-notch fa-spin' : 'fa-paperclip'} text-[12px]`} />
+                                            <input
+                                                type="file"
+                                                aria-label="Dosya ekle"
+                                                className="sr-only"
+                                                disabled={files.isUploading || !taskId}
+                                                onChange={(e) => { attachFile(e.target.files?.[0]); e.target.value = ''; }}
+                                            />
+                                        </label>
                                         {[
                                             { icon: 'fa-regular fa-face-smile', title: '👍 ekle', add: ' 👍 ' },
                                         ].map((tool) => (
@@ -383,7 +440,7 @@ export function TaskGeneralTabV3({
                                                 <span className="text-[12.5px] font-bold text-text-primary">{c.authorName}</span>
                                                 <span className="font-mono text-[10.5px] text-text-tertiary">{fmtDate(c.creationTime)}</span>
                                             </div>
-                                            <p className="m-0 text-[13px] leading-[1.65] text-text-secondary whitespace-pre-wrap">{c.text}</p>
+                                            <CommentText text={c.text} attachments={files.attachments} />
 
                                             <div className="flex items-center gap-1.5 mt-[3px]">
                                                 <button

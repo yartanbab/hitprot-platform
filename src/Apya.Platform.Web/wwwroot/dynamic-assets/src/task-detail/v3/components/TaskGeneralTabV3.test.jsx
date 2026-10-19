@@ -49,6 +49,35 @@ describe('TaskGeneralTabV3 açıklama editörü', () => {
     });
 });
 
+describe('TaskGeneralTabV3 yoruma dosya (UX-5)', () => {
+    it('yorumdaki ek satırı dosyanın indirme bağlantısıdır', async () => {
+        window.apya.platform.tasks.task.getComments = vi.fn(() => Promise.resolve([
+            { id: 'c-1', authorName: 'Can Öztürk', text: 'Teklifi ekledim\n📎 teklif.pdf', creationTime: '2026-10-19T10:00:00' },
+        ]));
+        window.apya.platform.tasks.task.getAttachments = vi.fn(() => Promise.resolve([
+            { id: 'f-1', fileName: 'teklif.pdf', downloadUrl: '/file/get/abc.pdf' },
+        ]));
+        render(wrap(A, A.description));
+
+        const link = await screen.findByRole('link', { name: /teklif\.pdf/ });
+        expect(link).toHaveAttribute('href', '/file/get/abc.pdf');
+    });
+
+    it('ataç dosyayı yükler ve yoruma ek satırını yazar', async () => {
+        const fetchMock = vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) }));
+        vi.stubGlobal('fetch', fetchMock);
+        try {
+            render(wrap(A, A.description));
+            await userEvent.upload(screen.getByLabelText('Dosya ekle'), new File(['x'], 'rapor.pdf', { type: 'application/pdf' }));
+
+            await waitFor(() => expect(screen.getByPlaceholderText(/Bir yorum yazın/)).toHaveValue('📎 rapor.pdf'));
+            expect(fetchMock.mock.calls[0][0]).toBe('/api/tasks/attachments/upload/' + A.id);
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+});
+
 describe('TaskGeneralTabV3 kişi bahsetme (P-09)', () => {
     const people = [
         { id: 'u-1', name: 'Ayşe', surname: 'Yılmaz', userName: 'ayse' },

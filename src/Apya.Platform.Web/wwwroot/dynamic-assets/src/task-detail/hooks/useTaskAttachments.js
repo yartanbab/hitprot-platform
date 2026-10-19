@@ -40,15 +40,18 @@ async function uploadAttachment(taskId, file) {
     return result;
 }
 
-/** Görev dosya ekleri — listele/yükle/sil. */
-export function useTaskAttachments(taskId) {
+/**
+ * Görev dosya ekleri — listele/yükle/sil. `enabled: false` liste isteğini erteler (yükleme yine çalışır):
+ * yorum kutusu listeyi yalnız bir yorumda ek bağlantısı varsa ister (UX-5).
+ */
+export function useTaskAttachments(taskId, { enabled = true } = {}) {
     const queryClient = useQueryClient();
     const queryKey = ['task-attachments', taskId];
 
     const query = useQuery({
         queryKey,
         queryFn: () => fetchAttachments(taskId),
-        enabled: Boolean(taskId),
+        enabled: Boolean(taskId) && enabled,
         staleTime: 30_000,
         meta: { persist: false },
         retry: false,
