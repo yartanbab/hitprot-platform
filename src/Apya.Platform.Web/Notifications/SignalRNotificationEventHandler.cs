@@ -1,7 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
+using Volo.Abp.Uow;
 using Volo.Abp.EventBus;
 using Apya.Platform.Web.Hubs;
 using Apya.Platform.Tasks;
@@ -18,10 +20,47 @@ public class SignalRNotificationEventHandler :
     ITransientDependency
 {
     private readonly IHubContext<NotificationHub> _hubContext;
+    private readonly IUnitOfWorkManager _unitOfWorkManager;
+    private readonly ILogger<SignalRNotificationEventHandler> _logger;
 
-    public SignalRNotificationEventHandler(IHubContext<NotificationHub> hubContext)
+    public SignalRNotificationEventHandler(
+        IHubContext<NotificationHub> hubContext,
+        IUnitOfWorkManager unitOfWorkManager,
+        ILogger<SignalRNotificationEventHandler> logger)
     {
         _hubContext = hubContext;
+        _unitOfWorkManager = unitOfWorkManager;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// N-01 · Yayın COMMIT'TEN SONRA ve hata yutularak yapılır. Yerel olaylar iş biriminin
+    /// tamamlanması sırasında, commit'ten ÖNCE işlenir: (1) istemci zile hemen sayacı sorduğunda
+    /// satır henüz yazılmamış olabiliyordu, (2) hub hatası (bağlantı, serileştirme) kullanıcının
+    /// asıl işlemini (yorum, atama…) geri alabiliyordu. Bildirim bir yan etkidir; asıl işi bozamaz.
+    /// </summary>
+    private Task AfterCommitAsync(Func<Task> send)
+    {
+        var uow = _unitOfWorkManager.Current;
+        if (uow == null)
+        {
+            return SafeSendAsync(send);
+        }
+
+        uow.OnCompleted(() => SafeSendAsync(send));
+        return Task.CompletedTask;
+    }
+
+    private async Task SafeSendAsync(Func<Task> send)
+    {
+        try
+        {
+            await send();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Anlık bildirim (SignalR) gönderilemedi; bildirim kaydı ve zil sayacı etkilenmez.");
+        }
     }
 
     /// <summary>
@@ -34,9 +73,9 @@ public class SignalRNotificationEventHandler :
     /// adres kurmaya çalışmasın, derin link kuralı tek yerde
     /// (<see cref="NotificationTypeRegistry"/>) kalsın.</para>
     /// </summary>
-    public async Task HandleEventAsync(NotificationCreatedEto eventData)
+    public Task HandleEventAsync(NotificationCreatedEto eventData)
     {
-        await _hubContext.Clients.User(eventData.UserId.ToString())
+        return AfterCommitAsync(() => _hubContext.Clients.User(eventData.UserId.ToString())
             .SendAsync("ReceiveNotification", new
             {
                 id = eventData.Id,
@@ -47,13 +86,13 @@ public class SignalRNotificationEventHandler :
                 type = (int)eventData.Type,
                 severity = (int)eventData.Severity,
                 deepLinkUrl = NotificationTypeRegistry.BuildDeepLink(eventData.Type, eventData.EntityId)
-            });
+            }));
     }
 
     /// <summary>Okundu/silindi → kullanıcının tüm açık sekmeleri rozeti tazelesin.</summary>
-    public async Task HandleEventAsync(NotificationCountChangedEto eventData)
+    public Task HandleEventAsync(NotificationCountChangedEto eventData)
     {
-        await _hubContext.Clients.User(eventData.UserId.ToString())
-            .SendAsync("NotificationCountChanged");
+        return AfterCommitAsync(() => _hubContext.Clients.User(eventData.UserId.ToString())
+            .SendAsync("NotificationCountChanged"));
     }
 }

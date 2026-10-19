@@ -548,6 +548,10 @@ public class PlatformWebModule : AbpModule
                     bundle.AddFiles("/js/apya-load-state.js"); // satır içi yükleme/hata durumu + Tekrar dene (Razor sayfaları)
                     bundle.AddFiles("/js/apya-money-input.js"); // tutar giriş maskesi (data-money-input, gizli ham alan)
                     bundle.AddFiles("/js/apya-finance-modal.js"); // gelir/gider modalı: proje tarih aralığı kontrolü
+                    // N-01 · SignalR istemcisi GLOBAL: zil (anlık bildirim, sekmeler arası sayaç) ve
+                    // ai-hub-client.js her sayfada buna dayanır. Eskiden yalnız /Grants/Wizard yüklüyordu;
+                    // diğer sayfalarda bildirim ancak sayfa yenilenince görünüyordu.
+                    bundle.AddFiles("/libs/signalr/signalr.min.js");
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
                     bundle.AddFiles("/js/dark-mode.js");
                     bundle.AddFiles("/js/sidebar-toggle.js");
