@@ -48,6 +48,13 @@ function projectCodeFrom(name) {
     return slug || `PRJ-${Date.now().toString().slice(-6)}`;
 }
 
+/** Oturumdaki kullanıcının görünen adı: ad + soyad (baş harf "YB"; yalnız ad "YA" veriyordu). */
+function currentUserDisplayName() {
+    const u = window?.abp?.currentUser;
+    const full = [u?.name, u?.surName].filter((s) => s && String(s).trim()).join(' ').trim();
+    return full || u?.userName || 'Ben';
+}
+
 export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, switchToTask }) {
     const [currentTaskId, setCurrentTaskId] = useState(taskId);
     /* isLoading DEĞİL isPending: kalıcılaştırılmış önbellek geri yüklenirken
@@ -445,7 +452,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 descriptionValue={form.values.description}
                 checklist={checklist}
                 readOnly={!canEdit}
-                currentUserName={window?.abp?.currentUser?.name || window?.abp?.currentUser?.userName || 'Ben'}
+                currentUserName={currentUserDisplayName()}
             />
             <div className="w-full lt-1080:grid lt-1080:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] lt-1080:gap-3.5">
                 <TaskSidePanelV3 task={task} nameById={assignees.nameById} />
@@ -652,7 +659,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                     onClose={() => setOpenSubtaskId(null)}
                     onOpenFull={(id) => { setOpenSubtaskId(null); switchTask(id); }}
                     onDeleted={() => queryClient.invalidateQueries({ queryKey: ['task-detail', currentTaskId] })}
-                    currentUserName={window?.abp?.currentUser?.name || window?.abp?.currentUser?.userName || 'Ben'}
+                    currentUserName={currentUserDisplayName()}
                 />
             )}
             {/* İki sunumda da (modal: görev penceresinin üstünde iç içe katman; sayfa: tek başına). */}

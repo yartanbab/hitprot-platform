@@ -29,19 +29,18 @@ const TOOLBAR = [
     { icon: 'fa-quote-left', title: 'Alıntı', cmd: 'formatBlock', arg: 'BLOCKQUOTE' },
     { icon: 'fa-code',       title: 'Kod',    cmd: 'formatBlock', arg: 'PRE' },
 
+    /* "Görsel ekle" görsel eklemiyordu ("görsel yer tutucu" kutusu basıyordu), "Kişi bahset"
+       seçicisiz olarak kullanıcının KENDİ adını yazıyordu (QA-32). İkisi de kalktı; görseller
+       Dosyalar sekmesinde, kişi bahsetme seçici + bildirimle P-09'da. Eski içerikteki
+       apya-rte-mention / apya-rte-imgph işaretleri temizleyicide durur, bozulmaz. */
     { icon: 'fa-link',        title: 'Bağlantı ekle', cmd: 'link', gap: true },
-    { icon: 'fa-image',       title: 'Görsel ekle',   cmd: 'image', regular: true },
     { icon: 'fa-table-cells', title: 'Tablo ekle',    cmd: 'table' },
-    { icon: 'fa-at',          title: 'Kişi bahset',   cmd: 'mention' },
 
     { icon: 'fa-eraser', title: 'Biçimi temizle', cmd: 'removeFormat', gap: true },
 ];
 
 const TABLE_HTML =
     '<table class="apya-rte-table"><tr><th>Kolon 1</th><th>Kolon 2</th></tr><tr><td>Değer</td><td>Değer</td></tr></table><p><br></p>';
-
-const IMAGE_PLACEHOLDER_HTML =
-    '<div class="apya-rte-imgph">görsel yer tutucu</div><p><br></p>';
 
 /** Kaydedilmiş düz metni güvenle HTML'e çevirir. V3 açıklamayı düz metin/markdown
  *  olarak saklıyordu; o kayıtlar innerHTML'e ham basılırsa hem biçim bozulur hem
@@ -59,7 +58,7 @@ function toInitialHtml(value) {
     return `<p>${escaped.replace(/\n/g, '<br>')}</p>`;
 }
 
-export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaşı', placeholder, readOnly = false }) {
+export function RichTextEditorV3({ value, onChange, placeholder, readOnly = false }) {
     const editorRef = useRef(null);
     const initialHtmlRef = useRef(toInitialHtml(value));
     const [linkOpen, setLinkOpen] = useState(false);
@@ -108,14 +107,8 @@ export function RichTextEditorV3({ value, onChange, mentionName = 'ekip arkadaş
                    Buranın tek işi, odak popover'a geçmeden önce seçimi saklamak. */
                 saveSelection();
                 return;
-            case 'image':
-                exec('insertHTML', IMAGE_PLACEHOLDER_HTML);
-                return;
             case 'table':
                 exec('insertHTML', TABLE_HTML);
-                return;
-            case 'mention':
-                exec('insertHTML', `<span class="apya-rte-mention">@${mentionName}</span>&nbsp;`);
                 return;
             default:
                 exec(btn.cmd, btn.arg);
