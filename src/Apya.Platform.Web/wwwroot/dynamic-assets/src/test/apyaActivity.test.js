@@ -70,6 +70,58 @@ describe('apya-activity: kullanıcının tetiklediği istek', () => {
     });
 });
 
+describe('apya-activity: çift tıklama koruması (Y-02)', () => {
+    it('isteği süren düğmeye ikinci tıklama sayfaya ulaşmaz; istek bitince yeniden tıklanır', async () => {
+        const b = button();
+        let handled = 0;
+        b.addEventListener('click', () => { handled++; window.fetch('/api/app/task'); });
+
+        b.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+        b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        expect(handled).toBe(1);
+
+        pendingFetch.forEach((resolve) => resolve({ ok: true }));
+        await settle();
+        b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        expect(handled).toBe(2);
+        pendingFetch.forEach((resolve) => resolve({ ok: true }));
+        await settle();
+    });
+
+    it('data-apya-repeat düğmesi korumadan muaf', async () => {
+        const b = button();
+        b.setAttribute('data-apya-repeat', '');
+        let handled = 0;
+        b.addEventListener('click', () => { handled++; window.fetch('/api/app/task'); });
+
+        b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        expect(handled).toBe(2);
+        pendingFetch.forEach((resolve) => resolve({ ok: true }));
+        await settle();
+    });
+
+    it('klasik form gezinme sürerken ikinci kez gönderilmez', async () => {
+        const form = document.createElement('form');
+        form.action = '/Tasks/Create';
+        document.body.appendChild(form);
+        let submitted = 0;
+        form.addEventListener('submit', () => { submitted++; });
+
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        await vi.advanceTimersByTimeAsync(0);
+        const second = new Event('submit', { bubbles: true, cancelable: true });
+        form.dispatchEvent(second);
+        expect(submitted).toBe(1);
+        expect(second.defaultPrevented).toBe(true);
+
+        const e = new Event('pageshow');
+        Object.defineProperty(e, 'persisted', { value: true });
+        window.dispatchEvent(e);
+    });
+});
+
 describe('apya-activity: sayfa geçişi', () => {
     it('aynı kökenli bağlantı tıklaması gezinme çubuğunu açar; bfcache dönüşünde kapanır', async () => {
         const a = document.createElement('a');

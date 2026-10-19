@@ -16,6 +16,9 @@
    • TIKLANAN DÜĞME: aynı etkileşimin istekleri bitene dek data-apya-pending + aria-busy
      (dönen simge apya-shell.css'te). apya.busy ile zaten kilitli düğmeye ve açılır menü
      düğmesine (dropdown-toggle, ::after oku) dokunulmaz.
+   • ÇİFT TIKLAMA (Y-02): düğmenin isteği sürerken aynı düğmeye ikinci tıklama yutulur; klasik
+     form gezinme sürerken ikinci kez gönderilmez. Bilinçli tekrar isteyen düğme
+     data-apya-repeat ile muaf tutulur.
    • EMNİYET: istek göstergesi 30 sn'de kendiliğinden kapanır (asılı kalan istek).
    • window.apya.activity.track(söz) — etkileşim dışı ama kullanıcının beklediği uzun iş için
      elle kullanım (ör. dosya işleme): söz sonuçlanınca çubuk kapanır.
@@ -155,6 +158,24 @@
         };
     }
 
+    // --- Çift tıklama / çift gönderim koruması (Y-02) ---
+    // Etkileşim kaydından ÖNCE kayıtlı: yutulan tıklama yeni etkileşim sayılmaz. Belge düzeyinde
+    // yakalama evresi düğmenin kendi işleyicisinden ve jQuery temsilcilerinden önce çalışır.
+    document.addEventListener('click', function (e) {
+        var button = pendingTarget(e.target);
+        if (button && button.__apyaPendingCount > 0 && !button.hasAttribute('data-apya-repeat')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        }
+    }, true);
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (navigating && form && form.__apyaSubmitted) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        }
+    }, true);
+
     // --- Etkileşim kaydı (yakalama evresi: sayfanın kendi işleyicisinden ÖNCE) ---
     document.addEventListener('pointerdown', function (e) {
         if (e.button !== undefined && e.button !== 0) { return; }
@@ -219,6 +240,7 @@
             if (e.defaultPrevented || !form || form.nodeName !== 'FORM') { return; }
             var target = (form.getAttribute('target') || '').toLowerCase();
             if (target && target !== '_self') { return; }
+            form.__apyaSubmitted = true;
             startNavigation();
         }, 0);
     });
