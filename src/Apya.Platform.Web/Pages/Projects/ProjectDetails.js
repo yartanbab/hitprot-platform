@@ -328,7 +328,9 @@ $(function () {
                     className: 'apya-c-start',
                     width: '12%',
                     data: 'startDate',
-                    render: function (data) { return data ? moment(data).format('L') : ''; }
+                    // Bitiş çipiyle (apyaTask.dueDateChip) aynı biçim: yan yana "14.10.2026" ve
+                    // "16 Eki 2026" okunmuyordu (QA-09).
+                    render: function (data) { return data ? moment(data).format('DD MMM YYYY') : ''; }
                 },
                 {
                     title: 'Bitiş',
