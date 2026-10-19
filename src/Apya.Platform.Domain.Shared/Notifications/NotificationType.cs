@@ -88,5 +88,8 @@ public enum NotificationType
     TaskDueDateChanged          = 49, // Görevinizin son tarihi değişti
     TaskPriorityRaised          = 50, // Görevinizin önceliği Kritik'e çıktı
     ProjectMemberRemoved        = 51, // Proje ekibinden çıkarıldınız
-    ProjectMemberRoleChanged    = 52  // Proje ekibindeki rolünüz değişti
+    ProjectMemberRoleChanged    = 52, // Proje ekibindeki rolünüz değişti
+
+    // N-05: aday formu gönderiyordu ama host ancak listeyi açınca görüyordu.
+    RegistrationRequestReceived = 53  // Yeni kayıt talebi (HOST'a, Kayıt Talepleri yetkisiyle)
 }

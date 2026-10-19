@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Notifications;
 using Microsoft.Extensions.Logging;
-using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
@@ -29,7 +28,7 @@ public class GrantNotificationDispatcher : DomainService
     private readonly IIdentityUserRepository _userRepo;
     private readonly IEmailSender _emailSender;
     private readonly IDataFilter _dataFilter;
-    private readonly IPermissionStore _permissionStore;
+    private readonly PermittedUserFinder _permittedUsers;
 
     /// <summary>
     /// N-04 · Hibe duyurusunu alacak kişinin taşıması gereken izin (PlatformPermissions.Grants.Default).
@@ -44,9 +43,9 @@ public class GrantNotificationDispatcher : DomainService
         IIdentityUserRepository userRepo,
         IEmailSender emailSender,
         IDataFilter dataFilter,
-        IPermissionStore permissionStore)
+        PermittedUserFinder permittedUsers)
     {
-        _permissionStore = permissionStore;
+        _permittedUsers = permittedUsers;
         _templateRepo = templateRepo;
         _notificationManager = notificationManager;
         _userRepo = userRepo;
@@ -123,8 +122,7 @@ public class GrantNotificationDispatcher : DomainService
     {
         using (CurrentTenant.Change(tenantId))
         {
-            var userIds = (await _userRepo.GetListAsync())
-                .Where(u => u.IsActive).Select(u => u.Id).ToList();
+            var userIds = await _permittedUsers.ActiveUserIdsAsync();
 
             return await DispatchAsync(trigger, await WithGrantPermissionAsync(userIds), values, entityType, entityId, sendEmail);
         }
@@ -138,36 +136,8 @@ public class GrantNotificationDispatcher : DomainService
     /// </summary>
     private async Task<List<Guid>> WithGrantPermissionAsync(List<Guid> userIds)
     {
-        var allowed = new List<Guid>();
-        foreach (var userId in userIds)
-        {
-            if (await HasGrantPermissionAsync(userId))
-            {
-                allowed.Add(userId);
-            }
-        }
-
+        var allowed = await _permittedUsers.WithPermissionAsync(userIds, RecipientPermission);
         return allowed.Count > 0 ? allowed : userIds;
-    }
-
-    private async Task<bool> HasGrantPermissionAsync(Guid userId)
-    {
-        if (await _permissionStore.IsGrantedAsync(
-                RecipientPermission, UserPermissionValueProvider.ProviderName, userId.ToString()))
-        {
-            return true;
-        }
-
-        foreach (var roleName in await _userRepo.GetRoleNamesAsync(userId))
-        {
-            if (await _permissionStore.IsGrantedAsync(
-                    RecipientPermission, RolePermissionValueProvider.ProviderName, roleName))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /// <summary>

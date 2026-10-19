@@ -157,6 +157,9 @@ public class ShellBadgesDto
     /// </summary>
     public int PendingGrantInterests { get; set; }
 
+    /// <summary>K-02 · Henüz ele alınmamış ("Yeni") kayıt talebi (yalnız host bağlamı + RegistrationRequests).</summary>
+    public int NewRegistrationRequests { get; set; }
+
     /// <summary>Son 24 saatte başarısız webhook teslimi (yalnız DynamicAssets yetkisi).</summary>
     public int WebhookErrors { get; set; }
 }

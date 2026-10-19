@@ -90,6 +90,9 @@ public class CreateRegistrationRequestDto
 /// <summary>Panelde listelenen / görüntülenen kayıt talebi.</summary>
 public class RegistrationRequestDto : EntityDto<Guid>
 {
+    /// <summary>K-02 · Adaya postada verilen referans ("KT-…").</summary>
+    public string Reference => RegistrationRequestReference.Of(Id);
+
     public string FullName { get; set; } = string.Empty;
     public string AuthorizedTitle { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;

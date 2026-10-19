@@ -498,6 +498,8 @@
         "Notification:ProjectMemberRemoved:Body": "\"{0}\" projesinin ekibinden çıkarıldınız.",
         "Notification:ProjectMemberRoleChanged:Title": "Proje rolünüz değişti",
         "Notification:ProjectMemberRoleChanged:Body": "\"{0}\" projesindeki rolünüz artık: {1}.",
+        "Notification:RegistrationRequestReceived:Title": "Yeni kayıt talebi",
+        "Notification:RegistrationRequestReceived:Body": "{0} platforma katılmak istiyor ({1}).",
         "Notification:ProjectRole:Lead": "Sorumlu",
         "Notification:ProjectRole:Member": "Üye",
         "Notification:ProjectRole:Observer": "İzleyici",

@@ -104,6 +104,11 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Projects, NotificationSeverity.Normal,
                 "fa fa-user-gear", "/Projects/ProjectDetails/{0}", GroupSimilar: false),
 
+            // N-05 · Yeni müşteri adayı: önem Yüksek (kilit ekranında kalır), liste "Yeni" süzgeciyle açılır.
+            [NotificationType.RegistrationRequestReceived] = new(
+                NotificationCategory.System, NotificationSeverity.High,
+                "fa fa-file-signature", "/Admin/RegistrationRequests?Status=New", GroupSimilar: false),
+
             // Aşağıdaki hedef sayfalar henüz tekil kayda odaklanmayı desteklemiyor;
             // şablonda {0} yok, ilgili listeye götürüyoruz.
             // DOC-05 / NTF-07: Bağlantı belgenin durduğu klasörü açar. Önem "Normal"; 7 gün
