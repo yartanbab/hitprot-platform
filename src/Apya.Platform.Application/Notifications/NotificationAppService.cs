@@ -10,6 +10,8 @@ using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.EventBus.Local;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.SettingManagement;
+using Apya.Platform.Settings;
 using Volo.Abp.Users;
 
 namespace Apya.Platform.Notifications;
@@ -230,6 +232,37 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
 
         existing.Set(input.InApp, input.Email, input.Digest ?? input.Email, input.Push);
         await _preferenceRepository.UpdateAsync(existing);
+    }
+
+    // ─── Sessiz saatler (kullanıcı kararı 2026-10-19) ─────────────────────────
+    public async Task<NotificationQuietHoursDto> GetQuietHoursAsync()
+    {
+        var enabled = await SettingProvider.GetOrNullAsync(PlatformSettings.NotificationQuietHours.Enabled);
+        var raw = await SettingProvider.GetOrNullAsync(PlatformSettings.NotificationQuietHours.Window);
+        if (!QuietHoursWindow.TryParse(raw, out var window))
+        {
+            QuietHoursWindow.TryParse(PlatformSettingDefaults.NotificationQuietHoursWindow, out window);
+        }
+
+        var times = window.ToString().Split('-');
+        return new NotificationQuietHoursDto
+        {
+            Enabled = bool.TryParse(enabled, out var on) && on,
+            Start = times[0],
+            End = times[1]
+        };
+    }
+
+    public async Task UpdateQuietHoursAsync(NotificationQuietHoursDto input)
+    {
+        if (!QuietHoursWindow.TryParse(input.Start + "-" + input.End, out var window))
+        {
+            throw new UserFriendlyException("Sessiz saatlerin başlangıcı ile bitişi aynı olamaz.");
+        }
+
+        var settings = LazyServiceProvider.LazyGetRequiredService<ISettingManager>();
+        await settings.SetForCurrentUserAsync(PlatformSettings.NotificationQuietHours.Enabled, input.Enabled ? "true" : "false");
+        await settings.SetForCurrentUserAsync(PlatformSettings.NotificationQuietHours.Window, window.ToString());
     }
 
     // ─── Yardımcı ─────────────────────────────────────────────────────────────

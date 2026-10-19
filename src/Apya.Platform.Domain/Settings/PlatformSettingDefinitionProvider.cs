@@ -179,6 +179,14 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
             new SettingDefinition(PlatformSettings.Notifications.LastDigestAt)
                 .WithProviders(GlobalSettingValueProvider.ProviderName));
 
+        // Sessiz saatler — kullanıcı ayarı: .WithProviders() ile KISITLANMAZ ki User provider (ve varsayılan)
+        // zincirde kalsın.
+        context.Add(
+            new SettingDefinition(PlatformSettings.NotificationQuietHours.Enabled, defaultValue: "false"),
+            new SettingDefinition(
+                PlatformSettings.NotificationQuietHours.Window,
+                defaultValue: PlatformSettingDefaults.NotificationQuietHoursWindow));
+
         // --- Tek seferlik telafi işaretleri ---
         context.Add(
             new SettingDefinition(PlatformSettings.Backfills.GrantManageApplicationsGranted)

@@ -475,10 +475,35 @@ $(function () {
         $('#notif-device-help-text').toggleClass('d-none');
     });
 
+    // Sessiz saatler (kullanıcı kararı 2026-10-19): yalnız tarayıcı bildirimini pencere sonuna erteler.
+    function renderQuietHours(quiet) {
+        $('#notif-quiet-toggle').prop('checked', quiet.enabled);
+        $('#notif-quiet-start').val(quiet.start);
+        $('#notif-quiet-end').val(quiet.end);
+        $('#notif-quiet-times').toggleClass('d-none', !quiet.enabled);
+    }
+
     $('#notif-pref-modal').on('show.bs.modal', function () {
         renderDevicePanel();
         renderDevices();
         notificationService.getPreferences().then(renderPreferences);
+        notificationService.getQuietHours().then(renderQuietHours);
+    });
+
+    $('#notif-pref-modal').on('change', '#notif-quiet-toggle, #notif-quiet-start, #notif-quiet-end', function () {
+        var input = {
+            enabled: $('#notif-quiet-toggle').prop('checked'),
+            start: $('#notif-quiet-start').val(),
+            end: $('#notif-quiet-end').val()
+        };
+        $('#notif-quiet-times').toggleClass('d-none', !input.enabled);
+
+        notificationService.updateQuietHours(input)
+            .then(function () { abp.notify.success('Sessiz saatler kaydedildi.'); })
+            .catch(function () {
+                // Sunucu reddettiyse (ör. başlangıç = bitiş) ekran kayıtlı değeri göstersin.
+                notificationService.getQuietHours().then(renderQuietHours);
+            });
     });
 
     $('#notif-pref-modal').on('change', '.notif-pref-toggle', function () {
