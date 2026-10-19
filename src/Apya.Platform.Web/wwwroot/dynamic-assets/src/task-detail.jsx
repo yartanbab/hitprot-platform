@@ -17,6 +17,7 @@ import { Dialog, DialogContent } from './components/ui/Dialog';
 import { QueryProvider } from './lib/api/QueryProvider';
 import { TaskDetailRoot } from './task-detail/TaskDetailRoot';
 import { TaskDetailRootV3 } from './task-detail/v3/TaskDetailRootV3';
+import { goToTaskPage } from './task-detail/pageNavigation';
 import { taskDetailStore } from './task-detail/taskDetailStore';
 import { readTaskIdFromUrl, clearTaskUrl } from './task-detail/hooks/useTaskUrlSync';
 
@@ -172,6 +173,7 @@ if (document.readyState === 'loading') {
 }
 
 function TaskDetailPageIsland({ taskId }) {
+    /* Sayfa kipinde göreve geçiş = o görevin sayfası (bkz. pageNavigation.js). */
     const handleClose = () => {
         if (window.history.length > 1) {
             window.history.back();
@@ -187,6 +189,7 @@ function TaskDetailPageIsland({ taskId }) {
                     taskId={taskId}
                     presentation="page"
                     onClose={handleClose}
+                    switchToTask={goToTaskPage}
                 />
             </QueryProvider>
         );
