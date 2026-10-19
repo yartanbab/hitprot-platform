@@ -90,6 +90,19 @@ public static class ReleaseNoteCatalog
                 "ayrılsanız ya da iş uzun sürse de taslaklar kaybolmaz. Belgeden görev çıkarılamazsa bu da " +
                 "bildirilir."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Geciken görevler proje sorumlusuna da bildiriliyor",
+                "Bir görev son tarihini 3 gün geçip hâlâ açıksa projenin sorumlusu (rolü \"Sorumlu\" olan ekip " +
+                "üyeleri) bir kez \"Projenizde geciken görev\" bildirimi alır. Görevin sorumlusu ve izleyenleri " +
+                "gecikmeyi zaten ilk gün öğreniyordu; artık projeyi yöneten kişi de panoya bakmadan haberdar " +
+                "olur. Gizli görevler bildirilmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Dövizli projelerde TCMB kurları her iş günü kendiliğinden ekleniyor",
+                "Projenizin ya da donörünüzün para birimi TL dışındaysa Merkez Bankası döviz alış kurları (USD, " +
+                "EUR, GBP ve projelerinizdeki döviz) her iş günü kendiliğinden kaydedilir; bütçe ve donör " +
+                "hesapları için kuru elle girmeniz gerekmez. Elle girdiğiniz bir kur değiştirilmez."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "İşlem sürerken ekranda gösterge var",
                 "Bir sayfadan diğerine geçerken ya da bir düğmeye bastığınızda işlem sürüyorsa sayfanın " +
@@ -126,6 +139,29 @@ public static class ReleaseNoteCatalog
                 "Cuma kuru doğru tarihle gelir). Geçmiş bir gün seçerek o günün kurunu da getirebilirsiniz; " +
                 "hafta sonu ve resmî tatiller için kur yayımlanmadığı bildirilir."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe bildirimleri e-postayla da geliyor",
+                "Hibe başvurunuzla ilgili mesaj, sıra devri, kurum kararı ve son tarih hatırlatmaları artık " +
+                "uygulama içi bildirimin yanında e-postayla da gelir. İstemezseniz Bildirim Tercihleri'nden " +
+                "Hibe satırındaki e-postayı kapatabilirsiniz; diğer konuların e-postası eskisi gibi kapalı gelir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Başvurularım'da yanıt bekleyen mesaj görünüyor",
+                "Danışmanınızın son mesajı yanıt bekliyorsa Başvurularım listesinde ilgili başvurunun yanında " +
+                "uyarı görünür; tıklayınca mesajlar açılır. Yanıt verdiğinizde uyarı kalkar."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Ctrl K son açtığınız kayıtları gösteriyor",
+                "Arama kutusu boşken Ctrl K penceresinin en üstünde aramadan açtığınız son beş kayıt " +
+                "(görev, proje, hibe başvurusu, fatura) listelenir; aynı kayda yeniden aramadan dönebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görev detayından iptal ederken neden sorulur; Genel Bakış'tan tüm gecikmişlere gidilir",
+                "Görev sayfasındaki \"Görevi iptal et\" artık listedeki ve panodaki gibi isteğe bağlı bir iptal " +
+                "nedeni sorar ve neden görevin geçmişine yazılır. Genel Bakış'taki teslim kartı en yeni " +
+                "gecikmişleri gösterir; daha fazlası varsa \"Tüm gecikmişler\" bağlantısı Görevler listesini " +
+                "gecikmiş süzgeciyle açar."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Görev paylaşım bağlantısı e-postasız da oluşturuluyor",
                 "Görevi ekip dışıyla paylaşırken e-posta alanı \"isteğe bağlı\" yazıyordu ama boş " +
@@ -149,7 +185,23 @@ public static class ReleaseNoteCatalog
                 "Görevlerin zaman kayıtlarında, dosyaları yükleyende, görev belgelerinde, Dokümanlar'da " +
                 "(yükleyen, işlem geçmişi, teslim paketi) ve bildirim metinlerinde kişiler kullanıcı adıyla " +
                 "görünüyordu. Artık her yerde ad soyadıyla görünür. Görevi başka projeye taşırken aynı adlı " +
-                "projeler kodlarıyla ayrılır.")
+                "projeler kodlarıyla ayrılır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev bağımlılığında döngü kurulamıyor",
+                "Bir görev kendisinin ya da kendisinden sonra gelen bir görevin öncülü yapılamaz; böyle bir bağ " +
+                "kaydedilmek istendiğinde anlaşılır bir uyarı çıkar. Döngü, Zaman Çizelgesi ve kritik yol " +
+                "hesabını bozuyordu."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yalnız etiket değiştiğinde de \"Son kayıt\" saati güncelleniyor",
+                "Görev sayfasında yalnız etiket değiştirip kaydettiğinizde alttaki \"Son kayıt\" saati eski " +
+                "kalıyordu; kaydın gerçekleştiği anlaşılmıyordu. Artık her kayıtta güncellenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev ekranları ekip üyelerinin iletişim bilgilerini indirmiyor",
+                "Görev sayfalarındaki kişi seçicileri için ekipteki herkesin e-posta ve telefon bilgisi de " +
+                "tarayıcıya gönderiliyordu. Artık yalnız ad ve soyad gönderilir.")
         ),
 
         new ReleaseNote(
