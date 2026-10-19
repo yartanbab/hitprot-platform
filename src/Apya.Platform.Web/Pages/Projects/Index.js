@@ -494,12 +494,16 @@ $(function () {
 
     // =============================================================== RENDER
     function renderKpis() {
-        var all = state.items;
+        // QA-35 · Kutucuklar kapsamı ("yalnız bana atananlar") izler, çiplerle aynı küme; arama metnini
+        // izlemez. Eskiden kapsam açıkken de portföy toplamını gösteriyordu.
+        var all = state.myScope
+            ? state.items.filter(function (p) { return p.isAssignedToMe; })
+            : state.items;
 
         // Liste hiç gelmediyse (yükleniyor ya da yüklenemedi) proje sayaçları "—": boş
         // diziden hesaplanan "0 aktif proje · %0" yalan olurdu. Görev sayaçları ayrı
         // servisten gelir; gelmişse yazılır.
-        if (!all.length && (state.loading || state.loadFailed)) {
+        if (!state.items.length && (state.loading || state.loadFailed)) {
             $('#KpiActiveProjects, #KpiTotalBudget, #KpiAvgProgress, #KpiAtRisk').text('—');
             $('#KpiOverdueTasks, #KpiDueSoonTasks').text('—');
         } else {

@@ -25,6 +25,16 @@ public class ProjectsListConsistency_Tests
     }
 
     /// <summary>QA-04 · "Oluştur ve görev ekle" detaya gidip Yeni Görev penceresini açar.</summary>
+    /// <summary>QA-35 · KPI kutucukları "yalnız bana atananlar" kapsamını izler (çiplerle aynı küme).</summary>
+    [Fact]
+    public void Kpi_kutucuklari_kapsami_izler()
+    {
+        var js = Web("Pages", "Projects", "Index.js");
+        js.ShouldContain("var all = state.myScope");
+        js.ShouldContain("? state.items.filter(function (p) { return p.isAssignedToMe; })");
+        js.ShouldContain("if (!state.items.length && (state.loading || state.loadFailed))");
+    }
+
     [Fact]
     public void Olustur_ve_gorev_ekle_yeni_gorev_penceresini_acar()
     {
