@@ -585,6 +585,9 @@ public class PlatformWebModule : AbpModule
                     // tıklama dinleyen sonraki dosyalardan ÖNCE kaydolmalı (onaylanmamış tıklama onlara gitmesin).
                     bundle.AddFiles("/js/apya-confirm.js");
                     bundle.AddFiles("/js/apya-busy.js"); // meşgul kilidi (apya.busy) + tek gönderim delegesi (data-apya-submit-once)
+                    // İşlem göstergesi: sayfa geçişi + kullanıcının tetiklediği istekte üst çubuk ve düğme simgesi.
+                    // XHR/fetch'i sarmalar; React adaları ve sayfa betikleri istek atmadan ÖNCE yüklenmeli.
+                    bundle.AddFiles("/js/apya-activity.js");
                     // Kirli-form koruması. ajax-error-detail.js'ten SONRA ('storage' dinleyicisi onunkinden
                     // sonra kaydolsun: oturum akışı olayı kesmişse izin verilmez) ve tema demetinden sonra
                     // yüklendiği için ABP'nin $.fn.needConfirmationOnUnsavedClose eklentisini ezer (RSP-05).
