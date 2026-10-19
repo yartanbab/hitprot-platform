@@ -70,13 +70,14 @@ public class DashboardAppService_Tests : PlatformEntityFrameworkCoreTestBase
     {
         var today = _clock.Now.Date;
         var title = $"gecikmis-{Guid.NewGuid():N}";
-        await SeedTaskAsync(title, today.AddDays(-4));
+        // QA-46: kartta en yeni 10 gecikmiş gösterilir; dünkü gecikme paylaşılan veritabanında da listede kalır.
+        await SeedTaskAsync(title, today.AddDays(-1));
 
         var deliveries = await _dashboard.GetDeliveriesAsync(new DashboardQueryDto());
 
         var item = deliveries.Single(d => d.Title == title);
         item.State.ShouldBe(DeliveryState.Overdue);
-        item.OverdueDays.ShouldBe(4);
+        item.OverdueDays.ShouldBe(1);
     }
 
     [Fact]
@@ -86,8 +87,9 @@ public class DashboardAppService_Tests : PlatformEntityFrameworkCoreTestBase
         var weekStart = DashboardPeriod.StartOfWeek(today);
         var marker = Guid.NewGuid().ToString("N")[..8];
 
-        // Bu haftanın içinde kalan bir gün (hafta başı + 1) ve gelecek haftanın ortası.
-        var thisWeekDue = weekStart.AddDays(1);
+        // Bu haftanın içinde kalan ve GEÇMEMİŞ bir gün (bugün) ve gelecek haftanın ortası. QA-46'dan
+        // beri geçmiş gün "Gecikmiş" grubuna düşer; hafta başı + 1 Çarşamba'dan itibaren geçmişte kalırdı.
+        var thisWeekDue = today;
         var nextWeekDue = weekStart.AddDays(9);
 
         await SeedTaskAsync($"{marker}-bu-hafta", thisWeekDue);

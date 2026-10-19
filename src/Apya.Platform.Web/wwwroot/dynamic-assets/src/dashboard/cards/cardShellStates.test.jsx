@@ -192,6 +192,23 @@ describe('DeliveriesCard / ProjectHealthCard · alt başlık', () => {
         expect(await screen.findByText('0 aktif proje')).toBeInTheDocument();
     });
 
+    /* QA-46: gecikmişler kendi başlığında; alt başlıktaki gecikmiş sayısı kart sınırı (en yeni 10)
+       değil, "Gecikmiş" kutucuğuyla aynı toplam; "iş" dönemin teslimleridir. */
+    it('gecikmisler kendi grubunda, alt baslik toplam gecikmisi gosterir', async () => {
+        const deliveries = [
+            { taskId: 'g1', title: 'Dünkü iş', dueDate: '2026-10-18T00:00:00', state: 3, overdueDays: 1, groupKey: 4 },
+            { taskId: 'b1', title: 'Bu haftanın işi', dueDate: '2026-10-20T00:00:00', state: 1, groupKey: 0 },
+        ];
+        vi.stubGlobal('fetch', vi.fn((url) => Promise.resolve(jsonResponse(200,
+            String(url).includes('/summary') ? { overdue: 68 } : deliveries))));
+
+        renderWithClient(<DeliveriesCard filter={FILTER} />);
+
+        expect(await screen.findByText('1 iş · 68 gecikmiş')).toBeInTheDocument();
+        expect(screen.getByText('Gecikmiş')).toBeInTheDocument();
+        expect(screen.getByText('Bu hafta')).toBeInTheDocument();
+    });
+
     it('kalıcı önbellek geri yüklenirken "0 iş" / "0 aktif proje" YOK', () => {
         vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
         window.abp = { currentUser: { id: 'u1', tenantId: 't1' } };
