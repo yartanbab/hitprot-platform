@@ -14,6 +14,15 @@
 }
 
 <div data-page-description="İstemci hataları ve sunucu metrikleri" class="apya-page apya-health">
+@if (h.NotificationChannels.HasProblem)
+{
+    @* N-10 · Bildirim kanalında sorun varsa sekmeden bağımsız görünür. *@
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2" role="status">
+        <i class="fa fa-bell-slash"></i>
+        <span>Bildirimler bazı kullanıcılara ulaşmıyor olabilir.</span>
+        <a href="?windowDays=@days&tab=metrics#notification-channels" class="ms-auto">Bildirim kanallarına git</a>
+    </div>
+}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div class="d-flex flex-wrap align-items-center gap-2">
         <h5 class="mb-0"><i class="fa fa-heart-pulse me-2"></i> Sistem Sağlığı — Son @days Gün</h5>
@@ -104,6 +113,10 @@
     <div class="col-md-3">
         <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-desktop", Accent = "brand", Label = "İstemci Hata Oluşumu", Value = h.ClientErrorOccurrencesInWindow.ToString(), Href = $"?windowDays={days}&tab=metrics&clientFilter=all#client-errors", HrefTitle = "Tüm istemci hatalarını listele", Hint = "Son görülme tarihi seçili pencere içinde kalan hataların, o hata için kaydedilmiş TOPLAM oluşum sayısının toplamı — yaklaşık bir değerdir, tam geçmiş tutulmaz. Üstteki Çözülmemiş kartıyla karıştırmayın: o tüm zamanları kapsar, bu yalnız pencereyi." }' />
     </div>
+</div>
+
+<div class="mb-3">
+    <partial name="_NotificationChannels" model="h.NotificationChannels" />
 </div>
 
 <div class="row g-3 mb-3">

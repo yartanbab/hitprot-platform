@@ -1,0 +1,60 @@
+@using Apya.Platform.Telemetry.Dtos
+@model NotificationChannelHealthDto
+@*
+    N-10 · Bildirimin muhataba ulaşmasını sağlayan kanallar. Zil ve anlık balon uygulama içidir (hep açık);
+    telefon/masaüstü push, e-posta ve iş kuyruğu yapılandırmaya bağlıdır ve sessizce bozulabilir.
+*@
+<abp-card id="notification-channels">
+    <abp-card-header>
+        <abp-card-title><i class="fa fa-bell me-2"></i> Bildirim Kanalları</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <dl class="row mb-0 small">
+            <dt class="col-sm-5">Telefon / masaüstü push</dt>
+            <dd class="col-sm-7">
+                @if (Model.WebPushEnabled)
+                {
+                    <span class="apya-chip apya-chip-positive">Açık</span>
+                    <span class="text-muted ms-1">@Model.PushDeviceCount kayıtlı cihaz</span>
+                }
+                else
+                {
+                    <span class="apya-chip apya-chip-negative">Kapalı</span>
+                    <span class="text-muted ms-1">VAPID anahtarları tanımlı değil (WebPush__PublicKey, WebPush__PrivateKey, WebPush__Subject). Kilit ekranına bildirim gitmez.</span>
+                }
+            </dd>
+
+            <dt class="col-sm-5">E-posta</dt>
+            <dd class="col-sm-7">
+                @if (Model.EmailSender == "Null")
+                {
+                    <span class="apya-chip apya-chip-negative">Kapalı</span>
+                    <span class="text-muted ms-1">E-posta gönderilmez.</span>
+                }
+                else if (Model.EmailSender == "FileDrop")
+                {
+                    <span class="apya-chip apya-chip-neutral">Yerel</span>
+                    <span class="text-muted ms-1">Postalar dosyaya yazılıyor (geliştirme).</span>
+                }
+                else
+                {
+                    <span class="apya-chip apya-chip-positive">SMTP</span>
+                    <span class="text-muted ms-1">@(string.IsNullOrWhiteSpace(Model.EmailHost) ? "sunucu ayarı boş" : Model.EmailHost)</span>
+                }
+            </dd>
+
+            <dt class="col-sm-5">Bildirim kuyruğu</dt>
+            <dd class="col-sm-7">
+                <span class="apya-numeric">@Model.PendingJobCount</span> bekleyen
+                @if (Model.OverdueJobCount > 0)
+                {
+                    <span class="apya-chip apya-chip-warning ms-1">@Model.OverdueJobCount gecikmiş</span>
+                }
+                @if (Model.AbandonedJobCount24h > 0)
+                {
+                    <span class="apya-chip apya-chip-negative ms-1">@Model.AbandonedJobCount24h vazgeçildi (24 sa)</span>
+                }
+            </dd>
+        </dl>
+    </abp-card-body>
+</abp-card>

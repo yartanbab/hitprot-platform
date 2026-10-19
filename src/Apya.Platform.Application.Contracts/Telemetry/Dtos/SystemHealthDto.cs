@@ -15,6 +15,9 @@ namespace Apya.Platform.Telemetry.Dtos;
 /// </summary>
 public class SystemHealthDto
 {
+    /// <summary>N-10 · Bildirimin muhataba ulaşmasını sağlayan kanalların durumu.</summary>
+    public NotificationChannelHealthDto NotificationChannels { get; set; } = new();
+
     /// <summary>Kaç güne bakıldı — panelde başlıkta gösterilir.</summary>
     public int WindowDays { get; set; }
 
