@@ -29,6 +29,8 @@ public static class PlatformDomainErrorCodes
     public const string TaskShareDownloadNotAllowed = "Platform:Task:ShareDownloadNotAllowed";
     public const string TaskShareUploadLimitExceeded = "Platform:Task:ShareUploadLimitExceeded";
     public const string TaskShareRecipientNameRequired = "Platform:Task:ShareRecipientNameRequired";
+    public const string TaskDependencySelf = "Platform:Task:DependencySelf";
+    public const string TaskDependencyCycle = "Platform:Task:DependencyCycle";
     public const string TaskShareLifetimeInvalid = "Platform:Task:ShareLifetimeInvalid";
 
     // --- Cari (Customer) Modülü ---
