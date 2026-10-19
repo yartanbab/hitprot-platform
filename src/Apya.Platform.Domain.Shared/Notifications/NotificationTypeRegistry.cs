@@ -60,6 +60,11 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Tasks, NotificationSeverity.Critical,
                 "fa fa-calendar-xmark", "/Tasks/Detail/{0}", GroupSimilar: false),
 
+            // B-13 · Yükseltme proje sorumlusunadır: işi o yapmıyor, haberdar olup müdahale ediyor → Yüksek.
+            [NotificationType.TaskOverdueEscalated] = new(
+                NotificationCategory.Tasks, NotificationSeverity.High,
+                "fa fa-user-clock", "/Tasks/Detail/{0}", GroupSimilar: false),
+
             // NTF-05: Kayıt defterindeki önem "Normal"; 3 gün eşiğinde yayın sırasında
             // "High"a yükseltilir (bkz. NotificationDomainEventHandler).
             [NotificationType.ProjectEndingSoon] = new(
