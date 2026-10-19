@@ -52,6 +52,17 @@ public static class ReleaseNoteCatalog
                 "etkilenmez. Varsayılan olarak kapalıdır."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kilit ekranında ne görüneceğini seçebiliyorsunuz",
+                "Telefon ve masaüstü bildirimleri varsayılan olarak yalnız başlığı gösterir (ör. \"Yeni görev " +
+                "atandı\"); görev adı, yorum ve tutar uygulamada kalır. İsterseniz bildirim tercihlerinden " +
+                "\"Kilit ekranında yalnız başlık\"ı kapatarak başlığın altında kısa bir özet görebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Bildirim tercihleri telefonda tam görünüyor",
+                "Telefonda bildirim tercihleri penceresindeki kanal tablosu ekrana sığıyor; sağdaki sütunlar artık " +
+                "dışarıda kalmıyor. Penceredeki açıklamalar koyu temada daha okunur."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Görevinizdeki değişikliklerden haberiniz oluyor",
                 "Yorumunuza yanıt verildiğinde, görev sizden alındığında, görevinizin son tarihi değiştiğinde ya " +
                 "da önceliği Kritik yapıldığında bildirim alırsınız. Panoda kart taşınarak ya da formdan " +
