@@ -5,9 +5,9 @@ $(function () {
 
     // Enum değerleri sunucudakiyle birebir (GrantTodayItemKind / GrantTodayOwner / GrantNextAction).
     var KIND = ['UploadDocuments', 'CompleteForm', 'AppealDeadline', 'ReportDue', 'SubmitPackage',
-        'WaitingOnFirm', 'LeadMeeting', 'DraftCallPublish', 'InterestReview', 'WaitingOnInstitution', 'TrancheDue'];
+        'WaitingOnFirm', 'LeadMeeting', 'DraftCallPublish', 'InterestReview', 'WaitingOnInstitution', 'TrancheDue', 'MessageAwaitingReply'];
     var ICON = ['fa-file-arrow-up', 'fa-pen-to-square', 'fa-gavel', 'fa-receipt', 'fa-cloud-arrow-up',
-        'fa-hourglass-half', 'fa-phone', 'fa-pen-ruler', 'fa-handshake', 'fa-building-columns', 'fa-money-bill-transfer'];
+        'fa-hourglass-half', 'fa-phone', 'fa-pen-ruler', 'fa-handshake', 'fa-building-columns', 'fa-money-bill-transfer', 'fa-comment-dots'];
     var NEXT = ['CompleteForm', 'UploadDocuments', 'WaitingOnConsultant', 'WaitingOnInstitution', 'InProject', 'Done'];
 
     var model = null;
@@ -49,6 +49,8 @@ $(function () {
             // Talep satırı kaydın kendisini açar (Leads ?id= ile o talebi seçer); eskiden yalnız listeye gidiyordu.
             case 6: return '/Grants/Leads' + (item.leadId ? '?id=' + item.leadId : '');
             case 7: return '/Grants/Parameters?id=' + item.grantId;
+            // H-03 · Yazışma iki tarafta da sihirbazın mesaj panelinde.
+            case 11: return '/Grants/Wizard?id=' + item.applicationId;
             case 8: return '/Grants/Requests';
         }
         return '#';

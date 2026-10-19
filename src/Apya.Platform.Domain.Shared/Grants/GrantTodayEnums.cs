@@ -37,7 +37,10 @@ public enum GrantTodayItemKind
     WaitingOnInstitution = 9,
 
     /// <summary>Uygulama dönemi: ödeme diliminin vadesi yaklaşıyor ya da geçti, dilim ödenmedi (host).</summary>
-    TrancheDue = 10
+    TrancheDue = 10,
+
+    /// <summary>H-03 · Başvurunun son mesajı karşı taraftan; yanıt bekleniyor (iki taraf).</summary>
+    MessageAwaitingReply = 11
 }
 
 /// <summary>Bir işin şu an kimde olduğu — host'taki üç sekme, kiracıdaki "sizde / danışmanınızda" ayrımı.</summary>

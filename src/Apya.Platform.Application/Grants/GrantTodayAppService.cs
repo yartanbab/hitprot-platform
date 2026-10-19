@@ -56,6 +56,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
     private readonly IRepository<GrantInterest, Guid> _interestRepo;
     private readonly IRepository<GrantRecommendation, Guid> _recRepo;
     private readonly IRepository<GrantDisbursementTranche, Guid> _trancheRepo;
+    private readonly IRepository<GrantApplicationMessage, Guid> _messageRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly IIdentityUserRepository _userRepo;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
@@ -75,6 +76,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
         IRepository<GrantInterest, Guid> interestRepo,
         IRepository<GrantRecommendation, Guid> recRepo,
         IRepository<GrantDisbursementTranche, Guid> trancheRepo,
+        IRepository<GrantApplicationMessage, Guid> messageRepo,
         ITenantRepository tenantRepo,
         IIdentityUserRepository userRepo,
         IDataFilter<IMultiTenant> mtFilter)
@@ -93,6 +95,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
         _interestRepo = interestRepo;
         _recRepo = recRepo;
         _trancheRepo = trancheRepo;
+        _messageRepo = messageRepo;
         _tenantRepo = tenantRepo;
         _userRepo = userRepo;
         _mtFilter = mtFilter;
@@ -135,6 +138,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
         var decisions = await LoadDecisionsAsync(appIds);
         var (reports, sections) = await LoadReportsAsync(appIds);
         var (calls, grants, costItems) = await LoadCatalogAsync(applications.Select(a => a.GrantCallId));
+        var lastSenders = await LoadLastSendersAsync(appIds);
 
         GrantApplication? consultantSource = null;
         int? consultantSourceDays = null;
@@ -233,6 +237,14 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
                     open, amount, report.DueDate, DaysTo(report.DueDate, today)));
             }
 
+            // H-03 · Son mesaj danışmandan: firma yanıt vermeli.
+            if (!closed && lastSenders.TryGetValue(application.Id, out var lastSender)
+                && lastSender == GrantPartyRole.Danisman)
+            {
+                dto.Items.Add(Item(GrantTodayItemKind.MessageAwaitingReply, GrantTodayOwner.Me, name, application, call,
+                    0, amount, null, null));
+            }
+
             // Danışman kartı: en yakın son tarihli açık başvurunun danışmanı.
             if (!closed && application.AssignedUserId.HasValue
                 && (consultantSource == null || (days ?? int.MaxValue) < (consultantSourceDays ?? int.MaxValue)))
@@ -320,6 +332,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
         List<GrantInterest> interests;
         List<GrantApplication> implementation;
         Dictionary<Guid, List<GrantDisbursementTranche>> tranches;
+        Dictionary<Guid, GrantPartyRole> hostLastSenders;
 
         // 🔴 Kiracılar arası okuma bilinçli: gelen kutusu bütün firmaların dosyalarına bakar.
         using (_mtFilter.Disable())
@@ -339,6 +352,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
             budgetLines = await LoadBudgetLinesAsync(appIds);
             decisions = await LoadDecisionsAsync(appIds);
             (reports, sections) = await LoadReportsAsync(appIds.Concat(implIds).ToList());
+            hostLastSenders = await LoadLastSendersAsync(appIds);
             tranches = (await _trancheRepo.GetListAsync(t => implIds.Contains(t.GrantApplicationId)
                                                              && t.Status != GrantDisbursementTrancheStatus.Odendi
                                                              && t.DueDate != null))
@@ -430,6 +444,12 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
                     .Count(s => s.Status is not (GrantReportStatus.Onaylandi or GrantReportStatus.Gonderildi));
                 dto.Items.Add(Host(GrantTodayItemKind.ReportDue, GrantTodayOwner.Me, open, report.DueDate,
                     DaysTo(report.DueDate, today)));
+            }
+
+            // H-03 · Son mesaj firmadan: danışman yanıt vermeli.
+            if (hostLastSenders.TryGetValue(application.Id, out var lastSender) && lastSender == GrantPartyRole.Firma)
+            {
+                dto.Items.Add(Host(GrantTodayItemKind.MessageAwaitingReply, GrantTodayOwner.Me, 0, null, null));
             }
         }
 
@@ -606,6 +626,22 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
             Deadline = deadline,
             DaysRemaining = days
         };
+
+    /// <summary>
+    /// H-03 · Başvuru başına son mesajı gönderen taraf (yalnız üç alan okunur). Son mesaj karşı
+    /// taraftansa yanıt bekleniyor demektir. Çağıran kiracı kapsamını belirler (host süzgeci kapatır).
+    /// </summary>
+    private async Task<Dictionary<Guid, GrantPartyRole>> LoadLastSendersAsync(List<Guid> appIds)
+    {
+        if (appIds.Count == 0) { return new(); }
+
+        var rows = await AsyncExecuter.ToListAsync((await _messageRepo.GetQueryableAsync())
+            .Where(m => appIds.Contains(m.GrantApplicationId))
+            .Select(m => new { m.GrantApplicationId, m.CreationTime, m.SenderRole }));
+
+        return rows.GroupBy(r => r.GrantApplicationId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.CreationTime).First().SenderRole);
+    }
 
     private static int? DaysTo(DateTime? date, DateTime today)
         => date.HasValue ? (int)(date.Value.Date - today).TotalDays : null;

@@ -19,5 +19,8 @@ public enum GrantPipelineRisk
     WaitingOnFirm = 3,
 
     /// <summary>Başvuruya danışman atanmamış.</summary>
-    Unassigned = 4
+    Unassigned = 4,
+
+    /// <summary>H-03 · Son mesaj firmadan, danışman henüz yanıtlamadı.</summary>
+    UnansweredMessage = 5
 }

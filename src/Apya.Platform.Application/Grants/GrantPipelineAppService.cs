@@ -52,6 +52,7 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
     private readonly GrantApplicationStepAligner _stepAligner;
+    private readonly IRepository<GrantApplicationMessage, Guid> _messageRepo;
 
     public GrantPipelineAppService(
         IRepository<GrantApplication, Guid> appRepo,
@@ -68,8 +69,10 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> mtFilter,
         GrantNotificationDispatcher notifyDispatcher,
-        GrantApplicationStepAligner stepAligner)
+        GrantApplicationStepAligner stepAligner,
+        IRepository<GrantApplicationMessage, Guid> messageRepo)
     {
+        _messageRepo = messageRepo;
         _appRepo = appRepo;
         _activityRepo = activityRepo;
         _budgetRepo = budgetRepo;
@@ -310,6 +313,12 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
 
             var users = (await _userRepo.GetListAsync()).ToDictionary(u => u.Id);
             var today = Clock.Now.Date;
+            // H-03 · Başvuru başına son mesajın tarafı (yalnız üç alan).
+            var lastSenders = (await AsyncExecuter.ToListAsync((await _messageRepo.GetQueryableAsync())
+                    .Where(m => appIds.Contains(m.GrantApplicationId))
+                    .Select(m => new { m.GrantApplicationId, m.CreationTime, m.SenderRole })))
+                .GroupBy(r => r.GrantApplicationId)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.CreationTime).First().SenderRole);
 
             foreach (var application in applications)
             {
@@ -330,7 +339,9 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
                         : null,
                     PendingParty = application.PendingParty,
                     AssignedUserId = application.AssignedUserId,
-                    IsSubmitted = application.SubmittedAt.HasValue
+                    IsSubmitted = application.SubmittedAt.HasValue,
+                    AwaitingReply = lastSenders.TryGetValue(application.Id, out var lastSender)
+                                    && lastSender == GrantPartyRole.Firma
                 };
 
                 if (application.AssignedUserId.HasValue
@@ -423,6 +434,11 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
         if (card.AssignedUserId == null)
         {
             risks.Add(new GrantPipelineRiskDto { Kind = GrantPipelineRisk.Unassigned });
+        }
+
+        if (card.AwaitingReply)
+        {
+            risks.Add(new GrantPipelineRiskDto { Kind = GrantPipelineRisk.UnansweredMessage });
         }
 
         return risks;

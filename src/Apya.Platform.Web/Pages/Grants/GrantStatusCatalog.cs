@@ -99,7 +99,8 @@ public static class GrantStatusCatalog
         [GrantPipelineRisk.DeadlinePassed]   = "negative",
         [GrantPipelineRisk.MissingDocuments] = "warning",
         [GrantPipelineRisk.WaitingOnFirm]    = "neutral",
-        [GrantPipelineRisk.Unassigned]       = "neutral"
+        [GrantPipelineRisk.Unassigned]       = "neutral",
+        [GrantPipelineRisk.UnansweredMessage] = "warning"
     };
 
     // ── Hibe yolculuğu ────────────────────────────────────────────────────────

@@ -68,6 +68,9 @@ public class GrantPipelineCardDto
     public string? AssignedUserName { get; set; }
     public bool IsSubmitted { get; set; }
 
+    /// <summary>H-03 · Son mesaj firmadan — danışman yanıt vermeli.</summary>
+    public bool AwaitingReply { get; set; }
+
     /// <summary>Kart üzerinde gösterilecek risk sinyalleri.</summary>
     public List<GrantPipelineRiskDto> Risks { get; set; } = new();
 }
