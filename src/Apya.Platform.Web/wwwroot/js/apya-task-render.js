@@ -78,11 +78,17 @@
             return '<span class="text-muted small">' + fmt + '</span>';
         }
 
-        var diff = moment(dueDate).diff(moment(), 'hours');
-        if (diff < 0) {
+        // Gecikme gün düzeyinde (apya-task-dashboard.js ve apya-gantt.js ile aynı kural):
+        // son tarih gün olarak girilir (00:00); saat farkına bakılsaydı bugün biten görev
+        // gece yarısından itibaren kırmızı "gecikmiş" çipe dönerdi.
+        var dueDay = new Date(dueDate);
+        dueDay.setHours(0, 0, 0, 0);
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (dueDay < today) {
             return '<span class="apya-chip apya-chip-negative heartbeat-animation"><i class="fa fa-exclamation-circle me-1"></i>' + fmt + '</span>';
         }
-        if (diff <= 48) {
+        if (moment(dueDate).diff(moment(), 'hours') <= 48) {
             return '<span class="apya-chip apya-chip-warning"><i class="fa fa-clock me-1"></i>' + fmt + '</span>';
         }
         return '<span class="text-muted small">' + fmt + '</span>';

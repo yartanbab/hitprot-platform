@@ -17,7 +17,10 @@ namespace Apya.Platform.Projects;
 /// <para>Bilinçli tanımlar (liste ekranındaki davranışın aynısı, değiştirilmedi):</para>
 /// <list type="bullet">
 /// <item>Tamamlanma = <c>Done / TÜM görevler</c>. İptal edilen görev paydadan DÜŞMEZ.</item>
-/// <item>Gecikme = açık (Done ya da Cancelled değil) ve son tarihi <c>now</c>'dan önce.</item>
+/// <item>Gecikme = açık (Done ya da Cancelled değil) ve son tarihi BUGÜNDEN önce (gün
+/// düzeyi). Son tarih gün olarak girilir (saat yok, 00:00): saat düzeyinde karşılaştırma
+/// bugün biten görevi gece yarısından itibaren gecikmiş sayıyordu — proje detayı şeridi,
+/// görev süzgeçleri, Zaman Çizelgesi ve görev panosu ise saymıyordu.</item>
 /// </list>
 /// </summary>
 public static class ProjectTaskProgress
@@ -40,7 +43,7 @@ public static class ProjectTaskProgress
         var overdue = tasks.Count(t => t.Status != TaskStatus.Done
                                        && t.Status != TaskStatus.Cancelled
                                        && t.DueDate.HasValue
-                                       && t.DueDate.Value < now);
+                                       && t.DueDate.Value.Date < now.Date);
 
         return new Summary(
             Total: total,
