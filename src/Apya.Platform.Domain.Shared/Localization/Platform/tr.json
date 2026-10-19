@@ -358,7 +358,7 @@
         "Notifications:Desktop:BackgroundOnlyHint": "Bildirim yalnız uygulama arka plandayken gösterilir; ekranda açıkken zil ve anlık uyarı yeterlidir.",
         "Notifications:Desktop:Test": "Bu cihazda dene",
         "Notifications:Desktop:TestBody": "Masaüstü bildirimleri çalışıyor.",
-        "Notifications:Push:Subscribed": "Uygulama kapalıyken de bu cihaza bildirim gelir (yalnız başlık).",
+        "Notifications:Push:Subscribed": "Uygulama kapalıyken de bu cihaza bildirim gelir.",
         "Notifications:Devices:Title": "Bildirim alan cihazlar",
         "Notifications:Devices:ThisDevice": "bu cihaz",
         "Notifications:Devices:Inactive": "(pasif)",

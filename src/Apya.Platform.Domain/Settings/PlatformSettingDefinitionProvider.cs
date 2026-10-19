@@ -184,6 +184,9 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(
             new SettingDefinition(PlatformSettings.NotificationQuietHours.Enabled, defaultValue: "false"),
             new SettingDefinition(
+                PlatformSettings.NotificationLockScreen.TitleOnly,
+                defaultValue: PlatformSettingDefaults.NotificationPushTitleOnly ? "true" : "false"),
+            new SettingDefinition(
                 PlatformSettings.NotificationQuietHours.Window,
                 defaultValue: PlatformSettingDefaults.NotificationQuietHoursWindow));
 

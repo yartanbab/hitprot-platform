@@ -121,8 +121,8 @@
                     Uygulama içi kapatılan kategoride bildirim hiç üretilmez.
                     Anlık e-posta yalnız kritik bildirimleri hemen gönderir;
                     günlük özet diğerlerini günde bir kez tek iletide toplar.
-                    Tarayıcı bildirimi, uygulama kapalıyken de bu cihaza başlık düzeyinde bildirim gönderir
-                    (yukarıdan bu cihazda açılmış olmalıdır); ayrıntı uygulama içinde kalır.
+                    Tarayıcı bildirimi, uygulama kapalıyken de bu cihaza bildirim gönderir
+                    (yukarıdan bu cihazda açılmış olmalıdır); kilit ekranında ne görüneceğini aşağıdan seçersiniz.
                 </p>
                 <div class="table-responsive apya-notif-pref-table">
                 <table class="table table-sm align-middle mb-0">
@@ -141,6 +141,23 @@
                         </td></tr>
                     </tbody>
                 </table>
+                </div>
+
+                @* Kilit ekranı içeriği (kullanıcı kararı 2026-10-19): açıkken push yalnız başlık taşır. *@
+                <div id="notif-lock" class="mt-3 pt-3 border-top">
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        <div class="flex-grow-1" style="min-width: 0;">
+                            <div id="notif-lock-title" class="fw-semibold">Kilit ekranında yalnız başlık</div>
+                            <div class="text-sm text-muted">
+                                Açıkken telefon ve masaüstü bildirimi yalnız başlığı gösterir (ör. "Yeni görev atandı");
+                                görev adı, yorum ve tutar uygulamada kalır. Kapalıyken başlığın altında kısa özet görünür.
+                            </div>
+                        </div>
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" id="notif-lock-toggle"
+                                   aria-labelledby="notif-lock-title">
+                        </div>
+                    </div>
                 </div>
 
                 @* Sessiz saatler (kullanıcı kararı 2026-10-19, varsayılan kapalı): yalnız tarayıcı bildirimini erteler;

@@ -41,6 +41,11 @@ public interface INotificationAppService : IApplicationService
     /// <summary>Sessiz saatleri kaydeder. Başlangıç ile bitiş aynı olamaz.</summary>
     Task UpdateQuietHoursAsync(NotificationQuietHoursDto input);
 
+    /// <summary>Kilit ekranı içeriği (kişisel tercih).</summary>
+    Task<NotificationLockScreenDto> GetLockScreenAsync();
+
+    Task UpdateLockScreenAsync(NotificationLockScreenDto input);
+
     /// <summary>Bildirimi siler (soft delete).</summary>
     Task DeleteAsync(Guid id);
 }

@@ -61,6 +61,17 @@ public class NotificationPreference_Tests : PlatformEntityFrameworkCoreTestBase
             new NotificationQuietHoursDto { Enabled = true, Start = "08:00", End = "08:00" }));
     }
 
+    /// <summary>K2 · Kilit ekranı: varsayılan yalnız başlık (kullanıcı kararı 2026-10-19); kişi kısa özeti açabilir.</summary>
+    [Fact]
+    public async Task Kilit_ekrani_varsayilan_yalniz_baslik_tercih_geri_okunur()
+    {
+        (await _appService.GetLockScreenAsync()).TitleOnly.ShouldBeTrue();
+
+        await WithUnitOfWorkAsync(() => _appService.UpdateLockScreenAsync(new NotificationLockScreenDto { TitleOnly = false }));
+
+        (await _appService.GetLockScreenAsync()).TitleOnly.ShouldBeFalse();
+    }
+
     [Fact]
     public async Task Update_Should_Persist_And_Be_Read_Back()
     {

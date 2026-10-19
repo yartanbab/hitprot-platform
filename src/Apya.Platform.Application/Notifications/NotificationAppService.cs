@@ -265,6 +265,20 @@ public class NotificationAppService : ApplicationService, INotificationAppServic
         await settings.SetForCurrentUserAsync(PlatformSettings.NotificationQuietHours.Window, window.ToString());
     }
 
+    // ─── Kilit ekranı içeriği (kullanıcı kararı 2026-10-19) ────────────────────
+    public async Task<NotificationLockScreenDto> GetLockScreenAsync()
+    {
+        var value = await SettingProvider.GetOrNullAsync(PlatformSettings.NotificationLockScreen.TitleOnly);
+        return new NotificationLockScreenDto
+        {
+            TitleOnly = bool.TryParse(value, out var titleOnly) ? titleOnly : PlatformSettingDefaults.NotificationPushTitleOnly
+        };
+    }
+
+    public async Task UpdateLockScreenAsync(NotificationLockScreenDto input)
+        => await LazyServiceProvider.LazyGetRequiredService<ISettingManager>()
+            .SetForCurrentUserAsync(PlatformSettings.NotificationLockScreen.TitleOnly, input.TitleOnly ? "true" : "false");
+
     // ─── Yardımcı ─────────────────────────────────────────────────────────────
 
     /// <summary>
