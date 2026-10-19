@@ -7,6 +7,7 @@ export function TaskDetailFooterV3({
     justSaved,
     onCancel,
     onSave,
+    sticky = false,
 }) {
     const formatted = lastSavedAt
         ? new Intl.DateTimeFormat('tr-TR', {
@@ -22,9 +23,12 @@ export function TaskDetailFooterV3({
 
     /* shrink-0 ŞART: kolon flex'inde varsayılan flex-shrink:1'dir ve içerik taştığında
        tarayıcı footer'ı da kısaltıp Kaydet/Vazgeç düğmelerini yarım bırakabiliyordu.
-       Kısalması gereken tek öğe ortadaki kaydırma alanı. */
+       Kısalması gereken tek öğe ortadaki kaydırma alanı.
+       sticky: SAYFA kipinde kap sabit yükseklikli değil (min-h), çubuk içeriğin sonuna
+       itiliyordu — 800px ekranda 1405. pikselde (QA-15). Üstte değiştirilen durum/öncelik
+       "Kaydet"i beklerken çubuk görünmüyordu; yapışkan olunca hep ekranın altında. */
     return (
-        <footer className="shrink-0 flex items-center justify-between gap-4 px-6 lt-860:px-4 py-3.5 border-t border-subtle bg-surface-base">
+        <footer className={`${sticky ? 'sticky bottom-0 z-10 ' : ''}shrink-0 flex items-center justify-between gap-4 px-6 lt-860:px-4 py-3.5 border-t border-subtle bg-surface-base`}>
             <div className="flex items-center gap-3.5 min-w-0 lt-560:hidden">
                 <span className="flex items-center gap-[7px] text-[11.5px] text-text-tertiary">
                     <i className="fa-regular fa-clock text-[11px]" />

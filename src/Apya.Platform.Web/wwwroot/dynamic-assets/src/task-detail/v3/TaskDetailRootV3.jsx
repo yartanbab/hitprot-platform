@@ -18,6 +18,7 @@ import { useTaskDetail } from '../hooks/useTaskDetail';
 import { getTaskPermissions } from '../taskPermissions';
 import { useDirtyGuard } from '../../lib/feedback/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useTaskForm } from '../hooks/useTaskForm';
 import { useTaskChecklist } from '../hooks/useTaskChecklist';
 import { useAssigneeOptions } from '../hooks/useAssigneeOptions';
@@ -87,6 +88,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
        (history.back) o adıma inip kullanıcıyı sayfada bırakıyordu — "Vazgeç", "Değişiklikleri
        at" ve "Kaydet ve çık" ilk basışta çıkarmıyordu (canlıda ölçüldü). */
     useTaskUrlSync(presentation === 'page' ? null : currentTaskId);
+    usePageTitle(presentation === 'page' ? task?.title : null);
 
     /* Sunucudan gelen favori/takip durumunu bir kez yerel state'e al — düğmeler
        optimistik çalışıyor, her refetch'te kullanıcının tıklaması geri alınmasın. */
@@ -620,6 +622,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 justSaved={justSaved}
                 onCancel={requestClose}
                 onSave={doSave}
+                sticky={presentation === 'page'}
             />
         </div>
     );
