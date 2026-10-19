@@ -5,7 +5,7 @@ import { a as ot } from "./QueryProvider-D2Hvqdr9.js";
 import { u as J, a as re, b as te } from "./query-vendor-Db2mwxYI.js";
 import { C as Da } from "./Combobox-CHhgTuMW.js";
 import { U as Et, u as Ta } from "./useDirtyGuard-D_9NgM7w.js";
-import { i as He, a as We, s as be, p as ut, d as Sa, b as Ot, R as $a, c as Ie, e as Pa, f as Ea, g as ks, P as Cs } from "./RichTextEditorV3-CsU1qQrh.js";
+import { i as He, a as We, s as be, p as ut, d as Sa, b as Ot, R as $a, c as Fe, e as Pa, f as Ea, g as ks, P as Cs } from "./RichTextEditorV3-CsU1qQrh.js";
 import { r as Ds } from "./httpClient-BNoyY5yK.js";
 import { S as ke } from "./Skeleton-C92LWNeC.js";
 import { R as Ce, T as De, P as Te, C as Se, A as Ts, a as Bt, D as Ss, b as $s, c as Ps, d as Es, e as Bs } from "./ui-vendor-UYevF8mE.js";
@@ -1583,7 +1583,7 @@ function ur({ task: t }) {
     }) })
   ] });
 }
-const Fe = (t) => t ? new Intl.DateTimeFormat("tr-TR", {
+const Ae = (t) => t ? new Intl.DateTimeFormat("tr-TR", {
   day: "2-digit",
   month: "2-digit",
   year: "numeric",
@@ -1607,20 +1607,20 @@ function mr({ task: t = {}, nameById: s }) {
     { label: "Görev kodu", value: t.code || "—" },
     {
       label: "Oluşturulma",
-      value: Fe(t.creationTime),
+      value: Ae(t.creationTime),
       hint: a(t.creatorId) ? `${a(t.creatorId)} tarafından` : null
     },
     {
       label: "Son güncelleme",
-      value: Fe(t.lastModificationTime) ?? "Henüz güncellenmedi",
+      value: Ae(t.lastModificationTime) ?? "Henüz güncellenmedi",
       hint: a(t.lastModifierId) ? `${a(t.lastModifierId)} tarafından` : null
     },
-    { label: "Planlanan başlangıç", value: Fe(t.startDate) },
-    { label: "Termin", value: Fe(t.dueDate) }
+    { label: "Planlanan başlangıç", value: Ae(t.startDate) },
+    { label: "Termin", value: Ae(t.dueDate) }
   ];
-  return t.completedDate && r.push({ label: "Tamamlanma", value: Fe(t.completedDate) }), t.cancelledDate && r.push({
+  return t.completedDate && r.push({ label: "Tamamlanma", value: Ae(t.completedDate) }), t.cancelledDate && r.push({
     label: "İptal",
-    value: Fe(t.cancelledDate),
+    value: Ae(t.cancelledDate),
     hint: t.cancelReason || null
   }), /* @__PURE__ */ e.jsxs("div", { className: "flex flex-col gap-3.5", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "overflow-hidden rounded-2xl border border-subtle bg-surface-base shadow-xs", children: [
@@ -3237,7 +3237,7 @@ function en({ task: t = {}, readOnly: s = !1 }) {
     )
   ] });
 }
-function Ae() {
+function ze() {
   var t, s, a;
   return ((a = (s = (t = window == null ? void 0 : window.apya) == null ? void 0 : t.platform) == null ? void 0 : s.tasks) == null ? void 0 : a.task) || null;
 }
@@ -3246,9 +3246,9 @@ function tn(t) {
     queryKey: a,
     queryFn: () => {
       var m;
-      return Promise.resolve((m = Ae()) == null ? void 0 : m.getTimeLogs(t));
+      return Promise.resolve((m = ze()) == null ? void 0 : m.getTimeLogs(t));
     },
-    enabled: !!t && !!Ae(),
+    enabled: !!t && !!ze(),
     staleTime: 15e3,
     meta: { persist: !1 },
     retry: !1
@@ -3258,9 +3258,9 @@ function tn(t) {
        hata sayıp önceki çalışan kaydı ekranda bırakır (sayaç durmazdı). */
     queryFn: () => {
       var m;
-      return Promise.resolve((m = Ae()) == null ? void 0 : m.getActiveTimeLog()).then((h) => h ?? null);
+      return Promise.resolve((m = ze()) == null ? void 0 : m.getActiveTimeLog()).then((h) => h ?? null);
     },
-    enabled: !!Ae(),
+    enabled: !!ze(),
     staleTime: 5e3,
     /* Canlı sayaç kanbandan da başlatılıp durduruluyor; açılışlar arasında taşınmaz. */
     meta: { persist: !1 },
@@ -3270,13 +3270,13 @@ function tn(t) {
   }, i = te({
     mutationFn: () => {
       var m;
-      return Promise.resolve((m = Ae()) == null ? void 0 : m.startTimeTracking(t));
+      return Promise.resolve((m = ze()) == null ? void 0 : m.startTimeTracking(t));
     },
     onSuccess: n
   }), u = te({
     mutationFn: () => {
       var m;
-      return Promise.resolve((m = Ae()) == null ? void 0 : m.stopTimeTracking(t));
+      return Promise.resolve((m = ze()) == null ? void 0 : m.stopTimeTracking(t));
     },
     onSuccess: n
   });
@@ -4077,7 +4077,7 @@ function on({ isPrivate: t = !1, onChange: s = () => {
         ]
       }
     ) }),
-    /* @__PURE__ */ e.jsx(Te, { container: Ie(l), children: /* @__PURE__ */ e.jsxs(
+    /* @__PURE__ */ e.jsx(Te, { container: Fe(l), children: /* @__PURE__ */ e.jsxs(
       Se,
       {
         sideOffset: 8,
@@ -4160,7 +4160,7 @@ function pn({
   canChangeStatus: E = !0,
   canDelete: O = !0
 }) {
-  const [Y, q] = f.useState(!1), [F, M] = f.useState(null), [U, _] = f.useState(!1), V = f.useRef(null), X = f.useId(), Q = Ie(F), T = n ?? t.status, L = Pa(i), R = Ea(
+  const [Y, q] = f.useState(!1), [F, M] = f.useState(null), [U, _] = f.useState(!1), V = f.useRef(null), X = f.useId(), Q = Fe(F), T = n ?? t.status, L = Pa(i), R = Ea(
     L,
     T,
     u === void 0 ? t.boardColumnId : u
@@ -4454,7 +4454,7 @@ function mn({
               ]
             }
           ) }),
-          /* @__PURE__ */ e.jsx(Te, { container: Ie(U), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${st} w-[264px]`, children: [
+          /* @__PURE__ */ e.jsx(Te, { container: Fe(U), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${st} w-[264px]`, children: [
             /* @__PURE__ */ e.jsxs("div", { className: "relative mb-[7px]", children: [
               /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-magnifying-glass absolute left-[11px] top-1/2 -translate-y-1/2 text-[11px] text-text-tertiary" }),
               /* @__PURE__ */ e.jsx(
@@ -4564,7 +4564,7 @@ function mn({
               ]
             }
           ) }),
-          /* @__PURE__ */ e.jsx(Te, { container: Ie(U), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${st} w-[196px]`, children: [
+          /* @__PURE__ */ e.jsx(Te, { container: Fe(U), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${st} w-[196px]`, children: [
             /* @__PURE__ */ e.jsx("div", { className: "px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary", children: "Durumu değiştir" }),
             X.map((k) => {
               const Z = (Q == null ? void 0 : Q.key) === k.key;
@@ -4597,7 +4597,7 @@ function mn({
               ]
             }
           ) }),
-          /* @__PURE__ */ e.jsx(Te, { container: Ie(U), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${st} w-[184px]`, children: [
+          /* @__PURE__ */ e.jsx(Te, { container: Fe(U), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${st} w-[184px]`, children: [
             /* @__PURE__ */ e.jsx("div", { className: "px-[9px] pt-[5px] pb-[7px] text-[10px] font-bold uppercase tracking-[.08em] text-text-tertiary", children: "Öncelik seç" }),
             ks.map((k) => {
               const Z = Cs[k], z = (i ?? t.priority) === k;
@@ -4679,7 +4679,7 @@ function mn({
               ]
             }
           ) }),
-          /* @__PURE__ */ e.jsx(Te, { container: Ie(U), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${st} w-[250px]`, children: [
+          /* @__PURE__ */ e.jsx(Te, { container: Fe(U), children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", className: `${st} w-[250px]`, children: [
             /* @__PURE__ */ e.jsxs("div", { className: "relative mb-[7px]", children: [
               /* @__PURE__ */ e.jsx("i", { className: "fa-solid fa-magnifying-glass absolute left-[11px] top-1/2 -translate-y-1/2 text-[11px] text-text-tertiary" }),
               /* @__PURE__ */ e.jsx(
@@ -4763,7 +4763,7 @@ function mn({
 }
 const fn = "z-popover w-[225px] rounded-[13px] border border-default bg-surface-elevated p-1.5 shadow-float animate-fade-in-fast max-h-[var(--radix-popover-content-available-height)] overflow-y-auto";
 function Mt({ entries: t = [], onPick: s, children: a }) {
-  const [r, l] = f.useState(null), o = Ie(r);
+  const [r, l] = f.useState(null), o = Fe(r);
   return /* @__PURE__ */ e.jsx("span", { ref: l, className: "contents", children: /* @__PURE__ */ e.jsxs(Ce, { modal: !0, children: [
     /* @__PURE__ */ e.jsx(De, { asChild: !0, children: a }),
     /* @__PURE__ */ e.jsx(Te, { container: o, children: /* @__PURE__ */ e.jsxs(Se, { sideOffset: 6, align: "start", collisionPadding: 12, className: fn, children: [
@@ -4956,7 +4956,7 @@ function hn({
     }
   );
 }
-function ze({ label: t, value: s, avatarName: a }) {
+function Ie({ label: t, value: s, avatarName: a }) {
   return /* @__PURE__ */ e.jsxs("div", { className: "flex items-center justify-between gap-3 py-[9px] border-t border-subtle", children: [
     /* @__PURE__ */ e.jsx("span", { className: "text-[12.5px] text-text-tertiary shrink-0", children: t }),
     /* @__PURE__ */ e.jsxs("span", { className: "flex items-center gap-[7px] min-w-0", children: [
@@ -4986,12 +4986,13 @@ function yn({ task: t = {}, nameById: s }) {
   }, r = a(t.creatorName, t.creatorId), l = t.lastModificationTime ? a(t.lastModifierName, t.lastModifierId) : null;
   return /* @__PURE__ */ e.jsx("aside", { className: "flex flex-col gap-3.5 min-w-0", children: /* @__PURE__ */ e.jsxs("div", { className: "rounded-2xl border border-subtle bg-surface-base p-[18px] shadow-xs", children: [
     /* @__PURE__ */ e.jsx("h3", { className: "mt-0 mb-1.5 text-[13.5px] font-bold text-text-primary", children: "Detaylar" }),
-    /* @__PURE__ */ e.jsx(ze, { label: "Oluşturan", value: r || "Bilinmiyor", avatarName: r }),
-    /* @__PURE__ */ e.jsx(ze, { label: "Oluşturma tarihi", value: ua(t.creationTime) }),
-    /* @__PURE__ */ e.jsx(ze, { label: "Güncelleyen", value: l || "—", avatarName: l }),
-    /* @__PURE__ */ e.jsx(ze, { label: "Son güncelleme", value: ua(t.lastModificationTime) }),
-    /* @__PURE__ */ e.jsx(ze, { label: "Görev tipi", value: t.taskType }),
-    /* @__PURE__ */ e.jsx(ze, { label: "Sprint", value: t.sprint })
+    /* @__PURE__ */ e.jsx(Ie, { label: "Oluşturan", value: r || "Bilinmiyor", avatarName: r }),
+    /* @__PURE__ */ e.jsx(Ie, { label: "Oluşturma tarihi", value: ua(t.creationTime) }),
+    /* @__PURE__ */ e.jsx(Ie, { label: "Güncelleyen", value: l || "—", avatarName: l }),
+    /* @__PURE__ */ e.jsx(Ie, { label: "Son güncelleme", value: ua(t.lastModificationTime) }),
+    /* @__PURE__ */ e.jsx(Ie, { label: "Görev tipi", value: t.taskType }),
+    /* @__PURE__ */ e.jsx(Ie, { label: "Sprint", value: t.sprint }),
+    /* @__PURE__ */ e.jsx(Ie, { label: "İzleyenler", value: (t.watcherNames || []).join(", ") || "Kimse izlemiyor" })
   ] }) });
 }
 const pa = "flex flex-col rounded-2xl border border-subtle bg-surface-base p-[18px] shadow-xs";

@@ -49,6 +49,8 @@ export function TaskSidePanelV3({ task = {}, nameById }) {
                 <Row label="Son güncelleme"   value={fmt(task.lastModificationTime)} />
                 <Row label="Görev tipi"       value={task.taskType} />
                 <Row label="Sprint"           value={task.sprint} />
+                {/* B-15 · Yorum, durum ve vade bildirimlerini kimin aldığı görünsün. */}
+                <Row label="İzleyenler"       value={(task.watcherNames || []).join(', ') || 'Kimse izlemiyor'} />
             </div>
         </aside>
     );

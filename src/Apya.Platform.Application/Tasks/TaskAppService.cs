@@ -222,6 +222,16 @@ namespace Apya.Platform.Tasks
                 taskDto.IsWatched = await _watcherRepository.FindAsync(w => w.TaskId == id && w.UserId == favUserId.Value) != null;
             }
 
+            // B-15 · İzleyenler görünür (bildirim kime gidiyor).
+            var watcherIds = (await _watcherRepository.GetListAsync(w => w.TaskId == id)).Select(w => w.UserId).ToList();
+            if (watcherIds.Count > 0)
+            {
+                taskDto.WatcherNames = (await _identityRepository.GetListAsync(u => watcherIds.Contains(u.Id)))
+                    .Select(u => TaskPersonName.Of(u.Name, u.Surname, u.UserName))
+                    .OrderBy(n => n, StringComparer.Create(new System.Globalization.CultureInfo("tr-TR"), true))
+                    .ToList();
+            }
+
             // Harcanan süre: kapanmış zaman kayıtlarının toplamı (detay ekranındaki
             // "Harcanan / tahmin" hücresi ve tahmin kullanım çubuğu bunu kullanır).
             var logs = await _timeLogRepository.GetListAsync(l => l.TaskId == id);
