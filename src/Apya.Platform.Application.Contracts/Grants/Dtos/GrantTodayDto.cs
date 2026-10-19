@@ -82,6 +82,10 @@ public class GrantTodayItemDto
 
     public string? AssignedUserName { get; set; }
 
+    /// <summary>Dosyanın atandığı danışman; Bugün ekranının "Bana atananlar" süzgeci buna bakar
+    /// (boşsa iş henüz kimseye atanmamıştır ve herkesin listesinde kalır).</summary>
+    public Guid? AssignedUserId { get; set; }
+
     /// <summary>Risk × tutar — sunucu sıralar, istemci sırayı bozmaz.</summary>
     public double Priority { get; set; }
 }

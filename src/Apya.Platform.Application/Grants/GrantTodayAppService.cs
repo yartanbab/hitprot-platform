@@ -55,6 +55,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
     private readonly IRepository<GrantLead, Guid> _leadRepo;
     private readonly IRepository<GrantInterest, Guid> _interestRepo;
     private readonly IRepository<GrantRecommendation, Guid> _recRepo;
+    private readonly IRepository<GrantDisbursementTranche, Guid> _trancheRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly IIdentityUserRepository _userRepo;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
@@ -73,6 +74,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
         IRepository<GrantLead, Guid> leadRepo,
         IRepository<GrantInterest, Guid> interestRepo,
         IRepository<GrantRecommendation, Guid> recRepo,
+        IRepository<GrantDisbursementTranche, Guid> trancheRepo,
         ITenantRepository tenantRepo,
         IIdentityUserRepository userRepo,
         IDataFilter<IMultiTenant> mtFilter)
@@ -90,6 +92,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
         _leadRepo = leadRepo;
         _interestRepo = interestRepo;
         _recRepo = recRepo;
+        _trancheRepo = trancheRepo;
         _tenantRepo = tenantRepo;
         _userRepo = userRepo;
         _mtFilter = mtFilter;
@@ -315,18 +318,32 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
         Dictionary<Guid, string> tenants;
         List<GrantLead> leads;
         List<GrantInterest> interests;
+        List<GrantApplication> implementation;
+        Dictionary<Guid, List<GrantDisbursementTranche>> tranches;
 
         // 🔴 Kiracılar arası okuma bilinçli: gelen kutusu bütün firmaların dosyalarına bakar.
         using (_mtFilter.Disable())
         {
-            applications = (await _appRepo.GetListAsync())
+            var allApplications = await _appRepo.GetListAsync();
+            applications = allApplications
                 .Where(a => !a.ProjectId.HasValue && a.Stage != GrantApplicationStage.Odeme)
                 .ToList();
+            // H-05 · Uygulama dönemi (projeye dönmüş ya da ödeme aşamasındaki başvurular) eskiden
+            // Bugün'den tamamen düşüyordu: rapor teslimi ve dilim vadesi danışmanın giriş ekranında yoktu.
+            implementation = allApplications
+                .Where(a => a.ProjectId.HasValue || a.Stage == GrantApplicationStage.Odeme)
+                .ToList();
             var appIds = applications.Select(a => a.Id).ToList();
+            var implIds = implementation.Select(a => a.Id).ToList();
             documents = await LoadDocumentsAsync(appIds);
             budgetLines = await LoadBudgetLinesAsync(appIds);
             decisions = await LoadDecisionsAsync(appIds);
-            (reports, sections) = await LoadReportsAsync(appIds);
+            (reports, sections) = await LoadReportsAsync(appIds.Concat(implIds).ToList());
+            tranches = (await _trancheRepo.GetListAsync(t => implIds.Contains(t.GrantApplicationId)
+                                                             && t.Status != GrantDisbursementTrancheStatus.Odendi
+                                                             && t.DueDate != null))
+                .GroupBy(t => t.GrantApplicationId)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             calls = (await _callRepo.GetListAsync(c => c.TenantId == null)).ToDictionary(c => c.Id);
             grants = (await _grantRepo.GetListAsync(g => g.TenantId == null)).ToDictionary(g => g.Id);
@@ -374,6 +391,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
                 var item = Item(kind, owner, name, application, call, value, amount, deadline, d);
                 item.FirmName = firm;
                 item.AssignedUserName = assigned;
+                item.AssignedUserId = application.AssignedUserId;
                 return item;
             }
 
@@ -412,6 +430,37 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
                     .Count(s => s.Status is not (GrantReportStatus.Onaylandi or GrantReportStatus.Gonderildi));
                 dto.Items.Add(Host(GrantTodayItemKind.ReportDue, GrantTodayOwner.Me, open, report.DueDate,
                     DaysTo(report.DueDate, today)));
+            }
+        }
+
+        // H-05 · Uygulama dönemi: rapor teslimleri ve ödenmemiş, vadesi yaklaşan/geçen dilimler.
+        foreach (var application in implementation)
+        {
+            var call = calls.GetValueOrDefault(application.GrantCallId);
+            if (call == null) { continue; }
+            var grant = grants.GetValueOrDefault(call.GrantId);
+            var name = grant?.Name ?? "—";
+
+            GrantTodayItemDto Impl(GrantTodayItemKind kind, int value, decimal? amount, DateTime? deadline)
+            {
+                var item = Item(kind, GrantTodayOwner.Me, name, application, call, value, amount, deadline, DaysTo(deadline, today));
+                item.FirmName = application.TenantId.HasValue ? tenants.GetValueOrDefault(application.TenantId.Value) : null;
+                item.AssignedUserName = application.AssignedUserId.HasValue ? users.GetValueOrDefault(application.AssignedUserId.Value) : null;
+                item.AssignedUserId = application.AssignedUserId;
+                return item;
+            }
+
+            foreach (var report in DueReports(reports.GetValueOrDefault(application.Id, new()), today))
+            {
+                var open = sections.GetValueOrDefault(report.Id, new())
+                    .Count(s => s.Status is not (GrantReportStatus.Onaylandi or GrantReportStatus.Gonderildi));
+                dto.Items.Add(Impl(GrantTodayItemKind.ReportDue, open, AmountOf(application, grant), report.DueDate));
+            }
+
+            foreach (var tranche in tranches.GetValueOrDefault(application.Id, new())
+                         .Where(t => (t.DueDate!.Value.Date - today).TotalDays <= ReportWindowDays))
+            {
+                dto.Items.Add(Impl(GrantTodayItemKind.TrancheDue, tranche.SequenceNo, tranche.Amount, tranche.DueDate));
             }
         }
 

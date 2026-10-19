@@ -5,13 +5,17 @@ $(function () {
 
     // Enum değerleri sunucudakiyle birebir (GrantTodayItemKind / GrantTodayOwner / GrantNextAction).
     var KIND = ['UploadDocuments', 'CompleteForm', 'AppealDeadline', 'ReportDue', 'SubmitPackage',
-        'WaitingOnFirm', 'LeadMeeting', 'DraftCallPublish', 'InterestReview', 'WaitingOnInstitution'];
+        'WaitingOnFirm', 'LeadMeeting', 'DraftCallPublish', 'InterestReview', 'WaitingOnInstitution', 'TrancheDue'];
     var ICON = ['fa-file-arrow-up', 'fa-pen-to-square', 'fa-gavel', 'fa-receipt', 'fa-cloud-arrow-up',
-        'fa-hourglass-half', 'fa-phone', 'fa-pen-ruler', 'fa-handshake', 'fa-building-columns'];
+        'fa-hourglass-half', 'fa-phone', 'fa-pen-ruler', 'fa-handshake', 'fa-building-columns', 'fa-money-bill-transfer'];
     var NEXT = ['CompleteForm', 'UploadDocuments', 'WaitingOnConsultant', 'WaitingOnInstitution', 'InProject', 'Done'];
 
     var model = null;
     var owner = 0;
+    // H-05 · Host'ta varsayılan "Bana atananlar": bana atanmış ve henüz kimseye atanmamış işler
+    // (atanmamış iş kimsenin listesinden düşmesin). "Ekibin tümü" başkalarına atananları da gösterir.
+    var scope = 'mine';
+    var me = abp.currentUser && abp.currentUser.id;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     function money(v) { return Math.round(v).toLocaleString('tr-TR') + ' ₺'; }
@@ -40,9 +44,10 @@ $(function () {
             case 0: return isHost ? '/Grants/DetailHost?id=' + item.applicationId : '/Grants/Documents?id=' + item.applicationId;
             case 1: return '/Grants/Wizard?id=' + item.applicationId;
             case 2: return '/Grants/Appeal?id=' + item.applicationId;
-            case 3: return '/Grants/Implementation?id=' + item.applicationId;
+            case 3: case 10: return '/Grants/Implementation?id=' + item.applicationId;
             case 4: case 5: case 9: return '/Grants/DetailHost?id=' + item.applicationId;
-            case 6: return '/Grants/Leads';
+            // Talep satırı kaydın kendisini açar (Leads ?id= ile o talebi seçer); eskiden yalnız listeye gidiyordu.
+            case 6: return '/Grants/Leads' + (item.leadId ? '?id=' + item.leadId : '');
             case 7: return '/Grants/Parameters?id=' + item.grantId;
             case 8: return '/Grants/Requests';
         }
@@ -117,8 +122,10 @@ $(function () {
         $('#TodaySub').text(sub.join(' ')).toggleClass('d-none', sub.length === 0);
     }
 
+    function inScope(i) { return scope === 'team' || !i.assignedUserId || i.assignedUserId === me; }
+
     function visibleItems(list) {
-        return isHost ? list.filter(function (i) { return i.owner === owner; }) : list;
+        return isHost ? list.filter(function (i) { return i.owner === owner && inScope(i); }) : list;
     }
 
     function paintItems() {
@@ -136,7 +143,7 @@ $(function () {
     }
 
     function paintHostTabs(m) {
-        var all = m.items.concat(m.moreItems);
+        var all = m.items.concat(m.moreItems).filter(inScope);
         var count = function (o) { return all.filter(function (i) { return i.owner === o; }).length; };
         $('#TabCountMine').text(count(0));
         $('#TabCountFirm').text(count(1));
@@ -149,6 +156,17 @@ $(function () {
         owner = Number($(this).data('owner'));
         $('.apya-today-tabs [data-owner]').removeClass('is-active');
         $(this).addClass('is-active');
+        paintItems();
+    });
+
+    $('.apya-today-scope').on('click', '[data-scope]', function () {
+        if (!model) { return; }
+        scope = String($(this).data('scope'));
+        $('.apya-today-scope [data-scope]').each(function () {
+            var on = String($(this).data('scope')) === scope;
+            $(this).toggleClass('active', on).attr('aria-pressed', on ? 'true' : 'false');
+        });
+        paintHostTabs(model);
         paintItems();
     });
 
@@ -232,7 +250,7 @@ $(function () {
             if (isHost) {
                 paintHostTabs(m);
                 // İlk açılışta "Benim işlerim" boşsa dolu olan ilk sekmeye geç — boş ekranla karşılamayalım.
-                var all = m.items.concat(m.moreItems);
+                var all = m.items.concat(m.moreItems).filter(inScope);
                 if (!all.some(function (i) { return i.owner === 0; })) {
                     var first = all[0];
                     if (first) {

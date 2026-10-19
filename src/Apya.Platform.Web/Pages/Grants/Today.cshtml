@@ -29,6 +29,13 @@
 
     @if (Model.IsHost)
     {
+        @* H-05 · Kapsam: varsayılan bana atananlar (+ atanmamışlar); ekip anahtarı. Süzme istemcide. *@
+        <div class="btn-group btn-group-sm apya-today-scope mb-2" role="group" aria-label="@L["Grants:Today:Scope:Label"]">
+            <button type="button" class="btn btn-outline-secondary active" data-scope="mine" aria-pressed="true"
+                    title="@L["Grants:Today:Scope:Mine:Hint"]">@L["Grants:Today:Scope:Mine"]</button>
+            <button type="button" class="btn btn-outline-secondary" data-scope="team" aria-pressed="false">@L["Grants:Today:Scope:Team"]</button>
+        </div>
+
         @* Üç sekme: iş şu an kimde. Sunucu Owner alanını verir, süzme istemcide. *@
         <div class="apya-tenant-tabs apya-today-tabs" role="tablist">
             <button type="button" class="apya-tenant-tab is-active" role="tab" data-owner="0">
