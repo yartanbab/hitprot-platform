@@ -143,6 +143,35 @@ public class TaskManager : DomainService
         await _taskRepository.DeleteManyAsync(tasks);
     }
 
+    /// <summary>
+    /// Görevi ALT GÖREVLERİYLE (her derinlikte) soft-delete eder. Silme onayı "bu görev ve
+    /// tüm alt görevleri silinecek" diyor; eskiden yalnız görevin kendisi gidiyordu ve alt
+    /// görevler, üstü silinmiş "hayalet" olarak kalıyordu: hiyerarşik listede görünmüyor
+    /// (yalnız kökler listelenir) ama proje ilerlemesinde ve gecikmiş sayısında sayılmaya
+    /// devam ediyordu. Bağımlılık ve sinyal köprüsü bağları ağacın tamamı için temizlenir
+    /// (<see cref="DeleteByProjectAsync"/> ile aynı temizlik).
+    /// <para>Kiracı kapsamını çağıran ayarlar.</para>
+    /// </summary>
+    public async Task DeleteWithSubtasksAsync(Guid taskId)
+    {
+        var ids = new List<Guid> { taskId };
+        var frontier = new List<Guid> { taskId };
+        while (frontier.Count > 0)
+        {
+            var parents = frontier;
+            var children = await _taskRepository.GetListAsync(x =>
+                x.ParentTaskId.HasValue && parents.Contains(x.ParentTaskId.Value));
+            // Bozuk veride döngü olsa bile toplanmış görev yeniden sıraya girmez.
+            frontier = children.Select(x => x.Id).Where(id => !ids.Contains(id)).ToList();
+            ids.AddRange(frontier);
+        }
+
+        await _dependencyRepository.DeleteDirectAsync(x =>
+            ids.Contains(x.TaskId) || ids.Contains(x.PredecessorTaskId));
+        await _issueTaskLinkRepository.DeleteAsync(x => ids.Contains(x.TaskId));
+        await _taskRepository.DeleteManyAsync(ids);
+    }
+
     /// <summary>Tenant içindeki bir sonraki görev sırası. DB sequence kullanılmaz —
     /// çift provider'da (Postgres/MSSQL) sequence taşınması güvenilir değil.</summary>
     public async Task<int> GetNextNumberAsync()

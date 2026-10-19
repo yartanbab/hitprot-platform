@@ -1094,14 +1094,11 @@ namespace Apya.Platform.Tasks
                 }
             }
 
-            // Bağımlılıkları da temizleyelim (APYA-30)
-            await _dependencyRepository.DeleteDirectAsync(x => x.TaskId == id || x.PredecessorTaskId == id);
-
-            // Sinyal köprüsünün bağı da gitmeli: bağ soft-delete DEĞİL ve (SourceType,
-            // SourceKey) unique — kalırsa kaynak bir daha göreve dönüştürülemezdi.
-            await _issueTaskManager.RemoveLinksOfTaskAsync(id);
-
-            await base.DeleteAsync(id);
+            // Alt görevler de gider — onay metni "bu görev ve tüm alt görevleri" diyor.
+            // Bağımlılık (APYA-30) ve sinyal köprüsü bağı temizliği ağacın tamamı için
+            // TaskManager'da: bağ soft-delete DEĞİL ve (SourceType, SourceKey) unique —
+            // kalırsa kaynak bir daha göreve dönüştürülemezdi.
+            await _taskManager.DeleteWithSubtasksAsync(id);
         }
 
         // --- 5. LIST (Listeleme & Filtreleme) ---
