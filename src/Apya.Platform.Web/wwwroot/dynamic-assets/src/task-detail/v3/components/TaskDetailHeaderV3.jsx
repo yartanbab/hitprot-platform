@@ -66,7 +66,6 @@ export function TaskDetailHeaderV3({
     isWatched,
     onToggleWatch,
     onDuplicate,
-    onArchive,
     onCancelTask,
     onDelete,
     onOpenTransfer,
@@ -118,15 +117,16 @@ export function TaskDetailHeaderV3({
     const run = (fn) => () => { setMenuOpen(false); fn?.(); };
 
     /* `allowed: false` olan madde hiç çizilmez: Çoğalt/Kopyala/Taşı sunucuda TransferAsync
-       (düzenleme), Arşivle UpdateStatus (durum), Sil DeleteAsync (silme) uçlarına gider. */
+       (düzenleme), İptal CancelAsync (durum), Sil DeleteAsync (silme) uçlarına gider.
+       QA-20 · "Arşivle" kaldırıldı (kullanıcı kararı 2026-10-19): görevi Tamamlandı yapıp ilerlemeyi
+       şişiriyordu; tamamlamak durum seçicisinden yapılır. */
     const menuItems = [
         { label: 'Bağlantıyı kopyala', icon: 'fa-link', onClick: run(copyLink) },
         { label: 'Çoğalt', icon: 'fa-copy', allowed: canEdit, onClick: run(onDuplicate) },
         { label: 'Başka projeye kopyala', icon: 'fa-clone', allowed: canEdit, onClick: run(() => onOpenTransfer?.('copy')) },
         { label: 'Taşı (başka proje)', icon: 'fa-right-left', separator: true, allowed: canEdit, onClick: run(() => onOpenTransfer?.('move')) },
         { label: isWatched ? 'Takibi bırak' : 'Takip et', icon: 'fa-eye', onClick: run(onToggleWatch) },
-        { label: 'Arşivle', icon: 'fa-box-archive', separator: true, allowed: canChangeStatus, onClick: run(onArchive) },
-        { label: 'Görevi iptal et', icon: 'fa-ban', allowed: canChangeStatus && task.status !== 0, onClick: run(onCancelTask) },
+        { label: 'Görevi iptal et', icon: 'fa-ban', separator: true, allowed: canChangeStatus && task.status !== 0, onClick: run(onCancelTask) },
         { label: 'Yazdır', icon: 'fa-print', kbd: 'Ctrl P', onClick: run(() => window.print()) },
         { label: 'PDF olarak dışa aktar', icon: 'fa-file-pdf', onClick: run(onExportPdf) },
         { label: 'Sil', icon: 'fa-trash-can', separator: true, danger: true, allowed: canDelete, onClick: run(onDelete) },

@@ -131,19 +131,6 @@ describe('TaskDetailRootV3 — görev detayı açılışta taze gelir (TSK-01)',
 });
 
 describe('TaskDetailRootV3 — form sunucu verisine yeniden temellenir (STA-04)', () => {
-    it('Arşivle sonrası durum güncellenir, form kirli görünmez', async () => {
-        await openLoaded();
-        svc.get.mockImplementation(() => Promise.resolve({ ...TASK, status: 4 }));
-
-        clickMenuItem('Arşivle');
-
-        await waitFor(() => expect(svc.updateStatus).toHaveBeenCalledWith(TASK.id, 4));
-        await waitFor(() => expect(screen.getAllByText('Tamamlandı').length).toBeGreaterThan(0));
-        expect(screen.queryByText(DIRTY)).not.toBeInTheDocument();
-        expect(screen.queryByText('Taslak')).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Kaydet' })).toBeDisabled();
-    });
-
     it('Görevi iptal et anında İptal durumunu yazar, form kirli görünmez (QA-19)', async () => {
         await openLoaded();
         svc.get.mockImplementation(() => Promise.resolve({ ...TASK, status: 0 }));
@@ -234,23 +221,23 @@ describe('TaskDetailRootV3 — form sunucu verisine yeniden temellenir (STA-04)'
     /* Açık eylem kendi yazdığı alanı forma işler: kullanıcının kaydetmediği durum/proje
        seçimi rebase'de "dokunulmuş" sayılıp korunuyordu; Kaydet arşivi/taşımayı geri
        alıyordu. Diğer kaydedilmemiş düzenleme (öncelik) korunmalı. */
-    it('kaydedilmemiş durum seçiminin üstüne Arşivle: Kaydet arşivi geri almaz', async () => {
+    it('kaydedilmemiş durum seçiminin üstüne İptal: Kaydet iptali geri almaz', async () => {
         await openLoaded();
         fireEvent.click(screen.getByRole('button', { name: 'Orta' }));
         fireEvent.click(within(screen.getByText('Öncelik seç').parentElement).getByText('Kritik'));
         fireEvent.click(screen.getAllByRole('button', { name: 'Sürüyor' })[0]);
         fireEvent.click(within(screen.getByText('Durumu değiştir').parentElement).getByText('Testte'));
         await screen.findByText(DIRTY);
-        svc.get.mockImplementation(() => Promise.resolve({ ...TASK, status: 4 }));
+        svc.get.mockImplementation(() => Promise.resolve({ ...TASK, status: 0 }));
 
-        clickMenuItem('Arşivle');
+        clickMenuItem('Görevi iptal et');
 
-        await waitFor(() => expect(svc.updateStatus).toHaveBeenCalledWith(TASK.id, 4));
-        await waitFor(() => expect(screen.getAllByText('Tamamlandı').length).toBeGreaterThan(0));
+        await waitFor(() => expect(svc.cancel).toHaveBeenCalledWith(TASK.id, null));
+        await waitFor(() => expect(screen.getAllByText('İptal').length).toBeGreaterThan(0));
         fireEvent.click(screen.getByRole('button', { name: 'Kaydet' }));
 
         await waitFor(() => expect(svc.update).toHaveBeenCalledTimes(1));
-        expect(svc.update.mock.calls[0][1]).toMatchObject({ status: 4, priority: 4 });
+        expect(svc.update.mock.calls[0][1]).toMatchObject({ status: 0, priority: 4 });
     });
 
     it('kaydedilmemiş proje seçiminin üstüne Taşı: Kaydet taşımayı geri almaz', async () => {
@@ -319,16 +306,16 @@ describe('TaskDetailRootV3 — görev ekrandayken tazeleme düşerse form kalır
 });
 
 describe('TaskDetailRootV3 — yazma izi kapanıştan önce alınır (STA-19)', () => {
-    it('Arşivle: istek sürerken yazma işaretlenmiş olur', async () => {
+    it('İptal et: istek sürerken yazma işaretlenmiş olur', async () => {
         const markSpy = vi.spyOn(taskDetailStore, 'markChanged');
         let release;
-        svc.updateStatus.mockImplementation(() => new Promise((r) => { release = r; }));
+        svc.cancel.mockImplementation(() => new Promise((r) => { release = r; }));
         await openLoaded();
         expect(markSpy).not.toHaveBeenCalled();
 
-        clickMenuItem('Arşivle');
+        clickMenuItem('Görevi iptal et');
 
-        expect(svc.updateStatus).toHaveBeenCalled();
+        expect(svc.cancel).toHaveBeenCalled();
         expect(markSpy).toHaveBeenCalled();
         await act(async () => { release(); });
     });

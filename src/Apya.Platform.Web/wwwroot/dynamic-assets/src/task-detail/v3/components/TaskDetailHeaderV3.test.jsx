@@ -14,7 +14,6 @@ function renderHeader(overrides = {}) {
         onToggleFavorite: vi.fn(),
         onToggleWatch: vi.fn(),
         onDuplicate: vi.fn(),
-        onArchive: vi.fn(),
         onCancelTask: vi.fn(),
         onDelete: vi.fn(),
         onOpenTransfer: vi.fn(),
@@ -134,10 +133,11 @@ describe('TaskDetailHeaderV3 / ⋯ menusu', () => {
         expect(spies.onOpenTransfer).toHaveBeenCalledWith('move');
     });
 
-    it('Arsivle gercek handler i cagirir', () => {
-        const spies = renderHeader();
-        clickMenuItem('Arşivle');
-        expect(spies.onArchive).toHaveBeenCalledTimes(1);
+    /* QA-20 · Kullanıcı kararı: "Arşivle" menüden kalktı (görevi Tamamlandı yapıp ilerlemeyi şişiriyordu). */
+    it('Arsivle menude yok', () => {
+        renderHeader();
+        fireEvent.click(screen.getByRole('button', { name: /diğer seçenekler/i }));
+        expect(screen.queryByText('Arşivle')).not.toBeInTheDocument();
     });
 
     /* QA-19 · Görev detayından iptal; iptal edilmiş görevde madde çizilmez. */
@@ -215,19 +215,19 @@ describe('TaskDetailHeaderV3 / ⋯ menusu', () => {
 describe('TaskDetailHeaderV3 / yetki', () => {
     const openMenuLabels = () => {
         fireEvent.click(screen.getByRole('button', { name: /diğer seçenekler/i }));
-        return ['Çoğalt', 'Başka projeye kopyala', 'Taşı (başka proje)', 'Arşivle', 'Sil']
+        return ['Çoğalt', 'Başka projeye kopyala', 'Taşı (başka proje)', 'Görevi iptal et', 'Sil']
             .filter((label) => screen.queryByText(label));
     };
 
     it('duzenleme yetkisi yoksa transfer maddeleri gizli, okuma maddeleri durur', () => {
         renderHeader({ canEdit: false });
-        expect(openMenuLabels()).toEqual(['Arşivle', 'Sil']);
+        expect(openMenuLabels()).toEqual(['Görevi iptal et', 'Sil']);
         expect(screen.getByText('Bağlantıyı kopyala')).toBeInTheDocument();
         expect(screen.getByText('PDF olarak dışa aktar')).toBeInTheDocument();
         expect(screen.getByText('Takip et')).toBeInTheDocument();
     });
 
-    it('durum ve silme yetkisi yoksa Arsivle ve Sil gizli', () => {
+    it('durum ve silme yetkisi yoksa Iptal ve Sil gizli', () => {
         renderHeader({ canChangeStatus: false, canDelete: false });
         expect(openMenuLabels()).toEqual(['Çoğalt', 'Başka projeye kopyala', 'Taşı (başka proje)']);
     });
