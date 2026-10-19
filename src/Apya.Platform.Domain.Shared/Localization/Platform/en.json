@@ -2207,6 +2207,7 @@
     "Dashboard:Summary:AvgWait": "average wait {0} h",
     "Dashboard:Summary:BudgetUsage": "Budget usage",
     "Dashboard:Summary:DueTrend": "Delivery distribution",
+    "RecordSearch:UnknownTenant": "Unknown customer",
     "Dashboard:Deliveries:Overdue": "Overdue",
     "Dashboard:Deliveries:Title": "Due this month",
     "Dashboard:Deliveries:Subtitle": "{0} items · {1} overdue",
