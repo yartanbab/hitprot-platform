@@ -191,6 +191,41 @@ public class GrantToday_Tests : PlatformEntityFrameworkCoreTestBase
         item.AssignedUserId.ShouldBe(consultant);
     }
 
+    /// <summary>
+    /// H-03 · Son mesaj karşı taraftansa Bugün'de "yanıt bekleyen mesaj" işi çıkar: firma yazdıysa
+    /// danışmanda, danışman yazdıysa firmada. Kendi yazdığı son mesaj iş üretmez.
+    /// </summary>
+    [Fact]
+    public async Task Son_mesaj_karsi_taraftansa_yanit_bekleyen_is_cikar()
+    {
+        var (_, call) = await CreateHostCallAsync("Mesaj Programı", daysToDeadline: 40);
+        var tenant = await CreateTenantAsync("Mesajlaşan Firma");
+        var application = await CreateApplicationAsync(tenant, call, firmDocs: 0);
+        var messages = GetRequiredService<IRepository<GrantApplicationMessage, Guid>>();
+        using (_currentTenant.Change(tenant))
+        {
+            await messages.InsertAsync(new GrantApplicationMessage(Guid.NewGuid(), tenant, application.Id,
+                Guid.NewGuid(), "Firma Yetkilisi", GrantPartyRole.Firma, "Bütçe kalemini nasıl girelim?"), autoSave: true);
+        }
+
+        var host = await _today.GetAsync();
+        host.Items.Concat(host.MoreItems).ShouldContain(i =>
+            i.ApplicationId == application.Id && i.Kind == GrantTodayItemKind.MessageAwaitingReply);
+
+        using (_currentTenant.Change(tenant))
+        {
+            var firm = await _today.GetAsync();
+            firm.Items.Concat(firm.MoreItems).ShouldNotContain(i => i.Kind == GrantTodayItemKind.MessageAwaitingReply,
+                "firmanın kendi yazdığı son mesaj firmaya iş üretmez");
+
+            await messages.InsertAsync(new GrantApplicationMessage(Guid.NewGuid(), tenant, application.Id,
+                Guid.NewGuid(), "Danışman", GrantPartyRole.Danisman, "Personel kalemine yazın."), autoSave: true);
+            firm = await _today.GetAsync();
+            firm.Items.Concat(firm.MoreItems).ShouldContain(i =>
+                i.ApplicationId == application.Id && i.Kind == GrantTodayItemKind.MessageAwaitingReply);
+        }
+    }
+
     [Fact]
     public async Task Host_bekleyen_ilgi_taleplerini_tek_satirda_sayar()
     {
