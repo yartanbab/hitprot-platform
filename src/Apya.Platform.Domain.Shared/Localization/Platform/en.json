@@ -600,6 +600,8 @@
     "Notification:List:LoadFailed": "Notifications could not be loaded.",
     "Notification:TaskAssigned:Title": "New Task",
     "Notification:TaskAssigned:Body": "\"{0}\" was assigned to you.",
+    "Notification:ProjectMemberAdded:Title": "Added to a project",
+    "Notification:ProjectMemberAdded:Body": "You were added to the \"{0}\" project team.",
     "Notification:TaskComment:Title": "Task Comment",
     "Notification:TaskComment:Body": "{0}: {1}",
     "Notification:TaskStatus:Title": "Status Update",

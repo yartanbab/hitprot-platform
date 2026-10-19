@@ -485,6 +485,8 @@
         "Notification:List:LoadFailed": "Bildirimler yüklenemedi.",
         "Notification:TaskAssigned:Title": "Yeni Görev",
         "Notification:TaskAssigned:Body": "\"{0}\" size atandı.",
+        "Notification:ProjectMemberAdded:Title": "Projeye eklendiniz",
+        "Notification:ProjectMemberAdded:Body": "\"{0}\" projesinin ekibine eklendiniz.",
         "Notification:TaskComment:Title": "Görev Yorumu",
         "Notification:TaskComment:Body": "{0}: {1}",
         "Notification:TaskStatus:Title": "Durum Güncellemesi",
