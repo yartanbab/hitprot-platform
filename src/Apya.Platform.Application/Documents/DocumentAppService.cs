@@ -160,7 +160,7 @@ public class DocumentAppService :
         var userIds = attachments.Select(x => x.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
         var userQueryable = await _identityRepository.GetQueryableAsync();
         var users = await userQueryable.Where(u => userIds.Contains(u.Id)).ToListAsync();
-        var userDict = users.ToDictionary(k => k.Id, v => v.UserName);
+        var userDict = users.ToDictionary(k => k.Id, v => Apya.Platform.Tasks.TaskPersonName.Of(v.Name, v.Surname, v.UserName));
 
         return ordered
             .Select(x => new DocumentAttachmentDto
@@ -234,7 +234,7 @@ public class DocumentAppService :
         var userIds = logs.Select(x => x.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
         var userQueryable = await _identityRepository.GetQueryableAsync();
         var users = await userQueryable.Where(u => userIds.Contains(u.Id)).ToListAsync();
-        var userDict = users.ToDictionary(k => k.Id, v => v.UserName);
+        var userDict = users.ToDictionary(k => k.Id, v => Apya.Platform.Tasks.TaskPersonName.Of(v.Name, v.Surname, v.UserName));
 
         return logs
             .OrderByDescending(x => x.CreationTime)
