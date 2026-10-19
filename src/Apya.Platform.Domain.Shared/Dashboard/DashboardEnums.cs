@@ -31,7 +31,9 @@ public enum DeliveryGroup
     ThisWeek = 0,
     NextWeek = 1,
     EndOfMonth = 2,
-    Later = 3
+    Later = 3,
+    /// <summary>QA-46 · Son tarihi bugünden önce olan açık iş — "Bu hafta" altına düşmez.</summary>
+    Overdue = 4
 }
 
 /// <summary>

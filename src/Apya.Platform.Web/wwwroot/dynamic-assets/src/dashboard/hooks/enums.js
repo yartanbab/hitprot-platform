@@ -14,7 +14,7 @@
  */
 
 const DELIVERY_STATE = ['Upcoming', 'OnTrack', 'InReview', 'Overdue'];
-const DELIVERY_GROUP = ['ThisWeek', 'NextWeek', 'EndOfMonth', 'Later'];
+const DELIVERY_GROUP = ['ThisWeek', 'NextWeek', 'EndOfMonth', 'Later', 'Overdue'];
 const HEALTH_STATE   = ['Healthy', 'Attention', 'Risky'];
 const BLOCK_REASON   = ['WaitingReview', 'Dependency', 'Unassigned'];
 const TREND          = ['Flat', 'Up', 'Down'];

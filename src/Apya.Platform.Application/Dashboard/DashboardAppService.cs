@@ -146,6 +146,9 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
 
     // ─────────────────────────── Teslimler ───────────────────────────
 
+    /// <summary>QA-46 · Teslim kartında gösterilen en çok gecikmiş iş; tam sayı "Gecikmiş" kutucuğunda.</summary>
+    private const int DeliveryOverdueRows = 10;
+
     public async Task<List<DeliveryItemDto>> GetDeliveriesAsync(DashboardQueryDto input)
     {
         var today = Clock.Now.Date;
@@ -162,8 +165,15 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
             query = query.Where(t => t.ProjectId == input.ProjectId.Value);
         }
 
-        var tasks = await AsyncExecuter.ToListAsync(
-            query.OrderBy(t => t.DueDate).Take(_options.MaxListRows));
+        // QA-46 · Gecikmiş ve dönemin işleri AYRI sınırla çekilir: tek "artan tarih + 50" sorgusunda
+        // en eski gecikmişler sınırı dolduruyor, dönemin işleri hiç görünmüyordu.
+        var overdue = await AsyncExecuter.ToListAsync(
+            query.Where(t => t.DueDate!.Value < today)
+                 .OrderByDescending(t => t.DueDate).Take(DeliveryOverdueRows));
+        var upcoming = await AsyncExecuter.ToListAsync(
+            query.Where(t => t.DueDate!.Value >= today)
+                 .OrderBy(t => t.DueDate).Take(_options.MaxListRows));
+        var tasks = overdue.Concat(upcoming).ToList();
 
         // N+1 önleme: proje adları ve atanan kullanıcılar tek sorguda toplanır.
         var projectNames = await GetProjectNamesAsync(tasks.Select(t => t.ProjectId));
@@ -172,8 +182,8 @@ public class DashboardAppService : PlatformAppService, IDashboardAppService
         return tasks.Select(t =>
         {
             var due = t.DueDate!.Value;
-            var group = DashboardPeriod.GroupFor(due, today);
             var isOverdue = due.Date < today;
+            var group = isOverdue ? DeliveryGroup.Overdue : DashboardPeriod.GroupFor(due, today);
             var user = t.AssigneeId.HasValue && users.TryGetValue(t.AssigneeId.Value, out var u) ? u : null;
 
             return new DeliveryItemDto

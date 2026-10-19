@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { CardShell } from './CardShell';
-import { useDeliveries } from '../hooks/useDashboard';
+import { useDeliveries, useSummary } from '../hooks/useDashboard';
 import { EmptyState } from '../../components/ui';
 import { cn } from '../../lib/utils';
 import { t } from '../../lib/i18n';
@@ -12,9 +12,11 @@ import { t } from '../../lib/i18n';
  * Aksiyon = navigasyon: satır tıklaması görev sayfasına gider, satır içi düzenleme yok.
  */
 
-export const GROUP_ORDER = ['ThisWeek', 'NextWeek', 'EndOfMonth', 'Later'];
+/* QA-46: gecikmişler kendi başlığında ve en üstte (eskiden "Bu hafta" altına düşüyordu). */
+export const GROUP_ORDER = ['Overdue', 'ThisWeek', 'NextWeek', 'EndOfMonth', 'Later'];
 
 export const GROUP_LABEL = {
+    Overdue:    ['Dashboard:Deliveries:Overdue', 'Gecikmiş'],
     ThisWeek:   ['Dashboard:Deliveries:ThisWeek', 'Bu hafta'],
     NextWeek:   ['Dashboard:Deliveries:NextWeek', 'Gelecek hafta'],
     EndOfMonth: ['Dashboard:Deliveries:EndOfMonth', 'Ay sonu'],
@@ -36,6 +38,10 @@ function DeliveriesCard({ filter, editMode }) {
     }, [items]);
 
     const overdueCount = items.filter((i) => i.state === 'Overdue').length;
+    /* QA-46: kart en yeni gecikmişlerin bir kısmını gösterir; alt başlıktaki sayı "Gecikmiş"
+       kutucuğuyla AYNI kaynaktan (toplam) gelir, "iş" dönemin teslimleridir. */
+    const summary = useSummary(filter);
+    const overdueTotal = summary.data?.overdue ?? overdueCount;
 
     return (
         <CardShell
@@ -44,7 +50,7 @@ function DeliveriesCard({ filter, editMode }) {
             /* Yüklenirken (geri yükleme penceresi dahil) ve hatada items=[] "sıfır iş" demek
                değildir; EffortDistributionCard/StatisticsBand'deki koşullu alt başlık deseni. */
             subtitle={query.isSuccess
-                ? t('Dashboard:Deliveries:Subtitle', '{0} iş · {1} gecikmiş', items.length, overdueCount)
+                ? t('Dashboard:Deliveries:Subtitle', '{0} iş · {1} gecikmiş', items.length - overdueCount, overdueTotal)
                 : undefined}
             actions={
                 <a href="/Tasks" className="text-[12.5px] font-medium text-text-link hover:underline">
