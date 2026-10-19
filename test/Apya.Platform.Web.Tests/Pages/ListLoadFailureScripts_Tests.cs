@@ -257,17 +257,20 @@ public class ListLoadFailureScripts_Tests
     }
 
     /// <summary>
-    /// Yan yüklemeler tek kanal kuralına uyar (karar 2): KPI şeridindeki görev sayaçları düşerse ABP
-    /// penceresi açılmaz (liste kartıyla birlikte ikinci kanal olurdu); sayaç gelmemişse "—" kalır.
+    /// QA-01/02 · KPI şeridindeki görev sayaçları KARTLARLA AYNI kümeden gelir; ayrı görev servisi
+    /// yan yüklemesi yok (host görünümünde yalnız host görevlerini sayıyordu). Yan yükleme olmadığı
+    /// için ikinci hata kanalı da doğamaz; liste gelmemişse sayaçlar "—" kalır.
     /// </summary>
     [Fact]
-    public void Projeler_gorev_sayaclari_yan_yukleme_pencere_acmaz()
+    public void Projeler_gorev_sayaclari_kartlarla_ayni_kumeden_gelir()
     {
-        var kpis = Between(Web("Pages", "Projects", "Index.js"), "function loadTaskKpis() {", "// ======");
+        var script = Web("Pages", "Projects", "Index.js");
 
-        Count(kpis, "taskService.getList(").ShouldBe(2);
-        Count(kpis, "}, { abpHandleError: false }).then(function (r) {").ShouldBe(2);
-        Count(kpis, "renderKpis(); }, function () { });").ShouldBe(2, "reddin sessiz dalı olmalı");
+        script.ShouldNotContain("loadTaskKpis");
+        var kpis = Between(script, "function renderKpis() {", "function renderFilters() {");
+        kpis.ShouldContain("$('#KpiOverdueTasks').text(all.reduce(function (s, p) { return s + (p.overdueTaskCount || 0); }, 0));");
+        kpis.ShouldContain("$('#KpiDueSoonTasks').text(all.reduce(function (s, p) { return s + (p.dueSoonTaskCount || 0); }, 0));");
+        kpis.ShouldContain("$('#KpiOverdueTasks, #KpiDueSoonTasks').text('—');");
     }
 
     // ─────────────────────────── RES-06: Bildirimler ───────────────────────────
