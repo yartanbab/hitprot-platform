@@ -58,6 +58,16 @@ public static class ReleaseNoteCatalog
                 "metinden sildiğiniz bahsetme bildirim üretmez."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Yoruma dosya ekleyebiliyorsunuz",
+                "Yorum kutusundaki ataç düğmesiyle seçtiğiniz dosya görevin Dosyalar sekmesine yüklenir ve yoruma " +
+                "\"📎 dosya adı\" satırı olarak eklenir; yorumu okuyan kişi bu satıra tıklayarak dosyayı açar."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Yanıtlarda da kişiden bahsedebiliyorsunuz",
+                "Bir yoruma yanıt yazarken \"@Ad Soyad\" yazdığınız kişi de \"Sizden bahsedildi\" bildirimi alır " +
+                "(yalnız görevi görebilen kişiler)."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Takip ettiğiniz görevlerden haber alıyorsunuz",
                 "Görev menüsündeki \"Takip et\" artık işe yarıyor: takip ettiğiniz görevin yorumları, durum " +
                 "değişiklikleri ve son tarih uyarıları size de bildirim olarak gelir. Görev başkasına " +
