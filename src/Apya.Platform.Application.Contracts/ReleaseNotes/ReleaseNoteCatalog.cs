@@ -98,6 +98,13 @@ public static class ReleaseNoteCatalog
                 "olur. Gizli görevler bildirilmez."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Vadesi geçen faturalar bildiriliyor",
+                "Bir faturanın vadesi geçtiği hâlde fatura kapanmadıysa faturayı kesen kişi ve projenin " +
+                "sorumluları bir kez bildirim alır: satış faturası için \"Tahsilatı geciken fatura\", alış " +
+                "faturası için \"Ödemesi geciken fatura\". Bildirime tıklayınca fatura listede seçili açılır. " +
+                "Yalnız faturaları görmeye yetkili kişilere gider."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Dövizli projelerde TCMB kurları her iş günü kendiliğinden ekleniyor",
                 "Projenizin ya da donörünüzün para birimi TL dışındaysa Merkez Bankası döviz alış kurları (USD, " +
                 "EUR, GBP ve projelerinizdeki döviz) her iş günü kendiliğinden kaydedilir; bütçe ve donör " +
