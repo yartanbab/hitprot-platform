@@ -79,11 +79,13 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
     private sealed class CapturingJobManager : IBackgroundJobManager
     {
         public List<WebPushJobArgs> Jobs { get; } = new();
+        public List<BackgroundJobPriority> Priorities { get; } = new();
 
         public Task<string> EnqueueAsync<TArgs>(
             TArgs args, BackgroundJobPriority priority = BackgroundJobPriority.Normal, TimeSpan? delay = null)
         {
             Jobs.Add((WebPushJobArgs)(object)args!);
+            Priorities.Add(priority);
             return Task.FromResult(Guid.NewGuid().ToString());
         }
     }
@@ -112,6 +114,22 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
 
         jobs.Select(j => j.DeviceId).ShouldBe(new[] { first.Id, second.Id }, ignoreOrder: true);
         jobs.ShouldAllBe(j => j.Urgent, "yüksek önemli bildirim acil gönderilir");
+    }
+
+    /// <summary>N-02 · Yüksek/Kritik push kuyrukta öne geçer (geniş dağıtımda sıradanların arkasında beklemez).</summary>
+    [Fact]
+    public async Task Acil_push_yuksek_oncelikle_kuyruga_girer()
+    {
+        var user = Guid.NewGuid();
+        await DeviceAsync(user);
+        var jobs = new CapturingJobManager();
+        var handler = new WebPushNotificationHandler(
+            _deviceRepository, _preferenceRepository, jobs, _currentTenant,
+            Options.Create(Enabled()), NullLogger<WebPushNotificationHandler>.Instance);
+
+        await WithUnitOfWorkAsync(() => handler.HandleEventAsync(Event(user, Guid.NewGuid())));
+
+        jobs.Priorities.ShouldBe(new[] { BackgroundJobPriority.High });
     }
 
     /// <summary>

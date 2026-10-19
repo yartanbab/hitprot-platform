@@ -44,6 +44,10 @@ public class PlatformDomainModule : AbpModule
         Configure<Apya.Platform.Notifications.WebPushOptions>(
             context.Services.GetConfiguration().GetSection("WebPush"));
 
+        // N-02 · Arka plan iş kuyruğu (push, kritik e-posta) saniyede bir yoklanır; ABP varsayılanı 5 sn idi
+        // ve bildirim kilit ekranına 5 sn'ye kadar gecikiyordu. Sorgu hafif (dizinli NextTryTime).
+        Configure<Volo.Abp.BackgroundJobs.AbpBackgroundJobWorkerOptions>(options => options.JobPollPeriod = 1000);
+
         // Dil seçicide yalnız platform çevirisi olan diller durur (X-05). Şablondan gelen öbür 16 dilin
         // dosyasında 5 anahtar vardı; o dili seçen ekranın neredeyse tamamını Türkçe görüyordu. Yeni dil,
         // çevirisiyle birlikte eklenir — LanguageSelector_Tests eşiği ölçer.

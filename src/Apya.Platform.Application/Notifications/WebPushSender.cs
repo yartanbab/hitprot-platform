@@ -16,8 +16,10 @@ namespace Apya.Platform.Notifications;
 /// </summary>
 public class WebPushSender : IWebPushSender, ITransientDependency
 {
-    /// <summary>Tarayıcı kapalıyken bildirim servisinin mesajı tutacağı süre (saniye).</summary>
+    /// <summary>Tarayıcı kapalıyken bildirim servisinin mesajı tutacağı süre (saniye). N-02: acil
+    /// (Yüksek/Kritik) bildirim 3 gün tutulur — hafta sonu kapalı kalan telefon da pazartesi alır.</summary>
     private const int TimeToLiveSeconds = 24 * 60 * 60;
+    private const int UrgentTimeToLiveSeconds = 3 * 24 * 60 * 60;
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly WebPushOptions _options;
@@ -47,7 +49,7 @@ public class WebPushSender : IWebPushSender, ITransientDependency
 
         var message = new PushMessage(payloadJson)
         {
-            TimeToLive = TimeToLiveSeconds,
+            TimeToLive = urgent ? UrgentTimeToLiveSeconds : TimeToLiveSeconds,
             Urgency = urgent ? PushMessageUrgency.High : PushMessageUrgency.Normal,
             Topic = topic,
         };
