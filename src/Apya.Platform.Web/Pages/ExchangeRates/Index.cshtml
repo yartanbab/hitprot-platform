@@ -20,10 +20,12 @@
             <abp-column size-md="_6" class="text-end">
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.ExchangeRates.Create))
                 {
+                    <input type="date" id="SyncTcmbDate" class="form-control form-control-sm d-inline-block w-auto me-1"
+                           aria-label="TCMB kur tarihi (boşsa bugünkü bülten)" />
                     <button id="SyncTcmbButton" class="btn btn-outline-secondary btn-sm me-2">
                         <i class="fa fa-sync"></i> TCMB'den Güncelle
                     </button>
-                    <apya-hint placement="bottom" text="Merkez Bankası'nın bugünkü kur listesinden yalnız USD, EUR ve GBP için Döviz Satış kurunu çeker ve bugünün tarihiyle kaydeder. Aynı güne ait kayıt varsa üzerine yazılır; diğer para birimlerini elle eklemeniz gerekir." />
+                    <apya-hint placement="bottom" text="Merkez Bankası bülteninden yalnız USD, EUR ve GBP için Döviz Alış kurunu çeker ve bültenin tarihiyle kaydeder (hafta sonu son iş gününün bülteni gelir). Tarih seçerseniz o günün arşiv bülteni çekilir. Aynı güne ait kayıt varsa üzerine yazılır; diğer para birimlerini elle eklemeniz gerekir." />
                     <button id="NewExchangeRateButton" class="btn btn-primary btn-sm">
                         <i class="fa fa-plus"></i> Yeni Kur Ekle
                     </button>

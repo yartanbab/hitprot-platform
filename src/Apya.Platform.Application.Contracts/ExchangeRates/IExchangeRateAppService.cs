@@ -11,6 +11,9 @@ public interface IExchangeRateAppService :
         GetExchangeRatesInput,
         CreateUpdateExchangeRateDto>
 {
-    /// <summary>TCMB günlük kurlarını çekip USD/EUR/GBP → TRY kayıtlarını upsert eder.</summary>
-    Task<int> SyncFromTcmbAsync();
+    /// <summary>
+    /// TCMB kur bülteninden USD/EUR/GBP → TRY döviz ALIŞ kurlarını (kullanıcı kararı 2026-10-19) bültenin
+    /// kendi tarihiyle upsert eder. <paramref name="date"/> verilirse o günün arşiv bülteni çekilir.
+    /// </summary>
+    Task<int> SyncFromTcmbAsync(DateTime? date = null);
 }
