@@ -76,7 +76,7 @@ public class NotificationManager : DomainService
 
             if (existing != null)
             {
-                existing.Repeat(title, body, actorUserId, actorName);
+                existing.Repeat(title, body, actorUserId, actorName, effectiveSeverity);
                 await _notificationRepository.UpdateAsync(existing);
                 await PublishCreatedEventAsync(existing);
                 await TrySendCriticalEmailAsync(userId, preference.Email, effectiveSeverity, title, body);

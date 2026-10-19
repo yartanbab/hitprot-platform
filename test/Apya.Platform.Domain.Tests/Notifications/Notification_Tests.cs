@@ -59,6 +59,19 @@ public class Notification_Tests
     }
 
     [Fact]
+    public void Repeat_Raises_But_Never_Lowers_Severity()
+    {
+        // N-08 · Gruptaki daha önemli olay satırı yükseltir (push acil gider); daha önemsiz olay düşürmez.
+        var notification = Build(severity: NotificationSeverity.Normal);
+
+        notification.Repeat("kritik", "gövde", severity: NotificationSeverity.High);
+        notification.Severity.ShouldBe(NotificationSeverity.High);
+
+        notification.Repeat("sıradan", "gövde", severity: NotificationSeverity.Info);
+        notification.Severity.ShouldBe(NotificationSeverity.High);
+    }
+
+    [Fact]
     public void Repeat_Should_Not_Resurrect_A_Read_Notification()
     {
         // Gruplama yalnızca okunmamış kayıtlarda uygulanır; okunmuş bir bildirim
