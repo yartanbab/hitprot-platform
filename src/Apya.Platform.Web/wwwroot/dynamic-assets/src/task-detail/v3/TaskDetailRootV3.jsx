@@ -19,6 +19,7 @@ import { getTaskPermissions } from '../taskPermissions';
 import { useDirtyGuard } from '../../lib/feedback/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useElementWidth, isGeneralStacked } from '../hooks/useElementWidth';
 import { useTaskForm } from '../hooks/useTaskForm';
 import { useTaskChecklist } from '../hooks/useTaskChecklist';
 import { useAssigneeOptions } from '../hooks/useAssigneeOptions';
@@ -96,6 +97,11 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
        at" ve "Kaydet ve çık" ilk basışta çıkarmıyordu (canlıda ölçüldü). */
     useTaskUrlSync(presentation === 'page' ? null : currentTaskId);
     usePageTitle(presentation === 'page' ? task?.title : null);
+    /* QA-47: Genel sekmesinin kırılımı viewport'a değil KABA bakar. Sayfa kipinde görev, uygulama
+       kenar çubuğu ve özellik rayının yanında ~580px'lik kapta yaşıyor: 1280px ekranda "geniş"
+       sanılıp açıklama ve yorumlar 330px'lik Detaylar panelinin yanında 129px'e sıkışıyordu. */
+    const [generalRef, generalWidth] = useElementWidth();
+    const stackGeneral = isGeneralStacked(generalWidth);
 
     /* Sunucudan gelen favori/takip durumunu bir kez yerel state'e al — düğmeler
        optimistik çalışıyor, her refetch'te kullanıcının tıklaması geri alınmasın. */
@@ -445,7 +451,12 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
     const isGeneral = activeTabCode === 'general';
 
     const tabContent = isGeneral ? (
-        <div className="grid grid-cols-[minmax(0,1fr)_330px] lt-1080:grid-cols-[minmax(0,1fr)] gap-5 items-start">
+        <div
+            ref={generalRef}
+            className={`grid gap-5 items-start ${stackGeneral
+                ? 'grid-cols-[minmax(0,1fr)]'
+                : 'grid-cols-[minmax(0,1fr)_330px] lt-1080:grid-cols-[minmax(0,1fr)]'}`}
+        >
             <TaskGeneralTabV3
                 task={task}
                 onFieldChange={form.setField}
@@ -454,7 +465,10 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                 readOnly={!canEdit}
                 currentUserName={currentUserDisplayName()}
             />
-            <div className="w-full lt-1080:grid lt-1080:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] lt-1080:gap-3.5">
+            <div className={stackGeneral
+                ? 'w-full grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3.5'
+                : 'w-full lt-1080:grid lt-1080:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] lt-1080:gap-3.5'}
+            >
                 <TaskSidePanelV3 task={task} nameById={assignees.nameById} />
             </div>
         </div>
