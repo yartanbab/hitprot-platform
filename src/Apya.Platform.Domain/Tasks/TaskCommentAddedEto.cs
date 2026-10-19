@@ -21,6 +21,9 @@ public class TaskCommentAddedEto
     public string CommenterName { get; set; } = string.Empty;
     public string CommentText   { get; set; } = string.Empty;
 
+    /// <summary>N-03 · Yanıt verilen yorumun yazarı — "Yorumunuza yanıt" alır (kök yorumda null).</summary>
+    public Guid? ReplyToUserId { get; set; }
+
     /// <summary>P-09 · Bahsedilen kişiler — "Sizden bahsedildi" alır, ayrıca genel yorum bildirimi almaz.</summary>
     public List<Guid> MentionedUserIds { get; set; } = new();
 }

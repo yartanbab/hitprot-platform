@@ -122,7 +122,15 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
     /// defterinde hazırdı, hiç yayınlanmıyordu). Kendini ekleyene gitmez. "Atananlardan doldur"
     /// zaten görevde çalışan kişileri eklediği için bildirim üretmez.
     /// </summary>
-    private async Task NotifyAddedAsync(Project project, Guid userId)
+    private Task NotifyAddedAsync(Project project, Guid userId)
+        => NotifyMemberAsync(project, userId, NotificationType.ProjectMemberAdded,
+            L["Notification:ProjectMemberAdded:Title"], L["Notification:ProjectMemberAdded:Body", project.Name]);
+
+    /// <summary>
+    /// P-09 / N-03 · Ekip değişikliği kişinin kendisine bildirilir (eklendi, çıkarıldı, rolü değişti).
+    /// Kendi değişikliğini yapana gitmez. Rol önemlidir: "Sorumlu" bütçe ve gösterge uyarılarını alır.
+    /// </summary>
+    private async Task NotifyMemberAsync(Project project, Guid userId, NotificationType type, string title, string body)
     {
         if (userId == CurrentUser.Id)
         {
@@ -130,10 +138,7 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
         }
 
         await _notificationManager.PublishAsync(
-            userId,
-            L["Notification:ProjectMemberAdded:Title"],
-            L["Notification:ProjectMemberAdded:Body", project.Name],
-            NotificationType.ProjectMemberAdded,
+            userId, title, body, type,
             entityType: "Project",
             entityId: project.Id,
             actorUserId: CurrentUser.Id,
@@ -184,8 +189,17 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
     public async Task<ProjectMemberDto> UpdateRoleAsync(Guid id, UpdateProjectMemberRoleDto input)
     {
         var member = await _memberRepository.GetAsync(id);
+        var roleChanged = member.Role != input.Role;
         member.SetRole(input.Role);
         await _memberRepository.UpdateAsync(member, autoSave: true);
+
+        if (roleChanged)
+        {
+            var project = await EnsureProjectExistsAsync(member.ProjectId);
+            await NotifyMemberAsync(project, member.UserId, NotificationType.ProjectMemberRoleChanged,
+                L["Notification:ProjectMemberRoleChanged:Title"],
+                L["Notification:ProjectMemberRoleChanged:Body", project.Name, L["Notification:ProjectRole:" + input.Role]]);
+        }
 
         var user = await _userRepository.FindAsync(member.UserId);
         return ToDto(member, user, 0);
@@ -200,6 +214,10 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
         // (bkz. ProjectMember sınıf notu). Ekipten çıkan birinin görevleri
         // sessizce sahipsiz kalsaydı iş kaybolurdu.
         await _memberRepository.DeleteAsync(member, autoSave: true);
+
+        var project = await EnsureProjectExistsAsync(member.ProjectId);
+        await NotifyMemberAsync(project, member.UserId, NotificationType.ProjectMemberRemoved,
+            L["Notification:ProjectMemberRemoved:Title"], L["Notification:ProjectMemberRemoved:Body", project.Name]);
     }
 
     /// <summary>

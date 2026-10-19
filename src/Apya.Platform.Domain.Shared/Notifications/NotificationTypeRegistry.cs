@@ -78,6 +78,32 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Projects, NotificationSeverity.Normal,
                 "fa fa-user-plus", "/Projects/ProjectDetails/{0}", GroupSimilar: false),
 
+            // N-03 · Görevin muhatabına giden değişiklikler. Son tarih aynı görevde art arda değişirse
+            // tek satırda sayılır; yorum yanıtları da yorum gibi gruplanır.
+            [NotificationType.CommentReplied] = new(
+                NotificationCategory.Tasks, NotificationSeverity.Normal,
+                "fa fa-reply", "/Tasks/Detail/{0}", GroupSimilar: true),
+
+            [NotificationType.TaskUnassigned] = new(
+                NotificationCategory.Tasks, NotificationSeverity.Normal,
+                "fa fa-user-minus", "/Tasks/Detail/{0}", GroupSimilar: false),
+
+            [NotificationType.TaskDueDateChanged] = new(
+                NotificationCategory.Tasks, NotificationSeverity.Normal,
+                "fa fa-calendar-day", "/Tasks/Detail/{0}", GroupSimilar: true),
+
+            [NotificationType.TaskPriorityRaised] = new(
+                NotificationCategory.Tasks, NotificationSeverity.High,
+                "fa fa-angles-up", "/Tasks/Detail/{0}", GroupSimilar: false),
+
+            [NotificationType.ProjectMemberRemoved] = new(
+                NotificationCategory.Projects, NotificationSeverity.Normal,
+                "fa fa-user-xmark", "/Projects/ProjectDetails/{0}", GroupSimilar: false),
+
+            [NotificationType.ProjectMemberRoleChanged] = new(
+                NotificationCategory.Projects, NotificationSeverity.Normal,
+                "fa fa-user-gear", "/Projects/ProjectDetails/{0}", GroupSimilar: false),
+
             // Aşağıdaki hedef sayfalar henüz tekil kayda odaklanmayı desteklemiyor;
             // şablonda {0} yok, ilgili listeye götürüyoruz.
             // DOC-05 / NTF-07: Bağlantı belgenin durduğu klasörü açar. Önem "Normal"; 7 gün

@@ -19,12 +19,15 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
     private readonly IRepository<BoardColumn, Guid> _columnRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
+    private readonly TaskManager _taskManager;
 
     public BoardColumnAppService(
         IRepository<BoardColumn, Guid> columnRepository,
         IRepository<TaskItem, Guid> taskRepository,
-        IRepository<Project, Guid> projectRepository)
+        IRepository<Project, Guid> projectRepository,
+        TaskManager taskManager)
     {
+        _taskManager = taskManager;
         _projectRepository = projectRepository;
         _columnRepository = columnRepository;
         _taskRepository = taskRepository;
@@ -140,10 +143,15 @@ public class BoardColumnAppService : PlatformAppService, IBoardColumnAppService
         // sistem kolonunda bağ TEMİZLENİR (kart durum kolonunda yaşar), özel
         // kolonda KORUNUR (kart kolonda durur, durumu da hizalanır).
         // Clock.Now ŞART: Done'a taşınınca CompletedDate dolsun (yoksa null kalır).
+        var before = TaskChangeSnapshot.Of(task); // N-03
         task.ChangeStatus((Apya.Platform.Tasks.TaskStatus)col.GetEffectiveStatusValue(), Clock.Now);
         task.MoveToColumn(col.IsSystem ? (Guid?)null : columnId);
 
         await _taskRepository.UpdateAsync(task, autoSave: true);
+
+        // N-03 · Panoda sütun taşıması durumu değiştirir; eskiden bildirimsizdi (durum ucundan farklı olarak).
+        await _taskManager.PublishChangesAsync(task, before, CurrentUser.Id,
+            TaskPersonName.Of(CurrentUser.Name, CurrentUser.SurName, CurrentUser.UserName));
     }
 
     [Authorize(PlatformPermissions.Projects.Edit)]
