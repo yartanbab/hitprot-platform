@@ -11,7 +11,7 @@ $(function () {
                        'InterestAnswered', 'InterestReceived', 'CallClosed', 'MeetingProposed', 'MeetingAnswered',
                        'IdeaLinked', 'IdeaInvited', 'ApplicationSubmitted',
                        'ConvertedToProject', 'ConversionPending', 'SubmissionDeadlineNear', 'IdeaShared',
-                       'AppealResolved'];
+                       'AppealResolved', 'MessageReceived', 'HandedOver'];
 
     var model = null;
     var selectedId = null;

@@ -34,7 +34,9 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.ConversionPending]         = NotificationType.GrantConversionPending,
             [GrantNotificationTrigger.SubmissionDeadlineNear]   = NotificationType.GrantSubmissionDeadlineNear,
             [GrantNotificationTrigger.IdeaShared]                = NotificationType.GrantIdeaShared,
-            [GrantNotificationTrigger.AppealResolved]            = NotificationType.GrantAppealResolved
+            [GrantNotificationTrigger.AppealResolved]            = NotificationType.GrantAppealResolved,
+            [GrantNotificationTrigger.MessageReceived]           = NotificationType.GrantMessageReceived,
+            [GrantNotificationTrigger.HandedOver]                = NotificationType.GrantHandedOver
         };
 
     /// <summary>
@@ -122,7 +124,13 @@ public static class GrantNotificationTriggerRegistry
 
             // {sonuç} hazır bir ifadedir ("kabul edildi" / "reddedildi"): gövde cümlenin içinde kullanır.
             [GrantNotificationTrigger.AppealResolved] =
-                ["{çağrı_adı}", "{sonuç}"]
+                ["{çağrı_adı}", "{sonuç}"],
+
+            [GrantNotificationTrigger.MessageReceived] =
+                ["{gönderen}", "{çağrı_adı}", "{mesaj}"],
+
+            [GrantNotificationTrigger.HandedOver] =
+                ["{devreden}", "{çağrı_adı}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;
