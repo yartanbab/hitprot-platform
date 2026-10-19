@@ -198,7 +198,7 @@ namespace Apya.Platform.Tasks
             {
                 var attUserIds = task.Attachments.Select(a => a.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
                 var attUsers = await _identityRepository.GetListAsync(u => attUserIds.Contains(u.Id));
-                var userMap = attUsers.ToDictionary(u => u.Id, u => u.UserName);
+                var userMap = attUsers.ToDictionary(u => u.Id, u => TaskPersonName.Of(u.Name, u.Surname, u.UserName));
                 
                 foreach (var a in taskDto.Attachments)
                 {
@@ -749,7 +749,7 @@ namespace Apya.Platform.Tasks
                 .Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
             var userQueryable = await _identityRepository.GetQueryableAsync();
             var users = await AsyncExecuter.ToListAsync(userQueryable.Where(u => userIds.Contains(u.Id)));
-            var userDict = users.ToDictionary(k => k.Id, v => v.UserName);
+            var userDict = users.ToDictionary(k => k.Id, v => TaskPersonName.Of(v.Name, v.Surname, v.UserName));
 
             // Misafir yüklemesinde CreatorId yoktur; ad paylaşım linkinden çözülür
             // (GetAttachmentsAsync ile aynı kural — orada "Sistem" görünmesi hataydı).
@@ -932,7 +932,7 @@ namespace Apya.Platform.Tasks
                     TaskTitle      = newTask.Title,
                     AssigneeId     = input.AssigneeId.Value,
                     ModifierUserId = CurrentUser.Id,
-                    AssignerName   = CurrentUser.UserName ?? "Sistem"
+                    AssignerName   = ActorName("Sistem")
                 });
             }
 
@@ -1057,7 +1057,7 @@ namespace Apya.Platform.Tasks
                     TaskTitle      = task.Title,
                     AssigneeId     = task.AssigneeId.Value,
                     ModifierUserId = CurrentUser.Id,
-                    AssignerName   = CurrentUser.UserName ?? "Sistem"
+                    AssignerName   = ActorName("Sistem")
                 });
             }
 
@@ -1132,6 +1132,14 @@ namespace Apya.Platform.Tasks
                 .AsNoTracking();
         }
 
+        /// <summary>QA-39 · Bildirim metinlerindeki "yapan" adı: ad soyad, yoksa kullanıcı adı (TaskPersonName
+        /// kuralı). Eskiden kullanıcı adı gidiyordu: "admin, ... görevinde sizden bahsetti".</summary>
+        private string ActorName(string fallback)
+        {
+            var name = TaskPersonName.Of(CurrentUser.Name, CurrentUser.SurName, CurrentUser.UserName);
+            return name.Length > 0 ? name : fallback;
+        }
+
         // --- 5. USER LOOKUP (Kullanıcı Listesi) ---
         public async Task<ListResultDto<IdentityUserDto>> GetUsersLookupAsync()
         {
@@ -1172,7 +1180,7 @@ namespace Apya.Platform.Tasks
                 AssigneeId    = task.AssigneeId,
                 CreatorId     = task.CreatorId,
                 CommentUserId = CurrentUser.Id ?? Guid.Empty,
-                CommenterName = CurrentUser.UserName ?? "Bilinmeyen",
+                CommenterName = ActorName("Bilinmeyen"),
                 CommentText   = text,
                 MentionedUserIds = await ResolveMentionsAsync(task, mentionedUserIds)
             });
@@ -1228,7 +1236,7 @@ namespace Apya.Platform.Tasks
                 AssigneeId    = task.AssigneeId,
                 CreatorId     = task.CreatorId,
                 CommentUserId = CurrentUser.Id ?? Guid.Empty,
-                CommenterName = CurrentUser.UserName ?? "Bilinmeyen",
+                CommenterName = ActorName("Bilinmeyen"),
                 CommentText   = text
             });
 
@@ -1358,7 +1366,7 @@ namespace Apya.Platform.Tasks
             var userIds = attachments.Select(x => x.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
             var userQueryable = await _identityRepository.GetQueryableAsync();
             var users = await userQueryable.Where(u => userIds.Contains(u.Id)).ToListAsync();
-            var userDict = users.ToDictionary(k => k.Id, v => v.UserName);
+            var userDict = users.ToDictionary(k => k.Id, v => TaskPersonName.Of(v.Name, v.Surname, v.UserName));
 
             // Misafirin yüklediği dosyanın CreatorId'si YOKTUR (kullanıcı kaydı yok) — yükleyen
             // adı paylaşım linkinin alıcısından çözülür. Bu olmadan dış katkılar listede
@@ -1739,7 +1747,7 @@ namespace Apya.Platform.Tasks
 
             var queryable = await _identityRepository.GetQueryableAsync();
             var users = await AsyncExecuter.ToListAsync(queryable.Where(u => list.Contains(u.Id)));
-            return users.ToDictionary(u => u.Id, u => u.UserName);
+            return users.ToDictionary(u => u.Id, u => TaskPersonName.Of(u.Name, u.Surname, u.UserName));
         }
 
         private static string NameOf(Dictionary<Guid, string> names, Guid? id)
@@ -2110,7 +2118,7 @@ namespace Apya.Platform.Tasks
                 AssigneeId     = task.AssigneeId,
                 CreatorId      = task.CreatorId,
                 ModifierUserId = CurrentUser.Id,
-                ChangedByName  = CurrentUser.UserName ?? "Bilinmeyen"
+                ChangedByName  = ActorName("Bilinmeyen")
             });
         }
 
@@ -2144,7 +2152,7 @@ namespace Apya.Platform.Tasks
                     TaskTitle      = task.Title,
                     AssigneeId     = task.AssigneeId.Value,
                     ModifierUserId = CurrentUser.Id,
-                    AssignerName   = CurrentUser.UserName ?? "Sistem"
+                    AssignerName   = ActorName("Sistem")
                 });
             }
         }
@@ -2206,7 +2214,7 @@ namespace Apya.Platform.Tasks
                 AssigneeId     = task.AssigneeId,
                 CreatorId      = task.CreatorId,
                 ModifierUserId = CurrentUser.Id,
-                ChangedByName  = CurrentUser.UserName ?? "Bilinmeyen"
+                ChangedByName  = ActorName("Bilinmeyen")
             });
         }
 
@@ -2230,7 +2238,7 @@ namespace Apya.Platform.Tasks
                 AssigneeId     = task.AssigneeId,
                 CreatorId      = task.CreatorId,
                 ModifierUserId = CurrentUser.Id,
-                ChangedByName  = CurrentUser.UserName ?? "Bilinmeyen"
+                ChangedByName  = ActorName("Bilinmeyen")
             });
         }
 
@@ -2314,7 +2322,7 @@ namespace Apya.Platform.Tasks
             var logs = await _timeLogRepository.GetListAsync(x => x.TaskId == taskId);
             var userIds = logs.Select(x => x.UserId).Distinct().ToList();
             var users = await _identityRepository.GetListAsync(u => userIds.Contains(u.Id));
-            var userMap = users.ToDictionary(u => u.Id, u => u.UserName);
+            var userMap = users.ToDictionary(u => u.Id, u => TaskPersonName.Of(u.Name, u.Surname, u.UserName));
 
             return logs.Select(x => new TaskTimeLogDto
             {
