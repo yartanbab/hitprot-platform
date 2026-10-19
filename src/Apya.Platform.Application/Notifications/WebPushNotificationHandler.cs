@@ -87,8 +87,9 @@ public class WebPushNotificationHandler : ILocalEventHandler<NotificationCreated
                 }
 
                 var severity = eventData.Severity;
+                var titleOnly = await TitleOnlyAsync(eventData.UserId);
                 var payload = WebPushPayload.Build(
-                    eventData.Id, eventData.Title, tag: null, severity,
+                    eventData.Id, eventData.Title, titleOnly ? null : eventData.Body, tag: null, severity,
                     NotificationTypeRegistry.BuildDeepLink(eventData.Type, eventData.EntityId) ?? "/Notifications");
 
                 // N-02 · Acil (Yüksek/Kritik) push kuyrukta öne geçer: geniş dağıtımda (kiracının bütün
@@ -114,6 +115,13 @@ public class WebPushNotificationHandler : ILocalEventHandler<NotificationCreated
             // Push altyapısı bildirim akışını kırmamalı: kayıt atıldı, kullanıcı uygulama içinde görecek.
             _logger.LogWarning(ex, "Web push kuyruğa alınamadı. UserId: {UserId}", eventData.UserId);
         }
+    }
+
+    /// <summary>Kilit ekranı tercihi: "yalnız başlık" seçtiyse gövde push'a girmez.</summary>
+    private async Task<bool> TitleOnlyAsync(Guid userId)
+    {
+        var value = await _settingManager.GetOrNullForUserAsync(PlatformSettings.NotificationLockScreen.TitleOnly, userId);
+        return bool.TryParse(value, out var titleOnly) ? titleOnly : PlatformSettingDefaults.NotificationPushTitleOnly;
     }
 
     /// <summary>Kullanıcının sessiz saatleri açık ve şu an pencerenin içindeyse bitişe kalan süre.</summary>

@@ -488,6 +488,17 @@ $(function () {
         renderDevices();
         notificationService.getPreferences().then(renderPreferences);
         notificationService.getQuietHours().then(renderQuietHours);
+        notificationService.getLockScreen().then(function (lock) {
+            $('#notif-lock-toggle').prop('checked', lock.titleOnly);
+        });
+    });
+
+    // Kilit ekranı içeriği (kullanıcı kararı 2026-10-19).
+    $('#notif-pref-modal').on('change', '#notif-lock-toggle', function () {
+        var $toggle = $(this);
+        notificationService.updateLockScreen({ titleOnly: $toggle.prop('checked') })
+            .then(function () { abp.notify.success('Kilit ekranı tercihi kaydedildi.'); })
+            .catch(function () { $toggle.prop('checked', !$toggle.prop('checked')); });
     });
 
     $('#notif-pref-modal').on('change', '#notif-quiet-toggle, #notif-quiet-start, #notif-quiet-end', function () {

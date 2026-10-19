@@ -473,7 +473,7 @@
     "Notifications:Desktop:BackgroundOnlyHint": "Notifications appear only while the app is in the background; when it is on screen the bell and the in-app alert are enough.",
     "Notifications:Desktop:Test": "Try it on this device",
     "Notifications:Desktop:TestBody": "Desktop notifications are working.",
-    "Notifications:Push:Subscribed": "This device also receives notifications while the app is closed (title only).",
+    "Notifications:Push:Subscribed": "This device also receives notifications while the app is closed.",
     "Notifications:Devices:Title": "Devices receiving notifications",
     "Notifications:Devices:ThisDevice": "this device",
     "Notifications:Devices:Inactive": "(inactive)",

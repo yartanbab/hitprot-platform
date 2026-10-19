@@ -71,16 +71,19 @@ public class WebPushClientContract_Tests
         typeof(WebPushConfigDto).GetProperty("PublicKey").ShouldNotBeNull();
     }
 
-    /// <summary>Sunucunun yazdığı gövde alanlarını service worker AYNI adlarla okur; gövde metni yoktur.</summary>
+    /// <summary>
+    /// Sunucunun yazdığı gövde alanlarını service worker AYNI adlarla okur. <c>body</c> yalnız kişi kısa özeti
+    /// açtıysa yazılır (varsayılan yalnız başlık — K2, kullanıcı kararı 2026-10-19).
+    /// </summary>
     [Fact]
     public void Service_worker_sunucunun_yazdigi_govde_alanlarini_okur()
     {
         var worker = ReadSource("wwwroot", "sw.js");
         var payload = JsonDocument.Parse(
-            WebPushPayload.Build(Guid.NewGuid(), "Başlık", null, NotificationSeverity.High, "/Projects")).RootElement;
+            WebPushPayload.Build(Guid.NewGuid(), "Başlık", "Kısa özet", null, NotificationSeverity.High, "/Projects")).RootElement;
 
         var fields = payload.EnumerateObject().Select(p => p.Name).ToList();
-        fields.ShouldBe(new[] { "notificationId", "title", "tag", "severity", "url" }, ignoreOrder: true);
+        fields.ShouldBe(new[] { "notificationId", "title", "body", "tag", "severity", "url" }, ignoreOrder: true);
 
         foreach (var field in fields)
         {

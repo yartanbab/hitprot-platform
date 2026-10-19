@@ -371,6 +371,15 @@ public static class PlatformSettings
     /// daha düşük önemdeki tarayıcı bildirimi pencere bitince gönderilir; Yüksek/Kritik her zaman anında.
     /// Pencere "HH:mm-HH:mm", sunucunun yerel saatiyle; gece yarısını geçebilir (<c>QuietHoursWindow</c>).
     /// </summary>
+    /// <summary>
+    /// Kilit ekranı içeriği — KULLANICI ayarı. "true": push yalnız başlık taşır (K2); "false": başlığın altında
+    /// bildirimin kısa gövdesi de görünür. Varsayılan: <see cref="PlatformSettingDefaults.NotificationPushTitleOnly"/>.
+    /// </summary>
+    public static class NotificationLockScreen
+    {
+        public const string TitleOnly = Prefix + ".Notifications.LockScreen.TitleOnly";
+    }
+
     public static class NotificationQuietHours
     {
         public const string Enabled = Prefix + ".Notifications.QuietHours.Enabled";
@@ -487,6 +496,9 @@ public static class PlatformSettingDefaults
 {
     /// <summary>Sessiz saatler açılınca önerilen pencere (gece 22:00 – sabah 08:00).</summary>
     public const string NotificationQuietHoursWindow = "22:00-08:00";
+
+    /// <summary>Kilit ekranında yalnız başlık (kullanıcı kararı 2026-10-19; K2 korunur).</summary>
+    public const bool NotificationPushTitleOnly = true;
 
     /// <summary>Görev detay arayüzü varsayılanı: en yeni ekran (V3).</summary>
     public const string TaskDetailUi            = "v3";

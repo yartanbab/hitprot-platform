@@ -170,8 +170,8 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     /// <summary>
-    /// 🔴 K2 · Push gövdesi yalnız BAŞLIK taşır: işletim sistemi bildirimi kilit ekranında görünür,
-    /// tutar ve ayrıntı uygulama içinde kalır.
+    /// 🔴 K2 · VARSAYILAN: push gövdesi yalnız BAŞLIK taşır — işletim sistemi bildirimi kilit ekranında görünür,
+    /// tutar ve ayrıntı uygulama içinde kalır (kullanıcı kararı 2026-10-19: varsayılan korunur).
     /// </summary>
     [Fact]
     public async Task Push_govdesi_yalniz_basligi_tasir_bildirimin_metni_gitmez()
@@ -192,6 +192,32 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
         json.GetProperty("severity").GetInt32().ShouldBe((int)NotificationSeverity.High);
         json.GetProperty("url").GetString().ShouldBe("/Projects/ProjectDetails/" + projectId);
         json.TryGetProperty("body", out _).ShouldBeFalse("gövde alanı hiç yazılmaz");
+    }
+
+    /// <summary>Kullanıcı "yalnız başlık"ı kapattıysa kısa özet (en çok 120 karakter) gelir.</summary>
+    [Fact]
+    public async Task Kisa_ozet_tercihini_acan_kiside_govde_kisaltilarak_gelir()
+    {
+        var user = Guid.NewGuid();
+        await DeviceAsync(user);
+        await WithUnitOfWorkAsync(() => GetRequiredService<ISettingManager>()
+            .SetForUserAsync(user, PlatformSettings.NotificationLockScreen.TitleOnly, "false"));
+
+        var json = JsonDocument.Parse((await HandleAsync(Event(user, Guid.NewGuid()))).Single().PayloadJson).RootElement;
+
+        json.GetProperty("body").GetString().ShouldBe(SecretBody);
+    }
+
+    [Fact]
+    public void Kisa_ozet_bosluklari_tekler_uzunu_keser_bosu_yazmaz()
+    {
+        WebPushPayload.Short(null).ShouldBeNull();
+        WebPushPayload.Short("  \n ").ShouldBeNull();
+        WebPushPayload.Short("Ali\n\n  yorum   yazdı").ShouldBe("Ali yorum yazdı");
+
+        var cut = WebPushPayload.Short(new string('a', 300))!;
+        cut.Length.ShouldBe(WebPushPayload.MaxBodyLength);
+        cut.ShouldEndWith("…");
     }
 
     [Fact]
@@ -370,7 +396,7 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
             Options.Create(new WebPushOptions { PublicKey = vapid.Public, PrivateKey = vapid.Private, Subject = "mailto:test@example.com" }),
             NullLogger<WebPushSender>.Instance);
 
-        var payload = WebPushPayload.Build(Guid.NewGuid(), "Bütçe uyarısı", null, NotificationSeverity.High, "/Projects");
+        var payload = WebPushPayload.Build(Guid.NewGuid(), "Bütçe uyarısı", null, null, NotificationSeverity.High, "/Projects");
         var result = await sender.SendAsync(device, payload, WebPushPayload.Topic(Guid.NewGuid()), urgent: true);
         return (result, http);
     }
