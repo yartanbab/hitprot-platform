@@ -140,7 +140,6 @@ export function TaskGeneralTabV3({
                     key={taskId}
                     value={descriptionValue ?? task.description ?? ''}
                     onChange={(html) => onFieldChange('description', html)}
-                    mentionName={currentUserName}
                     readOnly={readOnly}
                 />
             </section>
