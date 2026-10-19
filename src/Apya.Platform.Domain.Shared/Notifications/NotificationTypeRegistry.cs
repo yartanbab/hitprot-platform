@@ -304,6 +304,15 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Ai, NotificationSeverity.Info,
                 "fa fa-robot", "/AiCenter/Evaluations", GroupSimilar: false),
 
+            // N-09 · Görevler sayfası ?drafts= ile taslak inceleme penceresini açar.
+            [NotificationType.AiDraftsReady] = new(
+                NotificationCategory.Ai, NotificationSeverity.Normal,
+                "fa fa-wand-magic-sparkles", "/Tasks?drafts={0}", GroupSimilar: false),
+
+            [NotificationType.AiDraftsFailed] = new(
+                NotificationCategory.Ai, NotificationSeverity.Normal,
+                "fa fa-triangle-exclamation", DeepLinkTemplate: null, GroupSimilar: false),
+
             [NotificationType.FeedbackReceived] = new(
                 NotificationCategory.Feedback, NotificationSeverity.Info,
                 "fa fa-circle-check", "/Feedback", GroupSimilar: false),
