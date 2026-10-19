@@ -15,6 +15,7 @@ function renderHeader(overrides = {}) {
         onToggleWatch: vi.fn(),
         onDuplicate: vi.fn(),
         onArchive: vi.fn(),
+        onCancelTask: vi.fn(),
         onDelete: vi.fn(),
         onOpenTransfer: vi.fn(),
         onExportPdf: vi.fn(),
@@ -137,6 +138,19 @@ describe('TaskDetailHeaderV3 / ⋯ menusu', () => {
         const spies = renderHeader();
         clickMenuItem('Arşivle');
         expect(spies.onArchive).toHaveBeenCalledTimes(1);
+    });
+
+    /* QA-19 · Görev detayından iptal; iptal edilmiş görevde madde çizilmez. */
+    it('Gorevi iptal et gercek handler i cagirir', () => {
+        const spies = renderHeader();
+        clickMenuItem('Görevi iptal et');
+        expect(spies.onCancelTask).toHaveBeenCalledTimes(1);
+    });
+
+    it('iptal edilmis gorevde Gorevi iptal et yok', () => {
+        renderHeader({ task: { ...TASK, status: 0 } });
+        fireEvent.click(screen.getByRole('button', { name: /diğer seçenekler/i }));
+        expect(screen.queryByText('Görevi iptal et')).toBeNull();
     });
 
     it('Sil gercek handler i cagirir', () => {
