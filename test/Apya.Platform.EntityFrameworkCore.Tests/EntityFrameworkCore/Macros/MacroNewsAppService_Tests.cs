@@ -55,14 +55,15 @@ public class MacroNewsAppService_Tests : PlatformEntityFrameworkCoreTestBase
         }
     }
 
-    private async Task<GrantCall> NewCallAsync(string name, GrantCallStatus status, int? deadlineInDays, int openedDaysAgo)
+    private async Task<GrantCall> NewCallAsync(string name, GrantCallStatus status, int? deadlineInDays, int openedDaysAgo,
+        DateTime? openedAt = null)
     {
         return await WithUnitOfWorkAsync(async () =>
         {
             var grant = new Grant(Guid.NewGuid(), name, "Haber Kurumu", 100_000m, 0);
             await _grants.InsertAsync(grant, autoSave: true);
             var call = new GrantCall(Guid.NewGuid(), grant.Id, "2026/9", status);
-            call.SetSchedule(_now.Date.AddDays(-openedDaysAgo),
+            call.SetSchedule(openedAt ?? _now.Date.AddDays(-openedDaysAgo),
                 deadlineInDays.HasValue ? _now.Date.AddDays(deadlineInDays.Value) : null);
             await _calls.InsertAsync(call, autoSave: true);
             return call;
@@ -72,7 +73,11 @@ public class MacroNewsAppService_Tests : PlatformEntityFrameworkCoreTestBase
     [Fact]
     public async Task Yalniz_acik_ve_tarihi_gecmemis_cagri_haber_olur()
     {
-        var open = await NewCallAsync("Açık haber çağrısı", GrantCallStatus.Acik, deadlineInDays: 10, openedDaysAgo: 2);
+        // Açılış ANI tam şimdi: haber listesi (OpenDate ?? CreationTime) azalan sırada ilk 50'yi alır.
+        // Veritabanı test sınıfları arasında ortak; açılış tarihi boş, bugün oluşturulmuş açık çağrılar
+        // "2 gün önce" açılanı ilk 50'nin dışına itiyor, test sırasına göre kırmızıya dönüyordu (10-19
+        // tam paket). Kural değişmedi; yalnız testin kendi kaydı en yeni olur.
+        var open = await NewCallAsync("Açık haber çağrısı", GrantCallStatus.Acik, deadlineInDays: 10, openedDaysAgo: 0, openedAt: _now);
         var past = await NewCallAsync("Süresi geçmiş haber çağrısı", GrantCallStatus.Acik, deadlineInDays: -1, openedDaysAgo: 40);
         var draft = await NewCallAsync("Taslak haber çağrısı", GrantCallStatus.Taslak, deadlineInDays: 10, openedDaysAgo: 1);
 
