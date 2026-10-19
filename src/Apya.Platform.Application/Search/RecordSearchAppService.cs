@@ -80,22 +80,30 @@ public class RecordSearchAppService : PlatformAppService, IRecordSearchAppServic
 
         if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Default))
         {
-            // Proje listesiyle aynı kapsam: host tüm kiracıların projelerini görür.
+            // Proje listesiyle aynı kapsam: host yaşayan kiracıların ve kendi projelerini görür (D-2: silinmiş
+            // kiracının projesi listede olmadığı gibi aramada da çıkmaz).
             using (CurrentTenant.Id == null ? _mtFilter.Disable() : null)
             {
-                var projects = await AsyncExecuter.ToListAsync((await _projects.GetQueryableAsync())
-                    .Where(p => p.Name.Contains(q) || p.Code.Contains(q))
+                var tenantNames = CurrentTenant.Id == null
+                    ? (await _tenants.GetListAsync()).ToDictionary(t => t.Id, t => t.Name)
+                    : new Dictionary<Guid, string>();
+                var liveTenantIds = tenantNames.Keys.ToList();
+
+                var projectQuery = (await _projects.GetQueryableAsync())
+                    .Where(p => p.Name.Contains(q) || p.Code.Contains(q));
+                if (CurrentTenant.Id == null)
+                {
+                    projectQuery = projectQuery.Where(p => p.TenantId == null || liveTenantIds.Contains(p.TenantId.Value));
+                }
+                var projects = await AsyncExecuter.ToListAsync(projectQuery
                     .OrderBy(p => p.Name)
                     .Take(RecordSearchLimits.PerKind));
                 // Host aynı adlı projeleri kiracıdan ayırır (QA-03 ile aynı gerekçe).
-                var tenantNames = CurrentTenant.Id == null && projects.Any(p => p.TenantId.HasValue)
-                    ? (await _tenants.GetListAsync()).ToDictionary(t => t.Id, t => t.Name)
-                    : new Dictionary<Guid, string>();
                 results.AddRange(projects.Select(p => new RecordSearchResultDto
                 {
                     Kind = "project",
                     Title = p.Name,
-                    // Kiracısı silinmiş proje proje listesindeki gibi "bilinmeyen müşteri" olarak ayrılır.
+                    // Savunma: kiracı adı bulunamazsa (yarış durumu) "bilinmeyen müşteri" yazılır.
                     Subtitle = !p.TenantId.HasValue || CurrentTenant.Id != null
                         ? p.Code
                         : p.Code + " · " + (tenantNames.TryGetValue(p.TenantId.Value, out var tenantName)

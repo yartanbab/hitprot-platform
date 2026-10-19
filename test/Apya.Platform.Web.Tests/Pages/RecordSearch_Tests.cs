@@ -37,6 +37,37 @@ public class RecordSearch_Tests : PlatformWebTestBase
         results.ShouldContain(r => r.Kind == "project" && r.Url == "/Projects/ProjectDetails/" + projectId);
     }
 
+    /// <summary>D-2 · Host araması silinmiş kiracının projesini bulmaz (proje listesiyle aynı kapsam).</summary>
+    [Fact]
+    public async Task Silinmis_kiracinin_projesi_bulunmaz()
+    {
+        var token = "Silinen" + Guid.NewGuid().ToString("N")[..6];
+        Guid tenantId;
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            var tenant = await GetRequiredService<Volo.Abp.TenantManagement.ITenantManager>().CreateAsync("Kiraci-" + token);
+            await GetRequiredService<Volo.Abp.TenantManagement.ITenantRepository>().InsertAsync(tenant, autoSave: true);
+            tenantId = tenant.Id;
+            using (GetRequiredService<Volo.Abp.MultiTenancy.ICurrentTenant>().Change(tenant.Id))
+            {
+                await GetRequiredService<IRepository<Project, Guid>>().InsertAsync(
+                    new Project(Guid.NewGuid(), tenant.Id, null, "QA " + token + " projesi", "S-" + token[^4..], "Arama testi"), autoSave: true);
+            }
+            await uow.CompleteAsync();
+        }
+
+        (await GetRequiredService<IRecordSearchAppService>().SearchAsync(token)).ShouldContain(r => r.Kind == "project");
+
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            var repo = GetRequiredService<Volo.Abp.TenantManagement.ITenantRepository>();
+            await repo.DeleteAsync(await repo.GetAsync(tenantId), autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        (await GetRequiredService<IRecordSearchAppService>().SearchAsync(token)).ShouldNotContain(r => r.Kind == "project");
+    }
+
     [Fact]
     public async Task Kisa_sorgu_aramaz()
     {
