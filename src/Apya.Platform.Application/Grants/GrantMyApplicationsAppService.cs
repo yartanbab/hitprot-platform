@@ -119,6 +119,14 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
 
         var today = Clock.Now.Date;
 
+        // H-03 · Başvuru başına son mesajın göndereni (Bugün ekranıyla aynı okuma).
+        var lastSenders = (await AsyncExecuter.ToListAsync(
+                (await LazyServiceProvider.LazyGetRequiredService<IRepository<GrantApplicationMessage, Guid>>().GetQueryableAsync())
+                .Where(m => appIds.Contains(m.GrantApplicationId))
+                .Select(m => new { m.GrantApplicationId, m.CreationTime, m.SenderRole })))
+            .GroupBy(m => m.GrantApplicationId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(m => m.CreationTime).First().SenderRole);
+
         foreach (var application in applications)
         {
             var call = calls.FirstOrDefault(c => c.Id == application.GrantCallId);
@@ -217,6 +225,9 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
             row.IsClosed = application.ProjectId.HasValue
                            || application.Stage == GrantApplicationStage.Odeme
                            || (row.IsRejected && row.AppealDaysLeft == null && !row.AppealPending);
+            row.AwaitingReply = !row.IsClosed
+                                && lastSenders.TryGetValue(application.Id, out var lastSender)
+                                && lastSender == GrantPartyRole.Danisman;
 
             dto.Items.Add(row);
         }

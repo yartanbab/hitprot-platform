@@ -245,4 +245,31 @@ public class GrantMyApplicationsPage_Tests : PlatformWebTestBase
         row.AppealPending.ShouldBeFalse();
         row.IsClosed.ShouldBeTrue();
     }
+
+    /// <summary>H-03 · Son mesaj danışmandansa satır "yanıt bekleyen mesaj" rozeti taşır; firma yanıtlayınca kalkar.</summary>
+    [Fact]
+    public async Task Danismanin_son_mesaji_yanit_bekler()
+    {
+        var (tenantId, appId) = await SetupAsync();
+
+        async Task SendAsync(GrantPartyRole role, string body)
+        {
+            using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+            await GetRequiredService<IRepository<GrantApplicationMessage, Guid>>().InsertAsync(
+                new GrantApplicationMessage(Guid.NewGuid(), tenantId, appId, Guid.NewGuid(), "Deniz Kaya", role, body), autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        await SendAsync(GrantPartyRole.Danisman, "Bütçe tablosunu günceller misiniz?");
+        (await ReadAsAsync(tenantId)).Items.Single(i => i.Id == appId).AwaitingReply.ShouldBeTrue();
+
+        await Task.Delay(20);
+        await SendAsync(GrantPartyRole.Firma, "Güncelledik.");
+        (await ReadAsAsync(tenantId)).Items.Single(i => i.Id == appId).AwaitingReply.ShouldBeFalse();
+
+        var js = System.IO.File.ReadAllText(System.IO.Path.Combine(WebSourceFiles.RepoRoot(),
+            "src", "Apya.Platform.Web", "Pages", "Grants", "MyApplications.js"));
+        js.ShouldContain("(r.awaitingReply");
+        js.ShouldContain("l('Grants:Mine:AwaitingReply')");
+    }
 }

@@ -64,6 +64,11 @@ $(function () {
             (r.period ? ' · ' + esc(r.period) : '') + '</span></span>' +
 
             '<span class="apya-my-stage">' +
+            // H-03 · Danışmanın mesajı yanıt bekliyor: rozet sihirbazın mesaj paneline götürür.
+            (r.awaitingReply
+                ? '<a class="apya-chip apya-chip-warning text-decoration-none align-self-start" href="/Grants/Wizard?id=' + r.id + '">' +
+                  '<i class="fa fa-comments me-1" aria-hidden="true"></i>' + esc(l('Grants:Mine:AwaitingReply')) + '</a>'
+                : '') +
             '<span class="apya-my-stage-text">' + esc(stageSentence) + '</span>' +
             '<span class="apya-my-grant-meta">' + esc(stageName) + '</span>' +
             '<span class="apya-mini-bar"><span style="width:' + r.progressPercent + '%"></span></span></span>' +
