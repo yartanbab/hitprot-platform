@@ -39,6 +39,62 @@ beforeEach(() => {
 
 afterEach(() => { delete window.apya; delete window.abp; });
 
+/* QA-22 · Öncül eklenebilir; ardıllar projenin bağ kenarlarından listelenir. */
+describe('DependenciesTabV3 / öncül ekleme ve ardıllar', () => {
+    function renderWith(extra, props = {}) {
+        Object.assign(window.apya.platform.tasks.task, extra);
+        const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        return render(
+            <QueryClientProvider client={qc}>
+                <DependenciesTabV3 task={{ ...TASK, projectId: 'pr1' }} {...props} />
+            </QueryClientProvider>,
+        );
+    }
+
+    const PROJECT_TASKS = {
+        items: [
+            { id: 't1', title: 'Ana görev', status: 1, code: 'GRV-1' },
+            { id: 'p1', title: 'p1', status: 1, code: 'GRV-p1' },
+            { id: 'c1', title: 'Aday iş', status: 1, code: 'GRV-7' },
+            { id: 's1', title: 'Ardıl iş', status: 2, code: 'GRV-9' },
+        ],
+    };
+
+    it('ardılları bağ kenarlarından listeler', async () => {
+        renderWith({
+            getList: () => Promise.resolve(PROJECT_TASKS),
+            getProjectDependencies: () => Promise.resolve([{ taskId: 's1', predecessorTaskId: 't1' }]),
+        });
+        expect(await screen.findByText('Ardıl iş')).toBeInTheDocument();
+    });
+
+    it('seçilen görevi öncül olarak ekler; görevin kendisi, öncülleri ve ardılları seçenek değildir', async () => {
+        renderWith({
+            getList: () => Promise.resolve(PROJECT_TASKS),
+            getProjectDependencies: () => Promise.resolve([{ taskId: 's1', predecessorTaskId: 't1' }]),
+        });
+        const select = await screen.findByLabelText('Öncül görev seç');
+        await waitFor(() => expect(select.querySelectorAll('option').length).toBe(2));
+        const values = [...select.querySelectorAll('option')].map((o) => o.value);
+        expect(values).toEqual(['', 'c1']);
+
+        fireEvent.change(select, { target: { value: 'c1' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Öncül ekle' }));
+
+        await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
+        expect(update).toHaveBeenCalledWith('t1', expect.objectContaining({ predecessorIds: ['p1', 'p2', 'c1'] }));
+    });
+
+    it('salt okunur kullanıcıya seçici çizilmez', async () => {
+        renderWith({
+            getList: () => Promise.resolve(PROJECT_TASKS),
+            getProjectDependencies: () => Promise.resolve([]),
+        }, { readOnly: true });
+        expect(await screen.findByText('Ardıl görev yok')).toBeInTheDocument();
+        expect(screen.queryByLabelText('Öncül görev seç')).toBeNull();
+    });
+});
+
 describe('DependenciesTabV3 / bağlantı kaldırma', () => {
     it('kalan öncüllerle günceller; bütçe bağı, etiket ve planlama korunur', async () => {
         const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
