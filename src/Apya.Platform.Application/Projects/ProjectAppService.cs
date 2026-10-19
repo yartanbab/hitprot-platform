@@ -290,9 +290,16 @@ public class ProjectAppService :
                 var sorting = NormalizeSorting(input.Sorting);
 
                 var queryable = await Repository.GetQueryableAsync();
+                if (CurrentTenant.Id == null)
+                {
+                    // D-2 · Kiracı süzgeci kapalıyken silinmiş kiracıların projeleri de gelir ("Bilinmeyen
+                    // Müşteri" ve şişen sayaçlar). Kiracı deposu silinmişleri zaten dışarıda bırakır.
+                    var liveTenantIds = (await _tenantRepository.GetListAsync()).Select(t => t.Id).ToList();
+                    queryable = queryable.Where(p => p.TenantId == null || liveTenantIds.Contains(p.TenantId.Value));
+                }
                 var query = queryable.OrderBy(sorting).PageBy(input.SkipCount, input.MaxResultCount);
 
-                var totalCount = await Repository.GetCountAsync();
+                var totalCount = await AsyncExecuter.CountAsync(queryable);
                 var items = await AsyncExecuter.ToListAsync(query);
                 var dtos = ObjectMapper.Map<List<Project>, List<ProjectDto>>(items);
 
