@@ -105,5 +105,8 @@ public enum NotificationType
 
     // N-09: belgeden görev çıkarma sonucu yalnız açık sayfaya gidiyordu.
     AiDraftsReady               = 60, // Görev taslakları hazır, onay bekliyor (başlatana)
-    AiDraftsFailed              = 61  // Görev taslağı çıkarılamadı (başlatana)
+    AiDraftsFailed              = 61, // Görev taslağı çıkarılamadı (başlatana)
+
+    // B-13: geciken görev proje sorumlusuna hiç ulaşmıyordu.
+    TaskOverdueEscalated        = 62  // Projenizdeki görev 3+ gündür gecikmede (proje sorumlularına)
 }

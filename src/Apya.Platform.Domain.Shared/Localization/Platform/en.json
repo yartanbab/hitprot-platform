@@ -643,6 +643,8 @@
     "Projects:Edit:BudgetFromLines:Open": "Open budget lines",
     "Notification:TaskOverdue:Title": "Overdue Task",
     "Notification:TaskOverdue:Body": "\"{0}\" was due {1} day(s) ago and is still open.",
+    "Notification:TaskOverdueEscalated:Title": "Overdue task in your project",
+    "Notification:TaskOverdueEscalated:Body": "\"{1}\" in \"{0}\" has been overdue for {2} day(s) and is still open.",
     "Notification:DocumentExpiring:Title": "Document Expiring",
     "Notification:DocumentExpiring:Body": "\"{0}\" expires in less than 7 days.",
     "Notification:DocumentFileExpiry:Title": "{0} day(s) until the document expires",

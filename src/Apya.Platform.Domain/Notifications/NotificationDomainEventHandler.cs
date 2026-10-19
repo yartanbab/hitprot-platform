@@ -31,14 +31,23 @@ public class NotificationDomainEventHandler :
     private readonly IRepository<TaskWatcher, Guid> _watcherRepository;
     private readonly IRepository<TaskItem, Guid> _taskRepository;
     private readonly IDataFilter _dataFilter;
+    private readonly IRepository<Apya.Platform.Projects.ProjectMember, Guid> _memberRepository;
+    private readonly IRepository<Apya.Platform.Projects.Project, Guid> _projectRepository;
+
+    /// <summary>B-13 · Görev bu kadar gün gecikince proje sorumlularına yükseltilir.</summary>
+    public const int OverdueEscalationDays = 3;
 
     public NotificationDomainEventHandler(
         NotificationManager notificationManager,
         IStringLocalizer<PlatformResource> l,
         IRepository<TaskWatcher, Guid> watcherRepository,
         IRepository<TaskItem, Guid> taskRepository,
-        IDataFilter dataFilter)
+        IDataFilter dataFilter,
+        IRepository<Apya.Platform.Projects.ProjectMember, Guid> memberRepository,
+        IRepository<Apya.Platform.Projects.Project, Guid> projectRepository)
     {
+        _memberRepository = memberRepository;
+        _projectRepository = projectRepository;
         _notificationManager = notificationManager;
         _l = l;
         _watcherRepository = watcherRepository;
@@ -331,6 +340,52 @@ public class NotificationDomainEventHandler :
                 entityType: "Task",
                 entityId: eventData.TaskId
             );
+        }
+
+        await EscalateOverdueAsync(eventData, overdueRecipients);
+    }
+
+    /// <summary>
+    /// B-13 · Bildirim hiyerarşisi: <see cref="OverdueEscalationDays"/> gün geciken görev proje sorumlularına
+    /// (Lead) görev + vade başına BİR KEZ yükseltilir. Sorumlu, açan ve izleyiciler gecikmeyi zaten alıyor;
+    /// proje sorumlusu ancak panoya bakınca görüyordu. Gizli görev yükseltilmez (sorumlunun görme hakkı yok),
+    /// zaten bildirim alan kişiye ikinci kez gitmez.
+    /// </summary>
+    private async Task EscalateOverdueAsync(TaskOverdueEto eventData, List<Guid> alreadyNotified)
+    {
+        if (eventData.DaysOverdue < OverdueEscalationDays)
+        {
+            return;
+        }
+
+        var task = await _taskRepository.FindAsync(eventData.TaskId);
+        if (task?.ProjectId is not { } projectId || task.IsPrivate)
+        {
+            return;
+        }
+
+        var leads = (await _memberRepository.GetListAsync(m =>
+                m.ProjectId == projectId && m.Role == Apya.Platform.Projects.ProjectMemberRole.Lead))
+            .Select(m => m.UserId)
+            .Where(id => !alreadyNotified.Contains(id))
+            .Distinct()
+            .ToList();
+        if (leads.Count == 0)
+        {
+            return;
+        }
+
+        var project = await _projectRepository.FindAsync(projectId);
+        var onceKey = $"{(int)NotificationType.TaskOverdueEscalated}:Task:{eventData.TaskId}:{eventData.DueDate:yyyyMMdd}";
+        var title = _l["Notification:TaskOverdueEscalated:Title"];
+        var body = _l["Notification:TaskOverdueEscalated:Body", project?.Name ?? "-", eventData.TaskTitle, eventData.DaysOverdue];
+        foreach (var userId in leads)
+        {
+            await _notificationManager.PublishOnceAsync(
+                userId, onceKey, title, body,
+                NotificationType.TaskOverdueEscalated,
+                entityType: "Task",
+                entityId: eventData.TaskId);
         }
     }
 
