@@ -570,7 +570,7 @@
         "Tasks:Timeline:Legend:NoBaseline": "Baseline ve sapma rozeti çizilmiyor — backend alanı yok.",
         "Tasks:Timeline:DatesUpdated": "{0} görevin tarihi güncellendi.",
         "Tasks:Priority:Low": "Düşük",
-        "Tasks:Priority:Medium": "Normal",
+        "Tasks:Priority:Medium": "Orta",
         "Tasks:Priority:High": "Yüksek",
         "Tasks:Priority:Critical": "Kritik",
         "Tasks:Create:Title": "Yeni Görev Oluştur",

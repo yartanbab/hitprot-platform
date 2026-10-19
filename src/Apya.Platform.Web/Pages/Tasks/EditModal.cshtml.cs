@@ -176,7 +176,7 @@ namespace Apya.Platform.Web.Pages.Tasks
 
             var userLookup = await _taskAppService.GetUsersLookupAsync();
             UserList = userLookup.Items
-                .Select(u => new SelectListItem(u.UserName, u.Id.ToString()))
+                .Select(u => new SelectListItem(TaskPersonName.Label(u.Name, u.Surname, u.UserName), u.Id.ToString()))
                 .ToList();
 
             AllTagNames = (await _taskAppService.GetAllTagsAsync()).Select(t => t.Name).ToList();

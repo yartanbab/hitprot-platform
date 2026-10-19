@@ -182,7 +182,7 @@ namespace Apya.Platform.Tasks
             {
                 var commentUserIds = task.Comments.Select(c => c.CreatorId).Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
                 var commentUsers = await _identityRepository.GetListAsync(u => commentUserIds.Contains(u.Id));
-                var userMap = commentUsers.ToDictionary(u => u.Id, u => u.UserName);
+                var userMap = commentUsers.ToDictionary(u => u.Id, u => TaskPersonName.Of(u.Name, u.Surname, u.UserName));
                 
                 foreach (var c in taskDto.Comments)
                 {
@@ -1267,7 +1267,7 @@ namespace Apya.Platform.Tasks
 
             var userQueryable = await _identityRepository.GetQueryableAsync();
             var users = await userQueryable.Where(u => userIds.Contains(u.Id)).ToListAsync();
-            var userDictionary = users.ToDictionary(u => u.Id, u => u.UserName);
+            var userDictionary = users.ToDictionary(u => u.Id, u => TaskPersonName.Of(u.Name, u.Surname, u.UserName));
 
             var allDtos = comments.Select(c => new TaskCommentDto
             {
