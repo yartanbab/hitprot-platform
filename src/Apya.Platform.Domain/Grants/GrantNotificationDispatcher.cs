@@ -141,6 +141,40 @@ public class GrantNotificationDispatcher : DomainService
     }
 
     /// <summary>
+    /// H-03 / N-06 · Başvurunun bir TARAFINA duyuru: firma → başvurunun kiracısı (hibe yetkisi olanlar);
+    /// danışman → atanan danışman, atanmamışsa host ekibi. Sihirbaz (mesaj, sıra devri) ve evrak konsolu
+    /// (yükleme) aynı kuralı kullanır.
+    /// </summary>
+    public async Task DispatchToPartyAsync(
+        GrantApplication application,
+        GrantPartyRole side,
+        GrantNotificationTrigger trigger,
+        IReadOnlyDictionary<string, string?> values)
+    {
+        if (!application.TenantId.HasValue)
+        {
+            return;
+        }
+
+        if (side == GrantPartyRole.Firma)
+        {
+            await DispatchToTenantAsync(trigger, application.TenantId, values, nameof(GrantApplication), application.Id);
+            return;
+        }
+
+        if (application.AssignedUserId is { } consultantId)
+        {
+            using (CurrentTenant.Change(null))
+            {
+                await DispatchAsync(trigger, new[] { consultantId }, values, nameof(GrantApplication), application.Id);
+            }
+            return;
+        }
+
+        await DispatchToTenantAsync(trigger, null, values, nameof(GrantApplication), application.Id);
+    }
+
+    /// <summary>
     /// Yalnız metni üretir; göndermez. Kendi gönderim döngüsü olan ekranlar
     /// (1c'de host kanalı gönderim başına seçiyor) metni buradan alır —
     /// böylece şablon düzenlemesi o ekranda da karşılık bulur.

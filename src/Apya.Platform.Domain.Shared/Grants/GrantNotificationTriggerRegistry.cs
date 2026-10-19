@@ -36,7 +36,9 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.IdeaShared]                = NotificationType.GrantIdeaShared,
             [GrantNotificationTrigger.AppealResolved]            = NotificationType.GrantAppealResolved,
             [GrantNotificationTrigger.MessageReceived]           = NotificationType.GrantMessageReceived,
-            [GrantNotificationTrigger.HandedOver]                = NotificationType.GrantHandedOver
+            [GrantNotificationTrigger.HandedOver]                = NotificationType.GrantHandedOver,
+            [GrantNotificationTrigger.DocumentUploaded]          = NotificationType.GrantDocumentUploaded,
+            [GrantNotificationTrigger.DocumentApproved]          = NotificationType.GrantDocumentApproved
         };
 
     /// <summary>
@@ -130,7 +132,13 @@ public static class GrantNotificationTriggerRegistry
                 ["{gönderen}", "{çağrı_adı}", "{mesaj}"],
 
             [GrantNotificationTrigger.HandedOver] =
-                ["{devreden}", "{çağrı_adı}"]
+                ["{devreden}", "{çağrı_adı}"],
+
+            [GrantNotificationTrigger.DocumentUploaded] =
+                ["{yükleyen}", "{evrak_adı}", "{çağrı_adı}"],
+
+            [GrantNotificationTrigger.DocumentApproved] =
+                ["{evrak_adı}", "{çağrı_adı}"]
         };
 
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;

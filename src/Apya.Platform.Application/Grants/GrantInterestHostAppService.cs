@@ -11,6 +11,7 @@ using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 using Apya.Platform.Grants.Dtos;
+using Apya.Platform.Notifications;
 using Apya.Platform.Permissions;
 
 namespace Apya.Platform.Grants;
@@ -349,11 +350,28 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         }
 
         var tenantId = await FindInterestTenantIdAsync(input.InterestId);
+        Guid? previous;
         using (_currentTenant.Change(tenantId))
         {
             var interest = await _interestRepo.GetAsync(input.InterestId);
+            previous = interest.AssignedUserId;
             interest.AssignTo(input.UserId);
             await _interestRepo.UpdateAsync(interest, autoSave: true);
+        }
+
+        // N-06 · Atanan danışman haberdar edilir (kendini atayana gitmez). Bildirim host kullanıcısınındır:
+        // host bağlamında yazılır.
+        if (input.UserId is { } assigneeId && assigneeId != previous && assigneeId != CurrentUser.Id)
+        {
+            var tenant = tenantId.HasValue ? await _tenantRepo.FindAsync(tenantId.Value) : null;
+            await LazyServiceProvider.LazyGetRequiredService<NotificationManager>().PublishAsync(
+                assigneeId,
+                L["Notification:GrantInterestAssigned:Title"],
+                L["Notification:GrantInterestAssigned:Body", tenant?.Name ?? "-"],
+                NotificationType.GrantInterestAssigned,
+                nameof(GrantInterest), input.InterestId,
+                actorUserId: CurrentUser.Id,
+                actorName: CurrentUser.Name ?? CurrentUser.UserName);
         }
 
         return await GetReviewAsync(input.InterestId);

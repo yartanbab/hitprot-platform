@@ -106,6 +106,17 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
             input.StoredFileName, input.OriginalFileName, input.SizeBytes,
             ViewerUserId, ViewerName, ViewerRole, input.Note), autoSave: true);
 
+        // N-06 · Yükleme karşı tarafa duyurulur: inceleme bekleyen evrak sessizce bekliyordu.
+        await _notifyDispatcher.DispatchToPartyAsync(application,
+            ViewerRole == GrantPartyRole.Firma ? GrantPartyRole.Danisman : GrantPartyRole.Firma,
+            GrantNotificationTrigger.DocumentUploaded,
+            new Dictionary<string, string?>
+            {
+                ["{yükleyen}"] = ViewerName,
+                ["{evrak_adı}"] = document.Name,
+                ["{çağrı_adı}"] = (await GetCatalogAsync(application)).Grant.Name
+            });
+
         return await BuildAsync(application);
     }
 
@@ -118,6 +129,15 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
 
         document.Approve(input.Note);
         await _docRepo.UpdateAsync(document, autoSave: true);
+
+        // N-06 · Onay firmaya duyurulur (revizyon isteği gidiyordu, onay sessizdi).
+        await NotifyFirmAsync(application, GrantNotificationTrigger.DocumentApproved,
+            new Dictionary<string, string?>
+            {
+                ["{evrak_adı}"] = document.Name,
+                ["{çağrı_adı}"] = (await GetCatalogAsync(application)).Grant.Name
+            });
+
         return await BuildAsync(application);
     }
 

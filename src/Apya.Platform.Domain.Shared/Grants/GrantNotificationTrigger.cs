@@ -113,5 +113,14 @@ public enum GrantNotificationTrigger
     MessageReceived = 20,
 
     /// <summary>H-03 · Sıra karşı tarafa devredildi ("Danışmana devret" / "Firmaya geri ver"). Devralana gider.</summary>
-    HandedOver = 21
+    HandedOver = 21,
+
+    /// <summary>
+    /// N-06 · Evrakın yeni sürümü yüklendi. Karşı tarafa gider: firma yüklediyse atanan danışmana (yoksa
+    /// host ekibine), danışman yüklediyse firmaya. İnceleme bekleyen evrak sessizce bekliyordu.
+    /// </summary>
+    DocumentUploaded = 22,
+
+    /// <summary>N-06 · Danışman evrakı onayladı. Firmaya gider (revizyon isteği gidiyordu, onay sessizdi).</summary>
+    DocumentApproved = 23
 }
