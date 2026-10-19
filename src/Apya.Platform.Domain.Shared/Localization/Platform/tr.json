@@ -489,6 +489,8 @@
         "Notification:ProjectMemberAdded:Body": "\"{0}\" projesinin ekibine eklendiniz.",
         "Notification:TaskComment:Title": "Görev Yorumu",
         "Notification:TaskComment:Body": "{0}: {1}",
+        "Notification:Mention:Title": "Sizden bahsedildi",
+        "Notification:Mention:Body": "{0}, \"{1}\" görevinde sizden bahsetti: {2}",
         "Notification:TaskStatus:Title": "Durum Güncellemesi",
         "Notification:TaskStatus:Body": "\"{0}\" görevi {1} tarafından {2} olarak işaretlendi.",
         "Notification:TaskStatus:Generic": "Güncellendi",

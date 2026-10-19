@@ -604,6 +604,8 @@
     "Notification:ProjectMemberAdded:Body": "You were added to the \"{0}\" project team.",
     "Notification:TaskComment:Title": "Task Comment",
     "Notification:TaskComment:Body": "{0}: {1}",
+    "Notification:Mention:Title": "You were mentioned",
+    "Notification:Mention:Body": "{0} mentioned you on \"{1}\": {2}",
     "Notification:TaskStatus:Title": "Status Update",
     "Notification:TaskStatus:Body": "\"{0}\" was marked as {2} by {1}.",
     "Notification:TaskStatus:Generic": "Updated",

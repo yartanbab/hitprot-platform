@@ -100,7 +100,28 @@ public class NotificationDomainEventHandler :
         // CommenterName'den gelir.
         Guid? actorUserId = eventData.CommentUserId == Guid.Empty ? null : eventData.CommentUserId;
 
-        if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.CommentUserId)
+        // P-09 · Bahsedilenler "Sizden bahsedildi" alır; aynı yorum için ayrıca genel yorum
+        // bildirimi almazlar (atanan, açan ya da izleyici olsalar bile tek bildirim).
+        var mentioned = eventData.MentionedUserIds
+            .Where(id => id != Guid.Empty && id != eventData.CommentUserId)
+            .Distinct()
+            .ToList();
+        foreach (var userId in mentioned)
+        {
+            await _notificationManager.PublishAsync(
+                userId,
+                _l["Notification:Mention:Title"],
+                _l["Notification:Mention:Body", eventData.CommenterName, eventData.TaskTitle, eventData.CommentText],
+                NotificationType.Mention,
+                entityType: "Task",
+                entityId: eventData.TaskId,
+                actorUserId: actorUserId,
+                actorName: eventData.CommenterName
+            );
+        }
+
+        if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.CommentUserId
+            && !mentioned.Contains(eventData.AssigneeId.Value))
         {
             await _notificationManager.PublishAsync(
                 eventData.AssigneeId.Value,
@@ -114,7 +135,8 @@ public class NotificationDomainEventHandler :
             );
         }
 
-        if (eventData.CreatorId.HasValue && eventData.CreatorId != eventData.CommentUserId && eventData.CreatorId != eventData.AssigneeId)
+        if (eventData.CreatorId.HasValue && eventData.CreatorId != eventData.CommentUserId && eventData.CreatorId != eventData.AssigneeId
+            && !mentioned.Contains(eventData.CreatorId.Value))
         {
             await _notificationManager.PublishAsync(
                 eventData.CreatorId.Value,
@@ -128,7 +150,8 @@ public class NotificationDomainEventHandler :
             );
         }
 
-        foreach (var watcherId in await WatchersAsync(eventData.TaskId, eventData.CommentUserId, eventData.AssigneeId, eventData.CreatorId))
+        foreach (var watcherId in (await WatchersAsync(eventData.TaskId, eventData.CommentUserId, eventData.AssigneeId, eventData.CreatorId))
+                     .Where(id => !mentioned.Contains(id)))
         {
             await _notificationManager.PublishAsync(
                 watcherId,
