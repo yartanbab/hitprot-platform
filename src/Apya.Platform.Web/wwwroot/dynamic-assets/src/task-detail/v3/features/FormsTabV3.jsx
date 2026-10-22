@@ -44,7 +44,7 @@ function ResponseList({ taskId, documentId }) {
     );
 }
 
-export function FormsTabV3({ taskId }) {
+export function FormsTabV3({ taskId, readOnly = false }) {
     const { forms, isLoading, linkForm, unlinkForm, setGuestFillable, isLinking } = useTaskForms(taskId);
     const [pickerOpen, setPickerOpen] = useState(false);
     const [openId, setOpenId] = useState(null);
@@ -82,14 +82,14 @@ export function FormsTabV3({ taskId }) {
         <div className="flex flex-col gap-3.5">
             <div className="flex items-center justify-between gap-3">
                 <h2 className="m-0 text-[14px] font-bold text-text-primary">Formlar</h2>
-                <button
+                {!readOnly && <button
                     type="button"
                     onClick={() => setPickerOpen((v) => !v)}
                     className="flex items-center gap-2 h-[34px] px-3.5 rounded-[10px] bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover"
                 >
                     <i className={`fa-solid ${pickerOpen ? 'fa-xmark' : 'fa-plus'} text-[11px]`} />
                     {pickerOpen ? 'Kapat' : 'Form bağla'}
-                </button>
+                </button>}
             </div>
 
             {pickerOpen && (
@@ -173,7 +173,7 @@ export function FormsTabV3({ taskId }) {
                             </a>
                         )}
 
-                        <button
+                        {!readOnly && <button
                             type="button"
                             title="Bağlantıyı kaldır"
                             aria-label={`${link.title} bağlantısını kaldır`}
@@ -181,12 +181,12 @@ export function FormsTabV3({ taskId }) {
                             className="flex shrink-0 items-center justify-center h-[28px] w-[28px] rounded-[8px] text-text-tertiary hover:bg-negative-subtle hover:text-negative cursor-pointer"
                         >
                             <i className="fa-regular fa-trash-can text-[12px]" />
-                        </button>
+                        </button>}
                     </div>
 
                     {/* Dışarı açma yalnız paylaşım yetkisi olana görünür; sunucu da
                         aynı yetkiyi ayrıca doğrular. */}
-                    {canShare && link.isPublished && (
+                    {canShare && !readOnly && link.isPublished && (
                         <label className="flex items-center gap-2 px-3.5 pb-3 text-[11.5px] text-text-secondary cursor-pointer">
                             <input
                                 type="checkbox"

@@ -1538,7 +1538,17 @@ namespace Apya.Platform.Tasks
         public async Task DeleteAttachmentAsync(Guid attachmentId)
         {
             var attachment = await _attachmentRepository.GetAsync(attachmentId);
-            await EnsureTaskAccessAllowedAsync(attachment.TaskId);
+            var task = await Repository.GetAsync(attachment.TaskId);
+            // Yükleyen kendi dosyasını kaldırabilir; başkasınınkini yalnız görevi değiştirebilen (oluşturan,
+            // atanan, ekip yöneticisi). Ek soft-delete DEĞİL: silinen dosya geri gelmez.
+            if (CurrentUser.Id.HasValue && attachment.CreatorId == CurrentUser.Id)
+            {
+                await EnsureTaskPrivacyAllowedAsync(task);
+            }
+            else
+            {
+                await EnsureCanMutateTaskAsync(task);
+            }
 
             await _attachmentRepository.DeleteAsync(attachment, autoSave: true);
         }
@@ -1555,7 +1565,7 @@ namespace Apya.Platform.Tasks
         [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task AddFeatureAsync(Guid taskId, string featureCode)
         {
-            await EnsureTaskAccessAllowedAsync(taskId);
+            await EnsureCanMutateTaskAsync(await Repository.GetAsync(taskId));
 
             if (string.IsNullOrWhiteSpace(featureCode) || featureCode.Length > 64)
             {
@@ -1578,7 +1588,7 @@ namespace Apya.Platform.Tasks
         [Authorize(PlatformPermissions.Tasks.Edit)]
         public async Task RemoveFeatureAsync(Guid taskId, string featureCode)
         {
-            await EnsureTaskAccessAllowedAsync(taskId);
+            await EnsureCanMutateTaskAsync(await Repository.GetAsync(taskId));
 
             if (string.IsNullOrWhiteSpace(featureCode) || featureCode.Length > 64)
             {
@@ -1672,7 +1682,7 @@ namespace Apya.Platform.Tasks
         public async Task<TaskFormLinkDto> LinkFormAsync(Guid taskId, Guid documentId)
         {
             await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
-            await EnsureTaskAccessAllowedAsync(taskId);
+            await EnsureCanMutateTaskAsync(await Repository.GetAsync(taskId));
 
             // Formun VARLIĞI ve kiracıya aitliği burada doğrulanır; GetAsync tenant
             // süzgecinden geçer, başka kiracının formu bulunamaz.
@@ -1696,7 +1706,7 @@ namespace Apya.Platform.Tasks
             await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
 
             var link = await _formLinkRepository.GetAsync(linkId);
-            await EnsureTaskAccessAllowedAsync(link.TaskId);
+            await EnsureCanMutateTaskAsync(await Repository.GetAsync(link.TaskId));
 
             // YALNIZ bağ silinir. Form da, toplanmış yanıtlar da yerinde kalır —
             // bağı kaldırmak "bu formu artık bu görevde kullanmıyoruz" demektir,
@@ -1709,7 +1719,7 @@ namespace Apya.Platform.Tasks
             await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
 
             var link = await _formLinkRepository.GetAsync(linkId);
-            await EnsureTaskAccessAllowedAsync(link.TaskId);
+            await EnsureCanMutateTaskAsync(await Repository.GetAsync(link.TaskId));
 
             // Ekip dışına açmak ayrı bir yetki: paylaşım linki üretmekle aynı kapı.
             if (isGuestFillable)
@@ -1818,7 +1828,7 @@ namespace Apya.Platform.Tasks
         public async Task<TaskDocumentDto> CreateDocumentAsync(Guid taskId, string title)
         {
             await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
-            await EnsureTaskAccessAllowedAsync(taskId);
+            await EnsureCanMutateTaskAsync(await Repository.GetAsync(taskId));
 
             if (string.IsNullOrWhiteSpace(title))
             {
@@ -1839,7 +1849,7 @@ namespace Apya.Platform.Tasks
             await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
 
             var doc = await _documentRepository.GetAsync(documentId);
-            await EnsureTaskAccessAllowedAsync(doc.TaskId);
+            await EnsureCanMutateTaskAsync(await Repository.GetAsync(doc.TaskId));
 
             if (string.IsNullOrWhiteSpace(input.Title))
             {
@@ -1859,7 +1869,7 @@ namespace Apya.Platform.Tasks
             await CheckPolicyAsync(PlatformPermissions.Tasks.Edit);
 
             var doc = await _documentRepository.GetAsync(documentId);
-            await EnsureTaskAccessAllowedAsync(doc.TaskId);
+            await EnsureCanMutateTaskAsync(await Repository.GetAsync(doc.TaskId));
 
             // FullAuditedEntity → SOFT delete. Kullanıcı yazısı, geri alınabilir kalsın.
             await _documentRepository.DeleteAsync(doc, autoSave: true);

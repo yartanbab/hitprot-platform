@@ -19,7 +19,7 @@ import { UnsavedChangesDialog } from '../../../components/ui';
  * tabanlı editör her tuşta onChange bastığı için otomatik kaydetme her harfte
  * bir istek anlamına gelirdi.
  */
-export function DocumentsTabV3({ taskId }) {
+export function DocumentsTabV3({ taskId, readOnly = false }) {
     const { documents, isLoading, createDocument, updateDocument, removeDocument, isSaving } =
         useTaskDocuments(taskId);
 
@@ -99,12 +99,13 @@ export function DocumentsTabV3({ taskId }) {
                     <input
                         type="text"
                         value={draftTitle}
+                        readOnly={readOnly}
                         aria-label="Belge başlığı"
                         onChange={(e) => { setDraftTitle(e.target.value); setDirty(true); }}
                         className="flex-1 min-w-0 h-9 px-3 rounded-[10px] border border-subtle bg-surface-base text-[13.5px] font-bold text-text-primary focus:border-focus focus:shadow-focus focus:outline-none"
                     />
 
-                    <button
+                    {!readOnly && <button
                         type="button"
                         onClick={onSave}
                         disabled={isSaving || !dirty}
@@ -114,7 +115,7 @@ export function DocumentsTabV3({ taskId }) {
                     >
                         <i className={`fa-solid ${isSaving ? 'fa-circle-notch fa-spin' : 'fa-floppy-disk'} text-[11px]`} />
                         {isSaving ? 'Kaydediliyor…' : dirty ? 'Kaydet' : 'Kaydedildi'}
-                    </button>
+                    </button>}
                 </div>
 
                 {isFetching && !openDoc ? (
@@ -124,6 +125,7 @@ export function DocumentsTabV3({ taskId }) {
                         value={draftContent}
                         ariaLabel="Belge içeriği"
                         placeholder="Belgeyi buraya yazın…"
+                        readOnly={readOnly}
                         onChange={(html) => { setDraftContent(html); setDirty(true); }}
                     />
                 )}
@@ -149,14 +151,14 @@ export function DocumentsTabV3({ taskId }) {
         <div className="flex flex-col gap-3.5">
             <div className="flex items-center justify-between gap-3">
                 <h2 className="m-0 text-[14px] font-bold text-text-primary">Belgeler</h2>
-                <button
+                {!readOnly && <button
                     type="button"
                     onClick={onCreate}
                     className="flex items-center gap-2 h-[34px] px-3.5 rounded-[10px] bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover"
                 >
                     <i className="fa-solid fa-plus text-[11px]" />
                     Yeni belge
-                </button>
+                </button>}
             </div>
 
             {isLoading && documents.length === 0 && (
@@ -195,7 +197,7 @@ export function DocumentsTabV3({ taskId }) {
                                 </span>
                             </button>
 
-                            <button
+                            {!readOnly && <button
                                 type="button"
                                 title="Sil"
                                 aria-label={`${doc.title} belgesini sil`}
@@ -203,7 +205,7 @@ export function DocumentsTabV3({ taskId }) {
                                 className="flex shrink-0 items-center justify-center h-[28px] w-[28px] rounded-[8px] text-text-tertiary opacity-0 group-hover:opacity-100 hover:bg-negative-subtle hover:text-negative cursor-pointer"
                             >
                                 <i className="fa-regular fa-trash-can text-[12px]" />
-                            </button>
+                            </button>}
                         </div>
                     ))}
                 </div>

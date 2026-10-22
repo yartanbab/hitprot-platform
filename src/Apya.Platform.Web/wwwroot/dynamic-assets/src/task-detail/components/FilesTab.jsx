@@ -9,13 +9,18 @@ import { notifyError } from '../../lib/api/abpErrors';
  * Dosyalar sekmesi (V4 tasarım dili) — sürükle-bırak alanı + kart ızgarası.
  * Yükleme yolu değişmedi (`useTaskAttachments` → raw multipart endpoint).
  */
-export function FilesTab({ taskId }) {
+export function FilesTab({ taskId, readOnly = false }) {
     const { attachments, upload, remove, isUploading } = useTaskAttachments(taskId);
     const queryClient = useQueryClient();
     const inputRef = useRef(null);
     const [dragging, setDragging] = useState(false);
 
     const canShare = isGranted('Platform.Tasks.ShareExternally');
+    /* Silme sunucudaki kuralın aynısı: görevi değiştirebilen (readOnly değil) ya da dosyayı yükleyen
+       (düzenleme izniyle). Yükleme her görebilene açık kalır (yorum eki, ürün kararı). */
+    const me = window?.abp?.currentUser?.id;
+    const canDeleteAttachment = (att) =>
+        !readOnly || (isGranted('Platform.Tasks.Edit') && Boolean(me) && att.creatorId === me);
 
     const onToggleGuestVisibility = async (attachmentId, isVisible) => {
         try {
@@ -108,6 +113,7 @@ export function FilesTab({ taskId }) {
                                         >
                                             <i className="fa-solid fa-download text-[11px]" />
                                         </a>
+                                        {canDeleteAttachment(att) && (
                                         <button
                                             type="button"
                                             title="Sil"
@@ -117,6 +123,7 @@ export function FilesTab({ taskId }) {
                                         >
                                             <i className="fa-regular fa-trash-can text-[11px]" />
                                         </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

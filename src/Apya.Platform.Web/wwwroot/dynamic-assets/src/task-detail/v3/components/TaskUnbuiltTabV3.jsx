@@ -7,7 +7,7 @@ import { FeatureAddMenuV3 } from './FeatureAddMenuV3';
  * olduğunu söyler ve iki çıkış yolu sunar: özelliği kaldır ya da başka özellik
  * ekle (CTA düz liste menüsünü yerinde açar — modal picker kalktı).
  */
-export function TaskUnbuiltTabV3({ code, onRemoveFeature, pickerEntries = [], onPickFeature, canRemove = true }) {
+export function TaskUnbuiltTabV3({ code, onRemoveFeature, pickerEntries = [], onPickFeature, canRemove = true, canAdd = true }) {
     const info = featureDisplay(code) ?? { title: code, desc: '', icon: 'fa-cube', bg: 'bg-neutral-subtle', fg: 'text-text-secondary' };
 
     return (
@@ -36,7 +36,7 @@ export function TaskUnbuiltTabV3({ code, onRemoveFeature, pickerEntries = [], on
                         Bu özelliği kaldır
                     </button>
                 )}
-                <FeatureAddMenuV3 entries={pickerEntries} onPick={onPickFeature}>
+                {canAdd && <FeatureAddMenuV3 entries={pickerEntries} onPick={onPickFeature}>
                     <button
                         type="button"
                         className="flex items-center gap-2 h-[34px] px-3.5 rounded-[10px] bg-primary text-white text-[12.5px] font-bold cursor-pointer hover:bg-primary-hover"
@@ -44,7 +44,7 @@ export function TaskUnbuiltTabV3({ code, onRemoveFeature, pickerEntries = [], on
                         <i className="fa-solid fa-shapes text-[10px]" />
                         Başka özellik ekle
                     </button>
-                </FeatureAddMenuV3>
+                </FeatureAddMenuV3>}
             </div>
         </div>
     );
