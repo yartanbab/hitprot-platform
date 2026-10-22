@@ -26,6 +26,48 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.10.22",
+            date: "22 Ekim 2026",
+            title: "Görevlerde ve hibe ekranlarında yetkiler her yerde aynı: yalnız yapabileceğiniz işlemler görünüyor",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görev kopyalarken gizli alt görevler korunuyor",
+                "Bir görevi alt görevleriyle kopyaladığınızda yalnız sizin görebildiğiniz alt görevler kopyalanır; " +
+                "başkasının gizli alt görevi kopyada görünür hâle gelmez. Göremediğiniz gizli bir üst görevin adı " +
+                "da alt görevin ekranında artık görünmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Başkasının görevindeki dosya ve belgeler korunuyor",
+                "Bir görevin oluşturanı, sorumlusu ya da ekip yöneticisi değilseniz o görevin dosyalarını silemez; " +
+                "belgelerini, bağlı formlarını ve sekmelerini değiştiremezsiniz. İlgili düğmeler size görünmez, " +
+                "belgeler salt okunur açılır. Kendi yüklediğiniz dosyayı her zaman kaldırabilirsiniz; görevi okumaya, " +
+                "yorum yazmaya ve dosya eklemeye devam edersiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Görev atama izni her yerde aynı",
+                "Görev atama izniniz yoksa yeni görev oluştururken, görevi düzenlerken ya da şablondan görev açarken " +
+                "sorumlu olarak yalnız kendinizi seçebilirsiniz. Başkasına görev atamak için atama izni gerekir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Panoda ve proje listesinde hata veren düğmeler kalktı",
+                "Panodaki kart menüsünde \"Sil\" yalnız görev silme izniniz varsa; proje ekranının görev listesindeki " +
+                "satır üstü \"Tamamla\" yalnız o görevi değiştirebiliyorsanız görünür. Tıklayınca \"yetkiniz yok\" " +
+                "diyen düğmeler artık çıkmıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Önerilen hibeyi kapatmak başvuru yönetme izni istiyor",
+                "Önerilen bir hibeyi kapatmak, takibe almak ya da takip notu yazmak firmanızın tamamı için geçerli " +
+                "olduğundan artık yalnız başvuru yönetme izni olan kullanıcılara açık. Yalnız görüntüleme izni olan " +
+                "kullanıcılar öneriyi görür ama kapatamaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe uygulama ekranında bütçe gerçekleşmesi bütçe izniyle görünüyor",
+                "Uygulama ve Tahsilat ekranındaki bütçe gerçekleşmesi (kalem bazlı harcama ve kaleme bağlanmamış " +
+                "giderler) artık proje bütçesini görme izniniz varsa gösterilir. İzniniz yoksa bölüm boş kalmaz, " +
+                "\"görme izniniz yok\" diye yazar.")
+        ),
+
+        new ReleaseNote(
             version: "2026.10.19",
             date: "19 Ekim 2026",
             title: "Bildirimler anında ve her cihazda; görev yorumunda kişiden bahsetme, Ctrl K ile kayıt arama, " +
