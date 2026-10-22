@@ -1788,6 +1788,7 @@
     "Grants:Impl:Status:Onaylandi": "approved",
     "Grants:Impl:Status:RevizyonIstendi": "revision requested",
     "Grants:Impl:Budget": "Budget realisation",
+    "Grants:Impl:BudgetHidden": "You are not allowed to see the project's budget realisation.",
     "Grants:Impl:BudgetHint": "Approved / spent / remaining per line; spending is read from the project.",
     "Grants:Impl:Col:Line": "Budget line",
     "Grants:Impl:Col:Approved": "Approved",

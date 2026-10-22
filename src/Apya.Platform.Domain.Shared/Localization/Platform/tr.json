@@ -1692,6 +1692,7 @@
         "Grants:Impl:Status:Onaylandi": "onaylandı",
         "Grants:Impl:Status:RevizyonIstendi": "revizyon istendi",
         "Grants:Impl:Budget": "Bütçe gerçekleşmesi",
+        "Grants:Impl:BudgetHidden": "Projenin bütçe gerçekleşmesini görme izniniz yok.",
         "Grants:Impl:BudgetHint": "Kalem bazlı onaylı / harcanan / kalan; harcama kayıtları projeden okunur.",
         "Grants:Impl:Col:Line": "Bütçe kalemi",
         "Grants:Impl:Col:Approved": "Onaylı",

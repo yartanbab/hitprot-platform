@@ -29,6 +29,9 @@ public class GrantImplementationDto
 
     public List<GrantChainItemDto> Chain { get; set; } = new();
     public List<GrantBudgetRealisationDto> Budget { get; set; } = new();
+
+    /// <summary>Bütçe gerçekleşmesi bu kullanıcıya gösterilmez (Projects.ViewBudget yok); bölüm boş gelir.</summary>
+    public bool BudgetHidden { get; set; }
     public List<GrantObligationDto> Obligations { get; set; } = new();
 
     /// <summary>

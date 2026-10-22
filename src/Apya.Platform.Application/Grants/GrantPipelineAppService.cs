@@ -482,8 +482,10 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
             .GroupBy(c => c.AssignedUserId!.Value)
             .ToDictionary(g => g.Key, g => g.Count());
 
+        // Danışman HOST kullanıcısıdır. Liste kiracı süzgeci kapalıyken de kurulduğu için koşul açıkça yazılır;
+        // yoksa firma çalışanları (başka kiracıların kullanıcıları) danışman listesine düşüyordu.
         dto.Consultants = users
-            .Where(u => u.IsActive)
+            .Where(u => u.IsActive && u.TenantId == null)
             .Select(u => new GrantPipelineConsultantDto
             {
                 UserId = u.Id,
