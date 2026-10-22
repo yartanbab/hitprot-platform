@@ -494,6 +494,10 @@ public class TaskManager : DomainService
         if (options.Subtasks)
         {
             var subtasks = await _taskRepository.GetListAsync(x => x.ParentTaskId == source.Id);
+            if (options.VisibleSubtaskIds != null)
+            {
+                subtasks = subtasks.Where(s => options.VisibleSubtaskIds.Contains(s.Id)).ToList();
+            }
             foreach (var sub in subtasks)
             {
                 await CloneSubtaskAsync(sub, clone, targetProjectId, options, now, shift);
