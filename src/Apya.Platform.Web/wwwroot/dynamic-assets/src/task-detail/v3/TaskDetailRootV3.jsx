@@ -14,7 +14,7 @@ import { SubtaskSheetV3 } from './components/SubtaskSheetV3';
 import { getPickerEntries, getVisibleTabs, TASK_FEATURE_REGISTRY } from '../TaskFeatureRegistry';
 import { isUnbuilt } from './featureCatalogV3';
 import { useTabOrder } from './hooks/useTabOrder';
-import { useTaskDetail } from '../hooks/useTaskDetail';
+import { useTaskDetail, isGranted } from '../hooks/useTaskDetail';
 import { getTaskPermissions } from '../taskPermissions';
 import { useDirtyGuard } from '../../lib/feedback/useDirtyGuard';
 import { useTaskUrlSync, clearTaskUrl } from '../hooks/useTaskUrlSync';
@@ -597,7 +597,11 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                 <TaskMetadataGridV3
                     task={task}
-                    assigneeOptions={assignees.options}
+                    assigneeOptions={isGranted('Platform.Tasks.Assign')
+                        ? assignees.options
+                        /* Atama izni yoksa yalnız kendisi + mevcut sorumlu (sunucu başkasını atamayı reddeder). */
+                        : assignees.options.filter((o) => o.value === window?.abp?.currentUser?.id
+                            || o.value === task?.assigneeId)}
                     projectOptions={projects.options}
                     onFieldChange={form.setField}
                     statusValue={form.values.status}

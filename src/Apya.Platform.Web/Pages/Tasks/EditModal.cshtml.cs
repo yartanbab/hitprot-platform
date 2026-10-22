@@ -175,7 +175,10 @@ namespace Apya.Platform.Web.Pages.Tasks
             Attachments = taskDto.Attachments?.OrderByDescending(x => x.CreationTime).ToList() ?? new List<TaskAttachmentDto>();
 
             var userLookup = await _taskAppService.GetUsersLookupAsync();
+            // Atama izni yoksa yalnız kişinin kendisi ve mevcut sorumlu listelenir (sunucu başkasını atamayı reddeder).
+            var canAssign = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Assign);
             UserList = userLookup.Items
+                .Where(u => canAssign || u.Id == CurrentUser.Id || u.Id == taskDto.AssigneeId)
                 .Select(u => new SelectListItem(TaskPersonName.Label(u.Name, u.Surname, u.UserName), u.Id.ToString()))
                 .ToList();
 

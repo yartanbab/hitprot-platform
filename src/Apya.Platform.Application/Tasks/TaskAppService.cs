@@ -377,6 +377,23 @@ namespace Apya.Platform.Tasks
         /// atlıyordu: salt-okur stajyer takvimden görev tamamlayıp erteleyebiliyor, çalışan
         /// başkasının görevinin önceliğini değiştirebiliyordu.
         /// </summary>
+        /// <summary>
+        /// QA 10-22 · Başkasını atamak ya da başkasının atamasını kaldırmak Tasks.Assign ister — "Ata" ucuyla
+        /// (SetAssigneeAsync) aynı kapı; form yolundan atlatılıyordu. Kişi kendini atayabilir, kendi atamasını kaldırabilir.
+        /// </summary>
+        private async Task EnsureCanAssignAsync(Guid? previousAssigneeId, Guid? newAssigneeId)
+        {
+            if (previousAssigneeId == newAssigneeId) return;
+
+            var me = CurrentUser.Id;
+            var touchesOthers = (newAssigneeId.HasValue && newAssigneeId != me)
+                                || (previousAssigneeId.HasValue && previousAssigneeId != me);
+            if (touchesOthers)
+            {
+                await CheckPolicyAsync(PlatformPermissions.Tasks.Assign);
+            }
+        }
+
         private async Task EnsureCanMutateTaskAsync(TaskItem task)
         {
             await EnsureTaskPrivacyAllowedAsync(task);
@@ -929,6 +946,7 @@ namespace Apya.Platform.Tasks
                 await EnsureTaskAccessAllowedAsync(input.ParentTaskId.Value);
             }
             await _taskManager.EnsureAssigneeIsValidAsync(input.AssigneeId);
+            await EnsureCanAssignAsync(null, input.AssigneeId);
 
             // Proje çağırandan gelen bir kimliktir ve üst görev verilmediğinde hiç doğrulanmıyordu:
             // görev başka kiracının (ya da var olmayan) bir projesine yazılabiliyor, host'un
@@ -1043,6 +1061,7 @@ namespace Apya.Platform.Tasks
             if (input.AssigneeId != task.AssigneeId)
             {
                 await _taskManager.EnsureAssigneeIsValidAsync(input.AssigneeId);
+                await EnsureCanAssignAsync(task.AssigneeId, input.AssigneeId);
             }
 
             var before = TaskChangeSnapshot.Of(task); // N-03

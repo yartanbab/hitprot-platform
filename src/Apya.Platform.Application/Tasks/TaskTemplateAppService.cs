@@ -103,6 +103,12 @@ public class TaskTemplateAppService : ApplicationService, ITaskTemplateAppServic
             await _projectRepository.GetAsync(input.ProjectId.Value);
         }
 
+        // Başkasını sorumlu atamak "Ata" ucuyla aynı izni ister (QA 10-22): şablon yolu bunu atlatıyordu.
+        if (input.AssigneeId.HasValue && input.AssigneeId != CurrentUser.Id)
+        {
+            await CheckPolicyAsync(PlatformPermissions.Tasks.Assign);
+        }
+
         var task = await _templateManager.ApplyAsync(
             input.TemplateId,
             input.ProjectId,
