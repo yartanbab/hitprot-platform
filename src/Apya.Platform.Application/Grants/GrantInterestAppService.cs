@@ -73,6 +73,11 @@ public class GrantInterestAppService : PlatformAppService, IGrantInterestAppServ
     public async Task<MyGrantInterestDto> ExpressAsync(ExpressGrantInterestInput input)
     {
         await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
+        // İlgi bir FİRMANINDIR (ShareIdeaAsync ile aynı kapı): host bağlamında kiracısız talep açılıyordu.
+        if (CurrentTenant.Id == null)
+        {
+            throw new AbpAuthorizationException();
+        }
         // Yalnız HOST kataloğuna ilgi bildirilebilir. Filtre kapalıyken TenantId koşulu
         // elle konmazsa kiracı, başka kiracının çağrı Id'siyle kendine talep açabilir.
         GrantCall? call;

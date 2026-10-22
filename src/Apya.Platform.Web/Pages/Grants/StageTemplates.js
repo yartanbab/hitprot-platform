@@ -125,7 +125,7 @@ $(function () {
         $('#TplIsDefault').prop('checked', !!t.isDefault);
         $('#TplStepCount').text(l('Grants:StageTemplates:StepCount', t.steps.length));
         // Kaydedilmemiş yeni şablon silinemez.
-        $('#TplDelete').toggleClass('d-none', !t.id);
+        $('#TplDelete').toggleClass('d-none', !t.id || !abp.auth.isGranted('Platform.Grants.Delete'));
 
         var $steps = $('#TplSteps').empty();
         t.steps.forEach(function (s) { $steps.append(stepRow(s)); });

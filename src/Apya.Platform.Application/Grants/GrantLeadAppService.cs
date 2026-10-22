@@ -145,6 +145,8 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
     /// Talebi müşteriye (kiracıya) dönüştürür ve testten gelen cevapları firma
     /// profiline aktarır — firma profili boş bir ekranla karşılaşmasın.
     /// </summary>
+    // Yeni kiracı açar: kiracı yönetimindeki "Oluştur" ile aynı izin (hibe düzenleme izni yetmez).
+    [Authorize(TenantManagementPermissions.Tenants.Create)]
     public async Task<GrantLeadConversionResultDto> ConvertToTenantAsync(ConvertGrantLeadInput input)
     {
         EnsureHostContext();

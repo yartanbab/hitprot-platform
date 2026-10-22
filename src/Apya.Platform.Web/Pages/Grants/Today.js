@@ -39,6 +39,12 @@ $(function () {
         return l.apply(null, [key].concat(args));
     }
 
+    // Host'ta bu ekranlar Grants.Edit ister; yalnız görüntüleme izni olana satır bağlantısız çizilir (403'e götürmesin).
+    var HOST_EDIT_ONLY = /^\/Grants\/(DetailHost|Leads|Parameters|Requests)\b/;
+    function canOpen(target) {
+        return !(isHost && HOST_EDIT_ONLY.test(target) && !abp.auth.isGranted('Platform.Grants.Edit'));
+    }
+
     function href(item) {
         switch (item.kind) {
             case 0: return isHost ? '/Grants/DetailHost?id=' + item.applicationId : '/Grants/Documents?id=' + item.applicationId;
@@ -84,15 +90,18 @@ $(function () {
         }
         meta += deadlineChip(item);
 
-        return '<a class="apya-today-item" href="' + href(item) + '" data-owner="' + item.owner + '">' +
+        var target = href(item);
+        var linked = canOpen(target);
+        return (linked ? '<a class="apya-today-item" href="' + target + '"' : '<div class="apya-today-item"') +
+            ' data-owner="' + item.owner + '">' +
             '<span class="apya-today-item-icon"><i class="fa ' + ICON[item.kind] + '"></i></span>' +
             '<span class="apya-today-item-body">' +
             '<span class="apya-today-item-title">' + esc(title) + '</span>' +
             '<span class="apya-today-item-detail">' + esc(detail) + '</span>' +
             '</span>' +
             '<span class="apya-today-item-meta">' + meta + '</span>' +
-            '<span class="apya-today-item-cta">' + esc(kindText(item.kind, 'Cta', [])) + ' <i class="fa fa-chevron-right"></i></span>' +
-            '</a>';
+            (linked ? '<span class="apya-today-item-cta">' + esc(kindText(item.kind, 'Cta', [])) + ' <i class="fa fa-chevron-right"></i></span>' : '') +
+            (linked ? '</a>' : '</div>');
     }
 
     function paintHead(m) {
@@ -178,7 +187,8 @@ $(function () {
         var $dismiss = $('#OpportunityDismiss');
         if (!o) { $card.addClass('d-none'); $dismiss.addClass('d-none'); return; }
         $card.removeClass('d-none').attr('href', '/Grants/Detail?id=' + o.grantCallId);
-        $dismiss.removeClass('d-none').data('call', o.grantCallId);
+        // Kapatma firmanın tamamı için geçerli: yalnız başvuru yazma izni olana görünür (sunucu da ister).
+        $dismiss.toggleClass('d-none', !abp.auth.isGranted('Platform.Grants.ManageApplications')).data('call', o.grantCallId);
         var amount = o.maxAmount != null ? l('Grants:Today:Opportunity:Amount', money(o.maxAmount)) : '';
         $('#OpportunityTitle').text(l('Grants:Today:Opportunity:Title', o.issuer + ' · ' + o.grantName));
         $('#OpportunityDetail').text([

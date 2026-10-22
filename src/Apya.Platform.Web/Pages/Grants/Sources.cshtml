@@ -1,8 +1,11 @@
 @page
 @using Apya.Platform.Localization
+@using Apya.Platform.Permissions
+@using Microsoft.AspNetCore.Authorization
 @using Apya.Platform.Web.Pages.Shared
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<PlatformResource> L
+@inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.Grants.SourcesModel
 @{
     ViewBag.Title = L["Grants:Sources:Title"].Value;
@@ -24,9 +27,12 @@
             <a href="/Grants" class="btn btn-sm btn-outline-secondary">
                 <i class="fa fa-arrow-left me-1"></i>@L["Grants:Parameters:BackToPrograms"]
             </a>
-            <a href="/Grants/Import" class="btn btn-sm btn-outline-secondary">
-                <i class="fa fa-pen-to-square me-1"></i>@L["Grants:Sources:ManualEntry"]
-            </a>
+            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Create))
+            {
+                <a href="/Grants/Import" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-pen-to-square me-1"></i>@L["Grants:Sources:ManualEntry"]
+                </a>
+            }
             @if (Model.ScraperConnected)
             {
                 <button type="button" id="ScrapeAllBtn" class="btn btn-sm btn-primary">

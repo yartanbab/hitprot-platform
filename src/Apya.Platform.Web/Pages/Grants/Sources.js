@@ -87,7 +87,7 @@ $(function () {
         $('#SourceName').val(s ? s.name : '');
         $('#SourceUrl').val(s ? (s.url || '') : '');
         $('#SourceActive').prop('checked', s ? s.isActive : true);
-        $('#SourceDeleteBtn').toggleClass('d-none', !s);
+        $('#SourceDeleteBtn').toggleClass('d-none', !s || !abp.auth.isGranted('Platform.Grants.Delete'));
         $('#SourceForm').removeClass('d-none');
         $('#SourceAddBtn').addClass('d-none');
         paintSources();

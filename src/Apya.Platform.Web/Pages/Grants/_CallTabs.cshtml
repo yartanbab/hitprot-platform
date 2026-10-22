@@ -1,6 +1,9 @@
 @using Apya.Platform.Localization
+@using Apya.Platform.Permissions
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<PlatformResource> L
+@inject IAuthorizationService AuthorizationService
 @model string
 @*
     21a/22 · Çağrılar'ın üç sekmesi. Yayında ve Taslak aynı sayfadır (/Grants?tab=…, Index.js sayfayı
@@ -24,8 +27,12 @@
             <span class="apya-chip apya-chip-neutral apya-numeric apya-skel-num" data-call-count="draft"></span>
         }
     </a>
-    <a class="apya-grant-tab @(Model == "sources" ? "is-active" : null)" href="/Grants/Sources"
-       aria-current="@(Model == "sources" ? "page" : null)">
-        @L["Grants:Calls:Tab:Sources"]
-    </a>
+    @* Kaynaklar sayfası Grants.Edit ister: izni olmayana sekme 403'e götürüyordu. *@
+    @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+    {
+        <a class="apya-grant-tab @(Model == "sources" ? "is-active" : null)" href="/Grants/Sources"
+           aria-current="@(Model == "sources" ? "page" : null)">
+            @L["Grants:Calls:Tab:Sources"]
+        </a>
+    }
 </nav>

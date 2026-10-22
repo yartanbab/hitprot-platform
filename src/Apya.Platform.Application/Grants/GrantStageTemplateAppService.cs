@@ -112,6 +112,7 @@ public class GrantStageTemplateAppService : ApplicationService, IGrantStageTempl
         return await GetAsync(id);
     }
 
+    [Authorize(PlatformPermissions.Grants.Delete)]
     public async Task DeleteAsync(Guid id)
     {
         EnsureHostContext();

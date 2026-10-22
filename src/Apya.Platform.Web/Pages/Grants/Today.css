@@ -61,7 +61,7 @@
                 box-shadow var(--apya-motion-fast) var(--apya-easing-standard);
 }
 
-.apya-today-item:hover,
+a.apya-today-item:hover,
 .apya-today-opportunity:hover {
     border-color: var(--apya-border-strong);
     box-shadow: var(--apya-shadow-md);
