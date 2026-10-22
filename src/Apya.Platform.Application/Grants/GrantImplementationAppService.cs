@@ -447,6 +447,14 @@ public class GrantImplementationAppService : ApplicationService, IGrantImplement
         var result = dto.Budget;
         if (!application.ProjectId.HasValue) { return; }
 
+        // Kalem bazlı harcama ve kalemsiz gider toplamı proje bütçesinin parçasıdır: proje bütçe ekranıyla
+        // aynı izin (Projects.ViewBudget). Yalnız hibe izni olan kullanıcıya gitmiyordu ama gidiyordu.
+        if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))
+        {
+            dto.BudgetHidden = true;
+            return;
+        }
+
         using (_currentTenant.Change(application.TenantId))
         {
             var expenses = await _expenseRepo.GetListAsync(e => e.ProjectId == application.ProjectId.Value);

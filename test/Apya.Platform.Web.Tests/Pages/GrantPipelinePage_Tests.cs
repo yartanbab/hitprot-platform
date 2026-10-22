@@ -266,6 +266,45 @@ public class GrantPipelinePage_Tests : PlatformWebTestBase
             }));
     }
 
+    /// <summary>
+    /// QA 10-22 (G8) · Pano kiracı süzgeci kapalıyken kurulduğu için danışman listesine TÜM kiracıların etkin
+    /// kullanıcıları (firma çalışanları) düşüyordu; host danışman başka firmanın çalışanını görüyor ve
+    /// başvuruya atayabiliyordu. Danışman host kullanıcısıdır.
+    /// </summary>
+    [Fact]
+    public async Task Danisman_Listesi_Firma_Kullanicilarini_Icermez()
+    {
+        var (callId, _, _) = await SetupAsync(withTemplate: false);
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var tenantManager = GetRequiredService<Volo.Abp.TenantManagement.ITenantManager>();
+        var tenantRepo = GetRequiredService<Volo.Abp.TenantManagement.ITenantRepository>();
+        var currentTenant = GetRequiredService<Volo.Abp.MultiTenancy.ICurrentTenant>();
+        var users = GetRequiredService<IIdentityUserRepository>();
+        var code = Guid.NewGuid().ToString("N")[..6];
+
+        Guid firmUser, hostUser;
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var tenant = await tenantManager.CreateAsync("Danisman-" + code);
+            await tenantRepo.InsertAsync(tenant, autoSave: true);
+            using (currentTenant.Change(tenant.Id))
+            {
+                var firm = new IdentityUser(Guid.NewGuid(), "calisan-" + code, code + "@firma.test", tenant.Id);
+                await users.InsertAsync(firm, autoSave: true);
+                firmUser = firm.Id;
+            }
+            var host = new IdentityUser(Guid.NewGuid(), "danisman-" + code, code + "@host.test");
+            await users.InsertAsync(host, autoSave: true);
+            hostUser = host.Id;
+            await uow.CompleteAsync();
+        }
+
+        var board = await _pipeline.GetBoardAsync(callId, null);
+
+        board.Consultants.ShouldContain(c => c.UserId == hostUser);
+        board.Consultants.ShouldNotContain(c => c.UserId == firmUser);
+    }
+
     [Fact]
     public async Task Danisman_Atanir_Ve_Yuk_Sayilir()
     {
