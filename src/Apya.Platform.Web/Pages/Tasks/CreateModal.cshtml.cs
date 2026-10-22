@@ -88,7 +88,10 @@ public class CreateModalModel : PlatformPageModel
         };
 
         var userLookup = await _taskAppService.GetUsersLookupAsync();
+        // Atama izni yoksa yalnız kişinin kendisi seçilebilir (sunucu başkasını atamayı reddeder).
+        var canAssign = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Assign);
         UserList = userLookup.Items
+            .Where(u => canAssign || u.Id == CurrentUser.Id)
             .Select(u => new SelectListItem(TaskPersonName.Label(u.Name, u.Surname, u.UserName), u.Id.ToString()))
             .ToList();
 
