@@ -40,10 +40,11 @@ describe('Görev konsolları — yayın ve toplu akış (STA-03, STA-15, STA-11)
     it.each(CONSOLES)('%s — toplu işlemler kalem başına ABP penceresi açmaz, sonucu özetler', (file) => {
         const text = read(file);
         expect(count(text, 'abpHandleError: false')).toBeGreaterThanOrEqual(2);
-        expect(count(text, 'notifyBulkResult(')).toBe(2);
         // Eski sonuçsuz desen (.then(function () {) — hata yolunda özet/yenileme yoktu.
         const thens = thensAfterRunSequential(text);
-        expect(thens).toHaveLength(2);
+        // Durum + silme + panoyla eşit toplu eylemler (P-04 / QA-33 runBulk): her sıralı akış sonucu özetler.
+        expect(thens.length).toBeGreaterThanOrEqual(2);
+        expect(count(text, 'notifyBulkResult(')).toBe(thens.length);
         thens.forEach((t) => expect(t).toBe('.then(function (result)'));
     });
 });

@@ -1759,6 +1759,7 @@ describe('kart ⋯ menüsü (v2)', () => {
 
     it('toplu çubuk yokken yalnız kart-sahibi eylemleri kalır (Sil)', async () => {
         mountBoard(sysCols, [{ ...task, creatorId: 'u1' }]);
+        granted['Platform.Tasks.Delete'] = true;          // Sil, silme izni VE sahiplik ister (QA 10-22)
         document.querySelector('.js-kb-bar').remove();   // yetkisiz sayfa: çubuk hiç basılmaz
         apya.kanban.create({ projectId: 'p1' }).load();
         await flush();
@@ -1768,6 +1769,17 @@ describe('kart ⋯ menüsü (v2)', () => {
         expect(items).not.toContain('Taşı');
         expect(items).not.toContain('Ata');
         expect(items).toContain('Sil');
+    });
+
+    it('silme izni yoksa kendi kartında da Sil yok (sunucu reddederdi)', async () => {
+        mountBoard(sysCols, [{ ...task, creatorId: 'u1' }]);
+        document.querySelector('.js-kb-bar').remove();
+        apya.kanban.create({ projectId: 'p1' }).load();
+        await flush();
+
+        const menu = openMenu();
+        const items = menu ? [...menu.querySelectorAll('.kanban-popmenu-item')].map((b) => b.textContent) : [];
+        expect(items).not.toContain('Sil');
     });
 
     it('sahibi olmadığı kart kilitli: sürüklenmez, menüde değiştirme eylemi yok', async () => {
