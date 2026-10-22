@@ -613,8 +613,10 @@
         return $row.append($body);
     }
 
-    // ABP ve DOM hazır olduğunda başlat
+    // ABP ve DOM hazır olduğunda başlat. Betik global demette: giriş/kayıt sayfalarında oturum yok,
+    // hub müzakeresi ve sayaç isteği 401 dönüp konsola hata basıyordu — oturumsuz hiç başlamaz.
     $(function() {
+        if (!(window.abp && abp.currentUser && abp.currentUser.isAuthenticated)) { return; }
         init();
     });
 
