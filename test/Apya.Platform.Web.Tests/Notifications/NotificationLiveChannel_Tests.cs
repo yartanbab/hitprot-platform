@@ -35,6 +35,14 @@ public class NotificationLiveChannel_Tests
         bell.ShouldNotContain("l('Connection:Lost'), l('Connection:ErrorTitle'), { sticky: true }", customMessage: "geçici kopma her sayfada kalıcı uyarı üretmesin");
     }
 
+    /// <summary>QA 10-22 · Betik global demette; giriş sayfasında oturumsuz başlayıp 401 üretmez.</summary>
+    [Fact]
+    public void Zil_oturum_yokken_baslamaz()
+    {
+        var bell = Src("wwwroot", "Pages", "Notifications", "notification-bell.js");
+        bell.ShouldContain("if (!(window.abp && abp.currentUser && abp.currentUser.isAuthenticated)) { return; }");
+    }
+
     /// <summary>Balon kim/ne söyler (gövde), kullanıcı metni kaçışlanır, tıklayınca kayda gider.</summary>
     [Fact]
     public void Balon_govdeyi_kacislanmis_gosterir_ve_kayda_goturur()
