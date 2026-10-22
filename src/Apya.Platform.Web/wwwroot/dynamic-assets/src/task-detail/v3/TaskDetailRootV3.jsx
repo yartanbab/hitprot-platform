@@ -496,7 +496,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
             onRemoveFeature={handleRemoveFeature}
             pickerEntries={pickerEntries}
             onPickFeature={handlePickFeature}
-            canRemove={!activeTabDef?.isCore}
+            canRemove={canEdit && !activeTabDef?.isCore}
+            canAdd={canEdit}
         />
     ) : (
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
@@ -515,7 +516,8 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                     onRemoveFeature={handleRemoveFeature}
                     pickerEntries={pickerEntries}
                     onPickFeature={handlePickFeature}
-                    canRemove={!activeTabDef?.isCore}
+                    canRemove={canEdit && !activeTabDef?.isCore}
+                    canAdd={canEdit}
                 />
             )}
         </Suspense>
@@ -629,6 +631,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                             pickerEntries={pickerEntries}
                             onPickFeature={handlePickFeature}
                             counts={counts}
+                            canAdd={canEdit}
                         />
                     )}
 
@@ -649,6 +652,7 @@ export function TaskDetailRootV3({ taskId, presentation = 'modal', onClose, swit
                                 onPickFeature={handlePickFeature}
                                 counts={counts}
                                 isDirty={form.isDirty}
+                                canAdd={canEdit}
                             />
                         </div>
 

@@ -25,6 +25,7 @@ export function TaskFeatureNavbarV3({
     onPickFeature,
     counts = {},
     isDirty = false,
+    canAdd = true,
 }) {
     const [plusHover, setPlusHover] = useState(false);
 
@@ -85,7 +86,7 @@ export function TaskFeatureNavbarV3({
                     düğme sağa doğru açılır, sekmeler yerinde kalır. Menü Radix
                     Popover ile portal edilir — kaydırma kabının overflow'u onu
                     kırpamaz (TAB_CARD kırpma tuzağının bilinen çözümü). */}
-                <FeatureAddMenuV3 entries={pickerEntries} onPick={onPickFeature}>
+                {canAdd && <FeatureAddMenuV3 entries={pickerEntries} onPick={onPickFeature}>
                     <button
                         type="button"
                         title="Özellik ekle"
@@ -104,7 +105,7 @@ export function TaskFeatureNavbarV3({
                         <i className="fa-solid fa-plus text-[11px]" />
                         {plusHover && <span className="animate-fade-in-fast">Özellik ekle</span>}
                     </button>
-                </FeatureAddMenuV3>
+                </FeatureAddMenuV3>}
             </div>
 
             {isDirty && (

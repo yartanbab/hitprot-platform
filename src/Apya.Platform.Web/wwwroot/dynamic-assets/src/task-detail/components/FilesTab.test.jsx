@@ -101,3 +101,24 @@ describe('FilesTab — hata bildirimi ortak kanaldan (STA-10)', () => {
         await waitFor(() => expect(window.abp.notify.error.mock.calls).toEqual([['rapor.pdf silinemedi.']]));
     });
 });
+
+/* QA 10-22: salt görüntüleyen (görevi değiştiremeyen) kullanıcı başkasının dosyasını silemez — sunucu
+   TaskUpdateDenied döndürür. Kendi yüklediğini (düzenleme izniyle) kaldırabilir. */
+describe('FilesTab — salt görüntüleme', () => {
+    beforeEach(() => {
+        window.abp = { currentUser: { id: 'me' }, auth: { isGranted: (p) => p === 'Platform.Tasks.Edit' } };
+        window.apya.platform.tasks.task.getAttachments = vi.fn(() => Promise.resolve([
+            { id: 'att-1', fileName: 'rapor.pdf', fileSize: 2048, downloadUrl: '/file/get/x', uploaderName: 'ali', creatorId: 'other' },
+            { id: 'att-2', fileName: 'benim.pdf', fileSize: 1024, downloadUrl: '/file/get/y', uploaderName: 'ben', creatorId: 'me' },
+        ]));
+    });
+
+    afterEach(() => { delete window.abp; });
+
+    it('başkasının dosyasında sil düğmesi yok, kendi dosyasında var', async () => {
+        renderWithClient(<FilesTab taskId="t-1" task={{ id: 't-1' }} readOnly />);
+        await screen.findByText('rapor.pdf');
+        expect(screen.queryByRole('button', { name: /rapor\.pdf dosyasini sil/i })).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /benim\.pdf dosyasini sil/i })).toBeInTheDocument();
+    });
+});

@@ -21,6 +21,7 @@ export function TaskFeatureRailV3({
     pickerEntries = [],
     onPickFeature,
     counts = {},
+    canAdd = true,
 }) {
     return (
         <nav
@@ -80,8 +81,8 @@ export function TaskFeatureRailV3({
                 );
             })}
 
-            {/* Düz liste menüsü (FeatureAddMenuV3) — modal picker kalktı. */}
-            <FeatureAddMenuV3 entries={pickerEntries} onPick={onPickFeature}>
+            {/* Düz liste menüsü (FeatureAddMenuV3) — modal picker kalktı. Görevi değiştiremeyene yok. */}
+            {canAdd && <FeatureAddMenuV3 entries={pickerEntries} onPick={onPickFeature}>
                 <button
                     type="button"
                     className="flex shrink-0 items-center gap-[11px] h-9 mt-1.5 px-[11px] rounded-[9px] border border-dashed border-primary bg-primary-subtle text-primary text-[12.5px] font-bold text-left cursor-pointer hover:border-solid"
@@ -89,7 +90,7 @@ export function TaskFeatureRailV3({
                     <i className="fa-solid fa-plus text-[11px] w-[15px]" />
                     <span>Özellik ekle</span>
                 </button>
-            </FeatureAddMenuV3>
+            </FeatureAddMenuV3>}
         </nav>
     );
 }

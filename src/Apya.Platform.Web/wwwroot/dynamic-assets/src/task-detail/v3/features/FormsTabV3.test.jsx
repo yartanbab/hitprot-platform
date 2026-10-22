@@ -153,3 +153,16 @@ describe('FormsTabV3 — yanıtlar', () => {
         expect(window.apya.platform.tasks.task.getFormResponses).not.toHaveBeenCalled();
     });
 });
+
+/* QA 10-22: görevi değiştiremeyen kullanıcı bağlı formları görür ve doldurur; bağlama/bağ kaldırma
+   düğmesi görmez (sunucu TaskUpdateDenied döndürür). */
+describe('FormsTabV3 — salt görüntüleme', () => {
+    it('Form bağla ve bağlantıyı kaldır düğmeleri yok, doldur düğmesi var', async () => {
+        renderWithClient(<FormsTabV3 taskId="t-1" readOnly />);
+        await screen.findByText('Saha kontrol formu');
+        expect(screen.queryByRole('button', { name: /Form bağla/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Saha kontrol formu bağlantısını kaldır/ })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /Saha kontrol formu formunu doldur/ })).toBeInTheDocument();
+        expect(screen.queryByText(/ekip dışından da doldurulabilsin/)).not.toBeInTheDocument();
+    });
+});

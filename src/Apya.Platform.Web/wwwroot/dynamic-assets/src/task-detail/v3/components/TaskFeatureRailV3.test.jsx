@@ -72,3 +72,18 @@ describe('TaskFeatureRailV3 sekme secimi', () => {
         expect(onDragStart).toHaveBeenCalledWith('subtasks');
     });
 });
+
+/* QA 10-22: sekme eklemek görevi değiştirir; görevi değiştiremeyen kullanıcıya menü gösterilmez
+   (sunucu TaskUpdateDenied döndürür). Açık sekmeler arasında gezinme sürer. */
+describe('TaskFeatureRailV3 — salt görüntüleme', () => {
+    it('canAdd=false iken "Özellik ekle" yok, sekmeler duruyor', () => {
+        renderRail({ canAdd: false });
+        expect(screen.queryByText('Özellik ekle')).not.toBeInTheDocument();
+        expect(screen.getByText('Alt Görevler')).toBeInTheDocument();
+    });
+
+    it('varsayılan (canAdd=true) "Özellik ekle" görünür', () => {
+        renderRail();
+        expect(screen.getByText('Özellik ekle')).toBeInTheDocument();
+    });
+});

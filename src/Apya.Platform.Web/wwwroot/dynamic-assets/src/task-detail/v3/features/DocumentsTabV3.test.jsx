@@ -170,3 +170,19 @@ describe('DocumentsTabV3 — editör', () => {
         expect(await screen.findByText('Belgeler')).toBeInTheDocument();
     });
 });
+
+/* QA 10-22: görevi değiştiremeyen kullanıcı belgeleri okur; oluşturma/silme/kaydetme düğmesi görmez
+   (sunucu TaskUpdateDenied döndürür). */
+describe('DocumentsTabV3 — salt görüntüleme', () => {
+    it('yeni belge ve sil düğmesi yok; açılan belgede başlık salt okunur, Kaydet yok', async () => {
+        renderWithClient(<DocumentsTabV3 taskId="t-1" readOnly />);
+        await screen.findByText('Toplantı notu');
+        expect(screen.queryByRole('button', { name: /Yeni belge/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Toplantı notu belgesini sil/ })).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByText('Toplantı notu'));
+        const title = await screen.findByLabelText('Belge başlığı');
+        expect(title).toHaveAttribute('readonly');
+        expect(screen.queryByRole('button', { name: /Kaydet/ })).not.toBeInTheDocument();
+    });
+});
