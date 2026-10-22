@@ -10,6 +10,7 @@ using Apya.Platform.Tasks;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.Uow;
@@ -280,6 +281,59 @@ public class GrantConversionPage_Tests : PlatformWebTestBase
         input.BudgetLines.Clear();
 
         await Should.ThrowAsync<BusinessException>(async () => await _conversion.ConvertAsync(input));
+    }
+
+    /// <summary>
+    /// QA 10-22 (G10) · Ekip listesine istemcinin yolladığı her kimlik ekleniyordu: host kullanıcısı, başka
+    /// kiracının kullanıcısı ya da uydurma kimlik firmanın projesine üye oluyordu. Artık yalnız başvurunun
+    /// kiracısının etkin kullanıcıları eklenir (önizlemedeki aday listesiyle aynı kural).
+    /// </summary>
+    [Fact]
+    public async Task Ekip_Yalniz_Basvurunun_Kiracisinin_Etkin_Kullanicilarindan_Kurulur()
+    {
+        var (id, tenantId) = await SetupAsync();
+        var users = GetRequiredService<IIdentityUserRepository>();
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        var code = Guid.NewGuid().ToString("N")[..6];
+
+        Guid firmUser, passiveFirmUser, hostUser;
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            using (currentTenant.Change(tenantId))
+            {
+                var active = new IdentityUser(Guid.NewGuid(), "firma-" + code, code + "@firma.test", tenantId);
+                await users.InsertAsync(active, autoSave: true);
+                firmUser = active.Id;
+
+                var passive = new IdentityUser(Guid.NewGuid(), "pasif-" + code, code + "@pasif.test", tenantId);
+                passive.SetIsActive(false);
+                await users.InsertAsync(passive, autoSave: true);
+                passiveFirmUser = passive.Id;
+            }
+
+            var host = new IdentityUser(Guid.NewGuid(), "host-" + code, code + "@host.test");
+            await users.InsertAsync(host, autoSave: true);
+            hostUser = host.Id;
+            await uow.CompleteAsync();
+        }
+
+        var input = Input(id);
+        input.MemberUserIds.AddRange(new[] { firmUser, passiveFirmUser, hostUser, Guid.NewGuid() });
+
+        var result = await _conversion.ConvertAsync(input);
+
+        result.MemberCount.ShouldBe(1);
+        using var check = uowManager.Begin(requiresNew: true);
+        using (currentTenant.Change(tenantId))
+        {
+            var members = await GetRequiredService<IRepository<ProjectMember, Guid>>()
+                .GetListAsync(m => m.ProjectId == result.ProjectId);
+            var ids = members.Select(m => m.UserId).ToList();
+            ids.ShouldContain(firmUser);
+            ids.ShouldNotContain(passiveFirmUser);
+            ids.ShouldNotContain(hostUser);
+        }
     }
 
     [Fact]

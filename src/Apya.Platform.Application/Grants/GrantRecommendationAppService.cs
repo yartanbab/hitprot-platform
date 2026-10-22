@@ -95,6 +95,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
 
     public async Task<bool> ToggleBookmarkAsync(Guid grantCallId)
     {
+        // Takip satırı FİRMANINDIR (kişiye ait değil): yazma izni ister.
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         var existing = await _bookmarkRepo.FirstOrDefaultAsync(b => b.GrantCallId == grantCallId);
         if (existing != null)
         {
@@ -121,6 +123,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
 
     public async Task DismissRecommendationAsync(Guid grantCallId)
     {
+        // Öneri firmanın tamamı için kapanır (host da durumu görür): salt görüntüleyen kapatamaz.
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         // Kiracı filtresi açık: yalnız bu firmaya gönderilmiş öneriler bulunur; başka firmanın
         // önerisi (ya da host bağlamı) "bulunamadı" olur.
         var recommendations = await _hostRecRepo.GetListAsync(
@@ -154,6 +158,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
 
     public async Task SetBookmarkNoteAsync(SetGrantBookmarkNoteInput input)
     {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
         // Kiracı filtresi açık: başka firmanın takibi bulunmaz. Takipte olmayan çağrıya
         // not yazılmaz — not takibin parçasıdır, yerine geçmez.
         var bookmark = await _bookmarkRepo.FirstOrDefaultAsync(b => b.GrantCallId == input.GrantCallId)

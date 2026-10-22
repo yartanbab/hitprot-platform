@@ -136,7 +136,9 @@ $(function () {
                 '<span>' + c.openApplicationCount + '</span></span>';
         }).join(''));
 
-        $('#ConvertBtn').prop('disabled', detail.isConverted);
+        // Dönüştürmek yeni kiracı açar: kiracı oluşturma izni olmayana düğme yok (sunucu da reddeder).
+        $('#ConvertBtn').toggleClass('d-none', !abp.auth.isGranted('AbpTenantManagement.Tenants.Create'))
+            .prop('disabled', detail.isConverted);
         $('#ConvertedNote').toggleClass('d-none', !detail.isConverted)
             .text(detail.isConverted ? l('Grants:Leads:AlreadyConverted') : '');
     }

@@ -136,7 +136,9 @@ $(function () {
         // Yeni talep ancak süren talep ya da açılmış başvuru yokken bırakılabilir. Kapanan
         // talep (reddedilen ya da geri çekilen) kapıyı kapatmaz: yeni kayıt açılır.
         var canExpress = !d.alreadyApplied && (st == null || closed);
-        $('#InterestBtn').toggleClass('d-none', !canExpress || !canWrite).prop('disabled', false);
+        // İlgi bir firmanındır: host bağlamında düğme yok (sunucu da reddeder).
+        var isTenant = !!(abp.currentTenant && abp.currentTenant.id);
+        $('#InterestBtn').toggleClass('d-none', !canExpress || !canWrite || !isTenant).prop('disabled', false);
         $('#InterestBtnText').text(l(closed ? 'Grants:Interest:ExpressAgain' : 'Grants:Interest:Express'));
 
         // Talep kaydı olmayan ESKİ başvurular (bu akıştan önce açılanlar) yalnız rozet görür;

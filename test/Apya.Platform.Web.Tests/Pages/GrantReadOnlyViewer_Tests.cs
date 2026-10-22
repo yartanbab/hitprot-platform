@@ -139,7 +139,8 @@ public class GrantReadOnlyViewer_Tests : PlatformWebTestBase
 
         var detail = ReadScript("Detail.js");
         detail.ShouldContain(ask, Case.Sensitive);
-        detail.ShouldContain("toggleClass('d-none', !canExpress || !canWrite)", Case.Sensitive);
+        // QA 10-22: ilgi bir firmanındır, host bağlamında düğme yok (sunucu da reddeder).
+        detail.ShouldContain("toggleClass('d-none', !canExpress || !canWrite || !isTenant)", Case.Sensitive);
         detail.ShouldContain("$('#InterestWithdrawBtn').toggleClass('d-none', !pending || !canWrite);", Case.Sensitive);
 
         var journey = ReadScript("Journey.js");

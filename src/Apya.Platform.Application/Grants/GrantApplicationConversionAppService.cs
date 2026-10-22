@@ -250,7 +250,16 @@ public class GrantApplicationConversionAppService : PlatformAppService, IGrantAp
                 result.BudgetLineCount++;
             }
 
-            foreach (var userId in input.MemberUserIds.Distinct())
+            // Ekip yalnız başvurunun kiracısının ETKİN kullanıcılarından kurulur (önizlemedeki aday listesiyle aynı
+            // kural); istemcinin yolladığı başka kimlik — başka kiracının ya da host'un kullanıcısı — eklenmez.
+            var requestedMembers = input.MemberUserIds.Distinct().ToList();
+            var validMembers = requestedMembers.Count == 0
+                ? new List<Guid>()
+                : (await _userRepo.GetListByIdsAsync(requestedMembers))
+                    .Where(u => u.TenantId == application.TenantId && u.IsActive)
+                    .Select(u => u.Id)
+                    .ToList();
+            foreach (var userId in validMembers)
             {
                 await _memberRepo.InsertAsync(new ProjectMember(
                     GuidGenerator.Create(), project.Id, userId,

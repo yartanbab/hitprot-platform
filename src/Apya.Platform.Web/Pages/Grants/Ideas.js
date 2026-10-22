@@ -70,7 +70,8 @@ $(function () {
     function row(r) {
         // Eşleşen fikirde birincil iş ilişkilendirmek: eşleştirme ekranının fikir sekmesine götürür. Fikrin tamamı
         // her satırda başlığa tıklayınca açılır.
-        var cta = r.bestMatch
+        // İlişkilendirme ekranı (Dispatch) Grants.Create ister: izni olmayana fikri açan düğme kalır.
+        var cta = r.bestMatch && abp.auth.isGranted('Platform.Grants.Create')
             ? '<a class="btn btn-sm btn-primary apya-idea-cta" href="/Grants/Dispatch?id=' + r.bestMatch.grantCallId + '&tab=ideas">' + esc(l('Grants:Ideas:Link')) + '</a>'
             : '<button type="button" class="btn btn-sm btn-outline-secondary apya-idea-cta" data-idea="' + r.id + '">' + esc(l('Grants:Ideas:Open')) + '</button>';
 

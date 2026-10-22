@@ -149,6 +149,7 @@ public class GrantSourceAppService : ApplicationService, IGrantSourceAppService
         return Map(source);
     }
 
+    [Authorize(PlatformPermissions.Grants.Delete)]
     public async Task DeleteAsync(Guid id)
     {
         EnsureHostContext();

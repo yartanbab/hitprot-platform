@@ -76,6 +76,8 @@ public class GrantDraftAppService : ApplicationService, IGrantDraftAppService
         });
     }
 
+    // Yeni program + çağrı oluşturur: olağan oluşturma yoluyla aynı izin (GrantAppService.Create).
+    [Authorize(PlatformPermissions.Grants.Create)]
     public async Task<GrantDraftCreatedDto> CreateDraftAsync(CreateGrantDraftInput input)
     {
         EnsureHostContext();
