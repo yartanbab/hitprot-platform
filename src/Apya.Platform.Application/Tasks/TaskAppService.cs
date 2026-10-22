@@ -213,6 +213,7 @@ namespace Apya.Platform.Tasks
             taskDto.PredecessorIds = dependencies.Select(d => d.PredecessorTaskId).ToList();
 
             await PopulateTagsAsync(new List<TaskDto> { taskDto });
+            await HideInvisibleParentTitlesAsync(new List<TaskDto> { taskDto });
 
             // Mevcut kullanıcının favorisi / takibi mi (TaskFavorite + TaskWatcher join)
             var favUserId = CurrentUser.Id;
@@ -312,7 +313,31 @@ namespace Apya.Platform.Tasks
             await PopulateSubTaskCountsAsync(result.Items);
             await PopulateProjectNamesAsync(result.Items);
             await PopulateCardMetaAsync(result.Items);   // Faz 7: yorum/ek sayısı + engelli
+            await HideInvisibleParentTitlesAsync(result.Items);
             return result;
+        }
+
+        /// <summary>
+        /// Gizli üst görevin BAŞLIĞI, o görevi göremeyen kullanıcıya gitmez (APYA-22). Alt görev gizli
+        /// olmayabilir; liste satırı, pano kartı ve detay üst görevin adını basıyordu.
+        /// </summary>
+        private async Task HideInvisibleParentTitlesAsync(System.Collections.Generic.IReadOnlyList<TaskDto> items)
+        {
+            var parentIds = items.Where(i => i.ParentTaskId.HasValue && i.ParentTaskTitle != null)
+                .Select(i => i.ParentTaskId!.Value).Distinct().ToList();
+            if (parentIds.Count == 0) return;
+
+            var parents = (await Repository.GetQueryableAsync()).Where(t => parentIds.Contains(t.Id));
+            var visible = (await AsyncExecuter.ToListAsync(
+                (await ApplyPrivacyFilterAsync(parents)).Select(t => t.Id))).ToHashSet();
+
+            foreach (var item in items)
+            {
+                if (item.ParentTaskId.HasValue && !visible.Contains(item.ParentTaskId.Value))
+                {
+                    item.ParentTaskTitle = null;
+                }
+            }
         }
 
         // Bir görevin bu kullanıcıya gizlilik kuralına göre görünür olup olmadığı —
@@ -614,6 +639,14 @@ namespace Apya.Platform.Tasks
                 KeepLinks    = input.Include.KeepLinks,
                 ShiftDates   = input.Include.ShiftDates,
             };
+
+            // Kopyalanan alt görevler çağıranın olur: yalnız GÖREBİLDİKLERİ kopyalanır (APYA-22).
+            if (options.Subtasks)
+            {
+                var children = (await Repository.GetQueryableAsync()).Where(t => t.ParentTaskId == id);
+                options.VisibleSubtaskIds = (await AsyncExecuter.ToListAsync(
+                    (await ApplyPrivacyFilterAsync(children)).Select(t => t.Id))).ToHashSet();
+            }
 
             // Hedef proje çağırandan gelen bir kimliktir ve hiç doğrulanmıyordu: görev, bu
             // kullanıcının göremediği (başka kiracının ya da var olmayan) bir projeye
