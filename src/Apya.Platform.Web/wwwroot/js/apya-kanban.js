@@ -243,8 +243,10 @@
         }
         function canDelete(t) {
             if (typeof opts.canDelete === 'function') { return opts.canDelete(t); }
-            return abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                   t.creatorId === abp.currentUser.id || t.assigneeId === abp.currentUser.id;
+            // Sunucu kuralıyla aynı: silme izni VE (oluşturan/atanan ya da ekip yöneticisi).
+            return abp.auth.isGranted('Platform.Tasks.Delete') &&
+                   (abp.auth.isGranted('Platform.Projects.ManageTeam') ||
+                    t.creatorId === abp.currentUser.id || t.assigneeId === abp.currentUser.id);
         }
 
         // ── localStorage anahtarı (sırala/boyutlandır) ──
