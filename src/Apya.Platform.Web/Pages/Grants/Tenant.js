@@ -295,7 +295,7 @@ $(function () {
         var note = r.bookmarkNote ? esc(r.bookmarkNote) : '<span class="apya-feed-bookmark-empty">' + esc(l('Grants:Feed:Bookmark:NoNote')) + '</span>';
         return '<div class="apya-feed-bookmark"><i class="fa fa-bookmark"></i><span class="apya-feed-bookmark-text">' +
             '<span class="apya-feed-bookmark-meta">' + esc(parts.join(' · ')) + '</span>' + note + '</span>' +
-            '<button type="button" class="apya-feed-bookmark-edit" data-note="' + r.grantCallId + '" title="' + esc(l('Grants:Feed:Bookmark:EditNote')) + '"><i class="fa fa-pen"></i></button></div>';
+            (canWrite ? '<button type="button" class="apya-feed-bookmark-edit" data-note="' + r.grantCallId + '" title="' + esc(l('Grants:Feed:Bookmark:EditNote')) + '"><i class="fa fa-pen"></i></button>' : '') + '</div>';
     }
 
     function feedCard(r) {
@@ -309,9 +309,12 @@ $(function () {
             '<span class="apya-feed-poster-bottom">' +
             '<span class="apya-feed-poster-issuer">' + esc(r.issuer) + ' · ' + esc(r.period) + '</span>' +
             '<span class="apya-feed-poster-name">' + esc(r.grantName) + '</span></span></a>' +
-            '<button type="button" class="apya-feed-mark' + (r.isBookmarked ? ' is-on' : '') + '" data-mark="' + r.grantCallId + '" ' +
-            'title="' + esc(l(r.isBookmarked ? 'Grants:Catalog:Unbookmark' : 'Grants:Catalog:Bookmark')) + '" aria-pressed="' + (r.isBookmarked ? 'true' : 'false') + '">' +
-            '<i class="fa' + (r.isBookmarked ? '' : '-regular') + ' fa-bookmark"></i></button>' +
+            // Takibe alma yazma izni ister (firmanın ortak kaydı); salt görüntüleyene düğme yok.
+            (canWrite
+                ? '<button type="button" class="apya-feed-mark' + (r.isBookmarked ? ' is-on' : '') + '" data-mark="' + r.grantCallId + '" ' +
+                  'title="' + esc(l(r.isBookmarked ? 'Grants:Catalog:Unbookmark' : 'Grants:Catalog:Bookmark')) + '" aria-pressed="' + (r.isBookmarked ? 'true' : 'false') + '">' +
+                  '<i class="fa' + (r.isBookmarked ? '' : '-regular') + ' fa-bookmark"></i></button>'
+                : '') +
             '<div class="apya-feed-body">' +
             '<div class="apya-feed-amount-row"><span class="apya-feed-amount-value">' + esc(ceiling(r.maxAmount)) + '</span>' +
             (r.supportRatePercent != null ? '<span class="apya-feed-rate">' + esc(l('Grants:Feed:Card:Rate', r.supportRatePercent)) + '</span>' : '') + '</div>' +

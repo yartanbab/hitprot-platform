@@ -142,6 +142,12 @@ public class GrantReadOnlyViewer_Tests : PlatformWebTestBase
         // QA 10-22: ilgi bir firmanındır, host bağlamında düğme yok (sunucu da reddeder).
         detail.ShouldContain("toggleClass('d-none', !canExpress || !canWrite || !isTenant)", Case.Sensitive);
         detail.ShouldContain("$('#InterestWithdrawBtn').toggleClass('d-none', !pending || !canWrite);", Case.Sensitive);
+        // QA 10-22: takip yazma izni ister (#796); düğme de izne bağlı.
+        detail.ShouldContain("$('#BookmarkBtn').toggleClass('d-none', !canWrite)", Case.Sensitive);
+
+        var catalog = ReadScript("Catalog.js");
+        catalog.ShouldContain(ask, Case.Sensitive);
+        catalog.ShouldContain("? '<button type=\"button\" class=\"apya-cat-bookmark'", Case.Sensitive);
 
         var journey = ReadScript("Journey.js");
         journey.ShouldContain(ask, Case.Sensitive);
@@ -155,6 +161,7 @@ public class GrantReadOnlyViewer_Tests : PlatformWebTestBase
         tenant.ShouldContain(ask, Case.Sensitive);
         tenant.ShouldContain("$('#ProfileForm').prop('disabled', !canWrite);", Case.Sensitive);
         tenant.ShouldContain("$('#SaveProfileBtn').addClass('d-none');", Case.Sensitive);
+        tenant.ShouldContain("(canWrite ? '<button type=\"button\" class=\"apya-feed-bookmark-edit\"", Case.Sensitive);
 
         var idea = ReadScript("Idea.js");
         idea.ShouldContain(ask, Case.Sensitive);
