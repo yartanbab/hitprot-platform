@@ -203,7 +203,8 @@ $(function () {
 
     function paintBookmark(on) {
         // İşaretlemede gizli: yer imi sunucuya yazar, veri gelmeden basılamasın (GRT-07).
-        $('#BookmarkBtn').removeClass('d-none').toggleClass('btn-primary', on).toggleClass('btn-outline-secondary', !on);
+        // Takip firmanın ortak kaydıdır: yazma izni olmayana düğme yok (sunucu da reddeder).
+        $('#BookmarkBtn').toggleClass('d-none', !canWrite).toggleClass('btn-primary', on).toggleClass('btn-outline-secondary', !on);
         $('#BookmarkText').text(l(on ? 'Grants:Catalog:Unbookmark' : 'Grants:Catalog:Bookmark'));
     }
 

@@ -309,7 +309,8 @@ public class GrantLoadFailureScripts_Tests
             "$('.apya-detail-head, .apya-detail-layout').addClass('d-none');",
             "apya.loadState.errorHtml(l('Grants:Detail:LoadFailed'), 'js-detail-retry', err)");
         Grants("Detail.cshtml").ShouldContain("<button type=\"button\" id=\"BookmarkBtn\" class=\"btn btn-sm btn-outline-secondary d-none\">");
-        Body(Grants("Detail.js"), "function paintBookmark(on)").ShouldContain("$('#BookmarkBtn').removeClass('d-none')");
+        // QA 10-22: veri gelince açılır, ama yalnız yazma izni olana (takip firmanın ortak kaydı).
+        Body(Grants("Detail.js"), "function paintBookmark(on)").ShouldContain("$('#BookmarkBtn').toggleClass('d-none', !canWrite)");
 
         var wizard = Body(Grants("Wizard.js"), "function load(background)");
         ShouldAppearInOrder(wizard,

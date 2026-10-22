@@ -1,5 +1,8 @@
 $(function () {
     var service = apya.platform.grants.grantRecommendation;
+    // Takip firmanın ortak kaydıdır: yazma izni olmayana takip düğmesi çizilmez (sunucu da reddeder).
+    // Firma: ManageApplications, danışman: Edit — Tenant.js ile aynı bayrak.
+    var canWrite = abp.auth.isGranted('Platform.Grants.ManageApplications') || abp.auth.isGranted('Platform.Grants.Edit');
     var l = abp.localization.getResource('Platform');
 
     // GrantEligibilityBucket / GrantEligibilityRule enum sıralarıyla birebir.
@@ -63,10 +66,12 @@ $(function () {
             '<span class="apya-cat-actions d-flex align-items-center gap-1">' +
             '<a class="btn btn-sm btn-outline-secondary" href="/Grants/Detail?id=' + r.grantCallId + '">' +
                 esc(l('Grants:Feed:Card:Detail')) + '</a>' +
-            '<button type="button" class="apya-cat-bookmark' + (r.isBookmarked ? ' is-on' : '') +
-                '" data-id="' + r.grantCallId + '" title="' +
-                esc(l(r.isBookmarked ? 'Grants:Catalog:Unbookmark' : 'Grants:Catalog:Bookmark')) +
-                '"><i class="fa fa-bookmark"></i></button>' +
+            (canWrite
+                ? '<button type="button" class="apya-cat-bookmark' + (r.isBookmarked ? ' is-on' : '') +
+                    '" data-id="' + r.grantCallId + '" title="' +
+                    esc(l(r.isBookmarked ? 'Grants:Catalog:Unbookmark' : 'Grants:Catalog:Bookmark')) +
+                    '"><i class="fa fa-bookmark"></i></button>'
+                : '') +
             '</span></div>';
     }
 
