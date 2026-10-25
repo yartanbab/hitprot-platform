@@ -3997,5 +3997,2127 @@
       }
     ],
     "documents": []
+  },
+  {
+    "id": "461717ee-9d9c-5c79-99e0-bb9a81d07e2c",
+    "name": "OKA 2026 Katma Değerli Üretim ve İhracat Odaklı Fizibilite Desteği Programı",
+    "issuer": "Orta Karadeniz Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-02-16",
+    "deadline": "2026-12-25",
+    "maxAmount": 1500000,
+    "minAmount": 400000,
+    "budget": 20000000,
+    "supportRatePercent": 75,
+    "projectDurationMonths": 12,
+    "reference": "TR83/26/FZD-KD",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://oka.gov.tr/destekler/basvurabileceklerim/2026-yili-katma-degerli-uretim-ve-ihracat-odakli-fizibilite-destegi-programi",
+    "sectors": [
+      "imalat",
+      "sanayi",
+      "lojistik"
+    ],
+    "regions": [
+      "Amasya",
+      "Çorum",
+      "Samsun",
+      "Tokat"
+    ],
+    "keywords": [
+      "fizibilite",
+      "ihracat",
+      "katma değerli üretim"
+    ],
+    "description": "Orta Karadeniz Kalkınma Ajansı, TR83 Bölgesi'nde (Amasya, Çorum, Samsun, Tokat) katma değerli üretim ve ihracatı geliştirecek yatırım projelerinin fizibilite etüdü ve eklerinin hazırlanmasını desteklemek için 2026 Yılı Katma Değerli Üretim ve İhracat Odaklı Fizibilite Desteği Programı'nı açtı. Toplam bütçe 20 milyon TL; proje başına 400.000–1.500.000 TL destek verilir. Kamu kurumları, yerel yönetimler, üniversiteler, meslek kuruluşları, birlik ve kooperatifler, STK'lar, OSB ve teknoloji bölgesi yönetici şirketleri başvurabilir. Başvurular KAYS üzerinden 25 Aralık 2026 23:59'a kadar alınır; taahhütname son tarihi 4 Ocak 2027 17:00.",
+    "objective": "TR83 Bölgesi'nin kalkınması ve rekabet gücü açısından önemli fırsatlardan yararlanılmasına, bölge ekonomisine yönelik tehdit ve risklerin önlenmesine, bölgede katma değerli üretim ve ihracatın geliştirilmesine yönelik yatırım projeleri havuzunu güçlendirmek. Özel amaç: bir işletme modeli içeren yatırım projesi önerilerinin fizibilite etüdü ve eklerinin hazırlanmasını sağlamak.",
+    "priorities": [
+      "Öncelik 1: İmalat sanayi altyapısının geliştirilmesine yönelik yatırım projeleri için fizibilite çalışmalarının desteklenmesi",
+      "Öncelik 2: İhracat kapasitesinin artırılmasına yönelik yatırım projelerine ilişkin fizibilite çalışmalarının desteklenmesi",
+      "Öncelik 3: Üretim faaliyetlerinin çeşitlendirilmesi; değer-tedarik zincirlerinin geliştirilmesi; genç ve kadın istihdamının artırılması; yerel ürünlerin ticarileştirilmesine yönelik fizibilite çalışmalarının desteklenmesi",
+      "Öncelik 4: 2024-2028 TR83 Bölge Planı imalat, ihracat ve istihdam odaklı proje/eylem önerilerinin hayata geçirilmesi; Güdümlü Proje Desteği, CMDP, SOGEP ya da dış kaynaklı fonlara yönelik yatırım projeleri için fizibilite çalışmalarının desteklenmesi",
+      "Öncelik 5: Yeşil, dijital ve kapsayıcı dönüşümlerin hızlandırılması ve kaynak verimliliği uygulamalarına yönelik yatırım projelerinin fizibilite çalışmalarının desteklenmesi",
+      "Öncelik 6: TR83 Bölgesi'nde liman, kuru liman, demiryolu, lojistik merkez, havayolu, konteyner toplama merkezi gibi lojistik altyapı yatırım projeleri için fizibilite çalışmalarının desteklenmesi"
+    ],
+    "eligibleApplicants": [
+      "Kamu Kurum ve Kuruluşları",
+      "Yerel Yönetimler (İl Özel İdareleri, Belediye Başkanlıkları)",
+      "Üniversiteler",
+      "Kamu Kurumu Niteliğindeki Meslek Kuruluşları",
+      "Birlikler (Tarımsal Üretici Birlikleri, Mahalli İdare Birlikleri vb.)",
+      "Kooperatifler",
+      "Sivil Toplum Kuruluşları",
+      "Organize Sanayi Bölgeleri",
+      "Sanayi Siteleri",
+      "Serbest Bölge İşleticileri",
+      "Teknoloji Transfer Ofisi Şirketleri",
+      "Teknoloji Geliştirme Bölgesi Yönetici Şirketi",
+      "Endüstri Bölgesi Yönetici Şirketi",
+      "İş Geliştirme Merkezi Yönetici Şirketi"
+    ],
+    "hasAdvancePayment": true,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "KAYS Başvuru Formu (EK A), Bütçe (EK B), Mantıksal Çerçeve (EK C), Kilit Personel Özgeçmişleri (EK D)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E Örnek 1-A/1-B: Temsil-ilzam yetkilisi ve eş finansmanın nasıl karşılanacağını belirleyen, proje sunulmasına (veya ortak…",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E Örnek 2: Kamu kurumları için üst amir onaylı tatbiki imza; diğerleri için noter tasdikli imza sirküleri (ortaklar dahil)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E Örnek 3: Her proje ortağı için ortağın yetkili temsilcisince imzalanmış ortaklık beyannamesi",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "EK E Örnek 4-A/4-B: 50.000 TL ve üzeri tüm hizmet alımlarında detaylı teknik şartname ve en az 2 proforma fatura",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E Örnek 5: Gerekli ise ilgili kurumlardan alınmış ön izin/görüş belgeleri; izin gerekli değilse buna ilişkin beyan",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza esastır; e-imza yoksa 5 iş günü içinde ıslak imzalı elden/posta)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": true
+      },
+      {
+        "name": "(Sözleşme aşaması) Vergi dairesinden vadesi geçmiş borç olmadığına dair yazı (genel yönetim kapsamı dışındaki tüzel kişiler…",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) SGK'ya vadesi geçmiş borç olmadığına dair belge",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Destek tutarının %3'ü ve üzeri haciz bulunmadığına dair beyan",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Kamu kurumları dışındakiler için kuruluş tüzüğü veya ana sözleşme",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Proje hesabı açma ve harcama yetkisi beyanı; Mali Kontrol Taahhütnamesi; Mali Kimlik Formu; Kimlik Beyan…",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      }
+    ]
+  },
+  {
+    "id": "184b1bc3-ace6-5a61-b317-5e463678a452",
+    "name": "OKA 2026 Turizm Odaklı Yatırım Projeleri Fizibilite Desteği Programı",
+    "issuer": "Orta Karadeniz Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-02-12",
+    "deadline": "2026-12-25",
+    "maxAmount": 1500000,
+    "minAmount": 400000,
+    "budget": 20000000,
+    "supportRatePercent": 75,
+    "projectDurationMonths": 12,
+    "reference": "TR83/26/FZD-TUR",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://oka.gov.tr/destekler/basvurabileceklerim/2026-yili-turizm-odakli-yatirim-projeleri-fizibilite-destegi-programi",
+    "sectors": [
+      "turizm",
+      "kırsal kalkınma"
+    ],
+    "regions": [
+      "Amasya",
+      "Çorum",
+      "Samsun",
+      "Tokat"
+    ],
+    "keywords": [
+      "fizibilite",
+      "turizm",
+      "yerel ürün"
+    ],
+    "description": "Orta Karadeniz Kalkınma Ajansı, TR83 Bölgesi'nde sürdürülebilir turizm yatırımları ile yerel ürünlerin katma değerli üretimine yönelik yatırım projelerinin fizibilite çalışmalarını desteklemek için 2026 Yılı Turizm Odaklı Yatırım Projeleri Fizibilite Desteği Programı'nı açtı. Toplam bütçe 20 milyon TL; proje başına 400.000–1.500.000 TL destek verilir. Kamu kurumları, yerel yönetimler, üniversiteler, kamu kurumu niteliğindeki meslek kuruluşları, birlikler ve STK'lar başvurabilir. Başvurular KAYS üzerinden 25 Aralık 2026 23:59'a kadar alınır; taahhütname son tarihi 4 Ocak 2027 17:00.",
+    "objective": "TR83 Bölgesi'nin kalkınması ve rekabet gücü açısından önemli fırsatlardan yararlanılmasına, bölge ekonomisine yönelik tehdit ve risklerin önlenmesine, bölgenin yenilik ve girişimcilik kapasitesinin geliştirilmesine yönelik turizm odaklı yatırım projeleri havuzunu güçlendirmek. Özel amaç: bir işletme modeli içeren yatırım projesi önerilerinin fizibilite etüdü ve eklerinin hazırlanmasını sağlamak; büyük ölçekli kamu yatırımlarına altlık oluşturmak.",
+    "priorities": [
+      "Öncelik 1: Sürdürülebilir turizm yatırımları ve destinasyon odaklı yaklaşım çerçevesinde doğal ve kültürel mirasın koruma-kullanma dengesi gözetilerek deneyim alanlarına dönüştürülmesi, ticarileştirilmesi ve turizmin dayanıklılığını sağlayacak büyük ölçekli kamu yatırımı fizibilitelerinin desteklenmesi",
+      "Öncelik 2: Yerel ürünlerin katma değerli üretimi, modern lojistik/pazarlama altyapısı ve kalite standartlarına uyumu ile geleneksel mirasın ticarileşmesini ve kırsal alanda teknolojik dönüşümü hedefleyen yatırım fizibilitelerinin desteklenmesi",
+      "Öncelik 3: TR83 Bölge Planı (2024-2028) hedef ve proje önerilerinin hayata geçirilmesi; Güdümlü Proje Desteği, CMDP, SOGEP ya da dış kaynaklı fonlara yönelik projeler geliştirilmesi için fizibilite çalışmalarının desteklenmesi"
+    ],
+    "eligibleApplicants": [
+      "Kamu Kurum ve Kuruluşları",
+      "Yerel Yönetimler (İl Özel İdareleri, Belediye Başkanlıkları)",
+      "Üniversiteler",
+      "Kamu Kurumu Niteliğindeki Meslek Kuruluşları",
+      "Birlikler (Tarımsal Üretici Birlikleri, Mahalli İdare Birlikleri vb.)",
+      "Sivil Toplum Kuruluşları"
+    ],
+    "hasAdvancePayment": true,
+    "requiresGuaranteeLetter": true,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "KAYS Başvuru Formu (EK A), Bütçe (EK B), Mantıksal Çerçeve (EK C), Kilit Personel Özgeçmişleri (EK D)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E Örnek 1: Temsil-ilzam yetkilisi ve eş finansmanın nasıl karşılanacağını belirleyen, proje sunulmasına ilişkin yetkili…",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E Örnek 2: Kamu kurumları için üst amir onaylı tatbiki imza; diğerleri için noter tasdikli imza sirküleri (ortaklar dahil)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Her proje ortağı için ortağın yetkili temsilcisince imzalanmış ortaklık beyannamesi",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "50.000 TL ve üzeri tüm hizmet alımlarında detaylı teknik şartname (ekinde fizibilite etüdü formatı; kurum yetkilisince…",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Gerekli ise ilgili kurumlardan alınmış ön izin/görüş belgeleri; izin gerekli değilse buna ilişkin beyan",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza esastır; e-imza yoksa 5 iş günü içinde ıslak imzalı elden/posta)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": true
+      },
+      {
+        "name": "(Sözleşme aşaması) Vergi dairesinden vadesi geçmiş borç olmadığına dair yazı; SGK borcu olmadığına dair belge; %3 haciz…",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Kamu kurumları dışındakiler için kuruluş tüzüğü veya ana sözleşme",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Proje hesabı açma ve harcama yetkisi beyanı; Mali Kontrol Taahhütnamesi; Mali Kimlik Formu; Kimlik Beyan…",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      }
+    ]
+  },
+  {
+    "id": "7c889b04-3702-5d48-8f96-6bded3ec0195",
+    "name": "OKA 2026 Sosyal Kalkınma ve Girişimcilik Teknik Destek Programı",
+    "issuer": "Orta Karadeniz Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-01-15",
+    "deadline": "2026-12-25",
+    "maxAmount": 600000,
+    "minAmount": null,
+    "budget": 14000000,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 6,
+    "reference": "TR83/26/TD-SKG",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://oka.gov.tr/destekler/basvurabileceklerim/2026-yili-sosyal-kalkinma-ve-girisimcilik-teknik-destek-programi",
+    "sectors": [
+      "girişimcilik",
+      "sivil toplum",
+      "kamu"
+    ],
+    "regions": [
+      "Amasya",
+      "Çorum",
+      "Samsun",
+      "Tokat"
+    ],
+    "keywords": [
+      "teknik destek",
+      "sosyal girişimcilik",
+      "yerel ürün"
+    ],
+    "description": "Orta Karadeniz Kalkınma Ajansı'nın 2026 Yılı Sosyal Kalkınma ve Girişimcilik Teknik Destek Programı, TR83 Bölgesi'ndeki teknoloji ve yenilik odaklı girişimlerin, yerel ürün ticarileştiren girişimlerin ve sosyal kalkınma odaklı kurumların ürün/hizmet geliştirme ve yönetim kapasitesini eğitim, danışmanlık ve program/proje hazırlama desteğiyle artırmayı hedefler. Toplam bütçe 14 milyon TL; eğitim için 200.000, danışmanlık için 400.000, çatı kuruluş danışmanlığı için 600.000 TL (KDV dâhil) tavan uygulanır. Kamu kurumları, üniversiteler, yerel yönetimler, STK'lar, kooperatifler, OSB'ler ve kâr amacı güden kişiler başvurabilir. Başvurular iki aylık dönemlerle alınır; son dönem KAYS 25 Aralık 2026 23:59.",
+    "objective": "Girişimcilik Ekosisteminin Desteklenmesi SOP'u doğrultusunda teknoloji/yenilik odaklı girişimlerin, yerel ürün ticarileştiren girişimlerin ve sosyal kalkınma odaklı kurum/sosyal girişimlerin ürün-hizmet geliştirme, rekabet ve yönetim kapasitesinin eğitim, danışmanlık ve program/proje hazırlama desteğiyle artırılması. Satın alma Ajans tarafından yapılır.",
+    "priorities": [
+      "Öncelik-1: Girişimcilik ekosisteminde yer alan teknoloji ve yenilikçilik odaklı kuruluşlar ile girişimcilerin ürün ve hizmetlerinin geliştirilmesi",
+      "Öncelik-2: Yerel ürünlerin ticarileştirilmesi ve yenilikçi ürün geliştirilmesine yönelik girişimlerin rekabet kapasitelerinin artırılması ve yönetim becerilerinin iyileştirilmesi",
+      "Öncelik-3: Sosyal kalkınma odaklı kurum ve kuruluşlar ile sosyal girişimlerin yenilikçi ürün ve hizmetlerinin geliştirilmesi"
+    ],
+    "eligibleApplicants": [
+      "Kamu Kurum ve Kuruluşları",
+      "Üniversiteler",
+      "Kamu Kurumu Niteliğindeki Meslek Kuruluşları",
+      "Yerel Yönetimler (İl Özel İdareleri, Belediye Başkanlıkları)",
+      "Birlikler (Tarımsal Üretici Birlikleri, Mahalli İdare Birlikleri vb.)",
+      "Kooperatifler",
+      "Sivil Toplum Kuruluşları",
+      "Organize Sanayi Bölgeleri",
+      "Sanayi Siteleri",
+      "Serbest Bölge İşleticileri",
+      "Teknoloji Transfer Ofisi Şirketleri",
+      "Teknoloji Geliştirme Bölgesi Yönetici Şirketi",
+      "Endüstri Bölgesi Yönetici Şirketi",
+      "İş Geliştirme Merkezi Yönetici Şirketi",
+      "Kâr amacı güden diğer gerçek ve tüzel kişiler"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "EK-A İş Tanımı / Teknik Şartname (kaşeli-imzalı)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "EK-B Eğitim / Danışmanlık Programı (eğitim içeren taleplerde günlük-saatlik kırılım; danışmanlıkta personele verilecek…",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "EK-C Proforma Fatura ve Teklif Talebi (aynı veya benzer hizmeti sunan 2 firmadan fiyat teklifi)",
+        "obligation": "Zorunlu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "Eğitmen/danışman özgeçmişi ve firmanın kaşe/imzayla onayladığı iş tanımı (proforma eki)",
+        "obligation": "Kosullu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "EK-D Yaklaşık Maliyet Formu (kaşeli-imzalı)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "EK-E Yetkilendirme ve Tatbiki İmza Belgesi (kamu kurumları, en üst amir onaylı)",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Noter Tasdikli İmza Sirküleri / Beyannamesi (kamu dışı başvuru sahipleri)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "EK-F İşletme Temel Bilgi Formu (kar amacı güden başvuru sahipleri)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Güncel Oda Kayıt / Faaliyet Belgesi (TR83'te faaliyet; kar amacı güden başvuru sahipleri)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "EK-L İşletme Gönüllü Katılım Beyanları (çatı kuruluş başvuruları)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Yasal dayanak belgeleri – kanun, yönetmelik, ana sözleşme, tüzük vb. ilgili kısımları (kamu ve kar amacı güdenler hariç…",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "EK-K Ortaklık Beyannamesi (ortak varsa; sözleşme öncesi; vekâleten imzada vekâlet belgesi)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "EK-G Ön Fizibilite Raporu Formatı (fiziki yatırıma yönelik ön fizibilite taleplerinde şablon)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "EK-H Eğitim İhtiyaç Analiz Formu (avantaj sağlayıcı, isteğe bağlı)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "EK-I Daha Önce Alınan Teknik Destekler İçin Değerlendirme Formu (avantaj sağlayıcı, isteğe bağlı)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza; e-imza yoksa ıslak imzalı elden/posta, dönem bitiminden sonra 5 iş günü)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "c4650853-d173-54fb-b809-ac09a56e0310",
+    "name": "KUZKA 2026 Destinasyon Geliştirme Teknik Destek Programı",
+    "issuer": "Kuzey Anadolu Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-07-01",
+    "deadline": "2026-12-31",
+    "maxAmount": 500000,
+    "minAmount": null,
+    "budget": 3000000,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 6,
+    "reference": "TR82/26/DG_TD",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://www.kuzka.gov.tr/page/2026-yili-destinasyon-gelistirme-teknik-destek-programi-406",
+    "sectors": [
+      "turizm"
+    ],
+    "regions": [
+      "Kastamonu",
+      "Çankırı",
+      "Sinop"
+    ],
+    "keywords": [
+      "teknik destek",
+      "destinasyon",
+      "yöresel ürün"
+    ],
+    "description": "Kuzey Anadolu Kalkınma Ajansı, TR82 Bölgesi'nde (Kastamonu, Çankırı, Sinop) destinasyonun tanınırlığını artırmak, destinasyona özgü insan kaynağı kapasitesini geliştirmek, yöresel ürünlerin katma değerini yükseltmek ve destinasyon altyapısını iyileştirmek amacıyla 2026 Yılı Destinasyon Geliştirme Teknik Destek Programı kapsamında 1 Temmuz 2026'dan itibaren proje kabulüne başladı. Toplam bütçe 3 milyon TL; talep başına KDV dâhil azami 500.000 TL ve 6 ay. Kamu kurumları, meslek kuruluşları, STK'lar, kooperatif ve birlikler ile kâr amacı güden gerçek ve tüzel kişiler başvurabilir. Başvurular KAYS üzerinden üç dönemde alınır; son dönem 31 Aralık 2026 23:59.",
+    "objective": "TR82 Bölgesi'ndeki yerel aktörlerin kurumsal kapasite eksikliğinden kaynaklanan hazırlık-uygulama zorluklarının giderilmesi ve rekabetçi turizm unsurlarının rota ve tematik eksenlerle entegre edilerek kırsalda turizmin yaygınlaştırılması, turizm gelirlerinin artırılması. TR82 Turizm Master Planı projelerine katkı sağlayan eğitim, danışmanlık, program/proje hazırlama ve lobi/uluslararası ilişki faaliyetleri desteklenir.",
+    "priorities": [
+      "Öncelik 1: Destinasyonun tanınırlığını artırmak",
+      "Öncelik 2: Destinasyon özelinde insan kaynakları kapasitesini geliştirmek",
+      "Öncelik 3: Yöresel ürünlerin katma değerinin artırılmasını sağlamak",
+      "Öncelik 4: Destinasyon altyapısının iyileştirilmesine katkı sağlamak"
+    ],
+    "eligibleApplicants": [
+      "Kamu Kurum ve Kuruluşları (Valilikler, İl Özel İdareleri, Belediyeler, Köyler, Bölge Müdürlükleri, Üniversiteler, Kaymakamlıklar, İl Müdürlükleri, Mahalli İdare Birlikleri)",
+      "Kamu Kurumu Niteliğindeki Meslek Kuruluşları (TOBB'a bağlı odalar ve borsalar, Esnaf ve Sanatkârlar Odaları ve üst birlikleri, meslek odaları ve üst birlikleri)",
+      "Sivil Toplum Kuruluşları (dernekler, vakıflar)",
+      "Kooperatifler ve Birlikler (kooperatifler, üretici ve yetiştirici birlikleri)",
+      "Kar amacı güden gerçek ve tüzel kişiler (TSO veya Esnaf ve Sanatkârlar Odasına kayıtlı işletmeler)"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      },
+      {
+        "kind": "SarfMalzeme",
+        "limitPercent": 5
+      }
+    ],
+    "documents": [
+      {
+        "name": "EK-TD Teknik Destek Talep Formu (KAYS üzerinden doldurulur)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "TD_Şablon-1 Faaliyet Belgesi – TR82'de kuruluş/kayıt/faaliyet belgesi (kamu ve KKNMK için gerekmez; STK/kooperatif/birlik…",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortak(lar)ın Faaliyet Belgesi (TD_Şablon-1; kamu, KKNMK ve ihtisas bölgeleri için gerekmez)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "TD_Şablon-2 Teknik Özellikler Listesi (hizmetin adı, tanımı, özelliği; elektronik doldurulur)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Proforma Fatura veya Fiyat Teklifi",
+        "obligation": "Zorunlu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "Temsil ve İlzam Yetki Belgesi – kamu için TD_Şablon-3 Tatbiki İmza; işletme/birlik/kooperatif/KKNMK için imza sirküleri…",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortak(lar)ın Temsil ve İlzam Yetki Belgesi (TD_Şablon-3 / TD_Şablon-4b + imza beyannamesi)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "TD_Şablon-5 Başvuru Sahibi ve Proje Ortaklarının Taahhütnamesi (imzalı taranarak KAYS'a yüklenir; ortaklar da imzalar)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza esastır; son başvuru tarihinden itibaren 5 iş günü; e-imza yoksa ıslak imzalı elden/posta)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "1d771135-4e91-5489-a99f-0a002538bc94",
+    "name": "KUZKA 2026 Tarımda Verimlilik ve Katma Değerin Artırılması Teknik Destek Programı",
+    "issuer": "Kuzey Anadolu Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-01-01",
+    "deadline": "2026-12-31",
+    "maxAmount": 500000,
+    "minAmount": null,
+    "budget": 5000000,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 6,
+    "reference": "TR82/26/TVKD_TD",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://www.kuzka.gov.tr/page/2026-yili-tarimda-verimlilik-ve-katma-degerin-artirilmasi-teknik-destek-programi-408",
+    "sectors": [
+      "tarım",
+      "kırsal kalkınma"
+    ],
+    "regions": [
+      "Kastamonu",
+      "Çankırı",
+      "Sinop"
+    ],
+    "keywords": [
+      "teknik destek",
+      "tarım",
+      "kooperatif",
+      "coğrafi işaret"
+    ],
+    "description": "Kuzey Anadolu Kalkınma Ajansı, TR82 Bölgesi'nde tarımsal kuruluşların ve tarım işletmelerinin kurumsal kapasitesini, ürün belgelendirme/coğrafi işaret çalışmalarını, pazarlama yetkinliğini ve yerel ürün kalitesini geliştirmek için 2026 Yılı Tarımda Verimlilik ve Katma Değerin Artırılması Teknik Destek Programı'nı 10 Şubat 2026'da ilan etti. Toplam bütçe 5 milyon TL; eğitim için 250.000, danışmanlık için 500.000 TL (KDV dâhil) tavan uygulanır. Oda kayıtlı tarımsal üreticiler, il özel idareleri, üniversiteler, tarım ve orman müdürlükleri, belediyeler, meslek odaları, tarımsal kooperatif ve birlikler başvurabilir. Başvurular KAYS üzerinden iki aylık dönemlerle, 31 Aralık 2026'ya kadar alınır.",
+    "objective": "TR82 Bölgesi'nde tarım alanında faaliyet gösteren yerel aktörlerin kurumsal yönetim ve hizmet kalitesinin artırılması, pazarlama kapasitelerinin geliştirilmesi, ürün miktar ve kalitesinin artırılması, ürünlerin belgelendirilmesi ve sertifikasyonu amacıyla eğitim ve danışmanlık desteği sağlanması. Tarımda Verimlilik ve Katma Değerin Artırılması SOP'u ve Anadoludakiler: 81 İl 81 Ürün çerçevesine katkı hedeflenir.",
+    "priorities": [
+      "Öncelik 1: Tarımsal amaçlı kurum, kuruluş, birlik, kooperatif ve odaların kurumsal alt yapı ve hizmet kapasitesinin geliştirilmesi",
+      "Öncelik 2: Tarım işletmelerinde kurumsal alt yapının güçlendirilmesi",
+      "Öncelik 3: Tarımsal ürünlerin belgelendirilmesi, sertifikasyonu ve coğrafi işaretlenmesi konusunda çalışmaların gerçekleştirilmesi",
+      "Öncelik 4: Pazarlamada teknolojik etkinlik, yetkinlik ve uzmanlaşma sağlanması",
+      "Öncelik 5: Yerel ürünlerin kalitesini ve üretim miktarının artırılmasını sağlamak"
+    ],
+    "eligibleApplicants": [
+      "Ticaret ve Sanayi Odasına kayıtlı tarımsal üretim yapan işletmeler",
+      "İl Özel İdareleri",
+      "Üniversiteler",
+      "Köylere Hizmet Götürme Birlikleri",
+      "İl ve İlçe Tarım ve Orman Müdürlükleri",
+      "Belediyeler",
+      "İl Müdürlükleri",
+      "Meslek Odaları ve Üst Birlikleri",
+      "Organize Sanayi Bölgeleri (Tarımsal)",
+      "Tarımsal Amaçlı Kooperatifler ve Üst Kuruluşları",
+      "Tarımsal Amaçlı Üretici ve Yetiştirici Birlikleri"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      },
+      {
+        "kind": "SarfMalzeme",
+        "limitPercent": 5
+      }
+    ],
+    "documents": [
+      {
+        "name": "EK-TD Teknik Destek Talep Formu (KAYS üzerinden doldurulur)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "TD_Şablon-1 Başvuru Sahibi Beyannamesi (imzalı; ortak beyannameleriyle tek PDF'te birleştirilir)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "TD_Şablon-1 Ortaklık Beyannamesi (her ortak için ayrı, yetkili kişi imzalı)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Temsil ve İlzam Yetki Belgesi – kamu için TD_Şablon-2 Tatbiki İmza; işletme/birlik/kooperatif/KKNMK için TD_Şablon-2a Yetkili…",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortak(lar)ın Temsil ve İlzam Yetki Belgesi (TD_Şablon-2 / TD_Şablon-2b + imza beyannamesi)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "TD_Şablon-3 Faaliyet Belgesi – TR82'de kuruluş/kayıt/faaliyet (kamu için gerekmez; STK/kooperatif/birlik kuruluş…",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortak(lar)ın Faaliyet Belgesi (TD_Şablon-3)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "TD_Şablon-4 Teknik Özellikler Listesi (elektronik doldurulur, her sayfa paraflı, son sayfa imzalı-mühürlü; dijital kopyası…",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Proforma Fatura (teknik özellikler listesindeki hizmetin bedelini gösteren; isteğe bağlı, Ajans satın alması için bağlayıcı…",
+        "obligation": "Kosullu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza esastır; son başvuru tarihinden itibaren 5 iş günü; e-imza yoksa ıslak imzalı elden/posta)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "4ef474eb-d82c-5990-bb8c-23e3fb1fabf6",
+    "name": "KUZKA 2026 Yerel Ürün Ticarileştirme ve KOBİ Destek Merkezi Teknik Destek Programı",
+    "issuer": "Kuzey Anadolu Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-01-01",
+    "deadline": "2026-12-31",
+    "maxAmount": 500000,
+    "minAmount": null,
+    "budget": 10000000,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 6,
+    "reference": "TR82/26/KDM_TD",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://www.kuzka.gov.tr/page/2026-yili-yerel-urun-ticarilestirme-ve-kobi-destek-merkezi-teknik-destek-programi-409",
+    "sectors": [
+      "imalat",
+      "turizm",
+      "su ürünleri"
+    ],
+    "regions": [
+      "Kastamonu",
+      "Çankırı",
+      "Sinop"
+    ],
+    "keywords": [
+      "teknik destek",
+      "KOBİ",
+      "yerel ürün",
+      "ticarileştirme"
+    ],
+    "description": "Kuzey Anadolu Kalkınma Ajansı, KOBİ Destek Merkezi faaliyetleri kapsamında başta su ürünleri ve turizm işletmeleri olmak üzere TR82 Bölgesi işletmelerinin rekabet gücünü artırmak ve yerel ürünleri ticarileştirmek için 2026 Yılı Yerel Ürün Ticarileştirme ve KOBİ Destek Merkezi Teknik Destek Programı'nı 9 Şubat 2026'da ilan etti. Toplam bütçe 10 milyon TL; talep başına KDV dâhil azami 500.000 TL danışmanlık desteği, en fazla 6 ay. Üniversiteler, odalar ve borsalar, oda kayıtlı işletmeler, teknokent/TTO/İŞGEM yönetici şirketleri ve kooperatifler başvurabilir. Başvurular KAYS üzerinden iki aylık dönemlerle, 31 Aralık 2026 23:59'a kadar alınır.",
+    "objective": "TR82 Düzey 2 Bölgesi'nde faaliyet gösteren yerel aktörlerin bölgesel kalkınmaya katkı sağlayacak hazırlık ve uygulama çalışmalarına destek sağlamak; KOBİ Destek Merkezi faaliyetleri kapsamında başta su ürünleri ve turizm işletmeleri olmak üzere işletmelerin rekabet gücünü artırmak ve yerel ürünlerin ticarileştirilmesine katkı vermek. Danışmanlık, program/proje hazırlama ve lobi/uluslararası ilişki faaliyetleri desteklenir; eğitim yalnız danışmanlık içinde öngörülebilir.",
+    "priorities": [
+      "Öncelik 1: KOBİ Destek Merkezi (KDM) faaliyetleri kapsamında başta su ürünleri ve turizm işletmeleri olmak üzere işletmelerin rekabet gücünü arttırmaya ve yerel ürünlerin ticarileştirilmesine yönelik çalışmalar",
+      "Öncelik 2: Temel Sektörlerde Rekabetçiliğin Arttırılması Sonuç Odaklı Programı kapsamındaki çalışmalar (pazar araştırmaları, ön fizibiliteler, ürün araştırma/geliştirme, stratejik yol haritası/program/proje hazırlama)"
+    ],
+    "eligibleApplicants": [
+      "Üniversiteler",
+      "Döner sermayesi olan mesleki eğitim kurumları",
+      "TOBB'a bağlı odalar ve borsalar",
+      "Esnaf ve Sanatkârlar Odaları ve üst birlikleri",
+      "Meslek odaları ve üst birlikleri",
+      "Ticaret ve Sanayi Odası veya Esnaf ve Sanatkârlar Odasına kayıtlı işletmeler",
+      "Teknokent Yönetici Şirketi",
+      "Teknoloji Transfer Ofisi Yönetici Şirketi",
+      "İŞGEM Yönetici Şirketi",
+      "Kooperatifler ve üst birlikleri (tarım ve hayvancılık kooperatifleri hariç; su ürünleri dâhil)"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      },
+      {
+        "kind": "SarfMalzeme",
+        "limitPercent": 5
+      }
+    ],
+    "documents": [
+      {
+        "name": "EK-TD Teknik Destek Talep Formu (KAYS üzerinden doldurulur)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Faaliyet Belgesi – TR82'de kuruluş/kayıt/faaliyet (işletmeler güncel oda kayıt/faaliyet belgesi; kooperatifler resmi kuruluş…",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortak(lar)ın Faaliyet Belgesi",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Temsil ve İlzam Yetki Belgesi – işletme/kooperatif/KKNMK için imza sirküleri (gerekirse TD_Şablon-1a Yetkili Organ Kararı +…",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortak(lar)ın Temsil ve İlzam Yetki Belgesi (imza sirküleri / TD_Şablon-1b + imza beyannamesi; kamu için TD_Şablon-1c)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Proforma Fatura veya Fiyat Teklifi",
+        "obligation": "Zorunlu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza esastır; son başvuru tarihinden itibaren 5 iş günü; e-imza yoksa ıslak imzalı elden/posta)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "1f0bc60a-0f50-524b-9da2-ea234badcf0d",
+    "name": "MEVKA 2026 Sosyal Kalkınma ve Girişimcilik Teknik Destek Programı",
+    "issuer": "Mevlana Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": null,
+    "deadline": "2026-12-31",
+    "maxAmount": 500000,
+    "minAmount": null,
+    "budget": 10000000,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 6,
+    "reference": "TR52/26/TD/SKGB/TEKNO",
+    "repayable": false,
+    "eligibleCompanySizes": 7,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": 5,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://www.mevka.org.tr/tr/destek-programlari/2026-yili-sosyal-kalkinma-ve-girisimcilik-teknik-destek-programi",
+    "sectors": [
+      "girişimcilik",
+      "teknoloji",
+      "sivil toplum"
+    ],
+    "regions": [
+      "Konya",
+      "Karaman"
+    ],
+    "keywords": [
+      "teknik destek",
+      "prototipleme",
+      "Ar-Ge danışmanlığı",
+      "mesleki eğitim"
+    ],
+    "description": "Mevlana Kalkınma Ajansı, Konya ve Karaman'daki teknoloji girişimcilerinin proje geliştirme ve yönetim becerilerini artırmak ve sosyal kalkınma alanındaki kurumların hizmet kapasitesini güçlendirmek için 10 milyon TL bütçeli 2026 Yılı Sosyal Kalkınma ve Girişimcilik Teknik Destek Programı'nı duyurdu. Öncelikler: prototipleme/test/ölçüm (4 mn TL), Ar-Ge danışmanlığı ve şirket yönetimi (4 mn TL), mesleki eğitim (1 mn TL) ve sosyal kalkınmada kurumsal kapasite (1 mn TL). 1 Ocak 2021 ve sonrasında kurulan teknoloji tabanlı şirketler, Teknofest gibi yarışmalara hazırlanan öğrenci takımları ve sosyal kalkınma kurumları başvurabilir. Başvurular KAYS üzerinden dönemler hâlinde alınır.",
+    "objective": "Konya ve Karaman'da teknoloji tabanlı girişimcilerin proje geliştirme, yönetme ve kurumsal yönetim becerilerini artırmak; kamu kurumları, meslek kuruluşları, üniversiteler, yerel yönetimler ve STK'ların sosyal kalkınma alanındaki hizmet sunum kapasitelerini geliştirmek.",
+    "priorities": [
+      "Öncelik 2: AR-GE Danışmanlığı – teşvik/hibe/destek başvuruları (KOSGEB, TÜBİTAK, bakanlık destekleri, Horizon/Eureka, yatırım teşvik belgesi) ve fikri-sınai mülkiyet başvuruları; en fazla 4 başlık (bütçe 4.000.000 TL, proje tavanı 250.000 TL)",
+      "Öncelik 4: Sosyal kalkınma faaliyetlerinde kurumların yetkinliklerinin artırılması – göç, kadına şiddet, aile, dezavantajlı gruplar, bağımlılık sonrası, sosyal etki ölçümü; eğitim, danışmanlık, araştırma, analiz, raporlama (bütçe 4.000.000 TL, proje tavanı 500.000 TL)"
+    ],
+    "eligibleApplicants": [
+      "1 Ocak 2021 sonrası kurulmuş teknoloji tabanlı KOBİ'ler (Öncelik 2)",
+      "Kamu kurum ve kuruluşları (Öncelik 4)",
+      "Kamu kurumu niteliğinde meslek kuruluşları (Öncelik 4)",
+      "Üniversiteler (Öncelik 4)",
+      "Yerel yönetimler (Öncelik 4)",
+      "STK'lar (Öncelik 4)"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "Başvuru Özeti (EK 1, Word; başvurulan öncelik belirtilmeli)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Temsil ve İlzam Yetki Belgesi – noter tasdikli imza sirküleri / kamu için en üst amir onaylı tatbiki imza (EK 2)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Teknik Şartnameler – danışmanlık konusu, hizmet yeri/süresi, eğitmen nitelikleri (EK 3; teklif veren firmalar ve başvuru…",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Proforma Faturalar – en az 3 firma (EK 4)",
+        "obligation": "Zorunlu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "Yaklaşık Maliyet Formu – KDV hariç (EK 5)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Danışman/Eğitici Özgeçmişleri (EK 6; yalnız Öncelik 4)",
+        "obligation": "Kosullu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "Eğitim Müfredatı (EK 7; yalnız Öncelik 4)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "KOBİ Bilgi Beyannamesi – KOSGEB e-devlet (EK 10; Öncelik 2 KOBİ başvuruları)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza; aksi halde ıslak imzalı taranıp skgb@mevka.org.tr'ye e-posta; elden/kargo alınmaz)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "468182b3-d1b5-5d58-a303-86fe6ece496d",
+    "name": "MEVKA 2026 Turizm Teknik Destek Programı",
+    "issuer": "Mevlana Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-03-02",
+    "deadline": "2026-12-31",
+    "maxAmount": 700000,
+    "minAmount": null,
+    "budget": 4000000,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 6,
+    "reference": "TR52/26/TD-TURİZM",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://www.mevka.org.tr/tr/destek-programlari/2026-yili-turizm-teknik-destek-programi",
+    "sectors": [
+      "turizm"
+    ],
+    "regions": [
+      "Konya",
+      "Karaman"
+    ],
+    "keywords": [
+      "teknik destek",
+      "turizm",
+      "coğrafi işaret",
+      "fizibilite"
+    ],
+    "description": "Mevlana Kalkınma Ajansı, TR52 Bölge Planı ve 2024-2026 Sonuç Odaklı Programı çerçevesinde bölgenin turizm potansiyelini ve turizmle ilgili kurumsal kapasiteyi geliştirmek amacıyla 2026 Yılı Turizm Teknik Destek Programı'nı 2 Mart 2026'da ilan etti. Program eğitim, planlama ve programlama, projelendirme, envanter, araştırma-analiz, coğrafi işaret, tanıtım, raporlama ve ön fizibilite/fizibilite çalışmalarını kapsar. Başvurular KAYS-PFD sistemi üzerinden dönemler hâlinde alınır; sorular kktb@mevka.org.tr adresine iletilir.",
+    "objective": "2024-2028 Konya Karaman Bölge Planı öncelikleri çerçevesinde bölgede turizm potansiyelinin ve turizmle ilgili kurumsal kapasitenin geliştirilmesine yönelik faaliyetlerin (planlama, proje hazırlama, geçici uzman, eğitim/danışmanlık) desteklenmesi.",
+    "priorities": [
+      "Öncelik: Bölgede Turizm Potansiyelinin ve Kapasitesinin Geliştirilmesi – H1 Eğitim, program ve proje hazırlama (200.000 TL); H2 Turizm/çevreye yönelik tanıtım, tarama, danışmanlık, rotalar, destinasyon yönetimi (250.000 TL); H3 Araştırma, raporlama, eylem planı, kısmi envanter, saha ve anket (200.000 TL); H4 Mimari, statik, avan, rölöve, restorasyon projeleri, vaziyet planları, koruma amaçlı imar planları, kentsel tasarım, bütüncül envanter (700.000 TL); H5 Ön fizibiliteler (350.000 TL)"
+    ],
+    "eligibleApplicants": [
+      "Kamu kurum ve kuruluşları (valilik, kaymakamlık, bölge/il/ilçe müdürlükleri; tematik okullar, BİLSEM ve mesleki eğitim merkezleri müstakil)",
+      "Yerel yönetimler ve mahalli idare birlikleri",
+      "İl ve ilçe özel idareleri",
+      "Üniversiteler",
+      "Kamu kurumu niteliğinde meslek kuruluşları",
+      "Sivil toplum kuruluşları (vakıf, dernek vb.)"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "TD Özeti (EK-1, Word)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Kuruluş ve Bölgede Kayıt Belgesi (EK-2; dernek, kooperatif, birlik ve işletmeler)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Temsil ve İlzam Yetki Belgesi (EK-3; kamu kurumları için en üst amir onaylı tatbiki imza)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Yetkili Yönetim Organı Kararı (belediye, il özel idaresi, mahalli idare birliği, meslek kuruluşu, kooperatif vb.)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Noter Tasdikli İmza Sirküleri (kamu kurumları hariç)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Yaklaşık Maliyet Formu – KDV dâhil (EK-4, Word)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Proforma Faturalar – en az 3 farklı firma, Ajansa hitaben (EK-5)",
+        "obligation": "Zorunlu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "İdari ve Teknik Şartnameler (EK-6A/6B/6C/6D)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Özgeçmişler – proforma veren tüm firmaların uzmanları ve başvuru sahibi proje yürütücüsü (EK-7)",
+        "obligation": "Zorunlu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "Diploma/Mezuniyet Belgesi – uzmanlar (en az lisans; ustalık belgesi istisnası)",
+        "obligation": "Zorunlu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "SGK Dökümü – uzmanların en az 5 yıl deneyimi",
+        "obligation": "Zorunlu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "Referans Mektupları / iş bitirme beyanı – son 5 yılda en az 2",
+        "obligation": "Zorunlu",
+        "uploader": "Danisman",
+        "eSignature": false
+      },
+      {
+        "name": "Eğitim Müfredatı (EK-8; eğitim içeriyorsa)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortaklık Beyannamesi (EK-9; ortak varsa)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Performans Göstergeleri (EK-10)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza esas; aksi halde dönem bitimini izleyen 5 iş günü içinde elden/posta ile teslim)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "da393418-ce2f-54b8-9857-ed928a663aec",
+    "name": "DOKA 2026 Turizm Teknik Destek Programı",
+    "issuer": "Doğu Karadeniz Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": null,
+    "deadline": "2026-10-31",
+    "maxAmount": 500000,
+    "minAmount": null,
+    "budget": 10000000,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 6,
+    "reference": "TR90/26/TD/TUR",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://doka.org.tr/destek-detay.php?id=58",
+    "sectors": [
+      "turizm",
+      "kamu"
+    ],
+    "regions": [
+      "Artvin",
+      "Giresun",
+      "Gümüşhane",
+      "Ordu",
+      "Rize",
+      "Trabzon"
+    ],
+    "keywords": [
+      "teknik destek",
+      "turizm",
+      "destinasyon yönetimi",
+      "gastronomi"
+    ],
+    "description": "Doğu Karadeniz Kalkınma Ajansı'nın 2026 Yılı Turizm Teknik Destek Programı (TR90/26/TD/TUR), TR90 Bölgesi'nde turizm kurumlarını ve insan kaynağını güçlendirmeyi, sürdürülebilir destinasyon yönetimini kurmayı, yerel ürünleri turizm değeri olarak ticarileştirmeyi ve bölgenin uluslararası görünürlüğünü artırmayı hedefler. Toplam bütçe 10 milyon TL; proje başına KDV dâhil azami 500.000 TL (eğitim projelerinde 250.000 TL), süre en fazla 6 ay. Yerel yönetimler, kamu kurumları, kamu kurumu niteliğindeki meslek kuruluşları ve kooperatifler hariç STK'lar başvurabilir. Başvurular 23 Haziran 2026'dan itibaren üç dönemde alınır; son dönem 31 Ekim 2026.",
+    "objective": "Bölgesel turizm ekosisteminin kurumsal ve beşeri kapasitesini geliştirerek sürdürülebilir destinasyon yönetimi kurmak; yöresel ürünleri ticarileştirmek, uluslararası ağlara katılım ve tanıtımı etkinleştirerek bölgenin uluslararası turizm pazarındaki rekabet gücünü ve marka değerini artırmak.",
+    "priorities": [
+      "Öncelik 1: Turizm paydaşlarının kurumsal ve insan kaynakları kapasitelerinin artırılması",
+      "Öncelik 2: Stratejik planlama, alan yönetimi ve turizm master planlarına yönelik teknik kapasite",
+      "Öncelik 3: Yöresel ürünlerin turizm öğesi olarak ticarileştirilmesi ve gastronomi turizmi",
+      "Öncelik 4: Uluslararası ağlara katılım, tanıtım etkinlikleri ve dijital içerik yönetimi",
+      "Öncelik 5: Turizmde sürdürülebilirlik, yeşil dönüşüm ve GSTC gibi küresel standartlara uyum"
+    ],
+    "eligibleApplicants": [
+      "Yerel yönetimler",
+      "Kamu kurum ve kuruluşları",
+      "Kamu kurumu niteliğindeki meslek kuruluşları",
+      "Sivil toplum kuruluşları (kooperatifler hariç)"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      },
+      {
+        "kind": "SarfMalzeme",
+        "limitPercent": 5
+      }
+    ],
+    "documents": [
+      {
+        "name": "Ek 1: Başvuru sahibinin temsil ve ilzam yetki belgesi",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ek 2: Teknik Şartname",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ek 3: Ortağın temsil ve ilzam yetki belgesi",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Ek 4: Başvuru ve sözleşme imzalamaya ilişkin yönetim kurulu kararı (STK için)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ek 5: Kuruluşun tüzel kişiliğini gösteren belge (STK için)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza; aksi halde 5 iş günü içinde ıslak imzalı teslim)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "b599401a-de52-5c82-b567-161c1bff4d0f",
+    "name": "Çukurova KA 2026 Fizibilite Desteği Programı",
+    "issuer": "Çukurova Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": null,
+    "deadline": "2026-12-24",
+    "maxAmount": 600000,
+    "minAmount": 100000,
+    "budget": 7500000,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 12,
+    "reference": "TR62/26/FZD",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://www.cka.org.tr/tr/guncel-destek/2026-yili-fizibilite-destegi",
+    "sectors": [
+      "kamu",
+      "sivil toplum"
+    ],
+    "regions": [
+      "Adana",
+      "Mersin"
+    ],
+    "keywords": [
+      "fizibilite",
+      "yeşil dönüşüm",
+      "kırsal kalkınma",
+      "kadın girişimciliği"
+    ],
+    "description": "Çukurova Kalkınma Ajansı'nın 2026 Yılı Fizibilite Desteği Programı, Adana ve Mersin'de bölgenin kalkınmasını ve rekabet gücünü destekleyen yatırım projelerinin fizibilite çalışmalarına doğrudan mali destek verir. Öncelikler: sürdürülebilir büyüme ve yeşil dönüşüm, imalat sanayinde rekabet gücü, kırsal alanların değerlendirilmesi ve kadın girişimciliği/istihdamı. Toplam bütçe 7,5 milyon TL. Kamu kurumları, mahalli idareler, üniversiteler, meslek kuruluşları, STK'lar, OSB'ler, teknoparklar, birlik ve kooperatifler başvurabilir; bir başvuru sahibi yılda en fazla dört başvuru yapabilir. Başvurular KAYS üzerinden 24 Aralık 2026 23:59'a kadar alınır.",
+    "objective": "TR62 (Adana, Mersin) Bölgesi'nin kalkınması ve rekabet gücü açısından önemli fırsatlardan yararlanılmasına, bölge ekonomisine yönelik tehdit ve risklerin önlenmesine, yenilikçilik ve girişimcilik kapasitesinin geliştirilmesine yönelik projelerin fizibilite çalışmalarına doğrudan mali destek sağlamak. Özel amaç: yeşil dönüşüm ve sürdürülebilir büyüme, imalat sanayinde katma değer, kırsalda yaşam standartları ve yerel kalkınma fırsatlarının yatırıma dönüştürülmesine yönelik fizibilite raporlarının hazırlanması. Yatırım projesi niteliğinde olmayan başvurulara destek verilmez.",
+    "priorities": [
+      "Öncelik I: Bölgenin sürdürülebilir büyüme ve yeşil dönüşüm kapasitesinin geliştirilmesine yönelik yatırım projelerinin fizibilite çalışmalarının desteklenmesi",
+      "Öncelik II: Bölgenin imalat sanayinde rekabet gücünün artırılmasına yönelik yatırım projelerinin fizibilite çalışmalarının desteklenmesi",
+      "Öncelik III: Bölgenin kırsal alanlarının ekonomik, ekolojik ve kültürel bağlamda ele alınarak mevcut potansiyelin değerlendirilmesine ve kırsalda yaşam standartlarının iyileştirilmesine yönelik yatırım projelerinin fizibilite çalışmalarının desteklenmesi",
+      "Öncelik IV: Bölgesel kalkınma öncelikleri ve ortaya çıkan fırsatlar doğrultusunda, özellikle kadın girişimciliği ile kadın istihdamını içeren ve diğer üç öncelik kapsamında değerlendirilemeyen yatırım projelerinin fizibilite çalışmalarının desteklenmesi"
+    ],
+    "eligibleApplicants": [
+      "Kamu Kurum ve Kuruluşları",
+      "Mahalli İdareler ve Mahalli İdare Birlikleri",
+      "Üniversiteler",
+      "Kamu Kurumu Niteliğindeki Meslek Kuruluşları",
+      "Sivil Toplum Kuruluşları",
+      "Organize Sanayi Bölgeleri",
+      "Küçük Sanayi Siteleri",
+      "Teknoparklar, Teknoloji Geliştirme Bölgeleri, Endüstri Bölgeleri",
+      "Serbest Bölge İşleticileri ve İş Geliştirme Merkezleri",
+      "Birlik ve Kooperatifler"
+    ],
+    "hasAdvancePayment": true,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "KAYS Başvuru Formu ve ekleri",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "a) Başvuru sahibini ve varsa ortaklarını temsile/ilzama yetkili kişilerin belirlendiği ve fizibilite başvurusu…",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "b) Hizmet alımlarına yönelik genel ve teknik özelliklerin belirtildiği teknik şartnameler",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "c) Başvuru sahibinin ve varsa ortakların resmi kayıt belgesi (kamu kurumları ve meslek kuruluşlarından istenmez)",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "d) Tüzük, vakıf senedi, kuruluş sözleşmesi veya görev tanımlarını içeren onaylı belge; proje konusu faaliyet alanında…",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "e) Temsil ve ilzama yetkili kişilerin noter tasdikli imza sirküleri ve yetkilendirme/atama kararı sureti (kamu ve meslek…",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Ortaklık Beyannamesi (başvuru sahibi ve tüm ortakların yetkili temsilcilerince imzalı)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "İştirakçi Beyannamesi",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza esastır; e-imza yoksa 5 iş günü içinde imzalı elden/posta)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "48d0272a-9f03-5de3-a1ec-4d95d9e56a93",
+    "name": "SERKA 2026 Teknik Destek Programı",
+    "issuer": "Serhat Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-02-09",
+    "deadline": "2026-12-24",
+    "maxAmount": 440000,
+    "minAmount": null,
+    "budget": 7000000,
+    "supportRatePercent": null,
+    "projectDurationMonths": 6,
+    "reference": "TRA2/26/TD",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": true,
+    "prefersYoungEntrepreneur": true,
+    "sourceUrl": "https://www.serka.gov.tr/duyuru/duyurular-t-c-serhat-kalkinma-ajansi-2026-yili-teknik-destek-programi-referans-no-tra2-26-td04-cagrisina-iliskin-onemli-duyuru/2930",
+    "sectors": [
+      "kamu",
+      "sivil toplum",
+      "imalat"
+    ],
+    "regions": [
+      "Ağrı",
+      "Ardahan",
+      "Iğdır",
+      "Kars"
+    ],
+    "keywords": [
+      "teknik destek",
+      "eğitim ve danışmanlık"
+    ],
+    "description": "Serhat Kalkınma Ajansı'nın 2026 Yılı Teknik Destek Programı (TRA2/26/TD), Ağrı, Ardahan, Iğdır ve Kars'ta kurumsal kapasite eksikliği nedeniyle hazırlık ve uygulama aşamalarında zorlanan yerel aktörlere eğitim, program/proje hazırlama, danışmanlık, lobi ve uluslararası ilişki kurma desteği sağlar. Toplam bütçe 7 milyon TL; danışmanlıkta azami 440.000 TL, eğitimde 220.000 TL. Kamu kurumları, meslek kuruluşları, STK'lar, OSB'ler, birlik ve kooperatifler, teknoloji bölgeleri ve kâr amacı güden tüzel kişiler başvurabilir. Başvurular KAYS üzerinden iki aylık dönemlerle alınır; dönem referansları TRA2-26-TD01…TD06, son dönem KAYS 24 Aralık 2026, taahhütname 31 Aralık 2026.",
+    "objective": "TRA2 Bölgesi'ndeki yerel aktörlerin bölgesel kalkınma açısından önem arz eden ancak kurumsal kapasite eksikliği nedeniyle sorun yaşanan çalışmalarına eğitim verme, danışmanlık sağlama, program/proje hazırlanmasına katkı ve lobi/uluslararası ilişkiler kurma yoluyla destek sağlamak. Yararlanıcıya doğrudan mali destek verilmez.",
+    "priorities": [
+      "Öncelik 1: TRA2 Bölgesi'nde turizm destinasyonlarının geliştirilmesi ve markalaştırılmasına yönelik faaliyetlerin desteklenmesi",
+      "Öncelik 2: Kırsal ekonominin geliştirilmesine, yerel ürünlerin pazarlanması ve markalaştırılmasına yönelik faaliyetlerin desteklenmesi",
+      "Öncelik 3: İmalat sanayiinin geliştirilmesi ve istihdamın artırılmasına yönelik faaliyetlerin desteklenmesi",
+      "Öncelik 4: Bölgesel kalkınma öncelikleri doğrultusunda, özellikle genç ve kadın girişimciliği ile istihdamını içeren, diğer üç öncelik kapsamında değerlendirilemeyen faaliyetlerin desteklenmesi"
+    ],
+    "eligibleApplicants": [
+      "Kamu kurum ve kuruluşları (Valilikler, il/ilçe müdürlükleri, kaymakamlıklar)",
+      "Yerel yönetimler ve mahalli idare birlikleri (Belediyeler, il özel idareleri, köy muhtarlıkları)",
+      "Üniversiteler (rektörlük üzerinden)",
+      "Kamu kurumu niteliğindeki meslek kuruluşları",
+      "Sivil toplum kuruluşları",
+      "Organize sanayi bölgeleri, sanayi siteleri, serbest bölge işleticileri",
+      "Birlik ve kooperatifler",
+      "TTO şirketleri, Teknoloji Geliştirme Bölgesi, Endüstri Bölgesi ve İŞGEM yönetici şirketleri",
+      "Kâr amacı güden tüzel kişiler (bireysel başvuru kabul edilmez)"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      },
+      {
+        "kind": "SarfMalzeme",
+        "limitPercent": 5
+      }
+    ],
+    "documents": [
+      {
+        "name": "Faaliyet Belgesi (son 1 ay; kâr amacı güden tüzel kişiler)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ticaret Sicil Gazetesi (kâr amacı güden tüzel kişiler)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Noter tasdikli İmza Sirküleri (kâr amacı güden tüzel kişiler)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Yetkili Yönetim Organı Kararı ve İmza Beyannamesi (EK B Örnek 1)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortaklık Kararı (EK B Örnek 2)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Teknik Şartname (EK B Örnek 3)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Proforma Fatura (en az 2 firmadan)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Taahhütname (KAYS)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "0d4da783-af47-53c3-acc0-b62fe0a7985f",
+    "name": "MARKA 2026 Yenilikçi Tarım Faizsiz Kredi Desteği Programı",
+    "issuer": "Doğu Marmara Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-10-02",
+    "deadline": "2026-12-15",
+    "maxAmount": 8000000,
+    "minAmount": 1000000,
+    "budget": 140000000,
+    "supportRatePercent": null,
+    "projectDurationMonths": 12,
+    "reference": "TR42/26/YTA",
+    "repayable": true,
+    "eligibleCompanySizes": 7,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://marka.org.tr/2026-yili-yenilikci-tarim-faizsiz-kredi-destegi-programi/",
+    "sectors": [
+      "tarım",
+      "tarım teknolojileri",
+      "imalat"
+    ],
+    "regions": [
+      "Kocaeli",
+      "Sakarya",
+      "Düzce",
+      "Bolu",
+      "Yalova"
+    ],
+    "keywords": [
+      "faizsiz kredi",
+      "yenilikçi tarım",
+      "akıllı tarım",
+      "tohumculuk"
+    ],
+    "description": "Doğu Marmara Kalkınma Ajansı, TR42 Bölgesi'nde (Bolu, Düzce, Kocaeli, Sakarya, Yalova) yenilikçi tarım ürün ve hizmetleri geliştiren, üreten, ticarileştiren ve ihraç eden KOBİ'lerin yatırımlarını desteklemek için 140 milyon TL bütçeli 2026 Yılı Yenilikçi Tarım Faizsiz Kredi Desteği Programı'nı (TR42/26/YTA) 2 Ekim 2026'da ilan etti. Proje başına 1–8 milyon TL faizsiz kredi; vade 24 ay, en az 6 ay ödemesiz dönem, 7 eşit taksit. Yedi öncelik alanı arasında akıllı tarım makineleri, tarım teknolojileri, katma değerli girdiler, tohum/fide ıslahı, döngüsel ekonomi, kontrollü üretim sistemleri ve işleme/soğuk zincir teknolojileri bulunur; enerji sistemi odaklı projeler kapsam dışıdır. Başvurular KAYS üzerinden 15 Aralık 2026 23:59'a kadar, taahhütname 22 Aralık 2026 17:00'ye kadar alınır.",
+    "objective": "TR42 Bölgesi'nde faaliyet gösteren KOBİ statüsündeki özel sektör firmalarının yenilikçi tarım başlığı kapsamındaki ürün ve hizmetleri geliştirme, üretme, ticarileştirme ve ihracat kapasitesini artırmaya yönelik yatırımlarını faizsiz kredi ile destekleyerek bölgesel rekabet gücü ile ikiz dönüşüm uyumunu güçlendirmek. Başvuru sahibi, yenilikçi ürün/hizmet/teknoloji geliştiren ya da üreten firma olmalıdır; yalnız kullanıcı olunmasına yönelik başvurular reddedilir.",
+    "priorities": [
+      "Öncelik 1: Yenilikçi Tarım Makineleri ve Akıllı Tarım Ekipmanları Üretimi",
+      "Öncelik 2: Tarım Teknolojileri ve Dijital Tarım Çözümlerinin Geliştirilmesi ve Ticarileştirilmesi",
+      "Öncelik 3: Katma Değerli Tarımsal Girdilerin Üretimi",
+      "Öncelik 4: Tohum, Fide, Fidan ve Bitki Geliştirme Teknolojileri",
+      "Öncelik 5: Tarımda Döngüsel Ekonomi, Kaynak Verimliliği ve Yeşil Dönüşüm Uygulamaları",
+      "Öncelik 6: Yenilikçi/Kontrollü Tarım Sistemleri ve İklim Uyumlu Üretim Teknolojileri",
+      "Öncelik 7: İşleme, Depolama, Soğuk Zincir ve İzlenebilirlik Teknolojilerinin Üretimi ve Ticarileştirilmesi"
+    ],
+    "eligibleApplicants": [
+      "KOBİ statüsündeki işletmeler (mikro, küçük, orta); başvuru tarihi itibarıyla kurulmuş ve tescil edilmiş, merkez veya faaliyet/üretim yeri TR42 Bölgesi'nde kayıtlı; proje konusu iştigal konularıyla uyumlu; Vakıf Katılım Bankası'ndan en az proje bütçesi kadar Finansman Uygunluk Belgesi almış"
+    ],
+    "hasAdvancePayment": true,
+    "requiresGuaranteeLetter": true,
+    "costItems": [
+      {
+        "kind": "Personel",
+        "limitPercent": 20
+      },
+      {
+        "kind": "MakineTechizat",
+        "limitPercent": null
+      },
+      {
+        "kind": "YazilimLisans",
+        "limitPercent": null
+      },
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      },
+      {
+        "kind": "SarfMalzeme",
+        "limitPercent": 5
+      }
+    ],
+    "documents": [
+      {
+        "name": "KAYS Başvuru Formu, Bütçe, Beklenen Finansman Kaynakları, Maliyetlerin Gerekçelendirilmesi, Mantıksal Çerçeve",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Finansman Uygunluk Belgesi (Vakıf Katılım Bankası A.Ş.; program ilan tarihinden sonra; kredibilite bütçe ve proformalara eşit…",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Proje Bilgi Formu (Ajansın bu programa özel formu)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Noter tasdikli imza sirküleri; yetki ana sözleşmeden gelmiyorsa yönetim kurulu yetkilendirme kararı",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Mevcut sermaye ve ortaklık yapısını gösteren Ticaret Sicili Gazetesi",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Kayıtlı olunan odadan alınan, program ilan tarihinden sonra düzenlenmiş Faaliyet Belgesi",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "KOSGEB e-Devlet KOBİ Bilgi Beyannamesi",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Başvuru Sahibi Beyannamesi (yetkililerce imzalı, taranmış)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Mali tablolar: 2023 ve 2024 vergi dairesi onaylı gelir/kurumlar vergisi beyannamesi ve ekleri; 2025 gelir tablosu ve…",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Bütçede inşaat işi varsa ÇŞİDB birim fiyat ve pozlarına göre keşif/metraj özeti ve maliyet tahmini",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Program ilan tarihi itibarıyla son 3 aya ait SGK onaylı personel sayısı belgesi / barkodlu çıktı",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Makine-ekipman ve hizmet alımları için başvuru sahibince hazırlanmış ve imzalanmış teknik şartnameler (KAYS bütçe kalemlerine…",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "100.000 TL ve üzeri tüm maliyet kalemleri için imzalı-kaşeli güncel proforma fatura / fiyat teklifleri (KDV dâhil; tutar…",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Mevzuat gereği diğer izin, ruhsat, yetki belgesi, lisans; izin gerekmiyorsa başvuru sahibi beyanı",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Avantaj sağlayıcı belgeler (zorunlu değil): sipariş formu/müşteri beyanı, TSE/CE/ISO/GMP/GAP vb., kapasite/ekspertiz raporu…",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Projeye ilişkin tanıtıcı film (en fazla 5 dk; zorunlu değil)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza esastır; e-imza yoksa 5 iş günü içinde ıslak imzalı elden)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      },
+      {
+        "name": "(Sözleşme aşaması) Vergi Borcu Yoktur Yazısı (sözleşmeden en fazla 15 gün önce; merkez ve tüm şubeleri kapsayan)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Kurum aleyhine kesinleşmiş haciz işlemi bulunmadığına dair beyanname",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) SGK Borcu Yoktur Yazısı (en fazla 15 gün önce)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) 'Destek Sözleşmesi İmza Süreci Kılavuzu'nda listelenen diğer belgeler",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      }
+    ]
+  },
+  {
+    "id": "e52f4149-a666-59d8-8312-7bceacca5665",
+    "name": "BAKKA 2026 Yönetim Danışmanlığı Teknik Destek Programı",
+    "issuer": "Batı Karadeniz Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-07-31",
+    "deadline": "2026-12-31",
+    "maxAmount": 600000,
+    "minAmount": null,
+    "budget": 6000000,
+    "supportRatePercent": null,
+    "projectDurationMonths": 6,
+    "reference": "TR81/26/YTD",
+    "repayable": false,
+    "eligibleCompanySizes": 7,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://bakka.gov.tr/haber/2026-yili-yonetim-danismanligi-teknik-destek-programi-basvurulari-basladi-15210",
+    "sectors": [
+      "imalat",
+      "tarım"
+    ],
+    "regions": [
+      "Zonguldak",
+      "Karabük",
+      "Bartın"
+    ],
+    "keywords": [
+      "teknik destek",
+      "yönetim danışmanlığı",
+      "ikiz dönüşüm",
+      "ihracat"
+    ],
+    "description": "Batı Karadeniz Kalkınma Ajansı, 2026 Yılı Yönetim Danışmanlığı Teknik Destek Programı (TR81/26/YTD) başvurularını 31 Temmuz 2026'da açtı. Program, Zonguldak, Karabük ve Bartın'daki imalat sanayi ve bitkisel üretim işletmelerinin yenilikçilik ve rekabetçilik kapasitesini mentorluk ve danışmanlıkla güçlendirmeyi hedefler; öncelikler yeşil/dijital/ikiz dönüşüm ve ihracat kapasitesidir. Toplam bütçe 6 milyon TL; KOBİ başvurusunda azami 300.000 TL, en az 3 KOBİ adına kurum başvurusunda 600.000 TL, OSB tekil başvurusunda 400.000 TL; süre en fazla 6 ay. Başvurular KAYS üzerinden iki aylık dönemlerle alınır; son başvuru 31 Aralık 2026 17:00.",
+    "objective": "TR81 Batı Karadeniz Bölgesi'ndeki imalat sanayi ve bitkisel üretim işletmelerinin yenilikçilik ve rekabetçilik kapasitesini artırmak için mentorluk ve danışmanlık desteği sağlamak (Yenilikçi Dönüşüm Sonuç Odaklı Programı).",
+    "priorities": [
+      "KOBİ'lerin ve destek kuruluşlarının sürdürülebilir büyüme kapasitesinin geliştirilmesi; yeşil, dijital ve ikiz dönüşüm",
+      "KOBİ'lerin ihracat kapasitesinin geliştirilmesi"
+    ],
+    "eligibleApplicants": [
+      "İmalat sanayi veya bitkisel üretimde faaliyet gösteren KOBİ statüsündeki işletmeler",
+      "Ticaret ve Sanayi Odaları",
+      "OSB Müdürlükleri",
+      "Küçük Sanayi Siteleri",
+      "Esnaf ve Sanatkârlar Odaları ve Birlikleri",
+      "Teknoparklar ve Teknoloji Geliştirme Bölgeleri"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "Teknik Şartname Formu (Ek-A)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Başvuru Sahibi İçin Yetkilendirme Kararı (EK-B1)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortak İçin Yetkilendirme Kararı (EK-B2)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Başvuru Sahibi İçin Matbu Beyanname",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "İşletme Gönüllü Katılım Beyanı",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "0c93d2b2-9cdf-56e9-bc4b-de0455756f63",
+    "name": "BAKKA 2026 Yerel Ürünlerin Markalaşması Teknik Destek Programı",
+    "issuer": "Batı Karadeniz Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-04-15",
+    "deadline": "2026-12-31",
+    "maxAmount": 600000,
+    "minAmount": null,
+    "budget": 8000000,
+    "supportRatePercent": null,
+    "projectDurationMonths": 6,
+    "reference": "TR81/26/YEREL-TD",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://bakka.gov.tr/haber/yerel-urunlerin-markalasmasi-teknik-destek-programi-ilan-edildi-15166",
+    "sectors": [
+      "turizm",
+      "kırsal kalkınma",
+      "gıda"
+    ],
+    "regions": [
+      "Zonguldak",
+      "Karabük",
+      "Bartın"
+    ],
+    "keywords": [
+      "teknik destek",
+      "yerel ürün",
+      "markalaşma",
+      "dijitalleşme"
+    ],
+    "description": "Batı Karadeniz Kalkınma Ajansı, bölgedeki yerel ürünlerin turizm sektörüne entegrasyonunu güçlendirmek; markalaşma, ürün geliştirme ve deneyim odaklı turizm uygulamalarını desteklemek amacıyla 8 milyon TL bütçeli Yerel Ürünlerin Markalaşması Teknik Destek Programı'nı (TR81/26/YEREL-TD) 15 Nisan 2026'da ilan etti. Proje başına azami 600.000 TL eğitim ve danışmanlık desteği, süre en fazla 6 ay. Kamu kurumları, yerel yönetimler, meslek kuruluşları, turizm altyapı hizmet birlikleri, STK'lar, üretici birlikleri ve kooperatifler, üniversiteler ve işletmeler başvurabilir. Başvurular KAYS üzerinden iki aylık dönemlerle alınır; son başvuru 31 Aralık 2026 16:00.",
+    "objective": "Bölgedeki yerel ürünlerin turizm sektörüne entegrasyonunu güçlendirmek; markalaşma, ürün geliştirme ve deneyim odaklı turizm uygulamalarını desteklemek.",
+    "priorities": [
+      "Yerel ürün ekosisteminin geliştirilmesi",
+      "Markalaşma, ticarileşme ve dijitalleşme"
+    ],
+    "eligibleApplicants": [
+      "Kamu kurum ve kuruluşları (KİT'ler dâhil)",
+      "Yerel yönetimler (il özel idareleri, belediyeler, KHGB)",
+      "Kamu kurumu niteliğindeki meslek kuruluşları",
+      "Turizm altyapı hizmet birlikleri",
+      "Sivil toplum kuruluşları (vakıf, dernek)",
+      "Üretici birlikleri ve kooperatifler",
+      "Üniversiteler (rektörlük, MYO)",
+      "İşletmeler"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "Teknik Şartname Formu (Ek-A)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Başvuru Sahibi İçin Yetkilendirme Kararı (EK-B1)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Ortak İçin Yetkilendirme Kararı (EK-B2)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Beyanname (Başvuru Sahibi)",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "İşletme Gönüllü Katılım Beyanı (EK-I)",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "4e5e6dd1-4f50-558d-ab20-039b3506e3e4",
+    "name": "BAKKA 2026 Fizibilite Desteği Programı",
+    "issuer": "Batı Karadeniz Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-04-21",
+    "deadline": "2026-12-18",
+    "maxAmount": 1000000,
+    "minAmount": 250000,
+    "budget": 10000000,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 12,
+    "reference": "TR81/26/FZD",
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://bakka.gov.tr/haber/2026-yili-fizibilite-destegi-programi-ilan-edildi-15169",
+    "sectors": [
+      "kamu",
+      "sivil toplum",
+      "sanayi",
+      "turizm"
+    ],
+    "regions": [
+      "Zonguldak",
+      "Karabük",
+      "Bartın"
+    ],
+    "keywords": [
+      "fizibilite"
+    ],
+    "description": "Batı Karadeniz Kalkınma Ajansı, TR81 2024–2028 Bölge Planı ve sonuç odaklı programları doğrultusunda bölgenin kalkınmasını ve rekabet gücünü artıracak fizibilite çalışmalarını desteklemek için 10 milyon TL bütçeli 2026 Yılı Fizibilite Desteği Programı'nı (TR81/26/FZD) 21 Nisan 2026'da başvuruya açtı. Proje başına 250.000–1.000.000 TL, destek oranı %25–%100, süre 3–12 ay. Yerel yönetimler, üniversiteler, kamu kurumları, meslek kuruluşları, OSB/KSS, teknoloji bölgesi yönetici şirketleri, STK'lar, birlik ve kooperatifler başvurabilir. Program teklif çağrısı değildir; talepler bir ay içinde değerlendirilir. KAYS son başvuru 18 Aralık 2026 23:59, taahhütname 25 Aralık 2026 18:00.",
+    "objective": "TR81 Batı Karadeniz Bölgesi 2024–2028 Bölge Planı ve ajansın sonuç odaklı programları doğrultusunda bölgenin kalkınmasını ve rekabet gücünü artıracak fizibilite çalışmalarını desteklemek.",
+    "priorities": [
+      "Üretim, sanayi ve teknoloji ekosistemini geliştiren katma değerli yatırımlar",
+      "Planlı sanayi alanları, ortak kullanım ve lojistik altyapı yatırımları",
+      "Katma değerli tarım, hayvancılık, kırsal kalkınma ve yerel ürünlerin ticarileştirilmesi",
+      "Sürdürülebilir turizm ve yerel ekonomi yatırımları",
+      "Çevre koruma ve doğal kaynakların sürdürülebilir yönetimi",
+      "Sosyal gelişme, beşerî sermaye ve kapsayıcı altyapı",
+      "Afet, iklim değişikliği ve çevresel risklere dayanıklılık",
+      "Bölge Planı ve Yerel Kalkınma Hamlesi ile uyumlu stratejik yatırımlar"
+    ],
+    "eligibleApplicants": [
+      "Yerel yönetimler",
+      "Üniversiteler",
+      "Diğer kamu kurum ve kuruluşları",
+      "Kamu kurumu niteliğindeki meslek kuruluşları",
+      "OSB'ler ve KSS'ler",
+      "Teknoloji transfer ofisi, teknoloji geliştirme bölgesi ve endüstri bölgesi yönetici şirketleri",
+      "Serbest bölge işleticileri",
+      "İş geliştirme merkezi yönetici şirketleri",
+      "Sivil toplum kuruluşları",
+      "Birlikler ve kooperatifler"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "EK-A Başvuru Formu (KAYS)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Destekleyici belgeler (rehber ekleri)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "83e8d687-9581-58ab-aa51-0de844b2c1ac",
+    "name": "KUDAKA 2026 Anadoludakiler Coğrafi İşaretli Ürünlerin Üretimi ve Tanıtımı Mali Destek Programı",
+    "issuer": "Kuzeydoğu Anadolu Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": "2026-09-17",
+    "deadline": "2026-11-09",
+    "maxAmount": 10000000,
+    "minAmount": 2000000,
+    "budget": 75000000,
+    "supportRatePercent": 50,
+    "projectDurationMonths": 24,
+    "reference": null,
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://kudaka.gov.tr/haber/2026-yili-anadoludakiler-cografi-isaretli-urunlerin-uretimi-ve-tanitimi-mali-destek-programi-ilani/723",
+    "sectors": [
+      "gıda",
+      "tarım",
+      "turizm",
+      "kamu"
+    ],
+    "regions": [
+      "Erzurum",
+      "Erzincan",
+      "Bayburt"
+    ],
+    "keywords": [
+      "mali destek",
+      "coğrafi işaret",
+      "anadoludakiler",
+      "tanıtım"
+    ],
+    "description": "Kuzeydoğu Anadolu Kalkınma Ajansı, Erzurum, Erzincan ve Bayburt'taki tescilli veya tescil süreci başlatılmış coğrafi işaretli ürünlerin üretim, işleme ve tanıtım kapasitesini güçlendirmek ve Anadoludakiler markası altında katma değerini artırmak için 75 milyon TL bütçeli mali destek programını 17 Eylül 2026'da ilan etti. Proje başına 2–10 milyon TL destek; Ajans desteği toplam uygun maliyetin %25–%50'si; uygulama süresi 12–24 ay. Her projede uygun bütçenin %10–%25'i Anadoludakiler markasıyla bütünleşik tanıtım bileşenine ayrılmalıdır. Kamu kurumları, mahalli idareler, üniversiteler, meslek kuruluşları, STK'lar, kooperatif ve birlikler başvurabilir; gerçek kişiler başvuramaz. KAYS son başvuru 9 Kasım 2026 23:59, taahhütname 16 Kasım 2026 18:00.",
+    "objective": "Erzurum, Erzincan ve Bayburt'taki coğrafi işaretli ürünlerin üretim, işleme ve tanıtım kapasitesini güçlendirmek; bu ürünlerin Anadoludakiler markası altında katma değerini ve görünürlüğünü artırmak.",
+    "priorities": [
+      "Coğrafi işaretli ürünlerin turizmle bütünleşik tanıtım ve deneyim altyapısı",
+      "Coğrafi işaretli et, süt ve arıcılık ürünlerinde üretim, işleme ve kalite altyapısı",
+      "Yerel ve tabii kaynakların sürdürülebilir, katma değerli kullanımına yönelik altyapılar"
+    ],
+    "eligibleApplicants": [
+      "Kamu kurum ve kuruluşları",
+      "Mahalli idareler",
+      "Üniversiteler",
+      "Kamu kurumu niteliğindeki meslek kuruluşları",
+      "Sivil toplum kuruluşları",
+      "Kooperatifler ve birlikler"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [],
+    "documents": [
+      {
+        "name": "KAYS Başvuru Formu ve rehber ekleri",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": true
+      }
+    ]
+  },
+  {
+    "id": "e314c1df-62e2-5a01-8329-eace8ade8d62",
+    "name": "FKA 2026 Uygulamalı Dış Ticaret Danışmanlığı Programı",
+    "issuer": "Fırat Kalkınma Ajansı",
+    "period": "2026",
+    "status": "Acik",
+    "openDate": null,
+    "deadline": "2026-11-04",
+    "maxAmount": 0,
+    "minAmount": null,
+    "budget": null,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 4,
+    "reference": null,
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://fka.gov.tr/2026-yili-uygulamali-dis-ticaret-danismanligi-programi-basvuru-cagrisi-detayi-17927374691517",
+    "sectors": [
+      "imalat",
+      "ihracat"
+    ],
+    "regions": [
+      "Bingöl",
+      "Elazığ",
+      "Malatya",
+      "Tunceli"
+    ],
+    "keywords": [
+      "dış ticaret",
+      "ihracat",
+      "danışmanlık",
+      "mentorluk"
+    ],
+    "description": "Fırat Kalkınma Ajansı, Bingöl, Elazığ, Malatya ve Tunceli'deki işletmelerin dış ticaret kapasitesini artırmak amacıyla 2026 Yılı Uygulamalı Dış Ticaret Danışmanlığı Programı başvuru çağrısını açtı. 12 işletmeyle sınırlı, dört ay sürecek ücretsiz bire bir danışmanlık ve mentorluk programında her işletme 5 kez ziyaret edilir, aylık çevrim içi danışmanlık ve eğitimler verilir, İhtiyaç Analizi ve İhracat Yol Haritası Raporu hazırlanır. Başvuru için işletmede yabancı dil bilen en az bir ihracat sorumlusu bulunmalıdır. Program Kasım 2026'da başlar; son başvuru 4 Kasım 2026.",
+    "objective": "Bölgenin dış ticaret hacmini artırmak; ihracat yapmamış işletmeleri ihracata hazırlamak, ihracat yapanların yetkinliğini geliştirmek.",
+    "priorities": [],
+    "eligibleApplicants": [
+      "TRB1 Bölgesi'nde yerleşik işletmeler (yabancı dil bilen ihracat sorumlusu personel/birim şartıyla)"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "Çevrim içi başvuru formu",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Katılım taahhütnamesi (kabul sonrası)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      }
+    ]
+  },
+  {
+    "id": "6b0a1a42-66e9-5282-86d4-27feb9d2237b",
+    "name": "İSTKA GovTech İstanbul Destek Programı",
+    "issuer": "İstanbul Kalkınma Ajansı",
+    "period": "2026-2027",
+    "status": "Acik",
+    "openDate": "2026-11-01",
+    "deadline": "2027-05-31",
+    "maxAmount": 5000000,
+    "minAmount": null,
+    "budget": null,
+    "supportRatePercent": 100,
+    "projectDurationMonths": 7,
+    "reference": null,
+    "repayable": false,
+    "eligibleCompanySizes": 0,
+    "requiresConsortium": false,
+    "minConsortiumPartners": null,
+    "maxCompanyAgeYears": null,
+    "prefersFemaleEntrepreneur": false,
+    "prefersYoungEntrepreneur": false,
+    "sourceUrl": "https://www.istka.org.tr/duyuru/govtech-istanbul-destek-programi-ile-kamu-hizmetlerinde-inovasyon-hamlesi-basliyor-xgq6",
+    "sectors": [
+      "bilişim",
+      "kamu",
+      "girişimcilik"
+    ],
+    "regions": [
+      "İstanbul"
+    ],
+    "keywords": [
+      "govtech",
+      "startup",
+      "MVP",
+      "kamu hizmetleri",
+      "inovasyon"
+    ],
+    "description": "İstanbul Kalkınma Ajansı, kamu hizmetlerinde verimliliği artırmak ve kamu ihtiyaçlarını teknoloji girişimleriyle buluşturmak için GovTech İstanbul Destek Programı'nı 8 Ekim 2026'da duyurdu. Kamu kurumları ihtiyaçlarını govtech.istanbul portalı üzerinden bildirir; eşleşen startuplara çözüm konsepti için 500.000 TL'ye, MVP geliştirme için 5.000.000 TL'ye kadar geri ödemesiz destek sağlanır. Çözüm konsepti 4 hafta, MVP 4 ay (3 ay uzatılabilir) sürer. Merkezi yönetim kuruluşları, İBB ve ilçe belediyeleri, İSKİ, İETT, İstanbul Valiliği, devlet üniversiteleri ve İstanbul merkezli meslek kuruluşları ihtiyaç bildirebilir; KİT ve belediye iştirakleri kapsam dışıdır. Başvurular Kasım 2026'dan itibaren aylık dönemlerle, 31 Mayıs 2027'ye kadar alınır.",
+    "objective": "Kamu hizmetlerinde verimliliği artırmak, süreçleri dijitalleştirmek ve kamu ihtiyaçlarını teknoloji girişimleriyle buluşturmak.",
+    "priorities": [
+      "Mevcut hizmetlerin iyileştirilmesi",
+      "Süreçlerin dijitalleştirilmesi ve otomasyonu",
+      "Veri temelli karar alma",
+      "Yeni kamu hizmetleri"
+    ],
+    "eligibleApplicants": [
+      "İhtiyaç sahibi kamu kurumları: merkezi yönetim kuruluşları, bakanlıklar ve bağlı kuruluşlar, İBB ve ilçe belediyeleri, İSKİ, İETT, İstanbul Valiliği ve kaymakamlıkları, devlet üniversiteleri, düzenleyici ve denetleyici kurumlar, İstanbul merkezli meslek kuruluşları",
+      "Çözüm geliştiren teknoloji girişimleri (startup)"
+    ],
+    "hasAdvancePayment": false,
+    "requiresGuaranteeLetter": false,
+    "costItems": [
+      {
+        "kind": "YazilimLisans",
+        "limitPercent": null
+      }
+    ],
+    "documents": [
+      {
+        "name": "govtech.istanbul portalı üzerinden ihtiyaç/çözüm başvurusu",
+        "obligation": "Zorunlu",
+        "uploader": "Firma",
+        "eSignature": false
+      }
+    ]
   }
 ]

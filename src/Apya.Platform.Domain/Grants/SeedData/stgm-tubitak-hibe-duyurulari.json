@@ -467,14 +467,14 @@
     "minAmount": 550000,
     "budget": null,
     "supportRatePercent": 90,
-    "projectDurationMonths": null,
-    "reference": null,
+    "projectDurationMonths": 12,
+    "reference": "TR51/26/ALT_SGE_Ö1 (Öncelik 1) / TR51/26/ALT_SGE_Ö2 (Öncelik 2)",
     "repayable": false,
     "eligibleCompanySizes": 0,
     "requiresConsortium": false,
     "minConsortiumPartners": null,
     "maxCompanyAgeYears": null,
-    "prefersFemaleEntrepreneur": false,
+    "prefersFemaleEntrepreneur": true,
     "prefersYoungEntrepreneur": false,
     "sourceUrl": "https://ankaraka.org.tr/ankara-sosyal-girisimcilik-ekosistemi-kapasite-gelistirme-mali-destek-programi-ilan-edildi-0",
     "sectors": [
@@ -488,7 +488,195 @@
       "sosyal girişimcilik",
       "mali destek"
     ],
-    "description": "Ankara Kalkınma Ajansı, Ankara Sosyal Girişimcilik Ekosistemi Kapasite Geliştirme Mali Destek Programı kapsamında başvuruları almaya başladı. Program, Ankara’da sosyal ve çevresel sorunlara çözüm geliştiren aktörlerin teknik ve operasyonel kapasitelerini güçlendirmeyi amaçlıyor.\nProgram iki öncelik alanında destek sağlayacak. İlk öncelik, sosyal sorunlara çözüm üreten sosyal girişimlerin ürün ve hizmet geliştirme ile sunma kapasitelerinin artırılmasına odaklanıyor. İkinci öncelik ise dernek ve vakıfların mali sürdürülebilirliklerini güçlendirmek amacıyla iktisadi işletme kurmalarını veya geliştirmelerini destekliyor.\nToplam bütçesi 1 milyon 526 bin avro olan program kapsamında;\nÖncelik 1 için proje başına 550 bin TL ile 3 milyon TL, Öncelik 2 için ise 550 bin TL ile 1 milyon 500 bin TL hibe desteği sağlanacak. Destek oranı ise %50 ile %90 arasında değişiyor.\nKimler başvurabilir?\nPrograma, Ankara’da faaliyet gösteren kooperatifler, iktisadi işletmesi bulunan veya kuracak dernek ve vakıflar, sosyal işletmeler başvuruda bulunabiliyor.\nBaşvuruların değerlendirilmesinde SEGE kapsamında 3., 4. ve 5. kademe ilçelerden yapılan başvurular, kadın, çocuk ve engelli alanında çalışan kurumların bu gruplara yönelik projeleri, iklim değişikliğiyle mücadeleyi destekleyen çalışmalar ile kadınlar tarafından yönetilen sosyal girişimler avantaj sağlayacak.\nPrograma ilişkin ayrıntılı bilgi ve başvuru koşulları için tıklayınız.\n\nDuyuru: Ankara Kalkınma Ajansı: Sosyal Girişimciliğin Geliştirilmesi Mali Destek Programı\nKaynak: https://www.stgm.org.tr/ankara-kalkinma-ajansi-sosyal-girisimciligin-gelistirilmesi-mali-destek-programi"
+    "description": "Ankara Kalkınma Ajansı, Ankara Sosyal Girişimcilik Ekosistemi Kapasite Geliştirme Mali Destek Programı kapsamında başvuruları almaya başladı. Program, Ankara’da sosyal ve çevresel sorunlara çözüm geliştiren aktörlerin teknik ve operasyonel kapasitelerini güçlendirmeyi amaçlıyor.\nProgram iki öncelik alanında destek sağlayacak. İlk öncelik, sosyal sorunlara çözüm üreten sosyal girişimlerin ürün ve hizmet geliştirme ile sunma kapasitelerinin artırılmasına odaklanıyor. İkinci öncelik ise dernek ve vakıfların mali sürdürülebilirliklerini güçlendirmek amacıyla iktisadi işletme kurmalarını veya geliştirmelerini destekliyor.\nToplam bütçesi 1 milyon 526 bin avro olan program kapsamında;\nÖncelik 1 için proje başına 550 bin TL ile 3 milyon TL, Öncelik 2 için ise 550 bin TL ile 1 milyon 500 bin TL hibe desteği sağlanacak. Destek oranı ise %50 ile %90 arasında değişiyor.\nKimler başvurabilir?\nPrograma, Ankara’da faaliyet gösteren kooperatifler, iktisadi işletmesi bulunan veya kuracak dernek ve vakıflar, sosyal işletmeler başvuruda bulunabiliyor.\nBaşvuruların değerlendirilmesinde SEGE kapsamında 3., 4. ve 5. kademe ilçelerden yapılan başvurular, kadın, çocuk ve engelli alanında çalışan kurumların bu gruplara yönelik projeleri, iklim değişikliğiyle mücadeleyi destekleyen çalışmalar ile kadınlar tarafından yönetilen sosyal girişimler avantaj sağlayacak.\nPrograma ilişkin ayrıntılı bilgi ve başvuru koşulları için tıklayınız.\n\nDuyuru: Ankara Kalkınma Ajansı: Sosyal Girişimciliğin Geliştirilmesi Mali Destek Programı\nKaynak: https://www.stgm.org.tr/ankara-kalkinma-ajansi-sosyal-girisimciligin-gelistirilmesi-mali-destek-programi",
+    "objective": "Sosyal girişimcilik modeliyle sosyal ihtiyaçlar temelinde kalkınmayı teşvik eden STK'lar ve sosyal ekonomi aktörlerinin sürdürülebilirliğini, mali istikrarını ve sosyal etkisini artırmak. Ankara'nın sosyal ve çevresel zorluklarına çözüm üreten sosyal girişimlerin teknik ve operasyonel kapasitesini geliştirmek ve yenilikçi sosyal hizmet modellerini hayata geçirmek. AB IPA III eş finansmanlı 'Türkiye'de Sivil Toplumun Sosyal Girişimcilik Yoluyla Desteklenmesi' projesi kapsamındadır.",
+    "priorities": [
+      "Öncelik 1: Sosyal sorunları çözmek için yenilikçi bakış açısıyla faaliyet gösteren sosyal girişimlerin, hedefledikleri SKA'lara hizmet edecek ürün/hizmet geliştirme ve sunma kapasitelerinin artırılması",
+      "Öncelik 2: Dernek ve vakıfların mali sürdürülebilirliklerini artırmak ve onları sosyal girişim olarak konumlandırmak amacıyla iktisadi işletme kurmalarının desteklenmesi"
+    ],
+    "eligibleApplicants": [
+      "Öncelik 1: Kooperatifler (yapı, motorlu taşıyıcılar, gayrimenkul, sigorta, site işletme, taşıma, esnaf-sanatkâr, kredi-kefalet kooperatifleri hariç)",
+      "Öncelik 1: İktisadi işletmesi olan dernek ve vakıflar (Sosyal Yardımlaşma ve Dayanışma Vakıfları hariç)",
+      "Öncelik 1: Sosyal işletmeler (kârının en az %50'sini sosyal amaca geri yatıran şahıs/limited/anonim şirketler)",
+      "Öncelik 2: İktisadi işletmesi olmayan ancak iktisadi işletme kurmak isteyen dernek ve vakıflar"
+    ],
+    "hasAdvancePayment": true,
+    "costItems": [
+      {
+        "kind": "Personel",
+        "limitPercent": 30
+      },
+      {
+        "kind": "MakineTechizat",
+        "limitPercent": null
+      },
+      {
+        "kind": "Danismanlik",
+        "limitPercent": null
+      },
+      {
+        "kind": "SarfMalzeme",
+        "limitPercent": 5
+      }
+    ],
+    "documents": [
+      {
+        "name": "EK E1 Başvuru Sahibi Yetkilendirme Beyanı + yetkili organ / yönetim kurulu kararı (Öncelik 2'de iktisadi işletme kurulacağına…",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E2 Ortak Kurumlar için Yetkilendirme Beyanı + ortağın yetkili organ kararı",
+        "obligation": "Kosullu",
+        "uploader": "Ortak",
+        "eSignature": false
+      },
+      {
+        "name": "Kuruluş ve faaliyete ilişkin belgeler: kooperatif için kayıtlı/faal belgesi ve ana sözleşme; dernek için Sivil Toplumla…",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Sosyal işletmeler için güncel Oda Faaliyet Belgesi (son 1 ay) ve Ticaret Sicil Gazeteleri; şahıs işletmesi için nüfus…",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Öncelik 1'e başvuran dernek/vakıfların iktisadi işletmesine ait oda kayıt belgesi ve ticaret sicil gazetesi",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Temsil ve ilzama yetkili kişilerin noter onaylı imza sirküleri (başvuruda fotokopi kabul; ortaklar için de)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Mevzuat gereği gerekli izin, ruhsat, yetki, lisans belgeleri (İş Yeri Açma ve Çalışma Ruhsatı, Gıda İşletmesi Kayıt Belgesi vb.)",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Son üç yıla ait YMM/SMMM onaylı bilanço ve gelir tablosu (işletmelerde ayrıca ayrıntılı mizan; dernek ve iktisadi işletmesi…",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Başvuru tarihi itibarıyla son 3 aya ait SGK çalışan sayısı belgesi/barkodlu çıktı",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Toplam maliyeti 200.000 TL ve üzeri her bütçe kalemi için başvuru sahibince imzalanmış teknik şartname",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Toplam maliyeti 200.000 TL ve üzeri makine-ekipman ve hizmet alımları için 2 proforma fatura veya teklif mektubu",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Yapım işi kalemleri için güncel birim fiyat ve pozlara göre keşif özeti ve maliyet tahmini; arsa/bina mülkiyet-tahsis…",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E3 Başvuru Sahibi / Ortak / İştirakçi Beyannameleri (her kurum için ayrı, imzalı)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E4 Sosyal Girişim İş Modeli Kanvası",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "EK E5 Kâr Dağıtım Taahhütnamesi (sosyal işletmeler; şirketlerde ekinde yönetim kurulu kararı/ticaret sicil)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "EK E6 Sosyal Fayda Beyanı (sosyal işletmeler)",
+        "obligation": "Kosullu",
+        "uploader": "Firma",
+        "eSignature": false
+      },
+      {
+        "name": "Yönetim yapısını gösteren belgeler (ek puan kanıtı: yönetim kurulu/ortak/üye cinsiyet dağılımı)",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Satış kapasitesine ilişkin belgeler (satış anlaşması, ön sipariş) - opsiyonel",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "Proje konusuyla ilgili sertifika, patent, marka, coğrafi işaret, ödül belgeleri - opsiyonel",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "KAYS Taahhütnamesi (e-imza esastır; e-imza yoksa 5 iş günü içinde ıslak imzalı elden/posta)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": true
+      },
+      {
+        "name": "(Sözleşme aşaması) SGK prim ve vergi borcu olmadığına/yapılandırıldığına dair belge (en fazla 15 gün önce alınmış)",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Destek tutarının %3'ü ve üzeri kesinleşmiş haciz bulunmadığına dair beyan",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) İzin, ruhsat vb.; ÇED durumuna ilişkin belge; mülkiyet durumu belgesi (yapım işinde 5 yıllık noter…",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Çifte Finansman Olmadığına Dair Taahhütname",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Güncel SGK'ya kayıtlı çalışan sayısı belgesi",
+        "obligation": "Zorunlu",
+        "uploader": "Kurum",
+        "eSignature": false
+      },
+      {
+        "name": "(Sözleşme aşaması) Öncelik 2 için iktisadi işletme tescil/kuruluş evrakı",
+        "obligation": "Kosullu",
+        "uploader": "Kurum",
+        "eSignature": false
+      }
+    ]
   },
   {
     "id": "b87559bc-af4b-4102-88b7-b1f25dc24650",
