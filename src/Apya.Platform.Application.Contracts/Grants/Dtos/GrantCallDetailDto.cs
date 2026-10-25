@@ -27,6 +27,8 @@ public class GrantCallDetailDto
 
     public decimal? MinAmount { get; set; }
     public decimal? MaxAmount { get; set; }
+    /// <summary>Tutarların para birimi (TRY/EUR/USD/GBP).</summary>
+    public string Currency { get; set; } = "TRY";
     public int? SupportRatePercent { get; set; }
 
     /// <summary>Türetilmiş: 100 − destek oranı.</summary>

@@ -106,6 +106,7 @@ public class GrantSourceAppService : ApplicationService, IGrantSourceAppService
                     Period = d.Period,
                     Deadline = d.Deadline,
                     MaxAmount = grants.TryGetValue(d.GrantId, out var g3) ? g3.MaxAmount : null,
+                    Currency = grants.TryGetValue(d.GrantId, out var g4) ? g4.Currency : GrantCurrencies.Try,
                     Origin = d.Origin,
                     FieldConfidence = AverageConfidence(fieldsByCall.GetValueOrDefault(d.Id))
                 })

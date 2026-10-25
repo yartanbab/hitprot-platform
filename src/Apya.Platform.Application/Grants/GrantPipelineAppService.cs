@@ -389,7 +389,7 @@ public class GrantPipelineAppService : PlatformAppService, IGrantPipelineAppServ
                     var budget = GrantBudgetCalculator.Calculate(
                         items.Select(i => new GrantBudgetCalculator.LineInput(
                             i.Kind, byKind.TryGetValue(i.Kind, out var l) ? l.Amount : 0m, i.LimitPercent)),
-                        grant.SupportRatePercent, grant.MaxAmount);
+                        grant.SupportRatePercent, grant.TryMaxAmount);
                     card.RequestedSupport = budget.TotalSupport;
                 }
 

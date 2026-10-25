@@ -102,7 +102,8 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
         var dto = new GrantPublicSearchResultDto
         {
             TotalOpenCount = rows.Count,
-            TotalBudget = rows.Sum(r => r.Dto.MaxAmount ?? 0m),
+            // Döviz tavanlar TL toplamına katılmaz (kur çevrimi yok).
+            TotalBudget = rows.Where(r => GrantCurrencies.IsTry(r.Dto.Currency)).Sum(r => r.Dto.MaxAmount ?? 0m),
             ClosingSoonCount = rows.Count(r => r.Dto.DaysRemaining is >= 0 and <= ClosingSoonDays),
             LastUpdatedAt = calls.Count == 0 ? null : calls.Max(c => c.LastModificationTime ?? c.CreationTime),
             // Sayaçlar SÜZGEÇTEN ÖNCE hesaplanır: kullanıcı bir kurumu seçtiğinde
@@ -191,8 +192,10 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
         }
 
         if (input.Issuers.Count > 0 && !input.Issuers.Contains(grant.Issuer)) { return false; }
-        if (input.MinAmount.HasValue && (dto.MaxAmount ?? 0m) < input.MinAmount.Value) { return false; }
-        if (input.MaxAmount.HasValue && (dto.MaxAmount ?? 0m) > input.MaxAmount.Value) { return false; }
+        // Süzgeç TL'dir; döviz tavan kıyaslanmaz, "tavan bilinmiyor" (0) gibi davranır.
+        var tryMax = GrantCurrencies.IsTry(dto.Currency) ? dto.MaxAmount ?? 0m : 0m;
+        if (input.MinAmount.HasValue && tryMax < input.MinAmount.Value) { return false; }
+        if (input.MaxAmount.HasValue && tryMax > input.MaxAmount.Value) { return false; }
         if (input.Difficulties.Count > 0 && !input.Difficulties.Contains(dto.Difficulty)) { return false; }
 
         if (input.DeadlineWithinDays.HasValue
@@ -242,6 +245,7 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
             Deadline = call.Deadline,
             DaysRemaining = days,
             MaxAmount = grant.MaxAmount,
+            Currency = grant.Currency,
             SupportRatePercent = grant.SupportRatePercent,
             ProjectDurationMonths = grant.ProjectDurationMonths,
             RepaymentType = grant.RepaymentType,
@@ -527,10 +531,13 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
         return (result, (heat, matchScore), heat.Signals);
     }
 
-    /// <summary>Tahmini destek = üst limit × destek oranı. Oran yoksa hesaplanmaz.</summary>
+    /// <summary>
+    /// Tahmini destek = üst limit × destek oranı. Oran yoksa hesaplanmaz. Potansiyel müşteri kaydına
+    /// TL olarak yazılıp toplandığı için döviz tavanlı programda hesaplanmaz.
+    /// </summary>
     private static decimal? EstimateSupport(Grant grant)
-        => grant.MaxAmount.HasValue && grant.SupportRatePercent.HasValue
-            ? Math.Round(grant.MaxAmount.Value * grant.SupportRatePercent.Value / 100m, 0)
+        => grant.TryMaxAmount.HasValue && grant.SupportRatePercent.HasValue
+            ? Math.Round(grant.TryMaxAmount.Value * grant.SupportRatePercent.Value / 100m, 0)
             : null;
 
     private async Task<int> CountOtherEligibleAsync(Guid excludeCallId, FirmSignals signals, DateTime today)
@@ -601,6 +608,7 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
             Issuer = grant.Issuer,
             Period = call.Period,
             MaxAmount = grant.MaxAmount,
+            Currency = grant.Currency,
             SupportRatePercent = grant.SupportRatePercent,
             Deadline = call.Deadline,
             DaysRemaining = days,

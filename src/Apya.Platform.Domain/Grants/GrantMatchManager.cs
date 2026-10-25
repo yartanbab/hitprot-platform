@@ -82,11 +82,12 @@ public class GrantMatchManager : DomainService
 
             // --- Proje geçmişi (B2) ---
             Add(GrantMatchDimension.ProjectHistory,
-                grantRequires: grant.MaxAmount > 0,
-                firmHasData: firm.TypicalProjectBudget is > 0 && grant.MaxAmount > 0,
-                value: () => firm.TypicalProjectBudget!.Value <= grant.MaxAmount!.Value
+                // Döviz tavanı firmanın TL bütçesiyle kıyaslanmaz (kur çevrimi yok): boyut atlanır.
+                grantRequires: grant.TryMaxAmount > 0,
+                firmHasData: firm.TypicalProjectBudget is > 0 && grant.TryMaxAmount > 0,
+                value: () => firm.TypicalProjectBudget!.Value <= grant.TryMaxAmount!.Value
                     ? 1.0
-                    : Math.Min(1.0, (double)(grant.MaxAmount!.Value / firm.TypicalProjectBudget.Value)));
+                    : Math.Min(1.0, (double)(grant.TryMaxAmount!.Value / firm.TypicalProjectBudget.Value)));
 
             // Kategori uyumu programın bir ŞARTI değil; verisi yoksa daima atlanır.
             Add(GrantMatchDimension.ProjectHistory,

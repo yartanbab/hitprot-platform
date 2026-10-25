@@ -18,7 +18,10 @@ $(function () {
     var loaded = false;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
-    function money(v) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
+    // Programın tutar para birimi (GrantCurrencies); bilinmeyen kod ₺ sayılır.
+    var CUR = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
+    function sym(cur) { return CUR[cur] || '₺'; }
+    function money(v, cur) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ' + sym(cur) : '—'; }
 
     /// Tek satırlık gerekçe: eleyen ya da ölçülemeyen şarttan kurulur.
     function reasonOf(r) {
@@ -60,7 +63,7 @@ $(function () {
                 r.score + '</span>' +
             '<span class="apya-mini-bar"><span style="width:' + r.score + '%"></span></span>' +
             '<span class="apya-cat-num text-end" data-label="' + esc(l('Grants:Catalog:Col:Amount')) +
-                '">' + esc(money(r.maxAmount)) + '</span>' +
+                '">' + esc(money(r.maxAmount, r.currency)) + '</span>' +
             '<span class="apya-cat-num" data-label="' + esc(l('Grants:Catalog:Col:Days')) + '">' +
                 days + '</span>' +
             '<span class="apya-cat-actions d-flex align-items-center gap-1">' +

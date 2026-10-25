@@ -56,7 +56,8 @@ public class GrantDifficultyCalculator : DomainService
             reasons.Add(GrantDifficultyReason.DeadlinePressure);
         }
 
-        return new GrantDifficulty(1 + reasons.Count, reasons);
+        // Beş etken birden tutarsa 1 + 5 = 6 olurdu; ölçek 1-5, etkenlerin hepsi Reasons'ta kalır.
+        return new GrantDifficulty(System.Math.Min(5, 1 + reasons.Count), reasons);
     }
 }
 

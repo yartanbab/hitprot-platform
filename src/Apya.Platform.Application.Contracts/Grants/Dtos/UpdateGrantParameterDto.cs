@@ -78,6 +78,10 @@ public class UpdateGrantParameterDto
     [Range(0, 999999999999.99, ErrorMessage = "Destek tutarı negatif olamaz.")]
     public decimal? MaxAmount { get; set; }
 
+    /// <summary>Tutarların para birimi; boş gelirse TRY. Desteklenmeyen kod reddedilir.</summary>
+    [RegularExpression("^(TRY|EUR|USD|GBP)$", ErrorMessage = "Para birimi TRY, EUR, USD ya da GBP olmalı.")]
+    public string? Currency { get; set; }
+
     [Range(0, 100, ErrorMessage = "Destek oranı 0 ile 100 arasında olmalıdır.")]
     public int? SupportRatePercent { get; set; }
 

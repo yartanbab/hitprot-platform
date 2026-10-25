@@ -153,6 +153,18 @@ public class GrantIdeaMatcher_Tests
     }
 
     [Fact]
+    public void Doviz_tavanli_programda_butce_kiyaslanmaz()
+    {
+        var grant = YouthProgram();
+        grant.MaxAmount = 2_000_000m;
+        grant.MinAmount = 1_000_000m;
+        grant.Currency = GrantCurrencies.Usd;
+
+        GrantIdeaMatcher.BudgetFits(1_500_000m, grant).ShouldBeNull();
+        GrantIdeaMatcher.BudgetFits(900_000m, grant).ShouldBeNull();
+    }
+
+    [Fact]
     public void Havuz_fikri_cagriya_baglaninca_incelemede_talep_olur()
     {
         var consultant = Guid.NewGuid();

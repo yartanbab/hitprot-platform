@@ -35,9 +35,12 @@ $(function () {
     var profile = null;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
-    function money(v) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
+    // Programın tutar para birimi (GrantCurrencies); bilinmeyen kod ₺ sayılır.
+    var CUR = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
+    function sym(cur) { return CUR[cur] || '₺'; }
+    function money(v, cur) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ' + sym(cur) : '—'; }
     // Tavan belirtilmemiş program 0 ile saklanır (MaxAmount kolonu NOT NULL) — "0 ₺" yerine — göster.
-    function ceiling(v) { return v ? money(v) : '—'; }
+    function ceiling(v, cur) { return v ? money(v, cur) : '—'; }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
 
     // ---------- Etiket (chip) girişi ----------
@@ -316,7 +319,7 @@ $(function () {
                   '<i class="fa' + (r.isBookmarked ? '' : '-regular') + ' fa-bookmark"></i></button>'
                 : '') +
             '<div class="apya-feed-body">' +
-            '<div class="apya-feed-amount-row"><span class="apya-feed-amount-value">' + esc(ceiling(r.maxAmount)) + '</span>' +
+            '<div class="apya-feed-amount-row"><span class="apya-feed-amount-value">' + esc(ceiling(r.maxAmount, r.currency)) + '</span>' +
             (r.supportRatePercent != null ? '<span class="apya-feed-rate">' + esc(l('Grants:Feed:Card:Rate', r.supportRatePercent)) + '</span>' : '') + '</div>' +
             '<p class="apya-feed-why">' + esc(whySentence(r)) + '</p>' +
             // H-07 · Danışmanın öneriyle gönderdiği not firmaya ulaşır.

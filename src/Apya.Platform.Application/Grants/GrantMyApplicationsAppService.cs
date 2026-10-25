@@ -191,7 +191,7 @@ public class GrantMyApplicationsAppService : ApplicationService, IGrantMyApplica
                 row.Amount = GrantBudgetCalculator.Calculate(
                     items.Select(i => new GrantBudgetCalculator.LineInput(
                         i.Kind, byKind.TryGetValue(i.Kind, out var l) ? l.Amount : 0m, i.LimitPercent)),
-                    grant.SupportRatePercent, grant.MaxAmount).TotalSupport;
+                    grant.SupportRatePercent, grant.TryMaxAmount).TotalSupport;
             }
 
             // --- Sıradaki iş ---

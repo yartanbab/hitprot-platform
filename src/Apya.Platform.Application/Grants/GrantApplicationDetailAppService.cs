@@ -381,7 +381,7 @@ public class GrantApplicationDetailAppService : ApplicationService, IGrantApplic
                 baseAmount = GrantBudgetCalculator.Calculate(
                     costItems.Select(c => new GrantBudgetCalculator.LineInput(
                         c.Kind, byKind.TryGetValue(c.Kind, out var l) ? l.Amount : 0m, c.LimitPercent)),
-                    grant.SupportRatePercent, grant.MaxAmount).TotalSupport;
+                    grant.SupportRatePercent, grant.TryMaxAmount).TotalSupport;
             }
             if (application.SuccessFeePercent.HasValue && baseAmount.HasValue)
             {

@@ -21,6 +21,9 @@ public class GrantAnnouncementCatalogSeed_Tests : PlatformEntityFrameworkCoreTes
     /// <summary>TÜBİTAK 1507 KOBİ Ar-Ge Başlangıç (2026/2) — stgm-tubitak-hibe-duyurulari.json.</summary>
     private static readonly Guid Tubitak1507Id = Guid.Parse("eb8cfcb6-0cad-4f04-8679-cfb171f97471");
 
+    /// <summary>Alanı Genişlet Gençlik Örgütleri Destek Programı — AB fonlu, tavanı avro.</summary>
+    private static readonly Guid AlaniGenisletId = Guid.Parse("766724c8-4fed-4410-8a97-80583376d2cf");
+
     private readonly IDataSeeder _dataSeeder;
     private readonly IRepository<Grant, Guid> _grantRepository;
     private readonly IRepository<GrantEligibleCostItem, Guid> _costItemRepository;
@@ -56,6 +59,42 @@ public class GrantAnnouncementCatalogSeed_Tests : PlatformEntityFrameworkCoreTes
         documents.ShouldNotBeEmpty();
         documents.Select(d => d.Order).ShouldBeUnique();
         documents.ShouldContain(d => d.Obligation == GrantDocumentObligation.Kosullu);
+    }
+
+    [Fact]
+    public async Task Doviz_tavanli_program_kendi_para_birimiyle_kurulur()
+    {
+        var tl = await _grantRepository.GetAsync(Tubitak1507Id);
+        tl.Currency.ShouldBe(GrantCurrencies.Try);
+
+        var eur = await _grantRepository.GetAsync(AlaniGenisletId);
+        eur.Currency.ShouldBe(GrantCurrencies.Eur);
+        eur.MaxAmount!.Value.ShouldBeGreaterThan(0m);
+        eur.TryMaxAmount.ShouldBeNull("döviz tavanı TL karşılaştırmasına girmez");
+    }
+
+    [Fact]
+    public async Task Bos_tavana_doviz_tutari_birimiyle_dolar_dolu_TL_tavana_dokunulmaz()
+    {
+        var eur = await _grantRepository.GetAsync(AlaniGenisletId);
+        var seededMax = eur.MaxAmount;
+        eur.MaxAmount = 0m;
+        eur.Currency = GrantCurrencies.Try;
+        await _grantRepository.UpdateAsync(eur, autoSave: true);
+
+        var tl = await _grantRepository.GetAsync(Tubitak1507Id);
+        tl.MaxAmount = 1_234_000m;
+        await _grantRepository.UpdateAsync(tl, autoSave: true);
+
+        await _dataSeeder.SeedAsync();
+
+        var eurAfter = await _grantRepository.GetAsync(AlaniGenisletId);
+        eurAfter.MaxAmount.ShouldBe(seededMax);
+        eurAfter.Currency.ShouldBe(GrantCurrencies.Eur, "tutar ile birimi birlikte gelir");
+
+        var tlAfter = await _grantRepository.GetAsync(Tubitak1507Id);
+        tlAfter.MaxAmount.ShouldBe(1_234_000m);
+        tlAfter.Currency.ShouldBe(GrantCurrencies.Try);
     }
 
     [Fact]

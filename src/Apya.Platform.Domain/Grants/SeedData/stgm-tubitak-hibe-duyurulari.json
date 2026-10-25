@@ -7,7 +7,7 @@
     "status": "Acik",
     "openDate": "2026-10-09",
     "deadline": "2026-11-09",
-    "maxAmount": 0,
+    "maxAmount": 50000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": null,
@@ -115,7 +115,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "e5b71c13-ee84-4c84-8812-460ed537fb29",
@@ -310,7 +311,7 @@
     "status": "Acik",
     "openDate": "2026-09-02",
     "deadline": "2028-05-31",
-    "maxAmount": 0,
+    "maxAmount": 20000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": 50,
@@ -392,7 +393,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "81b44b1d-f341-4405-8846-a6ef06191b4d",
@@ -402,8 +404,8 @@
     "status": "Acik",
     "openDate": null,
     "deadline": "2026-10-15",
-    "maxAmount": 0,
-    "minAmount": null,
+    "maxAmount": 500000,
+    "minAmount": 100000,
     "budget": null,
     "supportRatePercent": 75,
     "projectDurationMonths": 36,
@@ -453,7 +455,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "fc3259eb-0b42-4cc6-8609-d4265997bb9b",
@@ -778,7 +781,7 @@
     "status": "Acik",
     "openDate": null,
     "deadline": null,
-    "maxAmount": 0,
+    "maxAmount": 20000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": null,
@@ -809,7 +812,8 @@
     ],
     "eligibleApplicants": [
       "Sivil ve demokratik özgürlükleri genişletmeye çalışan resmî veya gayriresmî sivil toplum kuruluşları, gruplar ve toplumsal hareketler"
-    ]
+    ],
+    "currency": "USD"
   },
   {
     "id": "3c0598f4-f4c9-4957-83bf-e18844fe6190",
@@ -819,7 +823,7 @@
     "status": "Acik",
     "openDate": null,
     "deadline": "2026-10-15",
-    "maxAmount": 0,
+    "maxAmount": 4000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": null,
@@ -872,7 +876,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "USD"
   },
   {
     "id": "25cddf28-e126-4616-8702-cbfb39ca986e",
@@ -882,7 +887,7 @@
     "status": "Acik",
     "openDate": null,
     "deadline": "2026-10-31",
-    "maxAmount": 0,
+    "maxAmount": 25000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": 25,
@@ -931,7 +936,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "d5f9c648-601d-48c8-89cd-47eaffb7b8b0",
@@ -941,7 +947,7 @@
     "status": "Acik",
     "openDate": null,
     "deadline": null,
-    "maxAmount": 0,
+    "maxAmount": 100000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": null,
@@ -982,7 +988,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "USD"
   },
   {
     "id": "c46ec97e-d232-458c-85be-f65138e0db56",
@@ -1485,7 +1492,7 @@
     "status": "Acik",
     "openDate": "2026-10-01",
     "deadline": "2026-12-01",
-    "maxAmount": 0,
+    "maxAmount": 60000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": 70,
@@ -1553,7 +1560,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "c7d8b6ec-0fa8-4632-800e-240b2f6648d6",
@@ -1563,7 +1571,7 @@
     "status": "Acik",
     "openDate": "2026-09-14",
     "deadline": "2026-11-23",
-    "maxAmount": 0,
+    "maxAmount": 200000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": 75,
@@ -1660,7 +1668,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "34359703-6065-46ae-87c7-f911e87ef752",
@@ -1670,7 +1679,7 @@
     "status": "Acik",
     "openDate": "2026-09-15",
     "deadline": "2026-12-08",
-    "maxAmount": 0,
+    "maxAmount": 200000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": 75,
@@ -1758,7 +1767,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "8cfbe5ec-ad48-48f4-89c6-faa21f711c0a",
@@ -1913,7 +1923,7 @@
     "status": "Acik",
     "openDate": "2026-09-08",
     "deadline": "2026-11-16",
-    "maxAmount": 0,
+    "maxAmount": 190000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": 75,
@@ -2002,7 +2012,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "816b6af9-4803-4cf2-8291-3ec700252a06",
@@ -2012,7 +2023,7 @@
     "status": "Acik",
     "openDate": "2026-09-10",
     "deadline": "2026-11-20",
-    "maxAmount": 0,
+    "maxAmount": 230000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": 75,
@@ -2103,7 +2114,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "fc3e1045-ec8c-4285-80aa-e4c9f665596c",
@@ -2749,7 +2761,7 @@
     "status": "Acik",
     "openDate": "2026-06-08",
     "deadline": "2026-10-15",
-    "maxAmount": 0,
+    "maxAmount": 300000,
     "minAmount": null,
     "budget": null,
     "supportRatePercent": 75,
@@ -2843,7 +2855,8 @@
         "uploader": "Firma",
         "eSignature": false
       }
-    ]
+    ],
+    "currency": "EUR"
   },
   {
     "id": "372301eb-10a5-43e0-87cd-269ef9b677c1",

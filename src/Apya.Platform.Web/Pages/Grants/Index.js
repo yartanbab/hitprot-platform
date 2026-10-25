@@ -35,9 +35,10 @@ $(function () {
     // Tavan belirtilmemiş program 0 ile saklanır (MaxAmount kolonu NOT NULL); asgari varsa aralık.
     function amount(c) {
         var max = c.maxAmount || 0, min = c.minAmount || 0;
-        if (min && max) { return num(min) + ' – ' + num(max) + ' ₺'; }
-        if (max) { return num(max) + ' ₺'; }
-        if (min) { return num(min) + '+ ₺'; }
+        var s = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' }[c.currency] || '₺';
+        if (min && max) { return num(min) + ' – ' + num(max) + ' ' + s; }
+        if (max) { return num(max) + ' ' + s; }
+        if (min) { return num(min) + '+ ' + s; }
         return l('Grants:Calls:NoCeiling');
     }
 

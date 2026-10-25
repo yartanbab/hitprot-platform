@@ -18,7 +18,10 @@ $(function () {
     var me = abp.currentUser && abp.currentUser.id;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
-    function money(v) { return Math.round(v).toLocaleString('tr-TR') + ' ₺'; }
+    // Programın tutar para birimi (GrantCurrencies); bilinmeyen kod ₺ sayılır.
+    var CUR = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
+    function sym(cur) { return CUR[cur] || '₺'; }
+    function money(v, cur) { return Math.round(v).toLocaleString('tr-TR') + ' ' + sym(cur); }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : ''; }
     function fmtDateTime(v) {
         return v ? new Date(v).toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '';
@@ -189,7 +192,7 @@ $(function () {
         $card.removeClass('d-none').attr('href', '/Grants/Detail?id=' + o.grantCallId);
         // Kapatma firmanın tamamı için geçerli: yalnız başvuru yazma izni olana görünür (sunucu da ister).
         $dismiss.toggleClass('d-none', !abp.auth.isGranted('Platform.Grants.ManageApplications')).data('call', o.grantCallId);
-        var amount = o.maxAmount != null ? l('Grants:Today:Opportunity:Amount', money(o.maxAmount)) : '';
+        var amount = o.maxAmount != null ? l('Grants:Today:Opportunity:Amount', money(o.maxAmount, o.currency)) : '';
         $('#OpportunityTitle').text(l('Grants:Today:Opportunity:Title', o.issuer + ' · ' + o.grantName));
         $('#OpportunityDetail').text([
             l('Grants:Today:Opportunity:Recommended'),

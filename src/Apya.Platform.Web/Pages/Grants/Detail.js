@@ -23,7 +23,10 @@ $(function () {
     var detail = null;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
-    function money(v) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
+    // Programın tutar para birimi (GrantCurrencies); bilinmeyen kod ₺ sayılır.
+    var CUR = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
+    function sym(cur) { return CUR[cur] || '₺'; }
+    function money(v, cur) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ' + sym(cur) : '—'; }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
     function fmtDateTime(v) {
         return v ? new Date(v).toLocaleString('tr-TR', {
@@ -54,8 +57,8 @@ $(function () {
 
         var metrics = [
             d.minAmount
-                ? [l('Grants:Parameters:AmountRange'), amountRange(d.minAmount, d.maxAmount)]
-                : [l('Grants:Parameters:MaxAmount'), money(d.maxAmount)],
+                ? [l('Grants:Parameters:AmountRange'), amountRange(d.minAmount, d.maxAmount, d.currency)]
+                : [l('Grants:Parameters:MaxAmount'), money(d.maxAmount, d.currency)],
             [l('Grants:Parameters:SupportRate'), d.supportRatePercent != null ? '%' + d.supportRatePercent : '—'],
             [l('Grants:Parameters:Duration'), d.projectDurationMonths != null ? d.projectDurationMonths : '—'],
             [l('Grants:Field:Deadline'), fmtDate(d.deadline)]
@@ -94,9 +97,9 @@ $(function () {
     });
 
     // Azami 0 = üst limit yok; açık uçlu aralık "5.000.000+ ₺" yazılır.
-    function amountRange(min, max) {
+    function amountRange(min, max, cur) {
         var from = Math.round(min).toLocaleString('tr-TR');
-        return max ? from + ' – ' + money(max) : from + '+ ₺';
+        return max ? from + ' – ' + money(max, cur) : from + '+ ' + sym(cur);
     }
 
     // ---------- Program hakkında ----------

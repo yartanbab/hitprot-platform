@@ -743,6 +743,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Priorities).HasMaxLength(4000);
                 b.Property(x => x.EligibleApplicants).HasMaxLength(2000);
                 b.Property(x => x.MinAmount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.Currency).IsRequired().HasMaxLength(GrantCurrencies.MaxLength).HasDefaultValue(GrantCurrencies.Try);
+                b.Ignore(x => x.HasTryAmounts);
+                b.Ignore(x => x.TryMaxAmount);
+                b.Ignore(x => x.TryMinAmount);
                 b.Property(x => x.PosterFileName).HasMaxLength(256);
                 b.Property(x => x.MinRevenue).HasColumnType("decimal(18,2)");
                 b.Property(x => x.MaxRevenue).HasColumnType("decimal(18,2)");
