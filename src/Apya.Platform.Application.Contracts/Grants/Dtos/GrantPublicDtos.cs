@@ -74,6 +74,8 @@ public class GrantPublicCallDto
     public string Issuer { get; set; } = string.Empty;
     public string? Period { get; set; }
     public decimal? MaxAmount { get; set; }
+    /// <summary>Tutarların para birimi (TRY/EUR/USD/GBP).</summary>
+    public string Currency { get; set; } = "TRY";
     public int? SupportRatePercent { get; set; }
     public DateTime? Deadline { get; set; }
     public int? DaysRemaining { get; set; }
@@ -99,6 +101,8 @@ public class GrantPublicDetailDto
 
     // Dörtlü metrik şeridi
     public decimal? MaxAmount { get; set; }
+    /// <summary>Tutarların para birimi (TRY/EUR/USD/GBP).</summary>
+    public string Currency { get; set; } = "TRY";
     public int? SupportRatePercent { get; set; }
     public int? ProjectDurationMonths { get; set; }
     public GrantRepaymentType RepaymentType { get; set; }

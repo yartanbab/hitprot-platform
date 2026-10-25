@@ -10,6 +10,8 @@ public class GrantDto : EntityDto<Guid>
     public string Issuer { get; set; } = string.Empty;
     public string? Description { get; set; }
     public decimal? MaxAmount { get; set; }
+    /// <summary>Tutarların para birimi (TRY/EUR/USD/GBP).</summary>
+    public string Currency { get; set; } = "TRY";
     public double MinMatchScore { get; set; }
 
     // Faz A: eşleştirme kriterleri + çağrı sayısı özeti.

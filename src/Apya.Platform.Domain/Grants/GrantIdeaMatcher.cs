@@ -92,15 +92,15 @@ public static class GrantIdeaMatcher
             BudgetFits(idea.EstimatedBudget, grant));
     }
 
-    /// <summary>null = kıyaslanamaz (fikirde bütçe ya da programda tavan yok).</summary>
+    /// <summary>null = kıyaslanamaz (fikirde bütçe yok, programda tavan yok ya da tavan döviz).</summary>
     public static bool? BudgetFits(decimal? budget, Grant grant)
     {
-        if (budget is not > 0 || grant.MaxAmount is not > 0)
+        if (budget is not > 0 || grant.TryMaxAmount is not > 0)
         {
             return null;
         }
 
-        return budget <= grant.MaxAmount && (grant.MinAmount is not > 0 || budget >= grant.MinAmount);
+        return budget <= grant.TryMaxAmount && (grant.TryMinAmount is not > 0 || budget >= grant.TryMinAmount);
     }
 
     /// <summary>Kök → programda ilk geçtiği hâl (gerekçe satırında okunur kelime görünsün).</summary>

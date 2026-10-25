@@ -60,6 +60,8 @@ public class GrantDispatchConsoleDto
     public DateTime? Deadline { get; set; }
     public int? DaysRemaining { get; set; }
     public decimal? MaxAmount { get; set; }
+    /// <summary>Tutarların para birimi (TRY/EUR/USD/GBP).</summary>
+    public string Currency { get; set; } = "TRY";
 
     /// <summary>Programın kendi uyum eşiği — süzgeçteki "programın eşiği %70" notu.</summary>
     public double GrantMinMatchScore { get; set; }

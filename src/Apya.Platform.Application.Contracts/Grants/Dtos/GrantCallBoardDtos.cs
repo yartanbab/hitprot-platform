@@ -62,6 +62,8 @@ public class GrantCallCardDto
 
     /// <summary>0 = üst limit yok (kolon NOT NULL).</summary>
     public decimal? MaxAmount { get; set; }
+    /// <summary>Tutarların para birimi (TRY/EUR/USD/GBP).</summary>
+    public string Currency { get; set; } = "TRY";
 
     public int? SupportRatePercent { get; set; }
 

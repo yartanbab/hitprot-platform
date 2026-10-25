@@ -127,6 +127,8 @@ public class GrantTodayOpportunityDto
     public string Issuer { get; set; } = string.Empty;
 
     public decimal? MaxAmount { get; set; }
+    /// <summary>Tutarların para birimi (TRY/EUR/USD/GBP).</summary>
+    public string Currency { get; set; } = "TRY";
 
     public int? SupportRatePercent { get; set; }
 

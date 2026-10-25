@@ -43,6 +43,7 @@ public class GrantAnnouncementCatalogSeed_Tests
             string.Join("\n", s.EligibleApplicants ?? []).Length.ShouldBeLessThanOrEqualTo(2000, who);
             s.Sectors.Concat(s.Regions).Concat(s.Keywords).Where(t => t.Length > 64).ShouldBeEmpty(who);
             s.MaxAmount.ShouldBeGreaterThanOrEqualTo(0, who);
+            if (s.Currency != null) GrantCurrencies.IsSupported(s.Currency).ShouldBeTrue(who + ": " + s.Currency);
             if (s.MaxAmount > 0 && s.MinAmount != null) s.MinAmount.Value.ShouldBeLessThanOrEqualTo(s.MaxAmount, who);
             if (s.SupportRatePercent != null) s.SupportRatePercent.Value.ShouldBeInRange(0, 100, who);
 

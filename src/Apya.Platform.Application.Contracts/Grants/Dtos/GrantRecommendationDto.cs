@@ -24,6 +24,8 @@ public class GrantRecommendationDto
     public DateTime? Deadline { get; set; }
     public int? DaysRemaining { get; set; }
     public decimal? MaxAmount { get; set; }
+    /// <summary>Tutarların para birimi (TRY/EUR/USD/GBP).</summary>
+    public string Currency { get; set; } = "TRY";
     public int Score { get; set; }
     public bool AlreadyApplied { get; set; }
 

@@ -103,6 +103,17 @@ public class GrantMatchManager_Tests
     }
 
     [Fact]
+    public void Doviz_tavaninda_butce_boyutu_atlanir()
+    {
+        // TL olsaydı 50000/100000 → bütçe uyumu .5 → 75. EUR tavanı TL bütçeyle kıyaslanmaz: boyut atlanır.
+        var grant = Grant(0, 0, maxAmount: 50000m);
+        grant.Currency = GrantCurrencies.Eur;
+        var gt = Tags((GrantCriteriaKind.Sektor, "a"));
+        var firm = Firm(null, 100000m, null, (GrantCriteriaKind.Sektor, "a"));
+        _m.Score(firm, grant, gt).ShouldBe(100);
+    }
+
+    [Fact]
     public void Budget_Fit_Partial_When_Typical_Budget_Exceeds_MaxAmount()
     {
         var grant = Grant(0, 0, maxAmount: 50000m);

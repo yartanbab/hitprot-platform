@@ -655,7 +655,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             c.Kind,
             byKind.TryGetValue(c.Kind, out var l) ? l.Amount : 0m,
             c.LimitPercent));
-        var budget = GrantBudgetCalculator.Calculate(calcInput, grant.SupportRatePercent, grant.MaxAmount);
+        var budget = GrantBudgetCalculator.Calculate(calcInput, grant.SupportRatePercent, grant.TryMaxAmount);
 
         var dto = new GrantApplicationWizardDto
         {
@@ -669,7 +669,8 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             DaysRemaining = call.Deadline.HasValue
                 ? (int)(call.Deadline.Value.Date - Clock.Now.Date).TotalDays
                 : null,
-            MaxAmount = grant.MaxAmount,
+            // Tavan notu TL bütçeye göre okunur; döviz tavanda gösterilmez.
+            MaxAmount = grant.TryMaxAmount,
             SupportRatePercent = grant.SupportRatePercent,
             CurrentStep = application.CurrentStep,
             StepCount = GrantApplication.StepCount,

@@ -9,7 +9,10 @@ $(function () {
     var editingId = null;
 
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
-    function money(v) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ₺' : '—'; }
+    // Programın tutar para birimi (GrantCurrencies); bilinmeyen kod ₺ sayılır.
+    var CUR = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
+    function sym(cur) { return CUR[cur] || '₺'; }
+    function money(v, cur) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ' + sym(cur) : '—'; }
     function date(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
 
     // Gün farkı YEREL gün sınırından hesaplanır; ham milisaniye farkı saat
@@ -158,7 +161,7 @@ $(function () {
                 '<span class="apya-queue-num" data-label="' + esc(l('Grants:Sources:Col:Deadline')) + '">' +
                 esc(date(d.deadline)) + '</span>' +
                 '<span class="apya-queue-num text-end" data-label="' + esc(l('Grants:Sources:Col:Amount')) + '">' +
-                esc(money(d.maxAmount)) + '</span>' +
+                esc(money(d.maxAmount, d.currency)) + '</span>' +
                 '<span class="apya-queue-conf">' +
                 '<span class="apya-conf-bar"><span class="' + confidenceClass(d.fieldConfidence) +
                 '" style="width:' + d.fieldConfidence + '%"></span></span>' +

@@ -8,7 +8,8 @@
     Layout = "_PublicLayout";
     ViewBag.Title = L["Grants:Public:Search:Title"].Value;
 
-    string Money(decimal? v) => v.HasValue ? v.Value.ToString("N0") + " ₺" : "—";
+    string Money(decimal? v, string? currency = null) => v.HasValue ? v.Value.ToString("N0") + " " + Symbol(currency) : "—";
+    static string Symbol(string? currency) => currency switch { "EUR" => "€", "USD" => "$", "GBP" => "£", _ => "₺" };
 }
 
 <section class="apya-pub-hero">
@@ -174,7 +175,7 @@
                                             <span>@item.Period</span>
                                         </span>
                                         <span>@item.Issuer</span>
-                                        <span class="apya-pub-num">@Money(item.MaxAmount)</span>
+                                        <span class="apya-pub-num">@Money(item.MaxAmount, item.Currency)</span>
                                         <span class="apya-pub-num">
                                             @(item.SupportRatePercent.HasValue ? "%" + item.SupportRatePercent : "—")
                                         </span>

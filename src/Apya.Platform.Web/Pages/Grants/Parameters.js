@@ -585,6 +585,8 @@ $(function () {
             prefersFemaleEntrepreneur: $('#ParamPrefersFemale').is(':checked'),
             prefersYoungEntrepreneur: $('#ParamPrefersYoung').is(':checked'),
             criteriaTags: tags,
+            // Para birimi her kayıtta gönderilir: DTO'dan düşerse alan TRY'ye sıfırlanır.
+            currency: $('#ParamCurrency').val() || 'TRY',
             minAmount: num('#ParamMinAmount'),
             maxAmount: num('#ParamMaxAmount'),
             supportRatePercent: num('#ParamSupportRate'),
@@ -651,6 +653,7 @@ $(function () {
             addTag($('.apya-tag-input[data-kind="' + t.kind + '"]'), t.value);
         });
 
+        $('#ParamCurrency').val(dto.currency || 'TRY');
         setNum('#ParamMinAmount', dto.minAmount);
         setNum('#ParamMaxAmount', dto.maxAmount);
         setNum('#ParamSupportRate', dto.supportRatePercent);

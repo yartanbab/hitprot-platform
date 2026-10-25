@@ -32,6 +32,27 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Asgari destek tutarı. null = alt limit yok (MaxAmount'un aksine kolon nullable).</summary>
     public decimal? MinAmount { get; set; }
 
+    private string _currency = GrantCurrencies.Try;
+
+    /// <summary>
+    /// <see cref="MinAmount"/> ve <see cref="MaxAmount"/>'un para birimi (bkz. <see cref="GrantCurrencies"/>).
+    /// Desteklenmeyen ya da boş kod TRY'ye düşer. TRY dışında tutarlar firmanın TL verisiyle karşılaştırılmaz.
+    /// </summary>
+    public string Currency
+    {
+        get => _currency;
+        set => _currency = GrantCurrencies.Normalize(value);
+    }
+
+    /// <summary>Tutarlar TL ise firmanın TL bütçesiyle karşılaştırılabilir.</summary>
+    public bool HasTryAmounts => GrantCurrencies.IsTry(Currency);
+
+    /// <summary>TL bütçeyle karşılaştırmada/kırpmada kullanılan tavan: tutarlar dövizse null ("tavan yok").</summary>
+    public decimal? TryMaxAmount => HasTryAmounts ? MaxAmount : null;
+
+    /// <summary>TL bütçeyle karşılaştırmada kullanılan alt limit: tutarlar dövizse null.</summary>
+    public decimal? TryMinAmount => HasTryAmounts ? MinAmount : null;
+
     public double MinMatchScore { get; set; }
 
     /// <summary>Resmî çağrı metninin adresi (1b başlığında ve kaynak karşılaştırmada gösterilir).</summary>

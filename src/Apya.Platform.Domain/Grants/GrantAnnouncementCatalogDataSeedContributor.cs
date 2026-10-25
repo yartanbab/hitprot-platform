@@ -27,8 +27,9 @@ namespace Apya.Platform.Grants;
 /// DOKUNULMAZ. Var olan çağrıda yalnız boş tarihler dolar.</para>
 ///
 /// <para>Çağrılar <see cref="GrantCallStatus.Acik"/> doğar; son başvurusu tohumlama anında geçmiş
-/// olanlar arşiv olarak <see cref="GrantCallStatus.Kapandi"/> yazılır. Tutarlar yalnız TL ise
-/// yazılır; döviz cinsinden tavanlar açıklamada kalır ve <c>MaxAmount</c> 0 ("tavan belirtilmemiş").</para>
+/// olanlar arşiv olarak <see cref="GrantCallStatus.Kapandi"/> yazılır. Tutarlar programın kendi para
+/// biriminde yazılır (<c>currency</c>: TRY/EUR/USD/GBP, boşsa TRY); tavanı belirtilmemiş program
+/// <c>MaxAmount</c> 0 taşır.</para>
 /// </summary>
 public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
@@ -98,6 +99,7 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
                 {
                     Description = seed.Description,
                     MinAmount = seed.MinAmount,
+                    Currency = seed.Currency ?? GrantCurrencies.Try,
                     SourceUrl = seed.SourceUrl,
                     EligibleCompanySizes = seed.EligibleCompanySizes,
                     MaxCompanyAgeYears = seed.MaxCompanyAgeYears,
@@ -202,8 +204,16 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         if (grant.Objective.IsNullOrWhiteSpace() && !seed.Objective.IsNullOrWhiteSpace()) { grant.Objective = seed.Objective; changed = true; }
         if (grant.Priorities.IsNullOrWhiteSpace() && JoinLines(seed.Priorities) is { } priorities) { grant.Priorities = priorities; changed = true; }
         if (grant.EligibleApplicants.IsNullOrWhiteSpace() && JoinLines(seed.EligibleApplicants) is { } applicants) { grant.EligibleApplicants = applicants; changed = true; }
-        if (grant.MinAmount == null && seed.MinAmount != null) { grant.MinAmount = seed.MinAmount; changed = true; }
-        if (grant.MaxAmount == 0 && seed.MaxAmount > 0) { grant.MaxAmount = seed.MaxAmount; changed = true; }
+        // Tutar boşsa para birimi de tohumdan gelir (tutar ile birimi birlikte anlamlıdır). Dolu tavanın
+        // birimine dokunulmaz; alt limit yalnız birimler aynıysa doldurulur.
+        var seedCurrency = GrantCurrencies.Normalize(seed.Currency);
+        if (grant.MaxAmount == 0 && seed.MaxAmount > 0 && (grant.MinAmount == null || grant.Currency == seedCurrency))
+        {
+            grant.MaxAmount = seed.MaxAmount;
+            grant.Currency = seedCurrency;
+            changed = true;
+        }
+        if (grant.MinAmount == null && seed.MinAmount != null && grant.Currency == seedCurrency) { grant.MinAmount = seed.MinAmount; changed = true; }
         if (grant.SupportRatePercent == null && seed.SupportRatePercent != null) { grant.SupportRatePercent = seed.SupportRatePercent; changed = true; }
         if (grant.ProjectDurationMonths == null && seed.ProjectDurationMonths != null) { grant.ProjectDurationMonths = seed.ProjectDurationMonths; changed = true; }
         if (grant.MaxCompanyAgeYears == null && seed.MaxCompanyAgeYears != null) { grant.MaxCompanyAgeYears = seed.MaxCompanyAgeYears; changed = true; }
@@ -317,6 +327,7 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         string[] Regions,
         string[] Keywords,
         string Description,
+        string? Currency = null,
         string? Objective = null,
         string[]? Priorities = null,
         string[]? EligibleApplicants = null,

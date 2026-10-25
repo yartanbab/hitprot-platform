@@ -196,6 +196,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
                 ? (int)(call.Deadline.Value.Date - today).TotalDays
                 : null,
             MaxAmount = grant.MaxAmount,
+            Currency = grant.Currency,
             GrantMinMatchScore = grant.MinMatchScore,
             TotalFirms = tenants.Count,
             Candidates = candidates.OrderByDescending(c => c.Score).ThenBy(c => c.TenantName).ToList(),

@@ -227,6 +227,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 DaysRemaining = days,
                 MinAmount = grant.MinAmount,
                 MaxAmount = grant.MaxAmount,
+                Currency = grant.Currency,
                 SupportRatePercent = grant.SupportRatePercent,
                 CoFinancingRatePercent = grant.SupportRatePercent.HasValue
                     ? 100 - grant.SupportRatePercent.Value
@@ -335,7 +336,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     .Select(c => new GrantBudgetCalculator.LineInput(
                         c.Kind, amounts.TryGetValue(c.Kind, out var amount) ? amount : 0m, c.LimitPercent)),
                 grant.SupportRatePercent,
-                grant.MaxAmount);
+                grant.TryMaxAmount);
 
             return new GrantBudgetEstimateDto
             {
@@ -519,6 +520,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     Deadline = call.Deadline,
                     DaysRemaining = days,
                     MaxAmount = grant.MaxAmount,
+                    Currency = grant.Currency,
                     SupportRatePercent = grant.SupportRatePercent,
                     Score = score,
                     AlreadyApplied = appliedIds.Contains(call.Id),

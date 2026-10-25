@@ -72,6 +72,8 @@ public class GrantDraftQueueItemDto
     public string Period { get; set; } = string.Empty;
     public DateTime? Deadline { get; set; }
     public decimal? MaxAmount { get; set; }
+    /// <summary>Tutarların para birimi (TRY/EUR/USD/GBP).</summary>
+    public string Currency { get; set; } = "TRY";
     public GrantCallOrigin Origin { get; set; }
 
     /// <summary>

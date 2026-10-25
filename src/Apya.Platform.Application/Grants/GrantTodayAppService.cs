@@ -306,6 +306,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
             GrantName = grant?.Name ?? "—",
             Issuer = grant?.Issuer ?? "—",
             MaxAmount = grant?.MaxAmount is > 0 ? grant.MaxAmount : null,
+            Currency = grant?.Currency ?? GrantCurrencies.Try,
             SupportRatePercent = grant?.SupportRatePercent,
             DaysRemaining = DaysTo(best.Deadline, today)
         };
@@ -520,7 +521,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
                 GrantId = grant.Id,
                 GrantCallId = call.Id,
                 Value = missing.Count,
-                Amount = grant.MaxAmount > 0 ? grant.MaxAmount : null,
+                Amount = grant.TryMaxAmount > 0 ? grant.TryMaxAmount : null,
                 Deadline = call.Deadline,
                 DaysRemaining = DaysTo(call.Deadline, today)
             });
@@ -649,7 +650,7 @@ public class GrantTodayAppService : ApplicationService, IGrantTodayAppService
     /// <summary>Onaylanan destek, yoksa programın üst limiti (0 = "limit yok" → bilinmiyor).</summary>
     private static decimal? AmountOf(GrantApplication application, Grant? grant)
         => application.ApprovedAmount is > 0 ? application.ApprovedAmount
-            : grant?.MaxAmount is > 0 ? grant.MaxAmount
+            : grant?.TryMaxAmount is > 0 ? grant.TryMaxAmount
             : null;
 
     private static int MissingDocuments(List<GrantApplicationDocument> docs, GrantPartyRole uploader)

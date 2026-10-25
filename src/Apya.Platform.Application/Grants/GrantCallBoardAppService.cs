@@ -132,6 +132,7 @@ public class GrantCallBoardAppService : PlatformAppService, IGrantCallBoardAppSe
         PosterFileName = grant.PosterFileName,
         MinAmount = grant.MinAmount,
         MaxAmount = grant.MaxAmount,
+        Currency = grant.Currency,
         SupportRatePercent = grant.SupportRatePercent,
         CreationTime = call?.CreationTime ?? grant.CreationTime
     };
