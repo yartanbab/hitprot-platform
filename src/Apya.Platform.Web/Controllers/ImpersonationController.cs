@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Apya.Platform.Tenants;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Identity;
 using Volo.Abp.Security.Claims;
@@ -27,13 +28,16 @@ public class ImpersonationController : AbpController
     private readonly IdentityUserManager _userManager;
     private readonly ITenantRepository _tenantRepository;
     private readonly ISecurityLogManager _securityLogManager;
+    private readonly ImpersonationTargetFinder _targetFinder;
 
     public ImpersonationController(
         SignInManager<Volo.Abp.Identity.IdentityUser> signInManager,
         IdentityUserManager userManager,
         ITenantRepository tenantRepository,
-        ISecurityLogManager securityLogManager)
+        ISecurityLogManager securityLogManager,
+        ImpersonationTargetFinder targetFinder)
     {
+        _targetFinder = targetFinder;
         _signInManager = signInManager;
         _userManager = userManager;
         _tenantRepository = tenantRepository;
@@ -60,7 +64,7 @@ public class ImpersonationController : AbpController
         // Hedef tenant'a geç
         using (CurrentTenant.Change(tenantId))
         {
-            var adminUser = await _userManager.FindByNameAsync("root") ?? await _userManager.FindByNameAsync("admin");
+            var adminUser = await _targetFinder.FindAsync();
             if (adminUser == null)
             {
                 // Düz Exception ham anahtarı 500 hata sayfasına basıyordu. BusinessException
@@ -95,7 +99,7 @@ public class ImpersonationController : AbpController
         return Redirect("~/");
     }
 
-    /// <summary>Hedef kiracıda "root" ya da "admin" adlı kullanıcı yok; bürünülecek hesap bulunamadı.</summary>
+    /// <summary>Hedef kiracıda "root"/"admin" adlı kullanıcı da, "admin" rolünde aktif kullanıcı da yok.</summary>
     public const string AdminUserNotFoundCode = "Platform:Error:AdminUserNotFound";
 
     [HttpPost("BackToImpersonator")]

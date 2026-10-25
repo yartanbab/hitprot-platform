@@ -2042,7 +2042,7 @@
         "Platform:Error:TaxNumberAlreadyExists": "Bu vergi numarası başka bir müşteriye ait. Lütfen farklı bir vergi numarası girin (ya da boş bırakın).",
         "Platform:Error:NoCurrentSubscription": "Bu müşterinin yürürlükte bir aboneliği yok; önce paket atayın.",
         "Platform:Error:SubscriptionHostContext": "Host hesabının paketi yoktur; bu ekran yalnız kiracılar içindir.",
-        "Platform:Error:AdminUserNotFound": "Bu kiracının hesabına girilemiyor: kiracıda \"root\" ya da \"admin\" adlı bir yönetici kullanıcı yok.",
+        "Platform:Error:AdminUserNotFound": "Bu kiracının hesabına girilemiyor: kiracıda \"admin\" adlı ya da \"admin\" rolünde aktif bir yönetici kullanıcı yok.",
         "Platform:Customer:NameRequired": "Cari adı boş bırakılamaz.",
         "Platform:Customer:FieldTooLong": "Girilen değer izin verilen karakter sınırını aşıyor.",
         "Platform:Customer:InUse": "Bu cariye bağlı fatura, cari hareket, gider, gelir ya da proje var; cari silinirse bu kayıtlar carisiz kalır. Silmek yerine cariyi pasife alın.",
