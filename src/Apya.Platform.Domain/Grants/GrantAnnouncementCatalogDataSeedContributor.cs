@@ -65,10 +65,34 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
             return; // katalog host'ta yaşar
         }
 
-        foreach (var seed in await ReadSeedsAsync())
+        // 🔴 Toplu yazım: test tabanı HER testte tüm tohumları kurar. ~2.500 satırı tek tek autoSave
+        // ile yazmak her testin açılışına ~20 sn ekliyordu; var olan kayıtlar baştan bir kez okunur,
+        // yeniler biriktirilip tek seferde eklenir.
+        var seeds = await ReadSeedsAsync();
+        var ids = seeds.Select(s => s.Id).Distinct().ToList();
+
+        var grants = (await _grantRepository.GetListAsync(g => ids.Contains(g.Id))).ToDictionary(g => g.Id);
+        var callKeys = (await _callRepository.GetListAsync(c => ids.Contains(c.GrantId)))
+            .ToDictionary(c => (c.GrantId, c.Period));
+        var tagKinds = (await _criteriaRepository.GetListAsync(t => ids.Contains(t.GrantId)))
+            .Select(t => (t.GrantId, t.Kind)).ToHashSet();
+        var withCostItems = (await _costItemRepository.GetListAsync(c => ids.Contains(c.GrantId)))
+            .Select(c => c.GrantId).ToHashSet();
+        var withDocuments = (await _documentRepository.GetListAsync(d => ids.Contains(d.GrantId)))
+            .Select(d => d.GrantId).ToHashSet();
+
+        var created = new HashSet<Guid>();
+        var newGrants = new List<Grant>();
+        var updatedGrants = new HashSet<Grant>();
+        var newTags = new List<GrantCriteriaTag>();
+        var newCostItems = new List<GrantEligibleCostItem>();
+        var newDocuments = new List<GrantDocumentRequirement>();
+        var newCalls = new List<GrantCall>();
+        var updatedCalls = new List<GrantCall>();
+
+        foreach (var seed in seeds)
         {
-            var grant = await _grantRepository.FindAsync(seed.Id);
-            if (grant == null)
+            if (!grants.TryGetValue(seed.Id, out var grant))
             {
                 grant = new Grant(seed.Id, seed.Name, seed.Issuer, seed.MaxAmount, DefaultMinMatchScore)
                 {
@@ -90,28 +114,55 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
                     HasAdvancePayment = seed.HasAdvancePayment,
                     RequiresGuaranteeLetter = seed.RequiresGuaranteeLetter
                 };
-                await _grantRepository.InsertAsync(grant, autoSave: true);
+                grants[grant.Id] = grant;
+                created.Add(grant.Id);
+                newGrants.Add(grant);
 
-                await InsertTagsAsync(grant.Id, GrantCriteriaKind.Sektor, seed.Sectors);
-                await InsertTagsAsync(grant.Id, GrantCriteriaKind.Bolge, seed.Regions);
-                await InsertTagsAsync(grant.Id, GrantCriteriaKind.AnahtarKelime, seed.Keywords);
-                await InsertCostItemsAsync(grant.Id, seed.CostItems);
-                await InsertDocumentsAsync(grant.Id, seed.Documents);
+                AddTags(newTags, grant.Id, GrantCriteriaKind.Sektor, seed.Sectors);
+                AddTags(newTags, grant.Id, GrantCriteriaKind.Bolge, seed.Regions);
+                AddTags(newTags, grant.Id, GrantCriteriaKind.AnahtarKelime, seed.Keywords);
+                AddCostItems(newCostItems, grant.Id, seed.CostItems);
+                AddDocuments(newDocuments, grant.Id, seed.Documents);
             }
-            else
+            else if (!created.Contains(grant.Id))
             {
-                await EnrichExistingAsync(grant, seed);
+                if (EnrichExisting(grant, seed))
+                {
+                    updatedGrants.Add(grant);
+                }
+
+                foreach (var (kind, values) in new[]
+                         {
+                             (GrantCriteriaKind.Sektor, seed.Sectors),
+                             (GrantCriteriaKind.Bolge, seed.Regions),
+                             (GrantCriteriaKind.AnahtarKelime, seed.Keywords)
+                         })
+                {
+                    if (values.Length > 0 && tagKinds.Add((grant.Id, kind)))
+                    {
+                        AddTags(newTags, grant.Id, kind, values);
+                    }
+                }
+
+                if (seed.CostItems is { Length: > 0 } && withCostItems.Add(grant.Id))
+                {
+                    AddCostItems(newCostItems, grant.Id, seed.CostItems);
+                }
+
+                if (seed.Documents is { Length: > 0 } && withDocuments.Add(grant.Id))
+                {
+                    AddDocuments(newDocuments, grant.Id, seed.Documents);
+                }
             }
 
             var deadline = ParseDate(seed.Deadline, endOfDay: true);
-            var existing = await _callRepository.FindAsync(c => c.GrantId == seed.Id && c.Period == seed.Period);
-            if (existing != null)
+            if (callKeys.TryGetValue((seed.Id, seed.Period), out var existing))
             {
                 // Var olan çağrıda yalnız boş tarihler dolar; durum ve dolu tarihler host'undur.
                 if (existing.OpenDate == null && existing.Deadline == null && (seed.OpenDate != null || seed.Deadline != null))
                 {
                     existing.SetSchedule(ParseDate(seed.OpenDate, endOfDay: false), deadline);
-                    await _callRepository.UpdateAsync(existing, autoSave: true);
+                    updatedCalls.Add(existing);
                 }
 
                 continue;
@@ -126,16 +177,26 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
                 Reference = seed.Reference
             };
             call.SetSchedule(ParseDate(seed.OpenDate, endOfDay: false), deadline);
-            await _callRepository.InsertAsync(call, autoSave: true);
+            callKeys[(seed.Id, seed.Period)] = call;
+            newCalls.Add(call);
         }
+
+        // Sıra: program önce (alt kayıtlar ona bağlı).
+        if (newGrants.Count > 0) await _grantRepository.InsertManyAsync(newGrants, autoSave: true);
+        if (updatedGrants.Count > 0) await _grantRepository.UpdateManyAsync(updatedGrants, autoSave: true);
+        if (newTags.Count > 0) await _criteriaRepository.InsertManyAsync(newTags, autoSave: true);
+        if (newCostItems.Count > 0) await _costItemRepository.InsertManyAsync(newCostItems, autoSave: true);
+        if (newDocuments.Count > 0) await _documentRepository.InsertManyAsync(newDocuments, autoSave: true);
+        if (newCalls.Count > 0) await _callRepository.InsertManyAsync(newCalls, autoSave: true);
+        if (updatedCalls.Count > 0) await _callRepository.UpdateManyAsync(updatedCalls, autoSave: true);
     }
 
     /// <summary>
     /// Var olan programda yalnız boş alanlar dolar. Sayısal alanlarda "boş" = null (tutar tavanında 0);
     /// bayraklarda yalnız false → true yönü; alt listelerde (etiket türü, harcama kalemi, belge) program o
-    /// türden hiç kayıt taşımıyorsa.
+    /// türden hiç kayıt taşımıyorsa. Değişiklik olduysa true döner.
     /// </summary>
-    private async Task EnrichExistingAsync(Grant grant, GrantSeed seed)
+    private static bool EnrichExisting(Grant grant, GrantSeed seed)
     {
         var changed = false;
         if (grant.Objective.IsNullOrWhiteSpace() && !seed.Objective.IsNullOrWhiteSpace()) { grant.Objective = seed.Objective; changed = true; }
@@ -158,56 +219,38 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         if (changed)
         {
             grant.EnsureRangesValid();
-            await _grantRepository.UpdateAsync(grant, autoSave: true);
         }
 
-        foreach (var (kind, values) in new[]
-                 {
-                     (GrantCriteriaKind.Sektor, seed.Sectors),
-                     (GrantCriteriaKind.Bolge, seed.Regions),
-                     (GrantCriteriaKind.AnahtarKelime, seed.Keywords)
-                 })
-        {
-            if (values.Length > 0 && !await _criteriaRepository.AnyAsync(t => t.GrantId == grant.Id && t.Kind == kind))
-            {
-                await InsertTagsAsync(grant.Id, kind, values);
-            }
-        }
+        return changed;
+    }
 
-        if (seed.CostItems is { Length: > 0 } && !await _costItemRepository.AnyAsync(c => c.GrantId == grant.Id))
+    private void AddTags(List<GrantCriteriaTag> target, Guid grantId, GrantCriteriaKind kind, string[] values)
+    {
+        foreach (var value in values)
         {
-            await InsertCostItemsAsync(grant.Id, seed.CostItems);
-        }
-
-        if (seed.Documents is { Length: > 0 } && !await _documentRepository.AnyAsync(d => d.GrantId == grant.Id))
-        {
-            await InsertDocumentsAsync(grant.Id, seed.Documents);
+            target.Add(new GrantCriteriaTag(_guidGenerator.Create(), grantId, kind, value));
         }
     }
 
-    private async Task InsertCostItemsAsync(Guid grantId, CostItemSeed[]? items)
+    private void AddCostItems(List<GrantEligibleCostItem> target, Guid grantId, CostItemSeed[]? items)
     {
         foreach (var item in (items ?? []).DistinctBy(i => i.Kind))
         {
-            await _costItemRepository.InsertAsync(
-                new GrantEligibleCostItem(_guidGenerator.Create(), grantId, Enum.Parse<GrantCostItemKind>(item.Kind), item.LimitPercent),
-                autoSave: true);
+            target.Add(new GrantEligibleCostItem(_guidGenerator.Create(), grantId, Enum.Parse<GrantCostItemKind>(item.Kind), item.LimitPercent));
         }
     }
 
-    private async Task InsertDocumentsAsync(Guid grantId, DocumentSeed[]? documents)
+    private void AddDocuments(List<GrantDocumentRequirement> target, Guid grantId, DocumentSeed[]? documents)
     {
         var order = 0;
         foreach (var doc in documents ?? [])
         {
-            await _documentRepository.InsertAsync(
-                new GrantDocumentRequirement(_guidGenerator.Create(), grantId, order++, doc.Name)
-                {
-                    Obligation = Enum.Parse<GrantDocumentObligation>(doc.Obligation),
-                    UploaderParty = Enum.Parse<GrantPartyRole>(doc.Uploader),
-                    RequiresESignature = doc.ESignature
-                },
-                autoSave: true);
+            target.Add(new GrantDocumentRequirement(_guidGenerator.Create(), grantId, order++, doc.Name)
+            {
+                Obligation = Enum.Parse<GrantDocumentObligation>(doc.Obligation),
+                UploaderParty = Enum.Parse<GrantPartyRole>(doc.Uploader),
+                RequiresESignature = doc.ESignature
+            });
         }
     }
 
@@ -216,16 +259,6 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
     {
         var lines = (items ?? []).Where(i => !i.IsNullOrWhiteSpace()).Select(i => i.Trim()).ToArray();
         return lines.Length == 0 ? null : string.Join("\n", lines);
-    }
-
-    private async Task InsertTagsAsync(Guid grantId, GrantCriteriaKind kind, string[] values)
-    {
-        foreach (var value in values)
-        {
-            await _criteriaRepository.InsertAsync(
-                new GrantCriteriaTag(_guidGenerator.Create(), grantId, kind, value),
-                autoSave: true);
-        }
     }
 
     internal static async Task<List<GrantSeed>> ReadSeedsAsync()
