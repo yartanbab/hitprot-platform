@@ -41,8 +41,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
     private readonly ITenantRepository _tenantRepo;
     private readonly GrantMatchManager _matcher;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
-    private readonly GrantNotificationDispatcher _notifyDispatcher;
-    private readonly GrantAudienceResolver _audience;
+    private readonly GrantCallAnnouncer _announcer;
 
     public GrantParameterAppService(
         IRepository<Grant, Guid> grantRepo,
@@ -57,8 +56,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         ITenantRepository tenantRepo,
         GrantMatchManager matcher,
         IDataFilter<IMultiTenant> mtFilter,
-        GrantNotificationDispatcher notifyDispatcher,
-        GrantAudienceResolver audience)
+        GrantCallAnnouncer announcer)
     {
         _grantRepo = grantRepo;
         _criteriaRepo = criteriaRepo;
@@ -72,8 +70,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         _tenantRepo = tenantRepo;
         _matcher = matcher;
         _mtFilter = mtFilter;
-        _notifyDispatcher = notifyDispatcher;
-        _audience = audience;
+        _announcer = announcer;
     }
 
     public async Task<GrantParameterDto> GetAsync(Guid id)
@@ -388,10 +385,9 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
     };
 
     /// <summary>
-    /// 6d · Yayına alınan çağrıyı UYGUNLUK EŞİĞİNİ GEÇEN firmalara duyurur.
-    ///
-    /// <para>Tüm kiracılara gönderilseydi 1d'de bilerek kurulan "size önerilen /
-    /// tüm açık çağrılar" ayrımı bildirimde kaybolurdu.</para>
+    /// 6d · Yayına alınan çağrıyı UYGUNLUK EŞİĞİNİ GEÇEN firmalara duyurur. Kural ve
+    /// işaretleme <see cref="GrantCallAnnouncer"/>'da: çağrı başka yoldan açılmışsa aynı
+    /// duyuruyu saatlik tarama yapar; iki yol tek işaretle çakışmaz.
     /// </summary>
     private async Task AnnouncePublishedCallsAsync(Grant grant, List<GrantCall> published)
     {
@@ -402,24 +398,12 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
 
         // Birden çok taslak aynı anda açıldıysa duyuru en yakın son tarihli çağrıyı
         // anlatır; firmaya aynı program için üst üste bildirim göndermek gürültüdür.
-        var call = published.OrderBy(c => c.Deadline ?? DateTime.MaxValue).First();
-        var daysLeft = call.Deadline.HasValue
-            ? Math.Max(0, (call.Deadline.Value.Date - Clock.Now.Date).Days).ToString()
-            : null;
-
-        foreach (var (tenantId, firmName) in await _audience.ResolveAsync(grant))
+        // Diğerleri işlenmiş sayılır ki tarama onları ikinci bir duyuru olarak yakalamasın.
+        var ordered = published.OrderBy(c => c.Deadline ?? DateTime.MaxValue).ToList();
+        await _announcer.AnnounceAsync(grant, ordered[0], Clock.Now);
+        foreach (var sibling in ordered.Skip(1))
         {
-            await _notifyDispatcher.DispatchToTenantAsync(
-                GrantNotificationTrigger.CallPublished,
-                tenantId,
-                new Dictionary<string, string?>
-                {
-                    ["{firma_adı}"] = firmName,
-                    ["{çağrı_adı}"] = grant.Name,
-                    ["{son_tarih}"] = call.Deadline?.ToString("dd.MM.yyyy"),
-                    ["{kalan_gün}"] = daysLeft
-                },
-                nameof(GrantCall), call.Id);
+            await _announcer.MarkProcessedAsync(sibling.Id, Clock.Now);
         }
     }
 
