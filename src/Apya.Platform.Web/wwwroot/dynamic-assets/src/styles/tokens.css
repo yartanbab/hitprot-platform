@@ -25,6 +25,9 @@
    1) LIGHT THEME (default)
    ---------------------------------------------------------------------------- */
 :root {
+    /* --- 1.0 APYA işareti (logo) — tek marka rengi (docs/design/brand/kaynak) --- */
+    --apya-brand-mark: #123B63;
+
     /* --- 1.1 Brand (finansal linkler, raporlar, CTA) --- */
     --apya-brand-50:  #EFF6FF;
     --apya-brand-100: #DBEAFE;
@@ -278,6 +281,9 @@
    düşer ve contrast korunur. Brand 500 hafif aydınlatılır.
    ---------------------------------------------------------------------------- */
 [data-theme="dark"] {
+    /* APYA işareti (logo) koyu zeminde beyaz — marka kılavuzu "Koyu tema". */
+    --apya-brand-mark: #FFFFFF;
+
     /* Brand: link/finansal renk dark'ta biraz aydınlatılır.
        -700 dark konvansiyonu = parlak METİN tonu (positive/negative/warning ile aynı) */
     --apya-brand-500: #60A5FA;

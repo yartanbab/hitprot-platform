@@ -1491,9 +1491,9 @@ html[data-mobile-shell="tabs"] .lpx-mobile-navbar {
 html[data-mobile-shell="tabs"] .lpx-mobile-navbar > i.lpx-toggle[data-lpx-toggle="mobile-navbar"] {
     display: none;
 }
-/* Marka: wordmark yerine 26px "A" kutusu — ray modundaki işaretle aynı dil,
-   salt CSS (görsel varlık yok). Mobilde ~150px yiyen "Apya PLATFORM" bloğu
-   yerine sayfa adına yer açar. */
+/* Marka: yazı yerine yalnız 26px APYA işareti (kılavuz: dar alanda yalnız
+   işaret) — ray modundakiyle aynı maske (global.css --apya-mark-mask).
+   Mobilde yazı + işaret bloğu yerine sayfa adına yer açar. */
 .lpx-mobile-navbar .lpx-logo-container {
     flex: none;
     min-width: 0;
@@ -1516,26 +1516,18 @@ html[data-mobile-shell="tabs"] .lpx-mobile-navbar > i.lpx-toggle[data-lpx-toggle
 }
 .lpx-mobile-navbar .lpx-logo-container > a::after,
 .apya-drawer-brand {
-    content: "A";
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    content: "";
+    display: inline-block;
     width: 26px;
     height: 26px;
     flex: none;
-    border-radius: 7px;
-    background: var(--apya-accent-500);
-    color: var(--apya-text-inverse);
-    font-family: var(--apya-font-sans);
-    font-size: 14px;
-    font-weight: var(--apya-weight-bold);
-    letter-spacing: -0.03em;
-    line-height: 1;
+    background-color: var(--apya-brand-mark);
+    -webkit-mask: var(--apya-mark-mask);
+    mask: var(--apya-mark-mask);
 }
 html[data-mobile-shell="tabs"] .lpx-mobile-navbar .lpx-logo-container > a::after {
     width: 24px;
     height: 24px;
-    font-size: 13px;
 }
 /* Sayfa adı — barın sahibi. Kaynak masaüstü breadcrumb'ı ile aynı
    (apya-topbar-shell.js → window.apyaActiveMenuInfo). */

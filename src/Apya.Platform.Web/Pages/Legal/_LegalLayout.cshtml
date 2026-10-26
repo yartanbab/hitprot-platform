@@ -17,6 +17,7 @@
        değil; yalnız token + font + temel stil yüklenir (F/Index deseni). *@
     <link rel="stylesheet" href="~/css/apya-fonts.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/dynamic-assets/src/styles/tokens.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/apya-mark.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/js/style.css" asp-append-version="true" />
     <style>
         body {
@@ -70,14 +71,7 @@
     <div class="apya-legal">
         <div class="apya-legal__top">
             <span class="apya-legal__brand">
-                <svg width="26" height="26" viewBox="0 0 48 48" role="img" aria-label="@BrandingProvider.AppName">
-                    <polygon points="24,2 33,24 24,20 15,24" fill="#4338CA"></polygon>
-                    <polygon points="46,24 24,33 28,24 24,15" fill="#4F46E5"></polygon>
-                    <polygon points="24,46 15,24 24,28 33,24" fill="#5B54E8"></polygon>
-                    <polygon points="2,24 24,15 20,24 24,33" fill="#6D5FEC"></polygon>
-                    <polygon points="24,19 29,24 24,29 19,24" fill="#F5F5F5"></polygon>
-                </svg>
-                @BrandingProvider.AppName
+                <partial name="_ApyaLockup" model="18" />
             </span>
             <a class="apya-legal__back" href="~/">← Ana sayfaya dön</a>
         </div>

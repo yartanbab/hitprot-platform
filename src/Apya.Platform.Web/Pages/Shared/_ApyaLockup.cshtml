@@ -1,0 +1,19 @@
+@using Volo.Abp.Ui.Branding
+@inject IBrandingProvider BrandingProvider
+@model int
+@*
+    APYA yatay kilidi — işaret + ad. Model: yazı boyu (px).
+    Kılavuz ölçüsü: işaret = 1,25 × yazı boyu, aralık = .5 × yazı boyu
+    (CSS: /css/apya-mark.css ".apya-lockup"). 90 px'ten dar alanda yalnız işaret kullanılır.
+    Harfler ayrı span: açılış animasyonu (.apya-intro) harf harf belirtir; ekran okuyucu
+    kelimeyi tek parça okur. Açılım satırı ("AKILLI PROJE…") arayüzde KULLANILMAZ.
+*@
+@{
+    var textSize = Model > 0 ? Model : 20;
+    var markSize = (int)System.Math.Round(textSize * 1.25);
+    var name = BrandingProvider.AppName;
+}
+<span class="apya-lockup" style="--apya-lockup-text:@(textSize)px">
+    <apya-mark size="@markSize" />
+    <span class="apya-lockup__word">@for (var i = 0; i < name.Length; i++){<span style="--l:@i">@name[i]</span>}</span>
+</span>

@@ -59,3 +59,57 @@
         opacity: .4;
     }
 }
+
+/* =============================================================================
+   KİLİT — işaret + ad (Pages/Shared/_ApyaLockup.cshtml)
+   Figtree 600 / .12em; işaret = 1,25 × yazı boyu, aralık = .5 × yazı boyu.
+   Renk tek marka rengi: --apya-brand-mark (açıkta lacivert, koyuda beyaz).
+   ============================================================================= */
+.apya-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--apya-lockup-text, 20px) * .5);
+    color: var(--apya-brand-mark, #123B63);
+}
+.apya-lockup__word {
+    font-family: var(--apya-font-sans);
+    font-size: var(--apya-lockup-text, 20px);
+    font-weight: 600;
+    letter-spacing: .12em;
+    line-height: 1;
+    white-space: nowrap; /* kilit tek parça ölçeklenir, ad bölünmez */
+}
+.apya-lockup__word > span {
+    display: inline-block;
+}
+
+/* =============================================================================
+   AÇILIŞ KİLİDİ (tek sefer) — kapsayıcıya .apya-intro eklenince oynar.
+   Sıra (README "Ekran geçişleri"): ışınlar merkezden çizilir (500 ms, ışın başına
+   45 ms) → ibre belirir → harfler 1050 ms'den itibaren 110 ms arayla. Tek eğri.
+   Yazı deforme olmaz: harflerde yalnız opaklık ve 6 px kayma.
+   ============================================================================= */
+@keyframes apya-draw   { 0% { stroke-dashoffset: 17; } 22% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; } }
+@keyframes apya-pop    { 0% { transform: scale(0); } 18% { transform: scale(1.35); } 30%, 100% { transform: scale(1); } }
+@keyframes apya-letter { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+
+.apya-intro .apya-mark__ray {
+    stroke-dasharray: 17;
+    animation: apya-draw 500ms cubic-bezier(.4, 0, .2, 1) calc(var(--i, 0) * 45ms) both;
+}
+.apya-intro .apya-mark > polygon {
+    transform-box: view-box;
+    transform-origin: 50px 50px;
+    animation: apya-pop 800ms cubic-bezier(.4, 0, .2, 1) 600ms both;
+}
+.apya-intro .apya-lockup__word > span {
+    animation: apya-letter 400ms cubic-bezier(.4, 0, .2, 1) calc(1050ms + var(--l, 0) * 110ms) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .apya-intro .apya-mark__ray,
+    .apya-intro .apya-mark > polygon,
+    .apya-intro .apya-lockup__word > span {
+        animation: none;
+    }
+}

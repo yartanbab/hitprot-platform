@@ -5,12 +5,48 @@
    (/css/apya-theme-bridge.css) aynı bundle'da ayrıca yüklüdür.
    ============================================================================= */
 
-:root .lpx-brand-logo {
-    --lpx-logo: url('/images/logo/leptonx/logo-light.png');
-    --lpx-logo-icon: url('/images/logo/leptonx/logo-light-thumbnail.png');
+/* --- APYA kilidi: işaret + "APYA" -------------------------------------------
+   Tema logoyu .lpx-brand-logo'ya ARKA PLAN RESMİ olarak basar; resim rengi
+   temaya göre değişemez. İşaret bunun yerine MASKE ile çizilir: zemin
+   currentColor (--apya-brand-mark: açıkta lacivert, koyuda beyaz), şekil
+   /brand/apya-isaret-kucuk.svg'den (32 px altı → çizgi 6). Güney ucunun .38
+   opaklığı maskeye geçer. Ray ve mobil "A" kutuları da aynı maskeyi kullanır
+   (apya-shell.css "RAY MODU", apya-theme-bridge.css "MOBİL NAVİGASYON").
+   Ölçü (kılavuz): işaret = 1,25 × yazı boyu, aralık ≈ .5 × yazı boyu.
+   ------------------------------------------------------------------------- */
+:root {
+    --apya-mark-mask: url('/brand/apya-isaret-kucuk.svg') center / contain no-repeat;
 }
 
-[data-theme="dark"] .lpx-brand-logo {
-    --lpx-logo: url('/images/logo/leptonx/logo-dark.png');
-    --lpx-logo-icon: url('/images/logo/leptonx/logo-dark-thumbnail.png');
+:root .lpx-brand-logo {
+    --lpx-logo: none;
+    --lpx-logo-icon: none;
+}
+
+#lpx-sidebar .lpx-brand-logo,
+.lpx-sidebar .lpx-brand-logo {
+    position: relative;
+    background-image: none !important;
+}
+#lpx-sidebar .lpx-brand-logo::before,
+.lpx-sidebar .lpx-brand-logo::before {
+    content: "";
+    position: absolute;
+    /* Yazı temanın satır içi stiliyle left:58px'e kilitli; işaret ona göre
+       hizalanır: 58 − 19 (kutu) − 10 (aralık) − 24 (işaret) ≈ 5. */
+    left: 5px;
+    top: 4px;
+    width: 24px;
+    height: 24px;
+    background-color: var(--apya-brand-mark);
+    -webkit-mask: var(--apya-mark-mask);
+    mask: var(--apya-mark-mask);
+}
+#lpx-sidebar .lpx-brand-name,
+.lpx-sidebar .lpx-brand-name {
+    font-family: var(--apya-font-sans);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    color: var(--apya-brand-mark) !important;
 }

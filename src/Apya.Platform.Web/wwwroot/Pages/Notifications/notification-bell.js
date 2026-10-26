@@ -95,7 +95,7 @@
                     requireInteraction: (payload.severity || 0) >= SEVERITY.CRITICAL
                 };
 
-                var notification = new Notification(payload.title || 'Apya', options);
+                var notification = new Notification(payload.title || 'APYA', options);
                 notification.onclick = function() {
                     window.focus();
                     notification.close();
