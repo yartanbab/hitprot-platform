@@ -138,6 +138,62 @@ public class GrantCallAnnouncer : DomainService
     }
 
     /// <summary>
+    /// Tek seferlik taban işaretinin anahtarı (host satırı, <c>EntityId</c> olarak). Gerçek bir çağrı
+    /// kimliğiyle çakışmaz; taramanın "işlenmiş" kümesinde zararsızca durur.
+    /// </summary>
+    public static readonly Guid BaselineMarkerId = Guid.Parse("ba5e11e0-0805-4000-8000-000000000805");
+
+    /// <summary>
+    /// 🔴 İlk yayın tabanı (kullanıcı kararı 2026-10-26): tarama canlıya ilk indiğinde katalogdaki açık
+    /// çağrıların çoğu <see cref="AnnounceWindowDays"/> penceresinin içindeydi (24 Ekim tohumu + yeni tohum)
+    /// ve hepsi firmalara duyurulacaktı. Taban işareti yoksa o an açık olan bütün host çağrıları duyurulmadan
+    /// "işlendi" sayılır ve işaret yazılır; yalnız bir kez çalışır, sonra açılan çağrılar normal duyurulur.
+    /// Henüz açılış tarihi gelmemiş çağrılar işaretlenmez: açıldıklarında gerçekten yenidirler.
+    /// </summary>
+    /// <returns>Sessizce işaretlenen çağrı sayısı; taban daha önce kurulduysa 0.</returns>
+    public async Task<int> MarkBaselineOnceAsync(DateTime now)
+    {
+        List<Guid> open;
+        HashSet<Guid> processed;
+        using (_mtFilter.Disable())
+        {
+            if (await _logRepo.AnyAsync(x =>
+                    x.Trigger == GrantNotificationTrigger.CallPublished && x.TenantId == null && x.EntityId == BaselineMarkerId))
+            {
+                return 0;
+            }
+
+            // 🔴 Disable() tüm kiracılara açar; host kataloğu TenantId == null koşuluyla ELLE seçilir.
+            open = (await _callRepo.GetListAsync(c =>
+                    c.TenantId == null
+                    && c.Status == GrantCallStatus.Acik
+                    && (c.OpenDate == null || c.OpenDate <= now)
+                    && (c.Deadline == null || c.Deadline >= now.Date)))
+                .Select(c => c.Id)
+                .ToList();
+
+            processed = (await _logRepo.GetListAsync(x =>
+                    x.Trigger == GrantNotificationTrigger.CallPublished && x.TenantId == null))
+                .Select(x => x.EntityId)
+                .ToHashSet();
+        }
+
+        var marks = open
+            .Where(id => !processed.Contains(id))
+            .Select(id => new GrantNotificationLog(GuidGenerator.Create(), null, GrantNotificationTrigger.CallPublished, id, DayMark, now))
+            .Append(new GrantNotificationLog(GuidGenerator.Create(), null, GrantNotificationTrigger.CallPublished, BaselineMarkerId, DayMark, now))
+            .ToList();
+
+        using (CurrentTenant.Change(null))
+        {
+            await _logRepo.InsertManyAsync(marks, autoSave: true);
+        }
+
+        Logger.LogInformation("Çağrı duyurusu tabanı kuruldu: {Count} açık çağrı duyurulmadan işaretlendi.", marks.Count - 1);
+        return marks.Count - 1;
+    }
+
+    /// <summary>
     /// Tarama: host kataloğunda bugün açık olup henüz işlenmemiş çağrıları bulur; pencere içindekileri
     /// duyurur, eskileri yalnız işaretler. Bir çağrının hatası diğerlerini durdurmaz.
     /// </summary>

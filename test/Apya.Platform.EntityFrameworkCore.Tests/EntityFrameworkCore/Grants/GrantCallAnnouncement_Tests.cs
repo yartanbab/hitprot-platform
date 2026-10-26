@@ -119,6 +119,44 @@ public class GrantCallAnnouncement_Tests : PlatformEntityFrameworkCoreTestBase
             }
         });
 
+    /// <summary>
+    /// İlk yayın tabanı (kullanıcı kararı 2026-10-26): katalog tohumu bittiğinde o an açık olan bütün host
+    /// çağrıları duyurulmadan işaretlenir; tarama ilk turda firmalara toplu duyuru göndermez.
+    /// </summary>
+    [Fact]
+    public async Task Tohum_sonrasi_acik_katalog_cagrilari_duyurulmadan_islenmis_sayilir()
+    {
+        List<GrantCall> open;
+        using (GetRequiredService<IDataFilter<IMultiTenant>>().Disable())
+        {
+            open = await _callRepo.GetListAsync(c => c.TenantId == null && c.Status == GrantCallStatus.Acik
+                && (c.OpenDate == null || c.OpenDate <= DateTime.UtcNow)
+                && (c.Deadline == null || c.Deadline >= DateTime.UtcNow.Date));
+        }
+
+        open.ShouldNotBeEmpty("test veritabanında katalog tohumu açık çağrı kurar");
+        foreach (var call in open)
+        {
+            (await IsProcessedAsync(call.Id)).ShouldBeTrue($"{call.Id} tabana girmeli");
+        }
+        (await IsProcessedAsync(GrantCallAnnouncer.BaselineMarkerId)).ShouldBeTrue("taban işareti yazılmalı");
+
+        (await SweepAsync()).ShouldBe(0, "ilk tarama katalog çağrılarını duyurmamalı");
+    }
+
+    [Fact]
+    public async Task Taban_bir_kez_kurulur_sonra_acilan_cagri_dokunulmaz()
+    {
+        var sector = "sektor-" + Guid.NewGuid().ToString("N")[..6];
+        var call = await WithUnitOfWorkAsync(() => InsertCallAsync(sector, GrantCallStatus.Acik));
+
+        var marked = await WithUnitOfWorkAsync(() =>
+            GetRequiredService<GrantCallAnnouncer>().MarkBaselineOnceAsync(DateTime.Now));
+
+        marked.ShouldBe(0, "taban tohumda kuruldu; ikinci çağrı hiçbir şey işaretlememeli");
+        (await IsProcessedAsync(call.Id)).ShouldBeFalse("tabandan sonra açılan çağrı duyurulmak üzere bekler");
+    }
+
     [Fact]
     public async Task Disaridan_eklenen_acik_cagri_uygun_firmaya_duyurulur_ve_ikinci_tur_mukerrer_uretmez()
     {
