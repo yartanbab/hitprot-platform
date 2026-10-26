@@ -3,7 +3,7 @@
    -----------------------------------------------------------------------------
    Strateji:
      - App shell precache  : install sırasında kritik route'un statik asset'leri
-     - /js/*, /css/*, /icons/*, /manifest.webmanifest → stale-while-revalidate
+     - /js/*, /css/*, /icons/*, /brand/*, /manifest.webmanifest → stale-while-revalidate
        (önbellekteki varsa hemen onu dön, arka planda tazesini çekip önbelleği
        güncelle — bir sonraki istek güncel gelir)
      - /api/* → network-first (offline fallback yok; ABP error envelope kullanıcıya iletilir)
@@ -42,7 +42,8 @@ const CACHE_RUNTIME = `apya-runtime-${CACHE_VERSION}`;
    yapar (atomic) — eski SW aktif kalır. */
 const SHELL_URLS = [
     '/manifest.webmanifest',
-    '/icons/apya-icon.svg',
+    '/brand/icon-192.png',
+    '/brand/notification-badge.png',
 ];
 
 /* Kimlik route'ları — SW bunlara dokunmaz (gerekçe: baştaki açıklama).
@@ -95,7 +96,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(req.url);
     if (url.origin !== self.location.origin) return; /* cross-origin'i bypass'la */
 
-    if (url.pathname.startsWith('/js/') || url.pathname.startsWith('/icons/') ||
+    if (url.pathname.startsWith('/js/') || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/brand/') ||
         url.pathname === '/manifest.webmanifest' || url.pathname.endsWith('.css')) {
         event.respondWith(staleWhileRevalidate(event, CACHE_ASSETS));
         return;
@@ -207,8 +208,10 @@ async function showPushNotification(payload) {
 
     await self.registration.showNotification(payload.title || 'Apya', {
         body: payload.body,
-        icon: '/icons/apya-icon.svg',
-        badge: '/icons/apya-icon.svg',
+        /* icon: renkli uygulama ikonu. badge: Android yalnız saydamlığı okur (tek renk siluet),
+           renkli ikon orada içi dolu bir kare olarak görünür → ayrı beyaz mikro işaret. */
+        icon: '/brand/icon-192.png',
+        badge: '/brand/notification-badge.png',
         /* Aynı tag → mevcut bildirim güncellenir, yığılmaz. Gruplanan bildirimin tekrarı (ikinci yorum,
            ikinci mesaj) AYNI tag'le gelir; renotify olmadan sessizce üzerine yazılıyordu (N-02). */
         tag,

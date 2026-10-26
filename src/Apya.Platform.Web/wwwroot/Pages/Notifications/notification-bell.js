@@ -87,7 +87,7 @@
             try {
                 var options = {
                     body: payload.body || '',
-                    icon: '/icons/apya-icon.svg',
+                    icon: '/brand/icon-192.png',
                     // Aynı kullanıcının birden çok sekmesi açıkken her sekme
                     // göstermeye çalışır; aynı `tag` işletim sisteminde bunları
                     // TEK bildirimde toplar (sunucu artık satır kimliğini yolluyor).
