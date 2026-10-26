@@ -1,0 +1,61 @@
+/* =============================================================================
+   APYA İŞARETİ — durum animasyonları (tek kaynak)
+   -----------------------------------------------------------------------------
+   İşaretin SVG'si üç yerde üretilir, üçü de AYNI yapıyı basar:
+     • Razor : <apya-mark size="20" state="thinking" />  → ApyaMarkTagHelper
+     • jQuery: apya.mark({ size: 20, state: 'thinking' }) → /js/apya-mark.js
+     • React : <ApyaMark size={20} state="thinking" />   → components/brand/ApyaMark.jsx
+   Hareket satır içi stilde DEĞİL burada: durum değişince yalnız data-state
+   değişir, işaret yeniden çizilmez. Işın sırası (--i) ve dinleme süresi (--ld)
+   üreticilerden satır içi gelir.
+
+   Geometri, süreler ve eğriler marka paketinden birebir:
+   docs/design/brand/kaynak/README.md "Asistan durum sözlüğü".
+   Global stil bundle'ına kayıtlı (PlatformWebModule.ConfigureBundles).
+   ============================================================================= */
+
+.apya-mark {
+    display: block;
+    flex: none;
+}
+
+.apya-mark[data-state="off"] {
+    opacity: .4;
+}
+
+.apya-mark__ray {
+    transform-box: view-box;
+}
+
+/* Düşünüyor — ışınlar merkezden nefes alır. */
+.apya-mark[data-state="thinking"] .apya-mark__ray {
+    opacity: .2;
+    transform-origin: 50px 50px;
+    animation: apya-think 1.8s ease-in-out calc(var(--i, 0) * 55ms) infinite;
+}
+
+/* Akış — ışınlar sırayla söner. */
+.apya-mark[data-state="streaming"] .apya-mark__ray {
+    opacity: .16;
+    animation: apya-chase .85s linear calc(var(--i, 0) * 65ms) infinite;
+}
+
+/* Dinliyor — ışın boyu değişir; her ışının süresi farklı (--ld). */
+.apya-mark[data-state="listening"] .apya-mark__ray {
+    transform-origin: 50px 20px;
+    animation: apya-listen var(--ld, .8s) ease-in-out calc(var(--i, 0) * 40ms) infinite alternate;
+}
+
+@keyframes apya-think  { 0%, 100% { opacity: .18; transform: scale(.9); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes apya-chase  { 0% { opacity: 1; } 30% { opacity: .16; } 100% { opacity: .16; } }
+@keyframes apya-listen { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
+
+/* Hareket azaltma: hareketli durumlar sabit %40'a düşer. */
+@media (prefers-reduced-motion: reduce) {
+    .apya-mark[data-state="thinking"] .apya-mark__ray,
+    .apya-mark[data-state="streaming"] .apya-mark__ray,
+    .apya-mark[data-state="listening"] .apya-mark__ray {
+        animation: none;
+        opacity: .4;
+    }
+}
