@@ -1,5 +1,5 @@
 import { j as n } from "./react-vendor-D7YDiBbi.js";
-import { c as t } from "./Dialog-D3HpJNIB.js";
+import { c as t } from "./Dialog-DTcK6HxT.js";
 function f({ className: m, width: o, height: e, rounded: r = "md", ...l }) {
   const s = {};
   return o !== void 0 && (s.width = typeof o == "number" ? `${o}px` : o), e !== void 0 && (s.height = typeof e == "number" ? `${e}px` : e), /* @__PURE__ */ n.jsx(

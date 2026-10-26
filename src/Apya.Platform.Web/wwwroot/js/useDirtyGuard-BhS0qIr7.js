@@ -1,6 +1,6 @@
 import { r as a, j as n } from "./react-vendor-D7YDiBbi.js";
 import { D as b, b as k, c as h, d as j, e as w, f as R } from "./ui-vendor-UYevF8mE.js";
-import { B as g } from "./Dialog-D3HpJNIB.js";
+import { B as g } from "./Dialog-DTcK6HxT.js";
 import { t as c } from "./index-DgpuJ91w.js";
 function O({
   open: o,

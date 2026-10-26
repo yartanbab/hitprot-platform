@@ -1,28 +1,29 @@
 import { j as e, r as c } from "./react-vendor-D7YDiBbi.js";
 import { m as j } from "./index-DgpuJ91w.js";
-const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" }) }), k = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M5 15l7-7 7 7" }) }), N = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 9l-7 7-7-7" }) }), S = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2.5", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 4v16m8-8H4" }) }), C = () => {
+import { A as w } from "./ApyaMark-BHJ4Yu_6.js";
+const k = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" }) }), N = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M5 15l7-7 7 7" }) }), S = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M19 9l-7 7-7-7" }) }), B = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2.5", className: "w-5 h-5", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 4v16m8-8H4" }) }), C = () => {
   const [o, u] = c.useState(""), [s, l] = c.useState([]), [i, d] = c.useState(!1), m = [
     { type: "TextInput", label: "Metin Kutusu", defaultContent: "Kısa Yanıt" },
     { type: "NumberInput", label: "Sayısal Girdi", defaultContent: "Sayısal Değer" },
     { type: "Select", label: "Açılır Liste", defaultContent: "Lütfen Birini Seçin" },
     { type: "Rating", label: "Derecelendirme", defaultContent: "Memnuniyet Puanı" }
-  ], b = (t, a) => {
-    const r = {
+  ], b = (t, r) => {
+    const a = {
       id: Math.random().toString(36).substr(2, 9),
       type: t,
       order: s.length + 1,
-      content: a,
+      content: r,
       settings: t === "Select" ? { options: ["Seçenek 1", "Seçenek 2"], required: !1 } : { required: !1 }
     };
-    l([...s, r]);
-  }, h = (t) => {
-    l(s.filter((a) => a.id !== t).map((a, r) => ({ ...a, order: r + 1 })));
-  }, x = (t, a) => {
-    if (a === "up" && t === 0 || a === "down" && t === s.length - 1) return;
-    const r = [...s], n = a === "up" ? t - 1 : t + 1;
-    [r[t], r[n]] = [r[n], r[t]], l(r.map((v, y) => ({ ...v, order: y + 1 })));
-  }, f = (t, a) => {
-    l(s.map((r) => r.id === t ? { ...r, content: a } : r));
+    l([...s, a]);
+  }, f = (t) => {
+    l(s.filter((r) => r.id !== t).map((r, a) => ({ ...r, order: a + 1 })));
+  }, x = (t, r) => {
+    if (r === "up" && t === 0 || r === "down" && t === s.length - 1) return;
+    const a = [...s], n = r === "up" ? t - 1 : t + 1;
+    [a[t], a[n]] = [a[n], a[t]], l(a.map((v, y) => ({ ...v, order: y + 1 })));
+  }, h = (t, r) => {
+    l(s.map((a) => a.id === t ? { ...a, content: r } : a));
   }, g = () => {
     if (!o.trim()) {
       window.abp.message.warn("Lütfen formunuza şık bir başlık verin!", "Başlık Eksik");
@@ -33,27 +34,27 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
       return;
     }
     d(!0);
-    const t = o.trim().toLowerCase().replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-") + "-" + Math.random().toString(36).substr(2, 6), a = {
+    const t = o.trim().toLowerCase().replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-") + "-" + Math.random().toString(36).substr(2, 6), r = {
       title: o,
       slug: t,
-      blocks: s.map((r) => {
+      blocks: s.map((a) => {
         let n = 0;
-        return r.type === "NumberInput" ? n = 1 : r.type === "Select" ? n = 2 : r.type === "Rating" && (n = 4), {
+        return a.type === "NumberInput" ? n = 1 : a.type === "Select" ? n = 2 : a.type === "Rating" && (n = 4), {
           type: n,
-          order: r.order,
-          content: r.content || "İsimsiz Soru",
-          settings: JSON.stringify(r.settings || {})
+          order: a.order,
+          content: a.content || "İsimsiz Soru",
+          settings: JSON.stringify(a.settings || {})
         };
       })
     };
     window.abp.ajax({
       type: "POST",
       url: "/api/app/template",
-      data: JSON.stringify(a)
-    }).then(function(r) {
+      data: JSON.stringify(r)
+    }).then(function(a) {
       window.abp.notify.success("Şablon başarıyla veritabanına kaydedildi!", "Tebrikler"), u(""), l([]), d(!1);
-    }).catch(function(r) {
-      let n = r && r.message ? r.message : "Şablon kaydedilirken bir hata oluştu.";
+    }).catch(function(a) {
+      let n = a && a.message ? a.message : "Şablon kaydedilirken bir hata oluştu.";
       window.abp.message.error(n, "Hata"), d(!1);
     });
   };
@@ -73,7 +74,7 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
           disabled: i,
           className: "group flex items-center gap-4 w-full p-4 bg-surface-raised border border-default rounded-[1.25rem] hover:bg-accent-soft hover:border-accent shadow-sm hover:shadow-[0_8px_20px_rgba(99,102,241,0.08)] transition-all duration-300 ease-out hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed",
           children: [
-            /* @__PURE__ */ e.jsx("div", { className: "p-2.5 bg-accent-soft text-accent rounded-xl group-hover:scale-110 group-hover:bg-accent group-hover:text-white transition-all duration-300 shadow-sm", children: /* @__PURE__ */ e.jsx(S, {}) }),
+            /* @__PURE__ */ e.jsx("div", { className: "p-2.5 bg-accent-soft text-accent rounded-xl group-hover:scale-110 group-hover:bg-accent group-hover:text-white transition-all duration-300 shadow-sm", children: /* @__PURE__ */ e.jsx(B, {}) }),
             /* @__PURE__ */ e.jsx("span", { className: "font-bold text-[15px] text-text-secondary group-hover:text-accent transition-colors", children: t.label })
           ]
         },
@@ -95,11 +96,8 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
             onClick: g,
             disabled: i,
             className: "relative inline-flex items-center justify-center p-0.5 overflow-hidden text-sm font-medium rounded-2xl group bg-gradient-to-br from-accent to-ai-500 hover:text-white focus:ring-4 focus:outline-none focus:ring-accent-soft hover:shadow-[0_10px_25px_rgba(99,102,241,0.3)] transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:hover:-translate-y-0 disabled:cursor-not-allowed",
-            children: /* @__PURE__ */ e.jsx("span", { className: "relative px-8 py-3.5 transition-all ease-in duration-200 bg-surface-base rounded-[14px] group-hover:bg-opacity-0 text-text-primary group-hover:text-white font-bold tracking-wide text-[15px] flex items-center gap-2", children: i ? /* @__PURE__ */ e.jsxs("span", { children: [
-              /* @__PURE__ */ e.jsxs("svg", { className: "animate-spin h-5 w-5 text-current inline-block mr-2", xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", children: [
-                /* @__PURE__ */ e.jsx("circle", { className: "opacity-25", cx: "12", cy: "12", r: "10", stroke: "currentColor", strokeWidth: "4" }),
-                /* @__PURE__ */ e.jsx("path", { className: "opacity-75", fill: "currentColor", d: "M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" })
-              ] }),
+            children: /* @__PURE__ */ e.jsx("span", { className: "relative px-8 py-3.5 transition-all ease-in duration-200 bg-surface-base rounded-[14px] group-hover:bg-opacity-0 text-text-primary group-hover:text-white font-bold tracking-wide text-[15px] flex items-center gap-2", children: i ? /* @__PURE__ */ e.jsxs("span", { className: "inline-flex items-center gap-2", children: [
+              /* @__PURE__ */ e.jsx(w, { size: 20, state: "thinking" }),
               "Kaydediliyor..."
             ] }) : "Taslağı Canlıya Al" })
           }
@@ -121,12 +119,12 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
           /* @__PURE__ */ e.jsx("div", { className: "inline-flex items-center justify-center w-24 h-24 rounded-full bg-surface-base shadow-lg mb-8", children: /* @__PURE__ */ e.jsx("svg", { className: "w-10 h-10 text-accent", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", children: /* @__PURE__ */ e.jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", strokeWidth: "1.5", d: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" }) }) }),
           /* @__PURE__ */ e.jsx("h3", { className: "text-3xl text-text-primary font-extrabold mb-3 tracking-tight", children: "Ekrana bir şey sürükleyin" }),
           /* @__PURE__ */ e.jsx("p", { className: "text-text-tertiary font-semibold text-lg", children: "Mucize yaratmak için sol paneli kullanın." })
-        ] }) : /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-8", children: s.map((t, a) => /* @__PURE__ */ e.jsxs("div", { className: "group/block relative bg-surface-base border border-subtle rounded-[2rem] p-10 hover:border-focus hover:shadow-md transition-all duration-400 animate-fade-in hover:-translate-y-1", children: [
+        ] }) : /* @__PURE__ */ e.jsx("div", { className: "flex flex-col gap-8", children: s.map((t, r) => /* @__PURE__ */ e.jsxs("div", { className: "group/block relative bg-surface-base border border-subtle rounded-[2rem] p-10 hover:border-focus hover:shadow-md transition-all duration-400 animate-fade-in hover:-translate-y-1", children: [
           /* @__PURE__ */ e.jsxs("div", { className: "absolute -top-5 -right-5 hidden group-hover/block:flex items-center gap-2 bg-surface-elevated border border-strong shadow-xl rounded-2xl p-2 z-20 animate-fade-in", children: [
-            /* @__PURE__ */ e.jsx("button", { onClick: () => x(a, "up"), className: "p-2.5 hover:bg-surface-sunken rounded-xl text-text-secondary hover:text-text-primary transition-colors", title: "Yukarı Taşı", children: /* @__PURE__ */ e.jsx(k, {}) }),
-            /* @__PURE__ */ e.jsx("button", { onClick: () => x(a, "down"), className: "p-2.5 hover:bg-surface-sunken rounded-xl text-text-secondary hover:text-text-primary transition-colors", title: "Aşağı Taşı", children: /* @__PURE__ */ e.jsx(N, {}) }),
+            /* @__PURE__ */ e.jsx("button", { onClick: () => x(r, "up"), className: "p-2.5 hover:bg-surface-sunken rounded-xl text-text-secondary hover:text-text-primary transition-colors", title: "Yukarı Taşı", children: /* @__PURE__ */ e.jsx(N, {}) }),
+            /* @__PURE__ */ e.jsx("button", { onClick: () => x(r, "down"), className: "p-2.5 hover:bg-surface-sunken rounded-xl text-text-secondary hover:text-text-primary transition-colors", title: "Aşağı Taşı", children: /* @__PURE__ */ e.jsx(S, {}) }),
             /* @__PURE__ */ e.jsx("div", { className: "w-px h-6 bg-border-strong mx-1" }),
-            /* @__PURE__ */ e.jsx("button", { onClick: () => h(t.id), className: "p-2.5 hover:bg-negative-50 rounded-xl text-negative hover:opacity-80 transition-colors", title: "Bileşeni Sil", children: /* @__PURE__ */ e.jsx(w, {}) })
+            /* @__PURE__ */ e.jsx("button", { onClick: () => f(t.id), className: "p-2.5 hover:bg-negative-50 rounded-xl text-negative hover:opacity-80 transition-colors", title: "Bileşeni Sil", children: /* @__PURE__ */ e.jsx(k, {}) })
           ] }),
           /* @__PURE__ */ e.jsx("div", { className: "flex gap-4 items-start", children: /* @__PURE__ */ e.jsxs("div", { className: "flex-1 w-full", children: [
             /* @__PURE__ */ e.jsx("div", { className: "flex items-center justify-between mb-4", children: /* @__PURE__ */ e.jsx("span", { className: "inline-flex items-center px-4 py-1.5 rounded-full text-xs font-extrabold bg-accent-soft text-accent uppercase tracking-widest border border-default", children: t.type }) }),
@@ -135,7 +133,7 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
               {
                 type: "text",
                 value: t.content,
-                onChange: (r) => f(t.id, r.target.value),
+                onChange: (a) => h(t.id, a.target.value),
                 className: "w-full font-extrabold text-text-primary border-none p-0 focus:ring-0 text-2xl focus:outline-none mb-2 bg-transparent placeholder-text-tertiary",
                 placeholder: "Buraya sorunuzu yazın..."
               }
@@ -144,7 +142,7 @@ const w = () => /* @__PURE__ */ e.jsx("svg", { fill: "none", viewBox: "0 0 24 24
           /* @__PURE__ */ e.jsxs("div", { className: "mt-8 pt-8 border-t border-subtle", children: [
             t.type === "TextInput" && /* @__PURE__ */ e.jsx("input", { type: "text", disabled: !0, className: "w-full bg-surface-sunken border-2 border-default rounded-2xl p-5 text-text-tertiary font-semibold text-[15px]", placeholder: "Kullanıcı metin girecek..." }),
             t.type === "Select" && /* @__PURE__ */ e.jsx("select", { disabled: !0, className: "w-full bg-surface-sunken border-2 border-default rounded-2xl p-5 text-text-tertiary font-semibold text-[15px] appearance-none", children: /* @__PURE__ */ e.jsx("option", { children: "Açılır liste görünümü..." }) }),
-            t.type === "Rating" && /* @__PURE__ */ e.jsx("div", { className: "flex gap-4", children: [1, 2, 3, 4, 5].map((r) => /* @__PURE__ */ e.jsx("div", { className: "w-14 h-14 rounded-full border-2 border-default bg-surface-base flex items-center justify-center text-text-tertiary font-black text-xl shadow-sm", children: r }, r)) }),
+            t.type === "Rating" && /* @__PURE__ */ e.jsx("div", { className: "flex gap-4", children: [1, 2, 3, 4, 5].map((a) => /* @__PURE__ */ e.jsx("div", { className: "w-14 h-14 rounded-full border-2 border-default bg-surface-base flex items-center justify-center text-text-tertiary font-black text-xl shadow-sm", children: a }, a)) }),
             t.type === "NumberInput" && /* @__PURE__ */ e.jsx("input", { type: "number", disabled: !0, className: "w-full bg-surface-sunken border-2 border-default rounded-2xl p-5 text-text-tertiary font-semibold text-[15px]", placeholder: "Sayısal Değer..." })
           ] })
         ] }, t.id)) })

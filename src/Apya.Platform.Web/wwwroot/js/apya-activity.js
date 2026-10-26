@@ -4,10 +4,15 @@
    Kullanıcı isteği (2026-10-19): "bir şey yüklenirken, sayfa geçişinde ekranda yükleniyor
    işareti olsun; tıklayınca işlem yapıyor mu yapmıyor mu kestiremiyoruz."
 
+   • GEZİNME KATMANI (2026-10-26, marka yenilemesi): aynı kökenli bağlantı tıklaması ya da form
+     gönderimi (başka bir dinleyici durdurmadıysa — defaultPrevented) → 250 ms içinde yeni sayfa
+     gelmezse ekranı örten yarı saydam katman + ortada APYA işareti ("düşünüyor") + "Yükleniyor…".
+     Hızlı sayfada hiç görünmez. Yeni sayfa gelince biter; bfcache dönüşünde (pageshow), Esc ile
+     ya da 10 sn emniyetle kapanır (gezinme hiç olmazsa: kirli form uyarısında "Kal").
+     İndirme gibi görünen adres (?handler=Export…/Download…, /api/, dosya uzantısı) ve
+     data-apya-no-overlay taşıyan bağlantı/form katman AÇMAZ — sayfa yenilenmeyeceği için
+     katman ekranı kilitlerdi; onlarda yalnız üst çubuk.
    • ÜST ÇUBUK: sayfanın tepesinde ince, belirsiz ilerleme çubuğu.
-     - Tam sayfa gezinme: aynı kökenli bağlantı tıklaması ya da form gönderimi (başka bir
-       dinleyici durdurmadıysa — defaultPrevented) → hemen başlar, yeni sayfa gelince biter
-       (bfcache'ten dönüşte pageshow ile kapanır; gezinme hiç olmazsa 15 sn emniyet).
      - Kullanıcının tetiklediği istek: bir tıklamadan / Enter'dan sonraki 1,5 sn içinde başlayan
        istek. XMLHttpRequest (jQuery, ABP vekilleri, DataTables) ve fetch (React adaları)
        kapsanır. 250 ms'den kısa süren istek gösterge üretmez (titreşim yok).
@@ -34,8 +39,11 @@
     var INTERACTION_WINDOW_MS = 1500;
     var SHOW_DELAY_MS = 250;
     var NAV_DELAY_MS = 120;
+    var OVERLAY_DELAY_MS = 250;
     var REQUEST_SAFETY_MS = 30000;
-    var NAV_SAFETY_MS = 15000;
+    var NAV_SAFETY_MS = 10000;
+    // Sayfa yenilenmeyecek (dosya dönen) adresler: katman yerine yalnız çubuk.
+    var DOWNLOAD_URL = /[?&]handler=(download|export|attachment|screenshot|file|pdf|excel|csv)|\/api\/|\/(download|export)s?(\/|\?|$)|\.(pdf|xlsx?|csv|zip|docx?|pptx?|png|jpe?g|gif|txt)(\?|$)/i;
     var PENDING = 'data-apya-pending';
     var BUTTONS = 'button, [role=button], input[type=submit], input[type=button], a.btn';
 
@@ -44,7 +52,9 @@
     var bar = null;
     var showTimer = null;
     var navTimer = null;
+    var navSafety = null;
     var navigating = false;
+    var overlay = null;
 
     function now() { return Date.now(); }
 
@@ -191,24 +201,74 @@
         if (e.key === 'Enter') { lastInteraction = { time: now(), target: pendingTarget(e.target) }; }
     }, true);
 
+    // --- Gezinme katmanı ---
+    function loadingText() {
+        // Metin yerelleştirmeden (Shell:Loading); abp yoksa (test, oturumsuz sayfa) Türkçe yedek.
+        try {
+            if (window.abp && abp.localization && abp.localization.localize) {
+                var text = abp.localization.localize('Shell:Loading', 'Platform');
+                if (text && text !== 'Shell:Loading') { return text; }
+            }
+        } catch (err) { /* yedeğe düş */ }
+        return 'Yükleniyor…';
+    }
+
+    function showOverlay() {
+        if (!document.body) { return; }
+        if (!overlay || !overlay.isConnected) {
+            overlay = document.createElement('div');
+            overlay.className = 'apya-nav-overlay';
+            overlay.setAttribute('role', 'status');
+            overlay.setAttribute('aria-live', 'polite');
+            var mark = window.apya.mark ? window.apya.mark({ size: 56, state: 'thinking' }) : '';
+            overlay.innerHTML = '<div class="apya-nav-overlay__box">' + mark +
+                '<span class="apya-nav-overlay__text"></span></div>';
+            overlay.querySelector('.apya-nav-overlay__text').textContent = loadingText();
+            document.body.appendChild(overlay);
+        }
+        overlay.classList.add('is-active');
+        document.documentElement.classList.add('apya-activity-busy');
+    }
+
+    function hideOverlay() {
+        if (overlay && overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
+        overlay = null;
+    }
+
+    function isDownload(url) {
+        return !!url && DOWNLOAD_URL.test(url.pathname + url.search);
+    }
+
     // --- Tam sayfa gezinme ---
-    function startNavigation() {
+    function startNavigation(url, el) {
         if (navigating) { return; }
         navigating = true;
         clearTimeout(showTimer);
         showTimer = null;
-        navTimer = setTimeout(function () { setVisible(true); }, NAV_DELAY_MS);
-        // Gezinme hiç olmazsa (kirli form uyarısında "Kal", Esc, indirme) çubuk asılı kalmasın.
-        setTimeout(stopNavigation, NAV_SAFETY_MS);
+        if (isDownload(url) || (el && el.closest && el.closest('[data-apya-no-overlay]'))) {
+            navTimer = setTimeout(function () { setVisible(true); }, NAV_DELAY_MS);
+        } else {
+            navTimer = setTimeout(showOverlay, OVERLAY_DELAY_MS);
+        }
+        // Gezinme hiç olmazsa (kirli form uyarısında "Kal", indirme) gösterge asılı kalmasın.
+        clearTimeout(navSafety);
+        navSafety = setTimeout(stopNavigation, NAV_SAFETY_MS);
     }
 
     function stopNavigation() {
         if (!navigating) { return; }
         navigating = false;
         clearTimeout(navTimer);
+        clearTimeout(navSafety);
         navTimer = null;
+        hideOverlay();
+        document.documentElement.classList.remove('apya-activity-busy');
         refresh();
     }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && overlay) { stopNavigation(); }
+    });
 
     function isPageLink(a, e) {
         if (!a || !a.href) { return false; }
@@ -231,7 +291,7 @@
     document.addEventListener('click', function (e) {
         var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
         if (!a) { return; }
-        setTimeout(function () { if (isPageLink(a, e)) { startNavigation(); } }, 0);
+        setTimeout(function () { if (isPageLink(a, e)) { startNavigation(new URL(a.href, location.href), a); } }, 0);
     });
 
     document.addEventListener('submit', function (e) {
@@ -241,7 +301,10 @@
             var target = (form.getAttribute('target') || '').toLowerCase();
             if (target && target !== '_self') { return; }
             form.__apyaSubmitted = true;
-            startNavigation();
+            // form.action DEĞİL: formda name="action" alanı varsa o alanı döndürür.
+            var action = null;
+            try { action = new URL(form.getAttribute('action') || location.href, location.href); } catch (err) { action = null; }
+            startNavigation(action, form);
         }, 0);
     });
 

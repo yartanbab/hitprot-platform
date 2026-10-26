@@ -2468,6 +2468,7 @@
         "MenuLayout:SaveFailed": "Menü düzeni kaydedilemedi — gönderilen düzen okunamadı. Mevcut düzeniniz değişmedi; sayfayı yenileyip tekrar deneyin.",
         "MenuLayout:Saved": "Menü düzeni kaydedildi.",
         "Shell:SidebarWidth": "Kenar çubuğu genişliği — sürükleyin, çift tıkla varsayılana döner",
+        "Shell:Loading": "Yükleniyor…",
         "MenuLayout:Hidden": "Gizlenenler",
         "MenuLayout:HiddenHelp": "Buradaki öğeler ne kenar çubuğunda ne Ayarlar sayfasında görünür. Göz düğmesiyle geri getirebilirsiniz. Gizlemek bir yetki kısıtı DEĞİLDİR: sayfanın kendi adresi açılmaya devam eder.",
         "MenuLayout:Hide": "Gizle",

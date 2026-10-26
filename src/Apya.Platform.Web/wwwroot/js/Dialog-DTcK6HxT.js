@@ -1,7 +1,8 @@
 import { r as c, j as s, b as x } from "./react-vendor-D7YDiBbi.js";
-import { t as ne, g as se, h as z, S as oe, i as ie, b as _, c as U, d as G, e as R, f as T, D as L, j as de, k as q } from "./ui-vendor-UYevF8mE.js";
-import { t as le } from "./index-DgpuJ91w.js";
-const W = "apya-theme", D = "system", J = c.createContext({
+import { t as ne, g as se, h as O, S as oe, i as ie, b as _, c as U, d as G, e as R, f as T, D as q, j as de, k as L } from "./ui-vendor-UYevF8mE.js";
+import { A as le } from "./ApyaMark-BHJ4Yu_6.js";
+import { t as ce } from "./index-DgpuJ91w.js";
+const J = "apya-theme", D = "system", K = c.createContext({
   preference: D,
   resolvedTheme: "light",
   setPreference: () => {
@@ -9,33 +10,33 @@ const W = "apya-theme", D = "system", J = c.createContext({
   toggle: () => {
   }
 });
-function ce() {
+function ue() {
   if (typeof window > "u") return D;
   try {
-    const r = window.localStorage.getItem(W);
+    const r = window.localStorage.getItem(J);
     if (r === "light" || r === "dark" || r === "system")
       return r;
   } catch {
   }
   return D;
 }
-function K() {
+function W() {
   return typeof window > "u" || !window.matchMedia ? !1 : window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 function B(r) {
-  return r === "dark" ? "dark" : r === "light" ? "light" : K() ? "dark" : "light";
+  return r === "dark" ? "dark" : r === "light" ? "light" : W() ? "dark" : "light";
 }
 function I(r) {
   if (typeof document > "u") return;
   const e = document.documentElement;
   e.setAttribute("data-theme", r), r === "dark" ? e.classList.add("dark") : e.classList.remove("dark"), e.classList.remove("lpx-theme-light", "lpx-theme-dark", "lpx-theme-dim"), e.classList.add(r === "dark" ? "lpx-theme-dark" : "lpx-theme-light");
 }
-function Ie({ children: r, defaultPreference: e = D }) {
-  const [t, a] = c.useState(() => ce() ?? e), [n, o] = c.useState(() => B(t)), l = c.useCallback((d) => {
+function Oe({ children: r, defaultPreference: e = D }) {
+  const [t, a] = c.useState(() => ue() ?? e), [n, o] = c.useState(() => B(t)), l = c.useCallback((d) => {
     if (d !== "light" && d !== "dark" && d !== "system") return;
     a(d);
     try {
-      window.localStorage.setItem(W, d);
+      window.localStorage.setItem(J, d);
     } catch {
     }
     const f = B(d);
@@ -45,7 +46,7 @@ function Ie({ children: r, defaultPreference: e = D }) {
     if (t !== "system" || typeof window > "u" || !window.matchMedia)
       return;
     const d = window.matchMedia("(prefers-color-scheme: dark)"), f = () => {
-      const b = K() ? "dark" : "light";
+      const b = W() ? "dark" : "light";
       o(b), I(b);
     };
     return d.addEventListener("change", f), () => d.removeEventListener("change", f);
@@ -59,10 +60,10 @@ function Ie({ children: r, defaultPreference: e = D }) {
     () => ({ preference: t, resolvedTheme: n, setPreference: l, toggle: u }),
     [t, n, l, u]
   );
-  return /* @__PURE__ */ s.jsx(J.Provider, { value: m, children: r });
+  return /* @__PURE__ */ s.jsx(K.Provider, { value: m, children: r });
 }
-function Oe() {
-  const r = c.useContext(J);
+function Pe() {
+  const r = c.useContext(K);
   if (!r)
     throw new Error("useTheme must be used inside a <ThemeProvider>.");
   return r;
@@ -70,7 +71,7 @@ function Oe() {
 function i(...r) {
   return ne(se(r));
 }
-function ze(r, e, t = "tr-TR") {
+function Ye(r, e, t = "tr-TR") {
   return typeof r != "number" || !Number.isFinite(r) ? "—" : new Intl.NumberFormat(t, {
     style: "currency",
     currency: e,
@@ -79,7 +80,7 @@ function ze(r, e, t = "tr-TR") {
     maximumFractionDigits: 2
   }).format(r);
 }
-function Pe(r, e, t = "tr-TR") {
+function $e(r, e, t = "tr-TR") {
   return typeof r != "number" || !Number.isFinite(r) ? "—" : new Intl.NumberFormat(t, {
     style: "currency",
     currency: e,
@@ -87,7 +88,7 @@ function Pe(r, e, t = "tr-TR") {
     maximumFractionDigits: 1
   }).format(r);
 }
-const ue = z(
+const me = O(
   /* Base — her variant için ortak */
   i(
     "inline-flex items-center justify-center gap-2",
@@ -139,7 +140,7 @@ const ue = z(
       size: "md"
     }
   }
-), Ye = x.forwardRef(function({
+), He = x.forwardRef(function({
   className: e,
   variant: t,
   size: a,
@@ -162,33 +163,20 @@ const ue = z(
       disabled: n ? void 0 : v,
       "aria-busy": o || void 0,
       "data-loading": o || void 0,
-      className: i(ue({ variant: t, size: a }), e),
+      className: i(me({ variant: t, size: a }), e),
       ...g,
       children: [
-        o ? /* @__PURE__ */ s.jsx(me, {}) : u,
+        o ? /* @__PURE__ */ s.jsx(fe, {}) : u,
         n ? /* @__PURE__ */ s.jsx(ie, { children: f }) : /* @__PURE__ */ s.jsx("span", { className: o ? "opacity-80" : void 0, children: o && l ? l : f }),
         !o && m
       ]
     }
   );
 });
-function me() {
-  return /* @__PURE__ */ s.jsx(
-    "svg",
-    {
-      className: "animate-spin",
-      width: "14",
-      height: "14",
-      viewBox: "0 0 24 24",
-      fill: "none",
-      stroke: "currentColor",
-      strokeWidth: "2",
-      "aria-hidden": "true",
-      children: /* @__PURE__ */ s.jsx("path", { d: "M21 12a9 9 0 1 1-6.219-8.56", strokeLinecap: "round" })
-    }
-  );
+function fe() {
+  return /* @__PURE__ */ s.jsx(le, { size: 16, state: "thinking" });
 }
-const fe = {
+const be = {
   default: "bg-surface-raised border border-subtle shadow-sm",
   elevated: "bg-surface-elevated border border-subtle shadow-md",
   flat: "bg-surface-base border border-default shadow-none",
@@ -210,14 +198,14 @@ const fe = {
       className: i(
         "rounded-xl overflow-hidden",
         "text-text-primary",
-        fe[t],
+        be[t],
         e
       ),
       ...o,
       children: n
     }
   );
-}), be = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, o) {
+}), xe = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, o) {
   return /* @__PURE__ */ s.jsx(
     "div",
     {
@@ -232,7 +220,7 @@ const fe = {
       children: a
     }
   );
-}), xe = x.forwardRef(function({ className: e, as: t = "h3", children: a, ...n }, o) {
+}), pe = x.forwardRef(function({ className: e, as: t = "h3", children: a, ...n }, o) {
   return /* @__PURE__ */ s.jsx(
     t,
     {
@@ -255,7 +243,7 @@ const fe = {
       children: t
     }
   );
-}), pe = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, o) {
+}), ge = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, o) {
   return /* @__PURE__ */ s.jsx(
     "div",
     {
@@ -265,7 +253,7 @@ const fe = {
       children: a
     }
   );
-}), ge = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, o) {
+}), ve = x.forwardRef(function({ className: e, density: t = "comfortable", children: a, ...n }, o) {
   return /* @__PURE__ */ s.jsx(
     "div",
     {
@@ -281,12 +269,12 @@ const fe = {
     }
   );
 });
-N.Header = be;
-N.Title = xe;
+N.Header = xe;
+N.Title = pe;
 N.Description = he;
-N.Body = pe;
-N.Footer = ge;
-const Y = z(
+N.Body = ge;
+N.Footer = ve;
+const Y = O(
   i(
     "block w-full bg-surface-base text-text-primary",
     "rounded-md border",
@@ -313,7 +301,7 @@ const Y = z(
       tone: "default"
     }
   }
-), ve = x.forwardRef(function({
+), we = x.forwardRef(function({
   className: e,
   size: t,
   invalid: a,
@@ -381,14 +369,14 @@ function H(r) {
   const o = Number(n);
   return Number.isFinite(o) ? o : null;
 }
-function O(r, e, t) {
+function z(r, e, t) {
   return r == null || !Number.isFinite(r) ? "" : new Intl.NumberFormat(e, {
     minimumFractionDigits: t,
     maximumFractionDigits: t,
     useGrouping: !0
   }).format(r);
 }
-const $e = x.forwardRef(function({
+const _e = x.forwardRef(function({
   value: e,
   onValueChange: t,
   currency: a = "TRY",
@@ -405,49 +393,49 @@ const $e = x.forwardRef(function({
   className: y,
   inputClassName: j,
   ...v
-}, Z) {
-  const [F, k] = c.useState(() => O(e, l, u)), M = c.useRef(!1);
+}, X) {
+  const [F, k] = c.useState(() => z(e, l, u)), M = c.useRef(!1);
   x.useEffect(() => {
-    M.current || k(O(e, l, u));
+    M.current || k(z(e, l, u));
   }, [e, l, u]);
-  const A = c.useCallback((h) => {
-    const p = h.target.value;
-    k(p);
-    const w = H(p);
+  const Z = c.useCallback((p) => {
+    const h = p.target.value;
+    k(h);
+    const w = H(h);
     t == null || t(w);
-  }, [t]), V = c.useCallback((h) => {
+  }, [t]), V = c.useCallback((p) => {
     M.current = !0, e != null && (k(String(e).replace(".", l.startsWith("tr") ? "," : ".")), requestAnimationFrame(() => {
-      var p, w;
-      return (w = (p = h.target) == null ? void 0 : p.select) == null ? void 0 : w.call(p);
+      var h, w;
+      return (w = (h = p.target) == null ? void 0 : h.select) == null ? void 0 : w.call(h);
     }));
-  }, [e, l]), ee = c.useCallback((h) => {
+  }, [e, l]), ee = c.useCallback((p) => {
     var w;
     M.current = !1;
-    const p = H(F);
-    t == null || t(p), k(O(p, l, u)), (w = v.onBlur) == null || w.call(v, h);
+    const h = H(F);
+    t == null || t(h), k(z(h, l, u)), (w = v.onBlur) == null || w.call(v, p);
   }, [F, t, l, u, v]), te = c.useMemo(() => e == null ? !1 : m != null && e < m || d != null && e > d, [e, m, d]), re = $[a] ?? a, ae = n && n.length > 1 && o ? /* @__PURE__ */ s.jsx(
     "select",
     {
       value: a,
-      onChange: (h) => o(h.target.value),
-      "aria-label": le("Common:Currency", "Para birimi"),
+      onChange: (p) => o(p.target.value),
+      "aria-label": ce("Common:Currency", "Para birimi"),
       className: i(
         "bg-transparent border-0 outline-none text-sm text-text-secondary",
         "pr-1 -mr-1 cursor-pointer",
         "focus-visible:outline-none"
       ),
-      children: n.map((h) => /* @__PURE__ */ s.jsx("option", { value: h, children: $[h] ?? h }, h))
+      children: n.map((p) => /* @__PURE__ */ s.jsx("option", { value: p, children: $[p] ?? p }, p))
     }
   ) : /* @__PURE__ */ s.jsx("span", { className: "font-medium text-text-secondary", children: re });
   return /* @__PURE__ */ s.jsx(
-    ve,
+    we,
     {
-      ref: Z,
+      ref: X,
       inputMode: "decimal",
       type: "text",
       value: F,
       placeholder: g,
-      onChange: A,
+      onChange: Z,
       onFocus: V,
       onBlur: ee,
       invalid: f || te,
@@ -457,7 +445,7 @@ const $e = x.forwardRef(function({
       ...v
     }
   );
-}), we = z(
+}), ye = O(
   i(
     "inline-flex items-center gap-1",
     "font-medium",
@@ -486,7 +474,7 @@ const $e = x.forwardRef(function({
       size: "md"
     }
   }
-), ye = {
+), je = {
   neutral: "bg-neutral-500",
   brand: "bg-brand-500",
   positive: "bg-positive-500",
@@ -495,12 +483,12 @@ const $e = x.forwardRef(function({
   critical: "bg-critical-500",
   ai: "bg-ai-500"
 };
-function He({ variant: r = "neutral", size: e, withDot: t = !1, className: a, children: n, ...o }) {
-  return /* @__PURE__ */ s.jsxs("span", { className: i(we({ variant: r, size: e }), a), ...o, children: [
+function Ue({ variant: r = "neutral", size: e, withDot: t = !1, className: a, children: n, ...o }) {
+  return /* @__PURE__ */ s.jsxs("span", { className: i(ye({ variant: r, size: e }), a), ...o, children: [
     t && /* @__PURE__ */ s.jsx(
       "span",
       {
-        className: i("inline-block h-1.5 w-1.5 rounded-full", ye[r]),
+        className: i("inline-block h-1.5 w-1.5 rounded-full", je[r]),
         "aria-hidden": "true"
       }
     ),
@@ -508,7 +496,7 @@ function He({ variant: r = "neutral", size: e, withDot: t = !1, className: a, ch
   ] });
 }
 const S = c.createContext(null);
-function Q(r) {
+function A(r) {
   const e = c.useRef(null), t = c.useRef(!1);
   if (r && !t.current) {
     const a = document.activeElement;
@@ -516,7 +504,7 @@ function Q(r) {
   }
   return t.current = !!r, e;
 }
-function X(r, e) {
+function Q(r, e) {
   if (r.defaultPrevented) return;
   const t = e == null ? void 0 : e.current;
   if (!t || !t.isConnected) return;
@@ -524,10 +512,10 @@ function X(r, e) {
   a && a !== document.body || (r.preventDefault(), t.focus({ preventScroll: !0 }));
 }
 function C({ open: r, onOpenChange: e, children: t }) {
-  const a = Q(r);
-  return /* @__PURE__ */ s.jsx(L, { open: r, onOpenChange: e, children: /* @__PURE__ */ s.jsx(S.Provider, { value: a, children: t }) });
+  const a = A(r);
+  return /* @__PURE__ */ s.jsx(q, { open: r, onOpenChange: e, children: /* @__PURE__ */ s.jsx(S.Provider, { value: a, children: t }) });
 }
-const je = x.forwardRef(function({ side: e, className: t, children: a, title: n, description: o, onCloseAutoFocus: l, ...u }, m) {
+const Ne = x.forwardRef(function({ side: e, className: t, children: a, title: n, description: o, onCloseAutoFocus: l, ...u }, m) {
   const d = x.useContext(S), f = e === "bottom" ? "inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom" : e === "right" ? "inset-y-0 right-0 w-full max-w-md border-l animate-sheet-right" : i(
     "inset-x-0 bottom-0 max-h-[90vh] rounded-t-xl border-t animate-sheet-bottom",
     "tablet:inset-x-auto tablet:inset-y-0 tablet:right-0 tablet:left-auto tablet:bottom-auto",
@@ -555,7 +543,7 @@ const je = x.forwardRef(function({ side: e, className: t, children: a, title: n,
         ),
         ...u,
         onCloseAutoFocus: (b) => {
-          l == null || l(b), X(b, d);
+          l == null || l(b), Q(b, d);
         },
         children: [
           e !== "right" && /* @__PURE__ */ s.jsx("div", { className: "tablet:hidden flex justify-center pt-2 pb-1", children: /* @__PURE__ */ s.jsx("div", { className: "h-1 w-10 rounded-full bg-neutral-300", "aria-hidden": "true" }) }),
@@ -566,17 +554,17 @@ const je = x.forwardRef(function({ side: e, className: t, children: a, title: n,
       }
     )
   ] });
-}), Ne = de, Ce = q, ke = R, De = T;
-C.Trigger = Ne;
-C.Close = Ce;
-C.Content = je;
-C.Title = ke;
-C.Description = De;
+}), Ce = de, ke = L, De = R, Re = T;
+C.Trigger = Ce;
+C.Close = ke;
+C.Content = Ne;
+C.Title = De;
+C.Description = Re;
 function E({ open: r, onOpenChange: e, children: t }) {
-  const a = Q(r);
-  return /* @__PURE__ */ s.jsx(L, { open: r, onOpenChange: e, children: /* @__PURE__ */ s.jsx(S.Provider, { value: a, children: t }) });
+  const a = A(r);
+  return /* @__PURE__ */ s.jsx(q, { open: r, onOpenChange: e, children: /* @__PURE__ */ s.jsx(S.Provider, { value: a, children: t }) });
 }
-const Re = x.forwardRef(function({
+const Te = x.forwardRef(function({
   title: e,
   description: t,
   size: a = "default",
@@ -642,7 +630,7 @@ const Re = x.forwardRef(function({
         ),
         ...d,
         onCloseAutoFocus: (j) => {
-          m == null || m(j), X(j, b);
+          m == null || m(j), Q(j, b);
         },
         children: [
           e != null ? /* @__PURE__ */ s.jsx(R, { className: "sr-only", children: e }) : null,
@@ -652,24 +640,24 @@ const Re = x.forwardRef(function({
       }
     ) })
   ] });
-}), Te = q, Se = R, Ee = T;
-E.Content = Re;
-E.Close = Te;
-E.Title = Se;
-E.Description = Ee;
+}), Se = L, Ee = R, Fe = T;
+E.Content = Te;
+E.Close = Se;
+E.Title = Ee;
+E.Description = Fe;
 export {
-  Ye as B,
+  He as B,
   E as D,
-  ve as I,
-  $e as M,
+  we as I,
+  _e as M,
   C as S,
-  Ie as T,
-  ze as a,
-  je as b,
+  Oe as T,
+  Ye as a,
+  Ne as b,
   i as c,
-  He as d,
-  ue as e,
-  Pe as f,
-  Re as g,
-  Oe as u
+  Ue as d,
+  me as e,
+  $e as f,
+  Te as g,
+  Pe as u
 };

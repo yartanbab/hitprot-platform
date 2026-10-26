@@ -40,5 +40,10 @@ describe('Button', () => {
         expect(el).toBeDisabled();
         expect(el).toHaveAttribute('aria-busy', 'true');
         expect(el).toHaveTextContent('Yukleniyor');
+        // Bekleme göstergesi APYA işareti, dönen halka değil.
+        const mark = el.querySelector('svg.apya-mark');
+        expect(mark).not.toBeNull();
+        expect(mark.getAttribute('data-state')).toBe('thinking');
+        expect(el.querySelector('.animate-spin')).toBeNull();
     });
 });

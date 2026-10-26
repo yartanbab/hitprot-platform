@@ -61,6 +61,120 @@
 }
 
 /* =============================================================================
+   YÜKLENİYOR — sayfadaki TÜM bekleme göstergeleri APYA işareti ("düşünüyor")
+   -----------------------------------------------------------------------------
+   Kullanıcı kararı (2026-10-26): spinner'ların hepsi işaret olsun. Yüzlerce yerde
+   işaretleme değiştirmek yerine göstergenin KENDİSİ maskelenir; JS'in sonradan
+   bastığı spinner'lar (DataTables satırı, React adası, apya.busy) da kapsanır.
+   Maske /brand/apya-isaret-dusunuyor.svg: animasyon SVG'nin içinde (1800 ms nefes,
+   ışın başına 55 ms). Renk currentColor → düğme içinde düğme yazısının rengi.
+   İşaret DÖNDÜRÜLMEZ (kılavuz): fa-spin dönüşü kapatılır.
+   Kapsam:
+     • .fa-spin                 dönen her Font Awesome ikonu (yalnız yükleniyor için kullanılıyor;
+                                dönmeyen .fa-spinner "Sürüyor" durum simgesi DOKUNULMAZ)
+     • .spinner-border/-grow    Bootstrap
+     • [data-apya-pending]      tıklanan düğmenin bekleme simgesi (apya-shell.css)
+     • .abp-block-area          abp.ui.setBusy / block katmanı
+   16 px altında standart işaret okunmaz → en az 16 px.
+   ============================================================================= */
+:root {
+    --apya-busy-mask: url('/brand/apya-isaret-dusunuyor.svg') center / contain no-repeat;
+}
+
+.fa-spin {
+    animation: none !important;
+}
+.fa-spin::before {
+    content: "" !important;
+    display: inline-block;
+    width: max(16px, 1.15em);
+    height: max(16px, 1.15em);
+    vertical-align: -.22em;
+    background-color: currentColor;
+    -webkit-mask: var(--apya-busy-mask);
+    mask: var(--apya-busy-mask);
+}
+
+.spinner-border,
+.spinner-grow {
+    border: 0 !important;
+    border-radius: 0 !important;
+    animation: none !important;
+    opacity: 1 !important;
+    background-color: currentColor;
+    -webkit-mask: var(--apya-busy-mask);
+    mask: var(--apya-busy-mask);
+}
+
+/* ABP meşgul katmanı: beyaz perde + 150 px mavi halka yerine gezinme katmanıyla aynı görünüm. */
+.abp-block-area {
+    opacity: 1;
+    background-color: color-mix(in srgb, var(--apya-surface-app-bg, #F5F4F0) 78%, transparent);
+}
+.abp-block-area.abp-block-area-busy:before {
+    width: 56px;
+    height: 56px;
+    top: calc(50% - 28px);
+    left: calc(50% - 28px);
+    border: 0;
+    border-radius: 0;
+    animation: none;
+    background-color: var(--apya-brand-mark, #123B63);
+    -webkit-mask: var(--apya-busy-mask);
+    mask: var(--apya-busy-mask);
+}
+.abp-block-area.abp-block-area-busy:after {
+    top: calc(50% + 48px);
+    transform: translateX(-50%);
+    max-width: 240px;
+    font-family: var(--apya-font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: none;
+    color: var(--apya-text-secondary, #55524A);
+}
+
+/* Gezinme katmanı (apya-activity.js): 250 ms'de yeni sayfa gelmezse ekranı örter.
+   Solma geçişi YOK: sayfa yüklenirken ana iş parçacığı meşgulse geçiş ilerlemez ve
+   katman yarı görünür takılır (ölçüldü) — gecikme zaten 250 ms, anında görünür. */
+.apya-nav-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2090;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: color-mix(in srgb, var(--apya-surface-app-bg, #F5F4F0) 72%, transparent);
+    cursor: progress;
+}
+.apya-nav-overlay__box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    color: var(--apya-brand-mark, #123B63);
+}
+.apya-nav-overlay__text {
+    font-family: var(--apya-font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--apya-text-secondary, #55524A);
+}
+
+/* Hareket azaltma: maske durağan işarete döner, %40 opak (durum sözlüğü). */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --apya-busy-mask: url('/brand/apya-isaret-kucuk.svg') center / contain no-repeat;
+    }
+    .fa-spin::before,
+    .spinner-border,
+    .spinner-grow,
+    .abp-block-area.abp-block-area-busy:before {
+        opacity: .4 !important;
+    }
+}
+
+/* =============================================================================
    KİLİT — işaret + ad (Pages/Shared/_ApyaLockup.cshtml)
    Figtree 600 / .12em; işaret = 1,25 × yazı boyu, aralık = .5 × yazı boyu.
    Renk tek marka rengi: --apya-brand-mark (açıkta lacivert, koyuda beyaz).

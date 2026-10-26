@@ -1,6 +1,6 @@
 import { j as e } from "./react-vendor-D7YDiBbi.js";
-import { S as s } from "./Skeleton-C92LWNeC.js";
-import { c as m } from "./Dialog-D3HpJNIB.js";
+import { S as s } from "./Skeleton-B15h4VhT.js";
+import { c as m } from "./Dialog-DTcK6HxT.js";
 function c({ rows: t = 4, withLeading: a = !0, withTrailing: l = !0, className: i }) {
   return /* @__PURE__ */ e.jsx("ul", { className: m("flex flex-col gap-2", i), "aria-busy": "true", children: Array.from({ length: t }).map((o, r) => /* @__PURE__ */ e.jsxs(
     "li",
