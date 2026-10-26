@@ -1,0 +1,40 @@
+/* APYA marka tokenları ve işaret animasyonları. Tek dosya; global olarak bir kez yükleyin. */
+:root {
+  --apya-brand: #123B63;          /* tek marka rengi */
+  --apya-brand-hover: #0B2542;
+  --apya-dark: #101827;           /* koyu tema zemini */
+  --apya-ink: #1B1A17;            /* başlık metni */
+  --apya-body: #55524A;           /* gövde metni */
+  --apya-muted: #8C887C;          /* ikincil */
+  --apya-line: #E4E1D8;           /* kenarlık */
+  --apya-line-soft: #EDEBE4;
+  --apya-paper: #F5F4F0;          /* açık zemin */
+  --apya-white: #FFFFFF;
+
+  --apya-font: 'Figtree', 'Helvetica Neue', Arial, sans-serif;
+  --apya-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --apya-logo-weight: 600;  --apya-logo-tracking: .12em;
+  --apya-tag-weight: 500;   --apya-tag-tracking: .2em;
+
+  --apya-radius-sm: 8px; --apya-radius-md: 10px; --apya-radius-lg: 14px;
+  --apya-ease: cubic-bezier(.4,0,.2,1);
+}
+
+/* durumlar — ApyaMark bileşeni bunları satır içi style ile kullanır */
+@keyframes apya-think  { 0%, 100% { opacity: .18; transform: scale(.9); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes apya-chase  { 0% { opacity: 1; } 30% { opacity: .16; } 100% { opacity: .16; } }
+@keyframes apya-listen { from { transform: scaleY(.35); } to { transform: scaleY(1); } }
+
+/* kilit / ekran geçişleri */
+@keyframes apya-draw     { 0% { stroke-dashoffset: 17; } 22% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; } }
+@keyframes apya-pop      { 0% { transform: scale(0); } 18% { transform: scale(1.35); } 30%, 100% { transform: scale(1); } }
+@keyframes apya-letter   { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes apya-tagline  { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: .72; transform: translateY(0); } }
+@keyframes apya-ring-morph { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.62); } }
+@keyframes apya-ray-morph  { 0% { opacity: 0; transform: scaleY(.12); } 100% { opacity: 1; transform: scaleY(1); } }
+@keyframes apya-collapse   { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.05); } }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-state="thinking"] line, [data-state="streaming"] line, [data-state="listening"] line { animation: none !important; opacity: .4; }
+}
