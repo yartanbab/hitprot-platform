@@ -39,7 +39,7 @@ export default {
       },
       fontFamily: {
         /* Token tek kaynak: 'Plus Jakarta Sans' self-host EDİLMİYOR
-           (apya-fonts.css yalnız Inter + JetBrains Mono barındırıyor), bu yüzden
+           (apya-fonts.css yalnız Figtree + JetBrains Mono barındırıyor), bu yüzden
            preflight'ın html kuralı sistem fontuna düşüyordu. */
         sans: 'var(--apya-font-sans)',
         /* mono köprülenmemişti → font-mono, Tailwind'in kendi varsayılan

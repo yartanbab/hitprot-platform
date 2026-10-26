@@ -12,7 +12,7 @@
 ┌─ tokens.css (--apya-*)  ← TEK KAYNAK (light :root / dark [data-theme] / density [data-density])
 │
 ├─ Razor/LeptonX tarafı (site-wide, ABP global stil bundle)
-│    apya-fonts.css   → @font-face (Inter + JetBrains Mono, self-host)
+│    apya-fonts.css   → @font-face (Figtree + JetBrains Mono, self-host)
 │    tokens.css       → değişkenler
 │    apya-theme-bridge.css → Bootstrap --bs-* / LeptonX --lpx-* köprüsü + shell + tablo + chip
 │    global.css       → LeptonX logo override
@@ -72,8 +72,9 @@ React island sayfaları ek olarak `_ApyaThemeBootstrap` partial'ı ile `~/js/sty
 
 ## 4) Fontlar (self-host, CDN yok)
 
-- `wwwroot/fonts/` → 4 variable woff2: **Inter** + **JetBrains Mono**, her biri latin + latin-ext subset (Türkçe tam kapsanır: ı latin'de, ĞğŞşİ latin-ext'te). Kaynak: `@fontsource-variable` (npm→kopya; runtime bağımlılık yok).
-- `apya-fonts.css` → `@font-face` (weight ekseni: Inter 100–900, JBMono 100–800, `font-display: swap`, doğru `unicode-range`'ler).
+- `wwwroot/fonts/` → variable woff2: **Figtree** (marka yazı tipi, Google Fonts) + **JetBrains Mono** (`@fontsource-variable`), her biri latin + latin-ext subset (Türkçe tam kapsanır: ı latin'de, ĞğŞşİ latin-ext'te). Runtime bağımlılık yok.
+- **₺ istisnası:** Figtree'de U+20BA yok → `Inter` latin-ext dosyası yalnız bu karakter için `'Apya TL'` adıyla yığında ikinci sırada; sayfada ₺ yoksa indirilmez.
+- `apya-fonts.css` → `@font-face` (weight ekseni: Figtree 300–900, JBMono 100–800, `font-display: swap`, doğru `unicode-range`'ler).
 - `body { font-family: var(--apya-font-sans) }` (apya-shell.css).
 - **Para/sayı/ID/IBAN/kur = her zaman mono + tabular:** Razor'da `.apya-numeric` (apya-shell.css), React'te `.font-tabular` (index.css) — ikisi de `var(--apya-font-mono)` + `tabular-nums`.
 
@@ -134,7 +135,7 @@ Bootstrap/LeptonX'i token'lara bağlar; **yalnız renk/görünüm** (layout Lept
 - `darkMode: ['attribute', 'data-theme']` (aynı SoT).
 - Semantic renkler: `surface-*`, `text-*`, `border-*`, `accent(-soft/-600)`, `positive/negative/warning` → `var(--apya-*)`.
 - **Badge tone skalaları:** `neutral-100/200/500/700`, `brand-50/100/500/700`, `positive|negative|warning-50/100/500/700`, `critical-50/500/600`, `ai-50/500/600` → tokens.css değişkenlerine köprü. (Badge.jsx bunları kullanır; köprü olmadan sessizce transparent render oluyordu — düzeltildi.)
-- boxShadow/borderColor token'ları; fontFamily.sans not: config `Plus Jakarta Sans` der ama fiili `--apya-font-sans` (Inter) kazanır.
+- boxShadow/borderColor token'ları; fontFamily.sans not: config `var(--apya-font-sans)` (Figtree) okur.
 
 **index.css** — `@tailwind` direktifleri + `@layer utilities { .font-tabular }` (mono + tabular-nums; 11 kullanım noktası: Dashboard widget'ları, MoneyInput, DataTable, ExpenseForm...).
 

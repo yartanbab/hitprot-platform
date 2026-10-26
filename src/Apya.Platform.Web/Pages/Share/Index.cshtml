@@ -13,13 +13,14 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>@ViewBag.Title</title>
     <partial name="_ApyaIcons" />
+    <link rel="stylesheet" href="~/css/apya-fonts.css" />
     <link rel="stylesheet" href="~/dynamic-assets/src/styles/tokens.css" />
     <style>
         body {
             margin: 0;
             background: var(--apya-surface-base, #F5F5F5);
             color: var(--apya-text-primary, #111827);
-            font-family: Inter, system-ui, -apple-system, sans-serif;
+            font-family: var(--apya-font-sans, system-ui), sans-serif;
             -webkit-font-smoothing: antialiased;
         }
         .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 60px; position: relative; }

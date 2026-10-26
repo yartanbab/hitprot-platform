@@ -1,27 +1,43 @@
 /* =============================================================================
    APYA FONTS — self-hosted (CDN YOK). Global stil bundle'ında ilk yüklenir.
-   Inter (UI) + JetBrains Mono (sayısal/parasal) — variable woff2, weight ekseni.
-   Subset: latin + latin-ext (Türkçe kapsanır: ı=U+0131 latin'de; Ğğ Şş İ
-   latin-ext U+0100-02BA'da). Kaynak: @fontsource-variable (tarball'dan kopya).
-   Aile adları tokens.css --apya-font-sans / --apya-font-mono ile eşleşir.
+   Figtree (UI, marka yazı tipi) + JetBrains Mono (veri/kod) — variable woff2,
+   weight ekseni. Subset: latin + latin-ext (Türkçe kapsanır: ı=U+0131 latin'de;
+   Ğğ Şş İ latin-ext U+0100-02BA'da). Figtree kaynağı: Google Fonts (v9);
+   JetBrains Mono: @fontsource-variable. Aile adları tokens.css
+   --apya-font-sans / --apya-font-mono ile eşleşir.
    ============================================================================= */
 
-/* --- Inter Variable (weight 100–900) --- */
+/* --- Figtree Variable (weight 300–900) --- */
 @font-face {
-    font-family: 'Inter';
+    font-family: 'Figtree';
     font-style: normal;
     font-display: swap;
-    font-weight: 100 900;
-    src: url('/fonts/inter-latin-wght-normal.woff2') format('woff2');
+    font-weight: 300 900;
+    src: url('/fonts/figtree-latin-wght-normal.woff2') format('woff2');
     unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }
 @font-face {
-    font-family: 'Inter';
+    font-family: 'Figtree';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 300 900;
+    src: url('/fonts/figtree-latin-ext-wght-normal.woff2') format('woff2');
+    unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20B9,U+20BB-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+/* --- ₺ (U+20BA) yedeği ---
+   Figtree'de Türk lirası işareti YOK; yığında bir sonraki aile sistem fontu
+   olsaydı ₺ her platformda başka biçimde çizilirdi (Segoe UI / SF / Roboto).
+   Inter'in latin-ext dosyası YALNIZ bu karakter için ayrı adla kullanılır;
+   sayfada ₺ yoksa tarayıcı dosyayı hiç indirmez. Figtree yukarıda bu
+   karakteri unicode-range'den çıkarır → boşuna dosya indirilmez. */
+@font-face {
+    font-family: 'Apya TL';
     font-style: normal;
     font-display: swap;
     font-weight: 100 900;
     src: url('/fonts/inter-latin-ext-wght-normal.woff2') format('woff2');
-    unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+    unicode-range: U+20BA;
 }
 
 /* --- JetBrains Mono Variable (weight 100–800) --- */

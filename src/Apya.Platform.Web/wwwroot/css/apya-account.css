@@ -11,7 +11,7 @@
     margin: 0;
     background: var(--apya-surface-app-bg, #F5F5F5);
     color: var(--apya-text-primary, #111827);
-    font-family: var(--apya-font-sans, 'Inter', system-ui, sans-serif);
+    font-family: var(--apya-font-sans, 'Figtree', system-ui, sans-serif);
 }
 
 /* Kompozisyon sabit genişlikte ve ortalı; yalnız arka plan tam genişlikte akar.
