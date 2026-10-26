@@ -204,9 +204,9 @@
     --apya-space-24: 96px;
 
     /* --- 1.9 Typography --- */
-    --apya-font-sans:    'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --apya-font-sans:    'Figtree', 'Apya TL', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --apya-font-mono:    'JetBrains Mono', 'SF Mono', Consolas, 'Liberation Mono', monospace;
-    --apya-font-numeric: 'Inter', 'Plus Jakarta Sans', sans-serif; /* tabular-nums applied via utility */
+    --apya-font-numeric: 'Figtree', 'Apya TL', sans-serif; /* tabular-nums applied via utility */
 
     /* Type scale — modular 1.25 */
     --apya-text-xs:   12px;

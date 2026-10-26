@@ -1290,6 +1290,19 @@ html, body {
     --apya-font-icon: 'Font Awesome 7 Free', 'Font Awesome 6 Free', 'Font Awesome 5 Free', FontAwesome;
 }
 
+/* --- TEMANIN SABİT YAZI TİPİ ---
+   LeptonX Lite bu öğelere font-family'yi token yerine "Inter, sans-serif"
+   diye SABİT yazar. Inter self-host edildiği sürece fark edilmiyordu; marka
+   yazı tipi Figtree'ye geçince üst çubuk, tooltip, popover ve modal başlığı
+   sistem fontuna düşüyordu. Seçiciler temanınkiyle AYNI tutulur (özgüllük
+   eşit) — bu dosya temadan sonra yüklendiği için sıra kazanır. --- */
+.tooltip,
+.popover,
+.lpx-heading,
+.modal-header, .alert-heading, .lpx-nav-menu .menu-item .menu-item-text, .lpx-topbar, .lpx-mobile-navbar, .lpx-mobile-menu {
+    font-family: var(--apya-font-sans);
+}
+
 /* --- Daralt/genişlet butonu (temanın .menu-collapse-icon'u): 'bi' ikon fontu
    yüklenmiyor (glyph görünmezdi) → FontAwesome chevron ile değiştir + hit alanı. --- */
 #lpx-sidebar .menu-collapse-icon {
