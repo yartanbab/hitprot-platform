@@ -533,7 +533,7 @@ $(function () {
     // =========================================================================
     // 2) ÇEKMECE — tam ekran, iki gruplu (GÜNLÜK / DİĞER) + 2. seviye panel
     // =========================================================================
-    // Başlık: "A" işareti (CSS) + MENÜ + kapat düğmesi (modal-escape kuralı).
+    // Başlık: APYA işareti (CSS maskesi) + MENÜ + kapat düğmesi (modal-escape kuralı).
     if (!drawer.querySelector('.apya-drawer-head')) {
         var head = document.createElement('div');
         head.className = 'apya-drawer-head';

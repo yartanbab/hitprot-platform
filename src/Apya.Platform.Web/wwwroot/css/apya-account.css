@@ -70,34 +70,15 @@
     gap: 32px;
 }
 
+/* Marka: işaret + APYA (_ApyaLockup, stil /css/apya-mark.css ".apya-lockup"). */
 .apya-auth__brand {
     display: flex;
     align-items: center;
-    gap: 11px;
 }
 
-.apya-auth__mark {
-    display: block;
-    flex: none;
-}
-
-.apya-auth__wordmark {
-    font-size: 23px;
-    font-weight: 700;
-    letter-spacing: -.035em;
-    color: var(--apya-text-primary, #111827);
-}
-
-.apya-auth__badge {
-    align-self: center;
-    padding: 3px 6px;
-    border-radius: var(--apya-radius-sm, 4px);
-    background: var(--apya-accent-soft, rgba(79, 70, 229, .10));
-    color: var(--apya-accent-500, #4F46E5);
-    font-family: var(--apya-font-mono, 'JetBrains Mono', ui-monospace, monospace);
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: .1em;
+/* Dar ekranda tanıtım sütunu gizli → marka kartın üstünde. Geniş ekranda gizli. */
+.apya-auth__panel-brand {
+    display: none;
 }
 
 /* max-width satır kırılımını belirler: 7.5em (80px'te 600px) "Yönetim Asistanı"yı
@@ -482,6 +463,15 @@
         width: 100%;
         max-width: 470px;
         padding: 32px 20px;
+        /* Marka kartın ÜSTÜNDE: panel yatay flex, burada sütuna döner. */
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .apya-auth__panel-brand {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 24px;
     }
 }
 

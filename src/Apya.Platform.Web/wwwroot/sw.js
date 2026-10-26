@@ -183,7 +183,7 @@ const SEVERITY_CRITICAL = 4;
 self.addEventListener('push', (event) => {
     if (!event.data) return;
     let payload = {};
-    try { payload = event.data.json(); } catch (_) { payload = { title: 'Apya', body: event.data.text() }; }
+    try { payload = event.data.json(); } catch (_) { payload = { title: 'APYA', body: event.data.text() }; }
 
     event.waitUntil(showPushNotification(payload));
 });
@@ -206,7 +206,7 @@ async function showPushNotification(payload) {
     const important = (payload.severity || 0) >= SEVERITY_HIGH;
     const tag = payload.tag || (payload.notificationId ? `apya-${payload.notificationId}` : undefined);
 
-    await self.registration.showNotification(payload.title || 'Apya', {
+    await self.registration.showNotification(payload.title || 'APYA', {
         body: payload.body,
         /* icon: renkli uygulama ikonu. badge: Android yalnız saydamlığı okur (tek renk siluet),
            renkli ikon orada içi dolu bir kare olarak görünür → ayrı beyaz mikro işaret. */

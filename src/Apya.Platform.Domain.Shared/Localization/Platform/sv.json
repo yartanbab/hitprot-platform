@@ -1,7 +1,7 @@
 {
   "culture": "sv",
   "texts": {
-    "AppName": "MittProjektNamn",
+    "AppName": "APYA",
     "Menu:Home": "Hem",
     "Welcome": "Välkommen",
     "LongWelcomeMessage": "Välkommen till applikationen. Detta är ett startup-projekt baserat på ABP-ramverket. För mer information, besök abp.io."

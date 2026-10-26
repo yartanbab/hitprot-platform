@@ -239,7 +239,7 @@ public class ErrorPage_Tests
             WebUtility.HtmlDecode(state.InnerText).ShouldNotContain("Geri Bildirim");
 
             var title = WebUtility.HtmlDecode(doc.DocumentNode.SelectSingleNode("//title")!.InnerText).Trim();
-            title.ShouldNotBe("Apya", "sekme/üst çubuk başlığı artık yalnız uygulama adı değil");
+            title.ShouldNotBe("APYA", "sekme/üst çubuk başlığı artık yalnız uygulama adı değil");
             title.ShouldContain(WebUtility.HtmlDecode(state.SelectSingleNode("strong")!.InnerText).Trim());
             state.SelectSingleNode("strong")!.GetAttributeValue("role", "").ShouldBe("heading");
 

@@ -1,7 +1,7 @@
 {
   "culture": "fi",
   "texts": {
-    "AppName": "Platform",
+    "AppName": "APYA",
     "Menu:Home": "Koti",
     "Welcome": "Tervetuloa",
     "LongWelcomeMessage": "Tervetuloa sovellukseen. Tämä on ABP-kehykseen perustuva käynnistysprojekti. Lisätietoja on osoitteessa abp.io."

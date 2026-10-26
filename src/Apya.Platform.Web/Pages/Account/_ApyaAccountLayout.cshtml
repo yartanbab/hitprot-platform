@@ -48,24 +48,27 @@
 <body class="abp-account-layout apya-auth-body @rtl">
 
 <div class="apya-auth">
+    @* Açılış kilidi oturum başına BİR kez oynar (hatalı giriş POST'u sayfayı yeniler;
+       her seferinde 1,5 sn'lik animasyon izletmek yorar). Form beklemez: animasyon
+       yalnız logoda. Hareket azaltma tercihinde hiç oynamaz. CSS: /css/apya-mark.css. *@
+    <script>
+        (function () {
+            try {
+                var key = 'apya-intro-shown';
+                if (sessionStorage.getItem(key)) { return; }
+                if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+                sessionStorage.setItem(key, '1');
+                document.currentScript.parentElement.classList.add('apya-intro');
+            } catch (e) { /* depolama kapalıysa animasyonsuz devam */ }
+        })();
+    </script>
     <div class="apya-auth__glow apya-auth__glow--top" aria-hidden="true"></div>
     <div class="apya-auth__glow apya-auth__glow--bottom" aria-hidden="true"></div>
 
     @* Sol tanıtım sütunu — <992px'te gizlenir, kart tek başına ortalanır. *@
     <section class="apya-auth__hero">
         <div class="apya-auth__brand">
-            <svg class="apya-auth__mark" width="34" height="34" viewBox="0 0 48 48" role="img"
-                 aria-label="@BrandingProvider.AppName">
-                <g style="mix-blend-mode:multiply">
-                    <polygon points="24,2 33,24 24,20 15,24" fill="#4338CA"></polygon>
-                    <polygon points="46,24 24,33 28,24 24,15" fill="#4F46E5"></polygon>
-                    <polygon points="24,46 15,24 24,28 33,24" fill="#5B54E8"></polygon>
-                    <polygon points="2,24 24,15 20,24 24,33" fill="#6D5FEC"></polygon>
-                </g>
-                <polygon points="24,19 29,24 24,29 19,24" fill="#F5F5F5"></polygon>
-            </svg>
-            <span class="apya-auth__wordmark">@BrandingProvider.AppName</span>
-            <span class="apya-auth__badge">PLATFORM</span>
+            <partial name="_ApyaLockup" model="26" />
         </div>
 
         <div>
@@ -83,6 +86,10 @@
     </section>
 
     <main class="apya-auth__panel">
+        @* Tanıtım sütunu <992px'te gizlenir; marka orada kaybolmasın diye kartın üstünde. *@
+        <div class="apya-auth__panel-brand">
+            <partial name="_ApyaLockup" model="20" />
+        </div>
         <div class="apya-auth__card">
             <div class="apya-auth__card-head">
                 <h2 class="apya-auth__title">@ViewBag.Title</h2>

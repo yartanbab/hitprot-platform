@@ -699,29 +699,6 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateY(-1px);
 }
 
-/* ── Apya marka rozeti — prototip "Apya PLATFORM" logosu ──
-   Marka adı (AppName) artık "Apya"; yanına küçük "PLATFORM" hap rozeti eklenir. */
-.lpx-brand-name::after {
-    content: "PLATFORM";
-    display: inline-block;
-    margin-left: 7px;
-    padding: 1px 5px 0;
-    font-size: 8.5px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
-    line-height: 1.5;
-    vertical-align: middle;
-    text-transform: uppercase;
-    border-radius: 5px;
-    color: var(--apya-accent-500, #4F46E5);
-    background: var(--apya-accent-soft, rgba(79, 70, 229, 0.10));
-}
-/* Mobilde marka 26px "A" kutusuna iniyor (apya-theme-bridge.css "MOBİL
-   NAVİGASYON"); rozet orada yer kaplamasın. Masaüstü wordmark'ı dokunulmaz. */
-@media (max-width: 767.98px),
-       (pointer: coarse) and (max-height: 540px) and (max-width: 1199.98px) { /* kabuk kırılımı — bkz. apya-theme-bridge.css "KABUK KIRILIMI" */
-    .lpx-brand-name::after { content: none; }
-}
 
 /* ----------------------------------------------------------------------------
    12) KOMUT PALETİ (⌘K) — header tetikleyici + modal (P4)
@@ -5396,14 +5373,10 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
 /* ============================================================================
    RAY MODU — MARKA İŞARETİ
    ----------------------------------------------------------------------------
-   Rayda marka metni (.lpx-brand-name "Apya PLATFORM") gizleniyor; projede
-   görsel bir logo dosyası olmadığı için (marka bir WORDMARK) üst 72px'lik
-   alan bomboş kalıyordu. LeptonX'in `--lpx-logo-icon` yolu da bir resim
-   bekliyor, bizde yok.
-
-   Çözüm: kompakt "A" işareti — kiracı pilindeki baş harf kutusuyla AYNI
-   görsel dil (kare, yuvarlatılmış, tek harf), yalnız aksan renginde.
-   Salt CSS: markup ya da resim varlığı eklemeye gerek yok.
+   Rayda marka metni (.lpx-brand-name "APYA") gizleniyor; üst 72px'lik alan
+   boş kalmasın diye yalnız APYA işareti (kılavuz: dar alanda yalnız işaret).
+   Salt CSS: global.css'teki maske (--apya-mark-mask) ve logo rengi
+   (--apya-brand-mark) — markup eklemeye gerek yok.
    ============================================================================ */
 @media (min-width: 1200px) {
     html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container {
@@ -5412,20 +5385,13 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
         justify-content: center;
     }
     html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container::after {
-        content: "A";
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: var(--apya-radius-lg);
-        background: var(--apya-accent-500);
-        color: var(--apya-text-inverse);
-        font-family: var(--apya-font-sans);
-        font-size: 15px;
-        font-weight: var(--apya-weight-bold);
-        letter-spacing: -0.03em;
-        line-height: 1;
+        content: "";
+        display: block;
+        width: 28px;
+        height: 28px;
+        background-color: var(--apya-brand-mark);
+        -webkit-mask: var(--apya-mark-mask);
+        mask: var(--apya-mark-mask);
     }
     /* Daralt/genişlet düğmesi rayda zaten gizli; işaret ortada tek başına dursun. */
     html[data-sidebar="collapsed"] #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-logo-container > * {
@@ -5468,20 +5434,13 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
         justify-content: center;
     }
     html #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-sidebar .lpx-logo-container::after {
-        content: "A";
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: var(--apya-radius-lg);
-        background: var(--apya-accent-500);
-        color: var(--apya-text-inverse);
-        font-family: var(--apya-font-sans);
-        font-size: 15px;
-        font-weight: var(--apya-weight-bold);
-        letter-spacing: -0.03em;
-        line-height: 1;
+        content: "";
+        display: block;
+        width: 28px;
+        height: 28px;
+        background-color: var(--apya-brand-mark);
+        -webkit-mask: var(--apya-mark-mask);
+        mask: var(--apya-mark-mask);
     }
     html #lpx-wrapper .lpx-sidebar-container:not(:hover) .lpx-sidebar .lpx-logo-container > * {
         display: none !important;
