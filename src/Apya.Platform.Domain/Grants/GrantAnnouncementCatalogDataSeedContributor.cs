@@ -42,6 +42,7 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
     private readonly IRepository<GrantEligibleCostItem, Guid> _costItemRepository;
     private readonly IRepository<GrantDocumentRequirement, Guid> _documentRepository;
     private readonly IGuidGenerator _guidGenerator;
+    private readonly GrantCallAnnouncer _announcer;
 
     public GrantAnnouncementCatalogDataSeedContributor(
         IRepository<Grant, Guid> grantRepository,
@@ -49,7 +50,8 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         IRepository<GrantCriteriaTag, Guid> criteriaRepository,
         IRepository<GrantEligibleCostItem, Guid> costItemRepository,
         IRepository<GrantDocumentRequirement, Guid> documentRepository,
-        IGuidGenerator guidGenerator)
+        IGuidGenerator guidGenerator,
+        GrantCallAnnouncer announcer)
     {
         _grantRepository = grantRepository;
         _callRepository = callRepository;
@@ -57,6 +59,7 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         _costItemRepository = costItemRepository;
         _documentRepository = documentRepository;
         _guidGenerator = guidGenerator;
+        _announcer = announcer;
     }
 
     public async Task SeedAsync(DataSeedContext context)
@@ -191,6 +194,9 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         if (newDocuments.Count > 0) await _documentRepository.InsertManyAsync(newDocuments, autoSave: true);
         if (newCalls.Count > 0) await _callRepository.InsertManyAsync(newCalls, autoSave: true);
         if (updatedCalls.Count > 0) await _callRepository.UpdateManyAsync(updatedCalls, autoSave: true);
+
+        // Tohumdan SONRA: yeni eklenen çağrılar da tabana girsin (bkz. GrantCallAnnouncer.MarkBaselineOnceAsync).
+        await _announcer.MarkBaselineOnceAsync(DateTime.UtcNow);
     }
 
     /// <summary>
