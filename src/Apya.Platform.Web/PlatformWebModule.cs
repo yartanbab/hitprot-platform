@@ -789,6 +789,19 @@ public class PlatformWebModule : AbpModule
                 return Task.CompletedTask;
             }));
 
+        // Tarayıcı, sayfada ikon bağlantısı olmasa da (sekmede açılan PDF/JSON) /favicon.ico ister.
+        // LeptonX Lite kendi favicon.ico'sunu gömülü taşır ve MapAbpStaticAssets gömülü dosyayı
+        // wwwroot'takinden ÖNCE sunar → kökteki dosya hiç okunmaz, sekmede ABP logosu çıkar.
+        // Adres markanın ikonuna çevrilir; statik varlık eşlemesinden ÖNCE durmalı.
+        app.Use((ctx, next) =>
+        {
+            if (ctx.Request.Path.Equals("/favicon.ico", StringComparison.OrdinalIgnoreCase))
+            {
+                ctx.Request.Path = "/brand/favicon.ico";
+            }
+            return next();
+        });
+
         app.MapAbpStaticAssets();
         app.UseRouting();
         app.UseAuthentication();
@@ -831,7 +844,9 @@ public class PlatformWebModule : AbpModule
                     !path.StartsWith("/js", StringComparison.OrdinalIgnoreCase) &&
                     !path.StartsWith("/libs", StringComparison.OrdinalIgnoreCase) &&
                     !path.StartsWith("/images", StringComparison.OrdinalIgnoreCase) &&
-                    !path.StartsWith("/icons", StringComparison.OrdinalIgnoreCase))
+                    !path.StartsWith("/icons", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("/brand", StringComparison.OrdinalIgnoreCase) &&
+                    !path.StartsWith("/favicon", StringComparison.OrdinalIgnoreCase))
                 {
                     var antiforgery = ctx.RequestServices.GetRequiredService<IAntiforgery>();
                     var tokens = antiforgery.GetAndStoreTokens(ctx);

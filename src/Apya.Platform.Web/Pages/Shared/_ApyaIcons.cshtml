@@ -1,0 +1,17 @@
+@*
+    Sekme ve ana ekran ikonları — TEK kaynak. Uygulama kabuğu (ApyaThemeHead) ve
+    kabuğa bağlı olmayan sayfalar (giriş, yasal, herkese açık form/paylaşım, baskı)
+    bunu çağırır; ikon değişince yalnız burası güncellenir.
+
+    - favicon.ico: SVG desteklemeyen tarayıcılar için (16 + 32 px, mikro işaret).
+      Kökte DEĞİL /brand altında: LeptonX'in gömülü /favicon.ico'su kökteki dosyayı
+      gölgeler; kendiliğinden gelen /favicon.ico istekleri PlatformWebModule'de
+      buraya çevrilir.
+    - favicon.svg: mikro işaret; koyu sekme çubuğunda beyaza döner.
+    - apple-touch-icon: iOS SVG ve saydam köşe kabul etmez → tam kare PNG,
+      köşeyi iOS kendisi yuvarlar.
+    Kaynak ve kurallar: docs/design/brand/kaynak/README.md
+*@
+<link rel="icon" href="@Url.Content("~/brand/favicon.ico")" sizes="32x32" />
+<link rel="icon" type="image/svg+xml" href="@Url.Content("~/brand/favicon.svg")" />
+<link rel="apple-touch-icon" href="@Url.Content("~/brand/apple-touch-icon.png")" />

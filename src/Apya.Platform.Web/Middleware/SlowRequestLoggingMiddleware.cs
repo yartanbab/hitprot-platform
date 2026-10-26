@@ -19,7 +19,7 @@ public class SlowRequestLoggingMiddleware : IMiddleware, ITransientDependency
 {
     private static readonly string[] SkippedPrefixes =
     {
-        "/css", "/js", "/libs", "/images", "/icons", "/favicon",
+        "/css", "/js", "/libs", "/images", "/icons", "/brand", "/favicon",
         "/health", "/notification-hub", "/task-hub", "/ai-hub"
     };
 
