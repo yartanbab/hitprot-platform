@@ -26,6 +26,33 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.10.26",
+            date: "26 Ekim 2026",
+            title: "Hibe programları ayrıntılı: amaç, öncelikler, belgeler ve kendi para biriminde destek tutarı",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe programlarında amaç, öncelikler ve başvuru şartları",
+                "Hibe detayında programın amacı, öncelikleri ve kimlerin başvurabileceği resmî çağrı metninden " +
+                "madde madde gösterilir. Destek oranı, proje süresi, uygun harcama kalemleri ve başvuruda istenen " +
+                "belgelerin listesi de çoğu programda dolu; başvuruya başlamadan neye ihtiyacınız olduğunu görürsünüz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Yeni açık hibe çağrıları",
+                "Kalkınma ajansları, KOSGEB, TÜBİTAK, bakanlıklar, Avrupa Birliği programları ve vakıflardan " +
+                "yeni açık çağrılar eklendi. Size uygun olanlar öneri listenizde ve hibe kataloğunda görünür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Yabancı fonlarda destek tutarı kendi para biriminde",
+                "Avro, dolar ya da sterlin cinsinden destek veren programların tutarı artık \"tavan yok\" yerine " +
+                "kendi para birimiyle gösterilir (ör. 50.000 €). Bu tutarlar Türk lirası bütçenizle kıyaslanmaz; " +
+                "uyum puanı ve bütçe hesabı yalnız Türk lirası tavanlı programlarda tavanı dikkate alır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Yeni açılan çağrılar size bildirim olarak gelir",
+                "Size uygun yeni bir hibe çağrısı açıldığında, çağrı nasıl eklenmiş olursa olsun bildirim alırsınız.")
+        ),
+
+        new ReleaseNote(
             version: "2026.10.22",
             date: "22 Ekim 2026",
             title: "Görevlerde ve hibe ekranlarında yetkiler her yerde aynı: yalnız yapabileceğiniz işlemler görünüyor",
