@@ -2,6 +2,7 @@ import React from 'react';
 import { Slot, Slottable } from '@radix-ui/react-slot';
 import { cva } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
+import { ApyaMark } from '../brand/ApyaMark';
 
 /**
  * Button — token-aware, variant-driven primitive.
@@ -132,21 +133,9 @@ const Button = React.forwardRef(function Button(
 });
 
 function Spinner() {
-    /* Inline SVG — lucide-react'ten kaçınıp Button bağımsız kalsın diye. */
-    return (
-        <svg
-            className="animate-spin"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-        >
-            <path d="M21 12a9 9 0 1 1-6.219-8.56" strokeLinecap="round" />
-        </svg>
-    );
+    /* APYA işareti "düşünüyor" — bekleme göstergesi her yerde işaret (marka kararı 2026-10-26).
+       16 px: altında standart işaret okunmaz. Renk düğme yazısından (currentColor). */
+    return <ApyaMark size={16} state="thinking" />;
 }
 
 export { Button, buttonVariants };

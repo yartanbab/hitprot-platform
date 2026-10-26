@@ -8773,13 +8773,13 @@ html[data-sidebar] .apya-sidebar-resizer {
 }
 html.apya-activity-busy, html.apya-activity-busy body { cursor: progress; }
 [data-apya-pending] { cursor: progress; white-space: nowrap; }
+/* Bekleme simgesi: APYA işareti "düşünüyor" — maske ve hareket azaltma apya-mark.css "YÜKLENİYOR". */
 [data-apya-pending]::after {
-    content: ''; display: inline-block; width: .85em; height: .85em; margin-inline-start: .45em;
-    vertical-align: -.12em; border: 2px solid currentColor; border-inline-end-color: transparent;
-    border-radius: 50%; animation: apyaActivitySpin .7s linear infinite;
+    content: ''; display: inline-block; width: 16px; height: 16px; margin-inline-start: .45em;
+    vertical-align: -.2em; background-color: currentColor;
+    -webkit-mask: var(--apya-busy-mask); mask: var(--apya-busy-mask);
 }
-@keyframes apyaActivitySpin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
     .apya-activity::before { animation: none; left: 0; width: 100%; opacity: .6; }
-    [data-apya-pending]::after { animation: none; border-inline-end-color: currentColor; opacity: .5; }
+    [data-apya-pending]::after { opacity: .4; }
 }

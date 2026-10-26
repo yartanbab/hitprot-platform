@@ -186,6 +186,7 @@
     "MenuLayout:SaveFailed": "Menu layout could not be saved — the submitted layout was unreadable. Your current layout is unchanged; reload the page and try again.",
     "MenuLayout:Saved": "Menu layout saved.",
     "Shell:SidebarWidth": "Sidebar width — drag to resize, double-click to reset",
+    "Shell:Loading": "Loading…",
     "MenuLayout:Hidden": "Hidden",
     "MenuLayout:HiddenHelp": "These items appear neither in the sidebar nor on the Settings page. Use the eye button to bring one back. Hiding is NOT a permission restriction: the page's own address still opens.",
     "MenuLayout:Hide": "Hide",

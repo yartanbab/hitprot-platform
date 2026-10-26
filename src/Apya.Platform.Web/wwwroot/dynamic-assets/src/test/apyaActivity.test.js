@@ -7,6 +7,7 @@ let pendingFetch = [];
 beforeAll(async () => {
     window.fetch = vi.fn(() => new Promise((resolve) => { pendingFetch.push(resolve); }));
     await import('../../../js/apya-activity.js');
+    await import('../../../js/apya-mark.js'); // gezinme katmanı işareti apya.mark ile basar
 });
 
 beforeEach(() => { vi.useFakeTimers(); pendingFetch = []; });
@@ -122,22 +123,97 @@ describe('apya-activity: çift tıklama koruması (Y-02)', () => {
     });
 });
 
-describe('apya-activity: sayfa geçişi', () => {
-    it('aynı kökenli bağlantı tıklaması gezinme çubuğunu açar; bfcache dönüşünde kapanır', async () => {
-        const a = document.createElement('a');
-        a.href = '/Projects';
-        a.textContent = 'Projeler';
-        document.body.appendChild(a);
-        // jsdom gerçek gezinme yapmaz; varsayılan eylemi burada durdurmak testi bozar, o yüzden
-        // yalnız gezinme sonrası kabarcık dinleyicisinin kararını ölçeriz.
-        a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
-        await vi.advanceTimersByTimeAsync(150);
-        expect(isActive()).toBe(true);
+const overlay = () => document.querySelector('.apya-nav-overlay');
 
-        const e = new Event('pageshow');
-        Object.defineProperty(e, 'persisted', { value: true });
-        window.dispatchEvent(e);
+function backFromCache() {
+    const e = new Event('pageshow');
+    Object.defineProperty(e, 'persisted', { value: true });
+    window.dispatchEvent(e);
+}
+
+function clickLink(attrs) {
+    const a = document.createElement('a');
+    Object.entries(attrs).forEach(([k, v]) => a.setAttribute(k, v));
+    a.textContent = 'git';
+    document.body.appendChild(a);
+    // jsdom gerçek gezinme yapmaz; varsayılan eylemi burada durdurmak testi bozar, o yüzden
+    // yalnız gezinme sonrası kabarcık dinleyicisinin kararını ölçeriz.
+    a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
+    return a;
+}
+
+describe('apya-activity: sayfa geçişi', () => {
+    it('aynı kökenli bağlantı 250 ms içinde açılmazsa ekranı örten katman çıkar; bfcache dönüşünde kalkar', async () => {
+        clickLink({ href: '/Projects' });
+        await vi.advanceTimersByTimeAsync(200);
+        expect(overlay()).toBeNull(); // hızlı sayfa: katman hiç görünmez
+
+        await vi.advanceTimersByTimeAsync(100);
+        const el = overlay();
+        expect(el).not.toBeNull();
+        expect(el.classList.contains('is-active')).toBe(true);
+        expect(el.getAttribute('role')).toBe('status');
+        expect(el.textContent).toContain('Yükleniyor');
+        const mark = el.querySelector('svg.apya-mark');
+        expect(mark).not.toBeNull();
+        expect(mark.getAttribute('data-state')).toBe('thinking');
+        expect(isActive()).toBe(false); // gezinmede çubuk değil katman
+
+        backFromCache();
+        expect(overlay()).toBeNull();
+    });
+
+    it('Esc katmanı kapatır; gezinme hiç olmazsa 10 sn sonra kendiliğinden kalkar', async () => {
+        clickLink({ href: '/Tasks' });
+        await vi.advanceTimersByTimeAsync(300);
+        expect(overlay()).not.toBeNull();
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(overlay()).toBeNull();
+
+        clickLink({ href: '/Grants' });
+        await vi.advanceTimersByTimeAsync(300);
+        expect(overlay()).not.toBeNull();
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(overlay()).toBeNull();
+    });
+
+    it.each([
+        ['/Reports?handler=ExportExcel'],
+        ['/Share/?handler=Download&fileId=1'],
+        ['/api/app/document/abc/download'],
+        ['/files/rapor.pdf'],
+    ])('indirme adresi (%s) ekranı kilitlemez: katman yerine çubuk', async (href) => {
+        clickLink({ href });
+        await vi.advanceTimersByTimeAsync(300);
+        expect(overlay()).toBeNull();
+        expect(isActive()).toBe(true);
+        backFromCache();
         expect(isActive()).toBe(false);
+    });
+
+    it('data-apya-no-overlay taşıyan bağlantı katman açmaz', async () => {
+        clickLink({ href: '/Invoices/Print', 'data-apya-no-overlay': '' });
+        await vi.advanceTimersByTimeAsync(300);
+        expect(overlay()).toBeNull();
+        backFromCache();
+    });
+
+    it('dışa aktarma formu katman açmaz; normal form açar', async () => {
+        const exportForm = document.createElement('form');
+        exportForm.setAttribute('action', '/Finance?handler=ExportPdf');
+        document.body.appendChild(exportForm);
+        exportForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        await vi.advanceTimersByTimeAsync(300);
+        expect(overlay()).toBeNull();
+        backFromCache();
+
+        const form = document.createElement('form');
+        form.setAttribute('action', '/Projects/Create');
+        document.body.appendChild(form);
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        await vi.advanceTimersByTimeAsync(300);
+        expect(overlay()).not.toBeNull();
+        backFromCache();
     });
 
     it('sayfanın durdurduğu tıklama (onay penceresi, SPA) çubuk açmaz', async () => {
@@ -146,8 +222,9 @@ describe('apya-activity: sayfa geçişi', () => {
         a.addEventListener('click', (ev) => ev.preventDefault());
         document.body.appendChild(a);
         a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
-        await vi.advanceTimersByTimeAsync(200);
+        await vi.advanceTimersByTimeAsync(300);
         expect(isActive()).toBe(false);
+        expect(overlay()).toBeNull();
     });
 
     it('yeni sekmede açılan ve çapa bağlantısı çubuk açmaz', async () => {
@@ -157,7 +234,8 @@ describe('apya-activity: sayfa geçişi', () => {
             document.body.appendChild(a);
             a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
         }
-        await vi.advanceTimersByTimeAsync(200);
+        await vi.advanceTimersByTimeAsync(300);
         expect(isActive()).toBe(false);
+        expect(overlay()).toBeNull();
     });
 });
