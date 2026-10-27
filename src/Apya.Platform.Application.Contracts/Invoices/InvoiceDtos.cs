@@ -14,6 +14,9 @@ public class InvoiceDto : FullAuditedEntityDto<Guid>
     public InvoiceDirection Direction { get; set; }
     public Guid? TaskId { get; set; }
     public Guid? BudgetLineId { get; set; }
+
+    /// <summary>Bütçe kaleminin "kod · ad" gösterimi; yalnız tek fatura okunurken (GetAsync) dolar.</summary>
+    public string? BudgetLineName { get; set; }
     public string InvoiceNumber { get; set; } = string.Empty;
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }
@@ -75,6 +78,30 @@ public class CreateInvoiceItemDto
     public string Description { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
+}
+
+/// <summary>Taslak faturanın tam düzenlemesi. Proje, görev ve para birimi değişmez.</summary>
+public class UpdateInvoiceDto
+{
+    public Guid? CustomerId { get; set; }
+    public InvoiceDirection Direction { get; set; }
+
+    /// <summary>FIN-05 · İsteğe bağlı bütçe kalemi; verilirse faturanın projesine ait olmalıdır.</summary>
+    public Guid? BudgetLineId { get; set; }
+    public string InvoiceNumber { get; set; } = string.Empty;
+    public DateTime InvoiceDate { get; set; }
+    public DateTime DueDate { get; set; }
+    public decimal TaxRate { get; set; }
+    public string? Notes { get; set; }
+    public List<CreateInvoiceItemDto> Items { get; set; } = new();
+}
+
+/// <summary>Ödeme alınmış faturada da değişebilen alanlar: tutarı, cariyi ve kasayı etkilemezler.</summary>
+public class UpdateInvoiceDetailsDto
+{
+    public Guid? BudgetLineId { get; set; }
+    public DateTime DueDate { get; set; }
+    public string? Notes { get; set; }
 }
 
 public class ProjectLookupDto

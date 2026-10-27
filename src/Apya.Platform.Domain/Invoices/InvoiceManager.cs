@@ -114,6 +114,40 @@ public class InvoiceManager : DomainService
     }
 
     /// <summary>
+    /// Taslak faturayı baştan yazar: başlık, kalemler, not ve bütçe kalemi. Fatura tahakkuku
+    /// (CustomerLedgerEntry) yeni tutar, tarih, yön ve cariyle hizalanır.
+    /// </summary>
+    public async Task<Invoice> UpdateDraftAsync(
+        Guid invoiceId,
+        string invoiceNumber,
+        DateTime invoiceDate,
+        DateTime dueDate,
+        decimal taxRate,
+        InvoiceDirection direction,
+        Guid? customerId,
+        IReadOnlyList<InvoiceItemDescriptor> items,
+        string? notes,
+        Guid? budgetLineId)
+    {
+        // Kalemler yüklenmeden boşaltılırsa eski satırlar veritabanında kalır.
+        var query = await _invoiceRepository.WithDetailsAsync(x => x.Items);
+        var invoice = await AsyncExecuter.FirstOrDefaultAsync(query.Where(x => x.Id == invoiceId))
+            ?? throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(Invoice), invoiceId);
+
+        invoice.UpdateDraft(invoiceNumber, invoiceDate, dueDate, taxRate, direction, customerId);
+        foreach (var item in items)
+        {
+            invoice.AddItem(GuidGenerator.Create(), item.Description, item.Quantity, item.UnitPrice);
+        }
+        invoice.SetNotes(notes);
+        invoice.SetBudgetLine(budgetLineId);
+
+        await _invoiceRepository.UpdateAsync(invoice, autoSave: true);
+        await SyncInvoiceLedgerEntryAsync(invoice);
+        return invoice;
+    }
+
+    /// <summary>
     /// Fatura için ödeme kaydeder. İlgili kasa hareketi ve cari tahakkukunu oluşturur.
     /// Fatura durumu toplam ödemeye göre güncellenir (Sent → Paid).
     /// <para>
@@ -182,6 +216,52 @@ public class InvoiceManager : DomainService
     }
 
     // ======================== Private Helpers ========================
+
+    /// <summary>
+    /// Fatura tahakkukunu faturayla hizalar (CreateAsync'teki kuralla aynı): cari ve pozitif tutar
+    /// varsa kayıt güncellenir ya da açılır, yoksa varolan kayıt silinir.
+    /// </summary>
+    private async Task SyncInvoiceLedgerEntryAsync(Invoice invoice)
+    {
+        var invoiceId = invoice.Id;
+        var existing = await _customerLedgerRepository.GetListAsync(
+            e => e.ReferenceId == invoiceId && e.Source == CustomerLedgerSource.Invoice);
+
+        if (!invoice.CustomerId.HasValue || invoice.TotalAmount <= 0)
+        {
+            await _customerLedgerRepository.DeleteManyAsync(existing, autoSave: true);
+            return;
+        }
+
+        var isSales = invoice.Direction == InvoiceDirection.Sales;
+        var direction = isSales ? CustomerLedgerDirection.Debit : CustomerLedgerDirection.Credit;
+        var description = (isSales ? "Satış faturası: " : "Alış faturası: ") + invoice.InvoiceNumber;
+
+        var entry = existing.FirstOrDefault();
+        if (entry == null)
+        {
+            await _customerLedgerRepository.InsertAsync(new CustomerLedgerEntry(
+                GuidGenerator.Create(),
+                invoice.CustomerId.Value,
+                direction,
+                invoice.TotalAmount,
+                invoice.InvoiceDate,
+                CustomerLedgerSource.Invoice,
+                invoice.Currency,
+                invoice.Id,
+                invoice.ProjectId,
+                description,
+                CurrentTenant.Id), autoSave: true);
+            return;
+        }
+
+        entry.CustomerId = invoice.CustomerId.Value;
+        entry.Direction = direction;
+        entry.SetAmount(invoice.TotalAmount);
+        entry.EntryDate = invoice.InvoiceDate;
+        entry.Description = description;
+        await _customerLedgerRepository.UpdateAsync(entry, autoSave: true);
+    }
 
     private async Task CreateCashMovementAsync(
         Invoice invoice,

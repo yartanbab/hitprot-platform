@@ -100,6 +100,12 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         var dto = MapToDto(invoice, project, items);
         dto.CustomerName = customer?.Name;
         dto.PaidAmount = payments.Sum(p => p.Amount);
+        if (invoice.BudgetLineId.HasValue)
+        {
+            var line = await BudgetLineRepository.FindAsync(invoice.BudgetLineId.Value);
+            dto.BudgetLineName = line == null ? null
+                : string.IsNullOrWhiteSpace(line.Code) ? line.Name : line.Code + " · " + line.Name;
+        }
         return dto;
     }
 
@@ -118,19 +124,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             await _customerRepository.GetAsync(input.CustomerId.Value);
         }
 
-        // FIN-05: kalem isteğe bağlıdır; verilmişse faturanın PROJESİNE ait olmalıdır.
-        if (input.BudgetLineId.HasValue)
-        {
-            var lines = LazyServiceProvider.LazyGetRequiredService<
-                Volo.Abp.Domain.Repositories.IRepository<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Guid>>();
-            var lineId = input.BudgetLineId.Value;
-            if (!await lines.AnyAsync(l => l.Id == lineId && l.ProjectId == input.ProjectId))
-            {
-                throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.BudgetLineProjectMismatch)
-                    .WithData("BudgetLineId", lineId)
-                    .WithData("ProjectId", input.ProjectId);
-            }
-        }
+        await EnsureBudgetLineBelongsToProjectAsync(input.BudgetLineId, input.ProjectId);
 
         var items = input.Items
             .Select(i => new InvoiceItemDescriptor(i.Description, i.Quantity, i.UnitPrice))
@@ -152,6 +146,65 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
         return await GetAsync(invoice.Id);
     }
+
+    [Authorize(PlatformPermissions.Invoices.Edit)]
+    public async Task<InvoiceDto> UpdateAsync(Guid id, UpdateInvoiceDto input)
+    {
+        var invoice = await _invoiceRepository.GetAsync(id, includeDetails: false);
+        if (input.CustomerId.HasValue)
+        {
+            await _customerRepository.GetAsync(input.CustomerId.Value);
+        }
+        await EnsureBudgetLineBelongsToProjectAsync(input.BudgetLineId, invoice.ProjectId);
+
+        await _invoiceManager.UpdateDraftAsync(
+            id,
+            input.InvoiceNumber,
+            input.InvoiceDate,
+            input.DueDate,
+            input.TaxRate,
+            input.Direction,
+            input.CustomerId,
+            input.Items.Select(i => new InvoiceItemDescriptor(i.Description, i.Quantity, i.UnitPrice)).ToList(),
+            input.Notes,
+            input.BudgetLineId);
+
+        return await GetAsync(id);
+    }
+
+    [Authorize(PlatformPermissions.Invoices.Edit)]
+    public async Task<InvoiceDto> UpdateDetailsAsync(Guid id, UpdateInvoiceDetailsDto input)
+    {
+        var invoice = await _invoiceRepository.GetAsync(id, includeDetails: false);
+        await EnsureBudgetLineBelongsToProjectAsync(input.BudgetLineId, invoice.ProjectId);
+
+        invoice.SetDueDate(input.DueDate);
+        invoice.SetNotes(input.Notes);
+        invoice.SetBudgetLine(input.BudgetLineId);
+        await _invoiceRepository.UpdateAsync(invoice, autoSave: true);
+
+        return await GetAsync(id);
+    }
+
+    /// <summary>FIN-05: kalem isteğe bağlıdır; verilmişse faturanın PROJESİNE ait olmalıdır.</summary>
+    private async Task EnsureBudgetLineBelongsToProjectAsync(Guid? budgetLineId, Guid projectId)
+    {
+        if (!budgetLineId.HasValue)
+        {
+            return;
+        }
+
+        var lineId = budgetLineId.Value;
+        if (!await BudgetLineRepository.AnyAsync(l => l.Id == lineId && l.ProjectId == projectId))
+        {
+            throw new Volo.Abp.BusinessException(PlatformDomainErrorCodes.BudgetLineProjectMismatch)
+                .WithData("BudgetLineId", lineId)
+                .WithData("ProjectId", projectId);
+        }
+    }
+
+    private IRepository<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Guid> BudgetLineRepository
+        => LazyServiceProvider.LazyGetRequiredService<IRepository<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Guid>>();
 
     [Authorize(PlatformPermissions.Invoices.Edit)]
     public async Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference, Guid? cashAccountId = null)

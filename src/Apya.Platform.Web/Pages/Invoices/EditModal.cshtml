@@ -1,0 +1,219 @@
+@page
+@model Apya.Platform.Web.Pages.Invoices.EditModalModel
+@using System.Globalization
+@using Apya.Platform.Invoices
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@{
+    Layout = null;
+    var locked = !Model.IsDraft;
+    string Inv(decimal v) => v.ToString(CultureInfo.InvariantCulture);
+}
+@* Yeni Fatura penceresinin (CreateModal) düz form deseni. Ödeme alınmış faturada tutarı belirleyen
+   alanlar kilitlidir: sunucu o yolda yalnız vade, not ve bütçe kalemini okur. *@
+<form method="post" action="@Url.Page("/Invoices/EditModal")" id="InvoiceEditForm">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="InvoiceInfo.ProjectId" />
+    <abp-modal size="Large">
+        <abp-modal-header title="Faturayı Düzenle"></abp-modal-header>
+        <abp-modal-body>
+            @if (locked)
+            {
+                <div class="alert alert-info py-2" style="font-size:12.5px">
+                    Bu faturaya ödeme girilmiş: tutar, kalemler ve cari değiştirilemez. Vade, not ve bütçe kalemi düzenlenebilir.
+                </div>
+            }
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Proje</label>
+                    <input class="form-control" value="@Model.ProjectName" disabled />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" asp-for="InvoiceInfo.CustomerId">Müşteri</label>
+                    <select asp-for="InvoiceInfo.CustomerId" asp-items="Model.Customers" class="form-select" disabled="@locked"></select>
+                </div>
+            </div>
+            @* FIN-05 · Bütçe kalemi isteğe bağlı; seçici projenin kalemleriyle dolar. *@
+            <div class="row">
+                <div class="col-md-6 mb-3 d-none" data-budget-line-wrap>
+                    <label class="form-label" asp-for="InvoiceInfo.BudgetLineId">
+                        Bütçe kalemi <span class="text-muted fw-normal">(isteğe bağlı)</span>
+                    </label>
+                    <select asp-for="InvoiceInfo.BudgetLineId" class="form-select"></select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Yön</label>
+                    <div class="d-flex gap-3 pt-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="0" id="EditDirSales"
+                                   checked="@(Model.InvoiceInfo.Direction == InvoiceDirection.Sales)" disabled="@locked" />
+                            <label class="form-check-label" for="EditDirSales">Satış Faturası</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="InvoiceInfo.Direction" value="1" id="EditDirPurchase"
+                                   checked="@(Model.InvoiceInfo.Direction == InvoiceDirection.Purchase)" disabled="@locked" />
+                            <label class="form-check-label" for="EditDirPurchase">Alış Faturası</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" asp-for="InvoiceInfo.InvoiceNumber">Fatura No</label>
+                    @* readonly (disabled değil): alan gönderilmezse zorunlu alan doğrulaması formu düşürür. *@
+                    <input asp-for="InvoiceInfo.InvoiceNumber" class="form-control" readonly="@locked" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label" asp-for="InvoiceInfo.InvoiceDate">Fatura Tarihi</label>
+                    <input asp-for="InvoiceInfo.InvoiceDate" type="date" class="form-control" readonly="@locked" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label" asp-for="InvoiceInfo.DueDate">Son Ödeme Tarihi</label>
+                    <input asp-for="InvoiceInfo.DueDate" type="date" class="form-control" />
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label" asp-for="InvoiceInfo.TaxRate">KDV Oranı (%)</label>
+                    @if (locked)
+                    {
+                        <input class="form-control" value="@Model.InvoiceInfo.TaxRate.ToString("N2")" disabled />
+                    }
+                    else
+                    {
+                        <input asp-for="InvoiceInfo.TaxRate" type="number" step="0.01" class="form-control" data-money-input="true" />
+                    }
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" asp-for="InvoiceInfo.Notes">Notlar</label>
+                <textarea asp-for="InvoiceInfo.Notes" class="form-control" rows="2" placeholder="İsteğe bağlı not..."></textarea>
+            </div>
+
+            <hr />
+            @if (locked)
+            {
+                <h5 class="mb-3">Fatura Kalemleri</h5>
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Açıklama</th><th class="text-end">Miktar</th><th class="text-end">Birim Fiyat</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.InvoiceInfo.Items)
+                        {
+                            <tr>
+                                <td>@item.Description</td>
+                                <td class="text-end apya-numeric">@item.Quantity.ToString("N2")</td>
+                                <td class="text-end apya-numeric">@item.UnitPrice.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Fatura Kalemleri</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="EditInvoiceAddItemBtn">
+                        <i class="fa fa-plus"></i> Yeni Kalem Ekle
+                    </button>
+                </div>
+
+                <div id="EditInvoiceItemsContainer">
+                    @for (var i = 0; i < Model.InvoiceInfo.Items.Count; i++)
+                    {
+                        var item = Model.InvoiceInfo.Items[i];
+                        <div class="row invoice-item mb-2 align-items-end" data-index="@i">
+                            <div class="col-md-5">
+                                <label class="form-label">Açıklama</label>
+                                <input name="InvoiceInfo.Items[@i].Description" class="form-control" value="@item.Description" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Miktar</label>
+                                @* __Invariant ŞART (bkz. CreateModal): elle name= yazılan alanda ASP.NET işaretçiyi eklemez. *@
+                                <input name="InvoiceInfo.Items[@i].Quantity" type="number" step="0.01" class="form-control input-qty" value="@Inv(item.Quantity)" data-money-input="true" required />
+                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[@i].Quantity" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Birim Fiyat</label>
+                                <input name="InvoiceInfo.Items[@i].UnitPrice" type="number" step="0.01" data-money-input class="form-control input-price" value="@Inv(item.UnitPrice)" required />
+                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[@i].UnitPrice" />
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <button type="button" class="btn btn-outline-danger btn-remove-item" aria-label="Kalemi sil" title="Kalemi sil"><i class="fa fa-trash"></i></button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <script>
+                $(function () {
+                    setTimeout(function () {
+                        if (!window.apya || !apya.financeModal) { return; }
+                        apya.financeModal.bindBudgetContext({
+                            formSelector: '#InvoiceEditForm',
+                            projectSelector: '#InvoiceInfo_ProjectId',
+                            lineSelector: '#InvoiceInfo_BudgetLineId',
+                            lineWrapSelector: '[data-budget-line-wrap]',
+                            selectedLineId: '@Model.InvoiceInfo.BudgetLineId',
+                            optionalLine: true
+                        });
+                    }, 0);
+
+                    var $container = $('#EditInvoiceItemsContainer');
+                    if (!$container.length) { return; }
+
+                    // Satır şablonu ve yeniden numaralama CreateModal'daki ile aynı kural:
+                    // liste bağlama 0'dan başlayan KESİNTİSİZ indeks ister.
+                    function reindexItems() {
+                        $container.find('.invoice-item').each(function (i) {
+                            var prefix = 'InvoiceInfo.Items[' + i + ']';
+                            $(this).attr('data-index', i);
+                            $(this).find('[name^="InvoiceInfo.Items["]').each(function () {
+                                this.name = this.name.replace(/^InvoiceInfo\.Items\[\d+\]/, prefix);
+                            });
+                            $(this).find('input[name="__Invariant"]').each(function () {
+                                this.value = this.value.replace(/^InvoiceInfo\.Items\[\d+\]/, prefix);
+                            });
+                        });
+                    }
+
+                    $('#EditInvoiceAddItemBtn').click(function () {
+                        var i = $container.find('.invoice-item').length;
+                        var html = `
+                        <div class="row invoice-item mb-2 align-items-end" data-index="${i}">
+                            <div class="col-md-5">
+                                <label class="form-label">Açıklama</label>
+                                <input name="InvoiceInfo.Items[${i}].Description" class="form-control" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Miktar</label>
+                                <input name="InvoiceInfo.Items[${i}].Quantity" type="number" step="0.01" class="form-control input-qty" value="1" data-money-input="true" required />
+                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[${i}].Quantity" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Birim Fiyat</label>
+                                <input name="InvoiceInfo.Items[${i}].UnitPrice" type="number" step="0.01" data-money-input class="form-control input-price" required />
+                                <input type="hidden" name="__Invariant" value="InvoiceInfo.Items[${i}].UnitPrice" />
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <button type="button" class="btn btn-outline-danger btn-remove-item" aria-label="Kalemi sil" title="Kalemi sil"><i class="fa fa-trash"></i></button>
+                            </div>
+                        </div>`;
+                        var $row = $(html).appendTo($container);
+                        if (window.apya && apya.moneyInput) { apya.moneyInput.scan($row[0]); }
+                    });
+
+                    $container.on('click', '.btn-remove-item', function () {
+                        if ($container.find('.invoice-item').length > 1) {
+                            $(this).closest('.invoice-item').remove();
+                            reindexItems();
+                        } else {
+                            abp.notify.warn(abp.localization.getResource('Platform')('Notify:Invoice:ItemRequired'));
+                        }
+                    });
+                });
+            </script>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

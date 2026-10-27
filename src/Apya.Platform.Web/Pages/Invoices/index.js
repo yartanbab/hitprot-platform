@@ -5,6 +5,9 @@ $(function () {
 
     var createModal = new abp.ModalManager(abp.appPath + 'Invoices/CreateModal');
     var paymentModal = new abp.ModalManager(abp.appPath + 'Invoices/PaymentModal');
+    var editModal = new abp.ModalManager(abp.appPath + 'Invoices/EditModal');
+    // FIN-05 · Fatura bütçe harcamasına sayılmaz; kaleme harcama, karşılığı olan gider kaydıyla düşer.
+    var expenseModal = new abp.ModalManager({ viewUrl: abp.appPath + 'Expenses/CreateModal' });
 
     var state = { all: [], filtered: [], selectedId: null, status: '', loading: false, loadFailed: false, total: 0 };
     // F-05 · Sunucu sayfa sayfa verir; "Daha fazla yükle" sonraki sayfayı ekler (liste sessizce kesilmez).
@@ -170,7 +173,10 @@ $(function () {
             '    </div>' +
             '    <div class="text-muted mt-1" style="font-size:12.5px">' + esc(d.customerName || d.projectName || '—') + '</div>' +
             '  </div>' +
-            '  <div class="d-flex gap-1 flex-wrap">' +
+            '  <div class="d-flex gap-1 flex-wrap" id="InvoiceDetailActions">' +
+            (d.status !== 3 && abp.auth.isGranted('Platform.Invoices.Edit')
+                ? '<button type="button" class="btn btn-sm btn-outline-secondary" id="InvoiceDetailEdit"><i class="fa fa-pen me-1"></i>Düzenle</button>'
+                : '') +
             (d.status !== 2 && abp.auth.isGranted('Platform.Invoices.Edit')
                 ? '<button type="button" class="btn btn-sm btn-outline-secondary" id="InvoiceDetailPay"><i class="fa fa-hand-holding-dollar me-1"></i>Ödeme Ekle</button>' +
                   apya.hint('Faturaya kısmi ya da tam tahsilat kaydı ekler. Ödenen tutar genel toplamı karşılayınca fatura Ödendi durumuna geçer.', 'bottom')
@@ -187,6 +193,9 @@ $(function () {
             '</div><div style="font-size:12.5px">' + (isSales ? 'Satış' : 'Alış') + '</div></div>' +
             '  <div class="col-sm-3"><div class="apya-md-overline">Ödenen</div><div class="apya-numeric" style="font-size:12.5px">' + fmt(d.paidAmount) + ' ' + esc(d.currency) + '</div></div>' +
             '</div>' +
+
+            '<div class="mb-3"><div class="apya-md-overline">Bütçe kalemi</div><div style="font-size:12.5px">' +
+            (d.budgetLineId ? esc(d.budgetLineName || '—') : '<span class="text-muted">Bağlı değil</span>') + '</div></div>' +
 
             '<div class="table-responsive mb-3">' +
             '  <table class="table table-sm mb-0">' +
@@ -217,6 +226,23 @@ $(function () {
         $('#InvoiceDetailPay').on('click', function () {
             paymentModal.open({ invoiceId: d.id });
         });
+        $('#InvoiceDetailEdit').on('click', function () {
+            editModal.open({ id: d.id });
+        });
+        offerExpense(d);
+    }
+
+    // Alış faturasının karşılığı olan gider yoksa (ölçüt FinanceCrossCheck'te) gider penceresi
+    // faturanın bilgileriyle dolu açılır. Gider izni olmayana sunucu uyarı döndürmez.
+    function offerExpense(d) {
+        if (d.direction !== 1 || !abp.auth.isGranted('Platform.Expenses.Create')) { return; }
+        Promise.resolve(service.getExpenseCrossCheck(d.id, { abpHandleError: false })).then(function (r) {
+            if (!r || !r.shouldWarn || $detail.attr('data-invoice-id') !== String(d.id)) { return; }
+            $('<button type="button" class="btn btn-sm btn-outline-primary" id="InvoiceDetailExpense"><i class="fa fa-receipt me-1"></i>Gider kaydı oluştur</button>')
+                .on('click', function () { expenseModal.open({ FromInvoiceId: d.id }); })
+                .prependTo('#InvoiceDetailActions')
+                .after(apya.hint('Fatura bütçe harcamasına sayılmaz; tutarın bütçe kalemine harcama olarak düşmesi için karşılığı olan gider kaydı girilir. Pencere faturanın bilgileriyle dolu açılır.', 'bottom'));
+        }, function () { /* uç düşerse buton çıkmaz; detay etkilenmez */ });
     }
 
     // Seçim işareti ile panel aynı faturayı gösterir: yüklenirken önceki faturanın eylemleri durmaz,
@@ -328,6 +354,8 @@ $(function () {
 
     createModal.onResult(function () { abp.notify.success(l('Notify:Invoice:Created')); load(true); });
     paymentModal.onResult(function () { abp.notify.success(l('Notify:Invoice:PaymentRecorded')); load(true); });
+    editModal.onResult(function () { abp.notify.success(l('Notify:Invoice:Updated')); load(true); });
+    expenseModal.onResult(function () { abp.notify.success(l('Notify:Invoice:ExpenseCreated')); load(true); });
 
     $('#NewInvoiceButton').click(function (e) { e.preventDefault(); createModal.open(); });
 
