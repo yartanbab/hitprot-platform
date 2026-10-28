@@ -25,4 +25,7 @@ public interface IIncomeEntryAppService :
 
     /// <summary>DOC-08 · Belge bağını kaldırır; belge silinmez.</summary>
     Task UnlinkDocumentAsync(Guid id, Guid documentFileId);
+
+    /// <summary>Gelir formunun kasa seçicisi — bkz. IExpenseAppService.GetCashAccountLookupAsync.</summary>
+    Task<Volo.Abp.Application.Dtos.ListResultDto<Apya.Platform.CashAccounts.CashAccountLookupDto>> GetCashAccountLookupAsync();
 }

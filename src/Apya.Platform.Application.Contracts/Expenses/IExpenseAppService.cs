@@ -31,4 +31,10 @@ public interface IExpenseAppService :
     /// ve fatura görme izni olmayan kullanıcıda uyarı çıkmaz.
     /// </summary>
     Task<Apya.Platform.Invoices.Dtos.FinanceCrossCheckDto> GetInvoiceCrossCheckAsync(Guid id);
+
+    /// <summary>
+    /// Gider formunun kasa seçicisi: etkin kasalar, ada göre. Gider izniyle gelir —
+    /// gider giren kişiden ayrıca kasa yönetme izni (CashAccounts.Default) istenmez.
+    /// </summary>
+    Task<Volo.Abp.Application.Dtos.ListResultDto<Apya.Platform.CashAccounts.CashAccountLookupDto>> GetCashAccountLookupAsync();
 }

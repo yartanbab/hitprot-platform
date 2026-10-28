@@ -365,6 +365,16 @@ public class IncomeEntryAppService :
             l => l.IncomeEntryId == id && l.DocumentFileId == documentFileId, autoSave: true);
     }
 
+    public async Task<ListResultDto<CashAccountLookupDto>> GetCashAccountLookupAsync()
+    {
+        var q = await _cashAccountRepository.GetQueryableAsync();
+        var accounts = await AsyncExecuter.ToListAsync(q
+            .Where(a => a.IsActive)
+            .OrderBy(a => a.Name)
+            .Select(a => new CashAccountLookupDto { Id = a.Id, Name = a.Name, Currency = a.Currency }));
+        return new ListResultDto<CashAccountLookupDto>(accounts);
+    }
+
     public override async Task<PagedResultDto<IncomeEntryDto>> GetListAsync(GetIncomeEntriesInput input)
     {
         var result = await base.GetListAsync(input);
