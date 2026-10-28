@@ -2057,6 +2057,8 @@
     "Notify:Project:Created": "Project created successfully.",
     "Notify:Project:Deleted": "Project deleted.",
     "Notify:Invoice:Created": "Invoice created successfully.",
+    "Notify:Invoice:Updated": "Invoice updated.",
+    "Notify:Invoice:ExpenseCreated": "Expense recorded.",
     "Finance:CrossCheck:Title": "No matching record",
     "Finance:CrossCheck:InvoiceWithoutExpense": "No expense record matching this purchase invoice was found. Do you want to enter the expense now?",
     "Finance:CrossCheck:ExpenseWithoutInvoice": "No purchase invoice matching this expense was found. If the invoice has arrived, remember to enter it on the Invoices screen.",

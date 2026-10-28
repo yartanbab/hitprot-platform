@@ -1960,6 +1960,8 @@
         "Notify:Project:Created": "Proje başarıyla oluşturuldu.",
         "Notify:Project:Deleted": "Proje silindi.",
         "Notify:Invoice:Created": "Fatura başarıyla oluşturuldu.",
+        "Notify:Invoice:Updated": "Fatura güncellendi.",
+        "Notify:Invoice:ExpenseCreated": "Gider kaydı oluşturuldu.",
         "Finance:CrossCheck:Title": "Karşılık bulunamadı",
         "Finance:CrossCheck:InvoiceWithoutExpense": "Bu alış faturasının karşılığı olan bir gider kaydı bulunamadı. Şimdi gider kaydını girmek ister misiniz?",
         "Finance:CrossCheck:ExpenseWithoutInvoice": "Bu giderin karşılığı olan bir alış faturası bulunamadı. Fatura geldiyse Faturalar ekranından girmeyi unutmayın.",

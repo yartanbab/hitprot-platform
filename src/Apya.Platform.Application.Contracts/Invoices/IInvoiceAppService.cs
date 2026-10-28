@@ -12,6 +12,12 @@ public interface IInvoiceAppService : IApplicationService
     Task<PagedResultDto<InvoiceDto>> GetListAsync(GetInvoicesInput input);
     Task<InvoiceDto> GetAsync(Guid id);
     Task<InvoiceDto> CreateAsync(CreateInvoiceDto input);
+
+    /// <summary>Taslak (ödemesi olmayan) faturayı baştan düzenler; başka durumda reddeder.</summary>
+    Task<InvoiceDto> UpdateAsync(Guid id, UpdateInvoiceDto input);
+
+    /// <summary>Vade, not ve bütçe kalemi — ödeme alınmış faturada da değişir.</summary>
+    Task<InvoiceDto> UpdateDetailsAsync(Guid id, UpdateInvoiceDetailsDto input);
     Task AddPaymentAsync(Guid invoiceId, decimal amount, string method, string reference, Guid? cashAccountId = null);
     Task<List<PaymentDto>> GetPaymentsAsync(Guid invoiceId);
     Task<ListResultDto<ProjectLookupDto>> GetProjectLookupAsync();
