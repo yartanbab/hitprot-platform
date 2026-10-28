@@ -47,13 +47,15 @@ public class CreateModalModel : AbpPageModel
 
         // Görev panelinden açıldığında projeyi de ÖNDEN seç — fatura projesi
         // ZORUNLU, görevin projesi dururken kullanıcıya tekrar seçtirmenin
-        // anlamı yok (gelir/gider modalleriyle aynı davranış).
+        // anlamı yok (gelir/gider modalleriyle aynı davranış). Bütçe kalemi de
+        // görevin "Bütçe bağı"ndan önden seçilir; kullanıcı değiştirebilir.
         if (TaskId.HasValue)
         {
-            var taskProjectId = await FinanceLookupShared.ResolveTaskProjectAsync(_taskAppService, TaskId.Value);
+            var (taskProjectId, taskLineId) = await FinanceLookupShared.ResolveTaskLinkAsync(_taskAppService, TaskId.Value);
             if (taskProjectId.HasValue)
             {
                 InvoiceInfo.ProjectId = taskProjectId.Value;
+                InvoiceInfo.BudgetLineId = taskLineId;
             }
         }
 

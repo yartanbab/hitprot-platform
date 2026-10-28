@@ -37,18 +37,26 @@ public static class FinanceLookupShared
     /// bozulmaz (kullanıcı projeyi elle seçer).
     /// </summary>
     public static async Task<Guid?> ResolveTaskProjectAsync(ITaskAppService taskSvc, Guid taskId)
+        => (await ResolveTaskLinkAsync(taskSvc, taskId)).ProjectId;
+
+    /// <summary>
+    /// Görevin projesi ve "Bütçe bağı"ndaki kalemi. Fatura/gider penceresi kalemi bununla
+    /// ÖNDEN seçer (kullanıcı değiştirebilir) — aynı soruyu ikinci kez sormamak için.
+    /// </summary>
+    public static async Task<(Guid? ProjectId, Guid? BudgetLineId)> ResolveTaskLinkAsync(ITaskAppService taskSvc, Guid taskId)
     {
         try
         {
-            return (await taskSvc.GetAsync(taskId)).ProjectId;
+            var task = await taskSvc.GetAsync(taskId);
+            return (task.ProjectId, task.BudgetLineId);
         }
         catch (AbpAuthorizationException)
         {
-            return null;
+            return (null, null);
         }
         catch (EntityNotFoundException)
         {
-            return null;
+            return (null, null);
         }
     }
 

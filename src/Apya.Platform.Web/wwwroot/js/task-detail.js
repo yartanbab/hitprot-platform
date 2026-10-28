@@ -1809,7 +1809,7 @@ function ve(t, s) {
     return `${(t || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} ${a}`.trim();
   }
 }
-const Cr = ["pointerdown", "focusin", "wheel", "touchmove"], Dr = (t) => t.stopPropagation();
+const Cr = ["pointerdown", "focusin", "focusout", "wheel", "touchmove"], Dr = (t) => t.stopPropagation();
 function Tr(t, s, a, r) {
   var x, u, h, m, d, b, f;
   const l = (x = window == null ? void 0 : window.abp) == null ? void 0 : x.ModalManager;

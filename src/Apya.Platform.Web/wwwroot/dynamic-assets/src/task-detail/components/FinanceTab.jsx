@@ -29,9 +29,11 @@ function fmtMoney(amount, currency) {
  * tekerlek kilitleniyordu. Kap, Radix'in belge düzeyinde dinlediği olaylardan
  * yalıtılır (bkz. ajax-error-detail.js isolateLayer; mousedown'a DOKUNULMAZ —
  * select2 dışarı-kapatması onu dinler). Esc'i görev detayı `.modal.show` görünce bırakır.
+ * `focusout` da yalıtılır: FocusScope belgede onu da dinler ve pencere içinde alandan
+ * alana geçişte odağı görev detayına geri çekiyordu → metin alanlarına yazılamıyordu.
  * Form sunucudan yüklenirken (`onSettled` gelene dek) düğme meşgul gösterilir.
  */
-const ISOLATED_EVENTS = ['pointerdown', 'focusin', 'wheel', 'touchmove'];
+const ISOLATED_EVENTS = ['pointerdown', 'focusin', 'focusout', 'wheel', 'touchmove'];
 const stopPropagation = (e) => e.stopPropagation();
 
 function openFinanceModal(page, taskId, onSaved, onSettled) {
