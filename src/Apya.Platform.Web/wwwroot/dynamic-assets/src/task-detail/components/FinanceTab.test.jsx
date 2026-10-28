@@ -175,6 +175,24 @@ describe('FinanceTab · kayit ekleme aksiyonlari', () => {
         document.removeEventListener('focusin', docListener);
     });
 
+    it('modal icinde alandan alana gecis gorev penceresine odak kaybi saymaz (yazi yazilabilsin)', () => {
+        // Radix FocusScope belgede focusout dinler: relatedTarget kendi kabinin
+        // disindaysa odagi geri ceker → ABP penceresindeki metin alanlarina yazilamiyordu.
+        grant('Platform.Invoices.Create');
+        renderWithClient(<FinanceTab taskId="t-1" task={{ id: 't-1', expenses: [], incomes: [] }} />);
+        const docListener = vi.fn();
+        document.addEventListener('focusout', docListener);
+
+        fireEvent.click(screen.getByRole('button', { name: /fatura ekle/i }));
+        const container = document.getElementById('Abp_Modal_test');
+        const from = container.appendChild(document.createElement('select'));
+        const to = container.appendChild(document.createElement('input'));
+        fireEvent.focusOut(from, { relatedTarget: to });
+
+        expect(docListener).not.toHaveBeenCalled();
+        document.removeEventListener('focusout', docListener);
+    });
+
     it('form yuklenirken dugme mesgul ve ikinci modal acilmaz; modal acilinca serbest', () => {
         const ModalManager = grant('Platform.Expenses.Create', 'Platform.Incomes.Create');
         renderWithClient(<FinanceTab taskId="t-1" task={{ id: 't-1', expenses: [], incomes: [] }} />);
