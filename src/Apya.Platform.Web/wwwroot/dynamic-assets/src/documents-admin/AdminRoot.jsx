@@ -269,7 +269,7 @@ export function AdminRoot() {
           </div>
 
           {rules.length === 0 ? (
-            <EmptyState icon={<i className="fa fa-wand-magic-sparkles" />} title="Henüz kural yok"
+            <EmptyState icon={<i className="fa fa-code-branch" />} title="Henüz kural yok"
               description="Koşul → eylem tanımlayarak belgeleri otomatik sınıflandırın." />
           ) : rules.map((rule) => (
             <RuleEditor key={rule.id} rule={rule} onChanged={reloadRules}

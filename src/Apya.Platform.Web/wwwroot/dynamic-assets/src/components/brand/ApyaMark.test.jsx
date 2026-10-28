@@ -72,3 +72,15 @@ describe('ApyaMark', () => {
         expect(snapshot(react)).toEqual(snapshot(host.firstElementChild));
     });
 });
+
+describe('ApyaSuggestBadge', () => {
+    it('14 px standart (mikro değil) öneri işareti + metin basar', async () => {
+        const { ApyaSuggestBadge } = await import('./ApyaSuggestBadge');
+        const { container } = render(<ApyaSuggestBadge>Önerilen tarih</ApyaSuggestBadge>);
+        const svg = container.querySelector('svg.apya-mark');
+        expect(svg.getAttribute('width')).toBe('14');
+        expect(svg.getAttribute('data-state')).toBe('suggest');
+        expect(svg.querySelectorAll('.apya-mark__ray')).toHaveLength(13);
+        expect(container.textContent).toContain('Önerilen tarih');
+    });
+});

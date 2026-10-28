@@ -107,7 +107,7 @@ $(function () {
         $md.removeClass('has-selection');
         $detail.html(
             '<div class="apya-md-empty">' +
-            '  <i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i>' +
+            '  <i class="apya-ai-icon" aria-hidden="true"></i>' +
             '  <span>Detaylarını görmek için soldaki listeden bir prompt seçin.</span>' +
             '</div>'
         );

@@ -61,6 +61,26 @@
 }
 
 /* =============================================================================
+   AI İKONU — ikon dizesi alan her yer için (menü, bildirim türü, sekme, boş durum)
+   <i class="apya-ai-icon"> → durağan APYA işareti; rengi yazıdan (currentColor).
+   YALNIZ asistanın (AI modülü / LLM çağrısı) ürettiği ya da önerdiği yerde kullanılır;
+   kural tabanlı eşleştirme ve sihirbazlar nötr ikon taşır (kılavuz: işaret kullanıcı
+   verisinde ve asistan dışı işlevde görünmez). 16 px altında standart işaret okunmaz.
+   ============================================================================= */
+.apya-ai-icon {
+    display: inline-block;
+    width: max(16px, 1.15em);
+    height: max(16px, 1.15em);
+    vertical-align: -.22em;
+    background-color: currentColor;
+    -webkit-mask: var(--apya-mark-mask);
+    mask: var(--apya-mark-mask);
+}
+.apya-ai-icon::before {
+    content: none !important; /* "fa apya-ai-icon" gibi birleşimlerde FA glifi basılmasın */
+}
+
+/* =============================================================================
    YÜKLENİYOR — sayfadaki TÜM bekleme göstergeleri APYA işareti ("düşünüyor")
    -----------------------------------------------------------------------------
    Kullanıcı kararı (2026-10-26): spinner'ların hepsi işaret olsun. Yüzlerce yerde

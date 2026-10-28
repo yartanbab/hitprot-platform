@@ -36,6 +36,7 @@ function AiSuggestionsCard({ editMode }) {
             emptyState={
                 <EmptyState
                     compact
+                    icon={<i className="apya-ai-icon" aria-hidden="true" />}
                     title={t('Dashboard:Ai:EmptyTitle', 'AI şu an sessiz')}
                     description={t('Dashboard:Ai:EmptyDescription', 'Anlamlı bir öneri çıktığında burada görünecek.')}
                     action={canOpenAiCenter() ? (

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Badge, Button } from '../ui';
+import { Button } from '../ui';
+import { ApyaSuggestBadge } from '../brand/ApyaSuggestBadge';
 import { cn } from '../../lib/utils';
 import { ConfidenceMeter } from './ConfidenceMeter';
 import { t } from '../../lib/i18n';
@@ -70,7 +71,7 @@ function SuggestionCard({
             <div className="p-3 flex flex-col gap-2">
                 {/* Üst satır: rozet + confidence meter */}
                 <div className="flex items-center justify-between gap-2">
-                    {badge ?? <Badge variant="ai" size="sm" withDot>AI</Badge>}
+                    {badge ?? <ApyaSuggestBadge>AI</ApyaSuggestBadge>}
                     <ConfidenceMeter score={confidence} label={confidenceLabel} size="md" />
                 </div>
 

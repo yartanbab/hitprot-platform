@@ -16,7 +16,7 @@ $(function () {
         { value: 2,    key: 'Projects',  icon: 'fa fa-diagram-project' },
         { value: 3,    key: 'Documents', icon: 'fa fa-folder-open' },
         { value: 4,    key: 'Grants',    icon: 'fa fa-award' },
-        { value: 5,    key: 'Ai',        icon: 'fa fa-robot' },
+        { value: 5,    key: 'Ai',        icon: 'apya-ai-icon' },
         { value: 6,    key: 'Feedback',  icon: 'fa fa-comment-dots' },
         { value: 7,    key: 'System',    icon: 'fa fa-gear' },
         { value: 8,    key: 'Finance',   icon: 'fa fa-wallet' }

@@ -355,7 +355,7 @@ function he() {
       h.length === 0 ? /* @__PURE__ */ e.jsx(
         A,
         {
-          icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-wand-magic-sparkles" }),
+          icon: /* @__PURE__ */ e.jsx("i", { className: "fa fa-code-branch" }),
           title: "Henüz kural yok",
           description: "Koşul → eylem tanımlayarak belgeleri otomatik sınıflandırın."
         }

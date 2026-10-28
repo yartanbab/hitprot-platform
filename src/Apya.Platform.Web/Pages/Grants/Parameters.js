@@ -266,7 +266,7 @@ $(function () {
         if (src && src.source === SOURCE.MetindenFarkli) {
             tone = 'is-conflict'; icon = 'fa-code-compare'; text = l('Grants:Parameters:Source:Conflict');
         } else if (src && src.source === SOURCE.OnayBekliyor) {
-            tone = 'is-suggest'; icon = 'fa-wand-magic-sparkles'; text = l('Grants:Parameters:Source:Pending');
+            tone = 'is-suggest'; icon = 'fa-highlighter'; text = l('Grants:Parameters:Source:Pending');
         } else if (impact && impact.missingDataCount > 0) {
             tone = 'is-attention'; icon = 'fa-circle-exclamation';
             text = l('Grants:Parameters:Source:MissingData', impact.missingDataCount);
