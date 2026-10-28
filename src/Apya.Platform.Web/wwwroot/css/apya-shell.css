@@ -3851,7 +3851,9 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
         box-shadow: none;
     }
 
-    /* Şerit üst bara yaklaşır (24px) ve içerik yanlardan 12px içeride durur.
+    /* Şerit üst bara yaklaşır (12px) ve içerik yanlardan 8px içeride durur.
+       (2026-10-28: 24/12px'ten indi — kullanıcı raporu "fazla boşluk var,
+       fonksiyona yer kalmıyor"; panoda ilk kart ekranın yarısından başlıyordu.)
        Dolgu ŞERİDE DEĞİL kaba verilir: şeridin kendi margin'i temanın
        dolgusuna EKLENİR, onun yerine geçmez.
        Özgüllük (0,3,0) temanın `.lpx-content-container .lpx-content` (0,2,0)
@@ -3859,8 +3861,27 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
        payını apya-theme-bridge.css'teki `html[data-mobile-shell="tabs"]`
        kuralı (0,3,1) veriyor, kısayol yazsaydık onu değil o bizi ezerdi. */
     .lpx-content:has(> .apya-page.apya-task-console) {
-        padding-top: 24px;
-        padding-inline: 12px;
+        padding-top: 12px;
+        padding-inline: 8px;
+    }
+    .apya-page.apya-task-console { gap: 8px; }
+
+    /* --- Kart Panosu: kartlara yer açılır ---
+       375px'te kart 234px'e sıkışıp başlıklar kesiliyordu: dört kat iç içe
+       dolgu (içerik 12 + pano 12 + kolon 8) ve 250–300px sabit kolon.
+       Kolon ekranı doldurur, komşusu 32px görünür kalır ki kaydırılabildiği
+       belli olsun; kaydırma kolon kolon oturur. Kullanıcının masaüstünde
+       sürükleyip kaydettiği kolon genişliği satır içi `flex-basis` olarak
+       gelir — mobilde anlamsız, `!important` onu ezer. Daraltılmış, "kolon
+       ekle" ve not kolonları kendi dar genişliklerinde kalır. Bölümlü panoda
+       ("Projeye göre") kaydırma bölüm satırında, board'da değil — yakalama
+       orada kurulmaz. */
+    .apya-task-console .apya-console-views > #view-kanban { padding: 6px; }
+    .apya-task-console #view-kanban .kanban-board { margin-top: 0 !important; gap: 8px; }
+    .apya-task-console #view-kanban .kanban-board:not(.is-sectioned) { scroll-snap-type: x mandatory; }
+    .apya-task-console #view-kanban .kanban-column:not(.is-collapsed):not(.kanban-add-col):not(.kanban-note-col) {
+        flex: 0 0 calc(100% - 32px) !important;
+        scroll-snap-align: start;
     }
 
     /* --- Filtre çubuğu tek düğmenin arkasına katlanır ---
