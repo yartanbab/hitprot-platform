@@ -3646,7 +3646,7 @@ const tt = [
   {
     code: "ai",
     title: "Yapay Zeka",
-    icon: "fa-sparkles",
+    icon: "apya-ai-icon",
     category: "ileri",
     isCore: !1,
     order: 30,
@@ -3673,7 +3673,7 @@ const tt = [
   {
     code: "automations",
     title: "Otomasyonlar",
-    icon: "fa-wand-magic-sparkles",
+    icon: "fa-gears",
     category: "ileri",
     isCore: !1,
     order: 32,

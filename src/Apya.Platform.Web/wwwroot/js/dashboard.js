@@ -1027,6 +1027,7 @@ function Sa({ editMode: t }) {
         T,
         {
           compact: !0,
+          icon: /* @__PURE__ */ e.jsx("i", { className: "apya-ai-icon", "aria-hidden": "true" }),
           title: n("Dashboard:Ai:EmptyTitle", "AI şu an sessiz"),
           description: n("Dashboard:Ai:EmptyDescription", "Anlamlı bir öneri çıktığında burada görünecek."),
           action: Na() ? /* @__PURE__ */ e.jsx("a", { href: va, className: "text-[12.5px] font-medium text-text-link hover:underline", children: n("Dashboard:Ai:OpenCenter", "AI Merkezi →") }) : void 0

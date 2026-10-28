@@ -50,7 +50,7 @@ function dt(a) {
 const ut = [
   { key: "expiring", label: "Süresi dolanlar", icon: "fa-clock-rotate-left" },
   { key: "missing-meta", label: "Eksik meta", icon: "fa-triangle-exclamation" },
-  { key: "suggested", label: "Öneri bekleyen", icon: "fa-wand-magic-sparkles" },
+  { key: "suggested", label: "Öneri bekleyen", icon: "fa-lightbulb" },
   { key: "trash", label: "Çöp kutusu", icon: "fa-trash-can" }
 ];
 function Aa({
@@ -1527,7 +1527,7 @@ function Lt({ summary: a, busy: r, onApplyAll: n, onApply: u, onDismiss: o, onRe
   const S = [...new Set(i.map((v) => Pa[v.kind]).filter(Boolean))];
   return /* @__PURE__ */ e.jsxs("div", { className: "apya-doc-suggestion-banner", children: [
     /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-center gap-3 flex-wrap", children: [
-      /* @__PURE__ */ e.jsx("span", { className: "apya-doc-suggestion-icon", children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-wand-magic-sparkles" }) }),
+      /* @__PURE__ */ e.jsx("span", { className: "apya-doc-suggestion-icon", children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-lightbulb" }) }),
       /* @__PURE__ */ e.jsxs("div", { style: { minWidth: 0 }, children: [
         /* @__PURE__ */ e.jsxs("div", { style: { fontSize: 12.5, fontWeight: 600 }, children: [
           a.documentCount,
@@ -1642,7 +1642,7 @@ function Kt({ state: a, onDone: r }) {
   };
   return /* @__PURE__ */ e.jsx(Ze, { children: /* @__PURE__ */ e.jsx("div", { className: "apya-in apya-doc-overlay", children: /* @__PURE__ */ e.jsxs("div", { className: "apya-pop-in apya-doc-setup", onClick: (d) => d.stopPropagation(), children: [
     /* @__PURE__ */ e.jsxs("div", { className: "d-flex align-items-start gap-3 mb-3", children: [
-      /* @__PURE__ */ e.jsx("span", { className: "apya-doc-setup-icon", children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-wand-magic-sparkles" }) }),
+      /* @__PURE__ */ e.jsx("span", { className: "apya-doc-setup-icon", children: /* @__PURE__ */ e.jsx("i", { className: "fa fa-folder-tree" }) }),
       /* @__PURE__ */ e.jsxs("div", { style: { minWidth: 0 }, children: [
         /* @__PURE__ */ e.jsx("div", { style: { fontSize: 15, fontWeight: 600 }, children: "Dokümanlar kurulumu" }),
         /* @__PURE__ */ e.jsx("div", { style: { fontSize: 12, color: "var(--apya-text-tertiary)" }, children: "Klasör şemasını kurumun beklediği yapıya göre kurun. Sonradan da değiştirebilirsiniz." })
