@@ -91,6 +91,46 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     /// <summary>
+    /// Taslak faturanın başlığını düzenler ve kalemlerini boşaltır; yeni kalemler <see cref="AddItem"/>
+    /// ile eklenir. Ödeme alınmış faturada tutarı değiştirmek cari ve kasa kayıtlarını bozacağı için
+    /// yalnız Taslak düzenlenir. Proje ve para birimi değişmez.
+    /// </summary>
+    public void UpdateDraft(
+        string invoiceNumber,
+        DateTime invoiceDate,
+        DateTime dueDate,
+        decimal taxRate,
+        InvoiceDirection direction,
+        Guid? customerId)
+    {
+        EnsureDraft();
+        SetInvoiceNumber(invoiceNumber);
+        InvoiceDate = invoiceDate;
+        DueDate = dueDate;
+        SetTaxRate(taxRate);
+        Direction = direction;
+        CustomerId = customerId;
+        Items.Clear();
+        RecalculateTotal();
+    }
+
+    /// <summary>Vade tutarı etkilemez: ödeme alınmış faturada da değişir.</summary>
+    public void SetDueDate(DateTime dueDate)
+    {
+        if (Status == InvoiceStatus.Cancelled)
+            throw new BusinessException(PlatformDomainErrorCodes.InvoiceNotEditable)
+                .WithData("Status", Status);
+        DueDate = dueDate;
+    }
+
+    private void EnsureDraft()
+    {
+        if (Status != InvoiceStatus.Draft)
+            throw new BusinessException(PlatformDomainErrorCodes.InvoiceNotEditable)
+                .WithData("Status", Status);
+    }
+
+    /// <summary>
     /// Toplam ödemeye göre fatura durumunu günceller.
     /// İptal edilmiş faturalar bu çağrıdan etkilenmez.
     /// </summary>
