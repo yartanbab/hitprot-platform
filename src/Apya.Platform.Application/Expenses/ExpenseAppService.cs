@@ -343,6 +343,16 @@ public class ExpenseAppService :
         return result;
     }
 
+    public async Task<ListResultDto<CashAccountLookupDto>> GetCashAccountLookupAsync()
+    {
+        var q = await _cashAccountRepository.GetQueryableAsync();
+        var accounts = await AsyncExecuter.ToListAsync(q
+            .Where(a => a.IsActive)
+            .OrderBy(a => a.Name)
+            .Select(a => new CashAccountLookupDto { Id = a.Id, Name = a.Name, Currency = a.Currency }));
+        return new ListResultDto<CashAccountLookupDto>(accounts);
+    }
+
     public async Task<ExpenseProjectGroupsDto> GetProjectGroupedAsync(GetExpensesInput input)
     {
         const int RowLimit = 500;

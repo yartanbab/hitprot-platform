@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
-using Apya.Platform.CashAccounts;
-using Apya.Platform.Customers;
 using Apya.Platform.Expenses;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
@@ -17,9 +15,7 @@ namespace Apya.Platform.Web.Pages.Expenses;
 public class CreateModalModel : AbpPageModel
 {
     private readonly IExpenseAppService _expenseAppService;
-    private readonly ICashAccountAppService _cashAccountAppService;
     private readonly IProjectAppService _projectAppService;
-    private readonly ICustomerAppService _customerAppService;
     private readonly ITaskAppService _taskAppService;
     private readonly Apya.Platform.Invoices.IInvoiceAppService _invoiceAppService;
 
@@ -40,7 +36,6 @@ public class CreateModalModel : AbpPageModel
 
     public List<SelectListItem> Accounts { get; set; } = new();
     public List<SelectListItem> Projects { get; set; } = new();
-    public List<SelectListItem> Customers { get; set; } = new();
     public List<SelectListItem> Categories { get; set; } = new();
     public string ProjectDatesJson { get; set; } = "{}";
 
@@ -49,24 +44,20 @@ public class CreateModalModel : AbpPageModel
 
     public CreateModalModel(
         IExpenseAppService expenseAppService,
-        ICashAccountAppService cashAccountAppService,
         IProjectAppService projectAppService,
-        ICustomerAppService customerAppService,
         ITaskAppService taskAppService,
         Apya.Platform.Invoices.IInvoiceAppService invoiceAppService)
     {
         _invoiceAppService = invoiceAppService;
         _expenseAppService = expenseAppService;
-        _cashAccountAppService = cashAccountAppService;
         _projectAppService = projectAppService;
-        _customerAppService = customerAppService;
         _taskAppService = taskAppService;
     }
 
     public virtual async Task<IActionResult> OnGetAsync()
     {
-        (Accounts, Projects, Customers, Categories, ProjectDatesJson) =
-            await ExpenseLookups.LoadAsync(_cashAccountAppService, _projectAppService, _customerAppService);
+        (Accounts, Projects, Categories, ProjectDatesJson) =
+            await ExpenseLookups.LoadAsync(_expenseAppService, _projectAppService);
 
         if (FromInvoiceId.HasValue)
         {
