@@ -169,7 +169,7 @@ else
                 <div id="ProfileLoadState"></div>
                 @* Hiç kaydedilmemiş profil kurum profilinden önerilir; kayıt olmadan eşleşmeye girmez. *@
                 <div class="alert alert-info small mb-0 d-none" id="ProfileSuggestedNote" role="status">
-                    <i class="fa fa-wand-magic-sparkles me-2" aria-hidden="true"></i>@L["Grants:Feed:Profile:Suggested"]
+                    <i class="fa fa-id-card me-2" aria-hidden="true"></i>@L["Grants:Feed:Profile:Suggested"]
                 </div>
 
                 <fieldset id="ProfileForm" class="d-flex flex-column gap-3" disabled>
@@ -319,7 +319,7 @@ else
         </div>
 
         <div id="FeedEmpty" class="d-none">
-            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-wand-magic-sparkles", Title = L["Grants:Feed:Empty"].Value, Description = L["Grants:Feed:EmptyHint"].Value }' />
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-filter", Title = L["Grants:Feed:Empty"].Value, Description = L["Grants:Feed:EmptyHint"].Value }' />
         </div>
         <div id="BookmarkEmpty" class="d-none">
             <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-bookmark", Title = L["Grants:Feed:BookmarkEmpty"].Value, Description = L["Grants:Feed:BookmarkEmptyHint"].Value }' />

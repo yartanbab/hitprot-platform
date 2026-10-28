@@ -36,7 +36,7 @@ export function SuggestionBanner({ summary, busy, onApplyAll, onApply, onDismiss
   return (
     <div className="apya-doc-suggestion-banner">
       <div className="d-flex align-items-center gap-3 flex-wrap">
-        <span className="apya-doc-suggestion-icon"><i className="fa fa-wand-magic-sparkles" /></span>
+        <span className="apya-doc-suggestion-icon"><i className="fa fa-lightbulb" /></span>
 
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 12.5, fontWeight: 600 }}>

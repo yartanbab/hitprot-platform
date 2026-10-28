@@ -312,12 +312,12 @@ public static class NotificationTypeRegistry
 
             [NotificationType.AiWorkflowTriggered] = new(
                 NotificationCategory.Ai, NotificationSeverity.Info,
-                "fa fa-robot", "/AiCenter/Evaluations", GroupSimilar: false),
+                "apya-ai-icon", "/AiCenter/Evaluations", GroupSimilar: false),
 
             // N-09 · Görevler sayfası ?drafts= ile taslak inceleme penceresini açar.
             [NotificationType.AiDraftsReady] = new(
                 NotificationCategory.Ai, NotificationSeverity.Normal,
-                "fa fa-wand-magic-sparkles", "/Tasks?drafts={0}", GroupSimilar: false),
+                "apya-ai-icon", "/Tasks?drafts={0}", GroupSimilar: false),
 
             [NotificationType.AiDraftsFailed] = new(
                 NotificationCategory.Ai, NotificationSeverity.Normal,

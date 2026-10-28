@@ -7,7 +7,7 @@
 
 <form method="post" id="ImportDraftForm" enctype="multipart/form-data">
     <abp-modal>
-        <abp-modal-header title="✨ AI ile Görev Oluştur"></abp-modal-header>
+        <abp-modal-header title="AI ile Görev Oluştur"></abp-modal-header>
         
         <abp-modal-body class="p-4">
             <!-- Normal Yükleme Durumu -->
@@ -49,7 +49,7 @@
         
         // Modalın Abp footer'ına özel submit butonu ekliyoruz (Standart save butonu dosya yollamak için özel ajax gerektirdiği için kendi submit event'imizi yöneteceğiz)
         var $footer = $form.find('.modal-footer');
-        var $saveBtn = $('<button type="button" class="btn btn-primary shadow-sm"><i class="fa fa-magic me-1"></i> Analiz Et</button>');
+        var $saveBtn = $('<button type="button" class="btn btn-primary shadow-sm"><i class="apya-ai-icon me-1" aria-hidden="true"></i> Analiz Et</button>');
         $footer.append($saveBtn);
 
         $saveBtn.on('click', function(e) {

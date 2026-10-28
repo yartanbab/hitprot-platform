@@ -843,7 +843,7 @@ public class PlatformNavigationResolver : IScopedDependency
         if (await _feature.IsEnabledAsync(PlatformFeatures.AiAssist))
         {
             var aiCenter = new ApplicationMenuItem(
-                "Apya.AiCenter", l["Menu:AiCenter"], icon: "fa fa-robot", order: 7);
+                "Apya.AiCenter", l["Menu:AiCenter"], icon: "apya-ai-icon", order: 7);
             if (await _permission.IsGrantedAsync(AiPermissions.Dashboard.View))
             {
                 aiCenter.AddItem(new ApplicationMenuItem(
@@ -854,7 +854,7 @@ public class PlatformNavigationResolver : IScopedDependency
             {
                 aiCenter.AddItem(new ApplicationMenuItem(
                     "Apya.AiCenter.Prompts", l["Menu:AiCenter:Prompts"],
-                    icon: "fa fa-wand-magic-sparkles", url: "/AiCenter/Prompts"));
+                    icon: "apya-ai-icon", url: "/AiCenter/Prompts"));
                 aiCenter.AddItem(new ApplicationMenuItem(
                     "Apya.AiCenter.PromptCategories", l["Menu:AiCenter:PromptCategories"],
                     icon: "fa fa-folder-tree", url: "/AiCenter/PromptCategories"));

@@ -153,7 +153,7 @@ export const TASK_FEATURE_REGISTRY = [
         surfaces: ['project', 'tasks'],
     },
     {
-        code: 'ai', title: 'Yapay Zeka', icon: 'fa-sparkles',
+        code: 'ai', title: 'Yapay Zeka', icon: 'apya-ai-icon',
         category: 'ileri', isCore: false, order: 30, permission: null,
         // component yok: LLM entegrasyonu gelene kadar boş durum (UNBUILT_CODES).
         implemented: true, component: null,
@@ -166,7 +166,7 @@ export const TASK_FEATURE_REGISTRY = [
         hidden: true, // GİZLİ (2026-09-03) — bkz. dosya sonundaki not
     },
     {
-        code: 'automations', title: 'Otomasyonlar', icon: 'fa-wand-magic-sparkles',
+        code: 'automations', title: 'Otomasyonlar', icon: 'fa-gears',
         category: 'ileri', isCore: false, order: 32, permission: null,
         // component yok: kural motoru gelene kadar boş durum (UNBUILT_CODES).
         implemented: true, component: null,

@@ -89,7 +89,7 @@ export function SetupWizard({ state, onDone }) {
     <div className="apya-in apya-doc-overlay">
       <div className="apya-pop-in apya-doc-setup" onClick={(e) => e.stopPropagation()}>
         <div className="d-flex align-items-start gap-3 mb-3">
-          <span className="apya-doc-setup-icon"><i className="fa fa-wand-magic-sparkles" /></span>
+          <span className="apya-doc-setup-icon"><i className="fa fa-folder-tree" /></span>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 15, fontWeight: 600 }}>Dokümanlar kurulumu</div>
             <div style={{ fontSize: 12, color: 'var(--apya-text-tertiary)' }}>
