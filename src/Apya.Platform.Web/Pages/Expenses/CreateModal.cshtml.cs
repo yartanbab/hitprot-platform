@@ -77,8 +77,10 @@ public class CreateModalModel : AbpPageModel
 
             // Görev panelinden açıldığında projeyi de ÖNDEN seç: görev seçicisi
             // proje seçilene kadar gizli olduğu için, proje boş kalırsa gelen
-            // TaskId POST'ta kaybolurdu.
-            Expense.ProjectId = await FinanceLookupShared.ResolveTaskProjectAsync(_taskAppService, TaskId.Value);
+            // TaskId POST'ta kaybolurdu. Bütçe kalemi de görevin "Bütçe bağı"ndan
+            // önden seçilir; kullanıcı pencerede değiştirebilir.
+            (Expense.ProjectId, Expense.BudgetLineId) =
+                await FinanceLookupShared.ResolveTaskLinkAsync(_taskAppService, TaskId.Value);
         }
         else if (ProjectId.HasValue)
         {
