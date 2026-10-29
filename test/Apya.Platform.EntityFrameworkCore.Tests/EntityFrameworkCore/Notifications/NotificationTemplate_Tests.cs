@@ -33,14 +33,15 @@ public class NotificationTemplate_Tests : PlatformEntityFrameworkCoreTestBase
         _service = GetRequiredService<INotificationTemplateAppService>();
     }
 
-    /// <summary>Tanımın sıralı yerleri için ayırt edilebilir örnek değerler: {0} → "d0", {1} → "d1"…</summary>
+    /// <summary>
+    /// Değişken başına ayırt edilebilir örnek değer ("&lt;kalem&gt;"). Değer ADA bağlıdır: aynı değişken başlıkta
+    /// ve gövdede geçebilir (bütçe aşımında {kalem}), üretici ikisine de aynı değeri verir.
+    /// </summary>
     private static Dictionary<string, string?> Sample(NotificationTemplateDefinition d)
-    {
-        var values = new Dictionary<string, string?>();
-        for (var i = 0; i < d.TitleArgs.Length; i++) values[d.TitleArgs[i]] = "t" + i;
-        for (var i = 0; i < d.BodyArgs.Length; i++) values[d.BodyArgs[i]] = "d" + i;
-        return values;
-    }
+        => d.Variables.ToDictionary(v => v, v => (string?)("<" + v.Trim('{', '}') + ">"));
+
+    private static object[] Args(string[] names, Dictionary<string, string?> values)
+        => names.Select(n => (object)values[n]!).ToArray();
 
     [Fact]
     public async Task Tohumlanan_her_sablon_bugunku_metinle_ayni_sonucu_verir()
@@ -49,13 +50,12 @@ public class NotificationTemplate_Tests : PlatformEntityFrameworkCoreTestBase
         {
             foreach (var d in NotificationTemplateDefinitions.All)
             {
-                var text = await WithUnitOfWorkAsync(() => _composer.ComposeAsync(d.Type, d.Variant, Sample(d)));
+                var values = Sample(d);
+                var text = await WithUnitOfWorkAsync(() => _composer.ComposeAsync(d.Type, d.Variant, values));
 
                 text.ShouldNotBeNull($"{d.Type}/{d.Variant}");
-                text!.Value.Title.ShouldBe(
-                    _l[d.TitleKey, d.TitleArgs.Select((_, i) => (object)("t" + i)).ToArray()].Value, $"{d.Type}/{d.Variant} başlık");
-                text.Value.Body.ShouldBe(
-                    _l[d.BodyKey, d.BodyArgs.Select((_, i) => (object)("d" + i)).ToArray()].Value, $"{d.Type}/{d.Variant} gövde");
+                text!.Value.Title.ShouldBe(_l[d.TitleKey, Args(d.TitleArgs, values)].Value, $"{d.Type}/{d.Variant} başlık");
+                text.Value.Body.ShouldBe(_l[d.BodyKey, Args(d.BodyArgs, values)].Value, $"{d.Type}/{d.Variant} gövde");
             }
         }
     }
@@ -103,6 +103,19 @@ public class NotificationTemplate_Tests : PlatformEntityFrameworkCoreTestBase
         (await WithUnitOfWorkAsync(() =>
             _composer.ComposeAsync(NotificationType.TaskAssigned, NotificationTemplateDefinitions.Default, values)))
             .ShouldBeNull("kapalı tür hiç üretilmez");
+    }
+
+    [Fact]
+    public async Task Finans_sekmesi_dokuz_metinle_gelir()
+    {
+        var finance = (await WithUnitOfWorkAsync(() => _service.GetAsync())).Templates
+            .Where(t => t.Category == NotificationCategory.Finance)
+            .ToList();
+
+        finance.Count.ShouldBe(9, "8 tür; vadesi geçen faturanın alış ve satış hâli ayrı");
+        finance.Single(t => t.Type == NotificationType.InvoiceOverdue && t.Variant == NotificationTemplateDefinitions.Purchase)
+            .VariantName.ShouldBe("Alış faturası");
+        finance.ShouldAllBe(t => !t.PreviewBody.Contains("{"), "önizlemede ham değişken kalmaz");
     }
 
     [Fact]
