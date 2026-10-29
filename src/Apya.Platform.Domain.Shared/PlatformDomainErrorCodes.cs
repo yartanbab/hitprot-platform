@@ -181,6 +181,7 @@ public static class PlatformDomainErrorCodes
     public const string GrantNotificationTemplateAudienceNotReached = "Platform:Grant:NotificationTemplateAudienceNotReached";
     public const string GrantNotificationTemplateAudienceExists = "Platform:Grant:NotificationTemplateAudienceExists";
     public const string GrantNotificationTemplateGeneralNotDeletable = "Platform:Grant:NotificationTemplateGeneralNotDeletable";
+    public const string NotificationTemplateNotFound = "Platform:Notification:TemplateNotFound";
     public const string GrantNotificationEscalationNotAllowed = "Platform:Grant:NotificationEscalationNotAllowed";
     public const string GrantNotificationEscalationDaysInvalid = "Platform:Grant:NotificationEscalationDaysInvalid";
 
