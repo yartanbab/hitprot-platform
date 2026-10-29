@@ -6,6 +6,7 @@ using Microsoft.Extensions.Localization;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Localization;
 
 namespace Apya.Platform.Grants;
 
@@ -38,7 +39,23 @@ public class GrantNotificationTemplateDataSeedContributor : IDataSeedContributor
             return;
         }
 
-        var existing = (await _repository.GetListAsync()).Select(t => t.Trigger).ToHashSet();
+        var templates = await _repository.GetListAsync();
+
+        // Tohumlama eskiden sunucunun diliyle yazıyordu; İngilizce Windows'ta şablonlar
+        // İngilizce kuruldu. Hâlâ İngilizce varsayılanında duran (host'un dokunmadığı)
+        // şablon Türkçeye çevrilir; host'un düzenlediği metne dokunulmaz.
+        foreach (var template in templates)
+        {
+            var english = DefaultText(template.Trigger, "en");
+            if (template.Subject == english.Subject && template.Body == english.Body)
+            {
+                var turkish = DefaultText(template.Trigger, "tr");
+                template.SetText(turkish.Subject, turkish.Body);
+                await _repository.UpdateAsync(template, autoSave: true);
+            }
+        }
+
+        var existing = templates.Select(t => t.Trigger).ToHashSet();
 
         foreach (var trigger in GrantNotificationTriggerRegistry.All)
         {
@@ -47,11 +64,12 @@ public class GrantNotificationTemplateDataSeedContributor : IDataSeedContributor
                 continue;
             }
 
+            var text = DefaultText(trigger, "tr");
             var template = new GrantNotificationTemplate(
                 Guid.NewGuid(),
                 trigger,
-                _l[$"Grants:Notify:Trigger:{trigger}:Subject"],
-                _l[$"Grants:Notify:Trigger:{trigger}:Body"],
+                text.Subject,
+                text.Body,
                 inApp: true,
                 // E-posta yalnız kaçırılması pahalıya patlayan tetikleyicilerde açık gelir;
                 // kalanı uygulama içinde kalır ve günlük özete düşer. Mesaj ve sıra devri
@@ -64,6 +82,15 @@ public class GrantNotificationTemplateDataSeedContributor : IDataSeedContributor
                                 or GrantNotificationTrigger.HandedOver);
 
             await _repository.InsertAsync(template, autoSave: true);
+        }
+    }
+
+    /// <summary>Varsayılan metin, sunucunun dilinden bağımsız olarak istenen dilde.</summary>
+    private (string Subject, string Body) DefaultText(GrantNotificationTrigger trigger, string culture)
+    {
+        using (CultureHelper.Use(culture))
+        {
+            return (_l[$"Grants:Notify:Trigger:{trigger}:Subject"], _l[$"Grants:Notify:Trigger:{trigger}:Body"]);
         }
     }
 }
