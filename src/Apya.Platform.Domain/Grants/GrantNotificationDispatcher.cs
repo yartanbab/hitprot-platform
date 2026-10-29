@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Notifications;
+using Apya.Platform.Tenants;
 using Microsoft.Extensions.Logging;
+using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
@@ -37,8 +39,10 @@ public class GrantNotificationDispatcher : DomainService
     /// </summary>
     public const string RecipientPermission = "Platform.Grants";
 
-    /// <summary>Yönetici kitlesini belirleyen rol: ABP'nin hem host'ta hem kiracıda açtığı yönetici rolü.</summary>
-    public const string AdminRoleName = "admin";
+    /// <summary>ABP'nin hem host'ta hem kiracıda açtığı yönetici rolünün adı.</summary>
+    public const string AdminRoleName = ImpersonationTargetFinder.AdminRoleName;
+
+    private readonly IPermissionStore _permissionStore;
 
     public GrantNotificationDispatcher(
         IRepository<GrantNotificationTemplate, Guid> templateRepo,
@@ -46,8 +50,10 @@ public class GrantNotificationDispatcher : DomainService
         IIdentityUserRepository userRepo,
         IEmailSender emailSender,
         IDataFilter dataFilter,
-        PermittedUserFinder permittedUsers)
+        PermittedUserFinder permittedUsers,
+        IPermissionStore permissionStore)
     {
+        _permissionStore = permissionStore;
         _permittedUsers = permittedUsers;
         _templateRepo = templateRepo;
         _notificationManager = notificationManager;
@@ -167,12 +173,32 @@ public class GrantNotificationDispatcher : DomainService
 
     private async Task<GrantNotificationAudience> AudienceOfAsync(Guid userId)
     {
-        var isAdmin = (await _userRepo.GetRoleNamesAsync(userId))
-            .Contains(AdminRoleName, StringComparer.OrdinalIgnoreCase);
+        var isAdmin = await IsAdminAsync(userId);
 
         return CurrentTenant.Id != null
             ? (isAdmin ? GrantNotificationAudience.FirmaYoneticisi : GrantNotificationAudience.FirmaKullanicisi)
             : (isAdmin ? GrantNotificationAudience.HostYoneticisi : GrantNotificationAudience.Danisman);
+    }
+
+    /// <summary>
+    /// Yönetici, "Hesabına Gir"deki (<see cref="ImpersonationTargetFinder"/>) tanımla aynıdır: statik ya da
+    /// "admin" adlı rol, ya da rol izinlerini yönetebilen rol. Kiracı yönetici rolünün adını değiştirse de
+    /// yöneticisi yönetici metnini almaya devam eder.
+    /// </summary>
+    private async Task<bool> IsAdminAsync(Guid userId)
+    {
+        foreach (var role in await _userRepo.GetRolesAsync(userId))
+        {
+            if (role.IsStatic
+                || string.Equals(role.Name, AdminRoleName, StringComparison.OrdinalIgnoreCase)
+                || await _permissionStore.IsGrantedAsync(
+                    ImpersonationTargetFinder.AdminPermissionName, RolePermissionValueProvider.ProviderName, role.Name))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

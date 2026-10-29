@@ -5,8 +5,11 @@ using System.Threading.Tasks;
 using Apya.Platform.Grants;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Notifications;
+using Apya.Platform.Tenants;
 using Shouldly;
 using Volo.Abp;
+using Volo.Abp.Authorization.Permissions;
+using Volo.Abp.PermissionManagement;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
@@ -38,33 +41,45 @@ public class GrantNotificationAudience_Tests : PlatformEntityFrameworkCoreTestBa
 
     // ------------------------------------------------------------ gönderim
 
-    /// <summary>Kiracıda biri "admin" rolünde iki kullanıcı.</summary>
-    private async Task<(Guid Tenant, Guid Admin, Guid Member)> ArrangeTenantAsync()
+    /// <summary>
+    /// Kiracıda biri yönetici rolünde iki kullanıcı. <paramref name="renamed"/>: rol "admin" adını taşımaz,
+    /// yöneticiliği rol izinlerini yönetebilmesinden anlaşılır ("Hesabına Gir" ile aynı tanım).
+    /// </summary>
+    private async Task<(Guid Tenant, Guid Admin, Guid Member)> ArrangeTenantAsync(bool renamed = false)
     {
         var tenant = await GetRequiredService<ITenantManager>().CreateAsync("rol-" + Guid.NewGuid().ToString("N")[..6]);
         await GetRequiredService<ITenantRepository>().InsertAsync(tenant, autoSave: true);
 
         using (_currentTenant.Change(tenant.Id))
         {
+            var roleName = renamed ? "Yönetim" : GrantNotificationDispatcher.AdminRoleName;
             (await GetRequiredService<IdentityRoleManager>()
-                .CreateAsync(new IdentityRole(Guid.NewGuid(), GrantNotificationDispatcher.AdminRoleName, tenant.Id)))
+                .CreateAsync(new IdentityRole(Guid.NewGuid(), roleName, tenant.Id)))
                 .Succeeded.ShouldBeTrue();
+            if (renamed)
+            {
+                await GetRequiredService<IPermissionGrantRepository>().InsertAsync(new PermissionGrant(
+                    Guid.NewGuid(), ImpersonationTargetFinder.AdminPermissionName, RolePermissionValueProvider.ProviderName,
+                    roleName, tenant.Id), autoSave: true);
+            }
 
             var users = GetRequiredService<IdentityUserManager>();
             var admin = new IdentityUser(Guid.NewGuid(), "yonetici-" + Guid.NewGuid().ToString("N")[..6], Guid.NewGuid().ToString("N")[..8] + "@ornek.test", tenant.Id);
             var member = new IdentityUser(Guid.NewGuid(), "uye-" + Guid.NewGuid().ToString("N")[..6], Guid.NewGuid().ToString("N")[..8] + "@ornek.test", tenant.Id);
             (await users.CreateAsync(admin)).Succeeded.ShouldBeTrue();
             (await users.CreateAsync(member)).Succeeded.ShouldBeTrue();
-            (await users.AddToRoleAsync(admin, GrantNotificationDispatcher.AdminRoleName)).Succeeded.ShouldBeTrue();
+            (await users.AddToRoleAsync(admin, roleName)).Succeeded.ShouldBeTrue();
 
             return (tenant.Id, admin.Id, member.Id);
         }
     }
 
-    [Fact]
-    public async Task Yonetici_rol_sablonunu_digerleri_Genel_sablonu_alir()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Yonetici_rol_sablonunu_digerleri_Genel_sablonu_alir(bool renamed)
     {
-        var (tenant, admin, member) = await WithUnitOfWorkAsync(ArrangeTenantAsync);
+        var (tenant, admin, member) = await WithUnitOfWorkAsync(() => ArrangeTenantAsync(renamed));
 
         var console = await WithUnitOfWorkAsync(() => _service.GetAsync());
         var general = General(console, Trigger);
