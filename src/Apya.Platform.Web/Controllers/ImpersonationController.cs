@@ -99,7 +99,7 @@ public class ImpersonationController : AbpController
         return Redirect("~/");
     }
 
-    /// <summary>Hedef kiracıda "root"/"admin" adlı kullanıcı da, "admin" rolünde aktif kullanıcı da yok.</summary>
+    /// <summary>Hedef kiracıda bürünülecek aktif kullanıcı yok (bkz. ImpersonationTargetFinder).</summary>
     public const string AdminUserNotFoundCode = "Platform:Error:AdminUserNotFound";
 
     [HttpPost("BackToImpersonator")]

@@ -148,7 +148,7 @@ public class Smoke_Tests : PlatformWebTestBase
 
             info.Message.ShouldNotBeNull();
             info.Message.ShouldNotContain("Platform:Error", Case.Sensitive);
-            info.Message.ShouldContain("yönetici kullanıcı yok");
+            info.Message.ShouldContain("aktif bir kullanıcı yok");
         }
 
         var source = System.IO.File.ReadAllText(System.IO.Path.Combine(
