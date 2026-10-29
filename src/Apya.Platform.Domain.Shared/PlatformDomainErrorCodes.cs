@@ -178,6 +178,9 @@ public static class PlatformDomainErrorCodes
     public const string GrantNotificationTemplateNeedsChannel = "Platform:Grant:NotificationTemplateNeedsChannel";
     public const string GrantNotificationTemplateMandatory = "Platform:Grant:NotificationTemplateMandatory";
     public const string GrantNotificationTemplateNotFound = "Platform:Grant:NotificationTemplateNotFound";
+    public const string GrantNotificationTemplateAudienceNotReached = "Platform:Grant:NotificationTemplateAudienceNotReached";
+    public const string GrantNotificationTemplateAudienceExists = "Platform:Grant:NotificationTemplateAudienceExists";
+    public const string GrantNotificationTemplateGeneralNotDeletable = "Platform:Grant:NotificationTemplateGeneralNotDeletable";
 
     // 5a / 1g · Ön değerlendirme talepleri
     public const string GrantLeadAlreadyConverted = "Platform:Grant:LeadAlreadyConverted";

@@ -53,6 +53,12 @@
 
                 <div id="NtEditor" class="d-none">
                     <div class="apya-field">
+                        <span class="apya-field-label">@L["Grants:Notify:Field:Audience"]</span>
+                        <div><span id="NtAudience" class="apya-chip apya-chip-neutral"></span></div>
+                        <span id="NtAudienceHint" class="apya-field-hint"></span>
+                    </div>
+
+                    <div class="apya-field">
                         <label class="apya-field-label" for="NtSubject">@L["Grants:Notify:Field:Subject"]</label>
                         <input type="text" id="NtSubject" class="form-control form-control-sm" maxlength="200" />
                     </div>
@@ -101,6 +107,20 @@
                         <button type="button" id="NtSaveBtn" class="btn btn-sm btn-primary">
                             <i class="fa fa-check me-1"></i>@L["Grants:Notify:Save"]
                         </button>
+                        <button type="button" id="NtDeleteBtn" class="btn btn-sm btn-outline-danger d-none">
+                            <i class="fa fa-trash me-1"></i>@L["Grants:Notify:DeleteRole"]
+                        </button>
+                    </div>
+
+                    <div id="NtDuplicate" class="apya-field d-none">
+                        <label class="apya-field-label" for="NtDuplicateAudience">@L["Grants:Notify:Duplicate"]</label>
+                        <div class="input-group input-group-sm">
+                            <select id="NtDuplicateAudience" class="form-select form-select-sm"></select>
+                            <button type="button" id="NtDuplicateBtn" class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-clone me-1"></i>@L["Grants:Notify:Duplicate"]
+                            </button>
+                        </div>
+                        <span id="NtDuplicateHint" class="apya-field-hint"></span>
                     </div>
                 </div>
             </div>

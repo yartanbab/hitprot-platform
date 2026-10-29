@@ -17,6 +17,16 @@ public class GrantNotificationTemplateDto
 {
     public Guid Id { get; set; }
     public GrantNotificationTrigger Trigger { get; set; }
+
+    /// <summary>Şablonun gittiği rol; Genel = rol şablonu olmayan herkes.</summary>
+    public GrantNotificationAudience Audience { get; set; }
+
+    /// <summary>
+    /// Yalnız Genel şablonda dolu: bu tetikleyicinin ulaştığı ve henüz şablonu olmayan roller —
+    /// "role çoğalt" seçenekleri.
+    /// </summary>
+    public List<GrantNotificationAudience> DuplicableAudiences { get; set; } = new();
+
     public bool IsEnabled { get; set; }
     public bool InApp { get; set; }
     public bool Email { get; set; }
@@ -52,4 +62,13 @@ public class SaveGrantNotificationTemplateInput
     public bool IsEnabled { get; set; }
     public bool InApp { get; set; }
     public bool Email { get; set; }
+}
+
+public class DuplicateGrantNotificationTemplateInput
+{
+    [Required(ErrorMessage = "Şablon seçilmedi.")]
+    public Guid Id { get; set; }
+
+    /// <summary>Kopyanın gideceği rol.</summary>
+    public GrantNotificationAudience Audience { get; set; }
 }

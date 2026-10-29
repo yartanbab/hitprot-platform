@@ -170,4 +170,50 @@ public class GrantNotification_Tests
             }
         }
     }
+
+    // ------------------------------------------------------------ rol şablonları
+
+    [Fact]
+    public void Rol_kitlesi_tetikleyicinin_gittigi_taraftan_turer()
+    {
+        GrantNotificationTriggerRegistry.AudiencesOf(GrantNotificationTrigger.InterestReceived)
+            .ShouldBe(new[] { GrantNotificationAudience.Danisman, GrantNotificationAudience.HostYoneticisi });
+        GrantNotificationTriggerRegistry.AudiencesOf(GrantNotificationTrigger.DocumentApproved)
+            .ShouldBe(new[] { GrantNotificationAudience.FirmaKullanicisi, GrantNotificationAudience.FirmaYoneticisi });
+        GrantNotificationTriggerRegistry.AudiencesOf(GrantNotificationTrigger.MessageReceived).Count.ShouldBe(4);
+
+        foreach (var trigger in Enum.GetValues<GrantNotificationTrigger>())
+        {
+            GrantNotificationTriggerRegistry.AudiencesOf(trigger).ShouldNotContain(GrantNotificationAudience.Genel);
+        }
+    }
+
+    [Fact]
+    public void Ulasmadigi_role_sablon_kurulamaz()
+    {
+        var ex = Should.Throw<BusinessException>(() => new GrantNotificationTemplate(
+            Guid.NewGuid(), GrantNotificationTrigger.InterestReceived, "Konu", "Gövde",
+            audience: GrantNotificationAudience.FirmaKullanicisi));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantNotificationTemplateAudienceNotReached);
+    }
+
+    [Fact]
+    public void Rol_kopyasi_metni_kanallari_ve_durumu_tasir()
+    {
+        var general = new GrantNotificationTemplate(
+            Guid.NewGuid(), GrantNotificationTrigger.CallPublished, "Konu", "Gövde", inApp: false, email: true);
+        general.SetEnabled(false);
+
+        var copy = general.CopyFor(Guid.NewGuid(), GrantNotificationAudience.FirmaYoneticisi);
+
+        copy.Audience.ShouldBe(GrantNotificationAudience.FirmaYoneticisi);
+        copy.Trigger.ShouldBe(general.Trigger);
+        copy.Subject.ShouldBe("Konu");
+        copy.Body.ShouldBe("Gövde");
+        copy.InApp.ShouldBeFalse();
+        copy.Email.ShouldBeTrue();
+        copy.IsEnabled.ShouldBeFalse();
+        Should.Throw<BusinessException>(() => general.CopyFor(Guid.NewGuid(), GrantNotificationAudience.Genel));
+    }
 }

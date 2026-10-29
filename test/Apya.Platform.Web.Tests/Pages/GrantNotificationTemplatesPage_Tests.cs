@@ -77,6 +77,11 @@ public class GrantNotificationTemplatesPage_Tests : PlatformWebTestBase
         var keys = System.Text.RegularExpressions.Regex.Matches(array, @"'(?<k>\w+)'").Select(m => m.Groups["k"].Value).ToList();
 
         keys.ShouldBe(Enum.GetValues<GrantNotificationTrigger>().OrderBy(t => (int)t).Select(t => t.ToString()).ToList());
+
+        // Rol adları da sıra eşlemesiyle okunur; kayarsa rol şablonu yanlış rol adıyla görünür.
+        var audienceArray = System.Text.RegularExpressions.Regex.Match(script, @"var audienceKeys = \[(?<body>[^\]]*)\]").Groups["body"].Value;
+        System.Text.RegularExpressions.Regex.Matches(audienceArray, @"'(?<k>\w+)'").Select(m => m.Groups["k"].Value).ToList()
+            .ShouldBe(Enum.GetValues<GrantNotificationAudience>().OrderBy(a => (int)a).Select(a => a.ToString()).ToList());
     }
 
     /// <summary>20b · Fikre uygun çağrı şablonu önizlemede fikir, eşleşme ve danışmanla dolar.</summary>

@@ -20,7 +20,8 @@ namespace Apya.Platform.Grants;
 /// yazması söz konusu değil. Kiracı bağlamından çağrılırsa yetki hatası verilir —
 /// izin kapısı tek başına yetmez, kiracı yöneticisi de "Grants.Edit" taşıyabilir.</para>
 ///
-/// <para>Şablonlar tohumlamayla gelir; ekran ekleme/silme SUNMAZ. Tetikleyici
+/// <para>Genel şablonlar tohumlamayla gelir; ekran yalnız bir Genel şablonu role çoğaltır ve rol
+/// şablonunu siler — yeni tetikleyici eklemez. Tetikleyici
 /// listesi koda bağlıdır (<see cref="GrantNotificationTriggerRegistry"/>) — host'un
 /// ateşlenmeyen bir tetikleyici uydurabilmesi ekranı yanıltıcı yapardı.</para>
 /// </summary>
@@ -59,6 +60,41 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
         return await BuildAsync();
     }
 
+    public async Task<GrantNotificationConsoleDto> DuplicateAsync(DuplicateGrantNotificationTemplateInput input)
+    {
+        EnsureHostContext();
+
+        var source = await _repo.FindAsync(input.Id)
+                     ?? throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateNotFound);
+
+        if (await _repo.AnyAsync(t => t.Trigger == source.Trigger && t.Audience == input.Audience))
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateAudienceExists);
+        }
+
+        await _repo.InsertAsync(source.CopyFor(GuidGenerator.Create(), input.Audience), autoSave: true);
+
+        return await BuildAsync();
+    }
+
+    public async Task<GrantNotificationConsoleDto> DeleteAsync(Guid id)
+    {
+        EnsureHostContext();
+
+        var template = await _repo.FindAsync(id)
+                       ?? throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateNotFound);
+
+        // Genel şablon tetikleyicinin son çaresidir: silinseydi rol şablonu olmayan alıcılar sessiz kalırdı.
+        if (template.Audience == GrantNotificationAudience.Genel)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateGeneralNotDeletable);
+        }
+
+        await _repo.DeleteAsync(template, autoSave: true);
+
+        return await BuildAsync();
+    }
+
     // ------------------------------------------------------------------ yardımcılar
 
     private void EnsureHostContext()
@@ -74,10 +110,19 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
         var templates = await _repo.GetListAsync();
 
         var items = templates
-            // Sıra enum sırasıdır: süreçte hangi olayın önce geldiğini anlatır.
+            // Sıra enum sırasıdır: süreçte hangi olayın önce geldiğini anlatır. Rol şablonları
+            // Genel şablonun hemen altında durur.
             .OrderBy(t => (int)t.Trigger)
+            .ThenBy(t => (int)t.Audience)
             .Select(Map)
             .ToList();
+
+        foreach (var general in items.Where(t => t.Audience == GrantNotificationAudience.Genel))
+        {
+            general.DuplicableAudiences = GrantNotificationTriggerRegistry.AudiencesOf(general.Trigger)
+                .Where(a => !items.Any(t => t.Trigger == general.Trigger && t.Audience == a))
+                .ToList();
+        }
 
         return new GrantNotificationConsoleDto
         {
@@ -94,6 +139,7 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
         {
             Id = template.Id,
             Trigger = template.Trigger,
+            Audience = template.Audience,
             IsEnabled = template.IsEnabled,
             InApp = template.InApp,
             Email = template.Email,

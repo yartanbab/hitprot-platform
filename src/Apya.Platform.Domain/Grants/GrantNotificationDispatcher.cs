@@ -37,6 +37,9 @@ public class GrantNotificationDispatcher : DomainService
     /// </summary>
     public const string RecipientPermission = "Platform.Grants";
 
+    /// <summary>Yönetici kitlesini belirleyen rol: ABP'nin hem host'ta hem kiracıda açtığı yönetici rolü.</summary>
+    public const string AdminRoleName = "admin";
+
     public GrantNotificationDispatcher(
         IRepository<GrantNotificationTemplate, Guid> templateRepo,
         NotificationManager notificationManager,
@@ -74,13 +77,32 @@ public class GrantNotificationDispatcher : DomainService
             return false;
         }
 
-        var template = await FindTemplateAsync(trigger);
-        if (template is not { IsEnabled: true })
+        var templates = await FindTemplatesAsync(trigger);
+        var sent = false;
+
+        foreach (var (template, recipients) in await AssignTemplatesAsync(templates, userIds))
         {
-            return false;
+            if (!template.IsEnabled)
+            {
+                continue;
+            }
+
+            await SendAsync(template, recipients, values, entityType, entityId, sendEmail);
+            sent = true;
         }
 
-        var type = GrantNotificationTriggerRegistry.NotificationTypeOf(trigger);
+        return sent;
+    }
+
+    private async Task SendAsync(
+        GrantNotificationTemplate template,
+        IReadOnlyCollection<Guid> userIds,
+        IReadOnlyDictionary<string, string?> values,
+        string? entityType,
+        Guid? entityId,
+        bool? sendEmail)
+    {
+        var type = GrantNotificationTriggerRegistry.NotificationTypeOf(template.Trigger);
         var subject = GrantNotificationRenderer.Render(template.Subject, values);
         var body = GrantNotificationRenderer.Render(template.Body, values);
 
@@ -101,8 +123,56 @@ public class GrantNotificationDispatcher : DomainService
                 await TrySendEmailAsync(userId, subject, body);
             }
         }
+    }
 
-        return true;
+    /// <summary>
+    /// Her alıcıya rolüne uyan şablonu, yoksa Genel şablonu eşler. Tetikleyicinin rol şablonu
+    /// yoksa rol sorgusu hiç yapılmaz. Çağıran kiracı bağlamını ayarlamış olmalıdır: rol, alıcının
+    /// tarafından (kiracı = firma, host = danışman) türer.
+    /// </summary>
+    private async Task<List<(GrantNotificationTemplate Template, List<Guid> UserIds)>> AssignTemplatesAsync(
+        List<GrantNotificationTemplate> templates,
+        IReadOnlyCollection<Guid> userIds)
+    {
+        var general = templates.FirstOrDefault(t => t.Audience == GrantNotificationAudience.Genel);
+        var byAudience = templates
+            .Where(t => t.Audience != GrantNotificationAudience.Genel)
+            // Host satırları (TenantId null) tekil indeksin süzgecine girmiyor; çift kayıt gönderimi düşürmesin.
+            .GroupBy(t => t.Audience)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        if (byAudience.Count == 0)
+        {
+            return general == null ? [] : [(general, userIds.ToList())];
+        }
+
+        var assigned = new Dictionary<GrantNotificationTemplate, List<Guid>>();
+        foreach (var userId in userIds)
+        {
+            var template = byAudience.GetValueOrDefault(await AudienceOfAsync(userId)) ?? general;
+            if (template == null)
+            {
+                continue;
+            }
+
+            if (!assigned.TryGetValue(template, out var list))
+            {
+                assigned[template] = list = [];
+            }
+            list.Add(userId);
+        }
+
+        return assigned.Select(p => (p.Key, p.Value)).ToList();
+    }
+
+    private async Task<GrantNotificationAudience> AudienceOfAsync(Guid userId)
+    {
+        var isAdmin = (await _userRepo.GetRoleNamesAsync(userId))
+            .Contains(AdminRoleName, StringComparer.OrdinalIgnoreCase);
+
+        return CurrentTenant.Id != null
+            ? (isAdmin ? GrantNotificationAudience.FirmaYoneticisi : GrantNotificationAudience.FirmaKullanicisi)
+            : (isAdmin ? GrantNotificationAudience.HostYoneticisi : GrantNotificationAudience.Danisman);
     }
 
     /// <summary>
@@ -184,7 +254,9 @@ public class GrantNotificationDispatcher : DomainService
         GrantNotificationTrigger trigger,
         IReadOnlyDictionary<string, string?> values)
     {
-        var template = await FindTemplateAsync(trigger);
+        // Alıcısı belli olmayan metin: Genel şablon.
+        var template = (await FindTemplatesAsync(trigger))
+            .FirstOrDefault(t => t.Audience == GrantNotificationAudience.Genel);
         if (template is not { IsEnabled: true })
         {
             return null;
@@ -199,13 +271,11 @@ public class GrantNotificationDispatcher : DomainService
     /// okunduğu için filtre kapatılır; 🔴 <c>Disable()</c> kapsamı TÜM kiracılara
     /// açtığı için <c>TenantId == null</c> koşulu ELLE konur.
     /// </summary>
-    private async Task<GrantNotificationTemplate?> FindTemplateAsync(GrantNotificationTrigger trigger)
+    private async Task<List<GrantNotificationTemplate>> FindTemplatesAsync(GrantNotificationTrigger trigger)
     {
         using (_dataFilter.Disable<IMultiTenant>())
         {
-            return (await _templateRepo.GetListAsync(
-                    t => t.TenantId == null && t.Trigger == trigger))
-                .FirstOrDefault();
+            return await _templateRepo.GetListAsync(t => t.TenantId == null && t.Trigger == trigger);
         }
     }
 
