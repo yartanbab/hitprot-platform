@@ -216,4 +216,47 @@ public class GrantNotification_Tests
         copy.IsEnabled.ShouldBeFalse();
         Should.Throw<BusinessException>(() => general.CopyFor(Guid.NewGuid(), GrantNotificationAudience.Genel));
     }
+
+    // ------------------------------------------------------------ yükseltme (Faz 2)
+
+    [Fact]
+    public void Beklenen_isi_olmayan_bildirim_yukseltilemez()
+    {
+        var ex = Should.Throw<BusinessException>(() => GrantNotificationTemplate.CreateEscalation(
+            Guid.NewGuid(), GrantNotificationTrigger.CallPublished, GrantNotificationAudience.Genel, 3, "Konu", "Gövde"));
+
+        ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantNotificationEscalationNotAllowed);
+    }
+
+    [Fact]
+    public void Danismanin_isi_firmaya_yukseltilmez()
+    {
+        // İlgi talebini danışman yanıtlar; gecikmesi firma yöneticisine yazılmaz.
+        Should.Throw<BusinessException>(() => GrantNotificationTemplate.CreateEscalation(
+            Guid.NewGuid(), GrantNotificationTrigger.InterestReceived, GrantNotificationAudience.FirmaYoneticisi, 3, "Konu", "Gövde"))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantNotificationEscalationNotAllowed);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(91)]
+    public void Yukseltme_gunu_1_ile_90_arasinda(int days)
+    {
+        Should.Throw<BusinessException>(() => GrantNotificationTemplate.CreateEscalation(
+            Guid.NewGuid(), GrantNotificationTrigger.DocumentRevisionRequested, GrantNotificationAudience.Genel, days, "Konu", "Gövde"))
+            .Code.ShouldBe(PlatformDomainErrorCodes.GrantNotificationEscalationDaysInvalid);
+    }
+
+    [Fact]
+    public void Varsayilan_zincir_firma_isinde_3_7_14_danisman_isinde_2_5()
+    {
+        var firm = GrantNotificationTrigger.DocumentRevisionRequested;
+        GrantEscalationDefaults.DaysOf(firm, GrantNotificationAudience.Genel).ShouldBe(3);
+        GrantEscalationDefaults.DaysOf(firm, GrantNotificationAudience.FirmaYoneticisi).ShouldBe(7);
+        GrantEscalationDefaults.DaysOf(firm, GrantNotificationAudience.Danisman).ShouldBe(14);
+
+        var host = GrantNotificationTrigger.InterestReceived;
+        GrantEscalationDefaults.DaysOf(host, GrantNotificationAudience.Genel).ShouldBe(2);
+        GrantEscalationDefaults.DaysOf(host, GrantNotificationAudience.HostYoneticisi).ShouldBe(5);
+    }
 }

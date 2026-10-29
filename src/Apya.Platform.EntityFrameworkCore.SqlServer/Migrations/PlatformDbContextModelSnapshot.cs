@@ -6410,6 +6410,9 @@ namespace Apya.Platform.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("StatusChangedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TenantId");
@@ -8038,6 +8041,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("AfterDays")
+                        .HasColumnType("int");
+
                     b.Property<int>("Audience")
                         .HasColumnType("int");
 
@@ -8089,6 +8095,9 @@ namespace Apya.Platform.Migrations
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsEscalation")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2")
                         .HasColumnName("LastModificationTime");
@@ -8111,7 +8120,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "Trigger", "Audience")
+                    b.HasIndex("TenantId", "Trigger", "Audience", "IsEscalation")
                         .IsUnique()
                         .HasFilter("[TenantId] IS NOT NULL AND [IsDeleted] = 0");
 

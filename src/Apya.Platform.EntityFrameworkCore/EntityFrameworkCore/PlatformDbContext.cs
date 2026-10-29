@@ -1129,9 +1129,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.Subject).IsRequired().HasMaxLength(200);
                 b.Property(x => x.Body).IsRequired().HasMaxLength(2000);
-                // Host katalogunda tetikleyici ve rol başına tek CANLI şablon. EF'in nullable
-                // TenantId için eklediği "IS NOT NULL" korunur (davranış değişmesin).
-                b.HasIndex(x => new { x.TenantId, x.Trigger, x.Audience }).IsUnique()
+                // Host katalogunda tetikleyici, rol ve tür (ilk bildirim / yükseltme) başına tek CANLI şablon.
+                // EF'in nullable TenantId için eklediği "IS NOT NULL" korunur (davranış değişmesin).
+                b.HasIndex(x => new { x.TenantId, x.Trigger, x.Audience, x.IsEscalation }).IsUnique()
                     .HasFilter(isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 

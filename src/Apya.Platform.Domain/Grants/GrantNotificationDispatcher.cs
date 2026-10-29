@@ -301,7 +301,96 @@ public class GrantNotificationDispatcher : DomainService
     {
         using (_dataFilter.Disable<IMultiTenant>())
         {
-            return await _templateRepo.GetListAsync(t => t.TenantId == null && t.Trigger == trigger);
+            // Yükseltme şablonu ilk bildirimin yerine geçmez; yalnız yükseltme işçisi kullanır.
+            return await _templateRepo.GetListAsync(t => t.TenantId == null && t.Trigger == trigger && !t.IsEscalation);
+        }
+    }
+
+    // ------------------------------------------------------------------ yükseltme
+
+    /// <summary>Açık yükseltme şablonları (host kataloğu).</summary>
+    public async Task<List<GrantNotificationTemplate>> GetEnabledEscalationsAsync()
+    {
+        using (_dataFilter.Disable<IMultiTenant>())
+        {
+            return await _templateRepo.GetListAsync(t => t.TenantId == null && t.IsEscalation && t.IsEnabled);
+        }
+    }
+
+    /// <summary>
+    /// Yükseltmeyi gönderir. Alıcı, şablonun kitlesinin bekleyen işe GÖRE karşılığıdır: Genel = işi bekleyen
+    /// taraf; yönetici = o tarafın yöneticisi; Danışman = firma işi beklerken atanan danışman (yoksa host ekibi).
+    /// İşi bekleyen tarafa uymayan kitle (ör. firma beklerken host yöneticisi) atlanır.
+    /// </summary>
+    /// <returns>En az bir alıcıya gittiyse <c>true</c>.</returns>
+    public async Task<bool> SendEscalationAsync(
+        GrantNotificationTemplate template,
+        GrantPendingAction action,
+        IReadOnlyDictionary<string, string?> values)
+    {
+        var firmWaits = action.ActingSide == GrantPartyRole.Firma;
+        var (tenantId, userIds) = template.Audience switch
+        {
+            GrantNotificationAudience.Genel when firmWaits => (action.TenantId, await FirmUsersAsync(action.TenantId)),
+            GrantNotificationAudience.Genel => ((Guid?)null, await ConsultantOrHostTeamAsync(action.AssignedUserId)),
+            GrantNotificationAudience.FirmaYoneticisi when firmWaits => (action.TenantId, await AdminsAsync(action.TenantId)),
+            GrantNotificationAudience.Danisman when firmWaits => ((Guid?)null, await ConsultantOrHostTeamAsync(action.AssignedUserId)),
+            GrantNotificationAudience.HostYoneticisi when !firmWaits => ((Guid?)null, await AdminsAsync(null)),
+            _ => ((Guid?)null, new List<Guid>())
+        };
+
+        if (userIds.Count == 0)
+        {
+            return false;
+        }
+
+        using (CurrentTenant.Change(tenantId))
+        {
+            await SendAsync(template, userIds, values, action.EntityType, action.DeepLinkId, sendEmail: null);
+        }
+
+        return true;
+    }
+
+    private async Task<List<Guid>> FirmUsersAsync(Guid? tenantId)
+    {
+        if (tenantId == null)
+        {
+            return [];
+        }
+
+        using (CurrentTenant.Change(tenantId))
+        {
+            return await WithGrantPermissionAsync(await _permittedUsers.ActiveUserIdsAsync());
+        }
+    }
+
+    private async Task<List<Guid>> ConsultantOrHostTeamAsync(Guid? assignedUserId)
+    {
+        if (assignedUserId is { } consultantId)
+        {
+            return [consultantId];
+        }
+
+        using (CurrentTenant.Change(null))
+        {
+            return await WithGrantPermissionAsync(await _permittedUsers.ActiveUserIdsAsync());
+        }
+    }
+
+    private async Task<List<Guid>> AdminsAsync(Guid? tenantId)
+    {
+        using (CurrentTenant.Change(tenantId))
+        {
+            var admins = new List<Guid>();
+            foreach (var userId in await _permittedUsers.ActiveUserIdsAsync())
+            {
+                if (await IsAdminAsync(userId))
+                {
+                    admins.Add(userId);
+                }
+            }
+            return admins;
         }
     }
 

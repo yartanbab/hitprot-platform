@@ -16,6 +16,9 @@ $(function () {
     // Enum sırası sunucudakiyle birebir (GrantNotificationAudience).
     var audienceKeys = ['Genel', 'FirmaKullanicisi', 'FirmaYoneticisi', 'Danisman', 'HostYoneticisi'];
     function audienceName(a) { return l('Grants:Notify:Audience:' + audienceKeys[a]); }
+    // Yükseltmede kitle kayda göre okunur: Genel = işi bekleyen taraf, Danışman = atanan danışman.
+    function escalationName(a) { return l('Grants:Notify:Escalation:Audience:' + audienceKeys[a]); }
+    function targetName(t) { return t.isEscalation ? escalationName(t.audience) : audienceName(t.audience); }
 
     var model = null;
     var selectedId = null;
@@ -38,12 +41,12 @@ $(function () {
             : '<span class="apya-chip ' + (t.isEnabled ? 'apya-chip-positive' : 'apya-chip-neutral') + '">' +
               esc(l(t.isEnabled ? 'Grants:Notify:State:On' : 'Grants:Notify:State:Off')) + '</span>';
 
-        // Rol şablonu Genel şablonun altında, girintili ve rol adıyla durur.
-        var isRole = t.audience !== 0;
-        var name = isRole
-            ? '<strong><span class="apya-chip apya-chip-brand me-1">' + esc(audienceName(t.audience)) + '</span>' +
-              esc(tk(t.trigger, 'Name')) + '</strong>'
-            : '<strong>' + esc(tk(t.trigger, 'Name')) + '</strong>';
+        // Rol şablonu ve yükseltme Genel şablonun altında, girintili ve etiketiyle durur.
+        var isRole = t.audience !== 0 || t.isEscalation;
+        var chip = t.isEscalation
+            ? '<span class="apya-chip apya-chip-warning me-1">' + esc(l('Grants:Notify:Escalation:Row', t.afterDays)) + '</span>'
+            : isRole ? '<span class="apya-chip apya-chip-brand me-1">' + esc(audienceName(t.audience)) + '</span>' : '';
+        var name = '<strong>' + chip + esc(tk(t.trigger, 'Name')) + '</strong>';
 
         return '<button type="button" class="apya-nt-row' +
             (isRole ? ' is-role' : '') +
@@ -52,7 +55,7 @@ $(function () {
             '<span class="apya-nt-name">' + name +
             '<span>' + esc(t.subject) + '</span></span>' +
             '<span class="apya-nt-meta">' + esc(tk(t.trigger, 'When')) + '</span>' +
-            '<span class="apya-nt-meta">' + esc(isRole ? audienceName(t.audience) : tk(t.trigger, 'Recipient')) + '</span>' +
+            '<span class="apya-nt-meta">' + esc(isRole ? targetName(t) : tk(t.trigger, 'Recipient')) + '</span>' +
             '<span class="apya-nt-channels">' + channels + '</span>' +
             '<span>' + state + '</span></button>';
     }
@@ -98,19 +101,37 @@ $(function () {
         $('#NtPreviewSubject').text(t.previewSubject);
         $('#NtPreviewBody').text(t.previewBody);
 
-        // Hedef kitle: Genel şablon role çoğaltılır, rol şablonu silinir.
-        var isRole = t.audience !== 0;
-        $('#NtAudience').text(audienceName(t.audience));
-        $('#NtAudienceHint').text(l(isRole ? 'Grants:Notify:AudienceHint:Role' : 'Grants:Notify:AudienceHint:Genel'));
-        $('#NtDeleteBtn').toggleClass('d-none', !isRole);
+        // Hedef kitle: Genel şablon role çoğaltılır ve yükseltme alır; rol şablonu ve yükseltme silinir.
+        var isGeneral = t.audience === 0 && !t.isEscalation;
+        $('#NtAudience').text(targetName(t));
+        $('#NtAudienceHint').text(l(t.isEscalation ? 'Grants:Notify:Escalation:Hint'
+            : isGeneral ? 'Grants:Notify:AudienceHint:Genel' : 'Grants:Notify:AudienceHint:Role'));
+        $('#NtDeleteBtn').toggleClass('d-none', isGeneral)
+            .find('span.js-label').text(l(t.isEscalation ? 'Grants:Notify:DeleteEscalation' : 'Grants:Notify:DeleteRole'));
+
+        $('#NtAfterDaysField').toggleClass('d-none', !t.isEscalation);
+        $('#NtAfterDays').val(t.afterDays || '');
 
         var options = t.duplicableAudiences || [];
-        $('#NtDuplicate').toggleClass('d-none', isRole);
+        $('#NtDuplicate').toggleClass('d-none', !isGeneral);
         $('#NtDuplicateAudience').html(options.map(function (a) {
             return '<option value="' + a + '">' + esc(audienceName(a)) + '</option>';
         }).join('')).prop('disabled', options.length === 0);
         $('#NtDuplicateBtn').prop('disabled', options.length === 0);
         $('#NtDuplicateHint').text(l(options.length ? 'Grants:Notify:DuplicateHint' : 'Grants:Notify:DuplicateNone'));
+
+        // Yükseltme yalnız beklenen işi olan bildirimde: seçenek listesi boş geliyorsa ya bu bildirimin
+        // işi yok (bölüm gizli) ya da her kitlenin yükseltmesi zaten var.
+        var escalations = t.escalationAudiences || [];
+        var hasAny = escalations.length > 0 || (model.templates || []).some(function (x) {
+            return x.trigger === t.trigger && x.isEscalation;
+        });
+        $('#NtEscalate').toggleClass('d-none', !isGeneral || !hasAny);
+        $('#NtEscalateAudience').html(escalations.map(function (a) {
+            return '<option value="' + a + '">' + esc(escalationName(a)) + '</option>';
+        }).join('')).prop('disabled', escalations.length === 0);
+        $('#NtEscalateDays, #NtEscalateBtn').prop('disabled', escalations.length === 0);
+        $('#NtEscalateHint').text(l(escalations.length ? 'Grants:Notify:AddEscalationHint' : 'Grants:Notify:EscalationNone'));
     }
 
     // Çoğaltma/silme sonrası liste yeniden kurulur; seçimi yeni (ya da Genel) şablona taşır.
@@ -149,7 +170,8 @@ $(function () {
             // yerine sunucunun bildiği değeri geri gönderiyoruz.
             inApp: t.isMandatory ? true : $('#NtInApp').is(':checked'),
             email: $('#NtEmail').is(':checked'),
-            isEnabled: t.isMandatory ? true : $('#NtEnabled').is(':checked')
+            isEnabled: t.isMandatory ? true : $('#NtEnabled').is(':checked'),
+            afterDays: t.isEscalation ? parseInt($('#NtAfterDays').val(), 10) || null : null
         }).then(function (dto) {
             model = dto;
             paintList();
@@ -173,12 +195,24 @@ $(function () {
         var t = selected();
         if (!t) { return; }
 
-        abp.message.confirm(l('Grants:Notify:DeleteRoleConfirm')).then(function (ok) {
+        abp.message.confirm(l(t.isEscalation ? 'Grants:Notify:DeleteEscalationConfirm' : 'Grants:Notify:DeleteRoleConfirm')).then(function (ok) {
             if (!ok) { return; }
             service.delete(t.id).then(function (dto) {
-                apply(dto, function (x) { return x.trigger === t.trigger && x.audience === 0; },
-                    'Grants:Notify:Deleted');
+                apply(dto, function (x) { return x.trigger === t.trigger && x.audience === 0 && !x.isEscalation; },
+                    t.isEscalation ? 'Grants:Notify:EscalationDeleted' : 'Grants:Notify:Deleted');
             });
+        });
+    });
+
+    $('#NtEscalateBtn').on('click', function () {
+        var t = selected();
+        var audience = parseInt($('#NtEscalateAudience').val(), 10);
+        var days = parseInt($('#NtEscalateDays').val(), 10);
+        if (!t || isNaN(audience) || isNaN(days)) { return; }
+
+        service.addEscalation({ id: t.id, audience: audience, afterDays: days }).then(function (dto) {
+            apply(dto, function (x) { return x.trigger === t.trigger && x.audience === audience && x.isEscalation; },
+                'Grants:Notify:EscalationAdded');
         });
     });
 

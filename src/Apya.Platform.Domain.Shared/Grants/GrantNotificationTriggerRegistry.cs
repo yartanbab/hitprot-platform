@@ -168,7 +168,58 @@ public static class GrantNotificationTriggerRegistry
     private static readonly GrantNotificationAudience[] HostAudiences =
         [GrantNotificationAudience.Danisman, GrantNotificationAudience.HostYoneticisi];
 
+    /// <summary>
+    /// Arkasında yapılması beklenen bir iş olan tetikleyiciler ve işi yapacak taraf. <c>null</c> = taraf kayda
+    /// göre değişir (sıra devri: sıra kimdeyse). Listede olmayan tetikleyici yalnız haber verir, yükseltilmez.
+    /// </summary>
+    private static readonly Dictionary<GrantNotificationTrigger, GrantPartyRole?> ActionTriggers = new()
+    {
+        [GrantNotificationTrigger.DocumentRevisionRequested] = GrantPartyRole.Firma,
+        [GrantNotificationTrigger.RecommendationSent] = GrantPartyRole.Firma,
+        [GrantNotificationTrigger.DocumentUploaded] = GrantPartyRole.Danisman,
+        [GrantNotificationTrigger.InterestReceived] = GrantPartyRole.Danisman,
+        [GrantNotificationTrigger.MeetingProposed] = GrantPartyRole.Danisman,
+        [GrantNotificationTrigger.IdeaShared] = GrantPartyRole.Danisman,
+        [GrantNotificationTrigger.ApplicationSubmitted] = GrantPartyRole.Danisman,
+        [GrantNotificationTrigger.HandedOver] = null
+    };
+
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;
+
+    /// <summary>Beklenen iş yapılmazsa yükseltilebilen tetikleyici mi?</summary>
+    public static bool IsEscalatable(GrantNotificationTrigger trigger) => ActionTriggers.ContainsKey(trigger);
+
+    /// <summary>
+    /// Yükseltmenin gidebileceği kitleler. Genel = işi bekleyen taraf (hatırlatma); yönetici = o tarafın
+    /// yöneticisi; Danışman = firma işi yapmazsa karşı taraf bilgilendirilir. Danışmanın işi firmaya yükseltilmez.
+    /// </summary>
+    public static IReadOnlyList<GrantNotificationAudience> EscalationAudiencesOf(GrantNotificationTrigger trigger)
+    {
+        if (!ActionTriggers.TryGetValue(trigger, out var side))
+        {
+            return [];
+        }
+
+        return side switch
+        {
+            GrantPartyRole.Firma => [GrantNotificationAudience.Genel, GrantNotificationAudience.FirmaYoneticisi, GrantNotificationAudience.Danisman],
+            GrantPartyRole.Danisman => [GrantNotificationAudience.Genel, GrantNotificationAudience.HostYoneticisi],
+            _ => [GrantNotificationAudience.Genel, GrantNotificationAudience.FirmaYoneticisi, GrantNotificationAudience.Danisman, GrantNotificationAudience.HostYoneticisi]
+        };
+    }
+
+    /// <summary>
+    /// Yükseltme metninde kullanılabilecek değişkenler. İlk bildirimin değişkenleri (danışman notu, mesaj, saatler)
+    /// burada YOK: yükseltme işçisi yalnız kayıttan okunabilenleri doldurur.
+    /// </summary>
+    public static IReadOnlyList<string> EscalationVariablesOf(GrantNotificationTrigger trigger) => trigger switch
+    {
+        GrantNotificationTrigger.DocumentRevisionRequested or GrantNotificationTrigger.DocumentUploaded =>
+            ["{firma_adı}", "{çağrı_adı}", "{evrak_adı}", "{bekleyen_gün}"],
+        GrantNotificationTrigger.IdeaShared => ["{firma_adı}", "{fikir}", "{bekleyen_gün}"],
+        GrantNotificationTrigger.HandedOver => ["{firma_adı}", "{çağrı_adı}", "{sıradaki_taraf}", "{bekleyen_gün}"],
+        _ => ["{firma_adı}", "{çağrı_adı}", "{bekleyen_gün}"]
+    };
 
     /// <summary>
     /// Tetikleyicinin ulaştığı rol kitleleri (Genel hariç). Ulaşmadığı role şablon çoğaltılamaz:

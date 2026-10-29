@@ -52,13 +52,38 @@ public class GrantNotificationTemplatesPage_Tests : PlatformWebTestBase
     public async Task Yedi_Tetikleyici_De_Tohumlanir()
     {
         var dto = await _templates.GetAsync();
+        var initial = dto.Templates.Where(t => !t.IsEscalation).ToList();
 
-        dto.Templates.Count.ShouldBe(Enum.GetValues<GrantNotificationTrigger>().Length);
-        dto.Templates.Select(t => t.Trigger).ShouldBeUnique();
+        initial.Count.ShouldBe(Enum.GetValues<GrantNotificationTrigger>().Length);
+        initial.Select(t => t.Trigger).ShouldBeUnique();
         // Sıra enum sırasıdır: süreçte hangi olayın önce geldiğini anlatır.
         dto.Templates.Select(t => (int)t.Trigger)
             .ShouldBe(dto.Templates.Select(t => (int)t.Trigger).OrderBy(x => x));
         dto.EnabledCount.ShouldBe(dto.Templates.Count);
+    }
+
+    /// <summary>
+    /// Faz 2 · Beklenen işi olan her bildirimin her yükseltme kitlesi için varsayılan kademe tohumlanır ve
+    /// ilk bildiriminin altında, gün sırasıyla durur.
+    /// </summary>
+    [Fact]
+    public async Task Varsayilan_yukseltmeler_tohumlanir()
+    {
+        var dto = await _templates.GetAsync();
+
+        foreach (var trigger in Enum.GetValues<GrantNotificationTrigger>())
+        {
+            var escalations = dto.Templates.Where(t => t.Trigger == trigger && t.IsEscalation).ToList();
+            escalations.Select(t => t.Audience).OrderBy(a => a)
+                .ShouldBe(GrantNotificationTriggerRegistry.EscalationAudiencesOf(trigger).OrderBy(a => a), $"{trigger}");
+            escalations.Select(t => t.AfterDays).ShouldBe(escalations.Select(t => t.AfterDays).OrderBy(d => d));
+        }
+
+        var revision = dto.Templates.Single(t => t.Trigger == GrantNotificationTrigger.DocumentRevisionRequested
+            && t.IsEscalation && t.Audience == GrantNotificationAudience.Genel);
+        revision.AfterDays.ShouldBe(3);
+        revision.Subject.ShouldStartWith("Hatırlatma");
+        revision.Variables.ShouldContain("{bekleyen_gün}");
     }
 
     /// <summary>
@@ -272,7 +297,7 @@ public class GrantNotificationTemplatesPage_Tests : PlatformWebTestBase
         var (tenantId, _, documentId) = await SetupTenantApplicationAsync();
 
         var template = (await _templates.GetAsync()).Templates
-            .Single(t => t.Trigger == GrantNotificationTrigger.DocumentRevisionRequested);
+            .Single(t => t.Trigger == GrantNotificationTrigger.DocumentRevisionRequested && !t.IsEscalation);
         await _templates.SaveAsync(new SaveGrantNotificationTemplateInput
         {
             Id = template.Id,

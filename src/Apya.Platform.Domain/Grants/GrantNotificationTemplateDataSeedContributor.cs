@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Localization;
 using Microsoft.Extensions.Localization;
+using Volo.Abp;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
@@ -23,13 +25,16 @@ public class GrantNotificationTemplateDataSeedContributor : IDataSeedContributor
 {
     private readonly IRepository<GrantNotificationTemplate, Guid> _repository;
     private readonly IStringLocalizer<PlatformResource> _l;
+    private readonly IDataFilter<ISoftDelete> _softDeleteFilter;
 
     public GrantNotificationTemplateDataSeedContributor(
         IRepository<GrantNotificationTemplate, Guid> repository,
-        IStringLocalizer<PlatformResource> l)
+        IStringLocalizer<PlatformResource> l,
+        IDataFilter<ISoftDelete> softDeleteFilter)
     {
         _repository = repository;
         _l = l;
+        _softDeleteFilter = softDeleteFilter;
     }
 
     public async Task SeedAsync(DataSeedContext context)
@@ -57,7 +62,7 @@ public class GrantNotificationTemplateDataSeedContributor : IDataSeedContributor
 
         // Rol şablonu Genel'in yerine geçmez: her tetikleyicinin bir Genel şablonu olmalı.
         var existing = templates
-            .Where(t => t.Audience == GrantNotificationAudience.Genel)
+            .Where(t => t.Audience == GrantNotificationAudience.Genel && !t.IsEscalation)
             .Select(t => t.Trigger)
             .ToHashSet();
 
@@ -86,6 +91,40 @@ public class GrantNotificationTemplateDataSeedContributor : IDataSeedContributor
                                 or GrantNotificationTrigger.HandedOver);
 
             await _repository.InsertAsync(template, autoSave: true);
+        }
+
+        await SeedEscalationsAsync();
+    }
+
+    /// <summary>
+    /// Faz 2 · Varsayılan yükseltme kademeleri (<see cref="GrantEscalationDefaults"/>). 🔴 Silinmiş kayıtlar da
+    /// sayılır: host bir kademeyi sildiyse DbMigrator her koşuşta onu geri getirmesin.
+    /// </summary>
+    private async Task SeedEscalationsAsync()
+    {
+        List<GrantNotificationTemplate> all;
+        using (_softDeleteFilter.Disable())
+        {
+            all = await _repository.GetListAsync(t => t.IsEscalation);
+        }
+
+        using (CultureHelper.Use("tr"))
+        {
+            foreach (var trigger in GrantNotificationTriggerRegistry.All.Where(GrantNotificationTriggerRegistry.IsEscalatable))
+            {
+                foreach (var audience in GrantNotificationTriggerRegistry.EscalationAudiencesOf(trigger))
+                {
+                    if (all.Any(t => t.Trigger == trigger && t.Audience == audience))
+                    {
+                        continue;
+                    }
+
+                    var (subject, body) = GrantEscalationDefaults.TextOf(_l, trigger, audience);
+                    await _repository.InsertAsync(GrantNotificationTemplate.CreateEscalation(
+                        Guid.NewGuid(), trigger, audience, GrantEscalationDefaults.DaysOf(trigger, audience), subject, body),
+                        autoSave: true);
+                }
+            }
         }
     }
 
