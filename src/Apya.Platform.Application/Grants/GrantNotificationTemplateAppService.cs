@@ -219,7 +219,12 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
             ["{davet_mesajı}"] = L["Grants:Invite:DefaultMessage"],
             // Faz 2 · yükseltme
             ["{bekleyen_gün}"] = "7",
-            ["{sıradaki_taraf}"] = L["Grants:Notify:Sample:Side"]
+            ["{sıradaki_taraf}"] = L["Grants:Notify:Sample:Side"],
+            // Faz 3 · yönetici özeti
+            ["{toplam}"] = "5",
+            ["{en_eski_gün}"] = "9",
+            ["{özet}"] = L["Grants:Notify:Sample:DigestSummary"],
+            ["{liste}"] = L["Grants:Notify:Sample:DigestList"]
         };
     }
 }

@@ -352,6 +352,36 @@ public class GrantNotificationDispatcher : DomainService
         return true;
     }
 
+    /// <summary>
+    /// Faz 3 · Yönetici özetini bir tarafın yöneticilerine gönderir: firma yöneticisi (<paramref name="tenantId"/>
+    /// kiracısı) ya da host yöneticisi (<c>null</c>). Şablon kitlenin rol şablonudur, yoksa Genel.
+    /// </summary>
+    /// <returns>Şablon açık ve en az bir yönetici varsa <c>true</c>.</returns>
+    public async Task<bool> SendDigestAsync(
+        GrantNotificationAudience audience, Guid? tenantId, IReadOnlyDictionary<string, string?> values)
+    {
+        var templates = await FindTemplatesAsync(GrantNotificationTrigger.ManagerDigest);
+        var template = templates.FirstOrDefault(t => t.Audience == audience)
+                       ?? templates.FirstOrDefault(t => t.Audience == GrantNotificationAudience.Genel);
+        if (template is not { IsEnabled: true })
+        {
+            return false;
+        }
+
+        var admins = await AdminsAsync(tenantId);
+        if (admins.Count == 0)
+        {
+            return false;
+        }
+
+        using (CurrentTenant.Change(tenantId))
+        {
+            await SendAsync(template, admins, values, entityType: null, entityId: null, sendEmail: null);
+        }
+
+        return true;
+    }
+
     private async Task<List<Guid>> FirmUsersAsync(Guid? tenantId)
     {
         if (tenantId == null)

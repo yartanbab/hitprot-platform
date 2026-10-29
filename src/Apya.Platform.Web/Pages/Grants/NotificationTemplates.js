@@ -11,7 +11,8 @@ $(function () {
                        'InterestAnswered', 'InterestReceived', 'CallClosed', 'MeetingProposed', 'MeetingAnswered',
                        'IdeaLinked', 'IdeaInvited', 'ApplicationSubmitted',
                        'ConvertedToProject', 'ConversionPending', 'SubmissionDeadlineNear', 'IdeaShared',
-                       'AppealResolved', 'MessageReceived', 'HandedOver', 'DocumentUploaded', 'DocumentApproved'];
+                       'AppealResolved', 'MessageReceived', 'HandedOver', 'DocumentUploaded', 'DocumentApproved',
+                       'ManagerDigest'];
 
     // Enum sırası sunucudakiyle birebir (GrantNotificationAudience).
     var audienceKeys = ['Genel', 'FirmaKullanicisi', 'FirmaYoneticisi', 'Danisman', 'HostYoneticisi'];

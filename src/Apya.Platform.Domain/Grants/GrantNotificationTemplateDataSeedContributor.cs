@@ -88,7 +88,8 @@ public class GrantNotificationTemplateDataSeedContributor : IDataSeedContributor
                                 or GrantNotificationTrigger.DocumentDeadlineNear
                                 or GrantNotificationTrigger.ReportDeadlineNear
                                 or GrantNotificationTrigger.MessageReceived
-                                or GrantNotificationTrigger.HandedOver);
+                                or GrantNotificationTrigger.HandedOver
+                                or GrantNotificationTrigger.ManagerDigest);
 
             await _repository.InsertAsync(template, autoSave: true);
         }

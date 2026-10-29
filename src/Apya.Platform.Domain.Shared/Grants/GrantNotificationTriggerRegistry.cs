@@ -38,7 +38,8 @@ public static class GrantNotificationTriggerRegistry
             [GrantNotificationTrigger.MessageReceived]           = NotificationType.GrantMessageReceived,
             [GrantNotificationTrigger.HandedOver]                = NotificationType.GrantHandedOver,
             [GrantNotificationTrigger.DocumentUploaded]          = NotificationType.GrantDocumentUploaded,
-            [GrantNotificationTrigger.DocumentApproved]          = NotificationType.GrantDocumentApproved
+            [GrantNotificationTrigger.DocumentApproved]          = NotificationType.GrantDocumentApproved,
+            [GrantNotificationTrigger.ManagerDigest]             = NotificationType.GrantManagerDigest
         };
 
     /// <summary>
@@ -138,7 +139,11 @@ public static class GrantNotificationTriggerRegistry
                 ["{yükleyen}", "{evrak_adı}", "{çağrı_adı}"],
 
             [GrantNotificationTrigger.DocumentApproved] =
-                ["{evrak_adı}", "{çağrı_adı}"]
+                ["{evrak_adı}", "{çağrı_adı}"],
+
+            // {özet} iş türü (host'ta danışman) başına sayı, {liste} en uzun bekleyen işler; ikisi de tek paragraf.
+            [GrantNotificationTrigger.ManagerDigest] =
+                ["{toplam}", "{en_eski_gün}", "{özet}", "{liste}"]
         };
 
     /// <summary>Yalnız HOST'a (danışman ekibine) giden tetikleyiciler.</summary>
@@ -226,7 +231,9 @@ public static class GrantNotificationTriggerRegistry
     /// yalnız danışmana giden bir tetikleyiciye firma metni yazmak hiçbir yere gitmeyen bir metin olurdu.
     /// </summary>
     public static IReadOnlyList<GrantNotificationAudience> AudiencesOf(GrantNotificationTrigger trigger)
-        => HostOnly.Contains(trigger) ? HostAudiences
+        => trigger == GrantNotificationTrigger.ManagerDigest
+            ? [GrantNotificationAudience.FirmaYoneticisi, GrantNotificationAudience.HostYoneticisi]
+            : HostOnly.Contains(trigger) ? HostAudiences
             : BothSides.Contains(trigger) ? [.. FirmAudiences, .. HostAudiences]
             : FirmAudiences;
 
