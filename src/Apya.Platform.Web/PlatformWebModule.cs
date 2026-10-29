@@ -432,6 +432,15 @@ public class PlatformWebModule : AbpModule
             options.IsDynamicClaimsEnabled = true;
         });
 
+        // Masaüstüne kurulan uygulama (PWA) sürekli açık kalsın diye oturum 90 gün yaşar ve her
+        // kullanımda yenilenir; varsayılan 14 gündü. Kalıcı çerez yalnız "Beni hatırla" ile
+        // yazılır; işaretlemeyenin oturumu tarayıcı kapanınca biter. Şifre değişince yine düşer.
+        context.Services.ConfigureApplicationCookie(options =>
+        {
+            options.ExpireTimeSpan = TimeSpan.FromDays(90);
+            options.SlidingExpiration = true;
+        });
+
         // Yasaklı TAM SAYFA gezinmesi uygulama kabuğundaki /AccessDenied'a eksik izin adıyla gider;
         // geri kalan her şey varsayılan işleyiciye birebir devredilir. Replace: çerçevenin TryAdd
         // kaydı önce de sonra da gelse tek kayıt bizimki kalır.
