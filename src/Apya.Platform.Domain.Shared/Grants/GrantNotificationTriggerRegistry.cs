@@ -141,7 +141,43 @@ public static class GrantNotificationTriggerRegistry
                 ["{evrak_adı}", "{çağrı_adı}"]
         };
 
+    /// <summary>Yalnız HOST'a (danışman ekibine) giden tetikleyiciler.</summary>
+    private static readonly HashSet<GrantNotificationTrigger> HostOnly =
+    [
+        GrantNotificationTrigger.InterestReceived,
+        GrantNotificationTrigger.ApplicationSubmitted,
+        GrantNotificationTrigger.MeetingProposed,
+        GrantNotificationTrigger.ConversionPending,
+        GrantNotificationTrigger.IdeaShared
+    ];
+
+    /// <summary>İki tarafa da (firma ve danışman) gidebilen tetikleyiciler; kalanı yalnız firmaya gider.</summary>
+    private static readonly HashSet<GrantNotificationTrigger> BothSides =
+    [
+        GrantNotificationTrigger.ApplicationStageChanged,
+        GrantNotificationTrigger.DecisionIssued,
+        GrantNotificationTrigger.SubmissionDeadlineNear,
+        GrantNotificationTrigger.MessageReceived,
+        GrantNotificationTrigger.HandedOver,
+        GrantNotificationTrigger.DocumentUploaded
+    ];
+
+    private static readonly GrantNotificationAudience[] FirmAudiences =
+        [GrantNotificationAudience.FirmaKullanicisi, GrantNotificationAudience.FirmaYoneticisi];
+
+    private static readonly GrantNotificationAudience[] HostAudiences =
+        [GrantNotificationAudience.Danisman, GrantNotificationAudience.HostYoneticisi];
+
     public static IReadOnlyCollection<GrantNotificationTrigger> All => (IReadOnlyCollection<GrantNotificationTrigger>)Map.Keys;
+
+    /// <summary>
+    /// Tetikleyicinin ulaştığı rol kitleleri (Genel hariç). Ulaşmadığı role şablon çoğaltılamaz:
+    /// yalnız danışmana giden bir tetikleyiciye firma metni yazmak hiçbir yere gitmeyen bir metin olurdu.
+    /// </summary>
+    public static IReadOnlyList<GrantNotificationAudience> AudiencesOf(GrantNotificationTrigger trigger)
+        => HostOnly.Contains(trigger) ? HostAudiences
+            : BothSides.Contains(trigger) ? [.. FirmAudiences, .. HostAudiences]
+            : FirmAudiences;
 
     public static NotificationType NotificationTypeOf(GrantNotificationTrigger trigger) => Map[trigger];
 

@@ -13,6 +13,10 @@ $(function () {
                        'ConvertedToProject', 'ConversionPending', 'SubmissionDeadlineNear', 'IdeaShared',
                        'AppealResolved', 'MessageReceived', 'HandedOver', 'DocumentUploaded', 'DocumentApproved'];
 
+    // Enum sırası sunucudakiyle birebir (GrantNotificationAudience).
+    var audienceKeys = ['Genel', 'FirmaKullanicisi', 'FirmaYoneticisi', 'Danisman', 'HostYoneticisi'];
+    function audienceName(a) { return l('Grants:Notify:Audience:' + audienceKeys[a]); }
+
     var model = null;
     var selectedId = null;
 
@@ -34,14 +38,21 @@ $(function () {
             : '<span class="apya-chip ' + (t.isEnabled ? 'apya-chip-positive' : 'apya-chip-neutral') + '">' +
               esc(l(t.isEnabled ? 'Grants:Notify:State:On' : 'Grants:Notify:State:Off')) + '</span>';
 
+        // Rol şablonu Genel şablonun altında, girintili ve rol adıyla durur.
+        var isRole = t.audience !== 0;
+        var name = isRole
+            ? '<strong><span class="apya-chip apya-chip-brand me-1">' + esc(audienceName(t.audience)) + '</span>' +
+              esc(tk(t.trigger, 'Name')) + '</strong>'
+            : '<strong>' + esc(tk(t.trigger, 'Name')) + '</strong>';
+
         return '<button type="button" class="apya-nt-row' +
+            (isRole ? ' is-role' : '') +
             (t.id === selectedId ? ' is-selected' : '') +
             '" data-id="' + t.id + '">' +
-            '<span class="apya-nt-name">' +
-            '<strong>' + esc(tk(t.trigger, 'Name')) + '</strong>' +
+            '<span class="apya-nt-name">' + name +
             '<span>' + esc(t.subject) + '</span></span>' +
             '<span class="apya-nt-meta">' + esc(tk(t.trigger, 'When')) + '</span>' +
-            '<span class="apya-nt-meta">' + esc(tk(t.trigger, 'Recipient')) + '</span>' +
+            '<span class="apya-nt-meta">' + esc(isRole ? audienceName(t.audience) : tk(t.trigger, 'Recipient')) + '</span>' +
             '<span class="apya-nt-channels">' + channels + '</span>' +
             '<span>' + state + '</span></button>';
     }
@@ -86,6 +97,30 @@ $(function () {
 
         $('#NtPreviewSubject').text(t.previewSubject);
         $('#NtPreviewBody').text(t.previewBody);
+
+        // Hedef kitle: Genel şablon role çoğaltılır, rol şablonu silinir.
+        var isRole = t.audience !== 0;
+        $('#NtAudience').text(audienceName(t.audience));
+        $('#NtAudienceHint').text(l(isRole ? 'Grants:Notify:AudienceHint:Role' : 'Grants:Notify:AudienceHint:Genel'));
+        $('#NtDeleteBtn').toggleClass('d-none', !isRole);
+
+        var options = t.duplicableAudiences || [];
+        $('#NtDuplicate').toggleClass('d-none', isRole);
+        $('#NtDuplicateAudience').html(options.map(function (a) {
+            return '<option value="' + a + '">' + esc(audienceName(a)) + '</option>';
+        }).join('')).prop('disabled', options.length === 0);
+        $('#NtDuplicateBtn').prop('disabled', options.length === 0);
+        $('#NtDuplicateHint').text(l(options.length ? 'Grants:Notify:DuplicateHint' : 'Grants:Notify:DuplicateNone'));
+    }
+
+    // Çoğaltma/silme sonrası liste yeniden kurulur; seçimi yeni (ya da Genel) şablona taşır.
+    function apply(dto, selectWhere, message) {
+        model = dto;
+        var next = (dto.templates || []).filter(selectWhere)[0];
+        selectedId = next ? next.id : null;
+        paintList();
+        paintEditor();
+        abp.notify.success(l(message));
     }
 
     // ---------- Olaylar ----------
@@ -120,6 +155,30 @@ $(function () {
             paintList();
             paintEditor();
             abp.notify.success(l('Grants:Notify:Saved'));
+        });
+    });
+
+    $('#NtDuplicateBtn').on('click', function () {
+        var t = selected();
+        var audience = parseInt($('#NtDuplicateAudience').val(), 10);
+        if (!t || isNaN(audience)) { return; }
+
+        service.duplicate({ id: t.id, audience: audience }).then(function (dto) {
+            apply(dto, function (x) { return x.trigger === t.trigger && x.audience === audience; },
+                'Grants:Notify:Duplicated');
+        });
+    });
+
+    $('#NtDeleteBtn').on('click', function () {
+        var t = selected();
+        if (!t) { return; }
+
+        abp.message.confirm(l('Grants:Notify:DeleteRoleConfirm')).then(function (ok) {
+            if (!ok) { return; }
+            service.delete(t.id).then(function (dto) {
+                apply(dto, function (x) { return x.trigger === t.trigger && x.audience === 0; },
+                    'Grants:Notify:Deleted');
+            });
         });
     });
 

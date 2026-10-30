@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
@@ -23,6 +24,12 @@ public class GrantNotificationTemplate : FullAuditedAggregateRoot<Guid>, IMultiT
 
     public GrantNotificationTrigger Trigger { get; private set; }
 
+    /// <summary>
+    /// Şablonun gittiği rol. Rol şablonu varsa o roldeki alıcı için Genel şablonun yerine geçer
+    /// (metin, kanal ve açık/kapalı durumu dahil).
+    /// </summary>
+    public GrantNotificationAudience Audience { get; private set; }
+
     /// <summary>Kapalıysa tetikleyici hiç bildirim üretmez.</summary>
     public bool IsEnabled { get; private set; }
 
@@ -46,13 +53,36 @@ public class GrantNotificationTemplate : FullAuditedAggregateRoot<Guid>, IMultiT
         string subject,
         string body,
         bool inApp = true,
-        bool email = false)
+        bool email = false,
+        GrantNotificationAudience audience = GrantNotificationAudience.Genel)
         : base(id)
     {
+        if (audience != GrantNotificationAudience.Genel
+            && !GrantNotificationTriggerRegistry.AudiencesOf(trigger).Contains(audience))
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateAudienceNotReached);
+        }
+
         Trigger = trigger;
+        Audience = audience;
         IsEnabled = true;
         SetChannels(inApp, email);
         SetText(subject, body);
+    }
+
+    /// <summary>Bu şablonun metni, kanalları ve durumuyla başka bir role kopyası.</summary>
+    public GrantNotificationTemplate CopyFor(Guid id, GrantNotificationAudience audience)
+    {
+        if (audience == GrantNotificationAudience.Genel)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateAudienceNotReached);
+        }
+
+        return new GrantNotificationTemplate(id, Trigger, Subject, Body, InApp, Email, audience)
+        {
+            TenantId = TenantId,
+            IsEnabled = IsEnabled
+        };
     }
 
     public void SetText(string subject, string body)

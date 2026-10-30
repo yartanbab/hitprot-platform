@@ -56,6 +56,9 @@
     box-shadow: inset 3px 0 0 0 var(--apya-accent-500);
 }
 
+/* Rol şablonu: Genel şablonun altında girintili durur. */
+.apya-nt-row.is-role { padding-left: calc(var(--apya-space-4) * 2); }
+
 .apya-nt-name {
     display: flex;
     flex-direction: column;

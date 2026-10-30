@@ -55,7 +55,11 @@ public class GrantNotificationTemplateDataSeedContributor : IDataSeedContributor
             }
         }
 
-        var existing = templates.Select(t => t.Trigger).ToHashSet();
+        // Rol şablonu Genel'in yerine geçmez: her tetikleyicinin bir Genel şablonu olmalı.
+        var existing = templates
+            .Where(t => t.Audience == GrantNotificationAudience.Genel)
+            .Select(t => t.Trigger)
+            .ToHashSet();
 
         foreach (var trigger in GrantNotificationTriggerRegistry.All)
         {

@@ -8033,6 +8033,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Audience")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Body")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -8103,7 +8106,7 @@ namespace Apya.Platform.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "Trigger")
+                    b.HasIndex("TenantId", "Trigger", "Audience")
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
