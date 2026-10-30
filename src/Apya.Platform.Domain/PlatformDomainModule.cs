@@ -15,7 +15,9 @@ using Volo.Abp.PermissionManagement.Identity;
 using Volo.Abp.PermissionManagement.OpenIddict;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.TenantManagement;
+using Volo.Abp.TextTemplating;
 using Volo.Abp.BackgroundWorkers;
+using Apya.Platform.TextTemplating;
 using Apya.Platform.Tasks;
 using Apya.Platform.Documents;
 using System.Threading.Tasks;
@@ -71,6 +73,12 @@ public class PlatformDomainModule : AbpModule
         context.Services.Replace(
             ServiceDescriptor.Scoped<IdentityUserManager>(
                 sp => (IdentityUserManager)sp.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<IdentityUser>>()));
+
+        // ABP 10.0.2'nin Scriban motoru Scriban 6.x'e derlenmiş; Scriban 7'de render anında TypeLoadException
+        // verir ve ABP'nin tüm e-posta şablonları (şifre sıfırlama, e-posta doğrulama) çalışmaz. "Scriban" motor
+        // adı Scriban 7'ye derlenmiş kendi motorumuza yönlendirilir; ABP'ninki hiç örneklenmez.
+        Configure<AbpTextTemplatingOptions>(options =>
+            options.RenderingEngines[ApyaScribanTemplateRenderingEngine.EngineName] = typeof(ApyaScribanTemplateRenderingEngine));
 
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
