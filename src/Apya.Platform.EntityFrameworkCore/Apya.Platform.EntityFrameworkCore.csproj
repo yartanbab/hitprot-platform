@@ -34,11 +34,18 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <!-- CVE override: EF.Tools → Build.Tasks.Core 17.14.28 → System.Security.Cryptography.Xml 9.0.0
-         GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf. 9.0.18: CVE-2026-50648 + 4 diğer High
-         (EncryptedXml DoS) patch'i (9.0.17'ye kadar açık). PrivateAssets=all: dev-time only. -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.18">
+         GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf. 9.0.18 de 13 Ekim 2026'da yeni açıklarla işaretlendi
+         (CVE-2026-96958/96959/96960 EncryptedXml DoS, 9.0.20'ye kadar açık) → 9.0.22. Xml'in bağımlı olduğu
+         Pkcs de 9.0.22'ye çıkar. PrivateAssets=all: dev-time only. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.22">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <!-- CVE override: Microsoft.Data.SqlClient 6.1.1 → System.Security.Cryptography.Pkcs 9.0.4
+         (CVE-2026-84008 yüksek, CVE-2026-70162 orta; 9.0.20'ye kadar açık) → 9.0.22. SqlClient bu projedeki
+         Volo.Abp.EntityFrameworkCore.SqlServer'dan girer; Web, DbMigrator ve testler bu projeden alır, bu yüzden
+         PrivateAssets YOK. DbMigrator paketinde açıklı 9.0.4 gerçekten yükleniyordu (Web'de çalışma zamanı
+         paketinin 10.0.x'i kazanır, ama restore uyarısı yine çıkar). -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.22" />
   </ItemGroup>
 
 </Project>
