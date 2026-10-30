@@ -36,6 +36,8 @@ public static class NotificationTemplateDefinitions
     public const string Today = "Today";
     public const string NoOpenTasks = "NoOpenTasks";
     public const string TodayNoOpenTasks = "TodayNoOpenTasks";
+    public const string Purchase = "Purchase";
+    public const string Sales = "Sales";
 
     private const string Task = "{görev_adı}";
     private const string Commenter = "{yorumlayan}";
@@ -93,7 +95,37 @@ public static class NotificationTemplateDefinitions
         new(NotificationType.ProjectIndicatorBehind, Default,
             "Notification:ProjectIndicatorBehind:Title", [],
             "Notification:ProjectIndicatorBehind:Body",
-            [Project, "{gösterge}", "{hedef_tarih}", "{gerçekleşen}", "{hedef}", "{ilerleme}"])
+            [Project, "{gösterge}", "{hedef_tarih}", "{gerçekleşen}", "{hedef}", "{ilerleme}"]),
+
+        // --- Finans (Faz 4b). Tutarlar üreticide para birimiyle biçimlenir ("12.500,00 TRY").
+        new(NotificationType.BudgetRevisionApplied, Default,
+            "Notification:BudgetRevision:Title", [],
+            "Notification:BudgetRevision:Body", [Project, "{revizyon_no}", "{gerekçe}", "{onaylanan_toplam}"]),
+        new(NotificationType.BudgetUsageThresholdReached, Default,
+            "Notification:BudgetThreshold:Title", ["{eşik}"],
+            "Notification:BudgetThreshold:Body", [Project, "{kalem}", "{onaylanan}", "{harcanan}", "{yüzde}", "{kalan}"]),
+        new(NotificationType.BudgetOverrun, Default,
+            "Notification:BudgetOverrun:Title", ["{kalem}"],
+            "Notification:BudgetOverrun:Body", [Project, "{kalem}", "{onaylanan}", "{harcanan}", "{yüzde}", "{aşım}"]),
+        new(NotificationType.FundingTrancheCollected, Default,
+            "Notification:TrancheCollected:Title", [],
+            "Notification:TrancheCollected:Body", [Project, "{dilim_no}", "{tahsil_edilen}", "{beklenen}"]),
+        new(NotificationType.FundingTrancheOverdue, Default,
+            "Notification:TrancheOverdue:Title", [],
+            "Notification:TrancheOverdue:Body", [Project, "{dilim_no}", "{planlanan_tarih}", "{gecikme_gün}", "{beklenen}"]),
+        new(NotificationType.TrancheDeductionAdded, Default,
+            "Notification:TrancheDeduction:Title", [],
+            "Notification:TrancheDeduction:Body", [Project, "{dilim_no}", "{tutar}", "{gerekçe}"]),
+        new(NotificationType.TrancheDisputed, Default,
+            "Notification:TrancheDisputed:Title", [],
+            "Notification:TrancheDisputed:Body", [Project, "{dilim_no}", "{beklenen}"]),
+        // Fatura yönü başlığı değiştirir (alış: ödeme gecikti, satış: tahsilat gecikti); gövde ortak.
+        new(NotificationType.InvoiceOverdue, Purchase,
+            "Notification:InvoiceOverdue:TitlePurchase", [],
+            "Notification:InvoiceOverdue:Body", ["{fatura_no}", Project, "{gecikme_gün}"]),
+        new(NotificationType.InvoiceOverdue, Sales,
+            "Notification:InvoiceOverdue:TitleSales", [],
+            "Notification:InvoiceOverdue:Body", ["{fatura_no}", Project, "{gecikme_gün}"])
     ];
 
     public static NotificationTemplateDefinition? Find(NotificationType type, string variant)

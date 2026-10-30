@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using Apya.Platform.Localization;
@@ -49,6 +50,7 @@ public class FinanceNotificationPublisher : IFinanceNotificationPublisher, ITran
     private readonly ICurrentTenant _currentTenant;
     private readonly ICurrentUser _currentUser;
     private readonly ILogger<FinanceNotificationPublisher> _logger;
+    private readonly NotificationTextComposer _texts;
 
     public FinanceNotificationPublisher(
         FinanceNotificationRecipientResolver recipientResolver,
@@ -57,8 +59,10 @@ public class FinanceNotificationPublisher : IFinanceNotificationPublisher, ITran
         IStringLocalizer<PlatformResource> l,
         ICurrentTenant currentTenant,
         ICurrentUser currentUser,
-        ILogger<FinanceNotificationPublisher> logger)
+        ILogger<FinanceNotificationPublisher> logger,
+        NotificationTextComposer texts)
     {
+        _texts = texts;
         _recipientResolver = recipientResolver;
         _notificationManager = notificationManager;
         _projectRepository = projectRepository;
@@ -70,44 +74,54 @@ public class FinanceNotificationPublisher : IFinanceNotificationPublisher, ITran
 
     /// <summary>Bütçe revizyonu yürürlüğe girdi.</summary>
     public Task RevisionAppliedAsync(Guid projectId, int revisionNo, string reason, decimal totalApproved)
-        => SendAsync(projectId, NotificationType.BudgetRevisionApplied, project => (
-            _l["Notification:BudgetRevision:Title"],
-            _l["Notification:BudgetRevision:Body",
-                project.Name, revisionNo, reason, Money(totalApproved, project.Currency)]));
+        => SendAsync(projectId, NotificationType.BudgetRevisionApplied, project => new()
+        {
+            ["{proje_adı}"] = project.Name,
+            ["{revizyon_no}"] = revisionNo.ToString(),
+            ["{gerekçe}"] = reason,
+            ["{onaylanan_toplam}"] = Money(totalApproved, project.Currency)
+        });
 
     /// <summary>Fonlama dilimi tahsil edildi.</summary>
     public Task TrancheCollectedAsync(Guid projectId, int sequenceNo, decimal receivedAmount, decimal expectedAmount)
-        => SendAsync(projectId, NotificationType.FundingTrancheCollected, project => (
-            _l["Notification:TrancheCollected:Title"],
-            _l["Notification:TrancheCollected:Body",
-                project.Name, sequenceNo,
-                Money(receivedAmount, project.Currency), Money(expectedAmount, project.Currency)]));
+        => SendAsync(projectId, NotificationType.FundingTrancheCollected, project => new()
+        {
+            ["{proje_adı}"] = project.Name,
+            ["{dilim_no}"] = sequenceNo.ToString(),
+            ["{tahsil_edilen}"] = Money(receivedAmount, project.Currency),
+            ["{beklenen}"] = Money(expectedAmount, project.Currency)
+        });
 
     /// <summary>Dilime kesinti işlendi.</summary>
     public Task DeductionAddedAsync(Guid projectId, int sequenceNo, decimal amount, string reason)
-        => SendAsync(projectId, NotificationType.TrancheDeductionAdded, project => (
-            _l["Notification:TrancheDeduction:Title"],
-            _l["Notification:TrancheDeduction:Body",
-                project.Name, sequenceNo, Money(amount, project.Currency), reason]));
+        => SendAsync(projectId, NotificationType.TrancheDeductionAdded, project => new()
+        {
+            ["{proje_adı}"] = project.Name,
+            ["{dilim_no}"] = sequenceNo.ToString(),
+            ["{tutar}"] = Money(amount, project.Currency),
+            ["{gerekçe}"] = reason
+        });
 
     /// <summary>
     /// Dilim itirazlı işaretlendi. İşaret KALDIRILDIĞINDA bildirim gitmez —
     /// süreç başlangıcı haber değeri taşır, geri alınması taşımaz.
     /// </summary>
     public Task TrancheDisputedAsync(Guid projectId, int sequenceNo, decimal expectedAmount)
-        => SendAsync(projectId, NotificationType.TrancheDisputed, project => (
-            _l["Notification:TrancheDisputed:Title"],
-            _l["Notification:TrancheDisputed:Body",
-                project.Name, sequenceNo, Money(expectedAmount, project.Currency)]));
+        => SendAsync(projectId, NotificationType.TrancheDisputed, project => new()
+        {
+            ["{proje_adı}"] = project.Name,
+            ["{dilim_no}"] = sequenceNo.ToString(),
+            ["{beklenen}"] = Money(expectedAmount, project.Currency)
+        });
 
     /// <summary>
     /// Ortak gönderim yolu: projeyi bul, kiracısına geç, alıcıları çöz, eylemi
-    /// yapanı çıkar, yaz.
+    /// yapanı çıkar, yaz. Faz 4b · Metin host şablonundan gelir; host türü kapattıysa bildirim gitmez.
     /// </summary>
     private async Task SendAsync(
         Guid projectId,
         NotificationType type,
-        Func<Project, (string Title, string Body)> compose)
+        Func<Project, Dictionary<string, string?>> values)
     {
         try
         {
@@ -117,7 +131,11 @@ public class FinanceNotificationPublisher : IFinanceNotificationPublisher, ITran
                 return;
             }
 
-            var (title, body) = compose(project);
+            if (await _texts.ComposeAsync(type, NotificationTemplateDefinitions.Default, values(project)) is not { } text)
+            {
+                return;
+            }
+            var (title, body) = text;
 
             // 🔴 Kiracı bağlamı ZORUNLU: host bir kiracının projesinde işlem
             // yaptığında CurrentTenant.Id null olur ve bildirim satırı TenantId=null

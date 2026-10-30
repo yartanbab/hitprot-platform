@@ -117,7 +117,24 @@ public class NotificationTemplateAppService : PlatformAppService, INotificationT
             ["{hedef_tarih}"] = date,
             ["{gerçekleşen}"] = L["Notify:Sample:Actual"],
             ["{hedef}"] = L["Notify:Sample:Target"],
-            ["{ilerleme}"] = "40"
+            ["{ilerleme}"] = "40",
+            // Faz 4b · Finans
+            ["{revizyon_no}"] = "2",
+            ["{gerekçe}"] = L["Notify:Sample:Reason"],
+            ["{onaylanan_toplam}"] = "1.250.000,00 TRY",
+            ["{eşik}"] = "75",
+            ["{kalem}"] = L["Notify:Sample:BudgetLine"],
+            ["{onaylanan}"] = "400.000,00 TRY",
+            ["{harcanan}"] = "310.000,00 TRY",
+            ["{yüzde}"] = "77",
+            ["{kalan}"] = "90.000,00 TRY",
+            ["{aşım}"] = "25.000,00 TRY",
+            ["{dilim_no}"] = "2",
+            ["{tahsil_edilen}"] = "300.000,00 TRY",
+            ["{beklenen}"] = "320.000,00 TRY",
+            ["{planlanan_tarih}"] = date,
+            ["{tutar}"] = "20.000,00 TRY",
+            ["{fatura_no}"] = L["Notify:Sample:InvoiceNo"]
         };
     }
 }
