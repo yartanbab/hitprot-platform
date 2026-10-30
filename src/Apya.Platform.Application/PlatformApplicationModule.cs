@@ -1,3 +1,4 @@
+using AutoMapper.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Account;
@@ -69,6 +70,21 @@ public class PlatformApplicationModule : AbpModule
         {
             // PROJE İÇİNDEKİ MAPPING PROFİLLERİNİ TARA VE YÜKLE
             options.AddMaps<PlatformApplicationModule>();
+
+            // CVE-2026-32933: AutoMapper iç içe nesne grafiğini derinlik sınırı olmadan eşler;
+            // yeterince derin grafik yığını taşırır ve süreç çöker (14.x'e yama yok). Bizde gerçek
+            // yüzey görev ağacı: TaskItem.SubTasks → TaskDto.SubTasks kullanıcı verisiyle derinleşir,
+            // görev oluşturmada derinlik sınırı yok (100 bin düzeyli zincir süreci çökertti, ölçüldü).
+            // Sınırı olmayan her eşlemeye 64 konur: ABP >= 10.2'nin DefaultMaxDepth'i ile aynı,
+            // ona çıkınca bu blok silinir. AutoMapperMaxDepth_Tests korur; bkz. Directory.Build.props.
+            options.Configurators.Add(context =>
+                context.MapperConfiguration.Internal().ForAllMaps((typeMap, _) =>
+                {
+                    if (typeMap.MaxDepth == 0)
+                    {
+                        typeMap.MaxDepth = 64;
+                    }
+                }));
         });
 
         // GAP-011: ABAC İzin Yönetimi Entegrasyonu
