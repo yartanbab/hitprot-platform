@@ -29,6 +29,7 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
     private readonly IDataFilter _dataFilter;
     private readonly IRepository<Project, Guid> _projectRepository;
     private readonly NotificationManager _notificationManager;
+    private readonly NotificationTextComposer _texts;
 
     public ProjectMemberAppService(
         IRepository<ProjectMember, Guid> memberRepository,
@@ -36,8 +37,10 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
         IIdentityUserRepository userRepository,
         IDataFilter dataFilter,
         IRepository<Project, Guid> projectRepository,
-        NotificationManager notificationManager)
+        NotificationManager notificationManager,
+        NotificationTextComposer texts)
     {
+        _texts = texts;
         _projectRepository = projectRepository;
         _notificationManager = notificationManager;
         _memberRepository = memberRepository;
@@ -123,22 +126,29 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
     /// zaten görevde çalışan kişileri eklediği için bildirim üretmez.
     /// </summary>
     private Task NotifyAddedAsync(Project project, Guid userId)
-        => NotifyMemberAsync(project, userId, NotificationType.ProjectMemberAdded,
-            L["Notification:ProjectMemberAdded:Title"], L["Notification:ProjectMemberAdded:Body", project.Name]);
+        => NotifyMemberAsync(project, userId, NotificationType.ProjectMemberAdded);
 
     /// <summary>
     /// P-09 / N-03 · Ekip değişikliği kişinin kendisine bildirilir (eklendi, çıkarıldı, rolü değişti).
     /// Kendi değişikliğini yapana gitmez. Rol önemlidir: "Sorumlu" bütçe ve gösterge uyarılarını alır.
+    /// Faz 4 · Metin host şablonundan gelir; host türü kapattıysa bildirim gitmez.
     /// </summary>
-    private async Task NotifyMemberAsync(Project project, Guid userId, NotificationType type, string title, string body)
+    private async Task NotifyMemberAsync(Project project, Guid userId, NotificationType type, string? role = null)
     {
         if (userId == CurrentUser.Id)
         {
             return;
         }
 
+        var text = await _texts.ComposeAsync(type, NotificationTemplateDefinitions.Default,
+            new Dictionary<string, string?> { ["{proje_adı}"] = project.Name, ["{rol}"] = role });
+        if (text is not { } t)
+        {
+            return;
+        }
+
         await _notificationManager.PublishAsync(
-            userId, title, body, type,
+            userId, t.Title, t.Body, type,
             entityType: "Project",
             entityId: project.Id,
             actorUserId: CurrentUser.Id,
@@ -197,8 +207,7 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
         {
             var project = await EnsureProjectExistsAsync(member.ProjectId);
             await NotifyMemberAsync(project, member.UserId, NotificationType.ProjectMemberRoleChanged,
-                L["Notification:ProjectMemberRoleChanged:Title"],
-                L["Notification:ProjectMemberRoleChanged:Body", project.Name, L["Notification:ProjectRole:" + input.Role]]);
+                L["Notification:ProjectRole:" + input.Role]);
         }
 
         var user = await _userRepository.FindAsync(member.UserId);
@@ -216,8 +225,7 @@ public class ProjectMemberAppService : PlatformAppService, IProjectMemberAppServ
         await _memberRepository.DeleteAsync(member, autoSave: true);
 
         var project = await EnsureProjectExistsAsync(member.ProjectId);
-        await NotifyMemberAsync(project, member.UserId, NotificationType.ProjectMemberRemoved,
-            L["Notification:ProjectMemberRemoved:Title"], L["Notification:ProjectMemberRemoved:Body", project.Name]);
+        await NotifyMemberAsync(project, member.UserId, NotificationType.ProjectMemberRemoved);
     }
 
     /// <summary>

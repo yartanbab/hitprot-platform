@@ -81,6 +81,11 @@ public static class PlatformAdminLinks
             "Menu:DesignSystem", "Settings:Admin.DesignSystem.Desc",
             "/DesignSystem", "fa fa-palette"),
 
+        // Faz 4 · Görev/Proje/Finans bildirim metinleri. Host-only: izin yalnız host'ta var.
+        new("Apya.Admin.NotificationTemplates", TenantManagementPermissions.Tenants.Update,
+            "Menu:NotificationTemplates", "Settings:Admin.NotificationTemplates.Desc",
+            "/Notifications/Templates", "fa fa-bell"),
+
         new("Apya.Admin.Feedback", PlatformPermissions.Feedbacks.Default,
             "Menu:FeedbackAdmin", "Settings:Admin.Feedback.Desc",
             "/Admin/Feedback", "fa fa-inbox"),

@@ -58,6 +58,12 @@
                         <span id="NtAudienceHint" class="apya-field-hint"></span>
                     </div>
 
+                    <div id="NtAfterDaysField" class="apya-field d-none">
+                        <label class="apya-field-label" for="NtAfterDays">@L["Grants:Notify:Field:AfterDays"]</label>
+                        <input type="number" id="NtAfterDays" class="form-control form-control-sm" min="1" max="90" step="1" />
+                        <span class="apya-field-hint">@L["Grants:Notify:Escalation:Hint"]</span>
+                    </div>
+
                     <div class="apya-field">
                         <label class="apya-field-label" for="NtSubject">@L["Grants:Notify:Field:Subject"]</label>
                         <input type="text" id="NtSubject" class="form-control form-control-sm" maxlength="200" />
@@ -108,7 +114,7 @@
                             <i class="fa fa-check me-1"></i>@L["Grants:Notify:Save"]
                         </button>
                         <button type="button" id="NtDeleteBtn" class="btn btn-sm btn-outline-danger d-none">
-                            <i class="fa fa-trash me-1"></i>@L["Grants:Notify:DeleteRole"]
+                            <i class="fa fa-trash me-1"></i><span class="js-label">@L["Grants:Notify:DeleteRole"]</span>
                         </button>
                     </div>
 
@@ -121,6 +127,19 @@
                             </button>
                         </div>
                         <span id="NtDuplicateHint" class="apya-field-hint"></span>
+                    </div>
+
+                    <div id="NtEscalate" class="apya-field d-none">
+                        <label class="apya-field-label" for="NtEscalateAudience">@L["Grants:Notify:AddEscalation"]</label>
+                        <div class="input-group input-group-sm">
+                            <select id="NtEscalateAudience" class="form-select form-select-sm"></select>
+                            <input type="number" id="NtEscalateDays" class="form-control form-control-sm" min="1" max="90" step="1" value="3"
+                                   aria-label="@L["Grants:Notify:Field:AfterDays"]" />
+                            <button type="button" id="NtEscalateBtn" class="btn btn-sm btn-outline-primary">
+                                <i class="fa fa-arrow-up-right-dots me-1"></i>@L["Grants:Notify:AddEscalation"]
+                            </button>
+                        </div>
+                        <span id="NtEscalateHint" class="apya-field-hint"></span>
                     </div>
                 </div>
             </div>

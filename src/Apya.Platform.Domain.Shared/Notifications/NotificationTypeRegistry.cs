@@ -65,6 +65,11 @@ public static class NotificationTypeRegistry
                 NotificationCategory.Finance, NotificationSeverity.High,
                 "fa fa-file-invoice-dollar", "/Invoices?invoiceId={0}", GroupSimilar: false),
 
+            // Faz 3 · Yönetici özeti: kayda değil ekibin bütününe ait; hibe ana sayfasına gider.
+            [NotificationType.GrantManagerDigest] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-list-check", "/Grants", GroupSimilar: false),
+
             // B-13 · Yükseltme proje sorumlusunadır: işi o yapmıyor, haberdar olup müdahale ediyor → Yüksek.
             [NotificationType.TaskOverdueEscalated] = new(
                 NotificationCategory.Tasks, NotificationSeverity.High,

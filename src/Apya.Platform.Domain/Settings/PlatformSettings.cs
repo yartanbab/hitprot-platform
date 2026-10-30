@@ -364,6 +364,12 @@ public static class PlatformSettings
         /// özet işçisinin kalıcı durumu — uygulama yeniden başlayınca pencere kaymasın diye.
         /// </summary>
         public const string LastDigestAt = Prefix + ".Notifications.LastDigestAt";
+
+        /// <summary>
+        /// Hibe yönetici özetinin son gönderildiği gün (Türkiye saatiyle, yyyy-MM-dd). İşçinin kalıcı durumu:
+        /// uygulama yeniden başlayınca özet aynı gün ikinci kez gitmesin.
+        /// </summary>
+        public const string LastManagerDigestDate = Prefix + ".Notifications.LastManagerDigestDate";
     }
 
     /// <summary>

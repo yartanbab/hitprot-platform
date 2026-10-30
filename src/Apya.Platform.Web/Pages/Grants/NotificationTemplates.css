@@ -211,3 +211,6 @@
         text-align: start;
     }
 }
+
+/* Faz 4 · Görev/Proje/Finans şablonları (/Notifications/Templates): ad, hâl, durum. */
+.apya-nt-row.apya-nt-row--simple { grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.8fr) 64px; }

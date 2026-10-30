@@ -27,6 +27,17 @@ public class GrantNotificationTemplateDto
     /// </summary>
     public List<GrantNotificationAudience> DuplicableAudiences { get; set; } = new();
 
+    /// <summary>Yükseltme şablonu mu (beklenen iş <see cref="AfterDays"/> gün yapılmazsa gider)?</summary>
+    public bool IsEscalation { get; set; }
+
+    public int? AfterDays { get; set; }
+
+    /// <summary>
+    /// Yalnız Genel ilk bildirimde dolu: bu tetikleyicinin henüz yükseltmesi olmayan kitleleri —
+    /// "yükseltme ekle" seçenekleri. Beklenen işi olmayan tetikleyicide boştur.
+    /// </summary>
+    public List<GrantNotificationAudience> EscalationAudiences { get; set; } = new();
+
     public bool IsEnabled { get; set; }
     public bool InApp { get; set; }
     public bool Email { get; set; }
@@ -62,6 +73,22 @@ public class SaveGrantNotificationTemplateInput
     public bool IsEnabled { get; set; }
     public bool InApp { get; set; }
     public bool Email { get; set; }
+
+    /// <summary>Yalnız yükseltme şablonunda okunur.</summary>
+    [Range(1, 90, ErrorMessage = "Gün sayısı 1 ile 90 arasında olmalıdır.")]
+    public int? AfterDays { get; set; }
+}
+
+public class AddGrantNotificationEscalationInput
+{
+    [Required(ErrorMessage = "Şablon seçilmedi.")]
+    public Guid Id { get; set; }
+
+    /// <summary>Yükseltmenin gideceği kişi.</summary>
+    public GrantNotificationAudience Audience { get; set; }
+
+    [Range(1, 90, ErrorMessage = "Gün sayısı 1 ile 90 arasında olmalıdır.")]
+    public int AfterDays { get; set; }
 }
 
 public class DuplicateGrantNotificationTemplateInput

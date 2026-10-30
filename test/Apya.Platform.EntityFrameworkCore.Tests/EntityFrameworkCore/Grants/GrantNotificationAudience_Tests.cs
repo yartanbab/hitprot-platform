@@ -37,7 +37,7 @@ public class GrantNotificationAudience_Tests : PlatformEntityFrameworkCoreTestBa
     }
 
     private static GrantNotificationTemplateDto General(GrantNotificationConsoleDto dto, GrantNotificationTrigger trigger)
-        => dto.Templates.Single(t => t.Trigger == trigger && t.Audience == GrantNotificationAudience.Genel);
+        => dto.Templates.Single(t => t.Trigger == trigger && t.Audience == GrantNotificationAudience.Genel && !t.IsEscalation);
 
     // ------------------------------------------------------------ gönderim
 

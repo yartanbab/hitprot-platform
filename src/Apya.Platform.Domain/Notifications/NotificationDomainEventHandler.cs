@@ -33,6 +33,7 @@ public class NotificationDomainEventHandler :
     private readonly IDataFilter _dataFilter;
     private readonly IRepository<Apya.Platform.Projects.ProjectMember, Guid> _memberRepository;
     private readonly IRepository<Apya.Platform.Projects.Project, Guid> _projectRepository;
+    private readonly NotificationTextComposer _texts;
 
     /// <summary>B-13 · Görev bu kadar gün gecikince proje sorumlularına yükseltilir.</summary>
     public const int OverdueEscalationDays = 3;
@@ -44,8 +45,10 @@ public class NotificationDomainEventHandler :
         IRepository<TaskItem, Guid> taskRepository,
         IDataFilter dataFilter,
         IRepository<Apya.Platform.Projects.ProjectMember, Guid> memberRepository,
-        IRepository<Apya.Platform.Projects.Project, Guid> projectRepository)
+        IRepository<Apya.Platform.Projects.Project, Guid> projectRepository,
+        NotificationTextComposer texts)
     {
+        _texts = texts;
         _memberRepository = memberRepository;
         _projectRepository = projectRepository;
         _notificationManager = notificationManager;
@@ -82,15 +85,27 @@ public class NotificationDomainEventHandler :
             .ToList();
     }
 
+    /// <summary>
+    /// Faz 4 · Metin host şablonundan gelir (yoksa bugünkü metin). Kapalı türde <c>null</c>: bildirim yayınlanmaz.
+    /// </summary>
+    private Task<(string Title, string Body)?> TextAsync(
+        NotificationType type, string variant, params (string Token, object? Value)[] values)
+        => _texts.ComposeAsync(type, variant, values.ToDictionary(v => v.Token, v => v.Value?.ToString()));
+
+    private Task<(string Title, string Body)?> TextAsync(NotificationType type, params (string Token, object? Value)[] values)
+        => TextAsync(type, NotificationTemplateDefinitions.Default, values);
+
     public async Task HandleEventAsync(TaskAssignedEto eventData)
     {
         // Eğer atanan kişi kendisi atadıysa bildirim gönderme
         if (eventData.AssigneeId == eventData.ModifierUserId) return;
 
+        if (await TextAsync(NotificationType.TaskAssigned, ("{görev_adı}", eventData.TaskTitle)) is not { } text) return;
+
         await _notificationManager.PublishAsync(
             eventData.AssigneeId,
-            _l["Notification:TaskAssigned:Title"],
-            _l["Notification:TaskAssigned:Body", eventData.TaskTitle],
+            text.Title,
+            text.Body,
             NotificationType.TaskAssigned,
             entityType: "Task",
             entityId: eventData.TaskId
@@ -100,9 +115,14 @@ public class NotificationDomainEventHandler :
     // --- Yorum Yapıldığında ---
     public async Task HandleEventAsync(TaskCommentAddedEto eventData)
     {
-        // Alıcıları (Yorumu yapan hariç) bul ve veritabanına kaydet
-        var title = _l["Notification:TaskComment:Title"];
-        var body  = _l["Notification:TaskComment:Body", eventData.CommenterName, eventData.CommentText];
+        // Alıcıları (Yorumu yapan hariç) bul ve veritabanına kaydet. Kapalı türün alıcıları atlanır; diğer
+        // türlerin elemesi (bahsedilen genel bildirimi almaz) yine geçerlidir.
+        var commenter = ("{yorumlayan}", (object?)eventData.CommenterName);
+        var taskTitle = ("{görev_adı}", (object?)eventData.TaskTitle);
+        var comment = ("{yorum}", (object?)eventData.CommentText);
+        var general = await TextAsync(NotificationType.TaskCommentAdded, commenter, comment);
+        var mention = await TextAsync(NotificationType.Mention, commenter, taskTitle, comment);
+        var reply = await TextAsync(NotificationType.CommentReplied, commenter, taskTitle, comment);
 
         // Dış paylaşım linkinden gelen yorumun kullanıcı kimliği YOKTUR (Guid.Empty).
         // Olduğu gibi geçirilirse bildirim var olmayan bir kullanıcıya işaret eder ve
@@ -116,12 +136,12 @@ public class NotificationDomainEventHandler :
             .Where(id => id != Guid.Empty && id != eventData.CommentUserId)
             .Distinct()
             .ToList();
-        foreach (var userId in mentioned)
+        foreach (var userId in mention == null ? [] : mentioned)
         {
             await _notificationManager.PublishAsync(
                 userId,
-                _l["Notification:Mention:Title"],
-                _l["Notification:Mention:Body", eventData.CommenterName, eventData.TaskTitle, eventData.CommentText],
+                mention!.Value.Title,
+                mention.Value.Body,
                 NotificationType.Mention,
                 entityType: "Task",
                 entityId: eventData.TaskId,
@@ -134,17 +154,25 @@ public class NotificationDomainEventHandler :
         if (eventData.ReplyToUserId is { } repliedTo && repliedTo != Guid.Empty
             && repliedTo != eventData.CommentUserId && !mentioned.Contains(repliedTo))
         {
-            await _notificationManager.PublishAsync(
-                repliedTo,
-                _l["Notification:CommentReplied:Title"],
-                _l["Notification:CommentReplied:Body", eventData.CommenterName, eventData.TaskTitle, eventData.CommentText],
-                NotificationType.CommentReplied,
-                entityType: "Task",
-                entityId: eventData.TaskId,
-                actorUserId: actorUserId,
-                actorName: eventData.CommenterName
-            );
+            if (reply is { } replyText)
+            {
+                await _notificationManager.PublishAsync(
+                    repliedTo,
+                    replyText.Title,
+                    replyText.Body,
+                    NotificationType.CommentReplied,
+                    entityType: "Task",
+                    entityId: eventData.TaskId,
+                    actorUserId: actorUserId,
+                    actorName: eventData.CommenterName
+                );
+            }
             mentioned.Add(repliedTo); // aynı yorum için ikinci (genel) bildirim gitmesin
+        }
+
+        if (general is not { } generalText)
+        {
+            return;
         }
 
         if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.CommentUserId
@@ -152,8 +180,8 @@ public class NotificationDomainEventHandler :
         {
             await _notificationManager.PublishAsync(
                 eventData.AssigneeId.Value,
-                title,
-                body,
+                generalText.Title,
+                generalText.Body,
                 NotificationType.TaskCommentAdded,
                 entityType: "Task",
                 entityId: eventData.TaskId,
@@ -167,8 +195,8 @@ public class NotificationDomainEventHandler :
         {
             await _notificationManager.PublishAsync(
                 eventData.CreatorId.Value,
-                title,
-                body,
+                generalText.Title,
+                generalText.Body,
                 NotificationType.TaskCommentAdded,
                 entityType: "Task",
                 entityId: eventData.TaskId,
@@ -182,8 +210,8 @@ public class NotificationDomainEventHandler :
         {
             await _notificationManager.PublishAsync(
                 watcherId,
-                title,
-                body,
+                generalText.Title,
+                generalText.Body,
                 NotificationType.TaskCommentAdded,
                 entityType: "Task",
                 entityId: eventData.TaskId,
@@ -201,33 +229,27 @@ public class NotificationDomainEventHandler :
             return;
         }
 
-        NotificationType type;
-        string title;
-        string body;
-        switch (eventData.Kind)
+        var changedBy = ("{değiştiren}", (object?)eventData.ChangedByName);
+        var taskTitle = ("{görev_adı}", (object?)eventData.TaskTitle);
+        (NotificationType Type, string Variant, string? NewDate) change = eventData.Kind switch
         {
-            case TaskChangeKind.Unassigned:
-                type = NotificationType.TaskUnassigned;
-                title = _l["Notification:TaskUnassigned:Title"];
-                body = _l["Notification:TaskUnassigned:Body", eventData.ChangedByName, eventData.TaskTitle];
-                break;
-            case TaskChangeKind.DueDateChanged:
-                type = NotificationType.TaskDueDateChanged;
-                title = _l["Notification:TaskDueDateChanged:Title"];
-                body = eventData.NewDueDate.HasValue
-                    ? _l["Notification:TaskDueDateChanged:Body", eventData.ChangedByName, eventData.TaskTitle,
-                        eventData.NewDueDate.Value.ToString("dd.MM.yyyy")]
-                    : _l["Notification:TaskDueDateChanged:Body:Removed", eventData.ChangedByName, eventData.TaskTitle];
-                break;
-            default:
-                type = NotificationType.TaskPriorityRaised;
-                title = _l["Notification:TaskPriorityRaised:Title"];
-                body = _l["Notification:TaskPriorityRaised:Body", eventData.ChangedByName, eventData.TaskTitle];
-                break;
+            TaskChangeKind.Unassigned => (NotificationType.TaskUnassigned, NotificationTemplateDefinitions.Default, null),
+            TaskChangeKind.DueDateChanged when eventData.NewDueDate.HasValue =>
+                (NotificationType.TaskDueDateChanged, NotificationTemplateDefinitions.Default,
+                    eventData.NewDueDate.Value.ToString("dd.MM.yyyy")),
+            TaskChangeKind.DueDateChanged =>
+                (NotificationType.TaskDueDateChanged, NotificationTemplateDefinitions.Removed, null),
+            _ => (NotificationType.TaskPriorityRaised, NotificationTemplateDefinitions.Default, null)
+        };
+        var type = change.Type;
+
+        if (await TextAsync(type, change.Variant, changedBy, taskTitle, ("{yeni_tarih}", change.NewDate)) is not { } text)
+        {
+            return;
         }
 
         await _notificationManager.PublishAsync(
-            eventData.RecipientId, title, body, type,
+            eventData.RecipientId, text.Title, text.Body, type,
             entityType: "Task",
             entityId: eventData.TaskId,
             actorUserId: eventData.ModifierUserId,
@@ -245,8 +267,13 @@ public class NotificationDomainEventHandler :
             _                           => _l["Notification:TaskStatus:Generic"]
         };
 
-        var title = _l["Notification:TaskStatus:Title"];
-        var body  = _l["Notification:TaskStatus:Body", eventData.TaskTitle, eventData.ChangedByName, statusText];
+        if (await TextAsync(NotificationType.TaskStatusChanged,
+                ("{görev_adı}", eventData.TaskTitle), ("{değiştiren}", eventData.ChangedByName), ("{durum}", statusText))
+            is not { } text)
+        {
+            return;
+        }
+        var (title, body) = text;
 
         // Atanan kişiye bildir (Değiştiren o değilse)
         if (eventData.AssigneeId.HasValue && eventData.AssigneeId != eventData.ModifierUserId)
@@ -300,14 +327,19 @@ public class NotificationDomainEventHandler :
     {
         // 🔴 NTF-11: Eskiden YALNIZ atanana gidiyordu — atanmamış görev tamamen
         // sessizdi ve ETO'da zaten taşınan CreatorId hiç kullanılmıyordu.
+        if (await TextAsync(NotificationType.TaskDueSoon, ("{görev_adı}", eventData.TaskTitle)) is not { } text)
+        {
+            return;
+        }
+
         var dueSoonRecipients = Recipients(eventData.AssigneeId, eventData.CreatorId).ToList();
         dueSoonRecipients.AddRange(await WatchersAsync(eventData.TaskId, eventData.AssigneeId, eventData.CreatorId));
         foreach (var userId in dueSoonRecipients)
         {
             await _notificationManager.PublishAsync(
                 userId,
-                _l["Notification:TaskDueSoon:Title"],
-                _l["Notification:TaskDueSoon:Body", eventData.TaskTitle],
+                text.Title,
+                text.Body,
                 NotificationType.TaskDueSoon,
                 entityType: "Task",
                 entityId: eventData.TaskId
@@ -324,18 +356,19 @@ public class NotificationDomainEventHandler :
     public async Task HandleEventAsync(TaskOverdueEto eventData)
     {
         var onceKey = $"{(int)NotificationType.TaskOverdue}:Task:{eventData.TaskId}:{eventData.DueDate:yyyyMMdd}";
-        var title = _l["Notification:TaskOverdue:Title"];
-        var body = _l["Notification:TaskOverdue:Body", eventData.TaskTitle, eventData.DaysOverdue];
+        var text = await TextAsync(NotificationType.TaskOverdue,
+            ("{görev_adı}", eventData.TaskTitle), ("{gecikme_gün}", eventData.DaysOverdue));
 
         // 🔴 NTF-11: Atanan VE görevi açan. Yalnız atanana gönderilseydi atanmamış
         // görev tamamen sessiz kalırdı; diğer görev bildirimleri (yorum, atama, durum)
         // zaten sahibe de gidiyor.
         var overdueRecipients = Recipients(eventData.AssigneeId, eventData.CreatorId).ToList();
         overdueRecipients.AddRange(await WatchersAsync(eventData.TaskId, eventData.AssigneeId, eventData.CreatorId));
-        foreach (var userId in overdueRecipients)
+        // Kapalıysa gecikme bildirimi gitmez ama yükseltme kendi şablonuyla yine değerlendirilir.
+        foreach (var userId in text == null ? [] : overdueRecipients)
         {
             await _notificationManager.PublishOnceAsync(
-                userId, onceKey, title, body,
+                userId, onceKey, text!.Value.Title, text.Value.Body,
                 NotificationType.TaskOverdue,
                 entityType: "Task",
                 entityId: eventData.TaskId
@@ -377,12 +410,17 @@ public class NotificationDomainEventHandler :
 
         var project = await _projectRepository.FindAsync(projectId);
         var onceKey = $"{(int)NotificationType.TaskOverdueEscalated}:Task:{eventData.TaskId}:{eventData.DueDate:yyyyMMdd}";
-        var title = _l["Notification:TaskOverdueEscalated:Title"];
-        var body = _l["Notification:TaskOverdueEscalated:Body", project?.Name ?? "-", eventData.TaskTitle, eventData.DaysOverdue];
+        if (await TextAsync(NotificationType.TaskOverdueEscalated,
+                ("{proje_adı}", project?.Name ?? "-"), ("{görev_adı}", eventData.TaskTitle), ("{gecikme_gün}", eventData.DaysOverdue))
+            is not { } text)
+        {
+            return;
+        }
+
         foreach (var userId in leads)
         {
             await _notificationManager.PublishOnceAsync(
-                userId, onceKey, title, body,
+                userId, onceKey, text.Title, text.Body,
                 NotificationType.TaskOverdueEscalated,
                 entityType: "Task",
                 entityId: eventData.TaskId);
@@ -407,15 +445,24 @@ public class NotificationDomainEventHandler :
         var onceKey =
             $"{(int)NotificationType.ProjectEndingSoon}:Project:{eventData.ProjectId}:{eventData.EndDate:yyyyMMdd}:{eventData.Threshold}";
 
-        var title = eventData.DaysRemaining == 0
-            ? _l["Notification:ProjectEndingSoon:TitleToday"]
-            : _l["Notification:ProjectEndingSoon:Title", eventData.DaysRemaining];
-
         // Açık görev yoksa "0 açık görev" demek yerine ayrı cümle: hazır olan proje için
-        // sayı bir uyarı gibi okunmamalı.
-        var body = eventData.OpenTaskCount > 0
-            ? _l["Notification:ProjectEndingSoon:Body", eventData.ProjectName, eventData.EndDate.ToString("dd.MM.yyyy"), eventData.OpenTaskCount]
-            : _l["Notification:ProjectEndingSoon:BodyNoOpenTasks", eventData.ProjectName, eventData.EndDate.ToString("dd.MM.yyyy")];
+        // sayı bir uyarı gibi okunmamalı. Hâl (bugün / N gün, açık görev var / yok) kodda; metin host'ta.
+        var variant = (eventData.DaysRemaining == 0, eventData.OpenTaskCount > 0) switch
+        {
+            (true, true) => NotificationTemplateDefinitions.Today,
+            (true, false) => NotificationTemplateDefinitions.TodayNoOpenTasks,
+            (false, true) => NotificationTemplateDefinitions.Default,
+            _ => NotificationTemplateDefinitions.NoOpenTasks
+        };
+
+        if (await TextAsync(NotificationType.ProjectEndingSoon, variant,
+                ("{kalan_gün}", eventData.DaysRemaining), ("{proje_adı}", eventData.ProjectName),
+                ("{bitiş_tarihi}", eventData.EndDate.ToString("dd.MM.yyyy")), ("{açık_görev_sayısı}", eventData.OpenTaskCount))
+            is not { } text)
+        {
+            return;
+        }
+        var (title, body) = text;
 
         // Son eşikte önem yükselir: kapanışa üç gün kala bu artık bir hatırlatma değil, uyarı.
         var severity = eventData.Threshold <= 3 ? NotificationSeverity.High : (NotificationSeverity?)null;
@@ -444,10 +491,16 @@ public class NotificationDomainEventHandler :
 
         string Value(decimal v) => v.ToString("0.##") + (string.IsNullOrEmpty(eventData.Unit) ? "" : " " + eventData.Unit);
 
-        var title = _l["Notification:ProjectIndicatorBehind:Title"];
-        var body = _l["Notification:ProjectIndicatorBehind:Body",
-            eventData.ProjectName, eventData.IndicatorName, eventData.TargetDate.ToString("dd.MM.yyyy"),
-            Value(eventData.CurrentValue), Value(eventData.TargetValue), eventData.ProgressPercent];
+        if (await TextAsync(NotificationType.ProjectIndicatorBehind,
+                ("{proje_adı}", eventData.ProjectName), ("{gösterge}", eventData.IndicatorName),
+                ("{hedef_tarih}", eventData.TargetDate.ToString("dd.MM.yyyy")),
+                ("{gerçekleşen}", Value(eventData.CurrentValue)), ("{hedef}", Value(eventData.TargetValue)),
+                ("{ilerleme}", eventData.ProgressPercent))
+            is not { } text)
+        {
+            return;
+        }
+        var (title, body) = text;
 
         foreach (var userId in Recipients(eventData.RecipientIds.ToArray()))
         {
