@@ -1473,6 +1473,19 @@ html[data-density="comfortable"] #DensityToggle i.fa-table-cells::before {
     background: var(--apya-surface-app-bg) !important;
     border-bottom: 1px solid var(--apya-border-default);
 }
+/* Ham bar gizli: tema barı kendi sırasıyla basıyor (kişi ikonu hamburgerin
+   yanında, sayfa adı/arama/zil yok); sidebar-toggle.js ancak DOM hazır olunca
+   diziyor. Arada her sayfa geçişinde karışık bar görünüyordu. Zemin ve kenarlık
+   hemen gelir, içerik JS `apya-mshell-ready` deyince. html.js şartı: JS hiç
+   yoksa gizlenmez. 2 sn'lik animasyon güvencedir — JS yarıda kalırsa
+   hamburger kaybolmasın. */
+html.js:not(.apya-mshell-ready) .lpx-mobile-navbar > * {
+    visibility: hidden;
+    animation: apya-mshell-reveal 0s linear 2s forwards;
+}
+@keyframes apya-mshell-reveal {
+    to { visibility: visible; }
+}
 html[data-mobile-shell="tabs"] .lpx-mobile-navbar {
     height: 48px;
     /* 36px kutu + 2×4px isabet taşması = 44 → boşluk 8 olmalı ki hedefler

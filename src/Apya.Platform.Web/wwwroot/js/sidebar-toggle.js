@@ -294,12 +294,14 @@ $(function () {
     // Böylece tema güncellemesi mekanizmayı değiştirse bile menü çalışmaya
     // devam eder (yalnız süslemeler devre dışı kalır).
     if (/^\/Account\//i.test(location.pathname)) {
+        document.documentElement.classList.add('apya-mshell-ready');
         return;
     }
 
     var drawer = document.getElementById('mobile-navbar');
     var navbar = document.querySelector('.lpx-mobile-navbar');
     if (!drawer || !navbar) {
+        document.documentElement.classList.add('apya-mshell-ready');
         return;
     }
 
@@ -505,6 +507,9 @@ $(function () {
         personToggle.classList.add('apya-mshell-avatar');
         personToggle.textContent = initials;
     }
+    // Bar dizildi → içeriği göster (o ana dek CSS gizliyor, bkz.
+    // apya-theme-bridge.css "Ham bar gizli").
+    document.documentElement.classList.add('apya-mshell-ready');
 
     // Bar yüksekliği TEK KAYNAK: barı ölç, CSS'e bildir (hesap sheet'i ve
     // çekmece konumu buna bağlı). Varyant değişiminde bar 54 ↔ 48px olduğu için
