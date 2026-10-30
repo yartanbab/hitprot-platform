@@ -19,9 +19,10 @@
     same engine compiled against Scriban 7, and PlatformDomainModule points
     AbpTextTemplatingOptions.RenderingEngines["Scriban"] at it. AbpTemplateRenderer resolves
     the engine by that registered type, so ABP's own engine is never instantiated and never
-    JIT-compiled. ApyaScribanTemplateRenderingEngine_Tests (EntityFrameworkCore.Tests) guards
-    this — keep it green whenever Scriban or ABP is bumped. Control run 2026-10-30: ABP's own
-    engine DOES throw System.TypeLoadException with Scriban 7.2.5 in the test host.
+    JIT-compiled. ApyaScribanTemplateRenderingEngine_Tests (EntityFrameworkCore.Tests) and
+    ForgotPasswordEmail_Tests (Web.Tests) guard this — keep them green whenever Scriban or ABP
+    is bumped. Control run 2026-10-30: ABP's own engine DOES throw System.TypeLoadException
+    with Scriban 7.2.5 in the test host.
     This closes all 12 advisories that 6.6.0 carried (GHSA-5wr9-m6jw-xx44 critical, 7 high,
     4 medium). 7.5.3 was also advisory-free when checked (2026-10-30); 7.2.5 is what
     ABP 10.6/10.7 itself ships and is tested against.
