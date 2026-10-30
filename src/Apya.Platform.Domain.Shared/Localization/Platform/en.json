@@ -2075,6 +2075,7 @@
     "Platform:Task:ParentNotFound": "The parent task for this subtask could not be found. It may have been deleted; refresh the page and try again.",
     "Platform:Task:WorkStepProjectMismatch": "The selected work step does not belong to the task's project.",
     "Platform:Task:ParentProjectMismatch": "A subtask cannot be added to a different project than its parent task.",
+    "Platform:Task:ParentTooDeep": "Subtasks can be nested at most {MaxDepth} levels below the main task, so a new subtask cannot be added under this task. Attach it to a task higher up instead.",
     "Platform:Task:ViewPrivateDenied": "You do not have permission to view this private task. Only the creator and assignee can view it.",
     "Platform:Task:ViewImpersonationDenied": "You cannot view this private task while using impersonation.",
     "Platform:Task:UpdateDenied": "You do not have permission to update this task. Only the creator or assignee can update it.",

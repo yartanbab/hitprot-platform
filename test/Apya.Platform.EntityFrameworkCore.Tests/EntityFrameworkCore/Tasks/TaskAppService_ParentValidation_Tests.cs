@@ -18,8 +18,8 @@ namespace Apya.Platform.EntityFrameworkCore.Tasks;
 /// <para>Var olmayan bir üst görevle açılan alt görev erişilmez bir yetimdir: kök listeler
 /// onu "alt görev" diye dışarıda bırakır, üst görevi ise yoktur.</para>
 ///
-/// <para>Derinlik (alt görevin altına görev) burada BİLEREK ölçülmüyor ve zorlanmıyor:
-/// arayüz bugün buna izin veriyor, yasaklamak ürün kararı.</para>
+/// <para>Derinlik sınırı (en çok <see cref="TaskConsts.MaxSubTaskDepth"/> düzey, kullanıcı kararı
+/// 2026-10-30) ayrı bir sözleşmedir: <c>TaskAppService_SubtaskDepth_Tests</c>.</para>
 /// </summary>
 [Collection(PlatformTestConsts.CollectionDefinitionName)]
 public class TaskAppService_ParentValidation_Tests : PlatformEntityFrameworkCoreTestBase
