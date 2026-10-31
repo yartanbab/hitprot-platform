@@ -29,9 +29,12 @@ namespace Apya.Platform.Documents;
 /// satırları oluşturulduğu günün enum'undan yazılır, sonradan eklenen bölüm o şablonda
 /// hiç görünmezdi ve açılamazdı.</para>
 ///
-/// <para>Kapanış raporu şablonları (<see cref="BuildClosingReportDefinitions"/>) bu kuralın
-/// tek istisnasıdır: açık bölümleri kurumun resmi formundaki SIRAYLA gelir, kapalılar
-/// ortak sırayla arkaya dizilir (<see cref="TemplateDefinition.OfficialOrder"/>).</para>
+/// <para>Kurum şablonları bu kuralın istisnasıdır: ilk iki şablon (KOSGEB ve TÜBİTAK dönem
+/// raporu), kapanış (<see cref="BuildClosingReportDefinitions"/>) ve ara rapor
+/// (<see cref="BuildInterimReportDefinitions"/>) şablonlarında açık bölümler kurumun resmi
+/// formundaki SIRAYLA gelir, kapalılar ortak sırayla arkaya dizilir
+/// (<see cref="TemplateDefinition.OfficialOrder"/>). Ortak sırada kalanlar banka, müşteri,
+/// denetçi ve iç yönetim şablonlarıdır (3–6).</para>
 /// </summary>
 public class ReportTemplateDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
@@ -88,13 +91,8 @@ public class ReportTemplateDataSeedContributor : IDataSeedContributor, ITransien
         var newSections = new List<ReportSection>();
         foreach (var definition in definitions)
         {
-            // Resmi sıralı şablonda açık bölümler tanımdaki sırayla başa, kalanlar ortak sırayla arkaya.
-            var keys = definition.OfficialOrder
-                ? definition.EnabledSections.Concat(SectionOrder.Except(definition.EnabledSections))
-                : SectionOrder;
-
             var order = 0;
-            foreach (var key in keys)
+            foreach (var key in OrderedKeys(definition))
             {
                 order++;
 
@@ -116,8 +114,64 @@ public class ReportTemplateDataSeedContributor : IDataSeedContributor, ITransien
             await _sectionRepository.InsertManyAsync(newSections, autoSave: true);
         }
 
+        await ReviseLegacyTemplatesAsync(definitions);
         await BackfillCustomTemplatesAsync();
     }
+
+    /// <summary>Resmi sıralı şablonda açık bölümler tanımdaki sırayla başa, kalanlar ortak sırayla arkaya.</summary>
+    private static IEnumerable<ReportSectionKey> OrderedKeys(TemplateDefinition definition)
+        => definition.OfficialOrder
+            ? definition.EnabledSections.Concat(SectionOrder.Except(definition.EnabledSections))
+            : SectionOrder;
+
+    /// <summary>
+    /// İlk iki kurum şablonu resmi formla eksik tohumlanmıştı: KOSGEB ara raporunda Riskler ve
+    /// Ekip katkısı (Dönemsel İzleme Formu D ve A bölümleri), TÜBİTAK dönem raporunda adam-ay,
+    /// bütçe, ara çıktılar, değişiklik bildirimi ve riskler (AGY320 2.1.1–2.3) yoktu.
+    ///
+    /// <para>Kurulu veritabanlarında BİR KEZ düzeltilir: şablon hâlâ eski adını taşıyorsa adı,
+    /// bölüm sırası ve açık/kapalı durumu bugünkü tanıma getirilir. Yeni ad işarettir —
+    /// düzeltmeden sonra host'un bu şablonlarda yaptığı bölüm değişiklikleri bir daha ezilmez.
+    /// Yeni kurulumda şablonlar zaten yeni adla doğar, adım hiçbir şey yapmaz.</para>
+    /// </summary>
+    private async Task ReviseLegacyTemplatesAsync(IReadOnlyList<TemplateDefinition> definitions)
+    {
+        foreach (var (id, legacyName) in LegacyTemplateNames)
+        {
+            var template = await _templateRepository.FindAsync(id);
+            if (template == null || template.Name != legacyName)
+            {
+                continue;
+            }
+
+            var definition = definitions.Single(d => d.Id == id);
+            template.SetName(definition.Name);
+            await _templateRepository.UpdateAsync(template, autoSave: true);
+
+            var sections = await _sectionRepository.GetListAsync(s => s.TemplateId == id);
+            var order = 0;
+            foreach (var key in OrderedKeys(definition))
+            {
+                var section = sections.FirstOrDefault(s => s.SectionKey == key);
+                if (section == null)
+                {
+                    continue;
+                }
+
+                section.SetOrder(++order);
+                section.SetEnabled(ReportSectionAvailability.IsAvailable(key) && definition.EnabledSections.Contains(key));
+            }
+
+            await _sectionRepository.UpdateManyAsync(sections, autoSave: true);
+        }
+    }
+
+    /// <summary>Düzeltilecek şablonların ESKİ adları (bkz. <see cref="ReviseLegacyTemplatesAsync"/>).</summary>
+    private static readonly (Guid Id, string LegacyName)[] LegacyTemplateNames =
+    {
+        (new Guid("c1000000-0000-4000-8000-000000000001"), "KOSGEB ara rapor"),
+        (new Guid("c1000000-0000-4000-8000-000000000002"), "TÜBİTAK 1501 dönem raporu"),
+    };
 
     /// <summary>
     /// Kiracıların (ve host'un) KENDİ oluşturduğu şablonlara, sonradan eklenen bölüm
@@ -216,32 +270,43 @@ public class ReportTemplateDataSeedContributor : IDataSeedContributor, ITransien
         // değil. Mevcut kurulumlarda satırların sıra numarası 1..12 olarak yazılmış
         // durumda; araya eklenen bölüm var olan bir satırla AYNI sıra numarasını alır ve
         // çıktıdaki sıra belirsizleşirdi. Kullanıcı sırayı rapor derleyicide değiştirebilir.
-        // İlk altı sistem şablonu bunları açık GETİRMEZ (tanımlarda yoklar): mevcut
-        // kurulumların rapor çıktısı bir sonraki DbMigrator turunda kendiliğinden değişmemeli.
-        // Kapanış raporu şablonları yeni satır olarak doğduğu için bu kuralın dışındadır.
+        // Banka, müşteri, denetçi ve iç yönetim şablonları (3–6) bunları açık GETİRMEZ (tanımlarda
+        // yoklar): mevcut kurulumların rapor çıktısı bir sonraki DbMigrator turunda kendiliğinden
+        // değişmemeli. İlk iki kurum şablonu bir kez, bilerek resmi forma getirilir
+        // (ReviseLegacyTemplatesAsync); kapanış ve ara rapor şablonları yeni satır olarak doğar.
         ReportSectionKey.BudgetSummary,
         ReportSectionKey.TaskProgress,
-        // PRJ-08 · aynı kural: sona yazılır, ilk altı sistem şablonu açık getirmez.
+        // PRJ-08 · aynı kural: sona yazılır, 3–6 numaralı şablonlar açık getirmez.
         ReportSectionKey.Indicators,
     };
 
     private static List<TemplateDefinition> BuildDefinitions()
     {
-        // Kurum teslimleri: künye + ilerleme + uygunluk + eksikler + ek indeksi.
-        var institution = new[]
-        {
-            ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.WorkStepProgress,
-            ReportSectionKey.Timeline, ReportSectionKey.ExpenseDocumentMatch, ReportSectionKey.ComplianceStatus,
-            ReportSectionKey.MissingDocuments, ReportSectionKey.AnnexIndex,
-        };
-
         var definitions = new List<TemplateDefinition>
         {
-            new(new Guid("c1000000-0000-4000-8000-000000000001"), "KOSGEB ara rapor",
-                ReportRecipient.Institution, "KOSGEB", 1, institution),
+            // Dönemsel İzleme Formu (FRM.13.00.06 Stratejik Ürün, FRM.35.00.17 İş Geliştirme). Formu
+            // KOSGEB izleyicisi doldurur; işletmenin dönem dosyası ödeme talebiyle birlikte buna dayanır.
+            // ProjectSummary formdaki "C-Genel Değerlendirme"dir, Risks "D-Sonuç".
+            new(new Guid("c1000000-0000-4000-8000-000000000001"), "KOSGEB ara rapor (3 ayda bir)",
+                ReportRecipient.Institution, "KOSGEB", 1, new[]
+                {
+                    ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.WorkStepProgress,
+                    ReportSectionKey.Timeline, ReportSectionKey.Risks, ReportSectionKey.ExpenseDocumentMatch,
+                    ReportSectionKey.TeamContribution, ReportSectionKey.ComplianceStatus,
+                    ReportSectionKey.MissingDocuments, ReportSectionKey.AnnexIndex,
+                }, OfficialOrder: true),
 
-            new(new Guid("c1000000-0000-4000-8000-000000000002"), "TÜBİTAK 1501 dönem raporu",
-                ReportRecipient.Institution, "TÜBİTAK", 2, institution),
+            // AGY320/321/323 Dönem Raporu (Teknik Rapor) — 1501, 1507, 1509, 1511 ve Yenilik Destek
+            // Programı (1707, 1719) aynı form. Dönem = takvim yarıyılı.
+            new(new Guid("c1000000-0000-4000-8000-000000000002"), "TÜBİTAK TEYDEB dönem raporu (6 ayda bir)",
+                ReportRecipient.Institution, "TÜBİTAK", 2, new[]
+                {
+                    ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.WorkStepProgress,
+                    ReportSectionKey.TeamContribution, ReportSectionKey.BudgetSummary, ReportSectionKey.Timeline,
+                    ReportSectionKey.Milestones, ReportSectionKey.AuditTrail, ReportSectionKey.Risks,
+                    ReportSectionKey.ExpenseDocumentMatch, ReportSectionKey.ComplianceStatus,
+                    ReportSectionKey.MissingDocuments, ReportSectionKey.AnnexIndex,
+                }, OfficialOrder: true),
 
             new(new Guid("c1000000-0000-4000-8000-000000000003"), "Banka / finans dosyası",
                 ReportRecipient.Bank, null, 3, new[]
@@ -274,7 +339,117 @@ public class ReportTemplateDataSeedContributor : IDataSeedContributor, ITransien
         };
 
         definitions.AddRange(BuildClosingReportDefinitions());
+        definitions.AddRange(BuildInterimReportDefinitions());
         return definitions;
+    }
+
+    /// <summary>
+    /// Proje sürerken verilen ara rapor (dönem / gelişme / periyodik / ilerleme) şablonları. Her ara
+    /// rapor TÜRÜ için tek şablon: dönem raporları her dönem aynı yapıdadır, tarih aralığı rapor
+    /// üretilirken seçilir. Sıklık sabitse adda yazar. Kaynak: 2026-10-31 kurum araştırması
+    /// (docs/hibe-kapanis-raporlari/README.md).
+    ///
+    /// <para>KOSGEB ve TÜBİTAK TEYDEB dönem raporları ilk iki şablondur; TEKMER/SEGEM dönem
+    /// raporunu kapanış şablonu 9 karşılar. Kimlikler c1000000-…-000000000201'den başlar.</para>
+    /// </summary>
+    private static IEnumerable<TemplateDefinition> BuildInterimReportDefinitions()
+    {
+        static TemplateDefinition Interim(int no, string name, string issuer, params ReportSectionKey[] sections)
+            => new(new Guid($"c1000000-0000-4000-8000-{no + 200:D12}"), name, ReportRecipient.Institution,
+                issuer, 29 + no, sections, OfficialOrder: true);
+
+        // --- TÜBİTAK ve Eureka ---
+        // KAMAG: dönemler 4–8 ay, sözleşmede; rapor teslimden 10 gün önce müşteri kuruma sunulur.
+        yield return Interim(1, "TÜBİTAK 1007 gelişme raporu (4–8 ayda bir)", "TÜBİTAK",
+            ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.BudgetSummary,
+            ReportSectionKey.WorkStepProgress, ReportSectionKey.Milestones, ReportSectionKey.Timeline,
+            ReportSectionKey.TaskProgress, ReportSectionKey.TeamContribution, ReportSectionKey.Risks,
+            ReportSectionKey.AuditTrail, ReportSectionKey.ExpenseDocumentMatch, ReportSectionKey.AnnexIndex);
+
+        // ARDEB-PTS AP-GR-02: 1071 ikili işbirliği / ortaklıkların Türkiye tarafı ve BİDEB 2247; sıklık sözleşmede.
+        yield return Interim(2, "TÜBİTAK ARDEB / BİDEB gelişme raporu", "TÜBİTAK",
+            ReportSectionKey.CoverPage, ReportSectionKey.WorkStepProgress, ReportSectionKey.Timeline,
+            ReportSectionKey.Milestones, ReportSectionKey.AuditTrail, ReportSectionKey.Risks,
+            ReportSectionKey.TeamContribution, ReportSectionKey.BudgetSummary, ReportSectionKey.ExpenseDocumentMatch,
+            ReportSectionKey.AnnexIndex);
+
+        // Eureka kümeleri (üç aylık rapor + ara değerlendirme) ve Ufuk Avrupa ortaklıkları (ara / yıllık).
+        yield return Interim(3, "Uluslararası ortaklık ara raporu", "Eureka · Ufuk Avrupa",
+            ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.WorkStepProgress,
+            ReportSectionKey.Milestones, ReportSectionKey.Timeline, ReportSectionKey.TeamContribution,
+            ReportSectionKey.Risks, ReportSectionKey.Indicators, ReportSectionKey.AnnexIndex);
+
+        // AGY312: yatırımdan sonra 36 ay boyunca altı ayda bir, toplam 6 rapor.
+        yield return Interim(4, "BiGG+ iş planı ilerleme raporu (6 ayda bir)", "TÜBİTAK",
+            ReportSectionKey.CoverPage, ReportSectionKey.WorkStepProgress, ReportSectionKey.Milestones,
+            ReportSectionKey.BudgetSummary, ReportSectionKey.ExpenseDocumentMatch, ReportSectionKey.AuditTrail,
+            ReportSectionKey.Risks, ReportSectionKey.Indicators, ReportSectionKey.AnnexIndex);
+
+        // --- Kalkınma ajansları ---
+        // Mali destek: nihai raporla aynı form (PUR EK 4.1 / Sözleşme Ek IX-A), ara ödeme talebiyle; en fazla 3.
+        yield return Interim(5, "Kalkınma ajansı ara raporu (en fazla 3)", "Kalkınma ajansları",
+            ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.WorkStepProgress,
+            ReportSectionKey.Milestones, ReportSectionKey.Timeline, ReportSectionKey.Indicators,
+            ReportSectionKey.Risks, ReportSectionKey.TeamContribution, ReportSectionKey.BudgetSummary,
+            ReportSectionKey.ExpenseDocumentMatch, ReportSectionKey.ComplianceStatus,
+            ReportSectionKey.MissingDocuments, ReportSectionKey.AnnexIndex);
+
+        // --- AB programları ---
+        // Ufuk Avrupa / EIC, Dijital Avrupa, EACEA: nihai raporla aynı şablon; ara rapor = dönem sayısı − 1.
+        yield return Interim(6, "AB Funding & Tenders periyodik ara raporu", "Avrupa Komisyonu",
+            ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.WorkStepProgress,
+            ReportSectionKey.Milestones, ReportSectionKey.Timeline, ReportSectionKey.Risks,
+            ReportSectionKey.Indicators, ReportSectionKey.TeamContribution, ReportSectionKey.BudgetSummary,
+            ReportSectionKey.ExpenseDocumentMatch, ReportSectionKey.AnnexIndex);
+
+        // Veri sayfasındaki "additional prefinancing report" dönemleri; EIC'de ilerleme toplantısı.
+        yield return Interim(7, "AB ek ön finansman raporu", "Avrupa Komisyonu",
+            ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.WorkStepProgress,
+            ReportSectionKey.Milestones, ReportSectionKey.Risks, ReportSectionKey.BudgetSummary);
+
+        // KA2 periyodik / ilerleme raporu ve KA1 gençlik / ESC ara raporu (ön finansman modeline bağlı).
+        yield return Interim(8, "Erasmus+ Ulusal Ajans ara / ilerleme raporu", "Türkiye Ulusal Ajansı",
+            ReportSectionKey.CoverPage, ReportSectionKey.WorkStepProgress, ReportSectionKey.Timeline,
+            ReportSectionKey.Indicators, ReportSectionKey.TeamContribution, ReportSectionKey.Risks,
+            ReportSectionKey.BudgetSummary, ReportSectionKey.ComplianceStatus, ReportSectionKey.AnnexIndex);
+
+        // EIT Urban Mobility 6 aylık ara inceleme ve EIT Culture & Creativity dönem ortası güncellemesi.
+        yield return Interim(9, "EIT ara inceleme (6 aylık / dönem ortası)", "EIT",
+            ReportSectionKey.CoverPage, ReportSectionKey.TaskProgress, ReportSectionKey.WorkStepProgress,
+            ReportSectionKey.Milestones, ReportSectionKey.Timeline, ReportSectionKey.Indicators,
+            ReportSectionKey.Risks, ReportSectionKey.BudgetSummary, ReportSectionKey.ExpenseDocumentMatch,
+            ReportSectionKey.ComplianceStatus);
+
+        // EIT C&C ve EIT HEI: projenin değdiği her takvim yılı için performans + maliyet paketi.
+        yield return Interim(10, "EIT yıllık performans ve maliyet paketi", "EIT",
+            ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.TaskProgress,
+            ReportSectionKey.WorkStepProgress, ReportSectionKey.Indicators, ReportSectionKey.Milestones,
+            ReportSectionKey.Timeline, ReportSectionKey.Risks, ReportSectionKey.BudgetSummary,
+            ReportSectionKey.ExpenseDocumentMatch, ReportSectionKey.AnnexIndex);
+
+        // Ödemesi kilometre taşına bağlı cascade / götürü bedel hibeler (Women TechEU 2, EIT Food Seedbed).
+        yield return Interim(11, "Kilometre taşı ödeme raporu", "Women TechEU · EIT Food",
+            ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.Milestones,
+            ReportSectionKey.Indicators, ReportSectionKey.TaskProgress, ReportSectionKey.ExpenseDocumentMatch,
+            ReportSectionKey.AnnexIndex);
+
+        // --- Vakıflar ve uluslararası fonlar ---
+        // NED/EED çeyreklik, Global EbA altı aylık, Alanı Genişlet / MATRA / Avrupa Konseyi tek ara rapor.
+        yield return Interim(12, "Ara anlatı ve mali rapor", "Vakıflar ve uluslararası fonlar",
+            ReportSectionKey.CoverPage, ReportSectionKey.ProjectSummary, ReportSectionKey.WorkStepProgress,
+            ReportSectionKey.Timeline, ReportSectionKey.Milestones, ReportSectionKey.Indicators,
+            ReportSectionKey.Risks, ReportSectionKey.BudgetSummary, ReportSectionKey.ExpenseDocumentMatch,
+            ReportSectionKey.ComplianceStatus, ReportSectionKey.MissingDocuments, ReportSectionKey.AnnexIndex);
+
+        yield return Interim(13, "Aylık ilerleme raporu", "Open Technology Fund · CIVICUS",
+            ReportSectionKey.CoverPage, ReportSectionKey.Milestones, ReportSectionKey.TaskProgress,
+            ReportSectionKey.WorkStepProgress, ReportSectionKey.Risks, ReportSectionKey.Indicators,
+            ReportSectionKey.BudgetSummary, ReportSectionKey.ExpenseDocumentMatch);
+
+        // Ekipman ve tür koruma hibeleri: çeyreklik ya da altı aylık kısa güncelleme.
+        yield return Interim(14, "Kısa dönemsel ilerleme güncellemesi", "Wildlife Acoustics · MBZ",
+            ReportSectionKey.CoverPage, ReportSectionKey.Milestones, ReportSectionKey.WorkStepProgress,
+            ReportSectionKey.Indicators, ReportSectionKey.AnnexIndex);
     }
 
     /// <summary>

@@ -132,21 +132,23 @@ public class ReportTemplateSectionBackfill_Tests : PlatformEntityFrameworkCoreTe
     }
 
     /// <summary>
-    /// İlk altı sistem şablonuna da iner — KAPALI. Bu tanımlar yeni bölümleri açık getirmez:
-    /// mevcut kurulumların rapor çıktısı DbMigrator turunda kendiliğinden değişmemeli.
-    /// (Kapanış raporu şablonları yeni satır olarak doğar; bkz. ReportTemplateClosingSeed_Tests.)
+    /// Ortak sıradaki sistem şablonlarına (banka, müşteri, denetçi, iç yönetim: 3–6) da iner —
+    /// KAPALI. Bu tanımlar yeni bölümleri açık getirmez: mevcut kurulumların rapor çıktısı
+    /// DbMigrator turunda kendiliğinden değişmemeli. (İlk iki kurum şablonu bilerek bir kez
+    /// düzeltilir; kapanış ve ara rapor şablonları yeni satır olarak doğar — bkz.
+    /// ReportTemplateClosingSeed_Tests, ReportTemplateInterimSeed_Tests.)
     /// </summary>
     [Fact]
     public async Task Sistem_sablonlarina_yeni_bolumler_kapali_iner()
     {
         await WithUnitOfWorkAsync(() => _seeder.SeedAsync(new DataSeedContext()));
 
-        var legacyIds = Enumerable.Range(1, 6)
+        var legacyIds = Enumerable.Range(3, 4)
             .Select(i => new Guid($"c1000000-0000-4000-8000-{i:D12}"))
             .ToArray();
         var systemTemplates = await WithUnitOfWorkAsync(
             () => _templateRepository.GetListAsync(t => legacyIds.Contains(t.Id)));
-        systemTemplates.Count.ShouldBe(6);
+        systemTemplates.Count.ShouldBe(4);
         systemTemplates.ShouldAllBe(t => t.IsSystem);
 
         foreach (var template in systemTemplates)
