@@ -44,6 +44,7 @@ Her katmanda **aynı alan klasörü** kullanılır: `Domain/Projects/` ↔ `Appl
 - Bağımlılıklar constructor injection ile
 - DTO↔Entity dönüşümü **AutoMapper** ile; elle mapping yazma
 - Kullanıcıya dönen metinler Türkçe (`Localization/Platform/tr.json`), koda gömülmez
+- **ABP yüzeyi sınırlı (2026-10-30 kararı)** → ABP'den çıkış yeni depoda (`yartanbab/apya-platform-next`) yapılıyor ve bu deponun son hali sonunda oraya kopyalanacak. Yeni bir `using Volo.*` ad alanı ya da `Volo.*` paketi **ekleme**: `docs/abp-cikis/izinli-yuzey.txt` dışına çıkan kod `AbpYuzeyi_Tests`'i düşürür. Gerçekten gerekiyorsa önce sor; sonra listeye ekle ve yeni depoda uyumluluk işi aç.
 
 ---
 

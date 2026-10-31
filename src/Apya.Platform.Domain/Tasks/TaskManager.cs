@@ -44,9 +44,13 @@ public class TaskManager : DomainService
     /// bir proje gönderilmişse). Proje gönderilmemişse dokunulmaz — eski düzenleme penceresi
     /// alt görevi projesiz açıyor ve o davranışı burada sessizce değiştirmek ayrı bir karar.</para>
     ///
-    /// <para>🔴 DERİNLİK ZORLANMIYOR. Sistem "tek seviye alt görev" varsayıyor ama arayüz
-    /// bugün alt görevin altına görev eklemeye izin veriyor (Alt Görevler sekmesi her görevde
-    /// açık). Yasaklamak var olan bir yeteneği kaldırır — ürün kararı.</para>
+    /// <para>DERİNLİK: alt görevler ana görevin altında en fazla <see cref="TaskConsts.MaxSubTaskDepth"/>
+    /// düzey iç içe olabilir (kullanıcı kararı 2026-10-30). Eskiden zorlanmıyordu: arayüz alt görevin
+    /// altına görev eklemeye izin veriyor (Alt Görevler sekmesi her görevde açık) ve tam yasak var olan
+    /// bir yeteneği kaldırırdı. Ama derinliği kullanıcı verisi belirliyor: alt görev ağacını eşleyen
+    /// kod (AutoMapper CVE-2026-32933) yeterince derin zincirde yığını taşırıp süreci çökertebiliyordu.
+    /// Yalnız OLUŞTURMA anında zorlanır — alt görevin üst görevi sonradan değişmez — ve sınırdan derin
+    /// mevcut zincirlere dokunulmaz.</para>
     /// </summary>
     public async Task EnsureParentTaskIsValidAsync(Guid? parentTaskId, Guid? projectId)
     {
@@ -66,6 +70,32 @@ public class TaskManager : DomainService
             throw new BusinessException(PlatformDomainErrorCodes.TaskParentProjectMismatch)
                 .WithData("ParentTaskId", parentTaskId)
                 .WithData("ProjectId", projectId);
+
+        await EnsureSubTaskDepthAllowedAsync(parent);
+    }
+
+    /// <summary>
+    /// Yeni alt görev <paramref name="parent"/>'ın altına açılacak; kendi üst görev sayısı üst görevinkinden
+    /// bir fazla olur. Zinciri yukarı yürür ve sınır aşılır aşılmaz daha fazla yürümeden reddeder; bu yüzden
+    /// bozuk (döngülü) veride de en çok <see cref="TaskConsts.MaxSubTaskDepth"/> adımda biter.
+    /// </summary>
+    private async Task EnsureSubTaskDepthAllowedAsync(TaskItem parent)
+    {
+        var ancestorCount = 1; // üst görevin kendisi
+        var current = parent;
+
+        while (current.ParentTaskId.HasValue)
+        {
+            ancestorCount++;
+            if (ancestorCount > TaskConsts.MaxSubTaskDepth)
+                throw new BusinessException(PlatformDomainErrorCodes.TaskParentTooDeep)
+                    .WithData("MaxDepth", TaskConsts.MaxSubTaskDepth);
+
+            // Kopuk zincir (üst görev silinmiş ya da başka kiracıda): daha fazla yukarı çıkılamaz.
+            current = await _taskRepository.FindAsync(current.ParentTaskId.Value);
+            if (current == null)
+                return;
+        }
     }
 
     public TaskManager(
