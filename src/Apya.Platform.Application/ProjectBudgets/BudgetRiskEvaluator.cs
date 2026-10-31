@@ -49,6 +49,7 @@ public class BudgetRiskEvaluator : ITransientDependency
     private readonly IDataFilter<IMultiTenant> _multiTenantFilter;
     private readonly IClock _clock;
     private readonly ILogger<BudgetRiskEvaluator> _logger;
+    private readonly NotificationTextComposer _texts;
 
     public BudgetRiskEvaluator(
         IRepository<ProjectBudgetLine, Guid> lineRepository,
@@ -62,8 +63,10 @@ public class BudgetRiskEvaluator : ITransientDependency
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> multiTenantFilter,
         IClock clock,
-        ILogger<BudgetRiskEvaluator> logger)
+        ILogger<BudgetRiskEvaluator> logger,
+        NotificationTextComposer texts)
     {
+        _texts = texts;
         _lineRepository = lineRepository;
         _expenseRepository = expenseRepository;
         _trancheRepository = trancheRepository;
@@ -229,13 +232,15 @@ public class BudgetRiskEvaluator : ITransientDependency
                 project, recipients,
                 NotificationType.BudgetOverrun,
                 OnceKey(NotificationType.BudgetOverrun, line),
-                _l["Notification:BudgetOverrun:Title", line.Name],
-                _l["Notification:BudgetOverrun:Body",
-                    project.Name, line.Name,
-                    Money(line.ApprovedAmount, project.Currency),
-                    Money(spent, project.Currency),
-                    percent,
-                    Money(spent - line.ApprovedAmount, project.Currency)]);
+                new Dictionary<string, string?>
+                {
+                    ["{proje_adı}"] = project.Name,
+                    ["{kalem}"] = line.Name,
+                    ["{onaylanan}"] = Money(line.ApprovedAmount, project.Currency),
+                    ["{harcanan}"] = Money(spent, project.Currency),
+                    ["{yüzde}"] = percent.ToString(),
+                    ["{aşım}"] = Money(spent - line.ApprovedAmount, project.Currency)
+                });
         }
 
         // Yalnız EN YÜKSEK uygun eşik: sıfırdan %95'e sıçrayan kalem 50/75/90 için
@@ -254,13 +259,16 @@ public class BudgetRiskEvaluator : ITransientDependency
                 project, recipients,
                 NotificationType.BudgetUsageThresholdReached,
                 $"{OnceKey(NotificationType.BudgetUsageThresholdReached, line)}:{mark}",
-                _l["Notification:BudgetThreshold:Title", mark],
-                _l["Notification:BudgetThreshold:Body",
-                    project.Name, line.Name,
-                    Money(line.ApprovedAmount, project.Currency),
-                    Money(spent, project.Currency),
-                    percent,
-                    Money(Math.Max(0m, line.ApprovedAmount - spent), project.Currency)]);
+                new Dictionary<string, string?>
+                {
+                    ["{eşik}"] = mark.ToString(),
+                    ["{proje_adı}"] = project.Name,
+                    ["{kalem}"] = line.Name,
+                    ["{onaylanan}"] = Money(line.ApprovedAmount, project.Currency),
+                    ["{harcanan}"] = Money(spent, project.Currency),
+                    ["{yüzde}"] = percent.ToString(),
+                    ["{kalan}"] = Money(Math.Max(0m, line.ApprovedAmount - spent), project.Currency)
+                });
         }
 
         return sent;
@@ -281,23 +289,31 @@ public class BudgetRiskEvaluator : ITransientDependency
             // Vade değişirse anahtar değişir ve uyarı yeniden kurulur: donörle
             // yeni tarihte anlaşıldıysa o tarih de geçerse tekrar haber verilmeli.
             $"{(int)NotificationType.FundingTrancheOverdue}:Tranche:{tranche.Id}:{plannedDate:yyyyMMdd}",
-            _l["Notification:TrancheOverdue:Title"],
-            _l["Notification:TrancheOverdue:Body",
-                project.Name, tranche.SequenceNo,
-                plannedDate.ToString("dd.MM.yyyy", Turkish), daysLate,
-                Money(tranche.ExpectedAmount, project.Currency)]);
+            new Dictionary<string, string?>
+            {
+                ["{proje_adı}"] = project.Name,
+                ["{dilim_no}"] = tranche.SequenceNo.ToString(),
+                ["{planlanan_tarih}"] = plannedDate.ToString("dd.MM.yyyy", Turkish),
+                ["{gecikme_gün}"] = daysLate.ToString(),
+                ["{beklenen}"] = Money(tranche.ExpectedAmount, project.Currency)
+            });
     }
 
     // ── Yardımcılar ──────────────────────────────────────────────────────────
 
+    /// <summary>Faz 4b · Metin host şablonundan gelir; host türü kapattıysa hiçbir şey yayınlanmaz.</summary>
     private async Task<int> PublishOnceAsync(
         Project project,
         IReadOnlyCollection<Guid> recipients,
         NotificationType type,
         string onceKey,
-        string title,
-        string body)
+        Dictionary<string, string?> values)
     {
+        if (await _texts.ComposeAsync(type, NotificationTemplateDefinitions.Default, values) is not { } text)
+        {
+            return 0;
+        }
+        var (title, body) = text;
         var sent = 0;
 
         foreach (var userId in recipients)

@@ -98,7 +98,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         var document = await GetDocumentAsync(input.DocumentId);
         var application = await GetEditableApplicationAsync(document.GrantApplicationId);
 
-        document.RegisterUpload();
+        document.RegisterUpload(Clock.Now);
         await _docRepo.UpdateAsync(document, autoSave: true);
 
         await _versionRepo.InsertAsync(new GrantApplicationDocumentVersion(
@@ -127,7 +127,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         var application = await GetEditableApplicationAsync(document.GrantApplicationId);
         EnsureCanReview();
 
-        document.Approve(input.Note);
+        document.Approve(input.Note, Clock.Now);
         await _docRepo.UpdateAsync(document, autoSave: true);
 
         // N-06 · Onay firmaya duyurulur (revizyon isteği gidiyordu, onay sessizdi).
@@ -148,7 +148,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         var application = await GetEditableApplicationAsync(document.GrantApplicationId);
         EnsureCanReview();
 
-        document.RequestRevision(input.Note);
+        document.RequestRevision(input.Note, Clock.Now);
         await _docRepo.UpdateAsync(document, autoSave: true);
 
         // 6d · Revizyon isteği firmaya duyurulur. Danışman isteği yazdı ama firma

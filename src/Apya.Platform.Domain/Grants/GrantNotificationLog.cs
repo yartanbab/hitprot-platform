@@ -47,4 +47,10 @@ public class GrantNotificationLog : BasicAggregateRoot<Guid>, IMultiTenant
         DayMark = dayMark;
         SentAt = sentAt;
     }
+
+    /// <summary>
+    /// Yükseltme: aynı iş yeniden beklemeye girdiğinde (ör. ikinci revizyon isteği) kayıt tekil indeks yüzünden
+    /// yenisi eklenmez, zamanı ileri alınır.
+    /// </summary>
+    public void MarkSent(DateTime sentAt) => SentAt = sentAt;
 }

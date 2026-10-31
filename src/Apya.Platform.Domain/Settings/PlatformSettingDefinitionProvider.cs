@@ -177,6 +177,8 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
         // İşçinin kalıcı durumu; ekranda gösterilen bir ayar değil, bu yüzden adı/açıklaması yok.
         context.Add(
             new SettingDefinition(PlatformSettings.Notifications.LastDigestAt)
+                .WithProviders(GlobalSettingValueProvider.ProviderName),
+            new SettingDefinition(PlatformSettings.Notifications.LastManagerDigestDate)
                 .WithProviders(GlobalSettingValueProvider.ProviderName));
 
         // Sessiz saatler — kullanıcı ayarı: .WithProviders() ile KISITLANMAZ ki User provider (ve varsayılan)

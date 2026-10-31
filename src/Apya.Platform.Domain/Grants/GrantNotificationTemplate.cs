@@ -30,6 +30,17 @@ public class GrantNotificationTemplate : FullAuditedAggregateRoot<Guid>, IMultiT
     /// </summary>
     public GrantNotificationAudience Audience { get; private set; }
 
+    /// <summary>
+    /// Yükseltme şablonu mu? Yükseltme, tetikleyicinin beklediği iş <see cref="AfterDays"/> gün içinde
+    /// yapılmazsa gider; ilk bildirimin yerine geçmez. Genel kitle burada "işi bekleyen taraf" demektir.
+    /// </summary>
+    public bool IsEscalation { get; private set; }
+
+    /// <summary>Yükseltme kaç gün beklendikten sonra gider. Yalnız yükseltme şablonunda dolu.</summary>
+    public int? AfterDays { get; private set; }
+
+    public const int MaxAfterDays = 90;
+
     /// <summary>Kapalıysa tetikleyici hiç bildirim üretmez.</summary>
     public bool IsEnabled { get; private set; }
 
@@ -70,10 +81,52 @@ public class GrantNotificationTemplate : FullAuditedAggregateRoot<Guid>, IMultiT
         SetText(subject, body);
     }
 
+    /// <summary>
+    /// Yükseltme şablonu. Yalnız beklenen işi olan tetikleyicide ve o işin yükselebileceği kitleye kurulur.
+    /// </summary>
+    public static GrantNotificationTemplate CreateEscalation(
+        Guid id,
+        GrantNotificationTrigger trigger,
+        GrantNotificationAudience audience,
+        int afterDays,
+        string subject,
+        string body,
+        bool email = true)
+    {
+        if (!GrantNotificationTriggerRegistry.EscalationAudiencesOf(trigger).Contains(audience))
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationEscalationNotAllowed);
+        }
+
+        var template = new GrantNotificationTemplate(id, trigger, subject, body, inApp: true, email: email)
+        {
+            Audience = audience,
+            IsEscalation = true
+        };
+        template.SetAfterDays(afterDays);
+        return template;
+    }
+
+    public void SetAfterDays(int afterDays)
+    {
+        if (!IsEscalation)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationEscalationNotAllowed);
+        }
+
+        if (afterDays < 1 || afterDays > MaxAfterDays)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationEscalationDaysInvalid)
+                .WithData("Max", MaxAfterDays);
+        }
+
+        AfterDays = afterDays;
+    }
+
     /// <summary>Bu şablonun metni, kanalları ve durumuyla başka bir role kopyası.</summary>
     public GrantNotificationTemplate CopyFor(Guid id, GrantNotificationAudience audience)
     {
-        if (audience == GrantNotificationAudience.Genel)
+        if (audience == GrantNotificationAudience.Genel || IsEscalation)
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateAudienceNotReached);
         }

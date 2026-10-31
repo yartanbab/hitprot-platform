@@ -36,6 +36,7 @@ public class InvoiceOverdueNotifier : ITransientDependency
     private readonly NotificationManager _notificationManager;
     private readonly PermittedUserFinder _permittedUsers;
     private readonly IStringLocalizer<PlatformResource> _l;
+    private readonly NotificationTextComposer _texts;
 
     public InvoiceOverdueNotifier(
         IRepository<Invoice, Guid> invoiceRepository,
@@ -45,8 +46,10 @@ public class InvoiceOverdueNotifier : ITransientDependency
         ICurrentTenant currentTenant,
         NotificationManager notificationManager,
         PermittedUserFinder permittedUsers,
-        IStringLocalizer<PlatformResource> l)
+        IStringLocalizer<PlatformResource> l,
+        NotificationTextComposer texts)
     {
+        _texts = texts;
         _invoiceRepository = invoiceRepository;
         _projectRepository = projectRepository;
         _memberRepository = memberRepository;
@@ -110,10 +113,20 @@ public class InvoiceOverdueNotifier : ITransientDependency
                     }
 
                     var days = Math.Max(1, (int)(today - invoice.DueDate.Date).TotalDays);
-                    var title = invoice.Direction == InvoiceDirection.Purchase
-                        ? _l["Notification:InvoiceOverdue:TitlePurchase"]
-                        : _l["Notification:InvoiceOverdue:TitleSales"];
-                    var body = _l["Notification:InvoiceOverdue:Body", invoice.InvoiceNumber, project.Name, days];
+                    // Faz 4b · Metin host şablonundan; yön başlığı değiştirir. Kapalı türde fatura atlanır.
+                    var variant = invoice.Direction == InvoiceDirection.Purchase
+                        ? NotificationTemplateDefinitions.Purchase
+                        : NotificationTemplateDefinitions.Sales;
+                    if (await _texts.ComposeAsync(NotificationType.InvoiceOverdue, variant, new Dictionary<string, string?>
+                        {
+                            ["{fatura_no}"] = invoice.InvoiceNumber,
+                            ["{proje_adı}"] = project.Name,
+                            ["{gecikme_gün}"] = days.ToString()
+                        }) is not { } text)
+                    {
+                        continue;
+                    }
+                    var (title, body) = text;
                     var onceKey = $"{(int)NotificationType.InvoiceOverdue}:Invoice:{invoice.Id}:{invoice.DueDate:yyyyMMdd}";
 
                     foreach (var userId in recipients)

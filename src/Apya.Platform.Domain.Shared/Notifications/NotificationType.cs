@@ -111,5 +111,8 @@ public enum NotificationType
     TaskOverdueEscalated        = 62, // Projenizdeki görev 3+ gündür gecikmede (proje sorumlularına)
 
     // B-16: fatura listesi "gecikmiş" diyordu ama vade sessizce geçiyordu.
-    InvoiceOverdue              = 63  // Faturanın vadesi geçti, ödenmedi (kesen + proje sorumluları)
+    InvoiceOverdue              = 63, // Faturanın vadesi geçti, ödenmedi (kesen + proje sorumluları)
+
+    // Hiyerarşik bildirim Faz 3: yönetici ekibinde neyin beklediğini hiçbir yerde toplu görmüyordu.
+    GrantManagerDigest          = 64  // Ekibinizde bekleyen hibe işleri (iş günü 08:00, firma + host yöneticisine)
 }

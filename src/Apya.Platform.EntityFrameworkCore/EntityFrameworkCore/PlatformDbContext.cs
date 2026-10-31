@@ -191,6 +191,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NotificationPreference> NotificationPreferences { get; set; }
         public DbSet<NotificationDevice> NotificationDevices { get; set; }
+        public DbSet<NotificationTemplate> NotificationTemplates { get; set; }
 
         /* --- MAKRO EKRAN --- */
         public DbSet<MacroUsageDaily> MacroUsageDaily { get; set; }
@@ -1129,9 +1130,9 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.Subject).IsRequired().HasMaxLength(200);
                 b.Property(x => x.Body).IsRequired().HasMaxLength(2000);
-                // Host katalogunda tetikleyici ve rol başına tek CANLI şablon. EF'in nullable
-                // TenantId için eklediği "IS NOT NULL" korunur (davranış değişmesin).
-                b.HasIndex(x => new { x.TenantId, x.Trigger, x.Audience }).IsUnique()
+                // Host katalogunda tetikleyici, rol ve tür (ilk bildirim / yükseltme) başına tek CANLI şablon.
+                // EF'in nullable TenantId için eklediği "IS NOT NULL" korunur (davranış değişmesin).
+                b.HasIndex(x => new { x.TenantId, x.Trigger, x.Audience, x.IsEscalation }).IsUnique()
                     .HasFilter(isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
             });
 
@@ -1591,6 +1592,18 @@ namespace Apya.Platform.EntityFrameworkCore
             });
 
             /* --- BİLDİRİM MODÜLÜ YAPILANDIRMASI --- */
+            // Faz 4 · Host kataloğu: tür + hâl başına tek CANLI metin (GrantNotificationTemplate ile aynı desen).
+            builder.Entity<NotificationTemplate>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "NotificationTemplates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Variant).IsRequired().HasMaxLength(NotificationTemplate.MaxVariantLength);
+                b.Property(x => x.Subject).IsRequired().HasMaxLength(NotificationTemplate.MaxSubjectLength);
+                b.Property(x => x.Body).IsRequired().HasMaxLength(NotificationTemplate.MaxBodyLength);
+                b.HasIndex(x => new { x.TenantId, x.Type, x.Variant }).IsUnique()
+                    .HasFilter(isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
             builder.Entity<Notification>(b =>
             {
                 b.ToTable(PlatformConsts.DbTablePrefix + "Notifications", PlatformConsts.DbSchema);

@@ -55,6 +55,10 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
         template.SetText(input.Subject, input.Body);
         template.SetChannels(input.InApp, input.Email);
         template.SetEnabled(input.IsEnabled);
+        if (template.IsEscalation && input.AfterDays is { } afterDays)
+        {
+            template.SetAfterDays(afterDays);
+        }
         await _repo.UpdateAsync(template, autoSave: true);
 
         return await BuildAsync();
@@ -67,12 +71,31 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
         var source = await _repo.FindAsync(input.Id)
                      ?? throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateNotFound);
 
-        if (await _repo.AnyAsync(t => t.Trigger == source.Trigger && t.Audience == input.Audience))
+        if (await _repo.AnyAsync(t => t.Trigger == source.Trigger && t.Audience == input.Audience && !t.IsEscalation))
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateAudienceExists);
         }
 
         await _repo.InsertAsync(source.CopyFor(GuidGenerator.Create(), input.Audience), autoSave: true);
+
+        return await BuildAsync();
+    }
+
+    public async Task<GrantNotificationConsoleDto> AddEscalationAsync(AddGrantNotificationEscalationInput input)
+    {
+        EnsureHostContext();
+
+        var source = await _repo.FindAsync(input.Id)
+                     ?? throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateNotFound);
+
+        if (await _repo.AnyAsync(t => t.Trigger == source.Trigger && t.Audience == input.Audience && t.IsEscalation))
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateAudienceExists);
+        }
+
+        var (subject, body) = GrantEscalationDefaults.TextOf(L, source.Trigger, input.Audience);
+        await _repo.InsertAsync(GrantNotificationTemplate.CreateEscalation(
+            GuidGenerator.Create(), source.Trigger, input.Audience, input.AfterDays, subject, body), autoSave: true);
 
         return await BuildAsync();
     }
@@ -84,8 +107,8 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
         var template = await _repo.FindAsync(id)
                        ?? throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateNotFound);
 
-        // Genel şablon tetikleyicinin son çaresidir: silinseydi rol şablonu olmayan alıcılar sessiz kalırdı.
-        if (template.Audience == GrantNotificationAudience.Genel)
+        // Genel ilk bildirim tetikleyicinin son çaresidir: silinseydi rol şablonu olmayan alıcılar sessiz kalırdı.
+        if (template.Audience == GrantNotificationAudience.Genel && !template.IsEscalation)
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantNotificationTemplateGeneralNotDeletable);
         }
@@ -113,14 +136,20 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
             // Sıra enum sırasıdır: süreçte hangi olayın önce geldiğini anlatır. Rol şablonları
             // Genel şablonun hemen altında durur.
             .OrderBy(t => (int)t.Trigger)
+            // Yükseltmeler ilk bildirimlerin altında, gün sırasıyla.
+            .ThenBy(t => t.IsEscalation)
+            .ThenBy(t => t.AfterDays)
             .ThenBy(t => (int)t.Audience)
             .Select(Map)
             .ToList();
 
-        foreach (var general in items.Where(t => t.Audience == GrantNotificationAudience.Genel))
+        foreach (var general in items.Where(t => t.Audience == GrantNotificationAudience.Genel && !t.IsEscalation))
         {
             general.DuplicableAudiences = GrantNotificationTriggerRegistry.AudiencesOf(general.Trigger)
-                .Where(a => !items.Any(t => t.Trigger == general.Trigger && t.Audience == a))
+                .Where(a => !items.Any(t => t.Trigger == general.Trigger && t.Audience == a && !t.IsEscalation))
+                .ToList();
+            general.EscalationAudiences = GrantNotificationTriggerRegistry.EscalationAudiencesOf(general.Trigger)
+                .Where(a => !items.Any(t => t.Trigger == general.Trigger && t.Audience == a && t.IsEscalation))
                 .ToList();
         }
 
@@ -140,13 +169,19 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
             Id = template.Id,
             Trigger = template.Trigger,
             Audience = template.Audience,
+            IsEscalation = template.IsEscalation,
+            AfterDays = template.AfterDays,
             IsEnabled = template.IsEnabled,
             InApp = template.InApp,
             Email = template.Email,
             Subject = template.Subject,
             Body = template.Body,
-            IsMandatory = GrantNotificationTriggerRegistry.IsMandatory(template.Trigger),
-            Variables = GrantNotificationTriggerRegistry.VariablesOf(template.Trigger).ToList(),
+            // Yükseltme isteğe bağlıdır: zorunlu tetikleyicinin kilidi yükseltmeye geçmez.
+            IsMandatory = !template.IsEscalation && GrantNotificationTriggerRegistry.IsMandatory(template.Trigger),
+            Variables = (template.IsEscalation
+                    ? GrantNotificationTriggerRegistry.EscalationVariablesOf(template.Trigger)
+                    : GrantNotificationTriggerRegistry.VariablesOf(template.Trigger))
+                .ToList(),
             PreviewSubject = GrantNotificationRenderer.Render(template.Subject, sample),
             PreviewBody = GrantNotificationRenderer.Render(template.Body, sample)
         };
@@ -181,7 +216,15 @@ public class GrantNotificationTemplateAppService : PlatformAppService, IGrantNot
             ["{eşleşme}"] = "%91",
             ["{danışman}"] = L["Grants:Notify:Sample:Consultant"],
             // 19b · Fikir daveti: mesaj örneği ekranın varsayılan metni; {hatırlatma} ilk gönderimde boş.
-            ["{davet_mesajı}"] = L["Grants:Invite:DefaultMessage"]
+            ["{davet_mesajı}"] = L["Grants:Invite:DefaultMessage"],
+            // Faz 2 · yükseltme
+            ["{bekleyen_gün}"] = "7",
+            ["{sıradaki_taraf}"] = L["Grants:Notify:Sample:Side"],
+            // Faz 3 · yönetici özeti
+            ["{toplam}"] = "5",
+            ["{en_eski_gün}"] = "9",
+            ["{özet}"] = L["Grants:Notify:Sample:DigestSummary"],
+            ["{liste}"] = L["Grants:Notify:Sample:DigestList"]
         };
     }
 }

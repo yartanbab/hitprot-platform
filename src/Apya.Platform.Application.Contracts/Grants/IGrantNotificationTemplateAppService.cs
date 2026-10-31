@@ -15,6 +15,12 @@ public interface IGrantNotificationTemplateAppService : IApplicationService
     /// <summary>Genel şablonu bir role kopyalar; o roldeki alıcılar artık kopyanın metnini alır.</summary>
     Task<GrantNotificationConsoleDto> DuplicateAsync(DuplicateGrantNotificationTemplateInput input);
 
-    /// <summary>Rol şablonunu siler; o roldeki alıcılar yeniden Genel şablonu alır. Genel şablon silinemez.</summary>
+    /// <summary>
+    /// Rol şablonunu ya da yükseltmeyi siler; rol şablonu silinince o roldeki alıcılar yeniden Genel şablonu
+    /// alır. Genel ilk bildirim silinemez.
+    /// </summary>
     Task<GrantNotificationConsoleDto> DeleteAsync(Guid id);
+
+    /// <summary>Beklenen işi olan tetikleyiciye bir kişi için yükseltme ekler (varsayılan metinle).</summary>
+    Task<GrantNotificationConsoleDto> AddEscalationAsync(AddGrantNotificationEscalationInput input);
 }

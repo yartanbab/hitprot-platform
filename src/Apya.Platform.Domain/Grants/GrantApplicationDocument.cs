@@ -40,6 +40,12 @@ public class GrantApplicationDocument : FullAuditedAggregateRoot<Guid>, IMultiTe
     /// <summary>Son sürümün numarası; 0 = hiç yüklenmedi.</summary>
     public int LatestVersionNo { get; private set; }
 
+    /// <summary>
+    /// Durumun son değiştiği an (yükleme, onay, revizyon isteği). Yükseltme "revizyon ne zamandır bekliyor"
+    /// sorusunu buradan okur; LastModificationTime sıra değişikliğinde de kayıyordu.
+    /// </summary>
+    public DateTime? StatusChangedAt { get; private set; }
+
     public ICollection<GrantApplicationDocumentVersion> Versions { get; set; }
         = new List<GrantApplicationDocumentVersion>();
 
@@ -68,14 +74,15 @@ public class GrantApplicationDocument : FullAuditedAggregateRoot<Guid>, IMultiTe
     }
 
     /// <summary>Yeni sürüm yüklendi: evrak yeniden incelemeye düşer.</summary>
-    public void RegisterUpload()
+    public void RegisterUpload(DateTime now)
     {
         LatestVersionNo++;
         Status = GrantDocumentStatus.Incelemede;
         ReviewNote = null;
+        StatusChangedAt = now;
     }
 
-    public void Approve(string? note)
+    public void Approve(string? note, DateTime now)
     {
         if (LatestVersionNo == 0)
         {
@@ -84,9 +91,10 @@ public class GrantApplicationDocument : FullAuditedAggregateRoot<Guid>, IMultiTe
         }
         Status = GrantDocumentStatus.Onaylandi;
         ReviewNote = note;
+        StatusChangedAt = now;
     }
 
-    public void RequestRevision(string note)
+    public void RequestRevision(string note, DateTime now)
     {
         if (LatestVersionNo == 0)
         {
@@ -94,5 +102,6 @@ public class GrantApplicationDocument : FullAuditedAggregateRoot<Guid>, IMultiTe
         }
         Status = GrantDocumentStatus.RevizyonIstendi;
         ReviewNote = Check.NotNullOrWhiteSpace(note, nameof(note), maxLength: 512).Trim();
+        StatusChangedAt = now;
     }
 }

@@ -122,5 +122,11 @@ public enum GrantNotificationTrigger
     DocumentUploaded = 22,
 
     /// <summary>N-06 · Danışman evrakı onayladı. Firmaya gider (revizyon isteği gidiyordu, onay sessizdi).</summary>
-    DocumentApproved = 23
+    DocumentApproved = 23,
+
+    /// <summary>
+    /// Faz 3 · Yönetici özeti: her iş günü 08:00'de ekipte bekleyen işler. Firma yöneticisine kendi firmasının,
+    /// host yöneticisine danışman tarafının işleri gider. Bekleyen iş yoksa gönderilmez.
+    /// </summary>
+    ManagerDigest = 24
 }
