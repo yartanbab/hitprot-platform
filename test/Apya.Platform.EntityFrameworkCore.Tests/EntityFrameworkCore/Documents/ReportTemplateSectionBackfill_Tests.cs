@@ -132,17 +132,22 @@ public class ReportTemplateSectionBackfill_Tests : PlatformEntityFrameworkCoreTe
     }
 
     /// <summary>
-    /// Sistem şablonlarına da iner — KAPALI. Hiçbir tanım yeni bölümleri açık getirmez:
+    /// İlk altı sistem şablonuna da iner — KAPALI. Bu tanımlar yeni bölümleri açık getirmez:
     /// mevcut kurulumların rapor çıktısı DbMigrator turunda kendiliğinden değişmemeli.
+    /// (Kapanış raporu şablonları yeni satır olarak doğar; bkz. ReportTemplateClosingSeed_Tests.)
     /// </summary>
     [Fact]
     public async Task Sistem_sablonlarina_yeni_bolumler_kapali_iner()
     {
         await WithUnitOfWorkAsync(() => _seeder.SeedAsync(new DataSeedContext()));
 
+        var legacyIds = Enumerable.Range(1, 6)
+            .Select(i => new Guid($"c1000000-0000-4000-8000-{i:D12}"))
+            .ToArray();
         var systemTemplates = await WithUnitOfWorkAsync(
-            () => _templateRepository.GetListAsync(t => t.IsSystem));
+            () => _templateRepository.GetListAsync(t => legacyIds.Contains(t.Id)));
         systemTemplates.Count.ShouldBe(6);
+        systemTemplates.ShouldAllBe(t => t.IsSystem);
 
         foreach (var template in systemTemplates)
         {
@@ -153,6 +158,10 @@ public class ReportTemplateSectionBackfill_Tests : PlatformEntityFrameworkCoreTe
                 .ShouldAllBe(s => !s.IsEnabled, $"{template.Name}: yeni bölüm açık gelmemeli");
             sections.Select(s => s.Order).Distinct().Count()
                 .ShouldBe(sections.Length, $"{template.Name}: sıra numaraları tekil");
+
+            // Resmi sıra kuralı yalnız kapanış şablonlarına uygulanır: eskiler ortak sırada kalır.
+            sections.Single(s => s.SectionKey == ReportSectionKey.CoverPage).Order.ShouldBe(1, template.Name);
+            sections.Single(s => s.SectionKey == ReportSectionKey.AuditTrail).Order.ShouldBe(12, template.Name);
         }
     }
 
