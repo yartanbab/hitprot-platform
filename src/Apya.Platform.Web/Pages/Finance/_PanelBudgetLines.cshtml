@@ -11,6 +11,13 @@
 @functions {
     string Money(decimal v) => v.ToString("N2");
 
+    string MoneyOrDash(decimal? v) => v.HasValue ? v.Value.ToString("N2") : "—";
+
+    // Sıralama/süzme için ham değer — kültürden bağımsız, JS Number() ile okunur.
+    string Inv(decimal? v) => v?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
+
+    string Pct(decimal v) => v.ToString("0.##");
+
     string BarTone(int usagePercent) => usagePercent >= 100 ? "is-negative"
         : usagePercent >= 80 ? "is-warning"
         : "is-positive";
@@ -45,9 +52,23 @@ else
         {
             <span class="apya-chip apya-chip-warning">Rev.@b.LatestRevisionNo</span>
         }
+        @if (b.SupportRatePercent.HasValue)
+        {
+            <span class="apya-chip apya-chip-neutral"
+                  title="@(b.SupportRateFromProgram ? "Oran hibe programından geliyor" : "Projenin destek oranı")">
+                Hibe %@Pct(b.SupportRatePercent.Value) · Kurum %@Pct(b.InstitutionRatePercent!.Value)
+            </span>
+        }
+        else
+        {
+            <span class="apya-chip apya-chip-warning">Destek oranı girilmemiş</span>
+        }
         @if (Model.CanEditBudget)
         {
             <div class="ms-auto d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnSupportRate">
+                    <i class="fa fa-percent me-1" aria-hidden="true"></i>Destek oranı
+                </button>
                 @if (b.Lines.Any())
                 {
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnApplyRevision">
@@ -89,67 +110,124 @@ else
     }
     else
     {
+        @* Süzgeç ve sıralama tarayıcıda (Budget.js): kalem sayısı küçük, sunucuya gidip
+           gelmek gereksiz. Süzgeç eşleşen kalemin ÜST kalemlerini de gösterir — ağaç kopmasın. *@
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2" data-budget-filter>
+            <input type="search" class="form-control form-control-sm" style="max-width:260px"
+                   placeholder="Kod ya da ad ara…" aria-label="Kod ya da ad ara" data-filter-text />
+            <select class="form-select form-select-sm" style="max-width:220px" aria-label="Duruma göre süz" data-filter-status>
+                <option value="">Tüm kalemler</option>
+                <option value="over">Bütçeyi aşanlar</option>
+                <option value="spent">Harcama yapılanlar</option>
+                <option value="unspent">Harcama yapılmayanlar</option>
+                <option value="manual-grant">Hibe payı elle girilenler</option>
+            </select>
+            <span class="small text-muted" data-filter-count></span>
+        </div>
+
         <div class="table-responsive">
-            <table class="table apya-clean-table align-middle mb-0">
+            <table class="table apya-clean-table align-middle mb-0" data-budget-lines-table>
                 <thead>
                     <tr>
-                        <th>Kalem</th>
-                        <th class="text-end apya-numeric">Sözleşme</th>
-                        <th class="text-end apya-numeric">Onaylanan</th>
-                        <th class="text-end apya-numeric">Harcanan</th>
-                        <th class="text-end apya-numeric">Kalan</th>
-                        <th style="width:140px">Gerçekleşme</th>
+                        @* Varsayılan sıra: kod SAYI sırası (1, 2, 2.1, 2.2, 10) — sunucu da böyle basar. *@
+                        <th aria-sort="ascending"><button type="button" class="apya-th-sort" data-sort-key="code">Kalem</button></th>
+                        <th class="text-end apya-numeric" aria-sort="none"><button type="button" class="apya-th-sort" data-sort-key="planned">Sözleşme</button></th>
+                        <th class="text-end apya-numeric" aria-sort="none"><button type="button" class="apya-th-sort" data-sort-key="approved">Onaylanan</button></th>
+                        <th class="text-end apya-numeric" aria-sort="none"><button type="button" class="apya-th-sort" data-sort-key="grant">Hibe</button></th>
+                        <th class="text-end apya-numeric" aria-sort="none"><button type="button" class="apya-th-sort" data-sort-key="inst">Kurum</button></th>
+                        <th class="text-end apya-numeric" aria-sort="none"><button type="button" class="apya-th-sort" data-sort-key="spent">Harcanan</button></th>
+                        <th class="text-end apya-numeric" aria-sort="none"><button type="button" class="apya-th-sort" data-sort-key="remaining">Kalan</button></th>
+                        <th style="width:140px" aria-sort="none"><button type="button" class="apya-th-sort" data-sort-key="usage">Gerçekleşme</button></th>
                         @if (Model.CanEditBudget)
                         {
-                            <th style="width:96px"></th>
+                            <th style="width:120px"></th>
                         }
                     </tr>
                 </thead>
                 <tbody>
+                    @* Üst kalem satırı kendi tutarı + alt kalemlerinin toplamını gösterir (Total*). *@
                     @foreach (var line in b.Lines)
                     {
-                        <tr>
+                        <tr data-line-row
+                            data-id="@line.Id" data-parent="@line.ParentId"
+                            data-code="@line.Code" data-name="@line.Name" data-order="@line.Order"
+                            data-planned="@Inv(line.TotalPlannedAmount)" data-approved="@Inv(line.TotalApprovedAmount)"
+                            data-grant="@Inv(line.TotalGrantShare)" data-inst="@Inv(line.TotalInstitutionShare)"
+                            data-spent="@Inv(line.TotalSpentAmount)" data-remaining="@Inv(line.TotalRemainingAmount)"
+                            data-usage="@line.TotalUsagePercent" data-manual-grant="@(line.GrantAmount.HasValue ? "1" : "0")"
+                            class="@(line.HasChildren ? "apya-budget-parent" : "")">
                             <td>
-                                <div class="fw-semibold">@line.Name</div>
-                                @if (!string.IsNullOrWhiteSpace(line.Justification))
-                                {
-                                    <div class="small text-muted">@line.Justification</div>
-                                }
-                                <div class="small text-muted">
-                                    @if (!string.IsNullOrWhiteSpace(line.Code))
+                                <div class="d-flex align-items-start gap-2" style="padding-left:@(line.Depth * 20)px">
+                                    @if (line.HasChildren)
                                     {
-                                        <span class="apya-numeric">@line.Code</span>
+                                        <i class="fa fa-folder-open text-muted mt-1" aria-hidden="true"></i>
                                     }
-                                    @if (line.TransferLimitPercent.HasValue)
-                                    {
-                                        <span class="apya-chip apya-chip-neutral ms-1">aktarım payı %@line.TransferLimitPercent.Value.ToString("N0")</span>
-                                    }
-                                    @if (line.LinkedRecordCount > 0)
-                                    {
-                                        <span class="apya-chip apya-chip-neutral ms-1">@line.LinkedRecordCount kayıt</span>
-                                    }
+                                    <div>
+                                        <div class="fw-semibold">@line.Name</div>
+                                        @if (!string.IsNullOrWhiteSpace(line.Justification))
+                                        {
+                                            <div class="small text-muted">@line.Justification</div>
+                                        }
+                                        <div class="small text-muted">
+                                            @if (!string.IsNullOrWhiteSpace(line.Code))
+                                            {
+                                                <span class="apya-numeric">@line.Code</span>
+                                            }
+                                            @if (line.HasChildren && line.ApprovedAmount > 0)
+                                            {
+                                                <span class="apya-chip apya-chip-neutral ms-1" title="Alt kalemler hariç bu kalemin kendi tutarı">kendi tutarı @Money(line.ApprovedAmount)</span>
+                                            }
+                                            @if (line.TransferLimitPercent.HasValue)
+                                            {
+                                                <span class="apya-chip apya-chip-neutral ms-1">aktarım payı %@line.TransferLimitPercent.Value.ToString("N0")</span>
+                                            }
+                                            @if (line.LinkedRecordCount > 0)
+                                            {
+                                                <span class="apya-chip apya-chip-neutral ms-1">@line.LinkedRecordCount kayıt</span>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
-                            <td class="text-end apya-numeric text-muted">@Money(line.PlannedAmount)</td>
-                            <td class="text-end apya-numeric fw-semibold">@Money(line.ApprovedAmount)</td>
-                            <td class="text-end apya-numeric">@Money(line.SpentAmount)</td>
-                            <td class="text-end apya-numeric fw-semibold @(line.RemainingAmount < 0 ? "text-danger" : "")">@Money(line.RemainingAmount)</td>
+                            <td class="text-end apya-numeric text-muted">@Money(line.TotalPlannedAmount)</td>
+                            <td class="text-end apya-numeric fw-semibold">@Money(line.TotalApprovedAmount)</td>
+                            <td class="text-end apya-numeric">
+                                @MoneyOrDash(line.TotalGrantShare)
+                                @if (line.GrantAmount.HasValue)
+                                {
+                                    <span class="text-muted" title="Hibe payı elle girildi (orandan hesaplanmadı)">*</span>
+                                }
+                            </td>
+                            <td class="text-end apya-numeric">@MoneyOrDash(line.TotalInstitutionShare)</td>
+                            <td class="text-end apya-numeric">@Money(line.TotalSpentAmount)</td>
+                            <td class="text-end apya-numeric fw-semibold @(line.TotalRemainingAmount < 0 ? "text-danger" : "")">@Money(line.TotalRemainingAmount)</td>
                             <td>
                                 <div class="apya-tile-progress-label">
-                                    <span class="apya-numeric">%@line.UsagePercent</span>
+                                    <span class="apya-numeric">%@line.TotalUsagePercent</span>
                                 </div>
-                                <div class="apya-mini-progress @BarTone(line.UsagePercent)">
-                                    <span style="width:@(Math.Min(line.UsagePercent, 100))%"></span>
+                                <div class="apya-mini-progress @BarTone(line.TotalUsagePercent)">
+                                    <span style="width:@(Math.Min(line.TotalUsagePercent, 100))%"></span>
                                 </div>
                             </td>
                             @if (Model.CanEditBudget)
                             {
-                                <td class="text-end">
+                                <td class="text-end text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-link p-1 text-decoration-none"
+                                            data-add-child-line="@line.Id" title="Alt kalem ekle">
+                                        <i class="fa fa-indent" aria-hidden="true"></i>
+                                    </button>
                                     <button type="button" class="btn btn-sm btn-link p-1 text-decoration-none"
                                             data-edit-line="@line.Id" title="Düzenle">
                                         <i class="fa fa-pen" aria-hidden="true"></i>
                                     </button>
-                                    @if (line.LinkedRecordCount == 0)
+                                    @if (line.HasChildren)
+                                    {
+                                        <span class="btn btn-sm btn-link p-1 text-muted disabled"
+                                              title="Bu kalemin alt kalemleri var; önce onları silin ya da başka bir üst kaleme taşıyın.">
+                                            <i class="fa fa-trash" aria-hidden="true"></i>
+                                        </span>
+                                    }
+                                    else if (line.LinkedRecordCount == 0)
                                     {
                                         <form method="post" asp-page-handler="DeleteLine" class="d-inline"
                                               asp-route-projectId="@Model.ProjectId" asp-route-tab="@Model.ActiveTab">
@@ -173,10 +251,15 @@ else
                     }
                 </tbody>
                 <tfoot>
+                    @* Toplamlar kalemlerin KENDİ tutarlarından — üst kalem satırları zaten
+                       alt kalemleri içerdiği için satır toplamı alınırsa çift sayılırdı.
+                       Süzgeçten etkilenmez: her zaman projenin toplamıdır. *@
                     <tr class="fw-bold">
                         <td>TOPLAM</td>
                         <td class="text-end apya-numeric">@Money(b.Lines.Sum(x => x.PlannedAmount))</td>
                         <td class="text-end apya-numeric">@Money(b.ApprovedBudget)</td>
+                        <td class="text-end apya-numeric">@MoneyOrDash(b.GrantShareTotal)</td>
+                        <td class="text-end apya-numeric">@MoneyOrDash(b.InstitutionShareTotal)</td>
                         <td class="text-end apya-numeric">@Money(b.Lines.Sum(x => x.SpentAmount))</td>
                         <td class="text-end apya-numeric">@Money(b.Lines.Sum(x => x.RemainingAmount))</td>
                         <td colspan="@(Model.CanEditBudget ? 2 : 1)"></td>
@@ -184,6 +267,9 @@ else
                 </tfoot>
             </table>
         </div>
+        <p class="text-muted mt-2 mb-0 d-none" style="font-size:12.5px" data-filter-empty>
+            Süzgece uyan kalem yok.
+        </p>
 
         @if (b.UnassignedSpentAmount > 0)
         {

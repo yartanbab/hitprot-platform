@@ -49,6 +49,9 @@ public interface IProjectBudgetAppService : IApplicationService
     /// <summary>Bağlı gider/gelir kaydı varsa <c>Platform:ProjectBudget:LineInUse</c> ile reddeder.</summary>
     Task DeleteLineAsync(Guid id);
 
+    /// <summary>Projenin destek oranını yazar; boş değer hibe programının oranına döndürür.</summary>
+    Task UpdateSupportRateAsync(Guid projectId, UpdateSupportRateDto input);
+
     Task<List<FundingTrancheDto>> GetTranchesAsync(Guid projectId);
     Task<FundingTrancheDto> CreateTrancheAsync(Guid projectId, CreateUpdateTrancheDto input);
     Task<FundingTrancheDto> UpdateTrancheAsync(Guid id, CreateUpdateTrancheDto input);

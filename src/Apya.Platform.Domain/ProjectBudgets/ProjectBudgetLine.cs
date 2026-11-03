@@ -17,7 +17,11 @@ namespace Apya.Platform.ProjectBudgets;
 /// toplanır (<c>Expense.BudgetLineId</c>); denormalize edilirse ilk tutarsızlıkta
 /// hangisinin doğru olduğu bilinemez.
 ///
-/// Kalemler DÜZ bir listedir (kullanıcı kararı 2026-09-01): alt kalem yok.
+/// Kalemler bir AĞAÇTIR (kullanıcı kararı 2026-10-31; 2026-09-01'deki "düz liste"
+/// kararının yerine): <see cref="ParentId"/> üst kalemi gösterir. Üst kalem kendi
+/// tutarını taşıyabilir; ekran onu kendi tutarı + alt kalemlerin toplamı olarak
+/// gösterir. Proje toplamı TÜM kalemlerin kendi tutarlarının toplamıdır, böylece
+/// hiçbir tutar çift sayılmaz. Tutarı 0 olan üst kalem fiilen bir kategoridir.
 /// </summary>
 public class ProjectBudgetLine : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
@@ -62,6 +66,22 @@ public class ProjectBudgetLine : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// satırındaki gerekçe buraya taşınır; firma aynı metni projede yeniden yazmaz.
     /// </summary>
     public string? Justification { get; private set; }
+
+    /// <summary>
+    /// Üst kalem (aynı projede). Boşsa ana kalemdir. Döngü ve derinlik kuralı
+    /// <see cref="ProjectBudgetManager"/>'da: tek kalem kendi başına bilemez.
+    /// Bilerek FK DEĞİL — kalemler soft-delete ile silinir, FK onu engellemez;
+    /// alt kalemi olan kalemin silinmesini manager reddeder.
+    /// </summary>
+    public Guid? ParentId { get; private set; }
+
+    /// <summary>
+    /// Kalemin hibeden karşılanan kısmı — ELLE girilmişse. Boşsa projenin destek
+    /// oranından hesaplanır (bkz. <see cref="GetGrantShare"/>), böylece revizyon
+    /// tutarı değiştirdiğinde pay kendiliğinden güncellenir. Kurum payı SAKLANMAZ:
+    /// onaylanan − hibe payı.
+    /// </summary>
+    public decimal? GrantAmount { get; private set; }
 
     /// <summary>EF Core için.</summary>
     protected ProjectBudgetLine()
@@ -142,6 +162,39 @@ public class ProjectBudgetLine : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     public void SetOrder(int order) => Order = order;
+
+    /// <summary>Yalnız <see cref="ProjectBudgetManager"/> çağırmalı — döngü/derinlik orada denetlenir.</summary>
+    internal void SetParent(Guid? parentId) => ParentId = parentId;
+
+    /// <summary>
+    /// Hibe payını elle sabitler; boş değer "destek oranından hesapla" demektir.
+    /// Onaylanan tutardan büyük olamaz — kurum payı eksiye düşerdi.
+    /// </summary>
+    public void SetGrantAmount(decimal? grantAmount)
+    {
+        if (grantAmount.HasValue && (grantAmount.Value < 0 || grantAmount.Value > ApprovedAmount))
+            throw new BusinessException(PlatformDomainErrorCodes.BudgetLineGrantAmountInvalid)
+                .WithData("ApprovedAmount", ApprovedAmount.ToString("N2"))
+                .WithData("GrantAmount", grantAmount.Value.ToString("N2"));
+
+        GrantAmount = grantAmount;
+    }
+
+    /// <summary>
+    /// Hibeden karşılanan tutar. Elle girilen pay önceliklidir; sonradan bir revizyon
+    /// onaylanan tutarı payın altına indirdiyse pay onaylanana kırpılır (kurum payı
+    /// eksiye düşmez). Elle pay da oran da yoksa <c>null</c> — "bilinmiyor", 0 değil.
+    /// </summary>
+    public decimal? GetGrantShare(decimal? supportRatePercent)
+    {
+        if (GrantAmount.HasValue)
+            return Math.Min(GrantAmount.Value, ApprovedAmount);
+
+        if (supportRatePercent.HasValue)
+            return Math.Round(ApprovedAmount * supportRatePercent.Value / 100m, 2, MidpointRounding.AwayFromZero);
+
+        return null;
+    }
 
     /// <summary>
     /// Onaylanan tutarı revizyonla değiştirir. Yalnız <see cref="ProjectBudgetManager"/>

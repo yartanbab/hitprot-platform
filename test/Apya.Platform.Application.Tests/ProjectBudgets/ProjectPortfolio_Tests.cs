@@ -58,7 +58,8 @@ public class ProjectPortfolio_Tests
             _lineRepo, _trancheRepo, _deductionRepo, _revisionRepo, _projectRepo,
             _categoryRepo, _expenseRepo, _incomeRepo, _taskRepo, _matchRepo,
             Substitute.For<IRepository<Apya.Platform.Documents.DocumentFile, Guid>>(), manager,
-            Substitute.For<IFinanceNotificationPublisher>());
+            Substitute.For<IFinanceNotificationPublisher>(),
+            Substitute.For<IRepository<Apya.Platform.Grants.Grant, Guid>>());
 
         var services = new ServiceCollection();
         services.AddSingleton<IGuidGenerator>(SimpleGuidGenerator.Instance);

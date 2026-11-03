@@ -202,7 +202,14 @@ namespace Apya.Platform
             CreateMap<Apya.Platform.ProjectBudgets.ProjectBudgetLine, Apya.Platform.ProjectBudgets.Dtos.ProjectBudgetLineDto>()
                 .ForMember(d => d.SpentAmount, o => o.Ignore())
                 .ForMember(d => d.IncomeAmount, o => o.Ignore())
-                .ForMember(d => d.LinkedRecordCount, o => o.Ignore());
+                .ForMember(d => d.LinkedRecordCount, o => o.Ignore())
+                .ForMember(d => d.Depth, o => o.Ignore())
+                .ForMember(d => d.HasChildren, o => o.Ignore())
+                .ForMember(d => d.GrantShare, o => o.Ignore())
+                .ForMember(d => d.TotalPlannedAmount, o => o.Ignore())
+                .ForMember(d => d.TotalApprovedAmount, o => o.Ignore())
+                .ForMember(d => d.TotalSpentAmount, o => o.Ignore())
+                .ForMember(d => d.TotalGrantShare, o => o.Ignore());
 
             // BudgetRevisionNo başka bir aggregate'ten gelir (AppService doldurur).
             CreateMap<Apya.Platform.ProjectBudgets.TrancheDeduction, Apya.Platform.ProjectBudgets.Dtos.TrancheDeductionDto>()

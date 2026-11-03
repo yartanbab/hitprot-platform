@@ -41,6 +41,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
     private readonly IRepository<Apya.Platform.Documents.DocumentFile, Guid> _documentFileRepository;
     private readonly ProjectBudgetManager _budgetManager;
     private readonly IFinanceNotificationPublisher _financeNotifications;
+    private readonly IRepository<Apya.Platform.Grants.Grant, Guid> _grantRepository;
 
     public ProjectBudgetAppService(
         IRepository<ProjectBudgetLine, Guid> lineRepository,
@@ -55,7 +56,8 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         IRepository<Apya.Platform.Documents.DocumentExpenseMatch, Guid> matchRepository,
         IRepository<Apya.Platform.Documents.DocumentFile, Guid> documentFileRepository,
         ProjectBudgetManager budgetManager,
-        IFinanceNotificationPublisher financeNotifications)
+        IFinanceNotificationPublisher financeNotifications,
+        IRepository<Apya.Platform.Grants.Grant, Guid> grantRepository)
     {
         _lineRepository = lineRepository;
         _trancheRepository = trancheRepository;
@@ -70,6 +72,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
         _documentFileRepository = documentFileRepository;
         _budgetManager = budgetManager;
         _financeNotifications = financeNotifications;
+        _grantRepository = grantRepository;
     }
 
     /// <summary>Host bağlamında kiracı filtresini kapatır; kiracı bağlamında dokunmaz.</summary>
@@ -92,6 +95,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
 
         var hasLines = lines.Count > 0;
         var totalSpent = expenses.Sum(x => x.Amount);
+        var (supportRate, rateFromProgram) = await ResolveSupportRateAsync(projectId);
 
         var dto = new ProjectBudgetOverviewDto
         {
@@ -103,6 +107,13 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
             // Kalem yoksa proje bütçesi tek tutardır; ekran boş kalmasın diye ona düşülür.
             ContractBudget = hasLines ? lines.Sum(x => x.PlannedAmount) : project.TotalBudget,
             ApprovedBudget = hasLines ? lines.Sum(x => x.ApprovedAmount) : project.TotalBudget,
+
+            SupportRatePercent = supportRate,
+            SupportRateFromProgram = rateFromProgram,
+            // Kalemlerin KENDİ payları toplanır (alt ağaç toplamı değil) — çift sayım olmaz.
+            GrantShareTotal = !hasLines
+                ? (supportRate.HasValue ? Math.Round(project.TotalBudget * supportRate.Value / 100m, 2, MidpointRounding.AwayFromZero) : null)
+                : lines.All(x => x.GrantShare.HasValue) ? lines.Sum(x => x.GrantShare!.Value) : null,
 
             PlannedFunding = tranches.Sum(x => x.PlannedAmount),
             ReceivedFunding = tranches.Sum(x => x.ReceivedAmount),
@@ -393,7 +404,7 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
             UnassignedToLineAmount = expenses.Where(e => e.BudgetLineId == null).Sum(e => e.Amount)
         };
 
-        foreach (var line in lines.OrderBy(x => x.Order).ThenBy(x => x.Code))
+        foreach (var line in lines.OrderBy(x => x.Code, BudgetLineCodeComparer.Instance).ThenBy(x => x.Order))
         {
             var lineExpenses = expenses.Where(e => e.BudgetLineId == line.Id).ToList();
 
@@ -500,7 +511,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
             input.Name,
             input.PlannedAmount,
             input.ApprovedAmount,
-            input.TransferLimitPercent);
+            input.TransferLimitPercent,
+            input.ParentId,
+            input.GrantAmount);
 
         await _lineRepository.InsertAsync(line, autoSave: true);
         return await MapLineAsync(line);
@@ -519,7 +532,9 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
             input.Name,
             input.PlannedAmount,
             input.ApprovedAmount ?? line.ApprovedAmount,
-            input.TransferLimitPercent);
+            input.TransferLimitPercent,
+            input.ParentId,
+            input.GrantAmount);
 
         await _lineRepository.UpdateAsync(line, autoSave: true);
         return await MapLineAsync(line);
@@ -532,6 +547,16 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
 
         var line = await _lineRepository.GetAsync(id);
         await _budgetManager.DeleteLineAsync(line);
+    }
+
+    public async Task UpdateSupportRateAsync(Guid projectId, UpdateSupportRateDto input)
+    {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
+        using var scope = HostScope();
+
+        var project = await _projectRepository.GetAsync(projectId);
+        project.SetSupportRate(input.SupportRatePercent);
+        await _projectRepository.UpdateAsync(project, autoSave: true);
     }
 
     // ─────────────────────────── DİLİMLER ───────────────────────────
@@ -767,20 +792,102 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
             .GroupBy(x => x.BudgetLineId!.Value)
             .ToDictionary(g => g.Key, g => new { Total = g.Sum(x => x.Amount), Count = g.Count() });
 
-        return lines
-            .OrderBy(x => x.Order)
-            .ThenBy(x => x.Code)
-            .Select(line =>
+        var (supportRate, _) = await ResolveSupportRateAsync(projectId);
+
+        var dtos = lines.Select(line =>
+        {
+            var dto = ObjectMapper.Map<ProjectBudgetLine, ProjectBudgetLineDto>(line);
+            var spent = spentByLine.GetValueOrDefault(line.Id);
+            var income = incomeByLine.GetValueOrDefault(line.Id);
+            dto.SpentAmount = spent?.Total ?? 0m;
+            dto.IncomeAmount = income?.Total ?? 0m;
+            dto.LinkedRecordCount = (spent?.Count ?? 0) + (income?.Count ?? 0);
+            dto.GrantShare = line.GetGrantShare(supportRate);
+            return dto;
+        }).ToList();
+
+        return OrderAsTree(dtos);
+    }
+
+    /// <summary>
+    /// Kalemleri ağaç sırasıyla düzleştirir: her kalemin hemen ardından alt kalemleri gelir;
+    /// kardeşler kod SAYI sırasıyla (1, 2, 2.1, 2.2, 10), kodsuzlar en sonda tablo sırasıyla.
+    /// Derinlik ve alt ağaç toplamları da burada doldurulur.
+    /// </summary>
+    private static List<ProjectBudgetLineDto> OrderAsTree(List<ProjectBudgetLineDto> lines)
+    {
+        var ids = lines.Select(x => x.Id).ToHashSet();
+        // Üstü bu listede olmayan kalem (beklenmez; veri bozuksa) ana kalem sayılır — kaybolmaz.
+        var children = lines
+            .GroupBy(x => x.ParentId.HasValue && ids.Contains(x.ParentId.Value) ? x.ParentId : null)
+            .ToDictionary(g => g.Key ?? Guid.Empty, g => g
+                .OrderBy(x => x.Code, BudgetLineCodeComparer.Instance)
+                .ThenBy(x => x.Order)
+                .ToList());
+
+        var result = new List<ProjectBudgetLineDto>(lines.Count);
+        var visited = new HashSet<Guid>();
+
+        void Visit(ProjectBudgetLineDto line, int depth)
+        {
+            if (!visited.Add(line.Id))
             {
-                var dto = ObjectMapper.Map<ProjectBudgetLine, ProjectBudgetLineDto>(line);
-                var spent = spentByLine.GetValueOrDefault(line.Id);
-                var income = incomeByLine.GetValueOrDefault(line.Id);
-                dto.SpentAmount = spent?.Total ?? 0m;
-                dto.IncomeAmount = income?.Total ?? 0m;
-                dto.LinkedRecordCount = (spent?.Count ?? 0) + (income?.Count ?? 0);
-                return dto;
-            })
-            .ToList();
+                return; // döngü koruması — manager zaten engelliyor
+            }
+
+            line.Depth = depth;
+            result.Add(line);
+
+            line.TotalPlannedAmount = line.PlannedAmount;
+            line.TotalApprovedAmount = line.ApprovedAmount;
+            line.TotalSpentAmount = line.SpentAmount;
+            line.TotalGrantShare = line.GrantShare;
+
+            foreach (var child in children.GetValueOrDefault(line.Id) ?? new List<ProjectBudgetLineDto>())
+            {
+                line.HasChildren = true;
+                Visit(child, depth + 1);
+                line.TotalPlannedAmount += child.TotalPlannedAmount;
+                line.TotalApprovedAmount += child.TotalApprovedAmount;
+                line.TotalSpentAmount += child.TotalSpentAmount;
+                // Payı bilinmeyen tek alt kalem toplamı da bilinmez yapar — eksik toplam yanıltır.
+                line.TotalGrantShare = line.TotalGrantShare.HasValue && child.TotalGrantShare.HasValue
+                    ? line.TotalGrantShare + child.TotalGrantShare
+                    : null;
+            }
+        }
+
+        foreach (var root in children.GetValueOrDefault(Guid.Empty) ?? new List<ProjectBudgetLineDto>())
+        {
+            Visit(root, 0);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Geçerli destek oranı: projeye girilmişse o, değilse projenin doğduğu hibe
+    /// programınınki. Program kataloğu host'a ait olabildiği için yalnız bu tek kayıt
+    /// okunurken kiracı süzgeci kapatılır (kimliği projenin kendi bağından gelir).
+    /// </summary>
+    private async Task<(decimal? Rate, bool FromProgram)> ResolveSupportRateAsync(Guid projectId)
+    {
+        var project = await _projectRepository.GetAsync(projectId);
+        if (project.SupportRatePercent.HasValue)
+        {
+            return (project.SupportRatePercent, false);
+        }
+
+        if (project.GrantId == null)
+        {
+            return (null, false);
+        }
+
+        using (DataFilter.Disable<IMultiTenant>())
+        {
+            var grant = await _grantRepository.FindAsync(project.GrantId.Value);
+            return grant?.SupportRatePercent is int rate ? (rate, true) : (null, false);
+        }
     }
 
     private async Task<ProjectBudgetLineDto> MapLineAsync(ProjectBudgetLine line)

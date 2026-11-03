@@ -568,8 +568,12 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.PlannedAmount).HasColumnType("decimal(18,2)");
                 b.Property(x => x.ApprovedAmount).HasColumnType("decimal(18,2)");
                 b.Property(x => x.TransferLimitPercent).HasColumnType("decimal(5,2)");
+                b.Property(x => x.GrantAmount).HasColumnType("decimal(18,2)");
                 b.HasOne<Project>().WithMany().HasForeignKey(x => x.ProjectId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => new { x.ProjectId, x.Order });
+                // Üst kalem bağı FK DEĞİL (soft-delete'i engellemez); alt kalemi olan
+                // kalemin silinmesini ProjectBudgetManager reddeder. İndeks o sorgu için.
+                b.HasIndex(x => x.ParentId);
                 // Kod tekilliği VERİTABANINDA zorlanmaz: boş kod serbest ve soft-delete
                 // ile silinmiş bir kalemin kodu yeniden kullanılabilmeli. Kural
                 // ProjectBudgetManager.EnsureCodeIsFreeAsync'te (silinmişleri saymaz).
@@ -685,6 +689,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Kur köprüsü: donör PB'si boşsa proje tek defterlidir.
                 b.Property(x => x.DonorCurrency).HasMaxLength(3);
                 b.Property(x => x.FixedDonorRate).HasColumnType("decimal(18,6)");
+                b.Property(x => x.SupportRatePercent).HasColumnType("decimal(5,2)");
                 // FIN-07: Açık hassasiyet yoktu — SQL Server varsayılanı (18,2), PostgreSQL ise
                 // sınırsız numeric kullanıyordu; aynı tutar iki veritabanında farklı saklanabiliyordu.
                 b.Property(x => x.TotalBudget).HasColumnType("decimal(18,2)");

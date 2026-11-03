@@ -4,10 +4,24 @@
 @{
     Layout = null;
 }
-<form method="post" action="@Url.Page("/Finance/BudgetLineModal", new { projectId = Model.ProjectId, id = Model.Id })">
+<form method="post" action="@Url.Page("/Finance/BudgetLineModal", new { projectId = Model.ProjectId, id = Model.Id })"
+      data-budget-line-form
+      data-support-rate="@(Model.SupportRatePercent?.ToString(System.Globalization.CultureInfo.InvariantCulture))">
     <abp-modal>
         <abp-modal-header title="@(Model.IsEdit ? "Bütçe Kalemini Düzenle" : "Yeni Bütçe Kalemi")"></abp-modal-header>
         <abp-modal-body>
+            @* Üst kalem: data-code, kod yazılınca üst kalemin önerilmesi için ("2.1" → "2"). *@
+            <div class="mb-3">
+                <label class="form-label" for="Line_ParentId">Üst kalem / kategori</label>
+                <select class="form-select" id="Line_ParentId" name="Line.ParentId">
+                    <option value="">— Yok (ana kalem) —</option>
+                    @foreach (var p in Model.ParentOptions)
+                    {
+                        var label = new string(' ', p.Depth * 3) + (string.IsNullOrWhiteSpace(p.Code) ? "" : p.Code + " · ") + p.Name;
+                        <option value="@p.Id" data-code="@p.Code" selected="@(Model.Line.ParentId == p.Id)">@label</option>
+                    }
+                </select>
+            </div>
             <abp-row>
                 <abp-column size-md="_4">
                     <abp-input asp-for="Line.Code" label="Kod" placeholder="1.2" />
@@ -25,6 +39,20 @@
                     <abp-input asp-for="Line.ApprovedAmount" label="Onaylanan tutar" data-money-input="true" />
                 </abp-column>
             </abp-row>
+            @* Kurum payı SAKLANMAZ: onaylanan − hibe. Alanı yalnız giriş kolaylığı için var
+               (adı yok, sunucuya gitmez); yazılınca Budget.js hibe payını hesaplar. *@
+            <abp-row>
+                <abp-column size-md="_6">
+                    <abp-input asp-for="Line.GrantAmount" label="Hibe payı" data-money-input="true" />
+                </abp-column>
+                <abp-column size-md="_6">
+                    <div class="mb-3">
+                        <label class="form-label" for="Line_InstitutionShare">Kurum payı</label>
+                        <input type="text" class="form-control" id="Line_InstitutionShare" data-money-input="true" />
+                    </div>
+                </abp-column>
+            </abp-row>
+            <p class="text-muted" style="font-size:12px" data-share-hint></p>
             <abp-input asp-for="Line.TransferLimitPercent" label="Aktarım payı sınırı (%) — opsiyonel" data-money-input="true" />
             <p class="text-muted mb-0" style="font-size:12px">
                 Onaylanan tutarı buradan değiştirmek <strong>revizyon kaydı üretmez</strong>.

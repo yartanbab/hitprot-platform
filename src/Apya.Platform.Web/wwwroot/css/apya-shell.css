@@ -8804,3 +8804,16 @@ html.apya-activity-busy, html.apya-activity-busy body { cursor: progress; }
     .apya-activity::before { animation: none; left: 0; width: 100%; opacity: .6; }
     [data-apya-pending]::after { opacity: .4; }
 }
+
+/* Sıralanabilir tablo başlığı — ilk kullanım: Finans › Bütçe kalemleri. Yön th[aria-sort]'tan okunur. */
+.apya-th-sort {
+    background: none; border: 0; padding: 0; margin: 0;
+    font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit;
+    cursor: pointer; display: inline-flex; align-items: center; gap: .3rem;
+}
+.apya-th-sort::after { content: "\2195"; opacity: .35; font-size: .9em; }
+th[aria-sort="ascending"] .apya-th-sort::after { content: "\2191"; opacity: .9; }
+th[aria-sort="descending"] .apya-th-sort::after { content: "\2193"; opacity: .9; }
+.apya-th-sort:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 2px; border-radius: 2px; }
+/* Alt kalemi olan bütçe kalemi (kategori/üst kalem) satırı. */
+tr.apya-budget-parent > td { background-color: var(--bs-tertiary-bg); }

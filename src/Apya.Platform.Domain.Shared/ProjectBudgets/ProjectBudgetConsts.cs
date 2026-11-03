@@ -14,4 +14,7 @@ public static class ProjectBudgetConsts
     public const int MaxReasonLength = 512;
 
     public const int MaxNoteLength = 512;
+
+    /// <summary>Kalem ağacının en fazla derinliği ("1" → "1.1" → "1.1.1" … 4 düzey).</summary>
+    public const int MaxLineDepth = 4;
 }
