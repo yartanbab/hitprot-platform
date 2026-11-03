@@ -115,7 +115,8 @@
             <section class="card mb-0 d-none" id="TodayConsultant">
                 <div class="card-body apya-today-consultant">
                     <span class="apya-today-avatar apya-numeric" id="ConsultantInitials"></span>
-                    <div class="min-w-0">
+                    @* min-width:0 satır içi — Tailwind'in min-w-0'ı bu sayfada yüklü değil (bkz. Finance/_AccountsList). *@
+                    <div style="min-width:0">
                         <div class="fw-semibold" id="ConsultantName"></div>
                         <div class="apya-today-consultant-role">@L["Grants:Today:Consultant:Role"]</div>
                     </div>

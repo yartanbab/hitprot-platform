@@ -23,7 +23,8 @@
     <div class="card mb-0 apya-wiz-head">
         <div class="card-body d-flex align-items-center gap-3">
             <span class="apya-wiz-badge"><i class="fa fa-award"></i></span>
-            <div class="flex-fill min-w-0">
+            @* min-width:0 satır içi — Tailwind'in min-w-0'ı bu sayfada yüklü değil (bkz. Finance/_AccountsList). *@
+            <div class="flex-fill" style="min-width:0">
                 <div class="fw-bold" id="GrantName"></div>
                 <div class="apya-wiz-meta apya-numeric" id="GrantMeta"></div>
             </div>
