@@ -9794,6 +9794,9 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
 
+                    b.Property<decimal?>("GrantAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -9820,6 +9823,9 @@ namespace Apya.Platform.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("PlannedAmount")
                         .HasColumnType("decimal(18,2)");
 
@@ -9837,6 +9843,8 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("decimal(5,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
 
                     b.HasIndex("SourceGrantLineId");
 
@@ -10103,6 +10111,9 @@ namespace Apya.Platform.Migrations
 
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("SupportRatePercent")
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<string>("TargetAudience")
                         .HasColumnType("text");

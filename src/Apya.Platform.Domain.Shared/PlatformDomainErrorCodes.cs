@@ -343,6 +343,10 @@ public static class PlatformDomainErrorCodes
     public const string BudgetLineRequired = "Platform:ProjectBudget:LineRequired";
     public const string BudgetLineProjectMismatch = "Platform:ProjectBudget:LineProjectMismatch";
     public const string BudgetTransferLimitInvalid = "Platform:ProjectBudget:TransferLimitInvalid";
+    public const string BudgetLineParentInvalid = "Platform:ProjectBudget:LineParentInvalid";
+    public const string BudgetLineHasChildren = "Platform:ProjectBudget:LineHasChildren";
+    public const string BudgetLineGrantAmountInvalid = "Platform:ProjectBudget:LineGrantAmountInvalid";
+    public const string ProjectSupportRateInvalid = "Platform:ProjectBudget:SupportRateInvalid";
 
     public const string TrancheAmountInvalid = "Platform:ProjectBudget:TrancheAmountInvalid";
     public const string TrancheCollectionInvalid = "Platform:ProjectBudget:TrancheCollectionInvalid";

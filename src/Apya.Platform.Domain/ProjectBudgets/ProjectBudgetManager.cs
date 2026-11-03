@@ -55,13 +55,16 @@ public class ProjectBudgetManager : DomainService
         string name,
         decimal plannedAmount,
         decimal? approvedAmount = null,
-        decimal? transferLimitPercent = null)
+        decimal? transferLimitPercent = null,
+        Guid? parentId = null,
+        decimal? grantAmount = null)
     {
         await EnsureCodeIsFreeAsync(projectId, code, excludedLineId: null);
+        await EnsureParentIsValidAsync(projectId, lineId: null, parentId);
 
         var order = await NextLineOrderAsync(projectId);
 
-        return new ProjectBudgetLine(
+        var line = new ProjectBudgetLine(
             GuidGenerator.Create(),
             CurrentTenant.Id,
             projectId,
@@ -71,6 +74,10 @@ public class ProjectBudgetManager : DomainService
             approvedAmount ?? plannedAmount,
             order,
             transferLimitPercent);
+
+        line.SetParent(parentId);
+        line.SetGrantAmount(grantAmount);
+        return line;
     }
 
     /// <summary>Kalemi günceller. Tutar değişimi revizyon DEĞİLDİR — bkz. <see cref="ApplyRevisionAsync"/>.</summary>
@@ -80,14 +87,20 @@ public class ProjectBudgetManager : DomainService
         string name,
         decimal plannedAmount,
         decimal approvedAmount,
-        decimal? transferLimitPercent)
+        decimal? transferLimitPercent,
+        Guid? parentId = null,
+        decimal? grantAmount = null)
     {
         await EnsureCodeIsFreeAsync(line.ProjectId, code, excludedLineId: line.Id);
+        await EnsureParentIsValidAsync(line.ProjectId, line.Id, parentId);
 
         line.SetCode(code);
         line.SetName(name);
         line.SetAmounts(plannedAmount, approvedAmount);
         line.SetTransferLimit(transferLimitPercent);
+        line.SetParent(parentId);
+        // Tutardan SONRA: pay yeni onaylanan tutara göre doğrulanır.
+        line.SetGrantAmount(grantAmount);
     }
 
     /// <summary>
@@ -103,6 +116,11 @@ public class ProjectBudgetManager : DomainService
             throw new BusinessException(PlatformDomainErrorCodes.BudgetLineInUse)
                 .WithData("LineName", line.Name)
                 .WithData("RecordCount", expenseCount + incomeCount);
+
+        // Alt kalemler sessizce yetim (ana kalem) bırakılmaz — ağaç kullanıcının haberi olmadan değişirdi.
+        if (await _lineRepository.CountAsync(x => x.ParentId == line.Id) > 0)
+            throw new BusinessException(PlatformDomainErrorCodes.BudgetLineHasChildren)
+                .WithData("LineName", line.Name);
 
         await _lineRepository.DeleteAsync(line);
     }
@@ -385,4 +403,45 @@ public class ProjectBudgetManager : DomainService
         var lines = await _lineRepository.GetListAsync(x => x.ProjectId == projectId);
         return lines.Count == 0 ? 1 : lines.Max(x => x.Order) + 1;
     }
+
+    /// <summary>
+    /// Üst kalem seçimini doğrular: aynı projede olmalı, kalem kendisinin ya da kendi
+    /// alt kaleminin altına giremez (döngü) ve ağaç <see cref="ProjectBudgetConsts.MaxLineDepth"/>
+    /// düzeyi aşamaz — taşınan kalemin kendi alt ağacı da hesaba katılır.
+    /// </summary>
+    private async Task EnsureParentIsValidAsync(Guid projectId, Guid? lineId, Guid? parentId)
+    {
+        if (parentId == null)
+        {
+            return;
+        }
+
+        var lines = await _lineRepository.GetListAsync(x => x.ProjectId == projectId);
+        var byId = lines.ToDictionary(x => x.Id);
+
+        if (parentId == lineId || !byId.ContainsKey(parentId.Value))
+            throw ParentInvalid();
+
+        // Üst kalemin derinliği (ana kalem = 1); yolda kalemin kendisi çıkarsa döngüdür.
+        var parentDepth = 0;
+        for (Guid? cursor = parentId; cursor != null; cursor = byId.TryGetValue(cursor.Value, out var l) ? l.ParentId : null)
+        {
+            if (cursor == lineId || ++parentDepth > ProjectBudgetConsts.MaxLineDepth)
+                throw ParentInvalid();
+        }
+
+        var subtreeHeight = lineId == null ? 1 : SubtreeHeight(lineId.Value, lines);
+        if (parentDepth + subtreeHeight > ProjectBudgetConsts.MaxLineDepth)
+            throw ParentInvalid();
+    }
+
+    private static int SubtreeHeight(Guid lineId, List<ProjectBudgetLine> lines)
+    {
+        var children = lines.Where(x => x.ParentId == lineId).ToList();
+        return children.Count == 0 ? 1 : 1 + children.Max(c => SubtreeHeight(c.Id, lines));
+    }
+
+    private static BusinessException ParentInvalid()
+        => new BusinessException(PlatformDomainErrorCodes.BudgetLineParentInvalid)
+            .WithData("MaxDepth", ProjectBudgetConsts.MaxLineDepth);
 }

@@ -61,7 +61,7 @@ public class BudgetWritePermission_Tests
     /// öznitelik de geri gelmemeli.
     /// </summary>
     [Theory]
-    [InlineData("ProjectBudgetAppService.cs", 13)]
+    [InlineData("ProjectBudgetAppService.cs", 14)]
     [InlineData("ProjectFxAppService.cs", 2)]
     public void Yazma_metotlari_ortak_kapiyi_kullanir(string file, int expectedGuards)
     {

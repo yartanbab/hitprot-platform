@@ -79,6 +79,13 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public decimal? FixedDonorRate { get; private set; }
 
     /// <summary>
+    /// Hibenin bütçeyi karşıladığı oran (%). Kurum (eş finansman) payı SAKLANMAZ:
+    /// 100 − bu oran. Boşsa bağlı hibe programının oranı kullanılır
+    /// (<c>Grant.SupportRatePercent</c>); ikisi de boşsa pay hesaplanmaz.
+    /// </summary>
+    public decimal? SupportRatePercent { get; private set; }
+
+    /// <summary>
     /// EF Core için zorunlu parametre-siz constructor.
     /// </summary>
     protected Project()
@@ -248,6 +255,15 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
         // Sabit kur yalnız o politikada anlamlı; başka politikada saklamak
         // "hangi değer geçerli" belirsizliği üretir.
         FixedDonorRate = policy == FxPolicy.FixedContract ? fixedDonorRate : null;
+    }
+
+    public void SetSupportRate(decimal? percent)
+    {
+        if (percent.HasValue && (percent.Value < 0 || percent.Value > 100))
+            throw new BusinessException(PlatformDomainErrorCodes.ProjectSupportRateInvalid)
+                .WithData("SupportRatePercent", percent);
+
+        SupportRatePercent = percent;
     }
 
     public void Approve() => IsApproved = true;

@@ -47,6 +47,38 @@ public class ProjectBudgetLineDto : EntityDto<Guid>
 
     /// <summary>Kaleme bağlı gider+gelir sayısı. 0 değilse kalem silinemez.</summary>
     public int LinkedRecordCount { get; set; }
+
+    /// <summary>Üst kalem; boşsa ana kalem.</summary>
+    public Guid? ParentId { get; set; }
+
+    /// <summary>Elle girilmiş hibe payı. Boşsa pay destek oranından hesaplanır.</summary>
+    public decimal? GrantAmount { get; set; }
+
+    // ── Aşağıdakiler AppService'te doldurulur (entity'de yok) ──
+
+    /// <summary>Ağaçtaki düzey: ana kalem 0.</summary>
+    public int Depth { get; set; }
+
+    public bool HasChildren { get; set; }
+
+    /// <summary>Kalemin KENDİ hibe payı (elle ya da orandan). Hesaplanamıyorsa boş.</summary>
+    public decimal? GrantShare { get; set; }
+
+    /// <summary>Kalemin KENDİ kurum payı: onaylanan − hibe payı.</summary>
+    public decimal? InstitutionShare => GrantShare.HasValue ? ApprovedAmount - GrantShare.Value : null;
+
+    // Alt ağaç toplamları: kalemin kendi tutarı + tüm alt kalemlerininki.
+    // Alt kalemi olmayan kalemde kendi tutarlarına eşittir. Ekran bunları gösterir.
+    public decimal TotalPlannedAmount { get; set; }
+    public decimal TotalApprovedAmount { get; set; }
+    public decimal TotalSpentAmount { get; set; }
+    public decimal? TotalGrantShare { get; set; }
+    public decimal? TotalInstitutionShare => TotalGrantShare.HasValue ? TotalApprovedAmount - TotalGrantShare.Value : null;
+    public decimal TotalRemainingAmount => TotalApprovedAmount - TotalSpentAmount;
+
+    public int TotalUsagePercent => TotalApprovedAmount > 0
+        ? (int)Math.Round(TotalSpentAmount / TotalApprovedAmount * 100m)
+        : 0;
 }
 
 public class CreateUpdateBudgetLineDto
@@ -70,6 +102,23 @@ public class CreateUpdateBudgetLineDto
 
     [Range(0, 100)]
     public decimal? TransferLimitPercent { get; set; }
+
+    /// <summary>Üst kalem (aynı projede); boşsa ana kalem.</summary>
+    public Guid? ParentId { get; set; }
+
+    /// <summary>
+    /// Hibeden karşılanan tutar. Boş bırakılırsa projenin destek oranından hesaplanır;
+    /// kurum payı her zaman onaylanan − hibe payıdır, ayrıca gönderilmez.
+    /// </summary>
+    [Range(0, 999999999999)]
+    public decimal? GrantAmount { get; set; }
+}
+
+/// <summary>Projenin destek oranı. Boş değer "hibe programının oranını kullan" demektir.</summary>
+public class UpdateSupportRateDto
+{
+    [Range(0, 100)]
+    public decimal? SupportRatePercent { get; set; }
 }
 
 /// <summary>
@@ -236,6 +285,20 @@ public class ProjectBudgetOverviewDto
 
     /// <summary>Onaylanan (revize) bütçe — kalemlerin yürürlükteki toplamı.</summary>
     public decimal ApprovedBudget { get; set; }
+
+    /// <summary>Geçerli destek oranı: projeninki, boşsa bağlı hibe programınınki.</summary>
+    public decimal? SupportRatePercent { get; set; }
+
+    /// <summary>Oran projeden değil hibe programından geliyorsa true.</summary>
+    public bool SupportRateFromProgram { get; set; }
+
+    /// <summary>Kurum (eş finansman) oranı — türetilir, saklanmaz.</summary>
+    public decimal? InstitutionRatePercent => SupportRatePercent.HasValue ? 100m - SupportRatePercent.Value : null;
+
+    /// <summary>Kalemlerin hibe payı toplamı. Payı hesaplanamayan kalem varsa boş.</summary>
+    public decimal? GrantShareTotal { get; set; }
+
+    public decimal? InstitutionShareTotal => GrantShareTotal.HasValue ? ApprovedBudget - GrantShareTotal.Value : null;
 
     public decimal PlannedFunding { get; set; }
     public decimal ReceivedFunding { get; set; }

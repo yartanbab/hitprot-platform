@@ -61,6 +61,7 @@ public class FinancePageAuthorizationContract_Tests
     [InlineData(typeof(DeductionModalModel))]
     [InlineData(typeof(FxPolicyModalModel))]
     [InlineData(typeof(RevisionModalModel))]
+    [InlineData(typeof(SupportRateModalModel))]
     [InlineData(typeof(TrancheModalModel))]
     public void Finans_penceresi_butce_gorme_izni_ister(Type model)
     {
