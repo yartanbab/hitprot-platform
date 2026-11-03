@@ -62,7 +62,7 @@ public class GrantDocumentChecklistManager : DomainService
                 GuidGenerator.Create(), application.TenantId, application.Id,
                 requirement.Id, requirement.Name, requirement.Obligation,
                 requirement.UploaderParty, requirement.RequiresESignature,
-                requirement.Order), autoSave: true);
+                requirement.Order, requirement.RequiresWetSignature, requirement.RequiresStamp), autoSave: true);
         }
     }
 }

@@ -432,7 +432,9 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
                 Name = d.Name,
                 Obligation = d.Obligation,
                 UploaderParty = d.UploaderParty,
-                RequiresESignature = d.RequiresESignature
+                RequiresESignature = d.RequiresESignature,
+                RequiresWetSignature = d.RequiresWetSignature,
+                RequiresStamp = d.RequiresStamp
             })
             .ToList();
 
@@ -567,7 +569,9 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
                 {
                     Obligation = doc.Obligation,
                     UploaderParty = doc.UploaderParty,
-                    RequiresESignature = doc.RequiresESignature
+                    RequiresESignature = doc.RequiresESignature,
+                    RequiresWetSignature = doc.RequiresWetSignature,
+                    RequiresStamp = doc.RequiresStamp
                 });
             order++;
         }

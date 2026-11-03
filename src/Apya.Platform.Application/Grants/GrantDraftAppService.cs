@@ -156,7 +156,9 @@ public class GrantDraftAppService : ApplicationService, IGrantDraftAppService
                 new GrantDocumentRequirement(GuidGenerator.Create(), grantId, 0, document)
                 {
                     Obligation = GrantDocumentObligation.Zorunlu,
-                    UploaderParty = GrantPartyRole.Firma
+                    UploaderParty = GrantPartyRole.Firma,
+                    RequiresWetSignature = GrantDocumentSignatureRules.InfersWetSignature(document),
+                    RequiresStamp = GrantDocumentSignatureRules.InfersStamp(document)
                 },
                 autoSave: true);
         }

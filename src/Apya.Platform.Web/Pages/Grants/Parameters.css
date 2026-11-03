@@ -565,7 +565,7 @@
 
 .apya-doc-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 132px 132px 74px 30px;
+    grid-template-columns: minmax(0, 1fr) 132px 132px 74px 74px 74px 30px;
     align-items: center;
     gap: var(--apya-space-2);
     padding: 8px var(--apya-space-3);

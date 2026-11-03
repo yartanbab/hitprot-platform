@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Button, EmptyState, SkeletonList } from '../components/ui';
+import { Button, EmptyState, SkeletonList } from '../components/ui';
 import { DocsPageHeader, ProcessRibbon } from '../components/documents';
 import { abpAuth } from '../deliveries/api';
 import {
-  RECIPIENT_LABEL, SECTION_LABEL, abpAppPath, abpNotify, createTemplate, deleteTemplate,
+  SECTION_LABEL, abpAppPath, abpNotify, createTemplate, deleteTemplate,
   duplicateTemplate, getProjects, getTemplates, updateSections,
 } from './api';
 import { ensureDraftPackage } from './draftPackage';
 import { PreviewTab } from './PreviewTab';
 import { DistributionTab } from './DistributionTab';
+import { TemplatePicker } from './TemplatePicker';
 
 /**
  * Rapor derleyici — Bölümler / Önizleme / Dağıtım.
@@ -318,36 +319,8 @@ export function ReportBuilderRoot() {
       </div>
 
       <div className="apya-doc-reportgrid">
-        {/* Sol: şablonlar */}
-        <div className="apya-doc-check-card">
-          <div className="apya-md-overline">Şablonlar</div>
-
-          {templates.length === 0 ? (
-            <div style={{ fontSize: 12, color: 'var(--apya-text-tertiary)' }}>Şablon yok.</div>
-          ) : templates.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className={cn('apya-md-item', selectedId === t.id && 'selected')}
-              style={{ borderRadius: 8, height: 'auto', paddingTop: 7, paddingBottom: 7 }}
-              onClick={() => setSelectedId(t.id)}
-            >
-              <span style={{ minWidth: 0, flex: 1, textAlign: 'left' }}>
-                <span className="d-block text-truncate" style={{ fontSize: 12.5, fontWeight: 500 }}>
-                  {t.name}
-                </span>
-                <span className="d-block" style={{ fontSize: 10.5, color: 'var(--apya-text-tertiary)' }}>
-                  {RECIPIENT_LABEL[t.recipient] ?? '—'}
-                  {t.issuer && ` · ${t.issuer}`}
-                </span>
-              </span>
-              <span className="d-flex align-items-center gap-1">
-                {t.isSystem && <Badge variant="neutral" size="sm">sistem</Badge>}
-                <Badge variant="accent" size="sm">{t.enabledSectionCount}</Badge>
-              </span>
-            </button>
-          ))}
-        </div>
+        {/* Sol: şablonlar — aranabilir, kuruma göre gruplu */}
+        <TemplatePicker templates={templates} selectedId={selectedId} onSelect={setSelectedId} />
 
         {/* Sağ: sekme içeriği */}
         {tab === 'sections' && (

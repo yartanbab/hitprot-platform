@@ -178,6 +178,41 @@ public class GrantDocumentsPage_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// Yükleme ön kontrolü sürümle saklanır ve evrakın şartıyla karşılaştırılır:
+    /// e-imza istenen evrakta imzasız dosya uyarı alır, e-imzalı dosya almaz.
+    /// </summary>
+    [Fact]
+    public async Task On_kontrol_surumle_saklanir_ve_e_imza_sartiyla_karsilastirilir()
+    {
+        var id = await CreateApplicationAsync();
+        var document = (await _documents.GetAsync(id)).Documents.First(d => d.RequiresESignature);
+
+        await _documents.RegisterVersionAsync(new RegisterGrantDocumentVersionInput
+        {
+            DocumentId = document.Id,
+            StoredFileName = Guid.NewGuid() + ".pdf",
+            OriginalFileName = "protokol.pdf",
+            SizeBytes = 1024,
+            Inspection = new GrantDocumentFileInspection(HasDigitalSignature: false, LooksScanned: true, EmptyFieldCount: 2)
+        });
+        var unsigned = (await _documents.GetAsync(id)).Documents.Single(d => d.Id == document.Id).LatestVersion!;
+        unsigned.PreCheckWarnings.ShouldBe([nameof(GrantDocumentPreCheckWarning.ESignatureMissing), nameof(GrantDocumentPreCheckWarning.EmptyFields)]);
+        unsigned.EmptyFieldCount.ShouldBe(2);
+
+        await _documents.RegisterVersionAsync(new RegisterGrantDocumentVersionInput
+        {
+            DocumentId = document.Id,
+            StoredFileName = Guid.NewGuid() + ".pdf",
+            OriginalFileName = "protokol-imzali.pdf",
+            SizeBytes = 1024,
+            Inspection = new GrantDocumentFileInspection(HasDigitalSignature: true, LooksScanned: false, EmptyFieldCount: 0)
+        });
+        var signed = (await _documents.GetAsync(id)).Documents.Single(d => d.Id == document.Id);
+        signed.LatestVersion!.PreCheckWarnings.ShouldBeEmpty();
+        signed.Versions.Last().PreCheckWarnings.Count.ShouldBe(2, "eski sürümün uyarısı geçmişte kalır");
+    }
+
+    /// <summary>
     /// 🔴 Sürüm satırı KİRACIYA aittir. Liste sürümleri filtre kapalı okuyup "İndir"
     /// düğmesini gösteriyordu, indirme ise aynı satırı filtre açık arıyordu → host'taki
     /// danışman için her indirme 404 "GrantApplicationDocumentVersion bulunamadı".

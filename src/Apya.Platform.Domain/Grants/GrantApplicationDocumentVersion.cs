@@ -28,6 +28,12 @@ public class GrantApplicationDocumentVersion : CreationAuditedAggregateRoot<Guid
     /// <summary>Sürüm notu — "bütçe bölümü dolduruldu" gibi.</summary>
     public string? Note { get; private set; }
 
+    // Yükleme ön kontrolü (GrantDocumentFileInspection). Null = dosya okunamadı ya da
+    // biçim desteklenmiyor (zip, rar); o sürüm için uyarı üretilmez.
+    public bool? HasDigitalSignature { get; private set; }
+    public bool? LooksScanned { get; private set; }
+    public int? EmptyFieldCount { get; private set; }
+
     protected GrantApplicationDocumentVersion() { }
 
     public GrantApplicationDocumentVersion(
@@ -54,4 +60,16 @@ public class GrantApplicationDocumentVersion : CreationAuditedAggregateRoot<Guid
         UploaderRole = uploaderRole;
         Note = note;
     }
+
+    public void SetInspection(GrantDocumentFileInspection? inspection)
+    {
+        HasDigitalSignature = inspection?.HasDigitalSignature;
+        LooksScanned = inspection?.LooksScanned;
+        EmptyFieldCount = inspection?.EmptyFieldCount;
+    }
+
+    public GrantDocumentFileInspection? GetInspection() =>
+        HasDigitalSignature.HasValue && LooksScanned.HasValue
+            ? new GrantDocumentFileInspection(HasDigitalSignature.Value, LooksScanned.Value, EmptyFieldCount)
+            : null;
 }

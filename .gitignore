@@ -265,6 +265,8 @@ src/Apya.Platform.Blazor.Server.Tiered/Logs/*
 # Use abp install-libs to restore.
 **/wwwroot/libs/*
 src/Apya.Platform.Web/App_Data/uploads/*
+# Geri bildirim ekleri (FeedbackFileStorage) — kullanıcı dosyası, commit'lenmemeli.
+src/Apya.Platform.Web/App_Data/feedback-uploads/*
 # wwwroot altı OTURUMSUZ servis edilir: buraya düşen dosya depoya da pakete de girmemeli.
 # (Yüklemelerin gerçek yeri App_Data/uploads; bu klasör eski sürümden kalma.)
 src/Apya.Platform.Web/wwwroot/uploads/

@@ -6399,6 +6399,12 @@ namespace Apya.Platform.Migrations
                     b.Property<bool>("RequiresESignature")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("RequiresStamp")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("RequiresWetSignature")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("ReviewNote")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
@@ -6446,10 +6452,19 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("DocumentId")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("EmptyFieldCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ExtraProperties")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("ExtraProperties");
+
+                    b.Property<bool?>("HasDigitalSignature")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("LooksScanned")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Note")
                         .HasMaxLength(256)
@@ -7183,6 +7198,12 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("integer");
 
                     b.Property<bool>("RequiresESignature")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("RequiresStamp")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("RequiresWetSignature")
                         .HasColumnType("boolean");
 
                     b.Property<Guid?>("TenantId")

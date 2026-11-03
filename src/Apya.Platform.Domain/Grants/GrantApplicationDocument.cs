@@ -30,6 +30,8 @@ public class GrantApplicationDocument : FullAuditedAggregateRoot<Guid>, IMultiTe
     public GrantPartyRole UploaderParty { get; private set; }
 
     public bool RequiresESignature { get; private set; }
+    public bool RequiresWetSignature { get; private set; }
+    public bool RequiresStamp { get; private set; }
     public GrantDocumentStatus Status { get; private set; }
 
     /// <summary>Danışmanın revizyon notu ya da onay notu.</summary>
@@ -60,7 +62,9 @@ public class GrantApplicationDocument : FullAuditedAggregateRoot<Guid>, IMultiTe
         GrantDocumentObligation obligation,
         GrantPartyRole uploaderParty,
         bool requiresESignature,
-        int order) : base(id)
+        int order,
+        bool requiresWetSignature = false,
+        bool requiresStamp = false) : base(id)
     {
         TenantId = tenantId;
         GrantApplicationId = grantApplicationId;
@@ -69,6 +73,8 @@ public class GrantApplicationDocument : FullAuditedAggregateRoot<Guid>, IMultiTe
         Obligation = obligation;
         UploaderParty = uploaderParty;
         RequiresESignature = requiresESignature;
+        RequiresWetSignature = requiresWetSignature;
+        RequiresStamp = requiresStamp;
         Order = order;
         Status = GrantDocumentStatus.Bekleniyor;
     }

@@ -265,7 +265,9 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
             {
                 Obligation = Enum.Parse<GrantDocumentObligation>(doc.Obligation),
                 UploaderParty = Enum.Parse<GrantPartyRole>(doc.Uploader),
-                RequiresESignature = doc.ESignature
+                RequiresESignature = doc.ESignature,
+                RequiresWetSignature = GrantDocumentSignatureRules.InfersWetSignature(doc.Name),
+                RequiresStamp = GrantDocumentSignatureRules.InfersStamp(doc.Name)
             });
         }
     }

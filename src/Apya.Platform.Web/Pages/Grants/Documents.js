@@ -23,6 +23,18 @@ $(function () {
     }
     function date(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : ''; }
 
+    // Yükleme ön kontrolü (ıslak imza/kaşe, e-imza, boş alan) — sunucu uyarı adlarını verir.
+    function preCheckTexts(v) {
+        return ((v && v.preCheckWarnings) || []).map(function (w) {
+            return l('Grants:Documents:PreCheck:' + w, v.emptyFieldCount);
+        });
+    }
+    function preCheckHtml(v) {
+        return preCheckTexts(v).map(function (t) {
+            return '<span class="apya-doc-note d-block"><i class="fa fa-triangle-exclamation me-1"></i>' + esc(t) + '</span>';
+        }).join('');
+    }
+
     // ---------- Süzgeç ----------
     $('.apya-choice-row').on('click', '.apya-choice', function () {
         // Yükleme düştüyse süzülecek model yok (hata kartı kalır).
@@ -66,11 +78,17 @@ $(function () {
             (d.obligation === 0 ? '' : ' <span class="apya-chip apya-chip-neutral">' +
                 esc(l('Grants:Documents:Optional')) + '</span>') +
             (d.requiresESignature ? ' <span class="apya-chip apya-chip-accent">' +
-                esc(l('Grants:Documents:NeedsESignature')) + '</span>' : '') + '</span>' +
+                esc(l('Grants:Documents:NeedsESignature')) + '</span>' : '') +
+            (d.requiresWetSignature ? ' <span class="apya-chip apya-chip-accent">' +
+                esc(l('Grants:Documents:NeedsWetSignature')) + '</span>' : '') +
+            (d.requiresStamp ? ' <span class="apya-chip apya-chip-accent">' +
+                esc(l('Grants:Documents:NeedsStamp')) + '</span>' : '') + '</span>' +
             (d.latestVersion
                 ? '<span class="apya-doc-file">' + esc(d.latestVersion.originalFileName) + ' · ' +
                   size(d.latestVersion.sizeBytes) + '</span>'
                 : '') +
+            // Onaylanmış evrakta uyarı gürültüdür: danışman bakıp kabul etmiş.
+            (d.status !== 2 ? preCheckHtml(d.latestVersion) : '') +
             (d.reviewNote ? '<span class="apya-doc-note">' + esc(d.reviewNote) + '</span>' : '') +
             '</span>' +
             '<span class="apya-cat-sub" data-label="' + esc(l('Grants:Documents:Col:Party')) + '">' +
@@ -118,7 +136,7 @@ $(function () {
                     '<span class="flex-fill">' + esc(v.note || v.originalFileName) +
                     '<br /><span class="apya-doc-history-meta">' + esc(date(v.creationTime)) + ' · ' +
                     esc(v.uploaderName) + (i === 0 ? ' · ' + esc(l('Grants:Documents:Current')) : '') +
-                    '</span></span>' +
+                    '</span>' + preCheckHtml(v) + '</span>' +
                     '<a class="btn btn-sm btn-outline-secondary" href="?handler=Download&versionId=' + v.id + '">' +
                     '<i class="fa fa-download"></i></a></div>';
             }).join('')
@@ -147,8 +165,14 @@ $(function () {
             data: form,
             processData: false,
             contentType: false
-        }).done(function () {
-            abp.notify.success(l('Grants:Documents:Uploaded'));
+        }).done(function (r) {
+            var warnings = preCheckTexts(r);
+            if (warnings.length) {
+                abp.message.warn(warnings.join(' ') + ' ' + l('Grants:Documents:PreCheck:Hint'),
+                    l('Grants:Documents:PreCheck:Title'));
+            } else {
+                abp.notify.success(l('Grants:Documents:Uploaded'));
+            }
             load();
         }).fail(function (x) {
             // Ham gövde (JSON zarfı / HTML) basılmaz; oturum hatasında merkezi pencere (null).
