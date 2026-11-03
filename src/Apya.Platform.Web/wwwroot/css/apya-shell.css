@@ -2389,6 +2389,19 @@ i.apya-priority-dot {
     border-radius: var(--apya-radius-xl);
     box-shadow: var(--apya-shadow-sm);
 }
+/* Sayfanın ilk öğesi olan şerit üst bara yapışır (kullanıcı kararı 2026-11-03):
+   temanın 28px üst dolgusu kalkar, üst köşeler düzleşir, alt köşeler kalır.
+   Mobilde dokunulmaz — orada şerit kart değil, kendi 12px kuralı var (§21). */
+@media (min-width: 768px) {
+    .lpx-content:has(> .apya-page > .apya-console-rail:first-child) { padding-top: 0; }
+    .apya-page > .apya-console-rail:first-child {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+    /* Kalkan üst dolgu konsol yüksekliğine eklenir (56 → 28, yalnız alt dolgu). */
+    .apya-page.apya-project-console,
+    .apya-page.apya-task-console { height: calc(100vh - var(--apya-header-h) - 28px); }
+}
 .apya-console-sep {
     flex: none;
     width: 1px;
