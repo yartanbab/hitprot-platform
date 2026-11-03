@@ -3620,6 +3620,15 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     min-height: 0;
     display: flex;
     flex-direction: column;
+    /* .apya-console-main sabit yükseklikte ve overflow:hidden. Liste/Kanban/
+       Gantt kendi içinde kaydırır; Takvim, Gösterge Paneli, Finans ve
+       Belge/Form/Kontrol Listesi/Bağımlılıklar panellerinin kaydırıcısı yoktu,
+       taşan içerik kırpılıyordu. Kanban'ın #id kuralı (overflow:hidden) kazanır.
+       overflow-x:hidden şart: yalnız overflow-y:auto yazınca x de auto olur ve
+       Liste'de 15px yatay çubuk belirip tabloyu daraltıyordu (ölçüldü); yatay
+       taşma önceden de .apya-console-main'de kırpılıyordu, davranış aynı. */
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 /* DataTables konsol içinde.
