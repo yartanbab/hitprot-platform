@@ -2389,12 +2389,16 @@ i.apya-priority-dot {
     border-radius: var(--apya-radius-xl);
     box-shadow: var(--apya-shadow-sm);
 }
-/* Sayfanın ilk öğesi olan şerit üst bara yapışır (kullanıcı kararı 2026-11-03):
-   temanın 28px üst dolgusu kalkar, üst köşeler düzleşir, alt köşeler kalır.
-   Mobilde dokunulmaz — orada şerit kart değil, kendi 12px kuralı var (§21). */
+/* Sayfanın ilk öğesi olan şerit üst bara ve iki yana yapışır (kullanıcı kararı
+   2026-11-03): temanın 28px üst dolgusu kalkar, yan dolgu yalnız şerit için
+   negatif margin'le aşılır (sayfanın geri kalanı içeride kalır), üst köşeler
+   düzleşir, alt köşeler kalır. 28px = .lpx-content yan dolgusu, >=768px'te
+   her genişlikte aynı (canlı ölçüm). Mobilde dokunulmaz — orada şerit kart
+   değil, kendi 12px kuralı var (§21). */
 @media (min-width: 768px) {
     .lpx-content:has(> .apya-page > .apya-console-rail:first-child) { padding-top: 0; }
     .apya-page > .apya-console-rail:first-child {
+        margin-inline: -28px;
         border-top-left-radius: 0;
         border-top-right-radius: 0;
     }
