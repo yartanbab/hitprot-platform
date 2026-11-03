@@ -29,6 +29,11 @@ public class GrantDocumentRequirement : FullAuditedAggregateRoot<Guid>, IMultiTe
 
     public bool RequiresESignature { get; set; }
 
+    /// <summary>Islak imzalı (taranmış) kopya bekleniyor. E-imza ile birlikte işaretliyse "e-imza, yoksa ıslak".</summary>
+    public bool RequiresWetSignature { get; set; }
+
+    public bool RequiresStamp { get; set; }
+
     protected GrantDocumentRequirement() { }
 
     public GrantDocumentRequirement(Guid id, Guid grantId, int order, string name) : base(id)

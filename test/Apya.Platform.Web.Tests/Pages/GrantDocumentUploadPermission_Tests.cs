@@ -60,7 +60,8 @@ public class GrantDocumentUploadPermission_Tests : PlatformWebTestBase
         var page = new DocumentsModel(
             GetRequiredService<IGrantApplicationDocumentAppService>(),
             storage,
-            GetRequiredService<IUploadedFileRootFolderProvider>());
+            GetRequiredService<IUploadedFileRootFolderProvider>(),
+            GetRequiredService<GrantDocumentFileInspector>());
         page.LazyServiceProvider = GetRequiredService<IAbpLazyServiceProvider>();
         return page;
     }
