@@ -101,10 +101,12 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         document.RegisterUpload(Clock.Now);
         await _docRepo.UpdateAsync(document, autoSave: true);
 
-        await _versionRepo.InsertAsync(new GrantApplicationDocumentVersion(
+        var version = new GrantApplicationDocumentVersion(
             GuidGenerator.Create(), document.TenantId, document.Id, document.LatestVersionNo,
             input.StoredFileName, input.OriginalFileName, input.SizeBytes,
-            ViewerUserId, ViewerName, ViewerRole, input.Note), autoSave: true);
+            ViewerUserId, ViewerName, ViewerRole, input.Note);
+        version.SetInspection(input.Inspection);
+        await _versionRepo.InsertAsync(version, autoSave: true);
 
         // N-06 · Yükleme karşı tarafa duyurulur: inceleme bekleyen evrak sessizce bekliyordu.
         await _notifyDispatcher.DispatchToPartyAsync(application,
@@ -184,7 +186,9 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
             // zorunlu listesinde yoktur; gönderim paketini bloke etmemeli.
             GrantDocumentObligation.Kosullu, input.UploaderParty,
             requiresESignature: false,
-            order: existing.Count == 0 ? 0 : existing.Max(d => d.Order) + 1), autoSave: true);
+            order: existing.Count == 0 ? 0 : existing.Max(d => d.Order) + 1,
+            requiresWetSignature: GrantDocumentSignatureRules.InfersWetSignature(input.Name),
+            requiresStamp: GrantDocumentSignatureRules.InfersStamp(input.Name)), autoSave: true);
 
         return await BuildAsync(application);
     }
@@ -486,13 +490,15 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
                 Obligation = document.Obligation,
                 UploaderParty = document.UploaderParty,
                 RequiresESignature = document.RequiresESignature,
+                RequiresWetSignature = document.RequiresWetSignature,
+                RequiresStamp = document.RequiresStamp,
                 Status = document.Status,
                 ReviewNote = document.ReviewNote,
                 LatestVersionNo = document.LatestVersionNo,
                 Order = document.Order,
                 IsOnViewer = IsWaitingOn(document, ViewerRole),
-                LatestVersion = mine.Count == 0 ? null : ToDto(mine[0]),
-                Versions = mine.Select(ToDto).ToList()
+                LatestVersion = mine.Count == 0 ? null : ToDto(mine[0], document),
+                Versions = mine.Select(v => ToDto(v, document)).ToList()
             });
         }
 
@@ -538,7 +544,7 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         return document.UploaderParty == role || document.UploaderParty == GrantPartyRole.Ortak;
     }
 
-    private static GrantDocumentVersionDto ToDto(GrantApplicationDocumentVersion v) => new()
+    private static GrantDocumentVersionDto ToDto(GrantApplicationDocumentVersion v, GrantApplicationDocument document) => new()
     {
         Id = v.Id,
         VersionNo = v.VersionNo,
@@ -547,6 +553,10 @@ public class GrantApplicationDocumentAppService : ApplicationService, IGrantAppl
         UploaderName = v.UploaderName,
         UploaderRole = v.UploaderRole,
         Note = v.Note,
-        CreationTime = v.CreationTime
+        CreationTime = v.CreationTime,
+        PreCheckWarnings = GrantDocumentSignatureRules.Evaluate(
+                document.RequiresESignature, document.RequiresWetSignature, document.RequiresStamp, v.GetInspection())
+            .Select(w => w.ToString()).ToList(),
+        EmptyFieldCount = v.EmptyFieldCount
     };
 }

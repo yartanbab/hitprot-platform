@@ -60,6 +60,8 @@ public class GrantApplicationDocumentDto
     public GrantDocumentObligation Obligation { get; set; }
     public GrantPartyRole UploaderParty { get; set; }
     public bool RequiresESignature { get; set; }
+    public bool RequiresWetSignature { get; set; }
+    public bool RequiresStamp { get; set; }
     public GrantDocumentStatus Status { get; set; }
     public string? ReviewNote { get; set; }
     public int LatestVersionNo { get; set; }
@@ -82,6 +84,11 @@ public class GrantDocumentVersionDto
     public GrantPartyRole UploaderRole { get; set; }
     public string? Note { get; set; }
     public DateTime CreationTime { get; set; }
+
+    /// <summary>Yükleme ön kontrolünün uyarıları (<see cref="GrantDocumentPreCheckWarning"/> adları).</summary>
+    public List<string> PreCheckWarnings { get; set; } = new();
+
+    public int? EmptyFieldCount { get; set; }
 }
 
 public class GrantESignatureItemDto
@@ -140,6 +147,9 @@ public class RegisterGrantDocumentVersionInput
     public string OriginalFileName { get; set; } = null!;
     public long SizeBytes { get; set; }
     public string? Note { get; set; }
+
+    /// <summary>Dosyayı okuyan Web katmanının çıkardığı ön kontrol bilgisi; okunamadıysa null.</summary>
+    public GrantDocumentFileInspection? Inspection { get; set; }
 }
 
 /// <summary>İndirme işleyicisinin ihtiyacı: diskteki ad + kullanıcıya gösterilecek ad.</summary>

@@ -27,15 +27,18 @@ public class DocumentsModel : PlatformPageModel
     private readonly IGrantApplicationDocumentAppService _documents;
     private readonly IUploadedFileStorage _fileStorage;
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
+    private readonly GrantDocumentFileInspector _inspector;
 
     public DocumentsModel(
         IGrantApplicationDocumentAppService documents,
         IUploadedFileStorage fileStorage,
-        IUploadedFileRootFolderProvider rootFolderProvider)
+        IUploadedFileRootFolderProvider rootFolderProvider,
+        GrantDocumentFileInspector inspector)
     {
         _documents = documents;
         _fileStorage = fileStorage;
         _rootFolderProvider = rootFolderProvider;
+        _inspector = inspector;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -60,15 +63,24 @@ public class DocumentsModel : PlatformPageModel
 
         var storedFileName = await _fileStorage.StoreAsync(file);
 
+        // Islak imza/kaşe ve boş alan ön kontrolü: dosya baytları bu katmanda okunur.
+        GrantDocumentFileInspection? inspection;
+        await using (var content = file.OpenReadStream())
+        {
+            inspection = _inspector.Inspect(content, file.FileName);
+        }
+
+        GrantDocumentConsoleDto console;
         try
         {
-            await _documents.RegisterVersionAsync(new RegisterGrantDocumentVersionInput
+            console = await _documents.RegisterVersionAsync(new RegisterGrantDocumentVersionInput
             {
                 DocumentId = documentId,
                 StoredFileName = storedFileName,
                 OriginalFileName = Path.GetFileName(file.FileName),
                 SizeBytes = file.Length,
-                Note = note
+                Note = note,
+                Inspection = inspection
             });
         }
         catch
@@ -79,7 +91,14 @@ public class DocumentsModel : PlatformPageModel
             throw;
         }
 
-        return new JsonResult(new { ok = true });
+        // Uyarı yükleyene hemen gösterilir: danışmana gitmeden düzeltebilsin.
+        var uploaded = console.Documents.Find(d => d.Id == documentId)?.LatestVersion;
+        return new JsonResult(new
+        {
+            ok = true,
+            preCheckWarnings = uploaded?.PreCheckWarnings ?? [],
+            emptyFieldCount = uploaded?.EmptyFieldCount
+        });
     }
 
     /// <summary>Bir sürümü indirir.</summary>

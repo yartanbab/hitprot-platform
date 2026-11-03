@@ -16,4 +16,8 @@ public class GrantDocumentRequirementDto
     public GrantPartyRole UploaderParty { get; set; }
 
     public bool RequiresESignature { get; set; }
+
+    public bool RequiresWetSignature { get; set; }
+
+    public bool RequiresStamp { get; set; }
 }

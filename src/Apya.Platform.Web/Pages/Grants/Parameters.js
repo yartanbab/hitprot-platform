@@ -486,11 +486,17 @@ $(function () {
             '  <select class="form-select form-select-sm apya-doc-uploader">' +
                    opts(partyKeys, 'Grants:Party:', d.uploaderParty) + '</select>' +
             '  <span class="form-check mb-0"><input class="form-check-input apya-doc-esign" type="checkbox" /></span>' +
+            '  <span class="form-check mb-0"><input class="form-check-input apya-doc-wet" type="checkbox" aria-label="' +
+                   esc(l('Grants:Parameters:Documents:WetSignature')) + '" /></span>' +
+            '  <span class="form-check mb-0"><input class="form-check-input apya-doc-stamp" type="checkbox" aria-label="' +
+                   esc(l('Grants:Parameters:Documents:Stamp')) + '" /></span>' +
             '  <button type="button" class="apya-doc-remove" title="' + esc(l('Grants:Parameters:Documents:Remove')) + '">' +
             '    <i class="fa fa-xmark"></i></button>' +
             '</div>')
             .find('.apya-doc-name').val(d.name || '').end()
-            .find('.apya-doc-esign').prop('checked', !!d.requiresESignature).end();
+            .find('.apya-doc-esign').prop('checked', !!d.requiresESignature).end()
+            .find('.apya-doc-wet').prop('checked', !!d.requiresWetSignature).end()
+            .find('.apya-doc-stamp').prop('checked', !!d.requiresStamp).end();
     }
 
     $('#ParamAddDocument').on('click', function () {
@@ -519,7 +525,9 @@ $(function () {
                 name: $r.find('.apya-doc-name').val(),
                 obligation: Number($r.find('.apya-doc-obligation').val()),
                 uploaderParty: Number($r.find('.apya-doc-uploader').val()),
-                requiresESignature: $r.find('.apya-doc-esign').is(':checked')
+                requiresESignature: $r.find('.apya-doc-esign').is(':checked'),
+                requiresWetSignature: $r.find('.apya-doc-wet').is(':checked'),
+                requiresStamp: $r.find('.apya-doc-stamp').is(':checked')
             };
         }).get();
     }
