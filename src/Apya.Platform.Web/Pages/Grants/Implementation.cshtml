@@ -24,7 +24,8 @@
     @* ---------- Üst bar ---------- *@
     <div class="card mb-0">
         <div class="card-body d-flex align-items-center gap-4 flex-wrap">
-            <div class="flex-fill min-w-0">
+            @* min-width:0 satır içi — Tailwind'in min-w-0'ı bu sayfada yüklü değil (bkz. Finance/_AccountsList). *@
+            <div class="flex-fill" style="min-width:0">
                 <div class="fw-bold" id="HeaderTitle"></div>
                 <div class="apya-im-meta apya-numeric" id="HeaderMeta"></div>
             </div>

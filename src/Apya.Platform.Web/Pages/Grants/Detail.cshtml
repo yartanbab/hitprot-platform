@@ -163,7 +163,8 @@
     <section id="InterestState" class="apya-interest-state d-none" aria-live="polite">
         <div id="InterestSent" class="apya-interest-sent d-none">
             <span class="apya-interest-sent-icon"><i class="fa fa-circle-check"></i></span>
-            <div class="min-w-0">
+            @* min-width:0 satır içi — Tailwind'in min-w-0'ı bu sayfada yüklü değil (bkz. Finance/_AccountsList). *@
+            <div style="min-width:0">
                 <div class="apya-interest-sent-title">@L["Grants:Interest:Sent:Title"]</div>
                 <div class="apya-interest-sent-text" id="InterestSentText"></div>
             </div>
