@@ -59,7 +59,9 @@ else
                 <div class="kpi-icon-box kpi-icon-box--accent kpi-icon-box--sm">
                     <i class="fa @TypeIcon(a.Type)" aria-hidden="true"></i>
                 </div>
-                <div class="flex-grow-1 min-w-0">
+                @* min-width:0 satır içi: Tailwind'in min-w-0'ı bu sayfada yüklü değil,
+                   o olmadan ad sütunu daralmayıp tutarı kartın dışına itiyordu. *@
+                <div class="flex-grow-1" style="min-width:0">
                     <div class="fw-semibold text-truncate">
                         @a.Name <span class="apya-chip apya-chip-neutral ms-1">@a.Currency</span>
                     </div>

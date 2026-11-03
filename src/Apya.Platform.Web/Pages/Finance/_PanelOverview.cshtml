@@ -114,7 +114,8 @@ else
                         <div class="kpi-icon-box kpi-icon-box--sm @tone">
                             <i class="fa @icon" aria-hidden="true"></i>
                         </div>
-                        <div class="flex-grow-1 min-w-0">
+                        @* min-width:0 satır içi — Tailwind'in min-w-0'ı bu sayfada yüklü değil (bkz. _AccountsList). *@
+                        <div class="flex-grow-1" style="min-width:0">
                             <div class="fw-semibold text-truncate">@t.Title</div>
                             <div class="small text-muted text-truncate">
                                 @(t.CustomerName ?? t.ProjectName ?? "—") · @t.Date.ToString("dd MMM yyyy")
