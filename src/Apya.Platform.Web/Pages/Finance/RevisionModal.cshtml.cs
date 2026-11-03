@@ -75,8 +75,7 @@ public class RevisionModalModel : AbpPageModel
                 LineId = l.Id,
                 Name = string.IsNullOrWhiteSpace(l.Code) ? l.Name : $"{l.Code} · {l.Name}",
                 CurrentAmount = l.ApprovedAmount,
-                NewAmount = l.ApprovedAmount,
-                TransferLimitPercent = l.TransferLimitPercent
+                NewAmount = l.ApprovedAmount
             })
             .ToList();
 
@@ -144,10 +143,5 @@ public class RevisionModalModel : AbpPageModel
 
         /// <summary>"Düşülecek" kipinde yazılır; yeni tutar = mevcut − bu.</summary>
         public decimal Reduction { get; set; }
-
-        /// <summary>Aktarım payı sınırı (%). Tanımlıysa aşım AMBER UYARI üretir —
-        /// engellemez: sınır bugün sunucuda uygulanmıyor, uygulanıyormuş gibi
-        /// davranmak yalan olurdu.</summary>
-        public decimal? TransferLimitPercent { get; set; }
     }
 }

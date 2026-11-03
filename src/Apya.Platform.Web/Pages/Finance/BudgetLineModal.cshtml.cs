@@ -74,7 +74,6 @@ public class BudgetLineModalModel : AbpPageModel
                 Name = existing.Name,
                 PlannedAmount = existing.PlannedAmount,
                 ApprovedAmount = existing.ApprovedAmount,
-                TransferLimitPercent = existing.TransferLimitPercent,
                 ParentId = existing.ParentId,
                 GrantAmount = existing.GrantAmount
             };
@@ -93,6 +92,11 @@ public class BudgetLineModalModel : AbpPageModel
 
         if (Id.HasValue)
         {
+            // Aktarım payı ekrandan kaldırıldı (kullanıcı kararı 2026-11-03) ama veri DURUR:
+            // form alanı göndermediği için kayıtlı değer korunur, yoksa her düzenleme onu silerdi.
+            var existing = (await _budgetAppService.GetLinesAsync(ProjectId)).First(x => x.Id == Id.Value);
+            Line.TransferLimitPercent = existing.TransferLimitPercent;
+
             await _budgetAppService.UpdateLineAsync(Id.Value, Line);
         }
         else
