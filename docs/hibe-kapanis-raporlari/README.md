@@ -102,7 +102,22 @@ host'un bu şablonlarda yaptığı değişiklikler ezilmez. Kullanıcıların ke
 
 ## Yeni şablon eklerken
 
-- Kimlik sırası `c1000000-0000-4000-8000-0000000001NN`; yeni şablon **sona** eklenir. Var olan bir şablonu
-  silmek ya da kimliğini değiştirmek kurulu veritabanlarında yetim satır bırakır.
+- Kimlik sırası kapanışta `c1000000-0000-4000-8000-0000000001NN`, ara raporda `…0000000002NN`; yeni şablon
+  **sona** eklenir. Var olan bir şablonu silmek ya da kimliğini değiştirmek kurulu veritabanlarında yetim satır bırakır.
 - Tohumlayıcı var olan şablon satırına dokunmaz: yayımlanmış bir şablonun bölümlerini değiştirmek için
-  ayrı bir veri düzeltmesi gerekir.
+  ayrı bir veri düzeltmesi gerekir (örnek: `ReviseLegacyTemplatesAsync`).
+
+## Örnek raporlar
+
+`ornekler/` klasöründe üç programın kapanış raporu, **kurgusal bir projeyle doldurulmuş** Word örneği olarak
+durur. Kuruluş, kişi, proje numarası ve rakamlar örnektir; resmi teslimde PRODİS'teki güncel form esastır.
+TÜBİTAK doldurulmuş resmi örnek yayımlamaz.
+
+| Dosya | Dayanak | Örnek proje |
+|---|---|---|
+| `TUBITAK-1501-AGY350-proje-sonuc-raporu-ORNEK.docx` | Resmi boş AGY350 formunun bölüm sırası ve soruları birebir (A–J); ekinde son dönem AGY320 teknik rapor özeti | Büyük ölçekli otomotiv yan sanayi; batarya termal yönetim modülü, 30 ay |
+| `TUBITAK-1507-AGY351-proje-sonuc-raporu-ORNEK.docx` | Resmi boş AGY351 formu (AGY350 ile aynı sorular); ekinde AGY321 özeti | İlk Ar-Ge projesini yapan KOBİ; boyahane renk sapması tespiti, 18 ay, %75 destek |
+| `TUBITAK-1707-proje-sonuc-raporu-ve-ticarilesme-plani-ORNEK.docx` | **Resmi form yok, üretilmiştir**: 1707 Sipariş Ar-Ge 2026-2 çağrısı (md. 6, 9, 10, 19, 20), TÜBİTAK ticarileşme izleme yöntemi ve AGY35x yapısı; sonuç raporu + ticarileşme planı + müşteri kuruluş taahhüdü | Müşteri: beyaz eşya üreticisi, tedarikçi: KOBİ; bulaşık makinesi su kalitesi sensörü, 24 ay |
+
+Her örneğin ilk sayfasında teslim süresi ve kanalı, pakete giren belgeler ve kaynak bağlantıları; son
+sayfasında teslim kontrol listesi ve platformdaki rapor bölümleriyle eşleme var.
