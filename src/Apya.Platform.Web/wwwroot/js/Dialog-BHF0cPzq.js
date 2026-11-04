@@ -2,7 +2,7 @@ import { r as c, j as s, b as x } from "./react-vendor-D7YDiBbi.js";
 import { t as ne, g as se, h as O, S as oe, i as ie, b as _, c as U, d as G, e as R, f as T, D as q, j as de, k as L } from "./ui-vendor-UYevF8mE.js";
 import { A as le } from "./ApyaMark-BHJ4Yu_6.js";
 import { t as ce } from "./index-DgpuJ91w.js";
-const J = "apya-theme", D = "system", K = c.createContext({
+const J = "apya-theme", D = "light", K = c.createContext({
   preference: D,
   resolvedTheme: "light",
   setPreference: () => {

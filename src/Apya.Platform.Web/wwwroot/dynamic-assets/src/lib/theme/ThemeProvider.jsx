@@ -19,7 +19,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
  *       try {
  *         var stored = localStorage.getItem('apya-theme');
  *         var prefers = window.matchMedia('(prefers-color-scheme: dark)').matches;
- *         var resolved = stored === 'dark' || (stored !== 'light' && prefers) ? 'dark' : 'light';
+ *         var resolved = stored === 'dark' || (stored === 'system' && prefers) ? 'dark' : 'light';
  *         document.documentElement.setAttribute('data-theme', resolved);
  *       } catch (_) {}
  *     })();
@@ -27,7 +27,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
  */
 
 const STORAGE_KEY = 'apya-theme';   // 'light' | 'dark' | 'system'
-const DEFAULT_PREFERENCE = 'system';
+// Varsayılan AÇIK tema (web + mobil). OS tercihi yalnız 'system' açıkça seçilirse.
+const DEFAULT_PREFERENCE = 'light';
 
 const ThemeContext = createContext({
     preference: DEFAULT_PREFERENCE,
