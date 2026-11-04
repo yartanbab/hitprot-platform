@@ -59,7 +59,7 @@
         if (!name) return '<span class="text-muted small">—</span>';
         var initials = personInitials(name);
         var avatar = '<span class="apya-avatar apya-avatar-brand" title="' + esc(name) + '">' + esc(initials) + '</span>';
-        return avatarOnly ? avatar : avatar + '<span class="ms-2">' + esc(name) + '</span>';
+        return avatarOnly ? avatar : avatar + '<span class="apya-assignee-name ms-2">' + esc(name) + '</span>';
     }
 
     // status: TaskStatus enum (Done=4, Cancelled=0) — bu ikisinde aciliyet vurgusu yapılmaz.
@@ -109,7 +109,75 @@
     function commentCount(comments) {
         var n = (comments || []).length;
         if (!n) return '';
-        return '<span class="text-muted small ms-2" title="Yorum sayısı"><i class="fa fa-comment me-1"></i>' + n + '</span>';
+        return '<span class="apya-comment-count text-muted small ms-2" title="Yorum sayısı"><i class="fa fa-comment me-1"></i>' + n + '</span>';
+    }
+
+    // --- Mobil görev kartı (apya-shell.css "Liste → kart listesi") ---------
+    // Kart üç soruyu yanıtlar: ne (başlık), kim (avatar), ne zaman (göreli tarih).
+    // Bu parçalar masaüstünde gizli (.apya-m-only); tablo hücreleri aynı kalır.
+
+    // Gün farkı: dueDateChip ile aynı kural, yerel takvim gününe bakılır.
+    function dayDiff(date) {
+        var d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return Math.round((d - today) / 86400000);
+    }
+
+    // "12 Kas" — yıl yalnız bu yıldan farklıysa yazılır.
+    function shortDate(date) {
+        var sameYear = new Date(date).getFullYear() === new Date().getFullYear();
+        return moment(date).format(sameYear ? 'D MMM' : 'D MMM YYYY');
+    }
+
+    // Kartın sağ altındaki tarih: gecikme gün sayısıyla, yakın tarih sözle söylenir.
+    function dueRelative(dueDate, status, completedDate) {
+        var date = status === 4 ? (completedDate || dueDate) : dueDate;
+        if (!date) return '';
+        var cls = 'apya-due-m apya-m-only';
+        if (status === 4 || status === 0) {
+            return '<span class="' + cls + '">' + shortDate(date) + '</span>';
+        }
+        var diff = dayDiff(date);
+        if (diff < 0) {
+            return '<span class="' + cls + ' is-negative">' + (-diff) + ' gün gecikti</span>';
+        }
+        if (diff <= 1) {
+            return '<span class="' + cls + ' is-warning">' + (diff === 0 ? 'Bugün' : 'Yarın') + '</span>';
+        }
+        return '<span class="' + cls + '">' + shortDate(date) + '</span>';
+    }
+
+    // Kartın solundaki durum halkası. canComplete ise "Tamamla" düğmesidir
+    // (masaüstündeki satır ✓'süyle aynı data-complete-id akışı).
+    function statusRing(row, canComplete) {
+        var s = STATUS_MAP[row.status] || STATUS_MAP[1];
+        var icon = row.status === 4 ? '<i class="fa fa-check" aria-hidden="true"></i>'
+                 : row.status === 0 ? '<i class="fa fa-xmark" aria-hidden="true"></i>' : '';
+        var mark = '<span class="apya-task-ring-mark">' + icon + '</span>';
+        var cls = 'apya-task-ring apya-m-only is-s' + (STATUS_MAP[row.status] ? row.status : 1);
+        if (canComplete) {
+            return '<button type="button" class="' + cls + '" data-complete-id="' + row.id +
+                '" data-prev-status="' + row.status + '" aria-label="Görevi tamamla (durum: ' + s.text + ')">' +
+                mark + '</button>';
+        }
+        return '<span class="' + cls + '" role="img" aria-label="Durum: ' + s.text + '">' + mark + '</span>';
+    }
+
+    // Başlığın altındaki tek satırlık özet: durum · özel kolon · etiketler · alt görev · yorum.
+    // Öncelik kartta sol şeritle gösterilir (apya-prio-3/4); ekran okuyucu için metin olarak da var.
+    function mobileMeta(row) {
+        var s = STATUS_MAP[row.status] || STATUS_MAP[1];
+        var parts = [esc(s.text)];
+        if (row.boardColumnName) parts.push(esc(row.boardColumnName));
+        (row.tags || []).forEach(function (t) { parts.push(esc(t.name || t)); });
+        if (row.subTaskCount) parts.push(row.completedSubTaskCount + '/' + row.subTaskCount + ' alt görev');
+        var n = (row.comments || []).length;
+        if (n) parts.push('<i class="fa fa-comment" aria-hidden="true"></i> ' + n);
+        var prio = PRIORITY_MAP[row.priority];
+        var srPrio = row.priority >= 3 && prio ? '<span class="visually-hidden">, ' + prio.text + ' öncelik</span>' : '';
+        return '<div class="apya-task-meta-m apya-m-only">' + parts.join(' · ') + srPrio + '</div>';
     }
 
     // --- Alt görev hiyerarşisi (Görevler listesi) ---------------------------
@@ -184,6 +252,9 @@
         statusChip: statusChip,
         subtaskToggle: subtaskToggle,
         subtaskCountBadge: subtaskCountBadge,
-        subtaskRows: subtaskRows
+        subtaskRows: subtaskRows,
+        dueRelative: dueRelative,
+        statusRing: statusRing,
+        mobileMeta: mobileMeta
     };
 })(window);

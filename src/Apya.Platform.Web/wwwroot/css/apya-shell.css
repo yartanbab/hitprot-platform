@@ -3780,6 +3780,45 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
 /* FAB — varsayılan gizli, yalnız dar viewport'ta açılır. */
 .apya-console-fab { display: none; }
 
+/* Mobil kart parçaları (durum halkası, özet satırı, göreli tarih) — masaüstü
+   tablosunda gizli; aşağıdaki kap sorgusu açar. */
+.apya-m-only { display: none; }
+
+/* "Geri al" bildirimi — görev tamamlanınca (apya-task-console.js completeWithUndo).
+   Toplu işlem çubuğuyla aynı ters yüzey; renkler --apya-text-inverse'ten. */
+.apya-undo-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    z-index: 1090;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(100vw - 24px);
+    min-height: 48px;
+    padding: 6px 6px 6px 16px;
+    border-radius: var(--apya-radius-xl);
+    background: var(--apya-surface-inverse);
+    color: var(--apya-text-inverse);
+    box-shadow: var(--apya-shadow-xl);
+    font-size: 13px;
+}
+.apya-undo-toast.d-none { display: none; }
+.apya-undo-toast-btn {
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid color-mix(in srgb, var(--apya-text-inverse) 28%, transparent);
+    border-radius: var(--apya-radius-lg);
+    background: transparent;
+    color: var(--apya-text-inverse);
+    font-weight: var(--apya-weight-semibold);
+    white-space: nowrap;
+    cursor: pointer;
+}
+.apya-undo-toast-btn:hover { background: color-mix(in srgb, var(--apya-text-inverse) 12%, transparent); }
+.apya-undo-toast-btn:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
 @container (max-width: 760px) {
     /* --- Liste → kart listesi ---
        DataTables klon-başlık mimarisi: görünür başlıklar `.dt-scroll-head`te,
@@ -3798,36 +3837,154 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     .apya-console-views .dt-scroll-body > table > thead { display: none; }
     .apya-console-views .dt-scroll-body > table > tbody { display: block; width: 100%; }
 
-    /* Kart ızgarası — AÇIK YERLEŞİM, akış değil. Flex sarması hücre
-       genişliklerine bağlı: seçim kolonu yetkiye göre var/yok olduğu için
-       aynı kural iki kullanıcıda farklı satırlara düşüyordu (onay kutusu tek
-       başına bir satıra iniyordu, ölçüldü). Izgarada satır/kolon sabit.
-         [☐] Başlık..........................
-             [AV] [Durum] [Öncelik] [Bitiş]     */
+    /* Kart ızgarası — AÇIK YERLEŞİM, akış değil (flex sarması seçim kolonunun
+       var/yok olmasına göre farklı satırlara düşüyordu, ölçüldü).
+       Kart üç soruyu yanıtlar — ne, kim, ne zaman (kullanıcı onayı 2026-11-04):
+         (◔) Başlık............................ [AV]
+             Testte · saha · 2/5     3 gün gecikti
+       Halka durumu gösterir ve "Tamamla" düğmesidir; öncelik çip değil sol
+       şerittir (yalnız Yüksek/Kritik). Halka, özet satırı ve göreli tarih
+       apya-task-render.js'ten gelir (.apya-m-only); masaüstü parçaları
+       (.apya-d-only) burada gizlenir. */
     .apya-console-views .dt-scroll-body > table > tbody > tr {
         display: grid;
-        grid-template-columns: auto 1fr auto auto auto;
-        align-items: center;
-        gap: 6px 8px;
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 2px 8px;
         width: 100%;
         box-sizing: border-box;
-        padding: 10px 12px;
+        padding: 12px 12px 12px 8px;
         border-bottom: 1px solid var(--apya-border-subtle);
     }
+    /* height: auto — tablo yoğunluğunun hücre yüksekliği (theme-bridge
+       `.table tbody td { height: var(--row-h) }`) kartta her izi 44px'e
+       şişiriyordu (ölçüldü: kart 115px). */
     .apya-console-views .dt-scroll-body > table > tbody > tr > td {
         border: none !important;
         padding: 0 !important;
+        height: auto;
         white-space: normal;
     }
-    .apya-console-views td.apya-c-check    { grid-column: 1; grid-row: 1 / span 2; }
-    .apya-console-views td.apya-c-title    { grid-column: 2 / -1; grid-row: 1; min-width: 0; }
-    .apya-console-views td.apya-c-assignee { grid-column: 2; grid-row: 2; justify-self: start; }
-    .apya-console-views td.apya-c-status   { grid-column: 3; grid-row: 2; }
-    .apya-console-views td.apya-c-priority { grid-column: 4; grid-row: 2; }
-    .apya-console-views td.apya-c-due      { grid-column: 5; grid-row: 2; }
-    /* Toplu işlem yetkisi yoksa seçim kolonu HİÇ basılmaz; 1. iz 0 genişlikte
-       kalıp yalnız gap kadar (8px) sol boşluk bırakır — kabul edilebilir,
-       ızgarayı ikiye bölmeye değmez. */
+    /* Alt görev paneli (DataTables child satırı) tek colspan hücredir: tam satır. */
+    .apya-console-views .dt-scroll-body > table > tbody > tr > td[colspan] { grid-column: 1 / -1; }
+
+    .apya-console-views td.apya-c-status   { grid-column: 1; grid-row: 1 / span 2; margin-top: -7px; }
+    .apya-console-views td.apya-c-title    { grid-column: 2; grid-row: 1 / span 2; min-width: 0; }
+    .apya-console-views td.apya-c-assignee { grid-column: 3; grid-row: 1; justify-self: end; }
+    .apya-console-views td.apya-c-due      { grid-column: 3; grid-row: 2; align-self: end; justify-self: end; white-space: nowrap; }
+    .apya-console-views td.apya-c-priority,
+    .apya-console-views td.apya-c-check   { display: none; }
+
+    .apya-console-views .apya-d-only { display: none !important; }
+    .apya-console-views .apya-c-assignee .apya-assignee-name,
+    .apya-console-views .apya-c-assignee > .text-muted,
+    .apya-console-views .apya-c-title .apya-task-tags,
+    .apya-console-views .apya-c-title .apya-comment-count,
+    .apya-console-views .apya-c-title .apya-subtask-count { display: none; }
+    .apya-console-views .apya-c-title .fw-bold { font-size: 14px; line-height: 1.45; }
+
+    /* Özet satırı: tek satır, taşan kısım üç nokta. */
+    .apya-console-views .apya-task-meta-m {
+        display: block;
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--apya-text-secondary);
+    }
+    .apya-console-views .apya-due-m {
+        display: inline;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--apya-text-secondary);
+    }
+    .apya-console-views .apya-due-m.is-negative { color: var(--apya-negative-600); font-weight: var(--apya-weight-semibold); }
+    .apya-console-views .apya-due-m.is-warning  { color: var(--apya-warning-600); font-weight: var(--apya-weight-semibold); }
+
+    /* Öncelik şeridi — yalnız Yüksek (3) ve Kritik (4). */
+    .apya-console-views .dt-scroll-body > table > tbody > tr.apya-prio-3,
+    .apya-console-views .dt-scroll-body > table > tbody > tr.apya-prio-4 {
+        box-shadow: inset 3px 0 0 var(--apya-negative-500);
+    }
+    /* Kapalı görev: başlık söner, tamamlanan üstü çizilir. */
+    .apya-console-views tr.apya-st-4 .apya-c-title .fw-bold,
+    .apya-console-views tr.apya-st-0 .apya-c-title .fw-bold {
+        color: var(--apya-text-secondary);
+        font-weight: var(--apya-weight-medium) !important;
+    }
+    .apya-console-views tr.apya-st-4 .apya-c-title .fw-bold { text-decoration: line-through; }
+
+    /* Durum halkası — 36px dokunma alanı, 20px işaret. */
+    .apya-console-views .apya-task-ring {
+        display: inline-grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .apya-console-views button.apya-task-ring { cursor: pointer; }
+    .apya-console-views button.apya-task-ring:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+    .apya-task-ring-mark {
+        display: grid;
+        place-items: center;
+        width: 20px;
+        height: 20px;
+        box-sizing: border-box;
+        border: 2px solid var(--apya-text-tertiary);
+        border-radius: 50%;
+        background-clip: content-box;
+        font-size: 10px;
+        color: var(--apya-text-inverse);
+        transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+    }
+    .apya-console-views button.apya-task-ring:active .apya-task-ring-mark { transform: scale(0.88); }
+    /* Sürüyor: yarım dolu. Testte: ortası dolu nokta. */
+    .apya-task-ring.is-s2 .apya-task-ring-mark {
+        border-color: var(--apya-warning-500);
+        padding: 2px;
+        background-image: linear-gradient(90deg, transparent 50%, var(--apya-warning-500) 50%);
+    }
+    .apya-task-ring.is-s3 .apya-task-ring-mark {
+        border-color: var(--apya-accent-500);
+        padding: 4px;
+        background-color: var(--apya-accent-500);
+    }
+    .apya-task-ring.is-s4 .apya-task-ring-mark,
+    .apya-console-views button.apya-task-ring:disabled .apya-task-ring-mark {
+        border-color: var(--apya-positive-500);
+        background: var(--apya-positive-500);
+    }
+    .apya-task-ring.is-s0 .apya-task-ring-mark {
+        border-style: dashed;
+        color: var(--apya-text-tertiary);
+    }
+
+    /* Seçim kipi (uzun bas / ⋯ → Görev seç): halka yerine onay kutusu. */
+    .apya-console-views .dt-scroll-body > table.is-selecting td.apya-c-status { display: none; }
+    .apya-console-views .dt-scroll-body > table.is-selecting td.apya-c-check {
+        display: grid;
+        place-items: center;
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        width: 36px;
+        height: 22px;
+    }
+    .apya-console-views .dt-scroll-body > table.is-selecting .apya-row-check { width: 20px; height: 20px; }
+
+    /* Dokunmatikte uzun basma metin seçimi / bağlam menüsü açmasın. */
+    @media (pointer: coarse) {
+        .apya-console-views .dt-scroll-body > table > tbody > tr {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+    }
 
     /* "Kayıt yok" / boş hâl hücresi ızgaraya girmemeli, tam satırı kaplar. */
     .apya-console-views td.dt-empty { grid-column: 1 / -1 !important; grid-row: 1; }
@@ -4132,6 +4289,33 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     }
     .apya-console-fab:active { background: var(--apya-accent-600); }
     .apya-console-fab:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
+
+    /* --- Toplu işlem çubuğu + "Geri al" alt barın üstüne sabitlenir ---
+       Masaüstünde çubuk konsolun dibine `absolute` oturuyor; mobilde sayfa
+       kilidi kalktığı için konsolun dibi ekranın çok altında kalıyordu. Dar
+       ekranda düğmeler alt satıra sarar. Çubuk açıkken FAB gizlenir (çakışır). */
+    .apya-console-bulkbar {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: calc(58px + 12px + env(safe-area-inset-bottom));
+        transform: none;
+        z-index: 1035;
+        flex-wrap: wrap;
+        justify-content: center;
+        height: auto;
+        min-height: 52px;
+        padding: 8px 12px;
+    }
+    body.apya-bulk-open .apya-console-fab { display: none; }
+    /* Sağda FAB'ın yeri (16 + 56 + 12) boş kalır. */
+    .apya-undo-toast {
+        left: 12px;
+        right: 84px;
+        bottom: calc(58px + 16px + env(safe-area-inset-bottom));
+        transform: none;
+        justify-content: space-between;
+    }
 }
 
 /* ============================================================================

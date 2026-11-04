@@ -215,7 +215,9 @@ $(function () {
             },
             ajax: abp.libs.datatables.createAjax(taskService.getList, listFilter),
             createdRow: function (row, data) {
-                $(row).attr('data-id', data.id).css('cursor', 'pointer');
+                // apya-prio-* / apya-st-*: mobil kartın öncelik şeridi ve kapalı görev görünümü.
+                $(row).attr('data-id', data.id).css('cursor', 'pointer')
+                    .addClass('apya-prio-' + data.priority + ' apya-st-' + data.status);
             },
             columnDefs: buildColumns()
         })
@@ -228,6 +230,15 @@ $(function () {
         isEnabled: isHierarchical,
         openTask: function (id) { editModal.open(id); }
     });
+
+    // Tamamla kısayolu kime açık — sunucu kuralıyla aynı (/Tasks listesi de böyle):
+    // oluşturan/atanan ya da ekip yöneticisi.
+    function canComplete(row) {
+        var closed = row.status === 4 || row.status === 0;
+        var owns = abp.auth.isGranted('Platform.Projects.ManageTeam') ||
+            row.creatorId === abp.currentUser.id || row.assigneeId === abp.currentUser.id;
+        return canChangeStatus && !closed && owns;
+    }
 
     // Kolon tanımları — seçim kolonu yalnız toplu işlem yetkisi varsa eklenir.
     function buildColumns() {
@@ -263,7 +274,8 @@ $(function () {
                         }
                         return '<div class="apya-task-title-cell">' +
                             (isHierarchical() ? apyaTask.subtaskToggle(row) : '') +
-                            '<div class="apya-task-title-main">' + head + apyaTask.tagChips(row.tags) + '</div>' +
+                            '<div class="apya-task-title-main">' + head + apyaTask.tagChips(row.tags) +
+                            apyaTask.mobileMeta(row) + '</div>' +
                             '</div>';
                     }
                 },
@@ -282,7 +294,11 @@ $(function () {
                     // Kopyalanmış durum haritası kaldırıldı: alt görev satırları
                     // ile üst satırlar aynı sözcükleri kullansın diye paylaşılan
                     // çipe geçildi (Görevler listesiyle de aynı).
-                    render: function (data, type, row) { return apyaTask.statusChip(data, row.boardColumnName); }
+                    // Mobil kartta çip yerine durum halkası (aynı zamanda Tamamla düğmesi).
+                    render: function (data, type, row) {
+                        return apyaTask.statusRing(row, canComplete(row)) +
+                            '<span class="apya-d-only">' + apyaTask.statusChip(data, row.boardColumnName) + '</span>';
+                    }
                 },
                 {
                     title: 'Öncelik',
@@ -340,19 +356,18 @@ $(function () {
                     data: 'dueDate',
                     render: function (data, type, row) {
                         var chip = apyaTask.dueDateChip(data, row.status, row.completedDate);
+                        // Mobil kartta göreli tarih ("3 gün gecikti"); ✓ yerine halka var.
+                        var mobile = apyaTask.dueRelative(data, row.status, row.completedDate);
                         // Satır üstüne gelince hızlı aksiyon. Yalnız "Tamamla" var:
                         // Ata/Tarih tam DTO ile UpdateAsync gerektiriyor, kısmi
                         // güncelleme uç noktası yok (görev detayından yapılıyor).
-                        var closed = row.status === 4 || row.status === 0;
-                        // Sunucu kuralıyla aynı (/Tasks listesi de böyle): oluşturan/atanan ya da ekip yöneticisi.
-                        var owns = abp.auth.isGranted('Platform.Projects.ManageTeam') ||
-                            row.creatorId === abp.currentUser.id || row.assigneeId === abp.currentUser.id;
-                        if (!canChangeStatus || closed || !owns) { return chip; }
-                        return '<span class="apya-console-due">' + chip +
+                        if (!canComplete(row)) { return '<span class="apya-d-only">' + chip + '</span>' + mobile; }
+                        return '<span class="apya-console-due apya-d-only">' + chip +
                             '<span class="apya-row-actions apya-console-row-actions">' +
                             '<button type="button" class="apya-console-row-action" data-complete-id="' + row.id +
+                            '" data-prev-status="' + row.status +
                             '" title="Tamamla" aria-label="Görevi tamamla"><i class="fa fa-check"></i></button>' +
-                            '</span></span>';
+                            '</span></span>' + mobile;
                     }
                 }
         ]);
@@ -424,6 +439,7 @@ $(function () {
     function clearSelection() { bulk.clear(); }
 
     $('#bulk-clear').click(clearSelection);
+    $('#menu-select-tasks').on('click', function () { bulk.startSelecting(); });
 
     var runSequential = console_.runSequential;
 
@@ -561,11 +577,13 @@ $(function () {
     // Satır hover aksiyonu: Tamamla
     $(document).on('click', '[data-complete-id]', function (e) {
         e.stopPropagation(); // satır tıklaması görev detayını açmasın
-        var id = $(this).data('complete-id');
-        taskService.updateStatus(id, 4).then(function () {
-            abp.notify.success('Görev tamamlandı.');
-            reloadAll(false);
-        });
+        var $btn = $(this).prop('disabled', true);
+        console_.completeWithUndo({
+            service: taskService,
+            id: $btn.data('complete-id'),
+            prevStatus: $btn.attr('data-prev-status'),
+            onChanged: function () { reloadAll(false); }
+        }).always(function () { $btn.prop('disabled', false); });
     });
 
     // Boş hâldeki CTA'lar şeritteki gerçek butonları tetikler (tek akış).
