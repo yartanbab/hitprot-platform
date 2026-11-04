@@ -3987,6 +3987,62 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     .apya-console-actions #btn-create-task,
     .apya-console-actions #NewTaskButton { display: none; }
 
+    /* --- Proje konsolu şeridi sıkışır (kullanıcı kararı 2026-11-04) ---
+       Üst satır: Geri · arama · ⋯ — üçü de 34px. Altında ad + kiracı chip'i,
+       en altta barlar. "AI ile Görev Oluştur" ⋯ menüsüne, proje kodu ⋯
+       menüsündeki "Proje kodunu kopyala" satırına devreder. Aksiyon kümesi
+       `display: contents` ile çözülür ki çocukları şeridin sırasına girsin;
+       kanban araçları (yalnız pano görünümünde) kendi tam satırına iner.
+       44px dokunma hedefi kuralı burada BİLEREK ezilir — kullanıcı "abartı
+       büyük" dedi. Şerit üst bara 6px'e yaklaşır. */
+    .lpx-content:has(> .apya-page.apya-project-console) { padding-top: 6px; }
+    .apya-project-console .apya-console-rail { padding-block: 6px; gap: 8px; }
+    .apya-project-console .apya-console-sep,
+    .apya-project-console .apya-console-code-chip,
+    .apya-project-console .apya-console-copy,
+    .apya-project-console #btn-ai-task-generator { display: none; }
+    .apya-project-console .apya-console-actions { display: contents; }
+    .apya-project-console .apya-console-rail .apya-console-back { order: 0; height: 34px; padding: 0 10px; }
+    .apya-project-console .apya-console-rail .apya-console-search { order: 1; flex: 1 1 0; min-width: 0; height: 34px; }
+    .apya-project-console .apya-console-actions > .dropdown { order: 2; }
+    .apya-project-console .apya-console-kebab { width: 34px; height: 34px; }
+    .apya-project-console .apya-console-identity {
+        order: 3;
+        flex: 1 0 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+    }
+    /* Kiracı chip'i adın yanına çıkar: ikinci satırın çocukları kimliğe
+       katılır. Ad kutusunun basis'i 0 + min %50 → satır kırılımı adın
+       max-content'ine bakmaz, uzun ad kısalır ve chip yanında kalır; hibe/risk
+       chip'leri sığmazsa alt satıra iner. */
+    .apya-project-console .apya-console-identity > div:first-child { flex: 1 1 0; min-width: 50%; }
+    .apya-project-console .apya-console-identity > div:last-child { display: contents; }
+    .apya-project-console .apya-console-actions > .kanban-toolbar { order: 4; flex: 1 0 100%; }
+    .apya-project-console .apya-console-rail .apya-console-bars { order: 5; }
+
+    /* Filtre çipleri ve Gantt düğmeleri sıkışır (kullanıcı kararı 2026-11-04:
+       "geniş, köşeler çirkin"): 40px hap → 30px, köşe 6px. */
+    .apya-project-console .apya-console-filters { gap: 6px; padding-block: 6px; }
+    .apya-project-console .apya-filter-chip,
+    .apya-project-console .apya-gantt-seg {
+        min-height: 0;
+        height: 30px;
+        padding: 0 10px;
+        border-radius: var(--apya-radius-md);
+    }
+    /* Ayraç satır kırılımına döner: Zoom / Grupla / Kritik yol grupları
+       kendi satırında durur, "GRUPLA" etiketi satır sonunda yalnız kalmaz.
+       Satır aralığı row-gap DEĞİL öğe margin'i: row-gap 0 yükseklikli ayraç
+       satırına da bir aralık daha eklerdi. */
+    .apya-project-console .apya-gantt-toolbar { gap: 0 6px; padding-block: 3px; }
+    .apya-project-console .apya-gantt-toolbar > * { margin-block: 3px; }
+    .apya-project-console .apya-gantt-toolbar > .apya-gantt-sep { flex-basis: 100%; height: 0; margin: 0; }
+
     /* --- Şerit üst satırı: kimlik + arama + ⋯ TEK satırda (kullanıcı kararı
        2026-09-04) ---
        Aksiyon kümesi `@container (max-width: 760px)` kuralında tam satıra
