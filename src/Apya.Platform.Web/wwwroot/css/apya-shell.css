@@ -3998,6 +3998,24 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     .apya-project-console .apya-console-actions > .kanban-toolbar { order: 4; flex: 1 0 100%; }
     .apya-project-console .apya-console-rail .apya-console-bars { order: 5; }
 
+    /* Filtre çipleri ve Gantt düğmeleri sıkışır (kullanıcı kararı 2026-11-04:
+       "geniş, köşeler çirkin"): 40px hap → 30px, köşe 6px. */
+    .apya-project-console .apya-console-filters { gap: 6px; padding-block: 6px; }
+    .apya-project-console .apya-filter-chip,
+    .apya-project-console .apya-gantt-seg {
+        min-height: 0;
+        height: 30px;
+        padding: 0 10px;
+        border-radius: var(--apya-radius-md);
+    }
+    /* Ayraç satır kırılımına döner: Zoom / Grupla / Kritik yol grupları
+       kendi satırında durur, "GRUPLA" etiketi satır sonunda yalnız kalmaz.
+       Satır aralığı row-gap DEĞİL öğe margin'i: row-gap 0 yükseklikli ayraç
+       satırına da bir aralık daha eklerdi. */
+    .apya-project-console .apya-gantt-toolbar { gap: 0 6px; padding-block: 3px; }
+    .apya-project-console .apya-gantt-toolbar > * { margin-block: 3px; }
+    .apya-project-console .apya-gantt-toolbar > .apya-gantt-sep { flex-basis: 100%; height: 0; margin: 0; }
+
     /* --- Şerit üst satırı: kimlik + arama + ⋯ TEK satırda (kullanıcı kararı
        2026-09-04) ---
        Aksiyon kümesi `@container (max-width: 760px)` kuralında tam satıra
