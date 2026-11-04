@@ -32,7 +32,7 @@ public class IndexModel : AbpPageModel
     {
         ConsentType.CookieNotice => "Çerez Bilgilendirmesi",
         ConsentType.FormKvkk => "Form KVKK Onayı",
-        ConsentType.AiTransfer => "AI / Yurt Dışı Aktarım",
+        ConsentType.AiTransfer => "Yapay Zekâ / Yurt Dışı Aktarım",
         ConsentType.ServiceAgreement => "Hizmet Protokolü Kabulü",
         ConsentType.ServiceAgreementKvkk => "Protokol KVKK Taahhüdü",
         _ => type.ToString()

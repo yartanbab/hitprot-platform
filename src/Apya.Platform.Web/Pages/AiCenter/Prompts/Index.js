@@ -56,7 +56,7 @@ $(function () {
                 '<li><button type="button" class="apya-md-item" role="option">' +
                 '  <span class="apya-md-item-body">' +
                 '    <span class="apya-md-item-title d-block">' + esc(p.name) + '</span>' +
-                '    <span class="apya-md-item-sub d-block"><span class="apya-md-code">' + esc(p.code) + '</span> · ' + p.versionCount + ' versiyon</span>' +
+                '    <span class="apya-md-item-sub d-block"><span class="apya-md-code">' + esc(p.code) + '</span> · ' + p.versionCount + ' sürüm</span>' +
                 '  </span>' +
                 '  <span class="apya-md-item-side">' +
                 (p.activeVersionId
@@ -108,7 +108,7 @@ $(function () {
         $detail.html(
             '<div class="apya-md-empty">' +
             '  <i class="apya-ai-icon" aria-hidden="true"></i>' +
-            '  <span>Detaylarını görmek için soldaki listeden bir prompt seçin.</span>' +
+            '  <span>Detaylarını görmek için soldaki listeden bir istem seçin.</span>' +
             '</div>'
         );
     }
@@ -154,14 +154,14 @@ $(function () {
             '  </div>' +
             '  <div class="d-flex gap-1 flex-wrap">' +
             (canEdit ? '<button type="button" class="btn btn-sm btn-outline-secondary" id="PromptDetailEdit"><i class="fa fa-pencil me-1"></i>Düzenle</button>' : '') +
-            '    <button type="button" class="btn btn-sm btn-outline-secondary" id="PromptDetailVersions"><i class="fa fa-code-branch me-1"></i>Versiyonlar</button>' +
+            '    <button type="button" class="btn btn-sm btn-outline-secondary" id="PromptDetailVersions"><i class="fa fa-code-branch me-1"></i>Sürümler</button>' +
             (canDelete ? '<button type="button" class="btn btn-sm btn-outline-danger" id="PromptDetailDelete"><i class="fa fa-trash me-1"></i>Sil</button>' : '') +
             '  </div>' +
             '</div>' +
 
             '<div class="row g-3 mb-3">' +
             '  <div class="col-sm-4"><div class="apya-md-overline">Kategori</div><div style="font-size:12.5px">' + esc(categoryName) + '</div></div>' +
-            '  <div class="col-sm-4"><div class="apya-md-overline">Versiyon Sayısı</div><div class="apya-md-code" style="font-size:12.5px">' + d.versionCount + '</div></div>' +
+            '  <div class="col-sm-4"><div class="apya-md-overline">Sürüm Sayısı</div><div class="apya-md-code" style="font-size:12.5px">' + d.versionCount + '</div></div>' +
             '  <div class="col-sm-4"><div class="apya-md-overline">Yayın Durumu</div><div style="font-size:12.5px">' +
             (d.activeVersionId
                 ? '<i class="fa fa-check-circle text-success me-1"></i>v' + (activeVersion ? activeVersion.versionNo : '?') + ' yayında'
@@ -174,14 +174,14 @@ $(function () {
                 : '') +
 
             (activeVersion && activeVersion.systemPrompt
-                ? '<div class="mb-3"><div class="apya-md-overline mb-1">System Prompt (v' + activeVersion.versionNo + ')</div><pre class="apya-md-pre">' + esc(activeVersion.systemPrompt) + '</pre></div>'
+                ? '<div class="mb-3"><div class="apya-md-overline mb-1">Sistem İstemi (v' + activeVersion.versionNo + ')</div><pre class="apya-md-pre">' + esc(activeVersion.systemPrompt) + '</pre></div>'
                 : '') +
             (activeVersion && activeVersion.userPromptTemplate
                 ? '<div class="mb-3"><div class="apya-md-overline mb-1">Kullanıcı Şablonu (v' + activeVersion.versionNo + ')</div><pre class="apya-md-pre">' + esc(activeVersion.userPromptTemplate) + '</pre></div>'
                 : '') +
 
             (versionRows
-                ? '<div><div class="apya-md-overline mb-1">Son Versiyonlar</div>' + versionRows + '</div>'
+                ? '<div><div class="apya-md-overline mb-1">Son Sürümler</div>' + versionRows + '</div>'
                 : '');
 
         $detail.html(html);
@@ -197,11 +197,11 @@ $(function () {
             window.location = abp.appPath + 'AiCenter/Prompts/Versions?id=' + d.id;
         });
         $('#PromptDetailDelete').on('click', function () {
-            abp.message.confirm('"' + d.name + '" prompt\'u silinecek. Bu işlem geri alınamaz.', 'Prompt Silinecek')
+            abp.message.confirm('"' + d.name + '" istemi silinecek. Bu işlem geri alınamaz.', 'İstem Silinecek')
                 .then(function (confirmed) {
                     if (!confirmed) { return; }
                     service.delete(d.id).then(function () {
-                        abp.notify.success('Prompt silindi.');
+                        abp.notify.success('İstem silindi.');
                         state.selectedId = null;
                         load();
                     });
@@ -240,12 +240,12 @@ $(function () {
     });
 
     createModal.onResult(function () {
-        abp.notify.success('Prompt oluşturuldu.');
+        abp.notify.success('İstem oluşturuldu.');
         load(true);
     });
 
     editModal.onResult(function () {
-        abp.notify.success('Prompt güncellendi.');
+        abp.notify.success('İstem güncellendi.');
         load(true);
     });
 

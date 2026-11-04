@@ -11,12 +11,12 @@
     <abp-script src="/Pages/AiCenter/Bindings/Index.js" />
 }
 
-<div data-page-description="Form ve prompt eşleştirmeleri" class="apya-page">
+<div data-page-description="Form ve istem eşleştirmeleri" class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
             <abp-column size-md="_7">
-                <abp-card-title><i class="fa fa-link me-2"></i> Form ↔ Prompt Bağlamaları</abp-card-title>
+                <abp-card-title><i class="fa fa-link me-2"></i> Form ↔ İstem Bağlamaları</abp-card-title>
             </abp-column>
             <abp-column size-md="_5" class="text-end">
                 @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Edit))
@@ -28,14 +28,14 @@
     </abp-card-header>
     <abp-card-body>
         <p class="text-muted">
-            Bir form gönderildiğinde, ona bağlı aktif prompt(lar) otomatik olarak çalıştırılır ve sonuçlar Değerlendirmeler'de görünür.
+            Bir form gönderildiğinde, ona bağlı aktif istem(ler) otomatik olarak çalıştırılır ve sonuçlar Değerlendirmeler'de görünür.
         </p>
         <abp-table class="apya-clean-table" id="AiFormBindingsTable">
             <thead>
                 <tr>
                     <th>İşlemler</th>
                     <th>Form</th>
-                    <th>Prompt</th>
+                    <th>İstem</th>
                     <th>
                         Tetikleme
                         <apya-hint text="Gönderimde: form her doldurulduğunda değerlendirme kendiliğinden başlar. Manuel: yalnız siz elle çalıştırdığınızda başlar." />

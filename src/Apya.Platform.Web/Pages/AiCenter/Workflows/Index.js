@@ -24,7 +24,7 @@ $(function () {
     function scopeText(w) {
         var parts = [];
         if (w.documentId) { parts.push('Form'); }
-        if (w.promptId) { parts.push('Prompt'); }
+        if (w.promptId) { parts.push('İstem'); }
         return parts.length ? parts.join(' + ') : 'Tümü';
     }
 

@@ -121,7 +121,7 @@ $(function () {
                 }
             },
             {
-                title: 'Müşteri (Tenant) Adı',
+                title: 'Kiracı Adı',
                 data: "tenantName"
             },
             {

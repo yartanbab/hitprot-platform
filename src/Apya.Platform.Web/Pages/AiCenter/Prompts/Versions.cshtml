@@ -5,10 +5,10 @@
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.AiCenter.Prompts.VersionsModel
 @{
-    ViewBag.Title = "Prompt Versiyonları";
+    ViewBag.Title = "İstem Sürümleri";
 }
 
-<div data-page-description="Prompt sürüm geçmişi" class="apya-page">
+<div data-page-description="İstem sürüm geçmişi" class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
@@ -20,7 +20,7 @@
             </abp-column>
             <abp-column size-md="_4" class="text-end">
                 <a href="@Url.Page("Index")" class="btn btn-sm btn-outline-secondary">
-                    <i class="fa fa-arrow-left me-1"></i> Prompt Kütüphanesi
+                    <i class="fa fa-arrow-left me-1"></i> İstem Kütüphanesi
                 </a>
             </abp-column>
         </abp-row>
@@ -30,10 +30,10 @@
         <table class="table apya-clean-table align-middle">
             <thead>
                 <tr>
-                    <th>Versiyon</th>
+                    <th>Sürüm</th>
                     <th>
                         Durum
-                        <apya-hint text="Aynı anda yalnız bir versiyon Yayında olabilir. Yeni bir versiyonu yayınladığınızda önceki yayındaki versiyon Arşiv durumuna düşer. Taslaklar hiçbir çalıştırmada kullanılmaz." />
+                        <apya-hint text="Aynı anda yalnız bir sürüm Yayında olabilir. Yeni bir sürümü yayınladığınızda önceki yayındaki sürüm Arşiv durumuna düşer. Taslaklar hiçbir çalıştırmada kullanılmaz." />
                     </th>
                     <th>Yayın Tarihi</th>
                     <th class="text-end">İşlem</th>
@@ -81,11 +81,11 @@
                         <td colspan="4" class="bg-body-tertiary">
                             <div class="row g-3 py-2">
                                 <div class="col-md-6">
-                                    <div class="small text-muted mb-1">Sistem Prompt</div>
+                                    <div class="small text-muted mb-1">Sistem İstemi</div>
                                     <pre class="small border rounded p-2 mb-0" style="white-space:pre-wrap;">@(string.IsNullOrWhiteSpace(v.SystemPrompt) ? "—" : v.SystemPrompt)</pre>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="small text-muted mb-1">Kullanıcı Prompt Şablonu</div>
+                                    <div class="small text-muted mb-1">Kullanıcı İstem Şablonu</div>
                                     <pre class="small border rounded p-2 mb-0" style="white-space:pre-wrap;">@(string.IsNullOrWhiteSpace(v.UserPromptTemplate) ? "—" : v.UserPromptTemplate)</pre>
                                 </div>
                                 @if (!string.IsNullOrWhiteSpace(v.JsonSchema))
@@ -116,28 +116,28 @@
 {
     <abp-card>
         <abp-card-header>
-            <abp-card-title><i class="fa fa-plus me-2"></i> Yeni Versiyon Ekle</abp-card-title>
+            <abp-card-title><i class="fa fa-plus me-2"></i> Yeni Sürüm Ekle</abp-card-title>
         </abp-card-header>
         <abp-card-body>
             <form method="post" asp-page-handler="AddVersion" asp-route-id="@Model.Id">
                 <div class="mb-3">
-                    <label class="form-label">Sistem Prompt</label>
+                    <label class="form-label">Sistem İstemi</label>
                     <textarea asp-for="NewVersion.SystemPrompt" class="form-control" rows="3"></textarea>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Kullanıcı Prompt Şablonu (<code>{{alan_adi}}</code> yer tutucuları)</label>
+                    <label class="form-label">Kullanıcı İstem Şablonu (<code>{{alan_adi}}</code> yer tutucuları)</label>
                     <textarea asp-for="NewVersion.UserPromptTemplate" class="form-control" rows="3"></textarea>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Beklenen JSON Şeması (opsiyonel)</label>
+                    <label class="form-label">Beklenen JSON Şeması (isteğe bağlı)</label>
                     <textarea asp-for="NewVersion.JsonSchema" class="form-control" rows="3"></textarea>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Örnek Çıktı (opsiyonel)</label>
+                    <label class="form-label">Örnek Çıktı (isteğe bağlı)</label>
                     <textarea asp-for="NewVersion.ExpectedOutputSample" class="form-control" rows="2"></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fa fa-save me-1"></i> Taslak Versiyon Oluştur
+                    <i class="fa fa-save me-1"></i> Taslak Sürüm Oluştur
                 </button>
             </form>
         </abp-card-body>

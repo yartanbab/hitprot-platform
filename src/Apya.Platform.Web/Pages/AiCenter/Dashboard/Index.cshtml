@@ -5,13 +5,13 @@
 @using Microsoft.AspNetCore.Html
 @model Apya.Platform.Web.Pages.AiCenter.Dashboard.IndexModel
 @{
-    ViewBag.Title = "AI Gösterge Paneli";
+    ViewBag.Title = "Yapay Zekâ Genel Bakış";
     var d = Model.Data;
     var riskLabels = JsonSerializer.Serialize(d.RiskDistribution.Select(x => x.Label));
     var riskCounts = JsonSerializer.Serialize(d.RiskDistribution.Select(x => x.Count));
 }
 
-<div data-page-description="AI kullanım ve risk özeti" class="apya-page">
+<div data-page-description="Yapay zekâ kullanım ve risk özeti" class="apya-page">
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -24,7 +24,7 @@
         <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-list-check", Accent = "positive", Label = "Tamamlanan / Başarısız", ValueHtml = new HtmlString($"<span class=\"text-success\">{d.Completed}</span> / <span class=\"text-danger\">{d.Failed}</span>") }' />
     </div>
     <div class="col-md-3">
-        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-diagram-project", Accent = "brand", Label = "Prompt / Sağlayıcı / Aktif Akış", Value = $"{d.PromptCount} / {d.ProviderCount} / {d.ActiveWorkflowCount}", Hint = "Sırasıyla: tanımlı prompt sayısı, tanımlı AI sağlayıcı sayısı ve AKTİF durumdaki iş akışı sayısı. Pasif iş akışları üçüncü sayıya girmez." }' />
+        <partial name="_KpiCard" model='new KpiCardModel { Icon = "fa-diagram-project", Accent = "brand", Label = "İstem / Sağlayıcı / Aktif Akış", Value = $"{d.PromptCount} / {d.ProviderCount} / {d.ActiveWorkflowCount}", Hint = "Sırasıyla: tanımlı istem sayısı, tanımlı yapay zekâ sağlayıcı sayısı ve AKTİF durumdaki iş akışı sayısı. Pasif iş akışları üçüncü sayıya girmez." }' />
     </div>
 </div>
 

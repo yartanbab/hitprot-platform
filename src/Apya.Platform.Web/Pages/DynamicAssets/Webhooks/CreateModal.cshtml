@@ -6,10 +6,10 @@
 }
 <form method="post" action="@Url.Page("/DynamicAssets/Webhooks/CreateModal")">
     <abp-modal>
-        <abp-modal-header title="Yeni Webhook Aboneliği"></abp-modal-header>
+        <abp-modal-header title="Yeni Web Kancası Aboneliği"></abp-modal-header>
         <abp-modal-body>
             <abp-select asp-for="Subscription.DocumentId" asp-items="Model.Forms" label="Form" />
-            <abp-input asp-for="Subscription.TargetUrl" label="Hedef URL (https://...)"
+            <abp-input asp-for="Subscription.TargetUrl" label="Hedef adres (https://...)"
                        placeholder="https://example.com/webhooks/apya" />
             <abp-input asp-for="Subscription.Secret" label="Gizli Anahtar (HMAC imza için)"
                        placeholder="örn. wh_secret_..." />

@@ -669,10 +669,10 @@
                         '<span class="apya-console-menu-icon"><i class="fa fa-pen"></i></span>Yeniden adlandır</button>' +
                     '<div class="apya-console-menu-head is-divided">Renk</div>' +
                     '<div class="kanban-col-colors">' + colorSwatches(c.colorClass) + '</div>' +
-                    '<div class="apya-console-menu-head is-divided">WIP limiti</div>' +
+                    '<div class="apya-console-menu-head is-divided">WIP üst sınırı</div>' +
                     '<div class="kanban-col-wip-row">' +
                         '<input type="number" min="0" max="999" class="js-col-wip" ' +
-                            'value="' + (c.wipLimit || '') + '" placeholder="limit yok" aria-label="WIP limiti" />' +
+                            'value="' + (c.wipLimit || '') + '" placeholder="üst sınır yok" aria-label="WIP üst sınırı" />' +
                         '<button type="button" class="kanban-col-wip-save js-col-wip-save">Kaydet</button>' +
                     '</div>' +
                     del +
@@ -717,7 +717,7 @@
             col.innerHTML =
                 '<div class="kanban-header">' +
                     '<span class="kanban-title js-col-name' + (nameEditable ? ' is-editable' : '') +
-                        '" title="' + (nameEditable ? 'Adı düzenlemek için tıkla' : '') + '">' +
+                        '" title="' + (nameEditable ? 'Adı düzenlemek için tıklayın' : '') + '">' +
                         '<i class="fa fa-circle me-2"></i></span>' +
                     '<span class="kanban-count">0</span>' +
                     '<span class="kanban-col-late js-col-late d-none"></span>' +
@@ -727,7 +727,7 @@
                         collapseBtn +
                     '</span>' +
                 '</div>' +
-                '<div class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP limiti">' +
+                '<div class="kanban-wip' + (c.wipLimit ? '' : ' d-none') + '" title="WIP üst sınırı">' +
                     '<span class="kanban-wip-track"><span class="kanban-wip-fill"></span></span>' +
                     '<span class="kanban-wip-label"></span>' +
                 '</div>' +
@@ -1528,7 +1528,7 @@
                     '<div class="kanban-panel-cols"><span>Kolon adı</span><span>Renk</span><span>WIP</span><span></span></div>' +
                     '<div class="kanban-panel-rows js-p-rows"></div>' +
                     '<button type="button" class="kanban-panel-addcol js-p-add"><i class="fa fa-plus me-1"></i>Özel kolon ekle</button>' +
-                    '<p class="kanban-panel-note">Sistem kolonları görev durumuna bağlı olduğu için silinemez — adını ve rengini değiştirebilirsin. Sıralama sürükle-bırak ile yapılır ve projeye kaydedilir.</p>' +
+                    '<p class="kanban-panel-note">Sistem kolonları görev durumuna bağlı olduğu için silinemez — adını ve rengini değiştirebilirsiniz. Sıralama sürükle-bırak ile yapılır ve projeye kaydedilir.</p>' +
                     '<div class="kanban-panel-foot">' +
                         '<span class="kanban-panel-dirty js-p-dirty">Değişiklik yok</span>' +
                         '<span class="kanban-panel-actions">' +
@@ -1665,7 +1665,7 @@
                 '</div>' +
                 '<div class="kanban-panel-color">' + colorSwatches(d.colorClass) + '</div>' +
                 '<div class="kanban-panel-wip">' +
-                    '<input type="number" min="0" max="999" class="js-p-wip" placeholder="—" aria-label="WIP limiti" />' +
+                    '<input type="number" min="0" max="999" class="js-p-wip" placeholder="—" aria-label="WIP üst sınırı" />' +
                 '</div>' +
                 '<div class="kanban-panel-act">' +
                     (d.isSystem
@@ -1697,8 +1697,8 @@
                 var warn = row.querySelector('.js-p-warn');
                 if (d.wipLimit && d.cards > d.wipLimit) {
                     warn.classList.remove('d-none');
-                    warn.textContent = 'Şu anda bu kolonda ' + d.cards + ' kart var — limiti ' + d.wipLimit +
-                        ' yaparsan kolon başlığı uyarı rozetiyle görünür, kart eklemek engellenmez.';
+                    warn.textContent = 'Şu anda bu kolonda ' + d.cards + ' kart var — üst sınırı ' + d.wipLimit +
+                        ' yaparsanız kolon başlığı uyarı rozetiyle görünür, kart eklemek engellenmez.';
                 } else {
                     warn.classList.add('d-none');
                 }
@@ -2517,7 +2517,7 @@
                 var name = $(this).closest('.kanban-column').find('.js-col-name').text().trim();
                 abp.message.info(
                     '"' + name + '" görev durumuna bağlı bir sistem kolonu; panodan kaldırılamaz. ' +
-                    'Ekibinin diline uydurmak için ⋯ menüsünden yeniden adlandırabilirsin.',
+                    'Ekibinizin diline uydurmak için ⋯ menüsünden yeniden adlandırabilirsiniz.',
                     'Varsayılan kolonlar silinemez');
             });
             // Yeniden adlandırma yerinde yapılır (Enter kaydet · Esc iptal):
@@ -2541,7 +2541,7 @@
                 var raw = $col.find('.js-col-wip').val();
                 var limit = raw === '' ? null : parseInt(raw, 10);
                 if (limit !== null && (isNaN(limit) || limit < 0)) {
-                    abp.notify.warn('WIP limiti 0 veya daha büyük bir sayı olmalı.');
+                    abp.notify.warn('WIP üst sınırı 0 veya daha büyük bir sayı olmalı.');
                     return;
                 }
                 saveColumn($col, { wipLimit: limit });

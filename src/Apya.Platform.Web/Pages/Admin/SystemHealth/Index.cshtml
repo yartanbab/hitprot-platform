@@ -368,9 +368,9 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label text-xs fw-bold mb-1" for="Filter_Tenant">Tenant</label>
+                <label class="form-label text-xs fw-bold mb-1" for="Filter_Tenant">Kiracı</label>
                 <select id="Filter_Tenant" class="form-select form-select-sm">
-                    <option value="">Tüm tenant'lar</option>
+                    <option value="">Tüm kiracılar</option>
                     @foreach (var t in h.TenantOptions)
                     {
                         <option value="@(t.TenantId?.ToString() ?? "host")">@t.Name</option>
@@ -390,7 +390,7 @@
                     <th>Kaynak</th>
                     <th>Mesaj</th>
                     <th>Sayfa</th>
-                    <th>Tenant</th>
+                    <th>Kiracı</th>
                     <th>Oluşum</th>
                     <th>Durum</th>
                 </tr>

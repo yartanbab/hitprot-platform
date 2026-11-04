@@ -20,7 +20,7 @@
             <dd class="col-sm-8">
                 @(Model.Evaluation.IsSchemaValid == true ? "Evet" : (Model.Evaluation.IsSchemaValid == false ? "Hayır" : "—"))
             </dd>
-            <dt class="col-sm-4">Token</dt>
+            <dt class="col-sm-4">Belirteç</dt>
             <dd class="col-sm-8">@(Model.Evaluation.TokensUsed?.ToString() ?? "—")</dd>
             <dt class="col-sm-4">Süre (ms)</dt>
             <dd class="col-sm-8">@(Model.Evaluation.DurationMs?.ToString() ?? "—")</dd>
@@ -36,7 +36,7 @@
         }
         @if (!string.IsNullOrWhiteSpace(Model.Evaluation.RawJson))
         {
-            <label class="form-label fw-bold">Ham AI Çıktısı (JSON)</label>
+            <label class="form-label fw-bold">Ham Yapay Zekâ Çıktısı (JSON)</label>
             <pre class="apya-md-pre" style="max-height:300px;">@Model.Evaluation.RawJson</pre>
         }
     </abp-modal-body>

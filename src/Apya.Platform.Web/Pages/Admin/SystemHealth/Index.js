@@ -94,7 +94,7 @@ $(function () {
                     render: function (m) { return m && m.length > 80 ? m.substring(0, 80) + '…' : m; }
                 },
                 { title: 'Sayfa', data: 'pageUrl', defaultContent: '-' },
-                { title: 'Tenant', data: 'tenantName', defaultContent: '-' },
+                { title: 'Kiracı', data: 'tenantName', defaultContent: '-' },
                 { title: 'Oluşum', data: 'occurrenceCount' },
                 {
                     title: 'Durum', data: 'isResolved',
@@ -281,7 +281,7 @@ $(function () {
         }
 
         function announce() {
-            abp.notify.success('Özet panoya kopyalandı. Agent\'a yapıştırabilirsiniz.');
+            abp.notify.success('Özet panoya kopyalandı. Yapay zekâ ajanına yapıştırabilirsiniz.');
         }
 
         // Güvenli olmayan bağlamda (düz http) clipboard API yoktur; seçili

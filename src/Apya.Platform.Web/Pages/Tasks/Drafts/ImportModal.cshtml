@@ -7,14 +7,14 @@
 
 <form method="post" id="ImportDraftForm" enctype="multipart/form-data">
     <abp-modal>
-        <abp-modal-header title="AI ile Görev Oluştur"></abp-modal-header>
+        <abp-modal-header title="Yapay Zekâ ile Görev Oluştur"></abp-modal-header>
         
         <abp-modal-body class="p-4">
             <!-- Normal Yükleme Durumu -->
             <div id="upload-panel">
                 <p class="text-muted text-center mb-4">
                     Projenize ait bir gereksinim dosyasını, toplantı özetini veya maddeler halinde yönerge barındıran
-                    herhangi bir <b>PDF</b> dosyasını yükleyin. AI sizin için okuyup taslak görevlere (Kanban kartlarına) bölecektir.
+                    herhangi bir <b>PDF</b> dosyasını yükleyin. Yapay zekâ sizin için okuyup taslak görevlere (Kart Panosu kartlarına) bölecektir.
                 </p>
 
                 <div class="apya-dropzone">
@@ -28,9 +28,9 @@
             <!-- AI Animasyon Durumu (Gizli Başlar) -->
             <div id="ai-processing-panel" class="d-none text-center py-5">
                 <div class="spinner-grow text-primary" style="width: 3rem; height: 3rem;" role="status">
-                    <span class="visually-hidden">Loading...</span>
+                    <span class="visually-hidden">Yükleniyor…</span>
                 </div>
-                <h4 class="mt-4 fw-bold animate__animated animate__pulse animate__infinite">AI Dokümanı Analiz Ediyor...</h4>
+                <h4 class="mt-4 fw-bold animate__animated animate__pulse animate__infinite">Yapay Zekâ Belgeyi Analiz Ediyor...</h4>
                 <p class="text-muted mt-2">Bu işlem dosya boyutuna göre birkaç saniye sürebilir.<br/>Lütfen pencereyi kapatmayın.</p>
             </div>
             

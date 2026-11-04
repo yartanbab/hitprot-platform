@@ -10,15 +10,15 @@
 <div data-page-description="Abonelik paketleri ve özellikleri" class="apya-page">
 <abp-card>
     <abp-card-header>
-        <abp-card-title><i class="fa fa-box-open text-primary me-2"></i> Paket Yönetimi (Edition)</abp-card-title>
+        <abp-card-title><i class="fa fa-box-open text-primary me-2"></i> Paket Yönetimi</abp-card-title>
     </abp-card-header>
     <abp-card-body>
         <p class="text-muted">
-            Her paketin hangi <strong>izinleri</strong> kapsadığını ve limitlerini buradan düzenleyin.
-            İzin listesi paketin tavanıdır: listede olmayan bir izni o paketteki tenant kendi
+            Her paketin hangi <strong>izinleri</strong> kapsadığını ve üst sınırlarını buradan düzenleyin.
+            İzin listesi paketin tavanıdır: listede olmayan bir izni o paketteki kiracı kendi
             kullanıcılarına <strong>veremez</strong>. Değişiklik; paketin <strong>yeni atandığı</strong>
-            tenant'lara ve <strong>"yeniden uygula"</strong> dediğiniz mevcut tenant'lara yansır.
-            <apya-hint text="İzin tavanı anında geçerlidir (yeniden uygulamaya gerek yok). Yeniden uygula yalnız feature/limit değerlerini o tenant'a olduğu gibi yazar — tenant'a özel elle verdiğiniz istisna/limit varsa üzerine yazılır ve kaybolur." />
+            kiracılara ve <strong>"yeniden uygula"</strong> dediğiniz mevcut kiracılara yansır.
+            <apya-hint text="İzin tavanı anında geçerlidir (yeniden uygulamaya gerek yok). Yeniden uygula yalnız özellik/üst sınır değerlerini o kiracıya olduğu gibi yazar — kiracıya özel elle verdiğiniz istisna/üst sınır varsa üzerine yazılır ve kaybolur." />
         </p>
         <div class="row g-3" id="PackageCards"></div>
     </abp-card-body>
@@ -31,7 +31,7 @@
     <abp-card-body>
         <p class="text-muted">
             Süreli paket atanmış müşteriler, süre dolduğunda otomatik olarak <strong>Basic</strong> pakete iner.
-            Mevcut verileri silinmez; yalnız yeni kayıt açma limitleri ve modül yetkileri Basic'e döner.
+            Mevcut verileri silinmez; yalnız yeni kayıt açma üst sınırları ve modül yetkileri Basic'e döner.
             <strong>Süresi olmayan</strong> (süresiz) müşteriler bu kurallardan hiç etkilenmez.
             <apya-hint text="Müşteriye süre, kiracı yönetimi ekranındaki 'Paket Değiştir' ile verilir. Süre verilmemiş müşteri süresiz sayılır ve hiçbir zaman düşürülmez." />
         </p>
@@ -165,7 +165,7 @@
                 </div>
                 <div class="alert alert-light border py-2 small mb-3">
                     <i class="fa fa-circle-info me-1 text-primary"></i>
-                    Modül özellikleri (Finans, Hibe, AI…) bu seçimden <strong>otomatik türetilir</strong>;
+                    Modül özellikleri (Finans, Hibe, Yapay Zekâ…) bu seçimden <strong>otomatik türetilir</strong>;
                     ayrıca açmanız gerekmez.
                 </div>
                 <div id="PkgPermGroups"></div>

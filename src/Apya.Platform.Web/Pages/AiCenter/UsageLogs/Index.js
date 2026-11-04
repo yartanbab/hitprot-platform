@@ -38,7 +38,7 @@ $(function () {
                 { title: 'Sağlayıcı', data: 'providerName' },
                 { title: 'Tür', data: 'requestType' },
                 { title: 'Durum', data: 'status', render: statusBadge },
-                { title: 'Token', data: 'tokensUsed' },
+                { title: 'Belirteç', data: 'tokensUsed' },
                 {
                     title: 'Süre (ms)',
                     data: 'durationMs',

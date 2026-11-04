@@ -349,7 +349,7 @@ $(function () {
             '<div class="apya-shell-dialog-panel">' +
               '<div class="apya-shell-dialog-head">' +
                 '<div><div class="apya-shell-dialog-title">Klavye kısayolları</div>' +
-                '<div class="apya-shell-dialog-sub">Hepsi şu an çalışıyor — deneyebilirsin.</div></div>' +
+                '<div class="apya-shell-dialog-sub">Hepsi şu an çalışıyor — deneyebilirsiniz.</div></div>' +
                 '<button type="button" class="apya-shell-dialog-close" aria-label="Kapat">✕</button>' +
               '</div>' +
               '<div class="apya-shell-dialog-body">' + cols + '</div>' +

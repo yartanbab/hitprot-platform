@@ -19,7 +19,7 @@
                 <input class="form-control" value="@Model.FormTitle" disabled />
             </div>
             <div class="mb-3">
-                <label class="form-label">Prompt</label>
+                <label class="form-label">İstem</label>
                 <input class="form-control" value="@Model.PromptName" disabled />
             </div>
             <label class="form-label" for="Binding_TriggerMode">
@@ -29,7 +29,7 @@
             <abp-select asp-for="Binding.TriggerMode" asp-items="Model.TriggerModes" suppress-label="true" />
             <label class="form-label" for="Binding_Order">
                 Sıra
-                <apya-hint text="Aynı forma birden çok prompt bağlıysa çalıştırma sırasını belirler; küçük sayı önce çalışır. Tek bağlama varsa etkisi yoktur." />
+                <apya-hint text="Aynı forma birden çok istem bağlıysa çalıştırma sırasını belirler; küçük sayı önce çalışır. Tek bağlama varsa etkisi yoktur." />
             </label>
             <abp-input asp-for="Binding.Order" suppress-label="true" />
             <abp-input asp-for="Binding.IsActive" label="Aktif" />

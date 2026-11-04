@@ -8,9 +8,9 @@
     <abp-input asp-for="Id" />
     <input type="hidden" asp-for="Subscription.DocumentId" />
     <abp-modal>
-        <abp-modal-header title="Webhook Aboneliğini Düzenle"></abp-modal-header>
+        <abp-modal-header title="Web Kancası Aboneliğini Düzenle"></abp-modal-header>
         <abp-modal-body>
-            <abp-input asp-for="Subscription.TargetUrl" label="Hedef URL (https://...)" />
+            <abp-input asp-for="Subscription.TargetUrl" label="Hedef adres (https://...)" />
             <abp-input asp-for="Subscription.Secret" label="Gizli Anahtar (güvenlik gereği tekrar girilmeli)"
                        placeholder="Kaydetmek için gizli anahtarı yeniden girin" />
             <abp-input asp-for="Subscription.IsActive" label="Aktif" />

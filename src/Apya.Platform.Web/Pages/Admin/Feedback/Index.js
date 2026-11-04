@@ -106,7 +106,7 @@ $(function () {
                     data: 'creationTime',
                     render: function (d) { return d ? d.substring(0, 16).replace('T', ' ') : ''; }
                 },
-                { title: 'Tenant', data: 'tenantName', defaultContent: '-' },
+                { title: 'Kiracı', data: 'tenantName', defaultContent: '-' },
                 { title: 'Tür', data: 'type', render: function (t) { return TYPE_LABELS[t] || t; } },
                 {
                     title: 'Konu', data: 'subject',

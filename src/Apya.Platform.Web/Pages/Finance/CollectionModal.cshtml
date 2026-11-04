@@ -36,7 +36,7 @@
             @if (Model.IncomeEntries.Any())
             {
                 <abp-select asp-for="Collection.IncomeEntryId" asp-items="Model.IncomeEntries"
-                            label="Karşılık gelen gelir kaydı (opsiyonel)">
+                            label="Karşılık gelen gelir kaydı (isteğe bağlı)">
                     <option value="">— Bağlanmadı —</option>
                 </abp-select>
             }

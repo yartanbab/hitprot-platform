@@ -36,7 +36,7 @@ $(function () {
                 + '<button class="btn btn-sm btn-outline-primary js-edit-perms" data-code="' + p.code + '">'
                 + '<i class="fa fa-key me-1"></i>İzinler</button>'
                 + '<button class="btn btn-sm btn-outline-primary js-edit-pkg" data-code="' + p.code + '">'
-                + '<i class="fa fa-pen me-1"></i>Limitler</button>'
+                + '<i class="fa fa-pen me-1"></i>Üst Sınırlar</button>'
                 + '</div>'
                 + '</div>'
                 + '<div class="mb-2"><span class="apya-chip apya-chip-neutral">'
@@ -76,7 +76,7 @@ $(function () {
             var p = packages.filter(function (x) { return x.code === code; })[0];
             if (!p) { return; }
             current = p;
-            $('#PkgEditTitle').text('Limitler — ' + p.name);
+            $('#PkgEditTitle').text('Üst Sınırlar — ' + p.name);
 
             var editable = (p.features || []).filter(function (f) { return !f.isDerived; });
             var derived = (p.features || []).filter(function (f) { return f.isDerived; });
@@ -124,10 +124,10 @@ $(function () {
     });
 
     function askReapply(code) {
-        abp.message.confirm('Bu paketteki mevcut tenant\'lara şimdi yeniden uygulansın mı?', 'Yeniden uygula', function (ok) {
+        abp.message.confirm('Bu paketteki mevcut kiracılara şimdi yeniden uygulansın mı?', 'Yeniden uygula', function (ok) {
             if (ok) {
                 svc.reapplyToTenants(code).then(function (n) {
-                    abp.notify.info(n + ' tenant güncellendi.');
+                    abp.notify.info(n + ' kiracı güncellendi.');
                 });
             }
         });

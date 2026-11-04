@@ -5,16 +5,16 @@
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.AiCenter.Reports.IndexModel
 @{
-    ViewBag.Title = "AI Raporları";
+    ViewBag.Title = "Yapay Zekâ Raporları";
     var d = Model.Data;
 }
 
-<div data-page-description="AI maliyet ve kullanım raporları" class="apya-page">
+<div data-page-description="Yapay zekâ maliyet ve kullanım raporları" class="apya-page">
 <abp-card>
     <abp-card-header>
         <abp-row>
             <abp-column size-md="_6">
-                <abp-card-title><i class="fa fa-file-lines me-2"></i> AI Değerlendirme Raporu</abp-card-title>
+                <abp-card-title><i class="fa fa-file-lines me-2"></i> Yapay Zekâ Değerlendirme Raporu</abp-card-title>
             </abp-column>
             <abp-column size-md="_6" class="text-end">
                 @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Reports.Export))
@@ -45,7 +45,7 @@
                         <span class="text-muted small">(@d.ScoredCount skorlu sonuç)</span>
                     </td>
                 </tr>
-                <tr><th>Prompt / Sağlayıcı / Aktif İş Akışı</th><td>@d.PromptCount / @d.ProviderCount / @d.ActiveWorkflowCount</td></tr>
+                <tr><th>İstem / Sağlayıcı / Aktif İş Akışı</th><td>@d.PromptCount / @d.ProviderCount / @d.ActiveWorkflowCount</td></tr>
             </tbody>
         </table>
         </div>

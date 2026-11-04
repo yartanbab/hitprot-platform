@@ -703,7 +703,7 @@ $(function () {
     }
 
     function openReviewForBatch(batchId, totalItems) {
-        showProgressToast('AI ' + totalItems + ' taslak görev üretti. İncelemeye geçiliyor.', 'success');
+        showProgressToast('Yapay zekâ ' + totalItems + ' taslak görev üretti. İncelemeye geçiliyor.', 'success');
         setTimeout(function () {
             reviewModal.open({ BatchId: batchId });
         }, 500);
@@ -740,7 +740,7 @@ $(function () {
 
         switch (d.status) {
             case 'Processing':
-                showProgressToast('AI dokümanı analiz ediyor…', 'info');
+                showProgressToast('Yapay zekâ belgeyi analiz ediyor…', 'info');
                 break;
             case 'ReadyForReview':
                 delete subscribedBatches[d.batchId];
@@ -748,11 +748,11 @@ $(function () {
                 break;
             case 'Abandoned':
                 delete subscribedBatches[d.batchId];
-                abp.notify.warning(d.errorMessage || 'AI geçerli görev bulamadı.');
+                abp.notify.warning(d.errorMessage || 'Yapay zekâ geçerli görev bulamadı.');
                 break;
             case 'Failed':
                 delete subscribedBatches[d.batchId];
-                abp.notify.error(d.errorMessage || 'AI işleme sırasında hata oluştu.');
+                abp.notify.error(d.errorMessage || 'Yapay zekâ işleme sırasında hata oluştu.');
                 break;
         }
     });
@@ -764,7 +764,7 @@ $(function () {
                 return client.subscribeToBatch(batchId);
             })
             .then(function () {
-                showProgressToast('Canlı bağlantı kuruldu, AI işleminin sonucu beklenecek.', 'info');
+                showProgressToast('Canlı bağlantı kuruldu, yapay zekâ işleminin sonucu beklenecek.', 'info');
             })
             .catch(function () {
                 // Hub unavailable → fall back to polling
@@ -783,7 +783,7 @@ $(function () {
     }
 
     reviewModal.onResult(function () {
-        abp.notify.success('AI görevleri başarıyla oluşturuldu!');
+        abp.notify.success('Yapay zekâ görevleri başarıyla oluşturuldu!');
         reloadAll();
     });
 

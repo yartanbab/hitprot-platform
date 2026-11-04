@@ -8,7 +8,7 @@
    kaydetmeyi kırıyordu — bkz Workflows/CreateModal notu. *@
 <form method="post" action="@Url.Page("/AiCenter/Prompts/CreateModal")">
     <abp-modal size="Large">
-        <abp-modal-header title="Yeni Prompt"></abp-modal-header>
+        <abp-modal-header title="Yeni İstem"></abp-modal-header>
         <abp-modal-body>
             <abp-row>
                 <abp-column size-md="_6">
@@ -21,12 +21,12 @@
             <abp-select asp-for="Prompt.CategoryId" asp-items="Model.Categories" label="Kategori" />
             <abp-input asp-for="Prompt.Description" text-area rows="3" label="Açıklama" />
             <hr />
-            <h6 class="text-muted">İlk Versiyon (v1 — taslak olarak oluşturulur)</h6>
-            <abp-input asp-for="Prompt.SystemPrompt" text-area rows="6" label="Sistem Prompt" />
+            <h6 class="text-muted">İlk Sürüm (v1 — taslak olarak oluşturulur)</h6>
+            <abp-input asp-for="Prompt.SystemPrompt" text-area rows="6" label="Sistem İstemi" />
             <abp-input asp-for="Prompt.UserPromptTemplate" text-area rows="6"
-                       label="Kullanıcı Prompt Şablonu ({{alan_adi}} yer tutucuları form yanıtlarından doldurulur)" />
-            <abp-input asp-for="Prompt.JsonSchema" text-area rows="6" label="Beklenen JSON Şeması (opsiyonel — şema-temelli doğrulama)" />
-            <abp-input asp-for="Prompt.ExpectedOutputSample" text-area rows="6" label="Örnek Çıktı (opsiyonel)" />
+                       label="Kullanıcı İstem Şablonu ({{alan_adi}} yer tutucuları form yanıtlarından doldurulur)" />
+            <abp-input asp-for="Prompt.JsonSchema" text-area rows="6" label="Beklenen JSON Şeması (isteğe bağlı — şema-temelli doğrulama)" />
+            <abp-input asp-for="Prompt.ExpectedOutputSample" text-area rows="6" label="Örnek Çıktı (isteğe bağlı)" />
         </abp-modal-body>
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>
