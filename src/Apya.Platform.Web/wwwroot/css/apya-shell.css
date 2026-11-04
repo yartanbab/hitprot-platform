@@ -5640,15 +5640,15 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
 
     /* Ferah (varsayÄ±lan) */
     --apya-proj-row-h: 60px;
-    --apya-proj-card-pad-y: 18px;
-    --apya-proj-card-pad-x: 20px;
+    --apya-proj-card-pad-y: 12px;
+    --apya-proj-card-pad-x: 12px;
     --apya-proj-card-gap: 12px;
 }
 .apya-proj-console.is-tight {
     --apya-proj-row-h: 48px;
-    --apya-proj-card-pad-y: 13px;
-    --apya-proj-card-pad-x: 15px;
-    --apya-proj-card-gap: 9px;
+    --apya-proj-card-pad-y: 8px;
+    --apya-proj-card-pad-x: 8px;
+    --apya-proj-card-gap: 8px;
 }
 
 /* --- 22.1 KPI ÅERÄ°DÄ° â€” altÄ± hÃ¼creli tek satÄ±r, bÃ¶lmeli --------------------- */
@@ -6039,14 +6039,19 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     .apya-proj-card { transition: none; }
     .apya-proj-card:hover { transform: none; }
 }
-/* Kapak görseli kategori ikon kutusunun YERİNE geçer — aynı 38px yuva, kart
+/* Kapak görseli kategori ikon kutusunun YERİNE geçer — aynı 32px yuva, kart
    yüksekliği görselli/görselsiz birebir aynı. */
+.apya-proj-card-head .kpi-icon-box--sm {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+}
 .apya-proj-card-cover {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
     overflow: hidden;
     border-radius: var(--apya-radius-md);
@@ -6059,11 +6064,30 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
 }
 .apya-proj-card-head {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    align-items: center;
+    gap: 8px;
+}
+/* ⋯ başlığın sağında, çerçevesiz 28px; dokunma alanı ::before ile 44px —
+   görünen yükseklik başlığı uzatmaz. */
+.apya-proj-card-head .apya-proj-more {
+    position: relative;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-color: transparent;
+    color: var(--apya-text-secondary);
+}
+.apya-proj-card-head .apya-proj-more::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
 }
 .apya-proj-card-title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: var(--apya-weight-bold);
     line-height: 1.35;
     color: var(--apya-text-primary);
@@ -6082,44 +6106,84 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
 .apya-proj-chips {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     flex-wrap: wrap;
+}
+/* Bütçe ve ilerleme yan yana; bütçe görme izni yoksa ilerleme tam genişlik. */
+.apya-proj-card-metrics {
+    display: flex;
+    gap: 12px;
+}
+.apya-proj-card-metric { flex: 1 1 0; min-width: 0; }
+.apya-proj-card-metric .apya-mini-progress { height: 6px; }
+.apya-proj-card-metric .apya-proj-bar-label > :last-child {
+    color: var(--apya-text-primary);
+    font-weight: var(--apya-weight-semibold);
+}
+.apya-proj-card-metric-sub {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .apya-proj-card-foot {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 8px;
     margin-top: auto;
-    padding-top: 11px;
+    padding-top: 8px;
     border-top: 1px solid var(--apya-border-subtle);
 }
-.apya-proj-card-actions { display: flex; align-items: center; gap: 4px; }
+.apya-proj-card-foot .apya-tile-avatars,
+.apya-proj-card-foot .apya-proj-no-team { flex: none; }
 
-/* Gecikme kutusu â€” gecikme varsa kÄ±rmÄ±zÄ±, yoksa yeÅŸil "GecikmiÅŸ gÃ¶rev yok". */
-.apya-proj-overdue-box {
+/* Gecikme sinyali — eski tam genişlik kutunun yerine tek satır. */
+.apya-proj-card-signal {
     display: flex;
     align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 8px 10px;
-    border: 0;
-    border-radius: var(--apya-radius-lg);
-    background: color-mix(in srgb, var(--apya-negative-500) 6%, transparent);
+    gap: 4px;
+    min-width: 0;
+    font-size: 11px;
+    color: var(--apya-text-tertiary);
+    white-space: nowrap;
+}
+.apya-proj-card-signal > i { flex: none; color: var(--apya-text-positive); }
+.apya-proj-card-signal.is-negative {
     color: var(--apya-text-negative);
-    font-size: 11.5px;
     font-weight: var(--apya-weight-semibold);
-    text-align: start;
 }
-.apya-proj-overdue-box.is-clear {
-    background: color-mix(in srgb, var(--apya-positive-500) 6%, transparent);
-    color: var(--apya-text-positive);
-}
-.apya-proj-overdue-box:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
-.apya-proj-overdue-meta {
-    margin-left: auto;
+.apya-proj-card-signal.is-negative > i { color: inherit; }
+.apya-proj-card-signal-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-weight: var(--apya-weight-regular);
     color: var(--apya-text-tertiary);
+}
+/* Detay: düğme değil sessiz bağlantı; dokunma alanı ::before ile 44px. */
+.apya-proj-card-detail {
+    position: relative;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--apya-text-secondary);
+    text-decoration: none;
+}
+.apya-proj-card-detail::before {
+    content: '';
+    position: absolute;
+    inset: -12px -8px;
+}
+.apya-proj-card-detail > i { font-size: 10px; }
+.apya-proj-card-detail:hover { color: var(--apya-accent-500); }
+.apya-proj-card-detail:focus-visible {
+    outline: none;
+    border-radius: var(--apya-radius-sm);
+    box-shadow: var(--apya-shadow-focus);
 }
 .apya-proj-no-team { font-size: 11px; color: var(--apya-text-tertiary); }
 
@@ -6631,7 +6695,6 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     }
 
     /* Dokunma hedefleri 44px */
-    .apya-proj-card-actions .btn,
     .apya-proj-row-actions .btn,
     .apya-proj-drawer-foot .btn { min-height: 44px; }
     .apya-proj-check { width: 28px; height: 28px; font-size: 13px; }
