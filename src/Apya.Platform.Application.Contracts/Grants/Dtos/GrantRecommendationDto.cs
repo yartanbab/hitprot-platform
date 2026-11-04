@@ -63,6 +63,20 @@ public class GrantRecommendationDto
     /// <summary>Destek oranı — kartlardaki tutar/oran kutusu.</summary>
     public int? SupportRatePercent { get; set; }
 
+    // --- Gelişmiş filtre (kiracı Fırsatlar ekranı; süzme tarayıcıda yapılır) ---
+    /// <summary>Asgari destek tutarı (<see cref="Currency"/> cinsinden); yoksa null.</summary>
+    public decimal? MinAmount { get; set; }
+    public GrantRepaymentType RepaymentType { get; set; }
+    public bool RequiresConsortium { get; set; }
+    public bool PrefersFemaleEntrepreneur { get; set; }
+    public bool PrefersYoungEntrepreneur { get; set; }
+    /// <summary>Sektör etiketleri; boşsa programda sektör kısıtı yok.</summary>
+    public List<string> Sectors { get; set; } = new();
+    /// <summary>Bölge etiketleri; boşsa program ülke geneline açık.</summary>
+    public List<string> Regions { get; set; } = new();
+    /// <summary>Anahtar kelime etiketleri — serbest metin araması bunlarda da arar.</summary>
+    public List<string> Keywords { get; set; } = new();
+
     /// <summary>Kiracının bu çağrıya göre durduğu kova (Uygun / Koşullu / Uygun değil).</summary>
     public GrantEligibilityBucket Bucket { get; set; }
 

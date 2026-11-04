@@ -144,4 +144,36 @@ public class TenantOpenCallCatalog_Tests : PlatformEntityFrameworkCoreTestBase
             uyumluSira.ShouldBeLessThan(esikAltiSira);
         }
     }
+
+    /// <summary>Fırsatlar ekranının gelişmiş filtresi tarayıcıda süzer; süzdüğü alanlar akışta gelmeli.</summary>
+    [Fact]
+    public async Task Akis_filtre_alanlarini_programdan_tasir()
+    {
+        var call = await CreateOpenCallAsync("Filtre alanları programı", minMatchScore: 0);
+        var grant = await _grantRepository.GetAsync(call.GrantId);
+        grant.MinAmount = 20_000m;
+        grant.RepaymentType = GrantRepaymentType.GeriOdemeli;
+        grant.RequiresConsortium = true;
+        grant.PrefersFemaleEntrepreneur = true;
+        await _grantRepository.UpdateAsync(grant, autoSave: true);
+
+        var tags = GetRequiredService<IRepository<GrantCriteriaTag, Guid>>();
+        await tags.InsertAsync(new GrantCriteriaTag(Guid.NewGuid(), grant.Id, GrantCriteriaKind.Sektor, "tarım"), autoSave: true);
+        await tags.InsertAsync(new GrantCriteriaTag(Guid.NewGuid(), grant.Id, GrantCriteriaKind.Bolge, "Ankara"), autoSave: true);
+        await tags.InsertAsync(new GrantCriteriaTag(Guid.NewGuid(), grant.Id, GrantCriteriaKind.AnahtarKelime, "kırsal"), autoSave: true);
+
+        using (_currentTenant.Change(TenantId))
+        {
+            var row = (await _recommendationAppService.GetOpenCallsAsync()).Single(x => x.GrantCallId == call.Id);
+
+            row.MinAmount.ShouldBe(20_000m);
+            row.RepaymentType.ShouldBe(GrantRepaymentType.GeriOdemeli);
+            row.RequiresConsortium.ShouldBeTrue();
+            row.PrefersFemaleEntrepreneur.ShouldBeTrue();
+            row.PrefersYoungEntrepreneur.ShouldBeFalse();
+            row.Sectors.ShouldBe(new[] { "tarım" });
+            row.Regions.ShouldBe(new[] { "Ankara" });
+            row.Keywords.ShouldBe(new[] { "kırsal" });
+        }
+    }
 }

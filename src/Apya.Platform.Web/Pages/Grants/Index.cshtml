@@ -20,6 +20,8 @@
     }
     else
     {
+        @* Gelişmiş filtredeki çoklu seçimler (kurum/sektör/bölge) — dark uyumu apya-shell.css'te. *@
+        <link rel="stylesheet" href="~/libs/select2/css/select2.min.css" />
         <abp-style src="/Pages/Grants/Tenant.css" />
     }
 }
@@ -35,6 +37,7 @@
     }
     else
     {
+        <script src="~/libs/select2/js/select2.min.js"></script>
         <abp-script src="/Pages/Grants/Tenant.js" />
     }
 }
@@ -141,6 +144,12 @@ else
                 <a href="/Grants/Catalog" class="btn btn-sm btn-outline-secondary d-none" id="FeedTableLink" title="@L["Grants:Feed:TableView"]">
                     <i class="fa fa-list me-1"></i>@L["Grants:Feed:TableView"]
                 </a>
+                @* Gelişmiş filtre: üç sekmeyi de süzer; katlıyken etkin filtre sayısı rozette. *@
+                <button type="button" id="FilterToggleBtn" class="btn btn-sm btn-outline-secondary"
+                        aria-expanded="false" aria-controls="FeedFilters">
+                    <i class="fa fa-filter me-1" aria-hidden="true"></i>@L["Grants:Feed:Filter:Toggle"]
+                    <span class="apya-filters-badge ms-1 d-none" id="FilterActiveCount"></span>
+                </button>
                 @* Profil ve fikir kartları düğmeye indi: doluluk ayrıntısı açılan editörün başlığında. *@
                 <button type="button" id="ProfileToggleBtn" class="btn btn-sm btn-outline-secondary">
                     <i class="fa fa-id-card-clip me-1" aria-hidden="true"></i><span id="ProfileToggleText">@L["Grants:Feed:Profile:Edit"]</span>
@@ -303,6 +312,106 @@ else
             </div>
         </section>
 
+        @* --- Gelişmiş filtre (katlanır). Açık çağrıların hepsi zaten akışta: süzme Tenant.js'te. --- *@
+        <section class="card d-none apya-feed-filters" id="FeedFilters" aria-labelledby="FeedFiltersTitle">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                    <div class="fw-bold" id="FeedFiltersTitle"><i class="fa fa-filter me-2" aria-hidden="true"></i>@L["Grants:Feed:Filter:Title"]</div>
+                    <button type="button" class="apya-console-filter-clear" id="FilterClear">@L["Grants:Feed:Filter:Clear"]</button>
+                </div>
+                <div class="apya-feed-filter-grid">
+                    <div class="apya-feed-filter-wide">
+                        <label class="form-label small" for="FilterText">@L["Grants:Feed:Filter:Text"]</label>
+                        <input type="search" class="form-control form-control-sm" id="FilterText" maxlength="100"
+                               placeholder="@L["Grants:Feed:Filter:TextPlaceholder"]" />
+                    </div>
+                    <div>
+                        <label class="form-label small" for="FilterIssuer">@L["Grants:Feed:Filter:Issuer"]</label>
+                        <select class="form-select form-select-sm" id="FilterIssuer" multiple></select>
+                    </div>
+                    <div>
+                        <label class="form-label small" for="FilterSector">@L["Grants:Feed:Filter:Sector"]</label>
+                        <select class="form-select form-select-sm" id="FilterSector" multiple></select>
+                    </div>
+                    <div>
+                        <label class="form-label small" for="FilterRegion">@L["Grants:Feed:Filter:Region"]</label>
+                        <select class="form-select form-select-sm" id="FilterRegion" multiple></select>
+                        <div class="form-text">@L["Grants:Feed:Filter:RegionHint"]</div>
+                    </div>
+                    <div>
+                        <label class="form-label small" for="FilterDeadline">@L["Grants:Feed:Filter:Deadline"]</label>
+                        <select class="form-select form-select-sm" id="FilterDeadline">
+                            <option value="">@L["Grants:Feed:Filter:Any"]</option>
+                            <option value="7">@L["Grants:Feed:Filter:Deadline:7"]</option>
+                            <option value="30">@L["Grants:Feed:Filter:Deadline:30"]</option>
+                            <option value="90">@L["Grants:Feed:Filter:Deadline:90"]</option>
+                            <option value="custom">@L["Grants:Feed:Filter:Deadline:Custom"]</option>
+                        </select>
+                        <div class="d-flex gap-2 mt-2 d-none" id="FilterDeadlineRange">
+                            <input type="date" abp-data-datepicker="false" class="form-control form-control-sm apya-numeric" id="FilterDeadlineFrom"
+                                   aria-label="@L["Grants:Feed:Filter:DeadlineFrom"]" title="@L["Grants:Feed:Filter:DeadlineFrom"]" />
+                            <input type="date" abp-data-datepicker="false" class="form-control form-control-sm apya-numeric" id="FilterDeadlineTo"
+                                   aria-label="@L["Grants:Feed:Filter:DeadlineTo"]" title="@L["Grants:Feed:Filter:DeadlineTo"]" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label small" for="FilterCurrency">@L["Grants:Feed:Filter:Currency"]</label>
+                        <select class="form-select form-select-sm" id="FilterCurrency">
+                            <option value="">@L["Grants:Feed:Filter:Any"]</option>
+                            <option value="TRY">@L["Grants:Currency:TRY"]</option>
+                            <option value="EUR">@L["Grants:Currency:EUR"]</option>
+                            <option value="USD">@L["Grants:Currency:USD"]</option>
+                            <option value="GBP">@L["Grants:Currency:GBP"]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label small" for="FilterAmountMin">@L["Grants:Feed:Filter:Amount"]</label>
+                        <div class="d-flex gap-2">
+                            <input type="number" min="0" step="1000" class="form-control form-control-sm apya-numeric" id="FilterAmountMin"
+                                   placeholder="@L["Grants:Feed:Filter:AmountMin"]" aria-label="@L["Grants:Feed:Filter:AmountMin"]" />
+                            <input type="number" min="0" step="1000" class="form-control form-control-sm apya-numeric" id="FilterAmountMax"
+                                   placeholder="@L["Grants:Feed:Filter:AmountMax"]" aria-label="@L["Grants:Feed:Filter:AmountMax"]" />
+                        </div>
+                        <div class="form-text">@L["Grants:Feed:Filter:AmountHint"]</div>
+                    </div>
+                    <div>
+                        <label class="form-label small" for="FilterRate">@L["Grants:Feed:Filter:Rate"]</label>
+                        <input type="number" min="0" max="100" class="form-control form-control-sm apya-numeric" id="FilterRate" />
+                    </div>
+                    <div>
+                        <label class="form-label small" for="FilterRepayment">@L["Grants:Feed:Filter:Repayment"]</label>
+                        <select class="form-select form-select-sm" id="FilterRepayment">
+                            <option value="">@L["Grants:Feed:Filter:Any"]</option>
+                            <option value="0">@L["Grants:Feed:Filter:Repayment:0"]</option>
+                            <option value="1">@L["Grants:Feed:Filter:Repayment:1"]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label small" for="FilterConsortium">@L["Grants:Feed:Filter:Consortium"]</label>
+                        <select class="form-select form-select-sm" id="FilterConsortium">
+                            <option value="">@L["Grants:Feed:Filter:Any"]</option>
+                            <option value="no">@L["Grants:Feed:Filter:Consortium:No"]</option>
+                            <option value="yes">@L["Grants:Feed:Filter:Consortium:Yes"]</option>
+                        </select>
+                    </div>
+                    <fieldset>
+                        <legend class="form-label small mb-1">@L["Grants:Feed:Filter:Priority"]</legend>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="FilterFemale" />
+                            <label class="form-check-label small" for="FilterFemale">@L["Grants:Feed:Filter:Female"]</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="FilterYoung" />
+                            <label class="form-check-label small" for="FilterYoung">@L["Grants:Feed:Filter:Young"]</label>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </section>
+
+        @* Etkin filtreler: panel katlıyken de görünür; ✕ yalnız o filtreyi kaldırır. *@
+        <div class="apya-feed-filter-chips d-none" id="FeedFilterChips"></div>
+
         @* 12a · Tüm açık hibeler: kova sayısı tek satır — uygun olmayan gizlenmez, soluk durur. *@
         <div class="apya-feed-buckets d-none" id="FeedBuckets"></div>
 
@@ -320,6 +429,9 @@ else
 
         <div id="FeedEmpty" class="d-none">
             <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-filter", Title = L["Grants:Feed:Empty"].Value, Description = L["Grants:Feed:EmptyHint"].Value }' />
+        </div>
+        <div id="FilterEmpty" class="d-none">
+            <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-filter-circle-xmark", Title = L["Grants:Feed:Filter:Empty"].Value, Description = L["Grants:Feed:Filter:EmptyHint"].Value }' />
         </div>
         <div id="BookmarkEmpty" class="d-none">
             <partial name="_EmptyState" model='new EmptyStateModel { Icon = "fa-bookmark", Title = L["Grants:Feed:BookmarkEmpty"].Value, Description = L["Grants:Feed:BookmarkEmptyHint"].Value }' />
