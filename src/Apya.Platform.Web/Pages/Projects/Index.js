@@ -127,6 +127,19 @@ $(function () {
         }
     }
 
+    // Kart için kısa tutar (₺1,9 Mn) — panolardaki formatMoneyCompact ile aynı biçim.
+    // Tam tutar title'da durur.
+    function moneyCompact(v, cur) {
+        try {
+            return new Intl.NumberFormat('tr-TR', {
+                style: 'currency', currency: (cur && cur !== '***') ? cur : 'TRY',
+                notation: 'compact', maximumFractionDigits: 1
+            }).format(v || 0);
+        } catch (e) {
+            return money(v, cur);
+        }
+    }
+
     function fmtDate(iso) {
         if (!iso) { return null; }
         return luxon.DateTime.fromISO(iso, { locale: abp.localization.currentCulture.name })
@@ -287,14 +300,17 @@ $(function () {
         var spent = p.spentBudget || 0;
         var pct = total > 0 ? Math.round(100 * spent / total) : 0;
         var tone = pct > 100 ? ' is-negative' : (pct > 80 ? ' is-warning' : '');
-        var right = compact
-            ? '<span class="apya-numeric">' + money(total, p.currency) + '</span>'
-            : '<span class="apya-numeric">' + money(spent, p.currency) + ' / ' + money(total, p.currency) + '</span>';
-        var left = compact
-            ? '<span class="apya-numeric">' + money(spent, p.currency) + '</span>'
-            : '<span>Bütçe</span>';
-        return '<div class="apya-proj-bar-label">' + left + right + '</div>' +
-            '<div class="apya-mini-progress' + tone + '"><span style="width:' + Math.min(pct, 100) + '%"></span></div>';
+        var bar = '<div class="apya-mini-progress' + tone + '"><span style="width:' + Math.min(pct, 100) + '%"></span></div>';
+        if (compact) {
+            return '<div class="apya-proj-bar-label">' +
+                '<span class="apya-numeric">' + money(spent, p.currency) + '</span>' +
+                '<span class="apya-numeric">' + money(total, p.currency) + '</span></div>' + bar;
+        }
+        // Kart: üstte yüzde, altta kısa tutar — iki sütundan birine sığsın diye.
+        return '<div class="apya-proj-bar-label"><span>Bütçe</span><span class="apya-numeric">%' + pct + '</span></div>' + bar +
+            '<div class="apya-proj-card-metric-sub apya-numeric" title="' +
+            esc(money(spent, p.currency) + ' / ' + money(total, p.currency)) + '">' +
+            esc(moneyCompact(spent, p.currency) + ' / ' + moneyCompact(total, p.currency)) + '</div>';
     }
 
     function progressBarHtml(p, compact) {
@@ -302,14 +318,14 @@ $(function () {
         var tasks = (p.taskCount || 0) > 0
             ? p.completedTaskCount + '/' + p.taskCount + (compact ? '' : ' görev')
             : 'görev yok';
-        var left = compact
-            ? '<span class="apya-numeric">%' + pct + '</span>'
-            : '<span>İlerleme</span>';
-        var right = compact
-            ? '<span class="apya-numeric">' + tasks + '</span>'
-            : '<span class="apya-numeric">%' + pct + ' · ' + tasks + '</span>';
-        return '<div class="apya-proj-bar-label">' + left + right + '</div>' +
-            '<div class="apya-mini-progress is-progress"><span style="width:' + pct + '%"></span></div>';
+        var bar = '<div class="apya-mini-progress is-progress"><span style="width:' + pct + '%"></span></div>';
+        if (compact) {
+            return '<div class="apya-proj-bar-label">' +
+                '<span class="apya-numeric">%' + pct + '</span>' +
+                '<span class="apya-numeric">' + tasks + '</span></div>' + bar;
+        }
+        return '<div class="apya-proj-bar-label"><span>İlerleme</span><span class="apya-numeric">%' + pct + '</span></div>' + bar +
+            '<div class="apya-proj-card-metric-sub apya-numeric">' + tasks + '</div>';
     }
 
     function facepileHtml(p, emptyText) {
@@ -400,23 +416,26 @@ $(function () {
         if (riskOf(p) === 'high') { chips.push(chip('negative', 'Risk')); }
         if (p.displayStatus && p.displayStatus !== 'Risk') { chips.push(chip(STATUS_TONE[p.displayStatus] || 'neutral', p.displayStatus)); }
         if (cat.label) { chips.push('<span class="apya-chip ' + cat.chip + '">' + esc(cat.label) + '</span>'); }
-        chips.push(daysChipHtml(p));
+        var days = daysChipHtml(p);
+        if (days) { chips.push(days); }
 
-        var box = p.overdueTaskCount > 0
-            ? '<div class="apya-proj-overdue-box">' +
-              '  <i class="fa fa-clock-rotate-left" aria-hidden="true"></i>' +
-              '  <span>' + p.overdueTaskCount + ' gecikmiş görev</span>' +
-              '  <span class="apya-proj-overdue-meta">' + esc(overdueMeta(p)) + '</span>' +
-              '</div>'
-            : '<div class="apya-proj-overdue-box is-clear">' +
-              '  <i class="fa fa-check" aria-hidden="true"></i>' +
-              '  <span>Gecikmiş görev yok</span>' +
-              '  <span class="apya-proj-overdue-meta">' + esc(overdueMeta(p)) + '</span>' +
-              '</div>';
+        // Gecikme ayrı bir kutu değil, alt şeritte tek satırlık sinyal: varsa
+        // kırmızı, yoksa sönük "Gecikme yok". Dar kartta ek bilgi üç noktayla kırpılır.
+        var meta = overdueMeta(p);
+        var signalText = p.overdueTaskCount > 0
+            ? p.overdueTaskCount + ' gecikmiş görev'
+            : 'Gecikme yok';
+        var signal =
+            '<span class="apya-proj-card-signal' + (p.overdueTaskCount > 0 ? ' is-negative' : '') + '"' +
+            ' title="' + esc(signalText + (meta ? ' · ' + meta : '')) + '">' +
+            '<i class="fa ' + (p.overdueTaskCount > 0 ? 'fa-clock-rotate-left' : 'fa-check') + '" aria-hidden="true"></i>' +
+            esc(signalText) +
+            (meta ? '<span class="apya-proj-card-signal-meta"> · ' + esc(meta) + '</span>' : '') +
+            '</span>';
 
         var budget = budgetBarHtml(p, false);
 
-        // Kapak görseli varsa kategori ikon kutusunun YERİNE geçer — aynı 40px
+        // Kapak görseli varsa kategori ikon kutusunun YERİNE geçer — aynı 32px
         // yuva, yani kartın yüksekliği görselli/görselsiz aynı kalır.
         var thumb = p.coverImageFileName
             ? '<span class="apya-proj-card-cover" aria-hidden="true">' +
@@ -435,20 +454,18 @@ $(function () {
             '      <span class="apya-numeric">' + esc(p.code) + '</span>' + tenantHtml(p) +
             '    </div>' +
             '  </div>' +
+            moreButtonHtml(p) +
             '</div>' +
-            '<div class="apya-proj-chips">' + chips.join('') + '</div>' +
-            '<div class="apya-tile-progress-group">' +
-            (budget ? '<div>' + budget + '</div>' : '') +
-            '  <div>' + progressBarHtml(p, false) + '</div>' +
+            (chips.length ? '<div class="apya-proj-chips">' + chips.join('') + '</div>' : '') +
+            '<div class="apya-proj-card-metrics">' +
+            (budget ? '<div class="apya-proj-card-metric">' + budget + '</div>' : '') +
+            '  <div class="apya-proj-card-metric">' + progressBarHtml(p, false) + '</div>' +
             '</div>' +
-            box +
             '<div class="apya-proj-card-foot">' +
             facepileHtml(p, true) +
-            '  <div class="apya-proj-card-actions">' +
-            '    <a class="btn btn-sm btn-outline-secondary" href="/Projects/ProjectDetails/' + p.id + '" data-stop>' +
-            '      <i class="fa fa-list-check me-1"></i>Detay</a>' +
-            moreButtonHtml(p) +
-            '  </div>' +
+            signal +
+            '  <a class="apya-proj-card-detail" href="/Projects/ProjectDetails/' + p.id + '" data-stop' +
+            '     title="Proje detayına git">Detay<i class="fa fa-chevron-right" aria-hidden="true"></i></a>' +
             '</div>' +
             '</div>';
     }
