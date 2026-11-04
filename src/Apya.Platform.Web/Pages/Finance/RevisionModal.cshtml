@@ -97,9 +97,8 @@
                                                noktalı gönderir, tr-TR bağlaması onu binlik sayardı. *@
                                             <input asp-for="Lines[i].Reduction" type="number" step="0.01" min="0" data-money-input="true"
                                                    class="form-control form-control-sm text-end apya-numeric fw-bold text-danger"
-                                                   data-reduction data-limit="@(Model.Lines[i].TransferLimitPercent?.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                                                   data-reduction />
                                             <input type="hidden" name="__Invariant" value="Lines[@i].Reduction" />
-                                            <div class="small text-warning d-none" data-limit-warning></div>
                                         </td>
                                         <td class="text-end apya-numeric fw-semibold" data-result>@Model.Lines[i].CurrentAmount.ToString("N2")</td>
                                     }
@@ -156,15 +155,6 @@
                     allocated += red;
 
                     $row.find('[data-result]').text(fmt(current - red));
-
-                    // Aktarım payı UYARIDIR, engel değil: sınır sunucuda uygulanmıyor.
-                    var limit = parseFloat($inp.data('limit'));
-                    var $warn = $row.find('[data-limit-warning]');
-                    if (limit > 0 && current > 0 && red > current * limit / 100) {
-                        $warn.text('aktarım payı %' + limit + ' sınırını aşıyor').removeClass('d-none');
-                    } else {
-                        $warn.addClass('d-none');
-                    }
                 });
                 $body.find('[data-unallocated]').text(fmt(total - allocated));
             }

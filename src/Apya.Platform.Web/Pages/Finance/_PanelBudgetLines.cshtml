@@ -177,10 +177,6 @@ else
                                             {
                                                 <span class="apya-chip apya-chip-neutral ms-1" title="Alt kalemler hariç bu kalemin kendi tutarı">kendi tutarı @Money(line.ApprovedAmount)</span>
                                             }
-                                            @if (line.TransferLimitPercent.HasValue)
-                                            {
-                                                <span class="apya-chip apya-chip-neutral ms-1">aktarım payı %@line.TransferLimitPercent.Value.ToString("N0")</span>
-                                            }
                                             @if (line.LinkedRecordCount > 0)
                                             {
                                                 <span class="apya-chip apya-chip-neutral ms-1">@line.LinkedRecordCount kayıt</span>
