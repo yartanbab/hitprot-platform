@@ -49,6 +49,18 @@ Kanonik kaynak. Kategoriler (dosyadaki sırayla):
 | Z-index | dropdown..toast (1000..1080) | |
 | Motion | `fast/base/slow/skeleton` + easing | B2B: ≤200ms; `prefers-reduced-motion` desteği |
 | **Density** | `--row-h` + `[data-density]` compact=36 / cozy=44 (default) / comfortable=56 | Tablo satır yüksekliği |
+| Kontrol | `--apya-control-h-sm/md/lg` = 32 / 36 / 44 | Telefonda araç çubuğu (arama, birincil düğme) **md (36)** |
+| **Filtre çipi** | `--apya-chip-h/-px/-fs` = 28 / 10 / 11.5px · telefonda (≤767.98px) 30 / 11 / 12px | Aşağıdaki kurala bak |
+
+**Filtre çipi kuralı (2026-11-04):** Tıklanabilir filtre/görünüm çiplerinin hepsi
+(`.apya-filter-chip`, `.apya-proj-filter`, `.apya-doc-filterchip`, `.apya-view-chip-btn`)
+yüksekliği, yatay dolguyu ve yazı boyunu bu üç token'dan alır. Sabit px yazma, telefonda
+`min-height: 44px` ile büyütme. Telefon ölçüsü token'ın kendi `@media` bloğundan gelir.
+Yeni bir filtre çipi gerekiyorsa önce `.apya-filter-chip`'i kullan. Ayrı sınıf gerekirse
+o da bu üç token'ı kullansın. Salt-okunur durum etiketi (`.apya-chip`) bu kurala girmez.
+
+**Telefonda sayfa üst boşluğu:** `.lpx-content` üst dolgusu 12px (`--apya-space-3`).
+LeptonX'in 42px'i tüm sayfalarda eziliyor (apya-shell.css §9). Sayfaya ayrıca üst boşluk ekleme.
 
 Dark tema: `[data-theme="dark"]` bloğu tüm semantik/surface/text/border/shadow'u override eder. `color-scheme` da senkron (native form kontrolleri dark olur).
 

@@ -996,11 +996,13 @@
 }
 
 /* Mobilde şerit üst bara ve iki yana yapışır, kenarlık ve köşe yok (2026-11-04).
-   Negatif margin temanın <768px dolgusunu (3em 1.14em, 1em = 14px) aşar; şerit
-   gizliyken sayfanın geri kalanının boşluğu değişmez. */
+   Negatif margin içerik alanının <768px dolgusunu aşar: üstte 12px
+   (apya-shell.css §9, --apya-space-3; temanın 42px'i orada eziliyor), yanlarda
+   temanın 1.14em'i (1em = 14px). Şerit gizliyken sayfanın geri kalanının
+   boşluğu değişmez. */
 @media (max-width: 767.98px) {
     .apya-macros-news {
-        margin-top: -42px;
+        margin-top: calc(var(--apya-space-3) * -1);
         margin-inline: -15.96px;
         border: 0;
         border-radius: 0;

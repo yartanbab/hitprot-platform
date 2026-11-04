@@ -184,6 +184,14 @@
     --apya-control-h-sm: 32px;
     --apya-control-h-md: 36px;
     --apya-control-h-lg: 44px;
+    /* Filtre çipi — tüm filtre/görünüm çipleri (.apya-filter-chip,
+       .apya-proj-filter, .apya-doc-filterchip, .apya-view-chip-btn) bu üçlüyü
+       kullanır. Telefonda 30px'e çıkar (aşağıdaki @media); 44px'lik dokunma
+       hedefi bilinçli olarak bırakıldı (kullanıcı kararı 2026-11-04: çipler
+       ekranı yiyordu). Alt sınır WCAG 2.5.8 = 24px. */
+    --apya-chip-h:  28px;
+    --apya-chip-px: 10px;
+    --apya-chip-fs: 11.5px;
     /* Açık genişlik LeptonX'in kendi değeri (280px, canlı ölçüldü) — handoff
        248px diyor ama tema yönetiyor, ezmiyoruz. Ray genişliği 72px: yine
        LeptonX geometrisi (PR #101), handoff 64px diyor. İki sapma da bilinçli. */
@@ -396,6 +404,15 @@
 [data-density="compact"]     { --row-h: var(--apya-row-h-compact); }
 [data-density="cozy"]        { --row-h: var(--apya-row-h-cozy); }
 [data-density="comfortable"] { --row-h: var(--apya-row-h-comfortable); }
+
+/* Telefon: çip bir kademe büyür (parmakla seçilsin), ama 44px'e değil. */
+@media (max-width: 767.98px) {
+    :root {
+        --apya-chip-h:  30px;
+        --apya-chip-px: 11px;
+        --apya-chip-fs: 12px;
+    }
+}
 
 /* ----------------------------------------------------------------------------
    3) ACCESSIBILITY — prefers-reduced-motion
