@@ -70,7 +70,7 @@ Tercih `localStorage["apya-theme"]`'da kalır (`light` | `dark` | `system`).
     try {
       var s = localStorage.getItem('apya-theme');
       var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      var r = s === 'dark' || (s !== 'light' && d) ? 'dark' : 'light';
+      var r = s === 'dark' || (s === 'system' && d) ? 'dark' : 'light'; // varsayılan açık
       document.documentElement.setAttribute('data-theme', r);
     } catch (_) {}
   })();
