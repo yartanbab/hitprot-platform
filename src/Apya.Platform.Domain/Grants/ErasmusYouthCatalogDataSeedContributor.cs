@@ -229,7 +229,8 @@ public class ErasmusYouthCatalogDataSeedContributor : IDataSeedContributor, ITra
                 new CallSeed("2027/1", GrantCallStatus.Planlandi, null)
             }),
 
-        // KA220'nin gençlik dışındaki alanları. 2027 çağrısı yayımlanmadı; tarih girilince "Açık"a çekilir.
+        // KA220'nin gençlik dışındaki alanları. 2026 son başvurusu dört alanda da 5 Mart'tı (Komisyon
+        // başvuru formu); 2027 çağrısı yayımlanmadı, tarih girilince "Açık"a çekilir.
         new(
             Guid.Parse("e7a51520-0000-4000-8000-000000220101"),
             "KA220-SCH",
@@ -245,7 +246,11 @@ public class ErasmusYouthCatalogDataSeedContributor : IDataSeedContributor, ITra
             "(lump-sum) üst limit alternatifleri.",
             new[] { "eğitim", "okul", "kamu" },
             new[] { "erasmus+", "işbirliği ortaklığı", "okul eğitimi", "öğretmen gelişimi" },
-            new[] { new CallSeed("2027/1", GrantCallStatus.Planlandi, null) }),
+            new[]
+            {
+                new CallSeed("2026/1", GrantCallStatus.Kapandi, Deadline(2026, 3, 5)),
+                new CallSeed("2027/1", GrantCallStatus.Planlandi, null)
+            }),
 
         new(
             Guid.Parse("e7a51520-0000-4000-8000-000000220102"),
@@ -263,7 +268,11 @@ public class ErasmusYouthCatalogDataSeedContributor : IDataSeedContributor, ITra
             "(lump-sum) üst limit alternatifleri.",
             new[] { "eğitim", "mesleki eğitim", "sanayi" },
             new[] { "erasmus+", "işbirliği ortaklığı", "mesleki eğitim", "beceri geliştirme" },
-            new[] { new CallSeed("2027/1", GrantCallStatus.Planlandi, null) }),
+            new[]
+            {
+                new CallSeed("2026/1", GrantCallStatus.Kapandi, Deadline(2026, 3, 5)),
+                new CallSeed("2027/1", GrantCallStatus.Planlandi, null)
+            }),
 
         new(
             Guid.Parse("e7a51520-0000-4000-8000-000000220103"),
@@ -281,7 +290,11 @@ public class ErasmusYouthCatalogDataSeedContributor : IDataSeedContributor, ITra
             "(lump-sum) üst limit alternatifleri.",
             new[] { "eğitim", "yetişkin eğitimi", "sivil toplum", "kamu" },
             new[] { "erasmus+", "işbirliği ortaklığı", "hayat boyu öğrenme", "temel beceriler" },
-            new[] { new CallSeed("2027/1", GrantCallStatus.Planlandi, null) }),
+            new[]
+            {
+                new CallSeed("2026/1", GrantCallStatus.Kapandi, Deadline(2026, 3, 5)),
+                new CallSeed("2027/1", GrantCallStatus.Planlandi, null)
+            }),
 
         new(
             Guid.Parse("e7a51520-0000-4000-8000-000000220104"),
@@ -298,6 +311,10 @@ public class ErasmusYouthCatalogDataSeedContributor : IDataSeedContributor, ITra
             "(lump-sum) üst limit alternatifleri.",
             new[] { "eğitim", "yükseköğretim", "araştırma" },
             new[] { "erasmus+", "işbirliği ortaklığı", "yükseköğretim", "uluslararasılaşma" },
-            new[] { new CallSeed("2027/1", GrantCallStatus.Planlandi, null) })
+            new[]
+            {
+                new CallSeed("2026/1", GrantCallStatus.Kapandi, Deadline(2026, 3, 5)),
+                new CallSeed("2027/1", GrantCallStatus.Planlandi, null)
+            })
     };
 }

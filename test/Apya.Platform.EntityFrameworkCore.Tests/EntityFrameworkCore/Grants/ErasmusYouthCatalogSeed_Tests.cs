@@ -106,7 +106,7 @@ public class ErasmusYouthCatalogSeed_Tests : PlatformEntityFrameworkCoreTestBase
         gelecek.OpenDate.ShouldBeNull();
     }
 
-    /// <summary>KA220'nin gençlik dışı dört alanı: 2027 takvimi açıklanmadığı için yalnız tarihsiz "Planlandı" dönem.</summary>
+    /// <summary>KA220'nin gençlik dışı dört alanı: kapanmış 2026 dönemi + takvimi açıklanmamış tarihsiz 2027 dönemi.</summary>
     [Theory]
     [InlineData("000000220101", "KA220-SCH")]
     [InlineData("000000220102", "KA220-VET")]
@@ -121,11 +121,18 @@ public class ErasmusYouthCatalogSeed_Tests : PlatformEntityFrameworkCoreTestBase
         grant.TenantId.ShouldBeNull();
         grant.Name.ShouldStartWith("KA220 - ");
 
-        var call = (await _callRepository.GetListAsync(c => c.GrantId == id)).ShouldHaveSingleItem();
-        call.Period.ShouldBe("2027/1");
-        call.Status.ShouldBe(GrantCallStatus.Planlandi);
-        call.Deadline.ShouldBeNull();
-        call.Reference.ShouldBe(code);
+        var calls = await _callRepository.GetListAsync(c => c.GrantId == id);
+        calls.Count.ShouldBe(2);
+
+        var gecmis = calls.Single(c => c.Period == "2026/1");
+        gecmis.Status.ShouldBe(GrantCallStatus.Kapandi);
+        gecmis.Deadline!.Value.Date.ShouldBe(new DateTime(2026, 3, 5));
+        gecmis.Reference.ShouldBe(code);
+
+        var gelecek = calls.Single(c => c.Period == "2027/1");
+        gelecek.Status.ShouldBe(GrantCallStatus.Planlandi);
+        gelecek.Deadline.ShouldBeNull();
+        gelecek.Reference.ShouldBe(code);
 
         (await _criteriaRepository.GetListAsync(t => t.GrantId == id))
             .ShouldContain(t => t.Kind == GrantCriteriaKind.AnahtarKelime && t.Value == "erasmus+");
