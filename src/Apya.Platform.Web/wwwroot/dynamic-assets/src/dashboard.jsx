@@ -37,7 +37,13 @@ if (rootElement) {
             <DeviceModeProvider>
                 <QueryProvider>
                     <ToastProvider>
-                        <SignalRProvider>
+                        {/* Kapalı (kullanıcı kararı 2026-11-04): varsayılan hub
+                            /signalr-hubs/notifications sunucuda yok (her yüklemede
+                            negotiate 405 + konsol hatası) ve köprünün dinlediği
+                            olayların hiçbiri sunucudan gönderilmiyor. Pano yoklamayla
+                            tazeleniyor; köprünün yerel "veri değişti" dinleyicisi
+                            bağlantıdan bağımsız çalışmaya devam eder. */}
+                        <SignalRProvider enabled={false}>
                             <DashboardRealtimeBridge />
                             <DashboardRoot />
                         </SignalRProvider>

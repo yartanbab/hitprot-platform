@@ -2347,7 +2347,7 @@ const Ke = document.getElementById("apya-dashboard-root");
 Ke && bt(
   Ke,
   "dashboard",
-  /* @__PURE__ */ e.jsx(jt, { children: /* @__PURE__ */ e.jsx(Nt, { children: /* @__PURE__ */ e.jsx(kt, { children: /* @__PURE__ */ e.jsx(wt, { children: /* @__PURE__ */ e.jsxs(Ct, { children: [
+  /* @__PURE__ */ e.jsx(jt, { children: /* @__PURE__ */ e.jsx(Nt, { children: /* @__PURE__ */ e.jsx(kt, { children: /* @__PURE__ */ e.jsx(wt, { children: /* @__PURE__ */ e.jsxs(Ct, { enabled: !1, children: [
     /* @__PURE__ */ e.jsx(fs, {}),
     /* @__PURE__ */ e.jsx(is, {})
   ] }) }) }) }) })
