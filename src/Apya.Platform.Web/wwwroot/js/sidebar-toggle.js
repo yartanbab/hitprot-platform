@@ -371,7 +371,9 @@ $(function () {
     // Dördüncü anahtar eskiden 'Apya.Reports'tu; o kategori Finans çatısına
     // katılınca (2026-09-03) menüde bir daha doğmuyor ve slot zaten otomatik
     // doldurmaya kalıyordu. Otomatik doldurmanın seçeceği hedef açıkça yazıldı.
-    var DAILY_KEYS = ['Apya.Dashboard', 'Apya.Work', 'Apya.Finance', 'Apya.Grants'];
+    // İlk anahtar 2026-11-04'te Genel Bakış'tan Hızlı İşlemler'e geçti (açılış ekranı
+    // oldu); Genel Bakış "Daha" ekranına iner.
+    var DAILY_KEYS = ['Apya.Macros', 'Apya.Work', 'Apya.Finance', 'Apya.Grants'];
     var DAILY_MAX = 4;
 
     function splitItems() {

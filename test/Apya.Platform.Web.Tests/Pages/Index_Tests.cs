@@ -10,11 +10,9 @@ public class Index_Tests : PlatformWebTestBase
     [Fact]
     public async Task Welcome_Page()
     {
-        // Kök artık Dashboard'a yönleniyor (commit 7bb4335). Test /Projects
-        // beklemeye devam ettiği için main kırmızıydı — bu PR'ın konusuyla
-        // ilgisiz, yolda bulunup düzeltildi.
+        // Açılış ekranı Hızlı İşlemler (2026-11-04 kararı; önceden Genel Bakış).
         var response = await GetResponseAsync("/", HttpStatusCode.Found);
         response.Headers.Location.ShouldNotBeNull();
-        response.Headers.Location.ToString().ShouldContain("/Dashboard");
+        response.Headers.Location.ToString().ShouldContain("/Makro");
     }
 }
