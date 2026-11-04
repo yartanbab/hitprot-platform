@@ -7,7 +7,7 @@ namespace Apya.Platform.Web.Components.ApyaThemeHead;
 /// Site-wide &lt;head&gt; enjeksiyonu (LayoutHooks.Head.Last ile her sayfaya).
 /// İçerik: PWA manifest/icon/theme-color + tema FOUC (flash-of-unstyled-content)
 /// engelleme. data-theme'i paint'ten ÖNCE çözer: kayıtlı tercih ('apya-theme')
-/// || OS tercihi. Token'lar + LeptonX/Bootstrap köprüsü ayrı olarak global stil
+/// || açık (varsayılan; OS yalnız 'system' seçiliyse). Token'lar + LeptonX/Bootstrap köprüsü ayrı olarak global stil
 /// bundle'ında (PlatformWebModule.ConfigureBundles) yüklüdür.
 /// </summary>
 public class ApyaThemeHeadViewComponent : AbpViewComponent

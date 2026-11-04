@@ -157,6 +157,8 @@ $(function () {
         $html.addClass(theme === 'dark' ? 'lpx-theme-dark' : 'lpx-theme-light');
         // Body class — eski DataTable/jQuery widget uyumu.
         $('body').toggleClass('dark-theme', theme === 'dark');
+        // Mobil tarayıcı çubuğu rengi (ApyaThemeHead'deki tek theme-color meta'sı).
+        $('meta[name="theme-color"]').attr('content', theme === 'dark' ? '#0A0A0B' : '#F5F5F5');
 
         // Token'ları CSS dışında okuyan tüketiciler (chart.js — HANDOFF: "tema
         // değişince grafikler yeniden kurulur") için tek bildirim noktası.

@@ -6,13 +6,15 @@
     Token'lar + köprü global stil bundle'ında; burada yalnız PWA head + FOUC engelleme.
 *@
 <link rel="manifest" href="@Url.Content("~/manifest.webmanifest")" />
-<meta name="theme-color" content="#F5F5F5" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="#0A0A0B" media="(prefers-color-scheme: dark)" />
+@* Tarayıcı çubuğu rengi işletim sistemini değil seçili temayı izler: varsayılan
+   açık; koyu seçiliyse aşağıdaki betik ve dark-mode.js #0A0A0B yazar. *@
+<meta name="theme-color" content="#F5F5F5" />
 <partial name="_ApyaIcons" />
 
 @*
     FOUC engelleme — ThemeProvider/dark-mode.js mount olmadan ÖNCE (paint öncesi) çalışır.
-    Çözüm: kayıtlı tercih ('apya-theme') || OS tercihi → <html data-theme> + LeptonX class mirror.
+    Çözüm: kayıtlı tercih ('apya-theme') || AÇIK (varsayılan) → <html data-theme> + LeptonX class mirror.
+    OS tercihi yalnız kullanıcı açıkça 'system' seçtiyse izlenir (React ThemeToggle döngüsü).
     Tüm kontrolcüler aynı 'apya-theme' anahtarını okur (bu FOUC, dark-mode.js, React ThemeProvider).
 *@
 <script>
@@ -38,8 +40,12 @@
             var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             var resolved = isAuthPage
                 ? 'light'
-                : ((stored === 'dark' || (stored !== 'light' && prefersDark)) ? 'dark' : 'light');
+                : ((stored === 'dark' || (stored === 'system' && prefersDark)) ? 'dark' : 'light');
             html.setAttribute('data-theme', resolved);
+            if (resolved === 'dark') {
+                var themeColor = document.querySelector('meta[name="theme-color"]');
+                if (themeColor) { themeColor.setAttribute('content', '#0A0A0B'); }
+            }
             html.classList.remove('lpx-theme-light', 'lpx-theme-dark', 'lpx-theme-dim');
             html.classList.add(resolved === 'dark' ? 'lpx-theme-dark' : 'lpx-theme-light');
 
