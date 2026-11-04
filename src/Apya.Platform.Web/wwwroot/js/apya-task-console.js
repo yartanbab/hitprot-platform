@@ -109,15 +109,86 @@
     // seçmeye devam edebiliyor; "tümünü seç" yalnız görünen sayfayı kapsar.
     function createBulkSelection(opts) {
         var selected = {};
+        // Mobil kartta onay kutusu yalnız SEÇİM KİPİNDE görünür (apya-shell.css
+        // `table.is-selecting`). Kip, seçili görev varken ya da ⋯ menüsündeki
+        // "Görev seç" ile açılır; çubuktaki ✕ (clear) kapatır.
+        var forced = false;
 
         function ids() { return Object.keys(selected); }
 
         function render() {
             var n = ids().length;
-            $(opts.bar).toggleClass('d-none', n === 0);
+            var selecting = n > 0 || forced;
+            $(opts.bar).toggleClass('d-none', !selecting);
             $(opts.count).text(n + ' görev seçili');
+            $(opts.table).toggleClass('is-selecting', selecting);
+            // Mobilde çubuk ekrana sabit; FAB ile üst üste binmesin.
+            $('body').toggleClass('apya-bulk-open', selecting);
             syncRowChecks();
         }
+
+        // Kart düzeninde mi? Kap sorgusu JS'ten okunamıyor; satırın ızgara olması yeterli işaret.
+        function isCard(tr) {
+            return !!tr && window.getComputedStyle(tr).display === 'grid';
+        }
+
+        function toggleRow(tr) {
+            var $check = $(tr).find('.apya-row-check[data-task-id]');
+            if (!$check.length) { return false; }
+            $check.prop('checked', !$check.prop('checked')).trigger('change');
+            return true;
+        }
+
+        // Uzun basma (mobil kart) → seçim kipine gir ve satırı seç. Sonraki
+        // tıklama görev detayını AÇMAMALI; seçim kipindeyken karta dokunmak da
+        // seçimi değiştirir. Sayfaların satır tıklama işleyicisi document'ta
+        // kabarcık aşamasında çalışıyor — burada YAKALAMA aşamasında kesilir.
+        var pressTimer = null, pressStart = null, swallowClick = false;
+        $(document).on('touchstart', opts.table + ' tbody tr', function (e) {
+            var tr = this;
+            if (!isCard(tr) || $(e.target).closest('button, a, input').length) { return; }
+            var t = e.originalEvent && e.originalEvent.touches ? e.originalEvent.touches[0] : null;
+            pressStart = t ? { x: t.clientX, y: t.clientY } : null;
+            clearTimeout(pressTimer);
+            pressTimer = setTimeout(function () {
+                pressTimer = null;
+                if (toggleRow(tr)) {
+                    swallowClick = true;
+                    if (navigator.vibrate) { navigator.vibrate(10); }
+                }
+            }, 500);
+        });
+        $(document).on('touchmove', opts.table + ' tbody tr', function (e) {
+            var t = e.originalEvent && e.originalEvent.touches ? e.originalEvent.touches[0] : null;
+            if (pressTimer && (!t || !pressStart ||
+                Math.abs(t.clientX - pressStart.x) > 10 || Math.abs(t.clientY - pressStart.y) > 10)) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        });
+        $(document).on('touchend touchcancel', opts.table + ' tbody tr', function () {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+        });
+        document.addEventListener('contextmenu', function (e) {
+            if (swallowClick && $(e.target).closest(opts.table).length) { e.preventDefault(); }
+        }, true);
+        document.addEventListener('click', function (e) {
+            var tr = $(e.target).closest(opts.table + ' tbody tr')[0];
+            if (!tr) { swallowClick = false; return; }
+            if (swallowClick) {
+                swallowClick = false;
+                e.stopPropagation();
+                e.preventDefault();
+                return;
+            }
+            if ($(opts.table).hasClass('is-selecting') && isCard(tr) &&
+                !$(e.target).closest('.apya-row-check').length) {
+                e.stopPropagation();
+                e.preventDefault();
+                toggleRow(tr);
+            }
+        }, true);
 
         function syncRowChecks() {
             $(opts.table + ' tbody .apya-row-check[data-task-id]').each(function () {
@@ -150,10 +221,53 @@
 
         return {
             ids: ids,
-            clear: function () { selected = {}; render(); },
+            clear: function () { selected = {}; forced = false; render(); },
+            startSelecting: function () { forced = true; render(); },
             render: render,
             syncRowChecks: syncRowChecks
         };
+    }
+
+    // --- Tek görevi tamamla + "Geri al" -----------------------------------
+    // Satır ✓'si (masaüstü) ve kart halkası (mobil) aynı akışı kullanır.
+    // Geri al, görevi önceki durumuna döndürür; özel pano kolonu geri GELMEZ
+    // (UpdateStatusAsync tamamlanınca kartı kolondan düşürüyor).
+    var undoTimer = null;
+
+    function showUndoToast(message, onUndo) {
+        var $t = $('#apya-undo-toast');
+        if (!$t.length) {
+            $t = $('<div id="apya-undo-toast" class="apya-undo-toast d-none" role="status" aria-live="polite">' +
+                '<span class="apya-undo-toast-text"></span>' +
+                '<button type="button" class="apya-undo-toast-btn">Geri al</button></div>').appendTo('body');
+        }
+        function hide() { $t.addClass('d-none'); }
+        clearTimeout(undoTimer);
+        $t.find('.apya-undo-toast-text').text(message);
+        $t.removeClass('d-none');
+        $t.find('.apya-undo-toast-btn').prop('disabled', false).off('click').on('click', function () {
+            $(this).prop('disabled', true);
+            clearTimeout(undoTimer);
+            Promise.resolve(onUndo()).then(hide, hide);
+        });
+        undoTimer = setTimeout(hide, 6000);
+    }
+
+    function completeWithUndo(opts) {
+        var prev = parseInt(opts.prevStatus, 10);
+        return opts.service.updateStatus(opts.id, 4).then(function () {
+            opts.onChanged();
+            if (isNaN(prev) || prev === 4) {
+                abp.notify.success('Görev tamamlandı.');
+                return;
+            }
+            showUndoToast('Görev tamamlandı.', function () {
+                return opts.service.updateStatus(opts.id, prev).then(function () {
+                    abp.notify.info('Görev geri alındı.');
+                    opts.onChanged();
+                });
+            });
+        });
     }
 
     // İstekleri SIRAYLA çalıştırır. Paralel (Promise.all) çağrı bu backend'de
@@ -901,6 +1015,7 @@
         bindDropdownChip: bindDropdownChip,
         bindToggleChip: bindToggleChip,
         createBulkSelection: createBulkSelection,
+        completeWithUndo: completeWithUndo,
         bindDensitySegment: bindDensitySegment,
         createColumnPrefs: createColumnPrefs,
         renderEmptyState: renderEmptyState,
