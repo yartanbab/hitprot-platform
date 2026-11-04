@@ -372,6 +372,25 @@ h1, h2, h3, h4, h5, h6 {
     margin-inline: auto;
 }
 
+/* Telefon: üst bar ile ilk öğe arası 12px. LeptonX burada 3em (42px) veriyordu;
+   üst barın altında anlamsız bir boşluk kalıyor, ilk kart ekranın altına
+   itiliyordu (kullanıcı kararı 2026-11-04, tüm sayfalar). Özgüllük (0,2,1)
+   temanın (0,2,0) kuralını yükleme sırasından bağımsız yener. Yalnız ÜST:
+   alt dolguyu html[data-mobile-shell="tabs"] kuralı (alt sekme payı) veriyor. */
+@media (max-width: 767.98px) {
+    html .lpx-content-container .lpx-content { padding-top: var(--apya-space-3); }
+    /* React ada kabı (px-4 py-4 sm:…) kendi 36px üst dolgusunu EKLİYORDU —
+       üst boşluk tek kaynaktan (yukarıdaki 12px) gelsin. Adalar .apya-page içine
+       #…-island kabıyla bağlanır (Documents/*, Deliveries, Customers).
+       36px Tailwind'den değil, aynı adlı Bootstrap `.py-4`'ün !important'ından
+       geliyor; onu ancak !important yener. */
+    .apya-page > [id$="-island"] > :first-child { padding-top: 0 !important; }
+    /* Masraf Yakala satır içi `margin:-1.5rem` ile eski 42px dolguyu yiyordu;
+       12px'lik dolgunun altında üst barın altına 12px giriyordu (ölçüldü).
+       Satır içi stili ezmek için !important şart. Masaüstü değişmez. */
+    #apya-expense-capture-root { margin-top: 0 !important; }
+}
+
 /* ----------------------------------------------------------------------------
    10) MICRO COMPONENTS
    ---------------------------------------------------------------------------- */
@@ -1783,13 +1802,13 @@ i.apya-priority-dot {
 
 .apya-doc-filterchip {
     appearance: none;
-    height: 26px;
-    padding: 0 10px;
+    height: var(--apya-chip-h);
+    padding: 0 var(--apya-chip-px);
     border: 1px solid var(--apya-border-default);
     border-radius: var(--apya-radius-full);
     background: var(--apya-surface-raised);
     color: var(--apya-text-secondary);
-    font-size: 11.5px;
+    font-size: var(--apya-chip-fs);
     cursor: pointer;
 }
 .apya-doc-filterchip.is-active {
@@ -2948,13 +2967,13 @@ i.apya-priority-dot {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    height: 26px;
-    padding: 0 10px;
+    height: var(--apya-chip-h);
+    padding: 0 var(--apya-chip-px);
     border: 1px solid var(--apya-border-default);
     border-radius: var(--apya-radius-full);
     background: var(--apya-surface-base);
     color: var(--apya-text-secondary);
-    font-size: 11.5px;
+    font-size: var(--apya-chip-fs);
     font-weight: var(--apya-weight-semibold);
     white-space: nowrap;
     cursor: pointer;
@@ -3865,7 +3884,8 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     .apya-console-rail .apya-console-back { height: 44px; padding: 0 14px; }
     .apya-console-kebab { width: 44px; height: 44px; }
     .apya-console-search { height: 44px; }
-    .apya-filter-chip { min-height: 40px; }
+    /* Filtre çipi 44px'e ÇIKMAZ: yüksekliği --apya-chip-h token'ı verir
+       (telefonda 30px, kullanıcı kararı 2026-11-04). */
 
     /* --- Üst şerit mobilde kart olmaktan çıkar (kullanıcı kararı 2026-09-04) ---
        Dar ekranda kenarlık + gölge, zaten tam genişlikteki şeridi gereksiz bir
@@ -5517,13 +5537,13 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 30px;
-    padding: 0 8px 0 11px;
+    height: var(--apya-chip-h);
+    padding: 0 8px 0 var(--apya-chip-px);
     border: 1px solid var(--apya-border-default);
     border-radius: var(--apya-radius-full);
     background: var(--apya-surface-raised);
     color: var(--apya-text-primary);
-    font-size: var(--apya-fs-sm);
+    font-size: var(--apya-chip-fs);
     cursor: pointer;
     white-space: nowrap;
 }
@@ -5848,8 +5868,9 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     border: 1px solid var(--apya-border-default);
     background: var(--apya-surface-base);
     color: var(--apya-text-secondary);
-    padding: 4px 11px;
-    font-size: 11.5px;
+    height: var(--apya-chip-h);
+    padding: 0 var(--apya-chip-px);
+    font-size: var(--apya-chip-fs);
 }
 .apya-proj-filter:hover { border-color: var(--apya-border-strong); color: var(--apya-text-primary); }
 .apya-proj-filter:focus-visible { outline: none; box-shadow: var(--apya-shadow-focus); }
@@ -6475,7 +6496,7 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
 /* Mobilde gÃ¶rÃ¼nÃ¼m anahtarÄ± devre dÄ±ÅŸÄ±: her zaman tek kolon kart (spec md.7).
    Kart yÄ±ÄŸÄ±nÄ± `flex:none` ile ezilmez; kaydÄ±rma sayfanÄ±n kendisinde kalÄ±r. */
 @media (max-width: 768px) {
-    .apya-proj-console { gap: 10px; }
+    .apya-proj-console { gap: 8px; }
 
     /* Arama + Ã§ipler yapÄ±ÅŸkan: uzun listede filtreye dÃ¶nmek iÃ§in yukarÄ±
        kaydÄ±rmak gerekmesin. .lpx-content'in kendi kaydÄ±rmasÄ± altÄ±nda Ã§alÄ±ÅŸÄ±r. */
@@ -6502,7 +6523,7 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
        120px sığmadığı anda satır kırılır. 360px'ten itibaren tek satır kalır
        (arama ≥133px); 320px'te arama kendi satırına düşer — 92px'e kadar
        kısılmış bir arama kutusundan iyidir. */
-    .apya-proj-search { flex: 1 1 0; min-width: 120px; width: auto; height: var(--apya-control-h-lg); }
+    .apya-proj-search { flex: 1 1 0; min-width: 120px; width: auto; height: var(--apya-control-h-md); }
 
     /* Şerit mobilde BASILMAZ. Kalan üç hücrenin sürdüğü filtreler (risk ·
        overdue · week) hemen alttaki çip şeridinde zaten var: aynı üç filtre
@@ -6522,12 +6543,8 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
         padding-bottom: 2px;
     }
     .apya-proj-filters::-webkit-scrollbar { display: none; }
-    .apya-proj-filter {
-        flex: none;
-        min-height: 44px;   /* dokunma hedefi */
-        padding: 6px 14px;
-        font-size: var(--apya-fs-sm);
-    }
+    /* Ölçü --apya-chip-h token'ından (telefonda 30px); burada yalnız kısılmaz. */
+    .apya-proj-filter { flex: none; }
     /* Çip şeridi + sıralama kutusu tek satır. Kutu KAYDIRMA KABININ DIŞINDA,
        sağa sabit: çiplerin içine konsa şerit yatay kaydığında ekrandan çıkardı.
        Çipler solda kalır — "Tümü" ilk görünen öğe olmayı sürdürür. */
@@ -6545,10 +6562,14 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
         -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
         mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent);
     }
+    /* Kutu çiplerle aynı satırda, aynı boyda durur. Dokunmatikte yazı yine
+       16px olur: iOS yakınlaştırma koruması (pointer: coarse, !important) kazanır. */
     .apya-proj-filterbar > .apya-proj-sort {
         flex: none;
         max-width: 45%;
-        height: var(--apya-control-h-lg);
+        height: var(--apya-chip-h);
+        padding: 0 8px;
+        font-size: var(--apya-chip-fs);
     }
 
     /* Sayısı 0 olan çip mobilde basılmaz: 6 çipin 4'ü "0" derken şerit yatay
@@ -6571,11 +6592,12 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     .apya-proj-toolbar-end { margin-left: 0; width: 100%; flex-wrap: wrap; row-gap: 8px; }
     /* Eylem düğmesi tam metinle durur; daraltılırsa iki satıra kırılıp 46px'lik
        bir kutuya dönüyordu. Kısılmaz (flex:none) — satırda esneyen taraf arama.
-       Yükseklik 44px: blok içindeki dokunma hedefi kuralı. */
+       Yükseklik 36px (control-h-md): 44px şerit ekranı yiyordu (kullanıcı
+       kararı 2026-11-04); arama ve geri bildirim linki de aynı boyda. */
     .apya-proj-toolbar-end > .btn {
         flex: none;
         white-space: nowrap;
-        min-height: var(--apya-control-h-lg);
+        min-height: var(--apya-control-h-md);
     }
     /* Sayaç mobilde basılmaz: "2 proje" ile çip şeridindeki "Tümü 2" aynı bilgi,
        alt alta iki kez yazılıyordu. Filtre aktifken sayaç "1 / 2 proje" diyor —
@@ -6595,8 +6617,8 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-width: var(--apya-control-h-lg);
-        min-height: var(--apya-control-h-lg);   /* dokunma hedefi */
+        min-width: var(--apya-control-h-md);
+        min-height: var(--apya-control-h-md);
         text-decoration: none;
     }
     /* Metin görsel olarak düşer, ikon kalır — 320px'te arama + eylem + link
