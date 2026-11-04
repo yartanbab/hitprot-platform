@@ -3746,8 +3746,15 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     .apya-console-actions { margin-left: auto; }
 }
 @container (max-width: 760px) {
-    .apya-console-bars { flex-wrap: nowrap; overflow-x: auto; }
-    .apya-console-bar { flex: 0 0 104px; }
+    /* İki sütunlu ızgara, yana kaydırma YOK (2026-11-04). Eskiden şerit
+       `overflow-x:auto` idi; bu, dikey ekseni de kaydırılabilir yapar ve
+       barların içinde doğan açılır menüler (Bütçe, Zaman durumu) şeridin
+       içinde kırpılıp kendi içinde kayıyordu. 104px'lik kartta bütçe tutarı
+       da "264.800 / 2.242.6…" diye kesiliyordu. Tek kalan son bar tam satır. */
+    .apya-console-bars { display: grid; grid-template-columns: 1fr 1fr; }
+    .apya-console-bars > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .apya-console-bar { max-width: none; }
+    .apya-console-bars > .dropdown > .apya-console-bar { width: 100%; }
     /* Aksiyon kümesi tek satırda ~525px istiyor; 400px kapta şerit yatay
        taşıyordu (canlı ölçüm). `flex:none` iken genişliği max-content olduğu
        için `flex-wrap` TEK BAŞINA yetmiyor — önce tam satıra alınmalı. */
