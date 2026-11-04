@@ -522,6 +522,14 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     MaxAmount = grant.MaxAmount,
                     Currency = grant.Currency,
                     SupportRatePercent = grant.SupportRatePercent,
+                    MinAmount = grant.MinAmount,
+                    RepaymentType = grant.RepaymentType,
+                    RequiresConsortium = grant.RequiresConsortium,
+                    PrefersFemaleEntrepreneur = grant.PrefersFemaleEntrepreneur,
+                    PrefersYoungEntrepreneur = grant.PrefersYoungEntrepreneur,
+                    Sectors = TagValues(gtags, GrantCriteriaKind.Sektor),
+                    Regions = TagValues(gtags, GrantCriteriaKind.Bolge),
+                    Keywords = TagValues(gtags, GrantCriteriaKind.AnahtarKelime),
                     Score = score,
                     AlreadyApplied = appliedIds.Contains(call.Id),
                     InterestStatus = interestByCall.TryGetValue(call.Id, out var interestStatus)
@@ -559,6 +567,9 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
 
     private static int? DaysRemaining(GrantCall call, DateTime today)
         => call.Deadline.HasValue ? (int)(call.Deadline.Value.Date - today).TotalDays : null;
+
+    private static List<string> TagValues(IReadOnlyList<GrantCriteriaTag> tags, GrantCriteriaKind kind)
+        => tags.Where(t => t.Kind == kind).Select(t => t.Value).Distinct().OrderBy(v => v).ToList();
 
     private static List<GrantEligibilityRule> RulesWith(GrantEligibilityResult r, GrantRuleOutcome outcome)
         => r.Rules.Where(x => x.Outcome == outcome).Select(x => x.Rule).OrderBy(x => x).ToList();

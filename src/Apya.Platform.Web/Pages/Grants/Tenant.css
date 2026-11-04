@@ -67,6 +67,50 @@
     color: var(--apya-text-secondary);
 }
 
+/* --- Gelişmiş filtre --- */
+.apya-feed-filters { margin-bottom: var(--apya-space-3); }
+
+.apya-feed-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--apya-space-3);
+}
+
+.apya-feed-filter-grid fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.apya-feed-filter-wide { grid-column: 1 / -1; }
+
+/* Tarih kutusunun doğal genişliği dar ekranda iki kutuyu yan yana sığdırmıyor. */
+.apya-feed-filter-grid input[type="date"] { min-width: 0; }
+
+/* Koyu temada select2'nin açık gri seçim etiketi üzerinde açık renk yazı okunmuyor. */
+[data-theme="dark"] .apya-feed-filters .select2-selection__choice {
+    background-color: var(--apya-accent-soft);
+    border-color: var(--apya-border-default);
+    color: var(--apya-text-primary);
+}
+
+[data-theme="dark"] .apya-feed-filters .select2-selection__choice__remove { color: var(--apya-text-secondary); }
+
+.apya-feed-filter-chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--apya-space-2);
+    margin-bottom: var(--apya-space-3);
+}
+
+/* Çok değerli chip (ör. üç kurum) satırı itmesin: metin kesilir, tamamı chip'in title'ında. */
+.apya-feed-filter-chip-text {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.apya-feed-filter-result {
+    font-size: var(--apya-fs-xs);
+    color: var(--apya-text-secondary);
+}
+
 /* 12a · Kova sayıları tek satır. */
 .apya-feed-buckets {
     display: flex;

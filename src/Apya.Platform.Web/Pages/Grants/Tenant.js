@@ -226,6 +226,202 @@ $(function () {
         paintFeed();
     });
 
+    // ---------- Gelişmiş filtre ----------
+    // Açık çağrıların hepsi akışta geldiği için süzme burada yapılır; üç sekmeye de uygulanır.
+    function norm(s) { return (s || '').toLocaleLowerCase('tr-TR'); }
+    function numVal(sel) { var v = $(sel).val(); return v === '' || v == null ? null : parseFloat(v); }
+
+    function readFilters() {
+        var f = {
+            words: norm(($('#FilterText').val() || '').trim()).split(/\s+/).filter(Boolean),
+            issuers: $('#FilterIssuer').val() || [],
+            sectors: ($('#FilterSector').val() || []).map(norm),
+            regions: ($('#FilterRegion').val() || []).map(norm),
+            deadline: $('#FilterDeadline').val(),
+            from: $('#FilterDeadlineFrom').val(),
+            to: $('#FilterDeadlineTo').val(),
+            currency: $('#FilterCurrency').val(),
+            amountMin: numVal('#FilterAmountMin'),
+            amountMax: numVal('#FilterAmountMax'),
+            rate: numVal('#FilterRate'),
+            repayment: $('#FilterRepayment').val(),
+            consortium: $('#FilterConsortium').val(),
+            female: $('#FilterFemale').prop('checked'),
+            young: $('#FilterYoung').prop('checked')
+        };
+        // Döviz tutarı TL ile kıyaslanmaz (kur çevrimi yok): para birimi seçilmeden girilen tutar TL'dir.
+        f.hasAmount = f.amountMin != null || f.amountMax != null;
+        f.amountCurrency = f.currency || (f.hasAmount ? 'TRY' : '');
+        return f;
+    }
+
+    function hasAny(values, wanted) {
+        return (values || []).some(function (v) { return wanted.indexOf(norm(v)) >= 0; });
+    }
+
+    function matchesFilters(r, f) {
+        if (f.words.length) {
+            var hay = norm([r.grantName, r.issuer, r.period].concat(r.sectors || [], r.regions || [], r.keywords || []).join(' '));
+            if (f.words.some(function (w) { return hay.indexOf(w) < 0; })) { return false; }
+        }
+        if (f.issuers.length && f.issuers.indexOf(r.issuer) < 0) { return false; }
+        if (f.sectors.length && !hasAny(r.sectors, f.sectors)) { return false; }
+        // Bölge etiketi olmayan program ülke geneline açıktır: her bölge seçiminde listelenir.
+        if (f.regions.length && (r.regions || []).length && !hasAny(r.regions, f.regions)) { return false; }
+        if (f.deadline === 'custom') {
+            var d = r.deadline ? String(r.deadline).substring(0, 10) : null;
+            if ((f.from || f.to) && !d) { return false; }
+            if (f.from && d < f.from) { return false; }
+            if (f.to && d > f.to) { return false; }
+        } else if (f.deadline) {
+            if (r.daysRemaining == null || r.daysRemaining > parseInt(f.deadline, 10)) { return false; }
+        }
+        if (f.amountCurrency && (r.currency || 'TRY') !== f.amountCurrency) { return false; }
+        if (f.hasAmount) {
+            // Tutarı belirtilmemiş program tutar süzgecinden geçmez; aralık programın [asgari, tavan] aralığıyla kesişmeli.
+            if (!(r.maxAmount > 0)) { return false; }
+            if (f.amountMin != null && r.maxAmount < f.amountMin) { return false; }
+            if (f.amountMax != null && (r.minAmount || 0) > f.amountMax) { return false; }
+        }
+        if (f.rate != null && !(r.supportRatePercent != null && r.supportRatePercent >= f.rate)) { return false; }
+        if (f.repayment !== '' && r.repaymentType !== parseInt(f.repayment, 10)) { return false; }
+        if (f.consortium === 'yes' && !r.requiresConsortium) { return false; }
+        if (f.consortium === 'no' && r.requiresConsortium) { return false; }
+        if (f.female && !r.prefersFemaleEntrepreneur) { return false; }
+        if (f.young && !r.prefersYoungEntrepreneur) { return false; }
+        return true;
+    }
+
+    function applyFilters(rows) {
+        var f = readFilters();
+        return rows.filter(function (r) { return matchesFilters(r, f); });
+    }
+
+    // Etkin filtreler chip olarak: anahtar, temizlenecek denetimi söyler.
+    function activeFilterChips() {
+        var f = readFilters(), chips = [];
+        function selText(sel) { return $(sel).find('option:selected').text(); }
+        function add(key, label, value) { chips.push({ key: key, text: l(label) + ': ' + value }); }
+        if (f.words.length) { add('text', 'Grants:Feed:Filter:Text', ($('#FilterText').val() || '').trim()); }
+        if (f.issuers.length) { add('issuer', 'Grants:Feed:Filter:Issuer', f.issuers.join(', ')); }
+        if (f.sectors.length) { add('sector', 'Grants:Feed:Filter:Sector', ($('#FilterSector').val() || []).join(', ')); }
+        if (f.regions.length) { add('region', 'Grants:Feed:Filter:Region', ($('#FilterRegion').val() || []).join(', ')); }
+        if (f.deadline === 'custom' && (f.from || f.to)) {
+            add('deadline', 'Grants:Feed:Filter:Deadline', (f.from ? fmtDate(f.from) : '…') + ' – ' + (f.to ? fmtDate(f.to) : '…'));
+        } else if (f.deadline && f.deadline !== 'custom') {
+            add('deadline', 'Grants:Feed:Filter:Deadline', selText('#FilterDeadline'));
+        }
+        if (f.currency) { add('currency', 'Grants:Feed:Filter:Currency', selText('#FilterCurrency')); }
+        if (f.hasAmount) {
+            add('amount', 'Grants:Feed:Filter:Amount',
+                (f.amountMin != null ? money(f.amountMin, f.amountCurrency) : '…') + ' – ' +
+                (f.amountMax != null ? money(f.amountMax, f.amountCurrency) : '…'));
+        }
+        if (f.rate != null) { add('rate', 'Grants:Feed:Filter:Rate', '≥ ' + f.rate); }
+        if (f.repayment !== '') { add('repayment', 'Grants:Feed:Filter:Repayment', selText('#FilterRepayment')); }
+        if (f.consortium) { add('consortium', 'Grants:Feed:Filter:Consortium', selText('#FilterConsortium')); }
+        if (f.female) { chips.push({ key: 'female', text: l('Grants:Feed:Filter:Female') }); }
+        if (f.young) { chips.push({ key: 'young', text: l('Grants:Feed:Filter:Young') }); }
+        return chips;
+    }
+
+    function clearFilter(key) {
+        switch (key) {
+            case 'text': $('#FilterText').val(''); break;
+            case 'issuer': $('#FilterIssuer').val(null).trigger('change.select2'); break;
+            case 'sector': $('#FilterSector').val(null).trigger('change.select2'); break;
+            case 'region': $('#FilterRegion').val(null).trigger('change.select2'); break;
+            case 'deadline':
+                $('#FilterDeadline').val('');
+                $('#FilterDeadlineFrom, #FilterDeadlineTo').val('');
+                $('#FilterDeadlineRange').addClass('d-none');
+                break;
+            case 'currency': $('#FilterCurrency').val(''); break;
+            case 'amount': $('#FilterAmountMin, #FilterAmountMax').val(''); break;
+            case 'rate': $('#FilterRate').val(''); break;
+            case 'repayment': $('#FilterRepayment').val(''); break;
+            case 'consortium': $('#FilterConsortium').val(''); break;
+            case 'female': $('#FilterFemale').prop('checked', false); break;
+            case 'young': $('#FilterYoung').prop('checked', false); break;
+        }
+    }
+
+    // Seçenekler akıştaki değerlerden; büyük/küçük harf farkı tek seçenek sayılır, seçim korunur.
+    function fillOptions(sel, values) {
+        var $s = $(sel), keep = $s.val() || [], seen = {}, list = [];
+        values.concat(keep).forEach(function (v) {
+            var k = norm(v);
+            if (v && !seen[k]) { seen[k] = true; list.push(v); }
+        });
+        list.sort(function (a, b) { return a.localeCompare(b, 'tr'); });
+        $s.empty().append(list.map(function (v) { return new Option(v, v, false, keep.indexOf(v) >= 0); }));
+        $s.trigger('change.select2');
+    }
+
+    function fillFilterOptions() {
+        function collect(pick) { return feed.reduce(function (acc, r) { return acc.concat(pick(r) || []); }, []); }
+        fillOptions('#FilterIssuer', collect(function (r) { return [r.issuer]; }));
+        fillOptions('#FilterSector', collect(function (r) { return r.sectors; }));
+        fillOptions('#FilterRegion', collect(function (r) { return r.regions; }));
+    }
+
+    function paintFilterChips(shown, total) {
+        var chips = activeFilterChips();
+        $('#FilterActiveCount').toggleClass('d-none', chips.length === 0).text(chips.length);
+        $('#FeedFilterChips').toggleClass('d-none', chips.length === 0).html(chips.length === 0 ? '' :
+            chips.map(function (c) {
+                return '<button type="button" class="apya-filter-chip is-active" data-clear="' + c.key + '" title="' + esc(c.text) +
+                    '" aria-label="' + esc(l('Grants:Feed:Filter:Remove') + ': ' + c.text) + '"><span class="apya-feed-filter-chip-text">' + esc(c.text) +
+                    '</span><span class="apya-filter-chip-x" aria-hidden="true"><i class="fa fa-xmark"></i></span></button>';
+            }).join('') +
+            '<span class="apya-feed-filter-result">' + esc(l('Grants:Feed:Filter:Result', shown, total)) + '</span>' +
+            '<button type="button" class="apya-console-filter-clear" data-clear="all">' + esc(l('Grants:Feed:Filter:Clear')) + '</button>');
+    }
+
+    $('#FilterIssuer, #FilterSector, #FilterRegion').select2({
+        width: '100%',
+        placeholder: l('Grants:Feed:Filter:Any'),
+        language: { noResults: function () { return l('Grants:Feed:Filter:NoMatch'); } }
+    });
+
+    $('#FilterToggleBtn').on('click', function () {
+        var open = $('#FeedFilters').toggleClass('d-none').hasClass('d-none') === false;
+        $(this).attr('aria-expanded', open ? 'true' : 'false');
+        if (open) {
+            // select2 gizli panelde kurulunca "Tümü" yazısının genişliği 0 kalır; görünürken yeniden çizdir.
+            $('#FilterIssuer, #FilterSector, #FilterRegion').trigger('change.select2');
+            $('#FilterText').trigger('focus');
+        }
+    });
+
+    $('#FilterDeadline').on('change', function () {
+        $('#FilterDeadlineRange').toggleClass('d-none', $(this).val() !== 'custom');
+    });
+
+    // Yazarken her tuşta yeniden çizmesin.
+    var filterTimer = null;
+    $('#FeedFilters').on('input change', 'input, select', function () {
+        clearTimeout(filterTimer);
+        filterTimer = setTimeout(repaintFiltered, 150);
+    });
+
+    // Akış gelmeden çizilirse iskelet düşer ve boş durum görünür: yalnız yüklü akış yeniden çizilir.
+    function repaintFiltered() { if (feedLoaded) { paintFeed(); } }
+
+    function clearAllFilters() {
+        ['text', 'issuer', 'sector', 'region', 'deadline', 'currency', 'amount', 'rate', 'repayment', 'consortium', 'female', 'young']
+            .forEach(clearFilter);
+        repaintFiltered();
+    }
+
+    $('#FilterClear').on('click', clearAllFilters);
+    $('#FeedFilterChips').on('click', '[data-clear]', function () {
+        var key = $(this).data('clear');
+        if (key === 'all') { clearAllFilters(); return; }
+        clearFilter(key);
+        repaintFiltered();
+    });
+
     // ---------- Kart akışı ----------
     function ruleText(rule) { return l('Grants:Rule:' + ruleKeys[rule]); }
 
@@ -348,29 +544,43 @@ $(function () {
     function paintFeed() {
         // Akış yüklenemediyse sekme değişimi hata kutusunu "uygun çağrı yok" boş durumuyla ezmesin.
         if (feedFailed) { return; }
-        var eligible = sorted(feed.filter(function (r) { return r.isRecommended; }));
-        var items = activeTab === 'bookmarked' ? sorted(feed.filter(function (r) { return r.isBookmarked; }))
-            : activeTab === 'all' ? sorted(feed)
+        // Sekmeler ve sayaçları gelişmiş filtreden geçmiş akışı sayar; başlık cümlesi süzülmez.
+        var filtered = applyFilters(feed);
+        var eligible = sorted(filtered.filter(function (r) { return r.isRecommended; }));
+        var bookmarked = filtered.filter(function (r) { return r.isBookmarked; });
+        var items = activeTab === 'bookmarked' ? sorted(bookmarked)
+            : activeTab === 'all' ? sorted(filtered)
             : eligible;
+        var base = activeTab === 'bookmarked' ? feed.filter(function (r) { return r.isBookmarked; })
+            : activeTab === 'all' ? feed
+            : feed.filter(function (r) { return r.isRecommended; });
+        // Filtre sonucu boşaldıysa "uygun çağrı yok" değil "filtreye uyan yok" denir.
+        var filteredOut = items.length === 0 && base.length > 0;
+
+        $('#TabCountEligible').text(eligible.length);
+        $('#TabCountAll').text(filtered.length);
+        $('#TabCountBookmarked').text(bookmarked.length);
+        paintFilterChips(items.length, base.length);
 
         $('#FeedGrid').attr('data-cols', activeTab === 'eligible' ? '2' : '3');
         // İskelet `:empty` kuralıyla çiziliyor; boş sonuçta sonsuza dek parlardı — sınıf her boyamada düşer.
         $('#FeedGrid').removeClass('apya-skel-cards').html(items.map(feedCard).join(''));
         // Hiç açık çağrı yoksa "Tüm açık hibeler" sekmesi de boş kartı gösterir, boş ızgara değil.
-        $('#FeedEmpty').toggleClass('d-none', items.length > 0 || activeTab === 'bookmarked');
-        $('#BookmarkEmpty').toggleClass('d-none', items.length > 0 || activeTab !== 'bookmarked');
+        $('#FeedEmpty').toggleClass('d-none', items.length > 0 || activeTab === 'bookmarked' || filteredOut);
+        $('#BookmarkEmpty').toggleClass('d-none', items.length > 0 || activeTab !== 'bookmarked' || filteredOut);
+        $('#FilterEmpty').toggleClass('d-none', !filteredOut);
         $('#BookmarkHint').toggleClass('d-none', activeTab !== 'bookmarked' || items.length === 0);
         $('#FeedSortLabel').text(l('Grants:Feed:SortByFit'));
 
         // 12a · Kova sayıları tek satır.
-        var buckets = [0, 1, 2].map(function (b) { return feed.filter(function (r) { return r.bucket === b; }).length; });
-        $('#FeedBuckets').toggleClass('d-none', activeTab !== 'all' || feed.length === 0).html(
+        var buckets = [0, 1, 2].map(function (b) { return filtered.filter(function (r) { return r.bucket === b; }).length; });
+        $('#FeedBuckets').toggleClass('d-none', activeTab !== 'all' || filtered.length === 0).html(
             '<span class="apya-feed-bucket is-positive">' + esc(l('Grants:Feed:Bucket:Eligible', buckets[0])) + '</span>' +
             '<span class="apya-feed-bucket is-warning">' + esc(l('Grants:Feed:Bucket:Conditional', buckets[1])) + '</span>' +
             '<span class="apya-feed-bucket is-neutral">' + esc(l('Grants:Feed:Bucket:Ineligible', buckets[2])) + '</span>');
 
         // 13a · Eşiğin altındakiler gizlenmez; altta tek cümleyle çağrılır.
-        var below = feed.length - eligible.length;
+        var below = filtered.length - eligible.length;
         $('#FeedMore').toggleClass('d-none', activeTab !== 'eligible' || below === 0);
         $('#FeedMoreText').text(l('Grants:Feed:More:Text', below));
     }
@@ -384,7 +594,6 @@ $(function () {
         recoSvc.toggleBookmark(id).then(function (on) {
             var row = feed.filter(function (r) { return r.grantCallId === id; })[0];
             if (row) { row.isBookmarked = on; if (!on) { row.bookmarkNote = null; row.bookmarkedAt = null; row.bookmarkedByName = null; } else { row.bookmarkedAt = new Date().toISOString(); } }
-            $('#TabCountBookmarked').text(feed.filter(function (r) { return r.isBookmarked; }).length);
             paintHeading();
             paintFeed();
         }).always(function () { $btn.prop('disabled', false); });
@@ -487,9 +696,7 @@ $(function () {
             feedFailed = false;
             feedLoaded = true;
             feed = items || [];
-            $('#TabCountEligible').text(feed.filter(function (r) { return r.isRecommended; }).length);
-            $('#TabCountAll').text(feed.length);
-            $('#TabCountBookmarked').text(feed.filter(function (r) { return r.isBookmarked; }).length);
+            fillFilterOptions();
             paintHeading();
             paintFeed();
             paintGain();
