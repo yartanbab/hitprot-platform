@@ -106,6 +106,31 @@ public class ErasmusYouthCatalogSeed_Tests : PlatformEntityFrameworkCoreTestBase
         gelecek.OpenDate.ShouldBeNull();
     }
 
+    /// <summary>KA220'nin gençlik dışı dört alanı: 2027 takvimi açıklanmadığı için yalnız tarihsiz "Planlandı" dönem.</summary>
+    [Theory]
+    [InlineData("000000220101", "KA220-SCH")]
+    [InlineData("000000220102", "KA220-VET")]
+    [InlineData("000000220103", "KA220-ADU")]
+    [InlineData("000000220104", "KA220-HED")]
+    public async Task Ka220_diger_alanlari_tarihsiz_Planlandi_donemle_kurulur(string idSuffix, string code)
+    {
+        var id = Guid.Parse("e7a51520-0000-4000-8000-" + idSuffix);
+
+        var grant = await _grantRepository.FindAsync(id);
+        grant.ShouldNotBeNull($"{code} tohumlanmamış");
+        grant.TenantId.ShouldBeNull();
+        grant.Name.ShouldStartWith("KA220 - ");
+
+        var call = (await _callRepository.GetListAsync(c => c.GrantId == id)).ShouldHaveSingleItem();
+        call.Period.ShouldBe("2027/1");
+        call.Status.ShouldBe(GrantCallStatus.Planlandi);
+        call.Deadline.ShouldBeNull();
+        call.Reference.ShouldBe(code);
+
+        (await _criteriaRepository.GetListAsync(t => t.GrantId == id))
+            .ShouldContain(t => t.Kind == GrantCriteriaKind.AnahtarKelime && t.Value == "erasmus+");
+    }
+
     [Fact]
     public async Task Tohumlama_tekrar_kosunca_mukerrer_kayit_uretmez()
     {

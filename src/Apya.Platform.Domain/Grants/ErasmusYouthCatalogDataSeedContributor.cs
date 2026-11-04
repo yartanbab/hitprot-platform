@@ -8,7 +8,8 @@ using Volo.Abp.Guids;
 namespace Apya.Platform.Grants;
 
 /// <summary>
-/// Erasmus+ gençlik alanı programlarını (KA152/153/154/210/220) HOST kataloğuna kurar.
+/// Erasmus+ gençlik alanı programlarını (KA152/153/154/210/220) ve KA220'nin okul, mesleki eğitim,
+/// yetişkin ve yükseköğretim alanlarını HOST kataloğuna kurar.
 /// Demo verisi değildir; <see cref="PlatformTestDataSeedContributor"/>'ın aksine bir
 /// yapılandırma bayrağına bağlı değildir — gerçek çağrı kataloğudur.
 ///
@@ -226,6 +227,77 @@ public class ErasmusYouthCatalogDataSeedContributor : IDataSeedContributor, ITra
             {
                 new CallSeed("2026/1", GrantCallStatus.Kapandi, Deadline(2026, 3, 5)),
                 new CallSeed("2027/1", GrantCallStatus.Planlandi, null)
-            })
+            }),
+
+        // KA220'nin gençlik dışındaki alanları. 2027 çağrısı yayımlanmadı; tarih girilince "Açık"a çekilir.
+        new(
+            Guid.Parse("e7a51520-0000-4000-8000-000000220101"),
+            "KA220-SCH",
+            "KA220 - Okul Eğitimi Alanında İşbirliği Ortaklıkları",
+            "Okul eğitiminde kaliteyi artırmak; öğretim yöntemlerinde, okul yönetiminde ve öğrenme " +
+            "ortamlarında yenilikçi uygulamaların geliştirilmesi, transfer edilmesi veya hayata geçirilmesi " +
+            "amacıyla uluslararası ortaklıklarla yürütülen projelerdir.\n\n" +
+            "Hedef kitle: okul öncesinden liseye kadar öğrenciler, öğretmenler, okul yöneticileri ve eğitim " +
+            "politikası paydaşları.\n\n" +
+            "Kimler başvurabilir: program ülkelerinde kurulmuş okullar, il/ilçe milli eğitim müdürlükleri ve " +
+            "okul eğitimi alanında faaliyet gösteren her türlü kamu veya özel kurum/kuruluş.\n\n" +
+            "Bütçe: projenin süresi ve kapsamına göre 120.000, 250.000 veya 400.000 Avro götürü usulü " +
+            "(lump-sum) üst limit alternatifleri.",
+            new[] { "eğitim", "okul", "kamu" },
+            new[] { "erasmus+", "işbirliği ortaklığı", "okul eğitimi", "öğretmen gelişimi" },
+            new[] { new CallSeed("2027/1", GrantCallStatus.Planlandi, null) }),
+
+        new(
+            Guid.Parse("e7a51520-0000-4000-8000-000000220102"),
+            "KA220-VET",
+            "KA220 - Mesleki Eğitim Alanında İşbirliği Ortaklıkları",
+            "Mesleki eğitim ve öğretimde kaliteyi ve iş dünyasıyla bağı güçlendirmek; müfredat, beceri " +
+            "eşleştirme ve öğrenme ortamlarında yenilikçi uygulamaların geliştirilmesi, transfer edilmesi " +
+            "veya hayata geçirilmesi amacıyla uluslararası ortaklıklarla yürütülen projelerdir.\n\n" +
+            "Hedef kitle: mesleki eğitim öğrencileri, öğretmen ve eğitmenler, işletmeler ve sektör " +
+            "kuruluşları.\n\n" +
+            "Kimler başvurabilir: program ülkelerinde kurulmuş meslek liseleri, mesleki eğitim merkezleri, " +
+            "işletmeler, meslek kuruluşları ve mesleki eğitim alanında faaliyet gösteren her türlü kamu veya " +
+            "özel kurum/kuruluş.\n\n" +
+            "Bütçe: projenin süresi ve kapsamına göre 120.000, 250.000 veya 400.000 Avro götürü usulü " +
+            "(lump-sum) üst limit alternatifleri.",
+            new[] { "eğitim", "mesleki eğitim", "sanayi" },
+            new[] { "erasmus+", "işbirliği ortaklığı", "mesleki eğitim", "beceri geliştirme" },
+            new[] { new CallSeed("2027/1", GrantCallStatus.Planlandi, null) }),
+
+        new(
+            Guid.Parse("e7a51520-0000-4000-8000-000000220103"),
+            "KA220-ADU",
+            "KA220 - Yetişkin Eğitimi Alanında İşbirliği Ortaklıkları",
+            "Yetişkin eğitiminde kaliteyi ve erişimi artırmak; temel beceriler, dijital yetkinlik ve hayat " +
+            "boyu öğrenme alanlarında yenilikçi uygulamaların geliştirilmesi, transfer edilmesi veya hayata " +
+            "geçirilmesi amacıyla uluslararası ortaklıklarla yürütülen projelerdir.\n\n" +
+            "Hedef kitle: yetişkin öğrenenler (özellikle az fırsata sahip olanlar), yetişkin eğitimcileri " +
+            "ve yetişkin eğitimi kurumları.\n\n" +
+            "Kimler başvurabilir: program ülkelerinde kurulmuş halk eğitim merkezleri, belediyeler, sivil " +
+            "toplum kuruluşları ve yetişkin eğitimi alanında faaliyet gösteren her türlü kamu veya özel " +
+            "kurum/kuruluş.\n\n" +
+            "Bütçe: projenin süresi ve kapsamına göre 120.000, 250.000 veya 400.000 Avro götürü usulü " +
+            "(lump-sum) üst limit alternatifleri.",
+            new[] { "eğitim", "yetişkin eğitimi", "sivil toplum", "kamu" },
+            new[] { "erasmus+", "işbirliği ortaklığı", "hayat boyu öğrenme", "temel beceriler" },
+            new[] { new CallSeed("2027/1", GrantCallStatus.Planlandi, null) }),
+
+        new(
+            Guid.Parse("e7a51520-0000-4000-8000-000000220104"),
+            "KA220-HED",
+            "KA220 - Yükseköğretim Alanında İşbirliği Ortaklıkları",
+            "Yükseköğretimde kaliteyi ve uluslararasılaşmayı güçlendirmek; öğretim, müfredat, dijital " +
+            "dönüşüm ve sektörle işbirliği alanlarında yenilikçi uygulamaların geliştirilmesi, transfer " +
+            "edilmesi veya hayata geçirilmesi amacıyla uluslararası ortaklıklarla yürütülen projelerdir.\n\n" +
+            "Hedef kitle: yükseköğretim öğrencileri, akademik ve idari personel, yükseköğretim kurumları ve " +
+            "paydaşları.\n\n" +
+            "Kimler başvurabilir: program ülkelerinde kurulmuş yükseköğretim kurumları ile yükseköğretim " +
+            "alanında faaliyet gösteren her türlü kamu veya özel kurum/kuruluş.\n\n" +
+            "Bütçe: projenin süresi ve kapsamına göre 120.000, 250.000 veya 400.000 Avro götürü usulü " +
+            "(lump-sum) üst limit alternatifleri.",
+            new[] { "eğitim", "yükseköğretim", "araştırma" },
+            new[] { "erasmus+", "işbirliği ortaklığı", "yükseköğretim", "uluslararasılaşma" },
+            new[] { new CallSeed("2027/1", GrantCallStatus.Planlandi, null) })
     };
 }
