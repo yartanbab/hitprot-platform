@@ -135,7 +135,7 @@
         <div>
             <i class="fa fa-rocket apya-console-rocket" aria-hidden="true"></i>
             <h1 class="apya-console-name">@Model.Project?.Name</h1>
-            <span class="apya-chip apya-chip-brand">
+            <span class="apya-chip apya-chip-brand apya-console-code-chip">
                 <i class="fa fa-tag me-1" aria-hidden="true"></i>@Model.Project?.Code
             </span>
             <button type="button" class="apya-console-copy" data-copy-code="@Model.Project?.Code"
@@ -392,6 +392,15 @@
             <div class="dropdown-menu dropdown-menu-end apya-console-menu" aria-labelledby="btn-project-menu">
 
                 <div class="apya-console-menu-head">Proje</div>
+                @* Mobilde şeritteki AI butonu gizlenir, akış buradan açılır
+                   (data-state-action="ai" → şeritteki gerçek butonu tetikler). *@
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Tasks.Create))
+                {
+                    <button type="button" class="apya-console-menu-item d-md-none" data-state-action="ai">
+                        <span class="apya-console-menu-icon"><i class="apya-ai-icon" aria-hidden="true"></i></span>
+                        AI ile Görev Oluştur
+                    </button>
+                }
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.Edit))
                 {
                     <a href="/Projects/Edit/@Model.Id" class="apya-console-menu-item text-decoration-none">
