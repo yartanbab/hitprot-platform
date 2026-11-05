@@ -11,6 +11,7 @@
 @using Apya.Platform.Web.Pages.Finance
 @using Apya.Platform.Web.Pages.Shared
 @model ProjectMoneyLinksModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 
 @if (Model.IncludeStatusModal)
 {
@@ -31,6 +32,18 @@
    class="apya-console-menu-item text-decoration-none">
     <span class="apya-console-menu-icon"><i class="fa fa-coins" aria-hidden="true"></i></span>
     Finans
+</a>
+
+<a href="/Reports/ProjectBudget?handler=Excel&projectId=@Model.ProjectId"
+   class="apya-console-menu-item text-decoration-none">
+    <span class="apya-console-menu-icon"><i class="fa fa-file-excel" aria-hidden="true"></i></span>
+    @L["Export:BudgetReportExcel"]
+</a>
+
+<a href="/Reports/ProjectBudget?handler=Pdf&projectId=@Model.ProjectId"
+   class="apya-console-menu-item text-decoration-none">
+    <span class="apya-console-menu-icon"><i class="fa fa-file-pdf" aria-hidden="true"></i></span>
+    @L["Export:BudgetReportPdf"]
 </a>
 
 @if (Model.CanViewDocuments)

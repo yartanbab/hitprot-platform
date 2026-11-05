@@ -5,6 +5,7 @@
 @using Apya.Platform.Web.Pages.Shared
 @inject IAuthorizationService AuthorizationService
 @inject Volo.Abp.Settings.ISettingProvider SettingProvider
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @model Apya.Platform.Web.Pages.Projects.IndexModel
 @{
     ViewBag.Title = "Projeler";
@@ -165,6 +166,11 @@
                         aria-label="Liste görünümü" title="Liste görünümü"><i class="fa fa-list"></i></button>
                 <button type="button" class="apya-proj-seg-btn is-icon" data-view="card"
                         aria-label="Kart görünümü" title="Kart görünümü"><i class="fa fa-table-cells-large"></i></button>
+            </div>
+
+            <div class="apya-proj-seg apya-proj-toolbar-desktop">
+                <a class="apya-proj-seg-btn is-icon" href="?handler=Excel" id="ProjectsExportExcel"
+                   aria-label="@L["Export:ExcelButton"]" title="@L["Export:ExcelButton"]"><i class="fa fa-file-excel" aria-hidden="true"></i></a>
             </div>
 
             @if (canCreate)

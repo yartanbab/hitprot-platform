@@ -1,10 +1,18 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Localization;
+using Apya.Platform.Localization;
 using Apya.Platform.Permissions;
 using Apya.Platform.Settings;
 using Apya.Platform.Shell;
+using Apya.Platform.Tasks;
+using Apya.Platform.Web.Export;
 using Volo.Abp.Settings;
+using Volo.Abp.Timing;
 
 namespace Apya.Platform.Web.Pages.Tasks
 {
@@ -13,13 +21,22 @@ namespace Apya.Platform.Web.Pages.Tasks
     {
         private readonly ISettingProvider _settingProvider;
         private readonly Microsoft.AspNetCore.Authorization.IAuthorizationService _authorizationService;
+        private readonly ITaskAppService _taskAppService;
+        private readonly IStringLocalizer<PlatformResource> _l;
+        private readonly IClock _clock;
 
         public IndexModel(
             ISettingProvider settingProvider,
-            Microsoft.AspNetCore.Authorization.IAuthorizationService authorizationService)
+            Microsoft.AspNetCore.Authorization.IAuthorizationService authorizationService,
+            ITaskAppService taskAppService,
+            IStringLocalizer<PlatformResource> l,
+            IClock clock)
         {
             _settingProvider = settingProvider;
             _authorizationService = authorizationService;
+            _taskAppService = taskAppService;
+            _l = l;
+            _clock = clock;
         }
 
         /// <summary>
@@ -56,6 +73,47 @@ namespace Apya.Platform.Web.Pages.Tasks
 
             CanViewFinance = (await _authorizationService.AuthorizeAsync(
                 User, null, PlatformPermissions.Expenses.Default)).Succeeded;
+        }
+
+        /// <summary>
+        /// Ekrandaki filtreyle görev listesi (.xlsx). Liste ucu sayfa sayfa çağrılır: gizlilik kuralı ve
+        /// proje/etiket adları ekrandakiyle aynı kalır. Hiyerarşi düzleşir, alt görev "Üst görev" sütunuyla gelir.
+        /// </summary>
+        public async Task<IActionResult> OnGetExcelAsync(GetTasksInput input)
+        {
+            input.TenantId = null;
+            input.RootOnly = false;
+            input.ParentTaskId = null;
+
+            var rows = await ExcelTable.CollectAsync((skip, take) =>
+            {
+                input.SkipCount = skip;
+                input.MaxResultCount = take;
+                return _taskAppService.GetListAsync(input);
+            });
+
+            var columns = new List<ExcelColumn<TaskDto>>
+            {
+                new(_l["Export:Col:Code"], t => t.Code),
+                new(_l["Export:Col:Title"], t => t.Title),
+                new(_l["Export:Col:Project"], t => t.ProjectName),
+                new(_l["Export:Col:ParentTask"], t => t.ParentTaskTitle),
+                new(_l["Export:Col:Assignee"], t => t.AssigneeName),
+                new(_l["Export:Col:Status"], t => _l[$"Tasks:Status:{t.Status}"].Value),
+                new(_l["Export:Col:Priority"], t => _l[$"Tasks:Priority:{t.Priority}"].Value),
+                new(_l["Export:Col:StartDate"], t => t.StartDate, "dd.MM.yyyy"),
+                new(_l["Export:Col:DueDate"], t => t.DueDate, "dd.MM.yyyy"),
+                new(_l["Export:Col:CompletedDate"], t => t.CompletedDate, "dd.MM.yyyy"),
+                new(_l["Export:Col:EstimatedHours"], t => t.EstimatedHours, "#,##0.0"),
+                new(_l["Export:Col:SpentHours"], t => t.SpentHours, "#,##0.0"),
+                new(_l["Export:Col:Tags"], t => string.Join(", ", t.Tags.Select(x => x.Name))),
+                new(_l["Export:Col:CreationTime"], t => t.CreationTime, "dd.MM.yyyy HH:mm"),
+            };
+
+            var name = _l["Export:Tasks:Name"].Value;
+            var note = rows.Truncated ? _l["Export:Truncated", ExcelTable.MaxRows].Value : null;
+            var bytes = ExcelTable.Build(name, columns, rows.Items, note);
+            return File(bytes, ExcelTable.ContentType, ExcelTable.FileName(name, _clock.Now));
         }
     }
 }
