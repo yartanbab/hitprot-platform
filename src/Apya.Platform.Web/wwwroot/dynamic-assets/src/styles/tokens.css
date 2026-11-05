@@ -389,8 +389,10 @@
 .dark {
     color-scheme: dark;
 }
+/* "only": telefon koyu moddayken Chrome/Samsung Internet açık sayfayı kendi
+   kendine koyulaştırmasın. Koyu temada aşağıdaki kural `dark` yazar. */
 :root {
-    color-scheme: light;
+    color-scheme: only light;
 }
 [data-theme="dark"] {
     color-scheme: dark;
