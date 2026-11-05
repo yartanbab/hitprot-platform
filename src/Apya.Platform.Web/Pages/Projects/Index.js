@@ -435,8 +435,8 @@ $(function () {
 
         var budget = budgetBarHtml(p, false);
 
-        // Kapak görseli varsa kategori ikon kutusunun YERİNE geçer — aynı 32px
-        // yuva, yani kartın yüksekliği görselli/görselsiz aynı kalır.
+        // Kapak görseli varsa kategori ikon kutusunun YERİNE geçer — aynı yuva:
+        // başlık ve etiket satırlarının toplam yüksekliği kadar kare.
         var thumb = p.coverImageFileName
             ? '<span class="apya-proj-card-cover" aria-hidden="true">' +
               '<img src="/file/get/' + encodeURIComponent(p.coverImageFileName) + '" alt=""></span>'
@@ -448,15 +448,19 @@ $(function () {
             '<span class="' + riskEdgeClass(p) + '"></span>' +
             '<div class="apya-proj-card-head">' +
             thumb +
-            '  <div style="flex:1 1 auto;min-width:0">' +
-            '    <div class="apya-proj-card-title">' + esc(p.name) + '</div>' +
-            '    <div class="apya-proj-card-sub">' +
-            '      <span class="apya-numeric">' + esc(p.code) + '</span>' + tenantHtml(p) +
-            '    </div>' +
-            '  </div>' +
+            '  <div class="apya-proj-card-heading">' +
+            '    <div class="apya-proj-card-titlerow">' +
+            '      <div style="flex:1 1 auto;min-width:0">' +
+            '        <div class="apya-proj-card-title">' + esc(p.name) + '</div>' +
+            '        <div class="apya-proj-card-sub">' +
+            '          <span class="apya-numeric">' + esc(p.code) + '</span>' + tenantHtml(p) +
+            '        </div>' +
+            '      </div>' +
             moreButtonHtml(p) +
-            '</div>' +
+            '    </div>' +
             (chips.length ? '<div class="apya-proj-chips">' + chips.join('') + '</div>' : '') +
+            '  </div>' +
+            '</div>' +
             '<div class="apya-proj-card-metrics">' +
             (budget ? '<div class="apya-proj-card-metric">' + budget + '</div>' : '') +
             '  <div class="apya-proj-card-metric">' + progressBarHtml(p, false) + '</div>' +
