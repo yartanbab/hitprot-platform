@@ -563,6 +563,9 @@ public class PlatformWebModule : AbpModule
                     // diğer sayfalarda bildirim ancak sayfa yenilenince görünüyordu.
                     bundle.AddFiles("/libs/signalr/signalr.min.js");
                     bundle.AddFiles("/Pages/Notifications/notification-bell.js");
+                    // Ana ekrana ekle + her sayfada service worker kaydı. Zilden SONRA: yüklü
+                    // uygulamadaki bildirim şeridi window.apyaDesktopNotifications'a dayanır.
+                    bundle.AddFiles("/js/apya-pwa.js");
                     bundle.AddFiles("/js/dark-mode.js");
                     bundle.AddFiles("/js/sidebar-toggle.js");
                     // sidebar-toggle.js'ten SONRA: o, 2. seviye grupları kapatıp

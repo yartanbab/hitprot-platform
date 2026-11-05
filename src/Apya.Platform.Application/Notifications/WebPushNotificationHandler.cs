@@ -31,6 +31,7 @@ public class WebPushNotificationHandler : ILocalEventHandler<NotificationCreated
 {
     private readonly IRepository<NotificationDevice, Guid> _deviceRepository;
     private readonly IRepository<NotificationPreference, Guid> _preferenceRepository;
+    private readonly IRepository<Notification, Guid> _notificationRepository;
     private readonly IBackgroundJobManager _backgroundJobManager;
     private readonly ICurrentTenant _currentTenant;
     private readonly WebPushOptions _options;
@@ -41,6 +42,7 @@ public class WebPushNotificationHandler : ILocalEventHandler<NotificationCreated
     public WebPushNotificationHandler(
         IRepository<NotificationDevice, Guid> deviceRepository,
         IRepository<NotificationPreference, Guid> preferenceRepository,
+        IRepository<Notification, Guid> notificationRepository,
         IBackgroundJobManager backgroundJobManager,
         ICurrentTenant currentTenant,
         IOptions<WebPushOptions> options,
@@ -50,6 +52,7 @@ public class WebPushNotificationHandler : ILocalEventHandler<NotificationCreated
     {
         _deviceRepository = deviceRepository;
         _preferenceRepository = preferenceRepository;
+        _notificationRepository = notificationRepository;
         _backgroundJobManager = backgroundJobManager;
         _currentTenant = currentTenant;
         _options = options.Value;
@@ -88,9 +91,13 @@ public class WebPushNotificationHandler : ILocalEventHandler<NotificationCreated
 
                 var severity = eventData.Severity;
                 var titleOnly = await TitleOnlyAsync(eventData.UserId);
+                // Ana ekran ikonu rozeti. Olay iş birimi tamamlanınca yayınlandığı için yeni kayıt sayıya dahildir.
+                var unreadCount = await _notificationRepository.CountAsync(
+                    n => n.UserId == eventData.UserId && !n.IsRead);
                 var payload = WebPushPayload.Build(
                     eventData.Id, eventData.Title, titleOnly ? null : eventData.Body, tag: null, severity,
-                    NotificationTypeRegistry.BuildDeepLink(eventData.Type, eventData.EntityId) ?? "/Notifications");
+                    NotificationTypeRegistry.BuildDeepLink(eventData.Type, eventData.EntityId) ?? "/Notifications",
+                    unreadCount);
 
                 // N-02 · Acil (Yüksek/Kritik) push kuyrukta öne geçer: geniş dağıtımda (kiracının bütün
                 // kullanıcıları) sıradan bildirimlerin arkasında beklemesin.

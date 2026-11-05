@@ -21,8 +21,13 @@ public static class WebPushPayload
     /// <summary>Kilit ekranında okunur uzunluk; fazlası "…" ile kesilir.</summary>
     public const int MaxBodyLength = 120;
 
+    /// <param name="unreadCount">
+    /// Ana ekran ikonundaki rozet: kişinin okunmamış bildirim sayısı. İçerik değil, yalnız sayı;
+    /// <c>null</c> ise alan yazılmaz ve service worker rozete dokunmaz.
+    /// </param>
     public static string Build(
-        Guid notificationId, string title, string? body, string? tag, NotificationSeverity severity, string url)
+        Guid notificationId, string title, string? body, string? tag, NotificationSeverity severity, string url,
+        int? unreadCount = null)
         => JsonSerializer.Serialize(new
         {
             notificationId,
@@ -30,7 +35,8 @@ public static class WebPushPayload
             body = Short(body),
             tag = tag ?? "apya-" + notificationId,
             severity = (int)severity,
-            url
+            url,
+            unreadCount
         }, Json);
 
     /// <summary>Boşlukları tekler, <see cref="MaxBodyLength"/>'i aşanı keser; boşsa <c>null</c> (alan yazılmaz).</summary>

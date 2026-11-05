@@ -95,7 +95,7 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     private WebPushNotificationHandler Handler(IBackgroundJobManager jobs, WebPushOptions? options = null)
-        => new(_deviceRepository, _preferenceRepository, jobs, _currentTenant,
+        => new(_deviceRepository, _preferenceRepository, GetRequiredService<IRepository<Notification, Guid>>(), jobs, _currentTenant,
             Options.Create(options ?? Enabled()), GetRequiredService<ISettingManager>(), _clock,
             NullLogger<WebPushNotificationHandler>.Instance);
 
@@ -206,6 +206,25 @@ public class WebPushDelivery_Tests : PlatformEntityFrameworkCoreTestBase
         var json = JsonDocument.Parse((await HandleAsync(Event(user, Guid.NewGuid()))).Single().PayloadJson).RootElement;
 
         json.GetProperty("body").GetString().ShouldBe(SecretBody);
+    }
+
+    /// <summary>Ana ekran ikonu rozeti: gövde kişinin okunmamış sayısını taşır; okunanlar ve başkasınınkiler sayılmaz.</summary>
+    [Fact]
+    public async Task Push_govdesi_ikon_rozeti_icin_kisinin_okunmamis_sayisini_tasir()
+    {
+        var user = Guid.NewGuid();
+        await DeviceAsync(user);
+        var notifications = GetRequiredService<IRepository<Notification, Guid>>();
+        var read = new Notification(Guid.NewGuid(), null, user, NotificationType.TaskAssigned, "Eski", "Gövde");
+        read.MarkAsRead();
+        await notifications.InsertAsync(new Notification(Guid.NewGuid(), null, user, NotificationType.TaskAssigned, "Bir", "Gövde"), autoSave: true);
+        await notifications.InsertAsync(new Notification(Guid.NewGuid(), null, user, NotificationType.TaskAssigned, "İki", "Gövde"), autoSave: true);
+        await notifications.InsertAsync(read, autoSave: true);
+        await notifications.InsertAsync(new Notification(Guid.NewGuid(), null, Guid.NewGuid(), NotificationType.TaskAssigned, "Başkası", "Gövde"), autoSave: true);
+
+        var json = JsonDocument.Parse((await HandleAsync(Event(user, Guid.NewGuid()))).Single().PayloadJson).RootElement;
+
+        json.GetProperty("unreadCount").GetInt32().ShouldBe(2);
     }
 
     [Fact]
