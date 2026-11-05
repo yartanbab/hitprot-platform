@@ -6307,24 +6307,25 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     .apya-proj-card { transition: none; }
     .apya-proj-card:hover { transform: none; }
 }
-/* Kapak görseli kategori ikon kutusunun YERİNE geçer — aynı 32px yuva, kart
-   yüksekliği görselli/görselsiz birebir aynı. */
-.apya-proj-card-head .kpi-icon-box--sm {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-}
+/* Görsel (kapak ya da kategori ikonu) başlık + etiket satırlarının toplam
+   yüksekliğine uzar ve kare kalır; kapak görseli ikon kutusunun YERİNE geçer,
+   kart yüksekliği görselli/görselsiz birebir aynı. */
+.apya-proj-card-head > .kpi-icon-box--sm,
 .apya-proj-card-cover {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    align-self: stretch;
+    width: auto;
+    height: auto;
+    min-width: 56px;
+    aspect-ratio: 1;
     flex-shrink: 0;
     overflow: hidden;
-    border-radius: var(--apya-radius-md);
-    background: var(--apya-surface-sunken);
+    border-radius: var(--apya-radius-lg);
 }
+.apya-proj-card-head > .kpi-icon-box--sm { font-size: 22px; }
+.apya-proj-card-cover { background: var(--apya-surface-sunken); }
 .apya-proj-card-cover img {
     width: 100%;
     height: 100%;
@@ -6332,7 +6333,19 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
 }
 .apya-proj-card-head {
     display: flex;
-    align-items: center;
+    gap: 12px;
+}
+/* Görselin sağı: üstte ad + kod (⋯ ile), altta etiketler. */
+.apya-proj-card-heading {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.apya-proj-card-titlerow {
+    display: flex;
+    align-items: flex-start;
     gap: 8px;
 }
 /* ⋯ başlığın sağında, çerçevesiz 28px; dokunma alanı ::before ile 44px —
