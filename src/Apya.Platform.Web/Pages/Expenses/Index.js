@@ -58,6 +58,16 @@ $(function () {
         ]
     }));
 
+    // Ekrandaki arama ve sıralama dosyaya aynen geçer.
+    $('#ExpensesExportExcel').on('click', function () {
+        var params = new URLSearchParams({ handler: 'Excel' });
+        if (dataTable.search()) { params.append('filter', dataTable.search()); }
+        var order = dataTable.order()[0];
+        var column = order && dataTable.settings()[0].aoColumns[order[0]];
+        if (column && typeof column.data === 'string') { params.append('sorting', column.data + ' ' + order[1]); }
+        window.location.href = abp.appPath + 'Expenses?' + params.toString();
+    });
+
     $('#NewExpenseButton').click(function (e) {
         e.preventDefault();
         createModal.open();

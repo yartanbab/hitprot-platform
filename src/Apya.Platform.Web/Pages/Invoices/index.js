@@ -359,6 +359,19 @@ $(function () {
 
     $('#NewInvoiceButton').click(function (e) { e.preventDefault(); createModal.open(); });
 
+    // Süzgeç istemcide; sunucu aynı süzgeci (proje, durum, arama) dosyada yeniden uygular.
+    $('<button type="button" class="btn btn-sm btn-outline-secondary ms-auto"><i class="fa fa-file-excel me-1" aria-hidden="true"></i></button>')
+        .append(document.createTextNode(l('Export:ExcelButton')))
+        .appendTo('#InvoiceStatusPills')
+        .on('click', function () {
+            var params = new URLSearchParams({ handler: 'Excel' });
+            if (scopeProjectId) { params.append('projectId', scopeProjectId); }
+            if (state.status !== '') { params.append('status', state.status); }
+            var q = ($('#InvoiceFilter').val() || '').trim();
+            if (q) { params.append('q', q); }
+            window.location.href = abp.appPath + 'Invoices?' + params.toString();
+        });
+
     // Cariler'deki "+ Yeni Fatura" ile ?customerId=... üzerinden gelindiyse
     // formu o cari ön-dolu şekilde otomatik aç.
     // Yalniz /Invoices sayfasinda: Finans sekmesinde ?customerId yok, ama

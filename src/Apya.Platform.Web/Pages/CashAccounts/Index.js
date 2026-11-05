@@ -152,6 +152,8 @@ $(function () {
         $('#MovementsEmpty').addClass('d-none');
         $('#MovementsTableWrap').removeClass('d-none');
         $('#NewCashMovementButton').prop('disabled', false);
+        $('#MovementsExportExcel').removeClass('disabled').removeAttr('aria-disabled')
+            .attr('href', abp.appPath + 'CashAccounts?handler=MovementsExcel&cashAccountId=' + encodeURIComponent(selectedAccountId));
 
         // Seçim adreste kalır: hesap modallarındaki yenileme ve F5 seçimi düşürmez.
         var url = new URL(window.location.href);
