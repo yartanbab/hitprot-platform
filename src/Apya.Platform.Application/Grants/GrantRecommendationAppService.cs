@@ -205,7 +205,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
 
             var weights = await _weightResolver.ResolveAsync(grant.Id);
             var breakdown = _matcher.Explain(signals, grant, tags, weights);
-            var eligibility = _matcher.Evaluate(signals, grant, today);
+            var eligibility = _matcher.Evaluate(signals, grant, tags, today);
             var days = DaysRemaining(call, today);
             var difficulty = _difficulty.Calculate(
                 grant, documents.Count, documents.Any(d => d.RequiresESignature), steps.Count, days);
@@ -240,7 +240,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 Rules = eligibility.Rules
                     .Select(r =>
                     {
-                        var (firmValue, grantValue) = RuleValues(r.Rule, signals, grant, today);
+                        var (firmValue, grantValue) = RuleValues(r.Rule, signals, grant, tags, today);
                         return new GrantRuleCheckDto
                         {
                             Rule = r.Rule,
@@ -500,13 +500,13 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     : 0;
 
                 var score = _matcher.Score(signals, grant, gtags, weightsByGrant[grant.Id]);
-                var eligibility = _matcher.Evaluate(signals, grant, today);
+                var eligibility = _matcher.Evaluate(signals, grant, gtags, today);
                 var days = DaysRemaining(call, today);
                 var isHostRecommended = hostRecNotes.ContainsKey(call.Id);
 
                 var reasonRule = ReasonRuleOf(eligibility);
                 var (reasonFirm, reasonGrant) = reasonRule.HasValue
-                    ? RuleValues(reasonRule.Value, signals, grant, today)
+                    ? RuleValues(reasonRule.Value, signals, grant, gtags, today)
                     : (null, null);
 
                 result.Add(new GrantRecommendationDto
@@ -591,7 +591,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     /// Metin üretilmez — istemci bu değerlerle yerelleştirilmiş cümleyi kurar.
     /// </summary>
     private static (string? FirmValue, string? GrantValue) RuleValues(
-        GrantEligibilityRule rule, FirmSignals firm, Grant grant, DateTime today)
+        GrantEligibilityRule rule, FirmSignals firm, Grant grant, IReadOnlyList<GrantCriteriaTag> grantTags, DateTime today)
     {
         var c = CultureInfo.InvariantCulture;
         return rule switch
@@ -617,6 +617,9 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
             GrantEligibilityRule.Consortium => (
                 firm.HasConsortiumPartner?.ToString().ToLowerInvariant(),
                 grant.MinConsortiumPartners?.ToString(c) ?? "1"),
+            GrantEligibilityRule.Region => (
+                TurkeyProvinces.JoinKnown(firm.Tags.Where(t => t.Kind == GrantCriteriaKind.Bolge).Select(t => t.Value)),
+                TurkeyProvinces.JoinKnown(grantTags.Where(t => t.Kind == GrantCriteriaKind.Bolge).Select(t => t.Value))),
             _ => (null, null)
         };
     }

@@ -9,7 +9,7 @@ $(function () {
     // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
     var statusKeys = apyaGrantStatus.interest.keys;
     var statusTone = apyaGrantStatus.interest.tones;
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
+    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region'];
     var sizeKeys = { 1: 'Mikro', 2: 'Kucuk', 4: 'Orta', 8: 'Buyuk' };
 
     var model = null;

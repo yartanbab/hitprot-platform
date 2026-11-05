@@ -137,6 +137,8 @@ public class GrantAppService :
     // Programın kriter etiketlerini DTO ile senkronla: mevcutları sil, yenilerini ekle.
     private async Task SyncCriteriaAsync(Guid grantId, CreateUpdateGrantDto input)
     {
+        ProvinceTagGuard.EnsureKnown(input.CriteriaTags.Select(t => (t.Kind, t.Value)));
+
         var existing = await _criteriaRepository.GetListAsync(t => t.GrantId == grantId);
         await _criteriaRepository.DeleteManyAsync(existing);
 

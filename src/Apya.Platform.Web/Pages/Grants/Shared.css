@@ -218,6 +218,17 @@
     font-size: var(--apya-text-xs);
 }
 
+/* Listede olmayan eski bölge metni: kayıt reddedilir, kurum görüp kaldırsın. */
+.apya-tag-chip.is-invalid {
+    background: var(--apya-negative-50);
+    color: var(--apya-negative-700);
+    box-shadow: inset 0 0 0 1px var(--apya-negative-500);
+}
+[data-theme="dark"] .apya-tag-chip.is-invalid {
+    background: transparent;
+    color: var(--apya-negative-500);
+}
+
 .apya-tag-remove {
     padding: 0;
     border: 0;

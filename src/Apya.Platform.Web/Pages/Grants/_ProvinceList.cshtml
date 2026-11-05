@@ -1,0 +1,11 @@
+@using System.Globalization
+@using System.Linq
+@using Apya.Platform.Grants
+@* Bölge etiket girişlerinin (data-kind="1") öneri listesi. Tenant.js ve Parameters.js yazılan
+   değeri bu listeye göre resmi il adına çevirir; listede olmayan elle eklenemez. *@
+<datalist id="ApyaProvinceList">
+    @foreach (var province in TurkeyProvinces.All.OrderBy(p => p.Name, StringComparer.Create(new CultureInfo("tr-TR"), ignoreCase: true)))
+    {
+        <option value="@province.Name"></option>
+    }
+</datalist>

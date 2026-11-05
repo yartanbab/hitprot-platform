@@ -49,6 +49,8 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
     private readonly IRepository<GrantEligibleCostItem, Guid> _costRepo;
     private readonly IRepository<GrantDocumentRequirement, Guid> _docRepo;
     private readonly IRepository<GrantStageTemplateStep, Guid> _stepRepo;
+    private static readonly IReadOnlyList<GrantCriteriaTag> NoTags = Array.Empty<GrantCriteriaTag>();
+
     private readonly IRepository<GrantCriteriaTag, Guid> _tagRepo;
     private readonly IRepository<GrantLead, Guid> _leadRepo;
     private readonly GrantMatchManager _matcher;
@@ -479,7 +481,9 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
         var today = Clock.Now.Date;
         var signals = ToFirmSignals(answers, today);
 
-        var eligibility = _matcher.Evaluate(signals, grant, today);
+        // Ziyaretçi testi il sormaz: bölge şartı burada ölçülmez (etiket verilmez). Sorulsaydı
+        // sonuç ekranı yanıtlanmamış bir "Bölge" satırı gösterirdi.
+        var eligibility = _matcher.Evaluate(signals, grant, NoTags, today);
 
         List<GrantCriteriaTag> tags;
         List<GrantDocumentRequirement> docs;
@@ -548,7 +552,7 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
         foreach (var call in calls.Where(c => c.Id != excludeCallId))
         {
             if (!grants.TryGetValue(call.GrantId, out var grant)) { continue; }
-            if (_matcher.Evaluate(signals, grant, today).Bucket != GrantEligibilityBucket.UygunDegil)
+            if (_matcher.Evaluate(signals, grant, NoTags, today).Bucket != GrantEligibilityBucket.UygunDegil)
             {
                 count++;
             }

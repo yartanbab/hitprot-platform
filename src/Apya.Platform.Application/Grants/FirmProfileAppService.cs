@@ -46,6 +46,7 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
     public async Task<FirmProfileDto> UpdateMyProfileAsync(UpdateFirmProfileDto input)
     {
         await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
+        ProvinceTagGuard.EnsureKnown(input.Tags.Select(t => (t.Kind, t.Value)));
         var profile = await _profileRepo.FirstOrDefaultAsync();
         if (profile == null)
         {
@@ -66,8 +67,8 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
         var allowedKinds = AllowedTagKinds(input.Type);
         foreach (var t in input.Tags.Where(x => !string.IsNullOrWhiteSpace(x.Value) && allowedKinds.Contains(x.Kind)))
         {
-            await _tagRepo.InsertAsync(new FirmProfileTag(GuidGenerator.Create(), profile.Id, t.Kind, t.Value));
-            saved.Add(new GrantCriteriaTagDto { Kind = t.Kind, Value = t.Value.Trim() });
+            var tag = await _tagRepo.InsertAsync(new FirmProfileTag(GuidGenerator.Create(), profile.Id, t.Kind, t.Value));
+            saved.Add(new GrantCriteriaTagDto { Kind = tag.Kind, Value = tag.Value }); // il adı resmi yazımıyla döner
         }
 
         // Dönüş, kaydedilen girdiden kurulur — aynı UoW içinde henüz flush edilmemiş

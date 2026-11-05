@@ -11,7 +11,7 @@ $(function () {
     var bucketKeys = apyaGrantStatus.bucket.keys;
     var bucketTone = apyaGrantStatus.bucket.tones;
     var bucketIcon = ['fa-circle-check', 'fa-circle-exclamation', 'fa-circle-xmark'];
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
+    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region'];
 
     var items = [];
     // Süzgeç, yükleme düştüyse hata kartını "uygun çağrı yok" ile ezmesin.

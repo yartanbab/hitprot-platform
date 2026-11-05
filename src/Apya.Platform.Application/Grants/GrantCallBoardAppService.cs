@@ -35,6 +35,7 @@ public class GrantCallBoardAppService : PlatformAppService, IGrantCallBoardAppSe
     private readonly IRepository<GrantDocumentRequirement, Guid> _documentRepo;
     private readonly IRepository<GrantInterest, Guid> _interestRepo;
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
+    private readonly IRepository<FirmProfileTag, Guid> _profileTagRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly GrantMatchManager _matcher;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
@@ -47,6 +48,7 @@ public class GrantCallBoardAppService : PlatformAppService, IGrantCallBoardAppSe
         IRepository<GrantDocumentRequirement, Guid> documentRepo,
         IRepository<GrantInterest, Guid> interestRepo,
         IRepository<FirmProfile, Guid> profileRepo,
+        IRepository<FirmProfileTag, Guid> profileTagRepo,
         ITenantRepository tenantRepo,
         GrantMatchManager matcher,
         IDataFilter<IMultiTenant> mtFilter)
@@ -58,6 +60,7 @@ public class GrantCallBoardAppService : PlatformAppService, IGrantCallBoardAppSe
         _documentRepo = documentRepo;
         _interestRepo = interestRepo;
         _profileRepo = profileRepo;
+        _profileTagRepo = profileTagRepo;
         _tenantRepo = tenantRepo;
         _matcher = matcher;
         _mtFilter = mtFilter;
@@ -175,10 +178,12 @@ public class GrantCallBoardAppService : PlatformAppService, IGrantCallBoardAppSe
         var tenants = await _tenantRepo.GetListAsync();
 
         List<FirmProfile> profiles;
+        List<FirmProfileTag> profileTags;
         Dictionary<Guid, int> interests;
         using (_mtFilter.Disable())
         {
             profiles = await _profileRepo.GetListAsync();
+            profileTags = await _profileTagRepo.GetListAsync();
             interests = (await _interestRepo.GetListAsync(
                     i => i.GrantCallId != null && callIds.Contains(i.GrantCallId.Value) && i.Status != GrantInterestStatus.GeriCekildi))
                 .GroupBy(i => i.GrantCallId!.Value)
@@ -189,14 +194,18 @@ public class GrantCallBoardAppService : PlatformAppService, IGrantCallBoardAppSe
             .Where(p => p.TenantId.HasValue)
             .GroupBy(p => p.TenantId!.Value)
             .ToDictionary(g => g.Key, g => g.First());
+        var tagsByProfile = profileTags.ToLookup(t => t.FirmProfileId);
         var signals = tenants
-            .Select(t => GrantParameterAppService.ToSignals(profileByTenant.GetValueOrDefault(t.Id)))
+            .Select(t => profileByTenant.GetValueOrDefault(t.Id))
+            .Select(p => GrantParameterAppService.ToSignals(p, tagsByProfile[p?.Id ?? Guid.Empty]))
             .ToList();
 
-        var matching = cards
-            .Select(c => c.GrantId)
-            .Distinct()
-            .ToDictionary(id => id, id => signals.Count(s => _matcher.Evaluate(s, grants[id], today).IsConfirmed));
+        var grantIds = cards.Select(c => c.GrantId).Distinct().ToList();
+        var grantTags = (await _criteriaRepo.GetListAsync(t => grantIds.Contains(t.GrantId)))
+            .ToLookup(t => t.GrantId);
+        var matching = grantIds.ToDictionary(
+            id => id,
+            id => signals.Count(s => _matcher.Evaluate(s, grants[id], grantTags[id].ToList(), today).IsConfirmed));
 
         foreach (var card in cards)
         {

@@ -23,5 +23,22 @@ public class GrantCriteriaTag : FullAuditedAggregateRoot<Guid>, IMultiTenant
         GrantId = grantId;
         Kind = kind;
         Value = Check.NotNullOrWhiteSpace(value, nameof(value), maxLength: 64).Trim();
+        NormalizeProvince();
+    }
+
+    /// <summary>Bölge etiketini il adının resmi yazımına çevirir. Değiştiyse true.</summary>
+    public bool NormalizeProvince()
+    {
+        if (Kind != GrantCriteriaKind.Bolge)
+        {
+            return false;
+        }
+        var normalized = TurkeyProvinces.Normalize(Value);
+        if (normalized == Value)
+        {
+            return false;
+        }
+        Value = normalized;
+        return true;
     }
 }

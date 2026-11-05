@@ -12,7 +12,7 @@ $(function () {
     // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
     var bucketKeys = apyaGrantStatus.bucket.keys;
     var bucketTone = apyaGrantStatus.bucket.tones;
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium'];
+    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region'];
     var outcomeIcon = ['fa-circle-check is-passed', 'fa-circle-xmark is-failed', 'fa-circle-exclamation is-unknown'];
     var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword'];
     var costKeys = ['Personel', 'MakineTechizat', 'Danismanlik', 'YazilimLisans', 'Seyahat', 'SarfMalzeme'];

@@ -13,5 +13,10 @@ public enum GrantEligibilityRule
     StaffCount = 3,
     RdStaffCount = 4,
     Revenue = 5,
-    Consortium = 6
+    Consortium = 6,
+    /// <summary>
+    /// Program il etiketi taşıyorsa (kalkınma ajansı programları) kurumun illerinden biri
+    /// o listede olmalı. İl adı <see cref="TurkeyProvinces"/> sözlüğünden gelir.
+    /// </summary>
+    Region = 7
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Shouldly;
 using Xunit;
@@ -14,8 +15,17 @@ public class GrantEligibility_Tests
 {
     private readonly GrantMatchManager _m = new();
     private static readonly DateTime Today = new(2026, 9, 1);
+    private static readonly IReadOnlyList<GrantCriteriaTag> NoTags = Array.Empty<GrantCriteriaTag>();
 
     private static Grant Program() => new Grant(Guid.NewGuid(), "P", "K", 1_000_000m, 0);
+
+    private static List<GrantCriteriaTag> Regions(Grant grant, params string[] provinces)
+        => provinces.Select(p => new GrantCriteriaTag(Guid.NewGuid(), grant.Id, GrantCriteriaKind.Bolge, p)).ToList();
+
+    private static FirmSignals FirmIn(params string[] provinces) => new()
+    {
+        Tags = provinces.Select(p => new FirmSignalTag(GrantCriteriaKind.Bolge, p)).ToList()
+    };
 
     private static GrantRuleOutcome Outcome(GrantEligibilityResult r, GrantEligibilityRule rule)
         => r.Rules.Single(x => x.Rule == rule).Outcome;
@@ -23,7 +33,7 @@ public class GrantEligibility_Tests
     [Fact]
     public void Sart_Tanimlanmamissa_Kural_Hic_Uretilmez()
     {
-        var result = _m.Evaluate(new FirmSignals { StaffCount = 3 }, Program(), Today);
+        var result = _m.Evaluate(new FirmSignals { StaffCount = 3 }, Program(), NoTags, Today);
 
         result.Rules.ShouldBeEmpty();
         result.IsEligible.ShouldBeTrue();
@@ -36,7 +46,7 @@ public class GrantEligibility_Tests
         var grant = Program();
         grant.MinRdStaffCount = 2;
 
-        var result = _m.Evaluate(new FirmSignals(), grant, Today);
+        var result = _m.Evaluate(new FirmSignals(), grant, NoTags, Today);
 
         Outcome(result, GrantEligibilityRule.RdStaffCount).ShouldBe(GrantRuleOutcome.Unknown);
         result.IsEligible.ShouldBeTrue();   // eleyici değil
@@ -50,7 +60,7 @@ public class GrantEligibility_Tests
         var grant = Program();
         grant.MinRdStaffCount = 2;
 
-        var result = _m.Evaluate(new FirmSignals { RdStaffCount = 1 }, grant, Today);
+        var result = _m.Evaluate(new FirmSignals { RdStaffCount = 1 }, grant, NoTags, Today);
 
         Outcome(result, GrantEligibilityRule.RdStaffCount).ShouldBe(GrantRuleOutcome.Failed);
         result.IsEligible.ShouldBeFalse();
@@ -63,9 +73,9 @@ public class GrantEligibility_Tests
         var grant = Program();
         grant.EligibleCompanySizes = (int)(CompanySize.Kucuk | CompanySize.Orta);
 
-        Outcome(_m.Evaluate(new FirmSignals { Size = CompanySize.Orta }, grant, Today),
+        Outcome(_m.Evaluate(new FirmSignals { Size = CompanySize.Orta }, grant, NoTags, Today),
             GrantEligibilityRule.CompanySize).ShouldBe(GrantRuleOutcome.Passed);
-        Outcome(_m.Evaluate(new FirmSignals { Size = CompanySize.Buyuk }, grant, Today),
+        Outcome(_m.Evaluate(new FirmSignals { Size = CompanySize.Buyuk }, grant, NoTags, Today),
             GrantEligibilityRule.CompanySize).ShouldBe(GrantRuleOutcome.Failed);
     }
 
@@ -80,7 +90,7 @@ public class GrantEligibility_Tests
         grant.MinTrl = min;
         grant.MaxTrl = max;
 
-        Outcome(_m.Evaluate(new FirmSignals { Trl = firmTrl }, grant, Today), GrantEligibilityRule.Trl)
+        Outcome(_m.Evaluate(new FirmSignals { Trl = firmTrl }, grant, NoTags, Today), GrantEligibilityRule.Trl)
             .ShouldBe(beklenen);
     }
 
@@ -91,11 +101,11 @@ public class GrantEligibility_Tests
         grant.MinCompanyAgeYears = 2;
 
         // 2024-09-02 → 2026-09-01 arası 1 yıl 364 gün: HENÜZ 2 yıl değil.
-        Outcome(_m.Evaluate(new FirmSignals { FoundedOn = new DateTime(2024, 9, 2) }, grant, Today),
+        Outcome(_m.Evaluate(new FirmSignals { FoundedOn = new DateTime(2024, 9, 2) }, grant, NoTags, Today),
             GrantEligibilityRule.CompanyAge).ShouldBe(GrantRuleOutcome.Failed);
 
         // 2024-09-01 → tam 2 yıl.
-        Outcome(_m.Evaluate(new FirmSignals { FoundedOn = new DateTime(2024, 9, 1) }, grant, Today),
+        Outcome(_m.Evaluate(new FirmSignals { FoundedOn = new DateTime(2024, 9, 1) }, grant, NoTags, Today),
             GrantEligibilityRule.CompanyAge).ShouldBe(GrantRuleOutcome.Passed);
     }
 
@@ -106,11 +116,11 @@ public class GrantEligibility_Tests
         grant.MinRevenue = 5_000_000m;
         grant.MaxRevenue = 250_000_000m;
 
-        Outcome(_m.Evaluate(new FirmSignals { AnnualRevenue = 4_999_999m }, grant, Today),
+        Outcome(_m.Evaluate(new FirmSignals { AnnualRevenue = 4_999_999m }, grant, NoTags, Today),
             GrantEligibilityRule.Revenue).ShouldBe(GrantRuleOutcome.Failed);
-        Outcome(_m.Evaluate(new FirmSignals { AnnualRevenue = 5_000_000m }, grant, Today),
+        Outcome(_m.Evaluate(new FirmSignals { AnnualRevenue = 5_000_000m }, grant, NoTags, Today),
             GrantEligibilityRule.Revenue).ShouldBe(GrantRuleOutcome.Passed);
-        Outcome(_m.Evaluate(new FirmSignals { AnnualRevenue = 250_000_001m }, grant, Today),
+        Outcome(_m.Evaluate(new FirmSignals { AnnualRevenue = 250_000_001m }, grant, NoTags, Today),
             GrantEligibilityRule.Revenue).ShouldBe(GrantRuleOutcome.Failed);
     }
 
@@ -118,13 +128,13 @@ public class GrantEligibility_Tests
     public void Konsorsiyum_Sarti_Yalnizca_Zorunluysa_Degerlendirilir()
     {
         var grant = Program();
-        _m.Evaluate(new FirmSignals { HasConsortiumPartner = false }, grant, Today)
+        _m.Evaluate(new FirmSignals { HasConsortiumPartner = false }, grant, NoTags, Today)
             .Rules.ShouldBeEmpty();
 
         grant.RequiresConsortium = true;
-        Outcome(_m.Evaluate(new FirmSignals { HasConsortiumPartner = false }, grant, Today),
+        Outcome(_m.Evaluate(new FirmSignals { HasConsortiumPartner = false }, grant, NoTags, Today),
             GrantEligibilityRule.Consortium).ShouldBe(GrantRuleOutcome.Failed);
-        Outcome(_m.Evaluate(new FirmSignals { HasConsortiumPartner = true }, grant, Today),
+        Outcome(_m.Evaluate(new FirmSignals { HasConsortiumPartner = true }, grant, NoTags, Today),
             GrantEligibilityRule.Consortium).ShouldBe(GrantRuleOutcome.Passed);
     }
 
@@ -135,7 +145,7 @@ public class GrantEligibility_Tests
         grant.PrefersFemaleEntrepreneur = true;
         grant.PrefersYoungEntrepreneur = true;
 
-        _m.Evaluate(new FirmSignals(), grant, Today).Rules.ShouldBeEmpty();
+        _m.Evaluate(new FirmSignals(), grant, NoTags, Today).Rules.ShouldBeEmpty();
     }
 
     /// <summary>
@@ -157,7 +167,7 @@ public class GrantEligibility_Tests
         grant.MinRevenue = 5_000_000m;
         grant.RequiresConsortium = true;
 
-        var result = _m.Evaluate(new FirmSignals { Type = type }, grant, Today);
+        var result = _m.Evaluate(new FirmSignals { Type = type }, grant, NoTags, Today);
 
         result.Rules.ShouldBeEmpty();
         result.Bucket.ShouldBe(GrantEligibilityBucket.Uygun);
@@ -174,7 +184,7 @@ public class GrantEligibility_Tests
         grant.MinRevenue = 5_000_000m;
         grant.RequiresConsortium = true;
 
-        var result = _m.Evaluate(new FirmSignals(), grant, Today);
+        var result = _m.Evaluate(new FirmSignals(), grant, NoTags, Today);
 
         result.Rules.Count.ShouldBe(5);
         result.Bucket.ShouldBe(GrantEligibilityBucket.Kosullu);
@@ -190,7 +200,7 @@ public class GrantEligibility_Tests
 
         var result = _m.Evaluate(
             new FirmSignals { Type = OrganizationType.Dernek, FoundedOn = new DateTime(2019, 1, 24) },
-            grant, Today);
+            grant, NoTags, Today);
 
         Outcome(result, GrantEligibilityRule.CompanyAge).ShouldBe(GrantRuleOutcome.Failed);
         Outcome(result, GrantEligibilityRule.StaffCount).ShouldBe(GrantRuleOutcome.Unknown);
@@ -206,10 +216,83 @@ public class GrantEligibility_Tests
         grant.MinRdStaffCount = 2;
 
         var firm = new FirmSignals { Size = CompanySize.Kucuk, StaffCount = 40, RdStaffCount = 1 };
-        var result = _m.Evaluate(firm, grant, Today);
+        var result = _m.Evaluate(firm, grant, NoTags, Today);
 
         result.Rules.Count.ShouldBe(3);
         result.IsEligible.ShouldBeFalse();
         result.Rules.Count(r => r.Outcome == GrantRuleOutcome.Passed).ShouldBe(2);
+    }
+
+    [Fact]
+    public void Bolge_Disindaki_Kurum_Elenir()
+    {
+        var grant = Program();
+        var tags = Regions(grant, "Samsun", "Tokat", "Çorum", "Amasya");
+
+        var result = _m.Evaluate(FirmIn("Ankara"), grant, tags, Today);
+
+        Outcome(result, GrantEligibilityRule.Region).ShouldBe(GrantRuleOutcome.Failed);
+        result.Bucket.ShouldBe(GrantEligibilityBucket.UygunDegil);
+        result.IsFixable.ShouldBeFalse(); // kurumun yeri kısa vadede değişmez
+    }
+
+    [Fact]
+    public void Sube_Ili_Bolgedeyse_Kurum_Gecer()
+    {
+        var grant = Program();
+        var tags = Regions(grant, "Samsun", "Tokat");
+
+        // Merkez Ankara, şube Tokat: ajans projenin uygulama yerine bakar.
+        var result = _m.Evaluate(FirmIn("Ankara", "Tokat"), grant, tags, Today);
+
+        Outcome(result, GrantEligibilityRule.Region).ShouldBe(GrantRuleOutcome.Passed);
+    }
+
+    [Fact]
+    public void Il_Yazimi_Eslesmeyi_Bozmaz()
+    {
+        var grant = Program();
+        var tags = Regions(grant, "İstanbul");
+
+        // ToLowerInvariant "İ"yi noktalı "i̇"ye çevirdiği için eskiden eşleşmiyordu.
+        foreach (var spelling in new[] { "istanbul", "ISTANBUL", "Istanbul", "İSTANBUL" })
+        {
+            Outcome(_m.Evaluate(FirmIn(spelling), grant, tags, Today), GrantEligibilityRule.Region)
+                .ShouldBe(GrantRuleOutcome.Passed, spelling);
+        }
+    }
+
+    [Fact]
+    public void Ili_Olmayan_Kurum_Elenmez_Kosullu_Kalir()
+    {
+        var grant = Program();
+
+        var result = _m.Evaluate(new FirmSignals(), grant, Regions(grant, "Tokat"), Today);
+
+        Outcome(result, GrantEligibilityRule.Region).ShouldBe(GrantRuleOutcome.Unknown);
+        result.Bucket.ShouldBe(GrantEligibilityBucket.Kosullu);
+    }
+
+    [Fact]
+    public void Il_Olmayan_Eski_Bolge_Metni_Sart_Koydurmaz()
+    {
+        var grant = Program();
+
+        var result = _m.Evaluate(FirmIn("Ankara"), grant, Regions(grant, "Türkiye geneli"), Today);
+
+        result.Rules.ShouldNotContain(r => r.Rule == GrantEligibilityRule.Region);
+        result.IsEligible.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Bolge_Sarti_Dernege_De_Uygulanir()
+    {
+        var grant = Program();
+        var firm = FirmIn("Van");
+        firm.Type = OrganizationType.Dernek;
+
+        var result = _m.Evaluate(firm, grant, Regions(grant, "Tokat"), Today);
+
+        Outcome(result, GrantEligibilityRule.Region).ShouldBe(GrantRuleOutcome.Failed);
     }
 }

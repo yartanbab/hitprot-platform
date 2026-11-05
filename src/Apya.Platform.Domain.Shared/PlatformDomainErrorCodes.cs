@@ -217,6 +217,7 @@ public static class PlatformDomainErrorCodes
     public const string GrantMeetingNotPending = "Platform:Grant:MeetingNotPending";
     public const string GrantMeetingNoteRequired = "Platform:Grant:MeetingNoteRequired";
     public const string GrantMeetingInterestClosed = "Platform:Grant:MeetingInterestClosed";
+    public const string GrantUnknownProvince = "Platform:Grant:UnknownProvince";
 
     // --- Dosya (File) Modülü ---
     public const string FileUnsupportedExtension = "Platform:File:UnsupportedExtension";

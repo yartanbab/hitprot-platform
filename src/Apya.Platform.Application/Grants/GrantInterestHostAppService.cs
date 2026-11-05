@@ -285,7 +285,7 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         FillHostNames(row, hostUsers.ToDictionary(u => u.Id, DisplayName));
 
         var signals = await _signalsBuilder.BuildAsync(tenantId);
-        var eligibility = _matcher.Evaluate(signals, grant, today);
+        var eligibility = _matcher.Evaluate(signals, grant, criteria, today);
 
         var dto = new GrantInterestReviewDto
         {
