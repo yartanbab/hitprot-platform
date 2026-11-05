@@ -1130,6 +1130,24 @@ $(function () {
 
     // "＋" menüsünün her açılışta yeniden çizilmesi modülde (createTabs).
 
+    // ─── Excel'e aktar ─────────────────────────────────────────────────────
+    // Ekrandaki filtre, arama ve sıralama sunucuya aynen gider; hiyerarşi düzleşir
+    // (alt görevler "Üst görev" sütunuyla gelir).
+    $('#menu-export-excel').on('click', function () {
+        var input = buildInput();
+        var params = new URLSearchParams({ handler: 'Excel' });
+        Object.keys(input).forEach(function (key) {
+            [].concat(input[key]).forEach(function (v) { params.append(key, v); });
+        });
+        if (dataTable.search()) { params.append('filter', dataTable.search()); }
+        var order = dataTable.order()[0];
+        var sortColumn = order && columns[order[0]];
+        if (sortColumn && typeof sortColumn.data === 'string') {
+            params.append('sorting', sortColumn.data + ' ' + order[1]);
+        }
+        window.location.href = abp.appPath + 'Tasks?' + params.toString();
+    });
+
     // ─── Klavye kısayolları ────────────────────────────────────────────────
     var shortcuts = console_.bindShortcuts({
         table: '#TasksTable',
