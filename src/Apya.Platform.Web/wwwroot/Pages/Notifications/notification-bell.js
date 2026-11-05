@@ -520,6 +520,15 @@
         } else {
             $badge.removeClass('d-none').text(count > 99 ? '99+' : count);
         }
+        setIconBadge(count);
+    }
+
+    // Ana ekran ikonundaki sayı — yalnız yüklü uygulamada görünür; desteklemeyen tarayıcıda sessiz geçer.
+    // Uygulama kapalıyken sayıyı service worker push gövdesinden (unreadCount) yazar.
+    function setIconBadge(count) {
+        if (!('setAppBadge' in navigator)) { return; }
+        var done = count > 0 ? navigator.setAppBadge(count) : navigator.clearAppBadge();
+        Promise.resolve(done).catch(function() { /* rozet izni yok */ });
     }
 
     function refreshBadge() {

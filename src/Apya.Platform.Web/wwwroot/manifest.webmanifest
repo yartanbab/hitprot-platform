@@ -29,6 +29,18 @@
       "short_name": "Masraf",
       "url": "/Expenses/Capture",
       "description": "Mobil masraf yakalama"
+    },
+    {
+      "name": "Bildirimler",
+      "short_name": "Bildirimler",
+      "url": "/Notifications",
+      "description": "Okunmamış bildirimler"
+    },
+    {
+      "name": "Panolar",
+      "short_name": "Panolar",
+      "url": "/Tasks",
+      "description": "Görev panoları"
     }
   ],
   "prefer_related_applications": false

@@ -198,6 +198,8 @@ self.addEventListener('push', (event) => {
    SignalR balonuyla ve zil sayacıyla geldi. Eskiden "görünür" (visibilityState) yetiyordu: başka bir
    uygulamanın arkasında kalan ya da ikinci ekrandaki görünür pencere bildirimi tamamen yutuyordu. */
 async function showPushNotification(payload) {
+    await setIconBadge(payload.unreadCount);
+
     const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const isFocused = clientList.some((client) => client.focused);
 
@@ -221,6 +223,17 @@ async function showPushNotification(payload) {
         vibrate: important ? [200, 100, 200] : undefined,
         data: { url: payload.url || '/Dashboard' },
     });
+}
+
+/* Ana ekran ikonundaki sayı (yüklü uygulamada: iOS 16.4+, Android, masaüstü Chrome/Edge). Sunucu
+   okunmamış sayısını gövdeye yazar; uygulama açıkken sayıyı zil sayacı (notification-bell.js) tutar.
+   Desteklemeyen tarayıcıda ya da sayı gelmediyse hiçbir şey yapılmaz. */
+async function setIconBadge(count) {
+    if (typeof count !== 'number' || !('setAppBadge' in self.navigator)) return;
+    try {
+        if (count > 0) await self.navigator.setAppBadge(count);
+        else await self.navigator.clearAppBadge();
+    } catch (_) { /* rozet izni yok: bildirim yine gösterilir */ }
 }
 
 self.addEventListener('notificationclick', (event) => {

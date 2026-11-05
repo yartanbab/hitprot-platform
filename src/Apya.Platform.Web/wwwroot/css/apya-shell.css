@@ -9175,3 +9175,40 @@ th[aria-sort="descending"] .apya-th-sort::after { content: "\2193"; opacity: .9;
 .apya-th-sort:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 2px; border-radius: 2px; }
 /* Alt kalemi olan bütçe kalemi (kategori/üst kalem) satırı. */
 tr.apya-budget-parent > td { background-color: var(--bs-tertiary-bg); }
+
+/* ── Ana ekrana ekle / bildirim şeridi (apya-pwa.js) ─────────────────────
+   Yalnız mobil kabukta, içerik alanının en üstünde; sabit konumlu DEĞİL —
+   alttaki toplu işlem çubuğunu ve klavyeyi örtmesin. */
+.apya-pwa-banner {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    align-items: center;
+    gap: var(--apya-space-2) var(--apya-space-3);
+    margin-bottom: var(--apya-space-3);
+    padding: var(--apya-space-3);
+    border: 1px solid var(--apya-border-default);
+    border-radius: var(--apya-radius-lg);
+    background: var(--apya-surface-raised);
+}
+.apya-pwa-banner-icon { width: 36px; height: 36px; border-radius: 8px; }
+.apya-pwa-banner-text {
+    margin: 0;
+    font-size: var(--apya-fs-sm);
+    line-height: 1.45;
+    color: var(--apya-text-primary);
+}
+.apya-pwa-banner-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: var(--apya-space-2);
+}
+.apya-pwa-banner-actions .btn-link { color: var(--apya-text-secondary); text-decoration: none; }
+
+.apya-pwa-steps { margin: 0; padding-left: 1.25rem; display: grid; gap: var(--apya-space-3); }
+.apya-pwa-steps li { line-height: 1.5; }
+.apya-pwa-steps i { width: 1.25em; margin-right: .4em; text-align: center; color: var(--apya-accent-500); }
+.apya-pwa-note { margin: var(--apya-space-3) 0 0; font-size: var(--apya-fs-sm); color: var(--apya-text-secondary); }
+/* Menü satır sınıfları display:flex veriyor; [hidden]'ın display:none'ını açıkça geri al. */
+[data-act="install-app"][hidden],
+#mobile-user-menu-group .apya-mshell-row--install[hidden] { display: none; }

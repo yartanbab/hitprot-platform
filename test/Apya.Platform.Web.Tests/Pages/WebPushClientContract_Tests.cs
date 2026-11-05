@@ -80,10 +80,10 @@ public class WebPushClientContract_Tests
     {
         var worker = ReadSource("wwwroot", "sw.js");
         var payload = JsonDocument.Parse(
-            WebPushPayload.Build(Guid.NewGuid(), "Başlık", "Kısa özet", null, NotificationSeverity.High, "/Projects")).RootElement;
+            WebPushPayload.Build(Guid.NewGuid(), "Başlık", "Kısa özet", null, NotificationSeverity.High, "/Projects", 3)).RootElement;
 
         var fields = payload.EnumerateObject().Select(p => p.Name).ToList();
-        fields.ShouldBe(new[] { "notificationId", "title", "body", "tag", "severity", "url" }, ignoreOrder: true);
+        fields.ShouldBe(new[] { "notificationId", "title", "body", "tag", "severity", "url", "unreadCount" }, ignoreOrder: true);
 
         foreach (var field in fields)
         {
