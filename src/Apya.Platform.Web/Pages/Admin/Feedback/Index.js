@@ -1,6 +1,8 @@
 $(function () {
     var service = apya.platform.feedbacks.feedbackAdmin;
     var detailModal = new abp.ModalManager(abp.appPath + 'Admin/Feedback/DetailModal');
+    var bulkPromptModal = new abp.ModalManager(abp.appPath + 'Admin/Feedback/BulkPromptModal');
+    var BULK_PROMPT_LIMIT = 20; // FeedbackPromptBuilder.BulkLimit ile aynı; sunucu da denetler.
 
     // Detay modalındaki "Göreve Dönüştür" düğmesini ortak köprüye bağla.
     apyaIssueTask.bind(detailModal);
@@ -184,6 +186,16 @@ $(function () {
         });
     });
 
+    $('#btn-bulk-prompt').on('click', function () {
+        var ids = Object.keys(selectedIds).filter(function (k) { return selectedIds[k]; });
+        if (ids.length === 0) return;
+        if (ids.length > BULK_PROMPT_LIMIT) {
+            abp.notify.warn('Tek seferde en çok ' + BULK_PROMPT_LIMIT + ' geri bildirim seçilebilir; ' + ids.length + ' seçildi.');
+            return;
+        }
+        bulkPromptModal.open({ ids: ids.join(',') });
+    });
+
     $('#btn-export-excel').on('click', function () {
         var qs = $.param(getFilterInput());
         window.location.href = '/Admin/Feedback?handler=Excel&' + qs;
@@ -256,16 +268,16 @@ $(function () {
         detailModal.open({ id: openId });
     }
 
-    /* ─── Prompt sekmesi: metin sunucuda üretilir, burada yalnız seçilir/kopyalanır ── */
+    /* ─── Prompt (detay sekmesi + toplu pencere): metin sunucuda üretilir, burada yalnız seçilir/kopyalanır ── */
 
     $(document).on('change', '.detail-prompt-internal', function () {
-        var $pane = $(this).closest('.tab-pane');
+        var $pane = $(this).closest('.detail-prompt-pane');
         var source = $(this).is(':checked') ? '.detail-prompt-with-notes' : '.detail-prompt-plain';
         $pane.find('.detail-prompt-text').val($pane.find(source).val());
     });
 
     $(document).on('click', '.detail-prompt-copy', function () {
-        var $text = $(this).closest('.tab-pane').find('.detail-prompt-text');
+        var $text = $(this).closest('.detail-prompt-pane').find('.detail-prompt-text');
         var text = $text.val();
 
         function announce() {
