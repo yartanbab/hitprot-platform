@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.CashAccounts;
 using Apya.Platform.CashMovements;
 using Apya.Platform.ExchangeRates;
+using Apya.Platform.Web.Export;
 using Apya.Platform.Web.Pages.Shared;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,7 @@ using Apya.Platform.Permissions;
 namespace Apya.Platform.Web.Pages.CashAccounts;
 
 [Authorize(PlatformPermissions.CashAccounts.Default)]
-public class IndexModel : AbpPageModel
+public class IndexModel : PlatformPageModel
 {
     private readonly ICashAccountAppService _cashAccountAppService;
     private readonly ICashMovementAppService _cashMovementAppService;
@@ -50,6 +51,33 @@ public class IndexModel : AbpPageModel
     {
         await LoadAccountsAsync();
         return Partial("_AccountSummary", this);
+    }
+
+    /// <summary>Seçili kasanın hareketleri (.xlsx), yeniden eskiye.</summary>
+    public virtual async Task<IActionResult> OnGetMovementsExcelAsync(Guid cashAccountId)
+    {
+        var account = await _cashAccountAppService.GetAsync(cashAccountId);
+        var rows = await ExcelTable.CollectAsync((skip, take) => _cashMovementAppService.GetListAsync(new GetCashMovementsInput
+        {
+            CashAccountId = cashAccountId,
+            Sorting = "movementDate desc",
+            SkipCount = skip,
+            MaxResultCount = take
+        }));
+
+        var columns = new List<ExcelColumn<CashMovementDto>>
+        {
+            new(L["Export:Col:Date"], m => m.MovementDate, "dd.MM.yyyy"),
+            new(L["Export:Col:Direction"], m => L[$"CashMovement:Direction:{m.Direction}"].Value),
+            new(L["Export:Col:Description"], m => m.Description),
+            new(L["Export:Col:Amount"], m => m.Amount),
+            new(L["Export:Col:Currency"], _ => account.Currency),
+            new(L["Export:Col:Source"], m => L[$"CashMovement:Source:{m.Source}"].Value),
+        };
+
+        var name = L["Export:CashMovements:Name"].Value;
+        var note = rows.Truncated ? L["Export:Truncated", ExcelTable.MaxRows].Value : null;
+        return File(ExcelTable.Build(account.Name, columns, rows.Items, note), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
     }
 
     private async Task LoadAccountsAsync()

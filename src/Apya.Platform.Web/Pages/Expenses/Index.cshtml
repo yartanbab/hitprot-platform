@@ -1,5 +1,6 @@
 @page
 @model Apya.Platform.Web.Pages.Expenses.IndexModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     ViewBag.PageTitle = "Giderler";
 }
@@ -15,6 +16,9 @@
                 <abp-card-title>@ViewBag.PageTitle</abp-card-title>
             </abp-column>
             <abp-column size-md="_6" class="text-end">
+                <button type="button" id="ExpensesExportExcel" class="btn btn-outline-secondary btn-sm me-1">
+                    <i class="fa fa-file-excel"></i> @L["Export:ExcelButton"]
+                </button>
                 <a href="/Expenses/Capture" class="btn btn-outline-secondary btn-sm me-1">
                     <i class="fa fa-camera"></i> Masraf Yakala
                 </a>

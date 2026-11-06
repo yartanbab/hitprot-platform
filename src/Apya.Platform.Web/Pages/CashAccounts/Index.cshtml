@@ -4,6 +4,7 @@
 @using Apya.Platform.CashAccounts
 @using Apya.Platform.Web.Pages.Shared
 @inject IAuthorizationService AuthorizationService
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @model Apya.Platform.Web.Pages.CashAccounts.IndexModel
 @{
     ViewBag.PageTitle = "Kasa & Banka";
@@ -43,12 +44,20 @@
                 <span class="fw-semibold" id="MovementsTitle">Hareketler</span>
                 <div class="small text-muted" id="MovementsSubtitle">Bir hesap kartı seçin</div>
             </div>
-            @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashMovements.Create))
-            {
-                <button id="NewCashMovementButton" class="btn btn-sm btn-primary" disabled>
-                    <i class="fa fa-plus me-1" aria-hidden="true"></i>Yeni Hareket
-                </button>
-            }
+            <div class="d-flex gap-2">
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashMovements.Default))
+                {
+                    <a id="MovementsExportExcel" class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">
+                        <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
+                    </a>
+                }
+                @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashMovements.Create))
+                {
+                    <button id="NewCashMovementButton" class="btn btn-sm btn-primary" disabled>
+                        <i class="fa fa-plus me-1" aria-hidden="true"></i>Yeni Hareket
+                    </button>
+                }
+            </div>
         </div>
         <div class="card-body">
             <div id="MovementsEmpty" class="text-muted text-center py-4" style="font-size:13px">

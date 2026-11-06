@@ -1,5 +1,6 @@
 @page
 @model Apya.Platform.Web.Pages.Incomes.IndexModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     ViewBag.PageTitle = "Gelirler (Faturasız / Hibe)";
 }
@@ -16,6 +17,9 @@
                 <small class="text-muted">Hibe, bağış, faturasız nakit gelir. Kasa seçilirse otomatik kasa girişi oluşur.</small>
             </abp-column>
             <abp-column size-md="_5" class="text-end">
+                <button type="button" id="IncomesExportExcel" class="btn btn-outline-secondary btn-sm me-1">
+                    <i class="fa fa-file-excel"></i> @L["Export:ExcelButton"]
+                </button>
                 <button id="NewIncomeButton" class="btn btn-primary btn-sm">
                     <i class="fa fa-plus"></i> Yeni Gelir
                 </button>
