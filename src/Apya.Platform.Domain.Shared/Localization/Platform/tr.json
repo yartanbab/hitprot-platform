@@ -2139,6 +2139,7 @@
         "Platform:Expense:CashAccountRequired": "Gider için bir kasa seçilmelidir.",
         "Platform:Invoice:NumberRequired": "Fatura numarası boş bırakılamaz.",
         "Platform:Invoice:NotEditable": "Bu fatura artık düzenlenemez (ödeme alınmış veya kapatılmış olabilir).",
+        "Platform:Invoice:PartyLockedByPayment": "Bu faturaya ödeme girilmiş: cari ve fatura yönü değiştirilemez. Tutar, kalemler ve KDV düzenlenebilir.",
         "Platform:Invoice:TaxRateInvalid": "Geçersiz KDV oranı. Oran 0 ile 100 arasında olmalıdır.",
         "Platform:Invoice:CurrencyInvalid": "Geçersiz para birimi.",
         "Platform:Invoice:ItemAmountInvalid": "Fatura kaleminde miktar sıfırdan büyük olmalı, birim fiyat eksi olamaz.",

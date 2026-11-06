@@ -17,7 +17,7 @@ namespace Apya.Platform.Pages;
 
 /// <summary>
 /// Fatura düzenleme penceresi: Taslak fatura baştan düzenlenir (kalemler invariant değerle basılır ve
-/// geri bağlanır); ödeme alınmış faturada kalemler kilitlidir, yalnız vade/not/bütçe kalemi kaydedilir.
+/// geri bağlanır); ödeme alınmış faturada yalnız cari ve yön kilitlidir, tutar ve kalemler düzelir.
 /// </summary>
 public class InvoiceEditModal_Tests : PlatformWebTestBase
 {
@@ -95,30 +95,40 @@ public class InvoiceEditModal_Tests : PlatformWebTestBase
     }
 
     [Fact]
-    public async Task Odeme_alinmis_faturada_kalemler_kilitli_vade_ve_not_kaydedilir()
+    public async Task Odeme_alinmis_faturada_cari_ve_yon_kilitli_tutar_duzeltilir()
     {
         var invoice = await InvoiceAsync();
         await GetRequiredService<IInvoiceAppService>().AddPaymentAsync(invoice.Id, 100m, "Nakit", "fdm-odeme");
 
         var html = await GetResponseAsStringAsync("/Invoices/EditModal?id=" + invoice.Id);
 
-        html.ShouldNotContain("name=\"InvoiceInfo.Items[0].UnitPrice\"", Case.Sensitive);
-        html.ShouldNotContain("id=\"EditInvoiceAddItemBtn\"", Case.Sensitive);
+        html.ShouldContain("name=\"InvoiceInfo.Items[0].UnitPrice\"", Case.Sensitive);
+        html.ShouldContain("id=\"EditInvoiceAddItemBtn\"", Case.Sensitive);
 
-        // Kilitli alanlar tarayıcıdan gelmez (disabled); sunucu bu yolda yalnız vade/not/kalem okur.
+        // Cari ve yön disabled basılır, tarayıcıdan gelmez: sunucu ikisini faturadan alır. Gelmeyen
+        // yön varsayılana (Satış) düşseydi alış faturası kilit hatasıyla reddedilirdi.
         var response = await PostAsync(invoice, new()
         {
             new("InvoiceInfo.ProjectId", invoice.ProjectId.ToString()),
             new("InvoiceInfo.InvoiceNumber", invoice.InvoiceNumber),
             new("InvoiceInfo.InvoiceDate", "2026-10-17"),
             new("InvoiceInfo.DueDate", "2026-12-31"),
-            new("InvoiceInfo.Notes", "vade uzadı")
+            new("InvoiceInfo.Notes", "vade uzadı"),
+            new("InvoiceInfo.TaxRate", "20"),
+            new("__Invariant", "InvoiceInfo.TaxRate"),
+            new("InvoiceInfo.Items[0].Description", "Tablet"),
+            new("InvoiceInfo.Items[0].Quantity", "1"),
+            new("__Invariant", "InvoiceInfo.Items[0].Quantity"),
+            new("InvoiceInfo.Items[0].UnitPrice", "1000"),
+            new("__Invariant", "InvoiceInfo.Items[0].UnitPrice")
         });
 
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
         var saved = await GetRequiredService<IInvoiceAppService>().GetAsync(invoice.Id);
         saved.DueDate.ShouldBe(new DateTime(2026, 12, 31));
         saved.Notes.ShouldBe("vade uzadı");
-        saved.TotalAmount.ShouldBe(invoice.TotalAmount);
+        saved.Direction.ShouldBe(InvoiceDirection.Purchase);
+        saved.TotalAmount.ShouldBe(1200m);
+        saved.Status.ShouldBe(InvoiceStatus.Sent);
     }
 }

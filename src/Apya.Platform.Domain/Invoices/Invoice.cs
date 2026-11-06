@@ -70,14 +70,13 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
     // ======================== Domain Methods ========================
 
     /// <summary>
-    /// Faturaya kalem ekler. Yalnızca Draft durumundaki faturaya ekleme yapılabilir.
-    /// Ekleme sonrası TotalAmount otomatik yeniden hesaplanır.
+    /// Faturaya kalem ekler. İptal edilmiş faturaya ekleme yapılamaz.
+    /// Ekleme sonrası TotalAmount otomatik yeniden hesaplanır; ödeme alınmış faturada durum
+    /// çağıran tarafından (<see cref="UpdateStatus"/>) yeniden hesaplanır.
     /// </summary>
     public void AddItem(Guid itemId, string description, decimal quantity, decimal unitPrice)
     {
-        if (Status != InvoiceStatus.Draft)
-            throw new BusinessException(PlatformDomainErrorCodes.InvoiceNotEditable)
-                .WithData("Status", Status);
+        EnsureNotCancelled();
 
         // Sıfır ya da eksi kalem eksi/sıfır toplamlı fatura üretiyordu: cari tahakkuku atlanıyor,
         // ilk ödemede fatura "ödendi" oluyordu.
@@ -91,11 +90,16 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     /// <summary>
-    /// Taslak faturanın başlığını düzenler ve kalemlerini boşaltır; yeni kalemler <see cref="AddItem"/>
-    /// ile eklenir. Ödeme alınmış faturada tutarı değiştirmek cari ve kasa kayıtlarını bozacağı için
-    /// yalnız Taslak düzenlenir. Proje ve para birimi değişmez.
+    /// Faturanın başlığını düzenler ve kalemlerini boşaltır; yeni kalemler <see cref="AddItem"/>
+    /// ile eklenir. Proje ve para birimi değişmez.
+    /// <para>
+    /// Ödeme alınmış faturada da tutar, kalemler ve KDV düzeltilebilir (yanlış girilen KDV dahil
+    /// tutar gibi): fatura tahakkuku yeni tutara hizalanır, durum ödemelerden yeniden hesaplanır.
+    /// Cari ve yön ise kilitlidir — ödemenin kasa hareketi ve cari kaydı o cariye ve o yöne
+    /// yazılmıştır; değişirse o kayıtlar boşta kalır.
+    /// </para>
     /// </summary>
-    public void UpdateDraft(
+    public void Update(
         string invoiceNumber,
         DateTime invoiceDate,
         DateTime dueDate,
@@ -103,7 +107,10 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
         InvoiceDirection direction,
         Guid? customerId)
     {
-        EnsureDraft();
+        EnsureNotCancelled();
+        if (Status != InvoiceStatus.Draft && (direction != Direction || customerId != CustomerId))
+            throw new BusinessException(PlatformDomainErrorCodes.InvoicePartyLockedByPayment)
+                .WithData("Status", Status);
         SetInvoiceNumber(invoiceNumber);
         InvoiceDate = invoiceDate;
         DueDate = dueDate;
@@ -123,9 +130,9 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
         DueDate = dueDate;
     }
 
-    private void EnsureDraft()
+    private void EnsureNotCancelled()
     {
-        if (Status != InvoiceStatus.Draft)
+        if (Status == InvoiceStatus.Cancelled)
             throw new BusinessException(PlatformDomainErrorCodes.InvoiceNotEditable)
                 .WithData("Status", Status);
     }

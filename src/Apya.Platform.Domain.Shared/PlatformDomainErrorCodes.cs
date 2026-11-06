@@ -79,6 +79,7 @@ public static class PlatformDomainErrorCodes
     // --- Fatura (Invoice) Modülü ---
     public const string InvoiceNumberRequired = "Platform:Invoice:NumberRequired";
     public const string InvoiceNotEditable = "Platform:Invoice:NotEditable";
+    public const string InvoicePartyLockedByPayment = "Platform:Invoice:PartyLockedByPayment";
     public const string InvoiceTaxRateInvalid = "Platform:Invoice:TaxRateInvalid";
     public const string InvoiceCurrencyInvalid = "Platform:Invoice:CurrencyInvalid";
     public const string InvoiceItemAmountInvalid = "Platform:Invoice:ItemAmountInvalid";

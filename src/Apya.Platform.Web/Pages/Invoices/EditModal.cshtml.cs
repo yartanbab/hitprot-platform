@@ -13,8 +13,8 @@ using Apya.Platform.Permissions;
 namespace Apya.Platform.Web.Pages.Invoices;
 
 /// <summary>
-/// Fatura düzenleme. Taslak fatura baştan düzenlenir; ödeme alınmış faturada yalnız vade, not ve
-/// bütçe kalemi değişir (tutar cari ve kasa kayıtlarına yazılmıştır).
+/// Fatura düzenleme. Taslak fatura baştan düzenlenir; ödeme alınmış faturada da tutar, kalemler ve
+/// KDV düzeltilir, yalnız cari ve yön kilitlidir (ödemenin kasa ve cari kayıtları onlara yazılmıştır).
 /// </summary>
 [Authorize(PlatformPermissions.Invoices.Edit)]
 public class EditModalModel : AbpPageModel
@@ -71,23 +71,15 @@ public class EditModalModel : AbpPageModel
     {
         var budgetLineId = InvoiceInfo.BudgetLineId == Guid.Empty ? null : InvoiceInfo.BudgetLineId;
         var current = await _invoiceAppService.GetAsync(Id);
-
-        if (current.Status != InvoiceStatus.Draft)
-        {
-            await _invoiceAppService.UpdateDetailsAsync(Id, new UpdateInvoiceDetailsDto
-            {
-                BudgetLineId = budgetLineId,
-                DueDate = InvoiceInfo.DueDate,
-                Notes = InvoiceInfo.Notes
-            });
-            return NoContent();
-        }
+        // Ödemeli faturada cari ve yön alanları disabled basılır, tarayıcı göndermez.
+        var hasPayments = current.Status != InvoiceStatus.Draft;
 
         await _invoiceAppService.UpdateAsync(Id, new UpdateInvoiceDto
         {
-            CustomerId = InvoiceInfo.CustomerId == Guid.Empty ? null : InvoiceInfo.CustomerId,
+            CustomerId = hasPayments ? current.CustomerId
+                : InvoiceInfo.CustomerId == Guid.Empty ? null : InvoiceInfo.CustomerId,
             BudgetLineId = budgetLineId,
-            Direction = InvoiceInfo.Direction,
+            Direction = hasPayments ? current.Direction : InvoiceInfo.Direction,
             InvoiceNumber = InvoiceInfo.InvoiceNumber,
             InvoiceDate = InvoiceInfo.InvoiceDate,
             DueDate = InvoiceInfo.DueDate,

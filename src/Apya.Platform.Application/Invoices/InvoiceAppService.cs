@@ -157,7 +157,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         }
         await EnsureBudgetLineBelongsToProjectAsync(input.BudgetLineId, invoice.ProjectId);
 
-        await _invoiceManager.UpdateDraftAsync(
+        await _invoiceManager.UpdateAsync(
             id,
             input.InvoiceNumber,
             input.InvoiceDate,
