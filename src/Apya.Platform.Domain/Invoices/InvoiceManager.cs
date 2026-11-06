@@ -114,10 +114,12 @@ public class InvoiceManager : DomainService
     }
 
     /// <summary>
-    /// Taslak faturayı baştan yazar: başlık, kalemler, not ve bütçe kalemi. Fatura tahakkuku
-    /// (CustomerLedgerEntry) yeni tutar, tarih, yön ve cariyle hizalanır.
+    /// Faturayı baştan yazar: başlık, kalemler, not ve bütçe kalemi. Fatura tahakkuku
+    /// (CustomerLedgerEntry) yeni tutar, tarih, yön ve cariyle hizalanır. Ödeme alınmış faturada
+    /// durum (Gönderildi/Ödendi) yeni tutara göre ödemelerden yeniden hesaplanır; kasa hareketleri
+    /// gerçekten el değiştiren parayı gösterdiği için değişmez.
     /// </summary>
-    public async Task<Invoice> UpdateDraftAsync(
+    public async Task<Invoice> UpdateAsync(
         Guid invoiceId,
         string invoiceNumber,
         DateTime invoiceDate,
@@ -134,13 +136,19 @@ public class InvoiceManager : DomainService
         var invoice = await AsyncExecuter.FirstOrDefaultAsync(query.Where(x => x.Id == invoiceId))
             ?? throw new Volo.Abp.Domain.Entities.EntityNotFoundException(typeof(Invoice), invoiceId);
 
-        invoice.UpdateDraft(invoiceNumber, invoiceDate, dueDate, taxRate, direction, customerId);
+        invoice.Update(invoiceNumber, invoiceDate, dueDate, taxRate, direction, customerId);
         foreach (var item in items)
         {
             invoice.AddItem(GuidGenerator.Create(), item.Description, item.Quantity, item.UnitPrice);
         }
         invoice.SetNotes(notes);
         invoice.SetBudgetLine(budgetLineId);
+
+        var payments = await _paymentRepository.GetListAsync(p => p.InvoiceId == invoiceId);
+        if (payments.Count > 0)
+        {
+            invoice.UpdateStatus(payments.Sum(p => p.Amount));
+        }
 
         await _invoiceRepository.UpdateAsync(invoice, autoSave: true);
         await SyncInvoiceLedgerEntryAsync(invoice);

@@ -17,8 +17,9 @@ using Xunit;
 namespace Apya.Platform.EntityFrameworkCore.Finance;
 
 /// <summary>
-/// Fatura düzenleme (2026-10-27 kararı): Taslak fatura baştan düzenlenir ve cari tahakkuku onunla
-/// hizalanır; ödeme alınmış faturada yalnız vade, not ve bütçe kalemi değişir.
+/// Fatura düzenleme: Taslak fatura baştan düzenlenir ve cari tahakkuku onunla hizalanır. Ödeme
+/// alınmış faturada da tutar, kalemler ve KDV düzeltilir (2026-11-05 kararı; 10-27'de yalnız vade,
+/// not ve bütçe kalemiydi) — cari ve yön kilitli kalır, durum ödemelerden yeniden hesaplanır.
 /// </summary>
 [Collection(PlatformTestConsts.CollectionDefinitionName)]
 public class InvoiceEdit_Tests : PlatformEntityFrameworkCoreTestBase
@@ -133,16 +134,71 @@ public class InvoiceEdit_Tests : PlatformEntityFrameworkCoreTestBase
         (await LedgerAsync(created.Id)).ShouldBeEmpty();
     }
 
+    /// <summary>
+    /// Yanlış girilmiş tutarın düzeltilmesi (KDV dahil fiyatın KDV hariç girilmesi gibi): tahakkuk
+    /// yeni tutara iner, fazla ödenmiş fatura "Ödendi" kalır; tutar ödenenin üstüne çıkınca fatura
+    /// yeniden "Gönderildi" olur.
+    /// </summary>
     [Fact]
-    public async Task Odeme_alinmis_fatura_tam_duzenlenemez_vade_not_ve_kalem_degisir()
+    public async Task Odeme_alinmis_faturanin_tutari_duzeltilir_tahakkuk_ve_durum_hizalanir()
+    {
+        var projectId = await ProjectAsync();
+        var supplier = await CustomerAsync("Ödenmiş tedarikçi");
+        var created = await InvoiceAsync(projectId, supplier);
+        await _invoices.AddPaymentAsync(created.Id, 1200m, "Havale", "tam-odeme");
+        (await _invoices.GetAsync(created.Id)).Status.ShouldBe(InvoiceStatus.Paid);
+
+        UpdateInvoiceDto Fix(decimal unitPrice) => new()
+        {
+            CustomerId = supplier,
+            Direction = InvoiceDirection.Purchase,
+            InvoiceNumber = created.InvoiceNumber,
+            InvoiceDate = created.InvoiceDate,
+            DueDate = created.DueDate,
+            TaxRate = 20,
+            Items = new List<CreateInvoiceItemDto> { new() { Description = "Tablet", Quantity = 1, UnitPrice = unitPrice } }
+        };
+
+        var fixedDown = await _invoices.UpdateAsync(created.Id, Fix(500m));
+        fixedDown.TotalAmount.ShouldBe(600m);
+        fixedDown.Status.ShouldBe(InvoiceStatus.Paid);
+        (await LedgerAsync(created.Id)).ShouldHaveSingleItem().Amount.ShouldBe(600m);
+
+        var raised = await _invoices.UpdateAsync(created.Id, Fix(2000m));
+        raised.TotalAmount.ShouldBe(2400m);
+        raised.Status.ShouldBe(InvoiceStatus.Sent, "ödenen 1.200, yeni tutarın altında");
+        raised.PaidAmount.ShouldBe(1200m);
+        (await LedgerAsync(created.Id)).ShouldHaveSingleItem().Amount.ShouldBe(2400m);
+    }
+
+    /// <summary>Ödemenin kasa ve cari kaydı o cariye ve o yöne yazılmıştır: ikisi değişemez.</summary>
+    [Fact]
+    public async Task Odeme_alinmis_faturada_cari_ve_yon_degismez()
+    {
+        var projectId = await ProjectAsync();
+        var supplier = await CustomerAsync("Kilitli tedarikçi");
+        var other = await CustomerAsync("Başka cari");
+        var created = await InvoiceAsync(projectId, supplier);
+        await _invoices.AddPaymentAsync(created.Id, 100m, "Nakit", "kilit-odeme");
+
+        var input = UpdateInput(created, other, null);
+        (await Should.ThrowAsync<BusinessException>(() => _invoices.UpdateAsync(created.Id, input)))
+            .Code.ShouldBe(PlatformDomainErrorCodes.InvoicePartyLockedByPayment);
+
+        input.CustomerId = supplier; // yön hâlâ Satış, fatura Alış
+        (await Should.ThrowAsync<BusinessException>(() => _invoices.UpdateAsync(created.Id, input)))
+            .Code.ShouldBe(PlatformDomainErrorCodes.InvoicePartyLockedByPayment);
+
+        (await _invoices.GetAsync(created.Id)).TotalAmount.ShouldBe(created.TotalAmount);
+    }
+
+    [Fact]
+    public async Task Odeme_alinmis_faturada_vade_not_ve_kalem_ayrica_degisir()
     {
         var projectId = await ProjectAsync();
         var lineId = await LineAsync(projectId, "2");
         var created = await InvoiceAsync(projectId, customerId: null);
         await _invoices.AddPaymentAsync(created.Id, 100m, "Nakit", "kismi-odeme");
-
-        (await Should.ThrowAsync<BusinessException>(() => _invoices.UpdateAsync(created.Id, UpdateInput(created, null, null))))
-            .Code.ShouldBe(PlatformDomainErrorCodes.InvoiceNotEditable);
 
         var updated = await _invoices.UpdateDetailsAsync(created.Id, new UpdateInvoiceDetailsDto
         {
