@@ -82,6 +82,7 @@ public class CreateModalModel : AbpPageModel
             InvoiceDate   = InvoiceInfo.InvoiceDate,
             DueDate       = InvoiceInfo.DueDate,
             TaxRate       = InvoiceInfo.TaxRate,
+            PricesIncludeTax = InvoiceInfo.PricesIncludeTax,
             Currency      = InvoiceInfo.Currency,
             Notes         = InvoiceInfo.Notes,
             Items = InvoiceInfo.Items.Select(i => new CreateInvoiceItemDto
@@ -115,6 +116,7 @@ public class CreateModalModel : AbpPageModel
         public DateTime InvoiceDate { get; set; } = default;  // OnGetAsync'te Clock.Now ile set edilir
         public DateTime DueDate { get; set; } = default;       // OnGetAsync'te Clock.Now.AddDays(15) ile set edilir
         public decimal TaxRate { get; set; } = 20;
+        public bool PricesIncludeTax { get; set; }
         public string Currency { get; set; } = "TRY";
         public string? Notes { get; set; }
 

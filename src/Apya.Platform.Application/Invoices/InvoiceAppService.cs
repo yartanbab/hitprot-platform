@@ -126,9 +126,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
         await EnsureBudgetLineBelongsToProjectAsync(input.BudgetLineId, input.ProjectId);
 
-        var items = input.Items
-            .Select(i => new InvoiceItemDescriptor(i.Description, i.Quantity, i.UnitPrice))
-            .ToList();
+        var items = ToItemDescriptors(input.Items, input.TaxRate, input.PricesIncludeTax);
 
         var invoice = await _invoiceManager.CreateAsync(
             input.ProjectId,
@@ -165,12 +163,19 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             input.TaxRate,
             input.Direction,
             input.CustomerId,
-            input.Items.Select(i => new InvoiceItemDescriptor(i.Description, i.Quantity, i.UnitPrice)).ToList(),
+            ToItemDescriptors(input.Items, input.TaxRate, input.PricesIncludeTax),
             input.Notes,
             input.BudgetLineId);
 
         return await GetAsync(id);
     }
+
+    // KDV dahil girilen fiyatlar KDV hariç saklanır; çevirme kuralı domain'de.
+    private static List<InvoiceItemDescriptor> ToItemDescriptors(
+        IEnumerable<CreateInvoiceItemDto> items, decimal taxRate, bool pricesIncludeTax) =>
+        items.Select(i => new InvoiceItemDescriptor(i.Description, i.Quantity, i.UnitPrice))
+            .Select(d => pricesIncludeTax ? d.WithoutTax(taxRate) : d)
+            .ToList();
 
     [Authorize(PlatformPermissions.Invoices.Edit)]
     public async Task<InvoiceDto> UpdateDetailsAsync(Guid id, UpdateInvoiceDetailsDto input)

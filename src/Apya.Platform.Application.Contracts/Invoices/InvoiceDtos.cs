@@ -68,6 +68,9 @@ public class CreateInvoiceDto
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }
     public decimal TaxRate { get; set; } = 20;
+
+    /// <summary>Kalem fiyatları KDV dahil girildiyse true; KDV hariç fiyata çevrilip saklanır.</summary>
+    public bool PricesIncludeTax { get; set; }
     public string Currency { get; set; } = "TRY";
     public string? Notes { get; set; }
     public List<CreateInvoiceItemDto> Items { get; set; } = new();
@@ -80,7 +83,7 @@ public class CreateInvoiceItemDto
     public decimal UnitPrice { get; set; }
 }
 
-/// <summary>Taslak faturanın tam düzenlemesi. Proje, görev ve para birimi değişmez.</summary>
+/// <summary>Faturanın tam düzenlemesi. Proje, görev ve para birimi değişmez.</summary>
 public class UpdateInvoiceDto
 {
     public Guid? CustomerId { get; set; }
@@ -92,6 +95,9 @@ public class UpdateInvoiceDto
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }
     public decimal TaxRate { get; set; }
+
+    /// <summary>Kalem fiyatları KDV dahil girildiyse true; KDV hariç fiyata çevrilip saklanır.</summary>
+    public bool PricesIncludeTax { get; set; }
     public string? Notes { get; set; }
     public List<CreateInvoiceItemDto> Items { get; set; } = new();
 }

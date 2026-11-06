@@ -84,6 +84,7 @@ public class EditModalModel : AbpPageModel
             InvoiceDate = InvoiceInfo.InvoiceDate,
             DueDate = InvoiceInfo.DueDate,
             TaxRate = InvoiceInfo.TaxRate,
+            PricesIncludeTax = InvoiceInfo.PricesIncludeTax,
             Notes = InvoiceInfo.Notes,
             Items = InvoiceInfo.Items.Select(i => new CreateInvoiceItemDto
             {
@@ -106,6 +107,7 @@ public class EditModalModel : AbpPageModel
         public DateTime InvoiceDate { get; set; }
         public DateTime DueDate { get; set; }
         public decimal TaxRate { get; set; }
+        public bool PricesIncludeTax { get; set; }
         public string? Notes { get; set; }
         public List<EditInvoiceItemViewModel> Items { get; set; } = new();
     }

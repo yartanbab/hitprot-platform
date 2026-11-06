@@ -75,6 +75,13 @@
                     <label class="form-label" asp-for="InvoiceInfo.TaxRate">KDV Oranı (%)</label>
                     <input asp-for="InvoiceInfo.TaxRate" type="number" step="0.01" class="form-control" data-money-input="true" />
                 </div>
+                @* Kayıtlı fiyatlar KDV hariçtir; kutu boş açılır, işaretlenirse girilen fiyatlar KDV'den arındırılır. *@
+                <div class="col-md-2 mb-3 d-flex align-items-end">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" asp-for="InvoiceInfo.PricesIncludeTax" />
+                        <label class="form-check-label" asp-for="InvoiceInfo.PricesIncludeTax">Fiyatlar KDV dahil</label>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-3">
@@ -116,6 +123,7 @@
                     </div>
                 }
             </div>
+            <div class="text-end small text-muted mt-2" data-invoice-summary></div>
 
             <script>
                 $(function () {
@@ -129,10 +137,32 @@
                             selectedLineId: '@Model.InvoiceInfo.BudgetLineId',
                             optionalLine: true
                         });
+                        updateSummary();
                     }, 0);
 
                     var $container = $('#EditInvoiceItemsContainer');
                     if (!$container.length) { return; }
+
+                    var $form = $('#InvoiceEditForm');
+                    // CreateModal'daki özetle aynı hesap (sunucu kuralının aynısı).
+                    function updateSummary() {
+                        var num = function (el) {
+                            var v = window.apya && apya.moneyInput ? apya.moneyInput.getValue(el) : parseFloat(el && el.value);
+                            return v || 0;
+                        };
+                        var rate = num($form.find('#InvoiceInfo_TaxRate')[0]);
+                        var included = $form.find('#InvoiceInfo_PricesIncludeTax').is(':checked');
+                        var subtotal = 0;
+                        $container.find('.invoice-item').each(function () {
+                            var price = num($(this).find('.input-price')[0]);
+                            if (included) { price = Math.round(price * 10000 / (100 + rate)) / 100; }
+                            subtotal += num($(this).find('.input-qty')[0]) * price;
+                        });
+                        var total = subtotal * (1 + rate / 100);
+                        var tl = function (v) { return v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺'; };
+                        $form.find('[data-invoice-summary]').text('Ara toplam ' + tl(subtotal) + ' · KDV ' + tl(total - subtotal) + ' · Genel toplam ' + tl(total));
+                    }
+                    $form.on('input change', updateSummary);
 
                     // Satır şablonu ve yeniden numaralama CreateModal'daki ile aynı kural:
                     // liste bağlama 0'dan başlayan KESİNTİSİZ indeks ister.
@@ -179,6 +209,7 @@
                         if ($container.find('.invoice-item').length > 1) {
                             $(this).closest('.invoice-item').remove();
                             reindexItems();
+                            updateSummary();
                         } else {
                             abp.notify.warn(abp.localization.getResource('Platform')('Notify:Invoice:ItemRequired'));
                         }
