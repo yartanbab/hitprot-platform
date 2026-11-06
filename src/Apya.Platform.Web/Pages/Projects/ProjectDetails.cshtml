@@ -751,6 +751,45 @@
              `apya:project-panel-shown` yayınlar. Kayıtlar görevlerin kayıtları:
              gizlilik süzgeci sunucuda liste uçlarıyla ortak (TaskAppService
              proje kapsamı uçları). *@
+        @* Hibeden doğan projede başvuru evrakı Belgeler sekmesinin üstünde salt okunur listelenir;
+           island kabına basılamaz (React içeriği ezer), kardeş panel olarak sekmeyle birlikte açılır.
+           flex:0 0 auto — island paneli kalan yüksekliği alsın. *@
+        @if (Model.GrantDocuments.Count > 0)
+        {
+            <div id="view-documents-grant" class="view-panel d-none" role="region" aria-label="@L["Grants:Origin:DocumentsPanel"]" style="flex:0 0 auto" data-grant-documents>
+                <details class="border rounded mb-3 px-3 py-2">
+                    <summary class="fw-semibold">
+                        <i class="fa fa-folder-open me-1" aria-hidden="true"></i>
+                        @L["Grants:Origin:DocumentsPanel"] (@Model.GrantDocuments.Count)
+                        <span class="text-muted fw-normal small ms-1">@L["Grants:Origin:DocumentsPanelHint"]</span>
+                    </summary>
+                    <div class="table-responsive mt-2">
+                        <table class="table apya-clean-table table-sm align-middle mb-2">
+                            <tbody>
+                                @foreach (var doc in Model.GrantDocuments)
+                                {
+                                    var tone = doc.Status switch
+                                    {
+                                        Apya.Platform.Grants.GrantDocumentStatus.Onaylandi => "positive",
+                                        Apya.Platform.Grants.GrantDocumentStatus.Incelemede => "warning",
+                                        Apya.Platform.Grants.GrantDocumentStatus.RevizyonIstendi => "negative",
+                                        _ => "neutral"
+                                    };
+                                    <tr>
+                                        <td>@doc.Name</td>
+                                        <td class="text-muted small">@L["Grants:Obligation:" + doc.Obligation]</td>
+                                        <td><span class="apya-chip apya-chip-@tone">@L["Grants:DocStatus:" + doc.Status]</span></td>
+                                        <td class="text-muted small text-nowrap">@(doc.LatestVersionNo > 0 ? L["Grants:Origin:Version", doc.LatestVersionNo].Value : "")</td>
+                                        <td class="text-muted small text-nowrap">@doc.StatusChangedAt?.ToString("dd.MM.yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <a class="small" href="/Grants/Documents?id=@Model.GrantOrigin!.ApplicationId">@L["Grants:Origin:OpenDocuments"]</a>
+                </details>
+            </div>
+        }
         <div id="view-documents" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-documents" data-project-id="@Model.Id"></div>
         <div id="view-forms" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-forms" data-project-id="@Model.Id"></div>
         <div id="view-checklist" class="view-panel d-none" role="tabpanel" aria-labelledby="btn-view-checklist" data-project-id="@Model.Id"></div>

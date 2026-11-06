@@ -24,4 +24,10 @@ public interface IGrantProjectOriginAppService : IApplicationService
     /// bölümünün kaynağı. Proje hibeden doğmamışsa BOŞ liste döner (hata değil).
     /// </summary>
     Task<List<GrantProjectMilestoneDto>> GetMilestonesByProjectAsync(Guid projectId);
+
+    /// <summary>
+    /// Projenin doğduğu başvurunun evrakı, başvurudaki sırasıyla. Proje hibeden doğmamışsa
+    /// BOŞ liste döner (hata değil).
+    /// </summary>
+    Task<List<GrantProjectDocumentDto>> GetDocumentsByProjectAsync(Guid projectId);
 }

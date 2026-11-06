@@ -887,7 +887,8 @@ $(function () {
             // Panel sunucuda basıldı; yüklenecek bir şey yok.
             $('#view-finance').removeClass('d-none');
         } else if (ISLAND_VIEWS.indexOf(currentView) > -1) {
-            $('#view-' + currentView).removeClass('d-none');
+            // -grant: hibe başvuru evrakı (yalnız Belgeler'de, sunucuda basılır).
+            $('#view-' + currentView + ', #view-' + currentView + '-grant').removeClass('d-none');
             // Island TEMBEL yükler: panel ilk gösterildiğinde veri çeker
             // (project-panels → usePanelShown bu olayı dinliyor).
             document.dispatchEvent(new CustomEvent('apya:project-panel-shown', {

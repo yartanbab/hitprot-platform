@@ -113,6 +113,35 @@ public class GrantProjectOriginAppService : PlatformAppService, IGrantProjectOri
         }
     }
 
+    public async Task<List<GrantProjectDocumentDto>> GetDocumentsByProjectAsync(Guid projectId)
+    {
+        var application = await FindApplicationAsync(projectId);
+
+        if (application == null)
+        {
+            return new List<GrantProjectDocumentDto>();
+        }
+
+        // Kilometre taşlarıyla aynı kural: kapıyı başvurunun kiracı kuralıyla bulunması tutar.
+        using (_mtFilter.Disable())
+        {
+            var documents = await _docRepo.GetListAsync(d => d.GrantApplicationId == application.Id);
+
+            return documents
+                .OrderBy(d => d.Order)
+                .ThenBy(d => d.Name)
+                .Select(d => new GrantProjectDocumentDto
+                {
+                    Name = d.Name,
+                    Obligation = d.Obligation,
+                    Status = d.Status,
+                    LatestVersionNo = d.LatestVersionNo,
+                    StatusChangedAt = d.StatusChangedAt
+                })
+                .ToList();
+        }
+    }
+
     /// <summary>
     /// Projenin kaynağı başvuru. Kiracı bağlamında filtre AÇIK kalır (yalnız kendi
     /// başvurusu); host bağlamında kapatılır çünkü proje konsolu da öyle açılıyor.

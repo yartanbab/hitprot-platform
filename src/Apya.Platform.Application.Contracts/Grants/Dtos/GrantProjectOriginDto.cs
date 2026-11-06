@@ -32,3 +32,18 @@ public class GrantProjectMilestoneDto
     public DateTime? DueDate { get; set; }
     public bool IsCompleted { get; set; }
 }
+
+/// <summary>
+/// Projenin doğduğu başvurunun bir evrakı — proje Belgeler sekmesinde salt okunur listelenir.
+/// Dosyanın kendisi taşınmaz: yükleme ve inceleme başvurunun evrak ekranında kalır.
+/// </summary>
+public class GrantProjectDocumentDto
+{
+    public string Name { get; set; } = null!;
+    public GrantDocumentObligation Obligation { get; set; }
+    public GrantDocumentStatus Status { get; set; }
+
+    /// <summary>Son yüklenen sürümün numarası; 0 ise henüz yüklenmedi.</summary>
+    public int LatestVersionNo { get; set; }
+    public DateTime? StatusChangedAt { get; set; }
+}

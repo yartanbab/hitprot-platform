@@ -150,4 +150,41 @@ public class GrantProjectMilestones_Tests : PlatformEntityFrameworkCoreTestBase
             (await _origin.GetMilestonesByProjectAsync(projectId)).ShouldBeEmpty("yabancı kiracı görmemeli");
         }
     }
+
+    /// <summary>
+    /// Proje Belgeler sekmesindeki salt okunur evrak listesi: başvurudaki sırayla gelir,
+    /// kilometre taşlarıyla aynı kapıdan geçer (yabancı kiracı göremez).
+    /// </summary>
+    [Fact]
+    public async Task Basvuru_evraki_sirayla_gelir_baska_kiraci_goremez()
+    {
+        var call = await CreateHostCallAsync("Evrak Desteği");
+        var ownerTenantId = await CreateTenantAsync("Evrak Sahibi");
+        var otherTenantId = await CreateTenantAsync("Evrak Yabancısı");
+        var docRepo = GetRequiredService<IRepository<GrantApplicationDocument, Guid>>();
+
+        Guid projectId;
+        using (_currentTenant.Change(ownerTenantId))
+        {
+            Guid applicationId;
+            (projectId, applicationId) = await CreateConvertedProjectAsync(ownerTenantId, call.Id, "PRJ-D1");
+            await docRepo.InsertAsync(new GrantApplicationDocument(Guid.NewGuid(), ownerTenantId, applicationId, null,
+                "Mali tablo", GrantDocumentObligation.Kosullu, GrantPartyRole.Firma, false, 2), autoSave: true);
+            await docRepo.InsertAsync(new GrantApplicationDocument(Guid.NewGuid(), ownerTenantId, applicationId, null,
+                "İmza sirküleri", GrantDocumentObligation.Zorunlu, GrantPartyRole.Firma, false, 1), autoSave: true);
+
+            var docs = await _origin.GetDocumentsByProjectAsync(projectId);
+
+            docs.Select(d => d.Name).ShouldBe(new[] { "İmza sirküleri", "Mali tablo" });
+            docs[0].Status.ShouldBe(GrantDocumentStatus.Bekleniyor);
+            docs[1].Obligation.ShouldBe(GrantDocumentObligation.Kosullu);
+        }
+
+        (await _origin.GetDocumentsByProjectAsync(projectId)).Count.ShouldBe(2, "host görmeli");
+
+        using (_currentTenant.Change(otherTenantId))
+        {
+            (await _origin.GetDocumentsByProjectAsync(projectId)).ShouldBeEmpty("yabancı kiracı görmemeli");
+        }
+    }
 }
