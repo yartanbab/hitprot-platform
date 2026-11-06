@@ -5,7 +5,7 @@
     Layout = null;
 }
 <abp-modal size="Large">
-    <abp-modal-header title="Seçilenlerden prompt"></abp-modal-header>
+    <abp-modal-header title="Seçilenlerden istem"></abp-modal-header>
     <abp-modal-body>
         @if (Model.ErrorMessage is not null)
         {
@@ -41,7 +41,7 @@
                     </button>
                 </div>
                 <textarea class="form-control form-control-sm font-monospace detail-prompt-text" rows="18"
-                          aria-label="Geliştirme prompt'u" spellcheck="false">@Model.Prompt</textarea>
+                          aria-label="Geliştirme istemi" spellcheck="false">@Model.Prompt</textarea>
                 <textarea class="d-none detail-prompt-plain" aria-hidden="true" tabindex="-1">@Model.Prompt</textarea>
                 @if (Model.PromptWithNotes is not null)
                 {

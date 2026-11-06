@@ -281,7 +281,7 @@ $(function () {
         var text = $text.val();
 
         function announce() {
-            abp.notify.success('Prompt panoya kopyalandı.');
+            abp.notify.success('İstem panoya kopyalandı.');
         }
 
         // Güvenli bağlam dışında (ör. http üzerinden tünel) clipboard API yok.
