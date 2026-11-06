@@ -107,7 +107,7 @@ public class DetailModalModel : AbpPageModel
     }
 
     /// <summary>DetailsJson düz bir string sözlüğüdür; anahtarlar Türkçe etiketlere çevrilir.</summary>
-    private static List<KeyValuePair<string, string>> ParseDetails(string? json)
+    internal static List<KeyValuePair<string, string>> ParseDetails(string? json)
     {
         var result = new List<KeyValuePair<string, string>>();
         if (string.IsNullOrWhiteSpace(json))

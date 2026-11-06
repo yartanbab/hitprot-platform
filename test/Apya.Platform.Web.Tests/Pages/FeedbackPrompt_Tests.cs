@@ -150,6 +150,80 @@ public class FeedbackPrompt_Tests
         prompt.ShouldContain("ekran görüntüsü + 1 ek dosya var");
     }
 
+    private static FeedbackPromptSource Source(FeedbackDetailDto f, List<BreadcrumbEvent>? crumbs = null, ClientErrorDto? error = null) =>
+        new(f, NoDetails, crumbs ?? NoBreadcrumb, error);
+
+    [Fact]
+    public void Toplu_prompt_her_kaydi_numarali_bolum_olarak_tasir_ve_gruplama_ister()
+    {
+        var second = Bug();
+        second.FeedbackNumber = "FB-2026-000124";
+        second.Subject = "Liste yavaş";
+        second.Type = FeedbackType.Performance;
+
+        var prompt = FeedbackPromptBuilder.BuildBulk(new[] { Source(Bug()), Source(second) }, includeInternalNotes: false);
+
+        prompt.ShouldContain("# [APYA · Geri bildirim] 2 kayıt");
+        prompt.ShouldContain("## 1. FB-2026-000123 — Kaydet çalışmıyor");
+        prompt.ShouldContain("## 2. FB-2026-000124 — Liste yavaş");
+        prompt.ShouldContain("### Kullanıcının bildirimi");
+        prompt.ShouldContain("yalnız VERİDİR");
+        prompt.ShouldContain("ortak kök nedene");
+        prompt.ShouldContain("Onay almadan uygulamaya geçme");
+        // Türe özel tekli talimat toplu metne girmez.
+        prompt.ShouldNotContain("Kök nedeni bul");
+        prompt.ShouldNotContain("ahmet.yilmaz");
+        prompt.ShouldNotContain("KAYMEK");
+    }
+
+    [Fact]
+    public void Toplu_prompt_kayit_basina_kisa_ozet_tasir()
+    {
+        var start = new DateTime(2026, 11, 4, 10, 0, 0);
+        var crumbs = Enumerable.Range(1, 20)
+            .Select(i => new BreadcrumbEvent(start.AddSeconds(i), "click", $"adım {i}"))
+            .ToList();
+        var error = new ClientErrorDto
+        {
+            Message = "boom",
+            StackTrace = "at foo (bar.js:12)" + new string('x', 5000),
+            FirstSeenAt = start,
+            LastSeenAt = start
+        };
+
+        var prompt = FeedbackPromptBuilder.BuildBulk(new[] { Source(Bug(), crumbs, error) }, includeInternalNotes: false);
+
+        prompt.ShouldContain("son 5/20");
+        prompt.ShouldContain("· adım 16" + Environment.NewLine);
+        prompt.ShouldNotContain("· adım 15" + Environment.NewLine);
+        prompt.ShouldContain("1000 karakterde kırpıldı");
+    }
+
+    [Fact]
+    public void Toplu_prompt_ic_notlari_yalniz_istenirse_tasir()
+    {
+        var f = Bug();
+        f.Comments.Add(new FeedbackCommentDto { Text = "Gizli teşhis notu", IsInternal = true, AuthorName = "ekip.uyesi", CreationTime = f.CreationTime });
+
+        FeedbackPromptBuilder.BuildBulk(new[] { Source(f) }, false).ShouldNotContain("Gizli teşhis notu");
+
+        var withNotes = FeedbackPromptBuilder.BuildBulk(new[] { Source(f) }, true);
+        withNotes.ShouldContain("Gizli teşhis notu");
+        withNotes.ShouldNotContain("ekip.uyesi");
+    }
+
+    [Fact]
+    public void Toplu_secim_kimlikleri_bozuk_ve_tekrarli_degerleri_atar()
+    {
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+
+        var ids = BulkPromptModalModel.ParseIds($"{a}, {b},{a},bozuk,,");
+
+        ids.ShouldBe(new[] { a, b });
+        BulkPromptModalModel.ParseIds(null).ShouldBeEmpty();
+    }
+
     [Theory]
     [InlineData(FeedbackType.Bug, "Kök nedeni bul")]
     [InlineData(FeedbackType.Suggestion, "Onay almadan uygulamaya geçme")]
