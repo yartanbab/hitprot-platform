@@ -780,7 +780,8 @@ public class PlatformWebModule : AbpModule
                 "img-src 'self' data: blob:; " +
                 "font-src 'self' data:; " +
                 "connect-src 'self' wss: blob:; " +
-                "worker-src blob:; " +
+                // 'self': /sw.js (çevrimdışı + web push). Yalnız blob: ile zorunlu kipe geçilince kayıt reddedilir.
+                "worker-src 'self' blob:; " +
                 "frame-ancestors 'self'; " +
                 "object-src 'none'; " +
                 "base-uri 'self'; " +
