@@ -256,6 +256,39 @@ $(function () {
         detailModal.open({ id: openId });
     }
 
+    /* ─── Prompt sekmesi: metin sunucuda üretilir, burada yalnız seçilir/kopyalanır ── */
+
+    $(document).on('change', '.detail-prompt-internal', function () {
+        var $pane = $(this).closest('.tab-pane');
+        var source = $(this).is(':checked') ? '.detail-prompt-with-notes' : '.detail-prompt-plain';
+        $pane.find('.detail-prompt-text').val($pane.find(source).val());
+    });
+
+    $(document).on('click', '.detail-prompt-copy', function () {
+        var $text = $(this).closest('.tab-pane').find('.detail-prompt-text');
+        var text = $text.val();
+
+        function announce() {
+            abp.notify.success('Prompt panoya kopyalandı.');
+        }
+
+        // Güvenli bağlam dışında (ör. http üzerinden tünel) clipboard API yok.
+        function legacyCopy() {
+            $text[0].select();
+            if (document.execCommand('copy')) {
+                announce();
+            } else {
+                abp.notify.error('Kopyalanamadı; metni elle seçmeniz gerekiyor.');
+            }
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(announce, legacyCopy);
+        } else {
+            legacyCopy();
+        }
+    });
+
     $(document).on('click', '.detail-delete-btn', function () {
         var id = $(this).data('id');
         abp.message.confirm('Bu geri bildirim kalıcı olarak silinsin mi?', function (confirmed) {
