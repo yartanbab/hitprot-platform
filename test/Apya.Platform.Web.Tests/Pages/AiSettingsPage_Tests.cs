@@ -151,7 +151,7 @@ public class AiSettingsPage_Tests : PlatformWebTestBase
         var doc = Parse(await response.Content.ReadAsStringAsync());
 
         var error = FieldError(doc, ProviderField);
-        error.ShouldContain("kayıtlı bir AI sağlayıcısı değil");
+        error.ShouldContain("kayıtlı bir yapay zekâ sağlayıcısı değil");
         error.ShouldContain("opnai");
         doc.DocumentNode.SelectSingleNode("//input[@name='Input.PreferredModel']")!
             .GetAttributeValue("value", "").ShouldBe("qa-ux-model", "yazılan değer korunmalı");

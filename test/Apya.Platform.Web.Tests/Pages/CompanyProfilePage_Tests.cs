@@ -27,7 +27,7 @@ public class CompanyProfilePage_Tests : PlatformWebTestBase
     {
         var html = HtmlEntity.DeEntitize(await GetResponseAsStringAsync("/CompanyProfile"));
 
-        html.ShouldContain("Host hesabının kurum profili yoktur");
+        html.ShouldContain("Platform yönetim hesabının kurum profili yoktur");
     }
 
     /// <summary>Katalog kaydı ile sayfa adresi ayrışırsa Ayarlar'daki kart 404'e gider.</summary>
