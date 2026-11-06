@@ -229,4 +229,35 @@ public class InvoiceEdit_Tests : PlatformEntityFrameworkCoreTestBase
             .Code.ShouldBe(PlatformDomainErrorCodes.BudgetLineProjectMismatch);
         (await _invoices.GetAsync(created.Id)).BudgetLineId.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task KDV_dahil_girilen_fiyat_KDV_haric_saklanir()
+    {
+        var projectId = await ProjectAsync();
+        var created = await _invoices.CreateAsync(new CreateInvoiceDto
+        {
+            ProjectId = projectId,
+            InvoiceNumber = "FDZ-" + Guid.NewGuid().ToString("N")[..8],
+            InvoiceDate = new DateTime(2026, 10, 17),
+            DueDate = new DateTime(2026, 11, 20),
+            TaxRate = 20,
+            PricesIncludeTax = true,
+            Items = new List<CreateInvoiceItemDto> { new() { Description = "Tablet", Quantity = 2, UnitPrice = 600m } }
+        });
+
+        created.Items.ShouldHaveSingleItem().UnitPrice.ShouldBe(500m);
+        created.TotalAmount.ShouldBe(1200m);
+
+        var input = UpdateInput(created, null, null);
+        input.PricesIncludeTax = true;
+        input.Items = new List<CreateInvoiceItemDto>
+        {
+            new() { Description = "Tablet", Quantity = 1, UnitPrice = 1100m },
+            // 1000 / 1,10 = 909,0909… → kuruşa yuvarlanır.
+            new() { Description = "Kılıf", Quantity = 1, UnitPrice = 1000m }
+        };
+        var updated = await _invoices.UpdateAsync(created.Id, input);
+
+        updated.Items.Select(i => i.UnitPrice).OrderBy(x => x).ShouldBe(new[] { 909.09m, 1000m });
+    }
 }

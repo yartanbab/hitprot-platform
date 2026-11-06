@@ -3626,6 +3626,7 @@
         "DisplayName:TaxNumber": "Vergi numarası",
         "DisplayName:TaxOffice": "Vergi dairesi",
         "DisplayName:TaxRate": "KDV oranı",
+        "DisplayName:PricesIncludeTax": "Fiyatlar KDV dahil",
         "DisplayName:TelemetryEnabled": "Telemetri",
         "DisplayName:TelemetryRetentionDays": "Telemetri saklama süresi (gün)",
         "DisplayName:TemplateId": "Şablon",

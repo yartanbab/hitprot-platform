@@ -131,4 +131,35 @@ public class InvoiceEditModal_Tests : PlatformWebTestBase
         saved.TotalAmount.ShouldBe(1200m);
         saved.Status.ShouldBe(InvoiceStatus.Sent);
     }
+
+    [Fact]
+    public async Task KDV_dahil_isaretlenince_fiyat_KDV_haric_kaydedilir()
+    {
+        var invoice = await InvoiceAsync();
+
+        var html = await GetResponseAsStringAsync("/Invoices/EditModal?id=" + invoice.Id);
+        html.ShouldContain("name=\"InvoiceInfo.PricesIncludeTax\"", Case.Sensitive);
+
+        var response = await PostAsync(invoice, new()
+        {
+            new("InvoiceInfo.ProjectId", invoice.ProjectId.ToString()),
+            new("InvoiceInfo.Direction", "1"),
+            new("InvoiceInfo.InvoiceNumber", invoice.InvoiceNumber),
+            new("InvoiceInfo.InvoiceDate", "2026-10-17"),
+            new("InvoiceInfo.DueDate", "2026-11-20"),
+            new("InvoiceInfo.TaxRate", "20"),
+            new("__Invariant", "InvoiceInfo.TaxRate"),
+            new("InvoiceInfo.PricesIncludeTax", "true"),
+            new("InvoiceInfo.Items[0].Description", "Tablet"),
+            new("InvoiceInfo.Items[0].Quantity", "1"),
+            new("__Invariant", "InvoiceInfo.Items[0].Quantity"),
+            new("InvoiceInfo.Items[0].UnitPrice", "1200"),
+            new("__Invariant", "InvoiceInfo.Items[0].UnitPrice")
+        });
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        var saved = await GetRequiredService<IInvoiceAppService>().GetAsync(invoice.Id);
+        saved.Items.ShouldHaveSingleItem().UnitPrice.ShouldBe(1000m);
+        saved.TotalAmount.ShouldBe(1200m);
+    }
 }
