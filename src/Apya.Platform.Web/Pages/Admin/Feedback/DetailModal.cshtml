@@ -19,6 +19,7 @@
         <ul class="nav nav-tabs mb-3" role="tablist">
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#fb-tab-detail-@f.Id" type="button">Detay</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fb-tab-timeline-@f.Id" type="button">Zaman Çizelgesi <span class="apya-chip apya-chip-neutral ms-1">@Model.Activities.Count</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fb-tab-prompt-@f.Id" type="button"><i class="fa fa-code me-1"></i>Prompt</button></li>
         </ul>
         <div class="tab-content">
         <div class="tab-pane fade show active" id="fb-tab-detail-@f.Id">
@@ -250,6 +251,38 @@
                         </li>
                     }
                 </ul>
+            }
+        </div>
+
+        <div class="tab-pane fade" id="fb-tab-prompt-@f.Id">
+            @* Metin SUNUCUDA üretilir (FeedbackPromptBuilder); iç notlu sürüm ayrı
+               gizli alanda durur, onay kutusu ikisi arasında geçiş yapar. *@
+            <p class="text-sm text-muted mb-2">
+                Bu geri bildirimi bir kodlama asistanına (ör. Claude Code) yapıştırılacak hazır bir göreve çevirir.
+                Gönderen ve kiracı adı metne girmez. Göndermeden önce metni düzenleyebilirsiniz.
+            </p>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                @if (Model.DevPromptWithNotes is not null)
+                {
+                    <div class="form-check mb-0">
+                        <input class="form-check-input detail-prompt-internal" type="checkbox" id="PromptInternal-@f.Id" />
+                        <label class="form-check-label text-xs" for="PromptInternal-@f.Id">İç notları da ekle</label>
+                    </div>
+                }
+                else
+                {
+                    <span></span>
+                }
+                <button type="button" class="btn btn-sm btn-primary detail-prompt-copy">
+                    <i class="fa fa-copy me-1"></i>Kopyala
+                </button>
+            </div>
+            <textarea class="form-control form-control-sm font-monospace detail-prompt-text" rows="16"
+                      aria-label="Geliştirme prompt'u" spellcheck="false">@Model.DevPrompt</textarea>
+            <textarea class="d-none detail-prompt-plain" aria-hidden="true" tabindex="-1">@Model.DevPrompt</textarea>
+            @if (Model.DevPromptWithNotes is not null)
+            {
+                <textarea class="d-none detail-prompt-with-notes" aria-hidden="true" tabindex="-1">@Model.DevPromptWithNotes</textarea>
             }
         </div>
         </div>

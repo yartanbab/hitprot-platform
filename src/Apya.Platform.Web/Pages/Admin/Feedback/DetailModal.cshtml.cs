@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Apya.Platform.Feedbacks;
@@ -7,10 +8,13 @@ using Apya.Platform.Feedbacks.Dtos;
 using Apya.Platform.IssueTasks;
 using Apya.Platform.IssueTasks.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Telemetry;
+using Apya.Platform.Telemetry.Dtos;
 using Apya.Platform.Web.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Volo.Abp.Domain.Entities;
 
 namespace Apya.Platform.Web.Pages.Admin.Feedback;
 
@@ -19,6 +23,7 @@ public class DetailModalModel : AbpPageModel
 {
     private readonly IFeedbackAdminAppService _feedbackAdminAppService;
     private readonly IIssueTaskAppService _issueTaskAppService;
+    private readonly ISystemHealthAppService _systemHealthAppService;
 
     [BindProperty(SupportsGet = true)]
     public Guid Id { get; set; }
@@ -41,12 +46,20 @@ public class DetailModalModel : AbpPageModel
     /// <summary>Köprü izni olmayan yönetici için bağ hiç sorgulanmaz (servis yetki ister).</summary>
     public bool CanCreateIssueTask { get; set; }
 
+    /// <summary>Kodlama asistanına yapıştırılacak geliştirme prompt'u (iç notlar hariç).</summary>
+    public string DevPrompt { get; set; } = string.Empty;
+
+    /// <summary>İç notlar dahil sürüm; kayıtta iç not yoksa null (onay kutusu çizilmez).</summary>
+    public string? DevPromptWithNotes { get; set; }
+
     public DetailModalModel(
         IFeedbackAdminAppService feedbackAdminAppService,
-        IIssueTaskAppService issueTaskAppService)
+        IIssueTaskAppService issueTaskAppService,
+        ISystemHealthAppService systemHealthAppService)
     {
         _feedbackAdminAppService = feedbackAdminAppService;
         _issueTaskAppService = issueTaskAppService;
+        _systemHealthAppService = systemHealthAppService;
     }
 
     public async Task OnGetAsync()
@@ -61,6 +74,35 @@ public class DetailModalModel : AbpPageModel
         if (CanCreateIssueTask)
         {
             IssueTaskLink = await _issueTaskAppService.GetLinkForFeedbackAsync(Id);
+        }
+
+        var clientError = await FindLastClientErrorAsync();
+        DevPrompt = FeedbackPromptBuilder.Build(Feedback, Details, Breadcrumb, clientError, includeInternalNotes: false);
+        if (Feedback.Comments.Any(c => c.IsInternal))
+        {
+            DevPromptWithNotes = FeedbackPromptBuilder.Build(Feedback, Details, Breadcrumb, clientError, includeInternalNotes: true);
+        }
+    }
+
+    /// <summary>
+    /// Gönderimden hemen önceki tarayıcı hatası. Sistem Sağlığı izni olmayana hiç
+    /// sorgulanmaz; saklama süresiyle silinmişse prompt onsuz üretilir.
+    /// </summary>
+    private async Task<ClientErrorDto?> FindLastClientErrorAsync()
+    {
+        if (Feedback.LastClientErrorId is null
+            || !await AuthorizationService.IsGrantedAsync(PlatformPermissions.SystemHealth.Default))
+        {
+            return null;
+        }
+
+        try
+        {
+            return await _systemHealthAppService.GetClientErrorAsync(Feedback.LastClientErrorId.Value);
+        }
+        catch (EntityNotFoundException)
+        {
+            return null;
         }
     }
 
