@@ -44,6 +44,20 @@ public class GrantDocumentFileInspector_Tests
     }
 
     [Fact]
+    public void Turkce_harfsiz_yazilmis_imza_ve_kase_satiri_bos_alan_sayilmaz()
+    {
+        // Türkçe küçültmede "IMZA" noktasız "ımza" olur; bu satırlar boş alan sayılıyordu.
+        var result = Inspect(Pdf([
+            "Adi Soyadi: ..............",
+            "Imza: ..............",
+            "IMZA / KASE: ..............",
+            "Muhur: .........."
+        ]), "ascii.pdf");
+
+        result!.EmptyFieldCount.ShouldBe(1);
+    }
+
+    [Fact]
     public void Tam_sayfa_gorsel_taranmis_sayilir_ve_OCR_noktalari_bos_alan_sayilmaz()
     {
         var result = Inspect(Pdf(["Adi Soyadi: .............."], fullPageImage: true), "tarama.pdf");

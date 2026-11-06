@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -29,7 +28,6 @@ namespace Apya.Platform.Grants;
 /// </summary>
 public class GrantDocumentFileInspector : ITransientDependency
 {
-    private static readonly CultureInfo Turkish = CultureInfo.GetCultureInfo("tr-TR");
     private static readonly HashSet<string> ImageExtensions = [".png", ".jpg", ".jpeg", ".gif"];
     private static readonly HashSet<string> OtherOfficeExtensions = [".doc", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".csv"];
 
@@ -146,8 +144,7 @@ public class GrantDocumentFileInspector : ITransientDependency
             }
 
             // İmza/kaşe satırı boş alan değil; onu imza denetimi söyler.
-            var label = match.Groups["label"].Value.ToLower(Turkish);
-            if (label.Contains("imza") || label.Contains("kaşe") || label.Contains("mühür")) { continue; }
+            if (GrantDocumentSignatureRules.MentionsSignatureOrStamp(match.Groups["label"].Value)) { continue; }
 
             count++;
         }

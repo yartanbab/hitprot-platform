@@ -94,6 +94,8 @@
     white-space: nowrap;
 }
 
+.apya-doc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+
 .apya-doc-file {
     font-family: var(--apya-font-mono);
     font-size: var(--apya-fs-xs);
