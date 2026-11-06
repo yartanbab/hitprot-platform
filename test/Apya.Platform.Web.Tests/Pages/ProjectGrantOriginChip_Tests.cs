@@ -76,6 +76,11 @@ public class ProjectGrantOriginChip_Tests : PlatformWebTestBase
         html.ShouldContain("Dijital");
         html.ShouldContain("data-grant-origin=\"documents\"");
         html.ShouldContain($"/Grants/Documents?id={applicationId}");
+
+        // Belgeler sekmesindeki salt okunur liste: başvurudaki sırayla basılır.
+        html.ShouldContain("data-grant-documents");
+        html.ShouldContain("Evrak 1");
+        html.IndexOf("Evrak 1", StringComparison.Ordinal).ShouldBeLessThan(html.IndexOf("Evrak 3", StringComparison.Ordinal));
     }
 
     /// <summary>Evrak yoksa ikinci rozet basılmaz: boş listeye götüren bağlantı iş çıkarır, bilgi vermez.</summary>
@@ -88,6 +93,7 @@ public class ProjectGrantOriginChip_Tests : PlatformWebTestBase
 
         html.ShouldContain("data-grant-origin=\"application\"");
         html.ShouldNotContain("data-grant-origin=\"documents\"");
+        html.ShouldNotContain("data-grant-documents");
     }
 
     [Fact]

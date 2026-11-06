@@ -65,6 +65,9 @@ public class ProjectDetailsModel : PlatformPageModel
     /// </summary>
     public Apya.Platform.Grants.Dtos.GrantProjectOriginDto? GrantOrigin { get; set; }
 
+    /// <summary>Kaynak başvurunun evrakı; Belgeler sekmesinde salt okunur listelenir.</summary>
+    public List<Apya.Platform.Grants.Dtos.GrantProjectDocumentDto> GrantDocuments { get; set; } = new();
+
     /// <summary>
     /// PRJ-09 · Kapanmamış risk sayısı; kimlik şeridindeki rozet risk kütüğüne (zaman çizelgesi
     /// sayfası) götürür. Kütüğü açamayacak kullanıcıda ya da açık risk yokken null/0 kalır, rozet basılmaz.
@@ -146,6 +149,12 @@ public class ProjectDetailsModel : PlatformPageModel
         // Bütçe ile aynı desen: yetkisi olmayan kullanıcıda sessizce atlanır.
         try { GrantOrigin = await _grantProjectOrigin.GetByProjectAsync(Id); }
         catch (Volo.Abp.Authorization.AbpAuthorizationException) { GrantOrigin = null; }
+
+        // Evrak listesi yalnız evrakı olan hibe projesinde çekilir; aynı hibe izniyle okunur.
+        if (GrantOrigin is { DocumentCount: > 0 })
+        {
+            GrantDocuments = await _grantProjectOrigin.GetDocumentsByProjectAsync(Id);
+        }
 
         // Rozetin hedefi (zaman çizelgesi sayfası) belge izni ister: izni olmayana köprü de basılmaz.
         // Host bağlamında kiracı projesi bu servisten görünmez (EntityNotFound): sayfa düşmez, rozet çıkmaz.
