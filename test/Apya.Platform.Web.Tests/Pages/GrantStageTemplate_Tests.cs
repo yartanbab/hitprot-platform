@@ -420,7 +420,9 @@ public class GrantStageTemplate_Tests : PlatformWebTestBase
                     Name = "Patent belgesi",
                     Obligation = GrantDocumentObligation.Kosullu,
                     UploaderParty = GrantPartyRole.Danisman,
-                    RequiresESignature = true
+                    RequiresESignature = true,
+                    RequiresWetSignature = true,
+                    RequiresStamp = true
                 }
             }
         });
@@ -435,6 +437,10 @@ public class GrantStageTemplate_Tests : PlatformWebTestBase
         reread.DocumentRequirements.Select(d => d.Name)
             .ShouldBe(new[] { "KOBİ beyannamesi", "Patent belgesi" });
         reread.DocumentRequirements[1].RequiresESignature.ShouldBeTrue();
+        // Parametreler ekranındaki ıslak imza / kaşe kutuları: ad bir şey demese de elle konan şart korunur.
+        reread.DocumentRequirements[1].RequiresWetSignature.ShouldBeTrue();
+        reread.DocumentRequirements[1].RequiresStamp.ShouldBeTrue();
+        reread.DocumentRequirements[0].RequiresWetSignature.ShouldBeFalse();
         reread.DocumentRequirements[1].UploaderParty.ShouldBe(GrantPartyRole.Danisman);
     }
 

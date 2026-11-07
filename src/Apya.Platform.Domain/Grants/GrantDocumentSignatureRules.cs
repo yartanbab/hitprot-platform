@@ -7,8 +7,9 @@ namespace Apya.Platform.Grants;
 /// Evrak adından ıslak imza / kaşe şartını çıkarır. Katalogdaki şart bugüne dek yalnız
 /// adın içinde yazıyordu ("Faaliyet Planı (EK TD2; imzalı-kaşeli)").
 ///
-/// <para>🔴 Aynı kural migration'daki geri doldurma SQL'inde de var
-/// (<c>AddGrantDocumentSignatureChecks</c>); biri değişirse öbürü de değişmeli.</para>
+/// <para>Migration'daki geri doldurma SQL'i (<c>AddGrantDocumentSignatureChecks</c>) bu kuralın
+/// yakın karşılığıdır; ASCII yazımı ("KASELI") orada yakalanmaz. Migration uygulanmış olduğu için
+/// değiştirilmez.</para>
 /// </summary>
 public static class GrantDocumentSignatureRules
 {
@@ -17,14 +18,45 @@ public static class GrantDocumentSignatureRules
     /// <summary>"e-imzalı" ıslak imza değildir; ad bundan arındırılınca kalan "imza" ıslak imzadır.</summary>
     public static bool InfersWetSignature(string name)
     {
-        var text = name.ToLower(Turkish).Replace("elektronik imza", "").Replace("e-imza", "");
+        var text = Fold(name).Replace("elektronik imza", "").Replace("e-imza", "");
         return text.Contains("imza");
     }
 
     public static bool InfersStamp(string name)
     {
-        var text = name.ToLower(Turkish);
-        return text.Contains("kaşe") || text.Contains("mühür");
+        var text = Fold(name);
+        return text.Contains("kase") || text.Contains("muhur");
+    }
+
+    /// <summary>Metin imza, kaşe ya da mühürden söz ediyor mu (e-imza dahil).</summary>
+    public static bool MentionsSignatureOrStamp(string text)
+    {
+        var folded = Fold(text);
+        return folded.Contains("imza") || folded.Contains("kase") || folded.Contains("muhur");
+    }
+
+    /// <summary>
+    /// Küçük harfe indirip Türkçe harfleri ASCII karşılığına çevirir. Türkçe küçültmede
+    /// "IMZA" noktasız "ımza" olur ve "imza" aramasını kaçırırdı; formlarda ve elle yazılan
+    /// adlarda "IMZALI", "KASELI" gibi ASCII yazım sık görülür.
+    /// </summary>
+    private static string Fold(string text)
+    {
+        var chars = text.ToLower(Turkish).ToCharArray();
+        for (var i = 0; i < chars.Length; i++)
+        {
+            chars[i] = chars[i] switch
+            {
+                'ı' => 'i',
+                'ş' => 's',
+                'ü' => 'u',
+                'ç' => 'c',
+                'ğ' => 'g',
+                'ö' => 'o',
+                _ => chars[i]
+            };
+        }
+        return new string(chars);
     }
 
     /// <summary>

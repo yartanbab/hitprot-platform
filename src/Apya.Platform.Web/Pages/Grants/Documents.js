@@ -35,6 +35,18 @@ $(function () {
         }).join('');
     }
 
+    function tagsHtml(d) {
+        var tags = [];
+        if (d.obligation !== 0) { tags.push(['neutral', 'Grants:Documents:Optional']); }
+        if (d.requiresESignature) { tags.push(['accent', 'Grants:Documents:NeedsESignature']); }
+        if (d.requiresWetSignature) { tags.push(['accent', 'Grants:Documents:NeedsWetSignature']); }
+        if (d.requiresStamp) { tags.push(['accent', 'Grants:Documents:NeedsStamp']); }
+        if (!tags.length) { return ''; }
+        return '<span class="apya-doc-tags">' + tags.map(function (t) {
+            return '<span class="apya-chip apya-chip-' + t[0] + '">' + esc(l(t[1])) + '</span>';
+        }).join('') + '</span>';
+    }
+
     // ---------- Süzgeç ----------
     $('.apya-choice-row').on('click', '.apya-choice', function () {
         // Yükleme düştüyse süzülecek model yok (hata kartı kalır).
@@ -74,15 +86,10 @@ $(function () {
         return '<div class="apya-doc-row' + (d.id === selectedId ? ' is-selected' : '') + '" data-id="' + d.id + '">' +
             '<span><i class="fa ' + icon + '"></i></span>' +
             '<span class="apya-doc-name">' +
-            '<span class="apya-doc-name-text">' + esc(d.name) +
-            (d.obligation === 0 ? '' : ' <span class="apya-chip apya-chip-neutral">' +
-                esc(l('Grants:Documents:Optional')) + '</span>') +
-            (d.requiresESignature ? ' <span class="apya-chip apya-chip-accent">' +
-                esc(l('Grants:Documents:NeedsESignature')) + '</span>' : '') +
-            (d.requiresWetSignature ? ' <span class="apya-chip apya-chip-accent">' +
-                esc(l('Grants:Documents:NeedsWetSignature')) + '</span>' : '') +
-            (d.requiresStamp ? ' <span class="apya-chip apya-chip-accent">' +
-                esc(l('Grants:Documents:NeedsStamp')) + '</span>' : '') + '</span>' +
+            '<span class="apya-doc-name-text">' + esc(d.name) + '</span>' +
+            // Etiketler adın dışında: ad tek satırda kesildiğinde onlar da kesiliyordu
+            // (katalogdaki evrak adları uzun; "ıslak imza / kaşe" hiç görünmüyordu).
+            tagsHtml(d) +
             (d.latestVersion
                 ? '<span class="apya-doc-file">' + esc(d.latestVersion.originalFileName) + ' · ' +
                   size(d.latestVersion.sizeBytes) + '</span>'

@@ -19,6 +19,10 @@ public class GrantDocumentSignatureRules_Tests
     [InlineData("Proje Önerisi (PRODİS, 1719 ulusal çağrısı, e-imzalı)", false)]
     [InlineData("Başvuru formu (elektronik imza ile)", false)]
     [InlineData("Vergi levhası", false)]
+    // ASCII/büyük harf yazım: Türkçe küçültmede "IMZA" noktasız "ımza" olur.
+    [InlineData("TAAHHUTNAME (IMZALI)", true)]
+    [InlineData("Beyan formu - Imzali", true)]
+    [InlineData("BASVURU FORMU (E-IMZALI)", false)]
     public void Islak_imza_sarti_addan_cikarilir(string name, bool expected)
     {
         GrantDocumentSignatureRules.InfersWetSignature(name).ShouldBe(expected);
@@ -29,6 +33,9 @@ public class GrantDocumentSignatureRules_Tests
     [InlineData("Başvuru Sahibi Beyannamesi (imzalı, mühürlü/kaşeli)", true)]
     [InlineData("EK-C Yaklaşık Maliyet Formu (Kaşeli-imzalı)", true)]
     [InlineData("Proje Önerisi (PRODİS, 1719 ulusal çağrısı, e-imzalı)", false)]
+    [InlineData("TAAHHUTNAME (KASELI)", true)]
+    [InlineData("Yetki belgesi (MÜHÜRLÜ)", true)]
+    [InlineData("Muhurlu beyan", true)]
     public void Kase_sarti_addan_cikarilir(string name, bool expected)
     {
         GrantDocumentSignatureRules.InfersStamp(name).ShouldBe(expected);
