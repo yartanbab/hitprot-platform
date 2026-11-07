@@ -79,6 +79,12 @@ public static class ReleaseNoteCatalog
                 "ve danışmanınız uyarılırsınız."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe evrakı proje sayfasında",
+                "Hibe başvurusundan oluşturulan projelerde, başvuruda yüklediğiniz evrakı proje sayfasının Belgeler " +
+                "sekmesinde durumu ve sürümüyle birlikte görebilirsiniz. Evrakı açmak ya da yenisini yüklemek için " +
+                "listedeki bağlantı sizi başvurunun evrak ekranına götürür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Fırsatlar ekranında gelişmiş filtre",
                 "Açık hibe çağrılarını kuruma, sektöre, bölgeye, son başvuru tarihine, destek tutarı ve oranına, geri " +
                 "ödeme ve konsorsiyum durumuna göre süzebilirsiniz. Seçtiğiniz filtreler ekranın üstünde görünür, " +
