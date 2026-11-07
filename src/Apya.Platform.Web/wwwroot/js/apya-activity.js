@@ -9,7 +9,7 @@
      gelmezse ekranı örten yarı saydam katman + ortada APYA işareti ("düşünüyor") + "Yükleniyor…".
      Hızlı sayfada hiç görünmez. Yeni sayfa gelince biter; bfcache dönüşünde (pageshow), Esc ile
      ya da 10 sn emniyetle kapanır (gezinme hiç olmazsa: kirli form uyarısında "Kal").
-     İndirme gibi görünen adres (?handler=Export…/Download…, /api/, dosya uzantısı) ve
+     İndirme gibi görünen adres (işleyici adı Export…/Download…, /api/, dosya uzantısı) ve
      data-apya-no-overlay taşıyan bağlantı/form katman AÇMAZ — sayfa yenilenmeyeceği için
      katman ekranı kilitlerdi; onlarda yalnız üst çubuk.
    • ÜST ÇUBUK: sayfanın tepesinde ince, belirsiz ilerleme çubuğu.
