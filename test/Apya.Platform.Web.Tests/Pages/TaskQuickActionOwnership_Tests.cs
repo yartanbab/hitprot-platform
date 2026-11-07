@@ -29,6 +29,8 @@ public class TaskQuickActionOwnership_Tests
     public void Proje_detayi_tamamla_sahiplik_ister()
     {
         var js = Read("src", "Apya.Platform.Web", "Pages", "Projects", "ProjectDetails.js");
-        js.ShouldContain("if (!canChangeStatus || closed || !owns) { return chip; }");
+        // #859 kuralı canComplete(row) içine taşıdı; halka ve Tamamla kısayolu ikisi de ona bakar.
+        js.ShouldContain("return canChangeStatus && !closed && owns;");
+        js.ShouldContain("if (!canComplete(row)) {");
     }
 }

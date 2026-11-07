@@ -3879,6 +3879,7 @@
         "Grants:Notify:Escalation:Side:Firma": "firma",
         "Grants:Notify:Escalation:Side:Danisman": "danışman",
         "Grants:Notify:Escalation:Audience:Genel": "İşi bekleyen taraf",
+        "Grants:Notify:Escalation:Audience:FirmaKullanicisi": "Firma kullanıcısı",
         "Grants:Notify:Escalation:Audience:FirmaYoneticisi": "Firma yöneticisi",
         "Grants:Notify:Escalation:Audience:Danisman": "Atanan danışman",
         "Grants:Notify:Escalation:Audience:HostYoneticisi": "Host yöneticisi",

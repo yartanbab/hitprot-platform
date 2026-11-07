@@ -3446,6 +3446,7 @@
     "Grants:Notify:Escalation:Side:Firma": "company",
     "Grants:Notify:Escalation:Side:Danisman": "consultant",
     "Grants:Notify:Escalation:Audience:Genel": "Party the work waits on",
+    "Grants:Notify:Escalation:Audience:FirmaKullanicisi": "Company user",
     "Grants:Notify:Escalation:Audience:FirmaYoneticisi": "Company admin",
     "Grants:Notify:Escalation:Audience:Danisman": "Assigned consultant",
     "Grants:Notify:Escalation:Audience:HostYoneticisi": "Host admin",
