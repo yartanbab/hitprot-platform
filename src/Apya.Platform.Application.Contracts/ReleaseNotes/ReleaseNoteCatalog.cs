@@ -26,6 +26,122 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.11.06",
+            date: "6 Kasım 2026",
+            title: "Listeleri Excel'e aktarın, APYA'yı telefonunuza ekleyin; faturalar düzenlenebilir, yeni APYA görünümü",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Listeleri Excel'e aktarın",
+                "Görevler, Projeler, Giderler, Gelirler ve Faturalar listesini ekranda gördüğünüz süzgeç, arama ve " +
+                "sıralamayla Excel'e indirebilirsiniz. Kasa & Banka'da bir hesap seçip o hesabın tüm hareketlerini " +
+                "tek dosyada alabilir, proje sayfasındaki Bütçe menüsünden bütçe raporunu Excel ya da PDF olarak " +
+                "indirebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "APYA'yı telefonunuzun ana ekranına ekleyin",
+                "Avatar menüsündeki \"Uygulamayı yükle\" ile APYA ana ekranınıza tek dokunuşla açılan bir uygulama " +
+                "olarak eklenir; iPhone'da adımlar ekranda gösterilir. Ana ekrandan açtığınızda bildirimleri açabilir, " +
+                "görev ve proje gelişmelerini kilit ekranınızda görebilirsiniz. Okunmamış bildirim sayısı uygulama " +
+                "simgesinde görünür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Faturaları düzenleyin",
+                "Fatura detayındaki \"Düzenle\" ile kalemleri, tutarı, KDV oranını, tarihleri ve bütçe kalemini " +
+                "değiştirebilirsiniz. Ödeme girilmiş faturada da tutar, kalem ve KDV düzeltilebilir; ödeme durumu yeni " +
+                "tutara göre kendiliğinden güncellenir. Ödeme kayıtlarını korumak için ödenmiş faturanın karşı tarafı " +
+                "ve yönü değiştirilemez. Karşılığı gider kaydı olmayan alış faturasından tek tıkla " +
+                "gider kaydı oluşturabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "KDV dahil fiyatla fatura girin",
+                "Fatura girerken \"Fiyatlar KDV dahil\" kutusunu işaretlerseniz yazdığınız fiyatlar KDV'den arındırılarak " +
+                "kaydedilir; fatura toplamı girdiğiniz tutarla aynı çıkar. Kalemlerin altında ara toplam, KDV ve genel " +
+                "toplam siz yazdıkça güncellenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bütçe kalemlerinde hibe ve kurum payı, alt kalemler",
+                "Projenize destek oranı girerek her bütçe kaleminin hibeden ve kurumunuzdan karşılanan tutarını " +
+                "görebilir, gerekirse kalem bazında hibe payını elle girebilirsiniz. Kalemleri \"Personel → 1.1, 1.2\" " +
+                "gibi üst ve alt kalem olarak düzenleyebilir, listeyi arayıp süzebilir ve her sütuna göre " +
+                "sıralayabilirsiniz. Liste kod sırasıyla (1, 2, 2.1, 2.2 …) gelir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kapanış ve ara raporlar için hazır şablonlar",
+                "Rapor oluşturucuda TÜBİTAK, KOSGEB, kalkınma ajansları, Avrupa Birliği programları, vakıflar ve " +
+                "uluslararası fonlar için kapanış ve ara rapor şablonları var. Bölümler kurumun resmî formundaki " +
+                "sırayla gelir, projenizi seçtiğinizde rapor kendi verinizden dolar. Şablonlar kuruma göre gruplu; " +
+                "arama kutusuna kurum ya da şablon adını yazarak aradığınızı hemen bulursunuz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe evraklarında imza ve kaşe kontrolü",
+                "Islak imza ya da kaşe gereken belgeler evrak listesinde etiketle gösterilir. Belge yüklediğinizde " +
+                "e-imza, belgenin taranmış olup olmadığı ve doldurulmamış alanlar kontrol edilir; eksik görülürse siz " +
+                "ve danışmanınız uyarılırsınız."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe evrakı proje sayfasında",
+                "Hibe başvurusundan oluşturulan projelerde, başvuruda yüklediğiniz evrakı proje sayfasının Belgeler " +
+                "sekmesinde durumu ve sürümüyle birlikte görebilirsiniz. Evrakı açmak ya da yenisini yüklemek için " +
+                "listedeki bağlantı sizi başvurunun evrak ekranına götürür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Fırsatlar ekranında gelişmiş filtre",
+                "Açık hibe çağrılarını kuruma, sektöre, bölgeye, son başvuru tarihine, destek tutarı ve oranına, geri " +
+                "ödeme ve konsorsiyum durumuna göre süzebilirsiniz. Seçtiğiniz filtreler ekranın üstünde görünür, " +
+                "tek tıkla kaldırılır. Erasmus+ İşbirliği Ortaklıkları da okul, mesleki, yetişkin ve yükseköğretim " +
+                "alanlarıyla katalogda; 2027 çağrısı açıldığında Fırsatlar ekranınızda görünecek."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe işlerinde hatırlatma ve yönetici özeti",
+                "Hibe başvurunuzda sizden beklenen bir iş birkaç gün içinde yapılmazsa hatırlatma bildirimi alırsınız. " +
+                "Firma yöneticileri her iş günü sabah bekleyen hibe işlerinin kısa bir özetini alır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Yeni APYA görünümü",
+                "Logo, sekme ve ana ekran simgeleri yeni APYA işaretine geçti; arayüz yazı tipi yenilendi. Yükleniyor " +
+                "göstergeleri APYA işaretiyle gösterilir; yavaş açılan sayfalarda ekranda \"Yükleniyor…\" yazar. Yapay " +
+                "zekâ önerileri APYA işaretiyle ayırt edilir. Uygulama telefonda ve bilgisayarda varsayılan olarak " +
+                "açık temayla açılır; koyu temayı seçtiyseniz tercihiniz korunur."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Telefonda görev listesi sadeleşti",
+                "Her görev tek bakışta ne olduğunu, kimde olduğunu ve ne zaman bittiğini gösterir; geciken işler \"3 gün " +
+                "gecikti\" diye yazar. Soldaki halkaya dokunarak görevi tamamlayabilir, \"Geri al\" ile geri " +
+                "dönebilirsiniz. Birden çok görev seçmek için karta basılı tutun. Kart Panosu'nda kartlar ekranı " +
+                "dolduruyor, kolonlar kaydırınca yerine oturuyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje kartları ve proje sayfası daha derli toplu",
+                "Proje kartları daha az yer kaplıyor, proje görseli büyüdü; bütçe ve ilerleme yan yana, gecikmiş " +
+                "görevler kartın alt satırında. Telefonda proje sayfasının üstü tek satırda toplandı, göstergeler iki " +
+                "sütunda diziliyor ve açılan menüler artık kesilmiyor. Sayfaların üstündeki boşluk küçüldü, içerik " +
+                "ekranın üstünden başlıyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Oturumunuz 90 gün açık kalır",
+                "\"Beni hatırla\" ile giriş yaptığınızda oturumunuz kullandıkça 90 gün açık kalır; ana ekrana " +
+                "eklediğiniz APYA uygulaması sık sık yeniden giriş istemez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Alt görevlerde en fazla 10 düzey",
+                "Alt görevler ana görevin altında en fazla 10 düzey iç içe açılabilir. Var olan görevleriniz " +
+                "etkilenmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Görevden fatura ve gider ekleme düzeldi",
+                "Görevden açılan fatura ve gider pencerelerinde metin alanlarına yazılamıyordu; kasa yetkisi olmayan " +
+                "kullanıcılarda gider penceresi hiç açılmıyordu. İkisi de düzeldi, bütçe kalemi de görevin kaleminden " +
+                "kendiliğinden gelir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Ekran düzeltmeleri",
+                "Görevler ekranında Takvim, Finans, Gösterge Paneli, Kontrol Listesi ve Bağımlılıklar görünümleri " +
+                "artık aşağı kaydırılabiliyor. Finans sayfasında hesap bakiyeleri kartın dışına taşmıyor. Telefonda " +
+                "sayfa geçişinde üst çubuğun bir an karışık görünmesi ve Makro Ekran haber başlıklarının yarım " +
+                "kesilmesi giderildi.")
+        ),
+
+        new ReleaseNote(
             version: "2026.10.26",
             date: "26 Ekim 2026",
             title: "Hibe programları ayrıntılı: amaç, öncelikler, belgeler ve kendi para biriminde destek tutarı",
