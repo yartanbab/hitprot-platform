@@ -6,6 +6,8 @@ let pendingFetch = [];
 
 beforeAll(async () => {
     window.fetch = vi.fn(() => new Promise((resolve) => { pendingFetch.push(resolve); }));
+    // jsdom'da Navigation API yok: betik yüklenmeden önce sahte navigate kaynağı.
+    window.navigation = new EventTarget();
     await import('../../../js/apya-activity.js');
     await import('../../../js/apya-mark.js'); // gezinme katmanı işareti apya.mark ile basar
 });
@@ -237,5 +239,56 @@ describe('apya-activity: sayfa geçişi', () => {
         await vi.advanceTimersByTimeAsync(300);
         expect(isActive()).toBe(false);
         expect(overlay()).toBeNull();
+    });
+});
+
+// Navigation API navigate olayının jsdom karşılığı (location.href = ..., geri-ileri).
+function codeNavigate({ url, sameDocument = false, hashChange = false, downloadRequest = null, prevent = false }) {
+    const e = new Event('navigate', { cancelable: true });
+    Object.assign(e, { destination: { url: new URL(url, location.href).href, sameDocument }, hashChange, downloadRequest });
+    if (prevent) { e.preventDefault(); }
+    window.navigation.dispatchEvent(e);
+}
+
+describe('apya-activity: kodla yapılan gezinme (mobilde satır/kart dokunuşu)', () => {
+    it('location.href ile sayfa değişimi aynı katmanı açar; bfcache dönüşünde kalkar', async () => {
+        codeNavigate({ url: '/Projects/ProjectDetails/1' });
+        await vi.advanceTimersByTimeAsync(200);
+        expect(overlay()).toBeNull();
+        await vi.advanceTimersByTimeAsync(100);
+        expect(overlay()).not.toBeNull();
+        expect(overlay().querySelector('svg.apya-mark').getAttribute('data-state')).toBe('thinking');
+        backFromCache();
+        expect(overlay()).toBeNull();
+    });
+
+    it('kodla indirme adresine gidiş ekranı kilitlemez: katman yerine çubuk', async () => {
+        codeNavigate({ url: '/Admin/Feedback?handler=Excel&q=1' });
+        await vi.advanceTimersByTimeAsync(300);
+        expect(overlay()).toBeNull();
+        expect(isActive()).toBe(true);
+        backFromCache();
+    });
+
+    it.each([
+        ['aynı belge (pushState)', { url: '/Tasks?x=1', sameDocument: true }],
+        ['çapa', { url: '/Tasks#a', hashChange: true }],
+        ['download özniteliği', { url: '/files/a', downloadRequest: 'a.pdf' }],
+        ['başka köken', { url: 'https://example.com/' }],
+        ['durdurulmuş gezinme', { url: '/Tasks', prevent: true }],
+    ])('%s katman açmaz', async (_, opts) => {
+        codeNavigate(opts);
+        await vi.advanceTimersByTimeAsync(300);
+        expect(overlay()).toBeNull();
+        expect(isActive()).toBe(false);
+        backFromCache();
+    });
+
+    it('bağlantı tıklamasının ardından gelen navigate olayı bağlantının kararını ezmez (data-apya-no-overlay)', async () => {
+        clickLink({ href: '/Invoices/Print', 'data-apya-no-overlay': '' });
+        codeNavigate({ url: '/Invoices/Print' }); // gerçek tarayıcıda tıklamanın hemen ardından gelir
+        await vi.advanceTimersByTimeAsync(300);
+        expect(overlay()).toBeNull();
+        backFromCache();
     });
 });
