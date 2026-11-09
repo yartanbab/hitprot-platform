@@ -56,6 +56,9 @@
                         <i class="fa fa-pen-to-square me-1"></i>@L["Grants:Sources:ManualEntry"]
                     </a>
                 }
+                <button type="button" id="CallsExportExcel" class="btn btn-outline-secondary">
+                    <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
+                </button>
                 @* X-05 · Kazıyıcı bağlı değilken düğme yalnız "atlandı" koşusu bırakıyordu. *@
                 @if (Model.ScraperConnected && await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
                 {
@@ -150,6 +153,13 @@ else
                     <i class="fa fa-filter me-1" aria-hidden="true"></i>@L["Grants:Feed:Filter:Toggle"]
                     <span class="apya-filters-badge ms-1 d-none" id="FilterActiveCount"></span>
                 </button>
+                @* Ekranda görünen çağrılar (sekme + gelişmiş filtre) — kimlikleri Tenant.js doldurur. *@
+                <form id="FeedExportForm" method="post" action="/Grants?handler=FeedExcel" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" id="FeedExportExcel" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
+                    </button>
+                </form>
                 @* Profil ve fikir kartları düğmeye indi: doluluk ayrıntısı açılan editörün başlığında. *@
                 <button type="button" id="ProfileToggleBtn" class="btn btn-sm btn-outline-secondary">
                     <i class="fa fa-id-card-clip me-1" aria-hidden="true"></i><span id="ProfileToggleText">@L["Grants:Feed:Profile:Edit"]</span>
