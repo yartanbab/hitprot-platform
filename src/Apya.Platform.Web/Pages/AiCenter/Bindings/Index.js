@@ -46,7 +46,7 @@ $(function () {
                     }
                 },
                 { title: 'Form', data: 'documentTitle', defaultContent: '—' },
-                { title: 'Prompt', data: 'promptName', defaultContent: '—' },
+                { title: 'İstem', data: 'promptName', defaultContent: '—' },
                 { title: 'Tetikleme', data: 'triggerModeText' },
                 {
                     title: 'Durum',

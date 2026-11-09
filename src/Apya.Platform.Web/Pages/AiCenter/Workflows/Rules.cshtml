@@ -73,7 +73,7 @@
                     <abp-column size-md="_3">
                         <label class="form-label">
                             Alan (örn: score, riskLevel)
-                            <apya-hint text="Değerlendirme sonucunun JSON çıktısındaki alan adı. Prompt'un ürettiği çıktıda hangi alanlar varsa onları yazabilirsiniz; alan bulunamazsa kural eşleşmez ve sessizce atlanır." />
+                            <apya-hint text="Değerlendirme sonucunun JSON çıktısındaki alan adı. İstemin ürettiği çıktıda hangi alanlar varsa onları yazabilirsiniz; alan bulunamazsa kural eşleşmez ve sessizce atlanır." />
                         </label>
                         <input asp-for="NewRule.JsonPath" class="form-control" />
                     </abp-column>
@@ -88,7 +88,7 @@
                     <abp-column size-md="_2">
                         <label class="form-label">
                             Aksiyon
-                            <apya-hint text="Şu an yalnız Notify (bildirim) uçtan uca çalışır. Approve, Tag ve Webhook seçilebilir ve kural eşleşince tetiklenir, ancak sadece log kaydı düşer — henüz bir etkileri yoktur." />
+                            <apya-hint text="Şu an yalnız Bildirim (Notify) uçtan uca çalışır. Onay (Approve), Etiket (Tag) ve Web Kancası (Webhook) seçilebilir ve kural eşleşince tetiklenir, ancak sadece log kaydı düşer — henüz bir etkileri yoktur." />
                         </label>
                         <select asp-for="NewRule.ActionType" asp-items="Model.ActionTypes" class="form-select"></select>
                     </abp-column>

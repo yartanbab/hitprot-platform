@@ -41,14 +41,14 @@
 
 <form id="AiTaskGeneratorForm">
     <abp-modal size="ExtraLarge">
-        <abp-modal-header title="AI Görev Oluşturucu"></abp-modal-header>
+        <abp-modal-header title="Yapay Zekâ Görev Oluşturucu"></abp-modal-header>
         <abp-modal-body>
             <input type="hidden" id="AiProjectId" value="@Model.ProjectId" />
 
             <!-- Step Indicators -->
             <div class="ai-step-indicator">
                 <div class="step active" id="stepInd1"><i class="fa fa-file me-1"></i>Dosya Seç</div>
-                <div class="step" id="stepInd2"><i class="apya-ai-icon me-1" aria-hidden="true"></i>AI Analiz</div>
+                <div class="step" id="stepInd2"><i class="apya-ai-icon me-1" aria-hidden="true"></i>Yapay Zekâ Analizi</div>
                 <div class="step" id="stepInd3"><i class="fa fa-check-circle me-1"></i>Onay & Oluştur</div>
             </div>
 
@@ -61,7 +61,7 @@
                         </div>
                     </div>
                     <h5 class="fw-bold mb-2">Proje Dosyasını Yükleyin</h5>
-                    <p class="text-muted mb-4">AI, yüklediğiniz PDF dosyasını analiz ederek otomatik görev önerileri oluşturacak.</p>
+                    <p class="text-muted mb-4">Yapay zekâ, yüklediğiniz PDF dosyasını analiz ederek otomatik görev önerileri oluşturacak.</p>
 
                     <div class="mb-4">
                         <input type="file" class="form-control" id="aiDocumentFile" accept=".pdf" style="max-width:400px;margin:0 auto;">
@@ -76,7 +76,7 @@
                 <div id="aiLoadingState" class="text-center py-5">
                     <div class="ai-spinner mb-3" style="width:40px;height:40px;border-width:4px;"></div>
                     <h5 class="fw-bold">Dosya Analiz Ediliyor...</h5>
-                    <p class="text-muted">AI motoru dosyanızı okuyor ve görev adaylarını çıkarıyor.</p>
+                    <p class="text-muted">Yapay zekâ motoru dosyanızı okuyor ve görev adaylarını çıkarıyor.</p>
                 </div>
 
                 <!-- Results -->
@@ -128,7 +128,7 @@
 
                     <div class="alert alert-info mt-3 mb-0 d-flex align-items-center" role="alert">
                         <i class="fa fa-info-circle me-2"></i>
-                        <small>AI önerileri taslaktır. Her öneriyi inceleyebilir, düzenleyebilir ve istemediğiniz önerilerin seçimini kaldırabilirsiniz.</small>
+                        <small>Yapay zekâ önerileri taslaktır. Her öneriyi inceleyebilir, düzenleyebilir ve istemediğiniz önerilerin seçimini kaldırabilirsiniz.</small>
                     </div>
                 </div>
             </div>

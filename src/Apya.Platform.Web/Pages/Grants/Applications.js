@@ -60,8 +60,8 @@ $(function () {
             '        <div class="apya-tranche-list"></div>' +
             '      </div>' +
             '      <div class="col-md-6">' +
-            '        <div class="d-flex justify-content-between align-items-center mb-1"><span class="fw-semibold small">Milestone\'lar</span>' +
-            '          <button type="button" class="btn btn-sm btn-link apya-milestone-add">+ Milestone Ekle</button></div>' +
+            '        <div class="d-flex justify-content-between align-items-center mb-1"><span class="fw-semibold small">Kilometre Taşları</span>' +
+            '          <button type="button" class="btn btn-sm btn-link apya-milestone-add">+ Kilometre Taşı Ekle</button></div>' +
             '        <div class="apya-milestone-list"></div>' +
             '      </div>' +
             '    </div>' +
@@ -78,7 +78,7 @@ $(function () {
         if (!(a.tranches || []).length) { $t.append('<div class="text-muted small py-1">Dilim yok.</div>'); }
         var $m = $row.find('.apya-milestone-list').empty();
         (a.milestones || []).forEach(function (m) { $m.append(milestoneRow(a, m)); });
-        if (!(a.milestones || []).length) { $m.append('<div class="text-muted small py-1">Milestone yok.</div>'); }
+        if (!(a.milestones || []).length) { $m.append('<div class="text-muted small py-1">Kilometre taşı yok.</div>'); }
     }
 
     // Beş eylemden sonra yeniden yüklenir: yalnız son istek çizer. Yükleme hatası ABP penceresi
@@ -200,7 +200,7 @@ $(function () {
         $('#MilestoneForm')[0].reset();
         $('#MilestoneId').val('');
         $('#MilestoneAppId').val(a.id);
-        $('#MilestoneModalTitle').text('Yeni Milestone');
+        $('#MilestoneModalTitle').text('Yeni Kilometre Taşı');
         milestoneModal.show();
     });
     $('#AppList').on('click', '.apya-milestone-edit', function () {
@@ -213,7 +213,7 @@ $(function () {
         $('#MilestoneTitle').val(m.title);
         $('#MilestoneDueDate').val(m.dueDate ? m.dueDate.substring(0, 10) : '');
         $('#MilestoneCompleted').prop('checked', m.isCompleted);
-        $('#MilestoneModalTitle').text('Milestone Düzenle');
+        $('#MilestoneModalTitle').text('Kilometre Taşını Düzenle');
         milestoneModal.show();
     });
     $('#MilestoneForm').on('submit', function (e) {
@@ -227,19 +227,19 @@ $(function () {
         var op = id ? hostSvc.updateMilestone(id, dto) : hostSvc.addMilestone($('#MilestoneAppId').val(), dto);
         op.then(function () {
             milestoneModal.hide();
-            abp.notify.success('Milestone kaydedildi.');
+            abp.notify.success('Kilometre taşı kaydedildi.');
             loadList();
         });
     });
     $('#AppList').on('click', '.apya-milestone-del', function () {
         var milestoneId = $(this).closest('[data-milestone-id]').data('milestone-id');
         Swal.fire({
-            title: 'Milestone Silinecek', icon: 'warning', showCancelButton: true,
+            title: 'Kilometre Taşı Silinecek', icon: 'warning', showCancelButton: true,
             confirmButtonText: 'Evet, Sil', cancelButtonText: 'İptal', confirmButtonColor: '#dc3545'
         }).then(function (r) {
             if (!r.isConfirmed) return;
             hostSvc.deleteMilestone(milestoneId).then(function () {
-                abp.notify.success('Milestone silindi.');
+                abp.notify.success('Kilometre taşı silindi.');
                 loadList();
             });
         });

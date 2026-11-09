@@ -106,7 +106,7 @@ $(function () {
                     data: 'creationTime',
                     render: function (d) { return d ? d.substring(0, 16).replace('T', ' ') : ''; }
                 },
-                { title: 'Tenant', data: 'tenantName', defaultContent: '-' },
+                { title: 'Kiracı', data: 'tenantName', defaultContent: '-' },
                 { title: 'Tür', data: 'type', render: function (t) { return TYPE_LABELS[t] || t; } },
                 {
                     title: 'Konu', data: 'subject',
@@ -281,7 +281,7 @@ $(function () {
         var text = $text.val();
 
         function announce() {
-            abp.notify.success('Prompt panoya kopyalandı.');
+            abp.notify.success('İstem panoya kopyalandı.');
         }
 
         // Güvenli bağlam dışında (ör. http üzerinden tünel) clipboard API yok.

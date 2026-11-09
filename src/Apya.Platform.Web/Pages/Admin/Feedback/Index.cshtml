@@ -54,8 +54,8 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <select id="Filter_TenantId" class="form-select form-select-sm" aria-label="Tenant filtresi">
-                    <option value="">Tüm Tenant'lar</option>
+                <select id="Filter_TenantId" class="form-select form-select-sm" aria-label="Kiracı filtresi">
+                    <option value="">Tüm kiracılar</option>
                     @foreach (var t in Model.Tenants)
                     {
                         <option value="@t.Id">@t.Name</option>
@@ -107,7 +107,7 @@
             </select>
             <button type="button" id="btn-bulk-apply" class="btn btn-sm btn-primary">Uygula</button>
             <button type="button" id="btn-bulk-prompt" class="btn btn-sm btn-outline-primary">
-                <i class="fa fa-code me-1"></i>Prompt oluştur
+                <i class="fa fa-code me-1"></i>İstem oluştur
             </button>
             <apya-hint text="Kullanıcıya görünen durum değişirse (ör. İnceleniyor → Tamamlandı) gönderene bildirim gider — sessiz bir işlem değildir. Kapalı bir kayıt önce yeniden İnceleniyor'a alınmadan başka bir kapanış durumuna geçemez; geçersiz geçişler hatasız görünüp o kayıt için SESSİZCE atlanır, seçtiğiniz diğer kayıtlar yine de güncellenir." />
         </div>
@@ -119,7 +119,7 @@
                     <th>İşlemler</th>
                     <th>No</th>
                     <th>Tarih</th>
-                    <th>Tenant</th>
+                    <th>Kiracı</th>
                     <th>Tür</th>
                     <th>Konu</th>
                     <th>Modül</th>

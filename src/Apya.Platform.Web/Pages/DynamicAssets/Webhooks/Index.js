@@ -207,8 +207,8 @@ $(function () {
         var subId = $(this).closest('.card').data('sub').id;
 
         Swal.fire({
-            title: 'Webhook Silinecek',
-            text: 'Bu webhook aboneliği silinecek. Emin misiniz?',
+            title: 'Web Kancası Silinecek',
+            text: 'Bu web kancası aboneliği silinecek. Emin misiniz?',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Evet, Sil',
@@ -217,7 +217,7 @@ $(function () {
         }).then(function (result) {
             if (!result.isConfirmed) return;
             svc.delete(subId).then(function () {
-                abp.notify.success('Webhook aboneliği silindi.');
+                abp.notify.success('Web kancası aboneliği silindi.');
                 loadList();
             });
         });

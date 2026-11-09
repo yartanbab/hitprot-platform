@@ -8,22 +8,22 @@
 
 <form method="post" id="ReviewDraftsForm">
     <abp-modal size="ExtraLarge">
-        <abp-modal-header title="🚀 AI Sonuçları: Taslak Görevler"></abp-modal-header>
+        <abp-modal-header title="🚀 Yapay Zekâ Sonuçları: Taslak Görevler"></abp-modal-header>
         
         <abp-modal-body class="p-3">
             <input type="hidden" id="FinalBatchId" name="BatchId" value="@Model.BatchId" />
 
             <div class="alert alert-info border-info shadow-sm d-flex align-items-center mb-4">
                 <i class="fa fa-info-circle fa-2x me-3"></i>
-                <div>Döküman başarıyla analiz edildi! Aşağıdaki tabloda AI'ın bulduğu görevleri görebilirsiniz. İstemediğiniz öğelerin başındaki kutucuğu kaldırın.</div>
+                <div>Belge başarıyla analiz edildi! Aşağıdaki tabloda yapay zekânın bulduğu görevleri görebilirsiniz. İstemediğiniz öğelerin başındaki kutucuğu kaldırın.</div>
             </div>
 
             @if(Model.DraftTasks == null || Model.DraftTasks.Count == 0)
             {
                 <div class="text-center py-5 text-muted">
                     <apya-mark size="56" class="mx-auto mb-3" style="opacity:.32" />
-                    <h5>AI herhangi bir görev bulamadı.</h5>
-                    <p>Yüklediğiniz döküman bir format sorunu içeriyor olabilir veya tamamen ilgisiz bir metne sahip olabilir.</p>
+                    <h5>Yapay zekâ herhangi bir görev bulamadı.</h5>
+                    <p>Yüklediğiniz belge bir format sorunu içeriyor olabilir veya tamamen ilgisiz bir metne sahip olabilir.</p>
                 </div>
             }
             else

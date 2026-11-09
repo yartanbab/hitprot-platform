@@ -9,11 +9,11 @@
    modal HİÇ kaydedemiyordu. *@
 <form method="post" action="@Url.Page("/AiCenter/Workflows/CreateModal")">
     <abp-modal>
-        <abp-modal-header title="Yeni AI İş Akışı"></abp-modal-header>
+        <abp-modal-header title="Yeni Yapay Zekâ İş Akışı"></abp-modal-header>
         <abp-modal-body>
             <abp-input asp-for="Workflow.Name" label="Ad" />
-            <abp-select asp-for="Workflow.DocumentId" asp-items="Model.Forms" label="Form Kapsamı (opsiyonel)" />
-            <abp-select asp-for="Workflow.PromptId" asp-items="Model.Prompts" label="Prompt Kapsamı (opsiyonel)" />
+            <abp-select asp-for="Workflow.DocumentId" asp-items="Model.Forms" label="Form Kapsamı (isteğe bağlı)" />
+            <abp-select asp-for="Workflow.PromptId" asp-items="Model.Prompts" label="İstem Kapsamı (isteğe bağlı)" />
             <abp-input asp-for="Workflow.IsActive" label="Aktif" />
             <small class="text-muted">Kapsam boş bırakılırsa iş akışı tüm değerlendirmelere uygulanır. Kuralları oluşturduktan sonra "Kurallar" ekranından ekleyin.</small>
         </abp-modal-body>

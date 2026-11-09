@@ -21,14 +21,14 @@
     @if (Model.CanSwitch)
     {
         <button type="button" class="apya-tenant-switch-btn" data-bs-toggle="dropdown" aria-expanded="false"
-                title="Müşteri değiştir">
+                title="Kiracı değiştir">
             <span class="apya-tenant-switch-initial" aria-hidden="true">@tenantInitial</span>
             <span class="apya-tenant-switch-name">@Model.TenantName</span>
             <i class="fa fa-chevron-down apya-tenant-switch-caret" aria-hidden="true"></i>
         </button>
         <ul class="dropdown-menu dropdown-menu-end apya-tenant-switch-menu">
             <li class="apya-tenant-switch-head">
-                <span class="apya-overline">Müşteri (Tenant)</span>
+                <span class="apya-overline">Kiracı</span>
                 @if (Model.TenantCount.HasValue)
                 {
                     <span class="apya-tenant-switch-count apya-numeric">@Model.TenantCount</span>

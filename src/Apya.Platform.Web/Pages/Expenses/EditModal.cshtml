@@ -38,7 +38,7 @@
             </abp-row>
             <abp-row>
                 <abp-column size-md="_12">
-                    <abp-select asp-for="Expense.ProjectId" asp-items="Model.Projects" label="Proje (opsiyonel)">
+                    <abp-select asp-for="Expense.ProjectId" asp-items="Model.Projects" label="Proje (isteğe bağlı)">
                         <option value="">— Proje yok —</option>
                     </abp-select>
                 </abp-column>
@@ -59,7 +59,7 @@
                 </abp-column>
                 <abp-column size-md="_6">
                     <div class="mb-3 d-none" data-budget-task-wrap>
-                        <label class="form-label" asp-for="Expense.TaskId">Görev (opsiyonel)</label>
+                        <label class="form-label" asp-for="Expense.TaskId">Görev (isteğe bağlı)</label>
                         <select asp-for="Expense.TaskId" class="form-select"></select>
                     </div>
                 </abp-column>

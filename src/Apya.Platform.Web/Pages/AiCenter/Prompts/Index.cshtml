@@ -4,14 +4,14 @@
 @inject IAuthorizationService AuthorizationService
 @model Apya.Platform.Web.Pages.AiCenter.Prompts.IndexModel
 @{
-    ViewBag.Title = "Prompt Kütüphanesi";
+    ViewBag.Title = "İstem Kütüphanesi";
 }
 
 @section scripts {
     <abp-script src="/Pages/AiCenter/Prompts/Index.js" />
 }
 
-<div data-page-description="Prompt şablonlarını, versiyonlarını ve yayın durumlarını yönetin" class="apya-page">
+<div data-page-description="İstem şablonlarını, sürümlerini ve yayın durumlarını yönetin" class="apya-page">
     @* Başlık + açıklama artık app header'da (ViewBag.Title + data-page-description);
        sayfa içinde tekrarlanmıyor. Burada yalnız sayfa aksiyonları kalır. *@
     <div class="apya-page-head">
@@ -19,7 +19,7 @@
             @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Create))
             {
                 <abp-button id="NewPromptButton"
-                            text="Yeni Prompt"
+                            text="Yeni İstem"
                             icon="plus"
                             button-type="Primary" size="Small" />
             }
@@ -46,10 +46,10 @@
                     </select>
                 </div>
             </div>
-            <ul class="apya-md-items" id="PromptsList" role="listbox" aria-label="Prompt listesi"></ul>
+            <ul class="apya-md-items" id="PromptsList" role="listbox" aria-label="İstem listesi"></ul>
             <div class="apya-md-empty" id="PromptsListEmpty" hidden>
                 <i class="fa fa-inbox" aria-hidden="true"></i>
-                <span id="PromptsListEmptyText">Eşleşen prompt bulunamadı</span>
+                <span id="PromptsListEmptyText">Eşleşen istem bulunamadı</span>
             </div>
             <div class="apya-md-pager">
                 <span id="PromptsPagerInfo">—</span>
@@ -66,7 +66,7 @@
         <div class="apya-md-detail" id="PromptDetail">
             <div class="apya-md-empty">
                 <i class="apya-ai-icon" aria-hidden="true"></i>
-                <span>Detaylarını görmek için soldaki listeden bir prompt seçin.</span>
+                <span>Detaylarını görmek için soldaki listeden bir istem seçin.</span>
             </div>
         </div>
     </div>

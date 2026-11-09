@@ -53,7 +53,7 @@ public class BulkPromptModalModel : AbpPageModel
         var ids = ParseIds(Ids);
         if (ids.Count == 0)
         {
-            ErrorMessage = "Prompt için en az bir geri bildirim seçin.";
+            ErrorMessage = "İstem için en az bir geri bildirim seçin.";
             return;
         }
         if (ids.Count > FeedbackPromptBuilder.BulkLimit)

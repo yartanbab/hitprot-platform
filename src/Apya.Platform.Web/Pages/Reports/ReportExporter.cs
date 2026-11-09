@@ -586,7 +586,7 @@ internal static class ReportExporter
         using var wb = new XLWorkbook();
         var ws = wb.AddWorksheet("Geri Bildirimler");
 
-        string[] headers = ["Tarih", "Tenant", "Tür", "Konu", "Durum", "Öncelik", "Puan", "Sayfa", "Cevap Sayısı", "Etiketler"];
+        string[] headers = ["Tarih", "Kiracı", "Tür", "Konu", "Durum", "Öncelik", "Puan", "Sayfa", "Cevap Sayısı", "Etiketler"];
         for (int i = 0; i < headers.Length; i++)
         {
             ws.Cell(1, i + 1).Value = headers[i];
@@ -660,9 +660,9 @@ internal static class ReportExporter
     public static byte[] AiSummaryToExcel(Apya.Platform.Ai.Dashboard.AiDashboardDto d)
     {
         using var wb = new XLWorkbook();
-        var ws = wb.AddWorksheet("AI Özet");
+        var ws = wb.AddWorksheet("Yapay Zekâ Özet");
 
-        ws.Cell(1, 1).Value = "AI Değerlendirme Özeti";
+        ws.Cell(1, 1).Value = "Yapay Zekâ Değerlendirme Özeti";
         ws.Range(1, 1, 1, 2).Merge().Style.Font.Bold = true;
 
         ws.Cell(3, 1).Value = "Toplam Değerlendirme"; ws.Cell(3, 2).Value = d.TotalEvaluations;
@@ -673,7 +673,7 @@ internal static class ReportExporter
         ws.Cell(8, 1).Value = "Skorlu Sonuç"; ws.Cell(8, 2).Value = d.ScoredCount;
         ws.Cell(9, 1).Value = "Ortalama Skor";
         if (d.AverageScore.HasValue) ws.Cell(9, 2).Value = d.AverageScore.Value;
-        ws.Cell(10, 1).Value = "Prompt Sayısı"; ws.Cell(10, 2).Value = d.PromptCount;
+        ws.Cell(10, 1).Value = "İstem Sayısı"; ws.Cell(10, 2).Value = d.PromptCount;
         ws.Cell(11, 1).Value = "Sağlayıcı Sayısı"; ws.Cell(11, 2).Value = d.ProviderCount;
         ws.Cell(12, 1).Value = "Aktif İş Akışı"; ws.Cell(12, 2).Value = d.ActiveWorkflowCount;
 
@@ -714,7 +714,7 @@ internal static class ReportExporter
                 page.Margin(1.5f, Unit.Centimetre);
                 page.DefaultTextStyle(t => t.FontSize(10));
 
-                page.Header().Text("AI Değerlendirme Özeti").Bold().FontSize(13);
+                page.Header().Text("Yapay Zekâ Değerlendirme Özeti").Bold().FontSize(13);
 
                 page.Content().Column(col =>
                 {
@@ -734,7 +734,7 @@ internal static class ReportExporter
                         Row("Başarısız", d.Failed.ToString());
                         Row("Skorlu Sonuç", d.ScoredCount.ToString());
                         Row("Ortalama Skor", d.AverageScore.HasValue ? d.AverageScore.Value.ToString("0.0") : "—");
-                        Row("Prompt / Sağlayıcı / Aktif İş Akışı",
+                        Row("İstem / Sağlayıcı / Aktif İş Akışı",
                             $"{d.PromptCount} / {d.ProviderCount} / {d.ActiveWorkflowCount}");
                     });
 

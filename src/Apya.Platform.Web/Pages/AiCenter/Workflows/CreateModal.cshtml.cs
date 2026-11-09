@@ -46,7 +46,7 @@ public class CreateModalModel : AbpPageModel
         Forms.AddRange((await _bindingAppService.GetFormLookupAsync())
             .Select(x => new SelectListItem(x.DisplayName, x.Id.ToString())));
 
-        Prompts = new List<SelectListItem> { new SelectListItem("(Tüm promptlar)", "") };
+        Prompts = new List<SelectListItem> { new SelectListItem("(Tüm istemler)", "") };
         Prompts.AddRange((await _bindingAppService.GetPromptLookupAsync())
             .Select(x => new SelectListItem(x.DisplayName, x.Id.ToString())));
     }

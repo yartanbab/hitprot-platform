@@ -13,7 +13,7 @@
                     <abp-input asp-for="Indicator.Name" label="Gösterge adı" placeholder="Eğitilen kişi sayısı" />
                 </abp-column>
                 <abp-column size-md="_4">
-                    <abp-input asp-for="Indicator.Unit" label="Birim (opsiyonel)" placeholder="kişi" />
+                    <abp-input asp-for="Indicator.Unit" label="Birim (isteğe bağlı)" placeholder="kişi" />
                 </abp-column>
             </abp-row>
             <abp-row>
@@ -24,12 +24,12 @@
                     <abp-input asp-for="Indicator.TargetValue" label="Hedef değer" data-money-input="true" />
                 </abp-column>
                 <abp-column size-md="_4">
-                    <abp-input asp-for="Indicator.TargetDate" type="date" label="Hedef tarihi (opsiyonel)" />
+                    <abp-input asp-for="Indicator.TargetDate" type="date" label="Hedef tarihi (isteğe bağlı)" />
                 </abp-column>
             </abp-row>
             @if (Model.WorkSteps.Count > 0)
             {
-                <abp-select asp-for="Indicator.WorkStepId" asp-items="Model.WorkSteps" label="İş adımı (opsiyonel)">
+                <abp-select asp-for="Indicator.WorkStepId" asp-items="Model.WorkSteps" label="İş adımı (isteğe bağlı)">
                     <option value="">— İş adımı yok —</option>
                 </abp-select>
             }

@@ -74,10 +74,10 @@
                         <abp-input asp-for="Entry.Value" label="Ulaşılan değer (toplam)" data-money-input="true" />
                     </abp-column>
                 </abp-row>
-                <abp-input asp-for="Entry.Note" label="Not (opsiyonel)" />
+                <abp-input asp-for="Entry.Note" label="Not (isteğe bağlı)" />
                 @if (Model.Documents.Count > 0)
                 {
-                    <abp-select asp-for="Entry.DocumentFileId" asp-items="Model.Documents" label="Kanıt belgesi (opsiyonel)">
+                    <abp-select asp-for="Entry.DocumentFileId" asp-items="Model.Documents" label="Kanıt belgesi (isteğe bağlı)">
                         <option value="">— Belge yok —</option>
                     </abp-select>
                 }

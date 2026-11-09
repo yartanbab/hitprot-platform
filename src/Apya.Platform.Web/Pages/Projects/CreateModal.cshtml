@@ -423,7 +423,7 @@
                     <label class="apya-pform-file" for="PfFile">
                         <span class="kpi-icon-box kpi-icon-box--accent" aria-hidden="true"><i class="fa fa-paperclip"></i></span>
                         <span class="flex-grow-1" style="min-width:0">
-                            <span class="apya-pform-file-name d-block" id="PfFileName">Proje dosyası ekleyin (opsiyonel)</span>
+                            <span class="apya-pform-file-name d-block" id="PfFileName">Proje dosyası ekleyin (isteğe bağlı)</span>
                             <span class="apya-pform-file-hint d-block">PDF, Excel veya görsel · en fazla 20 MB</span>
                         </span>
                         <span class="btn btn-sm btn-outline-secondary">Dosya seç</span>
@@ -662,7 +662,7 @@
         // ---------------------------------------------------- DOSYA
         $('#PfFile').on('change', function () {
             var f = this.files && this.files[0];
-            $('#PfFileName').text(f ? f.name : 'Proje dosyası ekleyin (opsiyonel)');
+            $('#PfFileName').text(f ? f.name : 'Proje dosyası ekleyin (isteğe bağlı)');
         });
 
         // ---------------------------------------------------- DOĞRULAMA + ÖZET

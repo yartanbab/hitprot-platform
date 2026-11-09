@@ -8,7 +8,7 @@
     <abp-modal>
         <abp-modal-header title="@(Model.IsEdit ? "Dilimi Düzenle" : "Yeni Fonlama Dilimi")"></abp-modal-header>
         <abp-modal-body>
-            <abp-input asp-for="Tranche.Title" label="Başlık (opsiyonel)" placeholder="1. Hakediş" />
+            <abp-input asp-for="Tranche.Title" label="Başlık (isteğe bağlı)" placeholder="1. Hakediş" />
             <abp-row>
                 <abp-column size-md="_6">
                     <abp-input asp-for="Tranche.PlannedAmount" label="Planlanan tutar" data-money-input="true" />
@@ -17,7 +17,7 @@
                     <abp-input asp-for="Tranche.PlannedDate" type="date" label="Planlanan tarih" />
                 </abp-column>
             </abp-row>
-            <abp-input asp-for="Tranche.Note" label="Not (opsiyonel)" />
+            <abp-input asp-for="Tranche.Note" label="Not (isteğe bağlı)" />
             <p class="text-muted mb-0" style="font-size:12px">
                 Tahsilat bu ekranda girilmez — dilim oluştuktan sonra satırdaki
                 <strong>Tahsilat gir</strong> ile kaydedilir.
