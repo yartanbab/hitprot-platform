@@ -65,7 +65,7 @@ public partial class SystemHealthAppService : ApplicationService, ISystemHealthA
 
         using (_multiTenantFilter.Disable())
         {
-            var auditQuery = (await _auditLogRepository.GetQueryableAsync())
+            var auditQuery = WithoutHubConnections(await _auditLogRepository.GetQueryableAsync())
                 .Where(a => a.ExecutionTime >= since);
 
             // Toplam sayaçlar AYRI ve tamdır: uç gruplamasının tavanı (grup sayısı)
@@ -361,6 +361,13 @@ public partial class SystemHealthAppService : ApplicationService, ISystemHealthA
     /// (EF <c>Sum</c> içine <c>Where</c> katlayamıyor) — tanım burasıdır, kopyalar
     /// buraya atıf verir.
     /// </summary>
+    private static IQueryable<AuditLog> WithoutHubConnections(IQueryable<AuditLog> query)
+    {
+        // SignalR, HTTP/2 üzerinde WebSocket'i CONNECT ile açar ve bağlantının açık
+        // kaldığı süreyi (dakikalar) istek süresi olarak yazar. Yavaş uç değildir.
+        return query.Where(a => a.HttpMethod == null || a.HttpMethod != "CONNECT");
+    }
+
     private static IQueryable<AuditLog> FailedRequests(IQueryable<AuditLog> query)
     {
         return query.Where(a => ((a.Exceptions != null && a.Exceptions != "")

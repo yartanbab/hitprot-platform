@@ -176,7 +176,7 @@ public partial class SystemHealthAppService
 
         var url = input.Url!;
 
-        var query = (await _auditLogRepository.GetQueryableAsync())
+        var query = WithoutHubConnections(await _auditLogRepository.GetQueryableAsync())
             .Where(a => a.ExecutionTime >= since);
 
         // Üç tür ayrık kalmalı; liste tarafıyla AYNI ölçüt (BuildEndpointIssuesAsync).

@@ -234,7 +234,7 @@ public partial class SystemHealthAppService
         Dictionary<Guid, string> tenantNames,
         HealthIssueKind kind)
     {
-        var baseQuery = (await _auditLogRepository.GetQueryableAsync())
+        var baseQuery = WithoutHubConnections(await _auditLogRepository.GetQueryableAsync())
             .Where(a => a.ExecutionTime >= since)
             .Where(a => a.Url != null && a.Url != "");
 

@@ -297,6 +297,9 @@ public class PlatformWebModule : AbpModule
                             typeof(Apya.Platform.Ai.Bindings.AiFormBinding).IsAssignableFrom(type)
                 )
             );
+
+            // Hatasız GET'ler kayda düşmez; yavaş olanlar Sistem Sağlığı'nda görünsün.
+            options.AlwaysLogSelectors.Add(Middleware.SlowGetRequestAuditSelector.ShouldAlwaysLogAsync);
         });
 
         ConfigureAuthentication(context);

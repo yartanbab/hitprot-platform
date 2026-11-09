@@ -228,6 +228,34 @@ public class SystemHealthAggregation_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     /// <summary>
+    /// SignalR, HTTP/2 üzerinde WebSocket'i CONNECT ile açar; denetim satırına bağlantının
+    /// açık kaldığı süre yazılır (yerel veride ortalama 133 sn). Bu satırlar yavaş uç değildir.
+    /// </summary>
+    [Fact]
+    public async Task Hub_baglantisi_yavas_uc_sayilmaz()
+    {
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var prefix = NewPrefix();
+            for (var i = 0; i < TelemetryConsts.DefaultEndpointMinCallCount; i++)
+            {
+                await InsertAuditAsync($"{prefix}/notification-hub", httpMethod: "CONNECT", durationMs: 120_000);
+            }
+            await InsertAuditAsync($"{prefix}/Yavas", durationMs: TelemetryConsts.DefaultSlowEndpointThresholdMs + 500);
+
+            var issues = await _systemHealth.GetIssuesAsync(new GetHealthIssueListInput
+            {
+                WindowDays = 7,
+                Filter = prefix
+            });
+            var health = await _systemHealth.GetAsync(7);
+
+            issues.Items.ShouldHaveSingleItem().Where.ShouldBe($"{prefix}/Yavas");
+            health.SlowestEndpoints.ShouldNotContain(e => e.Url.StartsWith(prefix));
+        });
+    }
+
+    /// <summary>
     /// 2xx dönerken istisna yazılmışsa ortada gerçekten bir anormallik vardır.
     /// <b>4xx bunun istisnasıdır</b> — orada istisna beklenen akışın parçasıdır,
     /// bkz. <see cref="Dortyuzler_sunucu_hatasi_degil_reddedilen_istektir"/>.

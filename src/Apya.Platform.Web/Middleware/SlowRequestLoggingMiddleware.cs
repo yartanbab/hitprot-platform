@@ -17,10 +17,19 @@ namespace Apya.Platform.Web.Middleware;
 /// </summary>
 public class SlowRequestLoggingMiddleware : IMiddleware, ITransientDependency
 {
+    /// <summary>
+    /// SignalR hub yolları (<c>PlatformWebModule</c>'deki <c>MapHub</c> çağrılarıyla aynı).
+    /// <see cref="SlowGetRequestAuditSelector"/> da bunları dışarıda bırakır.
+    /// </summary>
+    internal static readonly string[] HubPrefixes =
+    {
+        "/notification-hub", "/task-hub", "/ai-hub", "/grant-application-hub"
+    };
+
     private static readonly string[] SkippedPrefixes =
     {
         "/css", "/js", "/libs", "/images", "/icons", "/brand", "/favicon",
-        "/health", "/notification-hub", "/task-hub", "/ai-hub"
+        "/health"
     };
 
     private readonly ILogger<SlowRequestLoggingMiddleware> _logger;
@@ -81,6 +90,24 @@ public class SlowRequestLoggingMiddleware : IMiddleware, ITransientDependency
 
         var path = context.Request.Path.Value ?? string.Empty;
         foreach (var prefix in SkippedPrefixes)
+        {
+            if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return IsHubPath(path);
+    }
+
+    internal static bool IsHubPath(string? path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return false;
+        }
+
+        foreach (var prefix in HubPrefixes)
         {
             if (path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
