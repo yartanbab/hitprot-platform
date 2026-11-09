@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Apya.Platform.Ai.Permissions;
 using Apya.Platform.Feedbacks;
 using Apya.Platform.Feedbacks.Dtos;
 using Apya.Platform.IssueTasks;
@@ -52,6 +53,9 @@ public class DetailModalModel : AbpPageModel
     /// <summary>İç notlar dahil sürüm; kayıtta iç not yoksa null (onay kutusu çizilmez).</summary>
     public string? DevPromptWithNotes { get; set; }
 
+    /// <summary>"AI ile zenginleştir" düğmesi yalnız AI izni olana çizilir (servis de ister).</summary>
+    public bool CanUseAi { get; set; }
+
     public DetailModalModel(
         IFeedbackAdminAppService feedbackAdminAppService,
         IIssueTaskAppService issueTaskAppService,
@@ -75,6 +79,8 @@ public class DetailModalModel : AbpPageModel
         {
             IssueTaskLink = await _issueTaskAppService.GetLinkForFeedbackAsync(Id);
         }
+
+        CanUseAi = await AuthorizationService.IsGrantedAsync(AiPermissions.Generation.Default);
 
         var clientError = await FindLastClientErrorAsync();
         DevPrompt = FeedbackPromptBuilder.Build(Feedback, Details, Breadcrumb, clientError, includeInternalNotes: false);
