@@ -26,7 +26,7 @@ public class SubscriptionPage_Tests : PlatformWebTestBase
         var html = HtmlEntity.DeEntitize(await GetResponseAsStringAsync("/Subscription"));
 
         // Host'un paketi yoktur; geri sayım/kota basmak yanlış bilgi olurdu.
-        html.ShouldContain("Host hesabında paket");
+        html.ShouldContain("Platform yönetim hesabında paket");
     }
 
     /// <summary>

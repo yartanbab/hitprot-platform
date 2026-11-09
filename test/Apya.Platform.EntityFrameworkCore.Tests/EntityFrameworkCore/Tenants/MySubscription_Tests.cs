@@ -163,7 +163,7 @@ public class MySubscription_Tests : PlatformEntityFrameworkCoreTestBase
 
                 var standard = dto.UpgradeOptions.Single(o => o.PackageCode == PackageCode.Standard);
                 standard.UnlockedCapabilities.ShouldContain("Hibe Yönetimi");
-                standard.UnlockedCapabilities.ShouldContain("Doküman Yönetimi");
+                standard.UnlockedCapabilities.ShouldContain("Belge Yönetimi");
 
                 // Finans Basic'te de açık — "kazanım" diye sayılmamalı.
                 standard.UnlockedCapabilities.ShouldNotContain("Finans & Muhasebe");
