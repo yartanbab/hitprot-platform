@@ -24,6 +24,8 @@ $(function () {
 
     var feed = [];
     var feedFailed = false;
+    // Ekranda son boyanan kartlar (sekme + gelişmiş filtre); Excel'e aktarma bunları gönderir.
+    var paintedItems = [];
     // Son akış okuması başarıyla geldi mi. Okuma sürerken ya da düştüyse false: "N çağrı" cümlesi
     // eldeki boş ya da eski diziyi sayıp "0 çağrı" veya yeni profille uyuşmayan sayı basmasın.
     var feedLoaded = false;
@@ -556,6 +558,7 @@ $(function () {
             : feed.filter(function (r) { return r.isRecommended; });
         // Filtre sonucu boşaldıysa "uygun çağrı yok" değil "filtreye uyan yok" denir.
         var filteredOut = items.length === 0 && base.length > 0;
+        paintedItems = items;
 
         $('#TabCountEligible').text(eligible.length);
         $('#TabCountAll').text(filtered.length);
@@ -688,6 +691,14 @@ $(function () {
     // editördeki kaydedilmemiş girdiyi ezmez, yalnız "N çağrı ölçülebilir" cümlesini yeniler.
     // Hata dalı da çözülür ve cümleyi boşaltır (eski sayı kalmasın). Yükleme hatası ABP
     // penceresi değil kutu (Faz 4 kararı 2); nedeni kutunun açıklaması söyler.
+    $('#FeedExportForm').on('submit', function () {
+        var $form = $(this);
+        $form.find('input[name="callIds"]').remove();
+        paintedItems.forEach(function (r) {
+            $('<input type="hidden" name="callIds">').val(r.grantCallId).appendTo($form);
+        });
+    });
+
     function loadFeed() {
         var isLatest = nextFeed();
         feedLoaded = false;

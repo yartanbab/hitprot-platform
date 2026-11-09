@@ -118,6 +118,7 @@ $(function () {
         $('.apya-choice-row .apya-choice').removeClass('is-on');
         $(this).addClass('is-on');
         filter = $(this).data('filter');
+        $('#MineExportExcel').attr('href', '/Grants/MyApplications?handler=Excel&filter=' + encodeURIComponent(filter));
         paintRows();
     });
 

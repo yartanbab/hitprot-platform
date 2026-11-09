@@ -234,6 +234,14 @@ $(function () {
         load();
     });
 
+    // Ekrandaki sekme ve süzgeçler dosyaya aynen geçer.
+    $('#CallsExportExcel').on('click', function () {
+        var params = new URLSearchParams({ handler: 'CallsExcel', tab: TAB[state.tab], sort: state.sort });
+        if (state.tab === 'live' && state.closed) { params.append('closed', 'true'); }
+        if (state.issuer) { params.append('issuer', state.issuer); }
+        window.location.href = '/Grants?' + params.toString();
+    });
+
     $('#IssuerFilter').on('change', function () { state.issuer = $(this).val(); load(); });
     $('#StateFilter').on('change', function () { state.closed = $(this).val() === 'closed'; load(); });
     $('#SortFilter').on('change', function () { state.sort = parseInt($(this).val(), 10) || 0; load(); });

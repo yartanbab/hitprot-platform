@@ -1,6 +1,7 @@
 @page
 @using Apya.Platform.Web.Pages.Shared
 @model Apya.Platform.Web.Pages.Grants.ApplicationsModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     ViewBag.Title = "Hibe Başvuruları";
 }
@@ -25,6 +26,7 @@
     <div class="apya-page-head">
         <div class="apya-page-head-actions">
             <a href="/Grants" class="btn btn-sm btn-outline-secondary"><i class="fa fa-arrow-left me-1"></i>Programlara Dön</a>
+            <a href="/Grants/Applications?handler=Excel" class="btn btn-sm btn-outline-secondary"><i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]</a>
         </div>
     </div>
 
