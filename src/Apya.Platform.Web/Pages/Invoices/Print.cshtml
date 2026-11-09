@@ -148,6 +148,12 @@
                         <span>KDV (%@inv.TaxRate.ToString("0.##")):</span>
                         <span>@taxAmount.ToString("N2")</span>
                     </div>
+                    @if (inv.VatExemptionReference != null)
+                    {
+                        <div class="totals-row small text-muted">
+                            <span>KDV istisnası · Belge no: @inv.VatExemptionReference</span>
+                        </div>
+                    }
                     @if (inv.PaidAmount > 0)
                     {
                         <div class="totals-row text-success">

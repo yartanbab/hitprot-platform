@@ -162,4 +162,27 @@ public class InvoiceEditModal_Tests : PlatformWebTestBase
         saved.Items.ShouldHaveSingleItem().UnitPrice.ShouldBe(1000m);
         saved.TotalAmount.ShouldBe(1200m);
     }
+
+    [Fact]
+    public async Task Projenin_istisna_belgesi_kaydedilir_yeni_fatura_penceresine_tasinir()
+    {
+        var invoice = await InvoiceAsync();
+
+        var modal = await GetResponseAsStringAsync("/Finance/VatExemptionModal?projectId=" + invoice.ProjectId);
+        modal.ShouldContain("name=\"Exemption.VatExemptionCertificateNo\"", Case.Sensitive);
+
+        var response = await Client.PostAsync("/Finance/VatExemptionModal?projectId=" + invoice.ProjectId, new FormUrlEncodedContent(new List<KeyValuePair<string, string>>
+        {
+            new("Exemption.VatExemptionCertificateNo", "TB-77"),
+            new("Exemption.VatExemptionValidUntil", "2026-12-31"),
+            new("__RequestVerificationToken", Token(await GetResponseAsStringAsync("/Projects/Edit/" + invoice.ProjectId)))
+        }));
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        // Yeni fatura penceresi, betiğin belge no'yu önden doldurması için projenin belgesini taşır.
+        var create = await GetResponseAsStringAsync("/Invoices/CreateModal");
+        create.ShouldContain(invoice.ProjectId.ToString(), Case.Sensitive);
+        create.ShouldContain("TB-77", Case.Sensitive);
+        create.ShouldContain("name=\"InvoiceInfo.VatExemptionReference\"", Case.Sensitive);
+    }
 }

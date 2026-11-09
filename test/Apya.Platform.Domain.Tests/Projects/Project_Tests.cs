@@ -141,4 +141,22 @@ public class Project_Tests
         project.TotalBudget.ShouldBe(100m, "bütçe kontrolü geçse de tarih ihlalinde bütçe de yazılmamalı");
         project.StartDate.ShouldBe(new DateTime(2026, 1, 1));
     }
+
+    [Fact]
+    public void KDV_istisna_belgesi_gecerlilik_gununu_dahil_sayar_numara_silinince_kalkar()
+    {
+        var project = new Project(Guid.NewGuid(), null, null, "Teşvikli Proje", "PRJ-KDV", "Açıklama");
+        project.HasVatExemptionOn(new DateTime(2026, 1, 1)).ShouldBeFalse();
+
+        project.SetVatExemption("  B-2026-123 ", new DateTime(2026, 12, 31, 15, 0, 0));
+
+        project.VatExemptionCertificateNo.ShouldBe("B-2026-123");
+        project.VatExemptionValidUntil.ShouldBe(new DateTime(2026, 12, 31));
+        project.HasVatExemptionOn(new DateTime(2026, 12, 31, 23, 0, 0)).ShouldBeTrue();
+        project.HasVatExemptionOn(new DateTime(2027, 1, 1)).ShouldBeFalse();
+
+        project.SetVatExemption(" ", new DateTime(2026, 12, 31));
+        project.VatExemptionCertificateNo.ShouldBeNull();
+        project.VatExemptionValidUntil.ShouldBeNull();
+    }
 }

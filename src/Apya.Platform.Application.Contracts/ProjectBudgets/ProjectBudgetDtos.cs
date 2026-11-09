@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel.DataAnnotations;
+using Apya.Platform.Invoices;
 using Apya.Platform.Projects;
 using Volo.Abp.Application.Dtos;
 
@@ -119,6 +120,16 @@ public class UpdateSupportRateDto
 {
     [Range(0, 100)]
     public decimal? SupportRatePercent { get; set; }
+}
+
+/// <summary>Projenin KDV istisna belgesi. Numara boş bırakılırsa istisna kaldırılır.</summary>
+public class UpdateVatExemptionDto
+{
+    [StringLength(VatExemptionConsts.MaxCertificateNoLength)]
+    public string? VatExemptionCertificateNo { get; set; }
+
+    /// <summary>Son geçerlilik günü; boşsa süresiz.</summary>
+    public DateTime? VatExemptionValidUntil { get; set; }
 }
 
 /// <summary>
@@ -294,6 +305,10 @@ public class ProjectBudgetOverviewDto
 
     /// <summary>Kurum (eş finansman) oranı — türetilir, saklanmaz.</summary>
     public decimal? InstitutionRatePercent => SupportRatePercent.HasValue ? 100m - SupportRatePercent.Value : null;
+
+    /// <summary>Projenin KDV istisna belgesi numarası; boşsa istisna yok.</summary>
+    public string? VatExemptionCertificateNo { get; set; }
+    public DateTime? VatExemptionValidUntil { get; set; }
 
     /// <summary>Kalemlerin hibe payı toplamı. Payı hesaplanamayan kalem varsa boş.</summary>
     public decimal? GrantShareTotal { get; set; }

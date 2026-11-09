@@ -63,11 +63,20 @@ else
         {
             <span class="apya-chip apya-chip-warning">Destek oranı girilmemiş</span>
         }
+        @if (b.VatExemptionCertificateNo != null)
+        {
+            <span class="apya-chip apya-chip-neutral" data-vat-exemption>
+                KDV istisnası · @b.VatExemptionCertificateNo@(b.VatExemptionValidUntil.HasValue ? " · " + b.VatExemptionValidUntil.Value.ToString("dd.MM.yyyy") + "'e kadar" : "")
+            </span>
+        }
         @if (Model.CanEditBudget)
         {
             <div class="ms-auto d-flex gap-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnSupportRate">
                     <i class="fa fa-percent me-1" aria-hidden="true"></i>Destek oranı
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnVatExemption">
+                    <i class="fa fa-receipt me-1" aria-hidden="true"></i>KDV istisnası
                 </button>
                 @if (b.Lines.Any())
                 {

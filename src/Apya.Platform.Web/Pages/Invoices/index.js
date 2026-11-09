@@ -206,7 +206,7 @@ $(function () {
 
             '<div class="ms-auto" style="max-width:280px">' +
             '  <div class="d-flex justify-content-between" style="font-size:12.5px"><span class="text-muted">Ara toplam</span><span class="apya-numeric">' + fmt(subtotal) + ' ' + esc(d.currency) + '</span></div>' +
-            '  <div class="d-flex justify-content-between mt-1" style="font-size:12.5px"><span class="text-muted">KDV (%' + fmt(d.taxRate) + ')</span><span class="apya-numeric">' + fmt(tax) + ' ' + esc(d.currency) + '</span></div>' +
+            '  <div class="d-flex justify-content-between mt-1" style="font-size:12.5px"><span class="text-muted">KDV (%' + fmt(d.taxRate) + ')' + (d.vatExemptionReference ? ' · istisna: ' + esc(d.vatExemptionReference) : '') + '</span><span class="apya-numeric">' + fmt(tax) + ' ' + esc(d.currency) + '</span></div>' +
             '  <div class="d-flex justify-content-between mt-2 pt-2 border-top fw-bold"><span>Genel Toplam</span><span class="apya-numeric">' + fmt(d.totalAmount) + ' ' + esc(d.currency) + '</span></div>' +
             '</div>' +
 

@@ -110,6 +110,8 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
 
             SupportRatePercent = supportRate,
             SupportRateFromProgram = rateFromProgram,
+            VatExemptionCertificateNo = project.VatExemptionCertificateNo,
+            VatExemptionValidUntil = project.VatExemptionValidUntil,
             // Kalemlerin KENDİ payları toplanır (alt ağaç toplamı değil) — çift sayım olmaz.
             GrantShareTotal = !hasLines
                 ? (supportRate.HasValue ? Math.Round(project.TotalBudget * supportRate.Value / 100m, 2, MidpointRounding.AwayFromZero) : null)
@@ -556,6 +558,16 @@ public class ProjectBudgetAppService : ApplicationService, IProjectBudgetAppServ
 
         var project = await _projectRepository.GetAsync(projectId);
         project.SetSupportRate(input.SupportRatePercent);
+        await _projectRepository.UpdateAsync(project, autoSave: true);
+    }
+
+    public async Task UpdateVatExemptionAsync(Guid projectId, UpdateVatExemptionDto input)
+    {
+        await BudgetWritePermission.CheckAsync(AuthorizationService);
+        using var scope = HostScope();
+
+        var project = await _projectRepository.GetAsync(projectId);
+        project.SetVatExemption(input.VatExemptionCertificateNo, input.VatExemptionValidUntil);
         await _projectRepository.UpdateAsync(project, autoSave: true);
     }
 

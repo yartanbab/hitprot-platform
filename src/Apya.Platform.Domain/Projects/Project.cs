@@ -1,4 +1,5 @@
 using System;
+using Apya.Platform.Invoices;
 using Apya.Platform.ProjectBudgets;
 using Volo.Abp;
 using Volo.Abp.Domain.Entities.Auditing;
@@ -84,6 +85,15 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// (<c>Grant.SupportRatePercent</c>); ikisi de boşsa pay hesaplanmaz.
     /// </summary>
     public decimal? SupportRatePercent { get; private set; }
+
+    /// <summary>
+    /// Projenin KDV istisna belgesi numarası (ör. yatırım teşvik belgesi). Doluysa ve belge
+    /// fatura tarihinde geçerliyse yeni faturalar varsayılan olarak KDV istisnalı açılır.
+    /// </summary>
+    public string? VatExemptionCertificateNo { get; private set; }
+
+    /// <summary>İstisna belgesinin son geçerlilik günü; boşsa süresiz sayılır.</summary>
+    public DateTime? VatExemptionValidUntil { get; private set; }
 
     /// <summary>
     /// EF Core için zorunlu parametre-siz constructor.
@@ -265,6 +275,20 @@ public class Project : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
         SupportRatePercent = percent;
     }
+
+    /// <summary>Belge numarası boşsa istisna kaldırılır (tarih de silinir).</summary>
+    public void SetVatExemption(string? certificateNo, DateTime? validUntil)
+    {
+        VatExemptionCertificateNo = string.IsNullOrWhiteSpace(certificateNo)
+            ? null
+            : Check.Length(certificateNo.Trim(), nameof(certificateNo), VatExemptionConsts.MaxCertificateNoLength);
+        VatExemptionValidUntil = VatExemptionCertificateNo == null ? null : validUntil?.Date;
+    }
+
+    /// <summary>Belge var ve verilen günde geçerli mi.</summary>
+    public bool HasVatExemptionOn(DateTime date)
+        => VatExemptionCertificateNo != null
+           && (VatExemptionValidUntil == null || date.Date <= VatExemptionValidUntil.Value.Date);
 
     public void Approve() => IsApproved = true;
     public void Unapprove() => IsApproved = false;

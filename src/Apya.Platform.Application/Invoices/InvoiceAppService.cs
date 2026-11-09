@@ -126,7 +126,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
 
         await EnsureBudgetLineBelongsToProjectAsync(input.BudgetLineId, input.ProjectId);
 
-        var items = ToItemDescriptors(input.Items, input.TaxRate, input.PricesIncludeTax);
+        var items = ToItemDescriptors(input.Items, input.TaxRate, input.PricesIncludeTax, input.VatExemptionReference);
 
         var invoice = await _invoiceManager.CreateAsync(
             input.ProjectId,
@@ -140,7 +140,8 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             input.TaskId,
             items,
             input.Notes,
-            input.BudgetLineId);
+            input.BudgetLineId,
+            input.VatExemptionReference);
 
         return await GetAsync(invoice.Id);
     }
@@ -163,18 +164,20 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             input.TaxRate,
             input.Direction,
             input.CustomerId,
-            ToItemDescriptors(input.Items, input.TaxRate, input.PricesIncludeTax),
+            ToItemDescriptors(input.Items, input.TaxRate, input.PricesIncludeTax, input.VatExemptionReference),
             input.Notes,
-            input.BudgetLineId);
+            input.BudgetLineId,
+            input.VatExemptionReference);
 
         return await GetAsync(id);
     }
 
-    // KDV dahil girilen fiyatlar KDV hariç saklanır; çevirme kuralı domain'de.
+    // KDV dahil girilen fiyatlar KDV hariç saklanır; çevirme kuralı domain'de. İstisnalı faturada
+    // KDV yoktur: girilen fiyat zaten nettir, arındırılmaz.
     private static List<InvoiceItemDescriptor> ToItemDescriptors(
-        IEnumerable<CreateInvoiceItemDto> items, decimal taxRate, bool pricesIncludeTax) =>
+        IEnumerable<CreateInvoiceItemDto> items, decimal taxRate, bool pricesIncludeTax, string? vatExemptionReference) =>
         items.Select(i => new InvoiceItemDescriptor(i.Description, i.Quantity, i.UnitPrice))
-            .Select(d => pricesIncludeTax ? d.WithoutTax(taxRate) : d)
+            .Select(d => pricesIncludeTax && string.IsNullOrWhiteSpace(vatExemptionReference) ? d.WithoutTax(taxRate) : d)
             .ToList();
 
     [Authorize(PlatformPermissions.Invoices.Edit)]
@@ -261,7 +264,9 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         return new ListResultDto<ProjectLookupDto>(projects.Select(p => new ProjectLookupDto
         {
             Id = p.Id,
-            Name = p.Name
+            Name = p.Name,
+            VatExemptionCertificateNo = p.VatExemptionCertificateNo,
+            VatExemptionValidUntil = p.VatExemptionValidUntil
         }).ToList());
     }
 
@@ -303,6 +308,7 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
                         && x.Status != InvoiceStatus.Paid
                         && x.DueDate < Clock.Now,
             Notes = x.Notes,
+            VatExemptionReference = x.VatExemptionReference,
             CreationTime = x.CreationTime,
             Items = (lineItems ?? x.Items).Select(i => new InvoiceItemDto
             {

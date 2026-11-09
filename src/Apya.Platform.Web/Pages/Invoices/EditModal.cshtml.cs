@@ -51,6 +51,7 @@ public class EditModalModel : AbpPageModel
             InvoiceDate = dto.InvoiceDate,
             DueDate = dto.DueDate,
             TaxRate = dto.TaxRate,
+            VatExemptionReference = dto.VatExemptionReference,
             Notes = dto.Notes,
             Items = dto.Items.Select(i => new EditInvoiceItemViewModel
             {
@@ -85,6 +86,7 @@ public class EditModalModel : AbpPageModel
             DueDate = InvoiceInfo.DueDate,
             TaxRate = InvoiceInfo.TaxRate,
             PricesIncludeTax = InvoiceInfo.PricesIncludeTax,
+            VatExemptionReference = InvoiceInfo.VatExemptionReference,
             Notes = InvoiceInfo.Notes,
             Items = InvoiceInfo.Items.Select(i => new CreateInvoiceItemDto
             {
@@ -108,6 +110,7 @@ public class EditModalModel : AbpPageModel
         public DateTime DueDate { get; set; }
         public decimal TaxRate { get; set; }
         public bool PricesIncludeTax { get; set; }
+        public string? VatExemptionReference { get; set; }
         public string? Notes { get; set; }
         public List<EditInvoiceItemViewModel> Items { get; set; } = new();
     }

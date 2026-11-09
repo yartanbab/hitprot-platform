@@ -260,4 +260,44 @@ public class InvoiceEdit_Tests : PlatformEntityFrameworkCoreTestBase
 
         updated.Items.Select(i => i.UnitPrice).OrderBy(x => x).ShouldBe(new[] { 909.09m, 1000m });
     }
+
+    [Fact]
+    public async Task KDV_istisnali_fatura_KDVsiz_kesilir_istisna_kalkinca_oran_doner()
+    {
+        var projectId = await ProjectAsync();
+        await GetRequiredService<IProjectBudgetAppService>().UpdateVatExemptionAsync(projectId,
+            new UpdateVatExemptionDto { VatExemptionCertificateNo = "TB-2026-77", VatExemptionValidUntil = new DateTime(2026, 12, 31) });
+
+        var lookup = (await _invoices.GetProjectLookupAsync()).Items.Single(p => p.Id == projectId);
+        lookup.VatExemptionCertificateNo.ShouldBe("TB-2026-77");
+        lookup.VatExemptionValidUntil.ShouldBe(new DateTime(2026, 12, 31));
+
+        // KDV dahil işaretli olsa da istisnalı faturada fiyat arındırılmaz: KDV yok.
+        var created = await _invoices.CreateAsync(new CreateInvoiceDto
+        {
+            ProjectId = projectId,
+            InvoiceNumber = "FDZ-" + Guid.NewGuid().ToString("N")[..8],
+            InvoiceDate = new DateTime(2026, 10, 17),
+            DueDate = new DateTime(2026, 11, 20),
+            TaxRate = 20,
+            PricesIncludeTax = true,
+            VatExemptionReference = "TB-2026-77",
+            Items = new List<CreateInvoiceItemDto> { new() { Description = "Makine", Quantity = 1, UnitPrice = 1000m } }
+        });
+
+        created.VatExemptionReference.ShouldBe("TB-2026-77");
+        created.TaxRate.ShouldBe(0m);
+        created.Items.ShouldHaveSingleItem().UnitPrice.ShouldBe(1000m);
+        created.TotalAmount.ShouldBe(1000m);
+
+        var input = UpdateInput(created, null, null);
+        input.TaxRate = 20;
+        input.VatExemptionReference = null;
+        input.Items = new List<CreateInvoiceItemDto> { new() { Description = "Makine", Quantity = 1, UnitPrice = 1000m } };
+        var updated = await _invoices.UpdateAsync(created.Id, input);
+
+        updated.VatExemptionReference.ShouldBeNull();
+        updated.TaxRate.ShouldBe(20m);
+        updated.TotalAmount.ShouldBe(1200m);
+    }
 }

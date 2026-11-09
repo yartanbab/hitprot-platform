@@ -8903,6 +8903,10 @@ namespace Apya.Platform.Migrations
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("VatExemptionReference")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BudgetLineId");
@@ -10145,6 +10149,13 @@ namespace Apya.Platform.Migrations
 
                     b.Property<decimal>("TotalBudget")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("VatExemptionCertificateNo")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("VatExemptionValidUntil")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 

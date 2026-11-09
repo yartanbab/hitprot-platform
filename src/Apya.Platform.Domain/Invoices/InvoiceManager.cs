@@ -66,7 +66,8 @@ public class InvoiceManager : DomainService
         Guid? taskId,
         IReadOnlyList<InvoiceItemDescriptor> items,
         string? notes = null,
-        Guid? budgetLineId = null)
+        Guid? budgetLineId = null,
+        string? vatExemptionReference = null)
     {
         var invoice = new Invoice(
             GuidGenerator.Create(),
@@ -88,6 +89,7 @@ public class InvoiceManager : DomainService
         {
             invoice.AddItem(GuidGenerator.Create(), item.Description, item.Quantity, item.UnitPrice);
         }
+        invoice.SetVatExemption(vatExemptionReference);
 
         await _invoiceRepository.InsertAsync(invoice, autoSave: true);
 
@@ -129,7 +131,8 @@ public class InvoiceManager : DomainService
         Guid? customerId,
         IReadOnlyList<InvoiceItemDescriptor> items,
         string? notes,
-        Guid? budgetLineId)
+        Guid? budgetLineId,
+        string? vatExemptionReference = null)
     {
         // Kalemler yüklenmeden boşaltılırsa eski satırlar veritabanında kalır.
         var query = await _invoiceRepository.WithDetailsAsync(x => x.Items);
@@ -141,6 +144,7 @@ public class InvoiceManager : DomainService
         {
             invoice.AddItem(GuidGenerator.Create(), item.Description, item.Quantity, item.UnitPrice);
         }
+        invoice.SetVatExemption(vatExemptionReference);
         invoice.SetNotes(notes);
         invoice.SetBudgetLine(budgetLineId);
 

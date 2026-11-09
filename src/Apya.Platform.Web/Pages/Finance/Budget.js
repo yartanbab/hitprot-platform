@@ -11,14 +11,19 @@ $(function () {
     var fxPolicyModal = new abp.ModalManager(abp.appPath + 'Finance/FxPolicyModal');
     var contextWizard = new abp.ModalManager(abp.appPath + 'Finance/ContextWizardModal');
     var supportRateModal = new abp.ModalManager(abp.appPath + 'Finance/SupportRateModal');
+    var vatExemptionModal = new abp.ModalManager(abp.appPath + 'Finance/VatExemptionModal');
 
     // Paneller sunucuda render ediliyor; kaydettikten sonra sayfayı tazelemek
     // hem tabloyu hem KPI'ları hem şerit toplamlarını tek hamlede tutarlı yapar.
-    [lineModal, trancheModal, collectionModal, deductionModal, revisionModal, fxPolicyModal, contextWizard, supportRateModal]
+    [lineModal, trancheModal, collectionModal, deductionModal, revisionModal, fxPolicyModal, contextWizard, supportRateModal, vatExemptionModal]
         .forEach(function (m) { m.onResult(function () { window.location.reload(); }); });
 
     $('#BtnSupportRate').on('click', function () {
         supportRateModal.open({ projectId: projectId });
+    });
+
+    $('#BtnVatExemption').on('click', function () {
+        vatExemptionModal.open({ projectId: projectId });
     });
 
     $(document).on('click', '[data-add-child-line]', function () {
