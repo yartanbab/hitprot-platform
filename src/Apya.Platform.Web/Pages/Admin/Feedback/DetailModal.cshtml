@@ -273,9 +273,19 @@
                 {
                     <span></span>
                 }
-                <button type="button" class="btn btn-sm btn-primary detail-prompt-copy">
-                    <i class="fa fa-copy me-1"></i>Kopyala
-                </button>
+                <div class="d-flex gap-2">
+                    @if (Model.CanUseAi)
+                    {
+                        @* Kayıt AI sağlayıcısına gönderilir; dönen "AI ön analizi" metnin başına eklenir. *@
+                        <button type="button" class="btn btn-sm btn-outline-primary detail-prompt-ai" data-id="@f.Id"
+                                title="Kayıt yapay zekâ sağlayıcısına gönderilir (gönderen ve kiracı adı hariç).">
+                            <i class="fa fa-robot me-1"></i>AI ile zenginleştir
+                        </button>
+                    }
+                    <button type="button" class="btn btn-sm btn-primary detail-prompt-copy">
+                        <i class="fa fa-copy me-1"></i>Kopyala
+                    </button>
+                </div>
             </div>
             <textarea class="form-control form-control-sm font-monospace detail-prompt-text" rows="16"
                       aria-label="Geliştirme istemi" spellcheck="false">@Model.DevPrompt</textarea>

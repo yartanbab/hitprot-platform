@@ -273,7 +273,38 @@ $(function () {
     $(document).on('change', '.detail-prompt-internal', function () {
         var $pane = $(this).closest('.detail-prompt-pane');
         var source = $(this).is(':checked') ? '.detail-prompt-with-notes' : '.detail-prompt-plain';
-        $pane.find('.detail-prompt-text').val($pane.find(source).val());
+        $pane.find('.detail-prompt-text').val(withAiSection($pane.find(source).val(), $pane.data('aiSection')));
+    });
+
+    // AI ön analizi, şablonun giriş paragrafından sonra (ilk "## " bölümünden önce) yer alır.
+    function withAiSection(prompt, section) {
+        if (!section) return prompt;
+        var at = prompt.indexOf('\n## ');
+        return at < 0 ? prompt + '\n' + section : prompt.slice(0, at + 1) + section + prompt.slice(at + 1);
+    }
+
+    $(document).on('click', '.detail-prompt-ai', function () {
+        var $btn = $(this);
+        var $pane = $btn.closest('.detail-prompt-pane');
+        var includeNotes = $pane.find('.detail-prompt-internal').is(':checked');
+        var original = $btn.html();
+
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i>Analiz ediliyor…');
+
+        apya.platform.ai.feedbacks.feedbackPromptAi.analyze($btn.data('id'), includeNotes)
+            .then(function (result) {
+                var section = '## AI ön analizi\n\n' +
+                    '> Bu bölümü yapay zekâ üretti; kaynak kodu görmedi, nedenler varsayımdır. Doğrulamadan uygulama.\n\n' +
+                    result.analysis.trim() + '\n\n';
+                $pane.data('aiSection', section);
+                var $text = $pane.find('.detail-prompt-text');
+                $text.val(withAiSection($text.val(), section));
+                $btn.html('<i class="fa fa-check me-1"></i>Zenginleştirildi');
+                abp.notify.success('AI ön analizi prompt\'a eklendi.');
+            }, function () {
+                // Hata metni (kota, sağlayıcı yapılandırılmamış…) ABP tarafından gösterilir.
+                $btn.prop('disabled', false).html(original);
+            });
     });
 
     $(document).on('click', '.detail-prompt-copy', function () {
