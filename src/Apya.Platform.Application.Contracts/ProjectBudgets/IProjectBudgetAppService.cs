@@ -52,6 +52,9 @@ public interface IProjectBudgetAppService : IApplicationService
     /// <summary>Projenin destek oranını yazar; boş değer hibe programının oranına döndürür.</summary>
     Task UpdateSupportRateAsync(Guid projectId, UpdateSupportRateDto input);
 
+    /// <summary>Projenin KDV istisna belgesini yazar; boş numara istisnayı kaldırır.</summary>
+    Task UpdateVatExemptionAsync(Guid projectId, UpdateVatExemptionDto input);
+
     Task<List<FundingTrancheDto>> GetTranchesAsync(Guid projectId);
     Task<FundingTrancheDto> CreateTrancheAsync(Guid projectId, CreateUpdateTrancheDto input);
     Task<FundingTrancheDto> UpdateTrancheAsync(Guid id, CreateUpdateTrancheDto input);

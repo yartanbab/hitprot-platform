@@ -35,6 +35,12 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public InvoiceStatus Status { get; private set; } = InvoiceStatus.Draft;
     public string? Notes { get; private set; }
 
+    /// <summary>
+    /// KDV istisnasının dayandığı belge (ör. projenin istisna belgesi numarası). Doluysa fatura
+    /// KDV'siz kesilmiştir: oran 0'a çekilir, yazdırmada istisna satırı basılır.
+    /// </summary>
+    public string? VatExemptionReference { get; private set; }
+
     public ICollection<InvoiceItem> Items { get; private set; } = new List<InvoiceItem>();
 
     /// <summary>EF Core için.</summary>
@@ -173,6 +179,23 @@ public class Invoice : FullAuditedAggregateRoot<Guid>, IMultiTenant
     }
 
     public void SetNotes(string? notes) => Notes = notes?.Trim();
+
+    /// <summary>
+    /// İstisna dayanağını yazar; doluysa KDV oranı 0 olur (abonelik faturasındaki Teknopark
+    /// istisnasıyla aynı kural). Kalemler eklendikten sonra çağrılır, toplam yeniden hesaplanır.
+    /// </summary>
+    public void SetVatExemption(string? reference)
+    {
+        EnsureNotCancelled();
+        VatExemptionReference = string.IsNullOrWhiteSpace(reference)
+            ? null
+            : Check.Length(reference.Trim(), nameof(reference), VatExemptionConsts.MaxReferenceLength);
+        if (VatExemptionReference != null)
+        {
+            TaxRate = 0;
+        }
+        RecalculateTotal();
+    }
 
     private void RecalculateTotal()
         => TotalAmount = Items.Sum(x => x.TotalPrice) * (1 + TaxRate / 100);

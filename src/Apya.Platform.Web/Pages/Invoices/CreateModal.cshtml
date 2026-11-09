@@ -10,7 +10,7 @@
 @* Düz form (Customers deseni): abp-dynamic-form, içinde <abp-form-content/> olmadan
    modelin tüm alanlarını formun başına İKİNCİ kez basıyordu; bağlama ilk (boş)
    kopyayı aldığı için fatura numarası boş gidiyor ve fatura HİÇ kaydedilemiyordu. *@
-<form method="post" action="@Url.Page("/Invoices/CreateModal")" id="ViewModelForm">
+<form method="post" action="@Url.Page("/Invoices/CreateModal")" id="ViewModelForm" data-vat-exemptions="@Model.VatExemptionsJson">
     <abp-modal size="Large">
         <abp-modal-header title="Yeni Fatura Oluştur"></abp-modal-header>
         <abp-modal-body>
@@ -86,6 +86,16 @@
                 <input type="hidden" asp-for="InvoiceInfo.TaskId" />
             </div>
 
+            @* KDV istisnası: belge no doluysa fatura KDV'siz kesilir (sunucu oranı 0'a çeker). Proje
+               belgesi fatura tarihinde geçerliyse alan önden dolar (aşağıdaki betik). *@
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" asp-for="InvoiceInfo.VatExemptionReference">KDV istisna belge no</label>
+                    <input asp-for="InvoiceInfo.VatExemptionReference" class="form-control" placeholder="İstisna yoksa boş bırakın" />
+                    <div class="form-text">Doluysa fatura KDV'siz kesilir (KDV %0).</div>
+                </div>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label" asp-for="InvoiceInfo.Notes">Notlar</label>
                 <textarea asp-for="InvoiceInfo.Notes" class="form-control" rows="2" placeholder="İsteğe bağlı not..."></textarea>
@@ -145,7 +155,7 @@
                             optionalLine: true,
                             selectedLineId: '@Model.InvoiceInfo.BudgetLineId'
                         });
-                        updateSummary();
+                        applyProjectExemption();
                     }, 0);
 
                     var $form = $('form[action$="/Invoices/CreateModal"]');
@@ -155,8 +165,10 @@
                             var v = window.apya && apya.moneyInput ? apya.moneyInput.getValue(el) : parseFloat(el && el.value);
                             return v || 0;
                         };
-                        var rate = num($form.find('#InvoiceInfo_TaxRate')[0]);
-                        var included = $form.find('#InvoiceInfo_PricesIncludeTax').is(':checked');
+                        // İstisnalı faturada KDV yok: oran 0, KDV dahil çevirmesi yapılmaz (sunucuyla aynı).
+                        var exempt = String($form.find('#InvoiceInfo_VatExemptionReference').val() || '').trim() !== '';
+                        var rate = exempt ? 0 : num($form.find('#InvoiceInfo_TaxRate')[0]);
+                        var included = !exempt && $form.find('#InvoiceInfo_PricesIncludeTax').is(':checked');
                         var subtotal = 0;
                         $form.find('.invoice-item').each(function () {
                             var price = num($(this).find('.input-price')[0]);
@@ -165,9 +177,20 @@
                         });
                         var total = subtotal * (1 + rate / 100);
                         var tl = function (v) { return v.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺'; };
-                        $form.find('[data-invoice-summary]').text('Ara toplam ' + tl(subtotal) + ' · KDV ' + tl(total - subtotal) + ' · Genel toplam ' + tl(total));
+                        $form.find('[data-invoice-summary]').text('Ara toplam ' + tl(subtotal) + (exempt ? ' · KDV (istisna) ' : ' · KDV ') + tl(total - subtotal) + ' · Genel toplam ' + tl(total));
                     }
                     $form.on('input change', updateSummary);
+
+                    // Projenin istisna belgesi fatura tarihinde geçerliyse belge no önden dolar; kullanıcı silebilir.
+                    var exemptions = $form.data('vat-exemptions') || {};
+                    function applyProjectExemption() {
+                        var e = exemptions[$form.find('#InvoiceInfo_ProjectId').val()];
+                        var date = $form.find('#InvoiceInfo_InvoiceDate').val();
+                        var valid = e && (!e.until || !date || date <= e.until);
+                        $form.find('#InvoiceInfo_VatExemptionReference').val(valid ? e.no : '');
+                        updateSummary();
+                    }
+                    $form.on('change', '#InvoiceInfo_ProjectId, #InvoiceInfo_InvoiceDate', applyProjectExemption);
 
                     var itemIndex = 1;
                     $('#AddInvoiceItemBtn').click(function () {

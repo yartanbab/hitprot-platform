@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -27,6 +28,9 @@ public class CreateModalModel : AbpPageModel
 
     public List<SelectListItem> Projects { get; set; } = new();
     public List<SelectListItem> Customers { get; set; } = new();
+
+    /// <summary>İstisna belgesi olan projeler: kimlik → { no, until }. Betik belge no'yu önden doldurur.</summary>
+    public string VatExemptionsJson { get; set; } = "{}";
 
     public CreateModalModel(IInvoiceAppService invoiceAppService, ITaskAppService taskAppService)
     {
@@ -63,6 +67,9 @@ public class CreateModalModel : AbpPageModel
         var customerLookup = await _invoiceAppService.GetCustomerLookupAsync();
 
         Projects = projectLookup.Items.Select(x => new SelectListItem(x.Name, x.Id.ToString())).ToList();
+        VatExemptionsJson = JsonSerializer.Serialize(projectLookup.Items
+            .Where(x => x.VatExemptionCertificateNo != null)
+            .ToDictionary(x => x.Id.ToString(), x => new { no = x.VatExemptionCertificateNo, until = x.VatExemptionValidUntil?.ToString("yyyy-MM-dd") }));
         Customers = customerLookup.Items
             .Select(x => new SelectListItem(x.Name, x.Id.ToString()))
             .Prepend(new SelectListItem("-- Müşteri Seç --", ""))
@@ -83,6 +90,7 @@ public class CreateModalModel : AbpPageModel
             DueDate       = InvoiceInfo.DueDate,
             TaxRate       = InvoiceInfo.TaxRate,
             PricesIncludeTax = InvoiceInfo.PricesIncludeTax,
+            VatExemptionReference = InvoiceInfo.VatExemptionReference,
             Currency      = InvoiceInfo.Currency,
             Notes         = InvoiceInfo.Notes,
             Items = InvoiceInfo.Items.Select(i => new CreateInvoiceItemDto
@@ -117,6 +125,7 @@ public class CreateModalModel : AbpPageModel
         public DateTime DueDate { get; set; } = default;       // OnGetAsync'te Clock.Now.AddDays(15) ile set edilir
         public decimal TaxRate { get; set; } = 20;
         public bool PricesIncludeTax { get; set; }
+        public string? VatExemptionReference { get; set; }
         public string Currency { get; set; } = "TRY";
         public string? Notes { get; set; }
 

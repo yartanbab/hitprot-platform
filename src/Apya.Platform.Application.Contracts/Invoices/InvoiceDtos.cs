@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Volo.Abp.Application.Dtos;
 using Apya.Platform.Invoices;
 
@@ -33,6 +34,9 @@ public class InvoiceDto : FullAuditedEntityDto<Guid>
     /// </summary>
     public bool IsOverdue { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>KDV istisnasının dayanağı (belge no); doluysa fatura KDV'sizdir.</summary>
+    public string? VatExemptionReference { get; set; }
     public List<InvoiceItemDto> Items { get; set; } = new();
     public decimal PaidAmount { get; set; }
     public decimal Balance => TotalAmount - PaidAmount;
@@ -71,6 +75,10 @@ public class CreateInvoiceDto
 
     /// <summary>Kalem fiyatları KDV dahil girildiyse true; KDV hariç fiyata çevrilip saklanır.</summary>
     public bool PricesIncludeTax { get; set; }
+
+    /// <summary>KDV istisnasının dayanağı (belge no). Doluysa KDV oranı 0'a çekilir.</summary>
+    [StringLength(VatExemptionConsts.MaxReferenceLength)]
+    public string? VatExemptionReference { get; set; }
     public string Currency { get; set; } = "TRY";
     public string? Notes { get; set; }
     public List<CreateInvoiceItemDto> Items { get; set; } = new();
@@ -98,6 +106,10 @@ public class UpdateInvoiceDto
 
     /// <summary>Kalem fiyatları KDV dahil girildiyse true; KDV hariç fiyata çevrilip saklanır.</summary>
     public bool PricesIncludeTax { get; set; }
+
+    /// <summary>KDV istisnasının dayanağı (belge no). Doluysa KDV oranı 0'a çekilir; boşsa kaldırılır.</summary>
+    [StringLength(VatExemptionConsts.MaxReferenceLength)]
+    public string? VatExemptionReference { get; set; }
     public string? Notes { get; set; }
     public List<CreateInvoiceItemDto> Items { get; set; } = new();
 }
@@ -114,6 +126,10 @@ public class ProjectLookupDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>Yeni fatura penceresi bunlarla KDV istisnasını varsayılan olarak işaretler.</summary>
+    public string? VatExemptionCertificateNo { get; set; }
+    public DateTime? VatExemptionValidUntil { get; set; }
 }
 
 public class CustomerLookupDto

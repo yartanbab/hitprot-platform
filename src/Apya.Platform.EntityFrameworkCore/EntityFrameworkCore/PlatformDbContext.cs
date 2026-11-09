@@ -690,6 +690,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.DonorCurrency).HasMaxLength(3);
                 b.Property(x => x.FixedDonorRate).HasColumnType("decimal(18,6)");
                 b.Property(x => x.SupportRatePercent).HasColumnType("decimal(5,2)");
+                b.Property(x => x.VatExemptionCertificateNo).HasMaxLength(VatExemptionConsts.MaxCertificateNoLength);
                 // FIN-07: Açık hassasiyet yoktu — SQL Server varsayılanı (18,2), PostgreSQL ise
                 // sınırsız numeric kullanıyordu; aynı tutar iki veritabanında farklı saklanabiliyordu.
                 b.Property(x => x.TotalBudget).HasColumnType("decimal(18,2)");
@@ -1571,6 +1572,7 @@ namespace Apya.Platform.EntityFrameworkCore
                 // FIN-07 (bkz. Project): hassasiyet iki sağlayıcıda aynı olsun.
                 b.Property(x => x.TotalAmount).HasColumnType("decimal(18,2)");
                 b.Property(x => x.TaxRate).HasColumnType("decimal(18,2)");
+                b.Property(x => x.VatExemptionReference).HasMaxLength(VatExemptionConsts.MaxReferenceLength);
             });
 
             builder.Entity<InvoiceItem>(b =>

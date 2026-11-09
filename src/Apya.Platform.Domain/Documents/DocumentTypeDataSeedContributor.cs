@@ -181,6 +181,18 @@ public class DocumentTypeDataSeedContributor : IDataSeedContributor, ITransientD
                 new(new Guid("a1060000-0000-4000-8000-000000000002"), "letterDate", "Belge tarihi", DocumentFieldType.Date, true, DocumentFieldFillSource.Ocr, DocumentFieldVisibility.Everyone),
                 new(new Guid("a1060000-0000-4000-8000-000000000003"), "validUntil", "Geçerlilik", DocumentFieldType.Date, true, DocumentFieldFillSource.Manual, DocumentFieldVisibility.Everyone),
             }),
+
+        // Projenin KDV istisna belgesi (ör. yatırım teşvik belgesi). Numara ve geçerlilik
+        // projeye de yazılır; faturalar istisnayı oradan varsayılan alır.
+        new TypeDefinition(
+            new Guid("a1000000-0000-4000-8000-000000000007"), "KDV istisna belgesi", "VAT_EXEMPTION", "fa-receipt",
+            FinancialRetentionMonths, 7,
+            new List<FieldDefinition>
+            {
+                new(new Guid("a1070000-0000-4000-8000-000000000001"), "certificateNo", "Belge no", DocumentFieldType.Text, true, DocumentFieldFillSource.Ocr, DocumentFieldVisibility.Everyone),
+                new(new Guid("a1070000-0000-4000-8000-000000000002"), "issuedAt", "Belge tarihi", DocumentFieldType.Date, true, DocumentFieldFillSource.Ocr, DocumentFieldVisibility.Everyone),
+                new(new Guid("a1070000-0000-4000-8000-000000000003"), "validUntil", "Geçerlilik", DocumentFieldType.Date, false, DocumentFieldFillSource.Manual, DocumentFieldVisibility.Everyone),
+            }),
     };
 
     private sealed record TypeDefinition(
