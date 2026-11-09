@@ -607,13 +607,14 @@ public class PlatformNavigationResolver : IScopedDependency
         var l = _l;
         var roots = new List<ApplicationMenuItem>();
 
-        roots.Add(new ApplicationMenuItem(
-            "Apya.Dashboard", l["Menu:Dashboard"], icon: "fa fa-chart-line", url: "/Dashboard", order: 1));
-
-        // Makro Ekran (2026-10-14): sık işleri tek tıkla başlatan ekran. Genel Bakış gibi izinsiz;
-        // ekrandaki her makro kendi izniyle süzülür (MacroCatalog). Giriş sayfası Genel Bakış kalır.
+        // Hızlı İşlemler (eski adı Makro Ekran, 2026-10-14): sık işleri tek tıkla başlatan ekran.
+        // Genel Bakış gibi izinsiz; ekrandaki her işlem kendi izniyle süzülür (MacroCatalog).
+        // 2026-11-04 kararı: menünün en üstünde durur ve giriş sonrası açılış ekranıdır (Pages/Index).
         roots.Add(new ApplicationMenuItem(
             "Apya.Macros", l["Menu:Macros"], icon: "fa fa-bolt", url: "/Makro", order: 1));
+
+        roots.Add(new ApplicationMenuItem(
+            "Apya.Dashboard", l["Menu:Dashboard"], icon: "fa fa-chart-line", url: "/Dashboard", order: 1));
 
         // İşler
         // NOT: eskiden burada ayrı bir "Ana Sayfa" (PlatformMenus.Home, url "~/") öğesi de vardı —
