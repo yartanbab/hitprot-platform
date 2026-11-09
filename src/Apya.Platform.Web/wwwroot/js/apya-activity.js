@@ -12,6 +12,8 @@
      İndirme gibi görünen adres (işleyici adı Export…/Download…, /api/, dosya uzantısı) ve
      data-apya-no-overlay taşıyan bağlantı/form katman AÇMAZ — sayfa yenilenmeyeceği için
      katman ekranı kilitlerdi; onlarda yalnız üst çubuk.
+     Kodla yapılan gezinme (location.href, satır/kart dokunuşu, geri-ileri) de aynı katmanı açar
+     (2026-11-09, "mobilde her yere"): Navigation API navigate olayı; desteklemeyen tarayıcıda yok.
    • ÜST ÇUBUK: sayfanın tepesinde ince, belirsiz ilerleme çubuğu.
      - Kullanıcının tetiklediği istek: bir tıklamadan / Enter'dan sonraki 1,5 sn içinde başlayan
        istek. XMLHttpRequest (jQuery, ABP vekilleri, DataTables) ve fetch (React adaları)
@@ -307,6 +309,23 @@
             startNavigation(action, form);
         }, 0);
     });
+
+    // Kodla yapılan gezinme (location.href / assign / reload, satır-kart dokunuşu, süzgeç değişimi,
+    // telefonda geri kaydırma): tıklama/gönderim dinleyicisi bunları görmez. Navigation API'nin
+    // navigate olayı hepsini bildirir; desteklemeyen tarayıcıda yukarıdaki davranış sürer.
+    // Sıfır gecikme: bağlantı/form dinleyicisinin zamanlayıcısı ÖNCE kuyruğa girer, o öğeyle
+    // (data-apya-no-overlay) karar verir; buradaki çağrı navigating korumasına takılır.
+    if (window.navigation && typeof window.navigation.addEventListener === 'function') {
+        window.navigation.addEventListener('navigate', function (e) {
+            if (e.hashChange || e.downloadRequest != null) { return; }
+            var dest = e.destination;
+            if (!dest || dest.sameDocument) { return; } // pushState / SPA yönlendirmesi
+            var url;
+            try { url = new URL(dest.url, location.href); } catch (err) { return; }
+            if (url.origin !== location.origin) { return; }
+            setTimeout(function () { if (!e.defaultPrevented) { startNavigation(url, null); } }, 0);
+        });
+    }
 
     window.addEventListener('pageshow', function (e) { if (e.persisted) { stopNavigation(); } });
 
