@@ -7,6 +7,7 @@ using Apya.Platform.Billing.Dtos;
 using Apya.Platform.Permissions;
 using Apya.Platform.Tenants;
 using Apya.Platform.Web.Billing;
+using Apya.Platform.Web.Export;
 using Apya.Platform.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -77,6 +78,45 @@ public class IndexModel : PlatformPageModel
     public async Task OnGetAsync()
     {
         await LoadAsync();
+    }
+
+    /// <summary>Faturalar (.xlsx), ekrandaki süzgeçlerle; sayfalama yok, tüm eşleşenler.</summary>
+    public async Task<IActionResult> OnGetExcelAsync()
+    {
+        var rows = await ExcelTable.CollectAsync((skip, take) => _billingAppService.GetListAsync(new SubscriptionInvoiceFilterDto
+        {
+            TenantId = TenantId,
+            Status = Status,
+            OnlyOverdue = OnlyOverdue,
+            OnlyPendingDeclaration = OnlyPendingDeclaration,
+            Filter = Filter,
+            SkipCount = skip,
+            MaxResultCount = take
+        }));
+
+        var columns = new List<ExcelColumn<SubscriptionInvoiceDto>>
+        {
+            new(L["Export:Col:InvoiceNumber"], i => i.Number),
+            new(L["Export:Col:OfficialNumber"], i => i.OfficialNumber),
+            new(L["Export:Col:Customer"], i => i.TenantName),
+            new(L["Export:Col:Type"], i => L[$"Billing:Type:{i.Type}"].Value),
+            new(L["Export:Col:Date"], i => i.IssueDate, "dd.MM.yyyy"),
+            new(L["Export:Col:DueDate"], i => i.DueDate, "dd.MM.yyyy"),
+            new(L["Export:Col:NetAmount"], i => i.NetAmount),
+            new(L["Export:Col:TaxRate"], i => i.VatRate),
+            new(L["Export:Col:VatAmount"], i => i.VatAmount),
+            new(L["Export:Col:Total"], i => i.TotalAmount),
+            new(L["Export:Col:Paid"], i => i.PaidAmount),
+            new(L["Export:Col:Balance"], i => i.RemainingAmount),
+            new(L["Export:Col:Status"], i => i.IsOverdue && i.Status != SubscriptionInvoiceStatus.Cancelled
+                ? L["Invoice:Status:Overdue"].Value
+                : L[$"Billing:Status:{i.Status}"].Value),
+            new(L["Export:Col:Description"], i => i.Notes),
+        };
+
+        var name = L["Export:SubscriptionInvoices:Name"].Value;
+        var note = rows.Truncated ? L["Export:Truncated", ExcelTable.MaxRows].Value : null;
+        return File(ExcelTable.Build(name, columns, rows.Items, note), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
     }
 
     /// <summary>

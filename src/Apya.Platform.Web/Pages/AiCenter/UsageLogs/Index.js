@@ -50,6 +50,15 @@ $(function () {
 
     $('#StatusFilter').on('change', function () { dataTable.ajax.reload(); });
 
+    // Ekrandaki süzgeçlerle aynı listeyi indirir; sıralama sunucuda sabit (en yeni üstte).
+    $('#UsageLogsExportExcel').on('click', function () {
+        var f = getFilterInput();
+        var q = new URLSearchParams({ handler: 'Excel' });
+        if (f.providerName) { q.set('providerName', f.providerName); }
+        if (f.status != null) { q.set('status', f.status); }
+        window.location.href = '/AiCenter/UsageLogs?' + q.toString();
+    });
+
     var providerDebounce;
     $('#ProviderFilter').on('keyup', function () {
         clearTimeout(providerDebounce);

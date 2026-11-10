@@ -102,6 +102,12 @@
                 <i class="fa fa-filter me-1" aria-hidden="true"></i> Süz
             </button>
         </div>
+        <div class="col-sm-3 col-md-2">
+            @* Formdaki süzgeçlerle aynı listeyi indirir (handler=Excel). *@
+            <button type="submit" name="handler" value="Excel" class="btn btn-outline-secondary w-100">
+                <i class="fa fa-file-excel me-1" aria-hidden="true"></i> @L["Export:ExcelButton"]
+            </button>
+        </div>
     </form>
 
     @if (Model.Items.Count == 0)
