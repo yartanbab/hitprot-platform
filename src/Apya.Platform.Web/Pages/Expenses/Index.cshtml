@@ -1,6 +1,8 @@
 @page
 @model Apya.Platform.Web.Pages.Expenses.IndexModel
 @inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 @{
     ViewBag.PageTitle = "Giderler";
 }
@@ -19,6 +21,12 @@
                 <button type="button" id="ExpensesExportExcel" class="btn btn-outline-secondary btn-sm me-1">
                     <i class="fa fa-file-excel"></i> @L["Export:ExcelButton"]
                 </button>
+                @if (await AuthorizationService.IsGrantedAsync(Apya.Platform.Permissions.PlatformPermissions.Expenses.Create))
+                {
+                    <button type="button" id="ExpensesImportExcel" class="btn btn-outline-secondary btn-sm me-1">
+                        <i class="fa fa-file-import"></i> @L["Import:ExcelButton"]
+                    </button>
+                }
                 <a href="/Expenses/Capture" class="btn btn-outline-secondary btn-sm me-1">
                     <i class="fa fa-camera"></i> Masraf Yakala
                 </a>

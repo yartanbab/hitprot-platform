@@ -1,0 +1,125 @@
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@model string
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
+@*
+    Excel'den içe aktarma penceresi (şablon → önizleme → onay). Model: pencere başlığı.
+    Uçlar çağıran pencere sayfasındadır: ?handler=Template (GET), Preview ve Import (POST, dosya).
+*@
+@{
+    var path = Context.Request.Path.Value;
+    var texts = new
+    {
+        row = L["Import:Col:Row"].Value,
+        errors = L["Import:Col:Errors"].Value,
+        chooseFile = L["Import:ChooseFile"].Value,
+        failed = L["Import:Error:Unexpected"].Value
+    };
+}
+
+<form method="post" enctype="multipart/form-data" id="ExcelImportForm" data-path="@path">
+    <abp-modal size="ExtraLarge">
+        <abp-modal-header title="@Model"></abp-modal-header>
+        <abp-modal-body>
+            <p class="mb-2">@L["Import:Step1"]</p>
+            <a class="btn btn-sm btn-outline-secondary mb-3" href="@(path)?handler=Template">
+                <i class="fa fa-download me-1" aria-hidden="true"></i>@L["Import:DownloadTemplate"]
+            </a>
+            <p class="mb-2">@L["Import:Step2"]</p>
+            <div class="d-flex gap-2 align-items-start mb-2">
+                <input type="file" name="file" class="form-control" accept=".xlsx" />
+                <button type="button" class="btn btn-outline-primary text-nowrap" data-import-preview>
+                    <i class="fa fa-eye me-1" aria-hidden="true"></i>@L["Import:Preview"]
+                </button>
+                <button type="button" class="btn btn-primary text-nowrap" data-import-confirm disabled>
+                    <i class="fa fa-file-import me-1" aria-hidden="true"></i>@L["Import:Confirm"]
+                </button>
+            </div>
+            <p class="text-muted small mb-3">@L["Import:AllOrNothing"]</p>
+            <div data-import-message class="alert d-none" role="status"></div>
+            <div class="table-responsive" style="max-height: 50vh;">
+                <table class="table table-sm table-bordered d-none" data-import-table></table>
+            </div>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Close)"></abp-modal-footer>
+    </abp-modal>
+</form>
+
+<script>
+    (function () {
+        var texts = @Json.Serialize(texts);
+        var form = document.getElementById('ExcelImportForm');
+        var path = form.getAttribute('data-path');
+        var fileInput = form.querySelector('input[name="file"]');
+        var previewBtn = form.querySelector('[data-import-preview]');
+        var confirmBtn = form.querySelector('[data-import-confirm]');
+        var message = form.querySelector('[data-import-message]');
+        var table = form.querySelector('[data-import-table]');
+
+        function show(kind, text) {
+            message.className = 'alert alert-' + kind;
+            message.textContent = text;
+        }
+
+        function cell(tag, text) {
+            var el = document.createElement(tag);
+            el.textContent = text;
+            return el;
+        }
+
+        function render(result) {
+            table.innerHTML = '';
+            if (!result.rows || result.rows.length === 0) { table.classList.add('d-none'); return; }
+            var head = table.createTHead().insertRow();
+            [texts.row].concat(result.headers, [texts.errors]).forEach(function (h) { head.appendChild(cell('th', h)); });
+            var body = table.createTBody();
+            result.rows.forEach(function (r) {
+                var tr = body.insertRow();
+                if (r.errors.length) { tr.className = 'table-danger'; }
+                [String(r.number)].concat(r.values, [r.errors.join(' ')]).forEach(function (v) { tr.appendChild(cell('td', v)); });
+            });
+            table.classList.remove('d-none');
+        }
+
+        function post(handler) {
+            if (!fileInput.files || fileInput.files.length === 0) {
+                show('warning', texts.chooseFile);
+                return Promise.reject();
+            }
+            var data = new FormData();
+            data.append('file', fileInput.files[0]);
+            data.append('__RequestVerificationToken', form.querySelector('input[name="__RequestVerificationToken"]').value);
+            previewBtn.disabled = confirmBtn.disabled = true;
+            return fetch(path + '?handler=' + handler, { method: 'POST', body: data, credentials: 'same-origin' })
+                .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+                .catch(function (e) { show('danger', texts.failed); previewBtn.disabled = false; throw e; });
+        }
+
+        fileInput.addEventListener('change', function () {
+            confirmBtn.disabled = true;
+            message.className = 'alert d-none';
+            render({});
+        });
+
+        previewBtn.addEventListener('click', function () {
+            post('Preview').then(function (result) {
+                previewBtn.disabled = false;
+                render(result);
+                show(result.ok ? 'success' : 'danger', result.message);
+                confirmBtn.disabled = !result.ok;
+            }, function () { });
+        });
+
+        confirmBtn.addEventListener('click', function () {
+            post('Import').then(function (result) {
+                previewBtn.disabled = false;
+                if (result.headers) { render(result); }
+                show(result.ok ? 'success' : 'danger', result.message);
+                if (result.done) {
+                    render({});
+                    fileInput.value = '';
+                    abp.notify.success(result.message);
+                }
+            }, function () { });
+        });
+    })();
+</script>
