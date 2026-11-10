@@ -5,6 +5,7 @@ using Apya.Platform.Permissions;
 using Apya.Platform.RegistrationRequests;
 using Apya.Platform.RegistrationRequests.Dtos;
 using Apya.Platform.Tenants;
+using Apya.Platform.Web.Export;
 using Apya.Platform.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -49,6 +50,41 @@ public class IndexModel : PlatformPageModel
     public async Task OnGetAsync()
     {
         await LoadAsync();
+    }
+
+    /// <summary>
+    /// Kayıt talepleri (.xlsx), ekrandaki durum ve arama süzgeciyle. IP adresi bilerek dışarıda:
+    /// dosya e-postayla dolaşabilir, IP değerlendirme için gerekmiyor.
+    /// </summary>
+    public async Task<IActionResult> OnGetExcelAsync()
+    {
+        var rows = await ExcelTable.CollectAsync((skip, take) => _registrationRequestAppService.GetListAsync(new RegistrationRequestListFilterDto
+        {
+            Status = Status,
+            Filter = Filter,
+            SkipCount = skip,
+            MaxResultCount = take
+        }));
+
+        var columns = new List<ExcelColumn<RegistrationRequestDto>>
+        {
+            new(L["Export:Col:Reference"], r => r.Reference),
+            new(L["Export:Col:Date"], r => r.CreationTime, "dd.MM.yyyy"),
+            new(L["Export:Col:Firm"], r => r.CompanyName),
+            new(L["Export:Col:CompanyType"], r => L[$"RegistrationRequest:CompanyType:{r.CompanyType}"].Value),
+            new(L["Export:Col:TaxNumber"], r => r.TaxNumber),
+            new(L["Export:Col:ContactName"], r => r.FullName),
+            new(L["Export:Col:Email"], r => r.Email),
+            new(L["Export:Col:Phone"], r => r.Phone),
+            new(L["Export:Col:Plan"], r => L[$"RegistrationRequest:Plan:{r.EffectivePlan}"].Value),
+            new(L["Export:Col:OfferedAmount"], r => r.OfferedAmount),
+            new(L["Export:Col:Status"], r => L[$"RegistrationRequest:Status:{r.Status}"].Value),
+            new(L["Export:Col:Note"], r => r.AdminNote),
+        };
+
+        var name = L["Export:RegistrationRequests:Name"].Value;
+        var note = rows.Truncated ? L["Export:Truncated", ExcelTable.MaxRows].Value : null;
+        return File(ExcelTable.Build(name, columns, rows.Items, note), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
     }
 
     /// <summary>

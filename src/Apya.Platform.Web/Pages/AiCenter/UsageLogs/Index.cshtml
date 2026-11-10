@@ -1,5 +1,6 @@
 @page
 @model Apya.Platform.Web.Pages.AiCenter.UsageLogs.IndexModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     ViewBag.Title = "Yapay Zekâ Kullanım Kayıtları";
 }
@@ -27,6 +28,11 @@
                     <option value="2">Tamamlandı</option>
                     <option value="3">Başarısız</option>
                 </select>
+            </abp-column>
+            <abp-column size-md="_4" class="text-end">
+                <button type="button" id="UsageLogsExportExcel" class="btn btn-outline-secondary btn-sm">
+                    <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
+                </button>
             </abp-column>
         </abp-row>
         <abp-table class="apya-clean-table" id="UsageLogsTable">
