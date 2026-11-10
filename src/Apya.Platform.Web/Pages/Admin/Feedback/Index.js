@@ -293,14 +293,14 @@ $(function () {
 
         apya.platform.ai.feedbacks.feedbackPromptAi.analyze($btn.data('id'), includeNotes)
             .then(function (result) {
-                var section = '## AI ön analizi\n\n' +
+                var section = '## Yapay zekâ ön analizi\n\n' +
                     '> Bu bölümü yapay zekâ üretti; kaynak kodu görmedi, nedenler varsayımdır. Doğrulamadan uygulama.\n\n' +
                     result.analysis.trim() + '\n\n';
                 $pane.data('aiSection', section);
                 var $text = $pane.find('.detail-prompt-text');
                 $text.val(withAiSection($text.val(), section));
                 $btn.html('<i class="fa fa-check me-1"></i>Zenginleştirildi');
-                abp.notify.success('AI ön analizi prompt\'a eklendi.');
+                abp.notify.success('Yapay zekâ ön analizi isteme eklendi.');
             }, function () {
                 // Hata metni (kota, sağlayıcı yapılandırılmamış…) ABP tarafından gösterilir.
                 $btn.prop('disabled', false).html(original);
