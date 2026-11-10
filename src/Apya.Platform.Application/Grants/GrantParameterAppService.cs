@@ -38,6 +38,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
     private readonly IRepository<GrantCall, Guid> _callRepo;
     private readonly IRepository<GrantDraftField, Guid> _draftFieldRepo;
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
+    private readonly IRepository<FirmProfileTag, Guid> _profileTagRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly GrantMatchManager _matcher;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
@@ -53,6 +54,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         IRepository<GrantCall, Guid> callRepo,
         IRepository<GrantDraftField, Guid> draftFieldRepo,
         IRepository<FirmProfile, Guid> profileRepo,
+        IRepository<FirmProfileTag, Guid> profileTagRepo,
         ITenantRepository tenantRepo,
         GrantMatchManager matcher,
         IDataFilter<IMultiTenant> mtFilter,
@@ -67,6 +69,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         _callRepo = callRepo;
         _draftFieldRepo = draftFieldRepo;
         _profileRepo = profileRepo;
+        _profileTagRepo = profileTagRepo;
         _tenantRepo = tenantRepo;
         _matcher = matcher;
         _mtFilter = mtFilter;
@@ -145,22 +148,33 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         // ulaştığını sayıyor. Okunan veri kiracıya ait olduğu için TenantId == null koşulu
         // KONMAZ — konursa yalnız host satırları gelir ve sayaç daima 0 çıkar.
         List<FirmProfile> profiles;
+        List<FirmProfileTag> profileTags;
         using (_mtFilter.Disable())
         {
             profiles = await _profileRepo.GetListAsync();
+            profileTags = await _profileTagRepo.GetListAsync();
         }
         var profileByTenant = profiles
             .Where(p => p.TenantId.HasValue)
             .GroupBy(p => p.TenantId!.Value)
             .ToDictionary(g => g.Key, g => g.First());
+        var tagsByProfile = profileTags.ToLookup(t => t.FirmProfileId);
+
+        // Formdaki (kaydedilmemiş) il etiketleri: bölge şartı canlı önizlemeye girsin. Yalnız
+        // tanınan il alınır — kural başka türü okumaz, serbest metin de varlık sınırına takılmaz.
+        var draftTags = input.CriteriaTags
+            .Where(t => t.Kind == GrantCriteriaKind.Bolge && TurkeyProvinces.Find(t.Value) != null)
+            .Select(t => new GrantCriteriaTag(Guid.Empty, id, t.Kind, t.Value))
+            .ToList();
 
         var today = Clock.Now.Date; // ARCH-049: tarihi eşleştiriciye çağıran geçirir.
         var evaluations = new List<GrantEligibilityResult>();
         var confirmedSizes = new List<CompanySize>();
         foreach (var tenant in tenants)
         {
-            var signals = ToSignals(profileByTenant.GetValueOrDefault(tenant.Id));
-            var result = _matcher.Evaluate(signals, draft, today);
+            var profile = profileByTenant.GetValueOrDefault(tenant.Id);
+            var signals = ToSignals(profile, tagsByProfile[profile?.Id ?? Guid.Empty]);
+            var result = _matcher.Evaluate(signals, draft, draftTags, today);
             evaluations.Add(result);
             if (result.IsConfirmed && signals.Size.HasValue)
             {
@@ -525,7 +539,7 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
         return (int)Math.Round(filled.Count(f => f) * 100.0 / filled.Count);
     }
 
-    internal static FirmSignals ToSignals(FirmProfile? profile)
+    internal static FirmSignals ToSignals(FirmProfile? profile, IEnumerable<FirmProfileTag> tags)
     {
         if (profile == null)
         {
@@ -540,12 +554,15 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
             RdStaffCount = profile.RdStaffCount,
             AnnualRevenue = profile.AnnualRevenue,
             Trl = profile.Trl,
-            HasConsortiumPartner = profile.HasConsortiumPartner
+            HasConsortiumPartner = profile.HasConsortiumPartner,
+            Tags = tags.Select(t => new FirmSignalTag(t.Kind, t.Value)).ToList()
         };
     }
 
     private async Task SyncCriteriaTagsAsync(Guid grantId, List<GrantCriteriaTagDto> tags)
     {
+        ProvinceTagGuard.EnsureKnown(tags.Select(t => (t.Kind, t.Value)));
+
         var existing = await _criteriaRepo.GetListAsync(t => t.GrantId == grantId);
         await _criteriaRepo.DeleteManyAsync(existing);
 

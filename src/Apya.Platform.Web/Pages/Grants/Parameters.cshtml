@@ -342,9 +342,19 @@
                     <div class="apya-rule-editor" id="RuleEditor-region" hidden>
                         <div class="apya-tag-input" data-kind="1">
                             <span class="apya-tag-chips"></span>
-                            <input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Parameters:TagPlaceholder"]"
+                            <input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Region:Placeholder"]"
+                                   list="ApyaProvinceList" autocomplete="off"
                                    aria-label="@L["Grants:Parameters:Region"]" />
                         </div>
+                        @* Ajans seçimi o ajansın TÜM illerini etiket olarak ekler; kayıtta yalnız iller tutulur. *@
+                        <select id="ParamRegionAgency" class="form-select form-select-sm mt-2" aria-label="@L["Grants:Region:AddAgency"]">
+                            <option value="">@L["Grants:Region:AddAgency"]</option>
+                            @foreach (var agency in Apya.Platform.Grants.TurkeyProvinces.Agencies)
+                            {
+                                <option value="@string.Join("|", Apya.Platform.Grants.TurkeyProvinces.OfAgency(agency.Code).Select(p => p.Name))">@agency.Name (@agency.RegionCode)</option>
+                            }
+                        </select>
+                        <div class="small text-muted mt-1">@L["Grants:Region:ProgramHint"]</div>
                     </div>
                 </div>
 
@@ -643,3 +653,4 @@
 </div>
 
 <partial name="_CallModal" />
+<partial name="_ProvinceList" />

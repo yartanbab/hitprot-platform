@@ -124,7 +124,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         foreach (var tenant in tenants)
         {
             var signals = await _signalsBuilder.BuildAsync(tenant.Id);
-            var eligibility = _matcher.Evaluate(signals, grant, today);
+            var eligibility = _matcher.Evaluate(signals, grant, tags, today);
 
             // Danışmanlık fırsatı: TEK engeli konsorsiyum ortağı olan firmalar.
             // Süzgeçten bağımsız sayılır — fırsat kartı listeyi değil pazarı anlatır.
@@ -146,7 +146,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
 
             var warning = WarningRuleOf(eligibility);
             var (warnFirm, warnGrant) = warning.HasValue
-                ? RuleValues(warning.Value, signals, grant, today)
+                ? RuleValues(warning.Value, signals, grant, tags, today)
                 : (null, null);
             var sent = sentByTenant.GetValueOrDefault(tenant.Id);
 
@@ -404,7 +404,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
     /// istemci yerelleştirilmiş cümleyi bu değerlerle kurar (1e/9a ile aynı sözleşme).
     /// </summary>
     private static (string? FirmValue, string? GrantValue) RuleValues(
-        GrantEligibilityRule rule, FirmSignals firm, Grant grant, DateTime today)
+        GrantEligibilityRule rule, FirmSignals firm, Grant grant, IReadOnlyList<GrantCriteriaTag> grantTags, DateTime today)
         => rule switch
         {
             GrantEligibilityRule.CompanySize => (
@@ -421,6 +421,9 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
             GrantEligibilityRule.Consortium => (
                 firm.HasConsortiumPartner?.ToString().ToLowerInvariant(),
                 grant.MinConsortiumPartners?.ToString() ?? "1"),
+            GrantEligibilityRule.Region => (
+                TurkeyProvinces.JoinKnown(firm.Tags.Where(t => t.Kind == GrantCriteriaKind.Bolge).Select(t => t.Value)),
+                TurkeyProvinces.JoinKnown(grantTags.Where(t => t.Kind == GrantCriteriaKind.Bolge).Select(t => t.Value))),
             _ => (null, null)
         };
 

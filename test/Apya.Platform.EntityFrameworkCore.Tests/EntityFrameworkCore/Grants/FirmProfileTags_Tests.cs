@@ -101,4 +101,39 @@ public class FirmProfileTags_Tests : PlatformEntityFrameworkCoreTestBase
             (await LiveTagsAsync()).ShouldBeEmpty();
         }
     }
+
+    /// <summary>Bölge il sözlüğünden: yazım farkı resmi ada çevrilir, kayıtta ve dönüşte aynı.</summary>
+    [Fact]
+    public async Task Bolge_yazimi_resmi_il_adina_cevrilir()
+    {
+        using (_currentTenant.Change(Guid.NewGuid()))
+        {
+            var input = new UpdateFirmProfileDto { Type = OrganizationType.Sirket };
+            input.Tags.Add(new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Bolge, Value = "istanbul" });
+
+            var saved = await _firmProfileAppService.UpdateMyProfileAsync(input);
+
+            saved.Tags.ShouldContain(t => t.Kind == GrantCriteriaKind.Bolge && t.Value == "İstanbul");
+            (await LiveTagsAsync()).ShouldBe(new[] { (GrantCriteriaKind.Bolge, "İstanbul") });
+        }
+    }
+
+    /// <summary>Tanınmayan bölge reddedilir ve profilin eski etiketleri yerinde kalır.</summary>
+    [Fact]
+    public async Task Il_olmayan_bolge_reddedilir_eski_etiketler_kalir()
+    {
+        using (_currentTenant.Change(Guid.NewGuid()))
+        {
+            await SaveCompanyProfileWithTagsAsync();
+
+            var input = new UpdateFirmProfileDto { Type = OrganizationType.Sirket };
+            input.Tags.Add(new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Bolge, Value = "Orta Karadeniz" });
+
+            var ex = await Should.ThrowAsync<Volo.Abp.BusinessException>(
+                () => _firmProfileAppService.UpdateMyProfileAsync(input));
+            ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantUnknownProvince);
+
+            (await LiveTagsAsync()).ShouldBe(CompanyTags, ignoreOrder: true);
+        }
+    }
 }

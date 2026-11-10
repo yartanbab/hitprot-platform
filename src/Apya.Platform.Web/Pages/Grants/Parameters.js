@@ -34,18 +34,58 @@ $(function () {
     }
 
     // ---------- Etiket (chip) girişi ----------
-    function addTag($input, value) {
+    // Bölge (data-kind=1) il sözlüğünden gelir (_ProvinceList): yazım resmi ada çevrilir.
+    // TurkeyProvinces.Key ile aynı kural — sunucu da aynı adı kabul eder. Tenant.js'te eşi var.
+    var PROVINCE_FOLD = { 'ı': 'i', 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ö': 'o', 'ç': 'c', 'â': 'a', 'î': 'i', 'û': 'u' };
+    function provinceKey(v) {
+        return String(v || '').trim().toLocaleLowerCase('tr-TR')
+            .replace(/[ığüşöçâîû]/g, function (c) { return PROVINCE_FOLD[c]; })
+            .replace(/̇/g, '');
+    }
+    function provinceOf(v) {
+        var key = provinceKey(v);
+        var hit = null;
+        $('#ApyaProvinceList option').each(function () {
+            if (provinceKey(this.value) === key) { hit = this.value; return false; }
+        });
+        return hit;
+    }
+
+    // fromLoad: kayıttan gelen değer. Listede olmayan eski bölge metni silinmez, işaretlenir —
+    // kayıt sunucuda reddedileceği için host onu görüp kaldırabilmeli.
+    function addTag($input, value, fromLoad) {
         value = (value || '').trim();
         if (!value) { return; }
+        var invalid = false;
+        if (String($input.data('kind')) === '1') {
+            var province = provinceOf(value);
+            if (province) {
+                value = province;
+            } else if (!fromLoad) {
+                abp.notify.warn(l('Grants:Region:NotProvince', value));
+                return;
+            } else {
+                invalid = true;
+            }
+        }
         var $chips = $input.find('.apya-tag-chips');
         var dup = $chips.find('.apya-tag-chip').filter(function () {
             return $(this).contents().first().text().trim().toLowerCase() === value.toLowerCase();
         }).length;
         if (!dup) {
-            $chips.append('<span class="apya-tag-chip">' + esc(value) +
+            $chips.append('<span class="apya-tag-chip' + (invalid ? ' is-invalid' : '') + '"' +
+                (invalid ? ' title="' + esc(l('Grants:Region:NotProvince', value)) + '"' : '') + '>' + esc(value) +
                 '<button type="button" class="apya-tag-remove" aria-label="&times;">&times;</button></span>');
         }
     }
+
+    // Ajans seçimi: o ajansın tüm illeri etiket olur, seçim kutusu başa döner.
+    $('#ParamRegionAgency').on('change', function () {
+        var $input = $('.apya-tag-input[data-kind="1"]');
+        String($(this).val() || '').split('|').forEach(function (p) { addTag($input, p); });
+        $(this).val('');
+        schedulePreview();
+    });
 
     function readTags(kind) {
         return $('.apya-tag-input[data-kind="' + kind + '"] .apya-tag-chip')
@@ -226,7 +266,7 @@ $(function () {
         { key: 'sector', rule: null, label: 'Grants:Parameters:Sector',
           isSet: function (s) { return tagValues(s, 0).length > 0; },
           text: function (s) { return listText(tagValues(s, 0)); } },
-        { key: 'region', rule: null, label: 'Grants:Parameters:Region',
+        { key: 'region', rule: 7, label: 'Grants:Parameters:Region',
           isSet: function (s) { return tagValues(s, 1).length > 0; },
           text: function (s) { return listText(tagValues(s, 1)); } },
         { key: 'keyword', rule: null, label: 'Grants:Parameters:Keyword',
@@ -658,7 +698,7 @@ $(function () {
             $(this).toggleClass('is-on', thematic.indexOf(String($(this).data('area'))) >= 0);
         });
         (dto.criteriaTags || []).filter(function (t) { return t.kind !== 4; }).forEach(function (t) {
-            addTag($('.apya-tag-input[data-kind="' + t.kind + '"]'), t.value);
+            addTag($('.apya-tag-input[data-kind="' + t.kind + '"]'), t.value, true);
         });
 
         $('#ParamCurrency').val(dto.currency || 'TRY');

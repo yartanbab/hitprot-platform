@@ -64,6 +64,7 @@ public class FirmProfile_OrganizationType_Tests
         var result = manager.Evaluate(
             new FirmSignals { StaffCount = p.EffectiveStaffCount },
             grant,
+            Array.Empty<GrantCriteriaTag>(),
             new DateTime(2026, 9, 1));
 
         result.IsEligible.ShouldBeFalse();

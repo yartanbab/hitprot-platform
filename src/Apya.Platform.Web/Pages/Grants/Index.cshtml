@@ -307,7 +307,9 @@ else
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label"><span>@L["Grants:Parameters:Region"]</span></label>
-                        <div class="apya-tag-input" data-kind="1"><span class="apya-tag-chips"></span><input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Parameters:TagPlaceholder"]" /></div>
+                        <div class="apya-tag-input" data-kind="1"><span class="apya-tag-chips"></span><input type="text" class="form-control apya-tag-entry" placeholder="@L["Grants:Region:Placeholder"]" list="ApyaProvinceList" autocomplete="off" aria-label="@L["Grants:Parameters:Region"]" /></div>
+                        <div class="small text-muted mt-1">@L["Grants:Region:ProfileHint"]</div>
+                        <partial name="_ProvinceList" />
                     </div>
                     <div class="apya-field">
                         <label class="apya-field-label"><span>@L["Grants:Parameters:Keyword"]</span></label>

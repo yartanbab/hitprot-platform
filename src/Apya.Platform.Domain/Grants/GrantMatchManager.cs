@@ -162,14 +162,22 @@ public class GrantMatchManager : DomainService
     /// Program bir şart tanımlamamışsa o kural sonuca hiç girmez; firmada karşılığı yoksa
     /// <see cref="GrantRuleOutcome.Unknown"/> döner ve firmayı ELEMEZ.
     /// STK'da şirkete özgü şartlar (ölçek, TRL, Ar-Ge personeli, ciro, konsorsiyum) hiç
-    /// üretilmez — bkz. <see cref="FirmSignals.Type"/>. Kuruluş yaşı ve personel sayısı
-    /// STK'da da ölçülür (personel, ekip bandının alt sınırından).
+    /// üretilmez — bkz. <see cref="FirmSignals.Type"/>. Kuruluş yaşı, personel sayısı ve
+    /// bölge STK'da da ölçülür (personel, ekip bandının alt sınırından).
     /// </summary>
+    /// <param name="grantTags">
+    /// Programın etiketleri; yalnız il (<see cref="GrantCriteriaKind.Bolge"/>) etiketleri okunur.
+    /// Bölge şartı etiketle tutulduğu için <see cref="Grant"/> tek başına yetmez.
+    /// </param>
     /// <param name="today">
     /// Şirket yaşı hesabının referans günü. ARCH-049 gereği IClock burada okunmaz —
     /// çağıran <c>Clock.Now.Date</c> geçirir; metot saf kalır ve DI'sız test edilebilir.
     /// </param>
-    public GrantEligibilityResult Evaluate(FirmSignals firm, Grant grant, DateTime today)
+    public GrantEligibilityResult Evaluate(
+        FirmSignals firm,
+        Grant grant,
+        IReadOnlyList<GrantCriteriaTag> grantTags,
+        DateTime today)
     {
         var rules = new List<GrantRuleResult>();
         var companyOnly = !firm.Type.IsNgo();
@@ -237,8 +245,30 @@ public class GrantMatchManager : DomainService
                         : GrantRuleOutcome.Failed));
         }
 
+        // Yalnız TANINAN iller sayılır: "Türkiye geneli" gibi eski serbest bölge metni
+        // programa şart koydurmaz, firmada da veri sayılmaz.
+        var grantProvinces = Provinces(grantTags.Select(t => (t.Kind, t.Value)));
+        if (grantProvinces.Count > 0)
+        {
+            var firmProvinces = Provinces(firm.Tags.Select(t => (t.Kind, t.Value)));
+            rules.Add(new GrantRuleResult(GrantEligibilityRule.Region,
+                firmProvinces.Count == 0
+                    ? GrantRuleOutcome.Unknown
+                    : firmProvinces.Overlaps(grantProvinces)
+                        ? GrantRuleOutcome.Passed
+                        : GrantRuleOutcome.Failed));
+        }
+
         return new GrantEligibilityResult(rules);
     }
+
+    private static HashSet<string> Provinces(IEnumerable<(GrantCriteriaKind Kind, string Value)> tags)
+        => tags
+            .Where(t => t.Kind == GrantCriteriaKind.Bolge)
+            .Select(t => TurkeyProvinces.Find(t.Value)?.Name)
+            .Where(name => name != null)
+            .Select(name => name!)
+            .ToHashSet();
 
     /// <summary>Kuruluş tarihinden bugüne TAM yıl. Doğum günü hesabı — 364 gün 0 yıl sayılır.</summary>
     private static int CompanyAgeInYears(DateTime foundedOn, DateTime today)

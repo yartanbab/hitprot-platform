@@ -68,7 +68,7 @@ public class GrantAudienceResolver : DomainService
             // Uygunluk şartını AÇIKÇA ihlal eden firma, skoru yüksek olsa bile
             // duyuru almaz: "size uygun" diyip başvuramayacağı çağrıyı göstermek
             // 1e'deki şart listesiyle çelişir.
-            var eligibility = _matcher.Evaluate(signals, grant, today);
+            var eligibility = _matcher.Evaluate(signals, grant, tags, today);
             if (eligibility.Bucket == GrantEligibilityBucket.UygunDegil)
             {
                 continue;
