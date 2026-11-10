@@ -1,5 +1,6 @@
 @page
 @model Apya.Platform.Web.Pages.Documents.IndexModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     ViewBag.Title = "Belgeler";
 }
@@ -15,7 +16,26 @@
     DOMContentLoaded'da kurulur, React adası ise daha sonra bağlanır.
 *@
 <div data-page-description="Klasörler ve belge arşivi" class="apya-page" data-filter="documents">
+    @* Ada dışında: süzgeç adres çubuğunda yaşadığı için düğme onu tıklama anında okur,
+       ada yeniden derlenmeden çalışır (sunucu tarafı: OnGetFilesExcelAsync). *@
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions">
+            <button type="button" id="DocumentsExportExcel" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
+            </button>
+        </div>
+    </div>
     <div id="documents-island"></div>
 </div>
 
 <script type="module" src="~/js/documents.js" asp-append-version="true"></script>
+<script>
+    document.getElementById('DocumentsExportExcel').addEventListener('click', function () {
+        var from = new URLSearchParams(window.location.search);
+        var to = new URLSearchParams({ handler: 'FilesExcel' });
+        ['folder', 'step', 'projectId', 'smart', 'q', 'sort'].forEach(function (k) {
+            if (from.get(k)) { to.set(k, from.get(k)); }
+        });
+        window.location.href = window.location.pathname + '?' + to.toString();
+    });
+</script>
