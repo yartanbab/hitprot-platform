@@ -2,6 +2,7 @@ $(function () {
 
     var createModal = new abp.ModalManager(abp.appPath + 'Expenses/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'Expenses/EditModal');
+    var importModal = new abp.ModalManager(abp.appPath + 'Expenses/ImportModal');
     var svc = apya.platform.expenses.expense;
 
     var categoryNames = {
@@ -75,4 +76,8 @@ $(function () {
 
     createModal.onResult(function () { dataTable.ajax.reload(); });
     editModal.onResult(function () { dataTable.ajax.reload(); });
+
+    // İçe aktarma pencereyi kendisi kapatmaz; kapanınca liste yenilenir.
+    $('#ExpensesImportExcel').on('click', function () { importModal.open(); });
+    importModal.onClose(function () { dataTable.ajax.reload(); });
 });
