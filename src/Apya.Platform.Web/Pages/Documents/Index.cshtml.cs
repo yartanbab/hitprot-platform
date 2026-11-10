@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +11,10 @@ using Apya.Platform.Documents;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
+using Apya.Platform.Localization;
+using Apya.Platform.Web.Export;
 using Apya.Platform.Web.Services;
+using Microsoft.Extensions.Localization;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 
 namespace Apya.Platform.Web.Pages.Documents;
@@ -70,6 +74,66 @@ public class IndexModel : AbpPageModel
     {
         var result = await _documentFileAppService.GetListAsync(input);
         return new JsonResult(result);
+    }
+
+    /// <summary>
+    /// Belgeler (.xlsx). Parametreler adanın adres çubuğuna yazdığı süzgeç adıdır
+    /// (DocumentsRoot.jsx "Durum → URL"); düğümden süzgece çeviri adadaki <c>filter</c> ile birebir.
+    /// </summary>
+    public async Task<IActionResult> OnGetFilesExcelAsync(
+        Guid? folder, Guid? step, Guid? projectId, string? smart, string? q, string? sort,
+        [FromServices] IStringLocalizer<PlatformResource> l)
+    {
+        var input = new GetDocumentFilesInput
+        {
+            Sorting = string.IsNullOrWhiteSpace(sort) ? "creationTime desc" : sort,
+            FilterText = string.IsNullOrWhiteSpace(q) ? null : q.Trim()
+        };
+
+        if (folder.HasValue) { input.DocumentId = folder; input.IncludeSubFolders = true; }
+        else if (step.HasValue) { input.WorkStepId = step; }
+        else if (projectId.HasValue) { input.ProjectId = projectId; }
+        else if (smart == "expiring") { input.ExpiringWithinDays = 30; }
+        else if (smart == "missing-meta") { input.MissingRequiredFields = true; }
+        else if (smart == "trash") { input.OnlyDeleted = true; }
+        else if (smart == "suggested")
+        {
+            // Ada gibi: öneri yoksa boş kimlik → boş liste, sahte sonuç yok.
+            var ids = (await _suggestionAppService.GetPendingAsync(null)).Items.Select(i => i.DocumentFileId).Distinct().ToList();
+            input.DocumentFileIds = ids.Count > 0 ? ids : new() { Guid.Empty };
+        }
+
+        var rows = await ExcelTable.CollectAsync((skip, take) =>
+        {
+            input.SkipCount = skip;
+            input.MaxResultCount = take;
+            return _documentFileAppService.GetListAsync(input);
+        });
+
+        var columns = new List<ExcelColumn<DocumentFileDto>>
+        {
+            new(l["Export:Col:Name"], d => d.DisplayName),
+            new(l["Export:Col:Folder"], d => d.FolderName),
+            new(l["Export:Col:DocumentType"], d => d.DocumentTypeName),
+            new(l["Export:Col:Project"], d => d.ProjectName),
+            new(l["Export:Col:WorkStep"], d => d.WorkStepName),
+            new(l["Export:Col:Date"], d => d.DocumentDate, "dd.MM.yyyy"),
+            new(l["Export:Col:Period"], d => d.PeriodCode),
+            new(l["Export:Col:Amount"], d => d.Amount),
+            new(l["Export:Col:Currency"], d => d.Currency),
+            new(l["Export:Col:Status"], d => l[$"Export:DocStatus:{d.Status}"].Value),
+            new(l["Export:Col:ExpiryDate"], d => d.ExpiryDate, "dd.MM.yyyy"),
+            new(l["Export:Col:Reference"], d => d.ExternalRef),
+            new(l["Export:Col:FileName"], d => d.FileName),
+            new(l["Export:Col:Versions"], d => d.VersionCount),
+            new(l["Export:Col:UploadedBy"], d => d.UploaderName),
+            new(l["Export:Col:CreationTime"], d => d.CreationTime, "dd.MM.yyyy"),
+            new(l["Export:Col:Tags"], d => string.Join(", ", d.Tags)),
+        };
+
+        var name = l["Export:Documents:Name"].Value;
+        var note = rows.Truncated ? l["Export:Truncated", ExcelTable.MaxRows].Value : null;
+        return File(ExcelTable.Build(name, columns, rows.Items, note), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
     }
 
     public async Task<IActionResult> OnGetFileAsync(Guid id)
