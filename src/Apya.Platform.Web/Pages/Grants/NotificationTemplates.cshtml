@@ -17,6 +17,27 @@
 }
 
 <div data-page-description="@L["Grants:Notify:Subtitle"]" class="apya-page apya-grant-scope">
+    @* JSON aktarımı: önce önizleme (NtImportPreview), onaydan sonra yazım (NotificationTemplates.js). *@
+    <div class="d-flex justify-content-end gap-2 mb-2">
+        @Html.AntiForgeryToken()
+        <a class="btn btn-sm btn-outline-secondary" href="/Grants/NotificationTemplates?handler=Export" download>
+            <i class="fa fa-download me-1" aria-hidden="true"></i>@L["Transfer:ExportJson"]
+        </a>
+        <input type="file" id="NtImportFile" accept=".json,application/json" class="d-none" aria-hidden="true" tabindex="-1" />
+        <button type="button" id="NtImportBtn" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-file-import me-1" aria-hidden="true"></i>@L["Transfer:ImportJson"]
+        </button>
+    </div>
+    <div id="NtImportPreview" class="card mb-2 d-none" role="region" aria-live="polite">
+        <div class="card-body">
+            <p id="NtImportMessage" class="mb-2"></p>
+            <ul id="NtImportRows" class="small mb-3"></ul>
+            <div class="d-flex gap-2">
+                <button type="button" id="NtImportConfirm" class="btn btn-sm btn-primary">@L["Transfer:Confirm"]</button>
+                <button type="button" id="NtImportCancel" class="btn btn-sm btn-outline-secondary">@L["Transfer:Cancel"]</button>
+            </div>
+        </div>
+    </div>
     <div class="apya-nt-layout">
 
         @* --- Sol: şablon listesi --- *@
