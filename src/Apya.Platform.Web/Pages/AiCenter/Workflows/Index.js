@@ -2,6 +2,7 @@ $(function () {
     // AI İş Akışları — master-detail (apya-shell.css §13 deseni).
     // Liste küçük olduğundan getList tek seferde çekilir; arama client-side.
     var service = apya.platform.ai.workflows.aiWorkflow;
+    var l = abp.localization.getResource('Platform');
 
     var createModal = new abp.ModalManager(abp.appPath + 'AiCenter/Workflows/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'AiCenter/Workflows/EditModal');
@@ -102,6 +103,7 @@ $(function () {
             '  </div>' +
             '  <div class="d-flex gap-1 flex-wrap">' +
             '    <button type="button" class="btn btn-sm btn-outline-secondary" id="WorkflowDetailRules"><i class="fa fa-list-check me-1"></i>Kurallar</button>' +
+            '    <a class="btn btn-sm btn-outline-secondary" id="WorkflowDetailExport" download href="' + abp.appPath + 'AiCenter/Workflows?handler=Export&id=' + d.id + '"><i class="fa fa-download me-1"></i>' + esc(l('Transfer:ExportJson')) + '</a>' +
             (canManage ? '<button type="button" class="btn btn-sm btn-outline-secondary" id="WorkflowDetailEdit"><i class="fa fa-pencil me-1"></i>Düzenle</button>' : '') +
             (canManage ? '<button type="button" class="btn btn-sm btn-outline-danger" id="WorkflowDetailDelete"><i class="fa fa-trash me-1"></i>Sil</button>' : '') +
             '  </div>' +
@@ -191,6 +193,30 @@ $(function () {
     editModal.onResult(function () { abp.notify.success('İş akışı güncellendi.'); load(true); });
 
     $('#NewWorkflowButton').click(function (e) { e.preventDefault(); createModal.open(); });
+
+    // Başka ortamdan indirilmiş iş akışı .json'u YENİ ve KAPALI iş akışı açar.
+    $('#WorkflowImportButton').on('click', function () { $('#WorkflowImportFile').trigger('click'); });
+    $('#WorkflowImportFile').on('change', function () {
+        var input = this;
+        if (!input.files || !input.files.length) { return; }
+        var data = new FormData();
+        data.append('file', input.files[0]);
+        data.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+        $('#WorkflowImportButton').prop('disabled', true);
+        fetch(abp.appPath + 'AiCenter/Workflows?handler=Import', { method: 'POST', body: data, credentials: 'same-origin' })
+            .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+            .then(function (result) {
+                if (!result.ok) { abp.message.error(result.message); return; }
+                abp.message.info(result.message);
+                state.selectedId = result.id;
+                load(true);
+            })
+            .catch(function () { abp.message.error(l('Import:Error:Unexpected')); })
+            .then(function () {
+                $('#WorkflowImportButton').prop('disabled', false);
+                input.value = '';
+            });
+    });
 
     load();
 });
