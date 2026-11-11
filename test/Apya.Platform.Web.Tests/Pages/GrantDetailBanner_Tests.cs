@@ -19,7 +19,7 @@ public class GrantDetailBanner_Tests : PlatformWebTestBase
     private static readonly string[] SharedIds =
     {
         "CallPoster", "CallTitle", "BucketChip", "DaysChip", "CallDescription", "CallMetrics",
-        "InterestBtn", "BookmarkBtn", "InterestChip", "InterestAppLink", "InterestFeedback", "InterestWithdrawn"
+        "InterestBtn", "BookmarkBtn", "CallIcsLink", "InterestChip", "InterestAppLink", "InterestFeedback", "InterestWithdrawn"
     };
 
     private readonly IGrantDetailBannerSettingsAppService _settings;

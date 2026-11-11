@@ -54,6 +54,7 @@ $(function () {
             .text(d.daysRemaining == null ? ''
                 : d.daysRemaining < 0 ? l('Grants:Feed:Card:Closed')
                 : l('Grants:Feed:Card:DaysLeft', d.daysRemaining));
+        $('#CallIcsLink').toggleClass('d-none', d.daysRemaining == null || d.daysRemaining < 0);
 
         var metrics = [
             d.minAmount

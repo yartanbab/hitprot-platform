@@ -3834,6 +3834,8 @@
     "Grants:Interest:Decision:StartedHint": "Your application is open; continue from the \"My Applications\" screen.",
     "Grants:Interest:Decision:Rejected": "Not eligible",
     "Grants:Interest:GoToApplication": "Go to application",
+    "Grants:Ics:AddToCalendar": "Add to calendar",
+    "Grants:Ics:FileName": "application-deadline",
     "Grants:Interest:Confirm:Title": "Your interest in this call will be recorded",
     "Grants:Interest:Confirm:Lead": "Next we will ask a few questions about your project idea. When you complete the form, your proposal goes to your consultant for review. Shall we continue?",
     "Grants:Interest:Confirm:Form": "The form takes a few minutes; the call is preselected for you.",
