@@ -6325,8 +6325,11 @@ table.dataTable td.dt-empty > .apya-console-state { position: sticky; left: 0; m
     border-radius: var(--apya-radius-lg);
 }
 .apya-proj-card-head > .kpi-icon-box--sm { font-size: 22px; }
-.apya-proj-card-cover { background: var(--apya-surface-sunken); }
+.apya-proj-card-cover { position: relative; background: var(--apya-surface-sunken); }
+/* Mutlak konum: görselin kendi boyu (ör. dikey afiş) kutuyu ve kartı büyütmez. */
 .apya-proj-card-cover img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
