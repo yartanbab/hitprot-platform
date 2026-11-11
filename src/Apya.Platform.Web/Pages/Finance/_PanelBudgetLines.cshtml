@@ -7,6 +7,7 @@
 *@
 @using Apya.Platform.Web.Pages.Finance
 @model IndexModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 
 @functions {
     string Money(decimal v) => v.ToString("N2");
@@ -86,6 +87,9 @@ else
                 }
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnContextWizard">
                     <i class="fa fa-list-check me-1" aria-hidden="true"></i>Bağlamı kur
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnImportBudgetLines">
+                    <i class="fa fa-file-import me-1" aria-hidden="true"></i>@L["Import:ExcelButton"]
                 </button>
                 <button type="button" class="btn btn-sm btn-primary" id="BtnAddBudgetLine">
                     <i class="fa fa-plus me-1" aria-hidden="true"></i>Kalem ekle
