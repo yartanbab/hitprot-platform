@@ -2,6 +2,7 @@
 @using Apya.Platform.Ai.Permissions
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @model Apya.Platform.Web.Pages.AiCenter.Prompts.IndexModel
 @{
     ViewBag.Title = "İstem Kütüphanesi";
@@ -18,6 +19,12 @@
         <div class="apya-page-head-actions">
             @if (await AuthorizationService.IsGrantedAsync(AiPermissions.Prompts.Create))
             {
+                @* Başka ortamdan indirilmiş istem .json'u YENİ, yayında olmayan istem açar (Index.js). *@
+                @Html.AntiForgeryToken()
+                <input type="file" id="PromptImportFile" accept=".json,application/json" class="d-none" aria-hidden="true" tabindex="-1" />
+                <button type="button" id="PromptImportButton" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-file-import me-1" aria-hidden="true"></i>@L["Transfer:ImportJson"]
+                </button>
                 <abp-button id="NewPromptButton"
                             text="Yeni İstem"
                             icon="plus"

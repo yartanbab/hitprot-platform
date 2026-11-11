@@ -714,6 +714,7 @@
         "Transfer:Name:StageTemplate": "aşama şablonu",
         "Transfer:ImportJson": "İçe aktar (JSON)",
         "Transfer:ExportJson": "JSON indir",
+        "Transfer:Name:Prompt": "istem",
         "Transfer:Name:NotificationTemplates": "bildirim şablonları",
         "Transfer:Notify:Escalation": "Yükseltme",
         "Transfer:Notify:Action:Change": "Değişecek",

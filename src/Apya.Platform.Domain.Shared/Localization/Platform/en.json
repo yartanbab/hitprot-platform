@@ -814,6 +814,7 @@
     "Transfer:Name:StageTemplate": "stage template",
     "Transfer:ImportJson": "Import (JSON)",
     "Transfer:ExportJson": "Download JSON",
+    "Transfer:Name:Prompt": "prompt",
     "Transfer:Name:NotificationTemplates": "notification templates",
     "Transfer:Notify:Escalation": "Escalation",
     "Transfer:Notify:Action:Change": "Will change",
