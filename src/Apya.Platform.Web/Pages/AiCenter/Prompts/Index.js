@@ -2,6 +2,7 @@ $(function () {
     // Prompt Kütüphanesi — master-detail (apya-shell.css §13 deseni).
     // Sol liste: server-side sayfalı getList; sağ detay: get(id) (versiyonlar dahil).
     var service = apya.platform.ai.prompts.prompt;
+    var l = abp.localization.getResource('Platform');
 
     var createModal = new abp.ModalManager(abp.appPath + 'AiCenter/Prompts/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'AiCenter/Prompts/EditModal');
@@ -155,6 +156,7 @@ $(function () {
             '  <div class="d-flex gap-1 flex-wrap">' +
             (canEdit ? '<button type="button" class="btn btn-sm btn-outline-secondary" id="PromptDetailEdit"><i class="fa fa-pencil me-1"></i>Düzenle</button>' : '') +
             '    <button type="button" class="btn btn-sm btn-outline-secondary" id="PromptDetailVersions"><i class="fa fa-code-branch me-1"></i>Sürümler</button>' +
+            '    <a class="btn btn-sm btn-outline-secondary" id="PromptDetailExport" download href="' + abp.appPath + 'AiCenter/Prompts?handler=Export&id=' + d.id + '"><i class="fa fa-download me-1"></i>' + esc(l('Transfer:ExportJson')) + '</a>' +
             (canDelete ? '<button type="button" class="btn btn-sm btn-outline-danger" id="PromptDetailDelete"><i class="fa fa-trash me-1"></i>Sil</button>' : '') +
             '  </div>' +
             '</div>' +
@@ -252,6 +254,30 @@ $(function () {
     $('#NewPromptButton').click(function (e) {
         e.preventDefault();
         createModal.open();
+    });
+
+    // Başka ortamdan indirilmiş istem .json'u YENİ (yayında olmayan) istem açar.
+    $('#PromptImportButton').on('click', function () { $('#PromptImportFile').trigger('click'); });
+    $('#PromptImportFile').on('change', function () {
+        var input = this;
+        if (!input.files || !input.files.length) { return; }
+        var data = new FormData();
+        data.append('file', input.files[0]);
+        data.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+        $('#PromptImportButton').prop('disabled', true);
+        fetch(abp.appPath + 'AiCenter/Prompts?handler=Import', { method: 'POST', body: data, credentials: 'same-origin' })
+            .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+            .then(function (result) {
+                if (!result.ok) { abp.message.error(result.message); return; }
+                abp.notify.success(result.message);
+                state.selectedId = result.id;
+                load(true);
+            })
+            .catch(function () { abp.message.error(l('Import:Error:Unexpected')); })
+            .then(function () {
+                $('#PromptImportButton').prop('disabled', false);
+                input.value = '';
+            });
     });
 
     load();
