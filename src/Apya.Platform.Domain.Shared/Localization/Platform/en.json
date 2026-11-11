@@ -851,6 +851,7 @@
     "Invoice:Status:Cancelled": "Cancelled",
     "Invoice:Status:Overdue": "Overdue",
     "Invoice:Pdf:Download": "Download PDF",
+    "Invoice:Print:Print": "Print",
     "Invoice:Pdf:FileName": "Invoice",
     "Invoice:Pdf:Title": "Invoice",
     "Invoice:Pdf:DueDate": "Due",

@@ -751,6 +751,7 @@
         "Invoice:Status:Cancelled": "İptal",
         "Invoice:Status:Overdue": "Gecikmiş",
         "Invoice:Pdf:Download": "PDF indir",
+        "Invoice:Print:Print": "Yazdır",
         "Invoice:Pdf:FileName": "Fatura",
         "Invoice:Pdf:Title": "Fatura",
         "Invoice:Pdf:DueDate": "Vade",

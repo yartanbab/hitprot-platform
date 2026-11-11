@@ -47,6 +47,32 @@ public class IssuerNamePrint_Tests : PlatformWebTestBase
     }
 
     /// <summary>
+    /// Yazdırma sayfasında uydurma bilgi yok: sahte IBAN, host'ta sahte vergi no, müşteri yerine
+    /// sabit "Türkiye" kalktı; durum Türkçe; genel toplam faturanın tutarıdır (kalan değil).
+    /// </summary>
+    [Fact]
+    public async Task Yazdirma_sayfasi_yer_tutucu_basmaz_durum_turkce_genel_toplam_tutardir()
+    {
+        var invoiceId = Guid.NewGuid();
+        // Host bağlamında, vadesi geçmiş fatura: başlık platform adı, durum "Gecikmiş".
+        await GetRequiredService<IRepository<Invoice, Guid>>().InsertAsync(
+            new Invoice(invoiceId, null, Guid.NewGuid(), "QA-BASKI-2", DateTime.Today.AddDays(-30), DateTime.Today.AddDays(-5),
+                20, "TRY", InvoiceDirection.Sales, customerId: null, taskId: null),
+            autoSave: true);
+
+        var html = HtmlEntity.DeEntitize(await GetResponseAsStringAsync("/Invoices/Print/" + invoiceId));
+
+        html.ShouldNotContain("TR00");
+        html.ShouldNotContain("1234567890");
+        html.ShouldNotContain("Türkiye");
+        html.ShouldNotContain(">Overdue<"); // "status-overdue" CSS sınıfı ayrı; görünen metne bakılır
+        html.ShouldContain("Gecikmiş");
+        html.ShouldContain("Genel toplam:");
+        html.ShouldContain("e-fatura ya da e-arşiv fatura yerine geçmez");
+        html.ShouldContain("?handler=Pdf");
+    }
+
+    /// <summary>
     /// "PDF indir": aynı faturanın PDF kopyası kurumun kendi bilgisini ve fatura numarasını taşır,
     /// e-fatura yerine geçmediğini yazar; yazdırma sayfasındaki yer tutucu VDK/IBAN PDF'e girmez.
     /// </summary>
