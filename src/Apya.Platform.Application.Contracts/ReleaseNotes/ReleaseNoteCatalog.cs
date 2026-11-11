@@ -26,6 +26,81 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.11.11",
+            date: "11 Kasım 2026",
+            title: "Excel'den toplu içe aktarın, kayıtlara belge ekleyin; fatura PDF'i ve takvim dosyaları",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Excel'den toplu içe aktarın",
+                "Giderler, Gelirler, Görevler ve Kurlar ekranlarında, proje sayfasındaki bütçe kalemlerinde " +
+                "\"Excel'den içe aktar\" düğmesi var. Şablonu indirip doldurun, önizleyin; hata yoksa tek tıkla " +
+                "kaydedin. Hatalı satır varsa hiçbir satır kaydedilmez. Bütçe kalemlerinde alt kalemleri aynı " +
+                "dosyada üst kalemin koduyla bağlayabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Gidere, gelire ve faturaya belge ekleyin",
+                "Gider, gelir ve fatura pencerelerinde \"Belge ekle\" alanı var: faturayı, fişi ya da dekontu kaydı " +
+                "girerken seçin. Tahsilat girerken banka dekontunu da ekleyebilirsiniz. Telefonda Masraf Yakala ile " +
+                "çektiğiniz fiş masrafla birlikte kaydedilir. Belgeler, Belgeler ekranına kaydedilir ve kayda " +
+                "bağlanır. Belgeler paketi olan hesaplarda geçerlidir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Faturayı ve başvuru özetini PDF olarak indirin",
+                "Faturalarınızı tek tıkla PDF olarak indirip e-postaya ekleyebilirsiniz; bu dosya e-fatura yerine " +
+                "geçmez. Hibe başvurunuzun özetini (proje, hedefler, bütçe) başvuru ekranından PDF olarak " +
+                "indirebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Tarihleri kendi takviminize ekleyin",
+                "Hibe detayındaki \"Takvime ekle\" ile son başvuru tarihini Google, Outlook ya da Apple takviminize " +
+                "eklersiniz. Takvim ekranında gördüğünüz aralığı da tek dosyayla kendi takviminize aktarabilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "KDV istisna belgesiyle KDV'siz fatura",
+                "Projenizin KDV istisna belgesini (belge no ve geçerlilik tarihi) proje sayfasındaki Bütçe panelinden " +
+                "kaydedin. Belge geçerliyken o projeye keseceğiniz faturalarda belge no kendiliğinden gelir ve fatura " +
+                "KDV'siz hazırlanır; belge no fatura çıktısında da yer alır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hibe ve belge listeleri de Excel'e",
+                "Hibe fırsatlarını, başvurularınızı ve Belgeler listesini ekranda gördüğünüz süzgeç ve klasörle " +
+                "Excel'e indirebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Formları ve rapor şablonlarını dosyayla taşıyın",
+                "Formlarınızı ve rapor şablonlarınızı JSON dosyası olarak indirip başka bir hesaba yükleyebilirsiniz. " +
+                "İçe aktarılan form taslak olarak, rapor şablonu yeni şablon olarak açılır; var olanların üzerine " +
+                "yazılmaz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Makro Ekran artık Hızlı İşlemler",
+                "Makro Ekran'ın adı Hızlı İşlemler oldu. Menünün en üstünde yer alır, girişten sonra ilk bu ekran " +
+                "açılır; telefonda ilk sekmedir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe uygunluğunda il eşleşmesi",
+                "Hibe programlarının bölgesi artık il listesinden geliyor. Kurumunuzun ili programın bölgesinde " +
+                "değilse uygunluk ön değerlendirmesinde bunu açıkça görürsünüz. İl adındaki yazım farkları " +
+                "(istanbul / İstanbul) eşleşmeyi bozmuyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Ekranlar tamamen Türkçe",
+                "Menü ve ekranlarda İngilizce kalan terimler Türkçeleşti (Yapay Zekâ, İstem, Belge, Kilometre taşı…); " +
+                "tüm metinler size \"siz\" diye hitap ediyor."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Telefonda sayfa geçişinde \"Yükleniyor\" işareti",
+                "Listede bir satıra ya da karta dokunduğunuzda, süzgeç değiştirdiğinizde veya geri döndüğünüzde sayfa " +
+                "gelene kadar ekranda APYA işareti ve \"Yükleniyor…\" yazısı görünür; dokunuşunuzun alındığını " +
+                "bilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Fatura çıktısı ve proje kartları düzeldi",
+                "Fatura çıktısında örnek IBAN ve vergi numarası artık görünmüyor; genel toplam ve ödeme durumu doğru " +
+                "basılıyor. Proje listesinde kapak görseli olan kartlar diğer kartlarla aynı boyda görünüyor.")
+        ),
+
+        new ReleaseNote(
             version: "2026.11.06",
             date: "6 Kasım 2026",
             title: "Listeleri Excel'e aktarın, APYA'yı telefonunuza ekleyin; faturalar düzenlenebilir, yeni APYA görünümü",
@@ -137,7 +212,7 @@ public static class ReleaseNoteCatalog
                 "Ekran düzeltmeleri",
                 "Görevler ekranında Takvim, Finans, Gösterge Paneli, Kontrol Listesi ve Bağımlılıklar görünümleri " +
                 "artık aşağı kaydırılabiliyor. Finans sayfasında hesap bakiyeleri kartın dışına taşmıyor. Telefonda " +
-                "sayfa geçişinde üst çubuğun bir an karışık görünmesi ve Makro Ekran haber başlıklarının yarım " +
+                "sayfa geçişinde üst çubuğun bir an karışık görünmesi ve Hızlı İşlemler haber başlıklarının yarım " +
                 "kesilmesi giderildi.")
         ),
 
