@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Tenants;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.AspNetCore.Mvc;
@@ -35,24 +36,30 @@ public class TenantBadgeViewComponent : AbpViewComponent
     private readonly ICurrentUser _currentUser;
     private readonly ITenantRepository _tenantRepository;
     private readonly IPermissionChecker _permissionChecker;
+    private readonly TenantDisplayNameResolver _displayNames;
 
     public TenantBadgeViewComponent(
         ICurrentTenant currentTenant,
         ICurrentUser currentUser,
         ITenantRepository tenantRepository,
-        IPermissionChecker permissionChecker)
+        IPermissionChecker permissionChecker,
+        TenantDisplayNameResolver displayNames)
     {
         _currentTenant = currentTenant;
         _currentUser = currentUser;
         _tenantRepository = tenantRepository;
         _permissionChecker = permissionChecker;
+        _displayNames = displayNames;
     }
 
     public async Task<IViewComponentResult> InvokeAsync()
     {
+        // Kiracı adı unvandan türetilmiş bir anahtardır ("erkam-egitim-..."); rozette ve listede
+        // kurumun resmî unvanı görünür, unvan yoksa kiracı adı.
         var model = new TenantBadgeViewModel
         {
-            TenantName = _currentTenant.Name ?? "Host",
+            TenantName = (_currentTenant.Id.HasValue ? await _displayNames.GetAsync(_currentTenant.Id.Value) : null)
+                ?? _currentTenant.Name ?? "Host",
             CurrentTenantId = _currentTenant.Id,
             IsImpersonated = _currentUser.FindImpersonatorUserId().HasValue
         };
@@ -65,10 +72,11 @@ public class TenantBadgeViewComponent : AbpViewComponent
             model.TenantCount = await _tenantRepository.GetCountAsync();
 
             var tenants = await _tenantRepository.GetListAsync();
+            var displayNames = await _displayNames.GetManyAsync(tenants.Select(t => t.Id));
             model.Tenants = tenants
+                .Select(t => new TenantBadgeItem { Id = t.Id, Name = displayNames.GetValueOrDefault(t.Id, t.Name) })
                 .OrderBy(t => t.Name)
                 .Take(MaxListedTenants)
-                .Select(t => new TenantBadgeItem { Id = t.Id, Name = t.Name })
                 .ToList();
             model.HasMore = model.TenantCount > MaxListedTenants;
         }
@@ -79,7 +87,7 @@ public class TenantBadgeViewComponent : AbpViewComponent
 
 public class TenantBadgeViewModel
 {
-    /// <summary>Geçerli tenant adı; host bağlamında "Host".</summary>
+    /// <summary>Geçerli kurumun unvanı (yoksa kiracı adı); host bağlamında "Host".</summary>
     public string TenantName { get; set; } = string.Empty;
 
     public Guid? CurrentTenantId { get; set; }
