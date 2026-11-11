@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Apya.Platform.Invoices;
@@ -42,6 +43,45 @@ public class IssuerNamePrint_Tests : PlatformWebTestBase
             html.ShouldContain("Halkalı V.D. · 4567891230");
             html.ShouldContain("Merkez Mah. Atatürk Cad. No:1, İstanbul");
             html.ShouldNotContain("VDK 1234567890");
+        });
+    }
+
+    /// <summary>
+    /// "PDF indir": aynı faturanın PDF kopyası kurumun kendi bilgisini ve fatura numarasını taşır,
+    /// e-fatura yerine geçmediğini yazar; yazdırma sayfasındaki yer tutucu VDK/IBAN PDF'e girmez.
+    /// </summary>
+    [Fact]
+    public async Task Fatura_pdf_kurum_bilgisi_ve_uyari_ile_iner()
+    {
+        var tenantId = await CreateTenantAsync();
+        var invoiceId = Guid.NewGuid();
+
+        using (GetRequiredService<ICurrentTenant>().Change(tenantId))
+        {
+            await GetRequiredService<IRepository<Invoice, Guid>>().InsertAsync(
+                new Invoice(invoiceId, tenantId, Guid.NewGuid(), "QA-PDF-1", DateTime.Today, DateTime.Today.AddDays(15),
+                    20, "TRY", InvoiceDirection.Sales, customerId: null, taskId: null),
+                autoSave: true);
+        }
+
+        await WithTenantClientAsync(tenantId, async client =>
+        {
+            var response = await client.GetAsync($"/Invoices/Print/{invoiceId}?handler=Pdf");
+            response.IsSuccessStatusCode.ShouldBeTrue();
+            response.Content.Headers.ContentType!.MediaType.ShouldBe("application/pdf");
+            response.Content.Headers.ContentDisposition!.FileName!.ShouldContain("QA-PDF-1");
+
+            using var pdf = UglyToad.PdfPig.PdfDocument.Open(await response.Content.ReadAsByteArrayAsync());
+            // PDF metninde sözcük boşlukları güvenilir değil; boşluksuz karşılaştırılır. Yazı tipi
+            // "ti"yi bitişik harfle çizer ve okuyucu onu tek işaret olarak çıkarır: unvanın "ti"
+            // içermeyen parçasıyla bakılır.
+            var text = string.Concat(pdf.GetPages().Select(p => p.Text)).Replace(" ", "");
+            text.ShouldContain("Derneği");
+            text.ShouldContain("QA-PDF-1");
+            text.ShouldContain("4567891230");
+            text.ShouldContain("e-faturayadae-arşivfaturayerinegeçmez");
+            text.ShouldNotContain("1234567890");
+            text.ShouldNotContain("TR00");
         });
     }
 
