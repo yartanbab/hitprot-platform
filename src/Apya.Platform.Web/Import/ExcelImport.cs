@@ -10,10 +10,10 @@ using Microsoft.Extensions.Localization;
 namespace Apya.Platform.Web.Import;
 
 /// <summary>Şablon sütunu. <see cref="Options"/> doluysa şablonda açılır liste olur.</summary>
-internal sealed record ImportColumn(string Header, bool Required = false, IReadOnlyList<string>? Options = null);
+public sealed record ImportColumn(string Header, bool Required = false, IReadOnlyList<string>? Options = null);
 
 /// <summary>Dosyadan okunan tek satır: hücre değerleri başlığa göre, hatalar satıra göre.</summary>
-internal sealed class ImportRow
+public sealed class ImportRow
 {
     private readonly Dictionary<string, object?> _cells;
 
@@ -40,7 +40,7 @@ internal sealed class ImportRow
 }
 
 /// <summary>Okunan sayfa. <see cref="Headers"/> şablonun sütun sırasıdır (önizleme tablosu bunu basar).</summary>
-internal sealed record ImportSheet(List<string> Headers, List<ImportRow> Rows, List<string> Errors);
+public sealed record ImportSheet(List<string> Headers, List<ImportRow> Rows, List<string> Errors);
 
 /// <summary>Pencerenin okuduğu JSON: önizleme, kayıt hatası ya da tamamlandı.</summary>
 internal static class ImportResponse

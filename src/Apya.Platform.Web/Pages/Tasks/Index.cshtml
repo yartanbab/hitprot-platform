@@ -180,6 +180,14 @@
                     @L["Export:ExcelButton"]
                 </button>
 
+                @if (canCreate)
+                {
+                    <button type="button" class="apya-console-menu-item" id="menu-import-excel">
+                        <span class="apya-console-menu-icon"><i class="fa fa-file-import" aria-hidden="true"></i></span>
+                        @L["Import:ExcelButton"]
+                    </button>
+                }
+
                 @* Kaydedilmiş görünümler — filtre + görünüm + arama önayarı.
                    Konsolda proje başına saklanır; burada proje yok, düz liste. *@
                 <div class="apya-console-menu-head is-divided">Kaydedilmiş görünümler</div>

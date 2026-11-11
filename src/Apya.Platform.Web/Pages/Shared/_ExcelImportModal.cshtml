@@ -1,8 +1,8 @@
 @using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
-@model string
+@model Apya.Platform.Web.Import.ExcelImportModalOptions
 @inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @*
-    Excel'den içe aktarma penceresi (şablon → önizleme → onay). Model: pencere başlığı.
+    Excel'den içe aktarma penceresi (şablon → önizleme → onay). Model: başlık + ekrana özel ipucu.
     Uçlar çağıran pencere sayfasındadır: ?handler=Template (GET), Preview ve Import (POST, dosya).
 *@
 @{
@@ -18,9 +18,9 @@
 
 <form method="post" enctype="multipart/form-data" id="ExcelImportForm" data-path="@path">
     <abp-modal size="ExtraLarge">
-        <abp-modal-header title="@Model"></abp-modal-header>
+        <abp-modal-header title="@Model.Title"></abp-modal-header>
         <abp-modal-body>
-            <p class="mb-2">@L["Import:Step1"]</p>
+            <p class="mb-2">@L["Import:Step1"] @Model.Hint</p>
             <a class="btn btn-sm btn-outline-secondary mb-3" href="@(path)?handler=Template">
                 <i class="fa fa-download me-1" aria-hidden="true"></i>@L["Import:DownloadTemplate"]
             </a>
