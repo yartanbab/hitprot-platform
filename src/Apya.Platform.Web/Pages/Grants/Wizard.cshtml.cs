@@ -1,4 +1,6 @@
 using System;
+using System.Threading.Tasks;
+using Apya.Platform.Grants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Apya.Platform.Permissions;
@@ -20,5 +22,13 @@ public class WizardModel : PlatformPageModel
     {
         // Başvuru kimliği olmadan sihirbazın gösterecek bir şeyi yok.
         return Id == Guid.Empty ? Redirect("/Grants") : Page();
+    }
+
+    /// <summary>Başvurunun PDF özeti; okuma sihirbazın servisinden (firma/danışman görme kuralı orada).</summary>
+    public async Task<IActionResult> OnGetPdfAsync([FromServices] IGrantApplicationWizardAppService wizard)
+    {
+        var application = await wizard.GetAsync(Id);
+        var bytes = GrantApplicationPdf.Build(application, L, Clock.Now);
+        return File(bytes, "application/pdf", $"{L["Grants:Pdf:FileName"]}_{application.GrantName}.pdf");
     }
 }
