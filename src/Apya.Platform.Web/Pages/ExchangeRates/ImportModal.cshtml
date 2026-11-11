@@ -1,0 +1,8 @@
+@page
+@model Apya.Platform.Web.Pages.ExchangeRates.ImportModalModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
+@{
+    Layout = null;
+}
+
+<partial name="_ExcelImportModal" model="@(new Apya.Platform.Web.Import.ExcelImportModalOptions(L["Import:Title:ExchangeRates"].Value, L["Import:Hint:ExchangeRates"].Value))" />

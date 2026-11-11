@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Apya.Platform.Permissions
 @inject IAuthorizationService AuthorizationService
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @model Apya.Platform.Web.Pages.ExchangeRates.IndexModel
 @{
     ViewBag.PageTitle = "Kurlar";
@@ -26,6 +27,9 @@
                         <i class="fa fa-sync"></i> TCMB'den Güncelle
                     </button>
                     <apya-hint placement="bottom" text="Merkez Bankası bülteninden yalnız USD, EUR ve GBP için Döviz Alış kurunu çeker ve bültenin tarihiyle kaydeder (hafta sonu son iş gününün bülteni gelir). Tarih seçerseniz o günün arşiv bülteni çekilir. Aynı güne ait kayıt varsa üzerine yazılır; diğer para birimlerini elle eklemeniz gerekir. Dövizli bir projeniz varsa kurlar her iş günü kendiliğinden de eklenir (o günün kaydı yoksa)." />
+                    <button id="ImportExchangeRatesButton" class="btn btn-outline-secondary btn-sm me-2">
+                        <i class="fa fa-file-import" aria-hidden="true"></i> @L["Import:ExcelButton"]
+                    </button>
                     <button id="NewExchangeRateButton" class="btn btn-primary btn-sm">
                         <i class="fa fa-plus"></i> Yeni Kur Ekle
                     </button>
