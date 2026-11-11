@@ -23,6 +23,50 @@ const token = (n, fb) =>
 const FALLBACK_CAT_COLOR = () => token('--apya-neutral-400', '#9CA3AF');
 const DEFAULT_NEW_CAT_COLOR = () => token('--apya-accent-500', '#4F46E5');
 
+/**
+ * Başka bir ortamdan/kiracıdan indirilmiş form .json'unu YENİ taslak form olarak açar
+ * (sunucu: DynamicAssets?handler=Import). Başarıda yeni formun düzenleyicisine gider.
+ */
+export function FormImportButton() {
+  const input = useRef(null);
+  const [busy, setBusy] = useState(false);
+
+  const upload = async (file) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const data = new FormData();
+      data.append('file', file);
+      data.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]')?.value || '');
+      const res = await fetch('/DynamicAssets?handler=Import', { method: 'POST', body: data, credentials: 'same-origin' });
+      const result = res.ok ? await res.json() : { ok: false, message: 'Dosya işlenemedi. Lütfen tekrar deneyin.' };
+      if (result.ok) {
+        notify('success', result.message);
+        window.location.href = `/DynamicAssets/Builder?id=${result.id}`;
+      } else {
+        notify('error', result.message);
+      }
+    } catch {
+      notify('error', 'Dosya işlenemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = '';
+    }
+  };
+
+  return (
+    <>
+      <input ref={input} type="file" accept=".json,application/json" className="hidden" aria-hidden="true" tabIndex={-1}
+        onChange={(e) => upload(e.target.files?.[0])} />
+      <button type="button" disabled={busy} onClick={() => input.current?.click()}
+        title="Başka bir yerden indirilmiş form .json dosyasını yeni taslak form olarak aç"
+        className="rounded-xl border border-default px-4 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-sunken disabled:opacity-50">
+        {busy ? 'Yükleniyor…' : 'İçe aktar (JSON)'}
+      </button>
+    </>
+  );
+}
+
 function FormsList() {
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,9 +128,12 @@ function FormsList() {
           <h1 className="text-2xl font-bold text-text-primary">Formlarım</h1>
           <p className="text-sm text-text-secondary">{loading || loadError ? '—' : `${forms.length} form`}</p>
         </div>
-        <a href="/DynamicAssets/Builder" className="rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-accent-600">
-          + Yeni Form
-        </a>
+        <div className="flex items-center gap-2">
+          {abpAuth('Platform.DynamicAssets.Create') && <FormImportButton />}
+          <a href="/DynamicAssets/Builder" className="rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-accent-600">
+            + Yeni Form
+          </a>
+        </div>
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -160,6 +207,7 @@ function FormsList() {
                 {f.status === 1 && (
                   <a href={publicFormPath(f.slug)} target="_blank" rel="noreferrer" className="shrink-0 rounded-lg border border-default px-2.5 py-1.5 text-xs hover:bg-surface-sunken" title="Formu aç">↗</a>
                 )}
+                <a href={`/DynamicAssets?handler=Export&id=${f.id}`} download className="shrink-0 rounded-lg border border-default px-2.5 py-1.5 text-xs font-semibold text-text-secondary hover:bg-surface-sunken" title="Form tanımını .json olarak indir (yanıtlar dahil değil)">JSON</a>
                 <button onClick={() => remove(f)} className="shrink-0 rounded-lg border border-negative-100 px-2.5 py-1.5 text-xs text-negative-500 hover:bg-negative-50">🗑</button>
                 <Hint placement="left" text="Formu siler ama mevcut yanıtları SİLMEZ — yanıtlar veritabanında kalır, sahipsiz kalır ve bir daha hiçbir ekrandan erişilemez." />
               </div>
