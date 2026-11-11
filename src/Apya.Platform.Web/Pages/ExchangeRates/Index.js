@@ -2,6 +2,7 @@ $(function () {
 
     var createModal = new abp.ModalManager(abp.appPath + 'ExchangeRates/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'ExchangeRates/EditModal');
+    var importModal = new abp.ModalManager(abp.appPath + 'ExchangeRates/ImportModal');
 
     var sourceNames = { 0: 'Manuel', 1: 'TCMB' };
 
@@ -99,6 +100,15 @@ $(function () {
     });
 
     createModal.onResult(function () {
+        dataTable.ajax.reload();
+    });
+
+    $('#ImportExchangeRatesButton').click(function (e) {
+        e.preventDefault();
+        importModal.open();
+    });
+
+    importModal.onClose(function () {
         dataTable.ajax.reload();
     });
 
