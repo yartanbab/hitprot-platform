@@ -2,11 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Documents;
 using Apya.Platform.Expenses;
+using Apya.Platform.ProjectBudgets.Dtos;
 using Apya.Platform.Projects;
+using Apya.Platform.Web.Services;
 
 namespace Apya.Platform.Web.Pages.Expenses;
 
@@ -15,6 +19,8 @@ public class EditModalModel : AbpPageModel
 {
     private readonly IExpenseAppService _expenseAppService;
     private readonly IProjectAppService _projectAppService;
+    private readonly IFinanceDocumentAppService _financeDocuments;
+    private readonly FinanceDocumentUploads _uploads;
 
     [HiddenInput]
     [BindProperty]
@@ -22,6 +28,14 @@ public class EditModalModel : AbpPageModel
 
     [BindProperty]
     public CreateUpdateExpenseDto Expense { get; set; } = new();
+
+    /// <summary>"Belge ekle" alanından gelen fatura/fiş/dekont dosyaları.</summary>
+    [BindProperty]
+    public List<IFormFile> DocumentFiles { get; set; } = new();
+
+    public bool CanAttachDocuments { get; set; }
+
+    public IReadOnlyList<ProjectExpenseDocumentDto> LinkedDocuments { get; set; } = Array.Empty<ProjectExpenseDocumentDto>();
 
     public List<SelectListItem> Accounts { get; set; } = new();
     public List<SelectListItem> Projects { get; set; } = new();
@@ -33,10 +47,14 @@ public class EditModalModel : AbpPageModel
 
     public EditModalModel(
         IExpenseAppService expenseAppService,
-        IProjectAppService projectAppService)
+        IProjectAppService projectAppService,
+        IFinanceDocumentAppService financeDocuments,
+        FinanceDocumentUploads uploads)
     {
         _expenseAppService = expenseAppService;
         _projectAppService = projectAppService;
+        _financeDocuments = financeDocuments;
+        _uploads = uploads;
     }
 
     public virtual async Task<IActionResult> OnGetAsync(Guid id)
@@ -61,13 +79,36 @@ public class EditModalModel : AbpPageModel
 
         (Accounts, Projects, Categories, ProjectDatesJson) =
             await ExpenseLookups.LoadAsync(_expenseAppService, _projectAppService);
+
+        CanAttachDocuments = await _financeDocuments.CanAttachAsync();
+        if (CanAttachDocuments)
+        {
+            LinkedDocuments = await _financeDocuments.GetExpenseDocumentsAsync(id);
+        }
+
         return Page();
     }
 
     public virtual async Task<IActionResult> OnPostAsync()
     {
         ValidateModel();
-        await _expenseAppService.UpdateAsync(ExpenseId, Expense);
+
+        var uploads = await _uploads.StoreAsync(DocumentFiles);
+        try
+        {
+            await _expenseAppService.UpdateAsync(ExpenseId, Expense);
+            foreach (var upload in uploads)
+            {
+                await _financeDocuments.AttachToExpenseAsync(
+                    ExpenseId, upload.FileName, upload.StoredFileName, upload.ContentType, upload.FileSize);
+            }
+        }
+        catch
+        {
+            _uploads.Discard(uploads);
+            throw;
+        }
+
         return NoContent();
     }
 }

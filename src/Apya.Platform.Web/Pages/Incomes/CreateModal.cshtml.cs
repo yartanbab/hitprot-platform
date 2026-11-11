@@ -2,12 +2,16 @@ using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Documents;
 using Apya.Platform.Incomes;
+using Apya.Platform.ProjectBudgets.Dtos;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
+using Apya.Platform.Web.Services;
 
 namespace Apya.Platform.Web.Pages.Incomes;
 
@@ -17,6 +21,8 @@ public class CreateModalModel : AbpPageModel
     private readonly IIncomeEntryAppService _incomeAppService;
     private readonly IProjectAppService _projectAppService;
     private readonly ITaskAppService _taskAppService;
+    private readonly IFinanceDocumentAppService _financeDocuments;
+    private readonly FinanceDocumentUploads _uploads;
 
     [BindProperty(SupportsGet = true)]
     public Guid? TaskId { get; set; }
@@ -29,6 +35,15 @@ public class CreateModalModel : AbpPageModel
     [BindProperty]
     public CreateUpdateIncomeEntryDto Income { get; set; } = new();
 
+    /// <summary>"Belge ekle" alanından gelen dekont/yazı dosyaları.</summary>
+    [BindProperty]
+    public List<IFormFile> DocumentFiles { get; set; } = new();
+
+    public bool CanAttachDocuments { get; set; }
+
+    /// <summary>Yeni kayıtta bağlı belge yok; alan düzenleme penceresiyle ortak.</summary>
+    public IReadOnlyList<ProjectExpenseDocumentDto> LinkedDocuments { get; } = Array.Empty<ProjectExpenseDocumentDto>();
+
     public List<SelectListItem> Accounts { get; set; } = new();
     public List<SelectListItem> Projects { get; set; } = new();
     public List<SelectListItem> Categories { get; set; } = new();
@@ -40,17 +55,22 @@ public class CreateModalModel : AbpPageModel
     public CreateModalModel(
         IIncomeEntryAppService incomeAppService,
         IProjectAppService projectAppService,
-        ITaskAppService taskAppService)
+        ITaskAppService taskAppService,
+        IFinanceDocumentAppService financeDocuments,
+        FinanceDocumentUploads uploads)
     {
         _incomeAppService = incomeAppService;
         _projectAppService = projectAppService;
         _taskAppService = taskAppService;
+        _financeDocuments = financeDocuments;
+        _uploads = uploads;
     }
 
     public virtual async Task<IActionResult> OnGetAsync()
     {
         (Accounts, Projects, Categories, ProjectDatesJson) =
             await IncomeLookups.LoadAsync(_incomeAppService, _projectAppService);
+        CanAttachDocuments = await _financeDocuments.CanAttachAsync();
         if (TaskId.HasValue)
         {
             Income.TaskId = TaskId;
@@ -71,7 +91,24 @@ public class CreateModalModel : AbpPageModel
     public virtual async Task<IActionResult> OnPostAsync()
     {
         ValidateModel();
-        await _incomeAppService.CreateAsync(Income);
+
+        // Dosyalar kayıttan ÖNCE doğrulanır: reddedilen dosya geliri yarım bırakmaz.
+        var uploads = await _uploads.StoreAsync(DocumentFiles);
+        try
+        {
+            var created = await _incomeAppService.CreateAsync(Income);
+            foreach (var upload in uploads)
+            {
+                await _financeDocuments.AttachToIncomeAsync(
+                    created.Id, upload.FileName, upload.StoredFileName, upload.ContentType, upload.FileSize);
+            }
+        }
+        catch
+        {
+            _uploads.Discard(uploads);
+            throw;
+        }
+
         return NoContent();
     }
 }
