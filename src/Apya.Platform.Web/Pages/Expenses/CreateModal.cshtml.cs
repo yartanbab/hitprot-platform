@@ -2,12 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Apya.Platform.Documents;
 using Apya.Platform.Expenses;
 using Apya.Platform.Projects;
 using Apya.Platform.Tasks;
+using Apya.Platform.Web.Services;
 
 namespace Apya.Platform.Web.Pages.Expenses;
 
@@ -18,6 +21,8 @@ public class CreateModalModel : AbpPageModel
     private readonly IProjectAppService _projectAppService;
     private readonly ITaskAppService _taskAppService;
     private readonly Apya.Platform.Invoices.IInvoiceAppService _invoiceAppService;
+    private readonly IFinanceDocumentAppService _financeDocuments;
+    private readonly FinanceDocumentUploads _uploads;
 
     [BindProperty(SupportsGet = true)]
     public Guid? TaskId { get; set; }
@@ -34,6 +39,16 @@ public class CreateModalModel : AbpPageModel
     [BindProperty]
     public CreateUpdateExpenseDto Expense { get; set; } = new();
 
+    /// <summary>"Belge ekle" alanından gelen fatura/fiş/dekont dosyaları.</summary>
+    [BindProperty]
+    public List<IFormFile> DocumentFiles { get; set; } = new();
+
+    public bool CanAttachDocuments { get; set; }
+
+    /// <summary>Yeni kayıtta bağlı belge yok; alan düzenleme penceresiyle ortak.</summary>
+    public IReadOnlyList<Apya.Platform.ProjectBudgets.Dtos.ProjectExpenseDocumentDto> LinkedDocuments { get; }
+        = Array.Empty<Apya.Platform.ProjectBudgets.Dtos.ProjectExpenseDocumentDto>();
+
     public List<SelectListItem> Accounts { get; set; } = new();
     public List<SelectListItem> Projects { get; set; } = new();
     public List<SelectListItem> Categories { get; set; } = new();
@@ -46,9 +61,13 @@ public class CreateModalModel : AbpPageModel
         IExpenseAppService expenseAppService,
         IProjectAppService projectAppService,
         ITaskAppService taskAppService,
-        Apya.Platform.Invoices.IInvoiceAppService invoiceAppService)
+        Apya.Platform.Invoices.IInvoiceAppService invoiceAppService,
+        IFinanceDocumentAppService financeDocuments,
+        FinanceDocumentUploads uploads)
     {
         _invoiceAppService = invoiceAppService;
+        _financeDocuments = financeDocuments;
+        _uploads = uploads;
         _expenseAppService = expenseAppService;
         _projectAppService = projectAppService;
         _taskAppService = taskAppService;
@@ -58,6 +77,7 @@ public class CreateModalModel : AbpPageModel
     {
         (Accounts, Projects, Categories, ProjectDatesJson) =
             await ExpenseLookups.LoadAsync(_expenseAppService, _projectAppService);
+        CanAttachDocuments = await _financeDocuments.CanAttachAsync();
 
         if (FromInvoiceId.HasValue)
         {
@@ -94,7 +114,24 @@ public class CreateModalModel : AbpPageModel
     public virtual async Task<IActionResult> OnPostAsync()
     {
         ValidateModel();
-        var created = await _expenseAppService.CreateAsync(Expense);
+
+        // Dosyalar kayıttan ÖNCE doğrulanır: reddedilen dosya gideri yarım bırakmaz.
+        var uploads = await _uploads.StoreAsync(DocumentFiles);
+        ExpenseDto created;
+        try
+        {
+            created = await _expenseAppService.CreateAsync(Expense);
+            foreach (var upload in uploads)
+            {
+                await _financeDocuments.AttachToExpenseAsync(
+                    created.Id, upload.FileName, upload.StoredFileName, upload.ContentType, upload.FileSize);
+            }
+        }
+        catch
+        {
+            _uploads.Discard(uploads);
+            throw;
+        }
 
         // FIN-05: projeye yazılan giderin alış faturası yoksa pencere kapanınca uyarı çıkar.
         if ((await _expenseAppService.GetInvoiceCrossCheckAsync(created.Id)).ShouldWarn)

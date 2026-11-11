@@ -1,0 +1,26 @@
+@using Apya.Platform.ProjectBudgets.Dtos
+@model IReadOnlyList<ProjectExpenseDocumentDto>
+@* Gider/gelir penceresinin "Belge ekle" alanı. Seçilen dosyalar Belge Merkezi'ne kaydedilir ve
+   bu kayda bağlanır (FinanceDocumentAppService). Sayfa yalnız belge yükleme izni olana basar;
+   formun enctype'ı multipart olmalı. Model: kayda zaten bağlı belgeler (yeni kayıtta boş). *@
+<div class="mb-3" data-finance-document-field>
+    <label class="form-label" for="FinanceDocumentFiles">Belge ekle (fatura, fiş, dekont)</label>
+    @if (Model.Count > 0)
+    {
+        <ul class="list-unstyled mb-2" aria-label="Bağlı belgeler">
+            @foreach (var doc in Model)
+            {
+                <li class="d-flex align-items-center gap-2 py-1">
+                    <i class="fa fa-paperclip text-muted" aria-hidden="true"></i>
+                    <a href="@doc.DownloadUrl" target="_blank" rel="noopener">@doc.Name</a>
+                </li>
+            }
+        </ul>
+    }
+    <input type="file" class="form-control" id="FinanceDocumentFiles" name="DocumentFiles" multiple
+           accept=".pdf,.png,.jpg,.jpeg,.gif,.doc,.docx,.xls,.xlsx,.zip,.rar" />
+    <div class="form-text">
+        İsteğe bağlı; birden çok dosya seçebilirsiniz (dosya başına en çok 25 MB).
+        Dosyalar Belge Merkezi'ne kaydedilir ve bu kayda bağlanır.
+    </div>
+</div>

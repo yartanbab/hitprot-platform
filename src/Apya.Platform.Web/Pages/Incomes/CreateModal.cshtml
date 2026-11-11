@@ -4,7 +4,7 @@
 @{
     Layout = null;
 }
-<form method="post" action="@Url.Page("/Incomes/CreateModal")">
+<form method="post" action="@Url.Page("/Incomes/CreateModal")" enctype="multipart/form-data">
     <abp-modal>
         <abp-modal-header title="Yeni Gelir / Fon"></abp-modal-header>
         <abp-modal-body>
@@ -67,6 +67,10 @@
             @* Cari alanı gizlendi (kullanıcı kararı 2026-06-22); değer korunsun diye gizli alan. *@
             <input type="hidden" asp-for="Income.CustomerId" />
             <abp-input asp-for="Income.Description" label="Açıklama" />
+            @if (Model.CanAttachDocuments)
+            {
+                <partial name="_FinanceDocumentField" model="Model.LinkedDocuments" />
+            }
         </abp-modal-body>
         <abp-modal-footer buttons="@(AbpModalButtons.Cancel | AbpModalButtons.Save)"></abp-modal-footer>
     </abp-modal>
