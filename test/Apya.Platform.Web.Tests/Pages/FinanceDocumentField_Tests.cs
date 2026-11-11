@@ -9,7 +9,9 @@ using Apya.Platform.CashAccounts;
 using Apya.Platform.Documents;
 using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
+using Apya.Platform.Invoices;
 using Apya.Platform.Permissions;
+using Apya.Platform.Projects;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -96,9 +98,9 @@ public class FinanceDocumentField_Tests : PlatformWebTestBase
     };
 
     [Fact]
-    public async Task Gider_ve_gelir_pencerelerinde_belge_alani_var_ve_form_dosya_gonderir()
+    public async Task Gider_gelir_ve_fatura_pencerelerinde_belge_alani_var_ve_form_dosya_gonderir()
     {
-        foreach (var url in new[] { "/Expenses/CreateModal", "/Incomes/CreateModal" })
+        foreach (var url in new[] { "/Expenses/CreateModal", "/Incomes/CreateModal", "/Invoices/CreateModal" })
         {
             var html = await GetResponseAsStringAsync(url);
             html.ShouldContain(FileField, Case.Sensitive, url);
@@ -173,6 +175,48 @@ public class FinanceDocumentField_Tests : PlatformWebTestBase
         (await InNewUowAsync(() => GetRequiredService<IFinanceDocumentAppService>().GetIncomeDocumentsAsync(incomeId)))
             .ShouldHaveSingleItem().Name.ShouldBe("Dekont.pdf");
     }
+
+    [Fact]
+    public async Task Fatura_ve_tahsilat_dekontu_faturaya_baglanir_duzenlemede_listelenir()
+    {
+        var project = new Project(
+            Guid.NewGuid(), null, null, "Belgeli fatura projesi", "BFP-" + Guid.NewGuid().ToString("N")[..8], "");
+        await InNewUowAsync(() => GetRequiredService<IRepository<Project, Guid>>().InsertAsync(project, autoSave: true));
+        var number = "BF-" + Guid.NewGuid().ToString("N")[..6];
+
+        var created = await PostAsync("/Invoices/CreateModal", new[]
+        {
+            ("InvoiceInfo.ProjectId", project.Id.ToString()),
+            ("InvoiceInfo.Direction", nameof(InvoiceDirection.Sales)),
+            ("InvoiceInfo.InvoiceNumber", number),
+            ("InvoiceInfo.InvoiceDate", "2026-11-11"),
+            ("InvoiceInfo.DueDate", "2026-11-26"),
+            ("InvoiceInfo.TaxRate", "20"),
+            ("InvoiceInfo.Currency", "TRY"),
+            ("InvoiceInfo.Items[0].Description", "Danışmanlık"),
+            ("InvoiceInfo.Items[0].Quantity", "1"),
+            ("InvoiceInfo.Items[0].UnitPrice", "100"),
+        }, ("Fatura.pdf", Encoding.UTF8.GetBytes("%PDF-1.4 fatura")));
+        created.IsSuccessStatusCode.ShouldBeTrue(created.StatusCode + " " + await created.Content.ReadAsStringAsync());
+
+        var invoiceId = await InNewUowAsync(async () =>
+            (await GetRequiredService<IRepository<Invoice, Guid>>().GetListAsync(i => i.InvoiceNumber == number)).Single().Id);
+
+        var paid = await PostAsync("/Invoices/PaymentModal?InvoiceId=" + invoiceId, new[]
+        {
+            ("InvoiceId", invoiceId.ToString()),
+            ("Amount", "120"),
+            ("Method", "Havale"),
+        }, ("Dekont.pdf", Encoding.UTF8.GetBytes("%PDF-1.4 dekont")));
+        paid.StatusCode.ShouldBe(HttpStatusCode.NoContent, await paid.Content.ReadAsStringAsync());
+
+        (await InNewUowAsync(() => GetRequiredService<IFinanceDocumentAppService>().GetInvoiceDocumentsAsync(invoiceId)))
+            .Select(d => d.Name).ShouldBe(new[] { "Fatura.pdf", "Dekont.pdf" }, ignoreOrder: true);
+
+        var edit = WebUtility.HtmlDecode(await GetResponseAsStringAsync("/Invoices/EditModal?id=" + invoiceId));
+        edit.ShouldContain("Fatura.pdf");
+        edit.ShouldContain("Dekont.pdf");
+    }
 }
 
 /// <summary>Belge yükleme izni (ya da Belgeler paketi) olmayan kullanıcıya alan basılmaz.</summary>
@@ -190,7 +234,10 @@ public class FinanceDocumentFieldDenied_Tests : PlatformWebTestBase
     [Fact]
     public async Task Belge_yukleme_izni_yoksa_alan_gorunmez_pencere_acilir()
     {
-        foreach (var (url, title) in new[] { ("/Expenses/CreateModal", "Yeni Gider"), ("/Incomes/CreateModal", "Yeni Gelir") })
+        foreach (var (url, title) in new[]
+                 {
+                     ("/Expenses/CreateModal", "Yeni Gider"), ("/Incomes/CreateModal", "Yeni Gelir"), ("/Invoices/CreateModal", "Yeni Fatura"),
+                 })
         {
             var html = await GetResponseAsStringAsync(url);
             html.ShouldContain(title, Case.Sensitive, url);

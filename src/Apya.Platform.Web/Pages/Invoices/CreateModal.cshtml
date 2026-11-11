@@ -10,7 +10,7 @@
 @* Düz form (Customers deseni): abp-dynamic-form, içinde <abp-form-content/> olmadan
    modelin tüm alanlarını formun başına İKİNCİ kez basıyordu; bağlama ilk (boş)
    kopyayı aldığı için fatura numarası boş gidiyor ve fatura HİÇ kaydedilemiyordu. *@
-<form method="post" action="@Url.Page("/Invoices/CreateModal")" id="ViewModelForm" data-vat-exemptions="@Model.VatExemptionsJson">
+<form method="post" action="@Url.Page("/Invoices/CreateModal")" id="ViewModelForm" data-vat-exemptions="@Model.VatExemptionsJson" enctype="multipart/form-data">
     <abp-modal size="Large">
         <abp-modal-header title="Yeni Fatura Oluştur"></abp-modal-header>
         <abp-modal-body>
@@ -100,6 +100,11 @@
                 <label class="form-label" asp-for="InvoiceInfo.Notes">Notlar</label>
                 <textarea asp-for="InvoiceInfo.Notes" class="form-control" rows="2" placeholder="İsteğe bağlı not..."></textarea>
             </div>
+
+            @if (Model.CanAttachDocuments)
+            {
+                <partial name="_FinanceDocumentField" model="Model.LinkedDocuments" />
+            }
 
             <hr />
             <div class="d-flex justify-content-between align-items-center mb-3">

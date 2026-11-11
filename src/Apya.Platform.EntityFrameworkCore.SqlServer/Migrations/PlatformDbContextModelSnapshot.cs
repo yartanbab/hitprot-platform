@@ -3449,6 +3449,51 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppDocumentIntegrations", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Documents.DocumentInvoiceLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("DocumentFileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentFileId");
+
+                    b.HasIndex("InvoiceId", "DocumentFileId")
+                        .IsUnique();
+
+                    b.ToTable("AppDocumentInvoiceLinks", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Documents.DocumentRule", b =>
                 {
                     b.Property<Guid>("Id")

@@ -3445,6 +3445,51 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppDocumentIntegrations", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Documents.DocumentInvoiceLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("DocumentFileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentFileId");
+
+                    b.HasIndex("InvoiceId", "DocumentFileId")
+                        .IsUnique();
+
+                    b.ToTable("AppDocumentInvoiceLinks", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Documents.DocumentRule", b =>
                 {
                     b.Property<Guid>("Id")
