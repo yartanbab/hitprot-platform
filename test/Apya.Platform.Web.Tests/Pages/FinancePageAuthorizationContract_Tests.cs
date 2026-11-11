@@ -56,6 +56,7 @@ public class FinancePageAuthorizationContract_Tests
     /// </summary>
     [Theory]
     [InlineData(typeof(BudgetLineModalModel))]
+    [InlineData(typeof(BudgetLineImportModalModel))]
     [InlineData(typeof(CollectionModalModel))]
     [InlineData(typeof(ContextWizardModalModel))]
     [InlineData(typeof(DeductionModalModel))]

@@ -6,7 +6,9 @@
     Uçlar çağıran pencere sayfasındadır: ?handler=Template (GET), Preview ve Import (POST, dosya).
 *@
 @{
-    var path = Context.Request.Path.Value;
+    // Sorgu dizesi korunur: proje bütçesi gibi pencereler bağlamını (projectId) oradan alır.
+    var path = Context.Request.Path.Value + Context.Request.QueryString.Value;
+    var sep = path.Contains('?') ? "&" : "?";
     var texts = new
     {
         row = L["Import:Col:Row"].Value,
@@ -21,7 +23,7 @@
         <abp-modal-header title="@Model.Title"></abp-modal-header>
         <abp-modal-body>
             <p class="mb-2">@L["Import:Step1"] @Model.Hint</p>
-            <a class="btn btn-sm btn-outline-secondary mb-3" href="@(path)?handler=Template">
+            <a class="btn btn-sm btn-outline-secondary mb-3" href="@(path + sep)handler=Template">
                 <i class="fa fa-download me-1" aria-hidden="true"></i>@L["Import:DownloadTemplate"]
             </a>
             <p class="mb-2">@L["Import:Step2"]</p>
@@ -89,7 +91,7 @@
             data.append('file', fileInput.files[0]);
             data.append('__RequestVerificationToken', form.querySelector('input[name="__RequestVerificationToken"]').value);
             previewBtn.disabled = confirmBtn.disabled = true;
-            return fetch(path + '?handler=' + handler, { method: 'POST', body: data, credentials: 'same-origin' })
+            return fetch(path + (path.indexOf('?') < 0 ? '?' : '&') + 'handler=' + handler, { method: 'POST', body: data, credentials: 'same-origin' })
                 .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
                 .catch(function (e) { show('danger', texts.failed); previewBtn.disabled = false; throw e; });
         }
@@ -118,6 +120,8 @@
                     render({});
                     fileInput.value = '';
                     abp.notify.success(result.message);
+                    // Sunucuda çizilen ekranlar (proje bütçesi) kapanınca yalnız buna göre tazelenir.
+                    document.dispatchEvent(new CustomEvent('apya:excel-imported'));
                 }
             }, function () { });
         });

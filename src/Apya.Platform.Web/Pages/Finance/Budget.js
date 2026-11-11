@@ -12,6 +12,12 @@ $(function () {
     var contextWizard = new abp.ModalManager(abp.appPath + 'Finance/ContextWizardModal');
     var supportRateModal = new abp.ModalManager(abp.appPath + 'Finance/SupportRateModal');
     var vatExemptionModal = new abp.ModalManager(abp.appPath + 'Finance/VatExemptionModal');
+    // İçe aktarma penceresi sonuç döndürmez (kendi içinde kaydeder); kapanınca sayfa tazelenir.
+    var lineImportModal = new abp.ModalManager(abp.appPath + 'Finance/BudgetLineImportModal');
+    var linesImported = false;
+    lineImportModal.onOpen(function () { linesImported = false; });
+    lineImportModal.onClose(function () { if (linesImported) { window.location.reload(); } });
+    $(document).on('apya:excel-imported', function () { linesImported = true; });
 
     // Paneller sunucuda render ediliyor; kaydettikten sonra sayfayı tazelemek
     // hem tabloyu hem KPI'ları hem şerit toplamlarını tek hamlede tutarlı yapar.
@@ -39,6 +45,10 @@ $(function () {
 
     $('#BtnContextWizard').on('click', function () {
         contextWizard.open({ projectId: projectId });
+    });
+
+    $('#BtnImportBudgetLines').on('click', function () {
+        lineImportModal.open({ projectId: projectId });
     });
 
     $('#BtnAddBudgetLine').on('click', function () {
