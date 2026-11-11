@@ -11,11 +11,13 @@ registerServiceWorker();
 
 const rootElement = document.getElementById('apya-expense-capture-root');
 if (rootElement) {
+    // Fişin kayda eklenip eklenemeyeceği sunucuda hesaplanır (Pages/Expenses/Capture).
+    const canAttachReceipt = rootElement.dataset.canAttachDocuments === 'true';
     mountIsland(rootElement, 'expense-capture',
         <ThemeProvider>
             <QueryProvider>
                 <ToastProvider>
-                    <ExpenseCaptureFlow />
+                    <ExpenseCaptureFlow canAttachReceipt={canAttachReceipt} />
                 </ToastProvider>
             </QueryProvider>
         </ThemeProvider>,

@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Shouldly;
+using Volo.Abp;
 using Volo.Abp.Authorization;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Uow;
@@ -57,9 +58,13 @@ public class FinanceDocumentField_Tests : PlatformWebTestBase
     /// içe aktarma penceresinden alınır.
     /// </summary>
     private async Task<HttpResponseMessage> PostAsync(
-        string url, (string Name, string Value)[] fields, (string Name, byte[] Content)? file)
+        string url, (string Name, string Value)[] fields, (string Name, byte[] Content)? file,
+        string fileField = "DocumentFiles", string? postUrl = null, string? fieldCheck = FileField)
     {
-        (await GetResponseAsStringAsync(url)).ShouldContain(FileField, Case.Sensitive, url);
+        if (fieldCheck != null)
+        {
+            (await GetResponseAsStringAsync(url)).ShouldContain(fieldCheck, Case.Sensitive, url);
+        }
 
         var doc = new HtmlDocument();
         doc.LoadHtml(await GetResponseAsStringAsync("/Expenses/ImportModal"));
@@ -78,10 +83,10 @@ public class FinanceDocumentField_Tests : PlatformWebTestBase
         {
             var part = new ByteArrayContent(file.Value.Content);
             part.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            content.Add(part, "DocumentFiles", file.Value.Name);
+            content.Add(part, fileField, file.Value.Name);
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, url.Split('?')[0]) { Content = content };
+        using var request = new HttpRequestMessage(HttpMethod.Post, postUrl ?? url.Split('?')[0]) { Content = content };
         request.Headers.Add("X-Requested-With", "XMLHttpRequest");
         request.Headers.Add("RequestVerificationToken", token);
         return await Client.SendAsync(request);
@@ -176,6 +181,43 @@ public class FinanceDocumentField_Tests : PlatformWebTestBase
             .ShouldHaveSingleItem().Name.ShouldBe("Dekont.pdf");
     }
 
+    private async Task<Guid> CaptureExpenseAsync(Guid? creatorId)
+    {
+        var accountId = await CashAccountAsync();
+        var expense = new Expense(Guid.NewGuid(), "Saha masrafı", 80m, accountId, new DateTime(2026, 11, 11));
+        if (creatorId.HasValue)
+        {
+            // Başka kullanıcının gideri: denetim CreatorId'yi doluysa ezmez.
+            ObjectHelper.TrySetProperty(expense, x => x.CreatorId, () => creatorId);
+        }
+
+        await InNewUowAsync(() => GetRequiredService<IRepository<Expense, Guid>>().InsertAsync(expense, autoSave: true));
+        return expense.Id;
+    }
+
+    [Fact]
+    public async Task Masraf_yakala_fisi_kendi_giderine_ekler_baskasininkine_eklemez()
+    {
+        (await GetResponseAsStringAsync("/Expenses/Capture"))
+            .ShouldContain("data-can-attach-documents=\"true\"", Case.Sensitive);
+
+        var own = await CaptureExpenseAsync(null);
+        var response = await PostAsync("/Expenses/Capture", new[] { ("expenseId", own.ToString()) },
+            ("Fiş - Shell - 2026-11-11.jpg", new byte[] { 0xFF, 0xD8, 0xFF }), fileField: "file",
+            postUrl: "/Expenses/Capture?handler=AttachReceipt", fieldCheck: null);
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent, await response.Content.ReadAsStringAsync());
+        (await InNewUowAsync(() => GetRequiredService<IFinanceDocumentAppService>().GetExpenseDocumentsAsync(own)))
+            .ShouldHaveSingleItem().Name.ShouldBe("Fiş - Shell - 2026-11-11.jpg");
+
+        var foreign = await CaptureExpenseAsync(Guid.NewGuid());
+        var denied = await PostAsync("/Expenses/Capture", new[] { ("expenseId", foreign.ToString()) },
+            ("fis.jpg", new byte[] { 0xFF, 0xD8, 0xFF }), fileField: "file",
+            postUrl: "/Expenses/Capture?handler=AttachReceipt", fieldCheck: null);
+        denied.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await InNewUowAsync(() => GetRequiredService<IFinanceDocumentAppService>().GetExpenseDocumentsAsync(foreign)))
+            .ShouldBeEmpty();
+    }
+
     [Fact]
     public async Task Fatura_ve_tahsilat_dekontu_faturaya_baglanir_duzenlemede_listelenir()
     {
@@ -243,5 +285,9 @@ public class FinanceDocumentFieldDenied_Tests : PlatformWebTestBase
             html.ShouldContain(title, Case.Sensitive, url);
             html.ShouldNotContain("name=\"DocumentFiles\"", Case.Sensitive, url);
         }
+
+        // Masraf Yakala ekranı da fotoğrafı "kayda eklenmez" diye anlatır.
+        (await GetResponseAsStringAsync("/Expenses/Capture"))
+            .ShouldContain("data-can-attach-documents=\"false\"", Case.Sensitive);
     }
 }

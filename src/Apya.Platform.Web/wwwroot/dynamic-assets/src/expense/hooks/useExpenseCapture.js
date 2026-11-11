@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createExpense, fetchBudgetLines, fetchCaptureContext } from './expenseApi';
+import { attachReceipt, createExpense, fetchBudgetLines, fetchCaptureContext } from './expenseApi';
 import { flushQueue, offlineQueue } from './offlineQueue';
 
 /** Proje + kasa seçicileri. Bağlam olmadan gider oluşturulamaz (kasa zorunlu). */
@@ -53,15 +53,29 @@ export function useOfflineState() {
  *
  * Sonuç `{ queued: true }` taşıyorsa kayıt HENÜZ SUNUCUDA YOK; arayüz bunu
  * "kaydedildi" değil "kuyruğa alındı" diye göstermeli.
+ *
+ * `photo` verilirse gider kaydedildikten SONRA fiş olarak eklenir. Fiş eklenemezse
+ * gider geri alınmaz (sahada kayıt kaybolmamalı): sonuç `receiptError` taşır, arayüz
+ * "kaydedildi ama fiş eklenemedi" der. Kuyruğa giden kayıt fotoğrafı TAŞIMAZ (bkz.
+ * offlineQueue).
  */
 export function useSubmitExpense() {
     return useMutation({
         retry: false, /* Finansal işlem — duplicate önlenir */
-        mutationFn: async (payload) => {
+        mutationFn: async ({ payload, photo = null }) => {
             const online = typeof navigator === 'undefined' || navigator.onLine !== false;
 
             if (online) {
-                return { queued: false, result: await createExpense(payload) };
+                const result = await createExpense(payload);
+                if (!photo || !result?.id) {
+                    return { queued: false, result, receiptAttached: false, receiptError: null };
+                }
+                try {
+                    await attachReceipt(result.id, photo, payload);
+                    return { queued: false, result, receiptAttached: true, receiptError: null };
+                } catch (err) {
+                    return { queued: false, result, receiptAttached: false, receiptError: err?.message ?? 'Fiş eklenemedi.' };
+                }
             }
 
             if (!offlineQueue.enqueue(payload)) {

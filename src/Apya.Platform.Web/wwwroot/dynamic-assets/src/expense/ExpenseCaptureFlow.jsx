@@ -29,9 +29,14 @@ const SUCCESS_AUTO_RESET_MS = 1500;        /* Success ekranı görünür kalsın
                                               kullanıcı "kaydedildi"yi okusun;
                                               sonra otomatik capture'a dön. */
 
-export function ExpenseCaptureFlow() {
+/**
+ * @param {boolean} canAttachReceipt Fotoğraf kayda fiş olarak eklenebilir mi (Belgeler paketi +
+ *   belge yükleme izni). Kural sunucuda; sayfa sonucu adanın kök öğesine basar.
+ */
+export function ExpenseCaptureFlow({ canAttachReceipt = false }) {
     const [phase, setPhase] = useState(PHASES.CAPTURE);
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [photo, setPhoto] = useState(null);
     const [submittedResult, setSubmittedResult] = useState(null);
     const [projectId, setProjectId] = useState(null);
 
@@ -45,12 +50,14 @@ export function ExpenseCaptureFlow() {
     const handleFile = useCallback((file) => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(URL.createObjectURL(file));
+        setPhoto(file);
         setPhase(PHASES.FORM);
     }, [previewUrl]);
 
     const resetForCapture = useCallback(() => {
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
+        setPhoto(null);
         setSubmittedResult(null);
         submit.reset();
         setPhase(PHASES.CAPTURE);
@@ -58,21 +65,27 @@ export function ExpenseCaptureFlow() {
 
     const handleSubmit = useCallback(async (payload) => {
         try {
-            const outcome = await submit.mutateAsync(payload);
+            const outcome = await submit.mutateAsync({ payload, photo: canAttachReceipt ? photo : null });
             setSubmittedResult(outcome.result);
             setPhase(PHASES.SUCCESS);
             refreshQueued();
 
             // "Kuyruğa alındı" ile "kaydedildi" AYNI ŞEY DEĞİL: kuyruktaki kayıt
             // henüz sunucuda yok. Ekranın ikisini aynı sözle anlatması, bu
-            // ekranın eski hâlindeki yalanın tekrarı olurdu.
+            // ekranın eski hâlindeki yalanın tekrarı olurdu. Fiş için de aynı:
+            // gider kaydedilip fiş eklenemediyse bu SÖYLENİR.
+            const summary = `${formatMoney(payload.amount, payload.currency)} — ${payload.vendor || 'Kayıt'}`;
             if (outcome.queued) {
                 toast.warning('Kuyruğa alındı', {
                     description: 'Bağlantı yok — bağlantı gelince otomatik gönderilecek.',
                 });
+            } else if (outcome.receiptError) {
+                toast.warning('Masraf kaydedildi, fiş eklenemedi', {
+                    description: `${outcome.receiptError} Fişi gider düzenleme penceresinden ekleyebilirsin.`,
+                });
             } else {
                 toast.success('Masraf kaydedildi', {
-                    description: `${formatMoney(payload.amount, payload.currency)} — ${payload.vendor || 'Kayıt'}`,
+                    description: outcome.receiptAttached ? `${summary} · fiş eklendi` : summary,
                 });
             }
             /* Auto-reset: saha kullanıcısı seri kayıt için bekler. Kullanıcı
@@ -94,7 +107,7 @@ export function ExpenseCaptureFlow() {
             });
             /* Form açık kalsın — kullanıcı düzeltsin */
         }
-    }, [submit, toast, resetForCapture, refreshQueued]);
+    }, [submit, toast, resetForCapture, refreshQueued, canAttachReceipt, photo]);
 
     // Bağlantı gelince kuyruğu boşalt. Sonucu KULLANICIYA SÖYLER: sessizce
     // göndermek, gönderilemeyen kaydın fark edilmemesi demekti.
@@ -168,6 +181,7 @@ export function ExpenseCaptureFlow() {
                 lines={lines.data}
                 onProjectChange={setProjectId}
                 isOffline={!isOnline}
+                receiptMode={canAttachReceipt ? (isOnline ? 'attach' : 'offline') : 'none'}
             />
         </div>
     );
