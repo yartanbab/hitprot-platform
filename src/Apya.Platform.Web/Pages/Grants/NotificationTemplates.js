@@ -240,5 +240,58 @@ $(function () {
         load();
     });
 
+    // --- JSON aktarımı: dosya seçilir → önizleme (yazmaz) → onay → aynı dosya tek işlemde yazılır.
+    var importFile = null;
+
+    function postImport(handler) {
+        var data = new FormData();
+        data.append('file', importFile);
+        data.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+        return fetch('/Grants/NotificationTemplates?handler=' + handler, { method: 'POST', body: data, credentials: 'same-origin' })
+            .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); });
+    }
+
+    function closePreview() {
+        importFile = null;
+        $('#NtImportFile').val('');
+        $('#NtImportPreview').addClass('d-none');
+        $('#NtImportBtn, #NtImportConfirm').prop('disabled', false);
+    }
+
+    $('#NtImportBtn').on('click', function () { $('#NtImportFile').trigger('click'); });
+
+    $('#NtImportFile').on('change', function () {
+        if (!this.files || !this.files.length) { return; }
+        importFile = this.files[0];
+        $('#NtImportBtn').prop('disabled', true);
+        postImport('Preview').then(function (result) {
+            $('#NtImportMessage').text(result.message);
+            var $rows = $('#NtImportRows').empty();
+            (result.rows || []).forEach(function (r) { $rows.append($('<li>').text(r.label + ' — ' + r.action)); });
+            $('#NtImportConfirm').toggleClass('d-none', !result.ok);
+            $('#NtImportPreview').removeClass('d-none');
+            $('#NtImportBtn').prop('disabled', false);
+        }).catch(function () {
+            closePreview();
+            abp.message.error(l('Import:Error:Unexpected'));
+        });
+    });
+
+    $('#NtImportCancel').on('click', closePreview);
+
+    $('#NtImportConfirm').on('click', function () {
+        if (!importFile) { return; }
+        $('#NtImportConfirm').prop('disabled', true);
+        postImport('Import').then(function (result) {
+            closePreview();
+            if (!result.ok) { abp.message.error(result.message); return; }
+            abp.notify.success(result.message);
+            load();
+        }).catch(function () {
+            closePreview();
+            abp.message.error(l('Import:Error:Unexpected'));
+        });
+    });
+
     load();
 });
