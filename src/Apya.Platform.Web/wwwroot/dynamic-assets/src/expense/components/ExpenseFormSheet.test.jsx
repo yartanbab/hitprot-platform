@@ -58,6 +58,17 @@ describe('ExpenseFormSheet — sahte okuma yok', () => {
     });
 });
 
+describe('ExpenseFormSheet — fotoğrafın akıbeti', () => {
+    it.each([
+        ['attach', /kayda fiş olarak eklenir/],
+        ['offline', /Bağlantı yokken fotoğraf kayda eklenmez/],
+        ['none', /yalnız bu ekranda görünür, kayda eklenmez/],
+    ])('%s: ekran fotoğrafa ne olacağını doğru söyler', (receiptMode, text) => {
+        renderForm({ previewUrl: 'blob:fis-1', receiptMode });
+        expect(screen.getByText(text)).toBeInTheDocument();
+    });
+});
+
 describe('CameraCapture — vaat', () => {
     it('otomatik okuma vaat etmez, kullanıcıya fotoğrafa bakarak girmesini söyler', () => {
         render(<ToastProvider><CameraCapture onFile={vi.fn()} /></ToastProvider>);

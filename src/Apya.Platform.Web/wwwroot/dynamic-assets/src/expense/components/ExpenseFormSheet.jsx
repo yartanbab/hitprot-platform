@@ -35,6 +35,17 @@ const CATEGORY_OPTIONS = [
 
 const CURRENCIES = ['TRY', 'USD', 'EUR'];
 
+/* Fotoğrafın akıbeti — ekran ne olacağını DOĞRU söylemeli:
+   attach  : çevrimiçi + belge izni → kayda fiş olarak eklenir,
+   offline : kuyruk fotoğraf taşımaz (bkz. offlineQueue),
+   none    : Belgeler paketi ya da belge yükleme izni yok. */
+const RECEIPT_NOTES = {
+    attach: 'Fotoğraf kayda fiş olarak eklenir; Belgeler\'de de görünür.',
+    offline: 'Bağlantı yokken fotoğraf kayda eklenmez. Gider gönderildikten sonra fişi gider '
+        + 'düzenleme penceresinden ekleyebilirsin.',
+    none: 'Fotoğraf yalnız bu ekranda görünür, kayda eklenmez.',
+};
+
 /* Seçici stili — mevcut Input/textarea deseniyle aynı token'lar.
    min-h-[44px]: tasarım 1d "tüm dokunma hedefleri ≥44px" diyor. */
 const SELECT_CLS = [
@@ -45,7 +56,7 @@ const SELECT_CLS = [
 
 export function ExpenseFormSheet({
     open, onOpenChange, previewUrl, onSubmit, isSubmitting,
-    context, lines, onProjectChange, isOffline,
+    context, lines, onProjectChange, isOffline, receiptMode = 'none',
 }) {
     const [form, setForm] = useState(emptyForm);
     const [showMore, setShowMore] = useState(false);
@@ -102,8 +113,7 @@ export function ExpenseFormSheet({
                                     className="max-h-64 w-full rounded-md border border-subtle bg-surface-sunken object-contain"
                                 />
                                 <figcaption className="text-xs text-text-tertiary">
-                                    Fotoğraf yalnız bu ekranda görünür, kayda eklenmez. Belgeyi sonradan
-                                    Dokümanlar'dan bu gidere bağlayabilirsin.
+                                    {RECEIPT_NOTES[receiptMode] ?? RECEIPT_NOTES.none}
                                 </figcaption>
                             </figure>
                         )}

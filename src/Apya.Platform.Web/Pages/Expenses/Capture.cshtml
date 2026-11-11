@@ -9,6 +9,9 @@
 
 @* Full-bleed: React island kendi kabuğunu çizer (negatif margin ile içerik
    alanının padding'ini yer). DESIGN-SYSTEM §10.1 gereği .apya-page KULLANMAZ. *@
-<div id="apya-expense-capture-root" style="margin: -1.5rem -1rem;"></div>
+@* data-can-attach-documents: fiş fotoğrafı kayda eklenebilir mi (Belgeler paketi + belge yükleme izni).
+   Kural sunucuda (FinanceDocumentAppService.CanAttachAsync); ada yalnız sonucu verilir. *@
+<div id="apya-expense-capture-root" style="margin: -1.5rem -1rem;"
+     data-can-attach-documents="@(Model.CanAttachDocuments ? "true" : "false")"></div>
 
 <script type="module" src="~/js/expense-capture.js" asp-append-version="true"></script>
