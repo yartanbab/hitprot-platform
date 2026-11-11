@@ -5,4 +5,4 @@
     Layout = null;
 }
 
-<partial name="_ExcelImportModal" model="@L["Import:Title:Incomes"].Value" />
+<partial name="_ExcelImportModal" model="@(new Apya.Platform.Web.Import.ExcelImportModalOptions(L["Import:Title:Incomes"].Value, L["Import:Hint:Finance"].Value))" />

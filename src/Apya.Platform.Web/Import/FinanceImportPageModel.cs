@@ -8,15 +8,10 @@ using Apya.Platform.Permissions;
 using Apya.Platform.ProjectBudgets;
 using Apya.Platform.ProjectBudgets.Dtos;
 using Apya.Platform.Projects;
-using Apya.Platform.Web.Export;
 using Apya.Platform.Web.Pages;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Dtos;
-using Volo.Abp.Uow;
 
 namespace Apya.Platform.Web.Import;
 
@@ -34,18 +29,24 @@ public sealed class FinanceImportRow<TCategory> where TCategory : struct, Enum
     public string? Description { get; set; }
 }
 
-/// <summary>
-/// Gider ve gelir pencerelerinin ortak "Excel'den içe aktar" gövdesi: şablon → önizleme → onay.
-/// Her satır ekranın kendi oluşturma servisinden geçer (kasa hareketi, kur damgası, bütçe kalemi
-/// kuralı aynen çalışır). Satırlar ayrı ve işlemli iş biriminde yazılır: tek satır düşerse hiçbiri
-/// kalmaz. Sayfanın kendi iş birimi kullanılmaz — yakalanan hatayı başarı sayıp önceki satırları
-/// kaydederdi (bkz. <see cref="PlatformPageModel.OnPageHandlerExecuted"/>).
-/// </summary>
-public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel where TCategory : struct, Enum
+/// <summary>Gider/gelir eşlemesinin istek boyu seçenekleri; kalem listesi proje başına bir kez okunur.</summary>
+public sealed class FinanceImportLookups<TCategory> where TCategory : struct, Enum
 {
-    /// <summary>Şablon sayfası ve dosya adı (ör. "Export:Expenses:Name").</summary>
-    protected abstract string NameKey { get; }
+    internal IReadOnlyList<CashAccountLookupDto> Accounts { get; init; } = [];
+    internal List<(Guid Id, string Name)> Projects { get; init; } = [];
+    internal List<(TCategory Value, string Name)> Categories { get; init; } = [];
+    internal bool CanSeeBudget { get; init; }
+    internal Dictionary<Guid, ProjectRecordFormLookupDto> Lines { get; } = new();
+}
 
+/// <summary>
+/// Gider ve gelir pencerelerinin ortak eşlemesi: kasa, kategori, proje ve bütçe kalemi. Her satır
+/// ekranın kendi oluşturma servisinden geçer (kasa hareketi, kur damgası, bütçe kalemi kuralı).
+/// </summary>
+public abstract class FinanceImportPageModel<TCategory>
+    : ExcelImportPageModel<FinanceImportLookups<TCategory>, FinanceImportRow<TCategory>>
+    where TCategory : struct, Enum
+{
     /// <summary>Kategori metninin anahtar öneki (ör. "Expense:Category:").</summary>
     protected abstract string CategoryKeyPrefix { get; }
 
@@ -55,59 +56,6 @@ public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel wher
 
     protected abstract Task<IReadOnlyList<CashAccountLookupDto>> GetAccountsAsync();
 
-    protected abstract Task CreateAsync(FinanceImportRow<TCategory> row);
-
-    public void OnGet()
-    {
-    }
-
-    public async Task<IActionResult> OnGetTemplateAsync()
-    {
-        var lookups = await LoadLookupsAsync();
-        var name = L[NameKey].Value;
-        var bytes = ExcelImport.Template(name, L["Import:OptionsSheet"], Columns(lookups));
-        return File(bytes, ExcelTable.ContentType, ExcelTable.FileName($"{L["Import:Template"]}_{name}", Clock.Now));
-    }
-
-    public async Task<IActionResult> OnPostPreviewAsync(IFormFile? file)
-    {
-        var (sheet, _) = await ReadAsync(file);
-        return new JsonResult(ImportResponse.Preview(sheet, L));
-    }
-
-    public async Task<IActionResult> OnPostImportAsync(IFormFile? file, [FromServices] IUnitOfWorkManager unitOfWorkManager)
-    {
-        var (sheet, rows) = await ReadAsync(file);
-        if (sheet.Errors.Count > 0 || sheet.Rows.Any(r => r.Errors.Count > 0))
-        {
-            return new JsonResult(ImportResponse.Preview(sheet, L));
-        }
-
-        // Complete çağrılmadan çıkılırsa (reddedilen satır) bütün satırlar geri alınır.
-        using var uow = unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
-        for (var i = 0; i < rows.Count; i++)
-        {
-            try
-            {
-                await CreateAsync(rows[i]);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "{Page} içe aktarma satır {Row} reddedildi", GetType().Name, sheet.Rows[i].Number);
-                return new JsonResult(ImportResponse.Failed(L["Import:Error:Row", sheet.Rows[i].Number, this.UserMessage(ex)]));
-            }
-        }
-
-        await uow.CompleteAsync();
-        return new JsonResult(ImportResponse.Done(L["Import:Done", rows.Count]));
-    }
-
-    private sealed record Lookups(
-        IReadOnlyList<CashAccountLookupDto> Accounts,
-        List<(Guid Id, string Name)> Projects,
-        List<(TCategory Value, string Name)> Categories,
-        bool CanSeeBudget);
-
     private sealed record Headers(string Date, string Title, string Category, string Amount, string Currency,
         string Account, string Project, string BudgetLine, string Description);
 
@@ -116,7 +64,7 @@ public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel wher
         L["Export:Col:Amount"], L["Export:Col:Currency"], L["Export:Col:CashAccount"], L["Export:Col:Project"],
         L["Export:Col:BudgetLine"], L["Export:Col:Description"]);
 
-    private List<ImportColumn> Columns(Lookups lookups)
+    protected override IReadOnlyList<ImportColumn> Columns(FinanceImportLookups<TCategory> lookups)
     {
         var h = H;
         return
@@ -133,40 +81,20 @@ public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel wher
         ];
     }
 
-    private async Task<Lookups> LoadLookupsAsync()
+    protected override async Task<FinanceImportLookups<TCategory>> LoadLookupsAsync()
     {
-        var projects = (await Service<IProjectAppService>().GetListAsync(new PagedAndSortedResultRequestDto { MaxResultCount = 1000 }))
-            .Items.Select(p => (p.Id, p.Name)).ToList();
-        var categories = Enum.GetValues<TCategory>().Select(c => (c, L[CategoryKeyPrefix + c].Value)).ToList();
-        var canSeeBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget);
-        return new Lookups(await GetAccountsAsync(), projects, categories, canSeeBudget);
+        var projects = await HttpContext.RequestServices.GetRequiredService<IProjectAppService>()
+            .GetListAsync(new PagedAndSortedResultRequestDto { MaxResultCount = 1000 });
+        return new FinanceImportLookups<TCategory>
+        {
+            Accounts = await GetAccountsAsync(),
+            Projects = projects.Items.Select(p => (p.Id, p.Name)).ToList(),
+            Categories = Enum.GetValues<TCategory>().Select(c => (c, L[CategoryKeyPrefix + c].Value)).ToList(),
+            CanSeeBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget)
+        };
     }
 
-    private T Service<T>() where T : notnull => HttpContext.RequestServices.GetRequiredService<T>();
-
-    private async Task<(ImportSheet Sheet, List<FinanceImportRow<TCategory>> Rows)> ReadAsync(IFormFile? file)
-    {
-        var rows = new List<FinanceImportRow<TCategory>>();
-        if (file == null || file.Length == 0)
-        {
-            return (new ImportSheet(new List<string>(), new List<ImportRow>(), [L["Import:ChooseFile"]]), rows);
-        }
-
-        var lookups = await LoadLookupsAsync();
-        await using var stream = file.OpenReadStream();
-        var sheet = ExcelImport.Read(stream, Columns(lookups), L);
-        var lines = new Dictionary<Guid, ProjectRecordFormLookupDto>();
-
-        foreach (var row in sheet.Rows)
-        {
-            rows.Add(await MapAsync(row, lookups, lines));
-        }
-
-        return (sheet, rows);
-    }
-
-    private async Task<FinanceImportRow<TCategory>> MapAsync(ImportRow row, Lookups lookups,
-        Dictionary<Guid, ProjectRecordFormLookupDto> lines)
+    protected override async Task<FinanceImportRow<TCategory>> MapAsync(ImportRow row, FinanceImportLookups<TCategory> lookups)
     {
         var h = H;
         var result = new FinanceImportRow<TCategory>();
@@ -185,11 +113,10 @@ public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel wher
         else result.Amount = Math.Round(amount.Value, 2);
 
         var category = row.Text(h.Category);
-        if (category.Length > 0)
+        if (category.Length > 0 && TryMatch(row, h.Category, category, lookups.Categories,
+                c => [c.Name, c.Value.ToString()], out var cat))
         {
-            var match = lookups.Categories.Where(c => Same(c.Name, category) || Same(c.Value.ToString(), category)).ToList();
-            if (match.Count == 1) result.Category = match[0].Value;
-            else row.Errors.Add(L["Import:Error:NotFound", h.Category, category]);
+            result.Category = cat.Value;
         }
 
         var accountText = row.Text(h.Account);
@@ -198,11 +125,9 @@ public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel wher
         {
             if (AccountRequired) row.Errors.Add(L["Import:Error:Required", h.Account]);
         }
-        else
+        else if (TryMatch(row, h.Account, accountText, lookups.Accounts, a => [a.Name], out var account))
         {
-            var match = lookups.Accounts.Where(a => Same(a.Name, accountText)).ToList();
-            if (match.Count == 1) (result.CashAccountId, accountCurrency) = (match[0].Id, match[0].Currency);
-            else row.Errors.Add(L[match.Count == 0 ? "Import:Error:NotFound" : "Import:Error:Ambiguous", h.Account, accountText]);
+            (result.CashAccountId, accountCurrency) = (account!.Id, account.Currency);
         }
 
         // Para birimi boşsa kasanınki: kasaya giren/çıkan para çoğunlukla kasanın para birimindedir.
@@ -215,15 +140,10 @@ public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel wher
         var lineText = row.Text(h.BudgetLine);
         if (projectText.Length > 0)
         {
-            var match = lookups.Projects.Where(p => Same(p.Name, projectText)).ToList();
-            if (match.Count == 1)
+            if (TryMatch(row, h.Project, projectText, lookups.Projects, p => [p.Name], out var project))
             {
-                result.ProjectId = match[0].Id;
-                await MapBudgetLineAsync(row, result, lineText, lookups, lines);
-            }
-            else
-            {
-                row.Errors.Add(L[match.Count == 0 ? "Import:Error:NotFound" : "Import:Error:Ambiguous", h.Project, projectText]);
+                result.ProjectId = project.Id;
+                await MapBudgetLineAsync(row, result, lineText, lookups);
             }
         }
         else if (lineText.Length > 0)
@@ -244,8 +164,8 @@ public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel wher
     /// Kalem kodla, adla ya da "kod - ad" ile eşleşir. Bütçeyi görme izni yoksa eşleme yapılamaz;
     /// kalem zorunluysa sunucudaki kural kaydı satır numarasıyla reddeder.
     /// </summary>
-    private async Task MapBudgetLineAsync(ImportRow row, FinanceImportRow<TCategory> result, string lineText, Lookups lookups,
-        Dictionary<Guid, ProjectRecordFormLookupDto> lines)
+    private async Task MapBudgetLineAsync(ImportRow row, FinanceImportRow<TCategory> result, string lineText,
+        FinanceImportLookups<TCategory> lookups)
     {
         var h = H;
         if (!lookups.CanSeeBudget)
@@ -255,10 +175,11 @@ public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel wher
         }
 
         var projectId = result.ProjectId!.Value;
-        if (!lines.TryGetValue(projectId, out var lookup))
+        if (!lookups.Lines.TryGetValue(projectId, out var lookup))
         {
-            lookup = await Service<IProjectBudgetAppService>().GetRecordFormLookupAsync(projectId);
-            lines[projectId] = lookup;
+            lookup = await HttpContext.RequestServices.GetRequiredService<IProjectBudgetAppService>()
+                .GetRecordFormLookupAsync(projectId);
+            lookups.Lines[projectId] = lookup;
         }
 
         if (lineText.Length == 0)
@@ -267,12 +188,9 @@ public abstract class FinanceImportPageModel<TCategory> : PlatformPageModel wher
             return;
         }
 
-        var match = lookup.Lines
-            .Where(l => Same(l.Code, lineText) || Same(l.Name, lineText) || Same($"{l.Code} - {l.Name}", lineText))
-            .ToList();
-        if (match.Count == 1) result.BudgetLineId = match[0].Id;
-        else row.Errors.Add(L[match.Count == 0 ? "Import:Error:NotFound" : "Import:Error:Ambiguous", h.BudgetLine, lineText]);
+        if (TryMatch(row, h.BudgetLine, lineText, lookup.Lines, l => [l.Code, l.Name, $"{l.Code} - {l.Name}"], out var line))
+        {
+            result.BudgetLineId = line!.Id;
+        }
     }
-
-    private static bool Same(string a, string b) => ExcelImport.Normalize(a) == ExcelImport.Normalize(b);
 }

@@ -7,6 +7,7 @@ $(function () {
     var console_ = apya.taskConsole;
 
     var createModal = new abp.ModalManager(abp.appPath + 'Tasks/CreateModal');
+    var importModal = new abp.ModalManager(abp.appPath + 'Tasks/ImportModal');
     // editModal: apya.taskDetail kuyruk köprüsü sayesinde her zaman hazır.
     var _oldModal = new abp.ModalManager(abp.appPath + 'Tasks/EditModal');
     var editModal = {
@@ -1067,6 +1068,10 @@ $(function () {
     }
 
     createModal.onResult(function () { reloadAll(); });
+
+    // İçe aktarma pencereyi kendisi kapatmaz; kapanınca liste ve görünümler yenilenir.
+    $('#menu-import-excel').on('click', function () { importModal.open(); });
+    importModal.onClose(function () { reloadAll(); });
     abp.event.on('app.task.updated', function () { reloadAll(); });
 
     // ─── Kaydedilmiş görünümler ────────────────────────────────────────────
