@@ -271,6 +271,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.DocumentIntegration> DocumentIntegrations { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentExpenseMatch> DocumentExpenseMatches { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentIncomeLink> DocumentIncomeLinks { get; set; }
+        public DbSet<Apya.Platform.Documents.DocumentInvoiceLink> DocumentInvoiceLinks { get; set; }
         public DbSet<ProjectRisk> ProjectRisks { get; set; }
 
         /* --- AI MODÜLÜ --- */
@@ -2149,6 +2150,16 @@ namespace Apya.Platform.EntityFrameworkCore
 
                 // Aynı belge aynı gelire bir kez bağlanır.
                 b.HasIndex(x => new { x.IncomeEntryId, x.DocumentFileId }).IsUnique();
+                b.HasIndex(x => x.DocumentFileId);
+            });
+
+            builder.Entity<Apya.Platform.Documents.DocumentInvoiceLink>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DocumentInvoiceLinks", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+
+                // Aynı belge aynı faturaya bir kez bağlanır.
+                b.HasIndex(x => new { x.InvoiceId, x.DocumentFileId }).IsUnique();
                 b.HasIndex(x => x.DocumentFileId);
             });
 

@@ -7,7 +7,7 @@ using Volo.Abp.Application.Services;
 namespace Apya.Platform.Documents;
 
 /// <summary>
-/// Gider/gelir penceresindeki "Belge ekle" alanı: yüklenen fatura, fiş ya da dekont
+/// Gider, gelir ve fatura pencerelerindeki "Belge ekle" alanı: yüklenen fatura, fiş ya da dekont
 /// Belge Merkezi'ne konur ve kayda bağlanır. Önceden belge önce Belgeler ekranına
 /// yüklenip sonra ayrı bir pencereden bağlanıyordu.
 ///
@@ -23,7 +23,12 @@ public interface IFinanceDocumentAppService : IApplicationService
 
     Task AttachToIncomeAsync(Guid incomeEntryId, string fileName, string storedFileName, string contentType, long fileSize);
 
+    /// <summary>Faturanın kendisi ya da tahsilat dekontu — ikisi de faturaya bağlanır.</summary>
+    Task AttachToInvoiceAsync(Guid invoiceId, string fileName, string storedFileName, string contentType, long fileSize);
+
     Task<List<ProjectExpenseDocumentDto>> GetExpenseDocumentsAsync(Guid expenseId);
 
     Task<List<ProjectExpenseDocumentDto>> GetIncomeDocumentsAsync(Guid incomeEntryId);
+
+    Task<List<ProjectExpenseDocumentDto>> GetInvoiceDocumentsAsync(Guid invoiceId);
 }

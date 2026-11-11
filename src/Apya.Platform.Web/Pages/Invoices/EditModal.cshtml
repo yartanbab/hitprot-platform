@@ -10,7 +10,7 @@
 }
 @* Yeni Fatura penceresinin (CreateModal) düz form deseni. Ödeme alınmış faturada yalnız cari ve yön
    kilitlidir: ödemenin kasa ve cari kayıtları onlara yazılmıştır, sunucu ikisini faturadan alır. *@
-<form method="post" action="@Url.Page("/Invoices/EditModal")" id="InvoiceEditForm">
+<form method="post" action="@Url.Page("/Invoices/EditModal")" id="InvoiceEditForm" enctype="multipart/form-data">
     <input type="hidden" asp-for="Id" />
     <input type="hidden" asp-for="InvoiceInfo.ProjectId" />
     <abp-modal size="Large">
@@ -97,6 +97,11 @@
                 <label class="form-label" asp-for="InvoiceInfo.Notes">Notlar</label>
                 <textarea asp-for="InvoiceInfo.Notes" class="form-control" rows="2" placeholder="İsteğe bağlı not..."></textarea>
             </div>
+
+            @if (Model.CanAttachDocuments)
+            {
+                <partial name="_FinanceDocumentField" model="Model.LinkedDocuments" />
+            }
 
             <hr />
             <div class="d-flex justify-content-between align-items-center mb-3">

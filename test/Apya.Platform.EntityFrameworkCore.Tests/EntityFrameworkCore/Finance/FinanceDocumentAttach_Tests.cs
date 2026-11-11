@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -6,6 +7,8 @@ using Apya.Platform.CashAccounts;
 using Apya.Platform.Documents;
 using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
+using Apya.Platform.Invoices;
+using Apya.Platform.Invoices.Dtos;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
 using Microsoft.AspNetCore.Authorization;
@@ -165,12 +168,47 @@ public class FinanceDocumentAttach_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     [Fact]
+    public async Task Faturaya_ve_tahsilatina_eklenen_belgeler_faturaya_baglanir()
+    {
+        var project = await ProjectAsync();
+        var invoice = await GetRequiredService<IInvoiceAppService>().CreateAsync(new CreateInvoiceDto
+        {
+            ProjectId = project.Id,
+            Direction = InvoiceDirection.Sales,
+            InvoiceNumber = "BEL-" + Guid.NewGuid().ToString("N")[..6],
+            InvoiceDate = new DateTime(2026, 11, 11),
+            DueDate = new DateTime(2026, 11, 26),
+            Items = new List<CreateInvoiceItemDto> { new() { Description = "Danışmanlık", Quantity = 1, UnitPrice = 100m } }
+        });
+
+        await _service.AttachToInvoiceAsync(invoice.Id, "Fatura.pdf", Guid.NewGuid() + ".pdf", "application/pdf", 10);
+        await _service.AttachToInvoiceAsync(invoice.Id, "Dekont.pdf", Guid.NewGuid() + ".pdf", "application/pdf", 10);
+
+        (await _service.GetInvoiceDocumentsAsync(invoice.Id)).Select(d => d.Name)
+            .ShouldBe(new[] { "Fatura.pdf", "Dekont.pdf" }, ignoreOrder: true);
+
+        var links = await GetRequiredService<IRepository<DocumentInvoiceLink, Guid>>()
+            .GetListAsync(l => l.InvoiceId == invoice.Id);
+        links.Count.ShouldBe(2);
+        // Fatura projeye zorunlu bağlı: belgeler projenin klasörüne düşer.
+        foreach (var link in links)
+        {
+            (await _fileRepository.GetAsync(link.DocumentFileId)).ProjectId.ShouldBe(project.Id);
+        }
+    }
+
+    [Fact]
     public void Servis_uzaktan_cagrilamaz_ve_belge_yukleme_izni_ister()
     {
         var type = typeof(FinanceDocumentAppService);
         type.GetCustomAttribute<RemoteServiceAttribute>()!.IsEnabled.ShouldBeFalse();
 
-        foreach (var name in new[] { nameof(FinanceDocumentAppService.AttachToExpenseAsync), nameof(FinanceDocumentAppService.AttachToIncomeAsync) })
+        foreach (var name in new[]
+                 {
+                     nameof(FinanceDocumentAppService.AttachToExpenseAsync),
+                     nameof(FinanceDocumentAppService.AttachToIncomeAsync),
+                     nameof(FinanceDocumentAppService.AttachToInvoiceAsync),
+                 })
         {
             type.GetMethod(name)!.GetCustomAttributes<AuthorizeAttribute>().Select(a => a.Policy)
                 .ShouldBe(new[] { PlatformPermissions.Documents.Default, PlatformPermissions.Documents.Edit }, ignoreOrder: true);

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Expenses;
 using Apya.Platform.Incomes;
+using Apya.Platform.Invoices;
 using Apya.Platform.Permissions;
 using Apya.Platform.ProjectBudgets.Dtos;
 using Apya.Platform.Projects;
@@ -15,7 +16,7 @@ using Volo.Abp.Domain.Repositories;
 namespace Apya.Platform.Documents;
 
 /// <summary>
-/// Gider/gelir penceresinden yüklenen belgeyi Belge Merkezi'ne koyar ve kayda bağlar.
+/// Gider, gelir ve fatura pencerelerinden yüklenen belgeyi Belge Merkezi'ne koyar ve kayda bağlar.
 ///
 /// <para>Dosya kaydın projesinin belge klasörüne düşer (içinde "Finans" alt klasörü varsa oraya).
 /// Projede henüz klasör yoksa, belge kurulum sihirbazının açtığı kök klasörün aynısı açılır.
@@ -37,8 +38,10 @@ public class FinanceDocumentAppService : PlatformAppService, IFinanceDocumentApp
     private readonly IRepository<DocumentAttachment, Guid> _attachmentRepository;
     private readonly IRepository<DocumentExpenseMatch, Guid> _expenseMatchRepository;
     private readonly IRepository<DocumentIncomeLink, Guid> _incomeLinkRepository;
+    private readonly IRepository<DocumentInvoiceLink, Guid> _invoiceLinkRepository;
     private readonly IRepository<Expense, Guid> _expenseRepository;
     private readonly IRepository<IncomeEntry, Guid> _incomeRepository;
+    private readonly IRepository<Invoice, Guid> _invoiceRepository;
     private readonly IRepository<Project, Guid> _projectRepository;
 
     public FinanceDocumentAppService(
@@ -48,10 +51,14 @@ public class FinanceDocumentAppService : PlatformAppService, IFinanceDocumentApp
         IRepository<DocumentAttachment, Guid> attachmentRepository,
         IRepository<DocumentExpenseMatch, Guid> expenseMatchRepository,
         IRepository<DocumentIncomeLink, Guid> incomeLinkRepository,
+        IRepository<DocumentInvoiceLink, Guid> invoiceLinkRepository,
         IRepository<Expense, Guid> expenseRepository,
         IRepository<IncomeEntry, Guid> incomeRepository,
+        IRepository<Invoice, Guid> invoiceRepository,
         IRepository<Project, Guid> projectRepository)
     {
+        _invoiceLinkRepository = invoiceLinkRepository;
+        _invoiceRepository = invoiceRepository;
         _documentAppService = documentAppService;
         _folderRepository = folderRepository;
         _fileRepository = fileRepository;
@@ -100,6 +107,19 @@ public class FinanceDocumentAppService : PlatformAppService, IFinanceDocumentApp
     }
 
     [Authorize(PlatformPermissions.Documents.Default)]
+    [Authorize(PlatformPermissions.Documents.Edit)]
+    public virtual async Task AttachToInvoiceAsync(
+        Guid invoiceId, string fileName, string storedFileName, string contentType, long fileSize)
+    {
+        var invoice = await _invoiceRepository.GetAsync(invoiceId);
+        var file = await AddToFolderAsync(invoice.ProjectId, fileName, storedFileName, contentType, fileSize);
+
+        await _invoiceLinkRepository.InsertAsync(
+            new DocumentInvoiceLink(GuidGenerator.Create(), invoice.TenantId, file.Id, invoice.Id),
+            autoSave: true);
+    }
+
+    [Authorize(PlatformPermissions.Documents.Default)]
     public virtual async Task<List<ProjectExpenseDocumentDto>> GetExpenseDocumentsAsync(Guid expenseId)
     {
         return await ToDocumentsAsync((await _expenseMatchRepository.GetQueryableAsync())
@@ -113,6 +133,15 @@ public class FinanceDocumentAppService : PlatformAppService, IFinanceDocumentApp
     {
         return await ToDocumentsAsync((await _incomeLinkRepository.GetQueryableAsync())
             .Where(l => l.IncomeEntryId == incomeEntryId)
+            .OrderBy(l => l.CreationTime)
+            .Select(l => l.DocumentFileId));
+    }
+
+    [Authorize(PlatformPermissions.Documents.Default)]
+    public virtual async Task<List<ProjectExpenseDocumentDto>> GetInvoiceDocumentsAsync(Guid invoiceId)
+    {
+        return await ToDocumentsAsync((await _invoiceLinkRepository.GetQueryableAsync())
+            .Where(l => l.InvoiceId == invoiceId)
             .OrderBy(l => l.CreationTime)
             .Select(l => l.DocumentFileId));
     }
