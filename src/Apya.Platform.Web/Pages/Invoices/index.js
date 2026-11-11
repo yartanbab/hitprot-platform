@@ -182,6 +182,7 @@ $(function () {
                   apya.hint('Faturaya kısmi ya da tam tahsilat kaydı ekler. Ödenen tutar genel toplamı karşılayınca fatura Ödendi durumuna geçer.', 'bottom')
                 : '') +
             '    <button type="button" class="btn btn-sm btn-outline-secondary" id="InvoiceDetailPrint"><i class="fa fa-print me-1"></i>Yazdır</button>' +
+            '    <a class="btn btn-sm btn-outline-secondary" id="InvoiceDetailPdf" href="' + abp.appPath + 'Invoices/Print/' + d.id + '?handler=Pdf"><i class="fa fa-file-pdf me-1"></i>' + esc(l('Invoice:Pdf:Download')) + '</a>' +
             '  </div>' +
             '</div>' +
 

@@ -47,4 +47,13 @@ public class PrintModel : AbpPageModel
 
         return Page();
     }
+
+    /// <summary>Aynı faturanın indirilebilir PDF kopyası (aynı okuma, aynı yetki).</summary>
+    public async Task<IActionResult> OnGetPdfAsync(Guid id)
+    {
+        var invoice = await _invoiceAppService.GetAsync(id);
+        var issuer = CurrentTenant.Id != null ? await _myCompanyProfileAppService.GetAsync() : null;
+        var bytes = InvoicePdf.Build(invoice, issuer, L, Clock.Now);
+        return File(bytes, "application/pdf", $"{L["Invoice:Pdf:FileName"]}_{invoice.InvoiceNumber}.pdf");
+    }
 }
