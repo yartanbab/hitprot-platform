@@ -87,4 +87,18 @@ public class AiWorkflowJsonTransfer_Tests : PlatformWebTestBase
         rules[1].ActionType.ShouldBe(WorkflowActionType.Webhook);
         rules[1].ActionPayload.ShouldBeNullOrEmpty();
     }
+
+    [Theory]
+    [InlineData("{\"name\":null,\"rules\":[]}")]
+    [InlineData("{\"name\":\"Elle düzenlenmiş\",\"rules\":null}")]
+    public async Task Elle_bosaltilmis_alan_500_vermez_okunamadi_der(string data)
+    {
+        var file = Encoding.UTF8.GetBytes(
+            "{\"format\":\"apya.ai-workflow\",\"version\":1,\"exportedAt\":\"2026-11-11T00:00:00\",\"data\":" + data + "}");
+
+        var result = await ImportAsync(file);
+
+        result.GetProperty("ok").GetBoolean().ShouldBeFalse();
+        result.GetProperty("message").GetString().ShouldNotBeNullOrWhiteSpace();
+    }
 }
