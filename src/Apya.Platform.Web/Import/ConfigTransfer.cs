@@ -28,6 +28,10 @@ public static class ConfigTransfer
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
+    // Okurken elle düzenlenmiş dosyadaki "name": null gibi değerler boş-olamaz alana girmesin; yoksa
+    // ekranlardaki Trim/Any 500 verir. Yalnız okumada: yazarken eski kayıttaki null dışa aktarmayı düşürmesin.
+    private static readonly JsonSerializerOptions ReadOptions = new(Options) { RespectNullableAnnotations = true };
+
     public sealed class Envelope<T>
     {
         public string Format { get; set; } = string.Empty;
@@ -59,7 +63,7 @@ public static class ConfigTransfer
         try
         {
             await using var stream = file.OpenReadStream();
-            envelope = await JsonSerializer.DeserializeAsync<Envelope<T>>(stream, Options);
+            envelope = await JsonSerializer.DeserializeAsync<Envelope<T>>(stream, ReadOptions);
         }
         catch (JsonException)
         {
