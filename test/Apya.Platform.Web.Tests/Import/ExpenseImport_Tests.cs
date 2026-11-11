@@ -144,7 +144,7 @@ public class ExpenseImport_Tests : PlatformWebTestBase
         import.GetProperty("message").GetString()!.ShouldContain("3");
 
         var page = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(),
-            "..", "..", "..", "..", "..", "src", "Apya.Platform.Web", "Pages", "Expenses", "ImportModal.cshtml.cs"));
+            "..", "..", "..", "..", "..", "src", "Apya.Platform.Web", "Import", "FinanceImportPageModel.cs"));
         page.ShouldContain("unitOfWorkManager.Begin(requiresNew: true, isTransactional: true)", Case.Sensitive);
         page.ShouldContain("await uow.CompleteAsync();", Case.Sensitive);
     }

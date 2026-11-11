@@ -763,6 +763,7 @@
     "Export:Documents:Name": "Documents",
     "Import:ExcelButton": "Import from Excel",
     "Import:Title:Expenses": "Import expenses from Excel",
+    "Import:Title:Incomes": "Import incomes from Excel",
     "Import:Step1": "1. Download and fill in the template. Columns marked with * are required; for list columns pick one of the options in the template. If currency is empty, the cash account's currency is used.",
     "Import:DownloadTemplate": "Download template",
     "Import:Step2": "2. Choose the filled file and preview it; import if there are no errors.",

@@ -2,6 +2,7 @@ $(function () {
 
     var createModal = new abp.ModalManager(abp.appPath + 'Incomes/CreateModal');
     var editModal = new abp.ModalManager(abp.appPath + 'Incomes/EditModal');
+    var importModal = new abp.ModalManager(abp.appPath + 'Incomes/ImportModal');
     var svc = apya.platform.incomes.incomeEntry;
 
     var categoryNames = { 0: 'Diğer', 1: 'Hibe', 2: 'Bağış', 3: 'Faturasız Satış', 4: 'Finansal' };
@@ -72,4 +73,8 @@ $(function () {
 
     createModal.onResult(function () { dataTable.ajax.reload(); });
     editModal.onResult(function () { dataTable.ajax.reload(); });
+
+    // İçe aktarma pencereyi kendisi kapatmaz; kapanınca liste yenilenir.
+    $('#IncomesImportExcel').on('click', function () { importModal.open(); });
+    importModal.onClose(function () { dataTable.ajax.reload(); });
 });
