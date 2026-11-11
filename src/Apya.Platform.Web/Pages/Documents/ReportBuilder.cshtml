@@ -8,6 +8,9 @@
 <partial name="_ApyaThemeBootstrap" />
 <island-preload entry="documents-report" />
 
+@* Şablon .json içe aktarması dosyayı FormData ile yollar; jeton buradan okunur. *@
+@Html.AntiForgeryToken()
+
 <div data-page-description="Şablon bölümlerini seçin, önizleyin, alıcıya dağıtın" class="apya-page">
     <div id="report-builder-island"></div>
 </div>

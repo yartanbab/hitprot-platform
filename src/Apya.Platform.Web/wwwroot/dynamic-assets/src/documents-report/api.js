@@ -29,6 +29,17 @@ export const updateTemplate = (id, dto) => post(handlerUrl('UpdateTemplate', { i
 export const duplicateTemplate = (id) => abpAjax({ url: handlerUrl('DuplicateTemplate', { id }), type: 'POST' });
 export const deleteTemplate = (id) => abpAjax({ url: handlerUrl('DeleteTemplate', { id }), type: 'POST' });
 
+/* Sablon aktarimi (.json): indirme baglantisi + dosyadan YENI sablon */
+export const exportTemplateUrl = (id) => handlerUrl('ExportTemplate', { id });
+export async function importTemplate(file) {
+  const data = new FormData();
+  data.append('file', file);
+  data.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]')?.value || '');
+  const res = await fetch(handlerUrl('ImportTemplate'), { method: 'POST', body: data, credentials: 'same-origin' });
+  if (!res.ok) return { ok: false, message: 'Dosya işlenemedi. Lütfen tekrar deneyin.' };
+  return res.json();
+}
+
 /* Onizleme */
 export const getProjects = () => abpAjax({ url: handlerUrl('Projects'), type: 'GET' });
 export const getPreview = (projectId, templateId, periodCode) =>

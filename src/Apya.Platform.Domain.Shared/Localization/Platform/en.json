@@ -810,6 +810,7 @@
     "Import:Error:Negative": "{0} cannot be negative.",
     "Import:Error:Duplicate": "{0}: \"{1}\" is already in use.",
     "Transfer:Name:Form": "form",
+    "Transfer:Name:ReportTemplate": "report template",
     "Transfer:Done": "\"{0}\" was imported.",
     "Transfer:Error:ChooseFile": "Choose a .json file first.",
     "Transfer:Error:TooLarge": "The file is too large (at most 2 MB).",

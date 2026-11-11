@@ -1,13 +1,18 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Documents;
 using Apya.Platform.Permissions;
 using Apya.Platform.Projects;
+using Apya.Platform.Web.Import;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
+using Volo.Abp.Uow;
 
 namespace Apya.Platform.Web.Pages.Documents;
 
@@ -55,6 +60,93 @@ public class ReportBuilderModel : AbpPageModel
 
     public async Task<IActionResult> OnPostUpdateSectionsAsync([FromBody] UpdateReportSectionsDto input)
         => new JsonResult(await _templateAppService.UpdateSectionsAsync(input));
+
+    /* ─── Şablon aktarımı (.json) ─────────────────────────────────────── */
+
+    public const string TemplateTransferFormat = "apya.report-template";
+
+    /// <summary>Şablonun künyesi ve bölüm düzeni; bölüm içeriği şablonda tutulmaz, aktarılmaz da.</summary>
+    public sealed class TemplateTransfer
+    {
+        public string Name { get; set; } = string.Empty;
+        public ReportRecipient Recipient { get; set; }
+        public string? Issuer { get; set; }
+        public int Order { get; set; }
+        public List<TemplateTransferSection> Sections { get; set; } = new();
+    }
+
+    public sealed class TemplateTransferSection
+    {
+        public ReportSectionKey Key { get; set; }
+        public int Order { get; set; }
+        public bool IsEnabled { get; set; }
+    }
+
+    public async Task<IActionResult> OnGetExportTemplateAsync(Guid id)
+    {
+        var template = (await _templateAppService.GetListAsync()).FirstOrDefault(t => t.Id == id);
+        if (template == null)
+        {
+            return NotFound();
+        }
+
+        var data = new TemplateTransfer
+        {
+            Name = template.Name,
+            Recipient = template.Recipient,
+            Issuer = template.Issuer,
+            Order = template.Order,
+            Sections = template.Sections.OrderBy(s => s.Order)
+                .Select(s => new TemplateTransferSection { Key = s.SectionKey, Order = s.Order, IsEnabled = s.IsEnabled }).ToList()
+        };
+        return File(ConfigTransfer.Write(TemplateTransferFormat, data, Clock.Now), ConfigTransfer.ContentType,
+            ConfigTransfer.FileName(template.Name, Clock.Now));
+    }
+
+    /// <summary>
+    /// Dosyadan YENİ (kiracının kendi) şablonunu açar: önce "Yeni şablon"un servisi, sonra bölüm düzeni.
+    /// İkisi tek işlemde; bölüm düzeni reddedilirse şablon da açılmaz. Dosyada olmayan bölüm varsayılanında kalır.
+    /// </summary>
+    public async Task<IActionResult> OnPostImportTemplateAsync(IFormFile? file, [FromServices] IUnitOfWorkManager unitOfWorkManager)
+    {
+        var (data, error) = await ConfigTransfer.ReadAsync<TemplateTransfer>(file, TemplateTransferFormat);
+        error ??= data!.Name.Trim().Length == 0
+                  || !Enum.IsDefined(data.Recipient)
+                  || data.Sections.Any(s => !Enum.IsDefined(s.Key))
+                  || data.Sections.Select(s => s.Key).Distinct().Count() != data.Sections.Count
+            ? "Transfer:Error:NotJson"
+            : null;
+        if (error != null)
+        {
+            return new JsonResult(new { ok = false, message = L[error, L["Transfer:Name:ReportTemplate"]].Value });
+        }
+
+        try
+        {
+            using var uow = unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
+            var created = await _templateAppService.CreateAsync(new CreateUpdateReportTemplateDto
+            {
+                Name = data!.Name.Trim(), Recipient = data.Recipient, Issuer = data.Issuer, Order = data.Order
+            });
+
+            var wanted = data.Sections.ToDictionary(s => s.Key);
+            await _templateAppService.UpdateSectionsAsync(new UpdateReportSectionsDto
+            {
+                TemplateId = created.Id,
+                Sections = created.Sections.Select(s => wanted.TryGetValue(s.SectionKey, out var w)
+                    ? new ReportSectionOrderDto { SectionId = s.Id, Order = w.Order, IsEnabled = w.IsEnabled }
+                    : new ReportSectionOrderDto { SectionId = s.Id, Order = s.Order, IsEnabled = s.IsEnabled }).ToList()
+            });
+            await uow.CompleteAsync();
+
+            return new JsonResult(new { ok = true, id = created.Id, message = L["Transfer:Done", created.Name].Value });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Rapor şablonu içe aktarma reddedildi");
+            return new JsonResult(new { ok = false, message = this.UserMessage(ex) });
+        }
+    }
 
     public async Task<IActionResult> OnPostCreateTemplateAsync([FromBody] CreateUpdateReportTemplateDto input)
         => new JsonResult(await _templateAppService.CreateAsync(input));
