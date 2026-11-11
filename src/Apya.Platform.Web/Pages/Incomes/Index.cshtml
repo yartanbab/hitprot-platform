@@ -1,6 +1,8 @@
 @page
 @model Apya.Platform.Web.Pages.Incomes.IndexModel
 @inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
 @{
     ViewBag.PageTitle = "Gelirler (Faturasız / Hibe)";
 }
@@ -20,6 +22,12 @@
                 <button type="button" id="IncomesExportExcel" class="btn btn-outline-secondary btn-sm me-1">
                     <i class="fa fa-file-excel"></i> @L["Export:ExcelButton"]
                 </button>
+                @if (await AuthorizationService.IsGrantedAsync(Apya.Platform.Permissions.PlatformPermissions.Incomes.Create))
+                {
+                    <button type="button" id="IncomesImportExcel" class="btn btn-outline-secondary btn-sm me-1">
+                        <i class="fa fa-file-import"></i> @L["Import:ExcelButton"]
+                    </button>
+                }
                 <button id="NewIncomeButton" class="btn btn-primary btn-sm">
                     <i class="fa fa-plus"></i> Yeni Gelir
                 </button>
