@@ -198,6 +198,14 @@ export function CalendarRoot() {
         () => availableSources.filter((s) => !enabledSources.has(s.source)).length,
         [availableSources, enabledSources],
     );
+    /* .ics: ekrandaki aralık + açık kaynaklar. Hiç kaynak açık değilse bağlantı yok —
+       boş liste sunucuda "hepsi" demek olurdu. */
+    const icsHref = useMemo(() => {
+        const open = availableSources.filter((s) => enabledSources.has(s.source)).map((s) => s.source);
+        if (open.length === 0) return null;
+        const qs = [`from=${isoDay(range.from)}`, `to=${isoDay(range.to)}`, ...open.map((s) => `sources=${s}`)];
+        return `/Calendars?handler=Ics&${qs.join('&')}`;
+    }, [availableSources, enabledSources, range]);
 
     /* En yeni senkron zamanı — birden çok hesap varsa en tazesi gösterilir. */
     const lastSyncAt = useMemo(() => {
@@ -290,6 +298,7 @@ export function CalendarRoot() {
                 syncError={riskCounts.syncError > 0}
                 compact={isNarrow}
                 canCreateTask={canCreateTask}
+                icsHref={icsHref}
             />
 
             {/* Veri yokken tek hata yüzeyi ana alandaki kart; şerit yalnız eldeki veri
