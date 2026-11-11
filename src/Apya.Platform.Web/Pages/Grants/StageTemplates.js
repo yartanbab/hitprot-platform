@@ -126,6 +126,9 @@ $(function () {
         $('#TplStepCount').text(l('Grants:StageTemplates:StepCount', t.steps.length));
         // Kaydedilmemiş yeni şablon silinemez.
         $('#TplDelete').toggleClass('d-none', !t.id || !abp.auth.isGranted('Platform.Grants.Delete'));
+        // Kaydedilmemiş şablonun indirilecek tanımı yok.
+        $('#TplExport').toggleClass('d-none', !t.id)
+            .attr('href', t.id ? '/Grants/StageTemplates?handler=Export&id=' + t.id : '#');
 
         var $steps = $('#TplSteps').empty();
         t.steps.forEach(function (s) { $steps.append(stepRow(s)); });
@@ -328,6 +331,30 @@ $(function () {
             $('#TplEditor, .apya-tpl-side, #TplEmpty').addClass('d-none');
         });
     }
+
+    $('#TplImportBtn').on('click', function () { $('#TplImportFile').trigger('click'); });
+
+    $('#TplImportFile').on('change', function () {
+        var input = this;
+        if (!input.files || !input.files.length) { return; }
+        var data = new FormData();
+        data.append('file', input.files[0]);
+        data.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+        $('#TplImportBtn').prop('disabled', true);
+        fetch('/Grants/StageTemplates?handler=Import', { method: 'POST', body: data, credentials: 'same-origin' })
+            .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+            .then(function (result) {
+                if (!result.ok) { abp.message.error(result.message); return; }
+                abp.notify.success(result.message);
+                activeId = result.id;
+                return load();
+            })
+            .catch(function () { abp.message.error(l('Import:Error:Unexpected')); })
+            .then(function () {
+                $('#TplImportBtn').prop('disabled', false);
+                input.value = '';
+            });
+    });
 
     $('#TplList').on('click', '.js-tpl-retry', function () {
         $(this).prop('disabled', true);
