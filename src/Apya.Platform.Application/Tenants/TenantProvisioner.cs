@@ -247,8 +247,10 @@ public class TenantProvisioner : ITransientDependency
 
     /// <summary>
     /// Türkçe harfler ASCII'ye indirilir; ad bazı yerlerde URL/anahtar gibi kullanılıyor.
+    /// <para>🔴 <c>ToLowerInvariant</c> büyük 'İ'yi KÜÇÜLTMEZ ('İ' kalır); eşlemede yoksa harf
+    /// tireye düşer ("EĞİTİM" → "eg-t-m"). Bu yüzden 'İ' ayrıca eşlenir.</para>
     /// </summary>
-    private static string Slugify(string value)
+    internal static string Slugify(string value)
     {
         var builder = new StringBuilder(value.Length);
         var lastWasDash = false;
@@ -257,7 +259,7 @@ public class TenantProvisioner : ITransientDependency
         {
             var mapped = ch switch
             {
-                'ı' or 'i' or 'î' => 'i',
+                'ı' or 'i' or 'î' or 'İ' => 'i',
                 'ğ' => 'g',
                 'ü' or 'û' => 'u',
                 'ş' => 's',
