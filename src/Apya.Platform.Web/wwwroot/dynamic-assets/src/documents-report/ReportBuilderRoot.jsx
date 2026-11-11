@@ -4,7 +4,7 @@ import { DocsPageHeader, ProcessRibbon } from '../components/documents';
 import { abpAuth } from '../deliveries/api';
 import {
   SECTION_LABEL, abpAppPath, abpNotify, createTemplate, deleteTemplate,
-  duplicateTemplate, getProjects, getTemplates, updateSections,
+  duplicateTemplate, exportTemplateUrl, getProjects, getTemplates, importTemplate, updateSections,
 } from './api';
 import { ensureDraftPackage } from './draftPackage';
 import { PreviewTab } from './PreviewTab';
@@ -177,6 +177,28 @@ export function ReportBuilderRoot() {
     }
   };
 
+  /* Başka hesaptan/ortamdan indirilmiş şablon .json'u YENİ şablon olarak açılır. */
+  const importInputRef = useRef(null);
+  const handleImport = async (file) => {
+    if (!file) return;
+    setBusy(true);
+    try {
+      const result = await importTemplate(file);
+      if (result.ok) {
+        abpNotify('success', result.message);
+        await load();
+        setSelectedId(result.id);
+      } else {
+        abpNotify('error', result.message);
+      }
+    } catch (e) {
+      abpNotify('error', 'Dosya işlenemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setBusy(false);
+      if (importInputRef.current) importInputRef.current.value = '';
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Bu şablon silinsin mi? Üretilmiş paketler etkilenmez.')) return;
     setBusy(true);
@@ -264,8 +286,14 @@ export function ReportBuilderRoot() {
         )}
         menuItems={[
           { key: 'new-template', label: 'Yeni şablon', icon: 'fa-plus', disabled: busy, onSelect: handleCreate },
+          ...(canGenerate ? [{
+            key: 'import-template', label: 'Şablonu içe aktar (JSON)', icon: 'fa-file-import', disabled: busy,
+            onSelect: () => importInputRef.current?.click(),
+          }] : []),
         ]}
       />
+      <input ref={importInputRef} type="file" accept=".json,application/json" className="d-none" aria-hidden="true"
+        tabIndex={-1} data-testid="template-import-input" onChange={(e) => handleImport(e.target.files?.[0])} />
 
       <ProcessRibbon active="report" projectId={projectId || null} />
 
@@ -335,6 +363,8 @@ export function ReportBuilderRoot() {
                   <span className="d-flex gap-2">
                     <button type="button" className="apya-doc-linkbtn" disabled={busy}
                       onClick={() => handleDuplicate(selected.id)}>Kopyala</button>
+                    <a className="apya-doc-linkbtn" href={exportTemplateUrl(selected.id)} download
+                      title="Şablonun künyesini ve bölüm düzenini .json olarak indir">JSON</a>
                     {!selected.isSystem && (
                       <button type="button" className="apya-doc-linkbtn" disabled={busy}
                         onClick={() => handleDelete(selected.id)}>Sil</button>

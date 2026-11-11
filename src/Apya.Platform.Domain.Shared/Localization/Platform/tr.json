@@ -710,6 +710,7 @@
         "Import:Error:Negative": "{0} negatif olamaz.",
         "Import:Error:Duplicate": "{0}: \"{1}\" zaten kullanılıyor.",
         "Transfer:Name:Form": "form",
+        "Transfer:Name:ReportTemplate": "rapor şablonu",
         "Transfer:Done": "\"{0}\" içe aktarıldı.",
         "Transfer:Error:ChooseFile": "Önce bir .json dosyası seçin.",
         "Transfer:Error:TooLarge": "Dosya çok büyük (en fazla 2 MB).",
