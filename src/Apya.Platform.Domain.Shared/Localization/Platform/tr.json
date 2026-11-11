@@ -293,6 +293,8 @@
         "Calendar:Grant:TrancheDue": "Dilim vadesi",
         "Calendar:Grant:Tranche": "{0}. dilim",
         "Calendar:Grant:CallDeadline": "Son başvuru",
+        "Calendar:Ics:Name": "APYA takvim",
+        "Calendar:Ics:FileName": "takvim",
         "Permission:TenantSettings": "Kurum Ayarları",
         "Permission:TenantSettings.ManageAi": "Yapay Zekâ Ayarlarını Yönetme",
         "Permission:Feedbacks": "Geri Bildirimler",

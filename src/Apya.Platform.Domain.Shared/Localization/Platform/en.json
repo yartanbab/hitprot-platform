@@ -426,6 +426,8 @@
     "Calendar:Grant:TrancheDue": "Tranche due",
     "Calendar:Grant:Tranche": "Tranche {0}",
     "Calendar:Grant:CallDeadline": "Application deadline",
+    "Calendar:Ics:Name": "APYA calendar",
+    "Calendar:Ics:FileName": "calendar",
     "Permission:TenantSettings": "Tenant Settings",
     "Permission:TenantSettings.ManageAi": "Manage AI Settings",
     "Permission:Feedbacks": "Feedback",

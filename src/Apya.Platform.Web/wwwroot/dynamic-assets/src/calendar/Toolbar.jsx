@@ -73,7 +73,7 @@ export function NewTaskFab() {
 export function Toolbar({
     title, view, onView, onPrev, onNext, onToday, overloadDays, onHelp,
     filterCount = 0, onClearFilters, lastSyncAt, syncError = false, canCreateTask = true,
-    compact = false,
+    compact = false, icsHref = null,
 }) {
     const showNav = view !== 'agenda';
     const since = sinceLabel(lastSyncAt);
@@ -159,6 +159,19 @@ export function Toolbar({
                     >
                         <i className="fa fa-print" aria-hidden="true" /><span className="sr-only">Yazdır</span>
                     </button>
+                )}
+
+                {/* Görünen aralık + açık kaynaklar .ics olarak (Google/Outlook/Apple içe alır).
+                    Baskı gibi dar kapta çizilmez: satır 375px'e sığmıyor. */}
+                {icsHref && !compact && (
+                    <a
+                        href={icsHref}
+                        download
+                        title="Görünen aralığı takvim dosyası (.ics) olarak indir"
+                        className="flex h-9 items-center rounded-md border border-default bg-surface-base px-2.5 text-[12px] text-text-secondary hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus"
+                    >
+                        <i className="fa fa-download" aria-hidden="true" /><span className="sr-only">Takvim dosyası indir (.ics)</span>
+                    </a>
                 )}
 
                 {onHelp && !compact && (

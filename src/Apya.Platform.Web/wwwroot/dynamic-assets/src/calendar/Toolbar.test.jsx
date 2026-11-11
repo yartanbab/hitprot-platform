@@ -33,6 +33,23 @@ describe('Toolbar', () => {
         expect(screen.queryByRole('button', { name: 'Klavye kısayolları' })).toBeNull();
     });
 
+    it('.ics bağlantısı verilen adresi indirir; adres yoksa ya da dar kapta çizilmez', () => {
+        const href = '/Calendars?handler=Ics&from=2026-08-01&to=2026-09-11&sources=1';
+        const { unmount } = render(<Toolbar {...base} icsHref={href} />);
+        const link = screen.getByRole('link', { name: 'Takvim dosyası indir (.ics)' });
+        expect(link).toHaveAttribute('href', href);
+        expect(link).toHaveAttribute('download');
+        unmount();
+
+        render(<Toolbar {...base} />);
+        expect(screen.queryByRole('link', { name: 'Takvim dosyası indir (.ics)' })).toBeNull();
+    });
+
+    it('dar kapta .ics bağlantısı çizilmez', () => {
+        render(<Toolbar {...base} compact icsHref="/Calendars?handler=Ics" />);
+        expect(screen.queryByRole('link', { name: 'Takvim dosyası indir (.ics)' })).toBeNull();
+    });
+
     it('dar kapta görünüm sekmeleri ve gezinme KALIR', () => {
         render(<Toolbar {...base} compact />);
         expect(screen.getByRole('tab', { name: 'Ay' })).toBeInTheDocument();
