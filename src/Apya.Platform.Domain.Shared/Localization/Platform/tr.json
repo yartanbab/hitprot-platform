@@ -4297,6 +4297,8 @@
         "Grants:Interest:Decision:StartedHint": "Başvurunuz açıldı; \"Başvurularım\" ekranından sürece devam edebilirsiniz.",
         "Grants:Interest:Decision:Rejected": "Uygun bulunmadı",
         "Grants:Interest:GoToApplication": "Başvuruya git",
+        "Grants:Ics:AddToCalendar": "Takvime ekle",
+        "Grants:Ics:FileName": "son-basvuru",
         "Grants:Interest:Confirm:Title": "Çağrıya ilginiz kaydedilecek",
         "Grants:Interest:Confirm:Lead": "Şimdi proje fikrinizle ilgili birkaç soru soracağız. Formu tamamladığınızda öneriniz inceleme için danışmanınıza iletilecek. Devam edelim mi?",
         "Grants:Interest:Confirm:Form": "Form birkaç dakika sürer; çağrı bilgisi otomatik seçili gelir.",
