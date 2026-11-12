@@ -95,9 +95,10 @@ public static class ReleaseNoteCatalog
                 "bilirsiniz."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
-                "Fatura çıktısı ve proje kartları düzeldi",
+                "Fatura çıktısı, proje kartları ve kurum adı düzeldi",
                 "Fatura çıktısında örnek IBAN ve vergi numarası artık görünmüyor; genel toplam ve ödeme durumu doğru " +
-                "basılıyor. Proje listesinde kapak görseli olan kartlar diğer kartlarla aynı boyda görünüyor.")
+                "basılıyor. Proje listesinde kapak görseli olan kartlar diğer kartlarla aynı boyda görünüyor. Üst " +
+                "çubukta kurumunuzun adı resmî unvanıyla görünür.")
         ),
 
         new ReleaseNote(
