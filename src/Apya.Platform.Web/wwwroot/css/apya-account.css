@@ -511,7 +511,6 @@
        uzun ekranda içerik dikeyde ortalanır, logo üst kenara yapışmaz. Kısa
        ekranda boşluk sıfıra iner, panelin iç boşluğu kalır. */
     .apya-auth__panel-brand {
-        justify-content: flex-start;
         margin-top: auto;
         margin-bottom: 44px;
     }
