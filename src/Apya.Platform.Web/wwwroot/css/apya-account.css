@@ -444,6 +444,22 @@
     padding-left: 18px;
 }
 
+/* Kayıt talebi bağlantısı — giriş düğmesinin altında ayrı blok. */
+.apya-auth__signup {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 4px;
+}
+
+/* Giriş alt başlığı ve kart altı yasal bağlantılar yalnız dar ekranda (aşağıda). */
+.apya-auth__lead,
+.apya-auth__panel-legal {
+    display: none;
+}
+
 /* --- Duyarlılık ------------------------------------------------------------ */
 @media (max-width: 991.98px) {
     .apya-auth {
@@ -475,10 +491,165 @@
     }
 }
 
+/* Telefon: kart kalkar, form ekranın tamamını kullanır. 470px'lik ortalı kart bu
+   genişlikte iki yanda ve altta boşluk bırakıp küçük kalıyordu. Alanlar 16px yazı
+   alır (iOS 16px altında odakta sayfayı yakınlaştırır), dokunma hedefleri ≥44px. */
 @media (max-width: 575.98px) {
+    .apya-auth {
+        place-items: stretch;
+    }
+
+    .apya-auth__panel {
+        max-width: none;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 20px 24px 24px;
+        box-sizing: border-box;
+    }
+
+    .apya-auth__panel-brand {
+        justify-content: flex-start;
+        margin-bottom: 44px;
+    }
+
     .apya-auth__card {
-        padding: 28px 22px 30px;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        backdrop-filter: none;
+        box-shadow: none;
+    }
+
+    .apya-auth__card-head {
+        align-items: center;
+    }
+
+    .apya-auth__title {
+        font-size: 32px;
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: -.03em;
+    }
+
+    .apya-auth__lang-btn {
+        height: 36px;
+        padding: 0 12px;
+        font-size: 11px;
+    }
+
+    .apya-auth__lead {
+        display: block;
+        margin: 10px 0 0;
+        font-size: 15.5px;
+        line-height: 1.5;
+        color: var(--apya-text-secondary, #6B7280);
+    }
+
+    .apya-auth__field {
+        margin-top: 28px;
+        gap: 8px;
+    }
+
+    .apya-auth__field + .apya-auth__field {
+        margin-top: 18px;
+    }
+
+    .apya-auth__label {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .apya-auth__link {
+        font-size: 13.5px;
+        font-weight: 600;
+    }
+
+    .apya-auth__input {
+        height: 54px;
+        font-size: 16px;
         border-radius: var(--apya-radius-xl, 12px);
+    }
+
+    .apya-auth__input-group .apya-auth__input {
+        padding-right: 54px;
+    }
+
+    .apya-auth__reveal {
+        top: 5px;
+        right: 5px;
+        width: 44px;
+        height: 44px;
+    }
+
+    .apya-auth__row {
+        margin-top: 12px;
+        min-height: 44px;
+    }
+
+    .apya-auth__check {
+        font-size: 14.5px;
+        gap: 10px;
+    }
+
+    .apya-auth__check input {
+        width: 20px;
+        height: 20px;
+    }
+
+    .apya-auth__submit {
+        margin-top: 16px;
+        height: 56px;
+        border-radius: var(--apya-radius-xl, 12px);
+        font-size: 16.5px;
+    }
+
+    /* Kayıt talebi: satır içi küçük bağlantı yerine çerçeveli, tam genişlik hedef. */
+    .apya-auth__signup {
+        margin-top: 28px;
+        padding: 16px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        border: 1px solid var(--apya-border-default, #E5E7EB);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, .8);
+        text-align: center;
+    }
+
+    .apya-auth__signup .apya-auth__muted {
+        font-size: 14px;
+    }
+
+    .apya-auth__signup-link {
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--apya-accent-300, #A5B4FC);
+        border-radius: var(--apya-radius-lg, 8px);
+        font-size: 15px;
+        color: var(--apya-accent-600, #4338CA);
+    }
+
+    .apya-auth__signup-link:hover {
+        background: var(--apya-accent-soft, rgba(79, 70, 229, .10));
+        text-decoration: none;
+    }
+
+    .apya-auth__panel-legal {
+        display: block;
+        margin: auto 0 0;
+        padding-top: 28px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--apya-text-tertiary, #9CA3AF);
+    }
+
+    .apya-auth__panel-legal .apya-auth__link {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--apya-text-secondary, #6B7280);
     }
 }
 

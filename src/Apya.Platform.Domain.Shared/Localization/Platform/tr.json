@@ -3168,6 +3168,7 @@
         "Login:AlreadySignedIn": "Bu tarayıcıda zaten {0} olarak oturum açtınız.",
         "Login:AlreadySignedIn:Hint": "Farklı bir hesapla girmek için önce çıkış yapın.",
         "Login:SignOut": "Çıkış yap",
+        "Login:Lead": "Projelerinize ve ekibinize devam etmek için giriş yapın.",
         "Account:ResetPassword:LinkInvalid": "Şifre sıfırlama bağlantısı geçersiz ya da süresi dolmuş. Yeni bir bağlantı isteyin.",
         "Dashboard:Print:Statistics:Empty": "Bu dönem için istatistik üretilmedi.",
         "Dashboard:Print:Count": "{0} kayıt",
