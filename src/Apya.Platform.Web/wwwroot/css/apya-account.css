@@ -7,7 +7,16 @@
    bu düzen tema anahtarını çalıştırmaz, bu yüzden dark override'ı yoktur.
    ========================================================================== */
 
+/* Hesap ekranlarında vurgu rengi logonun rengi (--apya-brand-mark, lacivert):
+   düğme, bağlantı, onay kutusu ve odak halkası işaretle aynı aileden gelir.
+   Uygulama kabuğunun indigo vurgusu bu düzene sızmaz, tersi de olmaz. */
 .apya-auth-body {
+    --apya-accent-500: var(--apya-brand-mark, #123B63);
+    --apya-accent-600: #0B2944;
+    --apya-accent-300: #8FA6BF;
+    --apya-accent-100: #DCE4ED;
+    --apya-accent-50: #EEF2F6;
+    --apya-accent-soft: rgba(18, 59, 99, .08);
     margin: 0;
     background: var(--apya-surface-app-bg, #F5F5F5);
     color: var(--apya-text-primary, #111827);
@@ -305,7 +314,7 @@
 
 .apya-auth__input:focus {
     border-color: var(--apya-accent-500, #4F46E5);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .25);
+    box-shadow: 0 0 0 3px rgba(18, 59, 99, .22);
 }
 
 .apya-auth__input-group {
