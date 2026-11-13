@@ -146,6 +146,13 @@
 
             @RenderBody()
         </div>
+
+        @* Tanıtım sütunu dar ekranda gizli → yasal bağlantılar da onunla kayboluyordu.
+           Yeni sekme kuralı tanıtım sütunuyla aynı (ACC-08). *@
+        <p class="apya-auth__panel-legal">
+            <a class="apya-auth__link" href="~/aydinlatma-metni" target="_blank" rel="noopener">Aydınlatma Metni</a> ·
+            <a class="apya-auth__link" href="~/gizlilik-politikasi" target="_blank" rel="noopener">Gizlilik Politikası</a>
+        </p>
     </main>
 </div>
 

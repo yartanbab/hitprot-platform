@@ -2769,6 +2769,7 @@
     "Login:AlreadySignedIn": "You are already signed in as {0} in this browser.",
     "Login:AlreadySignedIn:Hint": "To sign in with a different account, sign out first.",
     "Login:SignOut": "Sign out",
+    "Login:Lead": "Sign in to pick up where you left off with your projects and team.",
     "Account:ResetPassword:LinkInvalid": "This password reset link is invalid or has expired. Please request a new one.",
     "Dashboard:Print:Statistics:Empty": "No statistics were produced for this period.",
     "Dashboard:Print:Count": "{0} records",

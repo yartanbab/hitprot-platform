@@ -76,6 +76,9 @@
     }
 }
 
+@* Yalnız dar ekranda görünür: geniş ekranda aynı işi tanıtım sütunu yapıyor. *@
+<p class="apya-auth__lead">@PL["Login:Lead"]</p>
+
 @if (Model.EnableLocalLogin)
 {
     <form method="post">
@@ -110,14 +113,6 @@
                 <input type="checkbox" asp-for="LoginInput.RememberMe" />
                 <span>@L["RememberMe"]</span>
             </label>
-
-            @* Self-servis kayıt kapalı (bkz. AccountSettingOverrideProvider): aday
-               müşteri hesabı kendi açmaz, kayıt talebi gönderir; hesap onay ve
-               protokol adımından sonra açılır. *@
-            <span class="apya-auth__muted">
-                @PL["RegistrationRequest:LoginPrompt"]
-                <a class="apya-auth__link" asp-page="./RegistrationRequest">@PL["RegistrationRequest:LoginLink"]</a>
-            </span>
         </div>
 
         <button class="apya-auth__submit" type="submit" name="Action" value="Login">@L["Login"]</button>
@@ -127,6 +122,15 @@
             <button class="apya-auth__submit apya-auth__submit--secondary" type="submit"
                     formnovalidate="formnovalidate" name="Action" value="Cancel">@L["Cancel"]</button>
         }
+
+        @* Self-servis kayıt kapalı (bkz. AccountSettingOverrideProvider): aday
+           müşteri hesabı kendi açmaz, kayıt talebi gönderir; hesap onay ve
+           protokol adımından sonra açılır. "Beni hatırla" ile aynı satırdaydı;
+           dar ekranda iki satıra kırılıp sıkışıyordu → düğmenin altına, ayrı blok. *@
+        <div class="apya-auth__signup">
+            <span class="apya-auth__muted">@PL["RegistrationRequest:LoginPrompt"]</span>
+            <a class="apya-auth__link apya-auth__signup-link" asp-page="./RegistrationRequest">@PL["RegistrationRequest:LoginLink"]</a>
+        </div>
     </form>
 }
 
