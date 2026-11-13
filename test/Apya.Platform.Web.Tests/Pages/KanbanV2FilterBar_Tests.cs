@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using Shouldly;
@@ -24,6 +25,8 @@ public class KanbanV2FilterBar_Tests : PlatformWebTestBase
         foreach (var chip in new[] { "chip-status", "chip-assignee", "chip-project", "chip-priority", "chip-daterange" })
         {
             html.ShouldContain($"data-open-chip=\"{chip}\"");
+            // Her satır sağa okla "devamı var" demeli (ok yokken menü filtrenin sonu sanılıyordu).
+            Regex.Matches(html, $"data-open-chip=\"{chip}\"[^>]*>[^<]*<i class=\"fa fa-chevron-right").Count.ShouldBe(1);
         }
 
         // Etkin chip ✕'leri (dropdown chip'lerinde; toggle chip'lerinde yok).
