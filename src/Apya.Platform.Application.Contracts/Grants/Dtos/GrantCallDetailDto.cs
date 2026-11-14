@@ -43,6 +43,9 @@ public class GrantCallDetailDto
     public GrantEligibilityBucket Bucket { get; set; }
     public List<GrantRuleCheckDto> Rules { get; set; } = new();
 
+    /// <summary>Kurum parametrelerine bağlı şartlar (eş finansman ve programa eklenen ölçütler).</summary>
+    public List<GrantParameterRuleCheckDto> ParameterRules { get; set; } = new();
+
     /// <summary>Eksik şartların hiçbiri eleyici değilse true — tablonun altındaki not.</summary>
     public bool MissingRulesAreNotBlocking { get; set; }
 

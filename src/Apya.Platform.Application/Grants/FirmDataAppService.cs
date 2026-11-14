@@ -37,6 +37,7 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
     private readonly FirmSignalsBuilder _signalsBuilder;
     private readonly FirmDataGapCalculator _gapCalculator;
     private readonly IDataFilter<IMultiTenant> _tenantFilter;
+    private readonly GrantParameterCriterionManager _parameterCriteria;
 
     public FirmDataAppService(
         IRepository<FirmParameterDefinition, Guid> definitionRepository,
@@ -48,8 +49,10 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
         IRepository<GrantCriteriaTag, Guid> criteriaRepository,
         FirmSignalsBuilder signalsBuilder,
         FirmDataGapCalculator gapCalculator,
-        IDataFilter<IMultiTenant> tenantFilter)
+        IDataFilter<IMultiTenant> tenantFilter,
+        GrantParameterCriterionManager parameterCriteria)
     {
+        _parameterCriteria = parameterCriteria;
         _grantRepository = grantRepository;
         _callRepository = callRepository;
         _criteriaRepository = criteriaRepository;
@@ -164,9 +167,11 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
             var tags = (await _criteriaRepository.GetListAsync(t => grantIds.Contains(t.GrantId) && t.TenantId == null))
                 .ToLookup(t => t.GrantId);
 
+            var criteria = await _parameterCriteria.ResolveManyAsync(grantIds);
+
             return calls
                 .Where(c => grants.ContainsKey(c.GrantId))
-                .Select(c => new FirmDataOpenCall(grants[c.GrantId], tags[c.GrantId].ToList()))
+                .Select(c => new FirmDataOpenCall(grants[c.GrantId], tags[c.GrantId].ToList(), criteria.GetValueOrDefault(c.GrantId)))
                 .ToList();
         }
     }

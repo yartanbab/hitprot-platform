@@ -45,6 +45,7 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
     private readonly GrantMatchWeightResolver _weightResolver;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly IRepository<GrantMeetingProposal, Guid> _proposalRepo;
+    private readonly GrantParameterCriterionManager _parameterCriteria;
 
     public GrantInterestHostAppService(
         IRepository<GrantInterest, Guid> interestRepo,
@@ -61,8 +62,10 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         GrantMatchManager matcher,
         GrantMatchWeightResolver weightResolver,
         IDataFilter<IMultiTenant> mtFilter,
-        IRepository<GrantMeetingProposal, Guid> proposalRepo)
+        IRepository<GrantMeetingProposal, Guid> proposalRepo,
+        GrantParameterCriterionManager parameterCriteria)
     {
+        _parameterCriteria = parameterCriteria;
         _interestRepo = interestRepo;
         _appRepo = appRepo;
         _recRepo = recRepo;
@@ -285,7 +288,7 @@ public class GrantInterestHostAppService : PlatformAppService, IGrantInterestHos
         FillHostNames(row, hostUsers.ToDictionary(u => u.Id, DisplayName));
 
         var signals = await _signalsBuilder.BuildAsync(tenantId);
-        var eligibility = _matcher.Evaluate(signals, grant, criteria, today);
+        var eligibility = _matcher.Evaluate(signals, grant, criteria, today, await _parameterCriteria.ResolveAsync(grant.Id));
 
         var dto = new GrantInterestReviewDto
         {

@@ -44,6 +44,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     private readonly GrantDifficultyCalculator _difficulty;
     private readonly IIdentityUserRepository _userRepo;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly GrantParameterCriterionManager _parameterCriteria;
+    private readonly IRepository<FirmParameterDefinition, Guid> _parameterDefinitionRepo;
 
     public GrantRecommendationAppService(
         IRepository<GrantCall, Guid> callRepo,
@@ -62,8 +64,12 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         GrantMatchWeightResolver weightResolver,
         GrantDifficultyCalculator difficulty,
         IIdentityUserRepository userRepo,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        GrantParameterCriterionManager parameterCriteria,
+        IRepository<FirmParameterDefinition, Guid> parameterDefinitionRepo)
     {
+        _parameterCriteria = parameterCriteria;
+        _parameterDefinitionRepo = parameterDefinitionRepo;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
         _criteriaRepo = criteriaRepo;
@@ -205,7 +211,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
 
             var weights = await _weightResolver.ResolveAsync(grant.Id);
             var breakdown = _matcher.Explain(signals, grant, tags, weights);
-            var eligibility = _matcher.Evaluate(signals, grant, tags, today);
+            var eligibility = _matcher.Evaluate(signals, grant, tags, today, await _parameterCriteria.ResolveAsync(grant.Id));
+            var parameterRules = await MapParameterRulesAsync(eligibility, signals);
             var days = DaysRemaining(call, today);
             var difficulty = _difficulty.Calculate(
                 grant, documents.Count, documents.Any(d => d.RequiresESignature), steps.Count, days);
@@ -251,6 +258,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     })
                     .ToList(),
                 // "Eksik iki şart eleyici değil" notu: eleyen kural yokken gösterilir.
+                ParameterRules = parameterRules,
                 MissingRulesAreNotBlocking = eligibility.UnknownCount > 0 && eligibility.IsEligible,
                 CostItems = costItems
                     .OrderBy(c => c.Kind)
@@ -484,6 +492,9 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 .GroupBy(s => s.StageTemplateId)
                 .ToDictionary(g => g.Key, g => g.Count());
             var weightsByGrant = await _weightResolver.ResolveManyAsync(grantIds);
+            var criteriaByGrant = await _parameterCriteria.ResolveManyAsync(grantIds);
+            var parameterNames = (await _parameterDefinitionRepo.GetListAsync(d => d.SystemKey == null))
+                .ToDictionary(d => d.Id, d => d.Name);
 
             var today = Clock.Now.Date;
             foreach (var call in openCalls)
@@ -500,7 +511,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     : 0;
 
                 var score = _matcher.Score(signals, grant, gtags, weightsByGrant[grant.Id]);
-                var eligibility = _matcher.Evaluate(signals, grant, gtags, today);
+                var eligibility = _matcher.Evaluate(signals, grant, gtags, today,
+                    criteriaByGrant.GetValueOrDefault(grant.Id) ?? Array.Empty<GrantParameterCriterion>());
                 var days = DaysRemaining(call, today);
                 var isHostRecommended = hostRecNotes.ContainsKey(call.Id);
 
@@ -542,6 +554,9 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     PassedRules = RulesWith(eligibility, GrantRuleOutcome.Passed),
                     FailedRules = RulesWith(eligibility, GrantRuleOutcome.Failed),
                     UnknownRules = RulesWith(eligibility, GrantRuleOutcome.Unknown),
+                    // Kart gerekçesi: önce eleyen, yoksa ölçülemeyen parametre şartının adı.
+                    FailedParameter = ParameterNameWith(eligibility, parameterNames, r => r.IsEliminating && r.Outcome == GrantRuleOutcome.Failed),
+                    UnknownParameter = ParameterNameWith(eligibility, parameterNames, r => r.Outcome == GrantRuleOutcome.Unknown),
                     ReasonRule = reasonRule,
                     ReasonFirmValue = reasonFirm,
                     ReasonGrantValue = reasonGrant,
@@ -562,6 +577,59 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
             .ThenBy(r => r.Bucket)
             .ThenByDescending(r => r.Score)
             .ThenBy(r => r.DaysRemaining ?? int.MaxValue)
+            .ToList();
+    }
+
+    private static string? ParameterNameWith(
+        GrantEligibilityResult eligibility,
+        IReadOnlyDictionary<Guid, string> names,
+        Func<GrantParameterRuleResult, bool> predicate)
+        => eligibility.ParameterRules.Where(predicate)
+            .Select(r => names.GetValueOrDefault(r.DefinitionId))
+            .FirstOrDefault(name => name != null);
+
+    /// <summary>
+    /// Parametreye bağlı şartların detay tablosundaki satırları: kurumun değeri ve programın
+    /// istediği. Metin üretilmez; istemci yerelleştirir.
+    /// </summary>
+    private async Task<List<GrantParameterRuleCheckDto>> MapParameterRulesAsync(GrantEligibilityResult eligibility, FirmSignals signals)
+    {
+        if (eligibility.ParameterRules.Count == 0)
+        {
+            return new List<GrantParameterRuleCheckDto>();
+        }
+
+        var ids = eligibility.ParameterRules.Select(r => r.DefinitionId).Distinct().ToList();
+        var definitions = (await _parameterDefinitionRepo.GetListAsync(d => ids.Contains(d.Id))).ToDictionary(d => d.Id);
+        var c = CultureInfo.InvariantCulture;
+
+        return eligibility.ParameterRules
+            .Where(r => definitions.ContainsKey(r.DefinitionId))
+            .Select(r =>
+            {
+                var definition = definitions[r.DefinitionId];
+                signals.Parameters.TryGetValue(r.DefinitionId, out var value);
+                return new GrantParameterRuleCheckDto
+                {
+                    Code = definition.Code,
+                    Name = definition.Name,
+                    DataType = definition.DataType,
+                    Outcome = r.Outcome,
+                    IsEliminating = r.IsEliminating,
+                    IsStale = value?.IsStale == true,
+                    FirmValue = value == null ? null
+                        : value.Number?.ToString("0.##", c)
+                          ?? value.Bool?.ToString().ToLowerInvariant()
+                          ?? value.Text
+                          ?? (value.Choices.Count > 0 ? string.Join(", ", value.Choices) : null),
+                    // Ölçüt yoksa şart programın kendi alanından türemiştir (eş finansman).
+                    Operator = r.Criterion?.Operator,
+                    GrantValue = r.Criterion == null ? null
+                        : r.Criterion.ValueNumber?.ToString("0.##", c)
+                          ?? r.Criterion.ValueBool?.ToString().ToLowerInvariant()
+                          ?? r.Criterion.ValueText
+                };
+            })
             .ToList();
     }
 

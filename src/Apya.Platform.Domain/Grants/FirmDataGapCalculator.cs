@@ -9,7 +9,10 @@ namespace Apya.Platform.Grants;
 public sealed record FirmDataGap(FirmParameterDefinition Definition, bool IsStale, int UnlockCount);
 
 /// <summary>Bir açık çağrının programı ve etiketleri.</summary>
-public sealed record FirmDataOpenCall(Grant Grant, IReadOnlyList<GrantCriteriaTag> Tags);
+public sealed record FirmDataOpenCall(
+    Grant Grant,
+    IReadOnlyList<GrantCriteriaTag> Tags,
+    IReadOnlyList<GrantParameterCriterion>? ParameterCriteria = null);
 
 /// <summary>
 /// Kurumun hangi bilgisinin eksik olduğunu ve hangisini tamamlamanın en çok çağrıyı
@@ -38,11 +41,15 @@ public class FirmDataGapCalculator : DomainService
         DateTime today)
     {
         // Her çağrı bir kez değerlendirilir; parametreler aynı sonucu okur.
-        var unknownRulesByCall = openCalls
-            .Select(c => _matcher.Evaluate(signals, c.Grant, c.Tags, today).Rules
-                .Where(r => r.Outcome == GrantRuleOutcome.Unknown)
-                .Select(r => r.Rule)
-                .ToHashSet())
+        var evaluations = openCalls
+            .Select(c => _matcher.Evaluate(signals, c.Grant, c.Tags, today, c.ParameterCriteria ?? Array.Empty<GrantParameterCriterion>()))
+            .ToList();
+        var unknownRulesByCall = evaluations
+            .Select(e => e.Rules.Where(r => r.Outcome == GrantRuleOutcome.Unknown).Select(r => r.Rule).ToHashSet())
+            .ToList();
+        // Parametreye bağlı şartı (eş finansman ya da host'un eklediği ölçüt) ölçülemeyen çağrılar.
+        var unknownParametersByCall = evaluations
+            .Select(e => e.ParameterRules.Where(r => r.Outcome == GrantRuleOutcome.Unknown).Select(r => r.DefinitionId).ToHashSet())
             .ToList();
 
         var gaps = new List<FirmDataGap>();
@@ -75,7 +82,8 @@ public class FirmDataGapCalculator : DomainService
 
             if (!present)
             {
-                gaps.Add(new FirmDataGap(definition, stale, CountUnlocked(definition, openCalls, unknownRulesByCall)));
+                gaps.Add(new FirmDataGap(definition, stale,
+                    CountUnlocked(definition, openCalls, unknownRulesByCall, unknownParametersByCall)));
             }
         }
 
@@ -89,17 +97,12 @@ public class FirmDataGapCalculator : DomainService
     private static int CountUnlocked(
         FirmParameterDefinition definition,
         IReadOnlyList<FirmDataOpenCall> openCalls,
-        IReadOnlyList<HashSet<GrantEligibilityRule>> unknownRulesByCall)
+        IReadOnlyList<HashSet<GrantEligibilityRule>> unknownRulesByCall,
+        IReadOnlyList<HashSet<Guid>> unknownParametersByCall)
     {
-        if (definition.Code == FirmParameterCatalog.CofinancingCapacityCode)
-        {
-            // Destek oranı %100'ün altındaysa kalan pay kurumdan beklenir.
-            return openCalls.Count(c => c.Grant.SupportRatePercent is < 100);
-        }
-
         if (definition.SystemKey is not { } key)
         {
-            return 0;
+            return unknownParametersByCall.Count(ids => ids.Contains(definition.Id));
         }
 
         if (RuleOf(key) is { } rule)

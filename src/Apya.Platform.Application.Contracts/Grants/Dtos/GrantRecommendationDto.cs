@@ -89,6 +89,12 @@ public class GrantRecommendationDto
     /// <summary>Firma verisi eksik olduğu için ölçülemeyen şartlar.</summary>
     public List<GrantEligibilityRule> UnknownRules { get; set; } = new();
 
+    /// <summary>Kurumu eleyen parametre şartının adı (ör. "Eş finansman kapasitesi (TL)"); yoksa null.</summary>
+    public string? FailedParameter { get; set; }
+
+    /// <summary>Değeri girilmediği ya da süresi dolduğu için ölçülemeyen parametre şartının adı; yoksa null.</summary>
+    public string? UnknownParameter { get; set; }
+
     /// <summary>Tek satırlık gerekçenin dayandığı şart. Uygun çağrılarda null.</summary>
     public GrantEligibilityRule? ReasonRule { get; set; }
 

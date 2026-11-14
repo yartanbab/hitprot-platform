@@ -440,4 +440,10 @@ public static class PlatformDomainErrorCodes
     public const string FirmParameterInactive = "Platform:FirmParameter:Inactive";
     /// <summary>Değer kuruma aittir; host bağlamında hangi kurum için yazıldığı belli değildir.</summary>
     public const string FirmParameterTenantRequired = "Platform:FirmParameter:TenantRequired";
+    
+    // --- Programın kurum parametresine koyduğu ölçüt ---
+    public const string GrantCriterionNotSupported = "Platform:GrantCriterion:NotSupported";
+    public const string GrantCriterionOperatorInvalid = "Platform:GrantCriterion:OperatorInvalid";
+    public const string GrantCriterionValueRequired = "Platform:GrantCriterion:ValueRequired";
+    public const string GrantCriterionDuplicate = "Platform:GrantCriterion:Duplicate";
 }

@@ -136,6 +136,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<FirmProfileTag> FirmProfileTags { get; set; }
         public DbSet<FirmParameterDefinition> FirmParameterDefinitions { get; set; }
         public DbSet<FirmParameterValue> FirmParameterValues { get; set; }
+        public DbSet<GrantParameterCriterion> GrantParameterCriteria { get; set; }
         public DbSet<GrantApplication> GrantApplications { get; set; }
         public DbSet<GrantApplicationBudgetLine> GrantApplicationBudgetLines { get; set; }
         public DbSet<GrantApplicationFieldLock> GrantApplicationFieldLocks { get; set; }
@@ -922,6 +923,18 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Kod CANLI tanımlar arasında benzersiz: silinen tanımın kodu yeniden kullanılabilsin.
                 b.HasIndex(x => x.Code).IsUnique()
                     .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<GrantParameterCriterion>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantParameterCriteria", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.ValueNumber).HasColumnType("decimal(18,2)");
+                b.Property(x => x.ValueText).HasMaxLength(FirmParameterConsts.MaxTextLength);
+                b.HasOne<Grant>().WithMany().HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
+                // Ölçütü olan tanım fiziksel olarak silinemez (tanım zaten yumuşak silinir).
+                b.HasOne<FirmParameterDefinition>().WithMany().HasForeignKey(x => x.DefinitionId).OnDelete(DeleteBehavior.Restrict);
+                b.HasIndex(x => x.GrantId);
             });
 
             builder.Entity<FirmParameterValue>(b =>

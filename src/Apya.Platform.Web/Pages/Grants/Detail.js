@@ -228,7 +228,27 @@ $(function () {
                 esc(note) + '</span>' +
                 '</div>');
         });
-        $('#RuleEmpty').toggleClass('d-none', (d.rules || []).length > 0);
+        // Kurum parametrelerine bağlı şartlar aynı tabloda, kendi satırlarıyla.
+        (d.parameterRules || []).forEach(function (r) {
+            var failed = r.outcome === 1;
+            var cls = failed && r.isEliminating ? ' is-failed' : (failed || r.outcome === 2) ? ' is-unknown' : '';
+            var firm = r.firmValue == null ? l('Grants:Detail:NotEntered')
+                : r.dataType === 7 ? l(r.firmValue === 'true' ? 'FirmData:Yes' : 'FirmData:No')
+                : r.firmValue;
+            if (r.isStale) { firm += ' · ' + l('Grants:DataGap:Stale'); }
+            var wanted = r.dataType === 7 ? l(r.grantValue === 'true' ? 'FirmData:Yes' : 'FirmData:No') : r.grantValue;
+            var note = r.operator == null
+                ? l('Grants:ParamRule:Cofinancing', d.coFinancingRatePercent)
+                : l('Grants:ParamRule:Op.' + r.operator, wanted);
+            if (!r.isEliminating) { note += ' · ' + l('Grants:ParamRule:Advisory'); }
+            $rows.append(
+                '<div class="apya-check-row' + cls + '" data-param-rule="' + esc(r.code) + '">' +
+                '<i class="fa ' + outcomeIcon[r.outcome] + '"></i>' +
+                '<span>' + esc(r.name) + ' <span class="apya-cat-sub">· ' + esc(firm) + '</span></span>' +
+                '<span class="apya-check-note" data-label="' + esc(l('Grants:Detail:Col:Note')) + '">' + esc(note) + '</span>' +
+                '</div>');
+        });
+        $('#RuleEmpty').toggleClass('d-none', (d.rules || []).length + (d.parameterRules || []).length > 0);
         $('#NotBlockingNote').toggleClass('d-none', !d.missingRulesAreNotBlocking);
     }
 

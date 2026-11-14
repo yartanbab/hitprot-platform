@@ -47,6 +47,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
     private readonly NotificationManager _notificationManager;
     private readonly IEmailSender _emailSender;
     private readonly GrantNotificationDispatcher _notifyDispatcher;
+    private readonly GrantParameterCriterionManager _parameterCriteria;
 
     public GrantHostDispatchAppService(
         IRepository<GrantCall, Guid> callRepo,
@@ -66,8 +67,10 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         IDataFilter<IMultiTenant> mtFilter,
         NotificationManager notificationManager,
         IEmailSender emailSender,
-        GrantNotificationDispatcher notifyDispatcher)
+        GrantNotificationDispatcher notifyDispatcher,
+        GrantParameterCriterionManager parameterCriteria)
     {
+        _parameterCriteria = parameterCriteria;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
         _criteriaRepo = criteriaRepo;
@@ -95,6 +98,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         var call = await _callRepo.GetAsync(input.GrantCallId);
         var grant = await _grantRepo.GetAsync(call.GrantId);
         var tags = await _criteriaRepo.GetListAsync(t => t.GrantId == grant.Id);
+        var parameterCriteria = await _parameterCriteria.ResolveAsync(grant.Id);
         var weights = await _weightResolver.ResolveAsync(grant.Id);
         var today = Clock.Now.Date;
 
@@ -125,7 +129,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         foreach (var tenant in tenants)
         {
             var signals = await _signalsBuilder.BuildAsync(tenant.Id);
-            var eligibility = _matcher.Evaluate(signals, grant, tags, today);
+            var eligibility = _matcher.Evaluate(signals, grant, tags, today, parameterCriteria);
 
             // Danışmanlık fırsatı: TEK engeli konsorsiyum ortağı olan firmalar.
             // Süzgeçten bağımsız sayılır — fırsat kartı listeyi değil pazarı anlatır.
