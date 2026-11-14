@@ -48,6 +48,8 @@ public class TenantColumnCoverage_Tests
         // Makro Ekran host ayarı: tek kayıt bütün kiracılar için geçerli; izin host-only.
         ["Apya.Platform.Macros.MacroSetting"] = HostCatalog,
         ["Apya.Platform.Grants.GrantCallDailyStat"] = HostCatalog,
+        // Kurum parametre TANIMI: her kurum aynı kataloğu okur; kuruma ait olan değerdir (FirmParameterValue, IMultiTenant).
+        ["Apya.Platform.Grants.FirmParameterDefinition"] = HostCatalog,
 
         ["Apya.Platform.Tasks.TaskChecklistItem"] = ChildOf("TaskItem"),
         ["Apya.Platform.Tasks.TaskDependency"] = ChildOf("TaskItem"),
