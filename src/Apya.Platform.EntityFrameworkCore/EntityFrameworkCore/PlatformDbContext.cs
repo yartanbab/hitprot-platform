@@ -134,6 +134,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantBookmark> GrantBookmarks { get; set; }
         public DbSet<FirmProfile> FirmProfiles { get; set; }
         public DbSet<FirmProfileTag> FirmProfileTags { get; set; }
+        public DbSet<FirmParameterDefinition> FirmParameterDefinitions { get; set; }
+        public DbSet<FirmParameterValue> FirmParameterValues { get; set; }
         public DbSet<GrantApplication> GrantApplications { get; set; }
         public DbSet<GrantApplicationBudgetLine> GrantApplicationBudgetLines { get; set; }
         public DbSet<GrantApplicationFieldLock> GrantApplicationFieldLocks { get; set; }
@@ -902,6 +904,34 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.Value).IsRequired().HasMaxLength(64);
                 b.HasOne<FirmProfile>().WithMany(p => p.Tags).HasForeignKey(x => x.FirmProfileId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => x.FirmProfileId);
+            });
+
+            builder.Entity<FirmParameterDefinition>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FirmParameterDefinitions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Code).IsRequired().HasMaxLength(FirmParameterConsts.MaxCodeLength);
+                b.Property(x => x.Name).IsRequired().HasMaxLength(FirmParameterConsts.MaxNameLength);
+                b.Property(x => x.Description).HasMaxLength(FirmParameterConsts.MaxDescriptionLength);
+                b.Property(x => x.OptionsJson).HasMaxLength(FirmParameterConsts.MaxOptionsJsonLength);
+                b.Property(x => x.MinNumber).HasColumnType("decimal(18,2)");
+                b.Property(x => x.MaxNumber).HasColumnType("decimal(18,2)");
+                // Kod CANLI tanımlar arasında benzersiz: silinen tanımın kodu yeniden kullanılabilsin.
+                b.HasIndex(x => x.Code).IsUnique()
+                    .HasFilter(isSqlServer ? "[IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<FirmParameterValue>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FirmParameterValues", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.ValueText).HasMaxLength(FirmParameterConsts.MaxLongTextLength);
+                b.Property(x => x.ValueNumber).HasColumnType("decimal(18,2)");
+                b.Property(x => x.SourceExcerpt).HasMaxLength(FirmParameterConsts.MaxSourceExcerptLength);
+                // Değeri olan tanım fiziksel olarak silinemez (tanım zaten yumuşak silinir).
+                b.HasOne<FirmParameterDefinition>().WithMany().HasForeignKey(x => x.DefinitionId).OnDelete(DeleteBehavior.Restrict);
+                // Kurum başına parametre başına TEK satır. Satırlar gerçekten silindiği için süzgeç gerekmez.
+                b.HasIndex(x => new { x.TenantId, x.DefinitionId }).IsUnique();
             });
 
             builder.Entity<GrantApplication>(b =>

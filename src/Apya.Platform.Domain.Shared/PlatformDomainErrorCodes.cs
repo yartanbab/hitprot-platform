@@ -417,4 +417,20 @@ public static class PlatformDomainErrorCodes
     // NTF-08 · Web push aboneliği
     public const string NotificationDeviceEndpointInvalid = "Platform:Notification:DeviceEndpointInvalid";
     public const string NotificationWebPushDisabled = "Platform:Notification:WebPushDisabled";
+
+    // --- Kurum parametreleri (veri zenginleştirme) ---
+    public const string FirmParameterCodeInvalid = "Platform:FirmParameter:CodeInvalid";
+    public const string FirmParameterRangeInverted = "Platform:FirmParameter:RangeInverted";
+    public const string FirmParameterOptionsRequired = "Platform:FirmParameter:OptionsRequired";
+    public const string FirmParameterValueRequired = "Platform:FirmParameter:ValueRequired";
+    public const string FirmParameterValueTooLong = "Platform:FirmParameter:ValueTooLong";
+    public const string FirmParameterValueBelowMin = "Platform:FirmParameter:ValueBelowMin";
+    public const string FirmParameterValueAboveMax = "Platform:FirmParameter:ValueAboveMax";
+    public const string FirmParameterOptionNotAllowed = "Platform:FirmParameter:OptionNotAllowed";
+    public const string FirmParameterSourceNotAllowed = "Platform:FirmParameter:SourceNotAllowed";
+    /// <summary>Değeri platformun başka bir alanında yaşayan parametreye bu tablodan değer yazılmak istendi.</summary>
+    public const string FirmParameterSystemReadOnly = "Platform:FirmParameter:SystemReadOnly";
+    public const string FirmParameterInactive = "Platform:FirmParameter:Inactive";
+    /// <summary>Değer kuruma aittir; host bağlamında hangi kurum için yazıldığı belli değildir.</summary>
+    public const string FirmParameterTenantRequired = "Platform:FirmParameter:TenantRequired";
 }
