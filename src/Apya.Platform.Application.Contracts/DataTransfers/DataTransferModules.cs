@@ -51,7 +51,7 @@ public static class DataTransferModules
     public static readonly IReadOnlyList<DataTransferModule> All =
     [
         new("tasks", "Export:Tasks:Name", Both, PlatformPermissions.Tasks.Default, PlatformPermissions.Tasks.Create),
-        new("projects", "Export:Projects:Name", Both, PlatformPermissions.Projects.Default),
+        new("projects", "Export:Projects:Name", Both, PlatformPermissions.Projects.Default, PlatformPermissions.Projects.Create),
         new("expenses", "Export:Expenses:Name", Both, PlatformPermissions.Expenses.Default, PlatformPermissions.Expenses.Create),
         new("incomes", "Export:Incomes:Name", Both, PlatformPermissions.Incomes.Default, PlatformPermissions.Incomes.Create),
         new("invoices", "Export:Invoices:Name", Both, PlatformPermissions.Invoices.Default),

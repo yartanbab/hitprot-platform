@@ -40,7 +40,9 @@ public class IndexModel : PlatformPageModel
         };
         if (CurrentTenant.Id == null)
         {
-            columns.Add(new(L["Export:Col:Tenant"], p => p.TenantName));
+            // Host projesinde hücre boş kalır (servis oraya "Platform (Host)" yazar): içe aktarmada boş
+            // Kiracı "host projesi" demektir, dosya böylece geri yüklenebilir.
+            columns.Add(new(L["Export:Col:Tenant"], p => p.TenantId.HasValue ? p.TenantName : null));
         }
         columns.AddRange(
         [

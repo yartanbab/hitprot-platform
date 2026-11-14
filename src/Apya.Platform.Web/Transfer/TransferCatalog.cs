@@ -68,8 +68,8 @@ public static class TransferCatalog
             [Out("/Tasks/Index"), .. Modal("/Tasks/ImportModal")],
             ExportUrl: "/Tasks?handler=Excel", ImportUrl: "/Tasks/ImportModal"),
         new(M("projects"), "Menu:Work", "fa fa-diagram-project", "/Projects", Table,
-            [Out("/Projects/Index")],
-            ExportUrl: "/Projects?handler=Excel"),
+            [Out("/Projects/Index"), .. Modal("/Projects/ImportModal")],
+            ExportUrl: "/Projects?handler=Excel", ImportUrl: "/Projects/ImportModal"),
 
         // ── Finans ──
         new(M("expenses"), "Menu:Finance", "fa fa-receipt", "/Expenses", Table,

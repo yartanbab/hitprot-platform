@@ -669,6 +669,8 @@
         "Import:Title:Tasks": "Görevleri Excel'den içe aktar",
         "Import:Hint:Finance": "Para birimi boşsa kasanın para birimi kullanılır.",
         "Import:Hint:Tasks": "Başlangıç boşsa bugün kullanılır. Etiketleri virgülle ayırın; olmayan etiket oluşturulur. Atanan kişi ad soyad, kullanıcı adı ya da e-postayla yazılabilir.",
+        "Import:Title:Projects": "Projeleri Excel'den içe aktar",
+        "Import:Hint:Projects": "Kod boşsa sıradaki kod verilir; dolu kod bu kurumda başka projede kullanılıyorsa satır reddedilir. Durum ve görev sayıları alınmaz: projeler \"Planlama\" ile açılır. Kategori boşsa \"Diğer / Genel\".",
         "Import:Error:DueBeforeStart": "{0}, {1} tarihinden önce olamaz.",
         "Import:Step1": "1. Şablonu indirip doldurun ya da bu ekrandan dışa aktardığınız dosyayı kullanın. Yıldızlı sütunlar zorunludur; liste olan sütunlarda şablondaki seçeneklerden birini seçin.",
         "Import:DownloadTemplate": "Şablonu indir",
