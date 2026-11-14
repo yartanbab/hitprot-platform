@@ -16,6 +16,7 @@ namespace Apya.Platform.Web.Export;
 internal static class TableExport
 {
     public const string FormatQueryKey = "format";
+    public const string ColumnsQueryKey = "columns";
 
     /// <summary>Biçim adresten, form gönderiminde (süzgeç formundaki düğme) form alanından okunur.</summary>
     public static bool IsCsv(this PageModel page)
@@ -32,12 +33,24 @@ internal static class TableExport
 
     /// <param name="name">Dosya adı (tarih ve uzantı eklenir).</param>
     /// <param name="sheetName">Excel sayfa adı; boşsa <paramref name="name"/>.</param>
-    public static FileContentResult TableFile<T>(this PageModel page, string name, IReadOnlyList<ExcelColumn<T>> columns,
+    /// <remarks>Adreste <c>columns</c> varsa dosya yerine modülün standart sütun başlıkları döner (şablon düzenleyici için).</remarks>
+    public static IActionResult TableFile<T>(this PageModel page, string name, IReadOnlyList<ExcelColumn<T>> columns,
         IEnumerable<T> rows, string? note = null, string? sheetName = null)
     {
+        if (page.Request.Query.ContainsKey(ColumnsQueryKey))
+        {
+            return new JsonResult(columns.Select(c => new { key = c.Header, required = false }));
+        }
+
         var now = page.HttpContext.RequestServices.GetRequiredService<IClock>().Now;
         var list = rows as IReadOnlyCollection<T> ?? rows.ToList();
-        var csv = page.IsCsv();
+
+        // Şablon seçildiyse sütun seti, sırası ve başlıkları ondan gelir; biçim adreste verilmediyse de.
+        var template = TransferTemplateContext.Get(page.HttpContext);
+        columns = TransferTemplateContext.Apply(template, columns);
+        var csv = template != null && !page.Request.Query.ContainsKey(FormatQueryKey)
+            ? template.Format == Apya.Platform.DataTransfers.DataTransferFileFormat.Csv
+            : page.IsCsv();
         var fileName = ExcelTable.FileName(name, now, csv ? "csv" : "xlsx");
 
         // İşlem geçmişi satır sayısını buradan alır.

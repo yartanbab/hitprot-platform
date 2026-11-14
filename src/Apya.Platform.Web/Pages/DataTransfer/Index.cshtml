@@ -10,10 +10,12 @@
     {
         (Code: IndexModel.ExportTab, Label: "DataTransfer:Tab:Export", Icon: "fa-file-export"),
         (Code: IndexModel.ImportTab, Label: "DataTransfer:Tab:Import", Icon: "fa-file-import"),
+        (Code: IndexModel.TemplatesTab, Label: "DataTransfer:Tab:Templates", Icon: "fa-table-columns"),
         (Code: IndexModel.HistoryTab, Label: "DataTransfer:Tab:History", Icon: "fa-clock-rotate-left"),
     };
     var exporting = Model.ActiveTab == IndexModel.ExportTab;
     var history = Model.ActiveTab == IndexModel.HistoryTab;
+    var templates = Model.ActiveTab == IndexModel.TemplatesTab;
     var groups = Model.Groups
         .Select(g => (g.Name, Rows: g.Rows.Where(r => exporting ? Model.CanExport && r.Screen.HasExport : r.Screen.HasImport).ToList()))
         .Where(g => g.Rows.Count > 0)
@@ -57,7 +59,87 @@
 
     <abp-card>
         <abp-card-body>
-            @if (history)
+            @if (templates)
+            {
+                <div class="d-flex flex-wrap align-items-start gap-3 mb-3">
+                    <p class="text-muted mb-0 flex-grow-1">@L["DataTransfer:Templates:Intro"]</p>
+                    @if (Model.CanManageTemplates)
+                    {
+                        <button type="button" class="btn btn-sm btn-primary text-nowrap" data-template-edit="">
+                            <i class="fa fa-plus me-1" aria-hidden="true"></i>@L["DataTransfer:Template:New"]
+                        </button>
+                    }
+                </div>
+                if (Model.Templates.Count == 0)
+                {
+                    <p class="mb-0" data-transfer-templates-empty>@L["DataTransfer:Templates:Empty"]</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle apya-clean-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>@L["DataTransfer:Template:Name"]</th>
+                                    <th>@L["DataTransfer:History:Module"]</th>
+                                    <th>@L["DataTransfer:History:Direction"]</th>
+                                    <th>@L["DataTransfer:Template:Format"]</th>
+                                    <th>@L["DataTransfer:Templates:Version"]</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in Model.Templates)
+                                {
+                                    var t = row.Template;
+                                    var exportTemplate = t.Direction == Apya.Platform.DataTransfers.DataTransferDirection.Export;
+                                    <tr data-transfer-template="@t.Id">
+                                        <td>
+                                            @t.Name
+                                            @if (t.IsSystem)
+                                            {
+                                                <span class="apya-chip apya-chip-neutral ms-1">@L["DataTransfer:Templates:System"]</span>
+                                            }
+                                            @if (!string.IsNullOrEmpty(t.Description))
+                                            {
+                                                <div class="small text-muted">@t.Description</div>
+                                            }
+                                        </td>
+                                        <td>@row.Module</td>
+                                        <td>@L[exportTemplate ? "DataTransfer:Tab:Export" : "DataTransfer:Tab:Import"]</td>
+                                        <td>@(t.Format == Apya.Platform.DataTransfers.DataTransferFileFormat.Csv ? "CSV" : "Excel")</td>
+                                        <td>v@(t.Version)</td>
+                                        <td class="text-end text-nowrap">
+                                            @if (row.UseUrl != null && exportTemplate)
+                                            {
+                                                <a class="btn btn-sm btn-outline-secondary" href="@row.UseUrl" data-template-use>
+                                                    <i class="fa fa-download me-1" aria-hidden="true"></i>@L["DataTransfer:Templates:Download"]
+                                                </a>
+                                            }
+                                            else if (row.UseUrl != null)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-primary" data-transfer-import="@row.UseUrl" data-template-use>
+                                                    <i class="fa fa-file-import me-1" aria-hidden="true"></i>@L["DataTransfer:Import"]
+                                                </button>
+                                            }
+                                            <button type="button" class="btn btn-sm btn-link" data-template-edit="@t.Id">
+                                                @L[t.IsEditable && Model.CanManageTemplates ? "DataTransfer:Templates:Edit" : "DataTransfer:Templates:View"]
+                                            </button>
+                                            @if (t.IsEditable && Model.CanManageTemplates)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-link text-danger" data-template-delete="@t.Id" data-template-name="@t.Name">
+                                                    @L["DataTransfer:Templates:Delete"]
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+            else if (history)
             {
                 <p class="text-muted mb-3">@L["DataTransfer:History:Intro", IndexModel.HistorySize]</p>
                 if (Model.History.Count == 0)

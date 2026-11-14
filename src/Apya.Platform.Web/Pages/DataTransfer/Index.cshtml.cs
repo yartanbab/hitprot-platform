@@ -24,6 +24,7 @@ public class IndexModel : PlatformPageModel
 {
     public const string ExportTab = "export";
     public const string ImportTab = "import";
+    public const string TemplatesTab = "templates";
     public const string HistoryTab = "history";
 
     /// <summary>Geçmiş sekmesinde gösterilen en yeni kayıt sayısı.</summary>
@@ -32,9 +33,12 @@ public class IndexModel : PlatformPageModel
     private readonly TransferAccess _access;
     private readonly ISettingManager _settingManager;
     private readonly IDataTransferRunAppService _runAppService;
+    private readonly IDataTransferTemplateAppService _templateAppService;
 
-    public IndexModel(TransferAccess access, ISettingManager settingManager, IDataTransferRunAppService runAppService)
+    public IndexModel(TransferAccess access, ISettingManager settingManager, IDataTransferRunAppService runAppService,
+        IDataTransferTemplateAppService templateAppService)
     {
+        _templateAppService = templateAppService;
         _runAppService = runAppService;
         _access = access;
         _settingManager = settingManager;
@@ -47,7 +51,15 @@ public class IndexModel : PlatformPageModel
     [BindProperty(SupportsGet = true)]
     public string? Tab { get; set; }
 
-    public string ActiveTab => Tab is ImportTab or HistoryTab ? Tab : ExportTab;
+    public string ActiveTab => Tab is ImportTab or TemplatesTab or HistoryTab ? Tab : ExportTab;
+
+    /// <summary>Şablonlar sekmesinin satırı: şablon, modül adı ve "kullan" adresi (dışa aktarmada indirme, içe aktarmada pencere).</summary>
+    public sealed record TemplateRow(DataTransferTemplateDto Template, string Module, string? UseUrl);
+
+    public List<TemplateRow> Templates { get; private set; } = [];
+
+    /// <summary>Şablon oluşturabilir/değiştirebilir mi (izin yalnız "tek anahtar" açıkken aranır).</summary>
+    public bool CanManageTemplates { get; private set; }
 
     /// <summary>Geçmiş sekmesi: bu tarafın (host ya da kiracı) son işlemleri; modül adı sözlükten.</summary>
     public List<(DataTransferRunDto Run, string Module)> History { get; private set; } = [];
@@ -94,6 +106,23 @@ public class IndexModel : PlatformPageModel
         CanExport = canExport;
         Enforced = await _access.IsEnforcedAsync();
         CanManageAccess = host && await AuthorizationService.IsGrantedAsync(PlatformPermissions.DataTransfer.ManageAccess);
+
+        if (ActiveTab == TemplatesTab)
+        {
+            CanManageTemplates = await _access.IsGrantedAsync(PlatformPermissions.DataTransfer.ManageTemplates);
+            var screens = TransferCatalog.Screens.ToDictionary(s => s.Module.Key);
+            Templates = (await _templateAppService.GetListAsync(new GetDataTransferTemplatesInput())).Items
+                .Where(t => screens.ContainsKey(t.ModuleKey) && screens[t.ModuleKey].Module.IsOn(host))
+                .Select(t =>
+                {
+                    var screen = screens[t.ModuleKey];
+                    var useUrl = t.Direction == DataTransferDirection.Export
+                        ? (canExport && screen.ExportUrl != null ? $"{screen.ExportUrl}&{TransferTemplateContext.QueryKey}={t.Id}" : null)
+                        : (canImport && screen.ImportUrl != null ? $"{screen.ImportUrl}?{TransferTemplateContext.QueryKey}={t.Id}" : null);
+                    return new TemplateRow(t, L[screen.Module.NameKey], useUrl);
+                })
+                .ToList();
+        }
 
         if (ActiveTab == HistoryTab)
         {

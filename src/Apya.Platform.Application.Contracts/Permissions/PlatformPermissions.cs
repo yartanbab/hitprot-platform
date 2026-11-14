@@ -223,6 +223,7 @@ public static class PlatformPermissions
         public const string Default = GroupName + ".DataTransfer";    // Çalışma alanını görme
         public const string Export = Default + ".Export";             // Dışa aktarma
         public const string Import = Default + ".Import";             // İçe aktarma
+        public const string ManageTemplates = Default + ".ManageTemplates"; // Şablon oluşturma, değiştirme, silme
         /// <summary>İzin denetimini açıp kapatma. Host-only.</summary>
         public const string ManageAccess = Default + ".ManageAccess";
     }

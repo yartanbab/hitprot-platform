@@ -226,6 +226,7 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
             PlatformPermissions.DataTransfer.Default, L("Permission:DataTransfer"));
         dataTransferPermission.AddChild(PlatformPermissions.DataTransfer.Export, L("Permission:DataTransfer.Export"));
         dataTransferPermission.AddChild(PlatformPermissions.DataTransfer.Import, L("Permission:DataTransfer.Import"));
+        dataTransferPermission.AddChild(PlatformPermissions.DataTransfer.ManageTemplates, L("Permission:DataTransfer.ManageTemplates"));
         dataTransferPermission.AddChild(
             PlatformPermissions.DataTransfer.ManageAccess, L("Permission:DataTransfer.ManageAccess"), MultiTenancySides.Host);
 

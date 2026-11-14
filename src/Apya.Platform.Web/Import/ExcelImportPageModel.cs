@@ -42,12 +42,16 @@ public abstract class ExcelImportPageModel<TLookups, TRow> : PlatformPageModel
     public async Task<IActionResult> OnGetTemplateAsync()
     {
         var name = L[NameKey].Value;
-        var columns = Columns(await LoadLookupsAsync());
+        var columns = TransferTemplateContext.TemplateFileColumns(TransferTemplateContext.Get(HttpContext), Columns(await LoadLookupsAsync()));
         var fileName = $"{L["Import:Template"]}_{name}";
         return this.IsCsv()
             ? File(ExcelImport.TemplateCsv(columns), ExcelTable.CsvContentType, ExcelTable.FileName(fileName, Clock.Now, "csv"))
             : File(ExcelImport.Template(name, L["Import:OptionsSheet"], columns), ExcelTable.ContentType, ExcelTable.FileName(fileName, Clock.Now));
     }
+
+    /// <summary>Modülün içe aktarma sütunları (şablon düzenleyici için): standart başlık ve zorunluluk.</summary>
+    public async Task<IActionResult> OnGetColumnsAsync()
+        => new JsonResult(Columns(await LoadLookupsAsync()).Select(c => new { key = c.Header, required = c.Required }));
 
     public async Task<IActionResult> OnPostPreviewAsync(IFormFile? file)
     {
@@ -104,7 +108,7 @@ public abstract class ExcelImportPageModel<TLookups, TRow> : PlatformPageModel
 
         var lookups = await LoadLookupsAsync();
         await using var stream = file.OpenReadStream();
-        var sheet = ExcelImport.Read(stream, Columns(lookups), L);
+        var sheet = ExcelImport.Read(stream, Columns(lookups), L, TransferTemplateContext.Aliases(TransferTemplateContext.Get(HttpContext)));
         foreach (var row in sheet.Rows)
         {
             rows.Add(await MapAsync(row, lookups));

@@ -95,7 +95,7 @@ public class DataTransferRunRecorder : ITransientDependency
             await _runRepository.InsertAsync(new DataTransferRun(
                 _guidGenerator.Create(), _currentTenant.Id, input.ModuleKey, input.Direction, input.Succeeded,
                 input.DurationMs, input.Format, input.FileName, input.TotalRows, input.SucceededRows,
-                input.FailedRows, input.Message));
+                input.FailedRows, input.Message, input.TemplateId, input.TemplateVersion));
             await uow.CompleteAsync();
         }
         catch (Exception ex)

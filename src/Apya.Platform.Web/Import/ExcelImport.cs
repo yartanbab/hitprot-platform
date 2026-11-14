@@ -128,11 +128,15 @@ internal static class ExcelImport
     /// büyük/küçük harf yok sayılır); zorunlu olmayan sütun dosyada hiç olmayabilir. Tamamen boş
     /// satırlar atlanır.
     /// </summary>
-    public static ImportSheet Read(Stream stream, IReadOnlyList<ImportColumn> columns, IStringLocalizer l)
+    public static ImportSheet Read(Stream stream, IReadOnlyList<ImportColumn> columns, IStringLocalizer l,
+        IReadOnlyDictionary<string, string>? aliases = null)
     {
         var headers = columns.Select(c => c.Header).ToList();
         var rows = new List<ImportRow>();
         var errors = new List<string>();
+
+        // Şablon seçildiyse sütun dosyada şablondaki başlığıyla aranır; bulunamazsa standart başlığıyla.
+        string FileHeader(ImportColumn column) => aliases != null && aliases.TryGetValue(column.Header, out var alias) ? alias : column.Header;
 
         using var table = ImportTable.Open(stream);
         if (table == null)
@@ -145,7 +149,8 @@ internal static class ExcelImport
         for (var c = 1; c <= table.LastColumn; c++)
         {
             var header = Normalize(table.Text(1, c));
-            var match = columns.FirstOrDefault(x => Normalize(x.Header) == header);
+            var match = columns.FirstOrDefault(x => Normalize(FileHeader(x)) == header)
+                ?? columns.FirstOrDefault(x => Normalize(x.Header) == header);
             if (match != null && !positions.ContainsKey(match.Header))
             {
                 positions[match.Header] = c;
@@ -154,7 +159,7 @@ internal static class ExcelImport
 
         foreach (var missing in columns.Where(x => x.Required && !positions.ContainsKey(x.Header)))
         {
-            errors.Add(l["Import:Error:MissingColumn", missing.Header]);
+            errors.Add(l["Import:Error:MissingColumn", FileHeader(missing)]);
         }
 
         if (errors.Count > 0)

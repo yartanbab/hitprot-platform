@@ -301,6 +301,7 @@ public class TenantPackageManager : ITransientDependency
         PlatformPermissions.DataTransfer.Default,
         PlatformPermissions.DataTransfer.Export,
         PlatformPermissions.DataTransfer.Import,
+        PlatformPermissions.DataTransfer.ManageTemplates,
     };
 
     private IEnumerable<(Guid Id, string Name)> DefaultPermissionsFor(
