@@ -66,7 +66,7 @@ public class IndexModel : PlatformPageModel
         };
 
         var name = L["Export:GrantCalls:Name"].Value;
-        return File(ExcelTable.Build(name, columns, dto.Items), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
+        return this.TableFile(name, columns, dto.Items);
     }
 
     /// <summary>
@@ -96,7 +96,7 @@ public class IndexModel : PlatformPageModel
         };
 
         var name = L["Export:GrantFeed:Name"].Value;
-        return File(ExcelTable.Build(name, columns, rows), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
+        return this.TableFile(name, columns, rows);
     }
 
     // Index.js stateOf() ile aynı eşleme.

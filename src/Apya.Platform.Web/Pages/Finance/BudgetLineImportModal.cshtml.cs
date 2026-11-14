@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Apya.Platform.Permissions;
 using Apya.Platform.ProjectBudgets;
 using Apya.Platform.ProjectBudgets.Dtos;
+using Apya.Platform.Web.Export;
 using Apya.Platform.Web.Import;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,6 +68,30 @@ public class BudgetLineImportModalModel : ExcelImportPageModel<BudgetLineImportL
             new(h.Approved),
             new(h.Grant),
         ];
+    }
+
+    /// <summary>
+    /// Projenin kalemleri, içe aktarmanın sütunlarıyla (üst kalem önce): dosya başka bir projeye
+    /// geri yüklenebilir. Yalnız okur; bütçeyi görme izni yeter.
+    /// </summary>
+    public async Task<IActionResult> OnGetExportAsync()
+    {
+        var h = H;
+        var lines = await _budgetAppService.GetLinesAsync(ProjectId);
+        var byId = lines.ToDictionary(l => l.Id);
+        var columns = new List<ExcelColumn<ProjectBudgetLineDto>>
+        {
+            new(h.Code, l => l.Code),
+            new(h.Name, l => l.Name),
+            new(h.Parent, l => l.ParentId is { } id && byId.TryGetValue(id, out var parent)
+                ? (parent.Code.Length > 0 ? parent.Code : parent.Name)
+                : null),
+            new(h.Planned, l => l.PlannedAmount),
+            new(h.Approved, l => l.ApprovedAmount),
+            new(h.Grant, l => l.GrantAmount),
+        };
+
+        return this.TableFile(L[NameKey].Value, columns, lines);
     }
 
     protected override async Task<BudgetLineImportLookups> LoadLookupsAsync()

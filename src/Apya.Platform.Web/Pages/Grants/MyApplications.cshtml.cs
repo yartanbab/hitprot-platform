@@ -42,6 +42,6 @@ public class MyApplicationsModel : PlatformPageModel
         };
 
         var name = L["Export:MyGrantApplications:Name"].Value;
-        return File(ExcelTable.Build(name, columns, items), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
+        return this.TableFile(name, columns, items);
     }
 }

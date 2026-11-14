@@ -47,6 +47,6 @@ public class IndexModel : PlatformPageModel
         var name = L["Export:Tenants:Name"].Value;
         var note = rows.Truncated ? L["Export:Truncated", ExcelTable.MaxRows].Value : null;
         var ordered = rows.Items.OrderBy(t => t.TenantName, StringComparer.Create(new System.Globalization.CultureInfo("tr-TR"), true));
-        return File(ExcelTable.Build(name, columns, ordered, note), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
+        return this.TableFile(name, columns, ordered, note);
     }
 }

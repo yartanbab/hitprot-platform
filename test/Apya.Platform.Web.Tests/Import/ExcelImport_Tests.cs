@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Apya.Platform.Web.Import;
 using ClosedXML.Excel;
 using Microsoft.Extensions.Localization;
@@ -126,6 +128,75 @@ public class ExcelImport_Tests
     {
         var result = ExcelImport.Read(new MemoryStream([1, 2, 3]), Columns, L);
         result.Errors.ShouldBe(["Import:Error:NotExcel"]);
+    }
+
+    private static MemoryStream Csv(string text, Encoding? encoding = null) => new((encoding ?? Encoding.UTF8).GetBytes(text));
+
+    [Fact]
+    public void Csv_noktali_virgul_virgul_ya_da_sekmeyle_okunur_tirnakli_alan_bolunmez()
+    {
+        var semicolon = ExcelImport.Read(Csv("﻿Tarih *;Başlık *;Kasa;Açıklama\r\n05.11.2026;\"Kira; ofis\";Merkez;\"iki\nsatır\"\r\n\r\n06.11.2026;Fatura;;\r\n"), Columns, L);
+        semicolon.Errors.ShouldBeEmpty();
+        semicolon.Rows.Select(r => r.Number).ShouldBe([2, 4]);
+        semicolon.Rows[0].Text("Başlık").ShouldBe("Kira; ofis");
+        semicolon.Rows[0].Text("Açıklama").ShouldBe("iki\nsatır");
+        ExcelImport.Date(semicolon.Rows[0].Value("Tarih")).ShouldBe(new DateTime(2026, 11, 5));
+        semicolon.Rows[1].Text("Kasa").ShouldBe(string.Empty);
+
+        var comma = ExcelImport.Read(Csv("Tarih,Başlık\n2026-11-05,\"Kira, ofis\"\n"), Columns, L);
+        comma.Errors.ShouldBeEmpty();
+        comma.Rows[0].Text("Başlık").ShouldBe("Kira, ofis");
+
+        var tab = ExcelImport.Read(Csv("Tarih\tBaşlık\n05.11.2026\tKira\n"), Columns, L);
+        tab.Rows[0].Text("Başlık").ShouldBe("Kira");
+    }
+
+    [Fact]
+    public void Csv_turkce_windows_kodlamasiyla_da_okunur_ve_formul_korumasi_geri_alinir()
+    {
+        // Excel'in "CSV (Virgülle ayrılmış)" kaydı UTF-8 değil 1254'tür; başlıktaki "ş" ve "ı" bozulmamalı.
+        var ansi = CodePagesEncodingProvider.Instance.GetEncoding(1254)!;
+        var result = ExcelImport.Read(Csv("Tarih;Başlık;Açıklama\r\n05.11.2026;Işık;'=A1+B1\r\n", ansi), Columns, L);
+
+        result.Errors.ShouldBeEmpty();
+        result.Rows[0].Text("Başlık").ShouldBe("Işık");
+        result.Rows[0].Text("Açıklama").ShouldBe("=A1+B1");
+    }
+
+    [Fact]
+    public void Csv_sablonu_yalniz_baslik_tasir_ve_kendi_okuyucusundan_gecer()
+    {
+        var template = Encoding.UTF8.GetString(ExcelImport.TemplateCsv(Columns)).TrimStart('﻿');
+        template.ShouldBe("Tarih *;Başlık *;Kasa;Açıklama\r\n");
+
+        var filled = ExcelImport.Read(Csv(template + "05.11.2026;Kira;;\r\n"), Columns, L);
+        filled.Errors.ShouldBeEmpty();
+        filled.Rows.Count.ShouldBe(1);
+
+        ExcelImport.Read(Csv(template), Columns, L).Errors.ShouldBe(["Import:Error:NoRows"]);
+    }
+
+    [Fact]
+    public void En_buyuk_dosya_iki_bicimde_de_saniyeler_icinde_okunur()
+    {
+        var csv = new StringBuilder("Tarih;Başlık;Kasa;Açıklama\r\n");
+        for (var i = 0; i < ExcelImport.MaxRows; i++) csv.Append("05.11.2026;Satır ").Append(i).Append(";Merkez;not\r\n");
+
+        var watch = Stopwatch.StartNew();
+        ExcelImport.Read(Csv(csv.ToString()), Columns, L).Rows.Count.ShouldBe(ExcelImport.MaxRows);
+        ExcelImport.Read(Workbook(ws =>
+        {
+            ws.Cell(1, 1).Value = "Tarih";
+            ws.Cell(1, 2).Value = "Başlık";
+            for (var r = 2; r <= ExcelImport.MaxRows + 1; r++)
+            {
+                ws.Cell(r, 1).Value = new DateTime(2026, 11, 5);
+                ws.Cell(r, 2).Value = "Satır " + r;
+            }
+        }), Columns, L).Rows.Count.ShouldBe(ExcelImport.MaxRows);
+
+        // Sınır bol: ölçülen süre birkaç saniyedir; yüklü test makinesinde de geçsin.
+        watch.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(60));
     }
 
     [Theory]

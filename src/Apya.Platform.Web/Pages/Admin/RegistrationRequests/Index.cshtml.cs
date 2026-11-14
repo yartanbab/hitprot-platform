@@ -84,7 +84,7 @@ public class IndexModel : PlatformPageModel
 
         var name = L["Export:RegistrationRequests:Name"].Value;
         var note = rows.Truncated ? L["Export:Truncated", ExcelTable.MaxRows].Value : null;
-        return File(ExcelTable.Build(name, columns, rows.Items, note), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
+        return this.TableFile(name, columns, rows.Items, note);
     }
 
     /// <summary>

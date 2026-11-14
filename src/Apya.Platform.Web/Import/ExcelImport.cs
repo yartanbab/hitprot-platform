@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Apya.Platform.Web.Export;
 using ClosedXML.Excel;
 using Microsoft.Extensions.Localization;
 
@@ -117,9 +118,15 @@ internal static class ExcelImport
         return stream.ToArray();
     }
 
+    /// <summary>Boş CSV şablonu: yalnız başlık satırı (zorunlu sütunlar yıldızlı). Seçenek listesi taşımaz.</summary>
+    public static byte[] TemplateCsv(IReadOnlyList<ImportColumn> columns)
+        => ExcelTable.BuildCsv(
+            columns.Select(c => new ExcelColumn<object>(c.Required ? c.Header + " *" : c.Header, _ => null)).ToList(), []);
+
     /// <summary>
-    /// İlk sayfayı okur. Başlıklar şablondaki adla eşleşir ("*" ve büyük/küçük harf yok sayılır);
-    /// zorunlu olmayan sütun dosyada hiç olmayabilir. Tamamen boş satırlar atlanır.
+    /// Excel'in ilk sayfasını ya da CSV dosyasını okur. Başlıklar şablondaki adla eşleşir ("*" ve
+    /// büyük/küçük harf yok sayılır); zorunlu olmayan sütun dosyada hiç olmayabilir. Tamamen boş
+    /// satırlar atlanır.
     /// </summary>
     public static ImportSheet Read(Stream stream, IReadOnlyList<ImportColumn> columns, IStringLocalizer l)
     {
@@ -127,59 +134,49 @@ internal static class ExcelImport
         var rows = new List<ImportRow>();
         var errors = new List<string>();
 
-        XLWorkbook wb;
-        try
-        {
-            wb = new XLWorkbook(stream);
-        }
-        catch (Exception)
+        using var table = ImportTable.Open(stream);
+        if (table == null)
         {
             errors.Add(l["Import:Error:NotExcel"]);
             return new ImportSheet(headers, rows, errors);
         }
 
-        using (wb)
+        var positions = new Dictionary<string, int>();
+        for (var c = 1; c <= table.LastColumn; c++)
         {
-            var ws = wb.Worksheet(1);
-            var lastColumn = ws.LastColumnUsed()?.ColumnNumber() ?? 0;
-            var positions = new Dictionary<string, int>();
-            for (var c = 1; c <= lastColumn; c++)
+            var header = Normalize(table.Text(1, c));
+            var match = columns.FirstOrDefault(x => Normalize(x.Header) == header);
+            if (match != null && !positions.ContainsKey(match.Header))
             {
-                var header = Normalize(ws.Cell(1, c).GetString());
-                var match = columns.FirstOrDefault(x => Normalize(x.Header) == header);
-                if (match != null && !positions.ContainsKey(match.Header))
-                {
-                    positions[match.Header] = c;
-                }
+                positions[match.Header] = c;
+            }
+        }
+
+        foreach (var missing in columns.Where(x => x.Required && !positions.ContainsKey(x.Header)))
+        {
+            errors.Add(l["Import:Error:MissingColumn", missing.Header]);
+        }
+
+        if (errors.Count > 0)
+        {
+            return new ImportSheet(headers, rows, errors);
+        }
+
+        for (var r = 2; r <= table.LastRow; r++)
+        {
+            var cells = positions.ToDictionary(p => p.Key, p => table.Value(r, p.Value));
+            if (cells.Values.All(v => v == null))
+            {
+                continue;
             }
 
-            foreach (var missing in columns.Where(x => x.Required && !positions.ContainsKey(x.Header)))
+            if (rows.Count == MaxRows)
             {
-                errors.Add(l["Import:Error:MissingColumn", missing.Header]);
+                errors.Add(l["Import:Error:TooManyRows", MaxRows]);
+                return new ImportSheet(headers, new List<ImportRow>(), errors);
             }
 
-            if (errors.Count > 0)
-            {
-                return new ImportSheet(headers, rows, errors);
-            }
-
-            var lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
-            for (var r = 2; r <= lastRow; r++)
-            {
-                var cells = positions.ToDictionary(p => p.Key, p => CellValue(ws.Cell(r, p.Value)));
-                if (cells.Values.All(v => v == null))
-                {
-                    continue;
-                }
-
-                if (rows.Count == MaxRows)
-                {
-                    errors.Add(l["Import:Error:TooManyRows", MaxRows]);
-                    return new ImportSheet(headers, new List<ImportRow>(), errors);
-                }
-
-                rows.Add(new ImportRow(r, cells));
-            }
+            rows.Add(new ImportRow(r, cells));
         }
 
         if (rows.Count == 0)
@@ -221,16 +218,6 @@ internal static class ExcelImport
 
     /// <summary>Ad eşleşmesinde büyük/küçük harf Türkçe kurala göre yok sayılır.</summary>
     public static string Normalize(string text) => text.Replace("*", string.Empty).Trim().ToUpper(Tr);
-
-    private static object? CellValue(IXLCell cell)
-    {
-        var value = cell.Value;
-        if (value.IsDateTime) return value.GetDateTime();
-        if (value.IsNumber) return value.GetNumber();
-        if (value.IsBoolean) return value.GetBoolean().ToString();
-        var text = cell.GetString().Trim();
-        return text.Length == 0 ? null : text;
-    }
 
     private static string SafeSheetName(string name)
     {

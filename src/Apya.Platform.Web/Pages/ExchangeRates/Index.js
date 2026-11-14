@@ -80,6 +80,15 @@ $(function () {
         ]
     }));
 
+    // Ekrandaki sıralama dosyaya aynen geçer.
+    $('#ExchangeRatesExportExcel').on('click', function () {
+        var params = new URLSearchParams({ handler: 'Excel' });
+        var order = dataTable.order()[0];
+        var column = order && dataTable.settings()[0].aoColumns[order[0]];
+        if (column && typeof column.data === 'string') { params.append('sorting', column.data + ' ' + order[1]); }
+        window.location.href = abp.appPath + 'ExchangeRates?' + params.toString();
+    });
+
     $('#NewExchangeRateButton').click(function (e) {
         e.preventDefault();
         createModal.open();

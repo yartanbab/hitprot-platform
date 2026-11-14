@@ -70,9 +70,17 @@ else
                 KDV istisnası · @b.VatExemptionCertificateNo@(b.VatExemptionValidUntil.HasValue ? " · " + b.VatExemptionValidUntil.Value.ToString("dd.MM.yyyy") + "'e kadar" : "")
             </span>
         }
+        @if (b.Lines.Any())
+        {
+            @* İçe aktarmanın sütunlarıyla iner: başka bir projeye geri yüklenebilir. *@
+            <a class="btn btn-sm btn-outline-secondary ms-auto" id="BtnExportBudgetLines"
+               href="/Finance/BudgetLineImportModal?projectId=@Model.ProjectId&handler=Export">
+                <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
+            </a>
+        }
         @if (Model.CanEditBudget)
         {
-            <div class="ms-auto d-flex gap-2">
+            <div class="@(b.Lines.Any() ? "" : "ms-auto ")d-flex gap-2">
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="BtnSupportRate">
                     <i class="fa fa-percent me-1" aria-hidden="true"></i>Destek oranı
                 </button>

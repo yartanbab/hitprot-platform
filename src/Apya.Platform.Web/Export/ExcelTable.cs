@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Volo.Abp.Application.Dtos;
@@ -27,7 +30,16 @@ internal static class ExcelTable
 
     public const string ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-    public static string FileName(string baseName, DateTime date) => $"{baseName}_{date:yyyy-MM-dd}.xlsx";
+    public const char CsvSeparator = ';';
+
+    /// <summary>Excel'in CSV hücresini formül saymasına yol açan ilk karakterler.</summary>
+    public const string CsvFormulaStarts = "=+-@";
+
+    private static readonly CultureInfo Tr = CultureInfo.GetCultureInfo("tr-TR");
+
+    public const string CsvContentType = "text/csv";
+
+    public static string FileName(string baseName, DateTime date, string extension = "xlsx") => $"{baseName}_{date:yyyy-MM-dd}.{extension}";
 
     /// <summary>
     /// Ekranın kullandığı sayfalı liste ucunu 1000'erli sayfalarla çağırır. Filtre, gizlilik ve ad
@@ -100,6 +112,50 @@ internal static class ExcelTable
         wb.SaveAs(ms);
         return ms.ToArray();
     }
+
+    /// <summary>
+    /// Aynı sütunların CSV karşılığı: UTF-8 (BOM'lu), noktalı virgül ayraçlı — Türkçe Excel çift
+    /// tıklamayla doğru açar. Sayı virgüllü ondalık, tarih gg.aa.yyyy yazılır; içe aktarma ikisini de
+    /// geri okur. Kesilme notu yazılmaz: CSV'de not satırı veri satırı sayılırdı.
+    /// </summary>
+    public static byte[] BuildCsv<T>(IReadOnlyList<ExcelColumn<T>> columns, IEnumerable<T> rows)
+    {
+        var sb = new StringBuilder();
+        AppendCsvLine(sb, columns.Select(c => c.Header));
+        foreach (var item in rows)
+        {
+            AppendCsvLine(sb, columns.Select(c => CsvText(c.Value(item), c.Format)));
+        }
+
+        return [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(sb.ToString())];
+    }
+
+    private static void AppendCsvLine(StringBuilder sb, IEnumerable<string> cells)
+    {
+        var first = true;
+        foreach (var cell in cells)
+        {
+            if (!first) sb.Append(CsvSeparator);
+            first = false;
+            var quote = cell.IndexOfAny([CsvSeparator, '"', '\r', '\n']) >= 0 || cell.Trim().Length != cell.Length;
+            sb.Append(quote ? "\"" + cell.Replace("\"", "\"\"") + "\"" : cell);
+        }
+
+        sb.Append("\r\n");
+    }
+
+    private static string CsvText(object? value, string? format) => value switch
+    {
+        null => string.Empty,
+        // Excel "=" ile başlayan CSV hücresini formül diye çalıştırır; kesme işaretiyle metin kalır
+        // (içe aktarma bu işareti geri atar).
+        string s => s.Length > 0 && CsvFormulaStarts.Contains(s[0]) ? "'" + s : s,
+        DateTime d => d.ToString(format ?? (d.TimeOfDay == TimeSpan.Zero ? "dd.MM.yyyy" : "dd.MM.yyyy HH:mm"), CultureInfo.InvariantCulture),
+        decimal m => m.ToString("0.##########", Tr),
+        double db => db.ToString("0.##########", Tr),
+        IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+        _ => value.ToString() ?? string.Empty
+    };
 
     private static void Write(IXLCell cell, object? value, string? format)
     {
