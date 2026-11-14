@@ -361,11 +361,12 @@ $(function () {
     $('#NewInvoiceButton').click(function (e) { e.preventDefault(); createModal.open(); });
 
     // Süzgeç istemcide; sunucu aynı süzgeci (proje, durum, arama) dosyada yeniden uygular.
-    $('<button type="button" class="btn btn-sm btn-outline-secondary ms-auto"><i class="fa fa-file-excel me-1" aria-hidden="true"></i></button>')
+    $('<button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-transfer-export><i class="fa fa-file-excel me-1" aria-hidden="true"></i></button>')
         .append(document.createTextNode(l('Export:ExcelButton')))
         .appendTo('#InvoiceStatusPills')
         .on('click', function () {
             var params = new URLSearchParams({ handler: 'Excel' });
+            if (window.apyaExportFormat) { params.append('format', window.apyaExportFormat); }
             if (scopeProjectId) { params.append('projectId', scopeProjectId); }
             if (state.status !== '') { params.append('status', state.status); }
             var q = ($('#InvoiceFilter').val() || '').trim();

@@ -569,6 +569,7 @@ public class PlatformWebModule : AbpModule
                     // Ana ekrana ekle + her sayfada service worker kaydı. Zilden SONRA: yüklü
                     // uygulamadaki bildirim şeridi window.apyaDesktopNotifications'a dayanır.
                     bundle.AddFiles("/js/apya-pwa.js");
+                    bundle.AddFiles("/js/apya-transfer-menu.js"); // "Excel'e aktar" düğmelerine CSV + çalışma alanı menüsü
                     bundle.AddFiles("/js/dark-mode.js");
                     bundle.AddFiles("/js/sidebar-toggle.js");
                     // sidebar-toggle.js'ten SONRA: o, 2. seviye grupları kapatıp

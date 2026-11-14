@@ -20,7 +20,7 @@
        ada yeniden derlenmeden çalışır (sunucu tarafı: OnGetFilesExcelAsync). *@
     <div class="apya-page-head">
         <div class="apya-page-head-actions">
-            <button type="button" id="DocumentsExportExcel" class="btn btn-sm btn-outline-secondary">
+            <button type="button" id="DocumentsExportExcel" data-transfer-export class="btn btn-sm btn-outline-secondary">
                 <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
             </button>
         </div>
@@ -33,6 +33,7 @@
     document.getElementById('DocumentsExportExcel').addEventListener('click', function () {
         var from = new URLSearchParams(window.location.search);
         var to = new URLSearchParams({ handler: 'FilesExcel' });
+        if (window.apyaExportFormat) { to.set('format', window.apyaExportFormat); }
         ['folder', 'step', 'projectId', 'smart', 'q', 'sort'].forEach(function (k) {
             if (from.get(k)) { to.set(k, from.get(k)); }
         });

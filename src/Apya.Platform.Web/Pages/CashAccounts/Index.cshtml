@@ -47,7 +47,7 @@
             <div class="d-flex gap-2">
                 @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.CashMovements.Default))
                 {
-                    <a id="MovementsExportExcel" class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">
+                    <a id="MovementsExportExcel" data-transfer-export class="btn btn-sm btn-outline-secondary disabled" aria-disabled="true">
                         <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
                     </a>
                 }

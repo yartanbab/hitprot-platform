@@ -237,6 +237,7 @@ $(function () {
     // Ekrandaki sekme ve süzgeçler dosyaya aynen geçer.
     $('#CallsExportExcel').on('click', function () {
         var params = new URLSearchParams({ handler: 'CallsExcel', tab: TAB[state.tab], sort: state.sort });
+        if (window.apyaExportFormat) { params.append('format', window.apyaExportFormat); }
         if (state.tab === 'live' && state.closed) { params.append('closed', 'true'); }
         if (state.issuer) { params.append('issuer', state.issuer); }
         window.location.href = '/Grants?' + params.toString();
