@@ -7,7 +7,16 @@
    bu düzen tema anahtarını çalıştırmaz, bu yüzden dark override'ı yoktur.
    ========================================================================== */
 
+/* Hesap ekranlarında vurgu rengi logonun rengi (--apya-brand-mark, lacivert):
+   düğme, bağlantı, onay kutusu ve odak halkası işaretle aynı aileden gelir.
+   Uygulama kabuğunun indigo vurgusu bu düzene sızmaz, tersi de olmaz. */
 .apya-auth-body {
+    --apya-accent-500: var(--apya-brand-mark, #123B63);
+    --apya-accent-600: #0B2944;
+    --apya-accent-300: #8FA6BF;
+    --apya-accent-100: #DCE4ED;
+    --apya-accent-50: #EEF2F6;
+    --apya-accent-soft: rgba(18, 59, 99, .08);
     margin: 0;
     background: var(--apya-surface-app-bg, #F5F5F5);
     color: var(--apya-text-primary, #111827);
@@ -110,6 +119,11 @@
     color: var(--apya-text-tertiary, #9CA3AF);
 }
 
+.apya-auth__legal .apya-auth__link {
+    font-size: 12px;
+    font-weight: 400;
+}
+
 /* --- Sağ panel + cam kart -------------------------------------------------- */
 /* Sol iç boşluk (48) tanıtım sütununun sağ iç boşluğuyla (56) toplanıp yazı ile
    kart arasındaki nefes payını verir. */
@@ -120,29 +134,27 @@
     padding: 40px 40px 40px 48px;
 }
 
+/* Çerçevesiz: form zemine gömülür (önce mobilde, sonra her genişlikte istendi).
+   Sınıf adı korunuyor; düzen ve diğer hesap sayfaları buna bağlı. */
 .apya-auth__card {
     width: 100%;
-    padding: 42px 44px 44px;
+    padding: 0;
     box-sizing: border-box;
-    border: 1px solid rgba(255, 255, 255, .9);
-    border-radius: var(--apya-radius-2xl, 16px);
-    background: rgba(255, 255, 255, .72);
-    backdrop-filter: blur(28px);
-    box-shadow: 0 20px 25px -5px rgba(17, 24, 39, .12), 0 8px 10px -6px rgba(17, 24, 39, .05);
 }
 
 .apya-auth__card-head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
 
 .apya-auth__title {
     margin: 0;
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -.02em;
+    font-size: 32px;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -.03em;
     color: var(--apya-text-primary, #111827);
 }
 
@@ -151,13 +163,13 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    height: 28px;
-    padding: 0 10px;
+    height: 36px;
+    padding: 0 12px;
     border: 1px solid var(--apya-border-default, #E5E7EB);
     border-radius: var(--apya-radius-full, 9999px);
     background: var(--apya-surface-base, #fff);
     font-family: var(--apya-font-mono, 'JetBrains Mono', ui-monospace, monospace);
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--apya-text-secondary, #4B5563);
     cursor: pointer;
@@ -267,14 +279,14 @@
 
 /* --- Form ------------------------------------------------------------------ */
 .apya-auth__field {
-    margin-top: 20px;
+    margin-top: 28px;
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 8px;
 }
 
 .apya-auth__field + .apya-auth__field {
-    margin-top: 16px;
+    margin-top: 18px;
 }
 
 .apya-auth__field-head {
@@ -285,27 +297,27 @@
 }
 
 .apya-auth__label {
-    font-size: 13.5px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
     color: var(--apya-text-primary, #374151);
 }
 
 .apya-auth__input {
     width: 100%;
-    height: 48px;
+    height: 54px;
     padding: 0 16px;
     box-sizing: border-box;
     border: 1px solid var(--apya-border-default, #E5E7EB);
-    border-radius: var(--apya-radius-lg, 8px);
+    border-radius: var(--apya-radius-xl, 12px);
     background: var(--apya-surface-base, #fff);
-    font-size: 15px;
+    font-size: 16px;
     color: var(--apya-text-primary, #111827);
     outline: none;
 }
 
 .apya-auth__input:focus {
     border-color: var(--apya-accent-500, #4F46E5);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, .25);
+    box-shadow: 0 0 0 3px rgba(18, 59, 99, .22);
 }
 
 .apya-auth__input-group {
@@ -314,15 +326,15 @@
 }
 
 .apya-auth__input-group .apya-auth__input {
-    padding-right: 44px;
+    padding-right: 54px;
 }
 
 .apya-auth__reveal {
     position: absolute;
-    right: 6px;
-    top: 6px;
-    width: 36px;
-    height: 36px;
+    right: 5px;
+    top: 5px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -346,7 +358,8 @@
 }
 
 .apya-auth__row {
-    margin-top: 16px;
+    margin-top: 12px;
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -356,23 +369,24 @@
 .apya-auth__check {
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 10px;
     margin: 0;
-    font-size: 13px;
+    font-size: 14.5px;
     color: var(--apya-text-primary, #374151);
     cursor: pointer;
 }
 
 .apya-auth__check input {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     margin: 0;
     accent-color: var(--apya-accent-500, #4F46E5);
     cursor: pointer;
 }
 
 .apya-auth__link {
-    font-size: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
     color: var(--apya-accent-500, #4F46E5);
     text-decoration: none;
 }
@@ -383,7 +397,7 @@
 }
 
 .apya-auth__muted {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--apya-text-secondary, #6B7280);
 }
 
@@ -395,14 +409,14 @@
 }
 
 .apya-auth__submit {
-    margin-top: 24px;
+    margin-top: 16px;
     width: 100%;
-    height: 50px;
+    height: 56px;
     border: 0;
-    border-radius: var(--apya-radius-lg, 8px);
+    border-radius: var(--apya-radius-xl, 12px);
     background: var(--apya-accent-500, #4F46E5);
     color: #fff;
-    font-size: 15.5px;
+    font-size: 16.5px;
     font-weight: 700;
     cursor: pointer;
     transition: background 150ms cubic-bezier(.16, 1, .3, 1);
@@ -491,9 +505,9 @@
     }
 }
 
-/* Telefon: kart kalkar, form ekranın tamamını kullanır. 470px'lik ortalı kart bu
-   genişlikte iki yanda ve altta boşluk bırakıp küçük kalıyordu. Alanlar 16px yazı
-   alır (iOS 16px altında odakta sayfayı yakınlaştırır), dokunma hedefleri ≥44px. */
+/* Telefon: form ekranın tamamını kullanır; marka üstte, yasal bağlantılar altta.
+   Alan ölçüleri (16px yazı: iOS odakta yakınlaştırmaz; ≥44px dokunma hedefi) temel
+   kurallarda, her genişlikte aynı. */
 @media (max-width: 575.98px) {
     .apya-auth {
         place-items: stretch;
@@ -503,39 +517,16 @@
         max-width: none;
         min-height: 100vh;
         min-height: 100dvh;
-        padding: 20px 24px 24px;
+        padding: 32px 24px 24px;
         box-sizing: border-box;
     }
 
+    /* Üstteki auto boşluk, alttaki yasal satırın auto boşluğuyla eşit paylaşılır:
+       uzun ekranda içerik dikeyde ortalanır, logo üst kenara yapışmaz. Kısa
+       ekranda boşluk sıfıra iner, panelin iç boşluğu kalır. */
     .apya-auth__panel-brand {
-        justify-content: flex-start;
+        margin-top: auto;
         margin-bottom: 44px;
-    }
-
-    .apya-auth__card {
-        padding: 0;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        backdrop-filter: none;
-        box-shadow: none;
-    }
-
-    .apya-auth__card-head {
-        align-items: center;
-    }
-
-    .apya-auth__title {
-        font-size: 32px;
-        line-height: 1.1;
-        font-weight: 800;
-        letter-spacing: -.03em;
-    }
-
-    .apya-auth__lang-btn {
-        height: 36px;
-        padding: 0 12px;
-        font-size: 11px;
     }
 
     .apya-auth__lead {
@@ -544,64 +535,6 @@
         font-size: 15.5px;
         line-height: 1.5;
         color: var(--apya-text-secondary, #6B7280);
-    }
-
-    .apya-auth__field {
-        margin-top: 28px;
-        gap: 8px;
-    }
-
-    .apya-auth__field + .apya-auth__field {
-        margin-top: 18px;
-    }
-
-    .apya-auth__label {
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    .apya-auth__link {
-        font-size: 13.5px;
-        font-weight: 600;
-    }
-
-    .apya-auth__input {
-        height: 54px;
-        font-size: 16px;
-        border-radius: var(--apya-radius-xl, 12px);
-    }
-
-    .apya-auth__input-group .apya-auth__input {
-        padding-right: 54px;
-    }
-
-    .apya-auth__reveal {
-        top: 5px;
-        right: 5px;
-        width: 44px;
-        height: 44px;
-    }
-
-    .apya-auth__row {
-        margin-top: 12px;
-        min-height: 44px;
-    }
-
-    .apya-auth__check {
-        font-size: 14.5px;
-        gap: 10px;
-    }
-
-    .apya-auth__check input {
-        width: 20px;
-        height: 20px;
-    }
-
-    .apya-auth__submit {
-        margin-top: 16px;
-        height: 56px;
-        border-radius: var(--apya-radius-xl, 12px);
-        font-size: 16.5px;
     }
 
     /* Kayıt talebi: satır içi küçük bağlantı yerine çerçeveli, tam genişlik hedef. */
