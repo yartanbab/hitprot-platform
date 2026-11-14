@@ -1,0 +1,265 @@
+@page
+@using Apya.Platform.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.DataTransfer.TemplateModalModel
+@{
+    Layout = null;
+    var template = Model.Template;
+    var readOnly = template is { IsEditable: false };
+    var data = new
+    {
+        targets = Model.Targets.Select(t => new { module = t.ModuleKey, direction = t.Direction, name = t.Name, columnsUrl = t.ColumnsUrl }),
+        template = template == null ? null : new
+        {
+            id = template.Id, module = template.ModuleKey, direction = (int)template.Direction, name = template.Name,
+            description = template.Description, format = (int)template.Format,
+            columns = template.Columns.Select(c => new { key = c.Key, header = c.Header })
+        },
+        readOnly,
+        texts = new
+        {
+            export = L["DataTransfer:Tab:Export"].Value,
+            import = L["DataTransfer:Tab:Import"].Value,
+            required = L["DataTransfer:Template:Required"].Value,
+            up = L["DataTransfer:Template:MoveUp"].Value,
+            down = L["DataTransfer:Template:MoveDown"].Value,
+            noColumns = L["DataTransfer:Template:NoColumns"].Value,
+            loadFailed = L["DataTransfer:Template:LoadFailed"].Value,
+            saved = L["DataTransfer:Template:Saved"].Value,
+            missing = L["DataTransfer:Template:Missing"].Value
+        }
+    };
+}
+
+@* Şablon düzenleyici: hedef (modül + yön) seçilir, sütunları modülün ucundan gelir; işaretli
+   sütunlar listedeki sırayla dosyaya girer, "Dosyadaki başlık" dışa aktarmada yazılan, içe aktarmada
+   aranan başlıktır. Kayıt şablon servisine gider; kuralları ve sürümü o yönetir. *@
+<form id="TransferTemplateForm" onsubmit="return false;">
+    <abp-modal size="Large">
+        <abp-modal-header title="@(template == null ? L["DataTransfer:Template:New"].Value : template.Name)"></abp-modal-header>
+        <abp-modal-body>
+            @if (readOnly)
+            {
+                <div class="alert alert-light border small">@L["DataTransfer:Template:SystemReadOnly"]</div>
+            }
+            <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="TransferTemplateTarget">@L["DataTransfer:Template:Target"]</label>
+                    <select class="form-select" id="TransferTemplateTarget" @(template != null ? "disabled" : null)></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="TransferTemplateName">@L["DataTransfer:Template:Name"]</label>
+                    <input class="form-control" id="TransferTemplateName" maxlength="128" required @(readOnly ? "disabled" : null) />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label" for="TransferTemplateFormat">@L["DataTransfer:Template:Format"]</label>
+                    <select class="form-select" id="TransferTemplateFormat" @(readOnly ? "disabled" : null)>
+                        <option value="0">Excel</option>
+                        <option value="1">CSV</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="TransferTemplateDescription">@L["DataTransfer:Template:Description"]</label>
+                    <input class="form-control" id="TransferTemplateDescription" maxlength="512" @(readOnly ? "disabled" : null) />
+                </div>
+            </div>
+
+            <p class="text-muted small mb-2" data-template-hint></p>
+            <div data-template-message class="alert d-none" role="status"></div>
+            <div class="table-responsive" style="max-height: 45vh;">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 2.5rem;"></th>
+                            <th>@L["DataTransfer:Template:Column"]</th>
+                            <th>@L["DataTransfer:Template:FileHeader"]</th>
+                            <th style="width: 6rem;"></th>
+                        </tr>
+                    </thead>
+                    <tbody data-template-columns></tbody>
+                </table>
+            </div>
+
+            @if (Model.Versions.Count > 1)
+            {
+                <details class="mt-3 small">
+                    <summary>@L["DataTransfer:Template:Versions", Model.Versions.Count]</summary>
+                    <ul class="mb-0 mt-2">
+                        @foreach (var version in Model.Versions)
+                        {
+                            <li data-template-version="@version.Version">
+                                v@(version.Version) · @version.CreationTime.ToString("dd.MM.yyyy HH:mm") · @version.Name ·
+                                @string.Join(", ", version.Columns.Select(c => c.Header))
+                            </li>
+                        }
+                    </ul>
+                </details>
+            }
+        </abp-modal-body>
+        <abp-modal-footer>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["DataTransfer:Template:Close"]</button>
+            @if (!readOnly)
+            {
+                <button type="button" class="btn btn-primary" data-template-save>
+                    <i class="fa fa-check me-1" aria-hidden="true"></i>@L["DataTransfer:Template:Save"]
+                </button>
+            }
+        </abp-modal-footer>
+    </abp-modal>
+</form>
+
+<script>
+    (function () {
+        var data = @Json.Serialize(data);
+        var texts = data.texts;
+        var form = document.getElementById('TransferTemplateForm');
+        var target = form.querySelector('#TransferTemplateTarget');
+        var body = form.querySelector('[data-template-columns]');
+        var message = form.querySelector('[data-template-message]');
+        var hint = form.querySelector('[data-template-hint]');
+        var service = apya.platform.dataTransfers.dataTransferTemplate;
+
+        function show(kind, text) {
+            message.className = 'alert alert-' + kind;
+            message.textContent = text;
+        }
+
+        function current() {
+            return data.targets[target.selectedIndex];
+        }
+
+        // Satır: işaret (dosyaya girsin mi), standart sütun adı, dosyadaki başlık, sıra düğmeleri.
+        function row(column, included, header) {
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-key', column.key);
+
+            var check = document.createElement('input');
+            check.type = 'checkbox';
+            check.className = 'form-check-input';
+            check.checked = included;
+            check.disabled = data.readOnly;
+            check.setAttribute('aria-label', column.key);
+            tr.insertCell().appendChild(check);
+
+            var name = tr.insertCell();
+            name.textContent = column.key;
+            if (column.required) {
+                var badge = document.createElement('span');
+                badge.className = 'apya-chip apya-chip-neutral ms-2';
+                badge.textContent = texts.required;
+                name.appendChild(badge);
+            }
+
+            var input = document.createElement('input');
+            input.className = 'form-control form-control-sm';
+            input.value = header || column.key;
+            input.placeholder = column.key;
+            input.maxLength = 128;
+            input.disabled = data.readOnly;
+            tr.insertCell().appendChild(input);
+
+            var moves = tr.insertCell();
+            moves.className = 'text-end text-nowrap';
+            [['fa-arrow-up', texts.up, -1], ['fa-arrow-down', texts.down, 1]].forEach(function (m) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'btn btn-sm btn-link p-1';
+                b.disabled = data.readOnly;
+                b.setAttribute('aria-label', m[1]);
+                b.title = m[1];
+                b.innerHTML = '<i class="fa ' + m[0] + '" aria-hidden="true"></i>';
+                b.addEventListener('click', function () {
+                    var other = m[2] < 0 ? tr.previousElementSibling : tr.nextElementSibling;
+                    if (!other) { return; }
+                    if (m[2] < 0) { body.insertBefore(tr, other); } else { body.insertBefore(other, tr); }
+                });
+                moves.appendChild(b);
+            });
+            return tr;
+        }
+
+        // Şablondaki sütunlar şablonun sırasıyla başta; modülün şablonda olmayan sütunları işaretsiz sonda.
+        function render(columns) {
+            body.innerHTML = '';
+            var saved = data.template ? data.template.columns : null;
+            var byKey = {};
+            columns.forEach(function (c) { byKey[c.key] = c; });
+            var missing = [];
+            (saved || []).forEach(function (s) {
+                if (byKey[s.key]) { body.appendChild(row(byKey[s.key], true, s.header)); delete byKey[s.key]; }
+                else { missing.push(s.key); }
+            });
+            columns.forEach(function (c) {
+                if (byKey[c.key]) { body.appendChild(row(c, !saved, c.key)); }
+            });
+            if (missing.length) { show('warning', texts.missing + ' ' + missing.join(', ')); }
+            if (!columns.length) { show('warning', texts.noColumns); }
+        }
+
+        // Hedef hızlı değiştirilirse önceki (daha yavaş) yanıt sonradan gelip tabloyu ezmesin: yalnız son istek çizilir.
+        var latest = 0;
+
+        function load() {
+            var t = current();
+            var request = ++latest;
+            message.className = 'alert d-none';
+            body.innerHTML = '';
+            if (!t) { show('warning', texts.noColumns); return; }
+            hint.textContent = (t.direction === 0 ? texts.export : texts.import) + ' · ' + t.name;
+            fetch(abp.appPath + t.columnsUrl.replace(/^\//, ''), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); })
+                .then(function (columns) { if (request === latest) { render(columns); } })
+                .catch(function () { if (request === latest) { show('danger', texts.loadFailed); } });
+        }
+
+        data.targets.forEach(function (t) {
+            var option = document.createElement('option');
+            option.textContent = t.name + ' — ' + (t.direction === 0 ? texts.export : texts.import);
+            target.appendChild(option);
+        });
+
+        if (data.template) {
+            form.querySelector('#TransferTemplateName').value = data.template.name;
+            form.querySelector('#TransferTemplateDescription').value = data.template.description || '';
+            form.querySelector('#TransferTemplateFormat').value = String(data.template.format);
+            for (var i = 0; i < data.targets.length; i++) {
+                if (data.targets[i].module === data.template.module && data.targets[i].direction === data.template.direction) { target.selectedIndex = i; }
+            }
+        }
+
+        target.addEventListener('change', load);
+        load();
+
+        var save = form.querySelector('[data-template-save]');
+        if (save) {
+            save.addEventListener('click', function () {
+                var t = current();
+                var input = {
+                    name: form.querySelector('#TransferTemplateName').value.trim(),
+                    description: form.querySelector('#TransferTemplateDescription').value.trim() || null,
+                    format: parseInt(form.querySelector('#TransferTemplateFormat').value, 10),
+                    columns: Array.prototype.filter.call(body.rows, function (tr) { return tr.cells[0].firstChild.checked; })
+                        .map(function (tr) { return { key: tr.getAttribute('data-key'), header: tr.cells[2].firstChild.value.trim() }; })
+                };
+                if (!input.name) { form.querySelector('#TransferTemplateName').focus(); return; }
+
+                var request;
+                if (data.template) {
+                    request = service.update(data.template.id, input);
+                } else {
+                    input.moduleKey = t.module;
+                    input.direction = t.direction;
+                    request = service.create(input);
+                }
+
+                save.disabled = true;
+                request.then(function () {
+                    abp.notify.success(texts.saved);
+                    document.dispatchEvent(new CustomEvent('apya:transfer-template-saved'));
+                }).always(function () { save.disabled = false; });
+            });
+        }
+    })();
+</script>

@@ -49,6 +49,10 @@ public abstract class ExcelImportPageModel<TLookups, TRow> : PlatformPageModel
             : File(ExcelImport.Template(name, L["Import:OptionsSheet"], columns), ExcelTable.ContentType, ExcelTable.FileName(fileName, Clock.Now));
     }
 
+    /// <summary>Modülün içe aktarma sütunları (şablon düzenleyici için): standart başlık ve zorunluluk.</summary>
+    public async Task<IActionResult> OnGetColumnsAsync()
+        => new JsonResult(Columns(await LoadLookupsAsync()).Select(c => new { key = c.Header, required = c.Required }));
+
     public async Task<IActionResult> OnPostPreviewAsync(IFormFile? file)
     {
         var (sheet, _) = await ReadAsync(file);
