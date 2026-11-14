@@ -95,7 +95,7 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
             }
         }
 
-        var type = tenantProfile == null ? OrganizationType.Sirket : ToOrganizationType(tenantProfile.CompanyType);
+        var type = tenantProfile == null ? OrganizationType.Sirket : tenantProfile.CompanyType.ToOrganizationType();
         var dto = WithCompleteness(new FirmProfileDto { Type = type });
         if (tenantProfile == null)
         {
@@ -128,14 +128,6 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
 
         return dto;
     }
-
-    /// <summary>Kamu kurumu ve "Diğer"in hibe tarafında karşılığı yok; varsayılan (Şirket) kalır, kurum seçer.</summary>
-    private static OrganizationType ToOrganizationType(CompanyType type) => type switch
-    {
-        CompanyType.Association => OrganizationType.Dernek,
-        CompanyType.Foundation => OrganizationType.Vakif,
-        _ => OrganizationType.Sirket
-    };
 
     /// <summary>
     /// KOBİ ölçeği: Mikro &lt;10, Küçük &lt;50, Orta &lt;250 çalışan. Talep aralıkları sınırda

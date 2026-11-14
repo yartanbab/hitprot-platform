@@ -10,6 +10,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Grants;
 
@@ -38,6 +39,7 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
     private readonly FirmDataGapCalculator _gapCalculator;
     private readonly IDataFilter<IMultiTenant> _tenantFilter;
     private readonly GrantParameterCriterionManager _parameterCriteria;
+    private readonly IRepository<TenantProfile, Guid> _tenantProfileRepository;
 
     public FirmDataAppService(
         IRepository<FirmParameterDefinition, Guid> definitionRepository,
@@ -50,8 +52,10 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
         FirmSignalsBuilder signalsBuilder,
         FirmDataGapCalculator gapCalculator,
         IDataFilter<IMultiTenant> tenantFilter,
-        GrantParameterCriterionManager parameterCriteria)
+        GrantParameterCriterionManager parameterCriteria,
+        IRepository<TenantProfile, Guid> tenantProfileRepository)
     {
+        _tenantProfileRepository = tenantProfileRepository;
         _parameterCriteria = parameterCriteria;
         _grantRepository = grantRepository;
         _callRepository = callRepository;
@@ -135,7 +139,8 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
         var signals = await _signalsBuilder.BuildAsync(CurrentTenant.Id);
         var openCalls = await GetOpenCallsAsync();
 
-        return _gapCalculator.Calculate(definitions, values, profile, signals, openCalls, Clock.Now.Date)
+        return _gapCalculator.Calculate(definitions, values, profile, signals, openCalls, Clock.Now.Date,
+                profile?.Type ?? await SuggestedOrganizationTypeAsync())
             .Select(g => new FirmDataGapDto
             {
                 Code = g.Definition.Code,
@@ -176,15 +181,31 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
         }
     }
 
+    /// <summary>
+    /// Hibe profili kaydedilmemiş kurumun türü: kurum profilindeki türden (hibe profili düzenleyicisi
+    /// de aynı öneriyi gösterir). Kurum profili host kaydıdır (IMultiTenant DEĞİL); eşleştirme ELLE.
+    /// Bilinmiyorsa null: hiçbir parametre gizlenmez.
+    /// </summary>
+    private async Task<OrganizationType?> SuggestedOrganizationTypeAsync()
+    {
+        var tenantId = CurrentTenant.Id;
+        using (CurrentTenant.Change(null))
+        {
+            var tenantProfile = await _tenantProfileRepository.FirstOrDefaultAsync(p => p.TenantId == tenantId);
+            return tenantProfile?.CompanyType.ToOrganizationType();
+        }
+    }
+
     /// <summary>Kurumun elle doldurabileceği, kendi türüne uyan canlı tanımlar.</summary>
     private async Task<List<FirmParameterDefinition>> GetEditableDefinitionsAsync()
     {
         var profile = await _profileRepository.FirstOrDefaultAsync();
+        var type = profile?.Type ?? await SuggestedOrganizationTypeAsync();
         var definitions = await _definitionRepository.GetListAsync(d => d.IsActive && d.SystemKey == null);
         return definitions
             .Where(d => d.AllowedSources.HasFlag(FirmParameterSource.Kullanici))
             // Türü henüz bilinmeyen kurumdan hiçbir parametre gizlenmez.
-            .Where(d => profile == null || d.AppliesTo(profile.Type))
+            .Where(d => type == null || d.AppliesTo(type.Value))
             .OrderBy(d => d.Group)
             .ThenBy(d => d.Order)
             .ThenBy(d => d.Name)
