@@ -1,0 +1,124 @@
+@page
+@using Apya.Platform.Grants
+@using Apya.Platform.Grants.Dtos
+@using Apya.Platform.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.ParameterCriteriaModel
+@{
+    ViewBag.Title = L["GrantCriteria:Title"].Value;
+
+    string ValueText(GrantParameterCriterionDto c) => c.DataType == FirmParameterDataType.Boolean
+        ? L[c.Value == "true" ? "FirmData:Yes" : "FirmData:No"].Value
+        : c.Value;
+}
+
+@*
+    PROGRAMIN PARAMETRE ÖLÇÜTLERİ — bir kurum parametresi, burada bir programa bağlanana kadar
+    hiçbir kurumun uygunluğunu etkilemez. Değeri olmayan kurum elenmez, "Koşullu" olur.
+*@
+<div data-page-description="@L["GrantCriteria:Description"]" class="apya-page--narrow apya-grant-scope">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions">
+            <a href="/Grants/Parameters?id=@Model.GrantId" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>@L["GrantCriteria:BackToProgram"]
+            </a>
+        </div>
+    </div>
+
+    @if (Model.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert"><i class="fa fa-triangle-exclamation me-2" aria-hidden="true"></i>@Model.ErrorMessage</div>
+    }
+
+    <abp-card>
+        <abp-card-body>
+            <h2 class="fs-5 fw-semibold mb-1">@Model.Data.GrantName</h2>
+            <p class="text-muted small mb-0">@L["GrantCriteria:Intro"]</p>
+            @if (Model.Data.CoFinancingRatePercent is { } rate)
+            {
+                <div class="alert alert-info small mt-3 mb-0" role="note" data-cofinancing-note>
+                    <i class="fa fa-coins me-2" aria-hidden="true"></i>@L["GrantCriteria:CofinancingNote", rate]
+                </div>
+            }
+        </abp-card-body>
+    </abp-card>
+
+    <abp-card class="mt-3">
+        <abp-card-header><abp-card-title>@L["GrantCriteria:List"]</abp-card-title></abp-card-header>
+        <abp-card-body>
+            @if (Model.Data.Criteria.Count == 0)
+            {
+                <div class="text-muted small">@L["GrantCriteria:Empty"]</div>
+            }
+            @foreach (var c in Model.Data.Criteria)
+            {
+                <div class="d-flex flex-wrap align-items-center gap-2 py-2 border-bottom" data-criterion="@c.Id">
+                    <div class="flex-grow-1">
+                        <span class="fw-medium">@c.ParameterName</span>
+                        <span class="text-muted">@L["GrantCriteria:Operator." + c.Operator]</span>
+                        <span class="fw-medium">@ValueText(c)</span>
+                        <span class="badge @(c.IsEliminating ? "text-bg-danger" : "text-bg-light border") ms-1 fw-normal">
+                            @L[c.IsEliminating ? "GrantCriteria:Eliminating" : "GrantCriteria:Advisory"]
+                        </span>
+                    </div>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@c.Id" asp-route-grantId="@Model.GrantId" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">@L["FirmParams:Delete"]</button>
+                    </form>
+                </div>
+            }
+        </abp-card-body>
+    </abp-card>
+
+    <abp-card class="mt-3">
+        <abp-card-header><abp-card-title>@L["GrantCriteria:Add"]</abp-card-title></abp-card-header>
+        <abp-card-body>
+            @if (Model.Data.Parameters.Count == 0)
+            {
+                <div class="text-muted small">@L["GrantCriteria:NoParameters"] <a href="/Grants/FirmParameters">@L["FirmParams:Title"]</a></div>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Add" asp-route-grantId="@Model.GrantId" novalidate>
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label class="form-label" for="GcParameter">@L["GrantCriteria:Field.Parameter"]</label>
+                            <select class="form-select" id="GcParameter" name="Input.DefinitionId">
+                                @foreach (var p in Model.Data.Parameters)
+                                {
+                                    <option value="@p.Id" selected="@(p.Id == Model.Input.DefinitionId)">@p.Name (@L["FirmParams:DataType." + p.DataType])</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="GcOperator">@L["GrantCriteria:Field.Operator"]</label>
+                            <select class="form-select" id="GcOperator" name="Input.Operator">
+                                @foreach (var op in Enum.GetValues<GrantParameterOperator>())
+                                {
+                                    <option value="@op" selected="@(op == Model.Input.Operator)">@L["GrantCriteria:Operator." + op]</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="GcValue">@L["GrantCriteria:Field.Value"]</label>
+                            <input class="form-control" id="GcValue" name="Input.Value" value="@Model.Input.Value" autocomplete="off" aria-describedby="GcValueHelp" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-text mt-0" id="GcValueHelp">@L["GrantCriteria:Field.Value.Help"]</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="GcEliminating" name="Input.IsEliminating" value="true" checked="@Model.Input.IsEliminating" />
+                                <input type="hidden" name="Input.IsEliminating" value="false" />
+                                <label class="form-check-label" for="GcEliminating">@L["GrantCriteria:Field.IsEliminating"]</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-plus me-1" aria-hidden="true"></i>@L["GrantCriteria:AddButton"]</button>
+                    </div>
+                </form>
+            }
+        </abp-card-body>
+    </abp-card>
+</div>

@@ -116,3 +116,14 @@ public enum FirmParameterSystemKey
     BaskinProjeKategorisi = 17,
     AktifProjeSayisi = 18
 }
+
+/// <summary>Programın bir kurum parametresine koyduğu ölçütün işleci.</summary>
+public enum GrantParameterOperator
+{
+    EnAz = 1,
+    EnFazla = 2,
+    Esit = 3,
+
+    /// <summary>Çoklu seçimli parametrede: kurumun seçimleri bu seçeneği içermeli.</summary>
+    Icerir = 4
+}

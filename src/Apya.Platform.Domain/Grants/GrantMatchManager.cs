@@ -173,11 +173,19 @@ public class GrantMatchManager : DomainService
     /// Şirket yaşı hesabının referans günü. ARCH-049 gereği IClock burada okunmaz —
     /// çağıran <c>Clock.Now.Date</c> geçirir; metot saf kalır ve DI'sız test edilebilir.
     /// </param>
+    /// <param name="parameterCriteria">
+    /// Host'un programa eklediği parametre ölçütleri. 🔴 null verilirse parametreye bağlı HİÇBİR
+    /// şart (eş finansman dahil) değerlendirilmez: bu, kurumun parametre değerlerini taşımayan
+    /// çağıranlar içindir (ziyaretçi testi, aday kaydı, kaydedilmemiş form önizlemesi) — onlarda
+    /// kapasite hiç sorulmadığı için her program "ölçülemez" görünürdü. Kurum sinyalleri
+    /// <see cref="FirmSignalsBuilder"/> ile kurulduysa boş da olsa bir liste geçirilir.
+    /// </param>
     public GrantEligibilityResult Evaluate(
         FirmSignals firm,
         Grant grant,
         IReadOnlyList<GrantCriteriaTag> grantTags,
-        DateTime today)
+        DateTime today,
+        IReadOnlyList<GrantParameterCriterion>? parameterCriteria = null)
     {
         var rules = new List<GrantRuleResult>();
         var companyOnly = !firm.Type.IsNgo();
@@ -259,7 +267,42 @@ public class GrantMatchManager : DomainService
                         : GrantRuleOutcome.Failed));
         }
 
-        return new GrantEligibilityResult(rules);
+        return new GrantEligibilityResult(
+            rules,
+            parameterCriteria == null ? null : EvaluateParameters(firm, grant, parameterCriteria));
+    }
+
+    /// <summary>
+    /// Kurumun elle girdiği parametrelere bağlı şartlar. Değer yoksa ya da süresi dolmuşsa şart
+    /// Unknown döner (kurum ELENMEZ, "Koşullu" olur) — bilinmeyen kapasite sıfır sayılmaz.
+    /// </summary>
+    private static List<GrantParameterRuleResult> EvaluateParameters(
+        FirmSignals firm,
+        Grant grant,
+        IReadOnlyList<GrantParameterCriterion> criteria)
+    {
+        var results = new List<GrantParameterRuleResult>();
+
+        // Eş finansman: destek oranı %100'ün altındaysa kalan pay kurumdan beklenir. Kapasite
+        // bilinmiyorsa ölçülemez; "ayıramam" (0) diyen kurum elenir; sıfırdan büyük her tutar geçer.
+        // Tutar programın bütçesiyle KARŞILAŞTIRILMAZ: proje bütçesi başvurudan önce bilinmez.
+        if (grant.SupportRatePercent is < 100)
+        {
+            firm.Parameters.TryGetValue(FirmParameterCatalog.CofinancingCapacityId, out var capacity);
+            var outcome = capacity == null || capacity.IsStale || capacity.Number == null
+                ? GrantRuleOutcome.Unknown
+                : capacity.Number > 0 ? GrantRuleOutcome.Passed : GrantRuleOutcome.Failed;
+            results.Add(new GrantParameterRuleResult(FirmParameterCatalog.CofinancingCapacityId, outcome, true, null));
+        }
+
+        foreach (var criterion in criteria)
+        {
+            firm.Parameters.TryGetValue(criterion.DefinitionId, out var value);
+            results.Add(new GrantParameterRuleResult(
+                criterion.DefinitionId, criterion.Evaluate(value), criterion.IsEliminating, criterion));
+        }
+
+        return results;
     }
 
     private static HashSet<string> Provinces(IEnumerable<(GrantCriteriaKind Kind, string Value)> tags)

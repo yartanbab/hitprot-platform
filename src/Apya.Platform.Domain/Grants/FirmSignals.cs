@@ -39,6 +39,21 @@ public sealed class FirmSignals
     public decimal? AnnualRevenue { get; set; }
     public int? Trl { get; set; }
     public bool? HasConsortiumPartner { get; set; }
+
+    /// <summary>
+    /// Kurumun elle girdiği parametre değerleri (tanım kimliğine göre). Anahtar YOKSA bilgi
+    /// bilinmiyordur; sıfır ve "hayır" kayıt olarak durur.
+    /// </summary>
+    public IReadOnlyDictionary<Guid, FirmSignalParameter> Parameters { get; set; }
+        = new Dictionary<Guid, FirmSignalParameter>();
 }
+
+/// <summary>Bir parametre değerinin eşleştiriciye taşınan hâli. Süresi dolan değer ölçülemez sayılır.</summary>
+public sealed record FirmSignalParameter(
+    decimal? Number,
+    string? Text,
+    bool? Bool,
+    IReadOnlyList<string> Choices,
+    bool IsStale);
 
 public sealed record FirmSignalTag(GrantCriteriaKind Kind, string Value);

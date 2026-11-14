@@ -32,6 +32,7 @@ public class GrantAudienceResolver : DomainService
     private readonly GrantMatchWeightResolver _weightResolver;
     private readonly TenantDisplayNameResolver _displayNames;
     private readonly IClock _clock;
+    private readonly GrantParameterCriterionManager _parameterCriteria;
 
     public GrantAudienceResolver(
         ITenantRepository tenantRepo,
@@ -40,8 +41,10 @@ public class GrantAudienceResolver : DomainService
         GrantMatchManager matcher,
         GrantMatchWeightResolver weightResolver,
         TenantDisplayNameResolver displayNames,
-        IClock clock)
+        IClock clock,
+        GrantParameterCriterionManager parameterCriteria)
     {
+        _parameterCriteria = parameterCriteria;
         _tenantRepo = tenantRepo;
         _criteriaRepo = criteriaRepo;
         _signalsBuilder = signalsBuilder;
@@ -56,6 +59,7 @@ public class GrantAudienceResolver : DomainService
         Grant grant, int minScore = DefaultMinScore)
     {
         var tags = await _criteriaRepo.GetListAsync(t => t.GrantId == grant.Id);
+        var parameterCriteria = await _parameterCriteria.ResolveAsync(grant.Id);
         var weights = await _weightResolver.ResolveAsync(grant.Id);
         var today = _clock.Now.Date;
 
@@ -68,7 +72,7 @@ public class GrantAudienceResolver : DomainService
             // Uygunluk şartını AÇIKÇA ihlal eden firma, skoru yüksek olsa bile
             // duyuru almaz: "size uygun" diyip başvuramayacağı çağrıyı göstermek
             // 1e'deki şart listesiyle çelişir.
-            var eligibility = _matcher.Evaluate(signals, grant, tags, today);
+            var eligibility = _matcher.Evaluate(signals, grant, tags, today, parameterCriteria);
             if (eligibility.Bucket == GrantEligibilityBucket.UygunDegil)
             {
                 continue;

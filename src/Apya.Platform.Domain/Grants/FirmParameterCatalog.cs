@@ -29,6 +29,8 @@ public static class FirmParameterCatalog
     /// <summary>Eş finansman kapasitesi: programın destek oranıyla karşılaştırılan tek parametre, bu yüzden kodu sabittir.</summary>
     public const string CofinancingCapacityCode = "cofinancing_capacity";
 
+    public static readonly Guid CofinancingCapacityId = IdOf(26);
+
     public static Guid IdOf(int number) => Guid.Parse($"f17a0000-0000-4000-8000-{number:D12}");
 
     public static IReadOnlyList<FirmParameterDefinition> Build() => Rows.Select(r => r.ToDefinition()).ToList();

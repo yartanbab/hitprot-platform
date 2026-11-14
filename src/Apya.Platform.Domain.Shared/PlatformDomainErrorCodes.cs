@@ -445,4 +445,10 @@ public static class PlatformDomainErrorCodes
     public const string DataTransferTemplateIsSystem = "Platform:DataTransfer:TemplateIsSystem";
     public const string DataTransferTemplateModuleUnknown = "Platform:DataTransfer:TemplateModuleUnknown";
     public const string DataTransferTemplateColumnsInvalid = "Platform:DataTransfer:TemplateColumnsInvalid";
+
+    // --- Programın kurum parametresine koyduğu ölçüt ---
+    public const string GrantCriterionNotSupported = "Platform:GrantCriterion:NotSupported";
+    public const string GrantCriterionOperatorInvalid = "Platform:GrantCriterion:OperatorInvalid";
+    public const string GrantCriterionValueRequired = "Platform:GrantCriterion:ValueRequired";
+    public const string GrantCriterionDuplicate = "Platform:GrantCriterion:Duplicate";
 }

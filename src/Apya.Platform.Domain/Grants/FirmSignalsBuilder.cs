@@ -22,6 +22,8 @@ public class FirmSignalsBuilder : DomainService
     private readonly IRepository<FirmProfileTag, Guid> _profileTagRepo;
     private readonly IRepository<Project, Guid> _projectRepo;
     private readonly IRepository<ProjectCategoryDefinition, Guid> _categoryRepo;
+    private readonly IRepository<FirmParameterDefinition, Guid> _parameterDefinitionRepo;
+    private readonly IRepository<FirmParameterValue, Guid> _parameterValueRepo;
     private readonly IDataFilter _dataFilter;
     private readonly ICurrentTenant _currentTenant;
 
@@ -30,6 +32,8 @@ public class FirmSignalsBuilder : DomainService
         IRepository<FirmProfileTag, Guid> profileTagRepo,
         IRepository<Project, Guid> projectRepo,
         IRepository<ProjectCategoryDefinition, Guid> categoryRepo,
+        IRepository<FirmParameterDefinition, Guid> parameterDefinitionRepo,
+        IRepository<FirmParameterValue, Guid> parameterValueRepo,
         IDataFilter dataFilter,
         ICurrentTenant currentTenant)
     {
@@ -37,6 +41,8 @@ public class FirmSignalsBuilder : DomainService
         _profileTagRepo = profileTagRepo;
         _projectRepo = projectRepo;
         _categoryRepo = categoryRepo;
+        _parameterDefinitionRepo = parameterDefinitionRepo;
+        _parameterValueRepo = parameterValueRepo;
         _dataFilter = dataFilter;
         _currentTenant = currentTenant;
     }
@@ -59,6 +65,26 @@ public class FirmSignalsBuilder : DomainService
                 signals.HasConsortiumPartner = profile.HasConsortiumPartner;
                 var ptags = await _profileTagRepo.GetListAsync(t => t.FirmProfileId == profile.Id);
                 signals.Tags = ptags.Select(t => new FirmSignalTag(t.Kind, t.Value)).ToList();
+            }
+
+            // Elle girilen parametreler: yalnız bu kurumun satırları (kiracı süzgeci açık).
+            var parameterValues = await _parameterValueRepo.GetListAsync();
+            if (parameterValues.Count > 0)
+            {
+                var definitionIds = parameterValues.Select(v => v.DefinitionId).ToList();
+                var definitions = (await _parameterDefinitionRepo.GetListAsync(d => definitionIds.Contains(d.Id)))
+                    .ToDictionary(d => d.Id);
+                var today = Clock.Now.Date;
+                signals.Parameters = parameterValues
+                    .Where(v => definitions.ContainsKey(v.DefinitionId))
+                    .ToDictionary(
+                        v => v.DefinitionId,
+                        v => new FirmSignalParameter(
+                            v.ValueNumber,
+                            definitions[v.DefinitionId].DataType == FirmParameterDataType.MultiSelect ? null : v.ValueText,
+                            v.ValueBool,
+                            v.GetChoices(definitions[v.DefinitionId]),
+                            v.IsStale(definitions[v.DefinitionId], today)));
             }
 
             var projects = await _projectRepo.GetListAsync();

@@ -490,6 +490,10 @@ $(function () {
         if (r.bucket === 2 && r.failedRules && r.failedRules.length) {
             return reasonSentence(r, r.failedRules[0]);
         }
+        // Kurumu yalnız bir parametre şartı eliyorsa (ör. eş finansman ayıramıyor) gerekçe odur.
+        if (r.bucket === 2 && r.failedParameter) {
+            return l('Grants:ParamRule:Failed', r.failedParameter);
+        }
         var passed = (r.passedRules || []).slice(0, 3).map(ruleText);
         if (passed.length === 0) {
             // Ölçülecek şart hiç yoksa (program koymamış ya da kurum türüne uygulanmıyor) profil suçlanmaz.
@@ -504,6 +508,9 @@ $(function () {
         }
         if (r.bucket === 0 && r.unknownRules && r.unknownRules.length) {
             return l('Grants:Feed:Card:GapOptional', ruleText(r.unknownRules[0]));
+        }
+        if (r.bucket === 1 && r.unknownParameter) {
+            return l('Grants:ParamRule:Missing', r.unknownParameter);
         }
         return '';
     }
