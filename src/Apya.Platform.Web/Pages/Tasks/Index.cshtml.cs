@@ -12,7 +12,6 @@ using Apya.Platform.Shell;
 using Apya.Platform.Tasks;
 using Apya.Platform.Web.Export;
 using Volo.Abp.Settings;
-using Volo.Abp.Timing;
 
 namespace Apya.Platform.Web.Pages.Tasks
 {
@@ -23,20 +22,17 @@ namespace Apya.Platform.Web.Pages.Tasks
         private readonly Microsoft.AspNetCore.Authorization.IAuthorizationService _authorizationService;
         private readonly ITaskAppService _taskAppService;
         private readonly IStringLocalizer<PlatformResource> _l;
-        private readonly IClock _clock;
 
         public IndexModel(
             ISettingProvider settingProvider,
             Microsoft.AspNetCore.Authorization.IAuthorizationService authorizationService,
             ITaskAppService taskAppService,
-            IStringLocalizer<PlatformResource> l,
-            IClock clock)
+            IStringLocalizer<PlatformResource> l)
         {
             _settingProvider = settingProvider;
             _authorizationService = authorizationService;
             _taskAppService = taskAppService;
             _l = l;
-            _clock = clock;
         }
 
         /// <summary>
@@ -107,13 +103,14 @@ namespace Apya.Platform.Web.Pages.Tasks
                 new(_l["Export:Col:EstimatedHours"], t => t.EstimatedHours, "#,##0.0"),
                 new(_l["Export:Col:SpentHours"], t => t.SpentHours, "#,##0.0"),
                 new(_l["Export:Col:Tags"], t => string.Join(", ", t.Tags.Select(x => x.Name))),
+                // İçe aktarmanın okuduğu son sütun: indirilen dosya geri yüklenince açıklama kaybolmaz.
+                new(_l["Export:Col:Description"], t => t.Description),
                 new(_l["Export:Col:CreationTime"], t => t.CreationTime, "dd.MM.yyyy HH:mm"),
             };
 
             var name = _l["Export:Tasks:Name"].Value;
             var note = rows.Truncated ? _l["Export:Truncated", ExcelTable.MaxRows].Value : null;
-            var bytes = ExcelTable.Build(name, columns, rows.Items, note);
-            return File(bytes, ExcelTable.ContentType, ExcelTable.FileName(name, _clock.Now));
+            return this.TableFile(name, columns, rows.Items, note);
         }
     }
 }

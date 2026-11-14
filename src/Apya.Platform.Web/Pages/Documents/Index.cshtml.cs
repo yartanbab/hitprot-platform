@@ -133,7 +133,7 @@ public class IndexModel : AbpPageModel
 
         var name = l["Export:Documents:Name"].Value;
         var note = rows.Truncated ? l["Export:Truncated", ExcelTable.MaxRows].Value : null;
-        return File(ExcelTable.Build(name, columns, rows.Items, note), ExcelTable.ContentType, ExcelTable.FileName(name, Clock.Now));
+        return this.TableFile(name, columns, rows.Items, note);
     }
 
     public async Task<IActionResult> OnGetFileAsync(Guid id)

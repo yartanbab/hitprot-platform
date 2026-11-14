@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Apya.Platform.Web.Export;
 using ClosedXML.Excel;
@@ -67,6 +69,38 @@ public class ExcelTable_Tests
 
         sheet.Name.Length.ShouldBeLessThanOrEqualTo(31);
         sheet.Name.IndexOfAny(['/', ':', '[', ']']).ShouldBe(-1);
+    }
+
+    [Fact]
+    public void Csv_noktali_virgulle_ayrilir_sayi_virgullu_tarih_gunlu_yazilir()
+    {
+        var bytes = ExcelTable.BuildCsv(Columns,
+        [
+            new Row("Kira; \"ofis\"", 1234.5m, new DateTime(2026, 11, 5)),
+            new Row("=1+1", null, new DateTime(2026, 11, 5, 14, 30, 0)),
+        ]);
+
+        // BOM: Excel dosyayı UTF-8 olarak açsın (Türkçe harfler bozulmasın).
+        bytes.Take(3).ShouldBe(new byte[] { 0xEF, 0xBB, 0xBF });
+        var lines = Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3).Split("\r\n");
+        lines[0].ShouldBe("Ad;Tutar;Tarih");
+        lines[1].ShouldBe("\"Kira; \"\"ofis\"\"\";1234,5;05.11.2026");
+        // "=" ile başlayan metin Excel'de formül olarak çalışmasın.
+        lines[2].ShouldBe("'=1+1;;05.11.2026 14:30");
+    }
+
+    [Fact]
+    public void En_buyuk_liste_iki_bicimde_de_saniyeler_icinde_uretilir()
+    {
+        var rows = Enumerable.Range(0, ExcelTable.MaxRows)
+            .Select(i => new Row("Satır " + i, i * 1.5m, new DateTime(2026, 1, 1).AddDays(i % 365))).ToList();
+
+        var watch = Stopwatch.StartNew();
+        ExcelTable.Build("Liste", Columns, rows).Length.ShouldBeGreaterThan(0);
+        ExcelTable.BuildCsv(Columns, rows).Length.ShouldBeGreaterThan(0);
+
+        // Sınır bol: ölçülen süre birkaç saniyedir; yüklü test makinesinde de geçsin.
+        watch.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(60));
     }
 
     [Fact]

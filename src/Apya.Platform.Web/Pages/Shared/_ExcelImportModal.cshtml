@@ -26,9 +26,10 @@
             <a class="btn btn-sm btn-outline-secondary mb-3" href="@(path + sep)handler=Template">
                 <i class="fa fa-download me-1" aria-hidden="true"></i>@L["Import:DownloadTemplate"]
             </a>
+            <a class="btn btn-sm btn-link mb-3" href="@(path + sep)handler=Template&format=csv">@L["Import:DownloadTemplateCsv"]</a>
             <p class="mb-2">@L["Import:Step2"]</p>
             <div class="d-flex gap-2 align-items-start mb-2">
-                <input type="file" name="file" class="form-control" accept=".xlsx" />
+                <input type="file" name="file" class="form-control" accept=".xlsx,.csv" />
                 <button type="button" class="btn btn-outline-primary text-nowrap" data-import-preview>
                     <i class="fa fa-eye me-1" aria-hidden="true"></i>@L["Import:Preview"]
                 </button>

@@ -41,8 +41,11 @@ public abstract class ExcelImportPageModel<TLookups, TRow> : PlatformPageModel
     public async Task<IActionResult> OnGetTemplateAsync()
     {
         var name = L[NameKey].Value;
-        var bytes = ExcelImport.Template(name, L["Import:OptionsSheet"], Columns(await LoadLookupsAsync()));
-        return File(bytes, ExcelTable.ContentType, ExcelTable.FileName($"{L["Import:Template"]}_{name}", Clock.Now));
+        var columns = Columns(await LoadLookupsAsync());
+        var fileName = $"{L["Import:Template"]}_{name}";
+        return this.IsCsv()
+            ? File(ExcelImport.TemplateCsv(columns), ExcelTable.CsvContentType, ExcelTable.FileName(fileName, Clock.Now, "csv"))
+            : File(ExcelImport.Template(name, L["Import:OptionsSheet"], columns), ExcelTable.ContentType, ExcelTable.FileName(fileName, Clock.Now));
     }
 
     public async Task<IActionResult> OnPostPreviewAsync(IFormFile? file)
