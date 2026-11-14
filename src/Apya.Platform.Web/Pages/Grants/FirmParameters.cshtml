@@ -1,0 +1,95 @@
+@page
+@using Apya.Platform.Grants
+@using Apya.Platform.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.FirmParametersModel
+@{
+    ViewBag.Title = L["FirmParams:Title"].Value;
+}
+
+@*
+    KURUM PARAMETRELERİ — kurumlardan istenen bilgilerin kataloğu (FirmParameterDefinition).
+    Sistem parametreleri motorun kodda okuduğu alanlardır: silinemez, yalnız metni ve süresi değişir.
+*@
+<div data-page-description="@L["FirmParams:Description"]" class="apya-page apya-grant-scope">
+    <div class="apya-page-head">
+        <div class="apya-page-head-actions">
+            <a href="/Grants" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>@L["Grants:Parameters:BackToPrograms"]
+            </a>
+            <a asp-page="/Grants/FirmParameterEdit" class="btn btn-sm btn-primary">
+                <i class="fa fa-plus me-1" aria-hidden="true"></i>@L["FirmParams:New"]
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["FirmParamsMessage"] is string message)
+    {
+        <div class="alert alert-success" role="status"><i class="fa fa-circle-check me-2" aria-hidden="true"></i>@message</div>
+    }
+    @if (Model.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert"><i class="fa fa-triangle-exclamation me-2" aria-hidden="true"></i>@Model.ErrorMessage</div>
+    }
+
+    @foreach (var group in Model.Definitions.GroupBy(d => d.Group))
+    {
+        <section class="card">
+            <div class="card-header fw-bold">@L["FirmData:Group." + group.Key]</div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="Column">@L["FirmParams:Col.Name"]</th>
+                            <th scope="Column">@L["FirmParams:Col.Type"]</th>
+                            <th scope="Column">@L["FirmParams:Col.Requirement"]</th>
+                            <th scope="Column">@L["FirmParams:Col.Validity"]</th>
+                            <th scope="Column">@L["FirmParams:Col.Usage"]</th>
+                            <th scope="Column" class="text-end">@L["FirmParams:Col.Version"]</th>
+                            <th scope="Column" class="text-end">@L["FirmParams:Col.Values"]</th>
+                            <th scope="Column"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in group)
+                        {
+                            <tr data-firm-param="@d.Code">
+                                <td>
+                                    <div class="fw-medium">
+                                        @d.Name
+                                        @if (d.IsSystem)
+                                        {
+                                            <span class="badge text-bg-light border ms-1 fw-normal">@L["FirmParams:System"]</span>
+                                        }
+                                        @if (!d.IsActive)
+                                        {
+                                            <span class="badge text-bg-warning ms-1 fw-normal">@L["FirmParams:Inactive"]</span>
+                                        }
+                                    </div>
+                                    <code class="small text-muted">@d.Code</code>
+                                </td>
+                                <td>@L["FirmParams:DataType." + d.DataType]</td>
+                                <td>@L["FirmParams:Requirement." + d.Requirement]</td>
+                                <td>@(d.ValidityMonths.HasValue ? L["FirmParams:Months", d.ValidityMonths.Value] : L["FirmParams:NoExpiry"])</td>
+                                <td>@L["FirmParams:MatchUsage." + d.MatchUsage]</td>
+                                <td class="text-end">@d.Version</td>
+                                <td class="text-end">@(d.IsSystem ? "—" : d.ValueOwnerCount.ToString())</td>
+                                <td class="text-end text-nowrap">
+                                    <a class="btn btn-sm btn-outline-secondary" asp-page="/Grants/FirmParameterEdit" asp-route-id="@d.Id">@L["FirmParams:Edit"]</a>
+                                    @if (!d.IsSystem)
+                                    {
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@d.Id" class="d-inline"
+                                              onsubmit="return confirm('@L["FirmParams:DeleteConfirm"].Value');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">@L["FirmParams:Delete"]</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</div>

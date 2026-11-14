@@ -1,0 +1,163 @@
+@page
+@using Apya.Platform.Grants
+@using Apya.Platform.Localization
+@using Microsoft.Extensions.Localization
+@inject IStringLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.Grants.FirmParameterEditModel
+@{
+    ViewBag.Title = L[Model.IsNew ? "FirmParams:NewTitle" : "FirmParams:EditTitle"].Value;
+    var type = Model.Input.DataType;
+}
+
+<div data-page-description="@L["FirmParams:Description"]" class="apya-page--narrow apya-grant-scope">
+    @if (Model.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert"><i class="fa fa-triangle-exclamation me-2" aria-hidden="true"></i>@Model.ErrorMessage</div>
+    }
+    @if (Model.IsSystem)
+    {
+        <div class="alert alert-info" role="note"><i class="fa fa-circle-info me-2" aria-hidden="true"></i>@L["FirmParams:SystemNote"]</div>
+    }
+
+    <form method="post" novalidate>
+        <input type="hidden" asp-for="Id" />
+        <abp-card>
+            <abp-card-body>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="FpCode">@L["FirmParams:Field.Code"]</label>
+                        @if (Model.IsNew)
+                        {
+                            <input class="form-control" id="FpCode" name="Input.Code" value="@Model.Input.Code" maxlength="@FirmParameterConsts.MaxCodeLength"
+                                   pattern="[a-z][a-z0-9_]*" autocomplete="off" spellcheck="false" aria-describedby="FpCodeHelp" />
+                            <div class="form-text" id="FpCodeHelp">@L["FirmParams:Field.Code.Help"]</div>
+                        }
+                        else
+                        {
+                            <input class="form-control" id="FpCode" value="@Model.Existing!.Code" disabled />
+                            <input type="hidden" name="Input.Code" value="@Model.Existing.Code" />
+                        }
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="FpType">@L["FirmParams:Field.DataType"]</label>
+                        @if (Model.IsNew)
+                        {
+                            <select class="form-select" id="FpType" name="Input.DataType" aria-describedby="FpTypeHelp">
+                                @foreach (var t in Enum.GetValues<FirmParameterDataType>())
+                                {
+                                    <option value="@t" selected="@(t == type)">@L["FirmParams:DataType." + t]</option>
+                                }
+                            </select>
+                            <div class="form-text" id="FpTypeHelp">@L["FirmParams:Field.DataType.Help"]</div>
+                        }
+                        else
+                        {
+                            <input class="form-control" id="FpType" value="@L["FirmParams:DataType." + type]" disabled />
+                            <input type="hidden" name="Input.DataType" value="@type" />
+                        }
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label" for="FpName">@L["FirmParams:Field.Name"]</label>
+                        <input class="form-control" id="FpName" name="Input.Name" value="@Model.Input.Name" maxlength="@FirmParameterConsts.MaxNameLength" required />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="FpDescription">@L["FirmParams:Field.Description"]</label>
+                        <textarea class="form-control" id="FpDescription" name="Input.Description" rows="2" maxlength="@FirmParameterConsts.MaxDescriptionLength" aria-describedby="FpDescriptionHelp">@Model.Input.Description</textarea>
+                        <div class="form-text" id="FpDescriptionHelp">@L["FirmParams:Field.Description.Help"]</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label" for="FpRequirement">@L["FirmParams:Field.Requirement"]</label>
+                        <select class="form-select" id="FpRequirement" name="Input.Requirement">
+                            @foreach (var r in Enum.GetValues<FirmParameterRequirement>())
+                            {
+                                <option value="@r" selected="@(r == Model.Input.Requirement)">@L["FirmParams:Requirement." + r]</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="FpValidity">@L["FirmParams:Field.ValidityMonths"]</label>
+                        <input class="form-control" type="number" min="1" step="1" id="FpValidity" name="Input.ValidityMonths" value="@Model.Input.ValidityMonths" aria-describedby="FpValidityHelp" />
+                        <div class="form-text" id="FpValidityHelp">@L["FirmParams:Field.ValidityMonths.Help"]</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="FpOrder">@L["FirmParams:Field.Order"]</label>
+                        <input class="form-control" type="number" step="1" id="FpOrder" name="Input.Order" value="@Model.Input.Order" />
+                    </div>
+
+                    @if (!Model.IsSystem)
+                    {
+                        <div class="col-md-4">
+                            <label class="form-label" for="FpGroup">@L["FirmParams:Field.Group"]</label>
+                            <select class="form-select" id="FpGroup" name="Input.Group">
+                                @foreach (var g in Enum.GetValues<FirmParameterGroup>())
+                                {
+                                    <option value="@g" selected="@(g == Model.Input.Group)">@L["FirmData:Group." + g]</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="FpAudience">@L["FirmParams:Field.Audience"]</label>
+                            <select class="form-select" id="FpAudience" name="Input.Audience">
+                                @foreach (var a in Enum.GetValues<FirmParameterAudience>())
+                                {
+                                    <option value="@a" selected="@(a == Model.Input.Audience)">@L["FirmParams:Audience." + a]</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="FpUsage">@L["FirmParams:Field.MatchUsage"]</label>
+                            <select class="form-select" id="FpUsage" name="Input.MatchUsage" aria-describedby="FpUsageHelp">
+                                @foreach (var u in Enum.GetValues<FirmParameterMatchUsage>())
+                                {
+                                    <option value="@u" selected="@(u == Model.Input.MatchUsage)">@L["FirmParams:MatchUsage." + u]</option>
+                                }
+                            </select>
+                            <div class="form-text" id="FpUsageHelp">@L["FirmParams:Field.MatchUsage.Help"]</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" for="FpMin">@L["FirmParams:Field.MinNumber"]</label>
+                            <input class="form-control" type="number" step="any" id="FpMin" name="MinText" value="@Model.MinText" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="FpMax">@L["FirmParams:Field.MaxNumber"]</label>
+                            <input class="form-control" type="number" step="any" id="FpMax" name="MaxText" value="@Model.MaxText" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="FpMaxLength">@L["FirmParams:Field.MaxLength"]</label>
+                            <input class="form-control" type="number" min="1" max="@FirmParameterConsts.MaxLongTextLength" step="1" id="FpMaxLength" name="Input.MaxLength" value="@Model.Input.MaxLength" />
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label" for="FpOptions">@L["FirmParams:Field.Options"]</label>
+                            <textarea class="form-control" id="FpOptions" name="Input.OptionsText" rows="4" aria-describedby="FpOptionsHelp">@Model.Input.OptionsText</textarea>
+                            <div class="form-text" id="FpOptionsHelp">@L["FirmParams:Field.Options.Help"]</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="FpDoc" name="Input.AllowDocumentSource" value="true" checked="@Model.Input.AllowDocumentSource" />
+                                <input type="hidden" name="Input.AllowDocumentSource" value="false" />
+                                <label class="form-check-label" for="FpDoc">@L["FirmParams:Field.AllowDocumentSource"]</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="FpActive" name="Input.IsActive" value="true" checked="@Model.Input.IsActive" />
+                                <input type="hidden" name="Input.IsActive" value="false" />
+                                <label class="form-check-label" for="FpActive">@L["FirmParams:Field.IsActive"]</label>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </abp-card-body>
+        </abp-card>
+
+        <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+            <a class="btn btn-outline-secondary" asp-page="/Grants/FirmParameters">@L["FirmParams:Back"]</a>
+            <button type="submit" class="btn btn-primary"><i class="fa fa-check me-1" aria-hidden="true"></i>@L["FirmParams:Save"]</button>
+        </div>
+    </form>
+</div>
