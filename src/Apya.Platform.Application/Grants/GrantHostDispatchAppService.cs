@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Authorization;
 using Volo.Abp.Data;
@@ -295,9 +296,9 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
                             user.Id, title, body, NotificationType.GrantRecommended, nameof(GrantCall), call.Id);
                         result.NotifiedUserCount++;
                     }
-                    if (input.SendEmail && !string.IsNullOrWhiteSpace(user.Email))
+                    if (input.SendEmail && !string.IsNullOrWhiteSpace(user.Email)
+                        && await TryQueueEmailAsync(user, title, body))
                     {
-                        await _emailSender.SendAsync(user.Email, title, body);
                         result.EmailCount++;
                     }
                 }
@@ -305,6 +306,31 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// E-posta <c>QueueAsync</c> ile kuyruğa alınır (GrantNotificationDispatcher'daki gerekçeyle):
+    /// firma × kullanıcı döngüsünde senkron SMTP host'un isteğini bekletiyor, döngünün ortasındaki
+    /// bir SMTP hatası da gönderimi yarıda kesiyordu. Kullanıcının hibe e-posta tercihi geçerlidir.
+    /// </summary>
+    private async Task<bool> TryQueueEmailAsync(IdentityUser user, string title, string body)
+    {
+        try
+        {
+            if (!await _notificationManager.IsEmailEnabledAsync(user.Id, NotificationCategory.Grants))
+            {
+                return false;
+            }
+
+            await _emailSender.QueueAsync(user.Email, title, body);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // E-posta altyapısı gönderimi kırmamalı; öneri kaydı zaten açıldı.
+            Logger.LogWarning(ex, "Hibe öneri e-postası kuyruğa alınamadı. UserId: {UserId}", user.Id);
+            return false;
+        }
     }
 
     /// <summary>Tek engeli konsorsiyum olan firma — danışmanlık fırsatı kartının sayacı.</summary>
