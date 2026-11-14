@@ -220,6 +220,15 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         billingPermission.AddChild(
             PlatformPermissions.Billing.Manage, L("Permission:Billing.Manage"), MultiTenancySides.Host);
 
+        // İçe / dışa aktarma — iki tarafta da tanımlı; paket kapısı yok (kiracı bazında kapatma
+        // paket izin tavanından yapılır). Denetimi açıp kapatmak tek ayardır, host'undur.
+        var dataTransferPermission = systemGroup.AddPermission(
+            PlatformPermissions.DataTransfer.Default, L("Permission:DataTransfer"));
+        dataTransferPermission.AddChild(PlatformPermissions.DataTransfer.Export, L("Permission:DataTransfer.Export"));
+        dataTransferPermission.AddChild(PlatformPermissions.DataTransfer.Import, L("Permission:DataTransfer.Import"));
+        dataTransferPermission.AddChild(
+            PlatformPermissions.DataTransfer.ManageAccess, L("Permission:DataTransfer.ManageAccess"), MultiTenancySides.Host);
+
         // Sürüm notu yayın onayı — karar TÜM kiracılar için tektir ve host bağlamında
         // verilir; kiracı yöneticisine sızmasın diye MultiTenancySides.Host.
         systemGroup.AddPermission(

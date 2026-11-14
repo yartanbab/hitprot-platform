@@ -297,6 +297,10 @@ public class TenantPackageManager : ITransientDependency
         // PRJ-08 gösterge izinleri: feature kapısı yok, tavana buradan girer.
         PlatformPermissions.Projects.ViewIndicators,
         PlatformPermissions.Projects.ManageIndicators,
+        // İçe / dışa aktarma izinleri: feature kapısı yok, tavana buradan girer.
+        PlatformPermissions.DataTransfer.Default,
+        PlatformPermissions.DataTransfer.Export,
+        PlatformPermissions.DataTransfer.Import,
     };
 
     private IEnumerable<(Guid Id, string Name)> DefaultPermissionsFor(

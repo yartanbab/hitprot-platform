@@ -420,6 +420,22 @@ public static class PlatformSettings
         /// "yapıldı"; host tarafı bu işaretle ayrıca BİR KEZ koşar.
         /// </summary>
         public const string ProjectIndicatorHostPermissionsGranted = Prefix + ".Backfills.ProjectIndicatorHostPermissionsGranted";
+
+        /// <summary>
+        /// İçe/dışa aktarma izinleri, bugün aktarım yapabilen host ve kiracı rollerine verildi mi.
+        /// Telafi BİR KEZ koşar: bir rolden bilerek kaldırılan izin sonraki yayında geri gelmemeli.
+        /// </summary>
+        public const string DataTransferPermissionsGranted = Prefix + ".Backfills.DataTransferPermissionsGranted";
+    }
+
+    /// <summary>İçe / dışa aktarma — host (Global) seviyesinde.</summary>
+    public static class DataTransfer
+    {
+        /// <summary>
+        /// "Tek anahtar": açıkken her içe/dışa aktarma ayrıca ilgili aktarım iznini ister
+        /// (<c>Platform.DataTransfer.*</c>). Kapalıyken (varsayılan) modül izinleri yeter.
+        /// </summary>
+        public const string EnforcePermissions = Prefix + ".DataTransfer.EnforcePermissions";
     }
 
     /// <summary>
