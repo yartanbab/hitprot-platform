@@ -91,6 +91,20 @@ public class FirmParameterManager : DomainService
     }
 
     /// <summary>
+    /// Değer değişmeden "hâlâ güncel" teyidi: yalnız güncellik tarihi yenilenir, kaynak ve
+    /// doğrulama durumu korunur. Değeri olmayan bilgi teyit edilemez (önce girilmeli).
+    /// </summary>
+    public async Task<FirmParameterValue> ConfirmValueAsync(Guid definitionId)
+    {
+        RequireTenantId();
+        var definition = await _definitionRepository.GetAsync(definitionId);
+        var value = await _valueRepository.FirstOrDefaultAsync(v => v.DefinitionId == definitionId)
+                    ?? throw new BusinessException(PlatformDomainErrorCodes.FirmParameterValueRequired).WithData("Name", definition.Name);
+        value.Confirm(Clock.Now);
+        return await _valueRepository.UpdateAsync(value, autoSave: true);
+    }
+
+    /// <summary>
     /// Değeri "bilinmiyor"a döndürür: satır silinir. Sıfır yazmak bunun yerine GEÇMEZ —
     /// sıfır bir değerdir.
     /// </summary>

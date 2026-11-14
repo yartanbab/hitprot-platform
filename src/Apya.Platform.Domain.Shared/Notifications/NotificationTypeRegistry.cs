@@ -255,6 +255,11 @@ public static class NotificationTypeRegistry
             // LIF-11: Karar bildirimi gibi itiraz ekranına götürür. Zorunlu DEĞİL: karar
             // bildirimi bir hakkın süresini taşır, bu yalnız sonucu haber verir.
             // PRJ-08: bağlantı proje sayfasının Göstergeler sekmesine iner.
+            // Kurum bilgisi kayda değil kurumun veri ekranına aittir: bağlantı Kurumsal Veriler'e gider.
+            [NotificationType.FirmDataStale] = new(
+                NotificationCategory.Grants, NotificationSeverity.Normal,
+                "fa fa-clock-rotate-left", "/CompanyProfile/Data", GroupSimilar: false),
+
             [NotificationType.ProjectIndicatorBehind] = new(
                 NotificationCategory.Projects, NotificationSeverity.High,
                 "fa fa-bullseye", "/Projects/ProjectDetails/{0}?view=indicators", GroupSimilar: false),

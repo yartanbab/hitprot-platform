@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -78,6 +79,23 @@ public class DataModel : AbpPageModel
         }
 
         TempData["FirmDataSaved"] = L["FirmData:Saved"].Value;
+        return RedirectToPage();
+    }
+
+    /// <summary>Süresi dolan değer değişmeden "hâlâ güncel" teyit edilir; formdaki diğer alanlar kaydedilmez.</summary>
+    public async Task<IActionResult> OnPostConfirmAsync(Guid definitionId)
+    {
+        if (CurrentTenant.Id == null)
+        {
+            return RedirectToPage();
+        }
+        if (!await AuthorizationService.IsGrantedAsync(PlatformPermissions.TenantSettings.Default))
+        {
+            return Forbid();
+        }
+
+        await _firmDataAppService.ConfirmMineAsync(definitionId);
+        TempData["FirmDataSaved"] = L["FirmData:Confirmed"].Value;
         return RedirectToPage();
     }
 

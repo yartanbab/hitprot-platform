@@ -114,5 +114,9 @@ public enum NotificationType
     InvoiceOverdue              = 63, // Faturanın vadesi geçti, ödenmedi (kesen + proje sorumluları)
 
     // Hiyerarşik bildirim Faz 3: yönetici ekibinde neyin beklediğini hiçbir yerde toplu görmüyordu.
-    GrantManagerDigest          = 64  // Ekibinizde bekleyen hibe işleri (iş günü 08:00, firma + host yöneticisine)
+    GrantManagerDigest          = 64, // Ekibinizde bekleyen hibe işleri (iş günü 08:00, firma + host yöneticisine)
+
+    // Veri zenginleştirme 7. adım: süresi dolan kurum bilgisi eşleştirmede "bilinmiyor" sayılıyordu
+    // ama kurum bunu ancak ekrana girince görüyordu.
+    FirmDataStale               = 65  // Kurum bilgisinin geçerlilik süresi doldu (kurum yöneticilerine)
 }
