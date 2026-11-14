@@ -39,6 +39,8 @@ namespace Apya.Platform.DataTransfers.Dtos
         public int? SucceededRows { get; set; }
         public int? FailedRows { get; set; }
         public string? Message { get; set; }
+        public Guid? TemplateId { get; set; }
+        public int? TemplateVersion { get; set; }
     }
 }
 

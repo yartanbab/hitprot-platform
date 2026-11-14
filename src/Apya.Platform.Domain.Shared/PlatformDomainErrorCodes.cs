@@ -434,4 +434,9 @@ public static class PlatformDomainErrorCodes
     public const string FirmParameterInactive = "Platform:FirmParameter:Inactive";
     /// <summary>Değer kuruma aittir; host bağlamında hangi kurum için yazıldığı belli değildir.</summary>
     public const string FirmParameterTenantRequired = "Platform:FirmParameter:TenantRequired";
+
+    // --- İçe / dışa aktarma şablonları ---
+    public const string DataTransferTemplateIsSystem = "Platform:DataTransfer:TemplateIsSystem";
+    public const string DataTransferTemplateModuleUnknown = "Platform:DataTransfer:TemplateModuleUnknown";
+    public const string DataTransferTemplateColumnsInvalid = "Platform:DataTransfer:TemplateColumnsInvalid";
 }

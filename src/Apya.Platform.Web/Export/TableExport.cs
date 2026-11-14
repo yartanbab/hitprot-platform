@@ -37,7 +37,13 @@ internal static class TableExport
     {
         var now = page.HttpContext.RequestServices.GetRequiredService<IClock>().Now;
         var list = rows as IReadOnlyCollection<T> ?? rows.ToList();
-        var csv = page.IsCsv();
+
+        // Şablon seçildiyse sütun seti, sırası ve başlıkları ondan gelir; biçim adreste verilmediyse de.
+        var template = TransferTemplateContext.Get(page.HttpContext);
+        columns = TransferTemplateContext.Apply(template, columns);
+        var csv = template != null && !page.Request.Query.ContainsKey(FormatQueryKey)
+            ? template.Format == Apya.Platform.DataTransfers.DataTransferFileFormat.Csv
+            : page.IsCsv();
         var fileName = ExcelTable.FileName(name, now, csv ? "csv" : "xlsx");
 
         // İşlem geçmişi satır sayısını buradan alır.

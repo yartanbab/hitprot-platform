@@ -31,10 +31,10 @@ namespace Apya.Platform.DataTransfers;
 public class DataTransferPermissionDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
     private static readonly string[] ExportGrants =
-        { PlatformPermissions.DataTransfer.Default, PlatformPermissions.DataTransfer.Export };
+        { PlatformPermissions.DataTransfer.Default, PlatformPermissions.DataTransfer.Export, PlatformPermissions.DataTransfer.ManageTemplates };
 
     private static readonly string[] ImportGrants =
-        { PlatformPermissions.DataTransfer.Default, PlatformPermissions.DataTransfer.Import };
+        { PlatformPermissions.DataTransfer.Default, PlatformPermissions.DataTransfer.Import, PlatformPermissions.DataTransfer.ManageTemplates };
 
     private readonly IPermissionDataSeeder _permissionDataSeeder;
     private readonly IPermissionGrantRepository _grantRepository;

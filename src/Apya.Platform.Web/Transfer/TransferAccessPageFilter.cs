@@ -18,9 +18,11 @@ public class TransferAccessPageFilter : IAsyncPageFilter, ITransientDependency
 {
     private readonly TransferAccess _access;
     private readonly DataTransferRunRecorder _recorder;
+    private readonly IDataTransferTemplateAppService _templates;
 
-    public TransferAccessPageFilter(TransferAccess access, DataTransferRunRecorder recorder)
+    public TransferAccessPageFilter(TransferAccess access, DataTransferRunRecorder recorder, IDataTransferTemplateAppService templates)
     {
+        _templates = templates;
         _access = access;
         _recorder = recorder;
     }
@@ -40,6 +42,20 @@ public class TransferAccessPageFilter : IAsyncPageFilter, ITransientDependency
         {
             context.Result = new ForbidResult();
             return;
+        }
+
+        // Şablon seçildiyse yüklenir (yalnız kendi ya da sistem şablonu, görebildiği modül) ve bu ucun
+        // modülüne ve yönüne ait olmalıdır.
+        if (Guid.TryParse(context.HttpContext.Request.Query[TransferTemplateContext.QueryKey], out var templateId))
+        {
+            var template = await _templates.GetAsync(templateId);
+            if (TransferCatalog.ScreenOf(endpoint)?.Module.Key != template.ModuleKey || template.Direction != DirectionOf(endpoint))
+            {
+                context.Result = new BadRequestResult();
+                return;
+            }
+
+            TransferTemplateContext.Set(context.HttpContext, template);
         }
 
         var watch = Stopwatch.StartNew();
@@ -63,13 +79,15 @@ public class TransferAccessPageFilter : IAsyncPageFilter, ITransientDependency
         var input = new RecordDataTransferRunDto
         {
             ModuleKey = screen.Module.Key,
-            Direction = endpoint.Direction == TransferDirection.Export ? DataTransferDirection.Export : DataTransferDirection.Import,
+            Direction = DirectionOf(endpoint),
             DurationMs = durationMs,
             FileName = report?.FileName,
             Format = report?.Format,
             TotalRows = report?.TotalRows,
             SucceededRows = report?.SucceededRows,
-            FailedRows = report?.FailedRows
+            FailedRows = report?.FailedRows,
+            TemplateId = TransferTemplateContext.Get(executed.HttpContext)?.Id,
+            TemplateVersion = TransferTemplateContext.Get(executed.HttpContext)?.Version
         };
 
         if (endpoint.Direction == TransferDirection.Export)
@@ -97,6 +115,9 @@ public class TransferAccessPageFilter : IAsyncPageFilter, ITransientDependency
 
         await _recorder.RecordAsync(input);
     }
+
+    private static DataTransferDirection DirectionOf(TransferEndpoint endpoint)
+        => endpoint.Direction == TransferDirection.Export ? DataTransferDirection.Export : DataTransferDirection.Import;
 
     private static bool? Flag(object? value, string name)
         => value?.GetType().GetProperty(name)?.GetValue(value) as bool?;
