@@ -1196,6 +1196,14 @@ $(function () {
     };
     var pendingCategory = null;
 
+    // İçe aktarma pencereyi kendisi kapatmaz; liste istemcide çizildiği için kayıt olduysa sayfa tazelenir.
+    var importModal = new abp.ModalManager(abp.appPath + 'Projects/ImportModal');
+    var projectsImported = false;
+    importModal.onOpen(function () { projectsImported = false; });
+    importModal.onClose(function () { if (projectsImported) { window.location.reload(); } });
+    $(document).on('apya:excel-imported', function () { projectsImported = true; });
+    $('#ProjectsImportExcel').on('click', function () { importModal.open(); });
+
     var createModal = new abp.ModalManager(abp.appPath + 'Projects/CreateModal');
     createModal.onOpen(function () {
         if (!pendingCategory) { return; }

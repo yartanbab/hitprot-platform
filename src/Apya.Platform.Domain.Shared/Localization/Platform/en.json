@@ -769,6 +769,8 @@
     "Import:Title:Tasks": "Import tasks from Excel",
     "Import:Hint:Finance": "If currency is empty, the cash account's currency is used.",
     "Import:Hint:Tasks": "If start is empty, today is used. Separate tags with commas; missing tags are created. The assignee can be written as full name, user name or e-mail.",
+    "Import:Title:Projects": "Import projects from Excel",
+    "Import:Hint:Projects": "If the code is empty the next code is assigned; a code already used by another project in this organization rejects the row. Status and task counts are not imported: projects open as \"Planning\". If the category is empty, \"Other / General\" is used.",
     "Import:Error:DueBeforeStart": "{0} cannot be before {1}.",
     "Import:Step1": "1. Download and fill in the template, or use a file you exported from this screen. Columns marked with * are required; for list columns pick one of the options in the template.",
     "Import:DownloadTemplate": "Download template",

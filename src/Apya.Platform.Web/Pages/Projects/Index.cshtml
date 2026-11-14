@@ -171,6 +171,11 @@
             <div class="apya-proj-seg apya-proj-toolbar-desktop">
                 <a class="apya-proj-seg-btn is-icon" href="?handler=Excel" id="ProjectsExportExcel"
                    aria-label="@L["Export:ExcelButton"]" title="@L["Export:ExcelButton"]"><i class="fa fa-file-excel" aria-hidden="true"></i></a>
+                @if (canCreate)
+                {
+                    <button type="button" class="apya-proj-seg-btn is-icon" id="ProjectsImportExcel"
+                            aria-label="@L["Import:ExcelButton"]" title="@L["Import:ExcelButton"]"><i class="fa fa-file-import" aria-hidden="true"></i></button>
+                }
             </div>
 
             @if (canCreate)
