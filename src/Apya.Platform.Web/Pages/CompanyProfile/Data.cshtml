@@ -1,0 +1,184 @@
+@page "/CompanyProfile/Data"
+@model Apya.Platform.Web.Pages.CompanyProfile.DataModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
+@using Apya.Platform.Grants
+@using Apya.Platform.Grants.Dtos
+@{
+    ViewBag.Title = L["FirmData:Title"].Value;
+    var index = 0;
+    var disabled = Model.CanEdit ? null : "disabled";
+
+    string GroupIcon(FirmParameterGroup group) => group switch
+    {
+        FirmParameterGroup.Kimlik => "fa-id-card",
+        FirmParameterGroup.Strateji => "fa-bullseye",
+        FirmParameterGroup.Kapasite => "fa-people-group",
+        FirmParameterGroup.Finans => "fa-coins",
+        FirmParameterGroup.Deneyim => "fa-clipboard-check",
+        FirmParameterGroup.Ortaklik => "fa-handshake",
+        _ => "fa-sliders"
+    };
+}
+
+@*
+    KURUMSAL VERİLER — form katalogdaki tanımlardan çizilir (FirmParameterDefinition).
+    Boş alan "bilinmiyor"dur; sıfır yazmak için 0 girilir. Evet/hayır bu yüzden üç seçeneklidir.
+*@
+<div data-page-description="@L["FirmData:PageDescription"]" class="apya-page--narrow apya-company-profile">
+
+@if (Model.IsHost)
+{
+    <div class="alert alert-info" role="status">
+        <i class="fa fa-circle-info me-2"></i>@L["FirmData:Host.Notice"]
+    </div>
+}
+else
+{
+    @if (TempData["FirmDataSaved"] is string saved)
+    {
+        <div class="alert alert-success" role="status">
+            <i class="fa fa-circle-check me-2"></i>@saved
+        </div>
+    }
+    @if (Model.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="fa fa-triangle-exclamation me-2"></i>@Model.ErrorMessage
+        </div>
+    }
+
+    <abp-card>
+        <abp-card-body>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="flex-grow-1">
+                    <p class="mb-1">@L["FirmData:Intro"]</p>
+                    <div class="text-muted small" data-firm-data-progress>
+                        @L["FirmData:Progress", Model.Data.FilledCount, Model.Data.TotalCount]
+                    </div>
+                </div>
+                <a class="btn btn-outline-secondary" asp-page="/CompanyProfile/Index">
+                    <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>@L["FirmData:Back"]
+                </a>
+            </div>
+            @if (!Model.CanEdit)
+            {
+                <div class="text-muted small mt-2"><i class="fa fa-lock me-1" aria-hidden="true"></i>@L["FirmData:ReadOnly"]</div>
+            }
+        </abp-card-body>
+    </abp-card>
+
+    <form method="post" class="mt-3" novalidate>
+        @foreach (var group in Model.Data.Groups)
+        {
+            <abp-card class="mt-3">
+                <abp-card-header>
+                    <abp-card-title><i class="fa @GroupIcon(group.Group) text-primary me-2"></i>@L["FirmData:Group." + group.Group]</abp-card-title>
+                </abp-card-header>
+                <abp-card-body>
+                    <div class="row g-4">
+                        @foreach (var item in group.Items)
+                        {
+                            var i = index++;
+                            var id = "firm-data-" + item.Code;
+                            var name = $"Items[{i}].RawValue";
+                            var wide = item.DataType is FirmParameterDataType.LongText or FirmParameterDataType.MultiSelect;
+                            <div class="@(wide ? "col-12" : "col-md-6")" data-firm-param="@item.Code">
+                                <input type="hidden" name="Items[@i].DefinitionId" value="@item.DefinitionId" />
+                                <label class="form-label fw-medium" for="@id">
+                                    @item.Name
+                                    @if (item.Requirement != FirmParameterRequirement.Opsiyonel)
+                                    {
+                                        <span class="badge text-bg-light border ms-1 fw-normal">@L["FirmData:Requirement." + item.Requirement]</span>
+                                    }
+                                </label>
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <div class="form-text mt-0 mb-2" id="@(id)-help">@item.Description</div>
+                                }
+
+                                @switch (item.DataType)
+                                {
+                                    case FirmParameterDataType.LongText:
+                                        <textarea class="form-control" id="@id" name="@name" rows="3" maxlength="@(item.MaxLength ?? FirmParameterConsts.MaxLongTextLength)" aria-describedby="@(id)-help" disabled="@disabled">@item.RawValue</textarea>
+                                        break;
+                                    case FirmParameterDataType.Number:
+                                    case FirmParameterDataType.Money:
+                                    case FirmParameterDataType.Percent:
+                                        <input class="form-control" type="number" step="any" inputmode="decimal" id="@id" name="@name" value="@item.RawValue"
+                                               min="@(item.MinNumber?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+                                               max="@(item.MaxNumber?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+                                               aria-describedby="@(id)-help" disabled="@disabled" />
+                                        break;
+                                    case FirmParameterDataType.Date:
+                                        <input class="form-control" type="date" id="@id" name="@name" value="@item.RawValue" aria-describedby="@(id)-help" disabled="@disabled" />
+                                        break;
+                                    case FirmParameterDataType.Boolean:
+                                        <select class="form-select" id="@id" name="@name" aria-describedby="@(id)-help" disabled="@disabled">
+                                            <option value="" selected="@(string.IsNullOrEmpty(item.RawValue))">@L["FirmData:Unknown"]</option>
+                                            <option value="true" selected="@(item.RawValue == "true")">@L["FirmData:Yes"]</option>
+                                            <option value="false" selected="@(item.RawValue == "false")">@L["FirmData:No"]</option>
+                                        </select>
+                                        break;
+                                    case FirmParameterDataType.Select:
+                                        <select class="form-select" id="@id" name="@name" aria-describedby="@(id)-help" disabled="@disabled">
+                                            <option value="" selected="@(string.IsNullOrEmpty(item.RawValue))">@L["FirmData:Unknown"]</option>
+                                            @foreach (var option in item.Options)
+                                            {
+                                                <option value="@option" selected="@(item.RawValue == option)">@option</option>
+                                            }
+                                        </select>
+                                        break;
+                                    case FirmParameterDataType.MultiSelect:
+                                        <div class="d-flex flex-wrap gap-3" role="group" aria-labelledby="@(id)-help">
+                                            @for (var o = 0; o < item.Options.Count; o++)
+                                            {
+                                                var option = item.Options[o];
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="@(id)-@o" name="Items[@i].Choices" value="@option"
+                                                           checked="@item.Choices.Contains(option)" disabled="@disabled" />
+                                                    <label class="form-check-label" for="@(id)-@o">@option</label>
+                                                </div>
+                                            }
+                                        </div>
+                                        break;
+                                    default:
+                                        <input class="form-control" type="text" id="@id" name="@name" value="@item.RawValue" maxlength="@(item.MaxLength ?? FirmParameterConsts.MaxTextLength)" aria-describedby="@(id)-help" disabled="@disabled" />
+                                        break;
+                                }
+
+                                <div class="small mt-1" data-firm-param-origin>
+                                    @if (!item.HasValue)
+                                    {
+                                        <span class="text-muted">@L["FirmData:NotEntered"]</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">@L["FirmData:Badge.Entered", L["FirmData:Source." + item.Source].Value, item.ConfirmedAt!.Value.ToString("dd.MM.yyyy")]</span>
+                                        @if (item.IsStale)
+                                        {
+                                            <span class="badge text-bg-warning ms-1"><i class="fa fa-clock me-1" aria-hidden="true"></i>@L["FirmData:Badge.Stale"]</span>
+                                        }
+                                        else if (item.Source == FirmParameterSource.BelgeAi && item.Verification == FirmParameterVerification.Dogrulanmadi)
+                                        {
+                                            <span class="badge text-bg-light border ms-1">@L["FirmData:Badge.Unverified"]</span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </abp-card-body>
+            </abp-card>
+        }
+
+        @if (Model.CanEdit)
+        {
+            <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-check me-1" aria-hidden="true"></i>@L["FirmData:Save"]
+                </button>
+            </div>
+        }
+    </form>
+}
+</div>
