@@ -420,6 +420,12 @@ public static class PlatformDomainErrorCodes
 
     // --- Kurum parametreleri (veri zenginleştirme) ---
     public const string FirmParameterCodeInvalid = "Platform:FirmParameter:CodeInvalid";
+    public const string FirmParameterCodeExists = "Platform:FirmParameter:CodeExists";
+    public const string FirmParameterNameRequired = "Platform:FirmParameter:NameRequired";
+    public const string FirmParameterLimitInvalid = "Platform:FirmParameter:LimitInvalid";
+    /// <summary>Sistem parametresinin kodda yaşayan özelliği (tip, eşleştirmedeki rol, etkinlik) değiştirilmek ya da tanım silinmek istendi.</summary>
+    public const string FirmParameterSystemLocked = "Platform:FirmParameter:SystemLocked";
+    public const string FirmParameterHasValues = "Platform:FirmParameter:HasValues";
     public const string FirmParameterRangeInverted = "Platform:FirmParameter:RangeInverted";
     public const string FirmParameterOptionsRequired = "Platform:FirmParameter:OptionsRequired";
     public const string FirmParameterValueRequired = "Platform:FirmParameter:ValueRequired";

@@ -125,6 +125,10 @@ public static class PlatformAdminLinks
 
         new("Apya.Admin.GrantBannerSettings", PlatformPermissions.Grants.Edit,
             "Menu:Grants:BannerSettings", "Settings:Admin.GrantBannerSettings.Desc",
-            "/Grants/BannerSettings", "fa fa-panorama", Group: Grants)
+            "/Grants/BannerSettings", "fa fa-panorama", Group: Grants),
+
+        new("Apya.Admin.GrantFirmParameters", PlatformPermissions.Grants.Edit,
+            "Menu:Grants:FirmParameters", "Settings:Admin.GrantFirmParameters.Desc",
+            "/Grants/FirmParameters", "fa fa-sliders", Group: Grants)
     };
 }
