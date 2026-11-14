@@ -26,6 +26,9 @@ public static class FirmParameterCatalog
     private const FirmParameterSource ElleVeyaBelge = FirmParameterSource.Kullanici | FirmParameterSource.BelgeAi;
     private const FirmParameterSource Hesap = FirmParameterSource.Hesaplama;
 
+    /// <summary>Eş finansman kapasitesi: programın destek oranıyla karşılaştırılan tek parametre, bu yüzden kodu sabittir.</summary>
+    public const string CofinancingCapacityCode = "cofinancing_capacity";
+
     public static Guid IdOf(int number) => Guid.Parse($"f17a0000-0000-4000-8000-{number:D12}");
 
     public static IReadOnlyList<FirmParameterDefinition> Build() => Rows.Select(r => r.ToDefinition()).ToList();
@@ -109,7 +112,7 @@ public static class FirmParameterCatalog
         new(25, "technical_infrastructure", "Teknik altyapı ve ekipman", LongText, Kapasite, Opsiyonel, Tumu, Kullanilmaz, ElleVeyaBelge,
             "Mevcut altyapınız, projeyi uygulayabileceğinizi göstermek için başvurularda sorulur.",
             ValidityMonths: 24),
-        new(26, "cofinancing_capacity", "Eş finansman kapasitesi (TL)", Money, Finans, Onerilen, Tumu, Kullanilmaz, ElleVeyaBelge,
+        new(26, CofinancingCapacityCode, "Eş finansman kapasitesi (TL)", Money, Finans, Onerilen, Tumu, Kullanilmaz, ElleVeyaBelge,
             "Programların çoğu bütçenin bir bölümünü kurumun karşılamasını ister. Ayırabileceğiniz öz kaynak bilinmeden mali uygunluk değerlendirilemez.",
             ValidityMonths: 6, Min: 0),
         new(27, "partnerships", "Ulusal ve uluslararası ortaklıklar", LongText, Ortaklik, Opsiyonel, Tumu, Kullanilmaz, ElleVeyaBelge,

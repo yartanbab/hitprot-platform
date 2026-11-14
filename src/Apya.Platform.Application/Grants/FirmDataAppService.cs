@@ -5,7 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
 
@@ -29,13 +31,31 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
     private readonly IRepository<FirmParameterValue, Guid> _valueRepository;
     private readonly IRepository<FirmProfile, Guid> _profileRepository;
     private readonly FirmParameterManager _manager;
+    private readonly IRepository<Grant, Guid> _grantRepository;
+    private readonly IRepository<GrantCall, Guid> _callRepository;
+    private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepository;
+    private readonly FirmSignalsBuilder _signalsBuilder;
+    private readonly FirmDataGapCalculator _gapCalculator;
+    private readonly IDataFilter<IMultiTenant> _tenantFilter;
 
     public FirmDataAppService(
         IRepository<FirmParameterDefinition, Guid> definitionRepository,
         IRepository<FirmParameterValue, Guid> valueRepository,
         IRepository<FirmProfile, Guid> profileRepository,
-        FirmParameterManager manager)
+        FirmParameterManager manager,
+        IRepository<Grant, Guid> grantRepository,
+        IRepository<GrantCall, Guid> callRepository,
+        IRepository<GrantCriteriaTag, Guid> criteriaRepository,
+        FirmSignalsBuilder signalsBuilder,
+        FirmDataGapCalculator gapCalculator,
+        IDataFilter<IMultiTenant> tenantFilter)
     {
+        _grantRepository = grantRepository;
+        _callRepository = callRepository;
+        _criteriaRepository = criteriaRepository;
+        _signalsBuilder = signalsBuilder;
+        _gapCalculator = gapCalculator;
+        _tenantFilter = tenantFilter;
         _definitionRepository = definitionRepository;
         _valueRepository = valueRepository;
         _profileRepository = profileRepository;
@@ -99,6 +119,56 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
         }
 
         return Build(definitions, values);
+    }
+
+    [Authorize(PlatformPermissions.Grants.Default)]
+    public async Task<List<FirmDataGapDto>> GetMyGapsAsync()
+    {
+        RequireTenant();
+
+        var definitions = await _definitionRepository.GetListAsync(d => d.IsActive);
+        var values = (await _valueRepository.GetListAsync()).ToDictionary(v => v.DefinitionId);
+        var profile = await _profileRepository.FirstOrDefaultAsync();
+        var signals = await _signalsBuilder.BuildAsync(CurrentTenant.Id);
+        var openCalls = await GetOpenCallsAsync();
+
+        return _gapCalculator.Calculate(definitions, values, profile, signals, openCalls, Clock.Now.Date)
+            .Select(g => new FirmDataGapDto
+            {
+                Code = g.Definition.Code,
+                Name = g.Definition.Name,
+                Description = g.Definition.Description,
+                IsStale = g.IsStale,
+                UnlockCount = g.UnlockCount,
+                // Sistem parametreleri hibe profilinden, diğerleri Kurumsal Veriler'den girilir.
+                Url = g.Definition.IsSystem ? "/Grants#profil" : "/CompanyProfile/Data#firm-data-" + g.Definition.Code
+            })
+            .ToList();
+    }
+
+    /// <summary>
+    /// Açık çağrılar ve programları. Katalog host verisidir (TenantId null): kiracı süzgeci
+    /// yalnız host satırlarına ERİŞMEK için kapatılır, her sorguya <c>TenantId == null</c>
+    /// koşulu elle konur — konmazsa başka kurumların satırları da gelirdi.
+    /// </summary>
+    private async Task<List<FirmDataOpenCall>> GetOpenCallsAsync()
+    {
+        using (_tenantFilter.Disable())
+        {
+            var calls = (await _callRepository.GetListAsync(c => c.Status == GrantCallStatus.Acik && c.TenantId == null))
+                .Where(c => c.IsOpenOn(Clock.Now))
+                .ToList();
+            var grantIds = calls.Select(c => c.GrantId).Distinct().ToList();
+            var grants = (await _grantRepository.GetListAsync(g => grantIds.Contains(g.Id) && g.TenantId == null))
+                .ToDictionary(g => g.Id);
+            var tags = (await _criteriaRepository.GetListAsync(t => grantIds.Contains(t.GrantId) && t.TenantId == null))
+                .ToLookup(t => t.GrantId);
+
+            return calls
+                .Where(c => grants.ContainsKey(c.GrantId))
+                .Select(c => new FirmDataOpenCall(grants[c.GrantId], tags[c.GrantId].ToList()))
+                .ToList();
+        }
     }
 
     /// <summary>Kurumun elle doldurabileceği, kendi türüne uyan canlı tanımlar.</summary>
