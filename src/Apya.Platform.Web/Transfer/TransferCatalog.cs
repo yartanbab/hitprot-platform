@@ -56,8 +56,8 @@ public static class TransferCatalog
 
     private static TransferEndpoint In(string page, string handler) => new(page, handler, TransferDirection.Import);
 
-    /// <summary>Ortak içe aktarma penceresinin üç ucu (şablon indirme de içe aktarmanın parçasıdır).</summary>
-    private static TransferEndpoint[] Modal(string page) => [In(page, "Template"), In(page, "Preview"), In(page, "Import")];
+    /// <summary>Ortak içe aktarma penceresinin uçları (şablon indirme de içe aktarmanın parçasıdır).</summary>
+    private static TransferEndpoint[] Modal(string page) => [In(page, "Template"), In(page, "Columns"), In(page, "Preview"), In(page, "Import")];
 
     private static DataTransferModule M(string key) => DataTransferModules.Get(key);
 

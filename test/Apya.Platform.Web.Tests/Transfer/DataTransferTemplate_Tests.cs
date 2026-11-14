@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Apya.Platform.DataTransfers;
 using Apya.Platform.DataTransfers.Dtos;
@@ -221,6 +222,58 @@ public class DataTransferTemplate_Tests : PlatformWebTestBase
         (await Templates.GetListAsync(new GetDataTransferTemplatesInput())).Items.ShouldNotContain(t => t.Id == ownId);
         await Should.ThrowAsync<EntityNotFoundException>(() => Templates.GetAsync(ownId));
         (await Templates.GetAsync(system.Id)).Name.ShouldBe("Sistem " + _code);
+    }
+
+    /// <summary>
+    /// Ekran: düzenleyici modülün sütunlarını modülün kendi ucundan okur; Şablonlar sekmesi şablonu
+    /// "kullan" adresiyle listeler (dışa aktarmada indirme, içe aktarmada şablonlu pencere).
+    /// </summary>
+    [Fact]
+    public async Task Sablonlar_sekmesi_ve_duzenleyici_sablonu_modulun_sutunlariyla_gosterir()
+    {
+        // Sütun uçları: dışa aktarmada standart başlıklar, içe aktarmada zorunluluk bilgisiyle.
+        var exportColumns = JsonDocument.Parse(await GetResponseAsStringAsync("/ExchangeRates?handler=Excel&columns=1")).RootElement;
+        exportColumns.GetArrayLength().ShouldBe(5);
+        var importColumns = JsonDocument.Parse(await GetResponseAsStringAsync(Modal + "?handler=Columns")).RootElement;
+        importColumns.GetArrayLength().ShouldBe(4);
+        importColumns[0].GetProperty("required").GetBoolean().ShouldBeTrue();
+        importColumns[2].GetProperty("required").GetBoolean().ShouldBeFalse();
+
+        var export = await Templates.CreateAsync(new CreateDataTransferTemplateDto
+        {
+            ModuleKey = Module, Direction = DataTransferDirection.Export, Name = "Ekran dışa " + _code,
+            Columns = [new() { Key = exportColumns[0].GetProperty("key").GetString()!, Header = "Gün" }]
+        });
+        var import = await Templates.CreateAsync(new CreateDataTransferTemplateDto
+        {
+            ModuleKey = Module, Direction = DataTransferDirection.Import, Name = "Ekran içe " + _code,
+            Columns = [new() { Key = importColumns[0].GetProperty("key").GetString()!, Header = "Gün" }]
+        });
+
+        var tab = new HtmlDocument();
+        tab.LoadHtml(await GetResponseAsStringAsync("/DataTransfer?tab=templates"));
+        var exportRow = tab.DocumentNode.SelectSingleNode($"//tr[@data-transfer-template='{export.Id}']");
+        exportRow.ShouldNotBeNull();
+        // "v@t.Version" Razor'da e-posta sanılıp düz metin basılıyordu.
+        exportRow.InnerText.ShouldContain("v1");
+        exportRow.InnerText.ShouldNotContain("@");
+        exportRow.SelectSingleNode(".//a[@data-template-use]").GetAttributeValue("href", "")
+            .ShouldBe($"/ExchangeRates?handler=Excel&amp;template={export.Id}");
+        tab.DocumentNode.SelectSingleNode($"//tr[@data-transfer-template='{import.Id}']//button[@data-template-use]")
+            .GetAttributeValue("data-transfer-import", "").ShouldBe($"{Modal}?template={import.Id}");
+        tab.DocumentNode.SelectSingleNode("//button[@data-template-edit='']").ShouldNotBeNull("\"Yeni şablon\" düğmesi yok");
+
+        // Düzenleyici: yeni şablonda hedef listesi, mevcut şablonda kayıtlı sütunlar.
+        var blank = await GetResponseAsStringAsync("/DataTransfer/TemplateModal");
+        blank.ShouldContain("/ExchangeRates?handler=Excel\\u0026columns=1");
+        blank.ShouldContain("/ExchangeRates/ImportModal?handler=Columns");
+        blank.ShouldNotContain("/CashAccounts", Case.Sensitive);
+
+        // Razor ASCII dışı harfleri varlık olarak yazar ("ı" → &#x131;, JSON'da ı): çözülmüş metne bakılır.
+        var existing = HtmlEntity.DeEntitize(await GetResponseAsStringAsync($"/DataTransfer/TemplateModal?id={export.Id}"));
+        existing.ShouldContain(export.Id.ToString());
+        Regex.Unescape(existing).ShouldContain("Ekran dışa " + _code);
+        Regex.Unescape(existing).ShouldContain("\"header\":\"Gün\"");
     }
 
     private async Task<Guid> NewTenantAsync()
