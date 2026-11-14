@@ -47,11 +47,14 @@ public class IndexModel : PlatformPageModel
                 || (status == "4" ? x.IsOverdue : ((int)x.Status).ToString() == status))
             && (string.IsNullOrWhiteSpace(q) || Contains(x.InvoiceNumber) || Contains(x.CustomerName)));
 
+        var list = items.ToList();
+        var labels = await FinanceExportLabels.LoadAsync(this, list.Select(x => (Guid?)x.ProjectId));
         var columns = new List<ExcelColumn<InvoiceDto>>
         {
             new(L["Export:Col:InvoiceNumber"], x => x.InvoiceNumber),
             new(L["Export:Col:Direction"], x => L[$"Invoice:Direction:{x.Direction}"].Value),
-            new(L["Export:Col:Project"], x => x.ProjectName),
+            // Adı başka projeyle aynıysa proje koduyla yazılır; içe aktarma ikisini de tanır.
+            new(L["Export:Col:Project"], x => labels.Project(x.ProjectId) ?? x.ProjectName),
             new(L["Export:Col:Customer"], x => x.CustomerName),
             new(L["Export:Col:Date"], x => x.InvoiceDate, "dd.MM.yyyy"),
             new(L["Export:Col:DueDate"], x => x.DueDate, "dd.MM.yyyy"),
@@ -66,6 +69,6 @@ public class IndexModel : PlatformPageModel
 
         var name = L["Export:Invoices:Name"].Value;
         var note = rows.Truncated ? L["Export:Truncated", ExcelTable.MaxRows].Value : null;
-        return this.TableFile(name, columns, items, note);
+        return this.TableFile(name, columns, list, note);
     }
 }

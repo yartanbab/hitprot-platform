@@ -54,7 +54,7 @@ public static class DataTransferModules
         new("projects", "Export:Projects:Name", Both, PlatformPermissions.Projects.Default, PlatformPermissions.Projects.Create),
         new("expenses", "Export:Expenses:Name", Both, PlatformPermissions.Expenses.Default, PlatformPermissions.Expenses.Create),
         new("incomes", "Export:Incomes:Name", Both, PlatformPermissions.Incomes.Default, PlatformPermissions.Incomes.Create),
-        new("invoices", "Export:Invoices:Name", Both, PlatformPermissions.Invoices.Default),
+        new("invoices", "Export:Invoices:Name", Both, PlatformPermissions.Invoices.Default, PlatformPermissions.Invoices.Create),
         new("exchange-rates", "Import:ExchangeRates:Name", Both, PlatformPermissions.ExchangeRates.Default, PlatformPermissions.ExchangeRates.Create),
         new("budget-lines", "Import:BudgetLines:Name", Both, PlatformPermissions.Projects.ViewBudget, PlatformPermissions.Projects.ViewBudget),
         new("cash-movements", "Export:CashMovements:Name", Both, PlatformPermissions.CashAccounts.Default),

@@ -3,6 +3,7 @@
 @using Apya.Platform.Permissions
 @using Microsoft.AspNetCore.Authorization
 @inject IAuthorizationService AuthorizationService
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     ViewBag.Title = "Faturalar";
 }
@@ -14,6 +15,9 @@
         <div class="apya-page-head-actions">
             @if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Invoices.Create))
             {
+                <button type="button" id="InvoicesImportExcel" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa fa-file-import me-1" aria-hidden="true"></i>@L["Import:ExcelButton"]
+                </button>
                 <abp-button id="NewInvoiceButton" text="Yeni fatura" icon="plus" button-type="Primary" size="Small" />
             }
         </div>
