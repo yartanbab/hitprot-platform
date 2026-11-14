@@ -1,0 +1,8 @@
+@page
+@model Apya.Platform.Web.Pages.Grants.CallImportModalModel
+@inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
+@{
+    Layout = null;
+}
+
+<partial name="_ExcelImportModal" model="@(new Apya.Platform.Web.Import.ExcelImportModalOptions(L["Import:Title:GrantCalls"].Value, L["Import:Hint:GrantCalls"].Value))" />

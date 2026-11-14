@@ -235,6 +235,14 @@ $(function () {
     });
 
     // Ekrandaki sekme ve süzgeçler dosyaya aynen geçer.
+    // İçe aktarma pencereyi kendisi kapatmaz; kayıt olduysa kapanınca pano yeniden yüklenir.
+    var callImportModal = new abp.ModalManager(abp.appPath + 'Grants/CallImportModal');
+    var callsImported = false;
+    callImportModal.onOpen(function () { callsImported = false; });
+    callImportModal.onClose(function () { if (callsImported) { load(); } });
+    $(document).on('apya:excel-imported', function () { callsImported = true; });
+    $('#CallsImportExcel').on('click', function () { callImportModal.open(); });
+
     $('#CallsExportExcel').on('click', function () {
         var params = new URLSearchParams({ handler: 'CallsExcel', tab: TAB[state.tab], sort: state.sort });
         if (window.apyaExportFormat) { params.append('format', window.apyaExportFormat); }

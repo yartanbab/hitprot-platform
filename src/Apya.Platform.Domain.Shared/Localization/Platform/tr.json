@@ -673,6 +673,8 @@
         "Import:Hint:Projects": "Kod boşsa sıradaki kod verilir; dolu kod bu kurumda başka projede kullanılıyorsa satır reddedilir. Durum ve görev sayıları alınmaz: projeler \"Planlama\" ile açılır. Kategori boşsa \"Diğer / Genel\".",
         "Import:Title:Invoices": "Faturaları Excel'den içe aktar",
         "Import:Hint:Invoices": "Aynı fatura numaralı satırlar tek faturanın kalemleridir. Birim fiyat KDV hariçtir (miktar boşsa 1); kalem sütunları boşsa Toplam KDV dahil tek kalem sayılır. KDV boşsa %20, son tarih boşsa fatura tarihi. Tahsilat ve durum alınmaz: faturalar ödenmemiş açılır, tahsilatı ekrandan girin.",
+        "Import:Title:GrantCalls": "Hibe çağrılarını Excel'den içe aktar",
+        "Import:Hint:GrantCalls": "Çağrı programa bağlanır: program adını yazın, aynı adlı iki program varsa Kurum sütununu da doldurun. Aynı program ve dönem ikinci kez açılmaz. Durum boşsa Taslak. İçe aktarılan açık çağrılar firmalara duyurulmaz; duyurmak için çağrıyı ekrandan yayınlayın.",
         "Import:Col:InvoiceLine": "Kalem",
         "Import:Col:Quantity": "Miktar",
         "Import:Col:UnitPrice": "Birim fiyat",
