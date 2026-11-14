@@ -94,6 +94,32 @@ public class FirmDataGaps_Tests : PlatformEntityFrameworkCoreTestBase
         }
     }
 
+    /// <summary>
+    /// Tarayıcı denemesinde (11-14) bulundu: hibe profilini henüz kaydetmemiş bir dernekte panel
+    /// "Sektörler"i (yalnız şirketlere sorulur) öneriyordu. Tür, hibe profili düzenleyicisinin de
+    /// önerdiği gibi kurum profilinden alınır.
+    /// </summary>
+    [Fact]
+    public async Task Hibe_profili_kaydedilmemis_dernege_sirket_alanlari_onerilmez()
+    {
+        var tenantId = Guid.NewGuid();
+        await WithUnitOfWorkAsync(() => GetRequiredService<IRepository<Apya.Platform.Tenants.TenantProfile, Guid>>().InsertAsync(
+            new Apya.Platform.Tenants.TenantProfile(
+                Guid.NewGuid(), tenantId, Apya.Platform.Tenants.CompanyType.Association,
+                Random.Shared.NextInt64(1_000_000_000L, 9_999_999_999L).ToString(), "dernek@ornek.org"),
+            autoSave: true));
+
+        using (_currentTenant.Change(tenantId))
+        {
+            var codes = (await _service.GetMyGapsAsync()).Select(g => g.Code).ToList();
+
+            codes.ShouldNotContain("sectors");
+            codes.ShouldNotContain("nace_codes");
+            codes.ShouldNotContain("company_size");
+            codes.ShouldContain("thematic_areas");
+        }
+    }
+
     [Fact]
     public async Task Hibe_profilindeki_eksik_bilgi_profil_duzenleyicisine_yonlendirir()
     {

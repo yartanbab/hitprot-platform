@@ -38,8 +38,12 @@ public class FirmDataGapCalculator : DomainService
         FirmProfile? profile,
         FirmSignals signals,
         IReadOnlyList<FirmDataOpenCall> openCalls,
-        DateTime today)
+        DateTime today,
+        OrganizationType? organizationType = null)
     {
+        // Hibe profili kaydedilmemişse tür, kurum profilinden gelen öneridir (çağıran verir).
+        // Hiç bilinmiyorsa hiçbir parametre gizlenmez.
+        var type = profile?.Type ?? organizationType;
         // Her çağrı bir kez değerlendirilir; parametreler aynı sonucu okur.
         var evaluations = openCalls
             .Select(c => _matcher.Evaluate(signals, c.Grant, c.Tags, today, c.ParameterCriteria ?? Array.Empty<GrantParameterCriterion>()))
@@ -59,7 +63,7 @@ public class FirmDataGapCalculator : DomainService
             // sinyaller (tipik bütçe vb.) kullanıcıdan istenemez.
             if (!definition.IsActive
                 || !definition.AllowedSources.HasFlag(FirmParameterSource.Kullanici)
-                || (profile != null && !definition.AppliesTo(profile.Type)))
+                || (type.HasValue && !definition.AppliesTo(type.Value)))
             {
                 continue;
             }
