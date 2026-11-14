@@ -266,6 +266,9 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<Apya.Platform.Documents.DocumentRuleCondition> DocumentRuleConditions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentRuleAction> DocumentRuleActions { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentRuleRun> DocumentRuleRuns { get; set; }
+        public DbSet<Apya.Platform.DataTransfers.DataTransferTemplate> DataTransferTemplates { get; set; }
+        public DbSet<Apya.Platform.DataTransfers.DataTransferTemplateVersion> DataTransferTemplateVersions { get; set; }
+        public DbSet<Apya.Platform.DataTransfers.DataTransferRun> DataTransferRuns { get; set; }
         public DbSet<Apya.Platform.Documents.DocumentSuggestionDismissal> DocumentSuggestionDismissals { get; set; }
         public DbSet<Apya.Platform.Documents.ReportSchedule> ReportSchedules { get; set; }
         public DbSet<Apya.Platform.Documents.ReportSubscriber> ReportSubscribers { get; set; }
@@ -2086,6 +2089,40 @@ namespace Apya.Platform.EntityFrameworkCore
 
                 // Kural silinse bile çalıştırma izi kalır → FK YOK (append-only kayıt).
                 b.HasIndex(x => new { x.RuleId, x.CreationTime });
+            });
+
+            // İçe / dışa aktarma: şablon (host satırı = sistem şablonu), sürüm anlık görüntüleri, işlem geçmişi.
+            builder.Entity<Apya.Platform.DataTransfers.DataTransferTemplate>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DataTransferTemplates", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.ModuleKey).IsRequired().HasMaxLength(Apya.Platform.DataTransfers.DataTransferConsts.MaxModuleKeyLength);
+                b.Property(x => x.Name).IsRequired().HasMaxLength(Apya.Platform.DataTransfers.DataTransferConsts.MaxTemplateNameLength);
+                b.Property(x => x.Description).HasMaxLength(Apya.Platform.DataTransfers.DataTransferConsts.MaxTemplateDescriptionLength);
+                b.Property(x => x.DefinitionJson).IsRequired();
+                b.HasIndex(x => new { x.TenantId, x.ModuleKey, x.Direction });
+                b.HasMany(x => x.Versions).WithOne().HasForeignKey(x => x.TemplateId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<Apya.Platform.DataTransfers.DataTransferTemplateVersion>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DataTransferTemplateVersions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Name).IsRequired().HasMaxLength(Apya.Platform.DataTransfers.DataTransferConsts.MaxTemplateNameLength);
+                b.Property(x => x.DefinitionJson).IsRequired();
+                b.HasIndex(x => new { x.TemplateId, x.Version }).IsUnique();
+            });
+
+            builder.Entity<Apya.Platform.DataTransfers.DataTransferRun>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "DataTransferRuns", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.ModuleKey).IsRequired().HasMaxLength(Apya.Platform.DataTransfers.DataTransferConsts.MaxModuleKeyLength);
+                b.Property(x => x.Format).HasMaxLength(Apya.Platform.DataTransfers.DataTransferConsts.MaxFormatLength);
+                b.Property(x => x.FileName).HasMaxLength(Apya.Platform.DataTransfers.DataTransferConsts.MaxFileNameLength);
+                b.Property(x => x.Message).HasMaxLength(Apya.Platform.DataTransfers.DataTransferConsts.MaxMessageLength);
+                // Şablon silinse bile işlem izi kalır → FK YOK (yalnız eklenen kayıt).
+                b.HasIndex(x => new { x.TenantId, x.CreationTime });
             });
 
             builder.Entity<Apya.Platform.Documents.ReportSchedule>(b =>

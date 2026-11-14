@@ -20,6 +20,9 @@ namespace Apya.Platform
             // --- MEVCUT PROJE (PROJECTS) MODÜLÜ ---
             // Mevcut satırı şununla değiştir:
             // Hata veren satırı şununla değiştirin:
+            CreateMap<Apya.Platform.DataTransfers.DataTransferRun, Apya.Platform.DataTransfers.Dtos.DataTransferRunDto>()
+                .ForMember(d => d.CreatorName, o => o.Ignore());
+
             CreateMap<Project, ProjectDto>();
             CreateMap<ProjectCategoryDefinition, ProjectCategoryDto>();
             CreateMap<Project, ProjectDetailDto>().IncludeBase<Project, ProjectDto>();

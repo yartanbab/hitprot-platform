@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Web.Export;
 using Apya.Platform.Web.Pages;
+using Apya.Platform.Web.Transfer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -57,8 +58,10 @@ public abstract class ExcelImportPageModel<TLookups, TRow> : PlatformPageModel
     public async Task<IActionResult> OnPostImportAsync(IFormFile? file, [FromServices] IUnitOfWorkManager unitOfWorkManager)
     {
         var (sheet, rows) = await ReadAsync(file);
-        if (sheet.Errors.Count > 0 || sheet.Rows.Any(r => r.Errors.Count > 0))
+        var failed = sheet.Rows.Count(r => r.Errors.Count > 0);
+        if (sheet.Errors.Count > 0 || failed > 0)
         {
+            Report(file, sheet.Rows.Count, succeeded: 0, failed);
             return new JsonResult(ImportResponse.Preview(sheet, L));
         }
 
@@ -73,13 +76,23 @@ public abstract class ExcelImportPageModel<TLookups, TRow> : PlatformPageModel
             catch (Exception ex)
             {
                 Logger.LogWarning(ex, "{Page} içe aktarma satır {Row} reddedildi", GetType().Name, sheet.Rows[i].Number);
+                Report(file, rows.Count, succeeded: 0, failed: 1);
                 return new JsonResult(ImportResponse.Failed(L["Import:Error:Row", sheet.Rows[i].Number, this.UserMessage(ex)]));
             }
         }
 
         await uow.CompleteAsync();
+        Report(file, rows.Count, succeeded: rows.Count, failed: 0);
         return new JsonResult(ImportResponse.Done(L["Import:Done", rows.Count]));
     }
+
+    /// <summary>İşlem geçmişine satır sayılarını bildirir (hepsi ya da hiçbiri: reddedilen dosyada yazılan satır yoktur).</summary>
+    private void Report(IFormFile? file, int total, int succeeded, int failed)
+        => TransferReport.Set(HttpContext, new TransferReport
+        {
+            FileName = file?.FileName, Format = TransferReport.FormatOf(file?.FileName),
+            TotalRows = total, SucceededRows = succeeded, FailedRows = failed
+        });
 
     private async Task<(ImportSheet Sheet, List<TRow> Rows)> ReadAsync(IFormFile? file)
     {
