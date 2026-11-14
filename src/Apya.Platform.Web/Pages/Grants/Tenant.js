@@ -1,5 +1,6 @@
 $(function () {
     var profileSvc = apya.platform.grants.firmProfile;
+    var firmDataSvc = apya.platform.grants.firmData;
     var recoSvc = apya.platform.grants.grantRecommendation;
     var appSvc = apya.platform.grants.grantApplication;
     var l = abp.localization.getResource('Platform');
@@ -761,8 +762,40 @@ $(function () {
     // Akış ve profil PARALEL okunur: kilit yavaş ya da düşen akışı beklemez. Akışa bağlı tek şey
     // "N çağrı ölçülebilir" cümlesi; hangisi sonra gelirse paintGain onu boyar. Dönen söz yalnız
     // profil okumasıdır, Kaydet de akışı beklemez.
+    // ---------- Eksik veri asistanı ----------
+    // Liste sunucudan faydaya göre sıralı gelir; yalnız en az bir çağrı kazandıran ilk üçü gösterilir.
+    // Okuma düşerse panel sessizce gizli kalır: asistan yardımcıdır, akışı engellemez.
+    function loadGaps() {
+        Promise.resolve(firmDataSvc.getMyGaps({ abpHandleError: false })).then(function (gaps) {
+            var top = (gaps || []).filter(function (g) { return g.unlockCount > 0; }).slice(0, 3);
+            $('#DataGapRows').html(top.map(function (g) {
+                return '<div class="d-flex flex-wrap align-items-start gap-2" data-gap="' + esc(g.code) + '">' +
+                    '<div class="flex-grow-1" style="min-width:0">' +
+                    '<div><span class="fw-medium">' + esc(g.name) + '</span>' +
+                    (g.isStale ? ' <span class="apya-chip apya-chip-warning">' + esc(l('Grants:DataGap:Stale')) + '</span>' : '') +
+                    ' <span class="apya-cat-sub">· ' + esc(l('Grants:DataGap:Unlock', g.unlockCount)) + '</span></div>' +
+                    (g.description ? '<div class="small text-muted">' + esc(g.description) + '</div>' : '') +
+                    '</div>' +
+                    '<a class="btn btn-sm btn-outline-primary js-data-gap-link" href="' + esc(g.url) + '">' +
+                    esc(l('Grants:DataGap:Complete')) + '</a>' +
+                    '</div>';
+            }).join(''));
+            $('#DataGapPanel').toggleClass('d-none', top.length === 0);
+        }, function () {
+            $('#DataGapPanel').addClass('d-none');
+        });
+    }
+
+    // Hibe profilindeki bilgi bu sayfada girilir: bağlantı sayfayı yenilemeden düzenleyiciyi açar.
+    $('#DataGapRows').on('click', '.js-data-gap-link', function (e) {
+        if ($(this).attr('href') !== '/Grants#profil') { return; }
+        e.preventDefault();
+        $('#ProfileEditor').removeClass('d-none')[0].scrollIntoView({ block: 'start' });
+    });
+
     function load() {
         var isLatest = nextLoad();
+        loadGaps();
         $('#ProfileForm').prop('disabled', true);
         // Yükleniyor kutusu yalnız profil henüz boyanmamışken: açık editörde her Kaydet'te formu itmesin.
         if (!profile) { $('#ProfileLoadState').html(apya.loadState.loadingHtml(l('Grants:Feed:Profile:Loading'))); }

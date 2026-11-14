@@ -232,6 +232,21 @@ $(function () {
         $('#NotBlockingNote').toggleClass('d-none', !d.missingRulesAreNotBlocking);
     }
 
+    // Program bütçenin bir bölümünü kurumdan bekliyorsa ve kurumun eş finansman kapasitesi
+    // girilmemişse (ya da süresi dolmuşsa) bunun NEDEN gerektiği söylenir. Okuma düşerse not çıkmaz.
+    function paintCofinancingGap(d) {
+        $('#CofinancingGapNote').addClass('d-none');
+        if (!(d.coFinancingRatePercent > 0)) { return; }
+        Promise.resolve(apya.platform.grants.firmData.getMyGaps({ abpHandleError: false })).then(function (gaps) {
+            var gap = (gaps || []).filter(function (g) { return g.code === 'cofinancing_capacity'; })[0];
+            if (!gap) { return; }
+            $('#CofinancingGapText').text(
+                l(gap.isStale ? 'Grants:DataGap:CofinancingStale' : 'Grants:DataGap:Cofinancing', d.coFinancingRatePercent) + ' ');
+            $('#CofinancingGapLink').attr('href', gap.url);
+            $('#CofinancingGapNote').removeClass('d-none');
+        }, function () { });
+    }
+
     // ---------- Bütçe hesaplayıcı ----------
     function paintBudget(d) {
         var $rows = $('#BudgetRows').empty();
@@ -480,6 +495,7 @@ $(function () {
             $('.apya-detail-head, .apya-detail-layout').removeClass('d-none');
             paintHead(d);
             paintRules(d);
+            paintCofinancingGap(d);
             paintBudget(d);
             paintProcess(d);
             paintSide(d);

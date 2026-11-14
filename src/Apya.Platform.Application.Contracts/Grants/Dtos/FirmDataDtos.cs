@@ -69,3 +69,20 @@ public class SaveFirmDataItemDto
     public string? RawValue { get; set; }
     public List<string> Choices { get; set; } = new();
 }
+
+/// <summary>Eksik ya da güncelliğini yitirmiş bir kurum bilgisi; liste faydaya göre sıralı gelir.</summary>
+public class FirmDataGapDto
+{
+    public string Code { get; set; } = null!;
+    public string Name { get; set; } = null!;
+    public string? Description { get; set; }
+
+    /// <summary>Değer girilmiş ama geçerlilik süresi dolmuş.</summary>
+    public bool IsStale { get; set; }
+
+    /// <summary>Bu bilgi tamamlanınca ölçülebilir hâle gelecek açık çağrı sayısı.</summary>
+    public int UnlockCount { get; set; }
+
+    /// <summary>Bilginin girileceği ekran (alanın kendisine iner).</summary>
+    public string Url { get; set; } = null!;
+}
