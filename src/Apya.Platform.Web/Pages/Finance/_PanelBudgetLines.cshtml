@@ -73,7 +73,7 @@ else
         @if (b.Lines.Any())
         {
             @* İçe aktarmanın sütunlarıyla iner: başka bir projeye geri yüklenebilir. *@
-            <a class="btn btn-sm btn-outline-secondary ms-auto" id="BtnExportBudgetLines"
+            <a class="btn btn-sm btn-outline-secondary ms-auto" id="BtnExportBudgetLines" data-transfer-export
                href="/Finance/BudgetLineImportModal?projectId=@Model.ProjectId&handler=Export">
                 <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
             </a>

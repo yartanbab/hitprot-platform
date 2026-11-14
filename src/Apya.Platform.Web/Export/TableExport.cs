@@ -15,8 +15,18 @@ internal static class TableExport
 {
     public const string FormatQueryKey = "format";
 
+    /// <summary>Biçim adresten, form gönderiminde (süzgeç formundaki düğme) form alanından okunur.</summary>
     public static bool IsCsv(this PageModel page)
-        => string.Equals(page.Request.Query[FormatQueryKey], "csv", StringComparison.OrdinalIgnoreCase);
+    {
+        var request = page.Request;
+        var format = request.Query[FormatQueryKey].ToString();
+        if (format.Length == 0 && request.HasFormContentType)
+        {
+            format = request.Form[FormatQueryKey].ToString();
+        }
+
+        return string.Equals(format, "csv", StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <param name="name">Dosya adı (tarih ve uzantı eklenir).</param>
     /// <param name="sheetName">Excel sayfa adı; boşsa <paramref name="name"/>.</param>

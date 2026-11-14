@@ -1141,6 +1141,7 @@ $(function () {
     $('#menu-export-excel').on('click', function () {
         var input = buildInput();
         var params = new URLSearchParams({ handler: 'Excel' });
+        if (window.apyaExportFormat) { params.append('format', window.apyaExportFormat); }
         Object.keys(input).forEach(function (key) {
             [].concat(input[key]).forEach(function (v) { params.append(key, v); });
         });

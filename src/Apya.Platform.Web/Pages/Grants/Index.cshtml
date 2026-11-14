@@ -56,7 +56,7 @@
                         <i class="fa fa-pen-to-square me-1"></i>@L["Grants:Sources:ManualEntry"]
                     </a>
                 }
-                <button type="button" id="CallsExportExcel" class="btn btn-outline-secondary">
+                <button type="button" id="CallsExportExcel" data-transfer-export class="btn btn-outline-secondary">
                     <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
                 </button>
                 @* X-05 · Kazıyıcı bağlı değilken düğme yalnız "atlandı" koşusu bırakıyordu. *@
@@ -156,7 +156,7 @@ else
                 @* Ekranda görünen çağrılar (sekme + gelişmiş filtre) — kimlikleri Tenant.js doldurur. *@
                 <form id="FeedExportForm" method="post" action="/Grants?handler=FeedExcel" class="d-inline">
                     @Html.AntiForgeryToken()
-                    <button type="submit" id="FeedExportExcel" class="btn btn-sm btn-outline-secondary">
+                    <button type="submit" id="FeedExportExcel" data-transfer-export class="btn btn-sm btn-outline-secondary">
                         <i class="fa fa-file-excel me-1" aria-hidden="true"></i>@L["Export:ExcelButton"]
                     </button>
                 </form>

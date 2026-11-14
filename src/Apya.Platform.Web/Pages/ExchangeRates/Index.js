@@ -83,6 +83,7 @@ $(function () {
     // Ekrandaki sıralama dosyaya aynen geçer.
     $('#ExchangeRatesExportExcel').on('click', function () {
         var params = new URLSearchParams({ handler: 'Excel' });
+        if (window.apyaExportFormat) { params.append('format', window.apyaExportFormat); }
         var order = dataTable.order()[0];
         var column = order && dataTable.settings()[0].aoColumns[order[0]];
         if (column && typeof column.data === 'string') { params.append('sorting', column.data + ' ' + order[1]); }

@@ -19,7 +19,7 @@
                 <small class="text-muted">Hibe, bağış, faturasız nakit gelir. Kasa seçilirse otomatik kasa girişi oluşur.</small>
             </abp-column>
             <abp-column size-md="_5" class="text-end">
-                <button type="button" id="IncomesExportExcel" class="btn btn-outline-secondary btn-sm me-1">
+                <button type="button" id="IncomesExportExcel" data-transfer-export class="btn btn-outline-secondary btn-sm me-1">
                     <i class="fa fa-file-excel"></i> @L["Export:ExcelButton"]
                 </button>
                 @if (await AuthorizationService.IsGrantedAsync(Apya.Platform.Permissions.PlatformPermissions.Incomes.Create))
