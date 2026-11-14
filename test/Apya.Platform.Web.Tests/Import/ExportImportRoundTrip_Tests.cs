@@ -175,6 +175,40 @@ public class ExportImportRoundTrip_Tests : PlatformWebTestBase
         saved.ShouldAllBe(e => e.ProjectId == project.Id && e.BudgetLineId != null && e.Amount == 250.5m);
     }
 
+    /// <summary>
+    /// Aynı adı taşıyan iki proje (host bütün kiracıların projelerini görür): ad tek başına eşleşmez.
+    /// Dışa aktarma o projeyi KODUYLA yazar, içe aktarma kodu tanır — dosya yine hatasız geri yüklenir.
+    /// </summary>
+    [Fact]
+    public async Task Ayni_adli_projede_gider_proje_koduyla_tasinir()
+    {
+        var accountName = "Aynı ad kasası " + _code;
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            await GetRequiredService<IRepository<CashAccount, Guid>>().InsertAsync(new CashAccount(Guid.NewGuid(), accountName), autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        var name = "Aynı adlı proje " + _code;
+        var first = await SeedProjectAsync(name);
+        await SeedProjectAsync(name);
+
+        const string modal = "/Expenses/ImportModal";
+        var title = "Aynı ad gideri " + _code;
+
+        // Adla yazılan satır reddedilir: hangi proje olduğu belli değil.
+        var byName = await PostAsync(modal, "Preview", await CsvFromTemplateAsync(modal,
+            $"10.11.2026;{title};;100;TRY;{accountName};{name};;"), "giderler.csv");
+        byName.GetProperty("ok").GetBoolean().ShouldBeFalse();
+
+        await ImportAsync(modal, await CsvFromTemplateAsync(modal,
+            $"10.11.2026;{title};;100;TRY;{accountName};{first.Code};;"), "giderler.csv");
+
+        var xlsx = await ExportedFilesPreviewCleanAsync("/Expenses?handler=Excel&filter=" + Uri.EscapeDataString(title), modal, 1);
+        using var wb = new XLWorkbook(new MemoryStream(xlsx));
+        wb.Worksheet(1).Row(2).CellsUsed().Select(c => c.GetString()).ShouldContain(first.Code);
+    }
+
     [Fact]
     public async Task Butce_kalemleri_baska_projeye_agaciyla_geri_yuklenir()
     {

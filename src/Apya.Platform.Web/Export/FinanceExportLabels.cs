@@ -14,7 +14,7 @@ namespace Apya.Platform.Web.Export;
 
 /// <summary>
 /// Gider/gelir dışa aktarımının proje ve bütçe kalemi adları — içe aktarmanın eşleştirdiği yazımla
-/// (proje adı; kalem "kod - ad"), böylece indirilen dosya geri yüklenince bağlar kopmaz. Kişinin
+/// (proje adı, ad tekil değilse proje kodu; kalem "kod - ad"), böylece indirilen dosya geri yüklenince bağlar kopmaz. Kişinin
 /// göremediği ad boş kalır: projeyi görme izni yoksa proje, bütçeyi görme izni yoksa kalem.
 /// </summary>
 internal sealed class FinanceExportLabels
@@ -44,9 +44,12 @@ internal sealed class FinanceExportLabels
 
         var projects = await services.GetRequiredService<IProjectAppService>()
             .GetListAsync(new PagedAndSortedResultRequestDto { MaxResultCount = 1000 });
+        // Aynı adı taşıyan birden çok proje varsa (host bütün kiracıların projelerini görür) ad tek başına
+        // eşleşmez; o projeler koduyla yazılır — içe aktarma adı da kodu da tanır.
+        var repeated = projects.Items.GroupBy(p => p.Name).Where(g => g.Count() > 1).Select(g => g.Key).ToHashSet();
         foreach (var project in projects.Items.Where(p => ids.Contains(p.Id)))
         {
-            labels._projects[project.Id] = project.Name;
+            labels._projects[project.Id] = repeated.Contains(project.Name) && project.Code.Length > 0 ? project.Code : project.Name;
         }
 
         if (await authorization.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget))

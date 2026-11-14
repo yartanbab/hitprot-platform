@@ -33,7 +33,7 @@ public sealed class FinanceImportRow<TCategory> where TCategory : struct, Enum
 public sealed class FinanceImportLookups<TCategory> where TCategory : struct, Enum
 {
     internal IReadOnlyList<CashAccountLookupDto> Accounts { get; init; } = [];
-    internal List<(Guid Id, string Name)> Projects { get; init; } = [];
+    internal List<(Guid Id, string Name, string Code)> Projects { get; init; } = [];
     internal List<(TCategory Value, string Name)> Categories { get; init; } = [];
     internal bool CanSeeBudget { get; init; }
     internal Dictionary<Guid, ProjectRecordFormLookupDto> Lines { get; } = new();
@@ -88,7 +88,7 @@ public abstract class FinanceImportPageModel<TCategory>
         return new FinanceImportLookups<TCategory>
         {
             Accounts = await GetAccountsAsync(),
-            Projects = projects.Items.Select(p => (p.Id, p.Name)).ToList(),
+            Projects = projects.Items.Select(p => (p.Id, p.Name, p.Code)).ToList(),
             Categories = Enum.GetValues<TCategory>().Select(c => (c, L[CategoryKeyPrefix + c].Value)).ToList(),
             CanSeeBudget = await AuthorizationService.IsGrantedAsync(PlatformPermissions.Projects.ViewBudget)
         };
@@ -140,7 +140,7 @@ public abstract class FinanceImportPageModel<TCategory>
         var lineText = row.Text(h.BudgetLine);
         if (projectText.Length > 0)
         {
-            if (TryMatch(row, h.Project, projectText, lookups.Projects, p => [p.Name], out var project))
+            if (TryMatch(row, h.Project, projectText, lookups.Projects, p => [p.Name, p.Code], out var project))
             {
                 result.ProjectId = project.Id;
                 await MapBudgetLineAsync(row, result, lineText, lookups);
