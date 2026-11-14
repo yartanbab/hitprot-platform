@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.DataTransfers;
+using Apya.Platform.DataTransfers.Dtos;
 using Apya.Platform.Permissions;
 using Apya.Platform.Settings;
 using Apya.Platform.Web.Transfer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.SettingManagement;
 
 namespace Apya.Platform.Web.Pages.DataTransfer;
@@ -21,12 +24,18 @@ public class IndexModel : PlatformPageModel
 {
     public const string ExportTab = "export";
     public const string ImportTab = "import";
+    public const string HistoryTab = "history";
+
+    /// <summary>Geçmiş sekmesinde gösterilen en yeni kayıt sayısı.</summary>
+    public const int HistorySize = 100;
 
     private readonly TransferAccess _access;
     private readonly ISettingManager _settingManager;
+    private readonly IDataTransferRunAppService _runAppService;
 
-    public IndexModel(TransferAccess access, ISettingManager settingManager)
+    public IndexModel(TransferAccess access, ISettingManager settingManager, IDataTransferRunAppService runAppService)
     {
+        _runAppService = runAppService;
         _access = access;
         _settingManager = settingManager;
     }
@@ -38,7 +47,10 @@ public class IndexModel : PlatformPageModel
     [BindProperty(SupportsGet = true)]
     public string? Tab { get; set; }
 
-    public string ActiveTab => Tab == ImportTab ? ImportTab : ExportTab;
+    public string ActiveTab => Tab is ImportTab or HistoryTab ? Tab : ExportTab;
+
+    /// <summary>Geçmiş sekmesi: bu tarafın (host ya da kiracı) son işlemleri; modül adı sözlükten.</summary>
+    public List<(DataTransferRunDto Run, string Module)> History { get; private set; } = [];
 
     public List<ModuleGroup> Groups { get; private set; } = [];
 
@@ -82,6 +94,14 @@ public class IndexModel : PlatformPageModel
         CanExport = canExport;
         Enforced = await _access.IsEnforcedAsync();
         CanManageAccess = host && await AuthorizationService.IsGrantedAsync(PlatformPermissions.DataTransfer.ManageAccess);
+
+        if (ActiveTab == HistoryTab)
+        {
+            var runs = await _runAppService.GetListAsync(new PagedResultRequestDto { MaxResultCount = HistorySize });
+            History = runs.Items
+                .Select(r => (r, DataTransferModules.Find(r.ModuleKey) is { } module ? L[module.NameKey].Value : r.ModuleKey))
+                .ToList();
+        }
         return Page();
     }
 

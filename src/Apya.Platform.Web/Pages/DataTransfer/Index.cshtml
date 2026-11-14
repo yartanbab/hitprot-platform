@@ -10,8 +10,10 @@
     {
         (Code: IndexModel.ExportTab, Label: "DataTransfer:Tab:Export", Icon: "fa-file-export"),
         (Code: IndexModel.ImportTab, Label: "DataTransfer:Tab:Import", Icon: "fa-file-import"),
+        (Code: IndexModel.HistoryTab, Label: "DataTransfer:Tab:History", Icon: "fa-clock-rotate-left"),
     };
     var exporting = Model.ActiveTab == IndexModel.ExportTab;
+    var history = Model.ActiveTab == IndexModel.HistoryTab;
     var groups = Model.Groups
         .Select(g => (g.Name, Rows: g.Rows.Where(r => exporting ? Model.CanExport && r.Screen.HasExport : r.Screen.HasImport).ToList()))
         .Where(g => g.Rows.Count > 0)
@@ -55,14 +57,62 @@
 
     <abp-card>
         <abp-card-body>
+            @if (history)
+            {
+                <p class="text-muted mb-3">@L["DataTransfer:History:Intro", IndexModel.HistorySize]</p>
+                if (Model.History.Count == 0)
+                {
+                    <p class="mb-0" data-transfer-history-empty>@L["DataTransfer:History:Empty"]</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle apya-clean-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>@L["DataTransfer:History:When"]</th>
+                                    <th>@L["DataTransfer:History:Who"]</th>
+                                    <th>@L["DataTransfer:History:Module"]</th>
+                                    <th>@L["DataTransfer:History:Direction"]</th>
+                                    <th>@L["DataTransfer:History:File"]</th>
+                                    <th class="text-end">@L["DataTransfer:History:Rows"]</th>
+                                    <th class="text-end">@L["DataTransfer:History:Failed"]</th>
+                                    <th>@L["DataTransfer:History:Result"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var (run, module) in Model.History)
+                                {
+                                    <tr data-transfer-run="@run.ModuleKey">
+                                        <td class="text-nowrap">@run.CreationTime.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>@(run.CreatorName ?? "—")</td>
+                                        <td>@module</td>
+                                        <td>@L[run.Direction == Apya.Platform.DataTransfers.DataTransferDirection.Export ? "DataTransfer:Tab:Export" : "DataTransfer:Tab:Import"]</td>
+                                        <td class="text-break">@(run.FileName ?? run.Format?.ToUpperInvariant() ?? "—")</td>
+                                        <td class="text-end">@(run.TotalRows?.ToString() ?? "—")</td>
+                                        <td class="text-end">@(run.FailedRows?.ToString() ?? "—")</td>
+                                        <td>
+                                            <span class="apya-chip @(run.Succeeded ? "apya-chip-brand" : "apya-chip-warning")" title="@run.Message">
+                                                @L[run.Succeeded ? "DataTransfer:History:Ok" : "DataTransfer:History:NotSaved"]
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+            else
+            {
             <p class="text-muted mb-3">@L[exporting ? "DataTransfer:Export:Intro" : "DataTransfer:Import:Intro"]</p>
 
-            @if (groups.Count == 0)
+            if (groups.Count == 0)
             {
                 <p class="mb-0" data-transfer-empty>@L["DataTransfer:Empty"]</p>
             }
 
-            @foreach (var group in groups)
+            foreach (var group in groups)
             {
                 <h6 class="mt-4 mb-2">@group.Name</h6>
                 <table class="table table-sm align-middle apya-clean-table mb-0">
@@ -106,6 +156,7 @@
                         }
                     </tbody>
                 </table>
+            }
             }
         </abp-card-body>
     </abp-card>

@@ -168,5 +168,8 @@ public static class TransferCatalog
     public static TransferEndpoint? Find(string? page, string? handler)
         => page != null && handler != null && ByEndpoint.TryGetValue(EndpointKey(page, handler), out var found) ? found : null;
 
+    /// <summary>Ucun ait olduğu ekran; listelenmeyen uçlarda yok.</summary>
+    public static TransferScreen? ScreenOf(TransferEndpoint endpoint) => Screens.FirstOrDefault(s => s.Endpoints.Contains(endpoint));
+
     private static string EndpointKey(string page, string handler) => (page + "?" + handler).ToUpperInvariant();
 }

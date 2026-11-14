@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Apya.Platform.Web.Transfer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,8 +36,18 @@ internal static class TableExport
         IEnumerable<T> rows, string? note = null, string? sheetName = null)
     {
         var now = page.HttpContext.RequestServices.GetRequiredService<IClock>().Now;
-        return page.IsCsv()
-            ? page.File(ExcelTable.BuildCsv(columns, rows), ExcelTable.CsvContentType, ExcelTable.FileName(name, now, "csv"))
-            : page.File(ExcelTable.Build(sheetName ?? name, columns, rows, note), ExcelTable.ContentType, ExcelTable.FileName(name, now));
+        var list = rows as IReadOnlyCollection<T> ?? rows.ToList();
+        var csv = page.IsCsv();
+        var fileName = ExcelTable.FileName(name, now, csv ? "csv" : "xlsx");
+
+        // İşlem geçmişi satır sayısını buradan alır.
+        TransferReport.Set(page.HttpContext, new TransferReport
+        {
+            FileName = fileName, Format = csv ? "csv" : "xlsx", TotalRows = list.Count, SucceededRows = list.Count
+        });
+
+        return csv
+            ? page.File(ExcelTable.BuildCsv(columns, list), ExcelTable.CsvContentType, fileName)
+            : page.File(ExcelTable.Build(sheetName ?? name, columns, list, note), ExcelTable.ContentType, fileName);
     }
 }
