@@ -360,6 +360,14 @@ $(function () {
 
     $('#NewInvoiceButton').click(function (e) { e.preventDefault(); createModal.open(); });
 
+    // İçe aktarma pencereyi kendisi kapatmaz; kayıt olduysa kapanınca liste yeniden yüklenir.
+    var importModal = new abp.ModalManager(abp.appPath + 'Invoices/ImportModal');
+    var invoicesImported = false;
+    importModal.onOpen(function () { invoicesImported = false; });
+    importModal.onClose(function () { if (invoicesImported) { load(true); } });
+    $(document).on('apya:excel-imported', function () { invoicesImported = true; });
+    $('#InvoicesImportExcel').on('click', function () { importModal.open(); });
+
     // Süzgeç istemcide; sunucu aynı süzgeci (proje, durum, arama) dosyada yeniden uygular.
     $('<button type="button" class="btn btn-sm btn-outline-secondary ms-auto" data-transfer-export><i class="fa fa-file-excel me-1" aria-hidden="true"></i></button>')
         .append(document.createTextNode(l('Export:ExcelButton')))
