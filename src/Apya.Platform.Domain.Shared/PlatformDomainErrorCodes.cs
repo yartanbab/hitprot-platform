@@ -423,6 +423,7 @@ public static class PlatformDomainErrorCodes
     public const string FirmParameterRangeInverted = "Platform:FirmParameter:RangeInverted";
     public const string FirmParameterOptionsRequired = "Platform:FirmParameter:OptionsRequired";
     public const string FirmParameterValueRequired = "Platform:FirmParameter:ValueRequired";
+    public const string FirmParameterValueInvalid = "Platform:FirmParameter:ValueInvalid";
     public const string FirmParameterValueTooLong = "Platform:FirmParameter:ValueTooLong";
     public const string FirmParameterValueBelowMin = "Platform:FirmParameter:ValueBelowMin";
     public const string FirmParameterValueAboveMax = "Platform:FirmParameter:ValueAboveMax";

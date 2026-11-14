@@ -81,6 +81,23 @@ else
         </abp-card-body>
     </abp-card>
 
+    @if (!Model.IsEditing)
+    {
+        <abp-card class="mt-3">
+            <abp-card-body>
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <div class="flex-grow-1">
+                        <h3 class="fs-6 fw-semibold mb-1"><i class="fa fa-layer-group text-primary me-2" aria-hidden="true"></i>@L["FirmData:ProfileCard.Title"]</h3>
+                        <div class="text-muted small">@L["FirmData:ProfileCard.Desc"]</div>
+                    </div>
+                    <a class="btn btn-outline-primary" asp-page="/CompanyProfile/Data">
+                        @L["FirmData:ProfileCard.Open"]<i class="fa fa-arrow-right ms-1" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </abp-card-body>
+        </abp-card>
+    }
+
     @if (Model.IsEditing)
     {
         <form method="post" class="mt-3" novalidate>
