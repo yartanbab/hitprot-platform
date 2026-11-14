@@ -711,6 +711,8 @@ public class PlatformWebModule : AbpModule
         Configure<MvcOptions>(options =>
         {
             options.Conventions.Add(new Apya.Platform.Web.Services.RemoveDisabledRemoteActionsConvention());
+            // Katalogdaki her içe/dışa aktarma ucuna aktarım izni kuralını uygular.
+            options.Filters.AddService<Apya.Platform.Web.Transfer.TransferAccessPageFilter>();
         });
     }
 

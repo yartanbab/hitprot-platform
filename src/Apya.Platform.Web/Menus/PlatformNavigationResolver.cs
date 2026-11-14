@@ -948,6 +948,11 @@ public class PlatformNavigationResolver : IScopedDependency
         // Makro Ekran yönetimi — host-only izin; tek ayar bütün kiracılar için geçerli.
         if (_currentTenant.Id == null && await _permission.IsGrantedAsync(PlatformPermissions.Macros.Manage))
             platform.AddItem(new ApplicationMenuItem("Apya.Platform.MacrosAdmin", l["Menu:MacrosAdmin"], icon: "fa fa-sliders", url: "/Admin/Macros"));
+        // İçe / dışa aktarma çalışma alanı — iki tarafta da. İzin yalnız host denetimi açtıysa aranır
+        // (aynı kural: Transfer/TransferAccess).
+        if (!await _settingProvider.GetAsync(PlatformSettings.DataTransfer.EnforcePermissions, false)
+            || await _permission.IsGrantedAsync(PlatformPermissions.DataTransfer.Default))
+            platform.AddItem(new ApplicationMenuItem("Apya.Platform.DataTransfer", l["Menu:DataTransfer"], icon: "fa fa-right-left", url: "/DataTransfer"));
         if (platform.Items.Count > 0) roots.Add(platform);
 
         // Kilitli özellikler — üst pakette açılacak bir şeyi OLAN kiracıya TEK keşif öğesi.

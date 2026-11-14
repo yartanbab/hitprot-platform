@@ -1,0 +1,112 @@
+@page
+@using Apya.Platform.Localization
+@using Apya.Platform.Web.Pages.DataTransfer
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<PlatformResource> L
+@model Apya.Platform.Web.Pages.DataTransfer.IndexModel
+@{
+    ViewBag.Title = L["DataTransfer:Title"].Value;
+    var tabs = new[]
+    {
+        (Code: IndexModel.ExportTab, Label: "DataTransfer:Tab:Export", Icon: "fa-file-export"),
+        (Code: IndexModel.ImportTab, Label: "DataTransfer:Tab:Import", Icon: "fa-file-import"),
+    };
+    var exporting = Model.ActiveTab == IndexModel.ExportTab;
+    var groups = Model.Groups
+        .Select(g => (g.Name, Rows: g.Rows.Where(r => exporting ? Model.CanExport && r.Screen.HasExport : r.Screen.HasImport).ToList()))
+        .Where(g => g.Rows.Count > 0)
+        .ToList();
+}
+
+@section scripts {
+    <abp-script src="/Pages/DataTransfer/Index.js" />
+}
+
+@* Sekmeler bağlantıdır (seçim adreste taşınır); görsel dil konsol sekmeleri — Finans sekme şeridiyle aynı. *@
+<div data-page-description="@L["DataTransfer:Description"]" class="apya-page">
+    @if (Model.CanManageAccess)
+    {
+        <form method="post" asp-page-handler="Access" asp-route-tab="@Model.ActiveTab"
+              class="alert alert-light border d-flex flex-wrap align-items-center gap-3" data-transfer-access>
+            <div class="flex-grow-1">
+                <strong>@L["DataTransfer:Access:Title"]</strong>
+                <span class="apya-chip @(Model.Enforced ? "apya-chip-brand" : "apya-chip-neutral") ms-1">
+                    @L[Model.Enforced ? "DataTransfer:Access:StateOn" : "DataTransfer:Access:StateOff"]
+                </span>
+                <div class="small text-muted mt-1">@L[Model.Enforced ? "DataTransfer:Access:On" : "DataTransfer:Access:Off"]</div>
+            </div>
+            <input type="hidden" name="enforce" value="@(Model.Enforced ? "false" : "true")" />
+            <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">
+                @L[Model.Enforced ? "DataTransfer:Access:TurnOff" : "DataTransfer:Access:TurnOn"]
+            </button>
+        </form>
+    }
+
+    <nav class="apya-console-tabs" aria-label="@L["DataTransfer:Title"]">
+        @foreach (var tab in tabs)
+        {
+            var active = tab.Code == Model.ActiveTab;
+            <a href="/DataTransfer?tab=@tab.Code" class="apya-console-tab text-decoration-none@(active ? " active" : "")"
+               aria-current="@(active ? "page" : null)">
+                <i class="fa @tab.Icon" aria-hidden="true"></i>@L[tab.Label]
+            </a>
+        }
+    </nav>
+
+    <abp-card>
+        <abp-card-body>
+            <p class="text-muted mb-3">@L[exporting ? "DataTransfer:Export:Intro" : "DataTransfer:Import:Intro"]</p>
+
+            @if (groups.Count == 0)
+            {
+                <p class="mb-0" data-transfer-empty>@L["DataTransfer:Empty"]</p>
+            }
+
+            @foreach (var group in groups)
+            {
+                <h6 class="mt-4 mb-2">@group.Name</h6>
+                <table class="table table-sm align-middle apya-clean-table mb-0">
+                    <tbody>
+                        @foreach (var row in group.Rows)
+                        {
+                            var module = row.Screen;
+                            <tr data-transfer-module="@module.Module.Key">
+                                <td>
+                                    <i class="@module.Icon me-2 text-muted" aria-hidden="true"></i>@row.Name
+                                    <span class="text-muted small ms-2">@string.Join(" · ", module.Formats.Select(f => f.ToUpperInvariant()))</span>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    @if (exporting && module.ExportUrl != null)
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary" href="@module.ExportUrl" data-transfer-export="@module.Formats[0]">
+                                            <i class="fa fa-download me-1" aria-hidden="true"></i>@module.Formats[0].ToUpperInvariant()
+                                        </a>
+                                        @if (module.Formats.Contains("csv"))
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary" href="@(module.ExportUrl)&format=csv" data-transfer-export="csv">
+                                                <i class="fa fa-download me-1" aria-hidden="true"></i>CSV
+                                            </a>
+                                        }
+                                    }
+                                    else if (!exporting && module.ImportUrl != null && row.CanImport)
+                                    {
+                                        <a class="btn btn-sm btn-link" href="@(module.ImportUrl)?handler=Template">@L["DataTransfer:TemplateXlsx"]</a>
+                                        <a class="btn btn-sm btn-link" href="@(module.ImportUrl)?handler=Template&format=csv">@L["DataTransfer:TemplateCsv"]</a>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-transfer-import="@module.ImportUrl">
+                                            <i class="fa fa-file-import me-1" aria-hidden="true"></i>@L["DataTransfer:Import"]
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small me-2">@L["DataTransfer:FromScreen"]</span>
+                                    }
+                                    <a class="btn btn-sm btn-link" href="@module.PageUrl">@L["DataTransfer:OpenScreen"]</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </abp-card-body>
+    </abp-card>
+</div>

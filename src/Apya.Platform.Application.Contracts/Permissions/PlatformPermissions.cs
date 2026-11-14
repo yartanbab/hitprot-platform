@@ -215,6 +215,18 @@ public static class PlatformPermissions
         public const string Manage = GroupName + ".Macros.Manage";
     }
 
+    // --- İÇE / DIŞA AKTARMA ---
+    // Yalnız host "aktarım izinlerini uygula" ayarını açtığında denetlenir
+    // (PlatformSettings.DataTransfer.EnforcePermissions); kapalıyken modül izinleri yeter.
+    public static class DataTransfer
+    {
+        public const string Default = GroupName + ".DataTransfer";    // Çalışma alanını görme
+        public const string Export = Default + ".Export";             // Dışa aktarma
+        public const string Import = Default + ".Import";             // İçe aktarma
+        /// <summary>İzin denetimini açıp kapatma. Host-only.</summary>
+        public const string ManageAccess = Default + ".ManageAccess";
+    }
+
     // --- SÜRÜM NOTU YAYIN ONAYI (host) ---
     public static class ReleaseNotes
     {

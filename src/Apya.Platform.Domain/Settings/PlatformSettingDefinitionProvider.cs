@@ -206,6 +206,19 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
             new SettingDefinition(PlatformSettings.Backfills.ProjectIndicatorHostPermissionsGranted)
                 .WithProviders(GlobalSettingValueProvider.ProviderName));
 
+        context.Add(
+            new SettingDefinition(PlatformSettings.Backfills.DataTransferPermissionsGranted)
+                .WithProviders(GlobalSettingValueProvider.ProviderName));
+
+        // --- İçe / dışa aktarma: izin denetimi anahtarı (host) ---
+        context.Add(
+            new SettingDefinition(
+                PlatformSettings.DataTransfer.EnforcePermissions,
+                defaultValue: "false",
+                displayName: L("Setting:DataTransfer.EnforcePermissions"),
+                description: L("Setting:DataTransfer.EnforcePermissions.Description"))
+                .WithProviders(GlobalSettingValueProvider.ProviderName));
+
         // --- Telemetri ---
         // Global (host) ayarları: tenant'lar değiştiremez.
         context.Add(
