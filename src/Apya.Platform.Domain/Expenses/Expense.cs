@@ -6,9 +6,10 @@ using Volo.Abp.MultiTenancy;
 namespace Apya.Platform.Expenses;
 
 /// <summary>
-/// Gider/Masraf (APYA-135). Kasa zorunlu (nereden ödendi), proje ve cari opsiyonel.
-/// Kaydedildiğinde ilgili kasaya otomatik bir çıkış (Out) CashMovement üretilir
-/// (ExpenseAppService, Source=Expense, ReferenceId=Expense.Id).
+/// Gider/Masraf (APYA-135). Kasa, proje ve cari opsiyonel.
+/// Kasa seçilirse ilgili kasaya otomatik bir çıkış (Out) CashMovement üretilir
+/// (ExpenseAppService, Source=Expense, ReferenceId=Expense.Id); kasasız gider
+/// hiçbir kasanın bakiyesine dokunmaz (kullanıcı kararı 2026-11-14, gelirdeki kural).
 /// </summary>
 public class Expense : FullAuditedAggregateRoot<Guid>, IMultiTenant
 {
@@ -20,8 +21,8 @@ public class Expense : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public DateTime ExpenseDate { get; set; }
     public ExpenseCategory Category { get; set; } = ExpenseCategory.Other;
 
-    /// <summary>Hangi kasadan ödendi — zorunlu.</summary>
-    public Guid CashAccountId { get; set; }
+    /// <summary>Hangi kasadan ödendi — opsiyonel (boşsa kasaya işlenmez).</summary>
+    public Guid? CashAccountId { get; set; }
 
     /// <summary>Opsiyonel proje ilişkisi (proje bütçesine yansıtmak için).</summary>
     public Guid? ProjectId { get; set; }
@@ -75,7 +76,7 @@ public class Expense : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Guid id,
         string title,
         decimal amount,
-        Guid cashAccountId,
+        Guid? cashAccountId,
         DateTime expenseDate,
         ExpenseCategory category = ExpenseCategory.Other,
         string currency = "TRY",
@@ -88,9 +89,7 @@ public class Expense : FullAuditedAggregateRoot<Guid>, IMultiTenant
         TenantId = tenantId;
         SetTitle(title);
         SetAmount(amount);
-        if (cashAccountId == Guid.Empty)
-            throw new BusinessException(PlatformDomainErrorCodes.ExpenseCashAccountRequired);
-        CashAccountId = cashAccountId;
+        CashAccountId = cashAccountId == Guid.Empty ? null : cashAccountId;
         ExpenseDate = expenseDate;
         Category = category;
         Currency = string.IsNullOrWhiteSpace(currency) ? "TRY" : currency.Trim().ToUpperInvariant();

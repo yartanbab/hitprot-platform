@@ -127,7 +127,7 @@ public class ProjectFxAppService : ApplicationService, IProjectFxAppService
             Date = x.ExpenseDate,
             IsInflow = false,
             Title = x.Title,
-            CashAccountName = accountNames.GetValueOrDefault(x.CashAccountId),
+            CashAccountName = x.CashAccountId.HasValue ? accountNames.GetValueOrDefault(x.CashAccountId.Value) : null,
             Currency = x.Currency,
             Amount = x.Amount,
             BookAmount = x.BookAmount,

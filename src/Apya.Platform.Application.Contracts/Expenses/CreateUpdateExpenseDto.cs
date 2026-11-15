@@ -20,8 +20,8 @@ public class CreateUpdateExpenseDto
 
     public ExpenseCategory Category { get; set; } = ExpenseCategory.Other;
 
-    [Required]
-    public Guid CashAccountId { get; set; }
+    /// <summary>Opsiyonel: boşsa kasaya işlenmez (kullanıcı kararı 2026-11-14).</summary>
+    public Guid? CashAccountId { get; set; }
 
     public Guid? ProjectId { get; set; }
     public Guid? TaskId { get; set; }

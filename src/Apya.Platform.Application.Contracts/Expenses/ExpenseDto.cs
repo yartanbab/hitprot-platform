@@ -11,7 +11,7 @@ public class ExpenseDto : FullAuditedEntityDto<Guid>
     public string Currency { get; set; } = "TRY";
     public DateTime ExpenseDate { get; set; }
     public ExpenseCategory Category { get; set; }
-    public Guid CashAccountId { get; set; }
+    public Guid? CashAccountId { get; set; }
     public string? CashAccountName { get; set; }
 
     /// <summary>

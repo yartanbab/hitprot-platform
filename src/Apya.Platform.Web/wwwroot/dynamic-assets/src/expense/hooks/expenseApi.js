@@ -58,7 +58,8 @@ export function createExpense(payload) {
         currency: payload.currency || 'TRY',
         expenseDate: payload.date,
         category: toCategory(payload.category),
-        cashAccountId: payload.cashAccountId,
+        /* Kasa isteğe bağlı (2026-11-14): boş seçim "" değil null gider — "" Guid?'e bağlanamaz. */
+        cashAccountId: payload.cashAccountId || null,
         projectId: payload.projectId || null,
         budgetLineId: payload.budgetLineId || null,
         description: payload.description || payload.note || null,

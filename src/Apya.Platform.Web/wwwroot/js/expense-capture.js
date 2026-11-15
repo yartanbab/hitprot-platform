@@ -1,6 +1,6 @@
 import { j as e, r as d, b as X } from "./react-vendor-D7YDiBbi.js";
 import { t as U, m as Z } from "./index-DgpuJ91w.js";
-import { u as ee, B as T, c as Q, S as B, M as te, I as K, a as P, T as ne } from "./Dialog-BHF0cPzq.js";
+import { u as ee, B as T, c as Q, S as q, M as te, I as K, a as P, T as ne } from "./Dialog-BHF0cPzq.js";
 import { a as re } from "./QueryProvider-D2Hvqdr9.js";
 import { u as Y, r as ae, T as se } from "./registerServiceWorker-pidX-tlY.js";
 import { C as ie } from "./Combobox-BsuZ2Fmj.js";
@@ -238,7 +238,7 @@ function ye({
   d.useEffect(() => {
     j($());
   }, [r]);
-  const p = (s) => (f) => j((N) => ({ ...N, [s]: f != null && f.target ? f.target.value : f })), S = !!(c != null && c.requiresBudgetLine), w = !u.cashAccountId || S && !u.budgetLineId, g = async (s) => {
+  const p = (s) => (f) => j((N) => ({ ...N, [s]: f != null && f.target ? f.target.value : f })), S = !!(c != null && c.requiresBudgetLine), w = S && !u.budgetLineId, g = async (s) => {
     if (s.preventDefault(), o || w) return;
     const f = {
       ...u,
@@ -246,7 +246,7 @@ function ye({
     };
     await a(f);
   };
-  return /* @__PURE__ */ e.jsx(B, { open: t, onOpenChange: n, children: /* @__PURE__ */ e.jsx(B.Content, { title: "Masraf detayları", description: "Fişteki bilgileri girin ve gönderin", children: /* @__PURE__ */ e.jsxs("form", { onSubmit: g, className: "flex flex-col flex-1 min-h-0", children: [
+  return /* @__PURE__ */ e.jsx(q, { open: t, onOpenChange: n, children: /* @__PURE__ */ e.jsx(q.Content, { title: "Masraf detayları", description: "Fişteki bilgileri girin ve gönderin", children: /* @__PURE__ */ e.jsxs("form", { onSubmit: g, className: "flex flex-col flex-1 min-h-0", children: [
     /* @__PURE__ */ e.jsx("header", { className: "px-4 pt-2 pb-3 border-b border-subtle flex items-center justify-between", children: /* @__PURE__ */ e.jsx("h2", { className: "text-lg font-semibold", children: "Masraf Detayları" }) }),
     /* @__PURE__ */ e.jsxs("div", { className: "flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4", children: [
       x && /* @__PURE__ */ e.jsxs("div", { className: "rounded-xl border border-warning bg-warning-subtle px-3 py-2 text-[12.5px] text-warning", children: [
@@ -292,14 +292,14 @@ function ye({
           ]
         }
       ) }),
-      /* @__PURE__ */ e.jsx(y, { label: "Kasa / banka", required: !0, children: /* @__PURE__ */ e.jsxs(
+      /* @__PURE__ */ e.jsx(y, { label: "Kasa / banka", children: /* @__PURE__ */ e.jsxs(
         "select",
         {
           className: z,
           value: u.cashAccountId || "",
           onChange: p("cashAccountId"),
           children: [
-            /* @__PURE__ */ e.jsx("option", { value: "", children: "— Kasa seçin —" }),
+            /* @__PURE__ */ e.jsx("option", { value: "", children: "— Kasaya işlenmesin —" }),
             ((l == null ? void 0 : l.accounts) ?? []).map((s) => /* @__PURE__ */ e.jsxs("option", { value: s.id, children: [
               s.name,
               " (",
@@ -383,7 +383,7 @@ function ye({
         /* @__PURE__ */ e.jsx("span", { className: "font-tabular font-semibold text-text-primary", children: typeof u.amount == "number" && u.amount > 0 ? P(u.amount, u.currency) : "—" })
       ] }),
       /* @__PURE__ */ e.jsxs("div", { className: "flex gap-2", children: [
-        /* @__PURE__ */ e.jsx(B.Close, { asChild: !0, children: /* @__PURE__ */ e.jsx(T, { type: "button", variant: "ghost", size: "md", children: "İptal" }) }),
+        /* @__PURE__ */ e.jsx(q.Close, { asChild: !0, children: /* @__PURE__ */ e.jsx(T, { type: "button", variant: "ghost", size: "md", children: "İptal" }) }),
         /* @__PURE__ */ e.jsx(
           T,
           {
@@ -488,7 +488,8 @@ function H(t) {
     currency: t.currency || "TRY",
     expenseDate: t.date,
     category: Ce(t.category),
-    cashAccountId: t.cashAccountId,
+    /* Kasa isteğe bağlı (2026-11-14): boş seçim "" değil null gider — "" Guid?'e bağlanamaz. */
+    cashAccountId: t.cashAccountId || null,
     projectId: t.projectId || null,
     budgetLineId: t.budgetLineId || null,
     description: t.description || t.note || null
@@ -602,7 +603,7 @@ function Ae(t) {
     staleTime: 60 * 1e3
   });
 }
-function qe() {
+function Be() {
   const [t, n] = d.useState(() => typeof navigator > "u" ? !0 : navigator.onLine !== !1), [r, a] = d.useState(() => b.count()), o = d.useCallback(() => a(b.count()), []);
   return d.useEffect(() => {
     const l = () => n(!0), c = () => n(!1);
@@ -611,7 +612,7 @@ function qe() {
     };
   }, []), { isOnline: t, queued: r, refreshQueued: o };
 }
-function Be() {
+function qe() {
   return oe({
     retry: !1,
     /* Finansal işlem — duplicate önlenir */
@@ -642,7 +643,7 @@ function ze(t) {
 }
 const k = { CAPTURE: "capture", FORM: "form", SUCCESS: "success" }, Oe = 1500;
 function De({ canAttachReceipt: t = !1 }) {
-  const [n, r] = d.useState(k.CAPTURE), [a, o] = d.useState(null), [l, c] = d.useState(null), [i, x] = d.useState(null), [C, u] = d.useState(null), j = Re(), I = Ae(C), { isOnline: v, queued: p, refreshQueued: S } = qe(), w = Be(), g = Y(), M = d.useCallback((m) => {
+  const [n, r] = d.useState(k.CAPTURE), [a, o] = d.useState(null), [l, c] = d.useState(null), [i, x] = d.useState(null), [C, u] = d.useState(null), j = Re(), I = Ae(C), { isOnline: v, queued: p, refreshQueued: S } = Be(), w = qe(), g = Y(), M = d.useCallback((m) => {
     a && URL.revokeObjectURL(a), o(URL.createObjectURL(m)), c(m), r(k.FORM);
   }, [a]), s = d.useCallback(() => {
     a && URL.revokeObjectURL(a), o(null), c(null), x(null), w.reset(), r(k.CAPTURE);
@@ -661,7 +662,7 @@ function De({ canAttachReceipt: t = !1 }) {
         s();
       }, Oe);
     } catch (h) {
-      const L = ((h == null ? void 0 : h.validationErrors) ?? []).map((q) => q == null ? void 0 : q.message).filter(Boolean);
+      const L = ((h == null ? void 0 : h.validationErrors) ?? []).map((B) => B == null ? void 0 : B.message).filter(Boolean);
       g.error("Kayıt başarısız", {
         description: L.length ? L.join(" · ") : (h == null ? void 0 : h.message) ?? "Tekrar deneyebilirsin."
       });
