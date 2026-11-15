@@ -96,6 +96,9 @@ public static class NotificationTemplateDefinitions
             "Notification:ProjectIndicatorBehind:Title", [],
             "Notification:ProjectIndicatorBehind:Body",
             [Project, "{gösterge}", "{hedef_tarih}", "{gerçekleşen}", "{hedef}", "{ilerleme}"]),
+        new(NotificationType.FirmDataStale, Default,
+            "Notification:FirmDataStale:Title", [],
+            "Notification:FirmDataStale:Body", ["{bilgi}", "{son_güncelleme}"]),
 
         // --- Finans (Faz 4b). Tutarlar üreticide para birimiyle biçimlenir ("12.500,00 TRY").
         new(NotificationType.BudgetRevisionApplied, Default,

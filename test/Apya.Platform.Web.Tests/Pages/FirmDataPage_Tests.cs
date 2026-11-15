@@ -10,6 +10,7 @@ using HtmlAgilityPack;
 using Shouldly;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.Uow;
 using Xunit;
 
 namespace Apya.Platform.Pages;
@@ -103,6 +104,47 @@ public class FirmDataPage_Tests : PlatformWebTestBase
             HtmlEntity.DeEntitize(html).ShouldContain("\"Eş finansman kapasitesi (TL)\" en az 0 olabilir.");
             HtmlEntity.DeEntitize(Load(html).DocumentNode.SelectSingleNode("//*[@data-firm-param='strategic_goals']//textarea")
                 .InnerText).Trim().ShouldBe("Bölgesel büyüme");
+        });
+    }
+
+    [Fact]
+    public async Task Suresi_dolan_bilgi_hala_guncel_dugmesiyle_teyit_edilir()
+    {
+        var tenantId = await CreateTenantAsync();
+        // Web test tabanında WithUnitOfWorkAsync yok — UoW elle açılır.
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+          using (GetRequiredService<ICurrentTenant>().Change(tenantId))
+          {
+            var definition = await GetRequiredService<IRepository<FirmParameterDefinition, Guid>>().GetAsync(Cofinancing);
+            await GetRequiredService<IRepository<FirmParameterValue, Guid>>().InsertAsync(
+                new FirmParameterValue(Guid.NewGuid(), tenantId, definition, new FirmParameterInput(Number: 75_000m),
+                    FirmParameterOrigin.UserEntry, DateTime.Now.AddMonths(-7)),
+                autoSave: true);
+          }
+          await uow.CompleteAsync();
+        }
+
+        await WithTenantClientAsync(tenantId, async client =>
+        {
+            var html = await client.GetStringAsync("/CompanyProfile/Data");
+            var button = Load(html).DocumentNode.SelectSingleNode("//*[@data-firm-param='cofinancing_capacity']//button[@data-firm-param-confirm]");
+            button.ShouldNotBeNull("süresi dolan bilgide teyit düğmesi basılır");
+            HtmlEntity.DeEntitize(button.InnerText).Trim().ShouldBe("Hâlâ güncel");
+            Load(html).DocumentNode.SelectSingleNode("//*[@data-firm-param='strategic_goals']//button[@data-firm-param-confirm]")
+                .ShouldBeNull("değeri olmayan bilgide düğme yok");
+
+            // Tarayıcı düğmenin formaction'ına bütün formu gönderir.
+            var form = ReadForm(html);
+            var action = WebUtility.HtmlDecode(button.GetAttributeValue("formaction", ""));
+            var response = await client.PostAsync("/CompanyProfile/Data" + action, new FormUrlEncodedContent(form));
+            response.StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+            var after = Load(await client.GetStringAsync("/CompanyProfile/Data"));
+            after.DocumentNode.SelectSingleNode("//*[@data-firm-param='cofinancing_capacity']//button[@data-firm-param-confirm]")
+                .ShouldBeNull("teyit edilen bilgi artık güncel");
+            after.DocumentNode.SelectSingleNode("//*[@data-firm-param='cofinancing_capacity']//input[@type='number']")
+                .GetAttributeValue("value", "").ShouldBe("75000");
         });
     }
 

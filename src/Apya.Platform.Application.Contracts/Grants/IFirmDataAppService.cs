@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Services;
@@ -14,4 +15,7 @@ public interface IFirmDataAppService : IApplicationService
 
     /// <summary>Eksik bilgiler; en çok açık çağrıyı ölçülebilir yapacak olan başta.</summary>
     Task<List<FirmDataGapDto>> GetMyGapsAsync();
+
+    /// <summary>Değeri değiştirmeden "hâlâ güncel" teyidi: güncellik tarihi bugüne çekilir.</summary>
+    Task<FirmDataDto> ConfirmMineAsync(Guid definitionId);
 }

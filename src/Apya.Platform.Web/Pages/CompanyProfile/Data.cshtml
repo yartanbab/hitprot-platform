@@ -157,6 +157,14 @@ else
                                         @if (item.IsStale)
                                         {
                                             <span class="badge text-bg-warning ms-1"><i class="fa fa-clock me-1" aria-hidden="true"></i>@L["FirmData:Badge.Stale"]</span>
+                                            @if (Model.CanEdit)
+                                            {
+                                                @* Ana formun içinde: ayrı form iç içe olamaz. Yalnız bu düğme Confirm işleyicisine gider. *@
+                                                <button type="submit" class="btn btn-link btn-sm p-0 ms-2 align-baseline" data-firm-param-confirm
+                                                        formaction="?handler=Confirm&definitionId=@item.DefinitionId" formnovalidate>
+                                                    @L["FirmData:StillCurrent"]
+                                                </button>
+                                            }
                                         }
                                         else if (item.Source == FirmParameterSource.BelgeAi && item.Verification == FirmParameterVerification.Dogrulanmadi)
                                         {

@@ -51,8 +51,10 @@ public class MacroNotificationLink_Tests
 
         // N-05 · Kayıt talepleri host yönetim sayfasıdır; makrosu yok, rozete bilinçli olarak girmez.
         // N-09 · AI taslak incelemesi Görevler listesinde açılır (pano değil); rozetsiz.
+        // Veri zenginleştirme 7 · Kurumsal Veriler kurum ayarı ekranıdır; makrosu yok, rozetsiz.
         unmapped.ShouldAllBe(path =>
             path == "/Feedback" || path == "/Subscription" || path == "/AiCenter/Evaluations" || path.StartsWith("/Calendars")
-            || path == "/Admin/RegistrationRequests" || path == "/Admin/Feedback" || path == "/Tasks");
+            || path == "/Admin/RegistrationRequests" || path == "/Admin/Feedback" || path == "/Tasks"
+            || path == "/CompanyProfile/Data");
     }
 }

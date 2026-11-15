@@ -128,6 +128,19 @@ public class FirmDataAppService : PlatformAppService, IFirmDataAppService
         return Build(definitions, values);
     }
 
+    [Authorize(PlatformPermissions.TenantSettings.Default)]
+    public async Task<FirmDataDto> ConfirmMineAsync(Guid definitionId)
+    {
+        RequireTenant();
+        var definitions = await GetEditableDefinitionsAsync();
+        if (definitions.Any(d => d.Id == definitionId))
+        {
+            await _manager.ConfirmValueAsync(definitionId);
+        }
+        var values = (await _valueRepository.GetListAsync()).ToDictionary(v => v.DefinitionId);
+        return Build(definitions, values);
+    }
+
     [Authorize(PlatformPermissions.Grants.Default)]
     public async Task<List<FirmDataGapDto>> GetMyGapsAsync()
     {

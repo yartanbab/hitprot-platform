@@ -103,5 +103,6 @@ public class PlatformDomainModule : AbpModule
         context.AddBackgroundWorkerAsync<Apya.Platform.Grants.GrantEscalationWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.Grants.GrantManagerDigestWorker>();
         context.AddBackgroundWorkerAsync<Apya.Platform.Invoices.InvoiceOverdueWorker>(); // B-16
+        context.AddBackgroundWorkerAsync<Apya.Platform.Grants.FirmDataStaleWorker>(); // veri zenginleştirme 7
     }
 }
