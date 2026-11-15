@@ -42,7 +42,6 @@ public class CreateModalModel : AbpPageModel
     public IReadOnlyList<ProjectExpenseDocumentDto> LinkedDocuments { get; } = Array.Empty<ProjectExpenseDocumentDto>();
 
     public List<SelectListItem> Projects { get; set; } = new();
-    public List<SelectListItem> Customers { get; set; } = new();
 
     /// <summary>İstisna belgesi olan projeler: kimlik → { no, until }. Betik belge no'yu önden doldurur.</summary>
     public string VatExemptionsJson { get; set; } = "{}";
@@ -85,16 +84,11 @@ public class CreateModalModel : AbpPageModel
         }
 
         var projectLookup  = await _invoiceAppService.GetProjectLookupAsync();
-        var customerLookup = await _invoiceAppService.GetCustomerLookupAsync();
 
         Projects = projectLookup.Items.Select(x => new SelectListItem(x.Name, x.Id.ToString())).ToList();
         VatExemptionsJson = JsonSerializer.Serialize(projectLookup.Items
             .Where(x => x.VatExemptionCertificateNo != null)
             .ToDictionary(x => x.Id.ToString(), x => new { no = x.VatExemptionCertificateNo, until = x.VatExemptionValidUntil?.ToString("yyyy-MM-dd") }));
-        Customers = customerLookup.Items
-            .Select(x => new SelectListItem(x.Name, x.Id.ToString()))
-            .Prepend(new SelectListItem("-- Müşteri Seç --", ""))
-            .ToList();
         CanAttachDocuments = await _financeDocuments.CanAttachAsync();
     }
 

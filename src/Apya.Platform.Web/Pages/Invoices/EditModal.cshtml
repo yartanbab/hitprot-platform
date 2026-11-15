@@ -19,7 +19,7 @@
             @if (partyLocked)
             {
                 <div class="alert alert-info py-2" style="font-size:12.5px">
-                    Bu faturaya ödeme girilmiş: cari ve fatura yönü değiştirilemez. Tutar değişirse cari kaydı yeni tutara eşitlenir, ödeme durumu yeniden hesaplanır.
+                    Bu faturaya ödeme girilmiş: fatura yönü değiştirilemez. Tutar değişirse ödeme durumu yeniden hesaplanır.
                 </div>
             }
             <div class="row">
@@ -27,13 +27,7 @@
                     <label class="form-label">Proje</label>
                     <input class="form-control" value="@Model.ProjectName" disabled />
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label" asp-for="InvoiceInfo.CustomerId">Müşteri</label>
-                    <select asp-for="InvoiceInfo.CustomerId" asp-items="Model.Customers" class="form-select" disabled="@partyLocked"></select>
-                </div>
-            </div>
-            @* FIN-05 · Bütçe kalemi isteğe bağlı; seçici projenin kalemleriyle dolar. *@
-            <div class="row">
+                @* FIN-05 · Bütçe kalemi isteğe bağlı; seçici projenin kalemleriyle dolar. *@
                 <div class="col-md-6 mb-3 d-none" data-budget-line-wrap>
                     <label class="form-label" asp-for="InvoiceInfo.BudgetLineId">
                         Bütçe kalemi <span class="text-muted fw-normal">(isteğe bağlı)</span>
@@ -41,6 +35,10 @@
                     <select asp-for="InvoiceInfo.BudgetLineId" class="form-select"></select>
                 </div>
             </div>
+            @* Müşteri (cari) seçicisi gizlendi (kullanıcı kararı 2026-11-14: şimdilik müşteri yok);
+               eski faturanın müşterisi silinmesin diye gizli alan. Ödemeli faturada sunucu
+               müşteriyi zaten faturadan alır. *@
+            <input type="hidden" asp-for="InvoiceInfo.CustomerId" />
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Yön</label>

@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 using Shouldly;
 using Xunit;
 
@@ -21,5 +22,18 @@ public class InvoiceCreateModal_Tests : PlatformWebTestBase
         html.ShouldContain("optionalLine: true", Case.Sensitive);
         // Alan sunucuda "required" basılmaz; zorunluluğu yalnız betik koyabilir ve burada koymaz.
         html.ShouldNotContain("id=\"InvoiceInfo_BudgetLineId\" required", Case.Sensitive);
+    }
+
+    [Fact]
+    public async Task Fatura_penceresi_musteri_secicisi_basmaz()
+    {
+        // Kullanıcı kararı 2026-11-14: şimdilik müşteri (cari) yok — seçici gizli, değer gizli alanda.
+        var doc = new HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync("/Invoices/CreateModal"));
+
+        doc.DocumentNode.SelectSingleNode("//select[@name='InvoiceInfo.CustomerId']").ShouldBeNull();
+        doc.DocumentNode.SelectSingleNode("//input[@name='InvoiceInfo.CustomerId']")
+            .GetAttributeValue("type", "").ShouldBe("hidden");
+        doc.DocumentNode.InnerText.ShouldNotContain("Müşteri", Case.Sensitive);
     }
 }

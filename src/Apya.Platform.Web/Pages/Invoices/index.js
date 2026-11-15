@@ -190,7 +190,7 @@ $(function () {
             '  <div class="col-sm-3"><div class="apya-md-overline">Düzenleme</div><div style="font-size:12.5px">' + fmtDate(d.invoiceDate) + '</div></div>' +
             '  <div class="col-sm-3"><div class="apya-md-overline">Vade</div><div style="font-size:12.5px">' + fmtDate(d.dueDate) + '</div></div>' +
             '  <div class="col-sm-3"><div class="apya-md-overline">Yön' +
-            apya.hint('Satış = sizin kestiğiniz fatura; cari hesabı borçlandırır, sizin için alacak doğurur. Alış = size kesilen fatura; tedarikçiye borcunuzu oluşturur.') +
+            apya.hint('Satış = sizin kestiğiniz fatura; sizin için alacak doğurur. Alış = size kesilen fatura; borcunuzu oluşturur.') +
             '</div><div style="font-size:12.5px">' + (isSales ? 'Satış' : 'Alış') + '</div></div>' +
             '  <div class="col-sm-3"><div class="apya-md-overline">Ödenen</div><div class="apya-numeric" style="font-size:12.5px">' + fmt(d.paidAmount) + ' ' + esc(d.currency) + '</div></div>' +
             '</div>' +

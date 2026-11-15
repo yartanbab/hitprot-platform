@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Apya.Platform.Customers;
 using Apya.Platform.Invoices;
 using Apya.Platform.Invoices.Dtos;
 using Apya.Platform.Projects;
@@ -21,7 +22,7 @@ namespace Apya.Platform.Pages;
 /// </summary>
 public class InvoiceEditModal_Tests : PlatformWebTestBase
 {
-    private async Task<InvoiceDto> InvoiceAsync()
+    private async Task<InvoiceDto> InvoiceAsync(Guid? customerId = null)
     {
         var projectId = Guid.NewGuid();
         var uowManager = GetRequiredService<IUnitOfWorkManager>();
@@ -30,12 +31,18 @@ public class InvoiceEditModal_Tests : PlatformWebTestBase
             await GetRequiredService<IRepository<Project, Guid>>().InsertAsync(
                 new Project(projectId, GetRequiredService<ICurrentTenant>().Id, null, "Fatura düzenleme", "FDM-" + projectId.ToString("N")[..6], ""),
                 autoSave: true);
+            if (customerId.HasValue)
+            {
+                await GetRequiredService<IRepository<Customer, Guid>>().InsertAsync(
+                    new Customer(customerId.Value, "Eski müşteri", GetRequiredService<ICurrentTenant>().Id), autoSave: true);
+            }
             await uow.CompleteAsync();
         }
 
         return await GetRequiredService<IInvoiceAppService>().CreateAsync(new CreateInvoiceDto
         {
             ProjectId = projectId,
+            CustomerId = customerId,
             Direction = InvoiceDirection.Purchase,
             InvoiceNumber = "FDM-" + Guid.NewGuid().ToString("N")[..8],
             InvoiceDate = new DateTime(2026, 10, 17),
@@ -92,6 +99,45 @@ public class InvoiceEditModal_Tests : PlatformWebTestBase
         var saved = await GetRequiredService<IInvoiceAppService>().GetAsync(invoice.Id);
         saved.InvoiceNumber.ShouldBe(invoice.InvoiceNumber + "-D");
         saved.TotalAmount.ShouldBe(2715.9m); // 2 × 1234,5 × 1,10
+    }
+
+    [Fact]
+    public async Task Musteri_secicisi_gizli_eski_faturanin_musterisi_korunur()
+    {
+        // Kullanıcı kararı 2026-11-14: şimdilik müşteri (cari) yok. Seçici kalktı ama eski faturada
+        // kayıtlı müşteri gizli alanla geri gelir; düzenleme onu sessizce silmemeli.
+        var customerId = Guid.NewGuid();
+        var invoice = await InvoiceAsync(customerId);
+
+        var doc = new HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync("/Invoices/EditModal?id=" + invoice.Id));
+        doc.DocumentNode.SelectSingleNode("//select[@name='InvoiceInfo.CustomerId']").ShouldBeNull();
+        var hidden = doc.DocumentNode.SelectSingleNode("//input[@name='InvoiceInfo.CustomerId']");
+        hidden.GetAttributeValue("type", "").ShouldBe("hidden");
+        hidden.GetAttributeValue("value", "").ShouldBe(customerId.ToString());
+
+        var response = await PostAsync(invoice, new()
+        {
+            new("InvoiceInfo.ProjectId", invoice.ProjectId.ToString()),
+            new("InvoiceInfo.CustomerId", hidden.GetAttributeValue("value", "")),
+            new("InvoiceInfo.Direction", "1"),
+            new("InvoiceInfo.InvoiceNumber", invoice.InvoiceNumber),
+            new("InvoiceInfo.InvoiceDate", "2026-10-17"),
+            new("InvoiceInfo.DueDate", "2026-11-20"),
+            new("InvoiceInfo.Notes", "not eklendi"),
+            new("InvoiceInfo.TaxRate", "20"),
+            new("__Invariant", "InvoiceInfo.TaxRate"),
+            new("InvoiceInfo.Items[0].Description", "Tablet"),
+            new("InvoiceInfo.Items[0].Quantity", "1"),
+            new("__Invariant", "InvoiceInfo.Items[0].Quantity"),
+            new("InvoiceInfo.Items[0].UnitPrice", "1000"),
+            new("__Invariant", "InvoiceInfo.Items[0].UnitPrice")
+        });
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        var saved = await GetRequiredService<IInvoiceAppService>().GetAsync(invoice.Id);
+        saved.Notes.ShouldBe("not eklendi");
+        saved.CustomerId.ShouldBe(customerId);
     }
 
     [Fact]

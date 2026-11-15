@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
 using Apya.Platform.Documents;
 using Apya.Platform.Invoices;
@@ -43,7 +42,6 @@ public class EditModalModel : AbpPageModel
 
     public bool IsDraft { get; set; }
     public string ProjectName { get; set; } = string.Empty;
-    public List<SelectListItem> Customers { get; set; } = new();
 
     public EditModalModel(
         IInvoiceAppService invoiceAppService,
@@ -79,12 +77,6 @@ public class EditModalModel : AbpPageModel
                 UnitPrice = i.UnitPrice
             }).ToList()
         };
-
-        var customerLookup = await _invoiceAppService.GetCustomerLookupAsync();
-        Customers = customerLookup.Items
-            .Select(x => new SelectListItem(x.Name, x.Id.ToString()))
-            .Prepend(new SelectListItem("-- Müşteri Seç --", ""))
-            .ToList();
 
         CanAttachDocuments = await _financeDocuments.CanAttachAsync();
         if (CanAttachDocuments)
