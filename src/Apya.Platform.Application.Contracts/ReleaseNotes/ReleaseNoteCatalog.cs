@@ -26,6 +26,46 @@ public static class ReleaseNoteCatalog
     public static IReadOnlyList<ReleaseNote> All { get; } = new List<ReleaseNote>
     {
         new ReleaseNote(
+            version: "2026.11.15",
+            date: "15 Kasım 2026",
+            title: "İçe ve dışa aktarma tek ekranda: CSV, şablonlar, projeler ve faturalar",
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Bütün aktarımlar tek ekranda",
+                "Menüde Platform › İçe / Dışa Aktarma ekranı var. Dışa aktar sekmesinde erişebildiğiniz bütün " +
+                "listeleri Excel ya da CSV olarak indirirsiniz; İçe aktar sekmesinden modülün içe aktarma " +
+                "penceresini açarsınız. Geçmiş sekmesi kurumunuzda kimin ne zaman hangi dosyayı aktardığını, kaç " +
+                "satırın kaydedildiğini ve reddedilen dosyaları gösterir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "CSV olarak indirin ve yükleyin",
+                "Ekranlardaki \"Excel'e aktar\" düğmesinin yanındaki oktan aynı listeyi, aynı süzgeç ve sıralamayla " +
+                "CSV olarak indirebilirsiniz. İçe aktarma pencereleri Excel'in yanında CSV dosyasını da kabul eder; " +
+                "\"CSV şablonu\" bağlantısıyla boş şablonu da CSV indirebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Aktarım şablonları",
+                "İçe / Dışa Aktarma › Şablonlar sekmesinde bir liste için hangi sütunların, hangi sırayla ve hangi " +
+                "başlıkla ineceğini kaydedebilirsiniz. İçe aktarma şablonunda dosyanızdaki başlığı alana " +
+                "bağlarsınız: örneğin bankanızın dosyasındaki \"İşlem Günü\" sütununu Tarih olarak tanıtıp dosyayı " +
+                "olduğu gibi yükleyebilirsiniz. Her değişiklik yeni sürüm olarak saklanır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Projeleri ve faturaları Excel'den içe aktarın",
+                "Projeler ve Faturalar ekranlarında \"Excel'den içe aktar\" var. Proje kodunu boş bırakırsanız " +
+                "sıradaki kod verilir. Faturada aynı fatura numarası taşıyan satırlar tek faturanın kalemleri olur; " +
+                "faturalar ödenmemiş olarak açılır, tahsilatı ekrandan girersiniz. Hatalı satır varsa hiçbir satır " +
+                "kaydedilmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "İndirdiğiniz dosyayı geri yükleyebilirsiniz",
+                "Gider ve gelir dosyasında artık proje ve bütçe kalemi, görev dosyasında açıklama da var; Kurlar " +
+                "ekranından ve proje bütçe kalemlerinden de Excel'e indirebilirsiniz. Bu dosyalar aynı ekranın içe " +
+                "aktarmasına doğrudan yüklenebilir; örneğin bir projenin bütçe kalemlerini başka bir projeye " +
+                "taşıyabilirsiniz. Aynı adı taşıyan projeler dosyada proje koduyla yazılır.")
+        ),
+
+        new ReleaseNote(
             version: "2026.11.11",
             date: "11 Kasım 2026",
             title: "Excel'den toplu içe aktarın, kayıtlara belge ekleyin; fatura PDF'i ve takvim dosyaları",
