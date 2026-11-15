@@ -127,11 +127,6 @@
 
     @* --- Araç çubuğu (tek satır) --- *@
     <div class="apya-proj-toolbar">
-        <div class="apya-proj-seg apya-proj-toolbar-desktop" role="group" aria-label="Yoğunluk">
-            <button type="button" class="apya-proj-seg-btn" data-density="cozy">Ferah</button>
-            <button type="button" class="apya-proj-seg-btn" data-density="tight">Sıkı</button>
-        </div>
-
         @* Rol rozeti aynı zamanda kapsam anahtarı: "Saha" ön ayarında yalnız
            kullanıcıya atanmış görevi olan projeler listelenir. Gizli filtre
            bırakmamak için tıklanabilir ve durumu rozette yazılı. *@
@@ -161,28 +156,56 @@
                 <option value="progress">İlerleme</option>
             </select>
 
-            <div class="apya-proj-seg apya-proj-toolbar-desktop" role="group" aria-label="Görünüm">
-                <button type="button" class="apya-proj-seg-btn is-icon" data-view="list"
-                        aria-label="Liste görünümü" title="Liste görünümü"><i class="fa fa-list"></i></button>
-                <button type="button" class="apya-proj-seg-btn is-icon" data-view="card"
-                        aria-label="Kart görünümü" title="Kart görünümü"><i class="fa fa-table-cells-large"></i></button>
-            </div>
-
-            <div class="apya-proj-seg apya-proj-toolbar-desktop">
-                <a class="apya-proj-seg-btn is-icon" href="?handler=Excel" id="ProjectsExportExcel"
-                   aria-label="@L["Export:ExcelButton"]" title="@L["Export:ExcelButton"]"><i class="fa fa-file-excel" aria-hidden="true"></i></a>
-                @if (canCreate)
-                {
-                    <button type="button" class="apya-proj-seg-btn is-icon" id="ProjectsImportExcel"
-                            aria-label="@L["Import:ExcelButton"]" title="@L["Import:ExcelButton"]"><i class="fa fa-file-import" aria-hidden="true"></i></button>
-                }
-            </div>
-
             @if (canCreate)
             {
                 <abp-button id="NewProjectButton" text="Yeni Proje Ekle" icon="plus"
                             button-type="Primary" size="Small" />
             }
+
+            @* ⋯ menüsü — görünüm/yoğunluk anahtarları ve Excel aktarımı burada
+               (Görevler sayfasındaki menüyle aynı desen). Anahtarlar araç
+               çubuğundakiyle aynı data-view/data-density düğmeleri: Index.js
+               onları $console üzerinden yakalar. auto-close="outside": seçim
+               yaparken menü açık kalır. Mobilde eskisi gibi gizli. *@
+            <div class="dropdown apya-proj-toolbar-desktop">
+                <button type="button" class="apya-console-kebab" id="ProjectsMenuButton"
+                        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                        aria-label="Proje listesi menüsü" title="Proje listesi menüsü">
+                    <i class="fa fa-ellipsis" aria-hidden="true"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end apya-console-menu" aria-labelledby="ProjectsMenuButton">
+                    <div class="apya-console-menu-head">Görünüm</div>
+                    <div class="apya-console-menu-row">
+                        <span>Düzen</span>
+                        <div class="apya-proj-seg" role="group" aria-label="Görünüm">
+                            <button type="button" class="apya-proj-seg-btn is-icon" data-view="list"
+                                    aria-label="Liste görünümü" title="Liste görünümü"><i class="fa fa-list"></i></button>
+                            <button type="button" class="apya-proj-seg-btn is-icon" data-view="card"
+                                    aria-label="Kart görünümü" title="Kart görünümü"><i class="fa fa-table-cells-large"></i></button>
+                        </div>
+                    </div>
+                    <div class="apya-console-menu-row">
+                        <span>Yoğunluk</span>
+                        <div class="apya-proj-seg" role="group" aria-label="Yoğunluk">
+                            <button type="button" class="apya-proj-seg-btn" data-density="cozy">Ferah</button>
+                            <button type="button" class="apya-proj-seg-btn" data-density="tight">Sıkı</button>
+                        </div>
+                    </div>
+
+                    <div class="apya-console-menu-head is-divided">Excel</div>
+                    <a class="apya-console-menu-item text-decoration-none" href="?handler=Excel" id="ProjectsExportExcel">
+                        <span class="apya-console-menu-icon"><i class="fa fa-file-excel" aria-hidden="true"></i></span>
+                        @L["Export:ExcelButton"]
+                    </a>
+                    @if (canCreate)
+                    {
+                        <button type="button" class="apya-console-menu-item" id="ProjectsImportExcel">
+                            <span class="apya-console-menu-icon"><i class="fa fa-file-import" aria-hidden="true"></i></span>
+                            @L["Import:ExcelButton"]
+                        </button>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 

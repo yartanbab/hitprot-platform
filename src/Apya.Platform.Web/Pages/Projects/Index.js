@@ -1203,6 +1203,11 @@ $(function () {
     importModal.onClose(function () { if (projectsImported) { window.location.reload(); } });
     $(document).on('apya:excel-imported', function () { projectsImported = true; });
     $('#ProjectsImportExcel').on('click', function () { importModal.open(); });
+    // ⋯ menüsü yalnız dış tıkla kapanıyor (auto-close="outside"); indirme ya da
+    // içe aktarma penceresi açılırken arkada asılı kalmasın.
+    $('#ProjectsExportExcel, #ProjectsImportExcel').on('click', function () {
+        $('#ProjectsMenuButton').dropdown('hide');
+    });
 
     var createModal = new abp.ModalManager(abp.appPath + 'Projects/CreateModal');
     createModal.onOpen(function () {
