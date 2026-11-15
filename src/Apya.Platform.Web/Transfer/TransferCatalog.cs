@@ -97,8 +97,8 @@ public static class TransferCatalog
 
         // ── Hibeler ──
         new(M("grant-calls"), "Menu:Grants:Group", "fa fa-bullhorn", "/Grants", Table,
-            [Out("/Grants/Index", "CallsExcel")],
-            ExportUrl: "/Grants?handler=CallsExcel"),
+            [Out("/Grants/Index", "CallsExcel"), .. Modal("/Grants/CallImportModal")],
+            ExportUrl: "/Grants?handler=CallsExcel", ImportUrl: "/Grants/CallImportModal"),
         new(M("grant-applications"), "Menu:Grants:Group", "fa fa-file-signature", "/Grants/Applications", Table,
             [Out("/Grants/Applications")],
             ExportUrl: "/Grants/Applications?handler=Excel"),
