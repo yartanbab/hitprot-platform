@@ -13,19 +13,21 @@ public class PromptInjectionSanitizer : IPromptInjectionSanitizer, ITransientDep
 {
     private const string Placeholder = "[filtrelendi]";
 
+    // CultureInvariant ŞART: büyük/küçük harf eşlemesi kültüre bağlıysa Türkçede "I" → "ı" olur ve
+    // "Ignore…", "INSTRUCTIONS", "ASSISTANT:" gibi büyük I'lı kalıplar süzülmeden geçerdi.
     private static readonly Regex[] Patterns =
     {
         // "ignore/disregard/forget (the) previous/above instructions/prompts"
         new(@"\b(ignore|disregard|forget|override)\b[^.\n]{0,40}\b(previous|above|prior|earlier|all|system)\b[^.\n]{0,30}\b(instruction|instructions|prompt|prompts|message|messages|rule|rules|context)\b",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled),
         // role-override attempts
-        new(@"\byou\s+are\s+now\b", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-        new(@"\bact\s+as\s+(a|an|if|though)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-        new(@"\bnew\s+(instructions?|prompt|rules?)\s*:", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"\byou\s+are\s+now\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled),
+        new(@"\bact\s+as\s+(a|an|if|though)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled),
+        new(@"\bnew\s+(instructions?|prompt|rules?)\s*:", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled),
         // chat role markers at the start of a line
-        new(@"(?im)^\s*(system|assistant|developer|user)\s*:", RegexOptions.Compiled),
+        new(@"(?im)^\s*(system|assistant|developer|user)\s*:", RegexOptions.CultureInvariant | RegexOptions.Compiled),
         // instruction/system tags
-        new(@"</?\s*(system|instructions?|prompt|assistant)\s*>", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+        new(@"</?\s*(system|instructions?|prompt|assistant)\s*>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled),
     };
 
     public string Sanitize(string input)
