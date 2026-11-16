@@ -137,6 +137,8 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<FirmParameterDefinition> FirmParameterDefinitions { get; set; }
         public DbSet<FirmParameterValue> FirmParameterValues { get; set; }
         public DbSet<GrantParameterCriterion> GrantParameterCriteria { get; set; }
+        public DbSet<FirmDataExtraction> FirmDataExtractions { get; set; }
+        public DbSet<FirmDataSuggestion> FirmDataSuggestions { get; set; }
         public DbSet<GrantApplication> GrantApplications { get; set; }
         public DbSet<GrantApplicationBudgetLine> GrantApplicationBudgetLines { get; set; }
         public DbSet<GrantApplicationFieldLock> GrantApplicationFieldLocks { get; set; }
@@ -948,6 +950,28 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.HasOne<FirmParameterDefinition>().WithMany().HasForeignKey(x => x.DefinitionId).OnDelete(DeleteBehavior.Restrict);
                 // Kurum başına parametre başına TEK satır. Satırlar gerçekten silindiği için süzgeç gerekmez.
                 b.HasIndex(x => new { x.TenantId, x.DefinitionId }).IsUnique();
+            });
+
+            builder.Entity<FirmDataExtraction>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FirmDataExtractions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.FileName).IsRequired().HasMaxLength(FirmDataExtractionConsts.MaxFileNameLength);
+                b.Property(x => x.Error).HasMaxLength(FirmDataExtractionConsts.MaxErrorLength);
+                // Belgeye FK yok: belge silinse de okuma ve KVKK onayı izi kalmalı.
+                b.HasMany(x => x.Suggestions).WithOne().HasForeignKey(x => x.ExtractionId).OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(x => new { x.TenantId, x.CreationTime });
+            });
+
+            builder.Entity<FirmDataSuggestion>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "FirmDataSuggestions", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.RawValue).IsRequired().HasMaxLength(FirmParameterConsts.MaxLongTextLength);
+                b.Property(x => x.AcceptedRawValue).HasMaxLength(FirmParameterConsts.MaxLongTextLength);
+                b.Property(x => x.Excerpt).HasMaxLength(FirmParameterConsts.MaxSourceExcerptLength);
+                // Öneri duran tanım fiziksel olarak silinemez (tanım zaten yumuşak silinir).
+                b.HasOne<FirmParameterDefinition>().WithMany().HasForeignKey(x => x.DefinitionId).OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<GrantApplication>(b =>

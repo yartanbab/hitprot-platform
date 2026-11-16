@@ -441,6 +441,14 @@ public static class PlatformDomainErrorCodes
     /// <summary>Değer kuruma aittir; host bağlamında hangi kurum için yazıldığı belli değildir.</summary>
     public const string FirmParameterTenantRequired = "Platform:FirmParameter:TenantRequired";
 
+    // --- Belgeden kurum verisi okuma ---
+    /// <summary>Belge yapay zekâyla okunmadan önce kişisel veri aydınlatma metni onaylanmadı.</summary>
+    public const string FirmDataExtractionConsentRequired = "Platform:FirmDataExtraction:ConsentRequired";
+    public const string FirmDataExtractionFileTypeNotSupported = "Platform:FirmDataExtraction:FileTypeNotSupported";
+    /// <summary>Yapay zekâ modülü yüklü değil ya da kurumun paketinde yapay zekâ yok.</summary>
+    public const string FirmDataExtractionUnavailable = "Platform:FirmDataExtraction:Unavailable";
+    public const string FirmDataSuggestionAlreadyDecided = "Platform:FirmDataExtraction:SuggestionAlreadyDecided";
+
     // --- İçe / dışa aktarma şablonları ---
     public const string DataTransferTemplateIsSystem = "Platform:DataTransfer:TemplateIsSystem";
     public const string DataTransferTemplateModuleUnknown = "Platform:DataTransfer:TemplateModuleUnknown";

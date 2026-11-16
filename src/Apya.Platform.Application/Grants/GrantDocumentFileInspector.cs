@@ -95,7 +95,7 @@ public class GrantDocumentFileInspector : ITransientDependency
     }
 
     /// <summary>Sözcükleri taban çizgisine göre satırlara toplar (PdfPig satır vermez).</summary>
-    private static IEnumerable<string> PdfLines(UglyToad.PdfPig.Content.Page page)
+    internal static IEnumerable<string> PdfLines(UglyToad.PdfPig.Content.Page page)
     {
         var words = page.GetWords()
             .OrderByDescending(w => w.BoundingBox.Bottom).ThenBy(w => w.BoundingBox.Left).ToList();
