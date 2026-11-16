@@ -19,14 +19,8 @@
                     <label class="form-label" asp-for="InvoiceInfo.ProjectId">Proje</label>
                     <select asp-for="InvoiceInfo.ProjectId" asp-items="Model.Projects" class="form-select"></select>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label" asp-for="InvoiceInfo.CustomerId">Müşteri</label>
-                    <select asp-for="InvoiceInfo.CustomerId" asp-items="Model.Customers" class="form-select"></select>
-                </div>
-            </div>
-            @* FIN-05 · Bütçe kalemi: proje seçilince dolar (gider/gelir penceresindeki ortak yardımcı),
-               ama burada HİÇBİR ZAMAN zorunlu değildir. *@
-            <div class="row">
+                @* FIN-05 · Bütçe kalemi: proje seçilince dolar (gider/gelir penceresindeki ortak yardımcı),
+                   ama burada HİÇBİR ZAMAN zorunlu değildir. *@
                 <div class="col-md-6 mb-3 d-none" data-budget-line-wrap>
                     <label class="form-label" asp-for="InvoiceInfo.BudgetLineId">
                         Bütçe kalemi <span class="text-muted fw-normal">(isteğe bağlı)</span>
@@ -34,6 +28,9 @@
                     <select asp-for="InvoiceInfo.BudgetLineId" class="form-select"></select>
                 </div>
             </div>
+            @* Müşteri (cari) seçicisi gizlendi (kullanıcı kararı 2026-11-14: şimdilik müşteri yok);
+               değer korunsun diye gizli alan — gider/gelir penceresindeki desen. *@
+            <input type="hidden" asp-for="InvoiceInfo.CustomerId" />
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Yön</label>
