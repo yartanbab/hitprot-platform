@@ -73,7 +73,7 @@ public class CashMovementCurrency_Tests : PlatformEntityFrameworkCoreTestBase
         });
     }
 
-    private async Task<ExpenseDto> CreateExpenseAsync(Guid cashAccountId, string currency, decimal amount, DateTime date)
+    private async Task<ExpenseDto> CreateExpenseAsync(Guid? cashAccountId, string currency, decimal amount, DateTime date)
     {
         ExpenseDto dto = null!;
         await WithUnitOfWorkAsync(async () =>
@@ -197,5 +197,50 @@ public class CashMovementCurrency_Tests : PlatformEntityFrameworkCoreTestBase
         movement.ShouldNotBeNull();
         movement!.Amount.ShouldBe(12_480m,
             "Güncelleme bağlı hareketi ham tutarla yeniden yazıyordu; çevrim burada da uygulanmalı");
+    }
+
+    /* Kasa isteğe bağlı (kullanıcı kararı 2026-11-14) — gelirdeki kuralın aynısı. */
+
+    [Fact]
+    public async Task Kasasiz_gider_kasa_hareketi_uretmez_kur_aramaz()
+    {
+        // USD → TRY kuru YOK: kasalı olsaydı "kur yok" hatası verirdi (bkz. Kur_Yoksa_...).
+        var expense = await CreateExpenseAsync(null, "USD", 100m, new DateTime(2026, 9, 23));
+
+        expense.CashAccountId.ShouldBeNull();
+        (await GetMovementAsync(expense.Id)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Sonradan_kasa_secilince_hareket_acilir_kaldirilinca_silinir()
+    {
+        var date = new DateTime(2026, 9, 24);
+        var cashId = await CreateCashAccountAsync("TRY");
+        var expense = await CreateExpenseAsync(null, "TRY", 400m, date);
+
+        async Task UpdateAsync(Guid? cashAccountId) => await WithUnitOfWorkAsync(async () =>
+        {
+            using (_currentTenant.Change(Tenant))
+            {
+                await _expenseAppService.UpdateAsync(expense.Id, new CreateUpdateExpenseDto
+                {
+                    Title = "Kur testi",
+                    Amount = 400m,
+                    Currency = "TRY",
+                    ExpenseDate = date,
+                    CashAccountId = cashAccountId
+                });
+            }
+        });
+
+        await UpdateAsync(cashId);
+        var movement = await GetMovementAsync(expense.Id);
+        movement.ShouldNotBeNull();
+        movement!.CashAccountId.ShouldBe(cashId);
+        movement.Amount.ShouldBe(400m);
+        movement.Direction.ShouldBe(CashMovementDirection.Out);
+
+        await UpdateAsync(null);
+        (await GetMovementAsync(expense.Id)).ShouldBeNull();
     }
 }

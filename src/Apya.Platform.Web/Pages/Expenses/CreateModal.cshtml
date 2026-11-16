@@ -31,7 +31,9 @@
                     <abp-select asp-for="Expense.Category" asp-items="Model.Categories" label="Kategori" />
                 </abp-column>
                 <abp-column size-md="_6">
-                    <abp-select asp-for="Expense.CashAccountId" asp-items="Model.Accounts" label="Kasa (zorunlu — buradan ödenir)" />
+                    <abp-select asp-for="Expense.CashAccountId" asp-items="Model.Accounts" label="Kasa (isteğe bağlı — boşsa kasaya işlenmez)">
+                        <option value="">— Kasaya işlenmesin —</option>
+                    </abp-select>
                 </abp-column>
             </abp-row>
             <abp-row>

@@ -5308,7 +5308,7 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("BudgetLineId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("CashAccountId")
+                    b.Property<Guid?>("CashAccountId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Category")
@@ -14865,8 +14865,7 @@ namespace Apya.Platform.Migrations
                     b.HasOne("Apya.Platform.CashAccounts.CashAccount", null)
                         .WithMany()
                         .HasForeignKey("CashAccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Apya.Platform.Feedbacks.FeedbackActivity", b =>

@@ -168,4 +168,25 @@ public class ExpenseImport_Tests : PlatformWebTestBase
         saved[1].Amount.ShouldBe(1500m);
         saved[1].Currency.ShouldBe("TRY");
     }
+
+    [Fact]
+    public async Task Kasasiz_satir_kaydedilir()
+    {
+        // Kasa isteğe bağlı (kullanıcı kararı 2026-11-14): boş Kasa hücresi hata değildir.
+        var account = await SeedAccountAsync();
+        var file = await FilledTemplateAsync(
+            ("Aktarım " + _code + " 1", 100, "TRY", ""),
+            ("Aktarım " + _code + " 2", 50, "TRY", account));
+
+        var import = await PostAsync("Import", file);
+        import.GetProperty("done").GetBoolean().ShouldBeTrue(import.GetProperty("message").GetString());
+
+        using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        var prefix = "Aktarım " + _code;
+        var saved = (await GetRequiredService<IRepository<Expense, Guid>>().GetListAsync(e => e.Title.StartsWith(prefix)))
+            .OrderBy(e => e.Title).ToList();
+        saved.Count.ShouldBe(2);
+        saved[0].CashAccountId.ShouldBeNull();
+        saved[1].CashAccountId.ShouldNotBeNull();
+    }
 }

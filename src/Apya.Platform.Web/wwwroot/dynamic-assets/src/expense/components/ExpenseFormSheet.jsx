@@ -73,8 +73,7 @@ export function ExpenseFormSheet({
        (ProjectBudgetManager.EnsureBudgetLineIsValidAsync). Burada engellemek
        erken geri bildirimdir, tek savunma hattı değil. */
     const lineRequired = !!lines?.requiresBudgetLine;
-    const missingContext = !form.cashAccountId
-        || (lineRequired && !form.budgetLineId);
+    const missingContext = lineRequired && !form.budgetLineId;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -119,9 +118,9 @@ export function ExpenseFormSheet({
                         )}
 
                         {/* ── BAĞLAM (tasarım 1d): proje · kalem · kasa ───────────
-                            Kasa ZORUNLU (sunucu sözleşmesi), kalem projede kalem
-                            tanımlıysa zorunlu. Bunlar olmadan saha kaydı doğrudan
-                            "kaleme yazılmamış" kovasına düşerdi. */}
+                            Kasa isteğe bağlı (kullanıcı kararı 2026-11-14): boşsa kasaya
+                            işlenmez. Kalem, projede kalem tanımlıysa zorunlu; o olmadan
+                            saha kaydı doğrudan "kaleme yazılmamış" kovasına düşerdi. */}
                         <Field label="Proje">
                             <select
                                 className={SELECT_CLS}
@@ -150,13 +149,13 @@ export function ExpenseFormSheet({
                             </Field>
                         )}
 
-                        <Field label="Kasa / banka" required>
+                        <Field label="Kasa / banka">
                             <select
                                 className={SELECT_CLS}
                                 value={form.cashAccountId || ''}
                                 onChange={update('cashAccountId')}
                             >
-                                <option value="">— Kasa seçin —</option>
+                                <option value="">— Kasaya işlenmesin —</option>
                                 {(context?.accounts ?? []).map(a => (
                                     <option key={a.id} value={a.id}>{a.name} ({a.currency})</option>
                                 ))}

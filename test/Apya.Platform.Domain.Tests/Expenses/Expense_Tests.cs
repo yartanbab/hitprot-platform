@@ -47,11 +47,11 @@ public class Expense_Tests
     }
 
     [Fact]
-    public void Constructor_Should_Throw_When_CashAccount_Empty()
+    public void Constructor_Should_Allow_Missing_CashAccount()
     {
-        var ex = Assert.Throws<BusinessException>(() =>
-            new Expense(Guid.NewGuid(), "Test", 100m, Guid.Empty, DateTime.Today));
-        ex.Code.ShouldBe(PlatformDomainErrorCodes.ExpenseCashAccountRequired);
+        // Kasa isteğe bağlı (kullanıcı kararı 2026-11-14): kasasız gider kasaya işlenmez.
+        new Expense(Guid.NewGuid(), "Test", 100m, null, DateTime.Today).CashAccountId.ShouldBeNull();
+        new Expense(Guid.NewGuid(), "Test", 100m, Guid.Empty, DateTime.Today).CashAccountId.ShouldBeNull();
     }
 
     [Fact]

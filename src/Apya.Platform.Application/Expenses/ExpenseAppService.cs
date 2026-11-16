@@ -185,22 +185,28 @@ public class ExpenseAppService :
 
         var dto = await base.CreateAsync(input);
 
-        // FIN-01: Kasa hareketinde para birimi alanı yok; tutar kasanın para biriminde
-        // sayılır. Kaydın para birimi farklıysa ham tutar yazmak bakiyeyi bozardı.
-        var cashAmount = await _cashAmountResolver.ResolveAsync(
-            input.CashAccountId, input.Currency, input.Amount, input.ExpenseDate);
+        // Kasa isteğe bağlı (kullanıcı kararı 2026-11-14): kasasız gider kasa hareketi
+        // üretmez — gelirdeki kural. Bütçe ve raporlar gider kaydından toplanır, etkilenmez.
+        if (input.CashAccountId.HasValue)
+        {
+            // FIN-01: Kasa hareketinde para birimi alanı yok; tutar kasanın para biriminde
+            // sayılır. Kaydın para birimi farklıysa ham tutar yazmak bakiyeyi bozardı.
+            // Kasasız giderde çözümleme HİÇ çalışmaz — kur aranmaz.
+            var cashAmount = await _cashAmountResolver.ResolveAsync(
+                input.CashAccountId.Value, input.Currency, input.Amount, input.ExpenseDate);
 
-        // Otomatik kasa çıkış hareketi
-        await _cashMovementRepository.InsertAsync(new CashMovement(
-            GuidGenerator.Create(),
-            input.CashAccountId,
-            CashMovementDirection.Out,
-            cashAmount.Amount,
-            input.ExpenseDate,
-            "Gider: " + input.Title + cashAmount.DescribeRate(input.Currency),
-            CashMovementSource.Expense,
-            dto.Id,
-            CurrentTenant.Id), autoSave: true);
+            // Otomatik kasa çıkış hareketi
+            await _cashMovementRepository.InsertAsync(new CashMovement(
+                GuidGenerator.Create(),
+                input.CashAccountId.Value,
+                CashMovementDirection.Out,
+                cashAmount.Amount,
+                input.ExpenseDate,
+                "Gider: " + input.Title + cashAmount.DescribeRate(input.Currency),
+                CashMovementSource.Expense,
+                dto.Id,
+                CurrentTenant.Id), autoSave: true);
+        }
 
         await EvaluateBudgetRiskAsync(input);
 
@@ -215,19 +221,35 @@ public class ExpenseAppService :
 
         var dto = await base.UpdateAsync(id, input);
 
-        // Bağlı kasa hareketini senkronla
+        // Bağlı kasa hareketini senkronla: kasa sonradan seçildiyse hareket açılır,
+        // kaldırıldıysa silinir (gelirdeki kural).
         var linked = await _cashMovementRepository.FirstOrDefaultAsync(
             x => x.ReferenceId == id && x.Source == CashMovementSource.Expense);
-        if (linked != null)
+        if (input.CashAccountId.HasValue)
         {
             var cashAmount = await _cashAmountResolver.ResolveAsync(
-                input.CashAccountId, input.Currency, input.Amount, input.ExpenseDate);
+                input.CashAccountId.Value, input.Currency, input.Amount, input.ExpenseDate);
+            var description = "Gider: " + input.Title + cashAmount.DescribeRate(input.Currency);
 
-            linked.CashAccountId = input.CashAccountId;
-            linked.SetAmount(cashAmount.Amount);
-            linked.MovementDate = input.ExpenseDate;
-            linked.Description = "Gider: " + input.Title + cashAmount.DescribeRate(input.Currency);
-            await _cashMovementRepository.UpdateAsync(linked, autoSave: true);
+            if (linked == null)
+            {
+                await _cashMovementRepository.InsertAsync(new CashMovement(
+                    GuidGenerator.Create(), input.CashAccountId.Value, CashMovementDirection.Out,
+                    cashAmount.Amount, input.ExpenseDate, description,
+                    CashMovementSource.Expense, id, CurrentTenant.Id), autoSave: true);
+            }
+            else
+            {
+                linked.CashAccountId = input.CashAccountId.Value;
+                linked.SetAmount(cashAmount.Amount);
+                linked.MovementDate = input.ExpenseDate;
+                linked.Description = description;
+                await _cashMovementRepository.UpdateAsync(linked, autoSave: true);
+            }
+        }
+        else if (linked != null)
+        {
+            await _cashMovementRepository.DeleteAsync(linked);
         }
 
         await EvaluateBudgetRiskAsync(input);
@@ -463,13 +485,15 @@ public class ExpenseAppService :
     {
         var result = await base.GetListAsync(input);
 
-        var accountIds = result.Items.Select(x => x.CashAccountId).Distinct().ToList();
+        var accountIds = result.Items
+            .Where(x => x.CashAccountId.HasValue)
+            .Select(x => x.CashAccountId!.Value).Distinct().ToList();
         if (accountIds.Count > 0)
         {
             var accounts = await _cashAccountRepository.GetListAsync(a => accountIds.Contains(a.Id));
             var nameMap = accounts.ToDictionary(a => a.Id, a => a.Name);
             foreach (var dto in result.Items)
-                if (nameMap.TryGetValue(dto.CashAccountId, out var name))
+                if (dto.CashAccountId.HasValue && nameMap.TryGetValue(dto.CashAccountId.Value, out var name))
                     dto.CashAccountName = name;
         }
 

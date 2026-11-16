@@ -21,7 +21,7 @@ public class ImportModalModel : FinanceImportPageModel<ExpenseCategory>
 
     protected override string NameKey => "Export:Expenses:Name";
     protected override string CategoryKeyPrefix => "Expense:Category:";
-    protected override bool AccountRequired => true;
+    protected override bool AccountRequired => false;
     protected override int MaxTitleLength => ExpenseConsts.MaxTitleLength;
     protected override int MaxDescriptionLength => ExpenseConsts.MaxDescriptionLength;
 
@@ -36,7 +36,7 @@ public class ImportModalModel : FinanceImportPageModel<ExpenseCategory>
             Category = row.Category,
             Amount = row.Amount,
             Currency = row.Currency,
-            CashAccountId = row.CashAccountId!.Value,
+            CashAccountId = row.CashAccountId,
             ProjectId = row.ProjectId,
             BudgetLineId = row.BudgetLineId,
             Description = row.Description

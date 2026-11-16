@@ -1,5 +1,19 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { attachReceipt, receiptFileName } from './expenseApi';
+import { attachReceipt, createExpense, receiptFileName } from './expenseApi';
+import { api } from '../../lib/api/httpClient';
+
+describe('createExpense', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('kasa seçilmediyse cashAccountId null gider — "" sunucuda Guid?\'e bağlanamaz', async () => {
+        const post = vi.spyOn(api, 'post').mockResolvedValue({ id: 'g1' });
+
+        await createExpense({ vendor: 'Shell', amount: 250, currency: 'TRY', date: '2026-11-11', cashAccountId: '' });
+
+        expect(post).toHaveBeenCalledWith('/api/app/expense',
+            expect.objectContaining({ title: 'Shell', cashAccountId: null }));
+    });
+});
 
 /*
  * Masraf Yakala'da çekilen fiş, gider kaydedildikten sonra Belge Merkezi'ne eklenir

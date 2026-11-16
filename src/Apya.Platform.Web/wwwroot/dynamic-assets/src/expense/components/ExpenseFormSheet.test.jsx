@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExpenseFormSheet } from './ExpenseFormSheet';
 import { CameraCapture } from './CameraCapture';
@@ -66,6 +66,19 @@ describe('ExpenseFormSheet — fotoğrafın akıbeti', () => {
     ])('%s: ekran fotoğrafa ne olacağını doğru söyler', (receiptMode, text) => {
         renderForm({ previewUrl: 'blob:fis-1', receiptMode });
         expect(screen.getByText(text)).toBeInTheDocument();
+    });
+});
+
+describe('ExpenseFormSheet — kasa isteğe bağlı', () => {
+    it('kasa seçilmeden de gönderilir (kullanıcı kararı 2026-11-14)', () => {
+        const onSubmit = vi.fn();
+        renderForm({ previewUrl: 'blob:fis-1', onSubmit });
+
+        expect(screen.getByRole('option', { name: '— Kasaya işlenmesin —' })).toBeInTheDocument();
+        fireEvent.submit(screen.getByRole('dialog', { name: 'Masraf detayları' }).querySelector('form'));
+
+        expect(onSubmit).toHaveBeenCalledTimes(1);
+        expect(onSubmit.mock.calls[0][0].cashAccountId).toBeFalsy();
     });
 });
 
