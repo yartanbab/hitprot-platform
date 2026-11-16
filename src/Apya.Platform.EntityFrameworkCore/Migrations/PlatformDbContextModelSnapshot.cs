@@ -5895,6 +5895,120 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppFxRevaluationSnapshots", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.FirmDataExtraction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("ConsentedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ConsentedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<Guid>("DocumentAttachmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DocumentFileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("IsTruncated")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("PageCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "CreationTime");
+
+                    b.ToTable("AppFirmDataExtractions", (string)null);
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.FirmDataSuggestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AcceptedRawValue")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int>("Confidence")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DecidedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DecidedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DefinitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Excerpt")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("ExtractionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Page")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RawValue")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DefinitionId");
+
+                    b.HasIndex("ExtractionId");
+
+                    b.ToTable("AppFirmDataSuggestions", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.FirmParameterDefinition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -14891,6 +15005,21 @@ namespace Apya.Platform.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.FirmDataSuggestion", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.FirmParameterDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("DefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Apya.Platform.Grants.FirmDataExtraction", null)
+                        .WithMany("Suggestions")
+                        .HasForeignKey("ExtractionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.FirmParameterValue", b =>
                 {
                     b.HasOne("Apya.Platform.Grants.FirmParameterDefinition", null)
@@ -15574,6 +15703,11 @@ namespace Apya.Platform.Migrations
             modelBuilder.Entity("Apya.Platform.FxRevaluations.FxRevaluationSnapshot", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.FirmDataExtraction", b =>
+                {
+                    b.Navigation("Suggestions");
                 });
 
             modelBuilder.Entity("Apya.Platform.Grants.FirmProfile", b =>

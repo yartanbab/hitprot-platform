@@ -50,6 +50,7 @@ public class TenantColumnCoverage_Tests
         ["Apya.Platform.Grants.GrantCallDailyStat"] = HostCatalog,
         // Kurum parametre TANIMI: her kurum aynı kataloğu okur; kuruma ait olan değerdir (FirmParameterValue, IMultiTenant).
         ["Apya.Platform.Grants.FirmParameterDefinition"] = HostCatalog,
+        ["Apya.Platform.Grants.FirmDataSuggestion"] = ChildOf("FirmDataExtraction"),
 
         ["Apya.Platform.Tasks.TaskChecklistItem"] = ChildOf("TaskItem"),
         ["Apya.Platform.Tasks.TaskDependency"] = ChildOf("TaskItem"),
