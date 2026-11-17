@@ -1,10 +1,13 @@
 using AutoMapper.Internal;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Volo.Abp;
 using Volo.Abp.Account;
 using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.FeatureManagement;
+using Volo.Abp.Mapperly;
+using Volo.Abp.ObjectMapping;
 using Volo.Abp.Identity;
 using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement;
@@ -22,6 +25,7 @@ namespace Apya.Platform;
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),
     typeof(AbpSettingManagementApplicationModule),
+    typeof(AbpMapperlyModule), // finans eşleyicileri (*Mappers.cs); bkz. MapperlyFirstAutoObjectMappingProvider
     typeof(AbpAutoMapperModule) // <-- Bu modülün ekli olduğundan emin oluyoruz
     )]
 public class PlatformApplicationModule : AbpModule
@@ -30,6 +34,15 @@ public class PlatformApplicationModule : AbpModule
     {
         // F-06b · Dövizli projesi olan kiracılara her iş günü TCMB kuru (kullanıcı kararı 2026-10-19).
         context.AddBackgroundWorkerAsync<ExchangeRates.TcmbDailySyncWorker>();
+    }
+
+    public override void PostConfigureServices(ServiceConfigurationContext context)
+    {
+        // AbpAutoMapperModule ve AbpMapperlyModule genel IAutoObjectMappingProvider'ı kendi sağlayıcısıyla
+        // değiştirir; hangisinin kazandığı modül sırasına bağlıdır. Post aşaması ikisinden de sonra çalışır:
+        // Mapperly eşleyicisi olan çift Mapperly'den, kalanlar AutoMapper'dan eşlenir.
+        context.Services.Replace(
+            ServiceDescriptor.Transient<IAutoObjectMappingProvider, MapperlyFirstAutoObjectMappingProvider>());
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)

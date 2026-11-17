@@ -1,10 +1,4 @@
 using AutoMapper;
-using Apya.Platform.Customers;
-using Apya.Platform.CashAccounts;
-using Apya.Platform.CashMovements;
-using Apya.Platform.Expenses;
-using Apya.Platform.Incomes;
-using Apya.Platform.ExchangeRates;
 using Apya.Platform.Projects;
 using Apya.Platform.Projects.Dtos;
 using Apya.Platform.Grants;
@@ -157,29 +151,8 @@ namespace Apya.Platform
             CreateMap<ProjectIndicatorEntry, ProjectIndicatorEntryDto>()
                 .ForMember(d => d.DocumentName, o => o.Ignore());
 
-            // --- CARİ (MÜŞTERİ) MODÜLÜ ---
-            CreateMap<Customer, CustomerDto>();
-            CreateMap<CreateUpdateCustomerDto, Customer>();
-
-            // --- KASA (CASH ACCOUNT) MODÜLÜ — APYA-133 ---
-            CreateMap<CashAccount, CashAccountDto>();
-            CreateMap<CreateUpdateCashAccountDto, CashAccount>();
-
-            // --- KUR (EXCHANGE RATE) MODÜLÜ — APYA-137 ---
-            CreateMap<ExchangeRate, ExchangeRateDto>();
-            CreateMap<CreateUpdateExchangeRateDto, ExchangeRate>();
-
-            // --- KASA HAREKETİ (CASH MOVEMENT) MODÜLÜ — APYA-134 ---
-            CreateMap<CashMovement, CashMovementDto>();
-            CreateMap<CreateUpdateCashMovementDto, CashMovement>();
-
-            // --- GİDER (EXPENSE) MODÜLÜ — APYA-135 ---
-            CreateMap<Expense, ExpenseDto>();
-            CreateMap<CreateUpdateExpenseDto, Expense>();
-
-            // --- GELİR (INCOME) MODÜLÜ — APYA-142d ---
-            CreateMap<IncomeEntry, IncomeEntryDto>();
-            CreateMap<CreateUpdateIncomeEntryDto, IncomeEntry>();
+            // Cari, kasa, kur, kasa hareketi, gider ve gelir eşlemeleri Mapperly'de:
+            // her alanın kendi klasöründeki *Mappers.cs (MapperlyFirstAutoObjectMappingProvider'a bakın).
 
             // --- TENANT PROFILE MODÜLÜ ---
             CreateMap<Apya.Platform.Tenants.TenantProfile, Apya.Platform.Tenants.TenantProfileDto>();
