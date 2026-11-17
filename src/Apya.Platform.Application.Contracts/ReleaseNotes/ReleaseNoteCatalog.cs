@@ -69,6 +69,13 @@ public static class ReleaseNoteCatalog
                 "Hibe ekranı, kurumunuz hakkında eksik kalan bilgilerden en çok çağrıyı değerlendirilebilir yapacak " +
                 "olanları öne çıkarır ve sizi doğrudan ilgili alana götürür."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kurumsal Verileri belgeden doldurun",
+                "Kurumsal Veriler ekranındaki \"Belgeden doldur\" ile faaliyet raporu gibi bir PDF ya da Word belgesi " +
+                "yükleyin; yapay zekâ belgeden bulduğu bilgileri öneri olarak getirir. Her önerinin yanında " +
+                "belgedeki alıntı, sayfası ve şu anki değeriniz görünür; öneriyi onaylar, düzelterek onaylar ya da " +
+                "reddedersiniz. Onaylamadığınız hiçbir bilgi kaydedilmez. Premium ve Enterprise paketlerde."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "İndirdiğiniz dosyayı geri yükleyebilirsiniz",
                 "Gider ve gelir dosyasında artık proje ve bütçe kalemi, görev dosyasında açıklama da var; Kurlar " +
@@ -100,7 +107,12 @@ public static class ReleaseNoteCatalog
                 "Projeler ve Görevler'de daha sade araç çubuğu",
                 "Projeler ekranında görünüm (Liste / Kart), yoğunluk ve Excel düğmeleri \"Yeni Proje Ekle\"nin " +
                 "yanındaki ⋯ menüsünde toplandı. Görevler'deki \"+ Filtre\" menüsünde ikinci bir seçim açan satırlar " +
-                "okla gösterilir.")
+                "okla gösterilir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yapay zekâyla görev oluşturma düzeldi",
+                "Yapay zekâyla görev oluşturma ve PDF'ten görev çıkarma hata verip sonuç döndürmeyebiliyordu. " +
+                "İkisi de düzeldi.")
         ),
 
         new ReleaseNote(
