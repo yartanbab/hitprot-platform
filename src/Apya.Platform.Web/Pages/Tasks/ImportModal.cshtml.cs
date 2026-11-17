@@ -6,6 +6,7 @@ using Apya.Platform.Permissions;
 using Apya.Platform.Tasks;
 using Apya.Platform.Web.Import;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskStatus = Apya.Platform.Tasks.TaskStatus;
 
 namespace Apya.Platform.Web.Pages.Tasks;
@@ -40,6 +41,10 @@ public class ImportModalModel : ExcelImportPageModel<TaskImportLookups, CreateUp
     {
         _taskAppService = taskAppService;
     }
+
+    /// <summary>Proje sayfasından açılınca o proje: Proje hücresi boş satırlar ona eklenir.</summary>
+    [BindProperty(SupportsGet = true)]
+    public Guid? ProjectId { get; set; }
 
     protected override string NameKey => "Export:Tasks:Name";
 
@@ -100,6 +105,10 @@ public class ImportModalModel : ExcelImportPageModel<TaskImportLookups, CreateUp
         if (project.Length > 0 && TryMatch(row, h.Project, project, lookups.Projects, x => [x.Name, x.Code], out var match))
         {
             dto.ProjectId = match!.Id;
+        }
+        else if (project.Length == 0)
+        {
+            dto.ProjectId = ProjectId;
         }
 
         // Başlangıç boşsa bugün (pencerenin varsayılanı); son tarih isteğe bağlı.
