@@ -1,0 +1,313 @@
+@page "/CompanyProfile/DataImport"
+@model Apya.Platform.Web.Pages.CompanyProfile.DataImportModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Apya.Platform.Localization.PlatformResource> L
+@using Apya.Platform.Grants
+@using Apya.Platform.Grants.Dtos
+@{
+    ViewBag.Title = L["FirmDataImport:Title"].Value;
+
+    string StatusBadge(FirmDataExtractionStatus status) => status switch
+    {
+        FirmDataExtractionStatus.Hazir => "text-bg-success",
+        FirmDataExtractionStatus.Okunamadi => "text-bg-warning",
+        FirmDataExtractionStatus.Hata => "text-bg-danger",
+        _ => "text-bg-secondary"
+    };
+
+    string DecisionBadge(FirmDataSuggestionStatus status) => status switch
+    {
+        FirmDataSuggestionStatus.Kabul or FirmDataSuggestionStatus.DuzenlenerekKabul => "text-bg-success",
+        FirmDataSuggestionStatus.Red => "text-bg-secondary",
+        _ => "text-bg-light border"
+    };
+}
+
+@section scripts {
+    <abp-script src="/Pages/CompanyProfile/DataImport.js" />
+}
+
+@*
+    BELGEDEN DOLDUR — yükleme (aydınlatma onayı zorunlu) ve önerilerin onayı.
+    Öneri kurum onaylamadan Kurumsal Veriler'e yazılmaz.
+*@
+<div data-page-description="@L["FirmDataImport:PageDescription"]" class="apya-page--narrow apya-company-profile">
+
+@if (Model.IsHost)
+{
+    <div class="alert alert-info" role="status">
+        <i class="fa fa-circle-info me-2"></i>@L["FirmData:Host.Notice"]
+    </div>
+}
+else if (!Model.CanManage)
+{
+    <div class="alert alert-info" role="status" data-firm-import-readonly>
+        <i class="fa fa-lock me-2"></i>@L["FirmDataImport:ManagersOnly"]
+    </div>
+}
+else if (Model.Current is { } current)
+{
+    var multiIndex = 0;
+
+    @if (TempData["FirmDataImportMessage"] is string message)
+    {
+        <div class="alert alert-success" role="status"><i class="fa fa-circle-check me-2"></i>@message</div>
+    }
+    @if (TempData["FirmDataImportError"] is string decideError)
+    {
+        <div class="alert alert-danger" role="alert" data-firm-import-error><i class="fa fa-triangle-exclamation me-2"></i>@decideError</div>
+    }
+
+    <abp-card>
+        <abp-card-body>
+            <div class="d-flex flex-wrap align-items-start gap-3">
+                <div class="flex-grow-1">
+                    <div class="fw-medium">
+                        <i class="fa fa-file-lines text-primary me-1" aria-hidden="true"></i>
+                        <a href="@current.DownloadUrl">@current.FileName</a>
+                        <span class="badge @StatusBadge(current.Status) ms-1" data-firm-import-status="@current.Status">@L["FirmDataImport:Status." + current.Status]</span>
+                    </div>
+                    <div class="text-muted small mt-1">
+                        @L["FirmDataImport:ReadAt", current.CreationTime.ToString("dd.MM.yyyy HH:mm")]
+                        @if (current.PageCount is { } pages)
+                        {
+                            <span> · @L["FirmDataImport:Pages", pages]</span>
+                        }
+                    </div>
+                </div>
+                <a class="btn btn-outline-secondary" asp-page="/CompanyProfile/DataImport">
+                    <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>@L["FirmDataImport:BackToList"]
+                </a>
+            </div>
+
+            @if (current.Status == FirmDataExtractionStatus.Okunamadi)
+            {
+                <div class="alert alert-warning mt-3 mb-0" role="status">
+                    @L["FirmDataImport:Unreadable"]
+                    <a asp-page="/CompanyProfile/Data">@L["FirmDataImport:EnterManually"]</a>
+                </div>
+            }
+            else if (current.Status == FirmDataExtractionStatus.Hata)
+            {
+                <div class="alert alert-danger mt-3 mb-0" role="alert">@current.Error</div>
+            }
+            else if (current.Suggestions.Count == 0)
+            {
+                <div class="alert alert-info mt-3 mb-0" role="status" data-firm-import-empty>@L["FirmDataImport:NoSuggestions"]</div>
+            }
+            else
+            {
+                <p class="mt-3 mb-0">@L["FirmDataImport:ReviewIntro"]</p>
+            }
+            @if (current.IsTruncated)
+            {
+                <div class="text-muted small mt-2"><i class="fa fa-scissors me-1" aria-hidden="true"></i>@L["FirmDataImport:Truncated"]</div>
+            }
+        </abp-card-body>
+    </abp-card>
+
+    @foreach (var s in current.Suggestions)
+    {
+        var pending = s.Status == FirmDataSuggestionStatus.Beklemede;
+        var fieldId = "suggestion-" + s.Id.ToString("N");
+        <abp-card class="mt-3" id="@fieldId" data-firm-suggestion="@s.Code" data-firm-suggestion-status="@s.Status">
+            <abp-card-body>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="fw-medium flex-grow-1">@s.Name</span>
+                    <span class="badge text-bg-light border" title="@L["FirmDataImport:ConfidenceHint"]">@L["FirmDataImport:Confidence", s.Confidence]</span>
+                    @if (!pending)
+                    {
+                        <span class="badge @DecisionBadge(s.Status)">@L["FirmDataImport:Decision." + s.Status]</span>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(s.Excerpt))
+                {
+                    <blockquote class="border-start border-3 ps-3 mb-2 text-muted small" data-firm-suggestion-excerpt>
+                        “@s.Excerpt”
+                        @if (s.Page is { } page)
+                        {
+                            <span class="ms-1 fst-normal">— @L["FirmDataImport:Page", page]</span>
+                        }
+                    </blockquote>
+                }
+
+                <div class="row g-2 small mb-2">
+                    <div class="col-md-6">
+                        <div class="text-muted">@L["FirmDataImport:Suggested"]</div>
+                        <div data-firm-suggestion-value>@Model.Display(s.DataType, s.RawValue)</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted">@L["FirmDataImport:CurrentValue"]</div>
+                        <div data-firm-suggestion-current>
+                            @if (s.HasCurrentValue)
+                            {
+                                @Model.Display(s.DataType, s.CurrentRawValue)
+                                <span class="text-muted"> · @L["FirmData:Source." + s.CurrentSource]</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">@L["FirmData:NotEntered"]</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @if (pending)
+                {
+                    <form method="post" asp-page-handler="Accept" asp-route-id="@current.Id" asp-route-suggestionId="@s.Id" novalidate>
+                        <label class="form-label small text-muted mb-1" for="@(fieldId)-value">@L["FirmDataImport:EditHint"]</label>
+                        @switch (s.DataType)
+                        {
+                            case FirmParameterDataType.LongText:
+                                <textarea class="form-control" id="@(fieldId)-value" name="rawValue" rows="3" maxlength="@FirmParameterConsts.MaxLongTextLength">@s.RawValue</textarea>
+                                break;
+                            case FirmParameterDataType.Number:
+                            case FirmParameterDataType.Money:
+                            case FirmParameterDataType.Percent:
+                                <input class="form-control" type="number" step="any" inputmode="decimal" id="@(fieldId)-value" name="rawValue" value="@s.RawValue" />
+                                break;
+                            case FirmParameterDataType.Date:
+                                <input class="form-control" type="date" id="@(fieldId)-value" name="rawValue" value="@s.RawValue" />
+                                break;
+                            case FirmParameterDataType.Boolean:
+                                <select class="form-select" id="@(fieldId)-value" name="rawValue">
+                                    <option value="true" selected="@(s.RawValue == "true")">@L["FirmData:Yes"]</option>
+                                    <option value="false" selected="@(s.RawValue == "false")">@L["FirmData:No"]</option>
+                                </select>
+                                break;
+                            case FirmParameterDataType.Select:
+                                <select class="form-select" id="@(fieldId)-value" name="rawValue">
+                                    @foreach (var option in s.Options)
+                                    {
+                                        <option value="@option" selected="@(s.RawValue == option)">@option</option>
+                                    }
+                                </select>
+                                break;
+                            case FirmParameterDataType.MultiSelect:
+                                var chosen = Apya.Platform.Web.Pages.CompanyProfile.DataImportModel.Choices(s.RawValue);
+                                <input type="hidden" name="multi" value="true" />
+                                <div class="d-flex flex-wrap gap-3" role="group" id="@(fieldId)-value">
+                                    @foreach (var option in s.Options)
+                                    {
+                                        var optionId = $"{fieldId}-o{multiIndex++}";
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="@optionId" name="choices" value="@option" checked="@chosen.Contains(option)" />
+                                            <label class="form-check-label" for="@optionId">@option</label>
+                                        </div>
+                                    }
+                                </div>
+                                break;
+                            default:
+                                <input class="form-control" type="text" id="@(fieldId)-value" name="rawValue" value="@s.RawValue" maxlength="@FirmParameterConsts.MaxTextLength" />
+                                break;
+                        }
+                        <div class="d-flex flex-wrap justify-content-end gap-2 mt-2">
+                            <button type="submit" class="btn btn-outline-secondary" data-firm-suggestion-reject formnovalidate
+                                    formaction="@Url.Page("/CompanyProfile/DataImport", "Reject", new { id = current.Id, suggestionId = s.Id })">
+                                <i class="fa fa-xmark me-1" aria-hidden="true"></i>@L["FirmDataImport:Reject"]
+                            </button>
+                            <button type="submit" class="btn btn-primary" data-firm-suggestion-accept>
+                                <i class="fa fa-check me-1" aria-hidden="true"></i>@L["FirmDataImport:Accept"]
+                            </button>
+                        </div>
+                    </form>
+                }
+                else if (s.AcceptedRawValue != null)
+                {
+                    <div class="small">
+                        <span class="text-muted">@L["FirmDataImport:Written"]</span> @Model.Display(s.DataType, s.AcceptedRawValue)
+                    </div>
+                }
+            </abp-card-body>
+        </abp-card>
+    }
+}
+else
+{
+    @if (Model.ErrorMessage != null)
+    {
+        <div class="alert alert-danger" role="alert" data-firm-import-error>
+            <i class="fa fa-triangle-exclamation me-2"></i>@Model.ErrorMessage
+        </div>
+    }
+
+    <abp-card>
+        <abp-card-body>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <p class="mb-0 flex-grow-1">@L["FirmDataImport:Intro"]</p>
+                <a class="btn btn-outline-secondary" asp-page="/CompanyProfile/Data">
+                    <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>@L["FirmData:Title"]
+                </a>
+            </div>
+        </abp-card-body>
+    </abp-card>
+
+    @if (Model.CanExtract)
+    {
+        <abp-card class="mt-3">
+            <abp-card-header>
+                <abp-card-title><i class="fa fa-file-arrow-up text-primary me-2"></i>@L["FirmDataImport:UploadTitle"]</abp-card-title>
+            </abp-card-header>
+            <abp-card-body>
+                <form method="post" enctype="multipart/form-data" data-firm-import-upload>
+                    <label class="form-label fw-medium" for="Document">@L["FirmDataImport:File"]</label>
+                    <input class="form-control" type="file" id="Document" name="Document" accept=".pdf,.docx" required aria-describedby="Document-help" />
+                    <div class="form-text" id="Document-help">@L["FirmDataImport:FileHelp"]</div>
+
+                    <div class="border rounded p-3 mt-3 small bg-body-tertiary" id="ConsentNotice" data-firm-import-notice>
+                        <div class="fw-medium mb-1"><i class="fa fa-shield-halved me-1" aria-hidden="true"></i>@L["FirmDataImport:Notice.Title"]</div>
+                        <p class="mb-0">@L["FirmDataImport:Notice.Body"]</p>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="Consent" name="Consent" value="true" required aria-describedby="ConsentNotice" />
+                        <label class="form-check-label" for="Consent">@L["FirmDataImport:Consent"]</label>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary" data-busy-label="@L["FirmDataImport:Reading"]">
+                            <i class="apya-ai-icon me-1" aria-hidden="true"></i>@L["FirmDataImport:Submit"]
+                        </button>
+                    </div>
+                </form>
+            </abp-card-body>
+        </abp-card>
+    }
+    else
+    {
+        <div class="alert alert-info mt-3" role="status" data-firm-import-unavailable>
+            <i class="fa fa-circle-info me-2"></i>@L["FirmDataImport:Unavailable"]
+        </div>
+    }
+
+    <abp-card class="mt-3">
+        <abp-card-header>
+            <abp-card-title><i class="fa fa-clock-rotate-left text-primary me-2"></i>@L["FirmDataImport:HistoryTitle"]</abp-card-title>
+        </abp-card-header>
+        <abp-card-body>
+            @if (Model.History.Count == 0)
+            {
+                <p class="text-muted mb-0">@L["FirmDataImport:HistoryEmpty"]</p>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush" data-firm-import-history>
+                    @foreach (var e in Model.History)
+                    {
+                        <li class="list-group-item d-flex flex-wrap align-items-center gap-2 px-0">
+                            <div class="flex-grow-1">
+                                <a asp-page="/CompanyProfile/DataImport" asp-route-id="@e.Id" class="fw-medium">@e.FileName</a>
+                                <div class="text-muted small">@e.CreationTime.ToString("dd.MM.yyyy HH:mm")</div>
+                            </div>
+                            <span class="badge @StatusBadge(e.Status)">@L["FirmDataImport:Status." + e.Status]</span>
+                            @if (e.PendingCount > 0)
+                            {
+                                <span class="badge text-bg-primary" data-firm-import-pending>@L["FirmDataImport:PendingCount", e.PendingCount]</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </abp-card-body>
+    </abp-card>
+}
+</div>

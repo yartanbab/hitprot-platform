@@ -24,15 +24,23 @@ namespace Apya.Platform.Web.Pages.CompanyProfile;
 public class DataModel : AbpPageModel
 {
     private readonly IFirmDataAppService _firmDataAppService;
+    private readonly IFirmDataExtractionAppService _extractions;
 
-    public DataModel(IFirmDataAppService firmDataAppService)
+    public DataModel(IFirmDataAppService firmDataAppService, IFirmDataExtractionAppService extractions)
     {
         _firmDataAppService = firmDataAppService;
+        _extractions = extractions;
     }
 
     public bool IsHost { get; private set; }
 
     public bool CanEdit { get; private set; }
+
+    /// <summary>"Belgeden doldur" açık mı (paketin yapay zekâ özelliği + belge yükleme izni).</summary>
+    public bool CanExtract { get; private set; }
+
+    /// <summary>Okutulan belgelerden gelip kurumun kararını bekleyen öneri sayısı.</summary>
+    public int PendingSuggestionCount { get; private set; }
 
     public FirmDataDto Data { get; private set; } = new();
 
@@ -103,6 +111,12 @@ public class DataModel : AbpPageModel
     {
         Data = await _firmDataAppService.GetMineAsync();
         CanEdit = await AuthorizationService.IsGrantedAsync(PlatformPermissions.TenantSettings.Default);
+        if (CanEdit)
+        {
+            CanExtract = await _extractions.CanExtractAsync();
+            // Paket sonradan düşse de bekleyen öneriler kaybolmaz: sayı yine gösterilir.
+            PendingSuggestionCount = (await _extractions.GetListAsync()).Sum(e => e.PendingCount);
+        }
     }
 
     private void KeepPostedValues()

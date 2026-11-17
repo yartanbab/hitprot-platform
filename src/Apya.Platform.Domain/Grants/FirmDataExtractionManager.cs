@@ -83,7 +83,7 @@ public class FirmDataExtractionManager : DomainService
 
     /// <summary>
     /// Öneriyi onaylar ve kurum verisine yazar (varsa mevcut değerin üzerine). Düzenlenmeden
-    /// onaylanan değerin kaynağı "belgeden okundu"dur, güveniyle birlikte; düzenlenen değer
+    /// onaylanan değerin kaynağı "belgeden okundu"dur, güveniyle ve "doğrulandı" olarak; düzenlenen değer
     /// kurumun kendi beyanıdır. İkisinde de belge, sayfa ve alıntı kanıt olarak saklanır.
     /// </summary>
     public async Task<FirmParameterValue> AcceptAsync(
@@ -104,8 +104,11 @@ public class FirmDataExtractionManager : DomainService
         var source = edited && definition.AllowedSources.HasFlag(FirmParameterSource.Kullanici)
             ? FirmParameterSource.Kullanici
             : FirmParameterSource.BelgeAi;
+        // Düzenlenmeden onaylanan okuma "doğrulandı"dır: kurum belgedeki değeri gördü ve kabul etti.
+        // Aksi halde Kurumsal Veriler onaylanmış değerin yanında "Doğrulanmadı" gösterirdi.
         var origin = new FirmParameterOrigin(
             source,
+            Verified: source == FirmParameterSource.BelgeAi,
             Confidence: source == FirmParameterSource.BelgeAi ? suggestion.Confidence : null,
             DocumentFileId: extraction.DocumentFileId,
             Page: suggestion.Page,

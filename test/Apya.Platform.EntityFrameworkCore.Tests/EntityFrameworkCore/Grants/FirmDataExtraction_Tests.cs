@@ -197,6 +197,7 @@ public class FirmDataExtraction_Tests : PlatformEntityFrameworkCoreTestBase
         value.ValueNumber.ShouldBe(250000m);
         value.Source.ShouldBe(FirmParameterSource.BelgeAi);
         value.Confidence.ShouldBe(90);
+        value.Verification.ShouldBe(FirmParameterVerification.Dogrulandi, "kurum okumayı gördü ve onayladı");
         value.SourceDocumentFileId.ShouldBe(result.DocumentFileId);
         value.SourcePage.ShouldBe(2);
         value.SourceExcerpt.ShouldBe("Es finansman kapasitemiz 250000 TL");
@@ -221,6 +222,7 @@ public class FirmDataExtraction_Tests : PlatformEntityFrameworkCoreTestBase
         value.ValueNumber.ShouldBe(200000m);
         value.Source.ShouldBe(FirmParameterSource.Kullanici);
         value.Confidence.ShouldBeNull();
+        value.Verification.ShouldBe(FirmParameterVerification.Dogrulanmadi, "elle girilen değer gibi beyandır");
         value.SourceDocumentFileId.ShouldBe(result.DocumentFileId);
     }
 
