@@ -28,7 +28,7 @@ public static class ReleaseNoteCatalog
         new ReleaseNote(
             version: "2026.11.15",
             date: "15 Kasım 2026",
-            title: "İçe ve dışa aktarma tek ekranda: CSV, şablonlar, projeler ve faturalar",
+            title: "İçe ve dışa aktarma tek ekranda; Kurumsal Veriler, eş finansman uygunluğu ve kasasız gider",
 
             new ReleaseNoteItem(ReleaseNoteCategory.Feature,
                 "Bütün aktarımlar tek ekranda",
@@ -57,12 +57,62 @@ public static class ReleaseNoteCatalog
                 "faturalar ödenmemiş olarak açılır, tahsilatı ekrandan girersiniz. Hatalı satır varsa hiçbir satır " +
                 "kaydedilmez."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kurumsal Veriler",
+                "Kurum Profili'nden açılan Kurumsal Veriler ekranında kurumunuzun hedeflerini, kapasitesini, eş " +
+                "finansman imkânını ve ortaklıklarını girebilirsiniz. Bilmediğiniz alanı boş bırakmanız yeterli; boş " +
+                "alan sıfır sayılmaz. Bir bilginin geçerlilik süresi dolduğunda size bildirim gelir; bilgi " +
+                "değişmediyse \"Hâlâ güncel\" demeniz yeterli."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Hangi bilgiyi girmeliyim?",
+                "Hibe ekranı, kurumunuz hakkında eksik kalan bilgilerden en çok çağrıyı değerlendirilebilir yapacak " +
+                "olanları öne çıkarır ve sizi doğrudan ilgili alana götürür."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Feature,
+                "Kurumsal Verileri belgeden doldurun",
+                "Kurumsal Veriler ekranındaki \"Belgeden doldur\" ile faaliyet raporu gibi bir PDF ya da Word belgesi " +
+                "yükleyin; yapay zekâ belgeden bulduğu bilgileri öneri olarak getirir. Her önerinin yanında " +
+                "belgedeki alıntı, sayfası ve şu anki değeriniz görünür; öneriyi onaylar, düzelterek onaylar ya da " +
+                "reddedersiniz. Onaylamadığınız hiçbir bilgi kaydedilmez. Premium ve Enterprise paketlerde."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "İndirdiğiniz dosyayı geri yükleyebilirsiniz",
                 "Gider ve gelir dosyasında artık proje ve bütçe kalemi, görev dosyasında açıklama da var; Kurlar " +
                 "ekranından ve proje bütçe kalemlerinden de Excel'e indirebilirsiniz. Bu dosyalar aynı ekranın içe " +
                 "aktarmasına doğrudan yüklenebilir; örneğin bir projenin bütçe kalemlerini başka bir projeye " +
-                "taşıyabilirsiniz. Aynı adı taşıyan projeler dosyada proje koduyla yazılır.")
+                "taşıyabilirsiniz. Aynı adı taşıyan projeler dosyada proje koduyla yazılır."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Eş finansman ve kurum bilgileri uygunluğa giriyor",
+                "Eş finansman isteyen çağrılarda kurumunuzun eş finansman kapasitesi girilmemişse çağrı \"Koşullu\" " +
+                "görünür ve nedeni çağrı sayfasında açıklanır; kapasitenizi Kurumsal Veriler'e girdiğinizde " +
+                "değerlendirme güncellenir. Programın kurum bilgilerinize koyduğu şartlar çağrı sayfasındaki " +
+                "uygunluk tablosunda gösterilir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Gider kaydında kasa isteğe bağlı",
+                "Gider girerken kasa seçmek zorunlu değil. Kasa seçmezseniz gider projenin bütçesine ve raporlara yine " +
+                "işlenir ama hiçbir kasanın bakiyesini düşürmez; kasayı sonradan seçebilirsiniz. Gider penceresi " +
+                "artık ilk kasayı kendiliğinden seçmez. Excel'den içe aktarmada ve telefondaki Masraf Yakala'da da " +
+                "kasa isteğe bağlı."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Yenilenen giriş ekranı",
+                "Giriş ekranında alanlar ve düğmeler daha büyük, renkler APYA lacivertinde. Telefonda form ekranın " +
+                "tamamını kullanır; kayıt talebi bağlantısı giriş düğmesinin altında, Aydınlatma Metni ve Gizlilik " +
+                "Politikası bağlantıları sayfanın altında."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Projeler ve Görevler'de daha sade araç çubuğu",
+                "Projeler ekranında görünüm (Liste / Kart), yoğunluk ve Excel düğmeleri \"Yeni Proje Ekle\"nin " +
+                "yanındaki ⋯ menüsünde toplandı. Görevler'deki \"+ Filtre\" menüsünde ikinci bir seçim açan satırlar " +
+                "okla gösterilir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yapay zekâyla görev oluşturma düzeldi",
+                "Yapay zekâyla görev oluşturma ve PDF'ten görev çıkarma hata verip sonuç döndürmeyebiliyordu. " +
+                "İkisi de düzeldi.")
         ),
 
         new ReleaseNote(
