@@ -15,6 +15,10 @@ namespace Apya.Platform.Ai.Providers;
 /// This is the sole <see cref="IAiProvider"/> registration (concrete providers expose
 /// <see cref="INamedAiProvider"/>), so consumers are never ambiguous.
 /// </summary>
+// 🔴 Açık kayıt ŞART: ABP arayüzü yalnız sınıf adı arayüz adıyla bitiyorsa kendiliğinden açar
+// ("AiGateway" ≠ "…AiProvider"). Somut sağlayıcılar INamedAiProvider'a geçtiğinden beri (ec42c26e)
+// IAiProvider'ı kaydeden kalmamıştı; ona bağlı her yapay zekâ servisi çözülemiyordu.
+[ExposeServices(typeof(IAiProvider), typeof(AiGateway))]
 public class AiGateway : IAiProvider, ITransientDependency
 {
     public string Name => "ai-gateway";

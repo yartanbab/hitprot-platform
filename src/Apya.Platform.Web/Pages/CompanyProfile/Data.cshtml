@@ -56,10 +56,23 @@ else
                         @L["FirmData:Progress", Model.Data.FilledCount, Model.Data.TotalCount]
                     </div>
                 </div>
+                @if (Model.CanExtract)
+                {
+                    <a class="btn btn-outline-primary" asp-page="/CompanyProfile/DataImport" data-firm-data-import>
+                        <i class="apya-ai-icon me-1" aria-hidden="true"></i>@L["FirmDataImport:Open"]
+                    </a>
+                }
                 <a class="btn btn-outline-secondary" asp-page="/CompanyProfile/Index">
                     <i class="fa fa-arrow-left me-1" aria-hidden="true"></i>@L["FirmData:Back"]
                 </a>
             </div>
+            @if (Model.PendingSuggestionCount > 0)
+            {
+                <div class="alert alert-primary mt-3 mb-0 py-2" role="status" data-firm-data-pending>
+                    <i class="fa fa-inbox me-2" aria-hidden="true"></i>@L["FirmDataImport:PendingNotice", Model.PendingSuggestionCount]
+                    <a asp-page="/CompanyProfile/DataImport" class="ms-1">@L["FirmDataImport:PendingOpen"]</a>
+                </div>
+            }
             @if (!Model.CanEdit)
             {
                 <div class="text-muted small mt-2"><i class="fa fa-lock me-1" aria-hidden="true"></i>@L["FirmData:ReadOnly"]</div>
