@@ -19,15 +19,18 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
     private readonly IRepository<FirmProfileTag, Guid> _tagRepo;
     private readonly IRepository<TenantProfile, Guid> _tenantProfileRepo;
+    private readonly FirmProfileCompletenessReader _completeness;
 
     public FirmProfileAppService(
         IRepository<FirmProfile, Guid> profileRepo,
         IRepository<FirmProfileTag, Guid> tagRepo,
-        IRepository<TenantProfile, Guid> tenantProfileRepo)
+        IRepository<TenantProfile, Guid> tenantProfileRepo,
+        FirmProfileCompletenessReader completeness)
     {
         _profileRepo = profileRepo;
         _tagRepo = tagRepo;
         _tenantProfileRepo = tenantProfileRepo;
+        _completeness = completeness;
     }
 
     public async Task<FirmProfileDto> GetMyProfileAsync()
@@ -38,9 +41,9 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
             return await SuggestFromTenantProfileAsync();
         }
         var tags = await _tagRepo.GetListAsync(t => t.FirmProfileId == profile.Id);
-        return WithCompleteness(Map(profile, tags
+        return await WithCompletenessAsync(Map(profile, tags
             .Select(t => new GrantCriteriaTagDto { Kind = t.Kind, Value = t.Value })
-            .ToList()));
+            .ToList()), profile);
     }
 
     public async Task<FirmProfileDto> UpdateMyProfileAsync(UpdateFirmProfileDto input)
@@ -73,7 +76,7 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
 
         // Dönüş, kaydedilen girdiden kurulur — aynı UoW içinde henüz flush edilmemiş
         // tag'leri GetMyProfileAsync yeniden okuyamayacağı için (boş dönerdi).
-        return WithCompleteness(Map(profile, saved));
+        return await WithCompletenessAsync(Map(profile, saved), profile);
     }
 
     /// <summary>
@@ -96,7 +99,7 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
         }
 
         var type = tenantProfile == null ? OrganizationType.Sirket : tenantProfile.CompanyType.ToOrganizationType();
-        var dto = WithCompleteness(new FirmProfileDto { Type = type });
+        var dto = await WithCompletenessAsync(new FirmProfileDto { Type = type }, null);
         if (tenantProfile == null)
         {
             return dto;
@@ -223,38 +226,17 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
     };
 
     /// <summary>
-    /// Doluluk, programların ölçebildiği alanlar üzerinden sayılır: her biri bir uygunluk
-    /// şartının ya da bir skor boyutunun karşılığıdır. Boş bırakılan alan o şartı
-    /// ölçülemez yapar — 1d'deki "N alan eksik" tam olarak bunu sayar. STK'da sayılan
-    /// küme farklıdır; kimlik verileri (kütük no, VKN, vergi dairesi) eşleştirmeye
-    /// girmediği için yüzdeye de girmez.
+    /// Doluluk kataloğa göre sayılır (kullanıcı kararı 2026-11-17): yalnız açık çağrıların gerçekten
+    /// ölçtüğü profil bilgileri — 1d'deki "N alan eksik" ile "Hangi bilgiyi girmeliyim?" paneli
+    /// aynı kaynaktan gelir. Hiçbir programın istemediği bilgi yüzdeyi düşürmez. Bedeli: katalog
+    /// değişince yüzde kurum bir şey yapmadan oynayabilir. Kimlik verileri (kütük no, VKN, vergi
+    /// dairesi) eşleştirmeye girmediği için yüzdeye de girmez.
     /// </summary>
-    private static FirmProfileDto WithCompleteness(FirmProfileDto dto)
+    private async Task<FirmProfileDto> WithCompletenessAsync(FirmProfileDto dto, FirmProfile? profile)
     {
-        var filled = dto.Type.IsNgo()
-            ? new[]
-            {
-                dto.FoundedOn.HasValue,
-                dto.ProfessionalStaffBand.HasValue,
-                dto.ProjectExperience.HasValue,
-                dto.Tags.Any(t => t.Kind == GrantCriteriaKind.TematikAlan),
-                dto.Tags.Any(t => t.Kind == GrantCriteriaKind.Bolge)
-            }
-            : new[]
-            {
-                dto.Size.HasValue,
-                dto.FoundedOn.HasValue,
-                dto.StaffCount.HasValue,
-                dto.RdStaffCount.HasValue,
-                dto.AnnualRevenue.HasValue,
-                dto.Trl.HasValue,
-                dto.HasConsortiumPartner.HasValue,
-                dto.Tags.Any(t => t.Kind == GrantCriteriaKind.NaceKodu),
-                dto.Tags.Any(t => t.Kind == GrantCriteriaKind.Sektor)
-            };
-
-        dto.MissingFieldCount = filled.Count(f => !f);
-        dto.CompletionPercent = (int)Math.Round(filled.Count(f => f) * 100.0 / filled.Length);
+        var completeness = await _completeness.CalculateAsync(profile, dto.Tags.Select(t => t.Kind), dto.Type);
+        dto.MissingFieldCount = completeness.MissingCount;
+        dto.CompletionPercent = completeness.Percent;
         return dto;
     }
 }

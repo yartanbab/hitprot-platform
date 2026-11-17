@@ -237,6 +237,11 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
             () => service.SetBookmarkNoteAsync(new SetGrantBookmarkNoteInput { GrantCallId = id, Note = "x" }));
     }
 
+    /// <summary>
+    /// Doluluk kataloğa göre sayılır: tohum kataloğundaki açık çağrıların ölçtüğü profil bilgileri.
+    /// Sayı katalogla değiştiği için sabit beklenmez; boş profil %0, bütün profil bilgileri dolu %100,
+    /// il eksikken tam değildir (tohumda il şartı koyan program var).
+    /// </summary>
     [Fact]
     public async Task Profil_Dolulugu_Alan_Doldukca_Artar()
     {
@@ -244,9 +249,19 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
 
         var bos = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto());
         bos.CompletionPercent.ShouldBe(0);
-        bos.MissingFieldCount.ShouldBe(9);
+        bos.MissingFieldCount.ShouldBeGreaterThan(0);
 
-        var dolu = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto
+        var ilsiz = await service.UpdateMyProfileAsync(Sirket(withProvince: false));
+        ilsiz.CompletionPercent.ShouldBeLessThan(100, "56 programı eleyen il eksikken profil tamam sayılmaz");
+
+        var dolu = await service.UpdateMyProfileAsync(Sirket(withProvince: true));
+        dolu.CompletionPercent.ShouldBe(100);
+        dolu.MissingFieldCount.ShouldBe(0);
+    }
+
+    private static UpdateFirmProfileDto Sirket(bool withProvince)
+    {
+        var dto = new UpdateFirmProfileDto
         {
             Size = CompanySize.Kucuk,
             FoundedOn = new DateTime(2020, 1, 1),
@@ -258,12 +273,15 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
             Tags =
             {
                 new GrantCriteriaTagDto { Kind = GrantCriteriaKind.NaceKodu, Value = "62.01" },
-                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Sektor, Value = "Yazılım" }
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Sektor, Value = "Yazılım" },
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.AnahtarKelime, Value = "yazılım" }
             }
-        });
-
-        dolu.CompletionPercent.ShouldBe(100);
-        dolu.MissingFieldCount.ShouldBe(0);
+        };
+        if (withProvince)
+        {
+            dto.Tags.Add(new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Bolge, Value = "Ankara" });
+        }
+        return dto;
     }
 
     /// <summary>
@@ -327,7 +345,7 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
         tekrar.Tags.ShouldNotContain(t => t.Kind == GrantCriteriaKind.NaceKodu);
     }
 
-    /// <summary>STK'da doluluk kendi beş alanından sayılır; şirket alanları hiç aranmaz.</summary>
+    /// <summary>STK'da doluluk kendi alanlarından sayılır; şirket alanları hiç aranmaz.</summary>
     [Fact]
     public async Task Stk_Dolulugu_Kendi_Alanlarindan_Sayilir()
     {
@@ -335,7 +353,7 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
 
         var bos = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto { Type = OrganizationType.Vakif });
         bos.CompletionPercent.ShouldBe(0);
-        bos.MissingFieldCount.ShouldBe(5);
+        bos.MissingFieldCount.ShouldBeGreaterThan(0);
 
         var dolu = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto
         {
@@ -346,7 +364,8 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
             Tags =
             {
                 new GrantCriteriaTagDto { Kind = GrantCriteriaKind.TematikAlan, Value = nameof(GrantThematicArea.Cevre) },
-                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Bolge, Value = "İzmir" }
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.Bolge, Value = "İzmir" },
+                new GrantCriteriaTagDto { Kind = GrantCriteriaKind.AnahtarKelime, Value = "çevre" }
             }
         });
 
