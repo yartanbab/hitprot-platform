@@ -91,6 +91,13 @@ public static class ReleaseNoteCatalog
                 "uygunluk tablosunda gösterilir."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Profil doluluğu açık çağrılara göre",
+                "Hibe ekranındaki profil doluluk yüzdesi ve eksik alan sayısı artık yalnız açık çağrıların gerçekten " +
+                "sorduğu bilgileri sayar. Faaliyet iliniz gibi birçok programın şart koştuğu bilgiler öne çıkar; " +
+                "hiçbir programın sormadığı bilgiler yüzdenizi düşürmez. Çağrılar açılıp kapandıkça yüzde de " +
+                "güncellenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Gider kaydında kasa isteğe bağlı",
                 "Gider girerken kasa seçmek zorunlu değil. Kasa seçmezseniz gider projenin bütçesine ve raporlara yine " +
                 "işlenir ama hiçbir kasanın bakiyesini düşürmez; kasayı sonradan seçebilirsiniz. Gider penceresi " +
@@ -112,7 +119,12 @@ public static class ReleaseNoteCatalog
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Yapay zekâyla görev oluşturma düzeldi",
                 "Yapay zekâyla görev oluşturma ve PDF'ten görev çıkarma hata verip sonuç döndürmeyebiliyordu. " +
-                "İkisi de düzeldi.")
+                "İkisi de düzeldi."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Yapay zekâ değerlendirmeleri düzeldi",
+                "Yapay Zekâ Değerlendirme Merkezi'nde başlatılan değerlendirmeler hata verip sonuç " +
+                "döndürmeyebiliyordu. Düzeldi.")
         ),
 
         new ReleaseNote(
