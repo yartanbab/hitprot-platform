@@ -8,6 +8,9 @@ namespace Apya.Platform.Ai.Prompts;
 /// Validates that the response is a JSON array (possibly wrapped in ```json fences).
 /// Used by the task-extraction prompt template.
 /// </summary>
+// Ad kuralı (…AiResponseValidator) tutmadığı için ABP arayüzü kendiliğinden açmıyordu;
+// TaskAiAgentManager bu yüzden çözülemiyordu.
+[ExposeServices(typeof(IAiResponseValidator), typeof(JsonArrayResponseValidator))]
 public class JsonArrayResponseValidator : IAiResponseValidator, ITransientDependency
 {
     public ValidationOutcome Validate(string response)

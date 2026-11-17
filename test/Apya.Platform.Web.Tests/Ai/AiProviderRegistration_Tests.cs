@@ -1,6 +1,7 @@
 using Apya.Platform.Ai.Evaluations;
 using Apya.Platform.Ai.Feedbacks;
 using Apya.Platform.Ai.Grants;
+using Apya.Platform.Ai.Prompts;
 using Apya.Platform.Ai.Providers;
 using Apya.Platform.Grants;
 using Shouldly;
@@ -22,9 +23,13 @@ public class AiProviderRegistration_Tests : PlatformWebTestBase
     [Fact]
     public void Saglayiciya_bagli_servisler_cozulur()
     {
-        // TaskAiAgentManager burada YOK: IAiResponseValidator da kayıtsız (ayrı iş).
+        GetRequiredService<TaskAiAgentManager>().ShouldNotBeNull();
         GetRequiredService<FeedbackPromptAiManager>().ShouldNotBeNull();
         GetRequiredService<AiEvaluationManager>().ShouldNotBeNull();
         GetRequiredService<IFirmDataExtractionAi>().ShouldBeOfType<FirmDataExtractionAi>();
     }
+
+    [Fact]
+    public void Gorev_cikarma_dogrulayicisi_json_dizisi_bekler()
+        => GetRequiredService<IAiResponseValidator>().ShouldBeOfType<JsonArrayResponseValidator>();
 }
