@@ -153,4 +153,65 @@ public class FirmDataGapCalculator_Tests
         codes.ShouldNotContain("typical_project_budget", "hesaplanan sinyal kullanıcıdan istenemez");
         codes.ShouldContain("thematic_areas");
     }
+
+    // --- Hibe profili yüzdesi: kataloğa göre ---
+
+    private FirmProfileCompleteness Completeness(
+        FirmProfile? profile, OrganizationType type, IReadOnlyList<FirmDataOpenCall> calls, params GrantCriteriaKind[] tagKinds)
+        => _calculator.CalculateProfileCompleteness(_catalog, profile, tagKinds, type, calls, Today);
+
+    [Fact]
+    public void Hicbir_acik_programin_istemedigi_bilgi_yuzdeyi_dusurmez()
+    {
+        // Programlar yalnız ölçek ve il soruyor; TRL, ciro, personel hiç sorulmuyor.
+        var calls = new[]
+        {
+            Call(g => g.EligibleCompanySizes = (int)CompanySize.Kucuk),
+            Call(null, (GrantCriteriaKind.Bolge, "Ankara"))
+        };
+        var profile = new FirmProfile(Guid.NewGuid(), Tenant) { Size = CompanySize.Kucuk };
+
+        var result = Completeness(profile, OrganizationType.Sirket, calls);
+
+        result.MeasuredCount.ShouldBe(2, "ölçek ve il");
+        result.FilledCount.ShouldBe(1);
+        result.Percent.ShouldBe(50);
+        result.MissingCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public void Programin_eledigi_il_yuzdeye_girer()
+    {
+        var calls = new[]
+        {
+            Call(g => g.EligibleCompanySizes = (int)CompanySize.Kucuk),
+            Call(null, (GrantCriteriaKind.Bolge, "Ankara"))
+        };
+        var profile = new FirmProfile(Guid.NewGuid(), Tenant) { Size = CompanySize.Kucuk };
+
+        Completeness(profile, OrganizationType.Sirket, calls, GrantCriteriaKind.Bolge).Percent.ShouldBe(100);
+    }
+
+    [Fact]
+    public void Acik_cagri_yoksa_bos_profil_tamam_gorunmez()
+    {
+        var result = Completeness(null, OrganizationType.Sirket, Array.Empty<FirmDataOpenCall>());
+
+        result.MeasuredCount.ShouldBeGreaterThan(0, "kurum türüne uyan bütün profil bilgileri sayılır");
+        result.Percent.ShouldBe(0);
+    }
+
+    [Fact]
+    public void Stk_da_sirket_sartlari_sayilmaz()
+    {
+        var calls = new[]
+        {
+            Call(g => g.EligibleCompanySizes = (int)CompanySize.Kucuk, (GrantCriteriaKind.TematikAlan, nameof(GrantThematicArea.Egitim)))
+        };
+
+        var result = Completeness(null, OrganizationType.Dernek, calls, GrantCriteriaKind.TematikAlan);
+
+        result.MeasuredCount.ShouldBe(1, "ölçek şartı STK'ya uygulanmaz; yalnız tematik alan");
+        result.Percent.ShouldBe(100);
+    }
 }

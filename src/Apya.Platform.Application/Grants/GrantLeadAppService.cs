@@ -42,6 +42,7 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
     private readonly ITenantRepository _tenantRepo;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
+    private readonly FirmProfileCompletenessReader _completeness;
 
     public GrantLeadAppService(
         IRepository<GrantLead, Guid> leadRepo,
@@ -53,8 +54,10 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
         ITenantManager tenantManager,
         ITenantRepository tenantRepo,
         ICurrentTenant currentTenant,
-        IDataFilter<IMultiTenant> mtFilter)
+        IDataFilter<IMultiTenant> mtFilter,
+        FirmProfileCompletenessReader completeness)
     {
+        _completeness = completeness;
         _leadRepo = leadRepo;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
@@ -177,7 +180,8 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
                 HasConsortiumPartner = lead.HasConsortiumPartner
             };
             await _profileRepo.InsertAsync(profile, autoSave: true);
-            completion = CompletionPercent(profile);
+            // Kurum ekranıyla aynı hesap; adayın etiketi yok.
+            completion = (await _completeness.CalculateAsync(profile, Array.Empty<GrantCriteriaKind>(), profile.Type)).Percent;
         }
 
         lead.MarkConverted(tenant.Id);
@@ -192,19 +196,6 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
     }
 
     // ------------------------------------------------------------------ yardımcılar
-
-    /// <summary>Eşleşmeyi besleyen altı alandan kaçı dolu.</summary>
-    private static int CompletionPercent(FirmProfile profile)
-    {
-        var filled = 0;
-        if (profile.Size.HasValue) { filled++; }
-        if (profile.FoundedOn.HasValue) { filled++; }
-        if (profile.RdStaffCount.HasValue) { filled++; }
-        if (profile.AnnualRevenue.HasValue) { filled++; }
-        if (profile.Trl.HasValue) { filled++; }
-        if (profile.HasConsortiumPartner.HasValue) { filled++; }
-        return filled * 100 / 6;
-    }
 
     private void EnsureHostContext()
     {

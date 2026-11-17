@@ -8,6 +8,18 @@ namespace Apya.Platform.Grants;
 /// <summary>Kurumun eksik ya da bayatlamış bir bilgisi ve tamamlanınca kaç açık çağrının ölçülebilir olacağı.</summary>
 public sealed record FirmDataGap(FirmParameterDefinition Definition, bool IsStale, int UnlockCount);
 
+/// <summary>
+/// Hibe profilinin doluluğu: açık çağrıların ölçtüğü profil bilgilerinden kaçının girildiği.
+/// Hiçbir açık çağrı profil bilgisi ölçmüyorsa kurum türüne uyan bütün profil bilgileri sayılır
+/// (boş profil "%100" görünmesin).
+/// </summary>
+public sealed record FirmProfileCompleteness(int MeasuredCount, int FilledCount)
+{
+    public int MissingCount => MeasuredCount - FilledCount;
+
+    public int Percent => MeasuredCount == 0 ? 100 : (int)Math.Round(FilledCount * 100.0 / MeasuredCount);
+}
+
 /// <summary>Bir açık çağrının programı ve etiketleri.</summary>
 public sealed record FirmDataOpenCall(
     Grant Grant,
@@ -72,7 +84,7 @@ public class FirmDataGapCalculator : DomainService
             bool present;
             if (definition.SystemKey is { } key)
             {
-                present = HasSystemValue(key, profile, signals);
+                present = HasSystemValue(key, profile, kind => signals.Tags.Any(t => t.Kind == kind));
             }
             else if (values.TryGetValue(definition.Id, out var value))
             {
@@ -96,6 +108,53 @@ public class FirmDataGapCalculator : DomainService
             .ThenByDescending(g => g.Definition.Requirement)
             .ThenBy(g => g.Definition.Order)
             .ToList();
+    }
+
+    /// <summary>
+    /// Hibe profili yüzdesi — "Hangi bilgiyi girmeliyim?" paneliyle AYNI kaynaktan: bir profil
+    /// bilgisi ancak en az bir açık çağrı onu ölçüyorsa (uygunluk şartı ya da etiket) sayılır.
+    /// Hiçbir programın istemediği bilgi yüzdeyi düşürmez; 56 programı eleyen il gibi bilgi düşürür.
+    ///
+    /// <para>Kurumun kayıtlı değerleri değil verilen profil ve etiket türleri okunur: profil
+    /// kaydedilirken etiketler henüz veritabanına yazılmamış olabilir.</para>
+    /// </summary>
+    public FirmProfileCompleteness CalculateProfileCompleteness(
+        IEnumerable<FirmParameterDefinition> definitions,
+        FirmProfile? profile,
+        IReadOnlyCollection<GrantCriteriaKind> tagKinds,
+        OrganizationType organizationType,
+        IReadOnlyList<FirmDataOpenCall> openCalls,
+        DateTime today)
+    {
+        // Profil bilgisi: değeri profilde ya da profil etiketlerinde yaşayan, kurumun girdiği,
+        // eşleştirmeye giren (şart ya da etiket) tanımlar. Kurum türü her profilde vardır, sayılmaz.
+        var fields = definitions
+            .Where(d => d.IsActive
+                        && d.SystemKey is { } key
+                        && (RuleOf(key) != null || TagKindOf(key) != null)
+                        && d.AllowedSources.HasFlag(FirmParameterSource.Kullanici)
+                        && d.AppliesTo(organizationType))
+            .ToList();
+
+        // Programın ölçtüğü şartlar: kurum hiçbir şey girmemiş gibi değerlendirilir; programın
+        // koyduğu her şart o zaman "ölçülemiyor" döner, koymadığı şart dönmez.
+        var empty = new FirmSignals { Type = organizationType };
+        var measuredRulesByCall = openCalls
+            .Select(c => _matcher.Evaluate(empty, c.Grant, c.Tags, today, Array.Empty<GrantParameterCriterion>())
+                .Rules.Where(r => r.Outcome == GrantRuleOutcome.Unknown).Select(r => r.Rule).ToHashSet())
+            .ToList();
+        var noParameters = openCalls.Select(_ => new HashSet<Guid>()).ToList();
+
+        var measured = fields
+            .Where(d => CountUnlocked(d, openCalls, measuredRulesByCall, noParameters) > 0)
+            .ToList();
+        if (measured.Count == 0)
+        {
+            measured = fields;
+        }
+
+        var filled = measured.Count(d => HasSystemValue(d.SystemKey!.Value, profile, kind => tagKinds.Contains(kind)));
+        return new FirmProfileCompleteness(measured.Count, filled);
     }
 
     private static int CountUnlocked(
@@ -122,15 +181,15 @@ public class FirmDataGapCalculator : DomainService
         return 0;
     }
 
-    private static bool HasSystemValue(FirmParameterSystemKey key, FirmProfile? profile, FirmSignals signals)
+    private static bool HasSystemValue(FirmParameterSystemKey key, FirmProfile? profile, Func<GrantCriteriaKind, bool> hasTag)
     {
         if (TagKindOf(key) is { } kind)
         {
-            return signals.Tags.Any(t => t.Kind == kind);
+            return hasTag(kind);
         }
         if (key == FirmParameterSystemKey.Bolge)
         {
-            return signals.Tags.Any(t => t.Kind == GrantCriteriaKind.Bolge);
+            return hasTag(GrantCriteriaKind.Bolge);
         }
 
         return key switch
