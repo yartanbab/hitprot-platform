@@ -4810,7 +4810,7 @@
         "GrantCriteria:Field.Parameter": "Parametre",
         "GrantCriteria:Field.Operator": "Karşılaştırma",
         "GrantCriteria:Field.Value": "Değer",
-        "GrantCriteria:Field.Value.Help": "Sayıda ondalık ayırıcı nokta (ör. 100000 ya da 0.5). Evet/hayır için true ya da false. Seçimli parametrede seçeneğin kendisi.",
+        "GrantCriteria:Field.Value.Help": "Sayıda ondalık ayırıcı nokta (ör. 100000 ya da 0.5). Seçimli parametrede seçeneğin kendisi.",
         "GrantCriteria:Field.IsEliminating": "Tutmayan kurum elensin (işaretlenmezse yalnız uyarı olur)",
         "GrantCriteria:Eliminating": "Eler",
         "GrantCriteria:Advisory": "Uyarı",

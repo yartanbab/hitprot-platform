@@ -77,7 +77,46 @@ public class GrantParameterCriteriaPage_Tests : PlatformWebTestBase
         var response = await Client.PostAsync(url + "&handler=Add", new FormUrlEncodedContent(form));
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
-        HtmlEntity.DeEntitize(await response.Content.ReadAsStringAsync()).ShouldContain("Bu karşılaştırma");
+        var html = await response.Content.ReadAsStringAsync();
+        HtmlEntity.DeEntitize(html).ShouldContain("Bu karşılaştırma");
+
+        // Hatalı gönderimde seçili kalan evet/hayır parametresinde değer seçim kutusudur.
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+        doc.DocumentNode.SelectSingleNode("//*[@data-criterion-value='yesno']").Attributes["disabled"].ShouldBeNull();
+        doc.DocumentNode.SelectSingleNode("//*[@data-criterion-value='text']").Attributes["disabled"].ShouldNotBeNull();
+    }
+
+    /// <summary>
+    /// Evet/hayır değeri "true/false" diye yazılmaz, seçilir. Seçim kutusu her parametre listesinde
+    /// basılır (betik parametre değişince açar); seçeneklerin türü betiğe <c>data-type</c> ile gider.
+    /// </summary>
+    [Fact]
+    public async Task Evet_hayir_degeri_secim_kutusundan_secilir()
+    {
+        var grantId = await CreateGrantAsync();
+        var url = $"/Grants/ParameterCriteria?grantId={grantId}";
+        var doc = new HtmlDocument();
+        doc.LoadHtml(await GetResponseAsStringAsync(url));
+
+        var yesNo = doc.DocumentNode.SelectSingleNode("//select[@data-criterion-value='yesno']");
+        yesNo.ShouldNotBeNull();
+        yesNo.GetAttributeValue("name", "").ShouldBe("Input.Value");
+        yesNo.SelectNodes("./option").Select(o => o.GetAttributeValue("value", "")).ShouldBe(new[] { "true", "false" });
+        HtmlEntity.DeEntitize(yesNo.InnerText).ShouldContain("Evet");
+        doc.DocumentNode.SelectSingleNode($"//select[@id='GcParameter']/option[@value='{PublicDebt}']")
+            .GetAttributeValue("data-type", "").ShouldBe(nameof(FirmParameterDataType.Boolean));
+
+        // Kamu borcu seçilip "Hayır" seçilerek eklenir: sunucuya false gider.
+        var form = ReadForm(doc.DocumentNode.OuterHtml, "Add");
+        Set(form, "Input.DefinitionId", PublicDebt.ToString());
+        Set(form, "Input.Operator", nameof(GrantParameterOperator.Esit));
+        form.RemoveAll(f => f.Key == "Input.Value");
+        form.Add(new KeyValuePair<string, string>("Input.Value", "false"));
+        (await Client.PostAsync(url + "&handler=Add", new FormUrlEncodedContent(form))).StatusCode.ShouldBe(HttpStatusCode.Redirect);
+
+        var criterion = (await GetRequiredService<IGrantParameterCriterionAppService>().GetAsync(grantId)).Criteria.Single();
+        criterion.Value.ShouldBe("false");
     }
 
     // --- Yardımcılar ---
@@ -95,6 +134,11 @@ public class GrantParameterCriteriaPage_Tests : PlatformWebTestBase
         foreach (var node in form.SelectNodes(".//input[@name] | .//select[@name]") ?? Enumerable.Empty<HtmlNode>())
         {
             if (node.Name == "input" && node.GetAttributeValue("type", "") == "checkbox" && node.Attributes["checked"] == null)
+            {
+                continue;
+            }
+            // Tarayıcı kapalı (disabled) alanı göndermez.
+            if (node.Attributes["disabled"] != null)
             {
                 continue;
             }

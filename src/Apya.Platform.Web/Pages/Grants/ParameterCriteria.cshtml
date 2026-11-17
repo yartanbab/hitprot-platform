@@ -11,6 +11,17 @@
     string ValueText(GrantParameterCriterionDto c) => c.DataType == FirmParameterDataType.Boolean
         ? L[c.Value == "true" ? "FirmData:Yes" : "FirmData:No"].Value
         : c.Value;
+
+    // Evet/hayır parametresinde değer serbest metin değil seçim kutusudur. Sayfa, seçili parametreye
+    // göre doğru alanı açık basar (betik yüklenmese de doğru alan gider); diğeri kapalıdır ve
+    // tarayıcı kapalı alanı göndermez.
+    var selectedParameter = Model.Data.Parameters.FirstOrDefault(p => p.Id == Model.Input.DefinitionId)
+                            ?? Model.Data.Parameters.FirstOrDefault();
+    var isYesNo = selectedParameter?.DataType == FirmParameterDataType.Boolean;
+}
+
+@section scripts {
+    <abp-script src="/Pages/Grants/ParameterCriteria.js" />
 }
 
 @*
@@ -86,7 +97,7 @@
                             <select class="form-select" id="GcParameter" name="Input.DefinitionId">
                                 @foreach (var p in Model.Data.Parameters)
                                 {
-                                    <option value="@p.Id" selected="@(p.Id == Model.Input.DefinitionId)">@p.Name (@L["FirmParams:DataType." + p.DataType])</option>
+                                    <option value="@p.Id" data-type="@p.DataType" selected="@(p.Id == selectedParameter?.Id)">@p.Name (@L["FirmParams:DataType." + p.DataType])</option>
                                 }
                             </select>
                         </div>
@@ -100,8 +111,14 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label" for="GcValue">@L["GrantCriteria:Field.Value"]</label>
-                            <input class="form-control" id="GcValue" name="Input.Value" value="@Model.Input.Value" autocomplete="off" aria-describedby="GcValueHelp" />
+                            <label class="form-label" for="@(isYesNo ? "GcValueYesNo" : "GcValue")" id="GcValueLabel">@L["GrantCriteria:Field.Value"]</label>
+                            <input class="form-control @(isYesNo ? "d-none" : null)" id="GcValue" name="Input.Value" value="@(isYesNo ? null : Model.Input.Value)" autocomplete="off"
+                                   aria-describedby="GcValueHelp" disabled="@isYesNo" data-criterion-value="text" />
+                            <select class="form-select @(isYesNo ? null : "d-none")" id="GcValueYesNo" name="Input.Value" aria-labelledby="GcValueLabel"
+                                    disabled="@(!isYesNo)" data-criterion-value="yesno">
+                                <option value="true" selected="@(isYesNo && Model.Input.Value == "true")">@L["FirmData:Yes"]</option>
+                                <option value="false" selected="@(isYesNo && Model.Input.Value != "true")">@L["FirmData:No"]</option>
+                            </select>
                         </div>
                         <div class="col-12">
                             <div class="form-text mt-0" id="GcValueHelp">@L["GrantCriteria:Field.Value.Help"]</div>
