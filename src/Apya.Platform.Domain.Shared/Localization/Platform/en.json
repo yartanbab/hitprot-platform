@@ -4346,7 +4346,7 @@
     "GrantCriteria:Field.Parameter": "Parameter",
     "GrantCriteria:Field.Operator": "Comparison",
     "GrantCriteria:Field.Value": "Value",
-    "GrantCriteria:Field.Value.Help": "Use a dot as the decimal separator (e.g. 100000 or 0.5). For yes/no enter true or false. For choice parameters enter the option itself.",
+    "GrantCriteria:Field.Value.Help": "Use a dot as the decimal separator (e.g. 100000 or 0.5). For choice parameters enter the option itself.",
     "GrantCriteria:Field.IsEliminating": "Eliminate organisations that do not meet it (otherwise it is only a warning)",
     "GrantCriteria:Eliminating": "Eliminates",
     "GrantCriteria:Advisory": "Warning",
