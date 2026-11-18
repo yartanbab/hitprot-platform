@@ -287,6 +287,67 @@ public class FirmDataExtraction_Tests : PlatformEntityFrameworkCoreTestBase
         list.ShouldHaveSingleItem().DocumentFileId.ShouldBe(result.DocumentFileId);
     }
 
+    [Fact]
+    public async Task Yapay_zeka_hatasi_ayni_belgeyle_yeniden_denenir_ayni_kayit_hazir_olur()
+    {
+        _ai.Respond = (_, _) => throw new BusinessException(PlatformDomainErrorCodes.AiQuotaExceeded);
+        var failed = await ExtractAsync(Report(), "rapor.pdf");
+        failed.Status.ShouldBe(FirmDataExtractionStatus.Hata);
+
+        _ai.Respond = (_, _) => [new("cofinancing_capacity", "250000", 90, 2, "Es finansman kapasitemiz 250000 TL")];
+        var retried = await InTenantAsync(() => Service.RetryAsync(failed.Id));
+
+        retried.Id.ShouldBe(failed.Id);
+        retried.Status.ShouldBe(FirmDataExtractionStatus.Hazir);
+        retried.Error.ShouldBeNull();
+        retried.PageCount.ShouldBe(2);
+        retried.Suggestions.ShouldHaveSingleItem().Page.ShouldBe(2);
+        _ai.Calls.ShouldBe(2);
+        _ai.LastPages!.Select(p => p.Number).ShouldBe(new int?[] { 1, 2 }, "Belge Merkezi'ndeki aynı dosya okunur");
+        var list = await InTenantAsync(() => Service.GetListAsync());
+        list.ShouldHaveSingleItem("yeniden deneme yeni kayıt ya da yeni belge açmaz");
+        list.Single().ConsentedAt.ShouldBe(failed.ConsentedAt, "ilk yüklemedeki aydınlatma onayı geçerlidir");
+        (await ValuesAsync()).ShouldBeEmpty("öneri yine kurum onayını bekler");
+    }
+
+    [Fact]
+    public async Task Yalniz_basarisiz_okuma_yeniden_denenir()
+    {
+        _ai.Respond = (_, _) => [new("cofinancing_capacity", "250000", 90, 2, null)];
+        var ready = await ExtractAsync(Report(), "rapor.pdf");
+        var unreadable = await ExtractAsync(Pdf([], []), "tarama.pdf");
+
+        foreach (var id in new[] { ready.Id, unreadable.Id })
+        {
+            var error = await Should.ThrowAsync<BusinessException>(() => InTenantAsync(() => Service.RetryAsync(id)));
+            error.Code.ShouldBe(PlatformDomainErrorCodes.FirmDataExtractionNotRetryable);
+        }
+        _ai.Calls.ShouldBe(1);
+        (await InTenantAsync(() => Service.GetAsync(ready.Id))).Suggestions.ShouldHaveSingleItem().Status
+            .ShouldBe(FirmDataSuggestionStatus.Beklemede, "hazır okumanın önerileri ezilmez");
+    }
+
+    [Fact]
+    public async Task Belgesi_silinen_okuma_yeniden_denenemez_hatada_kalir()
+    {
+        _ai.Respond = (_, _) => throw new BusinessException(PlatformDomainErrorCodes.AiQuotaExceeded);
+        var failed = await ExtractAsync(Report(), "rapor.pdf");
+        await WithUnitOfWorkAsync(async () =>
+        {
+            using (_currentTenant.Change(_tenantId))
+            {
+                var attachments = GetRequiredService<IRepository<DocumentAttachment, Guid>>();
+                await attachments.DeleteAsync(await attachments.GetAsync(a => a.DocumentFileId == failed.DocumentFileId));
+            }
+        });
+
+        var error = await Should.ThrowAsync<BusinessException>(() => InTenantAsync(() => Service.RetryAsync(failed.Id)));
+
+        error.Code.ShouldBe(PlatformDomainErrorCodes.FirmDataExtractionDocumentMissing);
+        _ai.Calls.ShouldBe(1);
+        (await InTenantAsync(() => Service.GetAsync(failed.Id))).Status.ShouldBe(FirmDataExtractionStatus.Hata);
+    }
+
     private sealed class FakeExtractionAi : IFirmDataExtractionAi
     {
         public Func<IReadOnlyList<FirmDocumentPage>, IReadOnlyList<FirmParameterDefinition>, IReadOnlyList<FirmDataProposal>> Respond { get; set; }

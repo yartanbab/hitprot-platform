@@ -89,6 +89,14 @@ else if (Model.Current is { } current)
             else if (current.Status == FirmDataExtractionStatus.Hata)
             {
                 <div class="alert alert-danger mt-3 mb-0" role="alert">@current.Error</div>
+                @if (Model.CanExtract)
+                {
+                    <form method="post" asp-page-handler="Retry" asp-route-id="@current.Id" class="d-flex justify-content-end mt-2" data-firm-import-retry>
+                        <button type="submit" class="btn btn-outline-primary" data-busy-label="@L["FirmDataImport:Reading"]">
+                            <i class="fa fa-rotate-right me-1" aria-hidden="true"></i>@L["FirmDataImport:Retry"]
+                        </button>
+                    </form>
+                }
             }
             else if (current.Suggestions.Count == 0)
             {

@@ -21,6 +21,12 @@ public interface IFirmDataExtractionAppService : IApplicationService
     /// </summary>
     Task<FirmDataExtractionDto> ExtractAsync(ExtractFirmDataInput input);
 
+    /// <summary>
+    /// Yapay zekâ hatasıyla biten okumayı Belge Merkezi'ndeki aynı belgeyle yeniden dener
+    /// (aynı kayıt; yeni yükleme ve yeni onay istemez).
+    /// </summary>
+    Task<FirmDataExtractionDto> RetryAsync(Guid id);
+
     /// <summary>Kurumun okuttuğu belgeler, yeniden eskiye.</summary>
     Task<List<FirmDataExtractionDto>> GetListAsync();
 
