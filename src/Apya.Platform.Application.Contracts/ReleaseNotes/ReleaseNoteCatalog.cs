@@ -84,6 +84,12 @@ public static class ReleaseNoteCatalog
                 "taşıyabilirsiniz. Aynı adı taşıyan projeler dosyada proje koduyla yazılır."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Proje sayfasından görevleri aktarın",
+                "Proje sayfasının ⋯ menüsündeki Görevler bölümünden projenin bütün görevlerini Excel ya da CSV " +
+                "olarak indirebilir, Excel'den görev içe aktarabilirsiniz. Buradan yüklediğiniz dosyada Proje " +
+                "sütunu boş olan satırlar bu projeye eklenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Eş finansman ve kurum bilgileri uygunluğa giriyor",
                 "Eş finansman isteyen çağrılarda kurumunuzun eş finansman kapasitesi girilmemişse çağrı \"Koşullu\" " +
                 "görünür ve nedeni çağrı sayfasında açıklanır; kapasitenizi Kurumsal Veriler'e girdiğinizde " +
