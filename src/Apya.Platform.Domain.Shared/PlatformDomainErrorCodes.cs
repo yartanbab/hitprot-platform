@@ -448,6 +448,10 @@ public static class PlatformDomainErrorCodes
     /// <summary>Yapay zekâ modülü yüklü değil ya da kurumun paketinde yapay zekâ yok.</summary>
     public const string FirmDataExtractionUnavailable = "Platform:FirmDataExtraction:Unavailable";
     public const string FirmDataSuggestionAlreadyDecided = "Platform:FirmDataExtraction:SuggestionAlreadyDecided";
+    /// <summary>Yalnız yapay zekâ hatasıyla biten okuma yeniden denenir.</summary>
+    public const string FirmDataExtractionNotRetryable = "Platform:FirmDataExtraction:NotRetryable";
+    /// <summary>Yeniden denenecek belge Belge Merkezi'nden silinmiş ya da dosyası yok.</summary>
+    public const string FirmDataExtractionDocumentMissing = "Platform:FirmDataExtraction:DocumentMissing";
 
     // --- İçe / dışa aktarma şablonları ---
     public const string DataTransferTemplateIsSystem = "Platform:DataTransfer:TemplateIsSystem";

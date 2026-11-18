@@ -70,6 +70,19 @@ public class FirmDataExtraction : CreationAuditedAggregateRoot<Guid>, IMultiTena
 
     public int PendingCount => Suggestions.Count(s => s.Status == FirmDataSuggestionStatus.Beklemede);
 
+    /// <summary>
+    /// Yalnız yapay zekâ hatasıyla (kota, sağlayıcı, geçersiz yanıt) biten okuma yeniden denenir.
+    /// Metni olmayan belge yeniden okunsa da değişmez; hazır okumanın kararları ezilmemeli.
+    /// Aynı belge aynı amaçla okunur: ilk yüklemedeki aydınlatma onayı geçerlidir.
+    /// </summary>
+    public void EnsureRetryable()
+    {
+        if (Status != FirmDataExtractionStatus.Hata)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.FirmDataExtractionNotRetryable);
+        }
+    }
+
     public void MarkUnreadable()
     {
         Status = FirmDataExtractionStatus.Okunamadi;

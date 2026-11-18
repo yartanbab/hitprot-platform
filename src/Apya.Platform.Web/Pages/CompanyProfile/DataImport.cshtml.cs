@@ -123,6 +123,25 @@ public class DataImportModel : AbpPageModel
         }
     }
 
+    /// <summary>Yapay zekâ hatasıyla biten okumayı aynı belgeyle yeniden dener; sonuç aynı sayfada görünür.</summary>
+    public async Task<IActionResult> OnPostRetryAsync(Guid id)
+    {
+        if (!await PrepareAsync())
+        {
+            return Page();
+        }
+
+        try
+        {
+            await _extractions.RetryAsync(id);
+        }
+        catch (BusinessException ex)
+        {
+            TempData["FirmDataImportError"] = Localize(ex);
+        }
+        return RedirectToPage(new { id });
+    }
+
     /// <summary>
     /// Öneriyi onaylar. Gönderilen değer önerilenden farklıysa düzenlenmiş değer yazılır.
     /// Çoklu seçimde işaretlenenler JSON dizisine çevrilir (hiçbiri işaretli değilse boş dizi: hata).

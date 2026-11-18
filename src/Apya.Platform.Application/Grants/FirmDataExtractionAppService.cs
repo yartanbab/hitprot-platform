@@ -44,6 +44,7 @@ public class FirmDataExtractionAppService : PlatformAppService, IFirmDataExtract
     private readonly IRepository<FirmProfile, Guid> _profileRepository;
     private readonly IRepository<TenantProfile, Guid> _tenantProfileRepository;
     private readonly IRepository<Document, Guid> _folderRepository;
+    private readonly IRepository<DocumentAttachment, Guid> _attachmentRepository;
     private readonly IDocumentAppService _documentAppService;
     private readonly IUploadedFileRootFolderProvider _rootFolderProvider;
     private readonly FirmDocumentTextReader _textReader;
@@ -56,6 +57,7 @@ public class FirmDataExtractionAppService : PlatformAppService, IFirmDataExtract
         IRepository<FirmProfile, Guid> profileRepository,
         IRepository<TenantProfile, Guid> tenantProfileRepository,
         IRepository<Document, Guid> folderRepository,
+        IRepository<DocumentAttachment, Guid> attachmentRepository,
         IDocumentAppService documentAppService,
         IUploadedFileRootFolderProvider rootFolderProvider,
         FirmDocumentTextReader textReader,
@@ -67,6 +69,7 @@ public class FirmDataExtractionAppService : PlatformAppService, IFirmDataExtract
         _profileRepository = profileRepository;
         _tenantProfileRepository = tenantProfileRepository;
         _folderRepository = folderRepository;
+        _attachmentRepository = attachmentRepository;
         _documentAppService = documentAppService;
         _rootFolderProvider = rootFolderProvider;
         _textReader = textReader;
@@ -96,11 +99,7 @@ public class FirmDataExtractionAppService : PlatformAppService, IFirmDataExtract
         {
             throw new BusinessException(PlatformDomainErrorCodes.FirmDataExtractionFileTypeNotSupported);
         }
-        var ai = LazyServiceProvider.LazyGetService<IFirmDataExtractionAi>();
-        if (ai == null || !await FeatureChecker.IsEnabledAsync(PlatformFeatures.AiAssist))
-        {
-            throw new BusinessException(PlatformDomainErrorCodes.FirmDataExtractionUnavailable);
-        }
+        var ai = await RequireAiAsync();
 
         var attachment = await _documentAppService.AddAttachmentAsync(
             await ResolveFolderAsync(), input.FileName, input.StoredFileName, input.ContentType, input.FileSize);
@@ -111,29 +110,32 @@ public class FirmDataExtractionAppService : PlatformAppService, IFirmDataExtract
             input.FileName, CurrentUser.GetId(), Clock.Now);
         await _extractionRepository.InsertAsync(extraction, autoSave: true);
 
-        var text = ReadText(input.StoredFileName, input.FileName);
-        if (text.IsEmpty)
+        await ProposeAsync(extraction, ReadText(input.StoredFileName, input.FileName), ai);
+
+        await _extractionRepository.UpdateAsync(extraction, autoSave: true);
+        return await MapAsync(extraction, withSuggestions: true);
+    }
+
+    [Authorize(PlatformPermissions.TenantSettings.Default)]
+    [Authorize(PlatformPermissions.Documents.Default)]
+    [Authorize(PlatformPermissions.Documents.Edit)]
+    public virtual async Task<FirmDataExtractionDto> RetryAsync(Guid id)
+    {
+        RequireTenant();
+        var ai = await RequireAiAsync();
+        var extraction = await LoadAsync(id);
+        extraction.EnsureRetryable();
+
+        // Okunan sürümün dosyası; belge silindiyse (yumuşak silme süzgeci) ya da dosya diskte yoksa
+        // kayıt hatada kalır: "metin okunamadı" demek yanıltır.
+        var attachment = await _attachmentRepository.FindAsync(extraction.DocumentAttachmentId);
+        var text = attachment == null ? null : ReadText(attachment.StoredFileName, extraction.FileName);
+        if (text == null)
         {
-            extraction.MarkUnreadable();
+            throw new BusinessException(PlatformDomainErrorCodes.FirmDataExtractionDocumentMissing);
         }
-        else
-        {
-            var candidates = FirmDataExtractionManager.SelectCandidates(
-                await _definitionRepository.GetListAsync(), await OrganizationTypeAsync());
-            try
-            {
-                var proposals = candidates.Count == 0
-                    ? Array.Empty<FirmDataProposal>()
-                    : await ai.ProposeAsync(extraction.Id, text.Pages, candidates);
-                _manager.Complete(extraction, candidates, text.Pages, proposals, text.PageCount, text.IsTruncated);
-            }
-            catch (BusinessException ex)
-            {
-                // Kota, sağlayıcı ya da geçersiz yanıt: kurum nedenini görür, belge yerinde kalır.
-                Logger.LogWarning(ex, "Kurum belgesi yapay zekâyla okunamadı. Okuma: {ExtractionId}", extraction.Id);
-                extraction.MarkFailed(ErrorText(ex));
-            }
-        }
+
+        await ProposeAsync(extraction, text, ai);
 
         await _extractionRepository.UpdateAsync(extraction, autoSave: true);
         return await MapAsync(extraction, withSuggestions: true);
@@ -183,12 +185,49 @@ public class FirmDataExtractionAppService : PlatformAppService, IFirmDataExtract
 
     /* ─────────────────────────── Yardımcılar ─────────────────────────── */
 
-    private FirmDocumentText ReadText(string storedFileName, string fileName)
+    private async Task<IFirmDataExtractionAi> RequireAiAsync()
+    {
+        var ai = LazyServiceProvider.LazyGetService<IFirmDataExtractionAi>();
+        if (ai == null || !await FeatureChecker.IsEnabledAsync(PlatformFeatures.AiAssist))
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.FirmDataExtractionUnavailable);
+        }
+        return ai;
+    }
+
+    /// <summary>Metni yapay zekâya okutur; okunamayan belge ve yapay zekâ hatası kayıttaki durumdur.</summary>
+    private async Task ProposeAsync(FirmDataExtraction extraction, FirmDocumentText? text, IFirmDataExtractionAi ai)
+    {
+        if (text == null || text.IsEmpty)
+        {
+            extraction.MarkUnreadable();
+            return;
+        }
+
+        var candidates = FirmDataExtractionManager.SelectCandidates(
+            await _definitionRepository.GetListAsync(), await OrganizationTypeAsync());
+        try
+        {
+            var proposals = candidates.Count == 0
+                ? Array.Empty<FirmDataProposal>()
+                : await ai.ProposeAsync(extraction.Id, text.Pages, candidates);
+            _manager.Complete(extraction, candidates, text.Pages, proposals, text.PageCount, text.IsTruncated);
+        }
+        catch (BusinessException ex)
+        {
+            // Kota, sağlayıcı ya da geçersiz yanıt: kurum nedenini görür, belge yerinde kalır.
+            Logger.LogWarning(ex, "Kurum belgesi yapay zekâyla okunamadı. Okuma: {ExtractionId}", extraction.Id);
+            extraction.MarkFailed(ErrorText(ex));
+        }
+    }
+
+    /// <summary>Yüklenen dosyanın metni; dosya diskte yoksa null.</summary>
+    private FirmDocumentText? ReadText(string storedFileName, string fileName)
     {
         var path = _rootFolderProvider.ResolveSafePath(storedFileName);
         if (path == null || !File.Exists(path))
         {
-            return new FirmDocumentText(Array.Empty<FirmDocumentPage>(), null, false);
+            return null;
         }
         using var stream = File.OpenRead(path);
         return _textReader.Read(stream, fileName);
