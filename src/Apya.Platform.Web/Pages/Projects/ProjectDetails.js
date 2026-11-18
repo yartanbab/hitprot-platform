@@ -793,6 +793,26 @@ $(function () {
         reloadAll();
     });
 
+    // ⋯ menüsündeki görev aktarımı: /Tasks ekranının uçları, bu projeyle sınırlı.
+    // Menü yalnız dış tıkla kapanıyor (auto-close="outside"); indirme ya da pencere açılırken asılı kalmasın.
+    $('#menu-export-tasks').on('click', function () {
+        var params = new URLSearchParams({ handler: 'Excel', projectId: projectId });
+        if (window.apyaExportFormat) { params.append('format', window.apyaExportFormat); }
+        $('#btn-project-menu').dropdown('hide');
+        window.location.href = abp.appPath + 'Tasks?' + params.toString();
+    });
+
+    // İçe aktarma pencereyi kendisi kapatmaz; kayıt olduysa kapanınca liste tazelenir.
+    var importModal = new abp.ModalManager(abp.appPath + 'Tasks/ImportModal');
+    var tasksImported = false;
+    importModal.onOpen(function () { tasksImported = false; });
+    importModal.onClose(function () { if (tasksImported) { reloadAll(); } });
+    $(document).on('apya:excel-imported', function () { tasksImported = true; });
+    $('#menu-import-tasks').on('click', function () {
+        $('#btn-project-menu').dropdown('hide');
+        importModal.open({ projectId: projectId });
+    });
+
     // editModal.onResult ortak kanban modülü tarafından bağlanır (load + onChanged
     // → board + datatable yenilenir). Burada tekrar bağlamıyoruz.
 

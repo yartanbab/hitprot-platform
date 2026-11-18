@@ -3,6 +3,11 @@
 @inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<Apya.Platform.Localization.PlatformResource> L
 @{
     Layout = null;
+    var hint = L["Import:Hint:Tasks"].Value;
+    if (Model.ProjectId != null)
+    {
+        hint += " " + L["Import:Hint:TasksInProject"].Value;
+    }
 }
 
-<partial name="_ExcelImportModal" model="@(new Apya.Platform.Web.Import.ExcelImportModalOptions(L["Import:Title:Tasks"].Value, L["Import:Hint:Tasks"].Value))" />
+<partial name="_ExcelImportModal" model="@(new Apya.Platform.Web.Import.ExcelImportModalOptions(L["Import:Title:Tasks"].Value, hint))" />

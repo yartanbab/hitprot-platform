@@ -59,10 +59,10 @@ public class TaskImport_Tests : PlatformWebTestBase
         return stream.ToArray();
     }
 
-    private async Task<JsonElement> PostAsync(string handler, byte[] file)
+    private async Task<JsonElement> PostAsync(string handler, byte[] file, string query = "")
     {
         var doc = new HtmlDocument();
-        doc.LoadHtml(await GetResponseAsStringAsync(Url));
+        doc.LoadHtml(await GetResponseAsStringAsync(Url + query));
         var token = doc.DocumentNode.SelectSingleNode("//input[@name='__RequestVerificationToken']");
         token.ShouldNotBeNull("pencerede antiforgery jetonu yok");
 
@@ -72,7 +72,7 @@ public class TaskImport_Tests : PlatformWebTestBase
         content.Add(part, "file", "gorevler.xlsx");
         content.Add(new StringContent(token.GetAttributeValue("value", "")), "__RequestVerificationToken");
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, Url + "?handler=" + handler) { Content = content };
+        using var request = new HttpRequestMessage(HttpMethod.Post, Url + (query.Length > 0 ? query + "&" : "?") + "handler=" + handler) { Content = content };
         request.Headers.Add("X-Requested-With", "XMLHttpRequest");
         var response = await Client.SendAsync(request);
         var body = await response.Content.ReadAsStringAsync();
@@ -122,5 +122,33 @@ public class TaskImport_Tests : PlatformWebTestBase
         rows[1].GetProperty("errors").GetArrayLength().ShouldBe(1);
 
         (await PostAsync("Import", file)).GetProperty("done").GetBoolean().ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Proje_sayfasindan_acilinca_proje_hucresi_bos_satir_o_projeye_eklenir()
+    {
+        var project = await SeedProjectAsync();
+        var other = new Project(Guid.NewGuid(), null, null, "Diğer proje " + _code, "OTH-" + _code, "");
+        using (var seed = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            await GetRequiredService<IRepository<Project, Guid>>().InsertAsync(other, autoSave: true);
+            await seed.CompleteAsync();
+        }
+
+        var query = "?projectId=" + project.Id;
+        var modal = HtmlEntity.DeEntitize(await GetResponseAsStringAsync(Url + query));
+        modal.ShouldContain("Proje sütunu boş satırlar bu projeye eklenir.");
+
+        var file = await FilledTemplateAsync(
+            ["Görev " + _code + " bos", null, null, null, null, null, null, null],
+            ["Görev " + _code + " dolu", other.Code, null, null, null, null, null, null]);
+
+        var import = await PostAsync("Import", file, query);
+        import.GetProperty("done").GetBoolean().ShouldBeTrue(import.GetProperty("message").GetString());
+
+        using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        var repo = GetRequiredService<IRepository<TaskItem, Guid>>();
+        (await repo.SingleAsync(t => t.Title == "Görev " + _code + " bos")).ProjectId.ShouldBe(project.Id);
+        (await repo.SingleAsync(t => t.Title == "Görev " + _code + " dolu")).ProjectId.ShouldBe(other.Id);
     }
 }

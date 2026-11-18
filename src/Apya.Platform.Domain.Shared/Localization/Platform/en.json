@@ -771,6 +771,7 @@
     "Import:Title:Tasks": "Import tasks from Excel",
     "Import:Hint:Finance": "If currency is empty, the cash account's currency is used.",
     "Import:Hint:Tasks": "If start is empty, today is used. Separate tags with commas; missing tags are created. The assignee can be written as full name, user name or e-mail.",
+    "Import:Hint:TasksInProject": "Rows with an empty project column are added to this project.",
     "Import:Title:Projects": "Import projects from Excel",
     "Import:Hint:Projects": "If the code is empty the next code is assigned; a code already used by another project in this organization rejects the row. Status and task counts are not imported: projects open as \"Planning\". If the category is empty, \"Other / General\" is used.",
     "Import:Title:Invoices": "Import invoices from Excel",
