@@ -104,6 +104,11 @@ public static class ReleaseNoteCatalog
                 "güncellenir."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Başarısız belge okumasını yeniden deneyin",
+                "Belgeden doldururken okuma başarısız olursa belgeyi yeniden yüklemeniz gerekmez: okumanın " +
+                "sayfasındaki \"Yeniden dene\" aynı belgeyi tekrar okutur ve öneriler aynı sayfada çıkar."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Gider kaydında kasa isteğe bağlı",
                 "Gider girerken kasa seçmek zorunlu değil. Kasa seçmezseniz gider projenin bütçesine ve raporlara yine " +
                 "işlenir ama hiçbir kasanın bakiyesini düşürmez; kasayı sonradan seçebilirsiniz. Gider penceresi " +
