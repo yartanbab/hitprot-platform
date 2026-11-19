@@ -97,10 +97,16 @@ public class UniqueUserNameChecker : DomainService
     /// alınmışsa "sukru.oz2", "sukru.oz3"… Ad ABP'nin varsayılan izinli karakterleriyle sınırlıdır.
     /// </summary>
     [UnitOfWork]
-    public virtual async Task<string> SuggestFromEmailAsync(string email)
+    public virtual Task<string> SuggestFromEmailAsync(string email)
     {
-        var baseName = ToUserNameBase(email);
+        var baseName = ToSlug((email ?? string.Empty).Split('@')[0]);
+        return SuggestAvailableAsync(baseName.Length == 0 ? FallbackUserName : baseName);
+    }
 
+    /// <summary><paramref name="baseName"/> boştaysa kendisi; değilse "ad2", "ad3"… ilk boştaki.</summary>
+    [UnitOfWork]
+    public virtual async Task<string> SuggestAvailableAsync(string baseName)
+    {
         var candidate = baseName;
         for (var suffix = 2; (await FindOwnerTenantIdsAsync(candidate)).Count > 0; suffix++)
         {
@@ -110,12 +116,11 @@ public class UniqueUserNameChecker : DomainService
         return candidate;
     }
 
-    private static string ToUserNameBase(string email)
+    /// <summary>Küçük harf, Türkçe harfler sadeleşir, yalnız <c>[a-z0-9._-]</c> kalır: "Marmara Ltd." → "marmaraltd".</summary>
+    public static string ToSlug(string text)
     {
-        var localPart = (email ?? string.Empty).Split('@')[0];
-
-        var builder = new StringBuilder(localPart.Length);
-        foreach (var c in localPart.Trim().ToLowerInvariant())
+        var builder = new StringBuilder(text.Length);
+        foreach (var c in text.Trim().ToLowerInvariant())
         {
             var mapped = c switch
             {
@@ -131,7 +136,6 @@ public class UniqueUserNameChecker : DomainService
             }
         }
 
-        var result = builder.ToString().Trim('.', '-', '_');
-        return result.Length == 0 ? FallbackUserName : result;
+        return builder.ToString().Trim('.', '-', '_');
     }
 }
