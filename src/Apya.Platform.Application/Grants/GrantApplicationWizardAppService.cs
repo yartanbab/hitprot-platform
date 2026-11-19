@@ -328,11 +328,15 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         // Son başvuru tarihi geçmiş çağrı da kapalı sayılır: otomatik kapanış işçisi çalışana
         // kadar durum "Açık" kalır ve o aralıkta gönderim kabul ediliyordu. İşçi çalıştığında
         // firmaya giden "başvurunuz gönderilmeden kaldı" bildirimi o gönderimi yalanlardı.
-        if (call != null && (call.Status == GrantCallStatus.Kapandi || call.IsPastDeadline(Clock.Now)))
+        if (call != null && IsClosedForSubmission(call))
         {
             throw new BusinessException(PlatformDomainErrorCodes.GrantApplicationCallClosed);
         }
     }
+
+    /// <summary>Gönderim kapısı ile ekrana giden <c>IsCallClosed</c> bayrağı aynı koşulu okur.</summary>
+    private bool IsClosedForSubmission(GrantCall call)
+        => call.Status == GrantCallStatus.Kapandi || call.IsPastDeadline(Clock.Now);
 
     private async Task AnnounceSubmissionAsync(GrantApplication application)
     {
@@ -669,6 +673,7 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
             DaysRemaining = call.Deadline.HasValue
                 ? (int)(call.Deadline.Value.Date - Clock.Now.Date).TotalDays
                 : null,
+            IsCallClosed = IsClosedForSubmission(call),
             // Tavan notu TL bütçeye göre okunur; döviz tavanda gösterilmez.
             MaxAmount = grant.TryMaxAmount,
             SupportRatePercent = grant.SupportRatePercent,

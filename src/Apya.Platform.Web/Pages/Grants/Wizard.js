@@ -30,6 +30,8 @@ $(function () {
     // Yazma kapalı mı: başvuru gönderilmiş YA DA görüntüleyenin yazma izni yok. İkisi ayrı
     // bayraktır — "gönderildi" rozeti yalnız isReadOnly'ye, mesajlaşma yalnız izne bakar.
     function locked() { return !!model.isReadOnly || model.canWrite === false; }
+    // Kapanmış çağrıda alanlar yazılabilir kalır (yazılanlar saklanır); kapanan yalnız gönderimdir.
+    function submitBlocked() { return locked() || !!model.isCallClosed; }
     function money(v) { return (v || 0).toLocaleString('tr-TR', { maximumFractionDigits: 0 }); }
     function initials(n) {
         return (n || '?').trim().split(/\s+/).slice(0, 2)
@@ -185,7 +187,7 @@ $(function () {
                 ? l('Grants:Wizard:Submit')
                 : l('Grants:Wizard:Next'))
             // Son adımda düğme "Gönder"dir; izinsiz kullanıcı adımlar arasında gezebilmeli.
-            .prop('disabled', model.currentStep === model.stepCount ? locked() : !!model.isReadOnly);
+            .prop('disabled', model.currentStep === model.stepCount ? submitBlocked() : !!model.isReadOnly);
         $('#HandOverBtn')
             .text(model.viewerRole === 0 ? l('Grants:Wizard:HandOverToConsultant') : l('Grants:Wizard:HandOverToFirm'))
             .prop('disabled', locked());
@@ -254,9 +256,9 @@ $(function () {
                 cancelButtonText: l('Grants:Wizard:SubmitConfirm:Cancel')
             });
         }).then(function (res) {
-            $btn.prop('disabled', locked());
+            $btn.prop('disabled', submitBlocked());
             if (res && res.isConfirmed) { submitNow(); }
-        }, function () { $btn.prop('disabled', locked()); });
+        }, function () { $btn.prop('disabled', submitBlocked()); });
     }
 
     function submitNow() {
@@ -524,8 +526,13 @@ $(function () {
             (ready ? 'fa-circle-check text-success' : 'fa-circle-exclamation text-warning') +
             '"></i>' + esc(l('Grants:Wizard:Completion')) + ' %' + model.completionPercent + '</div>');
 
-        $('#SubmitWarning').toggleClass('d-none', ready || locked());
-        $('#SubmitWarningText').text(l('Grants:Wizard:IncompleteWarning', items.length));
+        // Gönderilmemiş başvurunun çağrısı kapandıysa "eksik alan" uyarısı anlamsızdır: gönderim
+        // zaten yok. Yerine sunucunun ret metni satır içinde durur (hata penceresini beklemeden).
+        var closed = !!model.isCallClosed && !model.isReadOnly;
+        $('#SubmitWarning').toggleClass('d-none', !closed && (ready || locked()));
+        $('#SubmitWarningText').text(closed
+            ? l('Platform:Grant:ApplicationCallClosed')
+            : l('Grants:Wizard:IncompleteWarning', items.length));
         $('#SubmittedChip').toggleClass('d-none', !model.isReadOnly)
             .text(model.submittedAt ? l('Grants:Wizard:SubmittedOn',
                 new Date(model.submittedAt).toLocaleDateString('tr-TR')) : '');
@@ -613,8 +620,11 @@ $(function () {
         $('#GrantMeta').text([model.issuer, model.period,
             model.deadline ? l('Grants:Wizard:DeadlineOn', new Date(model.deadline).toLocaleDateString('tr-TR')) : null]
             .filter(Boolean).join(' · '));
-        $('#DeadlineChip').toggleClass('d-none', model.daysRemaining == null)
-            .text(l('Grants:Feed:Card:DaysLeft', model.daysRemaining));
+        // Kapanmış çağrıda gün sayısı basılmaz: tarihi geçmişse "-49 gün kaldı" çıkıyordu.
+        $('#DeadlineChip').toggleClass('d-none', !model.isCallClosed && model.daysRemaining == null)
+            .text(model.isCallClosed
+                ? l('Grants:Journey:State:CallClosed')
+                : l('Grants:Feed:Card:DaysLeft', model.daysRemaining));
         $('#CompletionBar').css('width', model.completionPercent + '%');
         $('#CompletionValue').text('%' + model.completionPercent);
 
