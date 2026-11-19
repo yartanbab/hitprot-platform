@@ -218,8 +218,10 @@ public class ImpersonationTargetFinder_Tests : PlatformEntityFrameworkCoreTestBa
 
     private async Task<IdentityUser> CreateUserAsync(Guid tenantId, string userName, string? roleName)
     {
+        // Depoya doğrudan yazılır: testler kuraldan ÖNCE açılmış kiracıları ("admin" adlı yönetici,
+        // kiracılar arası aynı adlar) canlandırır; UserManager artık o adları reddeder.
         var user = new IdentityUser(Guid.NewGuid(), userName, $"{userName}-{Guid.NewGuid():N}@apya.test", tenantId);
-        (await _userManager.CreateAsync(user)).Succeeded.ShouldBeTrue();
+        await GetRequiredService<Volo.Abp.Domain.Repositories.IRepository<IdentityUser, Guid>>().InsertAsync(user, autoSave: true);
         if (roleName != null)
         {
             (await _userManager.AddToRoleAsync(user, roleName)).Succeeded.ShouldBeTrue();

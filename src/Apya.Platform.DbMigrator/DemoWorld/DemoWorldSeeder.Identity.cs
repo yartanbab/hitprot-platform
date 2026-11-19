@@ -244,9 +244,13 @@ public partial class DemoWorldSeeder
     {
         var person = DemoWorldData.People[personIndex % DemoWorldData.People.Length];
 
+        // Kullanıcı adı sistem genelinde tekil (GlobalUniqueUserNameValidator): her kiracıda
+        // "ceo" açılamaz. Kiracıda ad kiracı kısa adıyla genişler ("ceo.marmara"); e-posta aynı kalır.
+        var uniqueUserName = tenantId == null ? userName : $"{userName}.{slug}";
+
         var user = new IdentityUser(
             _guid.Create(),
-            userName,
+            uniqueUserName,
             $"{userName}@{slug}.apya.demo",
             tenantId)
         {

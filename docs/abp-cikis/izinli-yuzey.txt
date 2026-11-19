@@ -84,6 +84,7 @@ Volo.Abp.Http.Client
 Volo.Abp.Http.Client.IdentityModel
 Volo.Abp.Identity
 Volo.Abp.Identity.EntityFrameworkCore
+Volo.Abp.Identity.Localization
 Volo.Abp.Identity.Web
 Volo.Abp.Json
 Volo.Abp.Linq

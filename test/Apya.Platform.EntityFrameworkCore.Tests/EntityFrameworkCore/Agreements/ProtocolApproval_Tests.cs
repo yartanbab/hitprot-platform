@@ -354,8 +354,8 @@ public class ProtocolApproval_Tests : PlatformEntityFrameworkCoreTestBase
             {
                 var admin = await _userManager.FindByEmailAsync(request.Email);
                 admin.ShouldNotBeNull();
-                // Kiracıya geçiş yöneticiyi bu adla arar; değişmemeli.
-                admin.UserName.ShouldBe("admin");
+                // Ad sistem genelinde tekil: "admin" değil, e-postanın @ öncesi.
+                admin.UserName.ShouldStartWith(request.Email.Split('@')[0]);
                 admin.Name.ShouldBe("Ayşe");
                 admin.Surname.ShouldBe("Yılmaz");
                 // Boşluklar atılır: ABP telefon kolonu 16 karakter, biçimli hâli sığmazdı.

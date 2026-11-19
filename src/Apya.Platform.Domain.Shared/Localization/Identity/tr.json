@@ -1,0 +1,6 @@
+{
+  "culture": "tr",
+  "texts": {
+    "Volo.Abp.Identity:DuplicateUserName": "Bu kullanıcı adı kullanılamaz."
+  }
+}

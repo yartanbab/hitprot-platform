@@ -42,7 +42,8 @@ public class TenantUserPassword_Tests : PlatformEntityFrameworkCoreTestBase
 
         // Yeni kurulan hesapta tek kullanıcı vardır: tohumlanan yönetici.
         var admin = users.ShouldHaveSingleItem();
-        admin.UserName.ShouldBe("admin");
+        // Ad sistem genelinde tekil: "admin" değil, e-postanın @ öncesi ("sifre-<guid>").
+        admin.UserName.ShouldStartWith("sifre-");
         admin.Email.ShouldNotBeNullOrWhiteSpace();
         admin.DisplayName.ShouldNotBeNullOrWhiteSpace();
     }

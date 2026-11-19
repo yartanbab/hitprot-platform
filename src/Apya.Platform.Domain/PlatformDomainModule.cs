@@ -74,6 +74,11 @@ public class PlatformDomainModule : AbpModule
             ServiceDescriptor.Scoped<IdentityUserManager>(
                 sp => (IdentityUserManager)sp.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<IdentityUser>>()));
 
+        // Kullanıcı adı host + bütün kiracılarda tekil. Identity'nin kendi doğrulayıcısı yalnız
+        // aynı kiracıya bakar; bu, ona EK olarak çalışır. Bkz. GlobalUniqueUserNameValidator.
+        context.Services.TryAddEnumerable(
+            ServiceDescriptor.Scoped<Microsoft.AspNetCore.Identity.IUserValidator<IdentityUser>, Identity.GlobalUniqueUserNameValidator>());
+
         // ABP 10.0.2'nin Scriban motoru Scriban 6.x'e derlenmiş; Scriban 7'de render anında TypeLoadException
         // verir ve ABP'nin tüm e-posta şablonları (şifre sıfırlama, e-posta doğrulama) çalışmaz. "Scriban" motor
         // adı Scriban 7'ye derlenmiş kendi motorumuza yönlendirilir; ABP'ninki hiç örneklenmez.
