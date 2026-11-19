@@ -8,6 +8,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
+using Volo.Abp.TenantManagement;
 
 namespace Apya.Platform.Accounts;
 
@@ -26,12 +27,15 @@ public class LoginTenantFinder : DomainService
     private readonly IRepository<IdentityUser, Guid> _userRepository;
     private readonly ILookupNormalizer _lookupNormalizer;
     private readonly IDataFilter<IMultiTenant> _multiTenantFilter;
+    private readonly ITenantRepository _tenantRepository;
 
     public LoginTenantFinder(
         IRepository<IdentityUser, Guid> userRepository,
         ILookupNormalizer lookupNormalizer,
-        IDataFilter<IMultiTenant> multiTenantFilter)
+        IDataFilter<IMultiTenant> multiTenantFilter,
+        ITenantRepository tenantRepository)
     {
+        _tenantRepository = tenantRepository;
         _userRepository = userRepository;
         _lookupNormalizer = lookupNormalizer;
         _multiTenantFilter = multiTenantFilter;
@@ -66,6 +70,21 @@ public class LoginTenantFinder : DomainService
                              || u.NormalizedEmail == normalizedEmail)
                     .Select(u => u.TenantId)
                     .Distinct());
+
+            // Kiracı silinince kullanıcıları AbpUsers'ta kalır. Aday sayılırlarsa şifre
+            // deneme kotasını doldurup gerçek kiracıyı sıranın dışına iterler; şifre
+            // onlarda tutarsa da giriş var olmayan bir kiracıya yönlenip sessizce düşer.
+            // Kiracı kataloğu yumuşak silme süzgeciyle okunur: silinmiş kiracı listede yoktur.
+            if (tenantIds.Any(id => id.HasValue))
+            {
+                var liveTenantIds = (await _tenantRepository.GetListAsync())
+                    .Select(t => t.Id)
+                    .ToHashSet();
+
+                tenantIds = tenantIds
+                    .Where(id => !id.HasValue || liveTenantIds.Contains(id.Value))
+                    .ToList();
+            }
 
             // Sıra deterministik olsun (birden fazla eşleşmede hep aynı kiracı önce
             // denensin); host (null) en başta kalır ki mevcut host girişi bozulmasın.
