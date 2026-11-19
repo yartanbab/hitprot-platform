@@ -4,6 +4,7 @@ using Volo.Abp.AuditLogging;
 using Volo.Abp.BackgroundJobs;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
+using Volo.Abp.Identity.Localization;
 using Volo.Abp.Localization;
 using Volo.Abp.Localization.ExceptionHandling;
 using Volo.Abp.Modularity;
@@ -72,6 +73,13 @@ public class PlatformDomainSharedModule : AbpModule
             options.Resources
                 .Get<AbpValidationResource>()
                 .AddVirtualJson("/Localization/Validation");
+
+            // Kullanıcı adı çakışması: ABP'nin "'x' kullanıcı adı zaten alınmış." metni yerine
+            // "Bu kullanıcı adı kullanılamaz." Ad başka bir kiracıda da olsa aynı mesaj çıkar;
+            // ABP kullanıcı ekranları kendi kaynaklarını okuduğu için ezme orada yapılır.
+            options.Resources
+                .Get<IdentityResource>()
+                .AddVirtualJson("/Localization/Identity");
         });
 
         Configure<AbpExceptionLocalizationOptions>(options =>

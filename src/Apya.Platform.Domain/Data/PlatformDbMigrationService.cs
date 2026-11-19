@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Apya.Platform.Identity;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
@@ -23,17 +24,20 @@ public class PlatformDbMigrationService : ITransientDependency
     private readonly IEnumerable<IPlatformDbSchemaMigrator> _dbSchemaMigrators;
     private readonly ITenantRepository _tenantRepository;
     private readonly ICurrentTenant _currentTenant;
+    private readonly DuplicateUserNameRenamer _duplicateUserNameRenamer;
 
     public PlatformDbMigrationService(
         IDataSeeder dataSeeder,
         IEnumerable<IPlatformDbSchemaMigrator> dbSchemaMigrators,
         ITenantRepository tenantRepository,
-        ICurrentTenant currentTenant)
+        ICurrentTenant currentTenant,
+        DuplicateUserNameRenamer duplicateUserNameRenamer)
     {
         _dataSeeder = dataSeeder;
         _dbSchemaMigrators = dbSchemaMigrators;
         _tenantRepository = tenantRepository;
         _currentTenant = currentTenant;
+        _duplicateUserNameRenamer = duplicateUserNameRenamer;
 
         Logger = NullLogger<PlatformDbMigrationService>.Instance;
     }
@@ -80,6 +84,9 @@ public class PlatformDbMigrationService : ITransientDependency
 
             Logger.LogInformation("Successfully completed {TenantName} tenant database migrations.", tenant.Name);
         }
+
+        var renamedUsers = await _duplicateUserNameRenamer.RenameAsync();
+        Logger.LogInformation("Duplicate user names resolved: {Count} user(s) renamed.", renamedUsers);
 
         Logger.LogInformation("Successfully completed all database migrations.");
         Logger.LogInformation("You can safely end this process...");

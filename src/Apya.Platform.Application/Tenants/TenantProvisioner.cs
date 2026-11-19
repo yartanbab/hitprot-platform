@@ -159,8 +159,8 @@ public class TenantProvisioner : ITransientDependency
 
     /// <summary>
     /// Tohumlanan yöneticiye ad/soyad/telefon yazar; menüde "admin" yerine kişinin adı görünür
-    /// ve "Hesabım"da düzenlenebilir. Kullanıcı adı ("admin") DEĞİŞMEZ — kiracıya geçiş
-    /// yöneticiyi o adla arar.
+    /// ve "Hesabım"da düzenlenebilir. Kullanıcı adına dokunulmaz: tohumlama onu e-postadan
+    /// tekil olarak üretir (bkz. ApyaIdentityDataSeedContributor).
     ///
     /// <para>🔴 ABP kolonları talep alanlarından DAR (ad/soyad 64, telefon 16). Taşan değer
     /// kırpılmazsa SQL taşma hatası tüm kurulumu geri alır; hesap bir görünüm ayrıntısı
