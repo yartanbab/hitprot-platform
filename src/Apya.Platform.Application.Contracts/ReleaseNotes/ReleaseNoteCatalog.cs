@@ -104,6 +104,15 @@ public static class ReleaseNoteCatalog
                 "güncellenir."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hibe önerileri kurum türünüze göre",
+                "Hibe ekranı kurum türünüzün başvuramayacağı programları artık önermez: örneğin bir derneğe yalnız " +
+                "şirketlerin başvurabildiği KOSGEB destekleri, hiçbir kuruma da yalnız bireylerin, okulların, " +
+                "üniversitelerin ya da kamu kurumlarının başvurabildiği programlar önerilmez. Programın hangi kurum " +
+                "türlerine açık olduğu çağrı sayfasındaki uygunluk tablosunda \"Kurum türü\" satırında görünür. Kurum " +
+                "türünüz bilinmiyorsa program elenmez, \"Koşullu\" görünür; türünüzü Hibe ekranındaki kurum profilinize " +
+                "kaydettiğinizde değerlendirme güncellenir."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Başarısız belge okumasını yeniden deneyin",
                 "Belgeden doldururken okuma başarısız olursa belgeyi yeniden yüklemeniz gerekmez: okumanın " +
                 "sayfasındaki \"Yeniden dene\" aynı belgeyi tekrar okutur ve öneriler aynı sayfada çıkar."),
