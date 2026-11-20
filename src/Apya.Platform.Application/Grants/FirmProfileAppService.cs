@@ -174,6 +174,8 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
     {
         profile.Type = input.Type;
         profile.FoundedOn = input.FoundedOn;
+        // Proje deneyimi iki türde de ortak: tür değişince korunur.
+        profile.ProjectExperience = input.ProjectExperience;
 
         if (input.Type.IsNgo())
         {
@@ -188,7 +190,6 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
             profile.TaxNumber = input.TaxNumber?.Trim();
             profile.TaxOffice = input.TaxOffice?.Trim();
             profile.ProfessionalStaffBand = input.ProfessionalStaffBand;
-            profile.ProjectExperience = input.ProjectExperience;
         }
         else
         {
@@ -203,7 +204,6 @@ public class FirmProfileAppService : ApplicationService, IFirmProfileAppService
             profile.TaxNumber = null;
             profile.TaxOffice = null;
             profile.ProfessionalStaffBand = null;
-            profile.ProjectExperience = null;
         }
     }
 

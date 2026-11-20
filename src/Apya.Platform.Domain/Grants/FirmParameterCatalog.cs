@@ -80,7 +80,7 @@ public static class FirmParameterCatalog
         new(14, "ngo_staff_band", "Ücretli ekip büyüklüğü", Select, Kapasite, Onerilen, YalnizStk, Eleme, Elle,
             "Asgari personel şartı olan programlarda uygunluk ücretli ekibinizin büyüklüğüyle ölçülür.",
             Key: FirmParameterSystemKey.StkEkipBandi, ValidityMonths: 12),
-        new(15, "ngo_project_experience", "Proje deneyimi", Select, Deneyim, Onerilen, YalnizStk, Kullanilmaz, Elle,
+        new(15, "ngo_project_experience", "Proje deneyimi", Select, Deneyim, Onerilen, Tumu, Kullanilmaz, Elle,
             "Bugüne kadar yürüttüğünüz proje sayısı, deneyim arayan programlarda değerlendirmeye girer.",
             Key: FirmParameterSystemKey.StkProjeDeneyimi),
         new(16, "typical_project_budget", "Tipik proje bütçesi", Money, Deneyim, Opsiyonel, Tumu, Skor, Hesap,

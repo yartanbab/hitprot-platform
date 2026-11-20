@@ -80,6 +80,22 @@ public class GrantFirmProfileEditorScript_Tests
     }
 
     /// <summary>
+    /// Proje deneyimi iki türde de ortak: tür gruplarından (data-org-group) ÖNCEKİ ortak satırda
+    /// durur, şirket seçiliyken gizlenmez.
+    /// </summary>
+    [Fact]
+    public void Proje_deneyimi_tur_gruplarinin_disinda_ortak_satirda()
+    {
+        var markup = Markup();
+
+        Count(markup, "id=\"ProfileExperience\"").ShouldBe(1);
+        ShouldAppearInOrder(markup,
+            "id=\"ProfileOrgType\"",
+            "id=\"ProfileExperience\"",
+            "data-org-group=\"company\"");
+    }
+
+    /// <summary>
     /// Kilit istek BAŞINDA konur (kayıt sonrası yeniden yükleme sürerken girilen değer geç yanıtla
     /// ezilmesin), yalnız son isteğin başarılı profil okuması değerler yazıldıktan SONRA açar.
     /// Akış düşse de profil okunur; iki aşamanın da hata dalı Tekrar dene basar.
