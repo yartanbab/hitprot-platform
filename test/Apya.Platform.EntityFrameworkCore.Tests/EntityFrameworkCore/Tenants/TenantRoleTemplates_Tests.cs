@@ -127,6 +127,12 @@ public class TenantRoleTemplates_Tests : PlatformEntityFrameworkCoreTestBase
         grants.ShouldNotContain(PlatformPermissions.Grants.ManageApplications);
         grants.ShouldNotContain(PlatformPermissions.Projects.ManageBudget);
         grants.ShouldNotContain(PlatformPermissions.TenantSettings.Default);
+
+        // Aktarım: gördüğünü dışa aktarır; içe aktaramaz, şablon değiştiremez.
+        grants.ShouldContain(PlatformPermissions.DataTransfer.Default);
+        grants.ShouldContain(PlatformPermissions.DataTransfer.Export);
+        grants.ShouldNotContain(PlatformPermissions.DataTransfer.Import);
+        grants.ShouldNotContain(PlatformPermissions.DataTransfer.ManageTemplates);
     }
 
     [Fact]
@@ -146,6 +152,10 @@ public class TenantRoleTemplates_Tests : PlatformEntityFrameworkCoreTestBase
         grants.ShouldNotContain(PlatformPermissions.Projects.Edit);
         grants.ShouldNotContain(PlatformPermissions.Tasks.Create);
         grants.ShouldNotContain(PlatformPermissions.Grants.Default);
+
+        grants.ShouldContain(PlatformPermissions.DataTransfer.Import);
+        grants.ShouldContain(PlatformPermissions.DataTransfer.ManageTemplates);
+        grants.ShouldNotContain(PlatformPermissions.DataTransfer.ManageAccess);
     }
 
     [Fact]
@@ -166,6 +176,10 @@ public class TenantRoleTemplates_Tests : PlatformEntityFrameworkCoreTestBase
         grants.ShouldNotContain(PlatformPermissions.CashAccounts.Default);
         // Host'a özel izin kiracı rolüne yazılmaz.
         grants.ShouldNotContain(PlatformPermissions.Grants.Edit);
+        grants.ShouldNotContain(PlatformPermissions.DataTransfer.ManageAccess);
+
+        grants.ShouldContain(PlatformPermissions.DataTransfer.Export);
+        grants.ShouldContain(PlatformPermissions.DataTransfer.Import);
     }
 
     /// <summary>

@@ -426,6 +426,12 @@ public static class PlatformSettings
         /// Telafi BİR KEZ koşar: bir rolden bilerek kaldırılan izin sonraki yayında geri gelmemeli.
         /// </summary>
         public const string DataTransferPermissionsGranted = Prefix + ".Backfills.DataTransferPermissionsGranted";
+
+        /// <summary>
+        /// Dokümanlar'ın altı alt izni, bu izinlerden önce kurulan kiracıların yönetici rolüne
+        /// verildi mi. Telafi BİR KEZ koşar: bilerek kaldırılan izin sonraki yayında geri gelmemeli.
+        /// </summary>
+        public const string DocumentsTenantPermissionsGranted = Prefix + ".Backfills.DocumentsTenantPermissionsGranted";
     }
 
     /// <summary>İçe / dışa aktarma — host (Global) seviyesinde.</summary>

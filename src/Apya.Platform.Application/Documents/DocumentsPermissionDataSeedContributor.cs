@@ -1,15 +1,21 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.Permissions;
+using Apya.Platform.Settings;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
+using Volo.Abp.MultiTenancy;
 using Volo.Abp.PermissionManagement;
+using Volo.Abp.SettingManagement;
+using Volo.Abp.TenantManagement;
 
 namespace Apya.Platform.Documents;
 
 /// <summary>
-/// Dokümanlar modülünün yeni alt izinlerini HOST'un "admin" rolüne verir.
+/// Dokümanlar modülünün yeni alt izinlerini HOST'un "admin" rolüne, bir kez de kurulu kiracıların
+/// yönetici rolüne (<see cref="BackfillTenantsOnceAsync"/>) verir.
 ///
 /// Neden gerekli: ABP yeni izinleri var olan rollere OTOMATİK vermez — izin yalnız rol ilk
 /// oluşturulurken seed edilir. Bu seeder olmadan, kurulu bir sistemde uygunluk yönetimi, rapor/teslim
@@ -31,15 +37,37 @@ namespace Apya.Platform.Documents;
 /// </summary>
 public class DocumentsPermissionDataSeedContributor : IDataSeedContributor, ITransientDependency
 {
+    private static readonly string[] SubPermissions =
+    {
+        PlatformPermissions.Documents.ManageMeta,
+        PlatformPermissions.Documents.BulkOperations,
+        PlatformPermissions.Documents.ManageCompliance,
+        PlatformPermissions.Documents.GenerateReports,
+        PlatformPermissions.Documents.ShareExternally,
+        PlatformPermissions.Documents.Administer
+    };
+
     private readonly IPermissionDataSeeder _permissionDataSeeder;
     private readonly IIdentityRoleRepository _roleRepository;
+    private readonly IPermissionGrantRepository _grantRepository;
+    private readonly ITenantRepository _tenantRepository;
+    private readonly ICurrentTenant _currentTenant;
+    private readonly ISettingManager _settingManager;
 
     public DocumentsPermissionDataSeedContributor(
         IPermissionDataSeeder permissionDataSeeder,
-        IIdentityRoleRepository roleRepository)
+        IIdentityRoleRepository roleRepository,
+        IPermissionGrantRepository grantRepository,
+        ITenantRepository tenantRepository,
+        ICurrentTenant currentTenant,
+        ISettingManager settingManager)
     {
         _permissionDataSeeder = permissionDataSeeder;
         _roleRepository = roleRepository;
+        _grantRepository = grantRepository;
+        _tenantRepository = tenantRepository;
+        _currentTenant = currentTenant;
+        _settingManager = settingManager;
     }
 
     public async Task SeedAsync(DataSeedContext context)
@@ -57,23 +85,49 @@ public class DocumentsPermissionDataSeedContributor : IDataSeedContributor, ITra
         }
 
         var adminRole = await _roleRepository.FindByNormalizedNameAsync("ADMIN");
-        if (adminRole == null)
+        if (adminRole != null)
+        {
+            await _permissionDataSeeder.SeedAsync(
+                RolePermissionValueProvider.ProviderName, adminRole.Name, SubPermissions, context.TenantId);
+        }
+
+        await BackfillTenantsOnceAsync();
+    }
+
+    /// <summary>
+    /// Bu izinlerden ÖNCE kurulan kiracıların yönetici rolü onları hiç almadı: kimlik tohumlayıcısı
+    /// yalnız rol ilk kurulurken verir, Dokümanlar zaten açık olduğu için paket akışı da
+    /// (<c>GrantNewlyEnabledPermissionsAsync</c>) onları "yeni açılan modül" saymaz. Yalnız
+    /// Dokümanlar'ı GÖREBİLEN statik yönetici rolü alır.
+    ///
+    /// <para>🔴 BİR KEZ koşar (<see cref="PlatformSettings.Backfills.DocumentsTenantPermissionsGranted"/>):
+    /// kiracının bilerek kaldırdığı izin sonraki yayında geri gelmemeli. Host bağlamından dolaşılır;
+    /// kiracı bağlamında koşmamasının nedeni <see cref="SeedAsync"/> başındaki not.</para>
+    /// </summary>
+    private async Task BackfillTenantsOnceAsync()
+    {
+        if (await _settingManager.GetOrNullGlobalAsync(PlatformSettings.Backfills.DocumentsTenantPermissionsGranted) == "true")
         {
             return;
         }
 
-        await _permissionDataSeeder.SeedAsync(
-            RolePermissionValueProvider.ProviderName,
-            adminRole.Name,
-            new[]
+        foreach (var tenant in await _tenantRepository.GetListAsync())
+        {
+            using (_currentTenant.Change(tenant.Id))
             {
-                PlatformPermissions.Documents.ManageMeta,
-                PlatformPermissions.Documents.BulkOperations,
-                PlatformPermissions.Documents.ManageCompliance,
-                PlatformPermissions.Documents.GenerateReports,
-                PlatformPermissions.Documents.ShareExternally,
-                PlatformPermissions.Documents.Administer
-            },
-            context.TenantId);
+                var adminRole = (await _roleRepository.GetListAsync()).FirstOrDefault(r => r.IsStatic);
+                if (adminRole == null
+                    || await _grantRepository.FindAsync(
+                        PlatformPermissions.Documents.Default, RolePermissionValueProvider.ProviderName, adminRole.Name) == null)
+                {
+                    continue;
+                }
+
+                await _permissionDataSeeder.SeedAsync(
+                    RolePermissionValueProvider.ProviderName, adminRole.Name, SubPermissions, tenant.Id);
+            }
+        }
+
+        await _settingManager.SetGlobalAsync(PlatformSettings.Backfills.DocumentsTenantPermissionsGranted, "true");
     }
 }

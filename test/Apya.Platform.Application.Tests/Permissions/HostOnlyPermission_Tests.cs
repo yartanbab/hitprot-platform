@@ -34,6 +34,10 @@ public class HostOnlyPermission_Tests
     [InlineData(PlatformPermissions.Feedbacks.ManageSettings)]
     [InlineData(PlatformPermissions.SystemHealth.Default)]
     [InlineData(PlatformPermissions.SystemHealth.Resolve)]
+    // 2026-11-19 izin denetimi: servisler host bağlamı ister / izin hiçbir paket tavanında yok.
+    [InlineData(PlatformPermissions.IssueTasks.Default)]
+    [InlineData(PlatformPermissions.IssueTasks.ManageSettings)]
+    [InlineData(PlatformPermissions.Consents.Default)]
     public void Host_yonetim_izni_kiraciya_verilemez(string name)
     {
         Definition(name).MultiTenancySide.ShouldBe(MultiTenancySides.Host);

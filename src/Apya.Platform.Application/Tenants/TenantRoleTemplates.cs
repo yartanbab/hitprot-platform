@@ -50,6 +50,9 @@ public static class TenantRoleTemplates
         PlatformPermissions.FxRevaluations.Default,
         PlatformPermissions.Notifications.Default,
         PlatformPermissions.Calendars.Default,
+        // Aktarım: görebilen dışa aktarabilir (DataTransferPermissionDataSeedContributor ilkesi).
+        PlatformPermissions.DataTransfer.Default,
+        PlatformPermissions.DataTransfer.Export,
     };
 
     public static readonly IReadOnlyList<Template> All = new[]
@@ -65,6 +68,8 @@ public static class TenantRoleTemplates
                 PlatformPermissions.DynamicAssets.Default,
                 PlatformPermissions.Calendars.Default,
                 PlatformPermissions.Notifications.Default,
+                // Kayıt açan rol içe de aktarır; ManageAccess host'a özel, Resolve onu düşürür.
+                PlatformPermissions.DataTransfer.Default,
             },
             Exact: new[]
             {
@@ -92,6 +97,7 @@ public static class TenantRoleTemplates
                 PlatformPermissions.Reports.Default,
                 PlatformPermissions.Calendars.Default,
                 PlatformPermissions.Notifications.Default,
+                PlatformPermissions.DataTransfer.Default,
             },
             Exact: new[]
             {
