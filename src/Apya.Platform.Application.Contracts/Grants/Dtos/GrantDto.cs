@@ -16,6 +16,10 @@ public class GrantDto : EntityDto<Guid>
 
     // Faz A: eşleştirme kriterleri + çağrı sayısı özeti.
     public int EligibleCompanySizes { get; set; }
+    /// <summary>Başvurabilecek kurum türleri — OrganizationType bit maskesi (0 = kısıt yok).</summary>
+    public int EligibleApplicantTypes { get; set; }
+    /// <summary>Platform kurumlarına kapalı (yalnız birey/okul/kamu başvurur).</summary>
+    public bool ClosedToPlatformApplicants { get; set; }
     public int CallCount { get; set; }
     public List<GrantCriteriaTagDto> CriteriaTags { get; set; } = new();
 }

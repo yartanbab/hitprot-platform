@@ -68,6 +68,18 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
     // Faz A: eşleştirme kriterleri (Faz B'de FirmProfile ile örtüşme skoru).
     public int EligibleCompanySizes { get; set; } // CompanySize bit-maskesi (0 = kısıt yok)
 
+    /// <summary>
+    /// Başvurabilecek kurum türleri — <see cref="OrganizationType"/> bit maskesi (0 = kısıt yok).
+    /// Türü listede olmayan kurum ELENİR (<see cref="GrantEligibilityRule.OrganizationType"/>).
+    /// </summary>
+    public int EligibleApplicantTypes { get; set; }
+
+    /// <summary>
+    /// Program platform kurumlarına hiç açık değil: başvuru sahibi yalnız birey, öğrenci,
+    /// okul, üniversite ya da kamu olabilir. İşaretliyse maske ne olursa olsun her kurum elenir.
+    /// </summary>
+    public bool ClosedToPlatformApplicants { get; set; }
+
     // --- 1b · Uygunluk Şartları ---
     // Hepsi nullable: null = "bu programda böyle bir şart YOK", 0 değil. Firma tarafındaki
     // karşılığı boşsa kural Unknown döner ve firmayı ELEMEZ (bkz. GrantMatchManager.Evaluate).

@@ -285,6 +285,14 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
     {
         var list = new List<GrantPublicCriterionDto>();
 
+        if (grant.ClosedToPlatformApplicants || grant.EligibleApplicantTypes != 0)
+        {
+            list.Add(new GrantPublicCriterionDto
+            {
+                Rule = GrantEligibilityRule.OrganizationType,
+                Value = OrganizationTypeRuleValues.GrantValueOf(grant)
+            });
+        }
         if (grant.EligibleCompanySizes != 0)
         {
             list.Add(new GrantPublicCriterionDto
@@ -570,7 +578,9 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
             RdStaffCount = input.RdStaffCount,
             AnnualRevenue = input.AnnualRevenue,
             Trl = input.Trl,
-            HasConsortiumPartner = input.HasConsortiumPartner
+            HasConsortiumPartner = input.HasConsortiumPartner,
+            // Ziyaretçi testi kurum türünü sormuyor: tür şartı "bilinmiyor" kalır, ziyaretçi elenmez.
+            IsTypeKnown = false
         };
 
     /// <summary>

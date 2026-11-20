@@ -121,6 +121,27 @@ $(function () {
         schedulePreview();
     });
 
+    // ---------- Başvurabilecek kurum türleri ----------
+    // "Platforma kapalı" ile tür seçimi birbirini dışlar: kapalı programda tür anlamsızdır.
+    $('#ParamOrgTypes').on('click', '.apya-choice', function () {
+        $(this).toggleClass('is-on');
+        $('#ParamClosedToPlatform').removeClass('is-on');
+        schedulePreview();
+    });
+
+    $('#ParamClosedToPlatform').on('click', function () {
+        $(this).toggleClass('is-on');
+        if ($(this).hasClass('is-on')) { $('#ParamOrgTypes .apya-choice').removeClass('is-on'); }
+        schedulePreview();
+    });
+
+    function fillOrgTypes(dto) {
+        $('#ParamOrgTypes .apya-choice').each(function () {
+            $(this).toggleClass('is-on', (dto.eligibleApplicantTypes & Number($(this).data('orgtype'))) !== 0);
+        });
+        $('#ParamClosedToPlatform').toggleClass('is-on', !!dto.closedToPlatformApplicants);
+    }
+
     // ---------- TRL aralığı ----------
     // Tek tıklama tek seviye seçer; ikinci tıklama aralığı o yöne genişletir.
     // Seçili tek segmente tekrar tıklamak seçimi temizler ("şart yok").
@@ -228,6 +249,14 @@ $(function () {
 
     // rule: GrantEligibilityRule (firmayı ELEYEN şartlar) · null: yalnız uyum puanını etkiler.
     var RULES = [
+        { key: 'orgtype', rule: 8, label: 'Grants:Parameters:ApplicantTypes',
+          isSet: function (s) { return !!s.closedToPlatformApplicants || s.eligibleApplicantTypes !== 0; },
+          text: function (s) {
+              if (s.closedToPlatformApplicants) { return l('Grants:OrgType:Closed'); }
+              return $('#ParamOrgTypes .apya-choice').filter(function () {
+                  return (s.eligibleApplicantTypes & Number($(this).data('orgtype'))) !== 0;
+              }).map(function () { return $(this).text(); }).get().join(', ');
+          } },
         { key: 'size', rule: 0, label: 'Grants:Parameters:CompanySizes',
           isSet: function (s) { return s.eligibleCompanySizes !== 0; },
           text: function (s) {
@@ -593,6 +622,8 @@ $(function () {
     function collect() {
         var sizes = 0;
         $('#ParamSizes .apya-choice.is-on').each(function () { sizes |= Number($(this).data('size')); });
+        var orgTypes = 0;
+        $('#ParamOrgTypes .apya-choice.is-on').each(function () { orgTypes |= Number($(this).data('orgtype')); });
 
         var tags = [];
         [0, 1, 2, 3].forEach(function (kind) {
@@ -620,6 +651,8 @@ $(function () {
             priorities: $('#ParamPriorities').val(),
             eligibleApplicants: $('#ParamEligibleApplicants').val(),
             eligibleCompanySizes: sizes,
+            eligibleApplicantTypes: orgTypes,
+            closedToPlatformApplicants: $('#ParamClosedToPlatform').hasClass('is-on'),
             minCompanyAgeYears: num('#ParamMinAge'),
             maxCompanyAgeYears: num('#ParamMaxAge'),
             minTrl: trlMin,
@@ -667,6 +700,7 @@ $(function () {
         posterFileName = dto.posterFileName || null;
         paintPoster();
 
+        fillOrgTypes(dto);
         $('#ParamSizes .apya-choice').each(function () {
             $(this).toggleClass('is-on', (dto.eligibleCompanySizes & Number($(this).data('size'))) !== 0);
         });

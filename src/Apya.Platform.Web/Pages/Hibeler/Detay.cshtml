@@ -28,6 +28,13 @@
             return S["Grants:Public:Criterion:Consortium", raw].Value;
         }
 
+        if (c.Rule == Apya.Platform.Grants.GrantEligibilityRule.OrganizationType)
+        {
+            var types = raw.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(v => S["Grants:OrgType:" + v].Value);
+            return S["Grants:Public:Criterion:OrganizationType", string.Join(" · ", types)].Value;
+        }
+
         if (c.Rule == Apya.Platform.Grants.GrantEligibilityRule.CompanySize)
         {
             var names = raw.Split(',', StringSplitOptions.RemoveEmptyEntries)

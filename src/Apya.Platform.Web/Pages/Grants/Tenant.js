@@ -21,7 +21,7 @@ $(function () {
     var trancheStatusLabels = apyaGrantStatus.tranche.keys.map(function (k) { return l('Grants:Tranche:' + k); });
 
     // GrantEligibilityRule enum sırasıyla birebir.
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region'];
+    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType'];
 
     var feed = [];
     var feedFailed = false;

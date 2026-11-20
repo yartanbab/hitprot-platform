@@ -7,6 +7,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Domain.Services;
 using Volo.Abp.MultiTenancy;
 using Apya.Platform.Projects;
+using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Grants;
 
@@ -24,6 +25,7 @@ public class FirmSignalsBuilder : DomainService
     private readonly IRepository<ProjectCategoryDefinition, Guid> _categoryRepo;
     private readonly IRepository<FirmParameterDefinition, Guid> _parameterDefinitionRepo;
     private readonly IRepository<FirmParameterValue, Guid> _parameterValueRepo;
+    private readonly IRepository<TenantProfile, Guid> _tenantProfileRepo;
     private readonly IDataFilter _dataFilter;
     private readonly ICurrentTenant _currentTenant;
 
@@ -34,9 +36,11 @@ public class FirmSignalsBuilder : DomainService
         IRepository<ProjectCategoryDefinition, Guid> categoryRepo,
         IRepository<FirmParameterDefinition, Guid> parameterDefinitionRepo,
         IRepository<FirmParameterValue, Guid> parameterValueRepo,
+        IRepository<TenantProfile, Guid> tenantProfileRepo,
         IDataFilter dataFilter,
         ICurrentTenant currentTenant)
     {
+        _tenantProfileRepo = tenantProfileRepo;
         _profileRepo = profileRepo;
         _profileTagRepo = profileTagRepo;
         _projectRepo = projectRepo;
@@ -65,6 +69,17 @@ public class FirmSignalsBuilder : DomainService
                 signals.HasConsortiumPartner = profile.HasConsortiumPartner;
                 var ptags = await _profileTagRepo.GetListAsync(t => t.FirmProfileId == profile.Id);
                 signals.Tags = ptags.Select(t => new FirmSignalTag(t.Kind, t.Value)).ToList();
+            }
+            else
+            {
+                // Hibe profili kaydedilmemiş kurum sessizce Şirket sayılmasın: tür kurum
+                // profilinden çözülür; karşılığı yoksa (kamu, "Diğer", profil yok) bilinmiyor.
+                var tenantProfile = tenantId == null
+                    ? null
+                    : await _tenantProfileRepo.FirstOrDefaultAsync(p => p.TenantId == tenantId.Value);
+                var resolved = tenantProfile?.CompanyType.TryToOrganizationType();
+                signals.Type = resolved ?? OrganizationType.Sirket;
+                signals.IsTypeKnown = resolved.HasValue;
             }
 
             // Elle girilen parametreler: yalnız bu kurumun satırları (kiracı süzgeci açık).

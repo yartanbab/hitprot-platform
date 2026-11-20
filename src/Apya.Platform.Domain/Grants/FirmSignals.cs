@@ -19,6 +19,14 @@ public sealed class FirmSignals
     /// </summary>
     public OrganizationType Type { get; set; }
 
+    /// <summary>
+    /// <see cref="Type"/> gerçekten biliniyor mu? Hibe profili de kurum profilindeki türün
+    /// karşılığı da yoksa false: "başvurabilecek kurum türü" kuralı Unknown döner (kurum
+    /// elenmez, Koşullu olur). <see cref="Type"/>'ın Şirket varsayılanı yalnız alan grubunu
+    /// seçer, tür şartında kanıt sayılmaz.
+    /// </summary>
+    public bool IsTypeKnown { get; set; } = true;
+
     public CompanySize? Size { get; set; }
     public IReadOnlyList<FirmSignalTag> Tags { get; set; } = new List<FirmSignalTag>();
 

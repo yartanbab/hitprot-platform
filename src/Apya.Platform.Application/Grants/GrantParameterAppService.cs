@@ -543,7 +543,8 @@ public class GrantParameterAppService : ApplicationService, IGrantParameterAppSe
     {
         if (profile == null)
         {
-            return new FirmSignals();
+            // Hibe profili olmayan kurumun türü bilinmiyor: tür şartında Koşullu kalır.
+            return new FirmSignals { IsTypeKnown = false };
         }
         return new FirmSignals
         {

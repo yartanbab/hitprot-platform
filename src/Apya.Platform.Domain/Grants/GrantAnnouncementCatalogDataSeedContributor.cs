@@ -105,6 +105,8 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
                     Currency = seed.Currency ?? GrantCurrencies.Try,
                     SourceUrl = seed.SourceUrl,
                     EligibleCompanySizes = seed.EligibleCompanySizes,
+                    EligibleApplicantTypes = seed.ApplicantTypeMask,
+                    ClosedToPlatformApplicants = seed.ClosedToPlatform,
                     MaxCompanyAgeYears = seed.MaxCompanyAgeYears,
                     RequiresConsortium = seed.RequiresConsortium,
                     MinConsortiumPartners = seed.MinConsortiumPartners,
@@ -225,6 +227,14 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         if (grant.MaxCompanyAgeYears == null && seed.MaxCompanyAgeYears != null) { grant.MaxCompanyAgeYears = seed.MaxCompanyAgeYears; changed = true; }
         if (grant.MinConsortiumPartners == null && seed.MinConsortiumPartners != null) { grant.MinConsortiumPartners = seed.MinConsortiumPartners; changed = true; }
         if (grant.EligibleCompanySizes == 0 && seed.EligibleCompanySizes != 0) { grant.EligibleCompanySizes = seed.EligibleCompanySizes; changed = true; }
+        // Kurum türü şartı: program hiç tür şartı taşımıyorsa (maske 0 ve kapalı değil) tohumdan gelir.
+        if (grant.EligibleApplicantTypes == 0 && !grant.ClosedToPlatformApplicants
+            && (seed.ApplicantTypeMask != 0 || seed.ClosedToPlatform))
+        {
+            grant.EligibleApplicantTypes = seed.ApplicantTypeMask;
+            grant.ClosedToPlatformApplicants = seed.ClosedToPlatform;
+            changed = true;
+        }
         if (grant.SourceUrl.IsNullOrWhiteSpace() && !seed.SourceUrl.IsNullOrWhiteSpace()) { grant.SourceUrl = seed.SourceUrl; changed = true; }
         if (!grant.HasAdvancePayment && seed.HasAdvancePayment) { grant.HasAdvancePayment = true; changed = true; }
         if (!grant.RequiresGuaranteeLetter && seed.RequiresGuaranteeLetter) { grant.RequiresGuaranteeLetter = true; changed = true; }
@@ -342,7 +352,17 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         bool HasAdvancePayment = false,
         bool RequiresGuaranteeLetter = false,
         CostItemSeed[]? CostItems = null,
-        DocumentSeed[]? Documents = null);
+        DocumentSeed[]? Documents = null,
+        string[]? ApplicantTypes = null,
+        bool ClosedToPlatform = false)
+    {
+        /// <summary>
+        /// Başvurabilecek kurum türleri (<see cref="OrganizationType"/> adları) → bit maskesi.
+        /// Boş ya da yok = kısıt yok (0). Bilinmeyen ad tohumu bozuk sayar.
+        /// </summary>
+        public int ApplicantTypeMask => (ApplicantTypes ?? Array.Empty<string>())
+            .Aggregate(0, (mask, name) => mask | Enum.Parse<OrganizationType>(name).ToMaskBit());
+    }
 
     internal sealed record CostItemSeed(string Kind, int? LimitPercent);
 

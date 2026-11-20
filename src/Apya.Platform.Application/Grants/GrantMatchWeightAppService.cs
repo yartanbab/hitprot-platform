@@ -316,7 +316,7 @@ public class GrantMatchWeightAppService : ApplicationService, IGrantMatchWeightA
         {
             if (!profileByTenant.TryGetValue(tenantId, out var profile))
             {
-                result[tenantId] = new FirmSignals();
+                result[tenantId] = new FirmSignals { IsTypeKnown = false };
                 continue;
             }
             result[tenantId] = new FirmSignals
