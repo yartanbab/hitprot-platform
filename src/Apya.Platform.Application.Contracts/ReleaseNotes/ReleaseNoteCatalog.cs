@@ -127,6 +127,23 @@ public static class ReleaseNoteCatalog
                 "yanındaki ⋯ menüsünde toplandı. Görevler'deki \"+ Filtre\" menüsünde ikinci bir seçim açan satırlar " +
                 "okla gösterilir."),
 
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Hazır roller aktarım izinleriyle gelir",
+                "Yeni kurulan kurumlarda Gözlemci rolü erişebildiği listeleri dışa aktarabilir; Proje Sorumlusu ve " +
+                "Muhasebe rolleri içe de aktarabilir, Muhasebe aktarım şablonlarını da düzenler. Daha önce " +
+                "oluşturulmuş rollerinize bu izinleri Ayarlar › Roller ekranından verebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Aktarım geçmişinde yalnız erişebildikleriniz",
+                "İçe / Dışa Aktarma › Geçmiş sekmesi artık yalnız erişim izniniz olan listelerin aktarımlarını " +
+                "gösterir; örneğin finans ekranlarına erişimi olmayan bir kullanıcı gider aktarımlarını görmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Belgeler'deki yönetim işlemleri açıldı",
+                "Belgeler modülünün açık olduğu paketlerde toplu belge işlemleri, kurum uygunluğu, rapor ve teslim " +
+                "paketi üretme, süreli dış paylaşım bağlantısı ve belge kuralları kurum yöneticisine açılmıyordu. " +
+                "Artık yönetici rolünde açık; diğer rollere Ayarlar › Roller ekranından verebilirsiniz."),
+
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Yapay zekâyla görev oluşturma düzeldi",
                 "Yapay zekâyla görev oluşturma ve PDF'ten görev çıkarma hata verip sonuç döndürmeyebiliyordu. " +
