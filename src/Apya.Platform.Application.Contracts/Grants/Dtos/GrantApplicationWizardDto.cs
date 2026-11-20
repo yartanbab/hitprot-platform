@@ -21,6 +21,12 @@ public class GrantApplicationWizardDto
     public string? Period { get; set; }
     public DateTime? Deadline { get; set; }
     public int? DaysRemaining { get; set; }
+
+    /// <summary>
+    /// Çağrı gönderime kapalı mı (durumu Kapandı ya da son başvuru tarihi geçmiş). Sunucu gönderimi
+    /// zaten reddeder; bayrak ekranın bunu en son adımdaki hata penceresinden ÖNCE söylemesi içindir.
+    /// </summary>
+    public bool IsCallClosed { get; set; }
     public decimal? MaxAmount { get; set; }
     public int? SupportRatePercent { get; set; }
 

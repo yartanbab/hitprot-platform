@@ -409,6 +409,22 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
         ex.Code.ShouldBe(PlatformDomainErrorCodes.GrantApplicationCallClosed);
     }
 
+    /// <summary>
+    /// Ekran kapanışı en son adımdaki hata penceresinden önce bilmeli: bayrak gönderim kapısıyla
+    /// aynı koşulu taşır (durumu Açık kalmış ama tarihi geçmiş çağrı dahil), son gün ise açıktır.
+    /// </summary>
+    [Fact]
+    public async Task Sihirbaz_Verisi_Cagrinin_Gonderime_Kapandigini_Tasir()
+    {
+        var (id, _) = await CreateApplicationAsync();
+
+        await SetCallDeadlineAsync(id, DateTime.Now.Date);
+        (await _wizard.GetAsync(id)).IsCallClosed.ShouldBeFalse("son gün dahildir");
+
+        await SetCallDeadlineAsync(id, DateTime.Now.Date.AddDays(-1));
+        (await _wizard.GetAsync(id)).IsCallClosed.ShouldBeTrue();
+    }
+
     /// <summary>Karşı yön: son gün dahildir.</summary>
     [Fact]
     public async Task Son_Gununde_Basvuru_Gonderilebilir()
