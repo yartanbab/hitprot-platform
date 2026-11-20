@@ -63,4 +63,31 @@ public class GrantAnnouncementCatalogSeed_Tests
             }
         }
     }
+
+    /// <summary>
+    /// Başvurabilecek kurum türleri: ad enum'a çözülmeli (yoksa tohumlama düşer), platforma kapalı
+    /// programda tür listesi olmamalı. Kullanıcının örneği: KOSGEB programları derneğe açık değil.
+    /// </summary>
+    [Fact]
+    public async Task Kurum_turu_tohumu_gecerli_ve_tutarli()
+    {
+        var seeds = await GrantAnnouncementCatalogDataSeedContributor.ReadSeedsAsync();
+
+        foreach (var s in seeds)
+        {
+            foreach (var name in s.ApplicantTypes ?? [])
+            {
+                Enum.TryParse<OrganizationType>(name, out _).ShouldBeTrue(s.Name + ": " + name);
+            }
+            if (s.ClosedToPlatform)
+            {
+                (s.ApplicantTypes ?? []).ShouldBeEmpty(s.Name + ": kapalı programda tür listesi");
+            }
+        }
+
+        seeds.Count(s => s.ClosedToPlatform).ShouldBeGreaterThan(10);
+        var kosgeb = seeds.Where(s => s.Issuer.Contains("KOSGEB") && !s.ClosedToPlatform && s.ApplicantTypeMask != 0).ToList();
+        kosgeb.ShouldNotBeEmpty();
+        kosgeb.ShouldAllBe(s => !OrganizationType.Dernek.IsAllowedBy(s.ApplicantTypeMask));
+    }
 }

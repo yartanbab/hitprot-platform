@@ -454,6 +454,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
             GrantEligibilityRule.Region => (
                 TurkeyProvinces.JoinKnown(firm.Tags.Where(t => t.Kind == GrantCriteriaKind.Bolge).Select(t => t.Value)),
                 TurkeyProvinces.JoinKnown(grantTags.Where(t => t.Kind == GrantCriteriaKind.Bolge).Select(t => t.Value))),
+            GrantEligibilityRule.OrganizationType => OrganizationTypeRuleValues.Of(firm, grant),
             _ => (null, null)
         };
 

@@ -36,6 +36,10 @@ public class UpdateGrantParameterDto
 
     // --- Uygunluk Şartları ---
     public int EligibleCompanySizes { get; set; }
+    /// <summary>Başvurabilecek kurum türleri — OrganizationType bit maskesi (0 = kısıt yok).</summary>
+    public int EligibleApplicantTypes { get; set; }
+    /// <summary>Platform kurumlarına kapalı (yalnız birey/okul/kamu başvurur).</summary>
+    public bool ClosedToPlatformApplicants { get; set; }
 
     [Range(0, 200, ErrorMessage = "Şirket yaşı 0 ile 200 arasında olmalıdır.")]
     public int? MinCompanyAgeYears { get; set; }

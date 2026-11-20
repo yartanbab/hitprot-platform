@@ -39,6 +39,14 @@ public sealed class GrantEligibilityResult
     public bool IsEligible => !AnyEliminated;
 
     /// <summary>
+    /// Kurum bu programa TÜRÜ yüzünden hiç başvuramaz (ya da program platforma kapalı).
+    /// Diğer eleyen şartlardan farkı: kurumun elinde değildir ve başvuru hakkını baştan
+    /// kaldırır — bu yüzden kiracı akışında öneri olarak gösterilmez.
+    /// </summary>
+    public bool IsExcludedByApplicantType =>
+        Rules.Any(r => r.Rule == GrantEligibilityRule.OrganizationType && r.Outcome == GrantRuleOutcome.Failed);
+
+    /// <summary>
     /// TÜM kurallar KANITLI biçimde geçti (Unknown yok). Host tarafındaki "kaç firma
     /// karşılıyor" sayacı bunu kullanır: verisi olmayan firma sayılmaz, "eksik veri
     /// kampanyası" ile kazanılır.

@@ -754,6 +754,8 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.MinMatchScore).IsRequired();
                 b.Property(x => x.MaxAmount).IsRequired();
                 b.Property(x => x.EligibleCompanySizes).IsRequired().HasDefaultValue(0);
+                b.Property(x => x.EligibleApplicantTypes).IsRequired().HasDefaultValue(0);
+                b.Property(x => x.ClosedToPlatformApplicants).IsRequired().HasDefaultValue(false);
                 b.Property(x => x.SourceUrl).HasMaxLength(512);
                 b.Property(x => x.Objective).HasMaxLength(2000);
                 b.Property(x => x.Priorities).HasMaxLength(4000);

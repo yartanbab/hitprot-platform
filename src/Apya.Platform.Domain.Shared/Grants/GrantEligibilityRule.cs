@@ -18,5 +18,11 @@ public enum GrantEligibilityRule
     /// Program il etiketi taşıyorsa (kalkınma ajansı programları) kurumun illerinden biri
     /// o listede olmalı. İl adı <see cref="TurkeyProvinces"/> sözlüğünden gelir.
     /// </summary>
-    Region = 7
+    Region = 7,
+    /// <summary>
+    /// Program yalnız belirli kurum türlerine açıksa (<c>Grant.EligibleApplicantTypes</c>) ya da
+    /// platform kurumlarına hiç açık değilse (<c>Grant.ClosedToPlatformApplicants</c>) kurumun
+    /// türü uymalı. Tür bilinmiyorsa sonuç Unknown olur, kurum elenmez.
+    /// </summary>
+    OrganizationType = 8
 }

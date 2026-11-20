@@ -186,6 +186,27 @@
 
             <div class="apya-rule-list" id="RuleList">
 
+                <div class="apya-rule" data-rule-key="orgtype" hidden>
+                    <button type="button" class="apya-rule-summary" aria-expanded="false" aria-controls="RuleEditor-orgtype">
+                        <span class="apya-rule-label">@L["Grants:Parameters:ApplicantTypes"]</span>
+                        <span class="apya-rule-value" data-rule-value></span>
+                        <span class="apya-rule-source" data-rule-source></span>
+                        <span class="apya-rule-impact" data-rule-impact><span class="apya-rule-impact-text"></span><span class="apya-rule-bar"><span></span></span></span>
+                    </button>
+                    <div class="apya-rule-editor" id="RuleEditor-orgtype" hidden>
+                        <div class="apya-choice-row" id="ParamOrgTypes">
+                            @foreach (var orgType in Enum.GetValues<Apya.Platform.Grants.OrganizationType>())
+                            {
+                                <button type="button" class="apya-choice" data-orgtype="@(1 << (int)orgType)">@L["Grants:OrgType:" + orgType]</button>
+                            }
+                        </div>
+                        <div class="apya-choice-row mt-2">
+                            <button type="button" class="apya-choice" id="ParamClosedToPlatform">@L["Grants:Parameters:ClosedToPlatform"]</button>
+                        </div>
+                        <div class="form-text">@L["Grants:Parameters:ApplicantTypesHint"]</div>
+                    </div>
+                </div>
+
                 <div class="apya-rule" data-rule-key="size" hidden>
                     <button type="button" class="apya-rule-summary" aria-expanded="false" aria-controls="RuleEditor-size">
                         <span class="apya-rule-label">@L["Grants:Parameters:CompanySizes"]</span>

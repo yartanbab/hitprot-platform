@@ -176,4 +176,44 @@ public class TenantOpenCallCatalog_Tests : PlatformEntityFrameworkCoreTestBase
             row.Keywords.ShouldBe(new[] { "kırsal" });
         }
     }
+
+    /// <summary>
+    /// Kullanıcının isteği: dernek olan kuruma yalnız şirkete açık program (KOSGEB gibi) ÖNERİLMEZ;
+    /// "Tümü"nde gerekçesiyle durur. Hibe profili kaydedilmemiş derneğin türü kurum profilinden
+    /// çözülür — eskiden sessizce Şirket sayılıp bu programlar ona önerilebiliyordu.
+    /// </summary>
+    [Fact]
+    public async Task Dernege_yalniz_sirkete_acik_program_onerilmez()
+    {
+        var dernekId = Guid.NewGuid();
+        await GetRequiredService<IRepository<Apya.Platform.Tenants.TenantProfile, Guid>>().InsertAsync(
+            new Apya.Platform.Tenants.TenantProfile(Guid.NewGuid(), dernekId, Apya.Platform.Tenants.CompanyType.Association,
+                "1234567890", "dernek@example.test"), autoSave: true);
+
+        var sirketProgrami = await CreateOpenCallAsync("Yalnız şirkete açık program", minMatchScore: 0);
+        var stkProgrami = await CreateOpenCallAsync("STK programı", minMatchScore: 0);
+        await SetApplicantTypesAsync(sirketProgrami.GrantId, OrganizationType.Sirket);
+        await SetApplicantTypesAsync(stkProgrami.GrantId, OrganizationType.Dernek, OrganizationType.Vakif);
+
+        using (_currentTenant.Change(dernekId))
+        {
+            var tumu = await _recommendationAppService.GetOpenCallsAsync();
+            var sirket = tumu.Single(x => x.GrantCallId == sirketProgrami.Id);
+            sirket.IsRecommended.ShouldBeFalse();
+            sirket.Bucket.ShouldBe(GrantEligibilityBucket.UygunDegil);
+            sirket.FailedRules.ShouldContain(GrantEligibilityRule.OrganizationType);
+            tumu.Single(x => x.GrantCallId == stkProgrami.Id).IsRecommended.ShouldBeTrue();
+
+            var oneriler = await _recommendationAppService.GetMyRecommendationsAsync();
+            oneriler.ShouldNotContain(x => x.GrantCallId == sirketProgrami.Id);
+            oneriler.ShouldContain(x => x.GrantCallId == stkProgrami.Id);
+        }
+    }
+
+    private async Task SetApplicantTypesAsync(Guid grantId, params OrganizationType[] types)
+    {
+        var grant = await _grantRepository.GetAsync(grantId);
+        grant.EligibleApplicantTypes = types.Aggregate(0, (mask, t) => mask | t.ToMaskBit());
+        await _grantRepository.UpdateAsync(grant, autoSave: true);
+    }
 }

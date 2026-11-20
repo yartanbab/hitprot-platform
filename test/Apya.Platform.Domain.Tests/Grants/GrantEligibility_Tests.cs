@@ -158,6 +158,7 @@ public class GrantEligibility_Tests
     [InlineData(OrganizationType.Kulup)]
     [InlineData(OrganizationType.Vakif)]
     [InlineData(OrganizationType.Federasyon)]
+    [InlineData(OrganizationType.Kooperatif)]
     public void Stkda_Sirkete_Ozgu_Sartlar_Uretilmez(OrganizationType type)
     {
         var grant = Program();
@@ -294,5 +295,104 @@ public class GrantEligibility_Tests
         var result = _m.Evaluate(firm, grant, Regions(grant, "Tokat"), Today);
 
         Outcome(result, GrantEligibilityRule.Region).ShouldBe(GrantRuleOutcome.Failed);
+    }
+
+    // ---------- Kurum türü (başvurabilecek türler) ----------
+
+    private static Grant OnlyFor(params OrganizationType[] types)
+    {
+        var grant = Program();
+        grant.EligibleApplicantTypes = types.Aggregate(0, (mask, t) => mask | t.ToMaskBit());
+        return grant;
+    }
+
+    /// <summary>Kullanıcının örneği: yalnız şirkete açık program (KOSGEB gibi) derneği eler.</summary>
+    [Fact]
+    public void Yalniz_Sirkete_Acik_Program_Dernegi_Eler()
+    {
+        var grant = OnlyFor(OrganizationType.Sirket);
+
+        var dernek = _m.Evaluate(new FirmSignals { Type = OrganizationType.Dernek }, grant, NoTags, Today);
+        var sirket = _m.Evaluate(new FirmSignals { Type = OrganizationType.Sirket }, grant, NoTags, Today);
+
+        Outcome(dernek, GrantEligibilityRule.OrganizationType).ShouldBe(GrantRuleOutcome.Failed);
+        dernek.Bucket.ShouldBe(GrantEligibilityBucket.UygunDegil);
+        dernek.IsExcludedByApplicantType.ShouldBeTrue();
+        Outcome(sirket, GrantEligibilityRule.OrganizationType).ShouldBe(GrantRuleOutcome.Passed);
+        sirket.IsExcludedByApplicantType.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// Eski açık: şirkete özgü şartlar STK'da atlandığı için yalnız şirkete açık bir program
+    /// derneğe "Şartları karşılıyor" görünüyordu. Tür şartı artık bunu kapatır.
+    /// </summary>
+    [Fact]
+    public void Sirket_Sartlari_Atlanan_Dernek_Artik_Uygun_Gorunmez()
+    {
+        var grant = OnlyFor(OrganizationType.Sirket);
+        grant.EligibleCompanySizes = (int)CompanySize.Kucuk;
+        grant.MinRevenue = 1_000_000m;
+
+        var result = _m.Evaluate(new FirmSignals { Type = OrganizationType.Dernek }, grant, NoTags, Today);
+
+        result.Rules.Select(r => r.Rule).ShouldBe(new[] { GrantEligibilityRule.OrganizationType });
+        result.Bucket.ShouldBe(GrantEligibilityBucket.UygunDegil);
+    }
+
+    [Fact]
+    public void Turu_Listede_Olan_Stk_Gecer()
+    {
+        var grant = OnlyFor(OrganizationType.Dernek, OrganizationType.Vakif, OrganizationType.Kooperatif);
+
+        Outcome(_m.Evaluate(new FirmSignals { Type = OrganizationType.Kooperatif }, grant, NoTags, Today),
+            GrantEligibilityRule.OrganizationType).ShouldBe(GrantRuleOutcome.Passed);
+        Outcome(_m.Evaluate(new FirmSignals { Type = OrganizationType.Kulup }, grant, NoTags, Today),
+            GrantEligibilityRule.OrganizationType).ShouldBe(GrantRuleOutcome.Failed);
+    }
+
+    /// <summary>Türü bilinmeyen kurum (hibe profili yok, kurum türünün karşılığı yok) elenmez, Koşullu kalır.</summary>
+    [Fact]
+    public void Turu_Bilinmeyen_Kurum_Elenmez_Kosullu_Kalir()
+    {
+        var grant = OnlyFor(OrganizationType.Sirket);
+
+        var result = _m.Evaluate(new FirmSignals { IsTypeKnown = false }, grant, NoTags, Today);
+
+        Outcome(result, GrantEligibilityRule.OrganizationType).ShouldBe(GrantRuleOutcome.Unknown);
+        result.Bucket.ShouldBe(GrantEligibilityBucket.Kosullu);
+        result.IsExcludedByApplicantType.ShouldBeFalse();
+    }
+
+    /// <summary>Platforma kapalı program (yalnız birey/okul/kamu başvurur) türü bilinmese de herkesi eler.</summary>
+    [Theory]
+    [InlineData(OrganizationType.Sirket, true)]
+    [InlineData(OrganizationType.Dernek, true)]
+    [InlineData(OrganizationType.Sirket, false)]
+    public void Platforma_Kapali_Program_Her_Kurumu_Eler(OrganizationType type, bool typeKnown)
+    {
+        var grant = Program();
+        grant.ClosedToPlatformApplicants = true;
+
+        var result = _m.Evaluate(new FirmSignals { Type = type, IsTypeKnown = typeKnown }, grant, NoTags, Today);
+
+        Outcome(result, GrantEligibilityRule.OrganizationType).ShouldBe(GrantRuleOutcome.Failed);
+        result.IsExcludedByApplicantType.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Tur_Sarti_Yoksa_Kural_Uretilmez()
+    {
+        var result = _m.Evaluate(new FirmSignals { Type = OrganizationType.Dernek }, Program(), NoTags, Today);
+
+        result.Rules.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Tur_Maskesi_Enum_Degerinden_Bit_Kaydirir()
+    {
+        OrganizationType.Sirket.ToMaskBit().ShouldBe(1);
+        OrganizationType.Kooperatif.ToMaskBit().ShouldBe(32);
+        OrganizationTypeExtensions.TypesIn(2 | 8).ShouldBe(new[] { OrganizationType.Dernek, OrganizationType.Vakif });
+        OrganizationType.Kulup.IsAllowedBy(0).ShouldBeTrue();
     }
 }

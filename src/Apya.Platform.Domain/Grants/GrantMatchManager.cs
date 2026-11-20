@@ -267,6 +267,20 @@ public class GrantMatchManager : DomainService
                         : GrantRuleOutcome.Failed));
         }
 
+        // Kurum türü: yalnız şirkete açık bir program derneğe önerilmesin. Platforma kapalı
+        // program (yalnız birey/okul/kamu başvurur) her kurumu eler.
+        if (grant.ClosedToPlatformApplicants || grant.EligibleApplicantTypes != 0)
+        {
+            rules.Add(new GrantRuleResult(GrantEligibilityRule.OrganizationType,
+                grant.ClosedToPlatformApplicants
+                    ? GrantRuleOutcome.Failed
+                    : !firm.IsTypeKnown
+                        ? GrantRuleOutcome.Unknown
+                        : firm.Type.IsAllowedBy(grant.EligibleApplicantTypes)
+                            ? GrantRuleOutcome.Passed
+                            : GrantRuleOutcome.Failed));
+        }
+
         return new GrantEligibilityResult(
             rules,
             parameterCriteria == null ? null : EvaluateParameters(firm, grant, parameterCriteria));

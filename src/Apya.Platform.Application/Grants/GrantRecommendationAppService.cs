@@ -549,7 +549,11 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                         : null,
                     IsHostRecommended = isHostRecommended,
                     HostRecommendationNote = hostRecNotes.GetValueOrDefault(call.Id),
-                    IsRecommended = score >= grant.MinMatchScore || isHostRecommended,
+                    // Kurum türü programa hiç uymuyorsa (yalnız şirkete açık programda dernek) skor
+                    // ne olursa olsun önerilmez; "Tümü"nde gerekçesiyle soluk durur. Host bilerek
+                    // önerdiyse onun kararı geçerli.
+                    IsRecommended = isHostRecommended
+                                    || (score >= grant.MinMatchScore && !eligibility.IsExcludedByApplicantType),
                     Bucket = eligibility.Bucket,
                     PassedRules = RulesWith(eligibility, GrantRuleOutcome.Passed),
                     FailedRules = RulesWith(eligibility, GrantRuleOutcome.Failed),
@@ -688,6 +692,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
             GrantEligibilityRule.Region => (
                 TurkeyProvinces.JoinKnown(firm.Tags.Where(t => t.Kind == GrantCriteriaKind.Bolge).Select(t => t.Value)),
                 TurkeyProvinces.JoinKnown(grantTags.Where(t => t.Kind == GrantCriteriaKind.Bolge).Select(t => t.Value))),
+            GrantEligibilityRule.OrganizationType => OrganizationTypeRuleValues.Of(firm, grant),
             _ => (null, null)
         };
     }

@@ -12,7 +12,7 @@ $(function () {
     // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
     var bucketKeys = apyaGrantStatus.bucket.keys;
     var bucketTone = apyaGrantStatus.bucket.tones;
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region'];
+    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType'];
     var outcomeIcon = ['fa-circle-check is-passed', 'fa-circle-xmark is-failed', 'fa-circle-exclamation is-unknown'];
     var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword'];
     var costKeys = ['Personel', 'MakineTechizat', 'Danismanlik', 'YazilimLisans', 'Seyahat', 'SarfMalzeme'];
@@ -212,13 +212,19 @@ $(function () {
         $('#BookmarkText').text(l(on ? 'Grants:Catalog:Unbookmark' : 'Grants:Catalog:Bookmark'));
     }
 
+    // Kurum türü şartı değerleri tür adlarıdır (virgülle); "Closed" = platforma kapalı.
+    function orgTypeText(v) {
+        return v.split(',').map(function (t) { return l('Grants:OrgType:' + t); }).join(', ');
+    }
+
     // ---------- Uygunluk tablosu ----------
     function paintRules(d) {
         var $rows = $('#RuleRows').empty();
         (d.rules || []).forEach(function (r) {
             var cls = r.outcome === 1 ? ' is-failed' : r.outcome === 2 ? ' is-unknown' : '';
-            var firm = r.firmValue == null ? l('Grants:Detail:NotEntered') : r.firmValue;
-            var note = (r.grantValue == null ? '—' : r.grantValue);
+            var isOrgType = ruleKeys[r.rule] === 'OrganizationType';
+            var firm = r.firmValue == null ? l('Grants:Detail:NotEntered') : isOrgType ? orgTypeText(r.firmValue) : r.firmValue;
+            var note = r.grantValue == null || r.grantValue === '' ? '—' : isOrgType ? orgTypeText(r.grantValue) : r.grantValue;
             $rows.append(
                 '<div class="apya-check-row' + cls + '">' +
                 '<i class="fa ' + outcomeIcon[r.outcome] + '"></i>' +
