@@ -209,6 +209,9 @@ public class PlatformSettingDefinitionProvider : SettingDefinitionProvider
         context.Add(
             new SettingDefinition(PlatformSettings.Backfills.DataTransferPermissionsGranted)
                 .WithProviders(GlobalSettingValueProvider.ProviderName));
+        context.Add(
+            new SettingDefinition(PlatformSettings.Backfills.DocumentsTenantPermissionsGranted)
+                .WithProviders(GlobalSettingValueProvider.ProviderName));
 
         // --- İçe / dışa aktarma: izin denetimi anahtarı (host) ---
         context.Add(

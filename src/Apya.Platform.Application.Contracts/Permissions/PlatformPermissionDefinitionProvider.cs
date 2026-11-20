@@ -198,11 +198,17 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         systemHealthPermission.AddChild(PlatformPermissions.SystemHealth.Resolve, L("Permission:SystemHealth.Resolve"), MultiTenancySides.Host);
 
         // Sinyalden göreve köprüsü — geri bildirim/hata kaydını host projesinde göreve dönüştürme.
-        var issueTasksPermission = systemGroup.AddPermission(PlatformPermissions.IssueTasks.Default, L("Permission:IssueTasks"));
-        issueTasksPermission.AddChild(PlatformPermissions.IssueTasks.ManageSettings, L("Permission:IssueTasks.ManageSettings"));
+        // Host-only: servis host bağlamı şart koşar (EnsureHostContext), tüketen ekranların hepsi
+        // host ekranı (Geri Bildirim, Sistem Sağlığı); kiracı rolüne atanabilmesi yalnız gürültüydü.
+        var issueTasksPermission = systemGroup.AddPermission(
+            PlatformPermissions.IssueTasks.Default, L("Permission:IssueTasks"), MultiTenancySides.Host);
+        issueTasksPermission.AddChild(
+            PlatformPermissions.IssueTasks.ManageSettings, L("Permission:IssueTasks.ManageSettings"), MultiTenancySides.Host);
 
-        // Rıza/KVKK analiz paneli — host/yönetici seviyesinde tek izin, alt izni yok.
-        systemGroup.AddPermission(PlatformPermissions.Consents.Default, L("Permission:Consents"));
+        // Rıza/KVKK analiz paneli — tek izin, alt izni yok. Host-only (ürün kararı 2026-11-19):
+        // izin hiçbir paket tavanına girmediği için fiilen zaten yalnız host görüyordu.
+        systemGroup.AddPermission(
+            PlatformPermissions.Consents.Default, L("Permission:Consents"), MultiTenancySides.Host);
 
         // Kayıt talepleri — giriş ekranından gelen talepler HOST kaydıdır; kiracıya
         // ait değildir, bu yüzden feature kapısı yoktur.

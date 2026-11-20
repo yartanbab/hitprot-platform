@@ -277,7 +277,7 @@ public class TenantPackageManager : ITransientDependency
     /// eklendiğinde <see cref="BackfillLateAdditionsAsync"/> onu mevcut paketlerin tavanına
     /// taşır. Buraya yazılmayan yeni izin, kurulu sistemlerde hiçbir tenant'ta açılamaz.
     /// </summary>
-    private static readonly string[] LateAddedPermissions =
+    internal static readonly string[] LateAddedPermissions =
     {
         PlatformPermissions.Tasks.QuickCreate,
         PlatformPermissions.Tasks.ManagePlanning,
@@ -302,6 +302,15 @@ public class TenantPackageManager : ITransientDependency
         PlatformPermissions.DataTransfer.Export,
         PlatformPermissions.DataTransfer.Import,
         PlatformPermissions.DataTransfer.ManageTemplates,
+        // Dokümanlar alt izinleri tavan özelliğinden (2026-08-14) SONRA geldi ve buraya hiç
+        // yazılmamıştı: tavanı o tarihten önce tohumlanan kurulumlarda hiçbir kiracıda açılamıyordu.
+        // Dokümanlar kapısının arkasındalar; kapısı kapalı paketin tavanına girmezler (IsIncluded).
+        PlatformPermissions.Documents.ManageMeta,
+        PlatformPermissions.Documents.BulkOperations,
+        PlatformPermissions.Documents.ManageCompliance,
+        PlatformPermissions.Documents.GenerateReports,
+        PlatformPermissions.Documents.ShareExternally,
+        PlatformPermissions.Documents.Administer,
     };
 
     private IEnumerable<(Guid Id, string Name)> DefaultPermissionsFor(

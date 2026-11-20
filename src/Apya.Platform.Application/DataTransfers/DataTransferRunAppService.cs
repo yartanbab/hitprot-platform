@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Apya.Platform.DataTransfers.Dtos;
@@ -34,7 +35,18 @@ public class DataTransferRunAppService : PlatformAppService, IDataTransferRunApp
 
     public async Task<PagedResultDto<DataTransferRunDto>> GetListAsync(PagedResultRequestDto input)
     {
-        var query = await _runRepository.GetQueryableAsync();
+        // Yalnız görebildiği modüllerin kayıtları: dosya adı ve kişi, modülü göremeyene açılmaz.
+        var host = CurrentTenant.Id == null;
+        var visibleKeys = new List<string>();
+        foreach (var module in DataTransferModules.All.Where(m => m.IsOn(host)))
+        {
+            if (await AuthorizationService.IsGrantedAsync(module.Permission))
+            {
+                visibleKeys.Add(module.Key);
+            }
+        }
+
+        var query = (await _runRepository.GetQueryableAsync()).Where(r => visibleKeys.Contains(r.ModuleKey));
         var total = await AsyncExecuter.CountAsync(query);
         var runs = await AsyncExecuter.ToListAsync(query
             .OrderByDescending(r => r.CreationTime)
