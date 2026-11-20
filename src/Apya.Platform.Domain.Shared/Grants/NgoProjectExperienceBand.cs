@@ -1,8 +1,8 @@
 namespace Apya.Platform.Grants;
 
 /// <summary>
-/// STK'nın bugüne dek yürüttüğü proje sayısı bandı. Yalnız profil verisidir —
-/// hiçbir uygunluk kuralına bağlanmaz, doluluk yüzdesine sayılır.
+/// Kurumun (şirket ya da STK) bugüne dek yürüttüğü proje sayısı bandı. Yalnız profil
+/// verisidir — hiçbir uygunluk kuralına bağlanmaz. Ad tarihseldir: önce yalnız STK'da vardı.
 /// </summary>
 public enum NgoProjectExperienceBand
 {

@@ -220,6 +220,17 @@ else
                         <label class="apya-field-label" for="ProfileFoundedOn"><span>@L["Grants:DataField:FoundedOn"]</span></label>
                         <input type="date" abp-data-datepicker="false" class="form-control form-control-sm apya-numeric" id="ProfileFoundedOn" />
                     </div>
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ProfileExperience"><span>@L["Grants:DataField:ProjectExperience"]</span></label>
+                        <select class="form-select form-select-sm" id="ProfileExperience">
+                            <option value="">@L["Grants:Detail:NotEntered"]</option>
+                            <option value="0">@L["Grants:Experience:Yok"]</option>
+                            <option value="1">@L["Grants:Experience:BirUc"]</option>
+                            <option value="2">@L["Grants:Experience:DortOn"]</option>
+                            <option value="3">@L["Grants:Experience:OnBirYirmiBes"]</option>
+                            <option value="4">@L["Grants:Experience:YirmiBesUstu"]</option>
+                        </select>
+                    </div>
                 </div>
 
                 @* --- Şirket alanları --- *@
@@ -282,17 +293,6 @@ else
                             <option value="2">@L["Grants:StaffBand:DortOn"]</option>
                             <option value="3">@L["Grants:StaffBand:OnBirYirmiBes"]</option>
                             <option value="4">@L["Grants:StaffBand:YirmiBesUstu"]</option>
-                        </select>
-                    </div>
-                    <div class="apya-field">
-                        <label class="apya-field-label" for="ProfileExperience"><span>@L["Grants:DataField:ProjectExperience"]</span></label>
-                        <select class="form-select form-select-sm" id="ProfileExperience">
-                            <option value="">@L["Grants:Detail:NotEntered"]</option>
-                            <option value="0">@L["Grants:Experience:Yok"]</option>
-                            <option value="1">@L["Grants:Experience:BirUc"]</option>
-                            <option value="2">@L["Grants:Experience:DortOn"]</option>
-                            <option value="3">@L["Grants:Experience:OnBirYirmiBes"]</option>
-                            <option value="4">@L["Grants:Experience:YirmiBesUstu"]</option>
                         </select>
                     </div>
                 </div>

@@ -372,4 +372,36 @@ public class GrantTenantSurface_Tests : PlatformWebTestBase
         dolu.CompletionPercent.ShouldBe(100);
         dolu.MissingFieldCount.ShouldBe(0);
     }
+
+    /// <summary>Proje deneyimi iki türde de ortak: şirket de girer, tür değişince silinmez.</summary>
+    [Fact]
+    public async Task Proje_Deneyimi_Sirkette_Saklanir_Ve_Tur_Degisince_Korunur()
+    {
+        var service = GetRequiredService<IFirmProfileAppService>();
+
+        var sirket = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto
+        {
+            Type = OrganizationType.Sirket,
+            ProjectExperience = NgoProjectExperienceBand.DortOn
+        });
+        sirket.ProjectExperience.ShouldBe(NgoProjectExperienceBand.DortOn);
+        (await service.GetMyProfileAsync()).ProjectExperience.ShouldBe(NgoProjectExperienceBand.DortOn);
+
+        var dernek = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto
+        {
+            Type = OrganizationType.Dernek,
+            RegistryNumber = "06-123-045",
+            ProjectExperience = NgoProjectExperienceBand.DortOn
+        });
+        dernek.ProjectExperience.ShouldBe(NgoProjectExperienceBand.DortOn);
+
+        var geri = await service.UpdateMyProfileAsync(new UpdateFirmProfileDto
+        {
+            Type = OrganizationType.Sirket,
+            RegistryNumber = "06-123-045",
+            ProjectExperience = NgoProjectExperienceBand.DortOn
+        });
+        geri.ProjectExperience.ShouldBe(NgoProjectExperienceBand.DortOn);
+        geri.RegistryNumber.ShouldBeNull("STK'ya özgü alanlar şirkette yine temizlenir");
+    }
 }
