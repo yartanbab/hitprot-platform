@@ -83,6 +83,7 @@ public static class PlatformDomainErrorCodes
     public const string InvoiceTaxRateInvalid = "Platform:Invoice:TaxRateInvalid";
     public const string InvoiceCurrencyInvalid = "Platform:Invoice:CurrencyInvalid";
     public const string InvoiceItemAmountInvalid = "Platform:Invoice:ItemAmountInvalid";
+    public const string InvoiceSortingInvalid = "Platform:Invoice:SortingInvalid";
 
     // --- Fatura Tahsilatı → Kasa (APYA-136) ---
     public const string PaymentExchangeRateMissing = "Platform:Payment:ExchangeRateMissing";

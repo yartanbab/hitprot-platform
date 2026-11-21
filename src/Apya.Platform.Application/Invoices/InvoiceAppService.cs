@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -51,16 +52,8 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
         }
         var totalCount = await AsyncExecuter.CountAsync(query);
 
-        var sorting = string.IsNullOrWhiteSpace(input.Sorting) ? "InvoiceDate desc" : input.Sorting;
-        // projectName ve paidAmount DTO-only alanlar; DB tarafında sort'a uygulanamaz.
-        if (sorting.StartsWith("projectName", StringComparison.OrdinalIgnoreCase)
-            || sorting.StartsWith("paidAmount", StringComparison.OrdinalIgnoreCase))
-        {
-            sorting = "InvoiceDate desc";
-        }
-
         var items = await AsyncExecuter.ToListAsync(
-            query.OrderBy(sorting).PageBy(input.SkipCount, input.MaxResultCount)
+            ApplySorting(query, input.Sorting).PageBy(input.SkipCount, input.MaxResultCount)
         );
 
         if (!items.Any())
@@ -319,4 +312,101 @@ public class InvoiceAppService : ApplicationService, IInvoiceAppService
             }).ToList()
         };
     }
+
+    /// <summary>Veritabanında sıralanabilen <see cref="Invoice"/> sütunları (küçük harfle).</summary>
+    private static readonly HashSet<string> SortableFields = new()
+    {
+        "invoicedate", "duedate", "invoicenumber", "totalamount", "currency", "status", "direction", "creationtime"
+    };
+
+    /// <summary>DTO'da hesaplanan alanlar: istenirse varsayılan sıralamaya düşülür.</summary>
+    private static readonly HashSet<string> ComputedSortFields = new() { "projectname", "paidamount" };
+
+    /// <summary>
+    /// Liste sıralaması açık bir eşlemeyle yapılır (dinamik LINQ yok): <c>"Alan [asc|desc], …"</c>,
+    /// alan adı büyük/küçük harf duyarsız. Boşsa <c>InvoiceDate desc</c>. <c>projectName</c> ve
+    /// <c>paidAmount</c> DTO'da hesaplanır, veritabanında sıralanamaz: bunlardan biri istenirse
+    /// <c>InvoiceDate desc</c>'e düşülür. Bilinmeyen alan ya da yön hata verir.
+    /// </summary>
+    private static IQueryable<Invoice> ApplySorting(IQueryable<Invoice> query, string? sorting)
+    {
+        if (string.IsNullOrWhiteSpace(sorting))
+        {
+            return query.OrderByDescending(x => x.InvoiceDate);
+        }
+
+        var clauses = new List<(string Field, bool Descending)>();
+        foreach (var part in sorting.Split(','))
+        {
+            var tokens = part.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length is 0 or > 2)
+            {
+                throw InvalidSorting(sorting);
+            }
+
+            var descending = false;
+            if (tokens.Length == 2)
+            {
+                var direction = tokens[1];
+                if (direction.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                    || direction.Equals("descending", StringComparison.OrdinalIgnoreCase))
+                {
+                    descending = true;
+                }
+                else if (!direction.Equals("asc", StringComparison.OrdinalIgnoreCase)
+                         && !direction.Equals("ascending", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw InvalidSorting(sorting);
+                }
+            }
+
+            var field = tokens[0].ToLowerInvariant();
+            if (!SortableFields.Contains(field) && !ComputedSortFields.Contains(field))
+            {
+                throw InvalidSorting(sorting);
+            }
+
+            clauses.Add((field, descending));
+        }
+
+        if (clauses.Any(c => ComputedSortFields.Contains(c.Field)))
+        {
+            return query.OrderByDescending(x => x.InvoiceDate);
+        }
+
+        IOrderedQueryable<Invoice>? ordered = null;
+        foreach (var (field, descending) in clauses)
+        {
+            ordered = field switch
+            {
+                "invoicedate" => SortBy(query, ordered, x => x.InvoiceDate, descending),
+                "duedate" => SortBy(query, ordered, x => x.DueDate, descending),
+                "invoicenumber" => SortBy(query, ordered, x => x.InvoiceNumber, descending),
+                "totalamount" => SortBy(query, ordered, x => x.TotalAmount, descending),
+                "currency" => SortBy(query, ordered, x => x.Currency, descending),
+                "status" => SortBy(query, ordered, x => x.Status, descending),
+                "direction" => SortBy(query, ordered, x => x.Direction, descending),
+                "creationtime" => SortBy(query, ordered, x => x.CreationTime, descending),
+                _ => throw InvalidSorting(sorting)
+            };
+        }
+
+        return ordered!;
+    }
+
+    private static IOrderedQueryable<Invoice> SortBy<TKey>(
+        IQueryable<Invoice> query,
+        IOrderedQueryable<Invoice>? ordered,
+        Expression<Func<Invoice, TKey>> key,
+        bool descending)
+    {
+        if (ordered == null)
+        {
+            return descending ? query.OrderByDescending(key) : query.OrderBy(key);
+        }
+        return descending ? ordered.ThenByDescending(key) : ordered.ThenBy(key);
+    }
+
+    private static BusinessException InvalidSorting(string sorting) =>
+        new BusinessException(PlatformDomainErrorCodes.InvoiceSortingInvalid).WithData("Sorting", sorting);
 }
