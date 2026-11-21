@@ -29,6 +29,7 @@ public class GrantMatchWeight : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public double RegionMultiplier { get; set; } = 1.0;
     public double ProjectHistoryMultiplier { get; set; } = 1.0;
     public double KeywordMultiplier { get; set; } = 1.0;
+    public double PriorityGroupMultiplier { get; set; } = 1.0;
 
     public bool SizePenaltyEnabled { get; set; } = true;
     public bool SkipMissingDimensions { get; set; } = true;
@@ -53,6 +54,7 @@ public class GrantMatchWeight : FullAuditedAggregateRoot<Guid>, IMultiTenant
         set[GrantMatchDimension.Region] = RegionMultiplier;
         set[GrantMatchDimension.ProjectHistory] = ProjectHistoryMultiplier;
         set[GrantMatchDimension.Keyword] = KeywordMultiplier;
+        set[GrantMatchDimension.PriorityGroup] = PriorityGroupMultiplier;
         return set;
     }
 
@@ -64,6 +66,7 @@ public class GrantMatchWeight : FullAuditedAggregateRoot<Guid>, IMultiTenant
         RegionMultiplier = set[GrantMatchDimension.Region];
         ProjectHistoryMultiplier = set[GrantMatchDimension.ProjectHistory];
         KeywordMultiplier = set[GrantMatchDimension.Keyword];
+        PriorityGroupMultiplier = set[GrantMatchDimension.PriorityGroup];
         SizePenaltyEnabled = set.SizePenaltyEnabled;
         SkipMissingDimensions = set.SkipMissingDimensions;
     }

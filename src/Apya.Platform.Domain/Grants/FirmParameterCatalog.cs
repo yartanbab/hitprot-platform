@@ -31,6 +31,10 @@ public static class FirmParameterCatalog
 
     public static readonly Guid CofinancingCapacityId = IdOf(26);
 
+    /// <summary>Öncelikli grup beyanları: uyum puanının <see cref="GrantMatchDimension.PriorityGroup"/> boyutu bunları okur.</summary>
+    public static readonly Guid FemaleEntrepreneurId = IdOf(32);
+    public static readonly Guid YoungEntrepreneurId = IdOf(33);
+
     public static Guid IdOf(int number) => Guid.Parse($"f17a0000-0000-4000-8000-{number:D12}");
 
     public static IReadOnlyList<FirmParameterDefinition> Build() => Rows.Select(r => r.ToDefinition()).ToList();
@@ -131,9 +135,9 @@ public static class FirmParameterCatalog
         new(31, "implementation_sustainability", "Uygulama ve sürdürülebilirlik kapasitesi", LongText, Kapasite, Opsiyonel, Tumu, Kullanilmaz, ElleVeyaBelge,
             "Projeyi nasıl yürütüp destek bittikten sonra nasıl sürdüreceğiniz hemen her başvuruda sorulur.",
             ValidityMonths: 24),
-        new(32, "female_entrepreneur", "Kadın girişimci", FirmParameterDataType.Boolean, Kimlik, Opsiyonel, Tumu, Kullanilmaz, Elle,
+        new(32, "female_entrepreneur", "Kadın girişimci", FirmParameterDataType.Boolean, Kimlik, Opsiyonel, Tumu, Skor, Elle,
             "Bazı programlar kadın girişimcilere öncelik ya da ek puan verir."),
-        new(33, "young_entrepreneur", "Genç girişimci", FirmParameterDataType.Boolean, Kimlik, Opsiyonel, Tumu, Kullanilmaz, Elle,
+        new(33, "young_entrepreneur", "Genç girişimci", FirmParameterDataType.Boolean, Kimlik, Opsiyonel, Tumu, Skor, Elle,
             "Bazı programlar genç girişimcilere öncelik ya da ek puan verir.",
             ValidityMonths: 12),
         new(34, "has_public_debt", "Vadesi geçmiş kamu borcu", FirmParameterDataType.Boolean, Finans, Onerilen, Tumu, Kullanilmaz, Elle,

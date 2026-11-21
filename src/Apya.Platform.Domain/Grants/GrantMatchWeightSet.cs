@@ -22,7 +22,8 @@ public sealed class GrantMatchWeightSet
         [GrantMatchDimension.RdStaff] = 1.0,
         [GrantMatchDimension.Region] = 1.0,
         [GrantMatchDimension.ProjectHistory] = 1.0,
-        [GrantMatchDimension.Keyword] = 1.0
+        [GrantMatchDimension.Keyword] = 1.0,
+        [GrantMatchDimension.PriorityGroup] = 1.0
     };
 
     /// <summary>Ölçek uyuşmazlığında skoru %30'a düşür (bugünkü davranış).</summary>

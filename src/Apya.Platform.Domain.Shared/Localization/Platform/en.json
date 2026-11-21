@@ -2405,6 +2405,7 @@
     "Grants:Dimension:Region": "Region",
     "Grants:Dimension:ProjectHistory": "Project budget history",
     "Grants:Dimension:Keyword": "Keyword",
+    "Grants:Dimension:PriorityGroup": "Priority group (women / young entrepreneurs)",
     "Grants:DataField:Nace": "NACE code",
     "Grants:DataField:Trl": "TRL declaration",
     "Grants:DataField:RdStaff": "R&D staff count",

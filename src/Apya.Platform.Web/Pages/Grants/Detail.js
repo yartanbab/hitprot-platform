@@ -14,7 +14,7 @@ $(function () {
     var bucketTone = apyaGrantStatus.bucket.tones;
     var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType'];
     var outcomeIcon = ['fa-circle-check is-passed', 'fa-circle-xmark is-failed', 'fa-circle-exclamation is-unknown'];
-    var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword'];
+    var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword', 'PriorityGroup'];
     var costKeys = ['Personel', 'MakineTechizat', 'Danismanlik', 'YazilimLisans', 'Seyahat', 'SarfMalzeme'];
     var partyKeys = ['Firma', 'Danisman', 'Ortak', 'Kurum'];
     var obligationKeys = ['Zorunlu', 'Kosullu'];

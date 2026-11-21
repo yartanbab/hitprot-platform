@@ -5,6 +5,8 @@ using Apya.Platform.Grants;
 using Apya.Platform.Grants.Dtos;
 using Shouldly;
 using Volo.Abp.Domain.Repositories;
+using Volo.Abp.MultiTenancy;
+using Volo.Abp.TenantManagement;
 using Volo.Abp.Uow;
 using Xunit;
 
@@ -72,7 +74,7 @@ public class GrantMatchWeightPage_Tests : PlatformWebTestBase
 
         var dto = await service.GetAsync(id);
 
-        dto.Dimensions.Count.ShouldBe(6);
+        dto.Dimensions.Count.ShouldBe(7);
         dto.Dimensions.ShouldAllBe(d => d.Multiplier == 1.0);
         dto.SizePenaltyEnabled.ShouldBeTrue();
         dto.SkipMissingDimensions.ShouldBeTrue();
@@ -168,4 +170,85 @@ public class GrantMatchWeightPage_Tests : PlatformWebTestBase
         rows.ShouldAllBe(r => r.FirmCount > 0);
         rows.Select(r => r.Field).Distinct().Count().ShouldBe(rows.Count);
     }
+
+    /// <summary>
+    /// Sonradan eklenen boyutun veritabanı varsayılanı 1,0: EF 0'ı "girilmemiş" sayarsa yeni
+    /// satırda host'un kapattığı boyut sessizce yeniden açılırdı.
+    /// </summary>
+    [Fact]
+    public async Task Oncelikli_Grup_Sifir_Agirligi_Yeni_Satirda_Korunur()
+    {
+        var service = GetRequiredService<IGrantMatchWeightAppService>();
+        var id = await GrantIdAsync();
+        var input = Input(global: false);
+        input.Dimensions.Add(new() { Dimension = GrantMatchDimension.PriorityGroup, Multiplier = 0 });
+
+        await service.UpdateAsync(id, input);
+
+        (await service.GetAsync(id)).Dimensions
+            .Single(d => d.Dimension == GrantMatchDimension.PriorityGroup).Multiplier.ShouldBe(0);
+    }
+
+    /// <summary>Host'un etki önizlemesi kurumun gerçek skorunu görür: beyan önizlemeye de girer.</summary>
+    [Fact]
+    public async Task Etki_Onizlemesi_Oncelikli_Grup_Beyanini_Gorur()
+    {
+        var uowManager = GetRequiredService<IUnitOfWorkManager>();
+        var currentTenant = GetRequiredService<ICurrentTenant>();
+        var label = "oncelik-" + Guid.NewGuid().ToString("N")[..6];
+
+        Guid tenantId;
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            var tenant = await GetRequiredService<ITenantManager>().CreateAsync(label);
+            await GetRequiredService<ITenantRepository>().InsertAsync(tenant, autoSave: true);
+            tenantId = tenant.Id;
+            await uow.CompleteAsync();
+        }
+
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            using (currentTenant.Change(tenantId))
+            {
+                var profile = await GetRequiredService<IRepository<FirmProfile, Guid>>().InsertAsync(
+                    new FirmProfile(Guid.NewGuid(), tenantId), autoSave: true);
+                await GetRequiredService<IRepository<FirmProfileTag, Guid>>().InsertAsync(
+                    new FirmProfileTag(Guid.NewGuid(), profile.Id, GrantCriteriaKind.Sektor, "oncelik-a"), autoSave: true);
+                var definition = await GetRequiredService<IRepository<FirmParameterDefinition, Guid>>()
+                    .GetAsync(FirmParameterCatalog.FemaleEntrepreneurId);
+                await GetRequiredService<IRepository<FirmParameterValue, Guid>>().InsertAsync(
+                    new FirmParameterValue(Guid.NewGuid(), tenantId, definition, new FirmParameterInput(Bool: true),
+                        FirmParameterOrigin.UserEntry, DateTime.Now),
+                    autoSave: true);
+            }
+            await uow.CompleteAsync();
+        }
+
+        var grantId = Guid.NewGuid();
+        using (var uow = uowManager.Begin(requiresNew: true))
+        {
+            await GetRequiredService<IRepository<Grant, Guid>>().InsertAsync(
+                new Grant(grantId, "Öncelik programı", "Test", 1_000_000m, 40) { PrefersFemaleEntrepreneur = true },
+                autoSave: true);
+            var tags = GetRequiredService<IRepository<GrantCriteriaTag, Guid>>();
+            await tags.InsertAsync(new GrantCriteriaTag(Guid.NewGuid(), grantId, GrantCriteriaKind.Sektor, "oncelik-a"), autoSave: true);
+            await tags.InsertAsync(new GrantCriteriaTag(Guid.NewGuid(), grantId, GrantCriteriaKind.Sektor, "oncelik-b"), autoSave: true);
+            await uow.CompleteAsync();
+        }
+
+        // Yalnız öncelik boyutu kapatılıyor: skor 75'ten 50'ye iner.
+        var input = new UpdateGrantMatchWeightDto
+        {
+            SizePenaltyEnabled = true,
+            SkipMissingDimensions = true,
+            Dimensions = new() { new() { Dimension = GrantMatchDimension.PriorityGroup, Multiplier = 0 } }
+        };
+
+        var impact = await GetRequiredService<IGrantMatchWeightAppService>().PreviewImpactAsync(grantId, input);
+
+        var mover = impact.TopMovers.Single(m => m.TenantName == label);
+        mover.CurrentScore.ShouldBe(75);
+        mover.NewScore.ShouldBe(50);
+    }
+
 }

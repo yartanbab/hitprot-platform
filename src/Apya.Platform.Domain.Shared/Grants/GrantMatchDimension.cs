@@ -23,5 +23,12 @@ public enum GrantMatchDimension
     ProjectHistory = 4,
 
     /// <summary>Serbest anahtar kelime örtüşmesi.</summary>
-    Keyword = 5
+    Keyword = 5,
+
+    /// <summary>
+    /// Programın öncelik verdiği grup (kadın / genç girişimci) — YALNIZ ARTI PUAN: kurum o
+    /// gruptaysa ve programın hedefiyle örtüşüyorsa boyut 1 ile girer, aksi halde hiç girmez.
+    /// Eleyici değildir.
+    /// </summary>
+    PriorityGroup = 6
 }

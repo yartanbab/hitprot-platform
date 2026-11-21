@@ -113,6 +113,24 @@ public class GrantMatchManager : DomainService
                 firmHasData: rdRequired && firm.RdStaffCount.HasValue,
                 value: () => firm.RdStaffCount!.Value >= grant.MinRdStaffCount!.Value ? 1.0 : 0.0);
 
+            // --- Öncelikli grup: YALNIZ ARTI PUAN ---
+            // Beyan Kurumsal Veriler'deki parametredir. Kurum programın öncelik verdiği gruptaysa
+            // boyut 1 ile girer; değilse, beyan yoksa ya da süresi dolduysa hiç girmez
+            // (grantRequires false: "eksik veri cezası" da kesilmez), kimsenin skoru düşmez.
+            // Programın hedefiyle (sektör, bölge, anahtar kelime) hiç örtüşmeyen kurumda da
+            // girmez: öncelik uyan programı öne çıkarır, uymayanı tek başına önerdirmez.
+            bool Declares(Guid definitionId)
+                => firm.Parameters.TryGetValue(definitionId, out var p) && !p.IsStale && p.Bool == true;
+            var fitsTarget = dims.Any(d => d.Value > 0 && d.Dimension
+                is GrantMatchDimension.Sector or GrantMatchDimension.Region or GrantMatchDimension.Keyword);
+            var inPriorityGroup = fitsTarget
+                && ((grant.PrefersFemaleEntrepreneur && Declares(FirmParameterCatalog.FemaleEntrepreneurId))
+                    || (grant.PrefersYoungEntrepreneur && Declares(FirmParameterCatalog.YoungEntrepreneurId)));
+            Add(GrantMatchDimension.PriorityGroup,
+                grantRequires: false,
+                firmHasData: inPriorityGroup,
+                value: () => 1.0);
+
             var totalWeight = dims.Sum(d => d.Weight);
             baseScore = totalWeight <= 0 ? 0 : dims.Sum(d => d.Value * d.Weight) / totalWeight * 100.0;
         }

@@ -8388,6 +8388,11 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<double>("PriorityGroupMultiplier")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("double precision")
+                        .HasDefaultValue(1.0);
+
                     b.Property<double>("ProjectHistoryMultiplier")
                         .HasColumnType("double precision");
 

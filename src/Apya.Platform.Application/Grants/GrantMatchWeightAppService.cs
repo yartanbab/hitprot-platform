@@ -28,7 +28,14 @@ public class GrantMatchWeightAppService : ApplicationService, IGrantMatchWeightA
         GrantMatchDimension.RdStaff,
         GrantMatchDimension.Region,
         GrantMatchDimension.ProjectHistory,
-        GrantMatchDimension.Keyword
+        GrantMatchDimension.Keyword,
+        GrantMatchDimension.PriorityGroup
+    };
+
+    private static readonly Guid[] PriorityGroupParameters =
+    {
+        FirmParameterCatalog.FemaleEntrepreneurId,
+        FirmParameterCatalog.YoungEntrepreneurId
     };
 
     private readonly IRepository<GrantMatchWeight, Guid> _weightRepo;
@@ -37,6 +44,8 @@ public class GrantMatchWeightAppService : ApplicationService, IGrantMatchWeightA
     private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepo;
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
     private readonly IRepository<FirmProfileTag, Guid> _profileTagRepo;
+    private readonly IRepository<FirmParameterDefinition, Guid> _parameterDefinitionRepo;
+    private readonly IRepository<FirmParameterValue, Guid> _parameterValueRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly GrantMatchManager _matcher;
     private readonly GrantMatchWeightResolver _weightResolver;
@@ -49,6 +58,8 @@ public class GrantMatchWeightAppService : ApplicationService, IGrantMatchWeightA
         IRepository<GrantCriteriaTag, Guid> criteriaRepo,
         IRepository<FirmProfile, Guid> profileRepo,
         IRepository<FirmProfileTag, Guid> profileTagRepo,
+        IRepository<FirmParameterDefinition, Guid> parameterDefinitionRepo,
+        IRepository<FirmParameterValue, Guid> parameterValueRepo,
         ITenantRepository tenantRepo,
         GrantMatchManager matcher,
         GrantMatchWeightResolver weightResolver,
@@ -60,6 +71,8 @@ public class GrantMatchWeightAppService : ApplicationService, IGrantMatchWeightA
         _criteriaRepo = criteriaRepo;
         _profileRepo = profileRepo;
         _profileTagRepo = profileTagRepo;
+        _parameterDefinitionRepo = parameterDefinitionRepo;
+        _parameterValueRepo = parameterValueRepo;
         _tenantRepo = tenantRepo;
         _matcher = matcher;
         _weightResolver = weightResolver;
@@ -298,11 +311,26 @@ public class GrantMatchWeightAppService : ApplicationService, IGrantMatchWeightA
         // 🔴 Aynı gerekçe: host tüm kiracıların profillerini okur.
         List<FirmProfile> profiles;
         List<FirmProfileTag> tags;
+        List<FirmParameterValue> priorityValues;
         using (_mtFilter.Disable())
         {
             profiles = await _profileRepo.GetListAsync();
             tags = await _profileTagRepo.GetListAsync();
+            priorityValues = await _parameterValueRepo.GetListAsync(v => PriorityGroupParameters.Contains(v.DefinitionId));
         }
+
+        // Önizleme kurumun gerçek skoruyla aynı çıksın: öncelikli grup beyanları da taşınır.
+        var priorityDefinitions = (await _parameterDefinitionRepo.GetListAsync(d => PriorityGroupParameters.Contains(d.Id)))
+            .ToDictionary(d => d.Id);
+        var today = Clock.Now.Date;
+        var priorityByTenant = priorityValues
+            .Where(v => v.TenantId.HasValue && priorityDefinitions.ContainsKey(v.DefinitionId))
+            .ToLookup(v => v.TenantId!.Value);
+        IReadOnlyDictionary<Guid, FirmSignalParameter> PriorityParameters(Guid tenantId)
+            => priorityByTenant[tenantId].ToDictionary(
+                v => v.DefinitionId,
+                v => new FirmSignalParameter(null, null, v.ValueBool, Array.Empty<string>(),
+                    v.IsStale(priorityDefinitions[v.DefinitionId], today)));
 
         var tagsByProfile = tags.GroupBy(t => t.FirmProfileId)
             .ToDictionary(g => g.Key, g => g.ToList());
@@ -316,7 +344,7 @@ public class GrantMatchWeightAppService : ApplicationService, IGrantMatchWeightA
         {
             if (!profileByTenant.TryGetValue(tenantId, out var profile))
             {
-                result[tenantId] = new FirmSignals { IsTypeKnown = false };
+                result[tenantId] = new FirmSignals { IsTypeKnown = false, Parameters = PriorityParameters(tenantId) };
                 continue;
             }
             result[tenantId] = new FirmSignals
@@ -329,6 +357,7 @@ public class GrantMatchWeightAppService : ApplicationService, IGrantMatchWeightA
                 AnnualRevenue = profile.AnnualRevenue,
                 Trl = profile.Trl,
                 HasConsortiumPartner = profile.HasConsortiumPartner,
+                Parameters = PriorityParameters(tenantId),
                 Tags = (tagsByProfile.TryGetValue(profile.Id, out var pt) ? pt : new List<FirmProfileTag>())
                     .Select(t => new FirmSignalTag(t.Kind, t.Value))
                     .ToList()
