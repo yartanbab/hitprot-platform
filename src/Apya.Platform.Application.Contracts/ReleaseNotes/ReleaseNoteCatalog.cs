@@ -127,6 +127,12 @@ public static class ReleaseNoteCatalog
                 "değiştirebilirsiniz. Yanıtınız üç ayda bir teyit istenir. Kesin şart için çağrı metnine bakın."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Kullanıcı adları artık tekil",
+                "Bir kullanıcı adı artık bütün platformda tek kişiye ait. Aynı adı başka bir kurumdaki biri de " +
+                "kullanıyorsa hesabınızın adı güncellenmiş olabilir ve bir kez yeniden giriş yapmanız gerekebilir. " +
+                "E-posta adresiniz ve şifreniz değişmez; onlarla girmeye devam edebilirsiniz."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Başarısız belge okumasını yeniden deneyin",
                 "Belgeden doldururken okuma başarısız olursa belgeyi yeniden yüklemeniz gerekmez: okumanın " +
                 "sayfasındaki \"Yeniden dene\" aynı belgeyi tekrar okutur ve öneriler aynı sayfada çıkar."),
@@ -160,6 +166,12 @@ public static class ReleaseNoteCatalog
                 "Aktarım geçmişinde yalnız erişebildikleriniz",
                 "İçe / Dışa Aktarma › Geçmiş sekmesi artık yalnız erişim izniniz olan listelerin aktarımlarını " +
                 "gösterir; örneğin finans ekranlarına erişimi olmayan bir kullanıcı gider aktarımlarını görmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Fix,
+                "Kapanan çağrıda başvuru ekranı durumu baştan söyler",
+                "Gönderilmemiş bir başvurunun çağrısı kapandıysa Gönder düğmesi kapalı olur ve nedeni ekranda yazar; " +
+                "yazdıklarınız saklanmaya devam eder. Son başvuru tarihi geçmiş çağrıda eksi gün sayısı yerine " +
+                "çağrının kapandığı görünür."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Fix,
                 "Belgeler'deki yönetim işlemleri açıldı",
