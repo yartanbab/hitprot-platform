@@ -343,7 +343,7 @@ public class GrantToday_Tests : PlatformEntityFrameworkCoreTestBase
 
             (await _today.GetAsync()).Opportunity!.GrantCallId.ShouldBe(call.Id);
 
-            await recommendations.DismissRecommendationAsync(call.Id);
+            await recommendations.DismissRecommendationAsync(new DismissGrantRecommendationInput { GrantCallId = call.Id, Reason = GrantDismissReason.OutOfScope });
 
             (await _today.GetAsync()).Opportunity.ShouldBeNull();
             (await recRepository.GetListAsync(r => r.GrantCallId == call.Id))
@@ -352,8 +352,10 @@ public class GrantToday_Tests : PlatformEntityFrameworkCoreTestBase
     }
 
     [Fact]
-    public async Task Baska_firmanin_onerisi_kapatilamaz()
+    public async Task Baska_firmanin_kapatmasi_onerinin_sahibine_dokunmaz()
     {
+        // Çağrı katalogda herkese açık: yabancı firma KENDİ akışında kapatabilir, ama
+        // sahibinin danışman önerisi ve akışı etkilenmez.
         var (_, call) = await CreateHostCallAsync("Yabancı Öneri Programı", daysToDeadline: 20);
         var owner = await CreateTenantAsync("Öneri Sahibi Firma");
         var other = await CreateTenantAsync("Yabancı Firma");
@@ -369,14 +371,17 @@ public class GrantToday_Tests : PlatformEntityFrameworkCoreTestBase
 
         using (_currentTenant.Change(other))
         {
-            await Should.ThrowAsync<Volo.Abp.Domain.Entities.EntityNotFoundException>(
-                () => recommendations.DismissRecommendationAsync(call.Id));
+            await recommendations.DismissRecommendationAsync(
+                new DismissGrantRecommendationInput { GrantCallId = call.Id, Reason = GrantDismissReason.OutOfScope });
         }
 
         using (_currentTenant.Change(owner))
         {
             (await recRepository.GetListAsync(r => r.GrantCallId == call.Id))
                 .ShouldAllBe(r => r.Status == GrantRecommendationStatus.New);
+            (await recommendations.GetOpenCallsAsync()).Single(r => r.GrantCallId == call.Id)
+                .IsDismissed.ShouldBeFalse();
+            (await _today.GetAsync()).Opportunity!.GrantCallId.ShouldBe(call.Id);
         }
     }
 }

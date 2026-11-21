@@ -160,6 +160,7 @@ namespace Apya.Platform.EntityFrameworkCore
         public DbSet<GrantInterest> GrantInterests { get; set; }
         public DbSet<GrantMeetingProposal> GrantMeetingProposals { get; set; }
         public DbSet<GrantRecommendation> GrantRecommendations { get; set; }
+        public DbSet<GrantRecommendationEvent> GrantRecommendationEvents { get; set; }
         public DbSet<GrantDisbursementTranche> GrantDisbursementTranches { get; set; }
         public DbSet<GrantMilestone> GrantMilestones { get; set; }
         public DbSet<GrantApplicationTarget> GrantApplicationTargets { get; set; }
@@ -1298,6 +1299,16 @@ namespace Apya.Platform.EntityFrameworkCore
                 // Tekillik yalnız CANLI satırlar arasında; EF'in "IS NOT NULL" filtresi korunur.
                 b.HasIndex(x => new { x.TenantId, x.GrantCallId }).IsUnique()
                     .HasFilter(isSqlServer ? "[TenantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
+            });
+
+            builder.Entity<GrantRecommendationEvent>(b =>
+            {
+                b.ToTable(PlatformConsts.DbTablePrefix + "GrantRecommendationEvents", PlatformConsts.DbSchema);
+                b.ConfigureByConvention();
+                b.Property(x => x.Note).HasMaxLength(GrantRecommendationEventConsts.MaxNoteLength);
+                b.HasOne<GrantCall>().WithMany().HasForeignKey(x => x.GrantCallId).OnDelete(DeleteBehavior.Cascade);
+                // Akış, kiracının çağrı başına SON olayını okur.
+                b.HasIndex(x => new { x.TenantId, x.GrantCallId, x.CreationTime });
             });
 
             // (BUG-001) ProjectTask, SubTask, ProjectTaskComment konfigürasyonları kaldırıldı.

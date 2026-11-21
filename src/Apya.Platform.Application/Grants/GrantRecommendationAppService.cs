@@ -34,6 +34,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     private readonly IRepository<GrantInterest, Guid> _interestRepo;
     private readonly IRepository<GrantRecommendation, Guid> _hostRecRepo;
     private readonly IRepository<GrantBookmark, Guid> _bookmarkRepo;
+    private readonly IRepository<GrantRecommendationEvent, Guid> _eventRepo;
     private readonly IRepository<GrantDocumentRequirement, Guid> _documentRepo;
     private readonly IRepository<GrantEligibleCostItem, Guid> _costItemRepo;
     private readonly IRepository<GrantStageTemplate, Guid> _templateRepo;
@@ -66,8 +67,10 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         IIdentityUserRepository userRepo,
         IDataFilter<IMultiTenant> mtFilter,
         GrantParameterCriterionManager parameterCriteria,
-        IRepository<FirmParameterDefinition, Guid> parameterDefinitionRepo)
+        IRepository<FirmParameterDefinition, Guid> parameterDefinitionRepo,
+        IRepository<GrantRecommendationEvent, Guid> eventRepo)
     {
+        _eventRepo = eventRepo;
         _parameterCriteria = parameterCriteria;
         _parameterDefinitionRepo = parameterDefinitionRepo;
         _callRepo = callRepo;
@@ -91,7 +94,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
 
     public async Task<List<GrantRecommendationDto>> GetMyRecommendationsAsync()
     {
-        return (await BuildOpenCallFeedAsync()).Where(r => r.IsRecommended).ToList();
+        return (await BuildOpenCallFeedAsync()).Where(r => r.IsRecommended && !r.IsDismissed).ToList();
     }
 
     public Task<List<GrantRecommendationDto>> GetOpenCallsAsync()
@@ -127,23 +130,82 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         return true;
     }
 
-    public async Task DismissRecommendationAsync(Guid grantCallId)
+    public async Task DismissRecommendationAsync(DismissGrantRecommendationInput input)
     {
         // Öneri firmanın tamamı için kapanır (host da durumu görür): salt görüntüleyen kapatamaz.
         await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
-        // Kiracı filtresi açık: yalnız bu firmaya gönderilmiş öneriler bulunur; başka firmanın
-        // önerisi (ya da host bağlamı) "bulunamadı" olur.
-        var recommendations = await _hostRecRepo.GetListAsync(
-            r => r.GrantCallId == grantCallId && r.Source == GrantRecommendationSource.Host);
-        if (recommendations.Count == 0)
+        var snapshot = await SnapshotAsync(input.GrantCallId);
+
+        // Başvurulmuş çağrı artık bir öneri değil, yürüyen bir iş (GrantRecommendation.Dismiss ile aynı kural).
+        if (await _appRepo.AnyAsync(a => a.GrantCallId == input.GrantCallId))
         {
-            throw new EntityNotFoundException(typeof(GrantRecommendation), grantCallId);
+            return;
         }
 
-        foreach (var recommendation in recommendations)
+        // Kiracı filtresi açık: yalnız bu firmaya gönderilmiş danışman önerileri bulunur.
+        var hostRecs = await _hostRecRepo.GetListAsync(
+            r => r.GrantCallId == input.GrantCallId && r.Source == GrantRecommendationSource.Host);
+        var wasHostRecommended = hostRecs.Any(r => r.Status != GrantRecommendationStatus.Dismissed);
+        foreach (var recommendation in hostRecs)
         {
             recommendation.Dismiss();
             await _hostRecRepo.UpdateAsync(recommendation, autoSave: true);
+        }
+
+        await _eventRepo.InsertAsync(GrantRecommendationEvent.Dismissed(
+            GuidGenerator.Create(), CurrentTenant.Id, input.GrantCallId, snapshot.GrantId,
+            input.Reason!.Value, input.Note, snapshot.Score, snapshot.Bucket, wasHostRecommended), autoSave: true);
+    }
+
+    public async Task RestoreRecommendationAsync(Guid grantCallId)
+    {
+        await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
+        // Kiracı filtresi açık: yalnız bu firmanın olayları.
+        var last = (await _eventRepo.GetListAsync(e => e.GrantCallId == grantCallId))
+            .OrderByDescending(e => e.CreationTime)
+            .FirstOrDefault();
+        if (last?.Kind != GrantRecommendationEventKind.Dismissed)
+        {
+            return; // çift tık ya da zaten açık
+        }
+
+        var snapshot = await SnapshotAsync(grantCallId);
+        var hostRecs = await _hostRecRepo.GetListAsync(
+            r => r.GrantCallId == grantCallId && r.Source == GrantRecommendationSource.Host);
+        foreach (var recommendation in hostRecs)
+        {
+            recommendation.Restore();
+            await _hostRecRepo.UpdateAsync(recommendation, autoSave: true);
+        }
+
+        await _eventRepo.InsertAsync(GrantRecommendationEvent.Restored(
+            GuidGenerator.Create(), CurrentTenant.Id, grantCallId, snapshot.GrantId,
+            snapshot.Score, snapshot.Bucket, hostRecs.Count > 0), autoSave: true);
+    }
+
+    /// <summary>
+    /// Olay anındaki skor ve uygunluk kovası — akış kartıyla AYNI hesap. Yalnız yayındaki açık
+    /// çağrı için; taslak/kapalı/başka kiracının çağrısı "bulunamadı" olur (ayrıntı ucuyla aynı kapı).
+    /// </summary>
+    private async Task<(Guid GrantId, int Score, GrantEligibilityBucket Bucket)> SnapshotAsync(Guid grantCallId)
+    {
+        var signals = await _signalsBuilder.BuildAsync(CurrentTenant.Id);
+        using (_mtFilter.Disable())
+        {
+            var call = await _callRepo.FirstOrDefaultAsync(
+                c => c.Id == grantCallId && c.Status == GrantCallStatus.Acik && c.TenantId == null);
+            if (call == null || call.IsPastDeadline(Clock.Now))
+            {
+                throw new EntityNotFoundException(typeof(GrantCall), grantCallId);
+            }
+
+            var grant = await _grantRepo.FirstOrDefaultAsync(g => g.Id == call.GrantId && g.TenantId == null)
+                        ?? throw new EntityNotFoundException(typeof(Grant), call.GrantId);
+            var tags = await _criteriaRepo.GetListAsync(t => t.GrantId == grant.Id && t.TenantId == null);
+            var score = _matcher.Score(signals, grant, tags, await _weightResolver.ResolveAsync(grant.Id));
+            var eligibility = _matcher.Evaluate(signals, grant, tags, Clock.Now.Date,
+                await _parameterCriteria.ResolveAsync(grant.Id));
+            return (grant.Id, score, eligibility.Bucket);
         }
     }
 
@@ -462,6 +524,13 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
             .GroupBy(r => r.GrantCallId)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.CreationTime).First().Note);
 
+        // 2c) "İlgilenmiyorum": çağrı başına SON olay kapatmaysa kapalı (tenant-scoped).
+        var dismissals = (await _eventRepo.GetListAsync())
+            .GroupBy(e => e.GrantCallId)
+            .Select(g => g.OrderByDescending(e => e.CreationTime).First())
+            .Where(e => e.Kind == GrantRecommendationEventKind.Dismissed)
+            .ToDictionary(e => e.GrantCallId);
+
         // 3) Katalog (host TenantId=null → filtreyi kapat).
         // 🔴 Filtre kapalıyken TenantId koşulu ELLE konur: aksi halde sorgu TÜM kiracıların
         // çağrılarını döndürür ve kiracı, başka kiracının kataloğunu görür. Filtre yalnız
@@ -571,7 +640,10 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                     IsBookmarked = bookmarkedIds.Contains(call.Id),
                     BookmarkNote = bookmarks.TryGetValue(call.Id, out var bm) ? bm.Note : null,
                     BookmarkedAt = bm?.CreationTime,
-                    BookmarkedByName = bm?.MarkedByUserId is { } markerId ? markerNames.GetValueOrDefault(markerId) : null
+                    BookmarkedByName = bm?.MarkedByUserId is { } markerId ? markerNames.GetValueOrDefault(markerId) : null,
+                    IsDismissed = dismissals.TryGetValue(call.Id, out var dismissal),
+                    DismissReason = dismissal?.Reason,
+                    DismissedAt = dismissal?.CreationTime
                 });
             }
         }

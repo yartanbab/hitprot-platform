@@ -66,4 +66,16 @@ public class GrantRecommendation : FullAuditedAggregateRoot<Guid>, IMultiTenant
             Status = GrantRecommendationStatus.Dismissed;
         }
     }
+
+    /// <summary>
+    /// "Geri al": kapatılan öneri "Görüldü"ye döner (firma onu zaten görüp kapatmıştı).
+    /// Kapatılmamış öneriye dokunulmaz.
+    /// </summary>
+    public void Restore()
+    {
+        if (Status == GrantRecommendationStatus.Dismissed)
+        {
+            Status = GrantRecommendationStatus.Seen;
+        }
+    }
 }

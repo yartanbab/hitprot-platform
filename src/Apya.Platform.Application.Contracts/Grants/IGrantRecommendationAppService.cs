@@ -30,8 +30,15 @@ public interface IGrantRecommendationAppService : IApplicationService
     /// <summary>13b · Takipteki çağrıya not düşer; boş not siler. Takipte değilse hata.</summary>
     Task SetBookmarkNoteAsync(SetGrantBookmarkNoteInput input);
 
-    /// <summary>LIF-08 · Firma, danışmanın bu çağrı için gönderdiği öneriyi kapatır. Öneri yoksa hata.</summary>
-    Task DismissRecommendationAsync(Guid grantCallId);
+    /// <summary>
+    /// LIF-08 · Firma çağrıya "İlgilenmiyorum" der (gerekçe zorunlu). Danışman önerisi de,
+    /// otomatik öneri de olabilir; olay kaydı tutulur, danışman önerisi "Kapatıldı" olur.
+    /// Yalnız yayındaki açık çağrı kapatılır; başvurulmuş çağrıda bir şey yapmaz.
+    /// </summary>
+    Task DismissRecommendationAsync(DismissGrantRecommendationInput input);
+
+    /// <summary>"Geri al": kapatılan çağrı akışa döner. Kapalı değilse bir şey yapmaz.</summary>
+    Task RestoreRecommendationAsync(Guid grantCallId);
 
     /// <summary>
     /// H-07 · Firma çağrının ayrıntısını açtı: danışmanın bu çağrı için gönderdiği yeni öneri

@@ -36,7 +36,8 @@ public class GrantFirmWriteGate_Tests : PlatformWebTestBase
         var recommendations = GetRequiredService<IGrantRecommendationAppService>();
         var callId = Guid.NewGuid();
 
-        await Should.ThrowAsync<AbpAuthorizationException>(() => recommendations.DismissRecommendationAsync(callId));
+        await Should.ThrowAsync<AbpAuthorizationException>(() => recommendations.DismissRecommendationAsync(
+            new DismissGrantRecommendationInput { GrantCallId = callId, Reason = GrantDismissReason.Other }));
         await Should.ThrowAsync<AbpAuthorizationException>(() => recommendations.ToggleBookmarkAsync(callId));
         await Should.ThrowAsync<AbpAuthorizationException>(() => recommendations.SetBookmarkNoteAsync(
             new SetGrantBookmarkNoteInput { GrantCallId = callId, Note = "not" }));
