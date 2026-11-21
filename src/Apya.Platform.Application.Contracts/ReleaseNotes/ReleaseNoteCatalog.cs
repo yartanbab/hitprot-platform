@@ -113,6 +113,20 @@ public static class ReleaseNoteCatalog
                 "kaydettiğinizde değerlendirme güncellenir."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Kadın ve genç girişimci önceliği uyum puanında",
+                "Kurumsal Veriler'de kadın ya da genç girişimci olduğunuzu işaretlerseniz, bu gruplara öncelik veren ve " +
+                "çalışma alanınıza uyan programlarda uyum puanınız yükselir. İşaretlemezseniz ya da \"hayır\" derseniz " +
+                "puanınız düşmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "Kamu borcu şartı uygunluğa giriyor",
+                "Türkiye'deki kamu destek programlarında vadesi geçmiş vergi ya da SGK borcu olmaması şartı artık " +
+                "değerlendiriliyor. Bu bilgiyi girmediyseniz ilgili çağrılar \"Koşullu\" görünür; Kurumsal Veriler'deki " +
+                "\"Vadesi geçmiş kamu borcu\" sorusunu bir kez yanıtladığınızda hepsi birden güncellenir. Borcunuz varsa " +
+                "bu çağrılar \"Şartları karşılamıyor\" görünür; borcu ödediğinizde ya da yapılandırdığınızda yanıtınızı " +
+                "değiştirebilirsiniz. Yanıtınız üç ayda bir teyit istenir. Kesin şart için çağrı metnine bakın."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Başarısız belge okumasını yeniden deneyin",
                 "Belgeden doldururken okuma başarısız olursa belgeyi yeniden yüklemeniz gerekmez: okumanın " +
                 "sayfasındaki \"Yeniden dene\" aynı belgeyi tekrar okutur ve öneriler aynı sayfada çıkar."),
