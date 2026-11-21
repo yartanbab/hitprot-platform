@@ -2307,6 +2307,7 @@
         "Grants:Dimension:Region": "Bölge",
         "Grants:Dimension:ProjectHistory": "Proje bütçesi geçmişi",
         "Grants:Dimension:Keyword": "Anahtar kelime",
+        "Grants:Dimension:PriorityGroup": "Öncelikli grup (kadın / genç girişimci)",
         "Grants:DataField:Nace": "NACE kodu",
         "Grants:DataField:Trl": "TRL beyanı",
         "Grants:DataField:RdStaff": "Ar-Ge personel sayısı",

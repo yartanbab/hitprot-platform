@@ -4,7 +4,7 @@ $(function () {
     var grantId = $('.apya-page').data('grant-id');
 
     // GrantMatchDimension ve GrantFirmDataField enum sıralarıyla birebir.
-    var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword'];
+    var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword', 'PriorityGroup'];
     var fieldKeys = ['Nace', 'Trl', 'RdStaff', 'StaffCount', 'Revenue', 'FoundedOn', 'ConsortiumPartner', 'CompanySize'];
     var steps = [0, 0.5, 1, 1.5, 2];
 

@@ -142,4 +142,115 @@ public class GrantMatchManager_Tests
         var firm = Firm(null, null, ProjectCategory.Other, (GrantCriteriaKind.Sektor, "a"));
         _m.Score(firm, grant, gt).ShouldBe(75);
     }
+
+    // ---------- Öncelikli grup (kadın / genç girişimci): yalnız artı puan ----------
+
+    /// <summary>İki sektör isteyen program; kurum birini tutturur → taban skor 50.</summary>
+    private static (Grant Grant, List<GrantCriteriaTag> Tags) PriorityProgram(bool female = false, bool young = false)
+    {
+        var grant = Grant(0, 40);
+        grant.PrefersFemaleEntrepreneur = female;
+        grant.PrefersYoungEntrepreneur = young;
+        return (grant, Tags((GrantCriteriaKind.Sektor, "a"), (GrantCriteriaKind.Sektor, "b")));
+    }
+
+    private static FirmSignals Declaring(bool? female = null, bool? young = null, bool stale = false, string sector = "a")
+    {
+        var parameters = new Dictionary<Guid, FirmSignalParameter>();
+        if (female.HasValue)
+        {
+            parameters[FirmParameterCatalog.FemaleEntrepreneurId] =
+                new FirmSignalParameter(null, null, female, Array.Empty<string>(), stale);
+        }
+        if (young.HasValue)
+        {
+            parameters[FirmParameterCatalog.YoungEntrepreneurId] =
+                new FirmSignalParameter(null, null, young, Array.Empty<string>(), stale);
+        }
+        var firm = Firm(null, (GrantCriteriaKind.Sektor, sector));
+        firm.Parameters = parameters;
+        return firm;
+    }
+
+    [Fact]
+    public void Oncelikli_Gruptaki_Kurumun_Skoru_Yukselir()
+    {
+        var (grant, tags) = PriorityProgram(female: true);
+
+        var result = _m.Explain(Declaring(female: true), grant, tags);
+
+        result.Total.ShouldBe(75); // sektör .5 + öncelik 1 → ort .75
+        result.Dimensions.Single(d => d.Dimension == GrantMatchDimension.PriorityGroup).Value.ShouldBe(100);
+    }
+
+    [Fact]
+    public void Genc_Girisimci_Beyani_Genc_Onceligini_Karsilar_Kadin_Beyani_Karsilamaz()
+    {
+        var (grant, tags) = PriorityProgram(young: true);
+
+        _m.Score(Declaring(young: true), grant, tags).ShouldBe(75);
+        _m.Score(Declaring(female: true), grant, tags).ShouldBe(50);
+    }
+
+    /// <summary>Öncelik eleyici değil: "hayır" diyen ya da beyan etmeyen kurumun skoru değişmez.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(null)]
+    public void Grup_Disindaki_Kurumun_Skoru_Dusmez(bool? declared)
+    {
+        var (grant, tags) = PriorityProgram(female: true);
+
+        var result = _m.Explain(Declaring(female: declared), grant, tags);
+
+        result.Total.ShouldBe(50);
+        result.Dimensions.ShouldNotContain(d => d.Dimension == GrantMatchDimension.PriorityGroup);
+    }
+
+    [Fact]
+    public void Beyan_Yoksa_Eksik_Veri_Cezasi_Da_Kesilmez()
+    {
+        var (grant, tags) = PriorityProgram(female: true);
+        var weights = new GrantMatchWeightSet { SkipMissingDimensions = false };
+        var (noPriority, sameTags) = PriorityProgram();
+
+        // Ceza açıkken bütçe boyutu tabanı düşürür; öncelik boyutu buna bir şey eklememeli.
+        _m.Score(Declaring(), grant, tags, weights).ShouldBe(_m.Score(Declaring(), noPriority, sameTags, weights));
+    }
+
+    [Fact]
+    public void Program_Oncelik_Vermiyorsa_Beyan_Puan_Getirmez()
+    {
+        var (grant, tags) = PriorityProgram();
+
+        _m.Score(Declaring(female: true, young: true), grant, tags).ShouldBe(50);
+    }
+
+    [Fact]
+    public void Suresi_Dolan_Beyan_Sayilmaz()
+    {
+        var (grant, tags) = PriorityProgram(young: true);
+
+        _m.Score(Declaring(young: true, stale: true), grant, tags).ShouldBe(50);
+    }
+
+    /// <summary>Hedefle hiç örtüşmeyen kurumu öncelik tek başına eşiğin üstüne çıkarmaz.</summary>
+    [Fact]
+    public void Hedefle_Ortusmeyen_Kurumu_Oncelik_Onerdirmez()
+    {
+        var (grant, tags) = PriorityProgram(female: true);
+        var firm = Declaring(female: true, sector: "z");
+
+        _m.Score(firm, grant, tags).ShouldBe(0);
+        _m.IsRecommended(firm, grant, tags).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Agirligi_Sifir_Olan_Oncelik_Boyutu_Skora_Girmez()
+    {
+        var (grant, tags) = PriorityProgram(female: true);
+        var weights = new GrantMatchWeightSet { [GrantMatchDimension.PriorityGroup] = 0 };
+
+        _m.Score(Declaring(female: true), grant, tags, weights).ShouldBe(50);
+    }
+
 }

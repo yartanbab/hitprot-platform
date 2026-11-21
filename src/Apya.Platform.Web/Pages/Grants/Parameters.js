@@ -10,7 +10,7 @@ $(function () {
     var partyKeys = ['Firma', 'Danisman', 'Ortak', 'Kurum'];
     var obligationKeys = ['Zorunlu', 'Kosullu'];
     var stageTemplates = [];
-    var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword'];
+    var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword', 'PriorityGroup'];
 
     var trlMin = null;
     var trlMax = null;

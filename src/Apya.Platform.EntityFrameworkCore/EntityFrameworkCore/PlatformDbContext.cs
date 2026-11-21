@@ -857,6 +857,10 @@ namespace Apya.Platform.EntityFrameworkCore
                 // "IS NOT NULL" korunur — HasFilter onu ezdiği için açıkça yazıldı.
                 b.HasIndex(x => x.GrantId).IsUnique()
                     .HasFilter(isSqlServer ? "[GrantId] IS NOT NULL AND [IsDeleted] = 0" : "\"IsDeleted\" = false");
+                // Sonradan eklenen boyut: mevcut satırlar 0 ("kapalı") değil 1,0 ile açılsın.
+                // Sentinel şart: yoksa EF 0'ı "girilmemiş" sayar, yeni satırda host'un
+                // kapattığı boyut veritabanı varsayılanıyla (1,0) yeniden açılırdı.
+                b.Property(x => x.PriorityGroupMultiplier).HasDefaultValue(1.0).HasSentinel(-1.0);
             });
 
             builder.Entity<GrantDocumentRequirement>(b =>

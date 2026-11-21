@@ -8394,6 +8394,11 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<double>("PriorityGroupMultiplier")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(1.0);
+
                     b.Property<double>("ProjectHistoryMultiplier")
                         .HasColumnType("float");
 
