@@ -68,7 +68,9 @@ public sealed class GrantEligibilityResult
     public bool IsFixable =>
         Rules.Where(r => r.Outcome == GrantRuleOutcome.Failed).All(r => FixableRules.Contains(r.Rule))
         // Parametre şartı tutmuyorsa (ör. eş finansman ayıramıyor) kısa vadede giderilebilir sayılmaz.
-        && !ParameterRules.Any(r => r.IsEliminating && r.Outcome == GrantRuleOutcome.Failed);
+        // İstisna kamu borcu: kurum borcu ödeyerek ya da yapılandırarak şartı karşılayabilir.
+        && !ParameterRules.Any(r => r.IsEliminating && r.Outcome == GrantRuleOutcome.Failed
+                                    && r.DefinitionId != FirmParameterCatalog.PublicDebtId);
 
     private static readonly GrantEligibilityRule[] FixableRules =
     {

@@ -395,4 +395,91 @@ public class GrantEligibility_Tests
         OrganizationTypeExtensions.TypesIn(2 | 8).ShouldBe(new[] { OrganizationType.Dernek, OrganizationType.Vakif });
         OrganizationType.Kulup.IsAllowedBy(0).ShouldBeTrue();
     }
+
+    // ---------- Kamu borcu ----------
+
+    private static IReadOnlyList<GrantParameterCriterion> NoPublicDebt(Grant grant)
+    {
+        var definition = FirmParameterCatalog.Build().Single(d => d.Id == FirmParameterCatalog.PublicDebtId);
+        return new[]
+        {
+            new GrantParameterCriterion(Guid.NewGuid(), grant.Id, definition, GrantParameterOperator.Esit, null, null, false, true)
+        };
+    }
+
+    private static FirmSignals Declaring(bool? hasDebt, bool stale = false) => new()
+    {
+        Parameters = hasDebt == null
+            ? new Dictionary<Guid, FirmSignalParameter>()
+            : new Dictionary<Guid, FirmSignalParameter>
+            {
+                [FirmParameterCatalog.PublicDebtId] = new(null, null, hasDebt, Array.Empty<string>(), stale)
+            }
+    };
+
+    /// <summary>Borcunu beyan eden elenir ama engel kendi elindedir: öder ya da yapılandırır.</summary>
+    [Fact]
+    public void Kamu_Borcu_Beyani_Eler_Ama_Giderilebilir_Sayilir()
+    {
+        var grant = Program();
+
+        var result = _m.Evaluate(Declaring(true), grant, NoTags, Today, NoPublicDebt(grant));
+
+        result.Bucket.ShouldBe(GrantEligibilityBucket.UygunDegil);
+        result.IsFixable.ShouldBeTrue();
+        result.IsExcludedByApplicantType.ShouldBeFalse("öneriden düşürülmez, nedeniyle gösterilir");
+    }
+
+    [Fact]
+    public void Kamu_Borcu_Yoksa_Uygun()
+    {
+        var grant = Program();
+
+        _m.Evaluate(Declaring(false), grant, NoTags, Today, NoPublicDebt(grant))
+            .Bucket.ShouldBe(GrantEligibilityBucket.Uygun);
+    }
+
+    /// <summary>Beyan yoksa ya da süresi dolduysa kurum elenmez, Koşullu kalır.</summary>
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void Kamu_Borcu_Bilinmiyorsa_Kosullu(bool? hasDebt, bool stale)
+    {
+        var grant = Program();
+
+        _m.Evaluate(Declaring(hasDebt, stale), grant, NoTags, Today, NoPublicDebt(grant))
+            .Bucket.ShouldBe(GrantEligibilityBucket.Kosullu);
+    }
+
+    [Fact]
+    public void Kamu_Borcu_Disindaki_Eleyen_Parametre_Giderilebilir_Sayilmaz()
+    {
+        var grant = Program();
+        grant.SupportRatePercent = 50;
+        var firm = new FirmSignals
+        {
+            Parameters = new Dictionary<Guid, FirmSignalParameter>
+            {
+                [FirmParameterCatalog.CofinancingCapacityId] = new(0m, null, null, Array.Empty<string>(), false)
+            }
+        };
+
+        var result = _m.Evaluate(firm, grant, NoTags, Today, Array.Empty<GrantParameterCriterion>());
+
+        result.Bucket.ShouldBe(GrantEligibilityBucket.UygunDegil);
+        result.IsFixable.ShouldBeFalse();
+    }
+
+    /// <summary>Borcu ödese de türü uymayan kurum başvuramaz: bütün engel giderilebilir değil.</summary>
+    [Fact]
+    public void Kamu_Borcu_Yaninda_Tur_Engeli_Varsa_Giderilebilir_Sayilmaz()
+    {
+        var grant = OnlyFor(OrganizationType.Sirket);
+        var firm = Declaring(true);
+        firm.Type = OrganizationType.Dernek;
+
+        _m.Evaluate(firm, grant, NoTags, Today, NoPublicDebt(grant)).IsFixable.ShouldBeFalse();
+    }
+
 }

@@ -35,6 +35,9 @@ public static class FirmParameterCatalog
     public static readonly Guid FemaleEntrepreneurId = IdOf(32);
     public static readonly Guid YoungEntrepreneurId = IdOf(33);
 
+    /// <summary>Vadesi geçmiş kamu borcu beyanı: tohumdaki "borç yok" ölçütü ve giderilebilirlik buna bakar.</summary>
+    public static readonly Guid PublicDebtId = IdOf(34);
+
     public static Guid IdOf(int number) => Guid.Parse($"f17a0000-0000-4000-8000-{number:D12}");
 
     public static IReadOnlyList<FirmParameterDefinition> Build() => Rows.Select(r => r.ToDefinition()).ToList();
@@ -140,7 +143,7 @@ public static class FirmParameterCatalog
         new(33, "young_entrepreneur", "Genç girişimci", FirmParameterDataType.Boolean, Kimlik, Opsiyonel, Tumu, Skor, Elle,
             "Bazı programlar genç girişimcilere öncelik ya da ek puan verir.",
             ValidityMonths: 12),
-        new(34, "has_public_debt", "Vadesi geçmiş kamu borcu", FirmParameterDataType.Boolean, Finans, Onerilen, Tumu, Kullanilmaz, Elle,
+        new(34, "has_public_debt", "Vadesi geçmiş kamu borcu", FirmParameterDataType.Boolean, Finans, Onerilen, Tumu, Eleme, Elle,
             "Vadesi geçmiş vergi ya da SGK borcu olan kurumlar birçok kamu desteğine başvuramaz.",
             ValidityMonths: 3)
     };
