@@ -6,6 +6,7 @@ using Apya.Platform.Grants.Dtos;
 using Shouldly;
 using Volo.Abp;
 using Volo.Abp.Authorization;
+using Volo.Abp.Data;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
 using Xunit;
@@ -213,4 +214,35 @@ public class GrantParameterCriterion_Tests : PlatformEntityFrameworkCoreTestBase
 
         (await WithUnitOfWorkAsync(() => _manager.ResolveAsync(grantId))).ShouldBeEmpty();
     }
+
+    /// <summary>Tohum şartı bir kez kurar; host'un kaldırdığı şart sonraki DbMigrator'da geri gelmez.</summary>
+    [Fact]
+    public async Task Kamu_borcu_olcutu_tohumdan_gelir_silinen_geri_gelmez()
+    {
+        var seeder = GetRequiredService<GrantAnnouncementCatalogDataSeedContributor>();
+        var repository = GetRequiredService<IRepository<GrantParameterCriterion, Guid>>();
+
+        await WithUnitOfWorkAsync(() => seeder.SeedAsync(new DataSeedContext()));
+        await WithUnitOfWorkAsync(() => seeder.SeedAsync(new DataSeedContext()));
+
+        var count = 0;
+        await WithUnitOfWorkAsync(async () =>
+        {
+            var rows = await repository.GetListAsync(c => c.DefinitionId == PublicDebt);
+            count = rows.Count;
+            rows.ShouldAllBe(c => c.IsEliminating && c.ValueBool == false && c.TenantId == null);
+            await repository.DeleteAsync(rows[0], autoSave: true);
+        });
+        count.ShouldBe(97, "yeniden tohumlama aynı şartı ikinci kez yazmaz");
+
+        await WithUnitOfWorkAsync(() => seeder.SeedAsync(new DataSeedContext()));
+
+        var after = 0;
+        await WithUnitOfWorkAsync(async () =>
+        {
+            after = (await repository.GetListAsync(c => c.DefinitionId == PublicDebt)).Count;
+        });
+        after.ShouldBe(96);
+    }
+
 }

@@ -90,4 +90,22 @@ public class GrantAnnouncementCatalogSeed_Tests
         kosgeb.ShouldNotBeEmpty();
         kosgeb.ShouldAllBe(s => !OrganizationType.Dernek.IsAllowedBy(s.ApplicantTypeMask));
     }
+
+    /// <summary>
+    /// Kamu borcu şartı Türkiye kamu programlarında (11-05 kararı, 11-21 kapsam onayı): özel vakıf
+    /// programları ve platforma kapalı programlar dışarıda, KOSGEB'in açık programları içeride.
+    /// </summary>
+    [Fact]
+    public async Task Kamu_borcu_tohumu_kapsamla_tutarli()
+    {
+        var seeds = await GrantAnnouncementCatalogDataSeedContributor.ReadSeedsAsync();
+        var marked = seeds.Where(s => s.RequiresNoPublicDebt).ToList();
+
+        marked.Select(s => s.Id).Distinct().Count().ShouldBe(97);
+        marked.ShouldAllBe(s => !s.ClosedToPlatform);
+        marked.ShouldNotContain(s => s.Issuer.Contains("TAP Vakfı") || s.Issuer.Contains("Hrant Dink"));
+        seeds.Where(s => s.Issuer.Contains("KOSGEB") && !s.ClosedToPlatform)
+            .ShouldAllBe(s => s.RequiresNoPublicDebt);
+    }
+
 }

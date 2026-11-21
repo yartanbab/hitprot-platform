@@ -41,6 +41,10 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
     private readonly IRepository<GrantCriteriaTag, Guid> _criteriaRepository;
     private readonly IRepository<GrantEligibleCostItem, Guid> _costItemRepository;
     private readonly IRepository<GrantDocumentRequirement, Guid> _documentRepository;
+    private readonly IRepository<GrantParameterCriterion, Guid> _parameterCriterionRepository;
+    private readonly IRepository<FirmParameterDefinition, Guid> _parameterDefinitionRepository;
+    private readonly FirmParameterDefinitionDataSeedContributor _parameterDefinitionSeeder;
+    private readonly IDataFilter<ISoftDelete> _softDeleteFilter;
     private readonly IGuidGenerator _guidGenerator;
     private readonly GrantCallAnnouncer _announcer;
 
@@ -50,6 +54,10 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         IRepository<GrantCriteriaTag, Guid> criteriaRepository,
         IRepository<GrantEligibleCostItem, Guid> costItemRepository,
         IRepository<GrantDocumentRequirement, Guid> documentRepository,
+        IRepository<GrantParameterCriterion, Guid> parameterCriterionRepository,
+        IRepository<FirmParameterDefinition, Guid> parameterDefinitionRepository,
+        FirmParameterDefinitionDataSeedContributor parameterDefinitionSeeder,
+        IDataFilter<ISoftDelete> softDeleteFilter,
         IGuidGenerator guidGenerator,
         GrantCallAnnouncer announcer)
     {
@@ -58,6 +66,10 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         _criteriaRepository = criteriaRepository;
         _costItemRepository = costItemRepository;
         _documentRepository = documentRepository;
+        _parameterCriterionRepository = parameterCriterionRepository;
+        _parameterDefinitionRepository = parameterDefinitionRepository;
+        _parameterDefinitionSeeder = parameterDefinitionSeeder;
+        _softDeleteFilter = softDeleteFilter;
         _guidGenerator = guidGenerator;
         _announcer = announcer;
     }
@@ -196,9 +208,50 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         if (newDocuments.Count > 0) await _documentRepository.InsertManyAsync(newDocuments, autoSave: true);
         if (newCalls.Count > 0) await _callRepository.InsertManyAsync(newCalls, autoSave: true);
         if (updatedCalls.Count > 0) await _callRepository.UpdateManyAsync(updatedCalls, autoSave: true);
+        await SeedPublicDebtCriteriaAsync(context, seeds);
 
         // Tohumdan SONRA: yeni eklenen çağrılar da tabana girsin (bkz. GrantCallAnnouncer.MarkBaselineOnceAsync).
         await _announcer.MarkBaselineOnceAsync(DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// "Vadesi geçmiş kamu borcu = hayır" eleyici ölçütünü işaretli programlara ekler. Programda bu
+    /// parametreye bağlı satır hiç olmadıysa yazılır: host'un sildiği ölçüt (silinmişler de sayılır)
+    /// geri gelmez, parametreyi kapattıysa hiçbir programa eklenmez.
+    /// </summary>
+    private async Task SeedPublicDebtCriteriaAsync(DataSeedContext context, IEnumerable<GrantSeed> seeds)
+    {
+        var grantIds = seeds.Where(s => s.RequiresNoPublicDebt).Select(s => s.Id).Distinct().ToList();
+        if (grantIds.Count == 0)
+        {
+            return;
+        }
+
+        // Tohumlayıcıların sırası garanti değil; ölçüt tanıma yabancı anahtarla bağlı.
+        await _parameterDefinitionSeeder.SeedAsync(context);
+        var definition = await _parameterDefinitionRepository.FindAsync(FirmParameterCatalog.PublicDebtId);
+        if (definition is not { IsActive: true })
+        {
+            return;
+        }
+
+        HashSet<Guid> known;
+        using (_softDeleteFilter.Disable())
+        {
+            known = (await _parameterCriterionRepository.GetListAsync(c => c.DefinitionId == definition.Id))
+                .Select(c => c.GrantId)
+                .ToHashSet();
+        }
+
+        var criteria = grantIds
+            .Where(id => !known.Contains(id))
+            .Select(id => new GrantParameterCriterion(
+                _guidGenerator.Create(), id, definition, GrantParameterOperator.Esit, null, null, false, true))
+            .ToList();
+        if (criteria.Count > 0)
+        {
+            await _parameterCriterionRepository.InsertManyAsync(criteria, autoSave: true);
+        }
     }
 
     /// <summary>
@@ -354,7 +407,8 @@ public class GrantAnnouncementCatalogDataSeedContributor : IDataSeedContributor,
         CostItemSeed[]? CostItems = null,
         DocumentSeed[]? Documents = null,
         string[]? ApplicantTypes = null,
-        bool ClosedToPlatform = false)
+        bool ClosedToPlatform = false,
+        bool RequiresNoPublicDebt = false)
     {
         /// <summary>
         /// Başvurabilecek kurum türleri (<see cref="OrganizationType"/> adları) → bit maskesi.
