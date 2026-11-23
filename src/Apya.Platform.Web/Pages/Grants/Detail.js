@@ -503,9 +503,9 @@ $(function () {
     }
 
     $('#HostRecDismissBtn').on('click', function () {
-        abp.message.confirm(l('Grants:Today:Opportunity:Dismiss:Confirm')).then(function (ok) {
-            if (!ok) { return; }
-            service.dismissRecommendation(callId).then(function () {
+        apya.grantDismiss.ask().then(function (answer) {
+            if (!answer) { return; }
+            service.dismissRecommendation({ grantCallId: callId, reason: answer.reason, note: answer.note }).then(function () {
                 abp.notify.success(l('Grants:Today:Opportunity:Dismissed'));
                 $('#HostRecNote').addClass('d-none');
             });

@@ -13,6 +13,20 @@ public class SetGrantBookmarkNoteInput
     public string? Note { get; set; }
 }
 
+public class DismissGrantRecommendationInput
+{
+    [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Çağrı seçilmedi.")]
+    public Guid GrantCallId { get; set; }
+
+    [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Bir gerekçe seçin.")]
+    [System.ComponentModel.DataAnnotations.EnumDataType(typeof(GrantDismissReason), ErrorMessage = "Geçersiz gerekçe.")]
+    public GrantDismissReason? Reason { get; set; }
+
+    [System.ComponentModel.DataAnnotations.StringLength(GrantRecommendationEventConsts.MaxNoteLength,
+        ErrorMessage = "Not en fazla 256 karakter olabilir.")]
+    public string? Note { get; set; }
+}
+
 /// <summary>Tenant çağrı feed öğesi — canlı hesaplanır (kalıcı değil).</summary>
 public class GrantRecommendationDto
 {
@@ -51,6 +65,15 @@ public class GrantRecommendationDto
 
     /// <summary>Danışman firma adına işaretlediyse adı; firma kendi işaretlediyse null.</summary>
     public string? BookmarkedByName { get; set; }
+
+    /// <summary>Firma "İlgilenmiyorum" dedi ve geri almadı. "Size Önerilen"de yer almaz.</summary>
+    public bool IsDismissed { get; set; }
+
+    /// <summary>Kapatma gerekçesi; kapalı değilse null.</summary>
+    public GrantDismissReason? DismissReason { get; set; }
+
+    /// <summary>Kapatma zamanı; kapalı değilse null.</summary>
+    public DateTime? DismissedAt { get; set; }
 
     /// <summary>12b · Programın afişi (saklanan ad); yoksa kart kuruma özel zemin çizer.</summary>
     public string? PosterFileName { get; set; }

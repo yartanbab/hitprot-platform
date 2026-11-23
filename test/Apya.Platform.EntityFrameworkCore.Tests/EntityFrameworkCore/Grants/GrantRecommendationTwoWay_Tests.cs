@@ -95,7 +95,7 @@ public class GrantRecommendationTwoWay_Tests : PlatformEntityFrameworkCoreTestBa
         using (_currentTenant.Change(tenantId))
         {
             await SendAsync(tenantId, call.Id);
-            await _recommendations.DismissRecommendationAsync(call.Id);
+            await _recommendations.DismissRecommendationAsync(new DismissGrantRecommendationInput { GrantCallId = call.Id, Reason = GrantDismissReason.OutOfScope });
 
             await _recommendations.MarkRecommendationSeenAsync(call.Id);
 
@@ -123,7 +123,7 @@ public class GrantRecommendationTwoWay_Tests : PlatformEntityFrameworkCoreTestBa
         using (_currentTenant.Change(dismissed))
         {
             await SendAsync(dismissed, call.Id);
-            await _recommendations.DismissRecommendationAsync(call.Id);
+            await _recommendations.DismissRecommendationAsync(new DismissGrantRecommendationInput { GrantCallId = call.Id, Reason = GrantDismissReason.OutOfScope });
         }
 
         var console = await _dispatch.PreviewAsync(new PreviewHostRecommendationInput { GrantCallId = call.Id });

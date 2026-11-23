@@ -8877,6 +8877,69 @@ namespace Apya.Platform.Migrations
                     b.ToTable("AppGrantRecommendations", (string)null);
                 });
 
+            modelBuilder.Entity("Apya.Platform.Grants.GrantRecommendationEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Bucket")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<Guid>("GrantCallId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GrantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MatchScore")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int?>("Reason")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
+                    b.Property<bool>("WasHostRecommended")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrantCallId");
+
+                    b.HasIndex("TenantId", "GrantCallId", "CreationTime");
+
+                    b.ToTable("AppGrantRecommendationEvents", (string)null);
+                });
+
             modelBuilder.Entity("Apya.Platform.Grants.GrantReport", b =>
                 {
                     b.Property<Guid>("Id")
@@ -15300,6 +15363,15 @@ namespace Apya.Platform.Migrations
                 });
 
             modelBuilder.Entity("Apya.Platform.Grants.GrantRecommendation", b =>
+                {
+                    b.HasOne("Apya.Platform.Grants.GrantCall", null)
+                        .WithMany()
+                        .HasForeignKey("GrantCallId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Apya.Platform.Grants.GrantRecommendationEvent", b =>
                 {
                     b.HasOne("Apya.Platform.Grants.GrantCall", null)
                         .WithMany()
