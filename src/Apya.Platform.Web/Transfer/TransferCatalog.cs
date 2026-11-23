@@ -70,6 +70,13 @@ public static class TransferCatalog
         new(M("projects"), "Menu:Work", "fa fa-diagram-project", "/Projects", Table,
             [Out("/Projects/Index"), .. Modal("/Projects/ImportModal")],
             ExportUrl: "/Projects?handler=Excel", ImportUrl: "/Projects/ImportModal"),
+        // Yalnız sistem yöneticisi: bütün parametreler, kiracı seçilerek; dolu çıktı düzenlenip geri yüklenir.
+        new(M("tasks-full"), "Menu:Work", "fa fa-sliders", "/Tasks", Table,
+            [Out("/Tasks/FullImportModal", "Export"), .. Modal("/Tasks/FullImportModal")],
+            ExportUrl: "/Tasks/FullImportModal?handler=Export", ImportUrl: "/Tasks/FullImportModal"),
+        new(M("projects-full"), "Menu:Work", "fa fa-sliders", "/Projects", Table,
+            [Out("/Projects/FullImportModal", "Export"), .. Modal("/Projects/FullImportModal")],
+            ExportUrl: "/Projects/FullImportModal?handler=Export", ImportUrl: "/Projects/FullImportModal"),
 
         // ── Finans ──
         new(M("expenses"), "Menu:Finance", "fa fa-receipt", "/Expenses", Table,

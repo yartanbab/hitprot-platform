@@ -52,6 +52,8 @@ public static class DataTransferModules
     [
         new("tasks", "Export:Tasks:Name", Both, PlatformPermissions.Tasks.Default, PlatformPermissions.Tasks.Create),
         new("projects", "Export:Projects:Name", Both, PlatformPermissions.Projects.Default, PlatformPermissions.Projects.Create),
+        new("tasks-full", "DataTransfer:Module:TasksFull", Host, PlatformPermissions.DataTransfer.FullParameters, PlatformPermissions.DataTransfer.FullParameters),
+        new("projects-full", "DataTransfer:Module:ProjectsFull", Host, PlatformPermissions.DataTransfer.FullParameters, PlatformPermissions.DataTransfer.FullParameters),
         new("expenses", "Export:Expenses:Name", Both, PlatformPermissions.Expenses.Default, PlatformPermissions.Expenses.Create),
         new("incomes", "Export:Incomes:Name", Both, PlatformPermissions.Incomes.Default, PlatformPermissions.Incomes.Create),
         new("invoices", "Export:Invoices:Name", Both, PlatformPermissions.Invoices.Default, PlatformPermissions.Invoices.Create),

@@ -10,14 +10,13 @@ using Apya.Platform.Web.Import;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 
 namespace Apya.Platform.Web.Pages.Grants;
 
 /// <summary>Dosya satırı: kimlik doluysa o program güncellenir, boşsa yeni program açılır.</summary>
-public sealed class GrantProgramImportRow
+public sealed class GrantProgramImportRow : IFullParameterRow
 {
     public Guid? Id { get; init; }
 
@@ -45,10 +44,9 @@ public sealed class GrantProgramImportLookups
 /// Dolu çıktı dışarıda düzenlenip geri yüklenir. Her satır parametre formunun servisinden
 /// (<see cref="IGrantParameterAppService.UpdateAsync"/>) geçer; çağrı açmaz, yayınlamaz, duyurmaz.
 /// </summary>
-[Authorize(PlatformPermissions.DataTransfer.FullParameters)]
 [Authorize(PlatformPermissions.Grants.Create)]
 [Authorize(PlatformPermissions.Grants.Edit)]
-public class ProgramImportModalModel : ExcelImportPageModel<GrantProgramImportLookups, GrantProgramImportRow>
+public class ProgramImportModalModel : FullParameterImportPageModel<GrantProgramImportLookups, GrantProgramImportRow>
 {
     private readonly IGrantAppService _grantAppService;
     private readonly IGrantParameterAppService _parameterAppService;
@@ -64,29 +62,10 @@ public class ProgramImportModalModel : ExcelImportPageModel<GrantProgramImportLo
 
     protected override string NameKey => "DataTransfer:Module:GrantPrograms";
 
-    /// <summary>
-    /// Her uçta: yalnız host bağlamı (kiracıya bürünmek yetmez) ve özel izin. "Tek anahtar"
-    /// kapalıyken de geçerlidir; <see cref="Web.Transfer.TransferAccess"/> bu izni denetlemez.
-    /// </summary>
-    public override async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
-    {
-        if (CurrentTenant.Id != null || !await AuthorizationService.IsGrantedAsync(PlatformPermissions.DataTransfer.FullParameters))
-        {
-            context.Result = new ForbidResult();
-            return;
-        }
-
-        await base.OnPageHandlerExecutionAsync(context, next);
-    }
-
     protected override IReadOnlyList<ImportColumn> Columns(GrantProgramImportLookups lookups) => lookups.Sheet.Columns;
 
     protected override void CompleteTemplate(XLWorkbook workbook, GrantProgramImportLookups lookups)
         => lookups.Sheet.AddGuide(workbook);
-
-    protected override string? Summarize(IReadOnlyList<GrantProgramImportRow> rows)
-        => L["Import:GrantProgram:Summary", rows.Count(r => r.Id == null),
-            rows.Count(r => r.Id != null && !r.Unchanged), rows.Count(r => r.Unchanged)].Value;
 
     /// <summary>Mevcut programlar, içe aktarmanın sütunlarıyla: dosya düzenlenip aynen geri yüklenir.</summary>
     public async Task<IActionResult> OnGetExportAsync()
@@ -101,11 +80,7 @@ public class ProgramImportModalModel : ExcelImportPageModel<GrantProgramImportLo
             }
         }
 
-        return this.TableFile(L[NameKey].Value, lookups.Sheet.ExportColumns, rows, finish: workbook =>
-        {
-            ExcelImport.AddOptions(workbook, workbook.Worksheet(1), L["Import:OptionsSheet"], lookups.Sheet.Columns);
-            lookups.Sheet.AddGuide(workbook);
-        });
+        return SheetFile(lookups.Sheet, rows);
     }
 
     protected override async Task<GrantProgramImportLookups> LoadLookupsAsync()
@@ -175,13 +150,8 @@ public class ProgramImportModalModel : ExcelImportPageModel<GrantProgramImportLo
         return new GrantProgramImportRow { Id = id, Input = input };
     }
 
-    protected override async Task CreateAsync(GrantProgramImportRow row)
+    protected override async Task SaveAsync(GrantProgramImportRow row)
     {
-        if (row.Unchanged)
-        {
-            return;
-        }
-
         var id = row.Id;
         if (id == null)
         {

@@ -56,6 +56,9 @@ public class NotificationManager : DomainService
     {
         var info = NotificationTypeRegistry.Get(type);
 
+        if (NotificationSuppression.IsActive && !info.Mandatory)
+            return;
+
         // 0. Kullanıcı bu kategoriyi sessize aldıysa hiç kayıt açma.
         //    Zorunlu türler bunun dışındadır: kaçırılması hak kaybına yol açar
         //    (kurum kararı + itiraz süresi). E-posta yine tercihe bağlıdır —

@@ -192,7 +192,7 @@ public class GrantProgramImport_Tests : PlatformWebTestBase
         untouched.GetProperty("done").GetBoolean().ShouldBeTrue(Describe(untouched));
         untouched.GetProperty("message").GetString().ShouldContain("Yeni: 0 · Güncellenen: 0");
 
-        // Tek hücre değişince satırın geri kalanı dosyadan okunup yazılır: hiçbir alan kaybolmamalı.
+        // Tek hücre değişince yalnız o alan yazılır: geri kalanı olduğu gibi kalmalı.
         var edited = Edit(file, ws => ws.Cell(RowOf(ws, id), ColumnOf(ws, "Destek oranı (%)")).Value = 80);
         var import = await PostAsync("Import", edited);
         import.GetProperty("done").GetBoolean().ShouldBeTrue(Describe(import));
@@ -200,12 +200,35 @@ public class GrantProgramImport_Tests : PlatformWebTestBase
 
         var after = await ReadProgramAsync(id);
         after.SupportRatePercent.ShouldBe(80);
-        foreach (var property in typeof(UpdateGrantParameterDto).GetProperties()
-                     .Where(p => p.Name != nameof(UpdateGrantParameterDto.SupportRatePercent)))
+        ShouldMatch(after, before, nameof(UpdateGrantParameterDto.SupportRatePercent));
+
+        // Kimliksiz kopya: bütün hücreler okuyucudan geçer, hiçbir parametre kaybolmamalı.
+        var copyName = "Kopya okuma " + _code;
+        var copy = Edit(file, ws =>
+        {
+            var row = RowOf(ws, id);
+            ws.Cell(row, 1).Clear(XLClearOptions.Contents);
+            ws.Cell(row, ColumnOf(ws, "Program adı")).Value = copyName;
+        });
+        var copied = await PostAsync("Import", copy);
+        copied.GetProperty("done").GetBoolean().ShouldBeTrue(Describe(copied));
+
+        Guid copyId;
+        using (var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true))
+        {
+            copyId = (await GetRequiredService<IRepository<Grant, Guid>>().SingleAsync(g => g.Name == copyName)).Id;
+        }
+
+        ShouldMatch(await ReadProgramAsync(copyId), before, nameof(UpdateGrantParameterDto.Name));
+    }
+
+    private static void ShouldMatch(GrantParameterDto actual, GrantParameterDto expected, string except)
+    {
+        foreach (var property in typeof(UpdateGrantParameterDto).GetProperties().Where(p => p.Name != except))
         {
             var source = typeof(GrantParameterDto).GetProperty(property.Name);
             source.ShouldNotBeNull(property.Name);
-            Canonical(source.GetValue(after)).ShouldBe(Canonical(source.GetValue(before)), property.Name);
+            Canonical(source.GetValue(actual)).ShouldBe(Canonical(source.GetValue(expected)), property.Name);
         }
     }
 
