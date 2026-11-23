@@ -323,7 +323,11 @@ public class TaskFullImport_Tests : FullImportTestBase
 /// <summary>Özel izni olmayan host kullanıcısı ve kiracı: "tek anahtar" kapalıyken de erişemez.</summary>
 public class FullParameterImportAccess_Tests : PlatformWebTestBase
 {
-    private static readonly string[] Pages = ["/Projects/FullImportModal", "/Tasks/FullImportModal", "/Grants/ProgramImportModal"];
+    private static readonly string[] Pages =
+    [
+        "/Projects/FullImportModal", "/Tasks/FullImportModal", "/Grants/ProgramImportModal",
+        "/Expenses/FullImportModal", "/Incomes/FullImportModal", "/Invoices/FullImportModal"
+    ];
 
     protected override void ConfigureServices(IServiceCollection services)
     {
@@ -366,7 +370,14 @@ public class FullParameterImportTenant_Tests : PlatformWebTestBase
             var workspace = await client.GetStringAsync("/DataTransfer?tab=import");
             workspace.ShouldNotContain("tasks-full");
             workspace.ShouldNotContain("projects-full");
-            foreach (var page in new[] { "/Projects/FullImportModal", "/Tasks/FullImportModal" })
+            workspace.ShouldNotContain("expenses-full");
+            workspace.ShouldNotContain("incomes-full");
+            workspace.ShouldNotContain("invoices-full");
+            foreach (var page in new[]
+                     {
+                         "/Projects/FullImportModal", "/Tasks/FullImportModal", "/Expenses/FullImportModal",
+                         "/Incomes/FullImportModal", "/Invoices/FullImportModal"
+                     })
             {
                 (await client.GetAsync($"{page}?handler=Export")).StatusCode.ShouldNotBe(HttpStatusCode.OK, page);
                 (await client.GetAsync($"{page}?handler=Template")).StatusCode.ShouldNotBe(HttpStatusCode.OK, page);
