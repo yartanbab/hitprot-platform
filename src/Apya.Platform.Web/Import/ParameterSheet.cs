@@ -55,6 +55,9 @@ internal abstract class ParameterSheet<TSource, TInput>
 
     protected abstract Guid IdOf(TSource source);
 
+    /// <summary>Kimlik sütununun rehber metni.</summary>
+    protected virtual string IdHint => Guide("Id");
+
     public IReadOnlyList<ImportColumn> Columns =>
         [new(IdHeader), .. Fields.Select(f => new ImportColumn(f.Header, f.Required, f.Options))];
 
@@ -120,7 +123,7 @@ internal abstract class ParameterSheet<TSource, TInput>
 
         var rows = new List<(string Header, bool Required, string Hint, IReadOnlyList<string>? Values)>
         {
-            (IdHeader, false, Guide("Id"), null)
+            (IdHeader, false, IdHint, null)
         };
         rows.AddRange(Fields.Select(f => (f.Header, f.Required, f.Hint, f.Allowed ?? f.Options)));
 
