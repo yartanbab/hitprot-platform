@@ -425,6 +425,24 @@ public class GrantWizardPage_Tests : PlatformWebTestBase
         (await _wizard.GetAsync(id)).IsCallClosed.ShouldBeTrue();
     }
 
+    /// <summary>Adım tiki "geçildi" değil "dolu" demektir: özet dolunca yalnız o adım eksikten çıkar.</summary>
+    [Fact]
+    public async Task Eksik_Adimlar_Doldukca_Listeden_Cikar()
+    {
+        var (id, _) = await CreateApplicationAsync();
+        (await _wizard.GetAsync(id)).IncompleteSteps.ShouldBe(new[] { 2, 3 });
+
+        var dto = await _wizard.SaveSummaryAsync(new SaveWizardSummaryInput
+        {
+            ApplicationId = id,
+            ProjectTitle = "Proje",
+            ProjectSummary = "Özet",
+            ProjectDurationMonths = 12
+        });
+
+        dto.IncompleteSteps.ShouldBe(new[] { 3 });
+    }
+
     /// <summary>Karşı yön: son gün dahildir.</summary>
     [Fact]
     public async Task Son_Gununde_Basvuru_Gonderilebilir()
