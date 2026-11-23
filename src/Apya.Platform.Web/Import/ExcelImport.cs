@@ -31,6 +31,9 @@ public sealed class ImportRow
 
     public object? Value(string header) => _cells.TryGetValue(header, out var v) ? v : null;
 
+    /// <summary>Sütun dosyada var mı? Boş hücreyi, dosyadan silinmiş sütundan ayırır.</summary>
+    public bool Has(string header) => _cells.ContainsKey(header);
+
     public string Text(string header) => Value(header) switch
     {
         null => string.Empty,
@@ -46,12 +49,13 @@ public sealed record ImportSheet(List<string> Headers, List<ImportRow> Rows, Lis
 /// <summary>Pencerenin okuduğu JSON: önizleme, kayıt hatası ya da tamamlandı.</summary>
 internal static class ImportResponse
 {
-    public static object Preview(ImportSheet sheet, IStringLocalizer l)
+    /// <param name="summary">Hatasız dosyada "hazır" iletisine eklenen özet (ör. kaç yeni, kaç güncelleme).</param>
+    public static object Preview(ImportSheet sheet, IStringLocalizer l, string? summary = null)
     {
         var failed = sheet.Rows.Count(r => r.Errors.Count > 0);
         var ok = sheet.Errors.Count == 0 && failed == 0;
         var message = sheet.Errors.Count > 0 ? string.Join(" ", sheet.Errors)
-            : ok ? l["Import:Ready", sheet.Rows.Count].Value
+            : ok ? $"{l["Import:Ready", sheet.Rows.Count].Value} {summary}".TrimEnd()
             : l["Import:HasErrors", sheet.Rows.Count, failed].Value;
         return new
         {
@@ -79,11 +83,12 @@ internal static class ExcelImport
 
     private static readonly CultureInfo Tr = CultureInfo.GetCultureInfo("tr-TR");
 
-    public static byte[] Template(string sheetName, string optionsSheetName, IReadOnlyList<ImportColumn> columns)
+    /// <param name="finish">Kaydetmeden önce kitaba ek sayfa yazar (ör. alan rehberi).</param>
+    public static byte[] Template(string sheetName, string optionsSheetName, IReadOnlyList<ImportColumn> columns,
+        Action<XLWorkbook>? finish = null)
     {
         using var wb = new XLWorkbook();
         var ws = wb.AddWorksheet(SafeSheetName(sheetName));
-        IXLWorksheet? options = null;
 
         for (var c = 0; c < columns.Count; c++)
         {
@@ -92,30 +97,49 @@ internal static class ExcelImport
             cell.Value = column.Required ? column.Header + " *" : column.Header;
             cell.Style.Font.Bold = true;
             cell.Style.Fill.BackgroundColor = XLColor.LightGray;
-
-            if (column.Options is { Count: > 0 })
-            {
-                options ??= wb.AddWorksheet(SafeSheetName(optionsSheetName));
-                var oc = options.LastColumnUsed()?.ColumnNumber() + 1 ?? 1;
-                options.Cell(1, oc).Value = column.Header;
-                options.Cell(1, oc).Style.Font.Bold = true;
-                for (var i = 0; i < column.Options.Count; i++)
-                {
-                    options.Cell(i + 2, oc).Value = column.Options[i];
-                }
-
-                var list = options.Range(2, oc, column.Options.Count + 1, oc);
-                ws.Range(2, c + 1, MaxRows + 1, c + 1).CreateDataValidation().List(list, true);
-            }
         }
 
         ws.SheetView.FreezeRows(1);
         ws.Columns(1, columns.Count).Width = 20;
-        options?.Columns().AdjustToContents();
+        AddOptions(wb, ws, optionsSheetName, columns);
+        finish?.Invoke(wb);
 
         using var stream = new MemoryStream();
         wb.SaveAs(stream);
         return stream.ToArray();
+    }
+
+    /// <summary>
+    /// Seçenekli sütunlara açılır liste kurar; liste ayrı sayfada durur. Sütun başlıkla bulunur:
+    /// dolu dışa aktarma dosyasında da aynı listeler çalışır, dosyada olmayan sütun atlanır.
+    /// </summary>
+    public static void AddOptions(XLWorkbook wb, IXLWorksheet ws, string optionsSheetName, IReadOnlyList<ImportColumn> columns)
+    {
+        IXLWorksheet? options = null;
+        var lastColumn = ws.LastColumnUsed()?.ColumnNumber() ?? 0;
+        foreach (var column in columns.Where(c => c.Options is { Count: > 0 }))
+        {
+            var position = Enumerable.Range(1, lastColumn)
+                .FirstOrDefault(c => Normalize(ws.Cell(1, c).GetString()) == Normalize(column.Header));
+            if (position == 0)
+            {
+                continue;
+            }
+
+            options ??= wb.AddWorksheet(SafeSheetName(optionsSheetName));
+            var oc = options.LastColumnUsed()?.ColumnNumber() + 1 ?? 1;
+            options.Cell(1, oc).Value = column.Header;
+            options.Cell(1, oc).Style.Font.Bold = true;
+            for (var i = 0; i < column.Options!.Count; i++)
+            {
+                options.Cell(i + 2, oc).Value = column.Options[i];
+            }
+
+            var list = options.Range(2, oc, column.Options.Count + 1, oc);
+            ws.Range(2, position, MaxRows + 1, position).CreateDataValidation().List(list, true);
+        }
+
+        options?.Columns().AdjustToContents();
     }
 
     /// <summary>Boş CSV şablonu: yalnız başlık satırı (zorunlu sütunlar yıldızlı). Seçenek listesi taşımaz.</summary>
