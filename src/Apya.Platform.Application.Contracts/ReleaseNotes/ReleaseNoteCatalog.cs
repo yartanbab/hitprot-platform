@@ -127,6 +127,13 @@ public static class ReleaseNoteCatalog
                 "değiştirebilirsiniz. Yanıtınız üç ayda bir teyit istenir. Kesin şart için çağrı metnine bakın."),
 
             new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
+                "İlgilenmediğiniz hibe çağrılarını kapatın",
+                "Hibe ekranındaki kartlarda ve çağrı sayfasında \"İlgilenmiyorum\" diyerek çağrıyı önerilerinizden " +
+                "çıkarabilirsiniz. Kısa bir gerekçe seçersiniz, isterseniz not eklersiniz. Kapattığınız çağrılar " +
+                "\"Kapattıklarım\" sekmesinde durur ve \"Geri al\" ile döner. Seçtiğiniz gerekçe danışmanınıza " +
+                "görünür, notunuz görünmez."),
+
+            new ReleaseNoteItem(ReleaseNoteCategory.Improvement,
                 "Kullanıcı adları artık tekil",
                 "Bir kullanıcı adı artık bütün platformda tek kişiye ait. Aynı adı başka bir kurumdaki biri de " +
                 "kullanıyorsa hesabınızın adı güncellenmiş olabilir ve bir kez yeniden giriş yapmanız gerekebilir. " +

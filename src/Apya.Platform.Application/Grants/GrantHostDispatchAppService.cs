@@ -36,6 +36,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<GrantBookmark, Guid> _bookmarkRepo;
     private readonly IRepository<GrantInterest, Guid> _interestRepo;
+    private readonly IRepository<GrantRecommendationEvent, Guid> _eventRepo;
     private readonly ITenantRepository _tenantRepo;
     private readonly TenantDisplayNameResolver _displayNames;
     private readonly IIdentityUserRepository _userRepo;
@@ -68,8 +69,10 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         NotificationManager notificationManager,
         IEmailSender emailSender,
         GrantNotificationDispatcher notifyDispatcher,
-        GrantParameterCriterionManager parameterCriteria)
+        GrantParameterCriterionManager parameterCriteria,
+        IRepository<GrantRecommendationEvent, Guid> eventRepo)
     {
+        _eventRepo = eventRepo;
         _parameterCriteria = parameterCriteria;
         _callRepo = callRepo;
         _grantRepo = grantRepo;
@@ -108,13 +111,22 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
         List<GrantRecommendation> sentRecs;
         List<GrantApplication> applications;
         List<GrantInterest> interests;
+        List<GrantRecommendationEvent> recEvents;
         using (_mtFilter.Disable())
         {
+            recEvents = await _eventRepo.GetListAsync(e => e.GrantCallId == call.Id);
             sentRecs = await _recRepo.GetListAsync(r => r.GrantCallId == call.Id);
             applications = await _appRepo.GetListAsync(a => a.GrantCallId == call.Id);
             // H-07 · Firmanın karşılığı: geri çekilmemiş ilgi talebi.
             interests = await _interestRepo.GetListAsync(i => i.GrantCallId == call.Id && i.WithdrawnAt == null);
         }
+        // Firma başına SON olay kapatmaysa gerekçesi gösterilir; geri alınan kapatma görünmez.
+        var dismissReasons = recEvents
+            .Where(e => e.TenantId.HasValue)
+            .GroupBy(e => e.TenantId!.Value)
+            .Select(g => g.OrderByDescending(e => e.CreationTime).First())
+            .Where(e => e.Kind == GrantRecommendationEventKind.Dismissed)
+            .ToDictionary(e => e.TenantId!.Value, e => e.Reason);
         var interestedTenants = interests.Where(i => i.TenantId.HasValue).Select(i => i.TenantId!.Value).ToHashSet();
         var sentByTenant = sentRecs.Where(r => r.TenantId.HasValue).ToDictionary(r => r.TenantId!.Value);
         var appliedTenants = applications.Where(a => a.TenantId.HasValue).Select(a => a.TenantId!.Value).ToHashSet();
@@ -181,6 +193,7 @@ public class GrantHostDispatchAppService : ApplicationService, IGrantHostDispatc
                 AlreadySent = sent != null,
                 AlreadyApplied = appliedTenants.Contains(tenant.Id),
                 RecommendationStatus = sent?.Status,
+                DismissReason = dismissReasons.GetValueOrDefault(tenant.Id),
                 HasInterest = interestedTenants.Contains(tenant.Id),
                 AssignedUserId = sent?.AssignedUserId,
                 AssignedUserName = sent?.AssignedUserId is { } uid

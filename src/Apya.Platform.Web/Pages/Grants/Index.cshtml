@@ -38,6 +38,7 @@
     else
     {
         <script src="~/libs/select2/js/select2.min.js"></script>
+        <abp-script src="/Pages/Grants/DismissReason.js" />
         <abp-script src="/Pages/Grants/Tenant.js" />
     }
 }
@@ -151,6 +152,10 @@ else
                 </button>
                 <button type="button" class="apya-tenant-tab" role="tab" data-tab="bookmarked">
                     @L["Grants:Feed:Tab:Bookmarked"]<span class="apya-chip apya-chip-neutral apya-numeric" id="TabCountBookmarked">—</span>
+                </button>
+                @* Kapatılan çağrı yoksa sekme görünmez. *@
+                <button type="button" class="apya-tenant-tab d-none" role="tab" data-tab="dismissed" id="TabDismissed">
+                    @L["Grants:Feed:Tab:Dismissed"]<span class="apya-chip apya-chip-neutral apya-numeric" id="TabCountDismissed">—</span>
                 </button>
             </div>
             <div class="apya-feed-bar-right">

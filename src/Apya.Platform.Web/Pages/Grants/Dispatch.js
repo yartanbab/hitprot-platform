@@ -103,6 +103,11 @@ $(function () {
         // H-07 · Gönderilen önerinin firmadaki karşılığı (GrantRecommendationStatus: 1 Seen, 3 Dismissed).
         if (c.recommendationStatus === 1) {
             chips += '<span class="apya-chip apya-chip-neutral">' + esc(l('Grants:Dispatch:Rec:Seen')) + '</span>';
+        }
+        // Kapatma gerekçesi otomatik öneride de görünür; gerekçeden önceki kapatmalarda yalnız durum vardır.
+        if (c.dismissReason != null) {
+            chips += '<span class="apya-chip apya-chip-warning">' +
+                esc(l('Grants:Dispatch:Rec:DismissedReason', l('Grants:Dismiss:Reason:' + c.dismissReason))) + '</span>';
         } else if (c.recommendationStatus === 3) {
             chips += '<span class="apya-chip apya-chip-warning">' + esc(l('Grants:Dispatch:Rec:Dismissed')) + '</span>';
         }

@@ -39,6 +39,10 @@ $(function () {
             chips += '<span class="apya-chip apya-chip-brand">' +
                 esc(l('Grants:Feed:Card:HostRecommended')) + '</span>';
         }
+        if (r.isDismissed) {
+            chips += '<span class="apya-chip apya-chip-warning">' +
+                esc(l('Grants:Dismiss:State', l('Grants:Dismiss:Reason:' + r.dismissReason))) + '</span>';
+        }
         chips += '<span class="apya-chip apya-chip-neutral">' +
             esc(l('Grants:Detail:Difficulty')) + ' ' + r.difficulty + '/5</span>';
 
@@ -107,7 +111,7 @@ $(function () {
         return Promise.resolve(service.getOpenCalls({ abpHandleError: false })).then(function (list) {
             items = list || [];
             loaded = true;
-            $('#TabCountEligible').text(items.filter(function (r) { return r.isRecommended; }).length);
+            $('#TabCountEligible').text(items.filter(function (r) { return r.isRecommended && !r.isDismissed; }).length);
             $('#TabCountAll').text(items.length);
             $('#BucketEligible').text(items.filter(function (r) { return r.bucket === UYGUN; }).length);
             $('#BucketConditional').text(items.filter(function (r) { return r.bucket === KOSULLU; }).length);

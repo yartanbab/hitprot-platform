@@ -32,6 +32,12 @@ public class HostRecommendationCandidateDto
     /// <summary>H-07 · Gönderilen önerinin firmadaki durumu (Görüldü, İlgilenmiyor…); gönderilmediyse null.</summary>
     public GrantRecommendationStatus? RecommendationStatus { get; set; }
 
+    /// <summary>
+    /// Firma çağrıyı kapattıysa gerekçesi (otomatik öneri dahil); açıksa null.
+    /// Firmanın serbest notu danışmana TAŞINMAZ.
+    /// </summary>
+    public GrantDismissReason? DismissReason { get; set; }
+
     /// <summary>H-07 · Firma bu çağrıya ilgi bildirdi mi (geri çekilmemiş talep).</summary>
     public bool HasInterest { get; set; }
 
