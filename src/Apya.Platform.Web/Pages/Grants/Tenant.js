@@ -539,6 +539,21 @@ $(function () {
             (canWrite ? '<button type="button" class="apya-feed-bookmark-edit" data-note="' + r.grantCallId + '" title="' + esc(l('Grants:Feed:Bookmark:EditNote')) + '"><i class="fa fa-pen"></i></button>' : '') + '</div>';
     }
 
+    /// Kartın alt satırı: "İlgilenmiyorum" ya da kapatılmış çağrıda gerekçe + "Geri al".
+    /// Başvurusu ya da süren ilgi talebi olan çağrıda kapatma sunulmaz.
+    function dismissLine(r) {
+        if (r.isDismissed) {
+            return '<p class="apya-feed-gap"><i class="fa fa-ban" aria-hidden="true"></i><span>' +
+                esc(l('Grants:Dismiss:State', l('Grants:Dismiss:Reason:' + r.dismissReason))) + '</span>' +
+                (canWrite ? ' <button type="button" class="btn btn-link btn-sm p-0 ms-2" data-restore="' + r.grantCallId + '">' +
+                    esc(l('Grants:Dismiss:Restore')) + '</button>' : '') + '</p>';
+        }
+        var st = r.interestStatus;
+        if (!canWrite || r.alreadyApplied || st === 0 || st === 1 || st === 2) { return ''; }
+        return '<button type="button" class="btn btn-link btn-sm p-0 text-muted text-decoration-none align-self-start" data-dismiss-call="' + r.grantCallId + '">' +
+            '<i class="fa fa-xmark me-1" aria-hidden="true"></i>' + esc(l('Grants:Today:Opportunity:Dismiss')) + '</button>';
+    }
+
     function feedCard(r) {
         var unfit = r.bucket === 2;
         var gap = gapSentence(r);
@@ -568,7 +583,7 @@ $(function () {
             '<div class="apya-feed-foot">' +
             '<span class="apya-feed-fit is-' + bucketTone[r.bucket] + '"><span class="apya-feed-fit-dot"></span>' + esc(l('Grants:Bucket:' + bucketKeys[r.bucket])) +
             '<span class="apya-feed-fit-sep">·</span>' + esc(difficultyWord(r.difficulty)) + '</span>' +
-            cardCta(r) + '</div></div></article>';
+            cardCta(r) + '</div>' + dismissLine(r) + '</div></article>';
     }
 
     /// Eleyen şartın tek satırlık gerekçesi — değerler sunucudan, cümle burada kurulur.
@@ -583,19 +598,30 @@ $(function () {
         return items.slice().sort(function (a, b) { return b.score - a.score || (a.daysRemaining == null ? 1e9 : a.daysRemaining) - (b.daysRemaining == null ? 1e9 : b.daysRemaining); });
     }
 
+    function isActiveRecommendation(r) { return r.isRecommended && !r.isDismissed; }
+
     function paintFeed() {
         // Akış yüklenemediyse sekme değişimi hata kutusunu "uygun çağrı yok" boş durumuyla ezmesin.
         if (feedFailed) { return; }
         // Sekmeler ve sayaçları gelişmiş filtreden geçmiş akışı sayar; başlık cümlesi süzülmez.
         var filtered = applyFilters(feed);
-        var eligible = sorted(filtered.filter(function (r) { return r.isRecommended; }));
+        var dismissedAll = feed.filter(function (r) { return r.isDismissed; });
+        // Son kapatma geri alındıysa boş sekmede kalınmaz.
+        if (activeTab === 'dismissed' && dismissedAll.length === 0) {
+            activeTab = 'eligible';
+            $('.apya-tenant-tab').removeClass('is-active').filter('[data-tab="eligible"]').addClass('is-active');
+        }
+        var eligible = sorted(filtered.filter(isActiveRecommendation));
         var bookmarked = filtered.filter(function (r) { return r.isBookmarked; });
+        var dismissed = filtered.filter(function (r) { return r.isDismissed; });
         var items = activeTab === 'bookmarked' ? sorted(bookmarked)
+            : activeTab === 'dismissed' ? sorted(dismissed)
             : activeTab === 'all' ? sorted(filtered)
             : eligible;
         var base = activeTab === 'bookmarked' ? feed.filter(function (r) { return r.isBookmarked; })
+            : activeTab === 'dismissed' ? dismissedAll
             : activeTab === 'all' ? feed
-            : feed.filter(function (r) { return r.isRecommended; });
+            : feed.filter(isActiveRecommendation);
         // Filtre sonucu boşaldıysa "uygun çağrı yok" değil "filtreye uyan yok" denir.
         var filteredOut = items.length === 0 && base.length > 0;
         paintedItems = items;
@@ -603,6 +629,8 @@ $(function () {
         $('#TabCountEligible').text(eligible.length);
         $('#TabCountAll').text(filtered.length);
         $('#TabCountBookmarked').text(bookmarked.length);
+        $('#TabCountDismissed').text(dismissed.length);
+        $('#TabDismissed').toggleClass('d-none', dismissedAll.length === 0);
         paintFilterChips(items.length, base.length);
 
         $('#FeedGrid').attr('data-cols', activeTab === 'eligible' ? '2' : '3');
@@ -623,7 +651,7 @@ $(function () {
             '<span class="apya-feed-bucket is-neutral">' + esc(l('Grants:Feed:Bucket:Ineligible', buckets[2])) + '</span>');
 
         // 13a · Eşiğin altındakiler gizlenmez; altta tek cümleyle çağrılır.
-        var below = filtered.length - eligible.length;
+        var below = filtered.filter(function (r) { return !r.isDismissed; }).length - eligible.length;
         $('#FeedMore').toggleClass('d-none', activeTab !== 'eligible' || below === 0);
         $('#FeedMoreText').text(l('Grants:Feed:More:Text', below));
     }
@@ -639,6 +667,26 @@ $(function () {
             if (row) { row.isBookmarked = on; if (!on) { row.bookmarkNote = null; row.bookmarkedAt = null; row.bookmarkedByName = null; } else { row.bookmarkedAt = new Date().toISOString(); } }
             paintHeading();
             paintFeed();
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+
+    // "İlgilenmiyorum" / "Geri al": sonuç akışın yeniden okunmasıyla çizilir (öneri durumu sunucuda değişir).
+    $('#FeedGrid').on('click', '[data-dismiss-call]', function () {
+        var id = $(this).data('dismiss-call');
+        apya.grantDismiss.ask().then(function (answer) {
+            if (!answer) { return; }
+            recoSvc.dismissRecommendation({ grantCallId: id, reason: answer.reason, note: answer.note }).then(function () {
+                abp.notify.success(l('Grants:Today:Opportunity:Dismissed'));
+                loadFeed();
+            });
+        });
+    });
+
+    $('#FeedGrid').on('click', '[data-restore]', function () {
+        var $btn = $(this).prop('disabled', true);
+        recoSvc.restoreRecommendation($btn.data('restore')).then(function () {
+            abp.notify.success(l('Grants:Dismiss:Restored'));
+            loadFeed();
         }).always(function () { $btn.prop('disabled', false); });
     });
 
@@ -667,7 +715,7 @@ $(function () {
 
     // 10c/13a · Başlık cümlesi: kaç uygun çağrı, en yakın son tarih hangi kartta.
     function paintHeading() {
-        var eligible = sorted(feed.filter(function (r) { return r.isRecommended; }));
+        var eligible = sorted(feed.filter(isActiveRecommendation));
         $('#FeedHeading').removeClass('apya-skel-num').text(eligible.length
             ? l('Grants:Feed:Heading', eligible.length) : l('Grants:Feed:Heading:None'));
         var nearest = null, nearestIndex = -1;

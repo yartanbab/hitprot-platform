@@ -81,6 +81,12 @@ public class GrantCallDetailDto
     /// <summary>Danışmanın öneriyle gönderdiği not; yoksa null.</summary>
     public string? HostRecommendationNote { get; set; }
 
+    /// <summary>Firma "İlgilenmiyorum" dedi ve geri almadı.</summary>
+    public bool IsDismissed { get; set; }
+
+    /// <summary>Kapatma gerekçesi; kapalı değilse null.</summary>
+    public GrantDismissReason? DismissReason { get; set; }
+
     // --- İlgi talebi (son kayıt) ---
 
     /// <summary>Son talebin kimliği — "İlgimi geri çek" buna gider.</summary>

@@ -485,7 +485,7 @@ $(function () {
             $btn.prop('disabled', true);
             interestSvc.withdraw(detail.interestId)
                 .then(function () { return service.getCallDetail(callId); })
-                .then(function (d) { detail = d; paintInterest(d); })
+                .then(function (d) { detail = d; paintInterest(d); paintDismissal(d); })
                 .always(function () { $btn.prop('disabled', false); });
         });
     });
@@ -495,21 +495,48 @@ $(function () {
     function paintHostRecommendation(d) {
         $('#HostRecNote').toggleClass('d-none', !d.isHostRecommended);
         $('#HostRecNoteText').text(d.hostRecommendationNote || '');
-        $('#HostRecDismissBtn').toggleClass('d-none', !d.isHostRecommended || !canWrite);
         if (d.isHostRecommended) {
             // İkincil işaret: düşerse ekranı bölmez, bir sonraki açılışta yeniden denenir.
             service.markRecommendationSeen(callId, { abpHandleError: false }).catch(function () { });
         }
     }
 
-    $('#HostRecDismissBtn').on('click', function () {
+    // Öneri tepkisi firmanındır: host bağlamında (danışman ön izlemesi) sunulmaz.
+    function paintDismissal(d) {
+        var inTenant = !!(abp.currentTenant && abp.currentTenant.id);
+        var st = d.interestStatus;
+        var busy = d.alreadyApplied || st === 0 || st === 1 || st === 2;
+        $('#CallDismissBtn').toggleClass('d-none', !inTenant || !canWrite || d.isDismissed || busy);
+        $('#CallDismissed').toggleClass('d-none', !d.isDismissed);
+        $('#CallRestoreBtn').toggleClass('d-none', !inTenant || !canWrite);
+        $('#CallDismissedText').text(d.isDismissed
+            ? l('Grants:Dismiss:State', l('Grants:Dismiss:Reason:' + d.dismissReason)) : '');
+    }
+
+    function reloadDismissal() {
+        return service.getCallDetail(callId).then(function (d) {
+            detail = d;
+            paintHostRecommendation(d);
+            paintDismissal(d);
+        });
+    }
+
+    $('#CallDismissBtn').on('click', function () {
         apya.grantDismiss.ask().then(function (answer) {
             if (!answer) { return; }
             service.dismissRecommendation({ grantCallId: callId, reason: answer.reason, note: answer.note }).then(function () {
                 abp.notify.success(l('Grants:Today:Opportunity:Dismissed'));
-                $('#HostRecNote').addClass('d-none');
+                reloadDismissal();
             });
         });
+    });
+
+    $('#CallRestoreBtn').on('click', function () {
+        var $btn = $(this).prop('disabled', true);
+        service.restoreRecommendation(callId).then(function () {
+            abp.notify.success(l('Grants:Dismiss:Restored'));
+            return reloadDismissal();
+        }).always(function () { $btn.prop('disabled', false); });
     });
 
     // Yalnız açılışta ve Tekrar dene ile çağrılır (ilgi/geri çekme kendi okumasını yapar).
@@ -526,6 +553,7 @@ $(function () {
             paintProcess(d);
             paintSide(d);
             paintHostRecommendation(d);
+            paintDismissal(d);
         }, function (err) {
             // Boş başlık kartı ve "—" metrikli kart yığını kartın altında kalmasın.
             $('.apya-detail-head, .apya-detail-layout').addClass('d-none');

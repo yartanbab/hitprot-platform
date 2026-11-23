@@ -160,4 +160,61 @@ public class GrantRecommendationDismissal_Tests : PlatformEntityFrameworkCoreTes
             (await _eventRepository.GetListAsync(x => x.GrantCallId == call.Id)).ShouldBeEmpty();
         }
     }
+
+    [Fact]
+    public async Task Host_baglaminda_kiracisiz_olay_yazilmaz()
+    {
+        var call = await CreateHostCallAsync("Host Bağlamı Programı");
+
+        await Should.ThrowAsync<EntityNotFoundException>(() => DismissAsync(call.Id));
+        await Should.ThrowAsync<EntityNotFoundException>(() => _recommendations.RestoreRecommendationAsync(call.Id));
+
+        (await _eventRepository.GetListAsync(x => x.GrantCallId == call.Id)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Ayrinti_kapatma_durumunu_ve_gerekceyi_gosterir()
+    {
+        var call = await CreateHostCallAsync("Ayrıntı Durumu Programı");
+        var tenantId = await CreateTenantAsync("Ayrıntıya Bakan Firma");
+
+        using (_currentTenant.Change(tenantId))
+        {
+            await DismissAsync(call.Id, GrantDismissReason.NotEligible);
+            var dismissed = await _recommendations.GetCallDetailAsync(call.Id);
+            dismissed.IsDismissed.ShouldBeTrue();
+            dismissed.DismissReason.ShouldBe(GrantDismissReason.NotEligible);
+
+            await _recommendations.RestoreRecommendationAsync(call.Id);
+            var restored = await _recommendations.GetCallDetailAsync(call.Id);
+            restored.IsDismissed.ShouldBeFalse();
+            restored.DismissReason.ShouldBeNull();
+        }
+    }
+
+    [Fact]
+    public async Task Danisman_gerekceyi_gorur_notu_gormez_geri_alinani_gormez()
+    {
+        var call = await CreateHostCallAsync("Danışman Görünümü Programı");
+        var kept = await CreateTenantAsync("Kapalı Kalan Firma");
+        var restored = await CreateTenantAsync("Geri Alan Firma");
+
+        using (_currentTenant.Change(kept))
+        {
+            await DismissAsync(call.Id, GrantDismissReason.NoCapacity, "gizli firma notu");
+        }
+        using (_currentTenant.Change(restored))
+        {
+            await DismissAsync(call.Id, GrantDismissReason.OutOfScope);
+            await _recommendations.RestoreRecommendationAsync(call.Id);
+        }
+
+        var console = await GetRequiredService<IGrantHostDispatchAppService>()
+            .PreviewAsync(new PreviewHostRecommendationInput { GrantCallId = call.Id });
+
+        console.Candidates.Single(c => c.TenantId == kept).DismissReason.ShouldBe(GrantDismissReason.NoCapacity);
+        console.Candidates.Single(c => c.TenantId == restored).DismissReason.ShouldBeNull();
+        typeof(HostRecommendationCandidateDto).GetProperties()
+            .ShouldNotContain(p => p.Name.Contains("Note") && p.Name.Contains("Dismiss"));
+    }
 }

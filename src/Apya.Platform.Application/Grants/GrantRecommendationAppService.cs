@@ -134,6 +134,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     {
         // Öneri firmanın tamamı için kapanır (host da durumu görür): salt görüntüleyen kapatamaz.
         await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
+        EnsureTenantContext(input.GrantCallId);
         var snapshot = await SnapshotAsync(input.GrantCallId);
 
         // Başvurulmuş çağrı artık bir öneri değil, yürüyen bir iş (GrantRecommendation.Dismiss ile aynı kural).
@@ -160,6 +161,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
     public async Task RestoreRecommendationAsync(Guid grantCallId)
     {
         await GrantWritePermission.CheckAsync(AuthorizationService, CurrentTenant);
+        EnsureTenantContext(grantCallId);
         // Kiracı filtresi açık: yalnız bu firmanın olayları.
         var last = (await _eventRepo.GetListAsync(e => e.GrantCallId == grantCallId))
             .OrderByDescending(e => e.CreationTime)
@@ -181,6 +183,15 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
         await _eventRepo.InsertAsync(GrantRecommendationEvent.Restored(
             GuidGenerator.Create(), CurrentTenant.Id, grantCallId, snapshot.GrantId,
             snapshot.Score, snapshot.Bucket, hostRecs.Count > 0), autoSave: true);
+    }
+
+    /// <summary>Öneri tepkisi firmanındır: host bağlamında kiracısız olay satırı yazılmaz.</summary>
+    private void EnsureTenantContext(Guid grantCallId)
+    {
+        if (CurrentTenant.Id == null)
+        {
+            throw new EntityNotFoundException(typeof(GrantRecommendation), grantCallId);
+        }
     }
 
     /// <summary>
@@ -251,6 +262,11 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 && r.Status != GrantRecommendationStatus.Dismissed))
             .OrderByDescending(r => r.CreationTime)
             .FirstOrDefault();
+        // "İlgilenmiyorum": çağrının SON olayı kapatmaysa kapalı.
+        var lastEvent = (await _eventRepo.GetListAsync(e => e.GrantCallId == grantCallId))
+            .OrderByDescending(e => e.CreationTime)
+            .FirstOrDefault();
+        var dismissal = lastEvent?.Kind == GrantRecommendationEventKind.Dismissed ? lastEvent : null;
         var today = Clock.Now.Date;
 
         using (_mtFilter.Disable())
@@ -367,6 +383,8 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 RequiresConsortium = grant.RequiresConsortium,
                 IsHostRecommended = hostRec != null,
                 HostRecommendationNote = hostRec?.Note,
+                IsDismissed = dismissal != null,
+                DismissReason = dismissal?.Reason,
                 InterestId = interest?.Id,
                 InterestCreationTime = interest?.CreationTime,
                 InterestWithdrawnAt = interest?.WithdrawnAt,
