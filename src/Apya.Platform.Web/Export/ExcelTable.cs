@@ -64,7 +64,9 @@ internal static class ExcelTable
         return new ExportRows<T>(items, total > items.Count);
     }
 
-    public static byte[] Build<T>(string sheetName, IReadOnlyList<ExcelColumn<T>> columns, IEnumerable<T> rows, string? note = null)
+    /// <param name="finish">Kaydetmeden önce kitaba ek sayfa ya da açılır liste yazar.</param>
+    public static byte[] Build<T>(string sheetName, IReadOnlyList<ExcelColumn<T>> columns, IEnumerable<T> rows, string? note = null,
+        Action<XLWorkbook>? finish = null)
     {
         using var wb = new XLWorkbook();
         var ws = wb.AddWorksheet(SafeSheetName(sheetName));
@@ -107,6 +109,8 @@ internal static class ExcelTable
             noteCell.Value = note;
             noteCell.Style.Font.Italic = true;
         }
+
+        finish?.Invoke(wb);
 
         using var ms = new MemoryStream();
         wb.SaveAs(ms);

@@ -99,6 +99,10 @@ public static class TransferCatalog
         new(M("grant-calls"), "Menu:Grants:Group", "fa fa-bullhorn", "/Grants", Table,
             [Out("/Grants/Index", "CallsExcel"), .. Modal("/Grants/CallImportModal")],
             ExportUrl: "/Grants?handler=CallsExcel", ImportUrl: "/Grants/CallImportModal"),
+        // Yalnız sistem yöneticisi: programların bütün parametreleri; dolu çıktı düzenlenip geri yüklenir.
+        new(M("grant-programs"), "Menu:Grants:Group", "fa fa-sliders", "/Grants", Table,
+            [Out("/Grants/ProgramImportModal", "Export"), .. Modal("/Grants/ProgramImportModal")],
+            ExportUrl: "/Grants/ProgramImportModal?handler=Export", ImportUrl: "/Grants/ProgramImportModal"),
         new(M("grant-applications"), "Menu:Grants:Group", "fa fa-file-signature", "/Grants/Applications", Table,
             [Out("/Grants/Applications")],
             ExportUrl: "/Grants/Applications?handler=Excel"),

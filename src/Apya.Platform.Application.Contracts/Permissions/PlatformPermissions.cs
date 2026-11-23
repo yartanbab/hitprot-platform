@@ -226,6 +226,8 @@ public static class PlatformPermissions
         public const string ManageTemplates = Default + ".ManageTemplates"; // Şablon oluşturma, değiştirme, silme
         /// <summary>İzin denetimini açıp kapatma. Host-only.</summary>
         public const string ManageAccess = Default + ".ManageAccess";
+        /// <summary>Bütün parametrelerle toplu aktarım. Host-only; "tek anahtar" kapalıyken de denetlenir.</summary>
+        public const string FullParameters = Default + ".FullParameters";
     }
 
     // --- SÜRÜM NOTU YAYIN ONAYI (host) ---

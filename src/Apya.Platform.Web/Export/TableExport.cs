@@ -35,7 +35,7 @@ internal static class TableExport
     /// <param name="sheetName">Excel sayfa adı; boşsa <paramref name="name"/>.</param>
     /// <remarks>Adreste <c>columns</c> varsa dosya yerine modülün standart sütun başlıkları döner (şablon düzenleyici için).</remarks>
     public static IActionResult TableFile<T>(this PageModel page, string name, IReadOnlyList<ExcelColumn<T>> columns,
-        IEnumerable<T> rows, string? note = null, string? sheetName = null)
+        IEnumerable<T> rows, string? note = null, string? sheetName = null, Action<ClosedXML.Excel.XLWorkbook>? finish = null)
     {
         if (page.Request.Query.ContainsKey(ColumnsQueryKey))
         {
@@ -61,6 +61,6 @@ internal static class TableExport
 
         return csv
             ? page.File(ExcelTable.BuildCsv(columns, list), ExcelTable.CsvContentType, fileName)
-            : page.File(ExcelTable.Build(sheetName ?? name, columns, list, note), ExcelTable.ContentType, fileName);
+            : page.File(ExcelTable.Build(sheetName ?? name, columns, list, note, finish), ExcelTable.ContentType, fileName);
     }
 }

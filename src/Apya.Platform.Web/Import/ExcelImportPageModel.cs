@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Apya.Platform.Web.Export;
 using Apya.Platform.Web.Pages;
 using Apya.Platform.Web.Transfer;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -42,12 +43,22 @@ public abstract class ExcelImportPageModel<TLookups, TRow> : PlatformPageModel
     public async Task<IActionResult> OnGetTemplateAsync()
     {
         var name = L[NameKey].Value;
-        var columns = TransferTemplateContext.TemplateFileColumns(TransferTemplateContext.Get(HttpContext), Columns(await LoadLookupsAsync()));
+        var lookups = await LoadLookupsAsync();
+        var columns = TransferTemplateContext.TemplateFileColumns(TransferTemplateContext.Get(HttpContext), Columns(lookups));
         var fileName = $"{L["Import:Template"]}_{name}";
         return this.IsCsv()
             ? File(ExcelImport.TemplateCsv(columns), ExcelTable.CsvContentType, ExcelTable.FileName(fileName, Clock.Now, "csv"))
-            : File(ExcelImport.Template(name, L["Import:OptionsSheet"], columns), ExcelTable.ContentType, ExcelTable.FileName(fileName, Clock.Now));
+            : File(ExcelImport.Template(name, L["Import:OptionsSheet"], columns, wb => CompleteTemplate(wb, lookups)),
+                ExcelTable.ContentType, ExcelTable.FileName(fileName, Clock.Now));
     }
+
+    /// <summary>Şablon kitabına ekranın ek sayfasını yazar (ör. alan rehberi).</summary>
+    protected virtual void CompleteTemplate(XLWorkbook workbook, TLookups lookups)
+    {
+    }
+
+    /// <summary>Hatasız dosyanın iletisine eklenen özet (ör. kaç yeni, kaç güncelleme).</summary>
+    protected virtual string? Summarize(IReadOnlyList<TRow> rows) => null;
 
     /// <summary>Modülün içe aktarma sütunları (şablon düzenleyici için): standart başlık ve zorunluluk.</summary>
     public async Task<IActionResult> OnGetColumnsAsync()
@@ -55,8 +66,8 @@ public abstract class ExcelImportPageModel<TLookups, TRow> : PlatformPageModel
 
     public async Task<IActionResult> OnPostPreviewAsync(IFormFile? file)
     {
-        var (sheet, _) = await ReadAsync(file);
-        return new JsonResult(ImportResponse.Preview(sheet, L));
+        var (sheet, rows) = await ReadAsync(file);
+        return new JsonResult(ImportResponse.Preview(sheet, L, Summarize(rows)));
     }
 
     public async Task<IActionResult> OnPostImportAsync(IFormFile? file, [FromServices] IUnitOfWorkManager unitOfWorkManager)
@@ -87,7 +98,7 @@ public abstract class ExcelImportPageModel<TLookups, TRow> : PlatformPageModel
 
         await uow.CompleteAsync();
         Report(file, rows.Count, succeeded: rows.Count, failed: 0);
-        return new JsonResult(ImportResponse.Done(L["Import:Done", rows.Count]));
+        return new JsonResult(ImportResponse.Done($"{L["Import:Done", rows.Count].Value} {Summarize(rows)}".TrimEnd()));
     }
 
     /// <summary>İşlem geçmişine satır sayılarını bildirir (hepsi ya da hiçbiri: reddedilen dosyada yazılan satır yoktur).</summary>

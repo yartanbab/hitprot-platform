@@ -235,6 +235,8 @@ public class PlatformPermissionDefinitionProvider : PermissionDefinitionProvider
         dataTransferPermission.AddChild(PlatformPermissions.DataTransfer.ManageTemplates, L("Permission:DataTransfer.ManageTemplates"));
         dataTransferPermission.AddChild(
             PlatformPermissions.DataTransfer.ManageAccess, L("Permission:DataTransfer.ManageAccess"), MultiTenancySides.Host);
+        dataTransferPermission.AddChild(
+            PlatformPermissions.DataTransfer.FullParameters, L("Permission:DataTransfer.FullParameters"), MultiTenancySides.Host);
 
         // Sürüm notu yayın onayı — karar TÜM kiracılar için tektir ve host bağlamında
         // verilir; kiracı yöneticisine sızmasın diye MultiTenancySides.Host.

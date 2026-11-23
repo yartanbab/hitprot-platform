@@ -38,6 +38,8 @@ public class HostOnlyPermission_Tests
     [InlineData(PlatformPermissions.IssueTasks.Default)]
     [InlineData(PlatformPermissions.IssueTasks.ManageSettings)]
     [InlineData(PlatformPermissions.Consents.Default)]
+    // 2026-11-23: tüm parametreli toplu aktarım yalnız sistem yöneticisine özel.
+    [InlineData(PlatformPermissions.DataTransfer.FullParameters)]
     public void Host_yonetim_izni_kiraciya_verilemez(string name)
     {
         Definition(name).MultiTenancySide.ShouldBe(MultiTenancySides.Host);
