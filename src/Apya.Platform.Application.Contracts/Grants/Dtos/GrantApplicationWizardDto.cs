@@ -74,6 +74,9 @@ public class GrantApplicationWizardDto
     /// <summary>Bu adımda henüz doldurulmamış alanlar — sağ paneldeki "Bu Adımda Kalanlar".</summary>
     public List<GrantWizardPendingFieldDto> PendingFields { get; set; } = new();
 
+    /// <summary>Eksik alanı olan adımlar. Ekran bunlara, geçilmiş olsalar da tik koymaz.</summary>
+    public List<int> IncompleteSteps { get; set; } = new();
+
     public List<GrantApplicationMessageDto> Messages { get; set; } = new();
 }
 

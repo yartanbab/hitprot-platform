@@ -170,7 +170,8 @@ $(function () {
     function paintSteps() {
         var html = '';
         for (var i = 1; i <= model.stepCount; i++) {
-            var done = i < model.currentStep;
+            // Tik "bu adım dolu" demektir: yalnız geçilmiş olması yetmez ("Tamamlanma %0" ile çelişiyordu).
+            var done = i < model.currentStep && (model.incompleteSteps || []).indexOf(i) < 0;
             html += '<button type="button" class="apya-wiz-step-chip' +
                 (i === model.currentStep ? ' is-active' : (done ? ' is-done' : '')) +
                 '" data-goto="' + i + '">' +

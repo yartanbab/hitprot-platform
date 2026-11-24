@@ -743,6 +743,9 @@ public class GrantApplicationWizardAppService : PlatformAppService, IGrantApplic
         // bakıldığı için 4. adımda liste boş, "N alan hâlâ boş" uyarısı hep "0" diyordu.
         dto.PendingFields = BuildPendingFields(application, dto, locks,
             application.CurrentStep == GrantApplication.StepCount ? FillableSteps : new[] { application.CurrentStep });
+        dto.IncompleteSteps = FillableSteps
+            .Where(step => BuildPendingFields(application, dto, locks, new[] { step }).Count > 0)
+            .ToList();
         dto.CompletionPercent = CalculateCompletion(application, dto);
         dto.Firm = await BuildFirmSummaryAsync(application);
 
