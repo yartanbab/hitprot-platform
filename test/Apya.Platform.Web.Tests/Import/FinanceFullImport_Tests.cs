@@ -129,6 +129,65 @@ public class ExpenseFullImport_Tests : FinanceFullImportTestBase
     }
 
     [Fact]
+    public async Task Ayni_dosya_ikinci_kez_islenmez_kasa_hareketi_ciftlenmez()
+    {
+        var seed = await SeedFinanceAsync();
+        var title = "Tekrar gider " + Code;
+        var file = Edit(await ExportAsync(), ws => AddEntry(ws, TenantName, title, 250.5, AccountName));
+        ShouldBeDone(await PostAsync("Import", file), "Yeni: 1");
+
+        var again = await PostAsync("Import", file);
+        again.GetProperty("ok").GetBoolean().ShouldBeFalse();
+        Describe(again).ShouldContain("tekrar ediyor");
+
+        await InTenantAsync(seed.TenantId, async () =>
+        {
+            var created = await GetRequiredService<IRepository<Expense, Guid>>().SingleAsync(e => e.Title == title);
+            (await GetRequiredService<IRepository<CashMovement, Guid>>().CountAsync(m => m.ReferenceId == created.Id)).ShouldBe(1);
+        });
+    }
+
+    [Fact]
+    public async Task Tekrar_kontrolu_gunu_dosyayi_ve_kiraciyi_ayirt_eder()
+    {
+        var seed = await SeedFinanceAsync();
+        var otherName = "baska-tekrar-" + Code;
+        await SeedTenantAsync(otherName);
+        var title = "Saatli gider " + Code;
+        await InTenantAsync(seed.TenantId, () => GetRequiredService<IExpenseAppService>().CreateAsync(new CreateUpdateExpenseDto
+        {
+            Title = title,
+            Amount = 77m,
+            Currency = "EUR",
+            ExpenseDate = new DateTime(2026, 11, 10, 14, 30, 0),
+            CashAccountId = seed.AccountId
+        }));
+        var file = await ExportAsync();
+
+        // Kayıttaki saat farkı aynı günü ayrı kayıt yapmaz.
+        var sameDay = await PostAsync("Preview", Edit(file, ws => AddEntry(ws, TenantName, title, 77, AccountName)));
+        sameDay.GetProperty("ok").GetBoolean().ShouldBeFalse();
+        Describe(sameDay).ShouldContain("tekrar ediyor");
+
+        var twins = await PostAsync("Preview", Edit(file, ws =>
+        {
+            AddEntry(ws, TenantName, "İkiz " + Code, 10);
+            AddEntry(ws, TenantName, "ikiz " + Code, 10);
+        }));
+        twins.GetProperty("ok").GetBoolean().ShouldBeFalse();
+        Describe(twins).ShouldContain("tekrar ediyor");
+
+        // Başlığı, tutarı ya da kiracısı farklı satır ayrı kayıttır.
+        var distinct = await PostAsync("Preview", Edit(file, ws =>
+        {
+            AddEntry(ws, TenantName, title + " 2", 77, AccountName);
+            AddEntry(ws, TenantName, title, 78, AccountName);
+            AddEntry(ws, otherName, title, 77);
+        }));
+        distinct.GetProperty("ok").GetBoolean().ShouldBeTrue(Describe(distinct));
+    }
+
+    [Fact]
     public async Task Baska_kiracinin_kasasi_kalemsiz_satir_ve_yabanci_gorev_reddedilir()
     {
         var seed = await SeedFinanceAsync();
@@ -166,6 +225,25 @@ public class ExpenseFullImport_Tests : FinanceFullImportTestBase
 public class IncomeFullImport_Tests : FinanceFullImportTestBase
 {
     protected override string Url => "/Incomes/FullImportModal";
+
+    [Fact]
+    public async Task Ayni_gelir_dosyasi_ikinci_kez_islenmez()
+    {
+        var seed = await SeedFinanceAsync();
+        var title = "Tekrar gelir " + Code;
+        var file = Edit(await ExportAsync(), ws => AddEntry(ws, TenantName, title, 125, AccountName));
+        ShouldBeDone(await PostAsync("Import", file), "Yeni: 1");
+
+        var again = await PostAsync("Import", file);
+        again.GetProperty("ok").GetBoolean().ShouldBeFalse();
+        Describe(again).ShouldContain("tekrar ediyor");
+
+        await InTenantAsync(seed.TenantId, async () =>
+        {
+            var created = await GetRequiredService<IRepository<IncomeEntry, Guid>>().SingleAsync(e => e.Title == title);
+            (await GetRequiredService<IRepository<CashMovement, Guid>>().CountAsync(m => m.ReferenceId == created.Id)).ShouldBe(1);
+        });
+    }
 
     [Fact]
     public async Task Yeni_gelir_kiracida_kasaya_girer_mevcut_satir_yazilmaz()

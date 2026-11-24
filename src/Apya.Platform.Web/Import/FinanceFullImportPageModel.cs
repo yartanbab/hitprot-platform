@@ -106,9 +106,8 @@ public abstract class FinanceFullImportPageModel<TRecord, TInput>
         => Task.FromResult<IReadOnlyList<CashAccountLookupDto>>([]);
 
     /// <summary>Yalnız yeni satırda çalışan ek kural (ör. fatura numarası tekilliği).</summary>
-    private protected virtual void ValidateNew(ImportRow row, TInput input, FinanceTenantScope<TRecord> scope)
-    {
-    }
+    private protected virtual Task ValidateNewAsync(ImportRow row, TInput input, FinanceTenantScope<TRecord> scope)
+        => Task.CompletedTask;
 
     protected override IReadOnlyList<ImportColumn> Columns(FinanceFullLookups<TRecord, TInput> lookups) => lookups.Sheet.Columns;
 
@@ -265,7 +264,7 @@ public abstract class FinanceFullImportPageModel<TRecord, TInput>
             return new FinanceFullRow<TInput> { Id = id, TenantId = tenantId, Unchanged = true };
         }
 
-        ValidateNew(row, input, scope);
+        await ValidateNewAsync(row, input, scope);
         return new FinanceFullRow<TInput> { TenantId = tenantId, Input = input };
     }
 
