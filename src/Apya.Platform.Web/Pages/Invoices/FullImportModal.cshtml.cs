@@ -47,11 +47,11 @@ public class FullImportModalModel : FinanceFullImportPageModel<InvoiceDto, Creat
         => (await ExcelTable.CollectAsync((skip, take) =>
             _invoiceAppService.GetListAsync(new GetInvoicesInput { SkipCount = skip, MaxResultCount = take }))).Items;
 
-    private protected override void ValidateNew(ImportRow row, CreateInvoiceDto input, FinanceTenantScope<InvoiceDto> scope)
+    private protected override Task ValidateNewAsync(ImportRow row, CreateInvoiceDto input, FinanceTenantScope<InvoiceDto> scope)
     {
         if (input.InvoiceNumber.Length == 0)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         var key = scope.Context.TenantId ?? Guid.Empty;
@@ -65,6 +65,8 @@ public class FullImportModalModel : FinanceFullImportPageModel<InvoiceDto, Creat
         {
             row.Errors.Add(L["Import:Error:Duplicate", L["Import:FinanceFull:Number"], input.InvoiceNumber]);
         }
+
+        return Task.CompletedTask;
     }
 
     protected override Task CreateRecordAsync(CreateInvoiceDto input) => _invoiceAppService.CreateAsync(input);

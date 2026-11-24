@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace Apya.Platform.Web.Pages.Expenses;
 
 /// <summary>Sistem yöneticisine özel toplu gider aktarımı: bütün parametreler, kiracı seçilerek, yalnız yeni kayıt.</summary>
 [Authorize(PlatformPermissions.Expenses.Create)]
-public class FullImportModalModel : FinanceFullImportPageModel<Entry, Entry>
+public class FullImportModalModel : FinanceEntryFullImportPageModel<ExpenseCategory>
 {
     private readonly IExpenseAppService _expenseAppService;
 
@@ -40,10 +41,10 @@ public class FullImportModalModel : FinanceFullImportPageModel<Entry, Entry>
     protected override async Task<IReadOnlyList<CashAccountLookupDto>> GetAccountsAsync()
         => (await _expenseAppService.GetCashAccountLookupAsync()).Items;
 
-    protected override async Task<IReadOnlyList<Entry>> GetRecordsAsync()
+    protected override async Task<IReadOnlyList<Entry>> GetEntriesAsync(DateTime? day)
     {
-        var expenses = await ExcelTable.CollectAsync((skip, take) =>
-            _expenseAppService.GetListAsync(new GetExpensesInput { SkipCount = skip, MaxResultCount = take }));
+        var expenses = await ExcelTable.CollectAsync((skip, take) => _expenseAppService.GetListAsync(
+            new GetExpensesInput { SkipCount = skip, MaxResultCount = take, FromDate = day, ToDate = EndOfDay(day) }));
         return expenses.Items.Select(e => new Entry
         {
             Id = e.Id,

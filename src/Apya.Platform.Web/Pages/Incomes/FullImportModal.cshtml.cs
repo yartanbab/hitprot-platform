@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace Apya.Platform.Web.Pages.Incomes;
 
 /// <summary>Sistem yöneticisine özel toplu gelir aktarımı: bütün parametreler, kiracı seçilerek, yalnız yeni kayıt.</summary>
 [Authorize(PlatformPermissions.Incomes.Create)]
-public class FullImportModalModel : FinanceFullImportPageModel<Entry, Entry>
+public class FullImportModalModel : FinanceEntryFullImportPageModel<IncomeCategory>
 {
     private readonly IIncomeEntryAppService _incomeAppService;
 
@@ -40,10 +41,10 @@ public class FullImportModalModel : FinanceFullImportPageModel<Entry, Entry>
     protected override async Task<IReadOnlyList<CashAccountLookupDto>> GetAccountsAsync()
         => (await _incomeAppService.GetCashAccountLookupAsync()).Items;
 
-    protected override async Task<IReadOnlyList<Entry>> GetRecordsAsync()
+    protected override async Task<IReadOnlyList<Entry>> GetEntriesAsync(DateTime? day)
     {
-        var incomes = await ExcelTable.CollectAsync((skip, take) =>
-            _incomeAppService.GetListAsync(new GetIncomeEntriesInput { SkipCount = skip, MaxResultCount = take }));
+        var incomes = await ExcelTable.CollectAsync((skip, take) => _incomeAppService.GetListAsync(
+            new GetIncomeEntriesInput { SkipCount = skip, MaxResultCount = take, FromDate = day, ToDate = EndOfDay(day) }));
         return incomes.Items.Select(e => new Entry
         {
             Id = e.Id,
