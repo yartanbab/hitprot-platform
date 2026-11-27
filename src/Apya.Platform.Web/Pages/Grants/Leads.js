@@ -141,6 +141,13 @@ $(function () {
             .prop('disabled', detail.isConverted);
         $('#ConvertedNote').toggleClass('d-none', !detail.isConverted)
             .text(detail.isConverted ? l('Grants:Leads:AlreadyConverted') : '');
+        // Başka talebe geçince açık form o talebe ait sanılmasın; yazılan şifre de kalmasın.
+        closeConvertForm();
+    }
+
+    function closeConvertForm() {
+        $('#ConvertForm').addClass('d-none');
+        $('#ConvertPassword').val('');
     }
 
     function loadDetail(id) {
@@ -166,16 +173,38 @@ $(function () {
         });
     });
 
+    // Hesap açmak yönetici şifresi, paket ve süre ister: düğme önce formu açar.
     $('#ConvertBtn').on('click', function () {
         if (!detail || detail.isConverted) { return; }
 
-        service.convertToTenant({ leadId: detail.id }).then(function (r) {
+        $('#ConvertForm').removeClass('d-none');
+        $('#ConvertPassword').trigger('focus');
+    });
+
+    $('#ConvertCancel').on('click', closeConvertForm);
+
+    $('#ConvertForm').on('submit', function (e) {
+        e.preventDefault();
+        if (!detail || detail.isConverted || !this.reportValidity()) { return; }
+
+        var leadId = detail.id;
+        var $submit = $('#ConvertSubmit').prop('disabled', true);
+
+        service.convertToTenant({
+            leadId: leadId,
+            adminPassword: $('#ConvertPassword').val(),
+            packageCode: Number($('#ConvertPackage').val()),
+            subscriptionPeriod: Number($('#ConvertPeriod').val())
+        }).then(function (r) {
+            closeConvertForm();
             abp.notify.success(l('Grants:Leads:Converted', r.tenantName, r.profileCompletionPercent));
             service.get().then(function (dto) {
                 model = dto;
                 paintList();
-                loadDetail(detail.id);
+                loadDetail(leadId);
             });
+        }).always(function () {
+            $submit.prop('disabled', false);
         });
     });
 

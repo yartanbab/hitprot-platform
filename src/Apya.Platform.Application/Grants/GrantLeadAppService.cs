@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Apya.Platform.Agreements;
 using Apya.Platform.Grants.Dtos;
 using Apya.Platform.Permissions;
+using Apya.Platform.Tenants;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Authorization;
@@ -38,8 +40,7 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
     private readonly IRepository<GrantApplication, Guid> _appRepo;
     private readonly IRepository<FirmProfile, Guid> _profileRepo;
     private readonly IIdentityUserRepository _userRepo;
-    private readonly ITenantManager _tenantManager;
-    private readonly ITenantRepository _tenantRepo;
+    private readonly TenantProvisioner _provisioner;
     private readonly ICurrentTenant _currentTenant;
     private readonly IDataFilter<IMultiTenant> _mtFilter;
     private readonly FirmProfileCompletenessReader _completeness;
@@ -51,8 +52,7 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
         IRepository<GrantApplication, Guid> appRepo,
         IRepository<FirmProfile, Guid> profileRepo,
         IIdentityUserRepository userRepo,
-        ITenantManager tenantManager,
-        ITenantRepository tenantRepo,
+        TenantProvisioner provisioner,
         ICurrentTenant currentTenant,
         IDataFilter<IMultiTenant> mtFilter,
         FirmProfileCompletenessReader completeness)
@@ -64,8 +64,7 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
         _appRepo = appRepo;
         _profileRepo = profileRepo;
         _userRepo = userRepo;
-        _tenantManager = tenantManager;
-        _tenantRepo = tenantRepo;
+        _provisioner = provisioner;
         _currentTenant = currentTenant;
         _mtFilter = mtFilter;
     }
@@ -147,6 +146,14 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
     /// <summary>
     /// Talebi müşteriye (kiracıya) dönüştürür ve testten gelen cevapları firma
     /// profiline aktarır — firma profili boş bir ekranla karşılaşmasın.
+    ///
+    /// <para>🔴 Kurulum <see cref="TenantProvisioner"/>'dan geçer (yönetici tohumu, kurum
+    /// profili + paket, feature seti, abonelik). Önceden kiracı yalnız <c>TenantManager</c> ile
+    /// açılıyordu: kullanıcısı olmadığı için girilemiyor, profili olmadığı için Basic sayılıp
+    /// hibe modülü kapalı kalıyordu (ölçüldü: 0 kullanıcı, 0 profil, hibe izni tavanda kapalı).</para>
+    ///
+    /// <para>Kurulum kendi UoW'unda commit olur; firma profili ve talep işareti ondan sonra
+    /// buradaki UoW'da yazılır.</para>
     /// </summary>
     // Yeni kiracı açar: kiracı yönetimindeki "Oluştur" ile aynı izin (hibe düzenleme izni yetmez).
     [Authorize(TenantManagementPermissions.Tenants.Create)]
@@ -158,17 +165,40 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
         // Kiracı AÇILMADAN önce: dönüştürülmüş talep ikinci kiracıyı (ve profilini) açamaz — çift tık,
         // eski sekme. MarkConverted'ın denetimi kiracı yazıldıktan sonra çalışıyordu.
         lead.EnsureNotConverted();
-        var name = (input.TenantName ?? lead.FirmName).Trim();
 
-        var tenant = await _tenantManager.CreateAsync(name);
-        await _tenantRepo.InsertAsync(tenant, autoSave: true);
+        // Talebi dolduran kişi hesabın yöneticisidir: girişi talepteki e-postayla yapar.
+        var (adminName, adminSurname) = ProtocolApprovalAppService.SplitFullName(lead.ContactName);
+        var hasExplicitName = !input.TenantName.IsNullOrWhiteSpace();
+
+        var provisioned = await _provisioner.ProvisionAsync(new CreateTenantExtendedDto
+        {
+            // Ad elle verilmediyse firma adı bir ÖNERİDİR (protokol akışıyla aynı): kiracı adı
+            // 64 karakterle sınırlı ve tekil, firma adı 160 karaktere kadar ve tekil değil.
+            Name = hasExplicitName ? input.TenantName!.Trim() : lead.FirmName,
+            AdminEmailAddress = lead.Email,
+            AdminPassword = input.AdminPassword,
+            AdminName = adminName,
+            AdminSurname = adminSurname,
+            AdminPhoneNumber = lead.Phone,
+            PackageCode = input.PackageCode,
+            SubscriptionPeriod = input.SubscriptionPeriod,
+            LegalName = lead.FirmName,
+            CorporateEmail = lead.Email,
+            LegalRepresentativeName = lead.ContactName,
+            LegalRepresentativeTitle = lead.ContactTitle ?? string.Empty,
+            LegalRepresentativeEmail = lead.Email,
+            LegalRepresentativePhone = lead.Phone ?? string.Empty
+        },
+        resolveUniqueName: !hasExplicitName);
+
+        var tenantId = provisioned.TenantId;
 
         // Profil KİRACININ bağlamında yazılır; host bağlamında yazılsaydı firma
         // kendi profilini göremezdi (2e'deki proje oluşturmayla aynı gerekçe).
         int completion;
-        using (_currentTenant.Change(tenant.Id))
+        using (_currentTenant.Change(tenantId))
         {
-            var profile = new FirmProfile(GuidGenerator.Create(), tenant.Id)
+            var profile = new FirmProfile(GuidGenerator.Create(), tenantId)
             {
                 Size = lead.Size,
                 FoundedOn = lead.CompanyAgeYears.HasValue
@@ -184,13 +214,13 @@ public class GrantLeadAppService : PlatformAppService, IGrantLeadAppService
             completion = (await _completeness.CalculateAsync(profile, Array.Empty<GrantCriteriaKind>(), profile.Type)).Percent;
         }
 
-        lead.MarkConverted(tenant.Id);
+        lead.MarkConverted(tenantId);
         await _leadRepo.UpdateAsync(lead, autoSave: true);
 
         return new GrantLeadConversionResultDto
         {
-            TenantId = tenant.Id,
-            TenantName = tenant.Name,
+            TenantId = tenantId,
+            TenantName = provisioned.TenantName,
             ProfileCompletionPercent = completion
         };
     }
