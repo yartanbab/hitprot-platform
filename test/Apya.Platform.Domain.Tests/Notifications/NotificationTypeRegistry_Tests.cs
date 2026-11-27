@@ -97,4 +97,12 @@ public class NotificationTypeRegistry_Tests
             NotificationTypeRegistry.Get(type).Icon.ShouldNotBeNullOrWhiteSpace();
         }
     }
+
+    /// <summary>"Deneme bitti" bildirimi Paketim'e götürür; kayda bağlı değildir.</summary>
+    [Fact]
+    public void TrialEnded_Links_To_Subscription_Page()
+    {
+        NotificationTypeRegistry.IsRegistered(NotificationType.TrialEnded).ShouldBeTrue();
+        NotificationTypeRegistry.Get(NotificationType.TrialEnded).DeepLinkTemplate.ShouldBe("/Subscription");
+    }
 }
