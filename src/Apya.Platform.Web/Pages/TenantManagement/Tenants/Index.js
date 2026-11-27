@@ -76,6 +76,13 @@ $(function () {
                                 }
                             },
                             {
+                                text: l('TenantManagement:StartTrial'),
+                                visible: abp.auth.isGranted('AbpTenantManagement.Tenants.Update'),
+                                action: function (data) {
+                                    startTrial(data.record);
+                                }
+                            },
+                            {
                                 text: 'Bağlantı Dizeleri (Connection Strings)',
                                 visible: abp.auth.isGranted('AbpTenantManagement.Tenants.ManageConnectionStrings'),
                                 action: function (data) {
@@ -136,13 +143,20 @@ $(function () {
                 title: 'Paket Bitişi',
                 data: "subscriptionEndDate",
                 render: function (data, type, row) {
+                    // Deneme bitince yürürlükte satır kalmaz; "Süresiz" demek yanlış olurdu.
+                    if (row.isReadOnly) {
+                        return '<span class="apya-chip apya-chip-negative">'
+                            + esc(l('TenantManagement:Chip.ReadOnly')) + '</span>';
+                    }
+
                     // Abonelik satırı olmayan müşteri süresizdir: süre işleyicisi ona dokunmaz.
                     if (!data) {
                         return '<span class="text-muted">Süresiz</span>';
                     }
 
                     var end = new Date(data);
-                    var text = end.toLocaleDateString('tr-TR');
+                    var text = end.toLocaleDateString('tr-TR')
+                        + (row.isTrial ? ' · ' + esc(l('TenantManagement:Chip.Trial')) : '');
                     var daysLeft = Math.ceil((end - new Date()) / 86400000);
 
                     if (row.isInGracePeriod) {
@@ -298,6 +312,42 @@ $(function () {
                 .renewPackage(record.tenantId, r.value)
                 .then(function () {
                     abp.notify.success('Paket süresi uzatıldı.');
+                    dataTable.ajax.reload();
+                });
+        });
+    }
+
+    // Süreli deneme: paket hemen uygulanır, süre GÜN olarak verilir. Bitince hesap Basic'e
+    // inmez, salt okunur olur (StartTrialAsync).
+    function startTrial(record) {
+        var trialPackages = { 2: 'Standard', 3: 'Premium', 4: 'Enterprise' };
+
+        Swal.fire({
+            title: esc(l('TenantManagement:StartTrial')),
+            html: '<div class="text-start">'
+                + '<div class="mb-2 text-muted small">' + esc(record.tenantName) + '</div>'
+                + '<label class="form-label small" for="trialPkgSelect">' + esc(l('TenantManagement:StartTrial.Package')) + '</label>'
+                + buildSelect('trialPkgSelect', trialPackages, 3)
+                + '<label class="form-label small mt-3" for="trialDays">' + esc(l('TenantManagement:StartTrial.Days')) + '</label>'
+                + '<input id="trialDays" type="number" class="form-control" min="1" max="90" value="14">'
+                + '<div class="form-text mt-2">' + esc(l('TenantManagement:StartTrial.Hint')) + '</div>'
+                + '</div>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: esc(l('TenantManagement:StartTrial.Confirm')),
+            cancelButtonText: 'İptal',
+            preConfirm: function () {
+                return {
+                    packageCode: parseInt(document.getElementById('trialPkgSelect').value, 10),
+                    days: parseInt(document.getElementById('trialDays').value, 10)
+                };
+            }
+        }).then(function (r) {
+            if (!r.isConfirmed) { return; }
+            apya.platform.tenants.tenantProfile
+                .startTrial(record.tenantId, r.value.packageCode, r.value.days)
+                .then(function () {
+                    abp.notify.success(l('TenantManagement:StartTrial.Done'));
                     dataTable.ajax.reload();
                 });
         });

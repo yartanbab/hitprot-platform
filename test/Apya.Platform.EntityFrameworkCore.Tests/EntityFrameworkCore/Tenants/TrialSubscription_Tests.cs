@@ -19,12 +19,48 @@ public class TrialSubscription_Tests : PlatformEntityFrameworkCoreTestBase
     private readonly TenantSubscriptionManager _subscriptionManager;
     private readonly IRepository<TenantSubscription, Guid> _subscriptionRepository;
     private readonly IClock _clock;
+    private readonly ITenantProfileAppService _tenantProfileAppService;
+    private readonly TenantPackageManager _packageManager;
+    private readonly IRepository<TenantProfile, Guid> _profileRepository;
 
     public TrialSubscription_Tests()
     {
         _subscriptionManager = GetRequiredService<TenantSubscriptionManager>();
         _subscriptionRepository = GetRequiredService<IRepository<TenantSubscription, Guid>>();
         _clock = GetRequiredService<IClock>();
+        _tenantProfileAppService = GetRequiredService<ITenantProfileAppService>();
+        _packageManager = GetRequiredService<TenantPackageManager>();
+        _profileRepository = GetRequiredService<IRepository<TenantProfile, Guid>>();
+    }
+
+    /// <summary>
+    /// Host "Denemeye al": paket uygulanır (salt okunur kilit de kalkar) ve deneme dönemi açılır.
+    /// </summary>
+    [Fact]
+    public async Task Host_StartTrial_Applies_Package_Clears_ReadOnly_And_Opens_Trial()
+    {
+        var tenantId = Guid.NewGuid();
+        await WithUnitOfWorkAsync(async () =>
+        {
+            await _packageManager.EnsureDefaultPackagesAsync();
+            var profile = new TenantProfile(
+                Guid.NewGuid(), tenantId, CompanyType.Company,
+                Guid.NewGuid().ToString("N")[..10], "a@b.com");
+            await _profileRepository.InsertAsync(profile, autoSave: true);
+            await _packageManager.SetReadOnlyAsync(tenantId, true);
+        });
+
+        var dto = await _tenantProfileAppService.StartTrialAsync(tenantId, PackageCode.Premium, 14);
+
+        dto.PackageCode.ShouldBe(PackageCode.Premium);
+        dto.IsTrial.ShouldBeTrue();
+        dto.SubscriptionEndDate.ShouldNotBeNull();
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            (await _packageManager.IsReadOnlyAsync(tenantId)).ShouldBeFalse();
+            (await _subscriptionManager.GetCurrentOrNullAsync(tenantId))!.Source.ShouldBe(SubscriptionSource.Trial);
+        });
     }
 
     [Fact]
