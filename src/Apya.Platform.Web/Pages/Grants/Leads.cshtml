@@ -109,6 +109,27 @@
                             <i class="fa fa-building-user me-1"></i>@L["Grants:Leads:Convert"]
                         </button>
                     </div>
+                    @* Hesap TenantProvisioner'la açılır: yönetici şifresi, paket ve süre ister. *@
+                    <form id="ConvertForm" class="d-none" autocomplete="off">
+                        <p class="apya-field-hint">@L["Grants:Leads:ConvertForm:Hint"]</p>
+                        <div class="apya-field">
+                            <label for="ConvertPassword" class="apya-field-label">@L["Grants:Leads:ConvertForm:Password"]</label>
+                            <input type="password" id="ConvertPassword" class="form-control form-control-sm" required maxlength="128" autocomplete="new-password" />
+                        </div>
+                        <div class="apya-field">
+                            <label for="ConvertPackage" class="apya-field-label">@L["Grants:Leads:ConvertForm:Package"]</label>
+                            <select id="ConvertPackage" class="form-select form-select-sm" asp-items="Model.PackageOptions"></select>
+                            <span class="apya-field-hint">@L["Grants:Leads:ConvertForm:PackageHint"]</span>
+                        </div>
+                        <div class="apya-field">
+                            <label for="ConvertPeriod" class="apya-field-label">@L["Grants:Leads:ConvertForm:Period"]</label>
+                            <select id="ConvertPeriod" class="form-select form-select-sm" asp-items="Model.PeriodOptions"></select>
+                        </div>
+                        <div class="apya-lead-actions">
+                            <button type="submit" id="ConvertSubmit" class="btn btn-sm btn-primary">@L["Grants:Leads:ConvertForm:Submit"]</button>
+                            <button type="button" id="ConvertCancel" class="btn btn-sm btn-outline-secondary">@L["Grants:Leads:ConvertForm:Cancel"]</button>
+                        </div>
+                    </form>
                     <p id="ConvertedNote" class="apya-field-hint d-none"></p>
                 </div>
             </div>

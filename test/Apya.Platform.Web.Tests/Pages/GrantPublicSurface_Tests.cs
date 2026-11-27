@@ -333,7 +333,7 @@ public class GrantPublicSurface_Tests : PlatformWebTestBase
         var call = await OpenCallAsync();
         var lead = await _public.SubmitLeadAsync(NewLead(call.Id, $"donus-{Guid.NewGuid():N}@test.local"));
 
-        var result = await _leads.ConvertToTenantAsync(new ConvertGrantLeadInput { LeadId = lead.LeadId });
+        var result = await _leads.ConvertToTenantAsync(new ConvertGrantLeadInput { LeadId = lead.LeadId, AdminPassword = "1q2w3E*asd" });
 
         result.TenantId.ShouldNotBe(Guid.Empty);
         result.ProfileCompletionPercent.ShouldBeGreaterThan(0, "test cevapları profile aktarılmalı");
@@ -351,7 +351,7 @@ public class GrantPublicSurface_Tests : PlatformWebTestBase
 
         // İkinci dönüştürme reddedilir.
         await Should.ThrowAsync<BusinessException>(async () =>
-            await _leads.ConvertToTenantAsync(new ConvertGrantLeadInput { LeadId = lead.LeadId }));
+            await _leads.ConvertToTenantAsync(new ConvertGrantLeadInput { LeadId = lead.LeadId, AdminPassword = "1q2w3E*asd" }));
     }
 
     [Fact]

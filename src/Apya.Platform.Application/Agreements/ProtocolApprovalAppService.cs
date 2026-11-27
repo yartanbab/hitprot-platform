@@ -254,7 +254,7 @@ public class ProtocolApprovalAppService : PlatformAppService, IProtocolApprovalA
     /// ("Ayşe Nur Yılmaz" → "Ayşe Nur" / "Yılmaz"). Tek kelimede soyad boş kalır.
     /// Kullanıcı yanlış ayrılmışsa "Hesabım"dan düzeltir.
     /// </summary>
-    private static (string Name, string? Surname) SplitFullName(string fullName)
+    internal static (string Name, string? Surname) SplitFullName(string fullName)
     {
         var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 

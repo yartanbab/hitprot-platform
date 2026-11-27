@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Apya.Platform.Tenants;
 
 namespace Apya.Platform.Grants.Dtos;
 
@@ -106,9 +107,23 @@ public class ConvertGrantLeadInput
     [Required(ErrorMessage = "Talep seçilmedi.")]
     public Guid LeadId { get; set; }
 
-    /// <summary>Açılacak kiracının adı. Boşsa firma adı kullanılır.</summary>
+    /// <summary>Açılacak kiracının adı. Boşsa firma adından boşta bir ad türetilir.</summary>
     [StringLength(64, ErrorMessage = "Kiracı adı en fazla 64 karakter olabilir.")]
     public string? TenantName { get; set; }
+
+    /// <summary>
+    /// Yönetici kullanıcının şifresi. Kullanıcı talepteki e-postayla açılır; şifreyi firmaya
+    /// host iletir ("Yeni Müşteri" modalıyla aynı yol).
+    /// </summary>
+    [Required(ErrorMessage = "Yönetici şifresi zorunludur.")]
+    [StringLength(128, ErrorMessage = "Şifre en fazla 128 karakter olabilir.")]
+    public string AdminPassword { get; set; } = string.Empty;
+
+    /// <summary>Varsayılan Standart: hibe modülü Basic'te kapalı, Standart'ta açık.</summary>
+    public PackageCode PackageCode { get; set; } = PackageCode.Standard;
+
+    /// <summary>Varsayılan süresiz — "Yeni Müşteri" modalıyla aynı.</summary>
+    public SubscriptionPeriod SubscriptionPeriod { get; set; } = SubscriptionPeriod.Unlimited;
 }
 
 public class GrantLeadConversionResultDto
