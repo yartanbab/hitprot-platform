@@ -337,6 +337,8 @@
         "Feature:Platform:Calendar": "Takvim Entegrasyonu",
         "Feature:Platform:TaskQuickEntry": "Hızlı Görev Girişi",
         "Feature:Platform:TaskQuickEntry:Description": "Görev oluşturma ekranında işaretçiyle yazılan hızlı giriş satırı (@kişi #etiket !öncelik >tarih) ve planlama alanları (tahmini süre, görev tipi, sprint). Kapalıyken görev oluşturma çalışmaya devam eder, yalnız bu ekstralar çizilmez.",
+        "Feature:Platform:ReadOnly": "Salt okunur hesap",
+        "Feature:Platform:ReadOnly:Description": "Açıkken kurumun kullanıcıları verilerini görür ama kayıt ekleyemez, değiştiremez, silemez. Hibe takibi, kişisel tercihler ve Paketim çalışmaya devam eder. Paket uygulanınca kendiliğinden kapanır.",
         "Feature:Platform:MaxUsers": "Maksimum Kullanıcı Sayısı",
         "Feature:Platform:MaxProjects": "Maksimum Proje Sayısı",
         "Platform:Error:MaxProjectsReached": "Paket sınırınıza ulaştınız: en fazla {Max} proje oluşturabilirsiniz. Daha fazlası için paketinizi yükseltin.",

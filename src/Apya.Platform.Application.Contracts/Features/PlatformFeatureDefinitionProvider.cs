@@ -49,6 +49,13 @@ public class PlatformFeatureDefinitionProvider : FeatureDefinitionProvider
             description: L("Feature:Platform:TaskQuickEntry:Description"),
             valueType: new ToggleStringValueType());
 
+        // Salt okunur hesap — paket kapısı değil, hesap DURUMU. Varsayılan KAPALI
+        // (bkz. PlatformFeatures.ReadOnly). Host kiracının özellik penceresinden elle açıp kapatabilir.
+        group.AddFeature(PlatformFeatures.ReadOnly, defaultValue: "false",
+            displayName: L("Feature:Platform:ReadOnly"),
+            description: L("Feature:Platform:ReadOnly:Description"),
+            valueType: new ToggleStringValueType());
+
         // ── Sayısal limitler (defaultValue yüksek: host/paketsiz ≈ sınırsız) ──
         group.AddFeature(PlatformFeatures.MaxUsers, defaultValue: "100000",
             displayName: L("Feature:Platform:MaxUsers"), valueType: new FreeTextStringValueType());

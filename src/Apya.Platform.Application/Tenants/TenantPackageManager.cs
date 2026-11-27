@@ -76,11 +76,40 @@ public class TenantPackageManager : ITransientDependency
                 tenantId.ToString());
         }
 
+        // Paket uygulamak hesabı yeniden AÇAR: deneme bitince konan salt okunur bayrağı paket
+        // satırlarında olmadığı için yukarıdaki döngü onu silmez (bkz. PlatformFeatures.ReadOnly).
+        await SetReadOnlyAsync(tenantId, false);
+
         // Tenant'ın paketi değişmiş olabilir: izin tavanı önbelleği bayat kalmasın.
         await _ceilingStore.InvalidateTenantAsync(tenantId);
 
         await GrantNewlyEnabledPermissionsAsync(tenantId, newlyEnabled);
     }
+
+    /// <summary>
+    /// Hesabı salt okunur yapar ya da açar. "false" ABP'de varsayılana eşit olduğu için kiracının
+    /// değer satırı silinir — açık hesapta iz kalmaz.
+    /// </summary>
+    public Task SetReadOnlyAsync(Guid tenantId, bool readOnly)
+        => _featureManager.SetAsync(
+            PlatformFeatures.ReadOnly,
+            readOnly ? "true" : "false",
+            TenantFeatureValueProvider.ProviderName,
+            tenantId.ToString());
+
+    /// <summary>
+    /// Kiracının KENDİ değeri. Zincire düşmeden okunur; host bağlamından (kiracı listesi) da doğru
+    /// sonuç verir.
+    /// </summary>
+    public async Task<bool> IsReadOnlyAsync(Guid tenantId)
+        => string.Equals(
+            await _featureManager.GetOrNullAsync(
+                PlatformFeatures.ReadOnly,
+                TenantFeatureValueProvider.ProviderName,
+                tenantId.ToString(),
+                fallback: false),
+            "true",
+            StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Paket uygulanmadan önce tenant'ta KAPALI olup bu paketle açılacak modül feature'ları.

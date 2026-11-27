@@ -45,6 +45,13 @@ public class HostFeatureValueProvider : IFeatureValueProvider, ITransientDepende
             return Task.FromResult<string?>(null);
         }
 
+        // Salt okunur bir hesap DURUMUDUR, yetenek değil: host'ta "true" dönseydi host kendini
+        // salt okunur sayardı (istemci betiği oluştur/düzenle pencerelerini kapatırdı).
+        if (feature.Name == PlatformFeatures.ReadOnly)
+        {
+            return Task.FromResult<string?>(null);
+        }
+
         if (!feature.Name.StartsWith(PlatformFeatures.GroupName + ".", StringComparison.Ordinal))
         {
             return Task.FromResult<string?>(null);
