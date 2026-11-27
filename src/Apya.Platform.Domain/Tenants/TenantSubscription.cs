@@ -86,6 +86,23 @@ public class TenantSubscription : FullAuditedAggregateRoot<Guid>
         Source = source;
     }
 
+    /// <summary>
+    /// Süreli deneme dönemi. Bitiş AY değil GÜN olarak verilir. <see cref="Period"/> bu satırda
+    /// anlam taşımaz (Monthly yazılır); ekranlar denemeyi <see cref="Source"/>'tan tanır.
+    /// </summary>
+    public static TenantSubscription CreateTrial(
+        Guid id,
+        Guid tenantId,
+        PackageCode packageCode,
+        DateTime startDate,
+        int days)
+    {
+        var subscription = new TenantSubscription(
+            id, tenantId, packageCode, SubscriptionPeriod.Monthly, startDate, SubscriptionSource.Trial);
+        subscription.EndDate = startDate.AddDays(days);
+        return subscription;
+    }
+
     /// <summary>Dönemin bitiş tarihi. Süresizde <c>null</c>; diğerlerinde enum değeri kadar AY eklenir.</summary>
     public static DateTime? CalculateEndDate(DateTime startDate, SubscriptionPeriod period)
         => period == SubscriptionPeriod.Unlimited ? null : startDate.AddMonths((int)period);

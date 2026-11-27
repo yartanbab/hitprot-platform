@@ -464,4 +464,7 @@ public static class PlatformDomainErrorCodes
     public const string GrantCriterionOperatorInvalid = "Platform:GrantCriterion:OperatorInvalid";
     public const string GrantCriterionValueRequired = "Platform:GrantCriterion:ValueRequired";
     public const string GrantCriterionDuplicate = "Platform:GrantCriterion:Duplicate";
+
+    // Süreli deneme (ücretsiz hesap tasarımı Faz 1).
+    public const string TrialDaysOutOfRange = "Platform:Subscription:TrialDaysOutOfRange";
 }

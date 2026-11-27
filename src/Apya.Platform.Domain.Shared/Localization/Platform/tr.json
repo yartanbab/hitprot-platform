@@ -343,6 +343,7 @@
         "Feature:Platform:MaxProjects": "Maksimum Proje Sayısı",
         "Platform:Error:MaxProjectsReached": "Paket sınırınıza ulaştınız: en fazla {Max} proje oluşturabilirsiniz. Daha fazlası için paketinizi yükseltin.",
         "Platform:Error:MaxUsersReached": "Paket sınırınıza ulaştınız: en fazla {Max} kullanıcı oluşturabilirsiniz. Daha fazlası için paketinizi yükseltin.",
+        "Platform:Subscription:TrialDaysOutOfRange": "Deneme süresi {Min} ile {Max} gün arasında olmalı.",
         "Connection:Reconnecting": "Bağlantı geçici olarak kesildi, yeniden bağlanıyor...",
         "Connection:Reconnected": "Bağlantı geri sağlandı.",
         "Connection:Lost": "Sunucu bağlantısı koptu. Lütfen sayfayı yenileyin.",

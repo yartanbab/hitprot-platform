@@ -72,6 +72,47 @@ public class TenantSubscriptionManager : DomainService
     }
 
     /// <summary>
+    /// Süreli deneme başlatır. Yürürlükteki satır <see cref="StartAsync"/>'teki gibi kapanır.
+    /// Paketi kiracıya UYGULAMAK çağıranın işidir (<c>TenantPackageManager</c> Application'da).
+    /// </summary>
+    public async Task<TenantSubscription> StartTrialAsync(Guid tenantId, PackageCode packageCode, int days)
+    {
+        if (days < SubscriptionTrialConsts.MinDays || days > SubscriptionTrialConsts.MaxDays)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.TrialDaysOutOfRange)
+                .WithData("Min", SubscriptionTrialConsts.MinDays)
+                .WithData("Max", SubscriptionTrialConsts.MaxDays);
+        }
+
+        var now = Clock.Now;
+
+        var current = await GetCurrentOrNullAsync(tenantId);
+        if (current != null)
+        {
+            current.Supersede(now);
+            await _subscriptionRepository.UpdateAsync(current);
+        }
+
+        var trial = TenantSubscription.CreateTrial(GuidGenerator.Create(), tenantId, packageCode, now, days);
+        return await _subscriptionRepository.InsertAsync(trial, autoSave: true);
+    }
+
+    /// <summary>
+    /// Kiracının en son BİTEN denemesi — salt okunur şeridindeki tarih buradan gelir. Yoksa
+    /// <c>null</c> (host hesabı elle kilitlemiş olabilir).
+    /// </summary>
+    public async Task<TenantSubscription?> GetLatestEndedTrialOrNullAsync(Guid tenantId)
+    {
+        var queryable = await _subscriptionRepository.GetQueryableAsync();
+        return await AsyncExecuter.FirstOrDefaultAsync(
+            queryable
+                .Where(s => s.TenantId == tenantId
+                            && s.Source == SubscriptionSource.Trial
+                            && s.Status == SubscriptionStatus.Expired)
+                .OrderByDescending(s => s.EndedAt));
+    }
+
+    /// <summary>
     /// Yürürlükteki paketi bir dönem daha uzatır. <b>Ödeme altyapısının gireceği kapı budur:</b>
     /// tahsilat tamamlanınca bu metot çağrılır, başka hiçbir yere dokunulmaz (paket değişmediği
     /// için feature/izin yeniden uygulanmasına da gerek yoktur).
