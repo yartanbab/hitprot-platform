@@ -43,10 +43,29 @@ public class IndexModel : PlatformPageModel
         Tab = Tab == "draft" ? "draft" : "live";
     }
 
-    /// <summary>Host Çağrılar (.xlsx): ekrandaki sekme, durum, kurum ve sıralama sunucuda aynen uygulanır.</summary>
-    public async Task<IActionResult> OnGetCallsExcelAsync(GetGrantCallBoardInput input, [FromServices] IGrantCallBoardAppService board)
+    /// <summary>
+    /// Host Çağrılar (.xlsx): ekrandaki sekme, durum, kurum ve sıralama sunucuda aynen uygulanır;
+    /// <paramref name="all"/> bütün sekmeleri birlikte verir (İçe / Dışa Aktarma ekranı). Dosya çağrının ve
+    /// programının bütün alanlarını taşır, aynen geri yüklenir (<see cref="CallImportModalModel"/>). Program
+    /// parametreleri düzenleme izniyle okunur; izni olmayan ekrandaki kısa listeyi alır.
+    /// </summary>
+    public async Task<IActionResult> OnGetCallsExcelAsync(GetGrantCallBoardInput input, bool all,
+        [FromServices] IGrantCallBoardAppService board, [FromServices] IGrantCallAppService calls,
+        [FromServices] IGrantParameterAppService parameters, [FromServices] IGrantStageTemplateAppService stages)
     {
-        var dto = await board.GetAsync(input);
+        var cards = all
+            ? (await board.GetAsync(new GetGrantCallBoardInput { Tab = GrantCallBoardTab.Live })).Items
+                .Concat((await board.GetAsync(new GetGrantCallBoardInput { Tab = GrantCallBoardTab.Live, Closed = true })).Items)
+                .Concat((await board.GetAsync(new GetGrantCallBoardInput { Tab = GrantCallBoardTab.Draft })).Items)
+                .ToList()
+            : (await board.GetAsync(input)).Items;
+
+        if (await AuthorizationService.IsGrantedAsync(PlatformPermissions.Grants.Edit))
+        {
+            var file = new GrantCallFile(L, (await stages.GetListAsync()).Select(s => (s.Id, s.Name)).ToList());
+            return file.File(this, await GrantCallFile.RowsAsync(cards, parameters, calls));
+        }
+
         var columns = new List<ExcelColumn<GrantCallCardDto>>
         {
             new(L["Export:Col:Program"], c => c.GrantName),
@@ -66,7 +85,7 @@ public class IndexModel : PlatformPageModel
         };
 
         var name = L["Export:GrantCalls:Name"].Value;
-        return this.TableFile(name, columns, dto.Items);
+        return this.TableFile(name, columns, cards);
     }
 
     /// <summary>

@@ -115,7 +115,7 @@ public static class TransferCatalog
         // ── Hibeler ──
         new(M("grant-calls"), "Menu:Grants:Group", "fa fa-bullhorn", "/Grants", Table,
             [Out("/Grants/Index", "CallsExcel"), .. Modal("/Grants/CallImportModal")],
-            ExportUrl: "/Grants?handler=CallsExcel", ImportUrl: "/Grants/CallImportModal"),
+            ExportUrl: "/Grants?handler=CallsExcel&all=true", ImportUrl: "/Grants/CallImportModal"),
         // Yalnız sistem yöneticisi: programların bütün parametreleri; dolu çıktı düzenlenip geri yüklenir.
         new(M("grant-programs"), "Menu:Grants:Group", "fa fa-sliders", "/Grants", Table,
             [Out("/Grants/ProgramImportModal", "Export"), .. Modal("/Grants/ProgramImportModal")],

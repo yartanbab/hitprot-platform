@@ -19,10 +19,18 @@ internal sealed class GrantProgramSheet : ParameterSheet<GrantParameterDto, Upda
 
     private readonly IReadOnlyList<(Guid Id, string Name)> _stages;
 
-    public GrantProgramSheet(IStringLocalizer l, IReadOnlyList<(Guid Id, string Name)> stages)
+    private readonly string? _idHint;
+
+    /// <param name="inCallFile">Çağrı dosyasında: kimlik sütunu "Program kimliği" olur, çağrınınkiyle karışmaz.</param>
+    public GrantProgramSheet(IStringLocalizer l, IReadOnlyList<(Guid Id, string Name)> stages, bool inCallFile = false)
         : base(l, "Import:GrantProgram:")
     {
         _stages = stages;
+        if (inCallFile)
+        {
+            IdHeader = l["Import:GrantCall:ProgramId"].Value;
+            _idHint = l["Import:Guide:CallProgramId"].Value;
+        }
 
         var sizes = Enum.GetValues<CompanySize>()
             .Select(s => ((int)s, s.ToString(), l[$"Grants:CompanySize:{s}"].Value)).ToList();
@@ -77,6 +85,8 @@ internal sealed class GrantProgramSheet : ParameterSheet<GrantParameterDto, Upda
     }
 
     protected override Guid IdOf(GrantParameterDto source) => source.Id;
+
+    protected override string IdHint => _idHint ?? base.IdHint;
 
     /// <summary>Yazma modelinin kuralları ve Türkçe iletileri DTO'da.</summary>
     protected override void Validate(ImportRow row, UpdateGrantParameterDto input)

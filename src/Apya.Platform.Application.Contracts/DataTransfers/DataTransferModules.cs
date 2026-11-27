@@ -65,7 +65,8 @@ public static class DataTransferModules
         new("cash-movements", "Export:CashMovements:Name", Both, PlatformPermissions.CashAccounts.Default),
         new("ledger", "DataTransfer:Module:Ledger", Both, PlatformPermissions.Expenses.Default),
         new("project-budget-report", "DataTransfer:Module:ProjectBudgetReport", Both, PlatformPermissions.Projects.ViewBudget),
-        new("grant-calls", "Export:GrantCalls:Name", Host, PlatformPermissions.Grants.Default, PlatformPermissions.Grants.Create),
+        // İçe aktarma programın bütün parametrelerini yazar: yalnız sistem yöneticisi.
+        new("grant-calls", "Export:GrantCalls:Name", Host, PlatformPermissions.Grants.Default, PlatformPermissions.DataTransfer.FullParameters),
         new("grant-programs", "DataTransfer:Module:GrantPrograms", Host, PlatformPermissions.DataTransfer.FullParameters, PlatformPermissions.DataTransfer.FullParameters),
         new("grant-applications", "Export:GrantApplications:Name", Host, PlatformPermissions.Grants.Edit),
         new("grant-feed", "Export:GrantFeed:Name", Tenant, PlatformPermissions.Grants.Default),

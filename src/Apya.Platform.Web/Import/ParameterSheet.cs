@@ -9,6 +9,9 @@ using Microsoft.Extensions.Localization;
 
 namespace Apya.Platform.Web.Import;
 
+/// <summary>Alan rehberinin bir satırı.</summary>
+internal sealed record GuideRow(string Header, bool Required, string Hint, IReadOnlyList<string>? Values);
+
 /// <summary>
 /// Bir kaydın tek satırlık, tüm parametreli Excel karşılığı. Her alan aynı satırda hem dışa aktarılır
 /// hem geri okunur. Mevcut kayıtta hücresi çıktıdakiyle aynı olan alan YORUMLANMAZ, kayıttaki değer
@@ -49,7 +52,7 @@ internal abstract class ParameterSheet<TSource, TInput>
 
     protected string No { get; }
 
-    public string IdHeader { get; }
+    public string IdHeader { get; protected set; }
 
     public IReadOnlyList<Field> Fields { get; protected set; } = [];
 
@@ -109,11 +112,20 @@ internal abstract class ParameterSheet<TSource, TInput>
         _ => ExcelImport.Decimal(cell) == Convert.ToDecimal(exported, CultureInfo.InvariantCulture)
     };
 
+    /// <summary>Rehber satırları, sütun sırasıyla: kimlik, sonra alanlar.</summary>
+    public IReadOnlyList<GuideRow> GuideRows =>
+        [new(IdHeader, false, IdHint, null), .. Fields.Select(f => new GuideRow(f.Header, f.Required, f.Hint, f.Allowed ?? f.Options))];
+
     /// <summary>Her sütunun ne istediğini anlatan sayfa; içe aktarma yalnız ilk sayfayı okur.</summary>
-    public void AddGuide(XLWorkbook workbook)
+    public void AddGuide(XLWorkbook workbook) => WriteGuide(workbook, L, GuideRows);
+
+    /// <summary>Rehber sayfası; birden çok kaydın sütunlarını tek dosyada anlatmak için de kullanılır.</summary>
+    internal static void WriteGuide(XLWorkbook workbook, IStringLocalizer l, IReadOnlyList<GuideRow> rows)
     {
-        var ws = workbook.AddWorksheet(L["Import:Guide:Sheet"].Value);
-        string[] heads = [L["Import:Guide:Column"], L["Import:Guide:Required"], L["Import:Guide:How"], L["Import:Guide:Values"]];
+        var yes = l["Import:Value:Yes"].Value;
+        var no = l["Import:Value:No"].Value;
+        var ws = workbook.AddWorksheet(l["Import:Guide:Sheet"].Value);
+        string[] heads = [l["Import:Guide:Column"], l["Import:Guide:Required"], l["Import:Guide:How"], l["Import:Guide:Values"]];
         for (var c = 0; c < heads.Length; c++)
         {
             ws.Cell(1, c + 1).Value = heads[c];
@@ -121,16 +133,10 @@ internal abstract class ParameterSheet<TSource, TInput>
             ws.Cell(1, c + 1).Style.Fill.BackgroundColor = XLColor.LightGray;
         }
 
-        var rows = new List<(string Header, bool Required, string Hint, IReadOnlyList<string>? Values)>
-        {
-            (IdHeader, false, IdHint, null)
-        };
-        rows.AddRange(Fields.Select(f => (f.Header, f.Required, f.Hint, f.Allowed ?? f.Options)));
-
         for (var i = 0; i < rows.Count; i++)
         {
             ws.Cell(i + 2, 1).Value = rows[i].Header;
-            ws.Cell(i + 2, 2).Value = rows[i].Required ? Yes : No;
+            ws.Cell(i + 2, 2).Value = rows[i].Required ? yes : no;
             ws.Cell(i + 2, 3).Value = rows[i].Hint;
             ws.Cell(i + 2, 4).Value = rows[i].Values == null ? string.Empty : string.Join(", ", rows[i].Values!);
         }
