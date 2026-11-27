@@ -1,10 +1,15 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Apya.Platform.Grants;
+using Apya.Platform.Grants.Dtos;
+using ClosedXML.Excel;
 using HtmlAgilityPack;
 using Shouldly;
 using Volo.Abp.Domain.Repositories;
@@ -14,9 +19,9 @@ using Xunit;
 namespace Apya.Platform.Import;
 
 /// <summary>
-/// Hibe çağrılarını Excel/CSV'den host kataloğuna aktarma: çağrı programa adla (gerekirse kurumla)
-/// bağlanır, aynı program + dönem ikinci kez açılmaz. İçe aktarılan açık çağrı firmalara duyurulmaz:
-/// duyuru taramasında "işlendi" sayılır (ürün kararı 2026-11-14).
+/// Hibe çağrısı dosyası: her satırda çağrının alanları ve programının bütün parametreleri. Program kimlikle ya
+/// da ad + kurumla bulunur, yoksa açılır; kimlikli çağrı güncellenir, kimliksiz yeni açılır. Yayında'ya geçen
+/// çağrı firmalara duyurulmaz: duyuru taramasında "işlendi" sayılır (ürün kararı 2026-11-14).
 /// </summary>
 public class GrantCallImport_Tests : PlatformWebTestBase
 {
@@ -24,113 +29,217 @@ public class GrantCallImport_Tests : PlatformWebTestBase
 
     private readonly string _code = Guid.NewGuid().ToString("N")[..6].ToUpperInvariant();
 
-    private async Task<string> HeaderAsync()
-        => Encoding.UTF8.GetString(await (await GetResponseAsync(Modal + "?handler=Template&format=csv")).Content.ReadAsByteArrayAsync())
-            .TrimStart('﻿').TrimEnd();
+    private async Task<List<string>> HeadersAsync(string url)
+        => Encoding.UTF8.GetString(await (await GetResponseAsync(url)).Content.ReadAsByteArrayAsync())
+            .TrimStart('﻿').Split("\r\n")[0].Split(';').Select(h => h.Trim().TrimEnd('*').Trim()).ToList();
 
-    private async Task<JsonElement> PostAsync(string handler, string csv)
+    /// <summary>Başlık → değer; yazılmayan sütun boş kalır.</summary>
+    private static string Line(List<string> headers, Dictionary<string, string> values)
+        => string.Join(';', headers.Select(h => values.TryGetValue(h, out var v) ? v : string.Empty));
+
+    private async Task<JsonElement> PostAsync(string handler, byte[] file, string fileName)
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(await GetResponseAsStringAsync(Modal));
         var token = doc.DocumentNode.SelectSingleNode("//input[@name='__RequestVerificationToken']").GetAttributeValue("value", "");
 
         using var content = new MultipartFormDataContent();
-        content.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(csv)), "file", "cagrilar.csv");
+        var part = new ByteArrayContent(file);
+        if (fileName.EndsWith(".xlsx"))
+        {
+            part.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+
+        content.Add(part, "file", fileName);
         content.Add(new StringContent(token), "__RequestVerificationToken");
         using var request = new HttpRequestMessage(HttpMethod.Post, Modal + "?handler=" + handler) { Content = content };
         request.Headers.Add("X-Requested-With", "XMLHttpRequest");
         var response = await Client.SendAsync(request);
-        response.IsSuccessStatusCode.ShouldBeTrue();
-        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.Clone();
+        var body = await response.Content.ReadAsStringAsync();
+        response.IsSuccessStatusCode.ShouldBeTrue(body);
+        return JsonDocument.Parse(body).RootElement.Clone();
     }
 
-    private async Task<string> SeedProgramAsync(string issuer, string? name = null)
+    private Task<JsonElement> PostCsvAsync(string handler, List<string> headers, params Dictionary<string, string>[] rows)
+        => PostAsync(handler, Encoding.UTF8.GetBytes(string.Join("\r\n", [string.Join(';', headers), .. rows.Select(r => Line(headers, r))])),
+            "cagrilar.csv");
+
+    private static string Describe(JsonElement result)
     {
-        name ??= "Aktarım programı " + _code;
-        using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
-        await GetRequiredService<IRepository<Grant, Guid>>().InsertAsync(new Grant(Guid.NewGuid(), name, issuer, 0, 0), autoSave: true);
-        await uow.CompleteAsync();
-        return name;
+        var errors = result.TryGetProperty("rows", out var rows)
+            ? rows.EnumerateArray().SelectMany(r => r.GetProperty("errors").EnumerateArray()
+                .Select(e => $"satır {r.GetProperty("number").GetInt32()}: {e.GetString()}"))
+            : [];
+        return $"{result.GetProperty("message").GetString()} {string.Join(" | ", errors)}";
     }
 
-    private async Task<(GrantCall? Call, bool Announced)> FindAsync(string period)
+    private async Task<Guid> SeedProgramAsync(string name, string issuer)
+    {
+        var id = Guid.NewGuid();
+        using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        await GetRequiredService<IRepository<Grant, Guid>>().InsertAsync(new Grant(id, name, issuer, 0, 0), autoSave: true);
+        await uow.CompleteAsync();
+        return id;
+    }
+
+    private async Task<Guid> SeedCallAsync(Guid grantId, string period)
+    {
+        var id = Guid.NewGuid();
+        using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        await GetRequiredService<IRepository<GrantCall, Guid>>()
+            .InsertAsync(new GrantCall(id, grantId, period, GrantCallStatus.Taslak) { Reference = "ESKİ-" + period }, autoSave: true);
+        await uow.CompleteAsync();
+        return id;
+    }
+
+    private async Task<GrantParameterDto> ProgramAsync(Guid id)
+    {
+        using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        return await GetRequiredService<IGrantParameterAppService>().GetAsync(id);
+    }
+
+    private async Task<Grant?> FindProgramAsync(string name)
+    {
+        using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
+        return (await GetRequiredService<IRepository<Grant, Guid>>().GetListAsync(g => g.Name == name)).SingleOrDefault();
+    }
+
+    private async Task<(GrantCall? Call, bool Marked)> FindCallAsync(string period)
     {
         using var uow = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true);
         var call = (await GetRequiredService<IRepository<GrantCall, Guid>>().GetListAsync(c => c.Period == period)).SingleOrDefault();
-        var announced = call != null && await GetRequiredService<IRepository<GrantNotificationLog, Guid>>()
+        var marked = call != null && await GetRequiredService<IRepository<GrantNotificationLog, Guid>>()
             .AnyAsync(l => l.Trigger == GrantNotificationTrigger.CallPublished && l.EntityId == call.Id && l.TenantId == null);
-        return (call, announced);
+        return (call, marked);
     }
 
     [Fact]
-    public async Task Cagri_programa_baglanir_acik_cagri_duyurulmadan_islendi_sayilir()
+    public async Task Sablon_ve_ekran_ciktisi_cagrinin_ve_programin_butun_sutunlarini_tasir()
     {
-        var program = await SeedProgramAsync("Kurum " + _code);
-        // Program; Kurum; Dönem; Referans; Durum; Açılış; Son tarih; Bütçe
-        var csv = await HeaderAsync() + "\r\n"
-            + $"{program};;A{_code};REF-{_code};Yayında;01.02.2027;31.03.2027;2.500.000\r\n"
-            + $"{program};;T{_code};;;;;\r\n";
+        var template = await HeadersAsync(Modal + "?handler=Template&format=csv");
+        template.Take(6).ShouldBe(["Çağrı kimliği", "Program kimliği", "Program adı", "Kurum", "Dönem", "Referans"]);
+        template.ShouldContain("Çağrı durumu");
+        template.ShouldContain("Çağrı bütçesi");
+        template.ShouldContain("Destek oranı (%)");
+        template.ShouldContain("Başvurabilecek kurum türleri");
+        template.ShouldContain("İstenen belgeler");
+        template.ShouldContain("Süreç şablonu");
+        template.Count.ShouldBeGreaterThan(45);
+        template.ShouldNotContain("Kalan gün", "bilgi sütunu içe aktarılmaz");
 
-        var import = await PostAsync("Import", csv);
-        import.GetProperty("done").GetBoolean().ShouldBeTrue(import.ToString());
+        // Ekrandaki "Excel'e aktar" aynı sütunları (ve bilgi sütunlarını) verir: dosya geri yüklenebilir.
+        var screen = await HeadersAsync("/Grants?handler=CallsExcel&tab=Draft&format=csv");
+        template.ShouldAllBe(h => screen.Contains(h));
+        screen.ShouldContain("Kalan gün");
+        screen.ShouldContain("Uygun firma");
+        screen.ShouldContain("İlgi talebi");
+    }
 
-        var (open, announced) = await FindAsync("A" + _code);
+    [Fact]
+    public async Task Yeni_program_ve_cagrilari_tek_dosyadan_acilir_mevcut_programa_dokunmadan_cagri_eklenir()
+    {
+        var name = "Yeni program " + _code;
+        var issuer = "Yeni kurum " + _code;
+        var existing = "Mevcut program " + _code;
+        var existingId = await SeedProgramAsync(existing, "Mevcut kurum " + _code);
+        var headers = await HeadersAsync(Modal + "?handler=Template&format=csv");
+
+        var import = await PostCsvAsync("Import", headers,
+            new()
+            {
+                ["Program adı"] = name, ["Kurum"] = issuer, ["Destek oranı (%)"] = "60", ["En yüksek destek"] = "100000",
+                ["Dönem"] = "A" + _code, ["Referans"] = "R-" + _code, ["Çağrı durumu"] = "Yayında",
+                ["Açılış"] = "01.02.2027", ["Son tarih"] = "31.03.2027", ["Çağrı bütçesi"] = "2.500.000"
+            },
+            // Aynı program: parametreler boş, yalnız yeni çağrı.
+            new() { ["Program adı"] = name, ["Kurum"] = issuer, ["Dönem"] = "T" + _code },
+            // Mevcut program ad + kurumla bulunur; parametreleri boş satır programa dokunmaz.
+            new() { ["Program adı"] = existing, ["Kurum"] = "Mevcut kurum " + _code, ["Dönem"] = "M" + _code });
+        import.GetProperty("done").GetBoolean().ShouldBeTrue(Describe(import));
+
+        var program = await FindProgramAsync(name);
+        program.ShouldNotBeNull();
+        var parameters = await ProgramAsync(program.Id);
+        parameters.SupportRatePercent.ShouldBe(60);
+        parameters.MaxAmount.ShouldBe(100000m);
+
+        var (open, openMarked) = await FindCallAsync("A" + _code);
         open.ShouldNotBeNull();
+        open.GrantId.ShouldBe(program.Id);
         open.Status.ShouldBe(GrantCallStatus.Acik);
-        open.Reference.ShouldBe("REF-" + _code);
+        open.Reference.ShouldBe("R-" + _code);
         open.Deadline.ShouldBe(new DateTime(2027, 3, 31));
         open.Budget.ShouldBe(2_500_000m);
-        announced.ShouldBeTrue("içe aktarılan açık çağrı duyuru taramasında işlendi sayılmalı");
+        openMarked.ShouldBeTrue("içe aktarılan açık çağrı duyuru taramasında işlendi sayılmalı");
 
-        var (draft, draftMarked) = await FindAsync("T" + _code);
+        var (draft, draftMarked) = await FindCallAsync("T" + _code);
         draft.ShouldNotBeNull();
+        draft.GrantId.ShouldBe(program.Id, "aynı programın ikinci satırı ikinci program açmamalı");
         draft.Status.ShouldBe(GrantCallStatus.Taslak);
         draftMarked.ShouldBeFalse("taslak ileride ekrandan yayınlanınca duyurulabilmeli");
+
+        (await FindCallAsync("M" + _code)).Call!.GrantId.ShouldBe(existingId);
+        (await ProgramAsync(existingId)).SupportRatePercent.ShouldBeNull();
     }
 
     [Fact]
-    public async Task Ayni_program_ve_donem_ikinci_kez_acilmaz_ayni_adli_program_kurumla_secilir()
+    public async Task Disa_aktarim_aynen_geri_yuklenir_duzenlenen_cagri_ve_program_guncellenir()
     {
-        var name = "Ortak ad " + _code;
-        await SeedProgramAsync("Birinci kurum " + _code, name);
-        await SeedProgramAsync("İkinci kurum " + _code, name);
+        var programId = await SeedProgramAsync("Gidiş dönüş " + _code, "Gidiş dönüş kurumu " + _code);
+        var callId = await SeedCallAsync(programId, "G" + _code);
 
-        var csv = await HeaderAsync() + "\r\n"
-            + $"{name};;X{_code};;;;;\r\n"                                   // ad iki programla eşleşir
-            + $"{name};İkinci kurum {_code};D{_code};;;;;\r\n"              // kurumla tekil
-            + $"{name};İkinci kurum {_code};D{_code};;;;;\r\n"              // dosyada tekrar
-            + $"{name};İkinci kurum {_code};R{_code};;;31.12.2027;01.01.2027;\r\n"; // ters tarih
+        var export = await (await GetResponseAsync("/Grants?handler=CallsExcel&all=true")).Content.ReadAsByteArrayAsync();
 
-        var preview = await PostAsync("Preview", csv);
+        var untouched = await PostAsync("Preview", export, "cagrilar.xlsx");
+        untouched.GetProperty("ok").GetBoolean().ShouldBeTrue(Describe(untouched));
+
+        using var wb = new XLWorkbook(new MemoryStream(export));
+        var ws = wb.Worksheet(1);
+        int Col(string header) => ws.Row(1).CellsUsed().First(c => c.GetString().TrimEnd(' ', '*') == header).Address.ColumnNumber;
+        var row = ws.Column(Col("Çağrı kimliği")).CellsUsed().First(c => c.GetString() == callId.ToString()).Address.RowNumber;
+        ws.Cell(row, Col("Program kimliği")).GetString().ShouldBe(programId.ToString());
+        ws.Cell(row, Col("Referans")).Value = "YENİ-" + _code;
+        ws.Cell(row, Col("Destek oranı (%)")).Value = 55;
+        using var edited = new MemoryStream();
+        wb.SaveAs(edited);
+
+        var import = await PostAsync("Import", edited.ToArray(), "cagrilar.xlsx");
+        import.GetProperty("done").GetBoolean().ShouldBeTrue(Describe(import));
+
+        var (call, _) = await FindCallAsync("G" + _code);
+        call.ShouldNotBeNull();
+        call.Id.ShouldBe(callId, "kimlikli satır yeni çağrı açmamalı");
+        call.Reference.ShouldBe("YENİ-" + _code);
+        (await ProgramAsync(programId)).SupportRatePercent.ShouldBe(55);
+    }
+
+    [Fact]
+    public async Task Farkli_parametreli_program_satiri_tekrar_eden_donem_ve_baska_programin_cagrisi_reddedilir()
+    {
+        var name = "Çelişkili program " + _code;
+        var issuer = "Kurum " + _code;
+        var ownerId = await SeedProgramAsync("Sahip program " + _code, issuer);
+        var foreignCall = await SeedCallAsync(ownerId, "S" + _code);
+        await SeedProgramAsync("Başka program " + _code, issuer);
+        var headers = await HeadersAsync(Modal + "?handler=Template&format=csv");
+
+        var preview = await PostCsvAsync("Preview", headers,
+            new() { ["Program adı"] = name, ["Kurum"] = issuer, ["Destek oranı (%)"] = "60", ["Dönem"] = "P" + _code },
+            new() { ["Program adı"] = name, ["Kurum"] = issuer, ["Destek oranı (%)"] = "70", ["Dönem"] = "Q" + _code },
+            new() { ["Program adı"] = name, ["Kurum"] = issuer, ["Dönem"] = "P" + _code },
+            new() { ["Çağrı kimliği"] = foreignCall.ToString(), ["Program adı"] = "Başka program " + _code, ["Kurum"] = issuer, ["Dönem"] = "S" + _code });
+
         preview.GetProperty("ok").GetBoolean().ShouldBeFalse();
         var rows = preview.GetProperty("rows");
-        rows[0].GetProperty("errors").GetArrayLength().ShouldBe(1, "ad birden fazla programla eşleşiyor");
-        rows[1].GetProperty("errors").GetArrayLength().ShouldBe(0);
+        rows[0].GetProperty("errors").GetArrayLength().ShouldBe(0, Describe(preview));
+        rows[1].GetProperty("errors").GetArrayLength().ShouldBe(1, "aynı program farklı parametreyle");
         rows[2].GetProperty("errors").GetArrayLength().ShouldBe(1, "aynı program + dönem");
-        rows[3].GetProperty("errors").GetArrayLength().ShouldBe(1, "son tarih açılıştan önce");
+        rows[3].GetProperty("errors").GetArrayLength().ShouldBe(1, "çağrı başka programa taşınamaz");
 
-        (await PostAsync("Import", csv)).GetProperty("done").GetBoolean().ShouldBeFalse();
-        (await FindAsync("D" + _code)).Call.ShouldBeNull();
-    }
-
-    /// <summary>
-    /// Gidiş-dönüş: host panosunun dışa aktarımı tanınır. Çağrısı olmayan program satırları ("Çağrı yok")
-    /// atlanır; var olan çağrılar "zaten kullanılıyor" der — sütun ya da eşleşme hatası çıkmaz.
-    /// </summary>
-    [Fact]
-    public async Task Pano_disa_aktarimi_okunur_cagri_yok_satirlari_atlanir()
-    {
-        var program = await SeedProgramAsync("Gidiş dönüş kurumu " + _code);
-        (await PostAsync("Import", await HeaderAsync() + "\r\n" + $"{program};;G{_code};;Taslak;;;\r\n"))
-            .GetProperty("done").GetBoolean().ShouldBeTrue();
-
-        var export = Encoding.UTF8.GetString(await (await GetResponseAsync("/Grants?handler=CallsExcel&tab=Draft&format=csv"))
-            .Content.ReadAsByteArrayAsync()).TrimStart('﻿');
-        export.ShouldContain("G" + _code);
-
-        var preview = await PostAsync("Preview", export);
-        preview.GetProperty("rows").EnumerateArray()
-            .SelectMany(r => r.GetProperty("errors").EnumerateArray().Select(e => e.GetString()!))
-            .ShouldAllBe(e => e.Contains("zaten kullanılıyor") || e.Contains("birden fazla"));
+        var import = await PostCsvAsync("Import", headers,
+            new() { ["Program adı"] = name, ["Kurum"] = issuer, ["Destek oranı (%)"] = "60", ["Dönem"] = "P" + _code },
+            new() { ["Program adı"] = name, ["Kurum"] = issuer, ["Destek oranı (%)"] = "70", ["Dönem"] = "Q" + _code });
+        import.GetProperty("done").GetBoolean().ShouldBeFalse();
+        (await FindProgramAsync(name)).ShouldBeNull("hatalı dosyadan hiçbir satır yazılmamalı");
     }
 }

@@ -325,7 +325,7 @@ public class FullParameterImportAccess_Tests : PlatformWebTestBase
 {
     private static readonly string[] Pages =
     [
-        "/Projects/FullImportModal", "/Tasks/FullImportModal", "/Grants/ProgramImportModal",
+        "/Projects/FullImportModal", "/Tasks/FullImportModal", "/Grants/ProgramImportModal", "/Grants/CallImportModal",
         "/Expenses/FullImportModal", "/Incomes/FullImportModal", "/Invoices/FullImportModal"
     ];
 
