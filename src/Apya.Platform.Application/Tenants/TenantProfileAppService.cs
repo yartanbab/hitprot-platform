@@ -103,7 +103,10 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
                 SubscriptionPeriod = subscription?.Period ?? SubscriptionPeriod.Unlimited,
                 // Ek süredeyse müşterinin gerçekten kapanacağı tarih gösterilir.
                 SubscriptionEndDate = subscription?.EffectiveEndDate,
-                IsInGracePeriod = subscription?.Status == SubscriptionStatus.InGrace
+                IsInGracePeriod = subscription?.Status == SubscriptionStatus.InGrace,
+                IsTrial = subscription?.Source == SubscriptionSource.Trial,
+                // Deneme bitince yürürlükte satır kalmaz ("süresiz" görünürdü); durumu bayrak söyler.
+                IsReadOnly = await _tenantPackageManager.IsReadOnlyAsync(tenant.Id)
             });
         }
 
@@ -160,6 +163,35 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
     }
 
     /// <summary>
+    /// Süreli deneme. Paket hemen uygulanır (ApplyPackageAsync salt okunur kilidi de kaldırır),
+    /// gün bazlı bir deneme dönemi açılır. Gün sınırı TenantSubscriptionManager'da denetlenir.
+    /// </summary>
+    [Authorize(TenantManagementPermissions.Tenants.Update)]
+    public async Task<TenantProfileDto> StartTrialAsync(Guid tenantId, PackageCode packageCode, int days)
+    {
+        using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
+
+        var profile = await _tenantProfileRepository.FirstOrDefaultAsync(x => x.TenantId == tenantId);
+        if (profile == null)
+        {
+            throw new UserFriendlyException("Bu tenant için profil bulunamadı; önce profil oluşturun.");
+        }
+
+        profile.SetPackage(packageCode);
+        await _tenantProfileRepository.UpdateAsync(profile);
+
+        await _tenantPackageManager.ApplyPackageAsync(tenantId, packageCode);
+
+        var subscription = await _tenantSubscriptionManager.StartTrialAsync(tenantId, packageCode, days);
+
+        var result = ObjectMapper.Map<TenantProfile, TenantProfileDto>(profile);
+        FillSubscription(result, subscription);
+
+        await uow.CompleteAsync();
+        return result;
+    }
+
+    /// <summary>
     /// Yürürlükteki paketi bir dönem daha uzatır. Paket değişmediği için feature/izin
     /// yeniden uygulanmaz; yalnız bitiş tarihi ileri alınır ve kalan süre korunur.
     /// </summary>
@@ -195,6 +227,7 @@ public class TenantProfileAppService : PlatformAppService, ITenantProfileAppServ
         dto.SubscriptionPeriod = subscription.Period;
         dto.SubscriptionEndDate = subscription.EffectiveEndDate;
         dto.IsInGracePeriod = subscription.Status == SubscriptionStatus.InGrace;
+        dto.IsTrial = subscription.Source == SubscriptionSource.Trial;
     }
 
     public async Task<TenantProfileDto> GetProfileAsync(Guid tenantId)

@@ -31,6 +31,9 @@ public class SubscriptionExpiryResult
     /// <summary>Basic'e indirilen kiracı sayısı.</summary>
     public int Downgraded { get; set; }
 
+    /// <summary>Süresi biten ve salt okunur yapılan deneme sayısı.</summary>
+    public int TrialsEnded { get; set; }
+
     /// <summary>Süresi dolduğu hâlde ayar kapalı olduğu için indirilMEyen abonelik sayısı.</summary>
     public int DowngradeSkipped { get; set; }
 }
@@ -146,8 +149,8 @@ public class SubscriptionExpiryProcessor : ITransientDependency
         }
 
         _logger.LogInformation(
-            "Abonelik süre turu: {Warned} uyarı, {Grace} ek süre, {Downgraded} indirme, {Skipped} atlandı.",
-            result.Warned, result.MovedToGrace, result.Downgraded, result.DowngradeSkipped);
+            "Abonelik süre turu: {Warned} uyarı, {Grace} ek süre, {Downgraded} indirme, {TrialsEnded} deneme bitti, {Skipped} atlandı.",
+            result.Warned, result.MovedToGrace, result.Downgraded, result.TrialsEnded, result.DowngradeSkipped);
 
         return result;
     }
@@ -169,6 +172,15 @@ public class SubscriptionExpiryProcessor : ITransientDependency
             {
                 result.Warned++;
             }
+            return;
+        }
+
+        // Deneme EK SÜREYE GİRMEZ ve otomatik indirme ayarına bağlı DEĞİLDİR (o ayar ücretli
+        // paket içindir): paket olduğu gibi kalır, hesap salt okunur olur.
+        if (subscription.Source == SubscriptionSource.Trial)
+        {
+            await EndTrialAsync(subscription, now);
+            result.TrialsEnded++;
             return;
         }
 
@@ -242,8 +254,12 @@ public class SubscriptionExpiryProcessor : ITransientDependency
 
         await NotifyTenantAdminsAsync(
             subscription.TenantId,
-            _l["Notification:SubscriptionExpiring:Title"],
-            _l["Notification:SubscriptionExpiring:Body",
+            _l[subscription.Source == SubscriptionSource.Trial
+                ? "Notification:SubscriptionExpiring:TitleTrial"
+                : "Notification:SubscriptionExpiring:Title"],
+            _l[subscription.Source == SubscriptionSource.Trial
+                    ? "Notification:SubscriptionExpiring:BodyTrial"
+                    : "Notification:SubscriptionExpiring:Body",
                 subscription.PackageCode.ToString(),
                 FormatDate(effectiveEnd),
                 Math.Max(daysRemaining, 0)],
@@ -321,6 +337,39 @@ public class SubscriptionExpiryProcessor : ITransientDependency
 
         _logger.LogInformation(
             "TenantId={TenantId}: {Package} paketinin süresi doldu, Basic pakete indirildi.",
+            subscription.TenantId, subscription.PackageCode);
+    }
+
+    /// <summary>
+    /// Denemeyi bitirir: satır <see cref="SubscriptionStatus.Expired"/> olur, paket DEĞİŞMEZ
+    /// (denemede açılan ekranlar görünmeye devam eder), hesap salt okunur yapılır. Yerine yeni satır
+    /// AÇILMAZ — kiracı bir daha bu taramaya girmez; kilit paket uygulanınca kalkar.
+    /// </summary>
+    private async Task EndTrialAsync(TenantSubscription subscription, DateTime now)
+    {
+        subscription.Expire(now);
+        await _subscriptionRepository.UpdateAsync(subscription, autoSave: true);
+
+        await _packageManager.SetReadOnlyAsync(subscription.TenantId, true);
+
+        await _localEventBus.PublishAsync(new SubscriptionExpiredEto
+        {
+            TenantId = subscription.TenantId,
+            SubscriptionId = subscription.Id,
+            PreviousPackageCode = subscription.PackageCode,
+            EndDate = subscription.EndDate!.Value,
+            GraceEndedAt = subscription.GraceEndsAt,
+            ExternalReference = subscription.ExternalReference
+        });
+
+        await NotifyTenantAdminsAsync(
+            subscription.TenantId,
+            _l["Notification:TrialEnded:Title"],
+            _l["Notification:TrialEnded:Body", FormatDate(subscription.EndDate!.Value)],
+            NotificationType.TrialEnded);
+
+        _logger.LogInformation(
+            "TenantId={TenantId}: {Package} denemesi bitti, hesap salt okunur yapıldı.",
             subscription.TenantId, subscription.PackageCode);
     }
 

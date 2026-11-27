@@ -49,6 +49,16 @@ public static class PlatformFeatures
     /// </summary>
     public const string TaskQuickEntry = GroupName + ".TaskQuickEntry";
 
+    /// <summary>
+    /// Hesap SALT OKUNUR: kullanıcılar verilerini görür ama kayıt ekleyemez, değiştiremez,
+    /// silemez. Süreli deneme bitince <c>SubscriptionExpiryProcessor</c> açar; paket uygulanınca
+    /// (<c>TenantPackageManager.ApplyPackageAsync</c>) kendiliğinden kapanır. Yazmayı Web
+    /// katmanındaki <c>ReadOnlyTenantMiddleware</c> keser.
+    /// <para>Paket yetenek kapısı DEĞİLDİR: <c>PackageDefinitions</c>'ta ve paket satırlarında
+    /// yer almaz; <see cref="HostFeatureValueProvider"/> host'ta onu "true" saymaz.</para>
+    /// </summary>
+    public const string ReadOnly = GroupName + ".ReadOnly";
+
     // ── Sayısal limitler (paket kotaları) ─────────────────────────────────────
 
     /// <summary>Tenant'ın oluşturabileceği maksimum kullanıcı sayısı.</summary>

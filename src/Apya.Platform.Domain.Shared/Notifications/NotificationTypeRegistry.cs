@@ -362,7 +362,11 @@ public static class NotificationTypeRegistry
 
             [NotificationType.SubscriptionDowngraded] = new(
                 NotificationCategory.System, NotificationSeverity.Critical,
-                "fa fa-circle-arrow-down", "/Subscription", GroupSimilar: false)
+                "fa fa-circle-arrow-down", "/Subscription", GroupSimilar: false),
+
+            [NotificationType.TrialEnded] = new(
+                NotificationCategory.System, NotificationSeverity.Critical,
+                "fa fa-lock", "/Subscription", GroupSimilar: false)
         };
 
     public static NotificationTypeInfo Get(NotificationType type)

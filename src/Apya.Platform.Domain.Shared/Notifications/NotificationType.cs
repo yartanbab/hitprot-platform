@@ -118,5 +118,8 @@ public enum NotificationType
 
     // Veri zenginleştirme 7. adım: süresi dolan kurum bilgisi eşleştirmede "bilinmiyor" sayılıyordu
     // ama kurum bunu ancak ekrana girince görüyordu.
-    FirmDataStale               = 65  // Kurum bilgisinin geçerlilik süresi doldu (kurum yöneticilerine)
+    FirmDataStale               = 65, // Kurum bilgisinin geçerlilik süresi doldu (kurum yöneticilerine)
+
+    // Ücretsiz hesap Faz 1: süreli deneme bitti, hesap salt okunur.
+    TrialEnded                  = 66  // Deneme süresi doldu; hesap salt okunur (kurum yöneticilerine)
 }

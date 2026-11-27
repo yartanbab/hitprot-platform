@@ -28,6 +28,7 @@ public class SubscriptionExpiry_Tests : PlatformEntityFrameworkCoreTestBase
     private readonly IRepository<TenantProfile, Guid> _profileRepository;
     private readonly ISettingManager _settingManager;
     private readonly IClock _clock;
+    private readonly TenantPackageManager _packageManager;
 
     public SubscriptionExpiry_Tests()
     {
@@ -37,6 +38,7 @@ public class SubscriptionExpiry_Tests : PlatformEntityFrameworkCoreTestBase
         _profileRepository = GetRequiredService<IRepository<TenantProfile, Guid>>();
         _settingManager = GetRequiredService<ISettingManager>();
         _clock = GetRequiredService<IClock>();
+        _packageManager = GetRequiredService<TenantPackageManager>();
     }
 
     private async Task ConfigureAsync(bool autoDowngrade, int graceDays, string warningDays = "7,1")
@@ -87,6 +89,102 @@ public class SubscriptionExpiry_Tests : PlatformEntityFrameworkCoreTestBase
     {
         var profile = await _profileRepository.FindAsync(p => p.TenantId == tenantId);
         return profile!.PackageCode;
+    }
+
+    private async Task AddTrialAsync(Guid tenantId, PackageCode code, DateTime startDate, int days)
+    {
+        var trial = TenantSubscription.CreateTrial(Guid.NewGuid(), tenantId, code, startDate, days);
+        await _subscriptionRepository.InsertAsync(trial, autoSave: true);
+    }
+
+    /// <summary>
+    /// DENEME BİTİNCE Basic'e İNİLMEZ: paket aynen kalır, hesap salt okunur olur, ek süre
+    /// tanımlı olsa da deneme oraya girmez ve yerine yeni satır açılmaz.
+    /// </summary>
+    [Fact]
+    public async Task Expired_Trial_Keeps_Package_And_Makes_Tenant_ReadOnly()
+    {
+        await ConfigureAsync(autoDowngrade: true, graceDays: 5);
+        var tenantId = Guid.NewGuid();
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            await CreateProfileAsync(tenantId, PackageCode.Premium);
+            await AddTrialAsync(tenantId, PackageCode.Premium, _clock.Now.AddDays(-20), 14);
+        });
+
+        var result = await WithUnitOfWorkAsync(() => _processor.RunAsync());
+
+        result.TrialsEnded.ShouldBe(1);
+        result.Downgraded.ShouldBe(0);
+        result.MovedToGrace.ShouldBe(0);
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            (await GetPackageAsync(tenantId)).ShouldBe(PackageCode.Premium);
+            (await _packageManager.IsReadOnlyAsync(tenantId)).ShouldBeTrue();
+            (await _subscriptionManager.GetCurrentOrNullAsync(tenantId)).ShouldBeNull();
+            (await _subscriptionManager.GetLatestEndedTrialOrNullAsync(tenantId)).ShouldNotBeNull();
+        });
+    }
+
+    /// <summary>Otomatik indirme ayarı ücretli paket içindir; deneme ondan bağımsız biter.</summary>
+    [Fact]
+    public async Task Expired_Trial_Ends_Even_When_AutoDowngrade_Is_Off()
+    {
+        await ConfigureAsync(autoDowngrade: false, graceDays: 0);
+        var tenantId = Guid.NewGuid();
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            await CreateProfileAsync(tenantId, PackageCode.Premium);
+            await AddTrialAsync(tenantId, PackageCode.Premium, _clock.Now.AddDays(-20), 14);
+        });
+
+        var result = await WithUnitOfWorkAsync(() => _processor.RunAsync());
+
+        result.TrialsEnded.ShouldBe(1);
+        result.DowngradeSkipped.ShouldBe(0);
+        (await WithUnitOfWorkAsync(() => _packageManager.IsReadOnlyAsync(tenantId))).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Expired_Trial_Is_Processed_Only_Once()
+    {
+        await ConfigureAsync(autoDowngrade: true, graceDays: 0);
+        var tenantId = Guid.NewGuid();
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            await CreateProfileAsync(tenantId, PackageCode.Premium);
+            await AddTrialAsync(tenantId, PackageCode.Premium, _clock.Now.AddDays(-20), 14);
+        });
+
+        await WithUnitOfWorkAsync(() => _processor.RunAsync());
+        var second = await WithUnitOfWorkAsync(() => _processor.RunAsync());
+
+        second.TrialsEnded.ShouldBe(0);
+    }
+
+    /// <summary>Ücretli (Manual) dönemin davranışı DEĞİŞMEZ: Basic'e iner, salt okunur olmaz.</summary>
+    [Fact]
+    public async Task Expired_Manual_Subscription_Is_Not_Made_ReadOnly()
+    {
+        await ConfigureAsync(autoDowngrade: true, graceDays: 0);
+        var tenantId = Guid.NewGuid();
+
+        await WithUnitOfWorkAsync(async () =>
+        {
+            await CreateProfileAsync(tenantId, PackageCode.Premium);
+            await AddSubscriptionAsync(
+                tenantId, PackageCode.Premium, SubscriptionPeriod.Monthly, _clock.Now.AddMonths(-2));
+        });
+
+        var result = await WithUnitOfWorkAsync(() => _processor.RunAsync());
+
+        result.Downgraded.ShouldBe(1);
+        result.TrialsEnded.ShouldBe(0);
+        (await WithUnitOfWorkAsync(() => _packageManager.IsReadOnlyAsync(tenantId))).ShouldBeFalse();
     }
 
     [Fact]

@@ -29,6 +29,13 @@ public interface ITenantProfileAppService : IApplicationService
     Task<TenantProfileDto> RenewPackageAsync(Guid tenantId, SubscriptionPeriod period);
 
     /// <summary>
+    /// Müşteriye süreli deneme verir: paketi uygular (salt okunur kilidi de kalkar) ve gün
+    /// cinsinden bir deneme dönemi açar. Yürürlükteki dönem kapanır. Süre bitince hesap Basic'e
+    /// İNMEZ, salt okunur olur.
+    /// </summary>
+    Task<TenantProfileDto> StartTrialAsync(Guid tenantId, PackageCode packageCode, int days);
+
+    /// <summary>
     /// Kiracının kullanıcıları — host'un şifre belirleyeceği kişiyi seçmesi için.
     /// </summary>
     Task<List<TenantUserDto>> GetTenantUsersAsync(Guid tenantId);

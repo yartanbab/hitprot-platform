@@ -35,4 +35,10 @@ public class TenantProfileDto : FullAuditedEntityDto<Guid>
 
     /// <summary>Ek süredeyse <c>true</c>: bitiş geçti ama paket hâlâ açık.</summary>
     public bool IsInGracePeriod { get; set; }
+
+    /// <summary>Yürürlükteki dönem süreli deneme mi?</summary>
+    public bool IsTrial { get; set; }
+
+    /// <summary>Hesap salt okunur mu (deneme bitti ya da host elle kilitledi)?</summary>
+    public bool IsReadOnly { get; set; }
 }
