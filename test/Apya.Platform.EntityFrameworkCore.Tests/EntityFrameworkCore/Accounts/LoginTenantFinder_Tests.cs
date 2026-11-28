@@ -16,8 +16,6 @@ namespace Apya.Platform.EntityFrameworkCore.Accounts;
 [Collection(PlatformTestConsts.CollectionDefinitionName)]
 public class LoginTenantFinder_Tests : PlatformEntityFrameworkCoreTestBase
 {
-    private const string Password = "1q2w3E*asd";
-
     private async Task<Guid> TenantWithUserAsync(string userName)
     {
         var tenant = await WithUnitOfWorkAsync(async () =>
@@ -26,13 +24,17 @@ public class LoginTenantFinder_Tests : PlatformEntityFrameworkCoreTestBase
             return await GetRequiredService<ITenantRepository>().InsertAsync(t, autoSave: true);
         });
 
+        // Kullanıcı UserManager'dan değil doğrudan depodan eklenir: kullanıcı adı artık sistem
+        // genelinde tekil (GlobalUniqueUserNameValidator) ve aynı adı ikinci kiracıda açmayı
+        // reddeder. Burada sınanan, kural ÖNCESİNDEN kalmış çakışan hesaplar — onlar hâlâ
+        // veritabanında olabilir, giriş ekranı onları da doğru ayırmalı.
         await WithUnitOfWorkAsync(async () =>
         {
             using (GetRequiredService<ICurrentTenant>().Change(tenant.Id))
             {
                 var user = new IdentityUser(
                     Guid.NewGuid(), userName, Guid.NewGuid().ToString("N") + "@ornek.com", tenant.Id);
-                (await GetRequiredService<IdentityUserManager>().CreateAsync(user, Password)).Succeeded.ShouldBeTrue();
+                await GetRequiredService<IIdentityUserRepository>().InsertAsync(user, autoSave: true);
             }
         });
 
