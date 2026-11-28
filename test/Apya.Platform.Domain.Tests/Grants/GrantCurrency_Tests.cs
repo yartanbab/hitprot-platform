@@ -23,7 +23,8 @@ public class GrantCurrency_Tests
         grant.Currency = "eur";
         grant.Currency.ShouldBe(GrantCurrencies.Eur);
 
-        grant.Currency = "CHF";
+        // CHF 2026-11-28'de listeye girdi; bilinmeyen kod örneği listede olmayan bir koddur.
+        grant.Currency = "MXN";
         grant.Currency.ShouldBe(GrantCurrencies.Try);
 
         grant.Currency = null!;

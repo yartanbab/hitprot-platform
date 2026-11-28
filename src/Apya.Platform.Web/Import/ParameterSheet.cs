@@ -237,6 +237,35 @@ internal abstract class ParameterSheet<TSource, TInput>
             Options: [Yes, No]);
     }
 
+    /// <summary>
+    /// Tek değerli enum: hücrede okunur adı (<paramref name="labelPrefix"/>:Değer). Sıfır değeri "belirtilmemiş"tir,
+    /// boş hücre olarak yazılır ve boş hücre ona okunur.
+    /// </summary>
+    protected Field Choice<TEnum>(string key, string labelPrefix, Func<TSource, TEnum> get, Action<TInput, TEnum> set)
+        where TEnum : struct, Enum
+    {
+        var header = H(key);
+        var options = Enum.GetValues<TEnum>()
+            .Where(v => Convert.ToInt32(v, CultureInfo.InvariantCulture) != 0)
+            .Select(v => (Value: v, Label: L[$"{labelPrefix}:{v}"].Value))
+            .ToList();
+        return new(header, Guide("Pick"),
+            s =>
+            {
+                var value = get(s);
+                return options.Where(o => o.Value.Equals(value)).Select(o => o.Label).FirstOrDefault();
+            },
+            (s, t) => set(t, get(s)),
+            (row, t) =>
+            {
+                var text = row.Text(header);
+                set(t, text.Length > 0 && TryPick(row, header, text, options, o => [o.Label, o.Value.ToString()], out var match)
+                    ? match.Value
+                    : default);
+            },
+            Options: options.Select(o => o.Label).ToList());
+    }
+
     // ── Hücre okuma ──
 
     protected void Require(ImportRow row, string header, string? value)

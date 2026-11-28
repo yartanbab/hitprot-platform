@@ -16,6 +16,7 @@ namespace Apya.Platform.Web.Pages.Grants;
 internal sealed class GrantProgramSheet : ParameterSheet<GrantParameterDto, UpdateGrantParameterDto>
 {
     private const int MaxDocumentNameLength = 128;
+    private const int MaxUrlLength = 512;
 
     private readonly IReadOnlyList<(Guid Id, string Name)> _stages;
 
@@ -36,6 +37,8 @@ internal sealed class GrantProgramSheet : ParameterSheet<GrantParameterDto, Upda
             .Select(s => ((int)s, s.ToString(), l[$"Grants:CompanySize:{s}"].Value)).ToList();
         var types = Enum.GetValues<OrganizationType>()
             .Select(o => (o.ToMaskBit(), o.ToString(), l[$"Grants:OrgType:{o}"].Value)).ToList();
+        var externals = Enum.GetValues<ExternalApplicantType>()
+            .Select(o => (o.ToMaskBit(), o.ToString(), l[$"Grants:ExternalApplicant:{o}"].Value)).ToList();
 
         Fields =
         [
@@ -81,6 +84,15 @@ internal sealed class GrantProgramSheet : ParameterSheet<GrantParameterDto, Upda
             Documents(),
             StageTemplate(),
             Score(),
+
+            // 2026-11-28 · eksik parametreler. Sona eklendi: önceki dosyaların sütun sırası bozulmasın;
+            // bu sütunları taşımayan eski dosyada alanın kayıttaki değeri korunur.
+            Choice("SupportType", "Grants:SupportType", d => d.SupportType, (t, v) => t.SupportType = v),
+            Choice("CallCycle", "Grants:CallCycle", d => d.CallCycle, (t, v) => t.CallCycle = v),
+            Choice("TurkeyParticipation", "Grants:TurkeyParticipation", d => d.TurkeyParticipation, (t, v) => t.TurkeyParticipation = v),
+            Choice("GeographicScope", "Grants:GeographicScope", d => d.GeographicScope, (t, v) => t.GeographicScope = v),
+            Mask("ExternalApplicants", externals, d => d.ExternalApplicantTypes, (t, v) => t.ExternalApplicantTypes = v),
+            Text("LogoUrl", d => d.LogoUrl, (t, v) => t.LogoUrl = v, maxLength: MaxUrlLength),
         ];
     }
 

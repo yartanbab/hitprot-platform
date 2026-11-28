@@ -393,10 +393,10 @@ else
                         <label class="form-label small" for="FilterCurrency">@L["Grants:Feed:Filter:Currency"]</label>
                         <select class="form-select form-select-sm" id="FilterCurrency">
                             <option value="">@L["Grants:Feed:Filter:Any"]</option>
-                            <option value="TRY">@L["Grants:Currency:TRY"]</option>
-                            <option value="EUR">@L["Grants:Currency:EUR"]</option>
-                            <option value="USD">@L["Grants:Currency:USD"]</option>
-                            <option value="GBP">@L["Grants:Currency:GBP"]</option>
+                            @foreach (var code in Apya.Platform.Grants.GrantCurrencies.All)
+                            {
+                                <option value="@code">@L["Grants:Currency:" + code]</option>
+                            }
                         </select>
                     </div>
                     <div>

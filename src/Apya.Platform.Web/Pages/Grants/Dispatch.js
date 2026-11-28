@@ -4,7 +4,7 @@ $(function () {
     var callId = $('.apya-page').data('call-id');
 
     // Enum sıraları sunucudakiyle birebir.
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType'];
+    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType', 'CountryParticipation'];
     var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword', 'PriorityGroup'];
     var sizeKeys = { 1: 'Mikro', 2: 'Kucuk', 4: 'Orta', 8: 'Buyuk' };
 

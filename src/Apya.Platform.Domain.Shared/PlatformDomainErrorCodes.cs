@@ -112,6 +112,7 @@ public static class PlatformDomainErrorCodes
 
     // --- Hibe (Grant) Modülü ---
     public const string GrantCallScheduleInvalid = "Platform:Grant:CallScheduleInvalid";
+    public const string GrantCallClosureReasonNeedsClosed = "Platform:Grant:CallClosureReasonNeedsClosed";
     public const string GrantCostLimitPercentInvalid = "Platform:Grant:CostLimitPercentInvalid";
     public const string GrantPublishRequiredFieldsMissing = "Platform:Grant:PublishRequiredFieldsMissing";
     public const string GrantStageTemplateInUse = "Platform:Grant:StageTemplateInUse";

@@ -18,7 +18,9 @@ public static class GrantCurrencies
 
     public const int MaxLength = 3;
 
-    public static IReadOnlyList<string> All { get; } = [Try, Eur, Usd, Gbp];
+    // Yabancı vakıf ve büyükelçilik çağrıları için genişletildi (2026-11-28). Kolon 3 karakter; kur çevrimi yok,
+    // TRY dışındaki her kod eşleştirmede "veri yok" sayılır.
+    public static IReadOnlyList<string> All { get; } = [Try, Eur, Usd, Gbp, "CHF", "JPY", "SEK", "NOK", "CAD", "AUD", "CZK"];
 
     public static bool IsSupported(string? code) => code != null && All.Contains(code);
 

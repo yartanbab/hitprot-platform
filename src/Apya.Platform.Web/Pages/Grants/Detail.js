@@ -12,7 +12,7 @@ $(function () {
     // Enum adları ve rozet tonları sunucudan gelir (GrantStatusCatalog → _StatusMap).
     var bucketKeys = apyaGrantStatus.bucket.keys;
     var bucketTone = apyaGrantStatus.bucket.tones;
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType'];
+    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType', 'CountryParticipation'];
     var outcomeIcon = ['fa-circle-check is-passed', 'fa-circle-xmark is-failed', 'fa-circle-exclamation is-unknown'];
     var dimensionKeys = ['Sector', 'TechnicalMaturity', 'RdStaff', 'Region', 'ProjectHistory', 'Keyword', 'PriorityGroup'];
     var costKeys = ['Personel', 'MakineTechizat', 'Danismanlik', 'YazilimLisans', 'Seyahat', 'SarfMalzeme'];
@@ -25,7 +25,7 @@ $(function () {
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     // Programın tutar para birimi (GrantCurrencies); bilinmeyen kod ₺ sayılır.
     var CUR = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
-    function sym(cur) { return CUR[cur] || '₺'; }
+    function sym(cur) { return CUR[cur] || cur || '₺'; }
     function money(v, cur) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ' + sym(cur) : '—'; }
     function fmtDate(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
     function fmtDateTime(v) {

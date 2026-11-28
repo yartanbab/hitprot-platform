@@ -38,6 +38,9 @@ public static class FirmParameterCatalog
     /// <summary>Vadesi geçmiş kamu borcu beyanı: tohumdaki "borç yok" ölçütü ve giderilebilirlik buna bakar.</summary>
     public static readonly Guid PublicDebtId = IdOf(34);
 
+    /// <summary>Kayıtlı merkez ili: "bu illerde yerleşik" kapsamlı programda il kuralı buna bakar.</summary>
+    public static readonly Guid HeadquartersProvinceId = IdOf(35);
+
     public static Guid IdOf(int number) => Guid.Parse($"f17a0000-0000-4000-8000-{number:D12}");
 
     public static IReadOnlyList<FirmParameterDefinition> Build() => Rows.Select(r => r.ToDefinition()).ToList();
@@ -145,7 +148,15 @@ public static class FirmParameterCatalog
             ValidityMonths: 12),
         new(34, "has_public_debt", "Vadesi geçmiş kamu borcu", FirmParameterDataType.Boolean, Finans, Onerilen, Tumu, Eleme, Elle,
             "Vadesi geçmiş vergi ya da SGK borcu olan kurumlar birçok kamu desteğine başvuramaz.",
-            ValidityMonths: 3)
+            ValidityMonths: 3),
+        new(35, "headquarters_province", "Kayıtlı merkez ili", Select, Kimlik, Onerilen, Tumu, Eleme, Elle,
+            "Bazı bölgesel programlar başvuranın o illerde kayıtlı olmasını şart koşar; faaliyet gösterilen il yetmez.",
+            Options: TurkeyProvinces.All.Select(p => p.Name).ToList()),
+        new(36, "eu_pic_registered", "AB katılımcı kimlik kodu (PIC)", FirmParameterDataType.Boolean, Ortaklik, Opsiyonel, Tumu, Eleme, Elle,
+            "Ufuk Avrupa, Erasmus+ gibi AB programlarına başvuru için kurumun AB Katılımcı Kaydı'nda PIC kodu olmalıdır."),
+        new(37, "english_proposal_capacity", "İngilizce başvuru hazırlayabilir", FirmParameterDataType.Boolean, Kapasite, Opsiyonel, Tumu, Eleme, ElleVeyaBelge,
+            "Uluslararası programların çoğunda başvuru metni İngilizce yazılır.",
+            ValidityMonths: 24)
     };
 
     private sealed record Row(
@@ -162,7 +173,8 @@ public static class FirmParameterCatalog
         FirmParameterSystemKey? Key = null,
         int? ValidityMonths = null,
         int? Min = null,
-        int? Max = null)
+        int? Max = null,
+        IReadOnlyList<string>? Options = null)
     {
         public FirmParameterDefinition ToDefinition()
         {
@@ -177,6 +189,10 @@ public static class FirmParameterCatalog
             definition.SetValidity(ValidityMonths);
             definition.SetNumberRange(Min, Max);
             definition.SetMatchUsage(MatchUsage);
+            if (Options != null)
+            {
+                definition.SetOptions(Options);
+            }
             return definition;
         }
     }

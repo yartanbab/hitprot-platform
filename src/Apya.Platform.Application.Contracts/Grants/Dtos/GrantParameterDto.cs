@@ -15,6 +15,8 @@ public class GrantParameterDto : EntityDto<Guid>
     public string Issuer { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? SourceUrl { get; set; }
+    /// <summary>Program logosunun adresi; yalnız aktarmada taşınır, ekranda gösterilmez.</summary>
+    public string? LogoUrl { get; set; }
     public string? Objective { get; set; }
     public string? Priorities { get; set; }
     public string? EligibleApplicants { get; set; }
@@ -28,6 +30,11 @@ public class GrantParameterDto : EntityDto<Guid>
     public int EligibleApplicantTypes { get; set; }
     /// <summary>Platform kurumlarına kapalı (yalnız birey/okul/kamu başvurur).</summary>
     public bool ClosedToPlatformApplicants { get; set; }
+    /// <summary>Platformda hesabı olmayan başvuru sahipleri — ExternalApplicantType bit maskesi.</summary>
+    public int ExternalApplicantTypes { get; set; }
+    public GrantTurkeyParticipation TurkeyParticipation { get; set; }
+    public GrantGeographicScope GeographicScope { get; set; }
+    public GrantCallCycle CallCycle { get; set; }
     public int? MinCompanyAgeYears { get; set; }
     public int? MaxCompanyAgeYears { get; set; }
     public int? MinTrl { get; set; }
@@ -54,6 +61,7 @@ public class GrantParameterDto : EntityDto<Guid>
 
     public int? ProjectDurationMonths { get; set; }
     public GrantRepaymentType RepaymentType { get; set; }
+    public GrantSupportType SupportType { get; set; }
     public bool HasAdvancePayment { get; set; }
     public bool RequiresGuaranteeLetter { get; set; }
     public List<GrantEligibleCostItemDto> EligibleCostItems { get; set; } = new();

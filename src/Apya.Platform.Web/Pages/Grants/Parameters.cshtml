@@ -167,6 +167,39 @@
                         <div class="small text-muted">@L["Grants:Parameters:OnePerLine"]</div>
                     </div>
                 </div>
+
+                @* Katılım ve kapsam (2026-11-28): Türkiye'den katılım elemeye, coğrafi kapsam il kuralına girer. *@
+                <div class="apya-field pt-3 border-top">
+                    <span class="apya-field-label"><span>@L["Grants:Parameters:ConditionsTitle"]</span></span>
+                    <div class="small text-muted mb-2">@L["Grants:Parameters:ConditionsHint"]</div>
+                    <div class="apya-param-grid apya-param-grid--3">
+                        @foreach (var (id, labelKey, prefix, values) in new (string, string, string, IEnumerable<Enum>)[]
+                        {
+                            ("ParamTurkeyParticipation", "Grants:Parameters:TurkeyParticipation", "Grants:TurkeyParticipation", Enum.GetValues<Apya.Platform.Grants.GrantTurkeyParticipation>().Cast<Enum>()),
+                            ("ParamGeographicScope", "Grants:Parameters:GeographicScope", "Grants:GeographicScope", Enum.GetValues<Apya.Platform.Grants.GrantGeographicScope>().Cast<Enum>()),
+                            ("ParamCallCycle", "Grants:Parameters:CallCycle", "Grants:CallCycle", Enum.GetValues<Apya.Platform.Grants.GrantCallCycle>().Cast<Enum>()),
+                        })
+                        {
+                            <div class="apya-field">
+                                <label class="apya-field-label" for="@id"><span>@L[labelKey]</span></label>
+                                <select id="@id" class="form-select form-select-sm">
+                                    @foreach (var value in values)
+                                    {
+                                        var number = Convert.ToInt32(value);
+                                        <option value="@number">@(number == 0 ? L["Grants:Parameters:Unspecified"] : L[prefix + ":" + value])</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    </div>
+                    <span class="apya-field-label mt-2"><span>@L["Grants:Parameters:ExternalApplicants"]</span></span>
+                    <div class="apya-choice-row" id="ParamExternalApplicants">
+                        @foreach (var external in Enum.GetValues<Apya.Platform.Grants.ExternalApplicantType>())
+                        {
+                            <button type="button" class="apya-choice" data-external="@(1 << (int)external)">@L["Grants:ExternalApplicant:" + external]</button>
+                        }
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -543,6 +576,15 @@
                         <select id="ParamRepayment" class="form-select form-select-sm">
                             <option value="0">@L["Grants:Parameters:RepaymentNone"]</option>
                             <option value="1">@L["Grants:Parameters:RepaymentYes"]</option>
+                        </select>
+                    </div>
+                    <div class="apya-field">
+                        <label class="apya-field-label" for="ParamSupportType"><span>@L["Grants:Parameters:SupportType"]</span></label>
+                        <select id="ParamSupportType" class="form-select form-select-sm">
+                            @foreach (var supportType in Enum.GetValues<Apya.Platform.Grants.GrantSupportType>())
+                            {
+                                <option value="@((int)supportType)">@(supportType == Apya.Platform.Grants.GrantSupportType.Belirtilmemis ? L["Grants:Parameters:Unspecified"] : L["Grants:SupportType:" + supportType])</option>
+                            }
                         </select>
                     </div>
                     <div class="d-flex flex-column gap-1">

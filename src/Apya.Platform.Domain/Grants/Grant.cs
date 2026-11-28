@@ -58,6 +58,12 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// <summary>Resmî çağrı metninin adresi (1b başlığında ve kaynak karşılaştırmada gösterilir).</summary>
     public string? SourceUrl { get; set; }
 
+    /// <summary>
+    /// Program logosunun resmî kaynaktaki adresi. Görsel indirilmez, uygulamada gösterilmez (karar 2026-11-28);
+    /// yalnız aktarmada taşınır. Yüklenmiş afiş dosyası ayrıdır: <see cref="PosterFileName"/>.
+    /// </summary>
+    public string? LogoUrl { get; set; }
+
     // --- Kimlik · resmî duyurunun metin başlıkları ---
     // Eşleştirmeye GİRMEZ; kiracı detayında okunur. Öncelikler ve uygun başvuru sahipleri
     // satır başına bir madde olarak yazılır, istemci satırları listeye çevirir.
@@ -79,6 +85,21 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
     /// okul, üniversite ya da kamu olabilir. İşaretliyse maske ne olursa olsun her kurum elenir.
     /// </summary>
     public bool ClosedToPlatformApplicants { get; set; }
+
+    /// <summary>
+    /// Platformda hesabı olmayan başvuru sahipleri — <see cref="ExternalApplicantType"/> bit maskesi (0 = yok/bilinmiyor).
+    /// Eşleştirmeye GİRMEZ; kime açık olduğunu anlatır (bkz. <see cref="ClosedToPlatformApplicants"/>).
+    /// </summary>
+    public int ExternalApplicantTypes { get; set; }
+
+    /// <summary>Türkiye'den katılım koşulu; eleme kuralı <see cref="GrantEligibilityRule.CountryParticipation"/>.</summary>
+    public GrantTurkeyParticipation TurkeyParticipation { get; set; }
+
+    /// <summary>Coğrafi kapsam; il kuralını (<see cref="GrantEligibilityRule.Region"/>) yönlendirir.</summary>
+    public GrantGeographicScope GeographicScope { get; set; }
+
+    /// <summary>Çağrıların açılma biçimi (sürekli açık, dönemsel…). Eşleştirmeye girmez.</summary>
+    public GrantCallCycle CallCycle { get; set; }
 
     // --- 1b · Uygunluk Şartları ---
     // Hepsi nullable: null = "bu programda böyle bir şart YOK", 0 değil. Firma tarafındaki
@@ -103,6 +124,10 @@ public class Grant : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public int? SupportRatePercent { get; set; }
     public int? ProjectDurationMonths { get; set; }
     public GrantRepaymentType RepaymentType { get; set; }
+
+    /// <summary>Desteğin biçimi (nakdî hibe, teknik destek, kredi…). Eşleştirmeye girmez.</summary>
+    public GrantSupportType SupportType { get; set; }
+
     public bool HasAdvancePayment { get; set; }
     public bool RequiresGuaranteeLetter { get; set; }
 

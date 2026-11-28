@@ -133,6 +133,7 @@ public class GrantCallImport_Tests : PlatformWebTestBase
         screen.ShouldContain("Kalan gün");
         screen.ShouldContain("Uygun firma");
         screen.ShouldContain("İlgi talebi");
+        screen.ShouldContain("Afiş dosyası");
     }
 
     [Fact]
@@ -241,5 +242,66 @@ public class GrantCallImport_Tests : PlatformWebTestBase
             new() { ["Program adı"] = name, ["Kurum"] = issuer, ["Destek oranı (%)"] = "70", ["Dönem"] = "Q" + _code });
         import.GetProperty("done").GetBoolean().ShouldBeFalse();
         (await FindProgramAsync(name)).ShouldBeNull("hatalı dosyadan hiçbir satır yazılmamalı");
+    }
+
+    [Fact]
+    public async Task Katilim_kapsam_ve_dogrulama_sutunlari_yazilir_kapanis_nedeni_yalniz_kapali_cagriya()
+    {
+        var name = "Kapsam programı " + _code;
+        var issuer = "Kapsam kurumu " + _code;
+        var headers = await HeadersAsync(Modal + "?handler=Template&format=csv");
+        headers.ShouldContain("Destek türü");
+        headers.ShouldContain("Türkiye'den katılım");
+        headers.ShouldContain("Çağrı duyuru adresi");
+        headers.ShouldContain("Kapanış nedeni");
+
+        // Açık çağrıda kapanış nedeni çelişkidir: satır reddedilir, dosyadan hiçbir şey yazılmaz.
+        var rejected = await PostCsvAsync("Import", headers,
+            new Dictionary<string, string> { ["Program adı"] = name, ["Kurum"] = issuer, ["Dönem"] = "X" + _code, ["Çağrı durumu"] = "Yayında", ["Kapanış nedeni"] = "İptal edildi" });
+        rejected.GetProperty("done").GetBoolean().ShouldBeFalse();
+        (await FindProgramAsync(name)).ShouldBeNull();
+
+        var import = await PostCsvAsync("Import", headers,
+            new Dictionary<string, string>
+            {
+                ["Program adı"] = name, ["Kurum"] = issuer,
+                ["Destek türü"] = "Teknik destek (danışmanlık, eğitim hizmeti)", ["Çağrı döngüsü"] = "Sürekli açık",
+                ["Türkiye'den katılım"] = "Yalnız ortak olarak (koordinatör olamaz)", ["Coğrafi kapsam"] = "Proje bu illerde uygulanmalı",
+                // Test CSV'si hücreyi tırnaklamaz: çok değerli hücrede ";" sütun ayıracıyla karışır, tek değer yazılır.
+                ["Platform dışı başvuranlar"] = "Üniversite / yükseköğretim kurumu", ["Para birimi"] = "JPY",
+                ["Dönem"] = "K" + _code, ["Çağrı durumu"] = "Kapandı", ["Kapanış nedeni"] = "Bütçe tükendi",
+                ["Çağrı duyuru adresi"] = "https://ornek.gov.tr/cagri-" + _code, ["Son doğrulama"] = "28.11.2026",
+                ["Doğrulama durumu"] = "Resmî kaynaktan doğrulandı",
+                ["Program logosu adresi"] = "https://ornek.gov.tr/logo-" + _code + ".png",
+                ["Duyuru görseli adresi"] = "https://ornek.gov.tr/banner-" + _code + ".jpg",
+                ["Görselin bulunduğu sayfa"] = "https://ornek.gov.tr/cagri-" + _code,
+                ["Görsel lisansı"] = "İzin gerekli", ["Görsel durumu"] = "Yalnız adres kaydedildi",
+                ["Görsel son kontrol"] = "27.11.2026"
+            });
+        import.GetProperty("done").GetBoolean().ShouldBeTrue(Describe(import));
+
+        var program = await ProgramAsync((await FindProgramAsync(name))!.Id);
+        program.SupportType.ShouldBe(GrantSupportType.TeknikDestek);
+        program.CallCycle.ShouldBe(GrantCallCycle.SurekliAcik);
+        program.TurkeyParticipation.ShouldBe(GrantTurkeyParticipation.YalnizOrtak);
+        program.GeographicScope.ShouldBe(GrantGeographicScope.IllerdeUygulama);
+        program.ExternalApplicantTypes.ShouldBe(ExternalApplicantType.Universite.ToMaskBit());
+        program.Currency.ShouldBe("JPY");
+
+        var (call, _) = await FindCallAsync("K" + _code);
+        call.ShouldNotBeNull();
+        call.ClosureReason.ShouldBe(GrantCallClosureReason.ButceTukendi);
+        call.SourceUrl.ShouldBe("https://ornek.gov.tr/cagri-" + _code);
+        call.LastVerifiedAt.ShouldBe(new DateTime(2026, 11, 28));
+        call.VerificationStatus.ShouldBe(GrantCallVerificationStatus.ResmiKaynak);
+
+        // Görseller: yalnız adres tutulur, dosya indirilmez.
+        program.LogoUrl.ShouldBe("https://ornek.gov.tr/logo-" + _code + ".png");
+        call.AnnouncementImageUrl.ShouldBe("https://ornek.gov.tr/banner-" + _code + ".jpg");
+        call.ImageSourceUrl.ShouldBe("https://ornek.gov.tr/cagri-" + _code);
+        call.ImageLicense.ShouldBe(GrantImageLicense.IzinGerekli);
+        call.ImageStatus.ShouldBe(GrantImageStatus.YalnizAdres);
+        call.ImageLastCheckedAt.ShouldBe(new DateTime(2026, 11, 27));
+        headers.ShouldNotContain("Afiş dosyası", "afiş yalnız bilgi sütunu, içe aktarılmaz");
     }
 }

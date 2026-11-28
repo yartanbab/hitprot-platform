@@ -261,7 +261,8 @@ public class GrantMatchManager : DomainService
                         : GrantRuleOutcome.Passed));
         }
 
-        if (companyOnly && grant.RequiresConsortium)
+        // Türk kurumu yalnız ortak olarak katılabiliyorsa konsorsiyum şartı gibi ölçülür.
+        if (companyOnly && (grant.RequiresConsortium || grant.TurkeyParticipation == GrantTurkeyParticipation.YalnizOrtak))
         {
             rules.Add(new GrantRuleResult(GrantEligibilityRule.Consortium,
                 firm.HasConsortiumPartner == null
@@ -276,13 +277,32 @@ public class GrantMatchManager : DomainService
         var grantProvinces = Provinces(grantTags.Select(t => (t.Kind, t.Value)));
         if (grantProvinces.Count > 0)
         {
-            var firmProvinces = Provinces(firm.Tags.Select(t => (t.Kind, t.Value)));
+            // "Bu illerde yerleşik" şartında kurumun kayıtlı merkez ili belirleyicidir; girilmemişse
+            // faaliyet illerine bakılır (kapsam alanından önceki davranış).
+            var headquarters = grant.GeographicScope == GrantGeographicScope.IllerdeYerlesik
+                && firm.Parameters.TryGetValue(FirmParameterCatalog.HeadquartersProvinceId, out var hq) && !hq.IsStale
+                    ? TurkeyProvinces.Find(hq.Text ?? hq.Choices.FirstOrDefault())?.Name
+                    : null;
+            var firmProvinces = headquarters != null
+                ? new HashSet<string> { headquarters }
+                : Provinces(firm.Tags.Select(t => (t.Kind, t.Value)));
             rules.Add(new GrantRuleResult(GrantEligibilityRule.Region,
                 firmProvinces.Count == 0
                     ? GrantRuleOutcome.Unknown
                     : firmProvinces.Overlaps(grantProvinces)
                         ? GrantRuleOutcome.Passed
                         : GrantRuleOutcome.Failed));
+        }
+        else if (grant.GeographicScope.NeedsProvinces())
+        {
+            // Program "belirli iller" diyor ama iller girilmemiş: bilinmeyen uygun sayılmaz.
+            rules.Add(new GrantRuleResult(GrantEligibilityRule.Region, GrantRuleOutcome.Unknown));
+        }
+
+        // Türkiye programa katılmıyor ya da Türk kurumu fon alamıyor: her kurum elenir.
+        if (grant.TurkeyParticipation is GrantTurkeyParticipation.UygunDegil or GrantTurkeyParticipation.FonAlamaz)
+        {
+            rules.Add(new GrantRuleResult(GrantEligibilityRule.CountryParticipation, GrantRuleOutcome.Failed));
         }
 
         // Kurum türü: yalnız şirkete açık bir program derneğe önerilmesin. Platforma kapalı

@@ -57,6 +57,36 @@
                             <input type="text" class="form-control" id="CallReference" maxlength="64" />
                         </div>
                     </div>
+                    <div class="mt-3 mb-3">
+                        <label class="form-label" for="CallSourceUrl">@L["Grants:Calls:Modal:SourceUrl"]</label>
+                        <input type="url" class="form-control" id="CallSourceUrl" maxlength="512" />
+                        <div class="form-text">@L["Grants:Calls:Modal:SourceUrlHint"]</div>
+                    </div>
+                    @* Kapanış nedeni yalnız "Kapandı" seçiliyken açılır (CallModal.js); domain de açık çağrıda reddeder. *@
+                    <div class="mb-3" id="CallClosureReasonRow" hidden>
+                        <label class="form-label" for="CallClosureReason">@L["Grants:Calls:Modal:ClosureReason"]</label>
+                        <select class="form-select" id="CallClosureReason">
+                            @foreach (var reason in Enum.GetValues<Apya.Platform.Grants.GrantCallClosureReason>())
+                            {
+                                <option value="@((int)reason)">@(reason == Apya.Platform.Grants.GrantCallClosureReason.Belirtilmemis ? L["Grants:Parameters:Unspecified"] : L["Grants:ClosureReason:" + reason])</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-1">
+                            <label class="form-label" for="CallLastVerifiedAt">@L["Grants:Calls:Modal:LastVerifiedAt"]</label>
+                            <input type="date" abp-data-datepicker="false" class="form-control" id="CallLastVerifiedAt" />
+                        </div>
+                        <div class="col-6 mb-1">
+                            <label class="form-label" for="CallVerificationStatus">@L["Grants:Calls:Modal:VerificationStatus"]</label>
+                            <select class="form-select" id="CallVerificationStatus">
+                                @foreach (var status in Enum.GetValues<Apya.Platform.Grants.GrantCallVerificationStatus>())
+                                {
+                                    <option value="@((int)status)">@(status == Apya.Platform.Grants.GrantCallVerificationStatus.Dogrulanmadi ? L["Grants:Parameters:Unspecified"] : L["Grants:Verification:" + status])</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Vazgeç</button>

@@ -21,7 +21,7 @@ $(function () {
     var trancheStatusLabels = apyaGrantStatus.tranche.keys.map(function (k) { return l('Grants:Tranche:' + k); });
 
     // GrantEligibilityRule enum sırasıyla birebir.
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType'];
+    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType', 'CountryParticipation'];
 
     var feed = [];
     var feedFailed = false;
@@ -40,7 +40,7 @@ $(function () {
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     // Programın tutar para birimi (GrantCurrencies); bilinmeyen kod ₺ sayılır.
     var CUR = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
-    function sym(cur) { return CUR[cur] || '₺'; }
+    function sym(cur) { return CUR[cur] || cur || '₺'; }
     function money(v, cur) { return v != null ? Math.round(v).toLocaleString('tr-TR') + ' ' + sym(cur) : '—'; }
     // Tavan belirtilmemiş program 0 ile saklanır (MaxAmount kolonu NOT NULL) — "0 ₺" yerine — göster.
     function ceiling(v, cur) { return v ? money(v, cur) : '—'; }

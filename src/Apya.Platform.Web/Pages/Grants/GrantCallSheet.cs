@@ -13,6 +13,7 @@ internal sealed class GrantCallSheet : ParameterSheet<GrantCallDto, CreateUpdate
 {
     private const int MaxPeriodLength = 32;
     private const int MaxReferenceLength = 64;
+    private const int MaxUrlLength = 512;
 
     public GrantCallSheet(IStringLocalizer l)
         : base(l, "Import:GrantCall:")
@@ -33,6 +34,16 @@ internal sealed class GrantCallSheet : ParameterSheet<GrantCallDto, CreateUpdate
             Date("OpenDate", c => c.OpenDate, (t, v) => t.OpenDate = v),
             Date("Deadline", c => c.Deadline, (t, v) => t.Deadline = v),
             Amount("Budget", c => c.Budget, (t, v) => t.Budget = v),
+            Text("SourceUrl", c => c.SourceUrl, (t, v) => t.SourceUrl = v, maxLength: MaxUrlLength),
+            Choice("ClosureReason", "Grants:ClosureReason", c => c.ClosureReason, (t, v) => t.ClosureReason = v),
+            Date("LastVerifiedAt", c => c.LastVerifiedAt, (t, v) => t.LastVerifiedAt = v),
+            Choice("VerificationStatus", "Grants:Verification", c => c.VerificationStatus, (t, v) => t.VerificationStatus = v),
+            // Duyuru görseli: yalnız adres taşınır, dosya indirilmez (karar 2026-11-28).
+            Text("AnnouncementImageUrl", c => c.AnnouncementImageUrl, (t, v) => t.AnnouncementImageUrl = v, maxLength: MaxUrlLength),
+            Text("ImageSourceUrl", c => c.ImageSourceUrl, (t, v) => t.ImageSourceUrl = v, maxLength: MaxUrlLength),
+            Choice("ImageLicense", "Grants:ImageLicense", c => c.ImageLicense, (t, v) => t.ImageLicense = v),
+            Choice("ImageStatus", "Grants:ImageStatus", c => c.ImageStatus, (t, v) => t.ImageStatus = v),
+            Date("ImageLastCheckedAt", c => c.ImageLastCheckedAt, (t, v) => t.ImageLastCheckedAt = v),
         ];
     }
 
@@ -54,6 +65,12 @@ internal sealed class GrantCallSheet : ParameterSheet<GrantCallDto, CreateUpdate
         if (input.Budget < 0)
         {
             row.Errors.Add(L["Import:Error:Negative", H("Budget")]);
+        }
+
+        // Domain de reddeder; kayıttan önce satırda gösterilir.
+        if (input.ClosureReason != GrantCallClosureReason.Belirtilmemis && input.Status != GrantCallStatus.Kapandi)
+        {
+            row.Errors.Add(L["Import:Error:ClosureNeedsClosed", H("ClosureReason"), H("Status")]);
         }
     }
 

@@ -25,6 +25,10 @@ public class UpdateGrantParameterDto
     [StringLength(512, ErrorMessage = "Kaynak adresi en fazla {1} karakter olabilir.")]
     public string? SourceUrl { get; set; }
 
+    /// <summary>Program logosunun adresi. Parametre formu bu alanı göstermez, okuduğunu aynen geri gönderir.</summary>
+    [StringLength(512, ErrorMessage = "Logo adresi en fazla {1} karakter olabilir.")]
+    public string? LogoUrl { get; set; }
+
     [StringLength(2000, ErrorMessage = "Programın amacı en fazla {1} karakter olabilir.")]
     public string? Objective { get; set; }
 
@@ -40,6 +44,11 @@ public class UpdateGrantParameterDto
     public int EligibleApplicantTypes { get; set; }
     /// <summary>Platform kurumlarına kapalı (yalnız birey/okul/kamu başvurur).</summary>
     public bool ClosedToPlatformApplicants { get; set; }
+    /// <summary>Platformda hesabı olmayan başvuru sahipleri — ExternalApplicantType bit maskesi. Eşleştirmeye girmez.</summary>
+    public int ExternalApplicantTypes { get; set; }
+    public GrantTurkeyParticipation TurkeyParticipation { get; set; }
+    public GrantGeographicScope GeographicScope { get; set; }
+    public GrantCallCycle CallCycle { get; set; }
 
     [Range(0, 200, ErrorMessage = "Şirket yaşı 0 ile 200 arasında olmalıdır.")]
     public int? MinCompanyAgeYears { get; set; }
@@ -83,7 +92,7 @@ public class UpdateGrantParameterDto
     public decimal? MaxAmount { get; set; }
 
     /// <summary>Tutarların para birimi; boş gelirse TRY. Desteklenmeyen kod reddedilir.</summary>
-    [RegularExpression("^(TRY|EUR|USD|GBP)$", ErrorMessage = "Para birimi TRY, EUR, USD ya da GBP olmalı.")]
+    [RegularExpression("^(TRY|EUR|USD|GBP|CHF|JPY|SEK|NOK|CAD|AUD|CZK)$", ErrorMessage = "Para birimi listedeki kodlardan biri olmalı (TRY, EUR, USD, GBP, CHF, JPY, SEK, NOK, CAD, AUD, CZK).")]
     public string? Currency { get; set; }
 
     [Range(0, 100, ErrorMessage = "Destek oranı 0 ile 100 arasında olmalıdır.")]
@@ -93,6 +102,7 @@ public class UpdateGrantParameterDto
     public int? ProjectDurationMonths { get; set; }
 
     public GrantRepaymentType RepaymentType { get; set; }
+    public GrantSupportType SupportType { get; set; }
     public bool HasAdvancePayment { get; set; }
     public bool RequiresGuaranteeLetter { get; set; }
 
