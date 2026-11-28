@@ -777,7 +777,7 @@
     "Import:Title:Invoices": "Import invoices from Excel",
     "Import:Hint:Invoices": "Rows with the same invoice number are the lines of one invoice. Unit price excludes VAT (quantity defaults to 1); if line columns are empty, Total is one VAT-inclusive line. VAT defaults to 20%, due date to the invoice date. Payments and status are not imported: invoices open unpaid; record payments on the screen.",
     "Import:Title:GrantCalls": "Import grant calls from Excel",
-    "Import:Hint:GrantCalls": "A call belongs to a programme: write the programme name, and fill in Institution as well if two programmes share a name. The same programme and period is not opened twice. Empty status means Draft. Imported open calls are not announced to firms; publish a call on the screen to announce it.",
+    "Import:Hint:GrantCalls": "Each row carries a call and all parameters of its programme. A row with a Call ID updates that call, a row without one opens a new call. The programme is found by its Program ID or its name (fill in Institution as well if two programmes share a name); if none is found, a new programme is opened. Rows of the same programme must have the same programme columns or leave them empty; a programme left empty stays as it is. The same programme and period is not opened twice. Empty status means Draft. Days left, Matching firms and Interest requests are for information only and are not read. Imported open calls are not announced to firms; publish a call on the screen to announce it.",
     "Import:Col:InvoiceLine": "Line",
     "Import:Col:Quantity": "Quantity",
     "Import:Col:UnitPrice": "Unit price",
