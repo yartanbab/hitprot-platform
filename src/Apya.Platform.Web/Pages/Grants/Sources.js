@@ -11,7 +11,7 @@ $(function () {
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     // Programın tutar para birimi (GrantCurrencies); bilinmeyen kod ₺ sayılır.
     var CUR = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
-    function sym(cur) { return CUR[cur] || '₺'; }
+    function sym(cur) { return CUR[cur] || cur || '₺'; }
     function money(v, cur) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ' + sym(cur) : '—'; }
     function date(v) { return v ? new Date(v).toLocaleDateString('tr-TR') : '—'; }
 

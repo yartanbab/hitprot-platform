@@ -11,7 +11,7 @@ $(function () {
     var bucketKeys = apyaGrantStatus.bucket.keys;
     var bucketTone = apyaGrantStatus.bucket.tones;
     var bucketIcon = ['fa-circle-check', 'fa-circle-exclamation', 'fa-circle-xmark'];
-    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType'];
+    var ruleKeys = ['CompanySize', 'CompanyAge', 'Trl', 'StaffCount', 'RdStaffCount', 'Revenue', 'Consortium', 'Region', 'OrganizationType', 'CountryParticipation'];
 
     var items = [];
     // Süzgeç, yükleme düştüyse hata kartını "uygun çağrı yok" ile ezmesin.
@@ -20,7 +20,7 @@ $(function () {
     function esc(t) { return $('<div>').text(t == null ? '' : t).html(); }
     // Programın tutar para birimi (GrantCurrencies); bilinmeyen kod ₺ sayılır.
     var CUR = { TRY: '₺', EUR: '€', USD: '$', GBP: '£' };
-    function sym(cur) { return CUR[cur] || '₺'; }
+    function sym(cur) { return CUR[cur] || cur || '₺'; }
     function money(v, cur) { return v ? Math.round(v).toLocaleString('tr-TR') + ' ' + sym(cur) : '—'; }
 
     /// Tek satırlık gerekçe: eleyen ya da ölçülemeyen şarttan kurulur.

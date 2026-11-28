@@ -303,7 +303,7 @@ public class GrantRecommendationAppService : ApplicationService, IGrantRecommend
                 Issuer = grant.Issuer,
                 Description = grant.Description,
                 PosterFileName = grant.PosterFileName,
-                SourceUrl = grant.SourceUrl,
+                SourceUrl = call.SourceUrl ?? grant.SourceUrl,
                 Objective = grant.Objective,
                 Priorities = grant.Priorities,
                 EligibleApplicants = grant.EligibleApplicants,

@@ -29,7 +29,7 @@ public sealed class GrantCallFileRow
 /// <summary>
 /// Hibe çağrısı dosyası: her satırda çağrının alanları ve programının bütün parametreleri. Hibe ekranından
 /// da İçe / Dışa Aktarma'dan da bu dosya iner; aynen geri yüklenebilir (<see cref="CallImportModalModel"/>).
-/// Kalan gün, uygun firma ve ilgi talebi yalnız bilgidir, içe aktarmada okunmaz.
+/// Kalan gün, uygun firma, ilgi talebi ve afiş dosyası yalnız bilgidir, içe aktarmada okunmaz.
 /// </summary>
 internal sealed class GrantCallFile
 {
@@ -65,6 +65,8 @@ internal sealed class GrantCallFile
                 .. Ordered(program, call, new ExcelColumn<GrantCallFileRow>(_l["Export:Col:DaysRemaining"], r => r.DaysRemaining)),
                 new(_l["Export:Col:MatchingFirms"], r => r.MatchingFirms),
                 new(_l["Export:Col:Interests"], r => r.Interests),
+                // Yüklenmiş afişin saklanan adı: yalnız bilgi, içe aktarmada okunmaz (olmayan dosya adı yazılamasın).
+                new(_l["Export:Col:PosterFile"], r => r.Program.PosterFileName),
             ];
         }
     }

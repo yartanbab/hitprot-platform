@@ -6391,6 +6391,11 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("CallCycle")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<bool>("ClosedToPlatformApplicants")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -6444,10 +6449,20 @@ namespace Apya.Platform.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
+                    b.Property<int>("ExternalApplicantTypes")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("ExtraProperties")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("ExtraProperties");
+
+                    b.Property<int>("GeographicScope")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<bool>("HasAdvancePayment")
                         .HasColumnType("bit");
@@ -6470,6 +6485,10 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("LastModifierId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
 
                     b.Property<decimal>("MaxAmount")
                         .HasColumnType("decimal(18,2)");
@@ -6552,9 +6571,19 @@ namespace Apya.Platform.Migrations
                     b.Property<int?>("SupportRatePercent")
                         .HasColumnType("int");
 
+                    b.Property<int>("SupportType")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TenantId");
+
+                    b.Property<int>("TurkeyParticipation")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -7312,8 +7341,17 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AnnouncementImageUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<decimal?>("Budget")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ClosureReason")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -7349,6 +7387,23 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid>("GrantId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("ImageLastCheckedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ImageLicense")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("ImageSourceUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<int>("ImageStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -7362,6 +7417,9 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("LastModifierId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
+
+                    b.Property<DateTime?>("LastVerifiedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("OpenDate")
                         .HasColumnType("datetime2");
@@ -7381,12 +7439,21 @@ namespace Apya.Platform.Migrations
                     b.Property<Guid?>("SourceId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("SourceUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TenantId");
+
+                    b.Property<int>("VerificationStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 

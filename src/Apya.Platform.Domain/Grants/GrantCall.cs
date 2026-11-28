@@ -26,6 +26,35 @@ public class GrantCall : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public GrantCallOrigin Origin { get; set; }
 
+    /// <summary>
+    /// Bu çağrının resmî duyuru adresi. Boşsa programın adresi (<c>Grant.SourceUrl</c>) geçerlidir; programın
+    /// yeni dönemi açılınca eski çağrının duyurusu kaybolmasın diye çağrıda tutulur.
+    /// </summary>
+    public string? SourceUrl { get; set; }
+
+    /// <summary>Kapanış nedeni. Yalnız kapalı çağrıda dolu olabilir (<see cref="SetClosureReason"/>).</summary>
+    public GrantCallClosureReason ClosureReason { get; private set; }
+
+    /// <summary>Çağrı bilgisinin resmî kaynaktan en son kontrol edildiği gün; null = hiç doğrulanmadı.</summary>
+    public DateTime? LastVerifiedAt { get; set; }
+
+    public GrantCallVerificationStatus VerificationStatus { get; set; }
+
+    // --- Duyuru görseli: yalnız adres (karar 2026-11-28: indirilmez, ekranda gösterilmez) ---
+    // Her dönemin kendi görseli vardır: programın eski çağrısının görseli yeni çağrıya taşınmaz.
+
+    /// <summary>Çağrı duyurusunun görselinin (banner, afiş) adresi.</summary>
+    public string? AnnouncementImageUrl { get; set; }
+
+    /// <summary>Görselin bulunduğu resmî sayfa.</summary>
+    public string? ImageSourceUrl { get; set; }
+
+    public GrantImageLicense ImageLicense { get; set; }
+
+    public GrantImageStatus ImageStatus { get; set; }
+
+    public DateTime? ImageLastCheckedAt { get; set; }
+
     protected GrantCall() { }
 
     public GrantCall(Guid id, Guid grantId, string period, GrantCallStatus status) : base(id)
@@ -46,13 +75,30 @@ public class GrantCall : FullAuditedAggregateRoot<Guid>, IMultiTenant
     // çağrı yerinde okunabilmesi ve serbest atamanın derlenmemesi.
 
     /// <summary>Yayın: çağrı kiracılara ve kamuya açılır.</summary>
-    public void Publish() => Status = GrantCallStatus.Acik;
+    public void Publish() => ChangeStatus(GrantCallStatus.Acik);
 
     /// <summary>Kapanış: son başvuru tarihi geçti ya da host kapattı.</summary>
     public void Close() => Status = GrantCallStatus.Kapandi;
 
-    /// <summary>Host çağrı düzenleme ekranından elle seçilen durum (ör. Planlandı).</summary>
-    public void ChangeStatus(GrantCallStatus status) => Status = status;
+    /// <summary>Host çağrı düzenleme ekranından elle seçilen durum (ör. Planlandı). Kapanmayan çağrının nedeni boşalır.</summary>
+    public void ChangeStatus(GrantCallStatus status)
+    {
+        Status = status;
+        if (status != GrantCallStatus.Kapandi)
+        {
+            ClosureReason = GrantCallClosureReason.Belirtilmemis;
+        }
+    }
+
+    /// <summary>Kapanış nedeni yalnız kapalı çağrıya yazılır; açık çağrıda "iptal edildi" çelişki olurdu.</summary>
+    public void SetClosureReason(GrantCallClosureReason reason)
+    {
+        if (reason != GrantCallClosureReason.Belirtilmemis && Status != GrantCallStatus.Kapandi)
+        {
+            throw new BusinessException(PlatformDomainErrorCodes.GrantCallClosureReasonNeedsClosed);
+        }
+        ClosureReason = reason;
+    }
 
     /// <summary>
     /// Son başvuru tarihi <paramref name="today"/> gününden önce mi. Son gün DAHİLDİR (o gün

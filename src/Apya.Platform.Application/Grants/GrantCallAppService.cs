@@ -131,9 +131,7 @@ public class GrantCallAppService :
     protected override Task<GrantCall> MapToEntityAsync(CreateUpdateGrantCallDto input)
     {
         var entity = new GrantCall(GuidGenerator.Create(), input.GrantId, input.Period, input.Status);
-        entity.SetSchedule(input.OpenDate, input.Deadline);
-        entity.Budget = input.Budget;
-        entity.Reference = input.Reference;
+        Apply(input, entity);
         return Task.FromResult(entity);
     }
 
@@ -141,10 +139,25 @@ public class GrantCallAppService :
     {
         entity.SetPeriod(input.Period);
         entity.ChangeStatus(input.Status);
+        Apply(input, entity);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Durumdan sonra yazılır: kapanış nedeni yalnız kapalı çağrıya düşer.</summary>
+    private static void Apply(CreateUpdateGrantCallDto input, GrantCall entity)
+    {
         entity.SetSchedule(input.OpenDate, input.Deadline);
         entity.Budget = input.Budget;
         entity.Reference = input.Reference;
-        return Task.CompletedTask;
+        entity.SourceUrl = string.IsNullOrWhiteSpace(input.SourceUrl) ? null : input.SourceUrl.Trim();
+        entity.SetClosureReason(input.ClosureReason);
+        entity.LastVerifiedAt = input.LastVerifiedAt?.Date;
+        entity.VerificationStatus = input.VerificationStatus;
+        entity.AnnouncementImageUrl = string.IsNullOrWhiteSpace(input.AnnouncementImageUrl) ? null : input.AnnouncementImageUrl.Trim();
+        entity.ImageSourceUrl = string.IsNullOrWhiteSpace(input.ImageSourceUrl) ? null : input.ImageSourceUrl.Trim();
+        entity.ImageLicense = input.ImageLicense;
+        entity.ImageStatus = input.ImageStatus;
+        entity.ImageLastCheckedAt = input.ImageLastCheckedAt?.Date;
     }
 
     protected override async Task<GrantCallDto> MapToGetOutputDtoAsync(GrantCall entity)

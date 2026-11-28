@@ -24,5 +24,10 @@ public enum GrantEligibilityRule
     /// platform kurumlarına hiç açık değilse (<c>Grant.ClosedToPlatformApplicants</c>) kurumun
     /// türü uymalı. Tür bilinmiyorsa sonuç Unknown olur, kurum elenmez.
     /// </summary>
-    OrganizationType = 8
+    OrganizationType = 8,
+    /// <summary>
+    /// Türkiye'den katılım (<c>Grant.TurkeyParticipation</c>): Türkiye programa katılmıyorsa ya da Türk
+    /// kurumu fon alamıyorsa her kurum elenir. Firma tarafında karşılığı yoktur; sonuç hiçbir zaman Unknown olmaz.
+    /// </summary>
+    CountryParticipation = 9
 }

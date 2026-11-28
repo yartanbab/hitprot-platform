@@ -757,7 +757,13 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.Property(x => x.EligibleCompanySizes).IsRequired().HasDefaultValue(0);
                 b.Property(x => x.EligibleApplicantTypes).IsRequired().HasDefaultValue(0);
                 b.Property(x => x.ClosedToPlatformApplicants).IsRequired().HasDefaultValue(false);
+                b.Property(x => x.ExternalApplicantTypes).IsRequired().HasDefaultValue(0);
+                b.Property(x => x.TurkeyParticipation).IsRequired().HasDefaultValue(GrantTurkeyParticipation.Belirtilmemis);
+                b.Property(x => x.GeographicScope).IsRequired().HasDefaultValue(GrantGeographicScope.Belirtilmemis);
+                b.Property(x => x.CallCycle).IsRequired().HasDefaultValue(GrantCallCycle.Belirtilmemis);
+                b.Property(x => x.SupportType).IsRequired().HasDefaultValue(GrantSupportType.Belirtilmemis);
                 b.Property(x => x.SourceUrl).HasMaxLength(512);
+                b.Property(x => x.LogoUrl).HasMaxLength(512);
                 b.Property(x => x.Objective).HasMaxLength(2000);
                 b.Property(x => x.Priorities).HasMaxLength(4000);
                 b.Property(x => x.EligibleApplicants).HasMaxLength(2000);
@@ -778,6 +784,13 @@ namespace Apya.Platform.EntityFrameworkCore
                 b.ConfigureByConvention();
                 b.Property(x => x.Period).IsRequired().HasMaxLength(32);
                 b.Property(x => x.Reference).HasMaxLength(64);
+                b.Property(x => x.SourceUrl).HasMaxLength(512);
+                b.Property(x => x.ClosureReason).IsRequired().HasDefaultValue(GrantCallClosureReason.Belirtilmemis);
+                b.Property(x => x.VerificationStatus).IsRequired().HasDefaultValue(GrantCallVerificationStatus.Dogrulanmadi);
+                b.Property(x => x.AnnouncementImageUrl).HasMaxLength(512);
+                b.Property(x => x.ImageSourceUrl).HasMaxLength(512);
+                b.Property(x => x.ImageLicense).IsRequired().HasDefaultValue(GrantImageLicense.Belirsiz);
+                b.Property(x => x.ImageStatus).IsRequired().HasDefaultValue(GrantImageStatus.Belirtilmemis);
                 b.HasOne<Grant>().WithMany(g => g.Calls).HasForeignKey(x => x.GrantId).OnDelete(DeleteBehavior.Cascade);
                 b.HasIndex(x => x.GrantId);
                 b.HasIndex(x => x.Deadline);

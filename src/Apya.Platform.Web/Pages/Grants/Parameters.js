@@ -5,6 +5,8 @@ $(function () {
     var l = abp.localization.getResource('Platform');
     var grantId = $('.apya-page').data('grant-id');
     var posterFileName = null;
+    // Formda gösterilmeyen logo adresi: okunduğu gibi geri gönderilir, kayıt onu boşaltmasın.
+    var logoUrl = null;
 
     var sizeKeys = { 1: 'Mikro', 2: 'Kucuk', 4: 'Orta', 8: 'Buyuk' };
     var partyKeys = ['Firma', 'Danisman', 'Ortak', 'Kurum'];
@@ -134,6 +136,19 @@ $(function () {
         if ($(this).hasClass('is-on')) { $('#ParamOrgTypes .apya-choice').removeClass('is-on'); }
         schedulePreview();
     });
+
+    // ---------- Platform dışı başvuranlar ----------
+    // Yalnız bilgi: eşleştirmeye girmez, kurum türleriyle ve "platforma kapalı" ile çakışmaz.
+    $('#ParamExternalApplicants').on('click', '.apya-choice', function () {
+        $(this).toggleClass('is-on');
+        schedulePreview();
+    });
+
+    function fillExternalApplicants(mask) {
+        $('#ParamExternalApplicants .apya-choice').each(function () {
+            $(this).toggleClass('is-on', ((mask || 0) & Number($(this).data('external'))) !== 0);
+        });
+    }
 
     function fillOrgTypes(dto) {
         $('#ParamOrgTypes .apya-choice').each(function () {
@@ -624,6 +639,8 @@ $(function () {
         $('#ParamSizes .apya-choice.is-on').each(function () { sizes |= Number($(this).data('size')); });
         var orgTypes = 0;
         $('#ParamOrgTypes .apya-choice.is-on').each(function () { orgTypes |= Number($(this).data('orgtype')); });
+        var externals = 0;
+        $('#ParamExternalApplicants .apya-choice.is-on').each(function () { externals |= Number($(this).data('external')); });
 
         var tags = [];
         [0, 1, 2, 3].forEach(function (kind) {
@@ -647,12 +664,17 @@ $(function () {
             issuer: $('#ParamIssuer').val(),
             description: $('#ParamSummary').val(),
             sourceUrl: $('#ParamSourceUrl').val(),
+            logoUrl: logoUrl,
             objective: $('#ParamObjective').val(),
             priorities: $('#ParamPriorities').val(),
             eligibleApplicants: $('#ParamEligibleApplicants').val(),
             eligibleCompanySizes: sizes,
             eligibleApplicantTypes: orgTypes,
             closedToPlatformApplicants: $('#ParamClosedToPlatform').hasClass('is-on'),
+            externalApplicantTypes: externals,
+            turkeyParticipation: Number($('#ParamTurkeyParticipation').val() || 0),
+            geographicScope: Number($('#ParamGeographicScope').val() || 0),
+            callCycle: Number($('#ParamCallCycle').val() || 0),
             minCompanyAgeYears: num('#ParamMinAge'),
             maxCompanyAgeYears: num('#ParamMaxAge'),
             minTrl: trlMin,
@@ -673,6 +695,7 @@ $(function () {
             supportRatePercent: num('#ParamSupportRate'),
             projectDurationMonths: num('#ParamDuration'),
             repaymentType: Number($('#ParamRepayment').val()),
+            supportType: Number($('#ParamSupportType').val() || 0),
             hasAdvancePayment: $('#ParamAdvance').is(':checked'),
             requiresGuaranteeLetter: $('#ParamGuarantee').is(':checked'),
             eligibleCostItems: costItems,
@@ -698,6 +721,7 @@ $(function () {
         $('#ParamPriorities').val(dto.priorities || '');
         $('#ParamEligibleApplicants').val(dto.eligibleApplicants || '');
         posterFileName = dto.posterFileName || null;
+        logoUrl = dto.logoUrl || null;
         paintPoster();
 
         fillOrgTypes(dto);
@@ -741,6 +765,11 @@ $(function () {
         setNum('#ParamSupportRate', dto.supportRatePercent);
         setNum('#ParamDuration', dto.projectDurationMonths);
         $('#ParamRepayment').val(String(dto.repaymentType || 0));
+        $('#ParamSupportType').val(String(dto.supportType || 0));
+        $('#ParamTurkeyParticipation').val(String(dto.turkeyParticipation || 0));
+        $('#ParamGeographicScope').val(String(dto.geographicScope || 0));
+        $('#ParamCallCycle').val(String(dto.callCycle || 0));
+        fillExternalApplicants(dto.externalApplicantTypes);
         $('#ParamAdvance').prop('checked', !!dto.hasAdvancePayment);
         $('#ParamGuarantee').prop('checked', !!dto.requiresGuaranteeLetter);
         paintCoFinancing();

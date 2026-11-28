@@ -251,7 +251,7 @@ public class GrantPublicAppService : PlatformAppService, IGrantPublicAppService
             SupportRatePercent = grant.SupportRatePercent,
             ProjectDurationMonths = grant.ProjectDurationMonths,
             RepaymentType = grant.RepaymentType,
-            SourceUrl = grant.SourceUrl,
+            SourceUrl = call.SourceUrl ?? grant.SourceUrl,
             Difficulty = difficulty.Level,
             DifficultyReasons = difficulty.Reasons.ToList(),
             Criteria = BuildCriteria(grant),

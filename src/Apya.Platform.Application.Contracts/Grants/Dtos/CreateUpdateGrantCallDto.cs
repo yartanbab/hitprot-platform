@@ -21,4 +21,28 @@ public class CreateUpdateGrantCallDto
 
     [StringLength(64)]
     public string? Reference { get; set; }
+
+    /// <summary>Çağrının resmî duyuru adresi; boşsa programın adresi geçerli.</summary>
+    [StringLength(512)]
+    public string? SourceUrl { get; set; }
+
+    /// <summary>Yalnız <see cref="GrantCallStatus.Kapandi"/> ile birlikte dolu olabilir.</summary>
+    public GrantCallClosureReason ClosureReason { get; set; }
+
+    public DateTime? LastVerifiedAt { get; set; }
+
+    public GrantCallVerificationStatus VerificationStatus { get; set; }
+
+    // Duyuru görseli: yalnız adres; ekranda düzenlenmez, çağrı penceresi okuduğunu aynen geri gönderir.
+    [StringLength(512)]
+    public string? AnnouncementImageUrl { get; set; }
+
+    [StringLength(512)]
+    public string? ImageSourceUrl { get; set; }
+
+    public GrantImageLicense ImageLicense { get; set; }
+
+    public GrantImageStatus ImageStatus { get; set; }
+
+    public DateTime? ImageLastCheckedAt { get; set; }
 }
