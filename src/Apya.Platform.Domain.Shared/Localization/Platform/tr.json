@@ -692,7 +692,7 @@
         "Import:Title:Invoices": "Faturaları Excel'den içe aktar",
         "Import:Hint:Invoices": "Aynı fatura numaralı satırlar tek faturanın kalemleridir. Birim fiyat KDV hariçtir (miktar boşsa 1); kalem sütunları boşsa Toplam KDV dahil tek kalem sayılır. KDV boşsa %20, son tarih boşsa fatura tarihi. Tahsilat ve durum alınmaz: faturalar ödenmemiş açılır, tahsilatı ekrandan girin.",
         "Import:Title:GrantCalls": "Hibe çağrılarını Excel'den içe aktar",
-        "Import:Hint:GrantCalls": "Çağrı programa bağlanır: program adını yazın, aynı adlı iki program varsa Kurum sütununu da doldurun. Aynı program ve dönem ikinci kez açılmaz. Durum boşsa Taslak. İçe aktarılan açık çağrılar firmalara duyurulmaz; duyurmak için çağrıyı ekrandan yayınlayın.",
+        "Import:Hint:GrantCalls": "Her satır bir çağrıyı ve programının bütün parametrelerini taşır. Çağrı kimliği dolu satır o çağrıyı günceller, boş satır yeni çağrı açar. Program, Program kimliğinden ya da adından bulunur (aynı adlı iki program varsa Kurum sütununu da doldurun); bulunamazsa yeni program açılır. Aynı programın satırlarında program sütunları aynı olmalı ya da boş bırakılmalı; boş bırakılan program olduğu gibi kalır. Aynı program ve dönem ikinci kez açılmaz. Durum boşsa Taslak. Kalan gün, Uygun firma ve İlgi talebi yalnız bilgi içindir, okunmaz. İçe aktarılan açık çağrılar firmalara duyurulmaz; duyurmak için çağrıyı ekrandan yayınlayın.",
         "Import:Col:InvoiceLine": "Kalem",
         "Import:Col:Quantity": "Miktar",
         "Import:Col:UnitPrice": "Birim fiyat",
